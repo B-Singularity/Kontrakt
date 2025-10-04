@@ -10,4 +10,4 @@ commons-math3 = { module = "org.apache.commons:commons-math3", version.ref = "co
 guava = { module = "com.google.guava:guava", version.ref = "guava" }
 
 [plugins]
-kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version = "2.2.0" }
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version = "2.2.20" }
