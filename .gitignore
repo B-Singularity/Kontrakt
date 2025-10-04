@@ -52,3 +52,5 @@ Desktop.ini
 
 # Ignore Gradle build output directory
 build
+
+!gradle/wrapper/gradle-wrapper.jar
