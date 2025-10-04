@@ -49,3 +49,6 @@ Desktop.ini
 *~
 *.swp
 
+
+# Ignore Gradle build output directory
+build
