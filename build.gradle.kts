@@ -4,7 +4,7 @@
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension
 
 plugins {
-    kotlin("jvm") version "2.2.0" apply false
+    kotlin("jvm") version "2.2.20" apply false
 }
 
 subprojects {
