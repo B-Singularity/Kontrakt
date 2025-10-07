@@ -8,7 +8,6 @@ subprojects {
     apply(plugin = "org.jetbrains.kotlin.jvm")
 
     group = "com.bsingularity.kontrakt"
-    version = "0.0.1-SNAPSHOT"
 
     repositories {
         mavenCentral()
@@ -18,3 +17,4 @@ subprojects {
         jvmToolchain(21)
     }
 }
+
