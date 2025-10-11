@@ -15,6 +15,6 @@ interface TestDiscoverer {
      */
     suspend fun discover(
         rootPackage: String,
-        contractMarker: KClass<out Annotation>,
+        contractMarker: KClass<out Annotation>
     ): Result<List<TestSpecification>>
 }
