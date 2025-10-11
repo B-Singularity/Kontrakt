@@ -29,3 +29,11 @@ All public API methods that perform potentially long-running or I/O-bound operat
 ### Negative
 - **Increased Complexity for Consumers:** Callers of `Kontrakt`'s core API (including our own runner modules and future plugins) will be required to operate within a coroutine context (e.g., using `runBlocking` or another `suspend` function). This introduces a slight learning curve for contributors.
 - **Initial Development Overhead:** Requires more careful thought about concurrency, thread safety, and the correct use of `CoroutineContext` and `Dispatchers` during initial development.
+
+### Implementation Guidelines
+
+To ensure this architectural decision is implemented correctly and efficiently, contributors must follow these guidelines:
+
+- Internal CPU-bound operations (e.g., reflection, dependency graph building) should **not** be wrapped in `withContext(Dispatchers.IO)`. They should run on the default dispatcher of the coroutine's scope.
+- Only true blocking I/O operations (e.g., reading `.class` files from disk or JARs) should be explicitly dispatched to `Dispatchers.IO`.
+- When in doubt, prefer keeping code synchronous within a `suspend` function. Only switch context to a different dispatcher when there is a clear reason, such as a blocking I/O call.
