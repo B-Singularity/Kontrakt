@@ -1,4 +1,7 @@
 package discovery.domain.service
 
-class TestDiscovererImpl {
-}
+import discovery.spi.ClasspathScanner
+
+class TestDiscovererImpl(
+    private val scanner: ClasspathScanner,
+)

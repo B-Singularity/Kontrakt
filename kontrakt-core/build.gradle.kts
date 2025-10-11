@@ -14,8 +14,12 @@ repositories {
 }
 
 dependencies {
+    implementation(libs.classgraph)
+    implementation(libs.kotlinx.coroutines.core)
+
     testImplementation(kotlin("test"))
     testImplementation(libs.junit.jupiter.api)
+    testImplementation(libs.kotlinx.coroutines.test)
     testRuntimeOnly(libs.junit.jupiter.engine)
 }
 
