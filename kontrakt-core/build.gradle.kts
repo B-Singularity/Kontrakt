@@ -14,6 +14,9 @@ repositories {
 }
 
 dependencies {
+    compileOnly(libs.slf4j.api)
+    implementation(libs.kotlin.logging.jvm)
+
     implementation(libs.classgraph)
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlin.reflect)
