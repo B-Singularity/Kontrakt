@@ -21,6 +21,8 @@ class TestDiscovererImpl(
         contractMarker: KClass<out Annotation>,
     ): Result<List<TestSpecification>> =
         runCatching {
+            logger.info { "Starting test discovery for root package: $rootPackage"}
+
             val implementationClasses =
                 withContext(Dispatchers.IO) {
                     val contractInterfaces = scanner.findAnnotatedInterfaces(rootPackage, contractMarker)
@@ -29,10 +31,12 @@ class TestDiscovererImpl(
                     }
                 }.distinct()
 
+            logger.debug { "Found ${implementationClasses.size} potential test targets." }
+
             implementationClasses.mapNotNull { kClass ->
                 createSpecificationForClass(kClass)
                     .onFailure { error ->
-                        println("Warning: Skipping class '${kClass.simpleName}'. Reason: ${error.message}")
+                        logger.warn(error) { "Skipping class '${kClass.simpleName}'. Failed to create a TestSpecification." }
                     }.getOrNull()
             }
         }
