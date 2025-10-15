@@ -14,8 +14,17 @@ repositories {
 }
 
 dependencies {
+    compileOnly(libs.slf4j.api)
+    testImplementation(libs.slf4j.api)
+    implementation(libs.kotlin.logging.jvm)
+
+    implementation(libs.classgraph)
+    implementation(libs.kotlinx.coroutines.core)
+    implementation(libs.kotlin.reflect)
+
     testImplementation(kotlin("test"))
     testImplementation(libs.junit.jupiter.api)
+    testImplementation(libs.kotlinx.coroutines.test)
     testRuntimeOnly(libs.junit.jupiter.engine)
 }
 

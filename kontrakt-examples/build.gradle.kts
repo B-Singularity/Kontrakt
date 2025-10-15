@@ -16,6 +16,7 @@ dependencies {
     implementation(project(":kontrakt-core"))
 
     testImplementation(kotlin("test"))
+    testImplementation(libs.kotlinx.coroutines.test)
     testRuntimeOnly(libs.junit.jupiter.engine)
 }
 
