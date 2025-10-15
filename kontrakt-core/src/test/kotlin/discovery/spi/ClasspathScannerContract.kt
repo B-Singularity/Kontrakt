@@ -1,27 +1,22 @@
-package discovery.spi
+package com.bsingularity.kontrakt.discovery.spi
 
+import com.bsingularity.kontrakt.test_fixtures.ContractToFind
+import com.bsingularity.kontrakt.test_fixtures.ImplementationToFind
 import discovery.api.Contract
+import discovery.spi.ClasspathScanner
+import discovery.test_fixtures.NonContractInterface
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.TestFactory
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
-@Contract
-private interface DummyContract
-
-private class DummyContractImpl : DummyContract
-
-private interface NonContractInterface
-
-
-
 interface ClasspathScannerContract {
 
     fun createScanner(): ClasspathScanner
 
     private val testPackage: String
-        get() = this::class.java.`package`.name
+        get() = "com.bsingularity.kontrakt.test_fixtures"
 
     @TestFactory
     fun `ClasspathScanner contract tests`() = listOf(
@@ -35,7 +30,7 @@ interface ClasspathScannerContract {
                 )
 
                 assertEquals(1, interfaces.size, "Should find exactly one @Contract interface.")
-                assertEquals(DummyContract::class, interfaces.first())
+                assertEquals(ContractToFind::class, interfaces.first())
             }
         },
 
@@ -45,11 +40,11 @@ interface ClasspathScannerContract {
             runTest {
                 val implementations = scanner.findAllImplementations(
                     rootPackage = testPackage,
-                    targetInterface = Contract::class
+                    targetInterface = ContractToFind::class
                 )
 
                 assertEquals(1, implementations.size, "Should find exactly one implementation.")
-                assertEquals(DummyContractImpl::class, implementations.first())
+                assertEquals(ImplementationToFind::class, implementations.first())
             }
         },
 

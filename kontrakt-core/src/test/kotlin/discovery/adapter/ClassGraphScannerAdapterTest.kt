@@ -1,7 +1,8 @@
 package discovery.adapter
 
+import com.bsingularity.kontrakt.discovery.spi.ClasspathScannerContract
 import discovery.spi.ClasspathScanner
-import discovery.spi.ClasspathScannerContract
+
 
 class ClassGraphScannerAdapterTest : ClasspathScannerContract {
 
