@@ -21,7 +21,7 @@ class TestDiscovererImpl(
         contractMarker: KClass<out Annotation>,
     ): Result<List<TestSpecification>> =
         runCatching {
-            logger.info { "Starting test discovery for root package: $rootPackage"}
+            logger.info { "Starting test discovery for root package: $rootPackage" }
 
             val implementationClasses =
                 withContext(Dispatchers.IO) {
