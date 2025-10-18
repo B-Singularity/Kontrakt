@@ -21,6 +21,8 @@ dependencies {
     implementation(libs.classgraph)
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlin.reflect)
+    implementation(libs.mockito.core)
+    implementation(libs.mockito.kotlin)
 
     testImplementation(kotlin("test"))
     testImplementation(libs.junit.jupiter.api)
