@@ -32,7 +32,10 @@ class TestContext(
 
     fun getTestTarget(): Any = testTargetInstance
 
+    fun getSpecification() = specification
+
     fun cleanup() {
         mocks.clear()
     }
+
 }
