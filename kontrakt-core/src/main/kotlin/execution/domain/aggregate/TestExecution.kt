@@ -44,7 +44,7 @@ class TestExecution(
                 val firstFailure = failedRecords.first()
                 TestStatus.AssertionFailed(
                     message = firstFailure.message,
-                    expected = firstFailure.excepted,
+                    expected = firstFailure.expected,
                     actual = firstFailure.actual,
                 )
             } else {
