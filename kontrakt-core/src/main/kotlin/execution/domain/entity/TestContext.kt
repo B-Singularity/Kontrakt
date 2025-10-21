@@ -34,6 +34,8 @@ class TestContext(
 
     fun getSpecification() = specification
 
+    fun getMockingEngine() = mockingEngine
+
     fun cleanup() {
         mocks.clear()
     }
