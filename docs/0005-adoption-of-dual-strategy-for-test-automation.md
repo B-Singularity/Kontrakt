@@ -1,45 +1,77 @@
-# ADR-005: Adoption of a Three-Pillar Strategy for Test Automation
+# ADR-005: Adoption of a Unified Two-Pillar Strategy for Test Automation
 
 **Status:** Accepted
 
-**Date:** 2025-10-19
+**Date:** 2025-11-23
 
 ## Context
 
-The primary goal of the `Kontrakt` framework is to automate unit testing and reduce boilerplate. The "Test Oracle Problem" and the repetitive nature of writing tests are the main challenges to overcome. A single approach to automation is insufficient. We need a multi-faceted strategy that provides different levels of automation for different kinds of testing needs.
+The primary goal of the `Kontrakt` framework is to achieve "Zero Boilerplate" testing. Previously, we considered
+segregating testing strategies based on class types (e.g., VO specific annotations).
+
+However, contracts exist everywhere. A "Rich Interface" defines behavioral contracts through parameters. A "Value
+Object" or "Entity" defines data contracts through fields and constructors. Furthermore, all data-holding objects must
+adhere to structural rules like `equals`/`hashCode` consistency and constructor safety.
 
 ## Decision
 
-We will adopt a **three-pillar strategy** for test automation, combining fully automated contract/validation testing with developer-assisted behavior testing.
+We will adopt a **Unified Two-Pillar Strategy** driven by a **Single Annotation (`@Contract`)**.
 
-### 1. Fully Automated Boundary Testing (for Interface Preconditions)
+The framework applies a **"Constraint-First & Structure-Aware"** approach. It verifies explicit user-defined constraints
+everywhere and enforces implicit structural rules for data objects.
 
-- **Mechanism:** Users declare constraints on `Contract` interface methods using annotations (e.g., `@IntRange`, `@NotEmpty`).
-- **`Kontrakt`'s Role:** The framework reads these annotations and **automatically generates, executes, and asserts** test cases for boundary conditions.
-- **User Effort:** Zero test code required.
+### Pillar 1: Automated Integrity Verification (Implicit Mode)
 
-### 2. Assisted Behavior Testing (for Complex Business Logic)
+* **Target:** **ANY** class or interface marked with `@Contract` (Interfaces, VOs, Entities, DTOs).
+* **Mechanism:** The **Stateless Constraint Engine** performs two layers of verification:
 
-- **Mechanism:** For complex logic where the expected outcome is non-trivial, users write test methods in a separate `src/test` file, annotating the test class with `@KontraktFor` and the method with `@KontraktTest`.
-- **`Kontrakt`'s Role:** The framework handles the entire **Arrange** phase, automatically instantiating the Test Target and all its mock dependencies, then injecting them into the user's test method.
-- **User's Role:** The developer focuses only on the **Act** and **Assert** phases.
-- **User Effort:** Minimal; only the core verification logic is written.
+  #### Layer A: Explicit Constraint Fuzzing (The Business Contract)
+    * **Trigger:** Presence of constraint annotations (e.g., `@IntRange`, `@Pattern`, `@Length`) on any Parameter,
+      Field, or Constructor Argument.
+    * **Action:**
+        * **Validity Check:** Generates random valid inputs and asserts the method/constructor accepts them.
+        * **Boundary Check:** Injects edge cases (Min/Max values) to verify robustness.
+        * **Violation Check:** Injects invalid inputs (e.g., `age = -1`) and asserts that the code throws a domain
+          exception (e.g., `IllegalArgumentException`), not a system error (e.g., `NPE`).
 
-### 3. Fully Automated Value Object (VO) Contract Testing
+  #### Layer B: Structural Compliance (The Code Contract)
+    * **Trigger:** The target is identified as a Data Container (Data Class, Entity, Record).
+    * **Action:**
+        * **Equality Contract:** Verifies reflexive, symmetric, transitive, and consistent properties of `equals()` and
+          `hashCode()`.
+        * **Constructor Safety:** Fuzzes the constructor with `null`s (for non-null types) and default type values to
+          ensure the object cannot be instantiated in an invalid state.
+        * **Immutability Check:** (Optional) Verifies that fields in Value Objects are not modified unexpectedly.
 
-- **Mechanism:** Users annotate their Value Object classes (e.g., `data class`es) with a `@ValueObjectContract` annotation.
-- **`Kontrakt`'s Role:** The framework reads this annotation and **automatically generates and runs** a standard suite of contract tests for the VO. This includes:
-    - Verifying the `equals()` and `hashCode()` contract.
-    - Verifying constructor validation by calling factory methods with invalid inputs (e.g., blank strings, out-of-range numbers) and asserting that they fail correctly.
-- **User Effort:** A single annotation. Zero test code is required.
+* **User Effort:** Just adding `@Contract` and standard constraint annotations. No test code.
+
+### Pillar 2: Zero-Setup Logic Verification (Explicit Mode)
+
+* **Target:** Complex Business Logic (Services, Use Cases) requiring behavioral verification.
+* **Mechanism:** Users write a separate **Spec File** (e.g., `RecruitServiceSpec.kt`) containing only assertion logic.
+* **`Kontrakt`'s Role (The Assistant):**
+    * **Micro-DI:** Automatically analyzes constructors and wires dependencies.
+    * **Semantic Mocking:** Automatically injects **Stateful Fakes** (Maps) for Repositories and **Stateless Mocks** for
+      services.
+    * **Ephemeral Context:** Ensures perfect isolation by creating and discarding the environment per scenario.
+* **User Effort:** Users focus solely on the **Behavior Verification** (The "Why" and "How" of the logic) using simple
+  assertions.
 
 ## Consequences
 
 ### Positive
-- **Comprehensive Coverage:** This three-pillar strategy addresses the most common and tedious aspects of unit testing: boundary conditions, VO correctness, and complex logic setup.
-- **Exceptional Developer Experience (DX):** Developers are freed from writing repetitive, boilerplate tests, allowing them to focus on the truly unique and valuable aspects of their business logic.
-- **Strong Value Proposition:** The combination of these three automation strategies gives `Kontrakt` a unique and highly competitive position among testing frameworks.
+
+* **Rich Interfaces & Domains:** Encourages developers to make their interfaces and entities "Rich" by adding
+  constraints directly to them. The test coverage comes for free.
+* **Universal Protection:** Whether it's a controller input (DTO), a database entity, or a service interface, `Kontrakt`
+  guards the boundaries automatically.
+* **Standard Compliance:** Eliminates the common bugs where `equals()` is implemented incorrectly or constructors allow
+  invalid nulls.
 
 ### Negative
-- **Increased Framework Complexity:** The framework's internal engine must now support three distinct modes of test discovery, generation, and execution.
-- **Documentation Challenge:** We must clearly document the three pillars and provide clear guidance to users on when and how to use each approach effectively.
+
+* **Execution Time:** Validating `equals` contracts and fuzzing constructors for every entity can be CPU-intensive. We
+  need to implement a "Smart Sampling" strategy to maintain speed during local development.
+* **False Positives:** Some legacy entities might rely on "invalid state" temporarily (e.g., setters called after
+  construction). The framework might break these patterns, forcing a refactor to safer designs (which is ultimately
+  good, but painful).

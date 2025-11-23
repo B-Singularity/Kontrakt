@@ -3,7 +3,7 @@ package execution.domain.aggregate
 import discovery.domain.aggregate.TestSpecification
 import execution.domain.AssertionStatus
 import execution.domain.TestStatus
-import execution.domain.entity.TestContext
+import execution.domain.entity.EphemeralTestContext
 import execution.domain.vo.AssertionRecord
 import execution.domain.vo.TestResult
 import execution.spi.MockingEngine
@@ -20,6 +20,7 @@ class TestExecution(
     private val logger = KotlinLogging.logger {}
 
     private enum class Lifecycle { PENDING, EXECUTED }
+
     private var lifecycle: Lifecycle = Lifecycle.PENDING
 
     fun execute(): TestResult {
@@ -32,14 +33,14 @@ class TestExecution(
 
         try {
             val kotlinDuration = measureTime {
-                val context = TestContext(specification, mockingEngine)
+                val context = EphemeralTestContext(specification, mockingEngine)
                 context.prepare()
 
                 records = scenarioExecutor.executeScenarios(context)
             }
             duration = kotlinDuration.toJavaDuration()
 
-            val failedRecords = records.filter( it.status == AssertionStatus.FAILED)
+            val failedRecords = records.filter(it.status == AssertionStatus.FAILED)
             finalStatus = if (failedRecords.isNotEmpty()) {
                 val firstFailure = failedRecords.first()
                 TestStatus.AssertionFailed(

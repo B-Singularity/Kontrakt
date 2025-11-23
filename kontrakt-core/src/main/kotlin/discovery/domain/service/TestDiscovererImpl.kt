@@ -1,14 +1,17 @@
 package discovery.domain.service
 
+import discovery.api.Stateful
 import discovery.api.TestDiscoverer
 import discovery.domain.aggregate.TestSpecification
 import discovery.domain.vo.DependencyMetadata
+import discovery.domain.vo.DependencyMetadata.MockingStrategy
 import discovery.domain.vo.DiscoveredTestTarget
 import discovery.spi.ClasspathScanner
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlin.reflect.KClass
+import kotlin.reflect.full.findAnnotation
 import kotlin.reflect.full.primaryConstructor
 
 class TestDiscovererImpl(
@@ -46,7 +49,8 @@ class TestDiscovererImpl(
             DiscoveredTestTarget.create(
                 kClass = kClass,
                 displayName = kClass.simpleName ?: "UnnamedClass",
-                fullyQualifiedName = kClass.qualifiedName ?: return Result.failure(Exception("Class must have a qualified name.")),
+                fullyQualifiedName = kClass.qualifiedName
+                    ?: return Result.failure(Exception("Class must have a qualified name.")),
             )
         val target = targetResult.getOrElse { return Result.failure(it) }
 
@@ -54,18 +58,35 @@ class TestDiscovererImpl(
             kClass.primaryConstructor
                 ?: return Result.failure(Exception("'${target.displayName}' must have a primary constructor."))
 
-        val dependencies =
-            constructor.parameters.map { param ->
-                val dependencyResult =
-                    DependencyMetadata.create(
-                        name = param.name ?: return Result.failure(Exception("Parameter in '${target.displayName}' must have a name.")),
-                        type =
-                            param.type.classifier as? KClass<*>
-                                ?: return Result.failure(Exception("Cannot determine type for parameter '${param.name}'.")),
-                    )
-                dependencyResult.getOrElse { return Result.failure(it) }
-            }
+        val dependencies = constructor.parameters.map { param ->
+            val paramType = param.type.classifier as? KClass<*>
+                ?: return Result.failure(Exception("Cannot determine type for parameter '${param.name}'."))
+
+            val strategy = determineMockingStrategy(paramType)
+
+            val dependencyResult = DependencyMetadata.create(
+                name = param.name ?: "unknown",
+                type = paramType,
+                strategy = strategy,
+            )
+            dependencyResult.getOrElse { return Result.failure(it) }
+        }
 
         return TestSpecification.create(target, dependencies)
+    }
+
+    private fun determineMockingStrategy(type: KClass<*>): MockingStrategy {
+
+        if (type.qualifiedName == "java.time.Clock") {
+            return MockingStrategy.Environment(DependencyMetadata.EnvType.TIME)
+        }
+
+        val isStateful = type.findAnnotation<Stateful>() != null
+
+        if (isStateful) {
+            return MockingStrategy.StatefulFake
+        }
+
+        return MockingStrategy.StatelessMock
     }
 }

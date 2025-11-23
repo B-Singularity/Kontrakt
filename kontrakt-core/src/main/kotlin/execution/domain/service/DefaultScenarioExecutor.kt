@@ -3,35 +3,39 @@ package execution.domain.service
 import discovery.api.LongRange
 import execution.api.TestScenarioExecutor
 import execution.domain.AssertionStatus
-import execution.domain.entity.TestContext
+import execution.domain.entity.EphemeralTestContext
 import execution.domain.vo.AssertionRecord
 import io.github.oshai.kotlinlogging.KotlinLogging
+import java.lang.reflect.Method
 import kotlin.reflect.KClass
 import kotlin.reflect.KFunction
 import kotlin.reflect.KParameter
 import kotlin.reflect.full.functions
-import kotlin.reflect.jvm.kotlinFunction
 
 class DefaultScenarioExecutor : TestScenarioExecutor {
 
     private val logger = KotlinLogging.logger {}
 
-    override fun executeScenarios(context: TestContext): List<AssertionRecord> {
+    override fun executeScenarios(context: EphemeralTestContext): List<AssertionRecord> {
         val testTargetInstance = context.getTestTarget()
-        val specification = context.getSpecification()
 
-        val contractInterface = specification.target.kClass.java.interfaces.firstOrNull()
+        val specification = context.specification
+
+        val targetClass = specification.target.kClass.java
+
+        val contractInterface = targetClass.interfaces.firstOrNull()
             ?: return emptyList()
 
         val implementationKClass = testTargetInstance::class
 
-        return contractInterface.methods.map { contractMethod ->
-            val implementationFunction = implementationKClass.java.methods.first {
-                it.name == contractMethod.name && it.parameterCount == contractMethod.parameterCount
-            }.kotlinFunction
+        return contractInterface.methods.map { contractMethod: Method ->
+            val implementationFunction = implementationKClass.functions.find { kFunc ->
+                kFunc.name == contractMethod.name &&
+                        kFunc.parameters.size == contractMethod.parameterCount + 1
+            } ?: throw IllegalStateException("Method '${contractMethod.name}' not found in implementation.")
 
             try {
-                val arguments = createArgumentsFor(implementationFunction!!, context)
+                val arguments = createArgumentsFor(implementationFunction, context)
                 implementationFunction.callBy(arguments)
 
                 AssertionRecord(
@@ -41,12 +45,14 @@ class DefaultScenarioExecutor : TestScenarioExecutor {
                     actual = "No Exception"
                 )
             } catch (e: Throwable) {
-                logger.error(e) { "Exception thrown during scenario execution for method '${contractMethod.name}'" }
+                val actualException = e.cause ?: e
+                logger.error(actualException) { "Exception thrown during scenario execution." }
+
                 AssertionRecord(
                     status = AssertionStatus.FAILED,
                     message = "Method '${contractMethod.name}' threw an exception.",
                     expected = "No Exception",
-                    actual = e.cause ?: e
+                    actual = actualException.message ?: actualException.toString()
                 )
             }
         }
@@ -54,35 +60,37 @@ class DefaultScenarioExecutor : TestScenarioExecutor {
 
     private fun createArgumentsFor(
         function: KFunction<*>,
-        context: TestContext
+        context: EphemeralTestContext
     ): Map<KParameter, Any?> {
         val arguments = mutableMapOf<KParameter, Any?>()
-        arguments[function.parameters.first()] = context.getTestTarget()
 
-        function.parameters.drop(1).forEach { param ->
-            val argumentValue = if (param.isOptional) {
-                UseDefaultArgument
-            } else {
-                val intRange = param.annotations.filterIsInstance<LongRange>().firstOrNull()
-                if (intRange != null) {
-                    intRange.min.toInt()
-                }
-                else {
-                    when (val type = param.type.classifier as? KClass<*>) {
-                        Int::class -> 0
-                        String::class -> ""
-                        Boolean::class -> false
-                        else -> if (type != null) context.getMockingEngine().createMock(type) else null
-                    }
-                }
+        function.parameters.forEach { param ->
+            if (param.kind == KParameter.Kind.INSTANCE) {
+                arguments[param] = context.getTestTarget()
+                return@forEach
             }
 
-            if (argumentValue != UseDefaultArgument) {
+            if (param.isOptional) return@forEach
+
+            val longRange = param.annotations.filterIsInstance<LongRange>().firstOrNull()
+            if (longRange != null) {
+                val value = if (param.type.classifier == Int::class) longRange.min.toInt() else longRange.min
+                arguments[param] = value
+            } else {
+                val argumentValue = when (val type = param.type.classifier as? KClass<*>) {
+                    Int::class -> 0
+                    Long::class -> 0L
+                    String::class -> "test"
+                    Boolean::class -> false
+                    else -> if (type != null) {
+                        context.mockingEngine.createMock(type)
+                    } else {
+                        null
+                    }
+                }
                 arguments[param] = argumentValue
             }
         }
         return arguments
     }
-
-    private object UseDefaultArgument
 }
