@@ -1,5 +1,6 @@
 package execution.domain.service
 
+import discovery.api.LongRange
 import execution.api.TestScenarioExecutor
 import execution.domain.AssertionStatus
 import execution.domain.entity.TestContext
@@ -62,7 +63,7 @@ class DefaultScenarioExecutor : TestScenarioExecutor {
             val argumentValue = if (param.isOptional) {
                 UseDefaultArgument
             } else {
-                val intRange = param.annotations.filterIsInstance<IntRange>().firstOrNull()
+                val intRange = param.annotations.filterIsInstance<LongRange>().firstOrNull()
                 if (intRange != null) {
                     intRange.min.toInt()
                 }
