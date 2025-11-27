@@ -1,26 +1,29 @@
 package execution.domain.service
 
-import discovery.api.LongRange
 import execution.api.TestScenarioExecutor
 import execution.domain.AssertionStatus
 import execution.domain.entity.EphemeralTestContext
+import execution.domain.util.ExceptionHelper
 import execution.domain.vo.AssertionRecord
 import io.github.oshai.kotlinlogging.KotlinLogging
 import java.lang.reflect.Method
-import kotlin.reflect.KClass
 import kotlin.reflect.KFunction
 import kotlin.reflect.KParameter
 import kotlin.reflect.full.functions
+import kotlin.reflect.jvm.javaMethod
+import kotlin.reflect.jvm.kotlinFunction
 
 class DefaultScenarioExecutor : TestScenarioExecutor {
 
     private val logger = KotlinLogging.logger {}
+    private lateinit var fixtureGenerator: FixtureGenerator
+    private val contractValidator = ContractValidator()
 
     override fun executeScenarios(context: EphemeralTestContext): List<AssertionRecord> {
+        this.fixtureGenerator = FixtureGenerator(context.mockingEngine)
+
         val testTargetInstance = context.getTestTarget()
-
         val specification = context.specification
-
         val targetClass = specification.target.kClass.java
 
         val contractInterface = targetClass.interfaces.firstOrNull()
@@ -28,37 +31,78 @@ class DefaultScenarioExecutor : TestScenarioExecutor {
 
         val implementationKClass = testTargetInstance::class
 
-        return contractInterface.methods.map { contractMethod: Method ->
-            val implementationFunction = implementationKClass.functions.find { kFunc ->
-                kFunc.name == contractMethod.name &&
-                        kFunc.parameters.size == contractMethod.parameterCount + 1
-            } ?: throw IllegalStateException("Method '${contractMethod.name}' not found in implementation.")
+        return contractInterface.methods
+            .filter { !it.isBridge && !it.isSynthetic }
+            .map { contractMethod ->
+                val implementationFunction = implementationKClass.functions.find { kFunc ->
+                    if (kFunc.name != contractMethod.name) return@find false
 
-            try {
-                val arguments = createArgumentsFor(implementationFunction, context)
-                implementationFunction.callBy(arguments)
+                    val kFuncAsJava = kFunc.javaMethod ?: return@find false
 
-                AssertionRecord(
-                    status = AssertionStatus.PASSED,
-                    message = "Method '${implementationFunction.name}' executed successfully.",
-                    expected = "No Exception",
-                    actual = "No Exception"
+                    kFuncAsJava.name == contractMethod.name &&
+                            kFuncAsJava.parameterTypes.contentEquals(contractMethod.parameterTypes)
+                } ?: return@map AssertionRecord(
+                    AssertionStatus.FAILED,
+                    "Method '${contractMethod.name}' not found",
+                    null,
+                    null
                 )
-            } catch (e: Throwable) {
-                val actualException = e.cause ?: e
-                logger.error(actualException) { "Exception thrown during scenario execution." }
 
+                val contractKFunc = contractMethod.kotlinFunction
+                    ?: return@map AssertionRecord(
+                        AssertionStatus.FAILED,
+                        "Reflection failed: Could not resolve Kotlin function for '${contractMethod.name}'",
+                        "KFunction",
+                        "null"
+                    )
+
+                executeMethod(contractMethod, implementationFunction, contractKFunc, context)
+            }
+    }
+
+    private fun executeMethod(
+        contractMethod: Method,
+        implFunc: KFunction<*>,
+        contractKFunc: KFunction<*>,
+        context: EphemeralTestContext
+    ): AssertionRecord {
+        return try {
+            val args = createArguments(implFunc, context)
+
+            val result = implFunc.callBy(args)
+
+            contractValidator.validate(contractKFunc, result)
+
+            AssertionRecord(
+                status = AssertionStatus.PASSED,
+                message = "Method '${contractMethod.name}' executed successfully and satisfied contract.",
+                expected = "No Exception & Valid Return",
+                actual = "Success"
+            )
+        } catch (e: Throwable) {
+            val rootCause = ExceptionHelper.unwrap(e)
+
+            if (rootCause is ContractValidator.ContractViolationException) {
+                logger.error { "Contract Violation in ${contractMethod.name}: ${rootCause.message}" }
                 AssertionRecord(
                     status = AssertionStatus.FAILED,
-                    message = "Method '${contractMethod.name}' threw an exception.",
+                    message = "Contract Violation: ${rootCause.message}",
+                    expected = "Constraint Compliance",
+                    actual = "Violation"
+                )
+            } else {
+                logger.error(rootCause) { "Unexpected Exception in ${contractMethod.name}" }
+                AssertionRecord(
+                    status = AssertionStatus.FAILED,
+                    message = "Method '${contractMethod.name}' threw an exception: ${rootCause.message}",
                     expected = "No Exception",
-                    actual = actualException.message ?: actualException.toString()
+                    actual = rootCause.javaClass.simpleName
                 )
             }
         }
     }
 
-    private fun createArgumentsFor(
+    private fun createArguments(
         function: KFunction<*>,
         context: EphemeralTestContext
     ): Map<KParameter, Any?> {
@@ -71,25 +115,7 @@ class DefaultScenarioExecutor : TestScenarioExecutor {
             }
 
             if (param.isOptional) return@forEach
-
-            val longRange = param.annotations.filterIsInstance<LongRange>().firstOrNull()
-            if (longRange != null) {
-                val value = if (param.type.classifier == Int::class) longRange.min.toInt() else longRange.min
-                arguments[param] = value
-            } else {
-                val argumentValue = when (val type = param.type.classifier as? KClass<*>) {
-                    Int::class -> 0
-                    Long::class -> 0L
-                    String::class -> "test"
-                    Boolean::class -> false
-                    else -> if (type != null) {
-                        context.mockingEngine.createMock(type)
-                    } else {
-                        null
-                    }
-                }
-                arguments[param] = argumentValue
-            }
+            arguments[param] = fixtureGenerator.generate(param)
         }
         return arguments
     }
