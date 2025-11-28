@@ -1,7 +1,7 @@
-package discovery.domain.service
+package execution.domain.service
 
 import discovery.domain.aggregate.TestSpecification
-import discovery.domain.vo.DependencyMetadata.MockingStrategy
+import discovery.domain.vo.DependencyMetadata
 import execution.domain.entity.EphemeralTestContext
 import execution.domain.util.ExceptionHelper
 import execution.spi.MockingEngine
@@ -41,9 +41,9 @@ class TestInstanceFactory(
 
             val instance = if (strategy != null) {
                 when (strategy) {
-                    is MockingStrategy.StatefulFake -> mockingEngine.createFake(type)
-                    is MockingStrategy.StatelessMock -> mockingEngine.createMock(type)
-                    is MockingStrategy.Environment -> mockingEngine.createMock(type)
+                    is DependencyMetadata.MockingStrategy.StatefulFake -> mockingEngine.createFake(type)
+                    is DependencyMetadata.MockingStrategy.StatelessMock -> mockingEngine.createMock(type)
+                    is DependencyMetadata.MockingStrategy.Environment -> mockingEngine.createMock(type)
                 }
             } else {
                 createByConstructor(type, context, dependencyPath)
@@ -88,5 +88,3 @@ class TestInstanceFactory(
         }
     }
 }
-
-

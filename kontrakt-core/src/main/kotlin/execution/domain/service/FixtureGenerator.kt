@@ -42,7 +42,6 @@ class FixtureGenerator(
     private val mockingEngine: MockingEngine
 ) {
     companion object {
-        private const val SAFE_STRING_LIMIT = 1000
         private const val DEFAULT_STRING_MIN_LENGTH = 5
         private const val DEFAULT_STRING_MAX_LENGTH = 15
         private const val NOT_BLANK_MAX_LENGTH = 20
@@ -205,31 +204,33 @@ class FixtureGenerator(
         return null
     }
 
-    private fun IntRange.smartFuzz(): Int = listOf(
-        min, max,
-        if (min < Int.MAX_VALUE) min + 1 else min,
-        if (max > Int.MIN_VALUE) max - 1 else max,
-        Random.Default.nextInt(min, max)
-    ).random()
+    private fun IntRange.smartFuzz(): Int {
+        val base = listOf(
+            min, max,
+            if (min < Int.MAX_VALUE) min + 1 else min,
+            if (max > Int.MIN_VALUE) max - 1 else max,
+            Random.Default.nextInt(min, max)
+        )
+        return if (0 in min..max) (base + 0).random() else base.random()
+    }
 
-    private fun LongRange.smartFuzz(): Long = listOf(
-        min, max,
-        if (min < Long.MAX_VALUE) min + 1 else min,
-        if (max > Long.MIN_VALUE) max - 1 else max,
-        Random.Default.nextLong(min, max)
-    ).random()
+    private fun LongRange.smartFuzz(): Long {
+        val base = listOf(
+            min, max,
+            if (min < Long.MAX_VALUE) min + 1 else min,
+            if (max > Long.MIN_VALUE) max - 1 else max,
+            Random.Default.nextLong(min, max)
+        )
+        return if (0L in min..max) (base + 0L).random() else base.random()
+    }
 
-    private fun DoubleRange.smartFuzz(): Double = when(Random.Default.nextInt(5)) {
+    private fun DoubleRange.smartFuzz(): Double = when(Random.Default.nextInt(3)) {
         0 -> min
         1 -> max
         else -> Random.Default.nextDouble(min, max)
     }
 
-    private fun Digits.generate(): BigDecimal {
-        val maxInteger = 10.0.pow(integer.toDouble())
-        val randomVal = Random.Default.nextDouble(0.0, maxInteger)
-        return BigDecimal.valueOf(randomVal).setScale(fraction, RoundingMode.HALF_UP)
-    }
+    private fun Digits.generate(): BigDecimal = BigDecimal.valueOf(Random.Default.nextDouble(0.0, 10.0.pow(integer))).setScale(fraction, RoundingMode.HALF_UP)
 
     private fun generatePositive(type: KClass<*>, includeZero: Boolean = false): Any = when (type) {
         Int::class -> if (includeZero) Random.Default.nextInt(0, Int.MAX_VALUE) else Random.Default.nextInt(1, Int.MAX_VALUE)
@@ -248,25 +249,26 @@ class FixtureGenerator(
     }
 
     private fun generateStringConstraint(param: KParameter): String? {
-        val length = param.find<StringLength>()
+        val length = param.findAnnotation<StringLength>()
         if (length != null) {
-            return generateRandomString(length.min, length.max)
+            val effectiveMax = if (length.max == Int.MAX_VALUE) length.min + 20 else length.max
+            return generateRandomString(length.min, effectiveMax)
         }
 
         if (param.has<NotBlank>()) {
             return generateRandomString(1, NOT_BLANK_MAX_LENGTH)
         }
-
         return null
     }
 
     private fun generateRandomString(min: Int, max: Int = min + 10): String {
-        val safeMin = min.coerceAtLeast(0)
-        val safeMax = max.coerceAtMost(SAFE_STRING_LIMIT).coerceAtLeast(safeMin)
-        val length = if (safeMin == safeMax) safeMin else Random.Default.nextInt(safeMin, safeMax + 1)
+        val targetMin = min.coerceAtLeast(0)
+        val targetMax = max.coerceAtLeast(targetMin)
+
+        val length = if (targetMin == targetMax) targetMin else Random.Default.nextInt(targetMin, targetMax + 1)
 
         return (1..length)
-            .map{ ALPHANUMERIC_POOL.random() }
+            .map { ALPHANUMERIC_POOL.random() }
             .joinToString("")
     }
 
