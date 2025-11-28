@@ -3,6 +3,7 @@ package discovery.domain.service
 import discovery.domain.aggregate.TestSpecification
 import discovery.domain.vo.DependencyMetadata.MockingStrategy
 import execution.domain.entity.EphemeralTestContext
+import execution.domain.util.ExceptionHelper
 import execution.spi.MockingEngine
 import kotlin.reflect.KClass
 
@@ -11,8 +12,13 @@ class TestInstanceFactory(
 ) {
     fun create(spec: TestSpecification): EphemeralTestContext {
         val context = EphemeralTestContext(spec, mockingEngine)
-        val targetInstance = resolve(spec.target.kClass, context, mutableSetOf())
-        context.registerTarget(targetInstance)
+        try {
+            val targetInstance = resolve(spec.target.kClass, context, mutableSetOf())
+            context.registerTarget(targetInstance)
+        } catch (e: Throwable) {
+            val cause = ExceptionHelper.unwrap(e)
+            throw IllegalStateException("Failed to create test target '${spec.target.displayName}': ${cause.message}", cause)
+        }
         return context
     }
 
@@ -24,32 +30,51 @@ class TestInstanceFactory(
         context.getDependency(type)?.let { return it }
 
         if (type in dependencyPath) {
-            throw IllegalStateException("Circular dependency detected: ${type.simpleName}")
+            throw IllegalStateException("Circular dependency detected: ${dependencyPath.joinToString(" -> ")} -> ${type.simpleName}")
         }
 
         dependencyPath.add(type)
         try {
             if (isValueType(type)) return createDefaultValue(type)
 
-            val definedDependency = context.specification.requiredDependencies.find { it.type == type }
-            val strategy = definedDependency?.strategy ?: MockingStrategy.StatelessMock
+            val strategy = context.specification.requiredDependencies.find { it.type == type }?.strategy
 
-            val instance = when (strategy) {
-                is MockingStrategy.StatefulFake -> mockingEngine.createFake(type)
-                is MockingStrategy.StatelessMock -> mockingEngine.createMock(type)
-
-                else -> mockingEngine.createMock(type)
+            val instance = if (strategy != null) {
+                when (strategy) {
+                    is MockingStrategy.StatefulFake -> mockingEngine.createFake(type)
+                    is MockingStrategy.StatelessMock -> mockingEngine.createMock(type)
+                    is MockingStrategy.Environment -> mockingEngine.createMock(type)
+                }
+            } else {
+                createByConstructor(type, context, dependencyPath)
             }
 
             context.registerDependency(type, instance)
             return instance
+
         } finally {
             dependencyPath.remove(type)
         }
     }
 
+    private fun createByConstructor(
+        type: KClass<*>,
+        context: EphemeralTestContext,
+        path: MutableSet<KClass<*>>
+    ): Any {
+        val constructor = type.constructors.firstOrNull()
+            ?: return mockingEngine.createMock(type)
+
+        val args = constructor.parameters.map {
+            param -> val paramType = param.type.classifier as KClass<*>
+            resolve(paramType, context, path)
+        }.toTypedArray()
+
+        return constructor.call(*args)
+    }
+
     private fun isValueType(type: KClass<*>): Boolean {
-        return type == String::class || type == Int::class || type == Boolean::class || type == Long::class
+        return type == String::class || type == Int::class || type == Boolean::class || type == Long::class || type == Double::class
     }
 
     private fun createDefaultValue(type: KClass<*>): Any {
@@ -58,6 +83,7 @@ class TestInstanceFactory(
             Int::class -> 0
             Long::class -> 0L
             Boolean::class -> false
+            Double::class -> 0.0
             else -> 0
         }
     }
