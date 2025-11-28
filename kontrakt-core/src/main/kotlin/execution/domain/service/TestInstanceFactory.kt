@@ -17,7 +17,10 @@ class TestInstanceFactory(
             context.registerTarget(targetInstance)
         } catch (e: Throwable) {
             val cause = ExceptionHelper.unwrap(e)
-            throw IllegalStateException("Failed to create test target '${spec.target.displayName}': ${cause.message}", cause)
+            throw IllegalStateException(
+                "Failed to create test target '${spec.target.displayName}': ${cause.message}",
+                cause
+            )
         }
         return context
     }
@@ -30,7 +33,9 @@ class TestInstanceFactory(
         context.getDependency(type)?.let { return it }
 
         if (type in dependencyPath) {
-            throw IllegalStateException("Circular dependency detected: ${dependencyPath.joinToString(" -> ")} -> ${type.simpleName}")
+            throw IllegalStateException(
+                "Circular dependency detected: ${dependencyPath.joinToString(" -> ") { it.simpleName.toString() }} -> ${type.simpleName}"
+            )
         }
 
         dependencyPath.add(type)
@@ -65,12 +70,21 @@ class TestInstanceFactory(
         val constructor = type.constructors.firstOrNull()
             ?: return mockingEngine.createMock(type)
 
-        val args = constructor.parameters.map {
-            param -> val paramType = param.type.classifier as KClass<*>
-            resolve(paramType, context, path)
-        }.toTypedArray()
+        try {
+            val args = constructor.parameters.map { param ->
+                val paramType = param.type.classifier as KClass<*>
+                resolve(paramType, context, path)
+            }.toTypedArray()
 
-        return constructor.call(*args)
+            return constructor.call(*args)
+
+        } catch (e: Throwable) {
+            val cause = ExceptionHelper.unwrap(e)
+            throw IllegalStateException(
+                "Failed to instantiate class [${type.qualifiedName}]: ${cause.message}",
+                cause
+            )
+        }
     }
 
     private fun isValueType(type: KClass<*>): Boolean {
