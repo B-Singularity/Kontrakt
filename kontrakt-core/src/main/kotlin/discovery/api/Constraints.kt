@@ -177,7 +177,11 @@ annotation class Email(
     AnnotationTarget.PROPERTY_GETTER
 )
 @Retention(AnnotationRetention.RUNTIME)
-annotation class Url
+annotation class Url(
+    val protocol: Array<String> = ["http", "https"],
+    val hostAllow: Array<String> = [],
+    val hostBlock: Array<String> = []
+)
 
 @Target(
     AnnotationTarget.VALUE_PARAMETER,

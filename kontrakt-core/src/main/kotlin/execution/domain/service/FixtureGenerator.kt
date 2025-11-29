@@ -30,8 +30,10 @@ class FixtureGenerator(
         private const val NOT_BLANK_MAX_LENGTH = 20
         private const val DEFAULT_DECIMAL_LIMIT = "10000"
         private const val DEFAULT_DECIMAL_BUFFER = "100"
+        private const val EFFECTIVEACCOUNTMAX = 20
 
-        private const val DEFAULT_DATE_RANGE_DAYS = 3650L
+        private const
+        val DEFAULT_DATE_RANGE_DAYS = 3650L
         private const val ALPHANUMERIC_POOL = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
     }
 
@@ -126,12 +128,19 @@ class FixtureGenerator(
         else -> null
     }
 
-    private fun generateSpecialFormat(param: KParameter): Any? = when {
-        param.has<Email>() -> generateComplexEmail()
-        param.has<Uuid>() -> UUID.randomUUID().toString()
-        param.has<Url>() -> generateComplexUrl()
-        param.has<Pattern>() -> generateFromRegex(param.find<Pattern>()!!.regexp)
-        else -> null
+    private fun generateSpecialFormat(param: KParameter): Any? {
+        val length = param.find<StringLength>()
+        val maxLen = length?.max ?: Int.MAX_VALUE
+
+        val urlAnno = param.find<Url>()
+
+        return when {
+            param.has<Email>() -> generateComplexEmail(maxLen, param.find<Email>()!!)
+            param.has<Uuid>() -> UUID.randomUUID().toString()
+            urlAnno != null -> generateComplexUrl(maxLen, urlAnno)
+            param.has<Pattern>() -> generateFromRegex(param.find<Pattern>()!!.regexp)
+            else -> null
+        }
     }
 
     private fun generateFromRegex(regex: String): String = when {
@@ -142,32 +151,51 @@ class FixtureGenerator(
         else -> "Pattern_Placeholder_for_$regex"
     }
 
-    private fun generateComplexEmail(): String {
-        val domainSuffixes = listOf("com", "net", "org", "io", "co.kr", "gov")
-        val separators = listOf(".", "_", "-", "")
-
-        val account = buildString {
-            append(generateRandomString(3, 6))
-            append(separators.random())
-            append(generateRandomString(3, 6))
-        }
-
-        val domain = if (Random.Default.nextBoolean()) {
-            "${generateRandomString(3, 5)}.${generateRandomString(3, 5)}"
+    private fun generateComplexEmail(limit: Int, rule: Email): String {
+        val availableDomains = if (rule.allow.isNotEmpty()) {
+            rule.allow.toList()
         } else {
-            generateRandomString(4, 8)
+            val defaults = listOf("com", "net", "org", "io", "co.kr", "gov")
+            defaults.filter { it !in rule.block }
         }
 
-        return "$account@$domain.${domainSuffixes.random()}"
+        val targetDomains = if (availableDomains.isEmpty()) listOf("com") else availableDomains
+        val suffix = targetDomains.random()
+
+        val domainPart = if (suffix.contains(".")) suffix else "${generateRandomString(3, 5)}.$suffix"
+
+        val overhead = 1 + domainPart.length // '@' + domainPart
+        val maxAccountLen = limit - overhead
+
+        if (maxAccountLen < 1) return "a@$domainPart"
+
+        val effectiveMax = maxAccountLen.coerceAtMost(20)
+        val accountLen = if (effectiveMax <= 1) 1 else Random.Default.nextInt(1, effectiveMax + 1)
+
+        val account = generateRandomString(accountLen, accountLen)
+
+        return "$account@$domainPart"
     }
 
-    private fun generateComplexUrl(): String {
-        val scheme = listOf("http", "https").random()
-        val host = generateHost()
-        val path = generatePath()
-        val query = generateQueryParam()
+    private fun generateComplexUrl(limit: Int, rule: Url): String {
+        val scheme = rule.protocol.random() + "://"
 
-        return "$scheme://$host$path$query"
+        val host = if (rule.hostAllow.isNotEmpty()) {
+            rule.hostAllow.random()
+        } else {
+            val generated = generateHost()
+            if (rule.hostBlock.any { generated.contains(it) }) "example.com" else generated
+        }
+
+        val overhead = scheme.length + host.length
+        val remaining = limit - overhead
+
+        if (remaining < 1) return "$scheme$host"
+
+        val pathLen = (remaining / 2).coerceAtLeast(1)
+        val path = "/" + generateRandomString(pathLen.coerceAtMost(10), pathLen.coerceAtMost(10))
+
+        return "$scheme$host$path"
     }
 
     private fun generateHost(): String {
