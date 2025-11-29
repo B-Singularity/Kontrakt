@@ -1,36 +1,16 @@
 package execution.domain.service
 
-import discovery.api.AssertFalse
-import discovery.api.AssertTrue
+import discovery.api.*
 import discovery.api.Digits
-import discovery.api.DoubleRange
-import discovery.api.Email
-import discovery.api.Future
-import discovery.api.FutureOrPresent
 import discovery.api.IntRange
 import discovery.api.LongRange
-import discovery.api.Negative
-import discovery.api.NegativeOrZero
-import discovery.api.NotBlank
-import discovery.api.Past
-import discovery.api.PastOrPresent
-import discovery.api.Pattern
-import discovery.api.Positive
-import discovery.api.PositiveOrZero
-import discovery.api.StringLength
-import discovery.api.Url
-import discovery.api.Uuid
 import execution.spi.MockingEngine
+import io.github.oshai.kotlinlogging.KotlinLogging
 import java.math.BigDecimal
 import java.math.RoundingMode
-import java.time.Instant
-import java.time.LocalDate
-import java.time.LocalDateTime
-import java.time.ZoneId
-import java.time.ZonedDateTime
+import java.time.*
 import java.time.temporal.ChronoUnit
-import java.util.Date
-import java.util.UUID
+import java.util.*
 import kotlin.math.pow
 import kotlin.random.Random
 import kotlin.reflect.KClass
@@ -41,18 +21,22 @@ import kotlin.reflect.full.primaryConstructor
 class FixtureGenerator(
     private val mockingEngine: MockingEngine
 ) {
+    private val logger = KotlinLogging.logger {}
+
     companion object {
         private const val DEFAULT_STRING_MIN_LENGTH = 5
         private const val DEFAULT_STRING_MAX_LENGTH = 15
+        private const val DEFAULT_STRING_BUFFER = 20
         private const val NOT_BLANK_MAX_LENGTH = 20
+        private const val DEFAULT_DECIMAL_LIMIT = "10000"
+        private const val DEFAULT_DECIMAL_BUFFER = "100"
 
         private const val DEFAULT_DATE_RANGE_DAYS = 3650L
-
         private const val ALPHANUMERIC_POOL = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
     }
 
     fun generate(param: KParameter): Any? {
-        val type = param.type.classifier as KClass<*> ?: return null
+        val type = param.type.classifier as? KClass<*> ?: return null
 
         return generateBooleanConstraint(param)
             ?: generateSpecialFormat(param)
@@ -76,13 +60,63 @@ class FixtureGenerator(
                     generate(param)
                 }.toTypedArray()
                 return constructor.call(*args)
-            } catch (e: Exception) {}
+            } catch (e: Exception) {
+                logger.debug(e) { "Failed to generate instance via constructor for '${type.simpleName}'. Falling back to Mock." }
+            }
         }
 
         return try {
             mockingEngine.createMock(type)
         } catch (e: Exception) {
+            logger.warn(e) { "Failed to create Mock for '${type.simpleName}'. Returning null." }
             null
+        }
+    }
+
+    fun generateInvalid(param: KParameter): List<Any?> = buildList {
+        val type = param.type.classifier as? KClass<*>
+
+        if (!param.type.isMarkedNullable) add(null)
+
+        param.find<IntRange>()?.let {
+            if (it.min > Int.MIN_VALUE) add(it.min - 1)
+            if (it.max < Int.MAX_VALUE) add(it.max + 1)
+        }
+        param.find<LongRange>()?.let {
+            if (it.min > Long.MIN_VALUE) add(it.min - 1L)
+            if (it.max < Long.MAX_VALUE) add(it.max + 1L)
+        }
+        param.find<DoubleRange>()?.let {
+            if (it.min > -Double.MAX_VALUE) add(it.min - 0.1)
+            if (it.max < Double.MAX_VALUE) add(it.max + 0.1)
+        }
+
+        if (param.has<Positive>()) {
+            if (type == Int::class) add(0)
+            else if (type == Long::class) add(0L)
+            else if (type == Double::class) add(0.0)
+            else if (type == BigDecimal::class) add(BigDecimal.ZERO)
+        }
+
+        if (param.has<Negative>()) {
+            if (type == Int::class) add(0)
+            else if (type == Long::class) add(0L)
+            else if (type == Double::class) add(0.0)
+            else if (type == BigDecimal::class) add(BigDecimal.ZERO)
+        }
+
+        param.find<StringLength>()?.let {
+            if (it.min > 0) add("x".repeat(it.min - 1))
+        }
+
+        if (param.has<NotBlank>()) {
+            add("")
+            add("   ")
+        }
+
+        if (param.has<Email>()) {
+            add("not-an-email")
+            add("@domain.com")
         }
     }
 
@@ -92,23 +126,20 @@ class FixtureGenerator(
         else -> null
     }
 
-
     private fun generateSpecialFormat(param: KParameter): Any? = when {
         param.has<Email>() -> generateComplexEmail()
         param.has<Uuid>() -> UUID.randomUUID().toString()
         param.has<Url>() -> generateComplexUrl()
-        param.has<Pattern>() -> generateFromRegex(param.findAnnotation<Pattern>()!!.regexp)
+        param.has<Pattern>() -> generateFromRegex(param.find<Pattern>()!!.regexp)
         else -> null
     }
 
-    private fun generateFromRegex(regex: String): String {
-        return when {
-            regex == "\\d+" || regex == "[0-9]+" -> generateRandomNumericString(5)
-            regex == "\\w+" || regex == "[a-zA-Z]+" -> generateRandomString(5)
-            regex == "^[A-Z]+$" -> generateRandomString(5).uppercase()
-            regex == "^[a-z]+$" -> generateRandomString(5).lowercase()
-            else -> "Pattern_Placeholder_for_$regex"
-        }
+    private fun generateFromRegex(regex: String): String = when {
+        regex == "\\d+" || regex == "[0-9]+" -> generateRandomNumericString(5)
+        regex == "\\w+" || regex == "[a-zA-Z]+" -> generateRandomString(5, 10)
+        regex == "^[A-Z]+$" -> generateRandomString(5, 10).uppercase()
+        regex == "^[a-z]+$" -> generateRandomString(5, 10).lowercase()
+        else -> "Pattern_Placeholder_for_$regex"
     }
 
     private fun generateComplexEmail(): String {
@@ -191,67 +222,92 @@ class FixtureGenerator(
     }
 
     private fun generateNumericConstraint(param: KParameter, type: KClass<*>): Any? {
+
+        val minDecimal = param.find<DecimalMin>()
+        val maxDecimal = param.find<DecimalMax>()
+        val digits = param.find<Digits>()
+
+        if (minDecimal != null || maxDecimal != null || digits != null) {
+            return generateDecimalSmartFuzz(minDecimal, maxDecimal, digits)
+        }
+
         param.find<IntRange>()?.let { return it.smartFuzz() }
         param.find<LongRange>()?.let { return it.smartFuzz() }
         param.find<DoubleRange>()?.let { return it.smartFuzz() }
         param.find<Digits>()?.let { return it.generate() }
 
-        if (param.has<Positive>()) return generatePositive(type)
+        if (param.has<Positive>()) return generatePositive(type, includeZero = false)
         if (param.has<PositiveOrZero>()) return generatePositive(type, includeZero = true)
-        if (param.has<Negative>()) return generateNegative(type)
+        if (param.has<Negative>()) return generateNegative(type, includeZero = false)
         if (param.has<NegativeOrZero>()) return generateNegative(type, includeZero = true)
 
         return null
     }
 
+
     private fun IntRange.smartFuzz(): Int {
-        val base = listOf(
-            min, max,
-            if (min < Int.MAX_VALUE) min + 1 else min,
-            if (max > Int.MIN_VALUE) max - 1 else max,
-            Random.Default.nextInt(min, max)
-        )
-        return if (0 in min..max) (base + 0).random() else base.random()
+        val base = mutableListOf(min, max)
+        if (min < Int.MAX_VALUE) base.add(min + 1)
+        if (max > Int.MIN_VALUE) base.add(max - 1)
+        if (0 in min..max) base.add(0)
+
+        val randomVal = if (min == max) min else Random.Default.nextInt(min, max + 1)
+        base.add(randomVal)
+        return base.random()
     }
 
     private fun LongRange.smartFuzz(): Long {
-        val base = listOf(
-            min, max,
-            if (min < Long.MAX_VALUE) min + 1 else min,
-            if (max > Long.MIN_VALUE) max - 1 else max,
-            Random.Default.nextLong(min, max)
-        )
-        return if (0L in min..max) (base + 0L).random() else base.random()
+        val base = mutableListOf(min, max)
+        if (min < Long.MAX_VALUE) base.add(min + 1)
+        if (max > Long.MIN_VALUE) base.add(max - 1)
+        if (0L in min..max) base.add(0L)
+
+        val randomVal = if (min == max) min else Random.Default.nextLong(min, max + 1)
+        base.add(randomVal)
+        return base.random()
     }
 
-    private fun DoubleRange.smartFuzz(): Double = when(Random.Default.nextInt(3)) {
+    private fun DoubleRange.smartFuzz(): Double = when (Random.Default.nextInt(3)) {
         0 -> min
         1 -> max
         else -> Random.Default.nextDouble(min, max)
     }
 
-    private fun Digits.generate(): BigDecimal = BigDecimal.valueOf(Random.Default.nextDouble(0.0, 10.0.pow(integer))).setScale(fraction, RoundingMode.HALF_UP)
+    private fun Digits.generate(): BigDecimal =
+        BigDecimal.valueOf(Random.Default.nextDouble(0.0, 10.0.pow(integer))).setScale(fraction, RoundingMode.HALF_UP)
 
-    private fun generatePositive(type: KClass<*>, includeZero: Boolean = false): Any = when (type) {
-        Int::class -> if (includeZero) Random.Default.nextInt(0, Int.MAX_VALUE) else Random.Default.nextInt(1, Int.MAX_VALUE)
-        Long::class -> if (includeZero) Random.Default.nextLong(0, Long.MAX_VALUE) else Random.Default.nextLong(1, Long.MAX_VALUE)
-        Double::class -> if (includeZero) Random.Default.nextDouble(0.0, Double.MAX_VALUE) else Random.Default.nextDouble(0.1, Double.MAX_VALUE)
-        BigDecimal::class -> BigDecimal.valueOf(Random.Default.nextDouble(0.1, Double.MAX_VALUE))
+    private fun generatePositive(type: KClass<*>, includeZero: Boolean): Any = when (type) {
+        Int::class -> Random.Default.nextInt(if (includeZero) 0 else 1, Int.MAX_VALUE)
+        Long::class -> Random.Default.nextLong(if (includeZero) 0L else 1L, Long.MAX_VALUE)
+        Double::class -> {
+            val origin = if (includeZero) 0.0 else Double.MIN_VALUE
+            Random.Default.nextDouble(origin, Double.MAX_VALUE)
+        }
+
+        BigDecimal::class -> {
+            val origin = if (includeZero) 0.0 else Double.MIN_VALUE
+            BigDecimal.valueOf(Random.Default.nextDouble(origin, Double.MAX_VALUE))
+        }
+
         else -> 1
     }
 
-    private fun generateNegative(type: KClass<*>, includeZero: Boolean = false): Any = when (type) {
-        Int::class -> if (includeZero) Random.Default.nextInt(Int.MIN_VALUE, 1) else Random.Default.nextInt(Int.MIN_VALUE, 0)
-        Long::class -> if (includeZero) Random.Default.nextLong(Long.MIN_VALUE, 1) else Random.Default.nextLong(Long.MIN_VALUE, 0)
-        Double::class -> if (includeZero) Random.Default.nextDouble(-Double.MAX_VALUE, 0.1) else Random.Default.nextDouble(-Double.MAX_VALUE, -0.0001)
-        BigDecimal::class -> BigDecimal.valueOf(Random.Default.nextDouble(-Double.MAX_VALUE, -0.0001))
+    private fun generateNegative(type: KClass<*>, includeZero: Boolean): Any = when (type) {
+        Int::class -> Random.Default.nextInt(Int.MIN_VALUE, if (includeZero) 1 else 0)
+        Long::class -> Random.Default.nextLong(Long.MIN_VALUE, if (includeZero) 1L else 0L)
+        Double::class -> {
+            val bound = if (includeZero) 0.00001 else -Double.MIN_VALUE
+            Random.Default.nextDouble(-Double.MAX_VALUE, bound)
+        }
+
+        BigDecimal::class -> BigDecimal.valueOf(Random.Default.nextDouble(-Double.MAX_VALUE, -0.00001))
         else -> -1
     }
 
     private fun generateStringConstraint(param: KParameter): String? {
-        val length = param.findAnnotation<StringLength>()
+        val length = param.find<StringLength>()
         if (length != null) {
-            val effectiveMax = if (length.max == Int.MAX_VALUE) length.min + 20 else length.max
+            val effectiveMax = if (length.max == Int.MAX_VALUE) length.min + DEFAULT_STRING_BUFFER else length.max
             return generateRandomString(length.min, effectiveMax)
         }
 
@@ -261,7 +317,7 @@ class FixtureGenerator(
         return null
     }
 
-    private fun generateRandomString(min: Int, max: Int = min + 10): String {
+    private fun generateRandomString(min: Int, max: Int): String {
         val targetMin = min.coerceAtLeast(0)
         val targetMax = max.coerceAtLeast(targetMin)
 
@@ -272,6 +328,9 @@ class FixtureGenerator(
             .joinToString("")
     }
 
+    private fun generateRandomNumericString(length: Int): String {
+        return (1..length).map { Random.Default.nextInt(0, 10) }.joinToString("")
+    }
 
     private fun generatePrimitiveDefaults(type: KClass<*>): Any? = when (type) {
         String::class -> generateRandomString(DEFAULT_STRING_MIN_LENGTH, DEFAULT_STRING_MAX_LENGTH)
@@ -283,12 +342,44 @@ class FixtureGenerator(
         BigDecimal::class -> BigDecimal.valueOf(Random.Default.nextDouble())
         else -> null
     }
-    private fun generateRandomNumericString(length: Int): String {
-        return (1..length).map { Random.Default.nextInt(0, 10) }.joinToString("")
+
+    private fun generateDecimalSmartFuzz(min: DecimalMin?, max: DecimalMax?, digits: Digits?): BigDecimal {
+        val minVal = if (min != null) BigDecimal(min.value) else BigDecimal("-$DEFAULT_DECIMAL_LIMIT")
+        val maxVal = if (max != null) {
+            BigDecimal(max.value)
+        } else {
+            if (min != null) minVal.add(BigDecimal(DEFAULT_DECIMAL_BUFFER)) else BigDecimal(DEFAULT_DECIMAL_LIMIT)
+        }
+
+        val scale = digits?.fraction ?: 2
+        val epsilon = BigDecimal.ONE.movePointLeft(scale)
+
+        val candidates = mutableListOf<BigDecimal>()
+
+        val effectiveMin = if (min?.inclusive == false) minVal.add(epsilon) else minVal
+        candidates.add(effectiveMin)
+
+        val effectiveMax = if (max?.inclusive == false) maxVal.subtract(epsilon) else maxVal
+        candidates.add(effectiveMax)
+
+        if (BigDecimal.ZERO >= effectiveMin && BigDecimal.ZERO <= effectiveMax) {
+            candidates.add(BigDecimal.ZERO.setScale(scale))
+        }
+
+        if (effectiveMin > effectiveMax) return effectiveMin
+
+        val randomFactor = BigDecimal.valueOf(Random.Default.nextDouble())
+        val range = effectiveMax.subtract(effectiveMin)
+        val randomVal = effectiveMin.add(range.multiply(randomFactor)).setScale(scale, RoundingMode.HALF_UP)
+        candidates.add(randomVal)
+
+        return candidates.random()
     }
 
-    private inline fun <reified T : Annotation> KParameter.has(): Boolean =
-        findAnnotation<T>() != null
+
+    private
+
+    inline fun <reified T : Annotation> KParameter.has(): Boolean = findAnnotation<T>() != null
 
     private inline fun <reified T : Annotation> KParameter.find(): T? = findAnnotation<T>()
 }
