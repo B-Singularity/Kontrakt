@@ -19,7 +19,8 @@ import kotlin.reflect.full.findAnnotation
 import kotlin.reflect.full.primaryConstructor
 
 class FixtureGenerator(
-    private val mockingEngine: MockingEngine
+    private val mockingEngine: MockingEngine,
+    private val clock: Clock = Clock.systemDefaultZone()
 ) {
     private val logger = KotlinLogging.logger {}
 
@@ -227,7 +228,7 @@ class FixtureGenerator(
     }
 
     private fun generateTime(param: KParameter, type: KClass<*>): Any? {
-        val now = Instant.now()
+        val now = clock.instant()
         val offsetDays = Random.Default.nextLong(1, DEFAULT_DATE_RANGE_DAYS)
 
         val targetInstant = when {
@@ -243,9 +244,9 @@ class FixtureGenerator(
         Instant::class -> instant
         String::class -> instant.toString()
         Date::class -> Date.from(instant)
-        LocalDate::class -> LocalDate.ofInstant(instant, ZoneId.systemDefault())
-        LocalDateTime::class -> LocalDateTime.ofInstant(instant, ZoneId.systemDefault())
-        ZonedDateTime::class -> ZonedDateTime.ofInstant(instant, ZoneId.systemDefault())
+        LocalDate::class -> LocalDate.ofInstant(instant, clock.zone)
+        LocalDateTime::class -> LocalDateTime.ofInstant(instant, clock.zone)
+        ZonedDateTime::class -> ZonedDateTime.ofInstant(instant, clock.zone)
         else -> null
     }
 

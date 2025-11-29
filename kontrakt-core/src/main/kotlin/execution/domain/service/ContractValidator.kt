@@ -112,6 +112,115 @@ class ContractValidator {
         }
     }
 
+    private fun validteString(element: KAnnotatedElement, value: String) {
+        element.find<StringLength>()?.let { limit ->
+            ensure(value.length in limit.min..limit.max) {
+                "StringLength violation: expected length [${limit.min}..${limit.max}] but got ${value.length}"
+            }
+        }
+
+        if (element.has<NotBlank>()) {
+            ensure(value.isNotBlank()) { "NotBlank violation: result was blank" }
+        }
+
+        element.find<Pattern>()?.let { pattern ->
+            ensure(value.matches(Regex(pattern.regexp))) {
+                "Pattern violation: expected regex '${pattern.regexp}' but got '$value'"
+            }
+        }
+
+        element.find<Email>()?.let { rule ->
+            ensure(value.contains("@") && value.contains(".")) {
+                "Email violation: '$value' is not a valid email format"
+            }
+
+            val domain = value.substringAfter("@")
+
+            if (rule.allow.isNotEmpty()) {
+                val isAllowed = rule.allow.any { allowed -> domain == allowed || domain.endsWith(".$allowed") }
+                ensure(isAllowed) { "Email domain violation: '$domain' is not in allowed list ${rule.allow.toList()}" }
+            }
+
+            if (rule.block.isNotEmpty()) {
+                val isBlocked = rule.block.any { blocked -> domain == blocked || domain.endsWith(".$blocked") }
+                ensure(!isBlocked) { "Email domain violation: '$domain' is blocked" }
+            }
+        }
+
+        element.find<Url>()?.let { rule ->
+            val isValidProtocol = rule.protocol.any { value.startsWith("$it://") }
+            ensure(isValidProtocol) { "Url protocol violation: '$value' does not start with ${rule.protocol.toList()}" }
+
+            val host = value.substringAfter("://").substringBefore("/").substringBefore("?")
+
+            if (rule.hostAllow.isNotEmpty()) {
+                val isAllowed = rule.hostAllow.any { allowed -> host == allowed || host.endsWith(".$allowed") }
+                ensure(isAllowed) { "Url host violation: '$host' is not in allowed list ${rule.hostAllow.toList()}" }
+            }
+
+            if (rule.hostBlock.isNotEmpty()) {
+                val isBlocked = rule.hostBlock.any { blocked -> host == blocked || host.endsWith(".$blocked") }
+                ensure(!isBlocked) { "Url host violation: '$host' is blocked" }
+            }
+        }
+
+        if (element.has<Uuid>()) {
+            ensure(value.length == 36) { "Uuid violation: '$value' is not a valid UUID format" }
+        }
+    }
+
+    private fun validateCollection(element: KAnnotatedElement, value: Collection<*>) {
+        element.find<Size>()?.let { limit ->
+            ensure(value.size in limit.min..limit.max) {
+                "Size violation: expected size [${limit.min}..${limit.max}] but got ${value.size}"
+            }
+        }
+
+        if (element.has<NotEmpty>()) {
+            ensure(value.isNotEmpty()) { "NotEmpty violation: collection was empty" }
+        }
+    }
+
+    private fun validateMap(element: KAnnotatedElement, value: Map<*, *>) {
+        element.find<Size>()?.let { limit ->
+            ensure(value.size in limit.min..limit.max) {
+                "Size violation: expected size [${limit.min}..${limit.max}] but got ${value.size}"
+            }
+        }
+        if (element.has<NotEmpty>()) {
+            ensure(value.isNotEmpty()) { "NotEmpty violation: map was empty" }
+        }
+    }
+
+    private fun validateArray(element: KAnnotatedElement, value: Array<*>) {
+        element.find<Size>()?.let { limit ->
+            ensure(value.size in limit.min..limit.max) {
+                "Size violation: expected size [${limit.min}..${limit.max}] but got ${value.size}"
+            }
+        }
+        if (element.has<NotEmpty>()) {
+            ensure(value.isNotEmpty()) { "NotEmpty violation: array was empty" }
+        }
+    }
+
+    private fun validateTime(element: KAnnotatedElement, value: Any) {
+        val now = Instant.now()
+        val target = toInstant(value) ?: return
+
+        if (element.has<Past>()) {
+            ensure(target.isBefore(now)) { "Past violation: expected past date but got $value" }
+        }
+        if (element.has<PastOrPresent>()) {
+            ensure(!target.isAfter(now)) { "PastOrPresent violation: expected past or present date but got $value" }
+        }
+        if (element.has<Future>()) {
+            ensure(target.isAfter(now)) { "Future violation: expected future date but got $value" }
+        }
+        if (element.has<FutureOrPresent>()) {
+            ensure(!target.isBefore(now)) { "FutureOrPresent violation: expected future or present date but got $value" }
+        }
+    }
+
     private fun isTimeType(value: Any): Boolean {
         return value is Instant || value is Date || value is ChronoLocalDate || value is ChronoLocalDateTime<*> || value is ChronoZonedDateTime<*>
     }

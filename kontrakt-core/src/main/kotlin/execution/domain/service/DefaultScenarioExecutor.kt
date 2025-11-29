@@ -7,6 +7,9 @@ import execution.domain.util.ExceptionHelper
 import execution.domain.vo.AssertionRecord
 import io.github.oshai.kotlinlogging.KotlinLogging
 import java.lang.reflect.Method
+import java.time.Clock
+import java.time.Instant
+import java.time.ZoneId
 import kotlin.reflect.KFunction
 import kotlin.reflect.KParameter
 import kotlin.reflect.full.functions
@@ -20,6 +23,8 @@ class DefaultScenarioExecutor : TestScenarioExecutor {
     private val contractValidator = ContractValidator()
 
     override fun executeScenarios(context: EphemeralTestContext): List<AssertionRecord> {
+        val fixedClock = Clock.fixed(Instant.now(), ZoneId.systemDefault())
+
         this.fixtureGenerator = FixtureGenerator(context.mockingEngine)
 
         val testTargetInstance = context.getTestTarget()
