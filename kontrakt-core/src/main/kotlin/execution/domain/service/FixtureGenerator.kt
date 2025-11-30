@@ -15,6 +15,7 @@ import kotlin.math.pow
 import kotlin.random.Random
 import kotlin.reflect.KClass
 import kotlin.reflect.KParameter
+import kotlin.reflect.KType
 import kotlin.reflect.full.findAnnotation
 import kotlin.reflect.full.primaryConstructor
 
@@ -38,7 +39,7 @@ class FixtureGenerator(
         private const val ALPHANUMERIC_POOL = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
     }
 
-    fun generate(param: KParameter): Any? {
+    fun generate(param: KParameter, history: Set<KClass<*>> = emptySet()): Any? {
         val type = param.type.classifier as? KClass<*> ?: return null
 
         return generateBooleanConstraint(param)
@@ -46,28 +47,43 @@ class FixtureGenerator(
             ?: generateTime(param, type)
             ?: generateNumericConstraint(param, type)
             ?: generateStringConstraint(param)
-            ?: generateByType(type)
+            ?: generateByType(param.type, history)
     }
 
-    fun generateByType(type: KClass<*>): Any? {
-        generatePrimitiveDefaults(type)?.let { return it }
+    fun generateByType(type: KType, history: Set<KClass<*>> = emptySet()): Any? {
+        val kClass = type.classifier as? KClass<*> ?: return null
 
-        if (type == List::class || type == Collection::class || type == Iterable::class) return emptyList<Any>()
-        if (type == Set::class) return emptySet<Any>()
-        if (type == Map::class) return emptyMap<Any, Any>()
+        generatePrimitiveDefaults(kClass)?.let { return it }
 
-        val constructor = type.primaryConstructor
+        if (kClass == List::class || kClass == Collection::class || kClass == Iterable::class) {
+            val elementType = type.arguments.firstOrNull()?.type ?: return emptyList<Any>()
+            return List(1) { generateByType(elementType, history) }
+        }
+        if (kClass == Set::class) return emptySet<Any>()
+        if (kClass == Map::class) return emptyMap<Any, Any>()
+
+        if (kClass in history) {
+            logger.debug { "Circular dependency detected for '${kClass.simpleName}'. Breaking cycle with Mock." }
+            return tryCreateMock(kClass)
+        }
+
+        val constructor = kClass.primaryConstructor
         if (constructor != null) {
             try {
+                val newHistory = history + kClass
+
                 val args = constructor.parameters.map { param ->
-                    generate(param)
+                    generate(param, newHistory)
                 }.toTypedArray()
                 return constructor.call(*args)
             } catch (e: Exception) {
-                logger.debug(e) { "Failed to generate instance via constructor for '${type.simpleName}'. Falling back to Mock." }
+                logger.debug(e) { "Constructor failed for '${kClass.simpleName}'. Fallback to Mock." }
             }
         }
+        return tryCreateMock(kClass)
+    }
 
+    private fun tryCreateMock(type: KClass<*>): Any? {
         return try {
             mockingEngine.createMock(type)
         } catch (e: Exception) {
