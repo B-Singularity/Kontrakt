@@ -1,12 +1,12 @@
 package execution.domain.aggregate
 
 import discovery.domain.aggregate.TestSpecification
+import execution.api.TestScenarioExecutor
 import execution.domain.AssertionStatus
 import execution.domain.TestStatus
-import execution.domain.entity.EphemeralTestContext
+import execution.domain.service.TestInstanceFactory
 import execution.domain.vo.AssertionRecord
 import execution.domain.vo.TestResult
-import execution.spi.MockingEngine
 import io.github.oshai.kotlinlogging.KotlinLogging
 import java.time.Duration
 import kotlin.time.measureTime
@@ -14,8 +14,8 @@ import kotlin.time.toJavaDuration
 
 class TestExecution(
     private val specification: TestSpecification,
-    private val mockingEngine: MockingEngine,
-    private val scenarioExceutor: TestScenarioExcutor
+    private val instanceFactory: TestInstanceFactory,
+    private val scenarioExecutor: TestScenarioExecutor
 ) {
     private val logger = KotlinLogging.logger {}
 
@@ -33,14 +33,14 @@ class TestExecution(
 
         try {
             val kotlinDuration = measureTime {
-                val context = EphemeralTestContext(specification, mockingEngine)
-                context.prepare()
+                val context = instanceFactory.create(specification)
 
                 records = scenarioExecutor.executeScenarios(context)
             }
             duration = kotlinDuration.toJavaDuration()
 
-            val failedRecords = records.filter(it.status == AssertionStatus.FAILED)
+            val failedRecords = records.filter { it.status == AssertionStatus.FAILED }
+
             finalStatus = if (failedRecords.isNotEmpty()) {
                 val firstFailure = failedRecords.first()
                 TestStatus.AssertionFailed(
@@ -54,7 +54,6 @@ class TestExecution(
         } catch (e: Throwable) {
             duration = Duration.ZERO
             logger.error(e) { "Test execution crashed for target: ${specification.target.displayName}" }
-
             finalStatus = TestStatus.ExecutionError(cause = e)
         }
 

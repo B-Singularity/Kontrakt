@@ -48,25 +48,25 @@ everywhere and enforces implicit structural rules for data objects.
 ### Pillar 2: Zero-Setup Logic Verification (Explicit Mode)
 
 * **Target:** Complex Business Logic (Services, Use Cases) requiring behavioral verification.
-* **Mechanism:** Users write a separate **Spec File** (e.g., `RecruitServiceSpec.kt`) containing only assertion logic.
+* **Mechanism:** Users write a standard **Test Class** (e.g., `RecruitServiceTest.kt`) annotated with `@KontraktTest`.
 * **`Kontrakt`'s Role (The Assistant):**
-    * **Micro-DI:** Automatically analyzes constructors and wires dependencies.
+    * **Micro-DI:** Automatically analyzes constructors and wires dependencies without `setUp()` boilerplate.
     * **Semantic Mocking:** Automatically injects **Stateful Fakes** (Maps) for Repositories and **Stateless Mocks** for
       services.
     * **Ephemeral Context:** Ensures perfect isolation by creating and discarding the environment per scenario.
 * **User Effort:** Users focus solely on the **Behavior Verification** (The "Why" and "How" of the logic) using simple
-  assertions.
+  assertions within methods annotated with `@TestScenario`.
 
 ## Consequences
 
 ### Positive
 
+* **Familiarity (DX):** By following the standard naming convention (`*Test`) and annotation style (`@KontraktTest`),
+  developers can adopt the framework with zero friction, feeling similar to Spring Boot tests but much faster.
 * **Rich Interfaces & Domains:** Encourages developers to make their interfaces and entities "Rich" by adding
   constraints directly to them. The test coverage comes for free.
 * **Universal Protection:** Whether it's a controller input (DTO), a database entity, or a service interface, `Kontrakt`
   guards the boundaries automatically.
-* **Standard Compliance:** Eliminates the common bugs where `equals()` is implemented incorrectly or constructors allow
-  invalid nulls.
 
 ### Negative
 
