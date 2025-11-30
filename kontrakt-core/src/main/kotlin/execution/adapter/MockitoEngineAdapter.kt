@@ -1,7 +1,9 @@
 package execution.adapter
 
+import execution.api.ScenarioContext
 import execution.domain.service.FixtureGenerator
 import execution.spi.MockingEngine
+import execution.spi.ScenarioControl
 import io.github.oshai.kotlinlogging.KLogger
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.mockito.Mockito
@@ -14,7 +16,7 @@ import kotlin.reflect.full.memberProperties
 import kotlin.reflect.jvm.isAccessible
 import kotlin.reflect.jvm.kotlinFunction
 
-class MockitoEngineAdapter : MockingEngine {
+class MockitoEngineAdapter : MockingEngine, ScenarioControl {
     private val logger = KotlinLogging.logger {}
 
     // [Circular Dependency Resolution]
@@ -173,6 +175,10 @@ class MockitoEngineAdapter : MockingEngine {
                 null
             }
         }
+    }
+
+    override fun createScenarioContext(): ScenarioContext {
+        return MockitoScenarioContext()
     }
 
 }
