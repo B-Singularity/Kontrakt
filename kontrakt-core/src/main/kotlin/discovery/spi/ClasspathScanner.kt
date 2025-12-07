@@ -8,6 +8,11 @@ interface ClasspathScanner {
         annotation: KClass<out Annotation>,
     ): List<KClass<*>>
 
+    suspend fun findAnnotatedClasses(
+        rootPackage: String,
+        annotation: KClass<out Annotation>,
+    ): List<KClass<*>>
+
     suspend fun findAllImplementations(
         rootPackage: String,
         targetInterface: KClass<*>,

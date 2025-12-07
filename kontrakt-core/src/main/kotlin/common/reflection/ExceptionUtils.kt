@@ -1,13 +1,12 @@
-package execution.domain.util
+package common.reflection
 
 import java.lang.reflect.InvocationTargetException
 
-object ExceptionHelper {
-    fun unwrap(t: Throwable): Throwable {
-        var current = t
+val Throwable.unwrapped: Throwable
+    get() {
+        var current = this
         while (current is InvocationTargetException) {
             current = current.targetException ?: break
         }
         return current
     }
-}

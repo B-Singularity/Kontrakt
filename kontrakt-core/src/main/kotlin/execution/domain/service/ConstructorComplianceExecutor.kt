@@ -1,8 +1,8 @@
 package execution.domain.service
 
+import common.reflection.unwrapped
 import execution.domain.AssertionStatus
 import execution.domain.entity.EphemeralTestContext
-import execution.domain.util.ExceptionHelper
 import execution.domain.vo.AssertionRecord
 import kotlin.reflect.KFunction
 import kotlin.reflect.full.primaryConstructor
@@ -41,7 +41,7 @@ class ConstructorComplianceExecutor(
                 "Success"
             )
         } catch (e: Throwable) {
-            val cause = ExceptionHelper.unwrap(e)
+            val cause = e.unwrapped
             AssertionRecord(
                 AssertionStatus.FAILED,
                 "Constructor Sanity Check Failed: ${cause.message}",
@@ -71,7 +71,7 @@ class ConstructorComplianceExecutor(
                 "Instance Created"
             )
         } catch (e: Throwable) {
-            val cause = ExceptionHelper.unwrap(e)
+            val cause = e.unwrapped
             AssertionRecord(
                 AssertionStatus.PASSED,
                 "Defensive Check Passed: Constructor rejected invalid '$paramName' = $badValue",

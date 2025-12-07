@@ -1,9 +1,9 @@
 package execution.domain.service
 
+import common.reflection.unwrapped
 import execution.api.TestScenarioExecutor
 import execution.domain.AssertionStatus
 import execution.domain.entity.EphemeralTestContext
-import execution.domain.util.ExceptionHelper
 import execution.domain.vo.AssertionRecord
 import io.github.oshai.kotlinlogging.KotlinLogging
 import java.lang.reflect.Method
@@ -85,7 +85,7 @@ class DefaultScenarioExecutor : TestScenarioExecutor {
                 actual = "Success"
             )
         } catch (e: Throwable) {
-            val rootCause = ExceptionHelper.unwrap(e)
+            val rootCause = e.unwrapped
 
             if (rootCause is ContractValidator.ContractViolationException) {
                 logger.error { "Contract Violation in ${contractMethod.name}: ${rootCause.message}" }

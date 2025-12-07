@@ -1,8 +1,11 @@
 package discovery.domain.service
 
+import discovery.api.KontraktConfigurationException
+import discovery.api.KontraktTest
 import discovery.api.Stateful
 import discovery.api.TestDiscoverer
 import discovery.domain.aggregate.TestSpecification
+import discovery.domain.aggregate.TestSpecification.TestMode
 import discovery.domain.vo.DependencyMetadata
 import discovery.domain.vo.DependencyMetadata.MockingStrategy
 import discovery.domain.vo.DiscoveredTestTarget
@@ -26,53 +29,79 @@ class TestDiscovererImpl(
         runCatching {
             logger.info { "Starting test discovery for root package: $rootPackage" }
 
-            val implementationClasses =
-                withContext(Dispatchers.IO) {
-                    val contractInterfaces = scanner.findAnnotatedInterfaces(rootPackage, contractMarker)
-                    contractInterfaces.flatMap { contract ->
+            withContext(Dispatchers.IO) {
+                val contractSpecs = scanner.findAnnotatedInterfaces(rootPackage, contractMarker)
+                    .flatMap { contract ->
                         scanner.findAllImplementations(rootPackage, contract)
+                            .map { impl -> impl to contract }
                     }
-                }.distinct()
+                    .mapNotNull { (impl, contract) ->
+                        createSpecificationForClass(impl, setOf(TestMode.ContractAuto(contract)))
+                            .onFailure { e ->
+                                logger.warn { "Failed to create spec for implementation '${impl.simpleName}': ${e.message}" }
+                            }
+                            .getOrNull()
+                    }
+                val manualSpecs = scanner.findAnnotatedClasses(rootPackage, KontraktTest::class)
+                    .mapNotNull { testClass ->
+                        createSpecificationForClass(testClass, setOf(TestMode.UserScenario))
+                            .onFailure { e ->
+                                logger.warn { "Failed to create spec for test class '${testClass.simpleName}': ${e.message}" }
+                            }
+                            .getOrNull()
+                    }
 
-            logger.debug { "Found ${implementationClasses.size} potential test targets." }
+                (contractSpecs + manualSpecs)
+                    .groupBy { it.target.fullyQualifiedName }
+                    .map { (_, specs) ->
+                        if (specs.size == 1) {
+                            specs.first()
+                        } else {
+                            val base = specs.first()
+                            val mergedModes = specs.flatMap { it.modes }.toSet()
 
-            implementationClasses.mapNotNull { kClass ->
-                createSpecificationForClass(kClass)
-                    .onFailure { error ->
-                        logger.warn(error) { "Skipping class '${kClass.simpleName}'. Failed to create a TestSpecification." }
-                    }.getOrNull()
+                            TestSpecification.create(base.target, mergedModes, base.requiredDependencies).getOrThrow()
+                        }
+                    }
             }
         }
 
-    private fun createSpecificationForClass(kClass: KClass<*>): Result<TestSpecification> {
+    private fun createSpecificationForClass(
+        kClass: KClass<*>,
+        initialModes: Set<TestMode>
+    ): Result<TestSpecification> {
         val targetResult =
             DiscoveredTestTarget.create(
                 kClass = kClass,
                 displayName = kClass.simpleName ?: "UnnamedClass",
                 fullyQualifiedName = kClass.qualifiedName
-                    ?: return Result.failure(Exception("Class must have a qualified name.")),
+                    ?: return Result.failure(
+                        KontraktConfigurationException("Class '${kClass.simpleName}' must have a qualified name. Local or anonymous classes are not supported.")
+                    )
             )
         val target = targetResult.getOrElse { return Result.failure(it) }
 
-        val constructor =
-            kClass.primaryConstructor
-                ?: return Result.failure(Exception("'${target.displayName}' must have a primary constructor."))
+        val constructor = kClass.primaryConstructor
+            ?: return Result.failure(
+                KontraktConfigurationException(
+                    "Target class '${target.displayName}' must have a primary constructor for dependency injection.\n" +
+                            "Tip: Interfaces, Objects, or Abstract classes cannot be tested directly as a Target."
+                )
+            )
 
         val dependencies = constructor.parameters.map { param ->
             val paramType = param.type.classifier as? KClass<*>
-                ?: return Result.failure(Exception("Cannot determine type for parameter '${param.name}'."))
+                ?: return Result.failure(
+                    KontraktConfigurationException("Cannot determine type for parameter '${param.name}' in '${target.displayName}'.")
+                )
 
             val strategy = determineMockingStrategy(paramType)
 
-            val dependencyResult = DependencyMetadata.create(
-                name = param.name ?: "unknown",
-                type = paramType,
-                strategy = strategy,
-            )
-            dependencyResult.getOrElse { return Result.failure(it) }
+            DependencyMetadata.create(param.name ?: "unknown", paramType, strategy)
+                .getOrElse { return Result.failure(it) }
         }
 
-        return TestSpecification.create(target, dependencies)
+        return TestSpecification.create(target, initialModes, dependencies)
     }
 
     private fun determineMockingStrategy(type: KClass<*>): MockingStrategy {
@@ -81,12 +110,10 @@ class TestDiscovererImpl(
             return MockingStrategy.Environment(DependencyMetadata.EnvType.TIME)
         }
 
-        val isStateful = type.findAnnotation<Stateful>() != null
-
-        if (isStateful) {
+        if (type.findAnnotation<Stateful>() != null) {
             return MockingStrategy.StatefulFake
         }
 
-        return MockingStrategy.StatelessMock
+        return MockingStrategy.Real
     }
 }

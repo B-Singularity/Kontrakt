@@ -1,9 +1,10 @@
 package execution.domain.service
 
+
+import common.reflection.unwrapped
 import discovery.domain.aggregate.TestSpecification
 import discovery.domain.vo.DependencyMetadata
 import execution.domain.entity.EphemeralTestContext
-import execution.domain.util.ExceptionHelper
 import execution.spi.MockingEngine
 import kotlin.reflect.KClass
 
@@ -16,7 +17,7 @@ class TestInstanceFactory(
             val targetInstance = resolve(spec.target.kClass, context, mutableSetOf())
             context.registerTarget(targetInstance)
         } catch (e: Throwable) {
-            val cause = ExceptionHelper.unwrap(e)
+            val cause = e.unwrapped
             throw IllegalStateException(
                 "Failed to create test target '${spec.target.displayName}': ${cause.message}",
                 cause
@@ -79,7 +80,7 @@ class TestInstanceFactory(
             return constructor.call(*args)
 
         } catch (e: Throwable) {
-            val cause = ExceptionHelper.unwrap(e)
+            val cause = e.unwrapped
             throw IllegalStateException(
                 "Failed to instantiate class [${type.qualifiedName}]: ${cause.message}",
                 cause

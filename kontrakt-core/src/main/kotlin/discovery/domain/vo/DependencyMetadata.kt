@@ -13,6 +13,7 @@ data class DependencyMetadata private constructor(
         data object StatelessMock : MockingStrategy
         data object StatefulFake : MockingStrategy
         data class Environment(val type: EnvType) : MockingStrategy
+        data object Real : MockingStrategy
     }
 
     enum class EnvType {

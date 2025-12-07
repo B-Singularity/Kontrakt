@@ -1,5 +1,7 @@
 package execution.domain.aggregate
 
+import common.reflection.unwrapped
+import discovery.api.KontraktInternalException
 import discovery.domain.aggregate.TestSpecification
 import execution.api.TestScenarioExecutor
 import execution.domain.AssertionStatus
@@ -8,7 +10,7 @@ import execution.domain.service.TestInstanceFactory
 import execution.domain.vo.AssertionRecord
 import execution.domain.vo.TestResult
 import io.github.oshai.kotlinlogging.KotlinLogging
-import java.time.Duration
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.time.measureTime
 import kotlin.time.toJavaDuration
 
@@ -19,48 +21,46 @@ class TestExecution(
 ) {
     private val logger = KotlinLogging.logger {}
 
-    private enum class Lifecycle { PENDING, EXECUTED }
+    private val executed = AtomicBoolean(false)
 
-    private var lifecycle: Lifecycle = Lifecycle.PENDING
 
     fun execute(): TestResult {
-        require(lifecycle == Lifecycle.PENDING) { "TestExecution has already been executed." }
-        this.lifecycle = Lifecycle.EXECUTED
+        if (!executed.compareAndSet(false, true)) {
+            throw KontraktInternalException("TestExecution instance cannot be reused. It has already been executed.")
+        }
 
         var finalStatus: TestStatus
         var records: List<AssertionRecord> = emptyList()
-        var duration: Duration
 
-        try {
-            val kotlinDuration = measureTime {
+        val kotlinDuration = measureTime {
+            try {
                 val context = instanceFactory.create(specification)
-
                 records = scenarioExecutor.executeScenarios(context)
-            }
-            duration = kotlinDuration.toJavaDuration()
+                val failedRecords = records.filter { it.status == AssertionStatus.FAILED }
 
-            val failedRecords = records.filter { it.status == AssertionStatus.FAILED }
+                finalStatus = if (failedRecords.isNotEmpty()) {
+                    val firstFailure = failedRecords.first()
+                    TestStatus.AssertionFailed(
+                        message = firstFailure.message,
+                        expected = firstFailure.expected,
+                        actual = firstFailure.actual,
+                    )
+                } else {
+                    TestStatus.Passed
+                }
+            } catch (e: Throwable) {
+                val cause = e.unwrapped
 
-            finalStatus = if (failedRecords.isNotEmpty()) {
-                val firstFailure = failedRecords.first()
-                TestStatus.AssertionFailed(
-                    message = firstFailure.message,
-                    expected = firstFailure.expected,
-                    actual = firstFailure.actual,
-                )
-            } else {
-                TestStatus.Passed
+                logger.error(cause) { "Test execution crashed for target: ${specification.target.displayName}" }
+                finalStatus = TestStatus.ExecutionError(cause = cause)
             }
-        } catch (e: Throwable) {
-            duration = Duration.ZERO
-            logger.error(e) { "Test execution crashed for target: ${specification.target.displayName}" }
-            finalStatus = TestStatus.ExecutionError(cause = e)
         }
+
 
         return TestResult(
             target = specification.target,
             finalStatus = finalStatus,
-            duration = duration,
+            duration = kotlinDuration.toJavaDuration(),
             assertionRecords = records,
         )
     }
