@@ -1,6 +1,8 @@
 package execution.adapter
 
+import discovery.api.KontraktConfigurationException
 import execution.api.ScenarioContext
+import execution.api.StubbingBuilder
 import execution.domain.service.FixtureGenerator
 import execution.spi.MockingEngine
 import execution.spi.ScenarioControl
@@ -47,6 +49,10 @@ class MockitoEngineAdapter : MockingEngine, ScenarioControl {
     override fun <T : Any> createFake(classToFake: KClass<T>): T {
         val smartAnswer = StatefulOrGenrativeAnswer(fixtureGenerator)
         return Mockito.mock(classToFake.java, smartAnswer)
+    }
+
+    override fun createScenarioContext(): ScenarioContext {
+        return MockitoScenarioContext()
     }
 
     private class GenerativeAnswer(
@@ -177,8 +183,38 @@ class MockitoEngineAdapter : MockingEngine, ScenarioControl {
         }
     }
 
-    override fun createScenarioContext(): ScenarioContext {
-        return MockitoScenarioContext()
+    private class MockitoScenarioContext : ScenarioContext {
+        override infix fun <T> every(methodCall: () -> T): StubbingBuilder<T> {
+            return MockitoStubbingBuilder(methodCall)
+        }
     }
 
+    private class MockitoStubbingBuilder<T>(
+        private val methodCall: () -> T
+    ) : StubbingBuilder<T> {
+
+        override infix fun returns(value: T) {
+            try {
+                val ongoingStubbing = Mockito.`when`(methodCall())
+                ongoingStubbing.thenReturn(value)
+            } catch (e: Exception) {
+                throw KontraktConfigurationException(
+                    "Failed to apply stubbing. Ensure you are calling a method on a Mock object within 'every { ... }'.",
+                    e
+                )
+            }
+        }
+
+        override infix fun throws(exception: Throwable) {
+            try {
+                val ongoingStubbing = Mockito.`when`(methodCall())
+                ongoingStubbing.thenThrow(exception)
+            } catch (e: Exception) {
+                throw KontraktConfigurationException(
+                    "Failed to stub exception. Ensure you are calling a method on a Mock object.",
+                    e
+                )
+            }
+        }
+    }
 }
