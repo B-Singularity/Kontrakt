@@ -1,5 +1,3 @@
-import org.gradle.api.plugins.jvm.JvmTestSuite
-
 plugins {
     `java-library`
     alias(libs.plugins.kotlin.jvm)
@@ -23,6 +21,7 @@ dependencies {
     implementation(libs.kotlin.reflect)
     implementation(libs.mockito.core)
     implementation(libs.mockito.kotlin)
+    implementation(libs.junit.platform.engine)
 
     testImplementation(kotlin("test"))
     testImplementation(libs.junit.jupiter.api)

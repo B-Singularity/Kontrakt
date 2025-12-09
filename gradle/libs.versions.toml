@@ -7,7 +7,9 @@ kotlinx-coroutines = "1.9.0"
 slf4j = "2.0.17"
 logback = "1.5.19"
 kotlin-logging = "7.0.13"
-mockito = "5.20.0"
+mockito-core = "5.20.0"
+mockito-kotlin = "5.3.1"
+junit-platform = "6.0.1"
 
 [libraries]
 junit-jupiter-api = { module = "org.junit.jupiter:junit-jupiter-api", version.ref = "junit" }
@@ -16,10 +18,12 @@ classgraph = { module = "io.github.classgraph:classgraph", version.ref = "classg
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
 kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinx-coroutines" }
 kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlin" }
-slf4j-api = { module = "org.slf4j:slf4j-api", version.ref = "slf4j"}
+slf4j-api = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
 kotlin-logging-jvm = { module = "io.github.oshai:kotlin-logging-jvm", version.ref = "kotlin-logging" }
-mockito-core = { module = "org.mockito:mockito-core", version.ref = "mockito" }
-mockito-kotlin = { module = "org.mockito.kotlin:mockito-kotlin", version.ref = "mockito" }
+mockito-core = { module = "org.mockito:mockito-core", version.ref = "mockito-core" }
+mockito-kotlin = { module = "org.mockito.kotlin:mockito-kotlin", version.ref = "mockito-kotlin" }
+junit-platform-engine = { module = "org.junit.platform:junit-platform-engine", version = "6.0.1" }
+junit-platform-commons = { module = "org.junit.platform:junit-platform-commons", version = "6.0.1" }
 
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
