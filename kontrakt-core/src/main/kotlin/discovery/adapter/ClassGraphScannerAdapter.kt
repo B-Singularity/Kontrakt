@@ -1,5 +1,6 @@
 package discovery.adapter
 
+import discovery.domain.vo.ScanScope
 import discovery.spi.ClasspathScanner
 import io.github.classgraph.ClassGraph
 import io.github.classgraph.ScanResult
@@ -10,10 +11,10 @@ import kotlin.reflect.KClass
 class ClassGraphScannerAdapter : ClasspathScanner {
 
     override suspend fun findAnnotatedInterfaces(
-        rootPackage: String,
+        scope: ScanScope,
         annotation: KClass<out Annotation>,
     ): List<KClass<*>> = withContext(Dispatchers.IO) {
-        scan(rootPackage) { scanResult ->
+        scan(scope) { scanResult ->
             scanResult
                 .getClassesWithAnnotation(annotation.java.name)
                 .filter { it.isInterface }
@@ -23,10 +24,10 @@ class ClassGraphScannerAdapter : ClasspathScanner {
     }
 
     override suspend fun findAnnotatedClasses(
-        rootPackage: String,
+        scope: ScanScope,
         annotation: KClass<out Annotation>
     ): List<KClass<*>> = withContext(Dispatchers.IO) {
-        scan(rootPackage) { scanResult ->
+        scan(scope) { scanResult ->
             scanResult
                 .getClassesWithAnnotation(annotation.java.name)
                 .filter { !it.isInterface && !it.isAbstract }
@@ -36,10 +37,10 @@ class ClassGraphScannerAdapter : ClasspathScanner {
     }
 
     override suspend fun findAllImplementations(
-        rootPackage: String,
+        scope: ScanScope,
         targetInterface: KClass<*>,
     ): List<KClass<*>> = withContext(Dispatchers.IO) {
-        scan(rootPackage) { scanResult ->
+        scan(scope) { scanResult ->
             scanResult
                 .getClassesImplementing(targetInterface.java.name)
                 .filter { !it.isInterface && !it.isAbstract }
@@ -48,12 +49,24 @@ class ClassGraphScannerAdapter : ClasspathScanner {
         }
     }
 
-    private fun <T> scan(rootPackage: String, block: (ScanResult) -> List<T>): List<T> {
-        return ClassGraph()
-            .acceptPackages(rootPackage)
+    private fun <T> scan(scope: ScanScope, block: (ScanResult) -> List<T>): List<T> {
+        val classGraph = ClassGraph()
             .enableAnnotationInfo()
             .enableClassInfo()
-            .scan()
-            .use(block)
+
+        when (scope) {
+            is ScanScope.All -> {
+                classGraph.acceptPackages("")
+            }
+
+            is ScanScope.Packages -> {
+                classGraph.acceptPackages(*scope.packageNames.toTypedArray())
+            }
+
+            is ScanScope.Classes -> {
+                classGraph.acceptClasses(*scope.classNames.toTypedArray())
+            }
+        }
+        return classGraph.scan().use(block)
     }
 }

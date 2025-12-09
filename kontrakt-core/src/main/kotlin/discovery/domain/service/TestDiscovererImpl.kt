@@ -9,6 +9,7 @@ import discovery.domain.aggregate.TestSpecification.TestMode
 import discovery.domain.vo.DependencyMetadata
 import discovery.domain.vo.DependencyMetadata.MockingStrategy
 import discovery.domain.vo.DiscoveredTestTarget
+import discovery.domain.vo.ScanScope
 import discovery.spi.ClasspathScanner
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.Dispatchers
@@ -23,16 +24,16 @@ class TestDiscovererImpl(
     private val logger = KotlinLogging.logger {}
 
     override suspend fun discover(
-        rootPackage: String,
+        scope: ScanScope,
         contractMarker: KClass<out Annotation>,
     ): Result<List<TestSpecification>> =
         runCatching {
-            logger.info { "Starting test discovery for root package: $rootPackage" }
+            logger.info { "Starting test discovery with scope: $scope" }
 
             withContext(Dispatchers.IO) {
-                val contractSpecs = scanner.findAnnotatedInterfaces(rootPackage, contractMarker)
+                val contractSpecs = scanner.findAnnotatedInterfaces(scope, contractMarker)
                     .flatMap { contract ->
-                        scanner.findAllImplementations(rootPackage, contract)
+                        scanner.findAllImplementations(scope, contract)
                             .map { impl -> impl to contract }
                     }
                     .mapNotNull { (impl, contract) ->
@@ -42,7 +43,7 @@ class TestDiscovererImpl(
                             }
                             .getOrNull()
                     }
-                val manualSpecs = scanner.findAnnotatedClasses(rootPackage, KontraktTest::class)
+                val manualSpecs = scanner.findAnnotatedClasses(scope, KontraktTest::class)
                     .mapNotNull { testClass ->
                         createSpecificationForClass(testClass, setOf(TestMode.UserScenario))
                             .onFailure { e ->

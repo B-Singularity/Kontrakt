@@ -5,5 +5,5 @@ sealed interface ScanScope {
 
     data class Packages(val packageNames: List<String>) : ScanScope
 
-    data class Classes(val classes: List<String>) : ScanScope
+    data class Classes(val classNames: List<String>) : ScanScope
 }

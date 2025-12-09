@@ -1,6 +1,7 @@
 package discovery.api
 
 import discovery.domain.aggregate.TestSpecification
+import discovery.domain.vo.ScanScope
 import kotlin.reflect.KClass
 
 interface TestDiscoverer {
@@ -14,7 +15,7 @@ interface TestDiscoverer {
      * @return A `Result` containing a list of all discovered `TestSpecification`s, or an exception if the scan fails.
      */
     suspend fun discover(
-        rootPackage: String,
+        scope: ScanScope,
         contractMarker: KClass<out Annotation>,
     ): Result<List<TestSpecification>>
 }

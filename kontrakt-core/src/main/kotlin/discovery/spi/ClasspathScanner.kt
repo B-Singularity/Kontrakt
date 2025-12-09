@@ -1,20 +1,21 @@
 package discovery.spi
 
+import discovery.domain.vo.ScanScope
 import kotlin.reflect.KClass
 
 interface ClasspathScanner {
     suspend fun findAnnotatedInterfaces(
-        rootPackage: String,
+        scope: ScanScope,
         annotation: KClass<out Annotation>,
     ): List<KClass<*>>
 
     suspend fun findAnnotatedClasses(
-        rootPackage: String,
+        scope: ScanScope,
         annotation: KClass<out Annotation>,
     ): List<KClass<*>>
 
     suspend fun findAllImplementations(
-        rootPackage: String,
+        scope: ScanScope,
         targetInterface: KClass<*>,
     ): List<KClass<*>>
 }
