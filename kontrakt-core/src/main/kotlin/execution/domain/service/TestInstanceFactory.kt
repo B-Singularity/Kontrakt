@@ -1,24 +1,26 @@
 package execution.domain.service
 
-
 import common.reflection.unwrapped
+import discovery.api.KontraktConfigurationException
 import discovery.domain.aggregate.TestSpecification
 import discovery.domain.vo.DependencyMetadata
 import execution.domain.entity.EphemeralTestContext
 import execution.spi.MockingEngine
+import execution.spi.ScenarioControl
 import kotlin.reflect.KClass
 
 class TestInstanceFactory(
-    private val mockingEngine: MockingEngine
+    private val mockingEngine: MockingEngine,
+    private val scenarioControl: ScenarioControl
 ) {
     fun create(spec: TestSpecification): EphemeralTestContext {
-        val context = EphemeralTestContext(spec, mockingEngine)
+        val context = EphemeralTestContext(spec, mockingEngine, scenarioControl)
         try {
             val targetInstance = resolve(spec.target.kClass, context, mutableSetOf())
             context.registerTarget(targetInstance)
         } catch (e: Throwable) {
             val cause = e.unwrapped
-            throw IllegalStateException(
+            throw KontraktConfigurationException(
                 "Failed to create test target '${spec.target.displayName}': ${cause.message}",
                 cause
             )
@@ -34,7 +36,7 @@ class TestInstanceFactory(
         context.getDependency(type)?.let { return it }
 
         if (type in dependencyPath) {
-            throw IllegalStateException(
+            throw KontraktConfigurationException(
                 "Circular dependency detected: ${dependencyPath.joinToString(" -> ") { it.simpleName.toString() }} -> ${type.simpleName}"
             )
         }
@@ -50,6 +52,7 @@ class TestInstanceFactory(
                     is DependencyMetadata.MockingStrategy.StatefulFake -> mockingEngine.createFake(type)
                     is DependencyMetadata.MockingStrategy.StatelessMock -> mockingEngine.createMock(type)
                     is DependencyMetadata.MockingStrategy.Environment -> mockingEngine.createMock(type)
+                    is DependencyMetadata.MockingStrategy.Real -> createByConstructor(type, context, dependencyPath)
                 }
             } else {
                 createByConstructor(type, context, dependencyPath)
@@ -81,7 +84,7 @@ class TestInstanceFactory(
 
         } catch (e: Throwable) {
             val cause = e.unwrapped
-            throw IllegalStateException(
+            throw KontraktConfigurationException(
                 "Failed to instantiate class [${type.qualifiedName}]: ${cause.message}",
                 cause
             )
