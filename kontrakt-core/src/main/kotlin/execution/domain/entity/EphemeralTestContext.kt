@@ -9,12 +9,15 @@ import kotlin.reflect.KClass
 class EphemeralTestContext(
     val specification: TestSpecification,
     val mockingEngine: MockingEngine,
-    val scenarioControl: ScenarioControl
+    val scenarioControl: ScenarioControl,
 ) {
     private val dependencies = mutableMapOf<KClass<*>, Any>()
     private lateinit var targetInstance: Any
 
-    fun registerDependency(type: KClass<*>, instance: Any) {
+    fun registerDependency(
+        type: KClass<*>,
+        instance: Any,
+    ) {
         dependencies[type] = instance
     }
 
@@ -30,5 +33,4 @@ class EphemeralTestContext(
         }
         return targetInstance
     }
-
 }

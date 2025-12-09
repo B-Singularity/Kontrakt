@@ -17,7 +17,6 @@ import kotlin.reflect.jvm.javaMethod
 import kotlin.reflect.jvm.kotlinFunction
 
 class DefaultScenarioExecutor : TestScenarioExecutor {
-
     private val logger = KotlinLogging.logger {}
     private lateinit var fixtureGenerator: FixtureGenerator
     private val contractValidator = ContractValidator()
@@ -31,35 +30,38 @@ class DefaultScenarioExecutor : TestScenarioExecutor {
         val specification = context.specification
         val targetClass = specification.target.kClass.java
 
-        val contractInterface = targetClass.interfaces.firstOrNull()
-            ?: return emptyList()
+        val contractInterface =
+            targetClass.interfaces.firstOrNull()
+                ?: return emptyList()
 
         val implementationKClass = testTargetInstance::class
 
         return contractInterface.methods
             .filter { !it.isBridge && !it.isSynthetic }
             .map { contractMethod ->
-                val implementationFunction = implementationKClass.functions.find { kFunc ->
-                    if (kFunc.name != contractMethod.name) return@find false
+                val implementationFunction =
+                    implementationKClass.functions.find { kFunc ->
+                        if (kFunc.name != contractMethod.name) return@find false
 
-                    val kFuncAsJava = kFunc.javaMethod ?: return@find false
+                        val kFuncAsJava = kFunc.javaMethod ?: return@find false
 
-                    kFuncAsJava.name == contractMethod.name &&
+                        kFuncAsJava.name == contractMethod.name &&
                             kFuncAsJava.parameterTypes.contentEquals(contractMethod.parameterTypes)
-                } ?: return@map AssertionRecord(
-                    AssertionStatus.FAILED,
-                    "Method '${contractMethod.name}' not found",
-                    null,
-                    null
-                )
-
-                val contractKFunc = contractMethod.kotlinFunction
-                    ?: return@map AssertionRecord(
+                    } ?: return@map AssertionRecord(
                         AssertionStatus.FAILED,
-                        "Reflection failed: Could not resolve Kotlin function for '${contractMethod.name}'",
-                        "KFunction",
-                        "null"
+                        "Method '${contractMethod.name}' not found",
+                        null,
+                        null,
                     )
+
+                val contractKFunc =
+                    contractMethod.kotlinFunction
+                        ?: return@map AssertionRecord(
+                            AssertionStatus.FAILED,
+                            "Reflection failed: Could not resolve Kotlin function for '${contractMethod.name}'",
+                            "KFunction",
+                            "null",
+                        )
 
                 executeMethod(contractMethod, implementationFunction, contractKFunc, context)
             }
@@ -69,9 +71,9 @@ class DefaultScenarioExecutor : TestScenarioExecutor {
         contractMethod: Method,
         implFunc: KFunction<*>,
         contractKFunc: KFunction<*>,
-        context: EphemeralTestContext
-    ): AssertionRecord {
-        return try {
+        context: EphemeralTestContext,
+    ): AssertionRecord =
+        try {
             val args = createArguments(implFunc, context)
 
             val result = implFunc.callBy(args)
@@ -82,7 +84,7 @@ class DefaultScenarioExecutor : TestScenarioExecutor {
                 status = AssertionStatus.PASSED,
                 message = "Method '${contractMethod.name}' executed successfully and satisfied contract.",
                 expected = "No Exception & Valid Return",
-                actual = "Success"
+                actual = "Success",
             )
         } catch (e: Throwable) {
             val rootCause = e.unwrapped
@@ -93,7 +95,7 @@ class DefaultScenarioExecutor : TestScenarioExecutor {
                     status = AssertionStatus.FAILED,
                     message = "Contract Violation: ${rootCause.message}",
                     expected = "Constraint Compliance",
-                    actual = "Violation"
+                    actual = "Violation",
                 )
             } else {
                 logger.error(rootCause) { "Unexpected Exception in ${contractMethod.name}" }
@@ -101,15 +103,14 @@ class DefaultScenarioExecutor : TestScenarioExecutor {
                     status = AssertionStatus.FAILED,
                     message = "Method '${contractMethod.name}' threw an exception: ${rootCause.message}",
                     expected = "No Exception",
-                    actual = rootCause.javaClass.simpleName
+                    actual = rootCause.javaClass.simpleName,
                 )
             }
         }
-    }
 
     private fun createArguments(
         function: KFunction<*>,
-        context: EphemeralTestContext
+        context: EphemeralTestContext,
     ): Map<KParameter, Any?> {
         val arguments = mutableMapOf<KParameter, Any?>()
 

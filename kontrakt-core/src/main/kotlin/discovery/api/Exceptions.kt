@@ -9,7 +9,7 @@ package discovery.api
  */
 open class KontraktException(
     message: String,
-    cause: Throwable? = null
+    cause: Throwable? = null,
 ) : RuntimeException(message, cause)
 
 /**
@@ -23,7 +23,7 @@ open class KontraktException(
  */
 class KontraktConfigurationException(
     message: String,
-    cause: Throwable? = null
+    cause: Throwable? = null,
 ) : KontraktException("[Configuration Error] $message", cause)
 
 /**
@@ -36,7 +36,7 @@ class KontraktConfigurationException(
  */
 class ContractViolationException(
     message: String,
-    cause: Throwable? = null
+    cause: Throwable? = null,
 ) : KontraktException("[Contract Violation] $message", cause)
 
 /**
@@ -49,5 +49,5 @@ class ContractViolationException(
  */
 class KontraktInternalException(
     message: String,
-    cause: Throwable? = null
+    cause: Throwable? = null,
 ) : KontraktException("[Internal Error] $message", cause)

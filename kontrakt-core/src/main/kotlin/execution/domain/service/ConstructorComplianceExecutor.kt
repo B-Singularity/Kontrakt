@@ -8,7 +8,7 @@ import kotlin.reflect.KFunction
 import kotlin.reflect.full.primaryConstructor
 
 class ConstructorComplianceExecutor(
-    private val fixtureGenerator: FixtureGenerator
+    private val fixtureGenerator: FixtureGenerator,
 ) {
     fun validateConstructor(context: EphemeralTestContext): List<AssertionRecord> {
         val targetClass = context.specification.target.kClass
@@ -28,17 +28,15 @@ class ConstructorComplianceExecutor(
         return records
     }
 
-    private fun testValidConstructor(
-        constructor: KFunction<*>
-    ): AssertionRecord {
-        return try {
+    private fun testValidConstructor(constructor: KFunction<*>): AssertionRecord =
+        try {
             val args = constructor.parameters.associateWith { fixtureGenerator.generate(it) }
             constructor.callBy(args)
             AssertionRecord(
                 AssertionStatus.PASSED,
                 "Constructor Sanity Check: Instance created successfully.",
                 "Success",
-                "Success"
+                "Success",
             )
         } catch (e: Throwable) {
             val cause = e.unwrapped
@@ -46,17 +44,16 @@ class ConstructorComplianceExecutor(
                 AssertionStatus.FAILED,
                 "Constructor Sanity Check Failed: ${cause.message}",
                 "Success",
-                cause.javaClass.simpleName
+                cause.javaClass.simpleName,
             )
         }
-    }
 
     private fun testInvalidContructor(
         constructor: KFunction<*>,
         paramName: String?,
-        badValue: Any?
-    ): AssertionRecord {
-        return try {
+        badValue: Any?,
+    ): AssertionRecord =
+        try {
             val args = constructor.parameters.associateWith { fixtureGenerator.generate(it) }.toMutableMap()
 
             val targetParam = constructor.parameters.find { it.name == paramName }!!
@@ -68,7 +65,7 @@ class ConstructorComplianceExecutor(
                 AssertionStatus.FAILED,
                 "Defensive Check Failed: Constructor accepted invalid '$paramName' = $badValue",
                 "Exception Thrown",
-                "Instance Created"
+                "Instance Created",
             )
         } catch (e: Throwable) {
             val cause = e.unwrapped
@@ -76,8 +73,7 @@ class ConstructorComplianceExecutor(
                 AssertionStatus.PASSED,
                 "Defensive Check Passed: Constructor rejected invalid '$paramName' = $badValue",
                 "Exception",
-                cause.javaClass.simpleName
+                cause.javaClass.simpleName,
             )
         }
-    }
 }

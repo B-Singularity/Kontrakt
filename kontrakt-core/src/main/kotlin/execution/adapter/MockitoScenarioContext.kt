@@ -5,15 +5,11 @@ import execution.api.StubbingBuilder
 import org.mockito.Mockito
 
 class MockitoScenarioContext : ScenarioContext {
-
-    override infix fun <T> every(methodCall: () -> T): StubbingBuilder<T> {
-        return MockitoStubbingBuilder(methodCall)
-    }
+    override infix fun <T> every(methodCall: () -> T): StubbingBuilder<T> = MockitoStubbingBuilder(methodCall)
 
     private class MockitoStubbingBuilder<T>(
-        private val methodCall: () -> T
+        private val methodCall: () -> T,
     ) : StubbingBuilder<T> {
-
         override infix fun returns(value: T) {
             try {
                 Mockito.`when`(methodCall()).thenReturn(value)

@@ -7,25 +7,30 @@ import kotlin.reflect.KClass
 data class DependencyMetadata private constructor(
     val name: String,
     val type: KClass<*>,
-    val strategy: MockingStrategy
+    val strategy: MockingStrategy,
 ) {
     sealed interface MockingStrategy {
         data object StatelessMock : MockingStrategy
+
         data object StatefulFake : MockingStrategy
-        data class Environment(val type: EnvType) : MockingStrategy
+
+        data class Environment(
+            val type: EnvType,
+        ) : MockingStrategy
+
         data object Real : MockingStrategy
     }
 
     enum class EnvType {
         TIME,
-        SECURITY
+        SECURITY,
     }
 
     companion object {
         fun create(
             name: String,
             type: KClass<*>,
-            strategy: MockingStrategy
+            strategy: MockingStrategy,
         ): Result<DependencyMetadata> {
             if (name.isBlank()) {
                 return Result.failure(IllegalArgumentException("Name cannot be blank"))

@@ -12,7 +12,10 @@ data class TestSpecification private constructor(
     val requiredDependencies: List<DependencyMetadata>,
 ) {
     sealed interface TestMode {
-        data class ContractAuto(val contractInterface: KClass<*>) : TestMode
+        data class ContractAuto(
+            val contractInterface: KClass<*>,
+        ) : TestMode
+
         data object UserScenario : TestMode
     }
 

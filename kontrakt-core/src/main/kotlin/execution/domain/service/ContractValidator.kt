@@ -1,9 +1,31 @@
 package execution.domain.service
 
-import discovery.api.*
+import discovery.api.AssertFalse
+import discovery.api.AssertTrue
+import discovery.api.DecimalMax
+import discovery.api.DecimalMin
 import discovery.api.Digits
+import discovery.api.DoubleRange
+import discovery.api.Email
+import discovery.api.Future
+import discovery.api.FutureOrPresent
 import discovery.api.IntRange
 import discovery.api.LongRange
+import discovery.api.Negative
+import discovery.api.NegativeOrZero
+import discovery.api.NotBlank
+import discovery.api.NotEmpty
+import discovery.api.NotNull
+import discovery.api.Null
+import discovery.api.Past
+import discovery.api.PastOrPresent
+import discovery.api.Pattern
+import discovery.api.Positive
+import discovery.api.PositiveOrZero
+import discovery.api.Size
+import discovery.api.StringLength
+import discovery.api.Url
+import discovery.api.Uuid
 import java.math.BigDecimal
 import java.time.Instant
 import java.time.LocalTime
@@ -11,14 +33,15 @@ import java.time.ZoneId
 import java.time.chrono.ChronoLocalDate
 import java.time.chrono.ChronoLocalDateTime
 import java.time.chrono.ChronoZonedDateTime
-import java.util.*
+import java.util.Date
 import kotlin.reflect.KAnnotatedElement
 import kotlin.reflect.full.findAnnotation
 
 class ContractValidator {
-
-    fun validate(element: KAnnotatedElement, value: Any?) {
-
+    fun validate(
+        element: KAnnotatedElement,
+        value: Any?,
+    ) {
         if (value == null) {
             if (element.has<NotNull>()) {
                 throw ContractViolationException("NotNull violation: value is null")
@@ -31,7 +54,10 @@ class ContractValidator {
         }
     }
 
-    private fun validateBoolean(element: KAnnotatedElement, value: Boolean) {
+    private fun validateBoolean(
+        element: KAnnotatedElement,
+        value: Boolean,
+    ) {
         if (element.has<AssertTrue>()) {
             ensure(value) { "AssertTrue violation: expected true but got false" }
         }
@@ -40,7 +66,10 @@ class ContractValidator {
         }
     }
 
-    private fun validateNumeric(element: KAnnotatedElement, value: Number) {
+    private fun validateNumeric(
+        element: KAnnotatedElement,
+        value: Number,
+    ) {
         val decimalValue = toBigDecimal(value)
 
         element.find<IntRange>()?.let { range ->
@@ -92,7 +121,9 @@ class ContractValidator {
             val fractionPart = if (decimalValue.scale() < 0) 0 else decimalValue.scale()
 
             ensure(integerPart <= digits.integer) { "Digits integer violation: expected max ${digits.integer} digits but got $integerPart" }
-            ensure(fractionPart <= digits.fraction) { "Digits fraction violation: expected max ${digits.fraction} digits but got $fractionPart" }
+            ensure(
+                fractionPart <= digits.fraction,
+            ) { "Digits fraction violation: expected max ${digits.fraction} digits but got $fractionPart" }
         }
 
         if (element.has<Positive>()) {
@@ -112,7 +143,10 @@ class ContractValidator {
         }
     }
 
-    private fun validteString(element: KAnnotatedElement, value: String) {
+    private fun validteString(
+        element: KAnnotatedElement,
+        value: String,
+    ) {
         element.find<StringLength>()?.let { limit ->
             ensure(value.length in limit.min..limit.max) {
                 "StringLength violation: expected length [${limit.min}..${limit.max}] but got ${value.length}"
@@ -169,7 +203,10 @@ class ContractValidator {
         }
     }
 
-    private fun validateCollection(element: KAnnotatedElement, value: Collection<*>) {
+    private fun validateCollection(
+        element: KAnnotatedElement,
+        value: Collection<*>,
+    ) {
         element.find<Size>()?.let { limit ->
             ensure(value.size in limit.min..limit.max) {
                 "Size violation: expected size [${limit.min}..${limit.max}] but got ${value.size}"
@@ -181,7 +218,10 @@ class ContractValidator {
         }
     }
 
-    private fun validateMap(element: KAnnotatedElement, value: Map<*, *>) {
+    private fun validateMap(
+        element: KAnnotatedElement,
+        value: Map<*, *>,
+    ) {
         element.find<Size>()?.let { limit ->
             ensure(value.size in limit.min..limit.max) {
                 "Size violation: expected size [${limit.min}..${limit.max}] but got ${value.size}"
@@ -192,7 +232,10 @@ class ContractValidator {
         }
     }
 
-    private fun validateArray(element: KAnnotatedElement, value: Array<*>) {
+    private fun validateArray(
+        element: KAnnotatedElement,
+        value: Array<*>,
+    ) {
         element.find<Size>()?.let { limit ->
             ensure(value.size in limit.min..limit.max) {
                 "Size violation: expected size [${limit.min}..${limit.max}] but got ${value.size}"
@@ -203,7 +246,10 @@ class ContractValidator {
         }
     }
 
-    private fun validateTime(element: KAnnotatedElement, value: Any) {
+    private fun validateTime(
+        element: KAnnotatedElement,
+        value: Any,
+    ) {
         val now = Instant.now()
         val target = toInstant(value) ?: return
 
@@ -221,43 +267,53 @@ class ContractValidator {
         }
     }
 
-    private fun isTimeType(value: Any): Boolean {
-        return value is Instant || value is Date || value is ChronoLocalDate || value is ChronoLocalDateTime<*> || value is ChronoZonedDateTime<*>
-    }
+    private fun isTimeType(value: Any): Boolean =
+        value is Instant ||
+            value is Date ||
+            value is ChronoLocalDate ||
+            value is ChronoLocalDateTime<*> ||
+            value is ChronoZonedDateTime<*>
 
-    private fun toInstant(value: Any): Instant? = when (value) {
-        is Instant -> value
-        is Date -> value.toInstant()
-        is ChronoLocalDate -> runCatching {
-            value.atTime(LocalTime.MIDNIGHT).atZone(ZoneId.systemDefault()).toInstant()
-        }.getOrNull()
+    private fun toInstant(value: Any): Instant? =
+        when (value) {
+            is Instant -> value
+            is Date -> value.toInstant()
+            is ChronoLocalDate ->
+                runCatching {
+                    value.atTime(LocalTime.MIDNIGHT).atZone(ZoneId.systemDefault()).toInstant()
+                }.getOrNull()
 
-        is ChronoLocalDateTime<*> -> value.atZone(ZoneId.systemDefault()).toInstant()
-        is ChronoZonedDateTime<*> -> value.toInstant()
-        else -> null
-    }
+            is ChronoLocalDateTime<*> -> value.atZone(ZoneId.systemDefault()).toInstant()
+            is ChronoZonedDateTime<*> -> value.toInstant()
+            else -> null
+        }
 
-    private fun toBigDecimal(value: Number): BigDecimal = when (value) {
-        is BigDecimal -> value
-        is Double -> BigDecimal.valueOf(value)
-        is Float -> BigDecimal.valueOf(value.toDouble())
-        is Long -> BigDecimal.valueOf(value)
-        is Int -> BigDecimal.valueOf(value.toLong())
-        is Short -> BigDecimal.valueOf(value.toLong())
-        is Byte -> BigDecimal.valueOf(value.toLong())
-        else -> BigDecimal(value.toString())
-    }
-
+    private fun toBigDecimal(value: Number): BigDecimal =
+        when (value) {
+            is BigDecimal -> value
+            is Double -> BigDecimal.valueOf(value)
+            is Float -> BigDecimal.valueOf(value.toDouble())
+            is Long -> BigDecimal.valueOf(value)
+            is Int -> BigDecimal.valueOf(value.toLong())
+            is Short -> BigDecimal.valueOf(value.toLong())
+            is Byte -> BigDecimal.valueOf(value.toLong())
+            else -> BigDecimal(value.toString())
+        }
 
     private inline fun <reified T : Annotation> KAnnotatedElement.find(): T? = findAnnotation<T>()
 
     private inline fun <reified T : Annotation> KAnnotatedElement.has(): Boolean = findAnnotation<T>() != null
 
-    private inline fun ensure(condition: Boolean, lazyMessage: () -> String) {
+    private inline fun ensure(
+        condition: Boolean,
+        lazyMessage: () -> String,
+    ) {
         if (!condition) {
             throw ContractViolationException(lazyMessage())
         }
     }
 
-    class ContractViolationException(message: String) : RuntimeException(message)
+    class ContractViolationException(
+        message: String,
+    ) : RuntimeException(message)
 }

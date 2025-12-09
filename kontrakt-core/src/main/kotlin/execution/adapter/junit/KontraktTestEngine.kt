@@ -13,35 +13,46 @@ import execution.domain.service.TestInstanceFactory
 import execution.domain.vo.TestResult
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.runBlocking
-import org.junit.platform.engine.*
+import org.junit.platform.engine.EngineDiscoveryRequest
+import org.junit.platform.engine.EngineExecutionListener
+import org.junit.platform.engine.ExecutionRequest
+import org.junit.platform.engine.TestDescriptor
+import org.junit.platform.engine.TestEngine
+import org.junit.platform.engine.TestExecutionResult
+import org.junit.platform.engine.UniqueId
 import org.junit.platform.engine.discovery.ClassSelector
 import org.junit.platform.engine.discovery.PackageSelector
 
 class KontraktTestEngine : TestEngine {
-
     private val logger = KotlinLogging.logger {}
 
     override fun getId(): String = "kontrakt-engine"
 
-    override fun discover(request: EngineDiscoveryRequest, uniqueId: UniqueId): TestDescriptor {
+    override fun discover(
+        request: EngineDiscoveryRequest,
+        uniqueId: UniqueId,
+    ): TestDescriptor {
         val engineDescriptor = KontraktTestDescriptor(uniqueId, "kontrakt")
         val scanScope = resolveScanScope(request)
 
         val scanner = ClassGraphScannerAdapter()
         val discoverer = TestDiscovererImpl(scanner)
 
-        val specs = runBlocking {
-            discoverer.discover(scanScope, Contract::class)
-                .onFailure { logger.error(it) { "Discovery failed" } }
-                .getOrDefault(emptyList())
-        }
+        val specs =
+            runBlocking {
+                discoverer
+                    .discover(scanScope, Contract::class)
+                    .onFailure { logger.error(it) { "Discovery failed" } }
+                    .getOrDefault(emptyList())
+            }
 
         specs.forEach { spec ->
-            val specDescriptor = KontraktTestDescriptor(
-                uniqueId.append("spec", spec.target.fullyQualifiedName),
-                spec.target.displayName,
-                spec
-            )
+            val specDescriptor =
+                KontraktTestDescriptor(
+                    uniqueId.append("spec", spec.target.fullyQualifiedName),
+                    spec.target.displayName,
+                    spec,
+                )
             engineDescriptor.addChild(specDescriptor)
         }
 
@@ -63,15 +74,19 @@ class KontraktTestEngine : TestEngine {
         listener.executionFinished(engineDescriptor, TestExecutionResult.successful())
     }
 
-    private fun executeSpec(descriptor: KontraktTestDescriptor, listener: EngineExecutionListener) {
+    private fun executeSpec(
+        descriptor: KontraktTestDescriptor,
+        listener: EngineExecutionListener,
+    ) {
         listener.executionStarted(descriptor)
 
         try {
             val engineAdapter = MockitoEngineAdapter()
-            val instanceFactory = TestInstanceFactory(
-                mockingEngine = engineAdapter,
-                scenarioControl = engineAdapter
-            )
+            val instanceFactory =
+                TestInstanceFactory(
+                    mockingEngine = engineAdapter,
+                    scenarioControl = engineAdapter,
+                )
 
             val scenarioExecutor = DefaultScenarioExecutor()
 
@@ -80,7 +95,6 @@ class KontraktTestEngine : TestEngine {
             val result = execution.execute()
 
             reportResult(descriptor, result, listener)
-
         } catch (e: Exception) {
             logger.error(e) { "💥 Framework CRASH: ${descriptor.displayName}" }
             listener.executionFinished(descriptor, TestExecutionResult.failed(e))
@@ -90,7 +104,7 @@ class KontraktTestEngine : TestEngine {
     private fun reportResult(
         descriptor: TestDescriptor,
         result: TestResult,
-        listener: EngineExecutionListener
+        listener: EngineExecutionListener,
     ) {
         when (val status = result.finalStatus) {
             is TestStatus.Passed -> {
@@ -99,12 +113,13 @@ class KontraktTestEngine : TestEngine {
             }
 
             is TestStatus.AssertionFailed -> {
-                val error = AssertionError(
-                    "❌ ASSERTION FAILED: ${descriptor.displayName}\n" +
+                val error =
+                    AssertionError(
+                        "❌ ASSERTION FAILED: ${descriptor.displayName}\n" +
                             "   Expected: ${status.expected}\n" +
                             "   Actual:   ${status.actual}\n" +
-                            "   Message:  ${status.message}"
-                )
+                            "   Message:  ${status.message}",
+                    )
                 logger.error { error.message }
                 listener.executionFinished(descriptor, TestExecutionResult.failed(error))
             }

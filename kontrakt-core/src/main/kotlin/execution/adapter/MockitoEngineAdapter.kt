@@ -11,14 +11,16 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import org.mockito.Mockito
 import org.mockito.invocation.InvocationOnMock
 import org.mockito.stubbing.Answer
-import java.util.*
+import java.util.Optional
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.reflect.KClass
 import kotlin.reflect.full.memberProperties
 import kotlin.reflect.jvm.isAccessible
 import kotlin.reflect.jvm.kotlinFunction
 
-class MockitoEngineAdapter : MockingEngine, ScenarioControl {
+class MockitoEngineAdapter :
+    MockingEngine,
+    ScenarioControl {
     private val logger = KotlinLogging.logger {}
 
     // [Circular Dependency Resolution]
@@ -35,9 +37,8 @@ class MockitoEngineAdapter : MockingEngine, ScenarioControl {
      *
      * It also warns if state-changing methods (e.g., save, delete) are called on a stateless mock.
      */
-    override fun <T : Any> createMock(classToMock: KClass<T>): T {
-        return Mockito.mock(classToMock.java, GenerativeAnswer(fixtureGenerator, classToMock, logger))
-    }
+    override fun <T : Any> createMock(classToMock: KClass<T>): T =
+        Mockito.mock(classToMock.java, GenerativeAnswer(fixtureGenerator, classToMock, logger))
 
     /**
      * Creates a **Stateful Fake** for repositories or stores.
@@ -51,16 +52,13 @@ class MockitoEngineAdapter : MockingEngine, ScenarioControl {
         return Mockito.mock(classToFake.java, smartAnswer)
     }
 
-    override fun createScenarioContext(): ScenarioContext {
-        return MockitoScenarioContext()
-    }
+    override fun createScenarioContext(): ScenarioContext = MockitoScenarioContext()
 
     private class GenerativeAnswer(
         private val generator: FixtureGenerator,
         private val mockType: KClass<*>,
-        private val logger: KLogger
+        private val logger: KLogger,
     ) : Answer<Any?> {
-
         override fun answer(invocation: InvocationOnMock): Any? {
             val methodName = invocation.method.name
 
@@ -69,8 +67,8 @@ class MockitoEngineAdapter : MockingEngine, ScenarioControl {
             if (isSuspiciousStatefulMethod(methodName)) {
                 logger.warn {
                     "⚠️ Potential Configuration Issue: " +
-                            "Method '$methodName' was called on Stateless Mock '${mockType.simpleName}'. " +
-                            "If this is a Repository, please annotate interface '${mockType.simpleName}' with '@Stateful' to enable In-Memory storage."
+                        "Method '$methodName' was called on Stateless Mock '${mockType.simpleName}'. " +
+                        "If this is a Repository, please annotate interface '${mockType.simpleName}' with '@Stateful' to enable In-Memory storage."
                 }
             }
 
@@ -82,14 +80,13 @@ class MockitoEngineAdapter : MockingEngine, ScenarioControl {
             return generator.generateByType(returnType)
         }
 
-        private fun isSuspiciousStatefulMethod(name: String): Boolean {
-            return name.startsWith("save") ||
-                    name.startsWith("insert") ||
-                    name.startsWith("update") ||
-                    name.startsWith("delete") ||
-                    name.startsWith("remove") ||
-                    name.startsWith("store")
-        }
+        private fun isSuspiciousStatefulMethod(name: String): Boolean =
+            name.startsWith("save") ||
+                name.startsWith("insert") ||
+                name.startsWith("update") ||
+                name.startsWith("delete") ||
+                name.startsWith("remove") ||
+                name.startsWith("store")
     }
 
     /**
@@ -98,7 +95,7 @@ class MockitoEngineAdapter : MockingEngine, ScenarioControl {
      * and falls back to generation for unknown methods.
      */
     private class StatefulOrGenrativeAnswer(
-        private val generator: FixtureGenerator
+        private val generator: FixtureGenerator,
     ) : Answer<Any?> {
         private val store = ConcurrentHashMap<Any, Any>()
 
@@ -163,15 +160,17 @@ class MockitoEngineAdapter : MockingEngine, ScenarioControl {
         // --- Heuristics Helpers ---
         private fun isSave(n: String) = n.startsWith("save") || n.startsWith("create") || n.startsWith("register")
 
-        private fun isFindById(n: String, args: Array<Any>) =
-            (n.startsWith("find") || n.startsWith("get")) && args.size == 1 && !n.contains("All") && !n.contains("By")
+        private fun isFindById(
+            n: String,
+            args: Array<Any>,
+        ) = (n.startsWith("find") || n.startsWith("get")) && args.size == 1 && !n.contains("All") && !n.contains("By")
 
         private fun isFindAll(n: String) = n.contains("All") || n.contains("findAll") || n == "list"
 
         private fun isDelete(n: String) = n.startsWith("delete") || n.startsWith("remove")
 
-        private fun extractId(entity: Any): Any? {
-            return try {
+        private fun extractId(entity: Any): Any? =
+            try {
                 val kClass = entity::class
                 kClass.memberProperties.firstOrNull { it.name.equals("id", ignoreCase = true) }?.let {
                     it.isAccessible = true
@@ -180,19 +179,15 @@ class MockitoEngineAdapter : MockingEngine, ScenarioControl {
             } catch (e: Exception) {
                 null
             }
-        }
     }
 
     private class MockitoScenarioContext : ScenarioContext {
-        override infix fun <T> every(methodCall: () -> T): StubbingBuilder<T> {
-            return MockitoStubbingBuilder(methodCall)
-        }
+        override infix fun <T> every(methodCall: () -> T): StubbingBuilder<T> = MockitoStubbingBuilder(methodCall)
     }
 
     private class MockitoStubbingBuilder<T>(
-        private val methodCall: () -> T
+        private val methodCall: () -> T,
     ) : StubbingBuilder<T> {
-
         override infix fun returns(value: T) {
             try {
                 val ongoingStubbing = Mockito.`when`(methodCall())
@@ -200,7 +195,7 @@ class MockitoEngineAdapter : MockingEngine, ScenarioControl {
             } catch (e: Exception) {
                 throw KontraktConfigurationException(
                     "Failed to apply stubbing. Ensure you are calling a method on a Mock object within 'every { ... }'.",
-                    e
+                    e,
                 )
             }
         }
@@ -212,7 +207,7 @@ class MockitoEngineAdapter : MockingEngine, ScenarioControl {
             } catch (e: Exception) {
                 throw KontraktConfigurationException(
                     "Failed to stub exception. Ensure you are calling a method on a Mock object.",
-                    e
+                    e,
                 )
             }
         }
