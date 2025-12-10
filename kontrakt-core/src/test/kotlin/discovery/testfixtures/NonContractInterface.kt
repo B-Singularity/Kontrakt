@@ -1,3 +1,0 @@
-package discovery.testfixtures
-
-interface NonContractInterface

@@ -24,6 +24,7 @@ mockito-core = { module = "org.mockito:mockito-core", version.ref = "mockito-cor
 mockito-kotlin = { module = "org.mockito.kotlin:mockito-kotlin", version.ref = "mockito-kotlin" }
 junit-platform-engine = { module = "org.junit.platform:junit-platform-engine", version = "6.0.1" }
 junit-platform-commons = { module = "org.junit.platform:junit-platform-commons", version = "6.0.1" }
+kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
 
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
