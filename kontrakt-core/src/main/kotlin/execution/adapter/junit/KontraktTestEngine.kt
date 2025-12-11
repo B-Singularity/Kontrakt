@@ -5,11 +5,7 @@ import discovery.api.Contract
 import discovery.api.KontraktInternalException
 import discovery.domain.service.TestDiscovererImpl
 import discovery.domain.vo.ScanScope
-import execution.adapter.MockitoEngineAdapter
 import execution.domain.TestStatus
-import execution.domain.aggregate.TestExecution
-import execution.domain.service.DefaultScenarioExecutor
-import execution.domain.service.TestInstanceFactory
 import execution.domain.vo.TestResult
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.runBlocking
@@ -23,7 +19,9 @@ import org.junit.platform.engine.UniqueId
 import org.junit.platform.engine.discovery.ClassSelector
 import org.junit.platform.engine.discovery.PackageSelector
 
-class KontraktTestEngine : TestEngine {
+class KontraktTestEngine(
+    private val runtimeFactory: KontraktRuntimeFactory = DefaultRuntimeFactory()
+) : TestEngine {
     private val logger = KotlinLogging.logger {}
 
     override fun getId(): String = "kontrakt-engine"
@@ -81,16 +79,10 @@ class KontraktTestEngine : TestEngine {
         listener.executionStarted(descriptor)
 
         try {
-            val engineAdapter = MockitoEngineAdapter()
-            val instanceFactory =
-                TestInstanceFactory(
-                    mockingEngine = engineAdapter,
-                    scenarioControl = engineAdapter,
-                )
 
-            val scenarioExecutor = DefaultScenarioExecutor()
+            val scenarioExecutor = runtimeFactory.createExecutor()
 
-            val execution = TestExecution(descriptor.spec!!, instanceFactory, scenarioExecutor)
+            val execution = runtimeFactory.createExecution(descriptor.spec!!, scenarioExecutor)
 
             val result = execution.execute()
 
@@ -116,9 +108,9 @@ class KontraktTestEngine : TestEngine {
                 val error =
                     AssertionError(
                         "❌ ASSERTION FAILED: ${descriptor.displayName}\n" +
-                            "   Expected: ${status.expected}\n" +
-                            "   Actual:   ${status.actual}\n" +
-                            "   Message:  ${status.message}",
+                                "   Expected: ${status.expected}\n" +
+                                "   Actual:   ${status.actual}\n" +
+                                "   Message:  ${status.message}",
                     )
                 logger.error { error.message }
                 listener.executionFinished(descriptor, TestExecutionResult.failed(error))
