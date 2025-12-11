@@ -48,7 +48,7 @@ class MockitoEngineAdapter :
      * - Falls back to [GenerativeAnswer] for complex queries that cannot be simulated by the Map.
      */
     override fun <T : Any> createFake(classToFake: KClass<T>): T {
-        val smartAnswer = StatefulOrGenrativeAnswer(fixtureGenerator)
+        val smartAnswer = StatefulOrGenerativeAnswer(fixtureGenerator)
         return Mockito.mock(classToFake.java, smartAnswer)
     }
 
@@ -67,8 +67,8 @@ class MockitoEngineAdapter :
             if (isSuspiciousStatefulMethod(methodName)) {
                 logger.warn {
                     "⚠️ Potential Configuration Issue: " +
-                        "Method '$methodName' was called on Stateless Mock '${mockType.simpleName}'. " +
-                        "If this is a Repository, please annotate interface '${mockType.simpleName}' with '@Stateful' to enable In-Memory storage."
+                            "Method '$methodName' was called on Stateless Mock '${mockType.simpleName}'. " +
+                            "If this is a Repository, please annotate interface '${mockType.simpleName}' with '@Stateful' to enable In-Memory storage."
                 }
             }
 
@@ -82,11 +82,11 @@ class MockitoEngineAdapter :
 
         private fun isSuspiciousStatefulMethod(name: String): Boolean =
             name.startsWith("save") ||
-                name.startsWith("insert") ||
-                name.startsWith("update") ||
-                name.startsWith("delete") ||
-                name.startsWith("remove") ||
-                name.startsWith("store")
+                    name.startsWith("insert") ||
+                    name.startsWith("update") ||
+                    name.startsWith("delete") ||
+                    name.startsWith("remove") ||
+                    name.startsWith("store")
     }
 
     /**
@@ -94,7 +94,7 @@ class MockitoEngineAdapter :
      * A hybrid answer that simulates CRUD operations using a Map,
      * and falls back to generation for unknown methods.
      */
-    private class StatefulOrGenrativeAnswer(
+    private class StatefulOrGenerativeAnswer(
         private val generator: FixtureGenerator,
     ) : Answer<Any?> {
         private val store = ConcurrentHashMap<Any, Any>()
@@ -160,10 +160,9 @@ class MockitoEngineAdapter :
         // --- Heuristics Helpers ---
         private fun isSave(n: String) = n.startsWith("save") || n.startsWith("create") || n.startsWith("register")
 
-        private fun isFindById(
-            n: String,
-            args: Array<Any>,
-        ) = (n.startsWith("find") || n.startsWith("get")) && args.size == 1 && !n.contains("All") && !n.contains("By")
+        private fun isFindById(n: String, args: Array<Any>) =
+            (n == "findById" || n == "getById") && args.size == 1 ||
+                    ((n.startsWith("find") || n.startsWith("get")) && args.size == 1 && !n.contains("By"))
 
         private fun isFindAll(n: String) = n.contains("All") || n.contains("findAll") || n == "list"
 

@@ -122,7 +122,7 @@ class FixtureGenerator(
         }
 
     fun generateInvalid(param: KParameter): List<Any?> =
-        buildList {
+        buildList<Any?> {
             val type = param.type.classifier as? KClass<*>
 
             if (!param.type.isMarkedNullable) add(null)
@@ -445,7 +445,8 @@ class FixtureGenerator(
             .joinToString("")
     }
 
-    private fun generateRandomNumericString(length: Int): String = (1..length).map { Random.Default.nextInt(0, 10) }.joinToString("")
+    private fun generateRandomNumericString(length: Int): String =
+        (1..length).map { Random.Default.nextInt(0, 10) }.joinToString("")
 
     private fun generatePrimitiveDefaults(type: KClass<*>): Any? =
         when (type) {
