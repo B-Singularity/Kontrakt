@@ -6,16 +6,18 @@ import discovery.domain.vo.DiscoveredTestTarget
 import execution.domain.AssertionStatus
 import execution.domain.entity.EphemeralTestContext
 import execution.spi.MockingEngine
-import org.mockito.Mockito.mock
+import org.junit.jupiter.api.Test
+import org.mockito.kotlin.any
+import org.mockito.kotlin.doReturn
+import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
-import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 abstract class TestScenarioExecutorTest {
 
     protected abstract val executor: TestScenarioExecutor
-
+    
     interface TestContract {
         fun validMethod(input: String): String
 
@@ -29,9 +31,7 @@ abstract class TestScenarioExecutorTest {
 
     class TestImplementation : TestContract {
         override fun validMethod(input: String): String = "Echo: $input"
-
         override fun violationMethod(): Int = -1
-
         override fun errorMethod() {
             throw IllegalStateException("Boom!")
         }
@@ -48,7 +48,8 @@ abstract class TestScenarioExecutorTest {
 
     @Test
     fun `executeScenarios - should execute valid method and return PASSED`() {
-        val context = setupContext(TestContract::class, TestImplementation())
+
+        val context = setupContext(TestImplementation::class, TestImplementation())
 
         val results = executor.executeScenarios(context)
 
@@ -60,7 +61,7 @@ abstract class TestScenarioExecutorTest {
     @Test
     fun `executeScenarios - should inject generated arguments for multiple parameters`() {
 
-        val context = setupContext(TestContract::class, TestImplementation())
+        val context = setupContext(TestImplementation::class, TestImplementation())
 
         val results = executor.executeScenarios(context)
 
@@ -71,7 +72,7 @@ abstract class TestScenarioExecutorTest {
     @Test
     fun `executeScenarios - should capture ContractViolationException and return FAILED`() {
 
-        val context = setupContext(TestContract::class, TestImplementation())
+        val context = setupContext(TestImplementation::class, TestImplementation())
 
         val results = executor.executeScenarios(context)
 
@@ -83,29 +84,43 @@ abstract class TestScenarioExecutorTest {
 
     @Test
     fun `executeScenarios - should capture RuntimeException and return FAILED`() {
-        val context = setupContext(TestContract::class, TestImplementation())
+
+        val context = setupContext(TestImplementation::class, TestImplementation())
 
         val results = executor.executeScenarios(context)
-        
+
         val record = results.find { it.message.contains("errorMethod") }!!
         assertEquals(AssertionStatus.FAILED, record.status)
         assertTrue(record.message.contains("threw an exception"), "Should report exception")
         assertEquals("IllegalStateException", record.actual)
     }
 
+    @Test
+    fun `executeScenarios - should return empty list if implementation does not implement interface`() {
 
-    private fun setupContext(contractClass: kotlin.reflect.KClass<*>, implInstance: Any): EphemeralTestContext {
+        val context = setupContext(GhostImplementation::class, GhostImplementation())
+
+        val results = executor.executeScenarios(context)
+
+        assertTrue(results.isEmpty(), "Should return empty list when no interface is found")
+    }
+
+
+    protected fun setupContext(targetClass: kotlin.reflect.KClass<*>, implInstance: Any): EphemeralTestContext {
         val mockContext = mock<EphemeralTestContext>()
         val mockSpec = mock<TestSpecification>()
         val mockTarget = mock<DiscoveredTestTarget>()
         val mockEngine = mock<MockingEngine>()
+
+        whenever(mockEngine.createMock<Any>(any())).thenAnswer { "DummyArg" }
 
         whenever(mockContext.getTestTarget()).thenReturn(implInstance)
         whenever(mockContext.specification).thenReturn(mockSpec)
         whenever(mockContext.mockingEngine).thenReturn(mockEngine)
 
         whenever(mockSpec.target).thenReturn(mockTarget)
-        whenever(mockTarget.kClass).thenReturn(contractClass)
+
+        whenever(mockTarget.kClass).doReturn(targetClass)
 
         return mockContext
     }

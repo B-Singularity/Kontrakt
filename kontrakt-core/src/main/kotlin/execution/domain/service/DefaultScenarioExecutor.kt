@@ -5,6 +5,7 @@ import execution.api.TestScenarioExecutor
 import execution.domain.AssertionStatus
 import execution.domain.entity.EphemeralTestContext
 import execution.domain.vo.AssertionRecord
+import execution.spi.MockingEngine
 import io.github.oshai.kotlinlogging.KotlinLogging
 import java.lang.reflect.Method
 import java.time.Clock
@@ -16,16 +17,22 @@ import kotlin.reflect.full.functions
 import kotlin.reflect.jvm.javaMethod
 import kotlin.reflect.jvm.kotlinFunction
 
-class DefaultScenarioExecutor : TestScenarioExecutor {
+class DefaultScenarioExecutor(
+    private val clock: Clock = Clock.systemDefaultZone(),
+    private val fixtureFactory: (MockingEngine, Clock) -> FixtureGenerator =
+        { engine, clk -> FixtureGenerator(engine, clk) },
+    private val validatorFactory: (Clock) -> ContractValidator =
+        { clk -> ContractValidator(clk) }
+
+) : TestScenarioExecutor {
     private val logger = KotlinLogging.logger {}
-    private lateinit var fixtureGenerator: FixtureGenerator
-    private lateinit var contractValidator: ContractValidator
 
     override fun executeScenarios(context: EphemeralTestContext): List<AssertionRecord> {
-        val fixedClock = Clock.fixed(Instant.now(), ZoneId.systemDefault())
+        val currentInstant = Instant.now(clock)
+        val fixedClock = Clock.fixed(currentInstant, ZoneId.systemDefault())
 
-        this.fixtureGenerator = FixtureGenerator(context.mockingEngine, fixedClock)
-        this.contractValidator = ContractValidator(fixedClock)
+        val fixtureGenerator = fixtureFactory(context.mockingEngine, fixedClock)
+        val contractValidator = validatorFactory(fixedClock)
 
         val testTargetInstance = context.getTestTarget()
         val specification = context.specification
@@ -64,7 +71,14 @@ class DefaultScenarioExecutor : TestScenarioExecutor {
                             "null",
                         )
 
-                executeMethod(contractMethod, implementationFunction, contractKFunc, context)
+                executeMethod(
+                    contractMethod,
+                    implementationFunction,
+                    contractKFunc,
+                    context,
+                    fixtureGenerator,
+                    contractValidator
+                )
             }
     }
 
@@ -73,9 +87,11 @@ class DefaultScenarioExecutor : TestScenarioExecutor {
         implFunc: KFunction<*>,
         contractKFunc: KFunction<*>,
         context: EphemeralTestContext,
+        fixtureGenerator: FixtureGenerator,
+        contractValidator: ContractValidator
     ): AssertionRecord =
         try {
-            val args = createArguments(implFunc, context)
+            val args = createArguments(implFunc, context, fixtureGenerator)
 
             val result = implFunc.callBy(args)
 
@@ -94,7 +110,7 @@ class DefaultScenarioExecutor : TestScenarioExecutor {
                 logger.error { "Contract Violation in ${contractMethod.name}: ${rootCause.message}" }
                 AssertionRecord(
                     status = AssertionStatus.FAILED,
-                    message = "Contract Violation: ${rootCause.message}",
+                    message = "Contract Violation in method '${contractMethod.name}': ${rootCause.message}",
                     expected = "Constraint Compliance",
                     actual = "Violation",
                 )
@@ -112,6 +128,7 @@ class DefaultScenarioExecutor : TestScenarioExecutor {
     private fun createArguments(
         function: KFunction<*>,
         context: EphemeralTestContext,
+        fixtureGenerator: FixtureGenerator
     ): Map<KParameter, Any?> {
         val arguments = mutableMapOf<KParameter, Any?>()
 
