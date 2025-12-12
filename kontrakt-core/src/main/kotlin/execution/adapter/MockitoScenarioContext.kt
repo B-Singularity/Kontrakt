@@ -1,5 +1,6 @@
 package execution.adapter
 
+import discovery.api.KontraktConfigurationException
 import execution.api.ScenarioContext
 import execution.api.StubbingBuilder
 import org.mockito.Mockito
@@ -14,7 +15,10 @@ class MockitoScenarioContext : ScenarioContext {
             try {
                 Mockito.`when`(methodCall()).thenReturn(value)
             } catch (e: Exception) {
-                throw RuntimeException("Failed to apply stubbing. Ensure you are calling a method on a Mock object.", e)
+                throw KontraktConfigurationException(
+                    "Failed to apply stubbing. Ensure you are calling a method on a Mock object within 'every { ... }'.",
+                    e,
+                )
             }
         }
 
@@ -22,7 +26,10 @@ class MockitoScenarioContext : ScenarioContext {
             try {
                 Mockito.`when`(methodCall()).thenThrow(exception)
             } catch (e: Exception) {
-                throw RuntimeException("Failed to stub exception.", e)
+                throw KontraktConfigurationException(
+                    "Failed to stub exception. Ensure you are calling a method on a Mock object.",
+                    e,
+                )
             }
         }
     }

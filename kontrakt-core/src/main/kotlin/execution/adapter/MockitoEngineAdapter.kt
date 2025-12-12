@@ -1,8 +1,6 @@
 package execution.adapter
 
-import discovery.api.KontraktConfigurationException
 import execution.api.ScenarioContext
-import execution.api.StubbingBuilder
 import execution.domain.service.FixtureGenerator
 import execution.spi.MockingEngine
 import execution.spi.ScenarioControl
@@ -52,7 +50,9 @@ class MockitoEngineAdapter :
         return Mockito.mock(classToFake.java, smartAnswer)
     }
 
-    override fun createScenarioContext(): ScenarioContext = MockitoScenarioContext()
+    override fun createScenarioContext(): ScenarioContext {
+        return MockitoScenarioContext()
+    }
 
     private class GenerativeAnswer(
         private val generator: FixtureGenerator,
@@ -178,37 +178,5 @@ class MockitoEngineAdapter :
             } catch (e: Exception) {
                 null
             }
-    }
-
-    private class MockitoScenarioContext : ScenarioContext {
-        override infix fun <T> every(methodCall: () -> T): StubbingBuilder<T> = MockitoStubbingBuilder(methodCall)
-    }
-
-    private class MockitoStubbingBuilder<T>(
-        private val methodCall: () -> T,
-    ) : StubbingBuilder<T> {
-        override infix fun returns(value: T) {
-            try {
-                val ongoingStubbing = Mockito.`when`(methodCall())
-                ongoingStubbing.thenReturn(value)
-            } catch (e: Exception) {
-                throw KontraktConfigurationException(
-                    "Failed to apply stubbing. Ensure you are calling a method on a Mock object within 'every { ... }'.",
-                    e,
-                )
-            }
-        }
-
-        override infix fun throws(exception: Throwable) {
-            try {
-                val ongoingStubbing = Mockito.`when`(methodCall())
-                ongoingStubbing.thenThrow(exception)
-            } catch (e: Exception) {
-                throw KontraktConfigurationException(
-                    "Failed to stub exception. Ensure you are calling a method on a Mock object.",
-                    e,
-                )
-            }
-        }
     }
 }
