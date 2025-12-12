@@ -19,12 +19,13 @@ import kotlin.reflect.jvm.kotlinFunction
 class DefaultScenarioExecutor : TestScenarioExecutor {
     private val logger = KotlinLogging.logger {}
     private lateinit var fixtureGenerator: FixtureGenerator
-    private val contractValidator = ContractValidator()
+    private lateinit var contractValidator: ContractValidator
 
     override fun executeScenarios(context: EphemeralTestContext): List<AssertionRecord> {
         val fixedClock = Clock.fixed(Instant.now(), ZoneId.systemDefault())
 
-        this.fixtureGenerator = FixtureGenerator(context.mockingEngine)
+        this.fixtureGenerator = FixtureGenerator(context.mockingEngine, fixedClock)
+        this.contractValidator = ContractValidator(fixedClock)
 
         val testTargetInstance = context.getTestTarget()
         val specification = context.specification
@@ -46,7 +47,7 @@ class DefaultScenarioExecutor : TestScenarioExecutor {
                         val kFuncAsJava = kFunc.javaMethod ?: return@find false
 
                         kFuncAsJava.name == contractMethod.name &&
-                            kFuncAsJava.parameterTypes.contentEquals(contractMethod.parameterTypes)
+                                kFuncAsJava.parameterTypes.contentEquals(contractMethod.parameterTypes)
                     } ?: return@map AssertionRecord(
                         AssertionStatus.FAILED,
                         "Method '${contractMethod.name}' not found",

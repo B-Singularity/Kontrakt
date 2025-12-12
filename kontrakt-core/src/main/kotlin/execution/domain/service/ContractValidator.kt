@@ -27,6 +27,7 @@ import discovery.api.StringLength
 import discovery.api.Url
 import discovery.api.Uuid
 import java.math.BigDecimal
+import java.time.Clock
 import java.time.Instant
 import java.time.LocalTime
 import java.time.ZoneId
@@ -37,7 +38,9 @@ import java.util.Date
 import kotlin.reflect.KAnnotatedElement
 import kotlin.reflect.full.findAnnotation
 
-class ContractValidator {
+class ContractValidator(
+    private val clock: Clock = Clock.systemDefaultZone(),
+) {
     fun validate(
         element: KAnnotatedElement,
         value: Any?,
@@ -51,6 +54,20 @@ class ContractValidator {
 
         if (element.has<Null>()) {
             throw ContractViolationException("Null violation: value must be null but got '$value'")
+        }
+
+        when (value) {
+            is Boolean -> validateBoolean(element, value)
+            is Number -> validateNumeric(element, value)
+            is String -> validateString(element, value) // [Fix] 오타 수정
+            is Collection<*> -> validateCollection(element, value)
+            is Map<*, *> -> validateMap(element, value)
+            is Array<*> -> validateArray(element, value)
+            else -> {
+                if (isTimeType(value)) {
+                    validateTime(element, value)
+                }
+            }
         }
     }
 
@@ -143,7 +160,7 @@ class ContractValidator {
         }
     }
 
-    private fun validteString(
+    private fun validateString(
         element: KAnnotatedElement,
         value: String,
     ) {
@@ -199,7 +216,8 @@ class ContractValidator {
         }
 
         if (element.has<Uuid>()) {
-            ensure(value.length == 36) { "Uuid violation: '$value' is not a valid UUID format" }
+            val uuidRegex = Regex("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
+            ensure(uuidRegex.matches(value)) { "Uuid violation: '$value' is not a valid UUID format" }
         }
     }
 
@@ -250,7 +268,7 @@ class ContractValidator {
         element: KAnnotatedElement,
         value: Any,
     ) {
-        val now = Instant.now()
+        val now = Instant.now(clock)
         val target = toInstant(value) ?: return
 
         if (element.has<Past>()) {
@@ -266,13 +284,14 @@ class ContractValidator {
             ensure(!target.isBefore(now)) { "FutureOrPresent violation: expected future or present date but got $value" }
         }
     }
+    
 
     private fun isTimeType(value: Any): Boolean =
         value is Instant ||
-            value is Date ||
-            value is ChronoLocalDate ||
-            value is ChronoLocalDateTime<*> ||
-            value is ChronoZonedDateTime<*>
+                value is Date ||
+                value is ChronoLocalDate ||
+                value is ChronoLocalDateTime<*> ||
+                value is ChronoZonedDateTime<*>
 
     private fun toInstant(value: Any): Instant? =
         when (value) {
