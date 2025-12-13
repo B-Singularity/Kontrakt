@@ -22,7 +22,7 @@ class ConstructorComplianceExecutor(
             val invalidValues = fixtureGenerator.generateInvalid(param)
 
             invalidValues.forEach { badValue ->
-                records.add(testInvalidContructor(constructor, param.name, badValue))
+                records.add(testInvalidConstructor(constructor, param.name, badValue))
             }
         }
         return records
@@ -48,7 +48,7 @@ class ConstructorComplianceExecutor(
             )
         }
 
-    private fun testInvalidContructor(
+    private fun testInvalidConstructor(
         constructor: KFunction<*>,
         paramName: String?,
         badValue: Any?,

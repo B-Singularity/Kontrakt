@@ -20,9 +20,9 @@ import kotlin.reflect.jvm.kotlinFunction
 class DefaultScenarioExecutor(
     private val clock: Clock = Clock.systemDefaultZone(),
     private val fixtureFactory: (MockingEngine, Clock) -> FixtureGenerator =
-        { engine, clk -> FixtureGenerator(engine, clk) },
+        { engine, clock -> FixtureGenerator(engine, clock) },
     private val validatorFactory: (Clock) -> ContractValidator =
-        { clk -> ContractValidator(clk) }
+        { clock -> ContractValidator(clock) }
 
 ) : TestScenarioExecutor {
     private val logger = KotlinLogging.logger {}

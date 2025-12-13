@@ -59,7 +59,7 @@ class ContractValidator(
         when (value) {
             is Boolean -> validateBoolean(element, value)
             is Number -> validateNumeric(element, value)
-            is String -> validateString(element, value) // [Fix] 오타 수정
+            is String -> validateString(element, value)
             is Collection<*> -> validateCollection(element, value)
             is Map<*, *> -> validateMap(element, value)
             is Array<*> -> validateArray(element, value)
@@ -284,7 +284,7 @@ class ContractValidator(
             ensure(!target.isBefore(now)) { "FutureOrPresent violation: expected future or present date but got $value" }
         }
     }
-    
+
 
     private fun isTimeType(value: Any): Boolean =
         value is Instant ||
