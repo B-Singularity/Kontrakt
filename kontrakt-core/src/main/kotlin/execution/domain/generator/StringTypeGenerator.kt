@@ -27,7 +27,9 @@ class StringTypeGenerator : TypeGenerator {
         if (minLen > 0) add("a".repeat(minLen))
         if (maxLen < 1000) add("a".repeat(maxLen))
 
-        if (param.has<NotBlank>()) add("a")
+        if (param.has<NotBlank>() && minLen <= 1) {
+            if (!contains("a")) add("a")
+        }
         if (param.has<Email>()) add("test@example.com")
         if (param.has<Uuid>()) add(UUID.randomUUID().toString())
     }
@@ -74,6 +76,9 @@ class StringTypeGenerator : TypeGenerator {
             minLen = max(minLen, 1)
         }
         if (maxLen == Int.MAX_VALUE) maxLen = minLen + GeneratorUtils.DEFAULT_STRING_BUFFER
+
+        if (minLen > maxLen) return minLen to minLen
+
         return minLen to maxLen
     }
 
@@ -98,8 +103,8 @@ class StringTypeGenerator : TypeGenerator {
         when {
             regex == "\\d+" || regex == "[0-9]+" -> GeneratorUtils.generateRandomNumericString(5)
             regex == "\\w+" || regex == "[a-zA-Z]+" -> GeneratorUtils.generateRandomString(5, 10)
-            regex == "^[A-Z]+$" -> GeneratorUtils.generateRandomString(5, 10).uppercase()
-            regex == "^[a-z]+$" -> GeneratorUtils.generateRandomString(5, 10).lowercase()
+            regex == "^[A-Z]+$" -> GeneratorUtils.generateRandomStringFromCharRange('A'..'Z')
+            regex == "^[a-z]+$" -> GeneratorUtils.generateRandomStringFromCharRange('a'..'z')
             else -> "Pattern_Placeholder_for_$regex"
         }
 
@@ -120,11 +125,36 @@ class StringTypeGenerator : TypeGenerator {
     }
 
     private fun generateComplexUrl(limit: Int, rule: Url): String {
-        val scheme = rule.protocol.random() + "://"
+        val scheme = (if (rule.protocol.isNotEmpty()) rule.protocol.random() else "http") + "://"
+        val overhead = scheme.length
+        val remaining = limit - overhead
+
+        if (remaining < 5) return "${scheme}a.co"
+
         val host = if (rule.hostAllow.isNotEmpty()) rule.hostAllow.random() else generateHost(rule)
-        val path = generatePath()
-        val query = generateQueryParam()
-        return "$scheme$host$path$query" // Simplified integration
+        val effectiveHost = if (host.length > remaining) {
+            if (remaining >= 6) "a.com" else host.take(remaining)
+        } else {
+            host
+        }
+
+        var currentUrl = "$scheme$effectiveHost"
+
+        if (currentUrl.length + 3 < limit) {
+            val path = generatePath()
+            if (currentUrl.length + path.length < limit) {
+                currentUrl += path
+            }
+        }
+
+        if (currentUrl.length + 5 < limit) {
+            val query = generateQueryParam()
+            if (query.isNotEmpty() && currentUrl.length + query.length <= limit) {
+                currentUrl += query
+            }
+        }
+
+        return currentUrl
     }
 
     private fun generateHost(rule: Url): String {

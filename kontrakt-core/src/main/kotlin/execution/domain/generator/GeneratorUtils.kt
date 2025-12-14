@@ -18,4 +18,12 @@ object GeneratorUtils {
 
     fun generateRandomNumericString(length: Int): String =
         (1..length).map { Random.nextInt(0, 10) }.joinToString("")
+
+    fun generateRandomStringFromCharRange(range: CharRange): String {
+        val chars = range.toList()
+        val length = Random.nextInt(5, 11)
+        return (1..length)
+            .map { chars.random() }
+            .joinToString("")
+    }
 }
