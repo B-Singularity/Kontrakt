@@ -1,7 +1,7 @@
 package execution.domain.entity
 
-import discovery.api.KontraktInternalException
 import discovery.domain.aggregate.TestSpecification
+import exception.KontraktInternalException
 import execution.spi.MockingEngine
 import execution.spi.ScenarioControl
 import kotlin.reflect.KClass

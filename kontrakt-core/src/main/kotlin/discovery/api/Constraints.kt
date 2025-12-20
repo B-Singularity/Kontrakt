@@ -1,5 +1,7 @@
 package discovery.api
 
+import java.time.temporal.ChronoUnit
+
 @Target(
     AnnotationTarget.VALUE_PARAMETER,
     AnnotationTarget.FIELD,
@@ -217,7 +219,12 @@ annotation class Uuid
     AnnotationTarget.PROPERTY_GETTER,
 )
 @Retention(AnnotationRetention.RUNTIME)
-annotation class Past
+annotation class Past(
+    val base: String = "NOW",
+    val value: Long,
+    val unit: ChronoUnit = ChronoUnit.SECONDS,
+    val zone: String = "UTC"
+)
 
 @Target(
     AnnotationTarget.VALUE_PARAMETER,
@@ -226,7 +233,12 @@ annotation class Past
     AnnotationTarget.PROPERTY_GETTER,
 )
 @Retention(AnnotationRetention.RUNTIME)
-annotation class PastOrPresent
+annotation class PastOrPresent(
+    val base: String = "NOW",
+    val value: Long,
+    val unit: ChronoUnit = ChronoUnit.SECONDS,
+    val zone: String = "UTC"
+)
 
 @Target(
     AnnotationTarget.VALUE_PARAMETER,
@@ -235,7 +247,12 @@ annotation class PastOrPresent
     AnnotationTarget.PROPERTY_GETTER,
 )
 @Retention(AnnotationRetention.RUNTIME)
-annotation class Future
+annotation class Future(
+    val base: String = "NOW",
+    val value: Long,
+    val unit: ChronoUnit = ChronoUnit.SECONDS,
+    val zone: String = "UTC"
+)
 
 @Target(
     AnnotationTarget.VALUE_PARAMETER,
@@ -244,7 +261,12 @@ annotation class Future
     AnnotationTarget.PROPERTY_GETTER,
 )
 @Retention(AnnotationRetention.RUNTIME)
-annotation class FutureOrPresent
+annotation class FutureOrPresent(
+    val base: String = "NOW",
+    val value: Long,
+    val unit: ChronoUnit = ChronoUnit.SECONDS,
+    val zone: String = "UTC"
+)
 
 @Target(
     AnnotationTarget.VALUE_PARAMETER,

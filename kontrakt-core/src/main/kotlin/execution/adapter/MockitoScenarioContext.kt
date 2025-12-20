@@ -1,6 +1,6 @@
 package execution.adapter
 
-import discovery.api.KontraktConfigurationException
+import exception.KontraktConfigurationException
 import execution.api.ScenarioContext
 import execution.api.StubbingBuilder
 import org.mockito.Mockito

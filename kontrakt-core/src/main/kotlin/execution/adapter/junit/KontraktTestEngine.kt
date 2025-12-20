@@ -2,9 +2,9 @@ package execution.adapter.junit
 
 import discovery.adapter.ClassGraphScannerAdapter
 import discovery.api.Contract
-import discovery.api.KontraktInternalException
 import discovery.domain.service.TestDiscovererImpl
 import discovery.domain.vo.ScanScope
+import exception.KontraktInternalException
 import execution.domain.TestStatus
 import execution.domain.vo.TestResult
 import io.github.oshai.kotlinlogging.KotlinLogging

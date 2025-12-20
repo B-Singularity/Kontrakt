@@ -1,6 +1,5 @@
 package discovery.domain.service
 
-import discovery.api.KontraktConfigurationException
 import discovery.api.KontraktTest
 import discovery.api.Stateful
 import discovery.api.TestDiscoverer
@@ -11,6 +10,7 @@ import discovery.domain.vo.DependencyMetadata.MockingStrategy
 import discovery.domain.vo.DiscoveredTestTarget
 import discovery.domain.vo.ScanScope
 import discovery.spi.ClasspathScanner
+import exception.KontraktConfigurationException
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -92,7 +92,7 @@ class TestDiscovererImpl(
                 ?: return Result.failure(
                     KontraktConfigurationException(
                         "Target class '${target.displayName}' must have a primary constructor for dependency injection.\n" +
-                            "Tip: Interfaces, Objects, or Abstract classes cannot be tested directly as a Target.",
+                                "Tip: Interfaces, Objects, or Abstract classes cannot be tested directly as a Target.",
                     ),
                 )
 
@@ -103,7 +103,7 @@ class TestDiscovererImpl(
                         ?: return Result.failure(
                             KontraktConfigurationException(
                                 "Cannot determine type for parameter '${param.name}' " +
-                                    "in '${target.displayName}'.",
+                                        "in '${target.displayName}'.",
                             ),
                         )
 

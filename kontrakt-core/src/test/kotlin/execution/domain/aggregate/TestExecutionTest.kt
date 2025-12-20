@@ -1,8 +1,8 @@
 package execution.domain.aggregate
 
-import discovery.api.KontraktInternalException
 import discovery.domain.aggregate.TestSpecification
 import discovery.domain.vo.DiscoveredTestTarget
+import exception.KontraktInternalException
 import execution.api.TestScenarioExecutor
 import execution.domain.AssertionStatus
 import execution.domain.TestStatus

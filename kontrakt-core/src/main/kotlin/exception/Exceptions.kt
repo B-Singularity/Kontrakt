@@ -1,4 +1,4 @@
-package discovery.api
+package exception
 
 /**
  * The root exception for the Kontrakt framework.
@@ -7,7 +7,7 @@ package discovery.api
  * Using a common base exception allows users to catch all framework-related errors
  * with a single try-catch block if needed.
  */
-open class KontraktException(
+open class KontraktException internal constructor(
     message: String,
     cause: Throwable? = null,
 ) : RuntimeException(message, cause)
@@ -21,7 +21,7 @@ open class KontraktException(
  *
  * This exception indicates a "User Error" that should be fixed by correcting the test setup.
  */
-class KontraktConfigurationException(
+open class KontraktConfigurationException(
     message: String,
     cause: Throwable? = null,
 ) : KontraktException("[Configuration Error] $message", cause)
@@ -34,7 +34,7 @@ class KontraktConfigurationException(
  *
  * This exception indicates a "Bug" in the user's implementation code.
  */
-class ContractViolationException(
+open class ContractViolationException(
     message: String,
     cause: Throwable? = null,
 ) : KontraktException("[Contract Violation] $message", cause)
@@ -47,7 +47,7 @@ class ContractViolationException(
  *
  * This exception indicates a "Framework Bug" and should be reported to the maintainers.
  */
-class KontraktInternalException(
+open class KontraktInternalException(
     message: String,
     cause: Throwable? = null,
 ) : KontraktException("[Internal Error] $message", cause)

@@ -1,9 +1,9 @@
 package execution.domain.service
 
 import common.reflection.unwrapped
-import discovery.api.KontraktConfigurationException
 import discovery.domain.aggregate.TestSpecification
 import discovery.domain.vo.DependencyMetadata
+import exception.KontraktConfigurationException
 import execution.domain.entity.EphemeralTestContext
 import execution.spi.MockingEngine
 import execution.spi.ScenarioControl

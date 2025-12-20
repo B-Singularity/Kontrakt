@@ -1,4 +1,4 @@
-# ADR-008: Adoption of Dual-Layer Contract Verification Strategy
+# ADR-009: Adoption of Dual-Layer Contract Verification Strategy
 
 **Status:** Accepted
 
