@@ -18,6 +18,7 @@ import execution.domain.generator.TimeTypeGenerator
 import execution.domain.generator.TypeGenerator
 import execution.exception.GenerationFailedException
 import execution.exception.RecursiveGenerationFailedException
+import execution.exception.UnsupportedGeneratorException
 import execution.spi.MockingEngine
 import io.github.oshai.kotlinlogging.KotlinLogging
 import java.time.Clock
@@ -82,26 +83,40 @@ class FixtureGenerator(
     )
 
     /**
-     * Generates a single valid value for the given [param].
+     * [Primary Port]
+     * Generates a single valid value based on the provided [GenerationRequest].
      *
-     * This method initiates the generation lifecycle by creating a root context and
-     * delegating to the internal orchestration logic. It also performs a final validation
-     * to ensure the result complies with the parameter's contract (e.g., non-nullability).
+     * This is the canonical entry point for all generation logic. It handles the lifecycle
+     * of the generation context and performs final integrity checks on the result.
+     * External adapters (like Mockito adapters) should convert their specific requirements
+     * into a [GenerationRequest] to use this method.
      *
-     * @param param The target parameter for which to generate a value.
-     * @return The generated value, or null if the parameter allows it.
-     * @throws GenerationFailedException If generation fails or the result violates type constraints.
+     * @param request The standard request object describing the generation target.
+     * @return The generated value.
+     * @throws GenerationFailedException If generation fails or integrity checks fail.
      */
-    fun generate(param: KParameter): Any? {
-        val request = GenerationRequest.from(param)
+    fun generate(request: GenerationRequest): Any? {
         val context = createRootContext()
-
         val result = generateInternal(request, context)
 
         // Ensure result integrity (e.g., preventing nulls for non-nullable types)
         validateResult(result, request)
 
         return result
+    }
+
+    /**
+     * [Convenience Port]
+     * Generates a valid value for the given function parameter [param].
+     *
+     * This method acts as a convenience wrapper for [generate(GenerationRequest)],
+     * primarily for use in test execution flows where [KParameter] is readily available.
+     *
+     * @param param The target parameter.
+     * @return The generated value.
+     */
+    fun generate(param: KParameter): Any? {
+        return generate(GenerationRequest.from(param))
     }
 
     /**
@@ -220,7 +235,7 @@ class FixtureGenerator(
             when (generator) {
                 is RecursiveGenerator -> generator.generator(request, context, ::generateInternal)
                 is TerminalGenerator -> generator.generate(request, context)
-                else -> throw IllegalStateException("Unknown generator type: ${generator::class.simpleName}")
+                else -> throw UnsupportedGeneratorException(generator::class)
             }
         } catch (recursionEx: RecursiveGenerationFailedException) {
             // Fallback Strategy: Break recursion with Mocking
