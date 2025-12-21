@@ -107,6 +107,10 @@ class CollectionTypeGenerator : RecursiveGenerator {
             Set::class.java.isAssignableFrom(javaClass) ->
                 generateList(request, context, size, regenerator).toSet()
 
+            java.util.Queue::class.java.isAssignableFrom(javaClass) ||
+                    java.util.Deque::class.java.isAssignableFrom(javaClass) ->
+                java.util.LinkedList(generateList(request, context, size, regenerator))
+            
             else ->
                 generateList(request, context, size, regenerator)
         }
