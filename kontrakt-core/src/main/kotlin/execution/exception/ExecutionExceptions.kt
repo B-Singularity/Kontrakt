@@ -35,3 +35,11 @@ internal class InvalidAnnotationValueException(
 ) : KontraktConfigurationException(
     "[Invalid Value] Field '$fieldName' has invalid configuration value '$value'. Reason: $reason"
 )
+
+internal class CollectionSizeLimitExceededException(
+    targetSize: Int,
+    limit: Int
+) : KontraktConfigurationException(
+    "[Safety Limit Exceeded] Collection size ($targetSize) exceeds the global limit ($limit). " +
+            "To force execution, use '@Size(..., ignoreLimit = true)'."
+)

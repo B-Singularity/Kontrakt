@@ -278,6 +278,7 @@ annotation class FutureOrPresent(
 annotation class Size(
     val min: Int = 0,
     val max: Int = Int.MAX_VALUE,
+    val ignoreLimit: Boolean = false
 )
 
 @Target(

@@ -7,5 +7,6 @@ import kotlin.reflect.KClass
 data class GenerationContext(
     val seededRandom: Random,
     val clock: Clock,
-    val history: Set<KClass<*>> = emptySet()
-)
+    val history: Set<KClass<*>> = emptySet(),
+
+    )
