@@ -8,5 +8,4 @@ data class GenerationContext(
     val seededRandom: Random,
     val clock: Clock,
     val history: Set<KClass<*>> = emptySet(),
-
-    )
+)

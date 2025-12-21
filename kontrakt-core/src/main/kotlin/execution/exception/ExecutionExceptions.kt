@@ -43,3 +43,9 @@ internal class CollectionSizeLimitExceededException(
     "[Safety Limit Exceeded] Collection size ($targetSize) exceeds the global limit ($limit). " +
             "To force execution, use '@Size(..., ignoreLimit = true)'."
 )
+
+internal class SealedClassHasNoSubclassesException(
+    type: kotlin.reflect.KType
+) : KontraktConfigurationException(
+    "Sealed class '$type' has no permitted subclasses. Please ensure at least one subclass is defined and accessible."
+)

@@ -2,180 +2,266 @@ package execution.domain.service
 
 import discovery.api.NotNull
 import discovery.api.Null
+import execution.domain.generator.ArrayTypeGenerator
 import execution.domain.generator.BooleanTypeGenerator
 import execution.domain.generator.CollectionTypeGenerator
-import execution.domain.generator.GeneratorUtils
+import execution.domain.generator.EnumTypeGenerator
+import execution.domain.generator.GenerationContext
+import execution.domain.generator.GenerationRequest
 import execution.domain.generator.NumericTypeGenerator
+import execution.domain.generator.ObjectGenerator
+import execution.domain.generator.RecursiveGenerator
+import execution.domain.generator.SealedTypeGenerator
 import execution.domain.generator.StringTypeGenerator
+import execution.domain.generator.TerminalGenerator
 import execution.domain.generator.TimeTypeGenerator
 import execution.domain.generator.TypeGenerator
+import execution.exception.GenerationFailedException
+import execution.exception.RecursiveGenerationFailedException
 import execution.spi.MockingEngine
 import io.github.oshai.kotlinlogging.KotlinLogging
 import java.time.Clock
+import kotlin.random.Random
 import kotlin.reflect.KClass
 import kotlin.reflect.KParameter
-import kotlin.reflect.KType
-import kotlin.reflect.full.findAnnotation
-import kotlin.reflect.full.primaryConstructor
 
 /**
  * Coordinates the generation of fixture data for testing purposes.
  *
- * This class acts as a central hub that delegates specific generation logic to registered [TypeGenerator] strategies.
- * It handles the orchestration of:
- * 1. Smart Fuzzing (generating valid random values).
- * 2. Boundary Analysis (generating edge cases based on constraints).
- * 3. Invalid Fuzzing (generating values that violate constraints).
- * 4. Recursive POJO generation and Mock creation fallback.
+ * This class acts as a central hub (Coordinator) that delegates specific generation logic
+ * to registered [TypeGenerator] strategies. It ensures that the generation process is
+ * deterministic, safe, and robust against infinite recursion.
+ *
+ * Key Responsibilities:
+ * 1. **Deterministic Generation:** Uses a shared, seeded [Random] instance to ensure that
+ * tests are reproducible. The same seed will always produce the same sequence of data.
+ * 2. **Strategy Delegation:** Dispatches generation requests to the appropriate [TypeGenerator]
+ * implementation based on the target type.
+ * 3. **Integrity Validation:** Enforces type system constraints (specifically nullability)
+ * on the generated values to prevent invalid states.
+ * 4. **Recursion Defense & Fallback:** Detects circular dependencies in the object graph
+ * and seamlessly falls back to [MockingEngine] to break the cycle.
+ *
+ * @property mockingEngine The engine used to create mock objects when POJO generation fails due to recursion.
+ * @property clock The clock used for time-based generation (default: system default zone).
+ * @property seed The seed value for the random number generator. Fixed for reproducibility.
  */
 class FixtureGenerator(
     private val mockingEngine: MockingEngine,
-    clock: Clock = Clock.systemDefaultZone()
+    private val clock: Clock = Clock.systemDefaultZone(),
+    seed: Long = System.nanoTime()
 ) {
     private val logger = KotlinLogging.logger {}
 
     /**
-     * Registry of strategies. Order matters: specific generators should come before general ones.
+     * The single source of randomness for this generator instance.
+     * It is initialized with the provided [seed], ensuring that the sequence of generated values
+     * remains consistent across multiple executions with the same seed.
+     */
+    private val sharedRandom: Random = Random(seed)
+
+    init {
+        logger.info { "FixtureGenerator initialized. Seed: $seed" }
+    }
+
+    /**
+     * The registry of generation strategies.
+     * The order is significant: specific types (like primitives and collections) must be
+     * handled before the general [ObjectGenerator] fallback.
      */
     private val generators: List<TypeGenerator> = listOf(
         BooleanTypeGenerator(),
         TimeTypeGenerator(clock),
         NumericTypeGenerator(),
         StringTypeGenerator(),
-        CollectionTypeGenerator()
+        CollectionTypeGenerator(),
+        ArrayTypeGenerator(),
+        EnumTypeGenerator(),
+        SealedTypeGenerator(),
+        ObjectGenerator() // Final fallback for POJOs
     )
 
     /**
      * Generates a single valid value for the given [param].
      *
-     * It attempts to find a supporting [TypeGenerator] strategy.
-     * If found, it returns a smart-fuzzed value.
-     * Otherwise, it falls back to recursive POJO generation via [generateByType].
+     * This method initiates the generation lifecycle by creating a root context and
+     * delegating to the internal orchestration logic. It also performs a final validation
+     * to ensure the result complies with the parameter's contract (e.g., non-nullability).
+     *
+     * @param param The target parameter for which to generate a value.
+     * @return The generated value, or null if the parameter allows it.
+     * @throws GenerationFailedException If generation fails or the result violates type constraints.
      */
-    fun generate(param: KParameter, history: Set<KClass<*>> = emptySet()): Any? {
-        generators.firstOrNull { it.supports(param) }?.let {
-            val result = it.generate(param)
-            if (result != null) return result
-        }
-        return generateByType(param.type, history)
+    fun generate(param: KParameter): Any? {
+        val request = GenerationRequest.from(param)
+        val context = createRootContext()
+
+        val result = generateInternal(request, context)
+
+        // Ensure result integrity (e.g., preventing nulls for non-nullable types)
+        validateResult(result, request)
+
+        return result
     }
 
     /**
-     * Generates a list of valid boundary values for the given [param].
+     * Generates a list of valid boundary values (Smart Fuzzing) for the given [param].
      *
-     * This includes:
-     * - Null values (if permitted).
-     * - Edge cases calculated by strategies (e.g., Min/Max values).
-     * - A default valid value if no boundaries are found.
+     * These values are chosen to test the edges of the valid input space, such as:
+     * - Minimum and maximum allowed values.
+     * - Empty collections.
+     * - Null (if the parameter is nullable).
+     *
+     * @param param The target parameter.
+     * @return A list of valid boundary values. Guaranteed to contain at least one value if possible.
      */
     fun generateValidBoundaries(param: KParameter): List<Any?> {
+        val request = GenerationRequest.from(param)
+        val context = createRootContext()
         val boundaries = mutableListOf<Any?>()
 
-        // Handle @Null constraint
-        if (param.findAnnotation<Null>() != null) {
-            return listOf(null)
-        }
+        // 1. Explicit Null Constraints
+        if (request.has<Null>()) return listOf(null)
 
-        // Handle implicit nullability
-        if (param.type.isMarkedNullable && param.findAnnotation<NotNull>() == null) {
+        // 2. Implicit Nullability
+        if (request.type.isMarkedNullable && !request.has<NotNull>()) {
             boundaries.add(null)
         }
 
-        // Delegate to strategies
-        val generated = generators.firstOrNull { it.supports(param) }
-            ?.generateValidBoundaries(param)
-            ?: emptyList()
+        // 3. Delegate to specific generator strategies
+        val generator = findGenerator(request)
+        if (generator != null) {
+            val generated = when (generator) {
+                is RecursiveGenerator -> generator.generateValidBoundaries(request, context, ::generateInternal)
+                is TerminalGenerator -> generator.generateValidBoundaries(request, context)
+                else -> emptyList()
+            }
+            boundaries.addAll(generated)
+        }
 
-        boundaries.addAll(generated)
-
-        // Fallback: Ensure at least one value exists for testing
+        // 4. Fallback: Ensure at least one value exists to keep the test running
         if (boundaries.isEmpty()) {
-            boundaries.add(generate(param))
+            try {
+                boundaries.add(generateInternal(request, context))
+            } catch (ignored: Exception) {
+                // Ignore fallback failure during boundary analysis
+            }
         }
 
         return boundaries
     }
 
     /**
-     * Generates a list of invalid values for the given [param] to test defense mechanisms.
+     * Generates a list of invalid values (Negative Testing) for the given [param].
      *
-     * This includes:
-     * - Null values (if the type is non-nullable).
-     * - Values that violate specific constraints (e.g., out of range, wrong format).
+     * These values are intended to provoke validation errors or test defense mechanisms.
+     * Common examples include:
+     * - Null for non-nullable parameters.
+     * - Values exceeding size limits or range constraints.
+     *
+     * @param param The target parameter.
+     * @return A list of invalid values.
      */
     fun generateInvalid(param: KParameter): List<Any?> {
+        val request = GenerationRequest.from(param)
+        val context = createRootContext()
         val invalids = mutableListOf<Any?>()
 
-        // Common defense: Null injection on non-nullable types
-        if (!param.type.isMarkedNullable) {
+        // 1. Common Defense: Inject Null into Non-Nullable types
+        if (!request.type.isMarkedNullable) {
             invalids.add(null)
         }
 
-        // Delegate to strategies
-        generators.firstOrNull { it.supports(param) }?.let { generator ->
-            invalids.addAll(generator.generateInvalid(param))
+        // 2. Delegate to specific generator strategies
+        val generator = findGenerator(request)
+        if (generator != null) {
+            val generated = when (generator) {
+                is RecursiveGenerator -> generator.generateInvalid(request, context, ::generateInternal)
+                is TerminalGenerator -> generator.generateInvalid(request, context)
+                else -> emptyList()
+            }
+            invalids.addAll(generated)
         }
-
         return invalids
     }
 
+    // =================================================================
+    // Internal Orchestration
+    // =================================================================
+
     /**
-     * Recursively generates an instance of the given [type].
+     * Creates the root [GenerationContext] for a new generation cycle.
      *
-     * Handles:
-     * - Primitives (fallback if no strategy applied).
-     * - Collections (List, Set, Map).
-     * - Circular dependencies (via Mocking).
-     * - Constructor injection for POJOs.
+     * It injects the [sharedRandom] instance into the context, ensuring that
+     * all downstream generators consume the same random sequence.
      */
-    fun generateByType(type: KType, history: Set<KClass<*>> = emptySet()): Any? {
-        val kClass = type.classifier as? KClass<*> ?: return null
-
-        // Fallback for unannotated primitives
-        when (kClass) {
-            String::class -> return GeneratorUtils.generateRandomString(5, 15)
-            Int::class -> return kotlin.random.Random.nextInt(1, 100)
-            Long::class -> return kotlin.random.Random.nextLong(1, 1000)
-            Boolean::class -> return kotlin.random.Random.nextBoolean()
-            Double::class -> return kotlin.random.Random.nextDouble()
-            Float::class -> return kotlin.random.Random.nextFloat()
-        }
-
-        // Handle Collections
-        if (kClass == List::class || kClass == Collection::class || kClass == Iterable::class) {
-            val elementType = type.arguments.firstOrNull()?.type ?: return emptyList<Any>()
-            return List(1) { generateByType(elementType, history) }
-        }
-        if (kClass == Set::class) return emptySet<Any>()
-        if (kClass == Map::class) return emptyMap<Any, Any>()
-
-        // Detect circular dependencies
-        if (kClass in history) {
-            logger.debug { "Circular dependency detected for '${kClass.simpleName}'. Breaking cycle with Mock." }
-            return tryCreateMock(kClass)
-        }
-
-        // Attempt Constructor Injection
-        val constructor = kClass.primaryConstructor
-        if (constructor != null) {
-            try {
-                val args = constructor.parameters
-                    .map { generate(it, history + kClass) }
-                    .toTypedArray()
-                return constructor.call(*args)
-            } catch (e: Exception) {
-                logger.debug(e) { "Constructor failed for '${kClass.simpleName}'. Fallback to Mock." }
-            }
-        }
-
-        // Final Fallback: Mock creation
-        return tryCreateMock(kClass)
+    private fun createRootContext(): GenerationContext {
+        return GenerationContext(
+            seededRandom = sharedRandom,
+            clock = clock,
+            history = emptySet()
+        )
     }
 
-    private fun tryCreateMock(type: KClass<*>): Any? = try {
-        mockingEngine.createMock(type)
-    } catch (e: Exception) {
-        logger.warn(e) { "Failed to create Mock for '${type.simpleName}'" }
-        null
+    /**
+     * The core orchestration method that handles the generation logic recursively.
+     *
+     * It finds the appropriate generator and executes it. If a recursive cycle is detected
+     * (indicated by [RecursiveGenerationFailedException]), it attempts to recover by
+     * creating a mock object using the [mockingEngine].
+     *
+     * @throws GenerationFailedException If generation fails unrecoverably.
+     */
+    private fun generateInternal(request: GenerationRequest, context: GenerationContext): Any? {
+        val generator = findGenerator(request)
+            ?: throw GenerationFailedException(request.type, "No suitable generator found for type: ${request.type}")
+
+        return try {
+            when (generator) {
+                is RecursiveGenerator -> generator.generator(request, context, ::generateInternal)
+                is TerminalGenerator -> generator.generate(request, context)
+                else -> throw IllegalStateException("Unknown generator type: ${generator::class.simpleName}")
+            }
+        } catch (recursionEx: RecursiveGenerationFailedException) {
+            // Fallback Strategy: Break recursion with Mocking
+            logger.debug { "Recursive generation detected for '${request.type}'. Attempting fallback to Mock." }
+
+            val kClass = request.type.classifier as? KClass<*> ?: throw recursionEx
+
+            try {
+                mockingEngine.createMock(kClass)
+            } catch (mockEx: Exception) {
+                val combinedEx = GenerationFailedException(
+                    request.type,
+                    "Failed to handle recursion via Mocking. (Recursion: ${recursionEx.message})",
+                    mockEx
+                )
+                combinedEx.addSuppressed(recursionEx)
+                throw combinedEx
+            }
+        } catch (e: Exception) {
+            logger.error(e) { "Error generating value for ${request.name} (${request.type})" }
+            throw e
+        }
+    }
+
+    private fun findGenerator(request: GenerationRequest): TypeGenerator? {
+        return generators.firstOrNull { it.supports(request) }
+    }
+
+    /**
+     * Validates that the generated [result] complies with the type constraints of the [request].
+     *
+     * Currently, checks if a null value was generated for a non-nullable type.
+     *
+     * @throws GenerationFailedException If the result violates integrity constraints.
+     */
+    private fun validateResult(result: Any?, request: GenerationRequest) {
+        if (result == null && !request.type.isMarkedNullable) {
+            throw GenerationFailedException(
+                request.type,
+                "Generator returned null for non-nullable type '${request.type}'. Check the logic of the generator handling this type."
+            )
+        }
     }
 }
