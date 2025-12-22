@@ -2,8 +2,9 @@ package execution.domain.generator
 
 import discovery.api.AssertFalse
 import discovery.api.AssertTrue
+import java.time.Clock
+import kotlin.random.Random
 import kotlin.reflect.KFunction
-import kotlin.reflect.KParameter
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -13,81 +14,112 @@ import kotlin.test.assertTrue
 class BooleanTypeGeneratorTest {
 
     private val generator = BooleanTypeGenerator()
+    private val context = GenerationContext(
+        seededRandom = Random(42),
+        clock = Clock.systemDefaultZone()
+    )
+
+    // =================================================================
+    // 1. Test Targets
+    // =================================================================
 
     @Suppress("UNUSED_PARAMETER")
     fun plainBoolean(arg: Boolean) {
     }
 
     @Suppress("UNUSED_PARAMETER")
-    fun assertTrue(@AssertTrue arg: Boolean) {
+    fun withAssertTrue(@AssertTrue arg: Boolean) {
     }
 
     @Suppress("UNUSED_PARAMETER")
-    fun assertFalse(@AssertFalse arg: Boolean) {
+    fun withAssertFalse(@AssertFalse arg: Boolean) {
     }
+    
 
     @Suppress("UNUSED_PARAMETER")
     fun notBoolean(arg: String) {
     }
 
-    private fun getParam(func: KFunction<*>): KParameter {
-        return func.parameters.first()
+    // =================================================================
+    // 2. Helpers & Data Structures
+    // =================================================================
+
+    private fun request(func: KFunction<*>): GenerationRequest {
+        val param = func.parameters.first()
+        return GenerationRequest.from(param)
+    }
+
+    data class BooleanContractScenario(
+        val description: String,
+        val targetFunction: KFunction<*>,
+        val expectedValid: Set<Boolean>,
+        val expectedInvalid: Set<Boolean>
+    )
+
+    // =================================================================
+    // 3. Contract Tests
+    // =================================================================
+
+    @Test
+    fun `Support Contract - verifies type compatibility`() {
+        val booleanReq = request(::plainBoolean)
+        val stringReq = request(::notBoolean)
+
+        assertTrue(generator.supports(booleanReq), "Should support Boolean type")
+        assertFalse(generator.supports(stringReq), "Should not support non-Boolean type")
     }
 
     @Test
-    fun `support returns true only for Boolean type`() {
-        val boolParam = getParam(::plainBoolean)
-        val stringParam = getParam(::notBoolean)
+    fun `Generation Contract - verifies all branching logic (Table-Driven)`() {
+        val scenarios = listOf(
+            BooleanContractScenario(
+                description = "Plain Boolean (No Annotations)",
+                targetFunction = ::plainBoolean,
+                expectedValid = setOf(true, false),
+                expectedInvalid = emptySet()
+            ),
+            BooleanContractScenario(
+                description = "Annotated with @AssertTrue",
+                targetFunction = ::withAssertTrue,
+                expectedValid = setOf(true),
+                expectedInvalid = setOf(false)
+            ),
+            BooleanContractScenario(
+                description = "Annotated with @AssertFalse",
+                targetFunction = ::withAssertFalse,
+                expectedValid = setOf(false),
+                expectedInvalid = setOf(true)
+            )
+        )
 
-        assertTrue(generator.supports(boolParam), "Should support Boolean type")
-        assertFalse(generator.supports(stringParam), "Should not support String type")
+        for (scenario in scenarios) {
+            val req = request(scenario.targetFunction)
+            val caseName = "[Scenario: ${scenario.description}]"
+
+            // 1. Generate
+            val generated = generator.generate(req, context)
+            assertIs<Boolean>(generated, "$caseName Generate should return Boolean")
+            assertTrue(
+                scenario.expectedValid.contains(generated),
+                "$caseName Generated value '$generated' should be in expected valid set"
+            )
+
+            // 2. Valid Boundaries
+            val boundaries = generator.generateValidBoundaries(req, context)
+            assertEquals(
+                scenario.expectedValid,
+                boundaries.toSet(),
+                "$caseName Boundaries should match expected valid set"
+            )
+
+            // 3. Invalid Values
+            val invalids = generator.generateInvalid(req, context)
+            assertEquals(
+                scenario.expectedInvalid,
+                invalids.toSet(),
+                "$caseName Invalid values should match expected invalid set"
+            )
+        }
     }
 
-    @Test
-    fun `Plain Boolean - generate both and false boundaries`() {
-        val param = getParam(::plainBoolean)
-
-        val boundaries = generator.generateValidBoundaries(param)
-        assertEquals(2, boundaries.size, "Should generate 2 boundary values")
-        assertTrue(boundaries.contains(true), "Should contain true")
-        assertTrue(boundaries.contains(false), "Should contain false")
-
-        val generated = generator.generate(param)
-        assertIs<Boolean>(generated, "Generated value should be of type Boolean")
-
-        val invalids = generator.generateInvalid(param)
-        assertTrue(invalids.isEmpty(), "There should be no invalid values for plain boolean")
-    }
-
-    @Test
-    fun `AsserTrue - generates only true as valid`() {
-        val param = getParam(::assertTrue)
-
-        val boundaries = generator.generateValidBoundaries(param)
-        assertEquals(1, boundaries.size)
-        assertEquals(true, boundaries.first(), "Should only contain true")
-
-        val generated = generator.generate(param)
-        assertEquals(true, generated, "Should generate true")
-
-        val invalids = generator.generateInvalid(param)
-        assertEquals(1, invalids.size)
-        assertEquals(false, invalids.first(), "Invalid value should be false")
-    }
-
-    @Test
-    fun `AssertFalse - generates only false as valid`() {
-        val param = getParam(::assertFalse)
-
-        val boundaries = generator.generateValidBoundaries(param)
-        assertEquals(1, boundaries.size)
-        assertEquals(false, boundaries.first(), "Should only contain false")
-
-        val generated = generator.generate(param)
-        assertEquals(false, generated, "Should generate false")
-
-        val invalids = generator.generateInvalid(param)
-        assertEquals(1, invalids.size)
-        assertEquals(true, invalids.first(), "Invalid value should be true")
-    }
 }

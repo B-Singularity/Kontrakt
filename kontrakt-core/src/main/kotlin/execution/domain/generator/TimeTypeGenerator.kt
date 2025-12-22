@@ -4,7 +4,6 @@ import discovery.api.Future
 import discovery.api.FutureOrPresent
 import discovery.api.Past
 import discovery.api.PastOrPresent
-import execution.exception.ConflictingAnnotationsException
 import execution.exception.InvalidAnnotationValueException
 import java.time.Clock
 import java.time.Instant
@@ -34,25 +33,11 @@ class TimeTypeGenerator(
     ): List<Any?> = buildList {
         val type = request.type.classifier as KClass<*>
         val currentClock = context.clock
+        val targetZone = extractZone(request, currentClock)
 
-        val past = request.find<Past>()
-        val pastOrPresent = request.find<PastOrPresent>()
-        val future = request.find<Future>()
-        val futureOrPresent = request.find<FutureOrPresent>()
-
-        validateConflict(request.name, past, pastOrPresent, future, futureOrPresent)
-        val targetZone = extractZone(request.name, past, pastOrPresent, future, futureOrPresent) ?: currentClock.zone
-
-        fun addBoundaries(
-            base: String,
-            value: Long,
-            unit: ChronoUnit,
-            isPast: Boolean,
-            allowPresent: Boolean
-        ) {
-            val anchor = parseBaseTime(base, targetZone.id, request.name, currentClock)
+        fun addBounds(base: String, value: Long, unit: ChronoUnit, isPast: Boolean, allowPresent: Boolean) {
+            val anchor = parseBaseTime(base, targetZone, request.name, currentClock)
             val maxSeconds = calculateSeconds(value, unit, request.name)
-
             val nearOffset = if (allowPresent) 0L else 1L
 
             if (isPast) {
@@ -65,32 +50,29 @@ class TimeTypeGenerator(
         }
 
         when {
-            past != null -> addBoundaries(past.base, past.value, past.unit, isPast = true, allowPresent = false)
-            pastOrPresent != null -> addBoundaries(
-                pastOrPresent.base,
-                pastOrPresent.value,
-                pastOrPresent.unit,
-                isPast = true,
-                allowPresent = true
-            )
+            request.has<Past>() -> {
+                val ann = request.find<Past>()!!
+                addBounds(ann.base, ann.value, ann.unit, isPast = true, allowPresent = false)
+            }
 
-            future != null -> addBoundaries(
-                future.base,
-                future.value,
-                future.unit,
-                isPast = false,
-                allowPresent = false
-            )
+            request.has<PastOrPresent>() -> {
+                val ann = request.find<PastOrPresent>()!!
+                addBounds(ann.base, ann.value, ann.unit, isPast = true, allowPresent = true)
+            }
 
-            futureOrPresent != null -> addBoundaries(
-                futureOrPresent.base,
-                futureOrPresent.value,
-                futureOrPresent.unit,
-                isPast = false,
-                allowPresent = true
-            )
+            request.has<Future>() -> {
+                val ann = request.find<Future>()!!
+                addBounds(ann.base, ann.value, ann.unit, isPast = false, allowPresent = false)
+            }
 
-            else -> add(convert(currentClock.instant(), type, targetZone))
+            request.has<FutureOrPresent>() -> {
+                val ann = request.find<FutureOrPresent>()!!
+                addBounds(ann.base, ann.value, ann.unit, isPast = false, allowPresent = true)
+            }
+
+            else -> {
+                add(convert(currentClock.instant(), type, targetZone))
+            }
         }
     }
 
@@ -102,50 +84,52 @@ class TimeTypeGenerator(
         val type = request.type.classifier as KClass<*>
         val random = context.seededRandom
         val currentClock = context.clock
+        val targetZone = extractZone(request, currentClock)
 
-        val past = request.find<Past>()
-        val pastOrPresent = request.find<PastOrPresent>()
-        val future = request.find<Future>()
-        val futureOrPresent = request.find<FutureOrPresent>()
+        fun randomOffset(maxSeconds: Long, allowPresent: Boolean): Long {
+            val minOffset = if (allowPresent) 0L else 1L
 
-        validateConflict(request.name, past, pastOrPresent, future, futureOrPresent)
+            val safeMax = maxSeconds.coerceAtLeast(minOffset)
+
+            return random.nextLong(minOffset, safeMax + 1)
+        }
 
         val targetInstant = when {
-            past != null -> {
-                val anchor = parseBaseTime(past.base, past.zone, request.name, currentClock)
-                val maxSeconds = calculateSeconds(past.value, past.unit, request.name)
-                val offset = random.nextLong(0, maxSeconds + 1)
-                anchor.minusSeconds(offset)
+            request.has<Past>() -> {
+                val ann = request.find<Past>()!!
+                val anchor = parseBaseTime(ann.base, targetZone, request.name, currentClock)
+                val maxSeconds = calculateSeconds(ann.value, ann.unit, request.name)
+                anchor.minusSeconds(randomOffset(maxSeconds, allowPresent = false))
             }
 
-            pastOrPresent != null -> {
-                val anchor = parseBaseTime(pastOrPresent.base, pastOrPresent.zone, request.name, currentClock)
-                val maxSeconds = calculateSeconds(pastOrPresent.value, pastOrPresent.unit, request.name)
-                val offset = random.nextLong(0, maxSeconds + 1)
-                anchor.minusSeconds(offset)
+            request.has<PastOrPresent>() -> {
+                val ann = request.find<PastOrPresent>()!!
+                val anchor = parseBaseTime(ann.base, targetZone, request.name, currentClock)
+                val maxSeconds = calculateSeconds(ann.value, ann.unit, request.name)
+                anchor.minusSeconds(randomOffset(maxSeconds, allowPresent = true))
             }
 
-            future != null -> {
-                val anchor = parseBaseTime(future.base, future.zone, request.name, currentClock)
-                val maxSeconds = calculateSeconds(future.value, future.unit, request.name)
-                val offset = random.nextLong(0, maxSeconds + 1)
-                anchor.plusSeconds(offset)
+            request.has<Future>() -> {
+                val ann = request.find<Future>()!!
+                val anchor = parseBaseTime(ann.base, targetZone, request.name, currentClock)
+                val maxSeconds = calculateSeconds(ann.value, ann.unit, request.name)
+                anchor.plusSeconds(randomOffset(maxSeconds, allowPresent = false))
             }
 
-            futureOrPresent != null -> {
-                val anchor = parseBaseTime(futureOrPresent.base, futureOrPresent.zone, request.name, currentClock)
-                val maxSeconds = calculateSeconds(futureOrPresent.value, futureOrPresent.unit, request.name)
-                val offset = random.nextLong(0, maxSeconds + 1)
-                anchor.plusSeconds(offset)
+            request.has<FutureOrPresent>() -> {
+                val ann = request.find<FutureOrPresent>()!!
+                val anchor = parseBaseTime(ann.base, targetZone, request.name, currentClock)
+                val maxSeconds = calculateSeconds(ann.value, ann.unit, request.name)
+                anchor.plusSeconds(randomOffset(maxSeconds, allowPresent = true))
             }
 
             else -> {
                 val now = currentClock.instant()
-                val offset = random.nextLong(0, defaultMaxSeconds + 1)
+                val offset = randomOffset(defaultMaxSeconds, allowPresent = false)
                 if (random.nextBoolean()) now.plusSeconds(offset) else now.minusSeconds(offset)
             }
         }
-        val targetZone = extractZone(request.name, past, pastOrPresent, future, futureOrPresent) ?: currentClock.zone
+
         return convert(targetInstant, type, targetZone)
     }
 
@@ -155,74 +139,70 @@ class TimeTypeGenerator(
     ): List<Any?> = buildList {
         val type = request.type.classifier as KClass<*>
         val currentClock = context.clock
+        val targetZone = extractZone(request, currentClock)
 
-        val past = request.find<Past>()
-        val pastOrPresent = request.find<PastOrPresent>()
-        val future = request.find<Future>()
-        val futureOrPresent = request.find<FutureOrPresent>()
 
-        val targetZone = extractZone(request.name, past, pastOrPresent, future, futureOrPresent) ?: currentClock.zone
-
-        if (past != null || pastOrPresent != null) {
-            val baseStr = past?.base ?: pastOrPresent!!.base
-            val zoneStr = past?.zone ?: pastOrPresent!!.zone
-            val value = past?.value ?: pastOrPresent!!.value
-            val unit = past?.unit ?: pastOrPresent!!.unit
-
-            val anchor = parseBaseTime(baseStr, zoneStr, request.name, currentClock)
+        fun addInvalid(base: String, value: Long, unit: ChronoUnit, shouldBePast: Boolean) {
+            val anchor = parseBaseTime(base, targetZone, request.name, currentClock)
             val maxSeconds = calculateSeconds(value, unit, request.name)
 
-            add(convert(anchor.plusSeconds(10), type, targetZone))
-            add(convert(anchor.minusSeconds(maxSeconds + 86400), type, targetZone))
+            if (shouldBePast) {
+                add(convert(anchor.plusSeconds(10), type, targetZone))
+                add(convert(anchor.minusSeconds(maxSeconds + 86400), type, targetZone))
+            } else {
+                add(convert(anchor.minusSeconds(10), type, targetZone))
+                add(convert(anchor.plusSeconds(maxSeconds + 86400), type, targetZone))
+            }
         }
 
-        if (future != null || futureOrPresent != null) {
-            val baseStr = future?.base ?: futureOrPresent!!.base
-            val zoneStr = future?.zone ?: futureOrPresent!!.zone
-            val value = future?.value ?: futureOrPresent!!.value
-            val unit = future?.unit ?: futureOrPresent!!.unit
+        when {
+            request.has<Past>() -> {
+                val ann = request.find<Past>()!!
+                addInvalid(ann.base, ann.value, ann.unit, shouldBePast = true)
+            }
 
-            val anchor = parseBaseTime(baseStr, zoneStr, request.name, currentClock)
-            val maxSeconds = calculateSeconds(value, unit, request.name)
+            request.has<PastOrPresent>() -> {
+                val ann = request.find<PastOrPresent>()!!
+                addInvalid(ann.base, ann.value, ann.unit, shouldBePast = true)
+            }
 
-            add(convert(anchor.minusSeconds(10), type, targetZone))
-            add(convert(anchor.plusSeconds(maxSeconds + 86400), type, targetZone))
+            request.has<Future>() -> {
+                val ann = request.find<Future>()!!
+                addInvalid(ann.base, ann.value, ann.unit, shouldBePast = false)
+            }
+
+            request.has<FutureOrPresent>() -> {
+                val ann = request.find<FutureOrPresent>()!!
+                addInvalid(ann.base, ann.value, ann.unit, shouldBePast = false)
+            }
         }
     }
 
-    private fun validateConflict(fieldName: String, vararg annotations: Annotation?) {
-        val presentAnnotations = annotations.filterNotNull()
-        if (presentAnnotations.size > 1) {
-            throw ConflictingAnnotationsException(
-                fieldName = fieldName,
-                annotations = presentAnnotations.map { "@${it.annotationClass.simpleName}" }
-            )
-        }
-    }
 
-    private fun extractZone(
-        fieldName: String,
-        past: Past?, pastOrPresent: PastOrPresent?,
-        future: Future?, futureOrPresent: FutureOrPresent?
-    ): ZoneId? {
-        val zoneStr = past?.zone ?: pastOrPresent?.zone ?: future?.zone ?: futureOrPresent?.zone
-        return zoneStr?.let {
+    private fun extractZone(request: GenerationRequest, currentClock: Clock): ZoneId {
+        val zoneStr = request.find<Past>()?.zone
+            ?: request.find<PastOrPresent>()?.zone
+            ?: request.find<Future>()?.zone
+            ?: request.find<FutureOrPresent>()?.zone
+
+        return if (zoneStr.isNullOrBlank() || zoneStr == "UTC") {
+            currentClock.zone
+        } else {
             try {
-                ZoneId.of(it)
+                ZoneId.of(zoneStr)
             } catch (e: Exception) {
                 throw InvalidAnnotationValueException(
-                    fieldName = fieldName,
-                    value = it,
+                    fieldName = request.name,
+                    value = zoneStr,
                     reason = "Invalid Zone ID. Please use valid IDs like 'UTC', 'Asia/Seoul'."
                 )
             }
         }
     }
 
-    private fun parseBaseTime(base: String, zoneStr: String, fieldName: String, clock: Clock): Instant {
-        if (base.equals("NOW", ignoreCase = true)) return clock.instant()
 
-        val zone = runCatching { ZoneId.of(zoneStr) }.getOrDefault(ZoneId.of("UTC"))
+    private fun parseBaseTime(base: String, zone: ZoneId, fieldName: String, clock: Clock): Instant {
+        if (base.equals("NOW", ignoreCase = true)) return clock.instant()
 
         return runCatching { Instant.parse(base) }.getOrNull()
             ?: runCatching { LocalDate.parse(base).atStartOfDay(zone).toInstant() }.getOrNull()

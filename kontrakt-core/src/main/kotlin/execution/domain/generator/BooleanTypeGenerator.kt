@@ -31,5 +31,4 @@ class BooleanTypeGenerator : TerminalGenerator {
         if (request.has<AssertTrue>()) add(false)
         if (request.has<AssertFalse>()) add(true)
     }
-
 }

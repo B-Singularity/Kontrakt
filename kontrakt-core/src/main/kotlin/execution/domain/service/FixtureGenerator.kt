@@ -96,6 +96,8 @@ class FixtureGenerator(
      * @throws GenerationFailedException If generation fails or integrity checks fail.
      */
     fun generate(request: GenerationRequest): Any? {
+        ContractConfigurationValidator.validate(request)
+
         val context = createRootContext()
         val result = generateInternal(request, context)
 
@@ -132,6 +134,9 @@ class FixtureGenerator(
      */
     fun generateValidBoundaries(param: KParameter): List<Any?> {
         val request = GenerationRequest.from(param)
+
+        ContractConfigurationValidator.validate(request)
+
         val context = createRootContext()
         val boundaries = mutableListOf<Any?>()
 
@@ -179,6 +184,9 @@ class FixtureGenerator(
      */
     fun generateInvalid(param: KParameter): List<Any?> {
         val request = GenerationRequest.from(param)
+
+        ContractConfigurationValidator.validate(request)
+
         val context = createRootContext()
         val invalids = mutableListOf<Any?>()
 

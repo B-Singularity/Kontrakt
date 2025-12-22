@@ -24,8 +24,10 @@ internal class RecursiveGenerationFailedException(
 internal class ConflictingAnnotationsException(
     fieldName: String,
     annotations: List<String>,
+    reason: String
 ) : KontraktConfigurationException(
-    "[Ambiguous Contract] Field '$fieldName' has conflicting annotations: ${annotations.joinToString(", ")}. Please use only one."
+    "[Ambiguous Contract] Field '$fieldName' has conflicting annotations: ${annotations.joinToString(", ")}. " +
+            "Please use only one. (Reason: $reason)"
 )
 
 internal class InvalidAnnotationValueException(
