@@ -11,13 +11,14 @@ import org.mockito.kotlin.any
 import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
+import kotlin.reflect.KClass
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 abstract class TestScenarioExecutorTest {
 
     protected abstract val executor: TestScenarioExecutor
-    
+
     interface TestContract {
         fun validMethod(input: String): String
 
@@ -112,7 +113,7 @@ abstract class TestScenarioExecutorTest {
         val mockTarget = mock<DiscoveredTestTarget>()
         val mockEngine = mock<MockingEngine>()
 
-        whenever(mockEngine.createMock<Any>(any())).thenAnswer { "DummyArg" }
+        whenever(mockEngine.createMock<Any>(any<KClass<Any>>())).thenAnswer { "DummyArg" }
 
         whenever(mockContext.getTestTarget()).thenReturn(implInstance)
         whenever(mockContext.specification).thenReturn(mockSpec)

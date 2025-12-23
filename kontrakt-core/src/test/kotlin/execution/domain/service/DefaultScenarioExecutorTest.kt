@@ -13,6 +13,7 @@ import org.mockito.kotlin.verify
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneId
+import kotlin.reflect.KAnnotatedElement
 import kotlin.reflect.KParameter
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -34,14 +35,13 @@ class DefaultScenarioExecutorTest : TestScenarioExecutorTest() {
 
         sut.executeScenarios(context)
 
-        verify(mockValidator, atLeastOnce()).validate(any(), any())
+        verify(mockValidator, atLeastOnce()).validate(any<KAnnotatedElement>(), any())
     }
 
     @Test
     fun `should delegate argument generation to the injected FixtureGenerator`() {
 
         val mockGenerator = mock<FixtureGenerator>()
-
 
         doAnswer { invocation ->
             val param = invocation.arguments[0] as KParameter
@@ -50,7 +50,7 @@ class DefaultScenarioExecutorTest : TestScenarioExecutorTest() {
                 String::class -> "MockedString"
                 else -> null
             }
-        }.`when`(mockGenerator).generate(any(), any())
+        }.`when`(mockGenerator).generate(any<KParameter>())
 
         val sut = DefaultScenarioExecutor(
             fixtureFactory = { _, _ -> mockGenerator }
