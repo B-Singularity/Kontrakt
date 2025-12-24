@@ -4,7 +4,7 @@ import exception.KontraktConfigurationException
 import kotlin.reflect.KType
 
 internal class GenerationFailedException(
-    type: KType,
+    val type: KType,
     part: String? = null,
     cause: Throwable? = null,
 ) : KontraktConfigurationException(
