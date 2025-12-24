@@ -27,6 +27,7 @@ import discovery.api.StringLength
 import discovery.api.Url
 import discovery.api.Uuid
 import execution.domain.generator.GenerationRequest
+import execution.exception.InvalidAnnotationValueException
 import java.time.temporal.Temporal
 import java.util.Date
 
@@ -128,7 +129,47 @@ object ContractConfigurationValidator {
             targetAnnotation = Size::class,
             allowedTypes = setOf(Collection::class, Map::class, Array::class, CharSequence::class),
             reason = "@Size can only be applied to Collections, Maps, Arrays, or Strings."
-        )
+        ),
+
+        AnnotationValueRule(
+            name = "SizeLogicValidation",
+            target = Size::class
+        ) { request, size ->
+            if (size.min < 0) {
+                throw InvalidAnnotationValueException(
+                    fieldName = request.name,
+                    value = "min=${size.min}",
+                    reason = "@Size min must be non-negative."
+                )
+            }
+            if (size.max != Int.MAX_VALUE && size.min > size.max) {
+                throw InvalidAnnotationValueException(
+                    fieldName = request.name,
+                    value = "min=${size.min}, max=${size.max}",
+                    reason = "@Size min cannot be greater than max."
+                )
+            }
+        },
+
+        AnnotationValueRule(
+            name = "StringLengthLogicValidation",
+            target = StringLength::class
+        ) { request, len ->
+            if (len.min < 0) {
+                throw InvalidAnnotationValueException(
+                    fieldName = request.name,
+                    value = "min=${len.min}",
+                    reason = "@StringLength min must be non-negative."
+                )
+            }
+            if (len.max != Int.MAX_VALUE && len.min > len.max) {
+                throw InvalidAnnotationValueException(
+                    fieldName = request.name,
+                    value = "min=${len.min}, max=${len.max}",
+                    reason = "@StringLength min cannot be greater than max."
+                )
+            }
+        },
     )
 
 

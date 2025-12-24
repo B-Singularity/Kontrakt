@@ -110,7 +110,7 @@ class CollectionTypeGenerator : RecursiveGenerator {
             java.util.Queue::class.java.isAssignableFrom(javaClass) ||
                     java.util.Deque::class.java.isAssignableFrom(javaClass) ->
                 java.util.LinkedList(generateList(request, context, size, regenerator))
-            
+
             else ->
                 generateList(request, context, size, regenerator)
         }
@@ -158,7 +158,7 @@ class CollectionTypeGenerator : RecursiveGenerator {
         if (annotation == null) return Triple(0, Int.MAX_VALUE, false)
 
         val min = annotation.min.coerceAtLeast(0)
-        val max = annotation.max.coerceAtLeast(min)
+        val max = annotation.max
         val isExplicit = annotation.max != Int.MAX_VALUE
 
         return Triple(min, max, isExplicit)

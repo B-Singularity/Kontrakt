@@ -132,3 +132,31 @@ data class TypeCompatibilityRule(
     }
 }
 
+/**
+ * [Rule Type 4] Annotation Value Logic Rule.
+ *
+ * Checks the internal values of a specific annotation instance.
+ * Unlike other rules that check relationships between annotations, this rule
+ * validates that a single annotation's parameters make logical sense.
+ *
+ * Example: Checking that `@Size(min=5, max=2)` throws an exception because min > max.
+ *
+ * @param T The type of annotation to validate.
+ * @property name The identifier for this rule.
+ * @property target The annotation class to look for.
+ * @property validator A lambda that takes the annotation instance and performs checks.
+ * It should throw an exception (e.g., InvalidAnnotationValueException) if valid.
+ */
+class AnnotationValueRule<T : Annotation>(
+    val name: String,
+    val target: KClass<T>,
+    val validator: (GenerationRequest, T) -> Unit
+) : ValidationRule {
+    override fun validate(request: GenerationRequest) {
+        @Suppress("UNCHECKED_CAST")
+        val annotation = request.annotations
+            .find { it.annotationClass == target } as? T ?: return
+
+        validator(request, annotation)
+    }
+}
