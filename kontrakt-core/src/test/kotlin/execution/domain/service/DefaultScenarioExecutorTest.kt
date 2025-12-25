@@ -1,5 +1,6 @@
 package execution.domain.service
 
+import exception.ContractViolationException
 import execution.api.TestScenarioExecutor
 import execution.api.TestScenarioExecutorTest
 import execution.domain.AssertionStatus
@@ -81,7 +82,7 @@ class DefaultScenarioExecutorTest : TestScenarioExecutorTest() {
         val mockValidator = mock<ContractValidator>()
         val exceptionMessage = "Simulated Validation Error"
 
-        doThrow(ContractValidator.ContractViolationException(exceptionMessage))
+        doThrow(ContractViolationException(exceptionMessage))
             .`when`(mockValidator).validate(any(), any())
 
         val sut = DefaultScenarioExecutor(

@@ -26,6 +26,7 @@ import discovery.api.Size
 import discovery.api.StringLength
 import discovery.api.Url
 import discovery.api.Uuid
+import exception.ContractViolationException
 import java.math.BigDecimal
 import java.time.Clock
 import java.time.Instant
@@ -332,7 +333,4 @@ class ContractValidator(
         }
     }
 
-    class ContractViolationException(
-        message: String,
-    ) : RuntimeException(message)
 }

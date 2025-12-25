@@ -1,6 +1,7 @@
 package execution.domain.service
 
 import common.reflection.unwrapped
+import exception.ContractViolationException
 import execution.api.TestScenarioExecutor
 import execution.domain.AssertionStatus
 import execution.domain.entity.EphemeralTestContext
@@ -106,7 +107,7 @@ class DefaultScenarioExecutor(
         } catch (e: Throwable) {
             val rootCause = e.unwrapped
 
-            if (rootCause is ContractValidator.ContractViolationException) {
+            if (rootCause is ContractViolationException) {
                 logger.error { "Contract Violation in ${contractMethod.name}: ${rootCause.message}" }
                 AssertionRecord(
                     status = AssertionStatus.FAILED,
