@@ -166,7 +166,12 @@ class KontraktTestEngineTest {
 
         val configParams = mock<ConfigurationParameters>()
 
-        return Pair(ExecutionRequest(rootDescriptor, listener, configParams), childDescriptor)
+        val mockRequest = mock<ExecutionRequest>()
+        whenever(mockRequest.rootTestDescriptor).thenReturn(rootDescriptor)
+        whenever(mockRequest.engineExecutionListener).thenReturn(listener)
+        whenever(mockRequest.configurationParameters).thenReturn(configParams)
+
+        return Pair(mockRequest, childDescriptor)
     }
 
     private fun createTestResult(status: TestStatus): TestResult =
