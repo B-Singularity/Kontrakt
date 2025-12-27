@@ -1,61 +1,53 @@
 package discovery.domain.vo
 
-import kotlin.test.Test
+import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertFailsWith
+import kotlin.test.assertIs
 import kotlin.test.assertTrue
 
 class DiscoveredTestTargetTest {
     @Test
-    fun `should create a valid instance with correct properties`() {
-        val result =
-            DiscoveredTestTarget.create(
-                kClass = String::class,
-                displayName = "String",
-                fullyQualifiedName = "kotlin.String",
-            )
+    fun `create should succeed when invalid arguments are provided`() {
+        val kClass = String::class
+        val displayName = "String"
+        val fullyQualifiedName = "java.lang.String"
+        val result = DiscoveredTestTarget.create(kClass, displayName, fullyQualifiedName)
 
-        assertTrue(result.isSuccess, "Creation should be successful")
-
+        assertTrue(result.isSuccess, "Creation should succeed with valid inputs")
         val target = result.getOrThrow()
-        assertEquals(String::class, target.kClass)
-        assertEquals("String", target.displayName)
-        assertEquals("kotlin.String", target.fullyQualifiedName)
+
+        assertEquals(kClass, target.kClass)
+        assertEquals(displayName, target.displayName)
+        assertEquals(fullyQualifiedName, target.fullyQualifiedName)
     }
 
     @Test
-    fun `should fail to create if displayName is blank`() {
-        val result =
-            DiscoveredTestTarget.create(
-                kClass = String::class,
-                displayName = "  ",
-                fullyQualifiedName = "kotlin.String",
-            )
+    fun `create should fail when displayName is blank`() {
+        val kClass = String::class
+        val invalidDisplayName = "   "
+        val fullyQualifiedName = "java.lang.String"
 
-        assertTrue(result.isFailure, "Creation should be failure")
-        val exception =
-            assertFailsWith<IllegalArgumentException> {
-                result.getOrThrow()
-            }
+        val result = DiscoveredTestTarget.create(kClass, invalidDisplayName, fullyQualifiedName)
 
+        assertTrue(result.isFailure, "Should fail if displayName is blank")
+
+        val exception = result.exceptionOrNull()
+        assertIs<IllegalArgumentException>(exception)
         assertEquals("Display name cannot be blank", exception.message)
     }
 
     @Test
-    fun `should fail to create if fullyQualifiedName is blank`() {
-        val result =
-            DiscoveredTestTarget.create(
-                kClass = String::class,
-                displayName = "String",
-                fullyQualifiedName = " ",
-            )
+    fun `create should fail when fullyQualifiedName is blank`() {
+        val kClass = String::class
+        val displayName = "String"
+        val invalidQualifiedName = ""
 
-        assertTrue(result.isFailure, "Creation should be failure")
-        val exception =
-            assertFailsWith<IllegalArgumentException> {
-                result.getOrThrow()
-            }
+        val result = DiscoveredTestTarget.create(kClass, displayName, invalidQualifiedName)
 
+        assertTrue(result.isFailure, "Should fail if fullyQualifiedName is blank")
+
+        val exception = result.exceptionOrNull()
+        assertIs<IllegalArgumentException>(exception)
         assertEquals("Fully qualified name cannot be blank", exception.message)
     }
 }

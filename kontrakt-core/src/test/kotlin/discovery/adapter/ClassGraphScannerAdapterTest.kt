@@ -1,8 +1,10 @@
 package discovery.adapter
 
-import com.bsingularity.kontrakt.discovery.spi.ClasspathScannerContract
-import discovery.spi.ClasspathScanner
+import discovery.domain.vo.ScanScope
+import discovery.spi.ClasspathScannerTest
 
-class ClassGraphScannerAdapterTest : ClasspathScannerContract {
-    override fun createScanner(): ClasspathScanner = ClassGraphScannerAdapter()
+class ClassGraphScannerAdapterTest : ClasspathScannerTest() {
+    override val scanner = ClassGraphScannerAdapter()
+
+    override val baseScope: ScanScope = ScanScope.Packages(listOf("discovery.spi"))
 }

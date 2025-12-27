@@ -7,4 +7,6 @@ package discovery.api
  */
 @Target(AnnotationTarget.CLASS)
 @Retention(AnnotationRetention.RUNTIME)
-annotation class Contract
+annotation class Contract(
+    val verifyConstructors: Boolean = false,
+)
