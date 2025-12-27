@@ -5,7 +5,6 @@ import kotlin.test.Test
 import kotlin.test.assertSame
 
 class ExceptionUtilsTest {
-
     @Test
     fun `should return self when exception is not wrapped`() {
         val original = IllegalArgumentException("I am a raw exception")
@@ -27,7 +26,6 @@ class ExceptionUtilsTest {
 
     @Test
     fun `should unwrap multiple layers of InvocationTargetException recursively`() {
-
         val realError = IllegalStateException("Deep trouble")
         val level3 = InvocationTargetException(realError)
         val level2 = InvocationTargetException(level3)
@@ -40,7 +38,6 @@ class ExceptionUtilsTest {
 
     @Test
     fun `should return wrapper itself if target exception is null`() {
-
         val emptyWrapper = InvocationTargetException(null)
 
         val result = emptyWrapper.unwrapped

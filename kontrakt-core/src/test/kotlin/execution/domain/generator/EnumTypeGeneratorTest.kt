@@ -12,13 +12,13 @@ import kotlin.test.assertIs
 import kotlin.test.assertTrue
 
 class EnumTypeGeneratorTest {
-
     private val generator = EnumTypeGenerator()
 
-    private val context = GenerationContext(
-        seededRandom = Random(42),
-        clock = Clock.systemDefaultZone()
-    )
+    private val context =
+        GenerationContext(
+            seededRandom = Random(42),
+            clock = Clock.systemDefaultZone(),
+        )
 
     // =================================================================
     // 1. Test Data
@@ -28,13 +28,15 @@ class EnumTypeGeneratorTest {
     enum class RGB { RED, GREEN, BLUE }
 
     // [Case 2] Single Value Enum
-    enum class Singleton { ONLY }
+    enum class Singleton { ONLY, }
 
     // [Case 3] Empty Enum (Edge Case)
-    enum class EmptyEnum {; }
+    enum class EmptyEnum
 
     // [Case 4] Non-Enum Class (Invalid Parameter)
-    data class NotAnEnum(val name: String)
+    data class NotAnEnum(
+        val name: String,
+    )
 
     // =================================================================
     // 2. Helpers
@@ -43,9 +45,13 @@ class EnumTypeGeneratorTest {
     @Suppress("UNUSED_PARAMETER")
     class TestTargets {
         fun rgb(e: RGB) {}
+
         fun singleton(e: Singleton) {}
+
         fun empty(e: EmptyEnum) {}
+
         fun notEnum(n: NotAnEnum) {}
+
         fun <T> generic(t: T) {}
     }
 
@@ -112,9 +118,10 @@ class EnumTypeGeneratorTest {
         // [Existing & Branch Coverage] constants is Empty
         val req = request("empty")
 
-        val ex = assertFailsWith<GenerationFailedException> {
-            generator.generate(req, context)
-        }
+        val ex =
+            assertFailsWith<GenerationFailedException> {
+                generator.generate(req, context)
+            }
 
         assertTrue(ex.message!!.contains("defines no constants"))
         assertEquals(req.type, ex.type)
@@ -124,9 +131,10 @@ class EnumTypeGeneratorTest {
     fun `Parameter Contract - throws exception when non-enum is passed bypassing supports`() {
         val req = request("notEnum")
 
-        val ex = assertFailsWith<GenerationFailedException> {
-            generator.generate(req, context)
-        }
+        val ex =
+            assertFailsWith<GenerationFailedException> {
+                generator.generate(req, context)
+            }
 
         // Logic: kClass.java.enumConstants returns null -> Caught by isNullOrEmpty()
         assertTrue(ex.message!!.contains("defines no constants"))

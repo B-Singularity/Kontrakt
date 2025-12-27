@@ -17,7 +17,6 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 class StringTypeGeneratorTest {
-
     private lateinit var generator: StringTypeGenerator
     private lateinit var context: GenerationContext
     private val fixedSeed = 12345L
@@ -25,10 +24,11 @@ class StringTypeGeneratorTest {
     @BeforeTest
     fun setup() {
         generator = StringTypeGenerator()
-        context = GenerationContext(
-            seededRandom = Random(fixedSeed),
-            clock = java.time.Clock.systemUTC()
-        )
+        context =
+            GenerationContext(
+                seededRandom = Random(fixedSeed),
+                clock = java.time.Clock.systemUTC(),
+            )
     }
 
     @Test
@@ -86,10 +86,11 @@ class StringTypeGeneratorTest {
         // Remaining = 5
         // host.take(5) -> "veryl"
         // Result: "http://veryl"
-        val reqTrunc = createRequest(
-            String::class,
-            listOf(Url(protocol = arrayOf("http"), hostAllow = arrayOf("verylong.com")), StringLength(max = 12))
-        )
+        val reqTrunc =
+            createRequest(
+                String::class,
+                listOf(Url(protocol = arrayOf("http"), hostAllow = arrayOf("verylong.com")), StringLength(max = 12)),
+            )
         assertEquals("http://veryl", generator.generate(reqTrunc, context))
     }
 
@@ -98,10 +99,11 @@ class StringTypeGeneratorTest {
         // 1. Path Discarding
         // Scheme+Host=14. Max=17. Space=3. Path min=4.
         // 14+3 < 17 (False). Path logic skipped.
-        val reqPath = createRequest(
-            String::class,
-            listOf(Url(protocol = arrayOf("http"), hostAllow = arrayOf("abc.com")), StringLength(max = 17))
-        )
+        val reqPath =
+            createRequest(
+                String::class,
+                listOf(Url(protocol = arrayOf("http"), hostAllow = arrayOf("abc.com")), StringLength(max = 17)),
+            )
         repeat(10) {
             val res = generator.generate(reqPath, context) as String
             assertEquals(2, res.count { it == '/' }, "Path should be discarded/skipped")
@@ -111,10 +113,11 @@ class StringTypeGeneratorTest {
         // Scheme+Host=14. Max=20.
         // Query check: 14+5 < 20 (True)
         // Query min=8. 14+8 <= 20 (False). Discard.
-        val reqQuery = createRequest(
-            String::class,
-            listOf(Url(protocol = arrayOf("http"), hostAllow = arrayOf("abc.com")), StringLength(max = 20))
-        )
+        val reqQuery =
+            createRequest(
+                String::class,
+                listOf(Url(protocol = arrayOf("http"), hostAllow = arrayOf("abc.com")), StringLength(max = 20)),
+            )
         repeat(20) {
             val res = generator.generate(reqQuery, context) as String
             assertFalse(res.contains("?key="), "Query should be discarded")
@@ -242,12 +245,11 @@ class StringTypeGeneratorTest {
 
     private fun createRequest(
         kClass: kotlin.reflect.KClass<*>,
-        annotations: List<Annotation> = emptyList()
-    ): GenerationRequest {
-        return GenerationRequest.from(
+        annotations: List<Annotation> = emptyList(),
+    ): GenerationRequest =
+        GenerationRequest.from(
             type = kClass.starProjectedType,
             annotations = annotations,
-            name = "testParam"
+            name = "testParam",
         )
-    }
 }

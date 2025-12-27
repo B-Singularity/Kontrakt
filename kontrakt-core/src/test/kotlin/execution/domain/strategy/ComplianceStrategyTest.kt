@@ -7,13 +7,20 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 abstract class ComplianceStrategyTest {
-
     abstract val strategy: ComplianceStrategy
 
-    data class SupportTestCase(val kClass: KClass<*>, val expected: Boolean)
-    data class DecideTestCase(val kClass: KClass<*>, val expected: StrategyResult)
+    data class SupportTestCase(
+        val kClass: KClass<*>,
+        val expected: Boolean,
+    )
+
+    data class DecideTestCase(
+        val kClass: KClass<*>,
+        val expected: StrategyResult,
+    )
 
     abstract fun provideSupportTestCases(): List<SupportTestCase>
+
     abstract fun provideDecideTestCases(): List<DecideTestCase>
 
     @Test

@@ -50,7 +50,7 @@ import kotlin.reflect.KParameter
 class FixtureGenerator(
     private val mockingEngine: MockingEngine,
     private val clock: Clock = Clock.systemDefaultZone(),
-    seed: Long = System.nanoTime()
+    seed: Long = System.nanoTime(),
 ) {
     private val logger = KotlinLogging.logger {}
 
@@ -70,17 +70,18 @@ class FixtureGenerator(
      * The order is significant: specific types (like primitives and collections) must be
      * handled before the general [ObjectGenerator] fallback.
      */
-    private val generators: List<TypeGenerator> = listOf(
-        BooleanTypeGenerator(),
-        TimeTypeGenerator(clock),
-        NumericTypeGenerator(),
-        StringTypeGenerator(),
-        CollectionTypeGenerator(),
-        ArrayTypeGenerator(),
-        EnumTypeGenerator(),
-        SealedTypeGenerator(),
-        ObjectGenerator() // Final fallback for POJOs
-    )
+    private val generators: List<TypeGenerator> =
+        listOf(
+            BooleanTypeGenerator(),
+            TimeTypeGenerator(clock),
+            NumericTypeGenerator(),
+            StringTypeGenerator(),
+            CollectionTypeGenerator(),
+            ArrayTypeGenerator(),
+            EnumTypeGenerator(),
+            SealedTypeGenerator(),
+            ObjectGenerator(), // Final fallback for POJOs
+        )
 
     /**
      * [Primary Port]
@@ -117,9 +118,7 @@ class FixtureGenerator(
      * @param param The target parameter.
      * @return The generated value.
      */
-    fun generate(param: KParameter): Any? {
-        return generate(GenerationRequest.from(param))
-    }
+    fun generate(param: KParameter): Any? = generate(GenerationRequest.from(param))
 
     /**
      * Generates a list of valid boundary values (Smart Fuzzing) for the given [param].
@@ -151,11 +150,12 @@ class FixtureGenerator(
         // 3. Delegate to specific generator strategies
         val generator = findGenerator(request)
         if (generator != null) {
-            val generated = when (generator) {
-                is RecursiveGenerator -> generator.generateValidBoundaries(request, context, ::generateInternal)
-                is TerminalGenerator -> generator.generateValidBoundaries(request, context)
-                else -> emptyList()
-            }
+            val generated =
+                when (generator) {
+                    is RecursiveGenerator -> generator.generateValidBoundaries(request, context, ::generateInternal)
+                    is TerminalGenerator -> generator.generateValidBoundaries(request, context)
+                    else -> emptyList()
+                }
             boundaries.addAll(generated)
         }
 
@@ -198,11 +198,12 @@ class FixtureGenerator(
         // 2. Delegate to specific generator strategies
         val generator = findGenerator(request)
         if (generator != null) {
-            val generated = when (generator) {
-                is RecursiveGenerator -> generator.generateInvalid(request, context, ::generateInternal)
-                is TerminalGenerator -> generator.generateInvalid(request, context)
-                else -> emptyList()
-            }
+            val generated =
+                when (generator) {
+                    is RecursiveGenerator -> generator.generateInvalid(request, context, ::generateInternal)
+                    is TerminalGenerator -> generator.generateInvalid(request, context)
+                    else -> emptyList()
+                }
             invalids.addAll(generated)
         }
         return invalids
@@ -218,13 +219,12 @@ class FixtureGenerator(
      * It injects the [sharedRandom] instance into the context, ensuring that
      * all downstream generators consume the same random sequence.
      */
-    private fun createRootContext(): GenerationContext {
-        return GenerationContext(
+    private fun createRootContext(): GenerationContext =
+        GenerationContext(
             seededRandom = sharedRandom,
             clock = clock,
-            history = emptySet()
+            history = emptySet(),
         )
-    }
 
     /**
      * The core orchestration method that handles the generation logic recursively.
@@ -235,9 +235,13 @@ class FixtureGenerator(
      *
      * @throws GenerationFailedException If generation fails unrecoverably.
      */
-    private fun generateInternal(request: GenerationRequest, context: GenerationContext): Any? {
-        val generator = findGenerator(request)
-            ?: throw GenerationFailedException(request.type, "No suitable generator found for type: ${request.type}")
+    private fun generateInternal(
+        request: GenerationRequest,
+        context: GenerationContext,
+    ): Any? {
+        val generator =
+            findGenerator(request)
+                ?: throw GenerationFailedException(request.type, "No suitable generator found for type: ${request.type}")
 
         return try {
             when (generator) {
@@ -254,11 +258,12 @@ class FixtureGenerator(
             try {
                 mockingEngine.createMock(kClass)
             } catch (mockEx: Exception) {
-                val combinedEx = GenerationFailedException(
-                    request.type,
-                    "Failed to handle recursion via Mocking. (Recursion: ${recursionEx.message})",
-                    mockEx
-                )
+                val combinedEx =
+                    GenerationFailedException(
+                        request.type,
+                        "Failed to handle recursion via Mocking. (Recursion: ${recursionEx.message})",
+                        mockEx,
+                    )
                 combinedEx.addSuppressed(recursionEx)
                 throw combinedEx
             }
@@ -268,9 +273,7 @@ class FixtureGenerator(
         }
     }
 
-    private fun findGenerator(request: GenerationRequest): TypeGenerator? {
-        return generators.firstOrNull { it.supports(request) }
-    }
+    private fun findGenerator(request: GenerationRequest): TypeGenerator? = generators.firstOrNull { it.supports(request) }
 
     /**
      * Validates that the generated [result] complies with the type constraints of the [request].
@@ -279,11 +282,14 @@ class FixtureGenerator(
      *
      * @throws GenerationFailedException If the result violates integrity constraints.
      */
-    private fun validateResult(result: Any?, request: GenerationRequest) {
+    private fun validateResult(
+        result: Any?,
+        request: GenerationRequest,
+    ) {
         if (result == null && !request.type.isMarkedNullable) {
             throw GenerationFailedException(
                 request.type,
-                "Generator returned null for non-nullable type '${request.type}'. Check the logic of the generator handling this type."
+                "Generator returned null for non-nullable type '${request.type}'. Check the logic of the generator handling this type.",
             )
         }
     }

@@ -7,7 +7,6 @@ import kotlin.reflect.full.starProjectedType
 import java.lang.reflect.Array as JavaArray
 
 class ArrayTypeGenerator : RecursiveGenerator {
-
     private companion object {
         const val DEFAULT_SIZE = 5
         const val GLOBAL_LIMIT = 1_000
@@ -21,15 +20,16 @@ class ArrayTypeGenerator : RecursiveGenerator {
     override fun generator(
         request: GenerationRequest,
         context: GenerationContext,
-        regenerator: (GenerationRequest, GenerationContext) -> Any?
+        regenerator: (GenerationRequest, GenerationContext) -> Any?,
     ): Any {
         val sizeAnnotation = request.find<Size>()
         val (min, max, isMaxExplicit) = parseSizeBoundaries(sizeAnnotation)
 
-        val targetSize = when {
-            isMaxExplicit -> context.seededRandom.nextInt(min, max + 1)
-            else -> maxOf(min, DEFAULT_SIZE)
-        }
+        val targetSize =
+            when {
+                isMaxExplicit -> context.seededRandom.nextInt(min, max + 1)
+                else -> maxOf(min, DEFAULT_SIZE)
+            }
 
         validateSafetyLimit(targetSize, min, sizeAnnotation?.ignoreLimit == true)
 
@@ -39,46 +39,48 @@ class ArrayTypeGenerator : RecursiveGenerator {
     override fun generateValidBoundaries(
         request: GenerationRequest,
         context: GenerationContext,
-        regenerator: (GenerationRequest, GenerationContext) -> Any?
-    ): List<Any?> = buildList {
-        val sizeAnnotation = request.find<Size>()
-        val (min, max, _) = parseSizeBoundaries(sizeAnnotation)
-        val ignoreLimit = sizeAnnotation?.ignoreLimit == true
+        regenerator: (GenerationRequest, GenerationContext) -> Any?,
+    ): List<Any?> =
+        buildList {
+            val sizeAnnotation = request.find<Size>()
+            val (min, max, _) = parseSizeBoundaries(sizeAnnotation)
+            val ignoreLimit = sizeAnnotation?.ignoreLimit == true
 
-        if (isValidSize(min, ignoreLimit)) {
-            add(createArray(request, context, min, regenerator))
+            if (isValidSize(min, ignoreLimit)) {
+                add(createArray(request, context, min, regenerator))
+            }
+            if (max != min && max != Int.MAX_VALUE && isValidSize(max, ignoreLimit)) {
+                add(createArray(request, context, max, regenerator))
+            }
         }
-        if (max != min && max != Int.MAX_VALUE && isValidSize(max, ignoreLimit)) {
-            add(createArray(request, context, max, regenerator))
-        }
-    }
 
     override fun generateInvalid(
         request: GenerationRequest,
         context: GenerationContext,
-        regenerator: (GenerationRequest, GenerationContext) -> Any?
-    ): List<Any?> = buildList {
-        val sizeAnnotation = request.find<Size>() ?: return@buildList
-        val (min, max, _) = parseSizeBoundaries(sizeAnnotation)
-        val ignoreLimit = sizeAnnotation.ignoreLimit
+        regenerator: (GenerationRequest, GenerationContext) -> Any?,
+    ): List<Any?> =
+        buildList {
+            val sizeAnnotation = request.find<Size>() ?: return@buildList
+            val (min, max, _) = parseSizeBoundaries(sizeAnnotation)
+            val ignoreLimit = sizeAnnotation.ignoreLimit
 
-        if (min > 0) {
-            add(createArray(request, context, min - 1, regenerator))
-        }
+            if (min > 0) {
+                add(createArray(request, context, min - 1, regenerator))
+            }
 
-        if (max != Int.MAX_VALUE) {
-            val invalidSize = max + 1
-            if (isValidSize(invalidSize, ignoreLimit)) {
-                add(createArray(request, context, invalidSize, regenerator))
+            if (max != Int.MAX_VALUE) {
+                val invalidSize = max + 1
+                if (isValidSize(invalidSize, ignoreLimit)) {
+                    add(createArray(request, context, invalidSize, regenerator))
+                }
             }
         }
-    }
 
     private fun createArray(
         request: GenerationRequest,
         context: GenerationContext,
         size: Int,
-        regenerator: (GenerationRequest, GenerationContext) -> Any?
+        regenerator: (GenerationRequest, GenerationContext) -> Any?,
     ): Any {
         val kClass = request.type.classifier as KClass<*>
         val javaClass = kClass.java
@@ -86,11 +88,14 @@ class ArrayTypeGenerator : RecursiveGenerator {
 
         val array = JavaArray.newInstance(componentType, size)
 
-        val elementType = if (componentType.isPrimitive) {
-            componentType.kotlin.starProjectedType
-        } else {
-            request.type.arguments.firstOrNull()?.type ?: componentType.kotlin.starProjectedType
-        }
+        val elementType =
+            if (componentType.isPrimitive) {
+                componentType.kotlin.starProjectedType
+            } else {
+                request.type.arguments
+                    .firstOrNull()
+                    ?.type ?: componentType.kotlin.starProjectedType
+            }
 
         val elementRequest = GenerationRequest.from(elementType, "${request.name}[$componentType]")
 
@@ -102,16 +107,21 @@ class ArrayTypeGenerator : RecursiveGenerator {
         return array
     }
 
-    private fun validateSafetyLimit(targetSize: Int, minSize: Int, ignoreLimit: Boolean) {
+    private fun validateSafetyLimit(
+        targetSize: Int,
+        minSize: Int,
+        ignoreLimit: Boolean,
+    ) {
         val isExplicitIntent = ignoreLimit || (minSize > GLOBAL_LIMIT)
         if (!isExplicitIntent && targetSize > GLOBAL_LIMIT) {
             throw CollectionSizeLimitExceededException(targetSize, GLOBAL_LIMIT)
         }
     }
 
-    private fun isValidSize(size: Int, ignoreLimit: Boolean): Boolean {
-        return ignoreLimit || size <= GLOBAL_LIMIT
-    }
+    private fun isValidSize(
+        size: Int,
+        ignoreLimit: Boolean,
+    ): Boolean = ignoreLimit || size <= GLOBAL_LIMIT
 
     private fun parseSizeBoundaries(annotation: Size?): Triple<Int, Int, Boolean> {
         if (annotation == null) return Triple(0, Int.MAX_VALUE, false)

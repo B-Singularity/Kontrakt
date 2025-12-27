@@ -13,39 +13,67 @@ import kotlin.test.assertIs
 import kotlin.test.assertTrue
 
 class ArrayTypeGeneratorTest {
-
     private val generator = ArrayTypeGenerator()
 
-    private val context = GenerationContext(
-        seededRandom = Random(42),
-        clock = Clock.systemDefaultZone()
-    )
+    private val context =
+        GenerationContext(
+            seededRandom = Random(42),
+            clock = Clock.systemDefaultZone(),
+        )
 
     @Suppress("UNUSED_PARAMETER")
     class ArrayTargets {
         // [Type Branches]
-        fun intArray(arr: IntArray) {}              // Primitive
-        fun stringArray(arr: Array<String>) {}      // Object
+        fun intArray(arr: IntArray) {} // Primitive
+
+        fun stringArray(arr: Array<String>) {} // Object
+
         fun multidimensional(arr: Array<IntArray>) {} // Nested/Recursive
 
         // [Size Logic Branches]
-        fun defaultSize(arr: IntArray) {}           // No Annotation
-        fun sizeRange(@Size(min = 2, max = 4) arr: IntArray) {}
-        fun fixedSize(@Size(min = 3, max = 3) arr: IntArray) {}
-        fun minOnly(@Size(min = 10) arr: IntArray) {} // Implicit Max
-        fun inverted(@Size(min = 5, max = 2) arr: IntArray) {} // Defensive Copy
+        fun defaultSize(arr: IntArray) {} // No Annotation
+
+        fun sizeRange(
+            @Size(min = 2, max = 4) arr: IntArray,
+        ) {}
+
+        fun fixedSize(
+            @Size(min = 3, max = 3) arr: IntArray,
+        ) {}
+
+        fun minOnly(
+            @Size(min = 10) arr: IntArray,
+        ) {} // Implicit Max
+
+        fun inverted(
+            @Size(min = 5, max = 2) arr: IntArray,
+        ) {} // Defensive Copy
 
         // [Edge Cases]
-        fun minZero(@Size(min = 0, max = 2) arr: IntArray) {}
-        fun maxInt(@Size(min = 1, max = Int.MAX_VALUE) arr: IntArray) {}
+        fun minZero(
+            @Size(min = 0, max = 2) arr: IntArray,
+        ) {}
+
+        fun maxInt(
+            @Size(min = 1, max = Int.MAX_VALUE) arr: IntArray,
+        ) {}
 
         // [Safety Limits]
-        fun largeLimit(@Size(min = 0, max = 2000) arr: IntArray) {}
-        fun explicitHuge(@Size(min = 1001) arr: IntArray) {}
-        fun ignoreLimit(@Size(min = 0, max = 2000, ignoreLimit = true) arr: IntArray) {}
+        fun largeLimit(
+            @Size(min = 0, max = 2000) arr: IntArray,
+        ) {}
+
+        fun explicitHuge(
+            @Size(min = 1001) arr: IntArray,
+        ) {}
+
+        fun ignoreLimit(
+            @Size(min = 0, max = 2000, ignoreLimit = true) arr: IntArray,
+        ) {}
 
         // [Unsupported]
         fun listType(list: List<String>) {}
+
         fun stringType(str: String) {}
     }
 
@@ -134,13 +162,19 @@ class ArrayTypeGeneratorTest {
     @Test
     fun `Safety Contract - validates GLOBAL_LIMIT constraints`() {
         // Malicious Context: Always returns 1500 (Unsafe size)
-        val maliciousContext = GenerationContext(
-            seededRandom = object : Random() {
-                override fun nextBits(bitCount: Int) = 0
-                override fun nextInt(from: Int, until: Int) = 1500
-            },
-            clock = Clock.systemDefaultZone()
-        )
+        val maliciousContext =
+            GenerationContext(
+                seededRandom =
+                    object : Random() {
+                        override fun nextBits(bitCount: Int) = 0
+
+                        override fun nextInt(
+                            from: Int,
+                            until: Int,
+                        ) = 1500
+                    },
+                clock = Clock.systemDefaultZone(),
+            )
 
         // 1. [Branch] Limit Exceeded -> Exception
         // targetSize(1500) > LIMIT(1000) && !ignoreLimit

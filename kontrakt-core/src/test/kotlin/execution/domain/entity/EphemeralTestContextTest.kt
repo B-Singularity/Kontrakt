@@ -13,7 +13,6 @@ import kotlin.test.assertNull
 import kotlin.test.assertSame
 
 class EphemeralTestContextTest {
-
     private val mockSpec: TestSpecification = mock()
     private val mockEngine: MockingEngine = mock()
     private val mockControl: ScenarioControl = mock()
@@ -22,7 +21,6 @@ class EphemeralTestContextTest {
 
     @Test
     fun `constructor - should correctly hold reference properties`() {
-
         val sut = createSUT()
 
         assertSame(mockSpec, sut.specification)
@@ -32,7 +30,6 @@ class EphemeralTestContextTest {
 
     @Test
     fun `dependencies - should retrieve registered dependency`() {
-
         val sut = createSUT()
         val dependencyInstance = "I am a dependency"
         val type = String::class
@@ -45,7 +42,6 @@ class EphemeralTestContextTest {
 
     @Test
     fun `dependencies - should return null for unregistered dependency`() {
-
         val sut = createSUT()
 
         val result = sut.getDependency(String::class)
@@ -55,7 +51,6 @@ class EphemeralTestContextTest {
 
     @Test
     fun `dependencies - should overwrite existing dependency if registered again`() {
-
         val sut = createSUT()
         val oldInstance = "Old"
         val newInstance = "New"
@@ -69,7 +64,6 @@ class EphemeralTestContextTest {
 
     @Test
     fun `getTestTarget - should return target instance if initialized`() {
-
         val sut = createSUT()
         val target = "MyTargetObject"
 
@@ -83,14 +77,15 @@ class EphemeralTestContextTest {
     fun `getTestTarget - should throw KontraktInternalException if NOT initialized`() {
         val sut = createSUT()
 
-        val exception = assertFailsWith<KontraktInternalException> {
-            sut.getTestTarget()
-        }
+        val exception =
+            assertFailsWith<KontraktInternalException> {
+                sut.getTestTarget()
+            }
 
         assertNotNull(exception.message)
         assertEquals(
             "[Internal Error] Test Target has not been initialized. Factory execution might have failed.",
-            exception.message
+            exception.message,
         )
     }
 }

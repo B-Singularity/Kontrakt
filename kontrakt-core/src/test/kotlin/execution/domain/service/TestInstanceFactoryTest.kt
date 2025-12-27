@@ -18,7 +18,6 @@ import org.mockito.kotlin.whenever
 import kotlin.reflect.KClass
 
 class TestInstanceFactoryTest {
-
     private lateinit var mockingEngine: MockingEngine
     private lateinit var scenarioControl: ScenarioControl
     private lateinit var factory: TestInstanceFactory
@@ -35,13 +34,26 @@ class TestInstanceFactoryTest {
     // =================================================================
 
     class SimpleService
-    class ServiceWithDep(val dep: SimpleService)
-    class ServiceWithValue(val name: String, val age: Int)
+
+    class ServiceWithDep(
+        val dep: SimpleService,
+    )
+
+    class ServiceWithValue(
+        val name: String,
+        val age: Int,
+    )
+
     interface ServiceInterface
 
     // Circular Dependency Classes
-    class CircularA(val b: CircularB)
-    class CircularB(val a: CircularA)
+    class CircularA(
+        val b: CircularB,
+    )
+
+    class CircularB(
+        val a: CircularA,
+    )
 
     // =================================================================
     // 1. Basic Instantiation & Real Strategy
@@ -81,11 +93,13 @@ class TestInstanceFactoryTest {
         val mockSimpleService = SimpleService()
         whenever(mockingEngine.createMock(SimpleService::class)).thenReturn(mockSimpleService)
 
-        val depMetadata = DependencyMetadata.create(
-            name = "simpleService",
-            type = SimpleService::class,
-            strategy = DependencyMetadata.MockingStrategy.StatelessMock
-        ).getOrThrow()
+        val depMetadata =
+            DependencyMetadata
+                .create(
+                    name = "simpleService",
+                    type = SimpleService::class,
+                    strategy = DependencyMetadata.MockingStrategy.StatelessMock,
+                ).getOrThrow()
         val spec = createSpecification(ServiceWithDep::class, listOf(depMetadata))
 
         val context = factory.create(spec)
@@ -100,11 +114,13 @@ class TestInstanceFactoryTest {
         val fakeSimpleService = SimpleService()
         whenever(mockingEngine.createFake(SimpleService::class)).thenReturn(fakeSimpleService)
 
-        val depMetadata = DependencyMetadata.create(
-            name = "simpleService",
-            type = SimpleService::class,
-            strategy = DependencyMetadata.MockingStrategy.StatefulFake
-        ).getOrThrow()
+        val depMetadata =
+            DependencyMetadata
+                .create(
+                    name = "simpleService",
+                    type = SimpleService::class,
+                    strategy = DependencyMetadata.MockingStrategy.StatefulFake,
+                ).getOrThrow()
         val spec = createSpecification(ServiceWithDep::class, listOf(depMetadata))
 
         val context = factory.create(spec)
@@ -158,9 +174,10 @@ class TestInstanceFactoryTest {
         // Circular path: A -> B -> A
         val spec = createSpecification(CircularA::class)
 
-        val ex = assertThrows<KontraktConfigurationException> {
-            factory.create(spec)
-        }
+        val ex =
+            assertThrows<KontraktConfigurationException> {
+                factory.create(spec)
+            }
         assertTrue(ex.message!!.contains("Circular dependency detected"))
         assertTrue(ex.message!!.contains("CircularA -> CircularB -> CircularA"))
     }
@@ -176,9 +193,10 @@ class TestInstanceFactoryTest {
 
         val spec = createSpecification(ThrowingClass::class)
 
-        val ex = assertThrows<KontraktConfigurationException> {
-            factory.create(spec)
-        }
+        val ex =
+            assertThrows<KontraktConfigurationException> {
+                factory.create(spec)
+            }
         assertTrue(ex.message!!.contains("Failed to create test target"))
         assertTrue(ex.cause!!.message!!.contains("Boom"))
     }
@@ -187,8 +205,15 @@ class TestInstanceFactoryTest {
     fun `create reuses dependencies within same context`() {
         // Singleton Scope Check: A -> C, B -> C. C should be created once.
         class ServiceC
-        class ServiceB(val c: ServiceC)
-        class ServiceA(val c: ServiceC, val b: ServiceB)
+
+        class ServiceB(
+            val c: ServiceC,
+        )
+
+        class ServiceA(
+            val c: ServiceC,
+            val b: ServiceB,
+        )
 
         val spec = createSpecification(ServiceA::class)
 
@@ -206,18 +231,21 @@ class TestInstanceFactoryTest {
     private fun createSpecification(
         type: KClass<*>,
         dependencies: List<DependencyMetadata> = emptyList(),
-        modes: Set<TestSpecification.TestMode> = setOf(TestSpecification.TestMode.UserScenario)
+        modes: Set<TestSpecification.TestMode> = setOf(TestSpecification.TestMode.UserScenario),
     ): TestSpecification {
-        val target = DiscoveredTestTarget.create(
-            kClass = type,
-            displayName = type.simpleName ?: "TestTarget",
-            fullyQualifiedName = type.qualifiedName ?: "test.Target"
-        ).getOrThrow()
+        val target =
+            DiscoveredTestTarget
+                .create(
+                    kClass = type,
+                    displayName = type.simpleName ?: "TestTarget",
+                    fullyQualifiedName = type.qualifiedName ?: "test.Target",
+                ).getOrThrow()
 
-        return TestSpecification.create(
-            target = target,
-            modes = modes,
-            requiredDependencies = dependencies
-        ).getOrThrow()
+        return TestSpecification
+            .create(
+                target = target,
+                modes = modes,
+                requiredDependencies = dependencies,
+            ).getOrThrow()
     }
 }

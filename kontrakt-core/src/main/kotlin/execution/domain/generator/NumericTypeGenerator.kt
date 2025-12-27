@@ -16,14 +16,19 @@ import kotlin.random.Random
 import kotlin.reflect.KClass
 
 class NumericTypeGenerator : TerminalGenerator {
-
     override fun supports(request: GenerationRequest): Boolean {
         val type = request.type.classifier as? KClass<*> ?: return false
-        return type == Int::class || type == Long::class || type == Double::class ||
-                type == Float::class || type == BigDecimal::class
+        return type == Int::class ||
+            type == Long::class ||
+            type == Double::class ||
+            type == Float::class ||
+            type == BigDecimal::class
     }
 
-    override fun generate(request: GenerationRequest, context: GenerationContext): Any? {
+    override fun generate(
+        request: GenerationRequest,
+        context: GenerationContext,
+    ): Any {
         val type = request.type.classifier as KClass<*>
 
         val (min, max) = calculateEffectiveRange(request, type)
@@ -32,24 +37,29 @@ class NumericTypeGenerator : TerminalGenerator {
             Int::class -> smartFuzzInt(min as Int, max as Int, context.seededRandom)
             Long::class -> smartFuzzLong(min as Long, max as Long, context.seededRandom)
             Double::class -> smartFuzzDouble(min as Double, max as Double, context.seededRandom)
-            Float::class -> smartFuzzDouble(
-                (min as Float).toDouble(),
-                (max as Float).toDouble(),
-                context.seededRandom
-            ).toFloat()
+            Float::class ->
+                smartFuzzDouble(
+                    (min as Float).toDouble(),
+                    (max as Float).toDouble(),
+                    context.seededRandom,
+                ).toFloat()
 
-            BigDecimal::class -> smartFuzzBigDecimal(
-                min as BigDecimal,
-                max as BigDecimal,
-                request.find<Digits>(),
-                context.seededRandom
-            )
+            BigDecimal::class ->
+                smartFuzzBigDecimal(
+                    min as BigDecimal,
+                    max as BigDecimal,
+                    request.find<Digits>(),
+                    context.seededRandom,
+                )
 
             else -> 0
         }
     }
 
-    override fun generateValidBoundaries(request: GenerationRequest, context: GenerationContext): List<Any?> =
+    override fun generateValidBoundaries(
+        request: GenerationRequest,
+        context: GenerationContext,
+    ): List<Any?> =
         buildList {
             val type = request.type.classifier as KClass<*>
             val (min, max) = calculateEffectiveRange(request, type)
@@ -59,8 +69,10 @@ class NumericTypeGenerator : TerminalGenerator {
 
             if (type == BigDecimal::class) {
                 request.find<Digits>()?.let { digits ->
-                    val maxPossible = BigDecimal.TEN.pow(digits.integer)
-                        .subtract(BigDecimal.ONE.movePointLeft(digits.fraction))
+                    val maxPossible =
+                        BigDecimal.TEN
+                            .pow(digits.integer)
+                            .subtract(BigDecimal.ONE.movePointLeft(digits.fraction))
 
                     val maxBD = max as BigDecimal
                     val minBD = min as BigDecimal
@@ -76,75 +88,97 @@ class NumericTypeGenerator : TerminalGenerator {
             }
         }
 
-    override fun generateInvalid(request: GenerationRequest, context: GenerationContext): List<Any?> = buildList {
-        val type = request.type.classifier as KClass<*>
-        val (min, max) = calculateEffectiveRange(request, type)
+    override fun generateInvalid(
+        request: GenerationRequest,
+        context: GenerationContext,
+    ): List<Any?> =
+        buildList {
+            val type = request.type.classifier as KClass<*>
+            val (min, max) = calculateEffectiveRange(request, type)
 
-        when (type) {
-            Int::class -> {
-                val minVal = min as Int
-                val maxVal = max as Int
-                if (minVal > Int.MIN_VALUE) add(minVal - 1)
-                if (maxVal < Int.MAX_VALUE) add(maxVal + 1)
-            }
+            when (type) {
+                Int::class -> {
+                    val minVal = min as Int
+                    val maxVal = max as Int
+                    if (minVal > Int.MIN_VALUE) add(minVal - 1)
+                    if (maxVal < Int.MAX_VALUE) add(maxVal + 1)
+                }
 
-            Long::class -> {
-                val minVal = min as Long
-                val maxVal = max as Long
-                if (minVal > Long.MIN_VALUE) add(minVal - 1L)
-                if (maxVal < Long.MAX_VALUE) add(maxVal + 1L)
-            }
+                Long::class -> {
+                    val minVal = min as Long
+                    val maxVal = max as Long
+                    if (minVal > Long.MIN_VALUE) add(minVal - 1L)
+                    if (maxVal < Long.MAX_VALUE) add(maxVal + 1L)
+                }
 
-            Double::class -> {
-                val minVal = min as Double
-                val maxVal = max as Double
-                if (minVal > -Double.MAX_VALUE) add(minVal - 0.1)
-                if (maxVal < Double.MAX_VALUE) add(maxVal + 0.1)
-            }
+                Double::class -> {
+                    val minVal = min as Double
+                    val maxVal = max as Double
+                    if (minVal > -Double.MAX_VALUE) add(minVal - 0.1)
+                    if (maxVal < Double.MAX_VALUE) add(maxVal + 0.1)
+                }
 
-            BigDecimal::class -> {
-                val minVal = min as BigDecimal
-                val maxVal = max as BigDecimal
-                add(minVal.subtract(BigDecimal("0.00001")))
-                add(maxVal.add(BigDecimal("0.00001")))
+                BigDecimal::class -> {
+                    val minVal = min as BigDecimal
+                    val maxVal = max as BigDecimal
+                    add(minVal.subtract(BigDecimal("0.00001")))
+                    add(maxVal.add(BigDecimal("0.00001")))
+                }
             }
         }
-    }
 
-    // =================================================================
-    // Internal Logic: Smart Fuzzing Implementations
-    // =================================================================
-
-    private fun smartFuzzInt(min: Int, max: Int, random: Random): Int {
+    private fun smartFuzzInt(
+        min: Int,
+        max: Int,
+        random: Random,
+    ): Int {
         val candidates = mutableListOf(min, max)
         if (min < Int.MAX_VALUE && (min + 1) <= max) candidates.add(min + 1)
         if (max > Int.MIN_VALUE && (max - 1) >= min) candidates.add(max - 1)
         if (0 in min..max) candidates.add(0)
 
         // Random value within range
-        val rand = if (min == max) min
-        else if (max == Int.MAX_VALUE) Random.nextInt(min, Int.MAX_VALUE) // max exclusive
-        else Random.nextInt(min, max + 1)
+        val rand =
+            if (min == max) {
+                min
+            } else if (max == Int.MAX_VALUE) {
+                Random.nextInt(min, Int.MAX_VALUE) // max exclusive
+            } else {
+                Random.nextInt(min, max + 1)
+            }
 
         candidates.add(rand)
         return candidates.random(random)
     }
 
-    private fun smartFuzzLong(min: Long, max: Long, random: Random): Long {
+    private fun smartFuzzLong(
+        min: Long,
+        max: Long,
+        random: Random,
+    ): Long {
         val candidates = mutableListOf(min, max)
         if (min < Long.MAX_VALUE && (min + 1) <= max) candidates.add(min + 1)
         if (max > Long.MIN_VALUE && (max - 1) >= min) candidates.add(max - 1)
         if (0L in min..max) candidates.add(0L)
 
-        val rand = if (min == max) min
-        else if (max == Long.MAX_VALUE) random.nextLong(min, Long.MAX_VALUE)
-        else random.nextLong(min, max + 1)
+        val rand =
+            if (min == max) {
+                min
+            } else if (max == Long.MAX_VALUE) {
+                random.nextLong(min, Long.MAX_VALUE)
+            } else {
+                random.nextLong(min, max + 1)
+            }
 
         candidates.add(rand)
         return candidates.random(random)
     }
 
-    private fun smartFuzzDouble(min: Double, max: Double, random: Random): Double {
+    private fun smartFuzzDouble(
+        min: Double,
+        max: Double,
+        random: Random,
+    ): Double {
         val candidates = mutableListOf(min, max)
         if (min <= 0.0 && max >= 0.0) candidates.add(0.0)
 
@@ -154,7 +188,12 @@ class NumericTypeGenerator : TerminalGenerator {
         return candidates.random(random)
     }
 
-    private fun smartFuzzBigDecimal(min: BigDecimal, max: BigDecimal, digits: Digits?, random: Random): BigDecimal {
+    private fun smartFuzzBigDecimal(
+        min: BigDecimal,
+        max: BigDecimal,
+        digits: Digits?,
+        random: Random,
+    ): BigDecimal {
         val candidates = mutableListOf(min, max)
         val scale = digits?.fraction ?: 2
         val epsilon = BigDecimal.ONE.movePointLeft(scale)
@@ -183,11 +222,10 @@ class NumericTypeGenerator : TerminalGenerator {
         return candidates.random(random)
     }
 
-    // =================================================================
-    // Internal Logic: Effective Range Calculation
-    // =================================================================
-
-    private fun calculateEffectiveRange(request: GenerationRequest, type: KClass<*>): Pair<Any, Any> {
+    private fun calculateEffectiveRange(
+        request: GenerationRequest,
+        type: KClass<*>,
+    ): Pair<Any, Any> {
         var minLimit = BigDecimal.valueOf(-Double.MAX_VALUE)
         var maxLimit = BigDecimal.valueOf(Double.MAX_VALUE)
 
@@ -259,8 +297,10 @@ class NumericTypeGenerator : TerminalGenerator {
 
         // Digits Annotation (limits magnitude)
         request.find<Digits>()?.let {
-            val maxVal = BigDecimal.TEN.pow(it.integer)
-                .subtract(BigDecimal.ONE.movePointLeft(it.fraction))
+            val maxVal =
+                BigDecimal.TEN
+                    .pow(it.integer)
+                    .subtract(BigDecimal.ONE.movePointLeft(it.fraction))
             maxLimit = maxLimit.min(maxVal)
             minLimit = minLimit.max(maxVal.negate())
         }
@@ -276,15 +316,13 @@ class NumericTypeGenerator : TerminalGenerator {
     private fun convertToPrimitivePair(
         min: BigDecimal,
         max: BigDecimal,
-        type: KClass<*>
-    ): Pair<Any, Any> {
-        return when (type) {
+        type: KClass<*>,
+    ): Pair<Any, Any> =
+        when (type) {
             Int::class -> min.toInt() to max.toInt()
             Long::class -> min.toLong() to max.toLong()
             Double::class -> min.toDouble() to max.toDouble()
             Float::class -> min.toFloat() to max.toFloat()
             else -> min to max
         }
-    }
-
 }

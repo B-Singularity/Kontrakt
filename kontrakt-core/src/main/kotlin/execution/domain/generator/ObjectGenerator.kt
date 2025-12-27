@@ -6,18 +6,19 @@ import kotlin.reflect.KClass
 import kotlin.reflect.full.primaryConstructor
 
 class ObjectGenerator : RecursiveGenerator {
-
     override fun supports(request: GenerationRequest): Boolean {
         val kClass = request.type.classifier as? KClass<*> ?: return false
 
-        return !kClass.isAbstract && !kClass.isSealed &&
-                !kClass.java.isEnum && kClass.constructors.isNotEmpty()
+        return !kClass.isAbstract &&
+            !kClass.isSealed &&
+            !kClass.java.isEnum &&
+            kClass.constructors.isNotEmpty()
     }
 
     override fun generator(
         request: GenerationRequest,
         context: GenerationContext,
-        regenerator: (GenerationRequest, GenerationContext) -> Any?
+        regenerator: (GenerationRequest, GenerationContext) -> Any?,
     ): Any? {
         val type = request.type
         val kClass = type.classifier as KClass<*>
@@ -28,7 +29,7 @@ class ObjectGenerator : RecursiveGenerator {
             throw RecursiveGenerationFailedException(
                 type = type,
                 path = context.history.map { it.simpleName ?: "Unknown" } + (kClass.simpleName ?: "Unknown"),
-                cause = IllegalStateException("Infinite recursion detected in object graph.")
+                cause = IllegalStateException("Infinite recursion detected in object graph."),
             )
         }
 
@@ -37,23 +38,24 @@ class ObjectGenerator : RecursiveGenerator {
         val constructor = kClass.primaryConstructor ?: kClass.constructors.first()
 
         return try {
-            val args = constructor.parameters.map { param ->
-                val paramRequest = GenerationRequest(
-                    type = param.type,
-                    name = param.name ?: "arg",
-                    annotations = param.annotations
-                )
+            val args =
+                constructor.parameters.map { param ->
+                    val paramRequest =
+                        GenerationRequest(
+                            type = param.type,
+                            name = param.name ?: "arg",
+                            annotations = param.annotations,
+                        )
 
-                regenerator(paramRequest, newContext)
-            }
+                    regenerator(paramRequest, newContext)
+                }
 
             constructor.call(*args.toTypedArray())
-
         } catch (e: Exception) {
             throw GenerationFailedException(
                 type = type,
                 part = "Constructor(${constructor.parameters.joinToString { it.name ?: "?" }})",
-                cause = e
+                cause = e,
             )
         }
     }
@@ -61,14 +63,12 @@ class ObjectGenerator : RecursiveGenerator {
     override fun generateValidBoundaries(
         request: GenerationRequest,
         context: GenerationContext,
-        regenerator: (GenerationRequest, GenerationContext) -> Any?
-    ): List<Any?> {
-        return listOf(generator(request, context, regenerator))
-    }
+        regenerator: (GenerationRequest, GenerationContext) -> Any?,
+    ): List<Any?> = listOf(generator(request, context, regenerator))
 
     override fun generateInvalid(
         request: GenerationRequest,
         context: GenerationContext,
-        regenerator: (GenerationRequest, GenerationContext) -> Any?
+        regenerator: (GenerationRequest, GenerationContext) -> Any?,
     ): List<Any?> = emptyList()
 }

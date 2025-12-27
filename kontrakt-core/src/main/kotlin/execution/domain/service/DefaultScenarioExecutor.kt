@@ -23,8 +23,7 @@ class DefaultScenarioExecutor(
     private val fixtureFactory: (MockingEngine, Clock) -> FixtureGenerator =
         { engine, clock -> FixtureGenerator(engine, clock) },
     private val validatorFactory: (Clock) -> ContractValidator =
-        { clock -> ContractValidator(clock) }
-
+        { clock -> ContractValidator(clock) },
 ) : TestScenarioExecutor {
     private val logger = KotlinLogging.logger {}
 
@@ -55,7 +54,7 @@ class DefaultScenarioExecutor(
                         val kFuncAsJava = kFunc.javaMethod ?: return@find false
 
                         kFuncAsJava.name == contractMethod.name &&
-                                kFuncAsJava.parameterTypes.contentEquals(contractMethod.parameterTypes)
+                            kFuncAsJava.parameterTypes.contentEquals(contractMethod.parameterTypes)
                     } ?: return@map AssertionRecord(
                         AssertionStatus.FAILED,
                         "Method '${contractMethod.name}' not found",
@@ -78,7 +77,7 @@ class DefaultScenarioExecutor(
                     contractKFunc,
                     context,
                     fixtureGenerator,
-                    contractValidator
+                    contractValidator,
                 )
             }
     }
@@ -89,7 +88,7 @@ class DefaultScenarioExecutor(
         contractKFunc: KFunction<*>,
         context: EphemeralTestContext,
         fixtureGenerator: FixtureGenerator,
-        contractValidator: ContractValidator
+        contractValidator: ContractValidator,
     ): AssertionRecord =
         try {
             val args = createArguments(implFunc, context, fixtureGenerator)
@@ -129,7 +128,7 @@ class DefaultScenarioExecutor(
     private fun createArguments(
         function: KFunction<*>,
         context: EphemeralTestContext,
-        fixtureGenerator: FixtureGenerator
+        fixtureGenerator: FixtureGenerator,
     ): Map<KParameter, Any?> {
         val arguments = mutableMapOf<KParameter, Any?>()
 

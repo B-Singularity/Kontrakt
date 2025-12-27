@@ -5,7 +5,6 @@ import execution.spi.MockingEngineTest
 import execution.spi.ScenarioControl
 
 class MockitoEngineAdapterTest : MockingEngineTest() {
-
     private val adapter = MockitoEngineAdapter()
 
     override val engine: MockingEngine = adapter

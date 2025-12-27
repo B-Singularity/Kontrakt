@@ -4,8 +4,5 @@ import execution.api.ScenarioContext
 import execution.api.ScenarioContextTest
 
 class MockitoScenarioContextTest : ScenarioContextTest() {
-
-    override fun createScenarioContext(): ScenarioContext {
-        return MockitoScenarioContext()
-    }
+    override fun createScenarioContext(): ScenarioContext = MockitoScenarioContext()
 }

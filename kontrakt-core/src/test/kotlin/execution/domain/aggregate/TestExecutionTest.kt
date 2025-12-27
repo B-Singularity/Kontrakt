@@ -19,7 +19,6 @@ import kotlin.test.assertIs
 import kotlin.test.assertTrue
 
 class TestExecutionTest {
-
     private val mockSpec: TestSpecification = mock()
     private val mockFactory: TestInstanceFactory = mock()
     private val mockExecutor: TestScenarioExecutor = mock()
@@ -34,7 +33,6 @@ class TestExecutionTest {
 
     @Test
     fun `execute - should return Passed status when all assertions pass`() {
-
         val sut = createSUT()
         val passedRecord = AssertionRecord(AssertionStatus.PASSED, "Good", "A", "A")
 
@@ -62,15 +60,15 @@ class TestExecutionTest {
 
     @Test
     fun `execute - should return AssertionFailed status when at least one assertion fails`() {
-
         val sut = createSUT()
         val passedRecord = AssertionRecord(AssertionStatus.PASSED, "Good", "A", "A")
-        val failedRecord = AssertionRecord(
-            status = AssertionStatus.FAILED,
-            message = "Something went wrong",
-            expected = "ExpectedValue",
-            actual = "ActualValue"
-        )
+        val failedRecord =
+            AssertionRecord(
+                status = AssertionStatus.FAILED,
+                message = "Something went wrong",
+                expected = "ExpectedValue",
+                actual = "ActualValue",
+            )
 
         whenever(mockFactory.create(mockSpec)).thenReturn(mockContext)
         whenever(mockExecutor.executeScenarios(mockContext)).thenReturn(listOf(passedRecord, failedRecord))
@@ -87,7 +85,6 @@ class TestExecutionTest {
 
     @Test
     fun `execute - should return ExecutionError when factory throws exception`() {
-
         val sut = createSUT()
         val runtimeException = RuntimeException("Instantiation Failed")
 
@@ -102,7 +99,6 @@ class TestExecutionTest {
 
     @Test
     fun `execute - should return ExecutionError when executor throws exception`() {
-
         val sut = createSUT()
         val runtimeException = IllegalStateException("Executor Crashed")
 
@@ -118,7 +114,6 @@ class TestExecutionTest {
 
     @Test
     fun `execute - should throw KontraktInternalException if executed more than once`() {
-
         val sut = createSUT()
 
         whenever(mockFactory.create(any())).thenReturn(mockContext)
@@ -126,9 +121,10 @@ class TestExecutionTest {
 
         sut.execute()
 
-        val exception = assertFailsWith<KontraktInternalException> {
-            sut.execute()
-        }
+        val exception =
+            assertFailsWith<KontraktInternalException> {
+                sut.execute()
+            }
         assertTrue(exception.message!!.contains("cannot be reused"), "Should fail on double execution")
     }
 }

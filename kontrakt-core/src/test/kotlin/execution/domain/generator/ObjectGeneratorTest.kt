@@ -19,7 +19,6 @@ import kotlin.test.assertTrue
 import kotlin.test.fail
 
 class ObjectGeneratorTest {
-
     private lateinit var generator: ObjectGenerator
     private lateinit var context: GenerationContext
 
@@ -27,14 +26,28 @@ class ObjectGeneratorTest {
     // Dummy Classes for Testing
     // =================================================================
 
-    data class SimpleData(val name: String, val age: Int)
-    data class RecursiveNullable(val next: RecursiveNullable?)
-    data class RecursiveStrict(val next: RecursiveStrict)
+    data class SimpleData(
+        val name: String,
+        val age: Int,
+    )
+
+    data class RecursiveNullable(
+        val next: RecursiveNullable?,
+    )
+
+    data class RecursiveStrict(
+        val next: RecursiveStrict,
+    )
+
     abstract class AbstractItem
+
     sealed class SealedItem
+
     enum class EnumItem { A, B }
 
-    class ExplodingClass(val data: String) {
+    class ExplodingClass(
+        val data: String,
+    ) {
         init {
             throw RuntimeException("Boom!")
         }
@@ -51,10 +64,11 @@ class ObjectGeneratorTest {
     @BeforeTest
     fun setup() {
         generator = ObjectGenerator()
-        context = GenerationContext(
-            seededRandom = Random(1234),
-            clock = Clock.fixed(Instant.EPOCH, ZoneId.of("UTC"))
-        )
+        context =
+            GenerationContext(
+                seededRandom = Random(1234),
+                clock = Clock.fixed(Instant.EPOCH, ZoneId.of("UTC")),
+            )
     }
 
     // =================================================================
@@ -130,9 +144,10 @@ class ObjectGeneratorTest {
         val recursiveContext = context.copy(history = setOf(RecursiveStrict::class))
         val regenerator: (GenerationRequest, GenerationContext) -> Any? = { _, _ -> null }
 
-        val exception = assertFailsWith<RecursiveGenerationFailedException> {
-            generator.generator(strictRequest, recursiveContext, regenerator)
-        }
+        val exception =
+            assertFailsWith<RecursiveGenerationFailedException> {
+                generator.generator(strictRequest, recursiveContext, regenerator)
+            }
 
         // 'type' is not a property in RecursiveGenerationFailedException, so we check the path and message
         assertTrue(exception.path.contains("RecursiveStrict"), "Path should contain the recursive class")
@@ -148,7 +163,9 @@ class ObjectGeneratorTest {
             if (req.name == "name") {
                 capturedContext = ctx
                 "test"
-            } else 0
+            } else {
+                0
+            }
         }
 
         generator.generator(request, context, regenerator)
@@ -166,15 +183,16 @@ class ObjectGeneratorTest {
         val request = createRequest(ExplodingClass::class)
         val regenerator: (GenerationRequest, GenerationContext) -> Any? = { _, _ -> "trigger" }
 
-        val exception = assertFailsWith<GenerationFailedException> {
-            generator.generator(request, context, regenerator)
-        }
+        val exception =
+            assertFailsWith<GenerationFailedException> {
+                generator.generator(request, context, regenerator)
+            }
         assertEquals(ExplodingClass::class.createType(), exception.type)
         val msg = exception.message
         assertNotNull(msg, "Exception message should not be null")
         assertTrue(
             msg.contains("Constructor"),
-            "Exception message should contain failure context 'Constructor'. Actual message: $msg"
+            "Exception message should contain failure context 'Constructor'. Actual message: $msg",
         )
 
         val cause = exception.cause
@@ -192,9 +210,10 @@ class ObjectGeneratorTest {
             throw IllegalArgumentException("Dependency failed")
         }
 
-        val exception = assertFailsWith<GenerationFailedException> {
-            generator.generator(request, context, regenerator)
-        }
+        val exception =
+            assertFailsWith<GenerationFailedException> {
+                generator.generator(request, context, regenerator)
+            }
 
         assertTrue(exception.cause is IllegalArgumentException)
         assertEquals("Dependency failed", exception.cause?.message)
@@ -231,10 +250,9 @@ class ObjectGeneratorTest {
     // Helper Methods
     // =================================================================
 
-    private fun createRequest(kClass: kotlin.reflect.KClass<*>): GenerationRequest {
-        return GenerationRequest.from(
+    private fun createRequest(kClass: kotlin.reflect.KClass<*>): GenerationRequest =
+        GenerationRequest.from(
             type = kClass.starProjectedType,
-            name = "testObj"
+            name = "testObj",
         )
-    }
 }

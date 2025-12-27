@@ -17,13 +17,13 @@ import kotlin.test.assertIs
 import kotlin.test.assertTrue
 
 class CollectionTypeGeneratorTest {
-
     private val generator = CollectionTypeGenerator()
 
-    private val context = GenerationContext(
-        seededRandom = Random(42),
-        clock = Clock.systemDefaultZone()
-    )
+    private val context =
+        GenerationContext(
+            seededRandom = Random(42),
+            clock = Clock.systemDefaultZone(),
+        )
 
     // =================================================================
     // 1. Test Targets
@@ -32,29 +32,52 @@ class CollectionTypeGeneratorTest {
     class CollectionTargets {
         // [Supported Types]
         fun listType(list: List<String>) {}
+
         fun setType(set: Set<Int>) {}
+
         fun mapType(map: Map<String, Int>) {}
+
         fun queueType(queue: Queue<String>) {}
+
         fun dequeType(deque: Deque<String>) {}
+
         fun collectionType(col: Collection<String>) {}
 
         // [Edge Cases: Raw Types / Star Projections]
-        fun starList(list: List<*>) {}        // List<?>
-        fun starMap(map: Map<*, *>) {}        // Map<?, ?>
+        fun starList(list: List<*>) {} // List<?>
+
+        fun starMap(map: Map<*, *>) {} // Map<?, ?>
 
         // [Invalid Context for Generator]
-        fun <T> genericType(t: T) {}          // classifier is TypeParameter
+        fun <T> genericType(t: T) {} // classifier is TypeParameter
 
         // [Size Logic]
         fun defaultSize(list: List<String>) {}
-        fun rangeSize(@Size(min = 2, max = 4) list: List<String>) {}
-        fun fixedSize(@Size(min = 3, max = 3) list: List<String>) {}
-        fun minOnly(@Size(min = 10) list: List<String>) {}
+
+        fun rangeSize(
+            @Size(min = 2, max = 4) list: List<String>,
+        ) {}
+
+        fun fixedSize(
+            @Size(min = 3, max = 3) list: List<String>,
+        ) {}
+
+        fun minOnly(
+            @Size(min = 10) list: List<String>,
+        ) {}
 
         // [Safety Limits]
-        fun largeLimit(@Size(min = 0, max = 2000) list: List<String>) {}
-        fun explicitHuge(@Size(min = 1001) list: List<String>) {}
-        fun ignoreLimit(@Size(min = 0, max = 2000, ignoreLimit = true) list: List<String>) {}
+        fun largeLimit(
+            @Size(min = 0, max = 2000) list: List<String>,
+        ) {}
+
+        fun explicitHuge(
+            @Size(min = 1001) list: List<String>,
+        ) {}
+
+        fun ignoreLimit(
+            @Size(min = 0, max = 2000, ignoreLimit = true) list: List<String>,
+        ) {}
     }
 
     // =================================================================
@@ -120,20 +143,27 @@ class CollectionTypeGeneratorTest {
 
     @Test
     fun `Exception Contract - throws CollectionSizeLimitExceededException when unsafe`() {
-        val maliciousContext = GenerationContext(
-            seededRandom = object : Random() {
-                override fun nextBits(bitCount: Int) = 0
-                override fun nextInt(from: Int, until: Int) = 1500 // Force unsafe size
-            },
-            clock = Clock.systemDefaultZone()
-        )
+        val maliciousContext =
+            GenerationContext(
+                seededRandom =
+                    object : Random() {
+                        override fun nextBits(bitCount: Int) = 0
+
+                        override fun nextInt(
+                            from: Int,
+                            until: Int,
+                        ) = 1500 // Force unsafe size
+                    },
+                clock = Clock.systemDefaultZone(),
+            )
 
         val req = request(CollectionTargets::largeLimit) // max=2000
 
         // [Check] Must throw exception to prevent OOM
-        val ex = assertFailsWith<CollectionSizeLimitExceededException> {
-            generator.generator(req, maliciousContext, mockRegenerator)
-        }
+        val ex =
+            assertFailsWith<CollectionSizeLimitExceededException> {
+                generator.generator(req, maliciousContext, mockRegenerator)
+            }
 
         // [Fix] Check message content instead of properties (currentSize, limit)
         val msg = ex.message.orEmpty()
@@ -197,13 +227,19 @@ class CollectionTypeGeneratorTest {
         assertEquals(1001, hugeMinList.size)
 
         // 2. Ignore Limit
-        val maliciousContext = GenerationContext(
-            seededRandom = object : Random() {
-                override fun nextBits(bitCount: Int) = 0
-                override fun nextInt(from: Int, until: Int) = 1500
-            },
-            clock = Clock.systemDefaultZone()
-        )
+        val maliciousContext =
+            GenerationContext(
+                seededRandom =
+                    object : Random() {
+                        override fun nextBits(bitCount: Int) = 0
+
+                        override fun nextInt(
+                            from: Int,
+                            until: Int,
+                        ) = 1500
+                    },
+                clock = Clock.systemDefaultZone(),
+            )
         val ignoreList =
             generator.generator(request(CollectionTargets::ignoreLimit), maliciousContext, mockRegenerator) as List<*>
         assertEquals(1500, ignoreList.size)

@@ -223,7 +223,7 @@ annotation class Past(
     val base: String = "NOW",
     val value: Long,
     val unit: ChronoUnit = ChronoUnit.SECONDS,
-    val zone: String = "UTC"
+    val zone: String = "UTC",
 )
 
 @Target(
@@ -237,7 +237,7 @@ annotation class PastOrPresent(
     val base: String = "NOW",
     val value: Long,
     val unit: ChronoUnit = ChronoUnit.SECONDS,
-    val zone: String = "UTC"
+    val zone: String = "UTC",
 )
 
 @Target(
@@ -251,7 +251,7 @@ annotation class Future(
     val base: String = "NOW",
     val value: Long,
     val unit: ChronoUnit = ChronoUnit.SECONDS,
-    val zone: String = "UTC"
+    val zone: String = "UTC",
 )
 
 @Target(
@@ -265,7 +265,7 @@ annotation class FutureOrPresent(
     val base: String = "NOW",
     val value: Long,
     val unit: ChronoUnit = ChronoUnit.SECONDS,
-    val zone: String = "UTC"
+    val zone: String = "UTC",
 )
 
 @Target(
@@ -278,7 +278,7 @@ annotation class FutureOrPresent(
 annotation class Size(
     val min: Int = 0,
     val max: Int = Int.MAX_VALUE,
-    val ignoreLimit: Boolean = false
+    val ignoreLimit: Boolean = false,
 )
 
 @Target(

@@ -11,14 +11,16 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class GenerationRequestTest {
+    annotation class TestInfo(
+        val description: String,
+    )
 
-    annotation class TestInfo(val description: String)
     annotation class IgnoredInfo
 
     @Suppress("unused")
     fun reflectionTarget(
         @TestInfo("sample_param")
-        targetParam: String
+        targetParam: String,
     ) {
     }
 
@@ -60,18 +62,19 @@ class GenerationRequestTest {
         // Setup: Create a dynamic proxy to simulate KParameter with null name (hard to reproduce with real reflection)
         val kTypeStub = String::class.createType()
 
-        val kParamStub = Proxy.newProxyInstance(
-            KParameter::class.java.classLoader,
-            arrayOf(KParameter::class.java)
-        ) { _, method, _ ->
-            when (method.name) {
-                "getName" -> null
-                "getType" -> kTypeStub
-                "getAnnotations" -> emptyList<Annotation>()
-                "toString" -> "KParameterStub"
-                else -> null
-            }
-        } as KParameter
+        val kParamStub =
+            Proxy.newProxyInstance(
+                KParameter::class.java.classLoader,
+                arrayOf(KParameter::class.java),
+            ) { _, method, _ ->
+                when (method.name) {
+                    "getName" -> null
+                    "getType" -> kTypeStub
+                    "getAnnotations" -> emptyList<Annotation>()
+                    "toString" -> "KParameterStub"
+                    else -> null
+                }
+            } as KParameter
 
         // Execution
         val request = GenerationRequest.from(kParamStub)

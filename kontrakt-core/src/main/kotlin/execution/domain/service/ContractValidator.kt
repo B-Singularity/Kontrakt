@@ -286,13 +286,12 @@ class ContractValidator(
         }
     }
 
-
     private fun isTimeType(value: Any): Boolean =
         value is Instant ||
-                value is Date ||
-                value is ChronoLocalDate ||
-                value is ChronoLocalDateTime<*> ||
-                value is ChronoZonedDateTime<*>
+            value is Date ||
+            value is ChronoLocalDate ||
+            value is ChronoLocalDateTime<*> ||
+            value is ChronoZonedDateTime<*>
 
     private fun toInstant(value: Any): Instant? =
         when (value) {
@@ -332,5 +331,4 @@ class ContractValidator(
             throw ContractViolationException(lazyMessage())
         }
     }
-
 }

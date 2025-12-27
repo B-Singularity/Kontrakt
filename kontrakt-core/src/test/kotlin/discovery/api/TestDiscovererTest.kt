@@ -12,13 +12,12 @@ import kotlin.test.assertIs
 import kotlin.test.assertTrue
 
 abstract class TestDiscovererTest {
-
     protected abstract val discoverer: TestDiscoverer
 
     protected abstract fun setupScanResult(
         interfaces: List<KClass<*>> = emptyList(),
         classes: List<KClass<*>> = emptyList(),
-        implementations: Map<KClass<*>, List<KClass<*>>> = emptyMap()
+        implementations: Map<KClass<*>, List<KClass<*>>> = emptyMap(),
     )
 
     @Contract
@@ -41,77 +40,79 @@ abstract class TestDiscovererTest {
     class ComplexService(
         val store: MyStore,
         val clock: Clock,
-        val helper: String
+        val helper: String,
     ) : TargetContract
 
     @Test
-    fun `Implicit Mode - should create ContractAuto spec`() = runTest {
+    fun `Implicit Mode - should create ContractAuto spec`() =
+        runTest {
+            setupScanResult(
+                interfaces = listOf(TargetContract::class),
+                implementations = mapOf(TargetContract::class to listOf(StandardImpl::class)),
+            )
 
-        setupScanResult(
-            interfaces = listOf(TargetContract::class),
-            implementations = mapOf(TargetContract::class to listOf(StandardImpl::class))
-        )
+            val result = discoverer.discover(ScanScope.All, Contract::class).getOrThrow()
 
-        val result = discoverer.discover(ScanScope.All, Contract::class).getOrThrow()
-
-        assertEquals(1, result.size)
-        val spec = result.first()
-        assertEquals(StandardImpl::class, spec.target.kClass)
-        assertIs<TestSpecification.TestMode.ContractAuto>(spec.modes.first())
-    }
-
-    @Test
-    fun `Explicit Mode - should create UserScenario spec`() = runTest {
-        setupScanResult(
-            classes = listOf(ManualTestClass::class)
-        )
-
-        val result = discoverer.discover(ScanScope.All, Contract::class).getOrThrow()
-
-        assertEquals(1, result.size)
-        val spec = result.first()
-        assertEquals(ManualTestClass::class, spec.target.kClass)
-        assertIs<TestSpecification.TestMode.UserScenario>(spec.modes.first())
-    }
+            assertEquals(1, result.size)
+            val spec = result.first()
+            assertEquals(StandardImpl::class, spec.target.kClass)
+            assertIs<TestSpecification.TestMode.ContractAuto>(spec.modes.first())
+        }
 
     @Test
-    fun `Merge Logic - should merge modes for hybrid class`() = runTest {
-        setupScanResult(
-            interfaces = listOf(TargetContract::class),
-            classes = listOf(HybridService::class),
-            implementations = mapOf(TargetContract::class to listOf(HybridService::class))
-        )
+    fun `Explicit Mode - should create UserScenario spec`() =
+        runTest {
+            setupScanResult(
+                classes = listOf(ManualTestClass::class),
+            )
 
-        val result = discoverer.discover(ScanScope.All, Contract::class).getOrThrow()
+            val result = discoverer.discover(ScanScope.All, Contract::class).getOrThrow()
 
-        assertEquals(1, result.size, "Should be merged into one spec")
-        val spec = result.first()
-        assertEquals(HybridService::class, spec.target.kClass)
-        assertEquals(2, spec.modes.size)
-        assertTrue(spec.modes.any { it is TestSpecification.TestMode.ContractAuto })
-        assertTrue(spec.modes.any { it is TestSpecification.TestMode.UserScenario })
-    }
+            assertEquals(1, result.size)
+            val spec = result.first()
+            assertEquals(ManualTestClass::class, spec.target.kClass)
+            assertIs<TestSpecification.TestMode.UserScenario>(spec.modes.first())
+        }
 
     @Test
-    fun `Dependency Analysis - should determine correct strategies`() = runTest {
+    fun `Merge Logic - should merge modes for hybrid class`() =
+        runTest {
+            setupScanResult(
+                interfaces = listOf(TargetContract::class),
+                classes = listOf(HybridService::class),
+                implementations = mapOf(TargetContract::class to listOf(HybridService::class)),
+            )
 
-        setupScanResult(
-            interfaces = listOf(TargetContract::class),
-            implementations = mapOf(TargetContract::class to listOf(ComplexService::class))
-        )
+            val result = discoverer.discover(ScanScope.All, Contract::class).getOrThrow()
 
-        val result = discoverer.discover(ScanScope.All, Contract::class).getOrThrow()
+            assertEquals(1, result.size, "Should be merged into one spec")
+            val spec = result.first()
+            assertEquals(HybridService::class, spec.target.kClass)
+            assertEquals(2, spec.modes.size)
+            assertTrue(spec.modes.any { it is TestSpecification.TestMode.ContractAuto })
+            assertTrue(spec.modes.any { it is TestSpecification.TestMode.UserScenario })
+        }
 
-        val spec = result.first()
-        val deps = spec.requiredDependencies
+    @Test
+    fun `Dependency Analysis - should determine correct strategies`() =
+        runTest {
+            setupScanResult(
+                interfaces = listOf(TargetContract::class),
+                implementations = mapOf(TargetContract::class to listOf(ComplexService::class)),
+            )
 
-        val storeDep = deps.find { it.type == MyStore::class }!!
-        assertIs<DependencyMetadata.MockingStrategy.StatefulFake>(storeDep.strategy)
+            val result = discoverer.discover(ScanScope.All, Contract::class).getOrThrow()
 
-        val clockDep = deps.find { it.type == Clock::class }!!
-        assertIs<DependencyMetadata.MockingStrategy.Environment>(clockDep.strategy)
+            val spec = result.first()
+            val deps = spec.requiredDependencies
 
-        val helperDep = deps.find { it.type == String::class }!!
-        assertIs<DependencyMetadata.MockingStrategy.Real>(helperDep.strategy)
-    }
+            val storeDep = deps.find { it.type == MyStore::class }!!
+            assertIs<DependencyMetadata.MockingStrategy.StatefulFake>(storeDep.strategy)
+
+            val clockDep = deps.find { it.type == Clock::class }!!
+            assertIs<DependencyMetadata.MockingStrategy.Environment>(clockDep.strategy)
+
+            val helperDep = deps.find { it.type == String::class }!!
+            assertIs<DependencyMetadata.MockingStrategy.Real>(helperDep.strategy)
+        }
 }

@@ -13,12 +13,10 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class KontraktTestDescriptorTest {
-
     private val uniqueId = UniqueId.forEngine("kontrakt-engine")
 
     @Test
     fun `getType should return CONTAINER when spec is null (Root Node)`() {
-
         val descriptor = KontraktTestDescriptor(uniqueId, "Root", null)
 
         val type = descriptor.type
@@ -28,7 +26,6 @@ class KontraktTestDescriptorTest {
 
     @Test
     fun `getType should return TEST when spec is present (Leaf Node)`() {
-
         val mockSpec = mock<TestSpecification>()
         val descriptor = KontraktTestDescriptor(uniqueId, "MyTest", mockSpec)
 

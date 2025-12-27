@@ -12,12 +12,12 @@ import kotlin.test.assertIs
 import kotlin.test.assertTrue
 
 class BooleanTypeGeneratorTest {
-
     private val generator = BooleanTypeGenerator()
-    private val context = GenerationContext(
-        seededRandom = Random(42),
-        clock = Clock.systemDefaultZone()
-    )
+    private val context =
+        GenerationContext(
+            seededRandom = Random(42),
+            clock = Clock.systemDefaultZone(),
+        )
 
     // =================================================================
     // 1. Test Targets
@@ -28,13 +28,16 @@ class BooleanTypeGeneratorTest {
     }
 
     @Suppress("UNUSED_PARAMETER")
-    fun withAssertTrue(@AssertTrue arg: Boolean) {
+    fun withAssertTrue(
+        @AssertTrue arg: Boolean,
+    ) {
     }
 
     @Suppress("UNUSED_PARAMETER")
-    fun withAssertFalse(@AssertFalse arg: Boolean) {
+    fun withAssertFalse(
+        @AssertFalse arg: Boolean,
+    ) {
     }
-    
 
     @Suppress("UNUSED_PARAMETER")
     fun notBoolean(arg: String) {
@@ -53,7 +56,7 @@ class BooleanTypeGeneratorTest {
         val description: String,
         val targetFunction: KFunction<*>,
         val expectedValid: Set<Boolean>,
-        val expectedInvalid: Set<Boolean>
+        val expectedInvalid: Set<Boolean>,
     )
 
     // =================================================================
@@ -71,26 +74,27 @@ class BooleanTypeGeneratorTest {
 
     @Test
     fun `Generation Contract - verifies all branching logic (Table-Driven)`() {
-        val scenarios = listOf(
-            BooleanContractScenario(
-                description = "Plain Boolean (No Annotations)",
-                targetFunction = ::plainBoolean,
-                expectedValid = setOf(true, false),
-                expectedInvalid = emptySet()
-            ),
-            BooleanContractScenario(
-                description = "Annotated with @AssertTrue",
-                targetFunction = ::withAssertTrue,
-                expectedValid = setOf(true),
-                expectedInvalid = setOf(false)
-            ),
-            BooleanContractScenario(
-                description = "Annotated with @AssertFalse",
-                targetFunction = ::withAssertFalse,
-                expectedValid = setOf(false),
-                expectedInvalid = setOf(true)
+        val scenarios =
+            listOf(
+                BooleanContractScenario(
+                    description = "Plain Boolean (No Annotations)",
+                    targetFunction = ::plainBoolean,
+                    expectedValid = setOf(true, false),
+                    expectedInvalid = emptySet(),
+                ),
+                BooleanContractScenario(
+                    description = "Annotated with @AssertTrue",
+                    targetFunction = ::withAssertTrue,
+                    expectedValid = setOf(true),
+                    expectedInvalid = setOf(false),
+                ),
+                BooleanContractScenario(
+                    description = "Annotated with @AssertFalse",
+                    targetFunction = ::withAssertFalse,
+                    expectedValid = setOf(false),
+                    expectedInvalid = setOf(true),
+                ),
             )
-        )
 
         for (scenario in scenarios) {
             val req = request(scenario.targetFunction)
@@ -101,7 +105,7 @@ class BooleanTypeGeneratorTest {
             assertIs<Boolean>(generated, "$caseName Generate should return Boolean")
             assertTrue(
                 scenario.expectedValid.contains(generated),
-                "$caseName Generated value '$generated' should be in expected valid set"
+                "$caseName Generated value '$generated' should be in expected valid set",
             )
 
             // 2. Valid Boundaries
@@ -109,7 +113,7 @@ class BooleanTypeGeneratorTest {
             assertEquals(
                 scenario.expectedValid,
                 boundaries.toSet(),
-                "$caseName Boundaries should match expected valid set"
+                "$caseName Boundaries should match expected valid set",
             )
 
             // 3. Invalid Values
@@ -117,9 +121,8 @@ class BooleanTypeGeneratorTest {
             assertEquals(
                 scenario.expectedInvalid,
                 invalids.toSet(),
-                "$caseName Invalid values should match expected invalid set"
+                "$caseName Invalid values should match expected invalid set",
             )
         }
     }
-
 }

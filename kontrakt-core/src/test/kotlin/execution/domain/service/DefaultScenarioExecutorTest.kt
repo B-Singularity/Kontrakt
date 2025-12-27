@@ -20,17 +20,15 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class DefaultScenarioExecutorTest : TestScenarioExecutorTest() {
-
     override val executor: TestScenarioExecutor = DefaultScenarioExecutor()
-
 
     @Test
     fun `should delegate validation to the injected ContractValidator`() {
-
         val mockValidator = mock<ContractValidator>()
-        val sut = DefaultScenarioExecutor(
-            validatorFactory = { _ -> mockValidator }
-        )
+        val sut =
+            DefaultScenarioExecutor(
+                validatorFactory = { _ -> mockValidator },
+            )
 
         val context = setupContext(TestImplementation::class, TestImplementation())
 
@@ -41,7 +39,6 @@ class DefaultScenarioExecutorTest : TestScenarioExecutorTest() {
 
     @Test
     fun `should delegate argument generation to the injected FixtureGenerator`() {
-
         val mockGenerator = mock<FixtureGenerator>()
 
         doAnswer { invocation ->
@@ -53,9 +50,10 @@ class DefaultScenarioExecutorTest : TestScenarioExecutorTest() {
             }
         }.`when`(mockGenerator).generate(any<KParameter>())
 
-        val sut = DefaultScenarioExecutor(
-            fixtureFactory = { _, _ -> mockGenerator }
-        )
+        val sut =
+            DefaultScenarioExecutor(
+                fixtureFactory = { _, _ -> mockGenerator },
+            )
         val context = setupContext(TestImplementation::class, TestImplementation())
 
         val results = sut.executeScenarios(context)
@@ -66,7 +64,6 @@ class DefaultScenarioExecutorTest : TestScenarioExecutorTest() {
 
     @Test
     fun `should use the injected Clock for time consistency`() {
-
         val fixedClock = Clock.fixed(Instant.parse("2099-01-01T00:00:00Z"), ZoneId.of("UTC"))
         val sut = DefaultScenarioExecutor(clock = fixedClock)
         val context = setupContext(TestImplementation::class, TestImplementation())
@@ -78,16 +75,17 @@ class DefaultScenarioExecutorTest : TestScenarioExecutorTest() {
 
     @Test
     fun `when Validator throws exception via Mock, it should be handled correctly`() {
-
         val mockValidator = mock<ContractValidator>()
         val exceptionMessage = "Simulated Validation Error"
 
         doThrow(ContractViolationException(exceptionMessage))
-            .`when`(mockValidator).validate(any(), any())
+            .`when`(mockValidator)
+            .validate(any(), any())
 
-        val sut = DefaultScenarioExecutor(
-            validatorFactory = { _ -> mockValidator }
-        )
+        val sut =
+            DefaultScenarioExecutor(
+                validatorFactory = { _ -> mockValidator },
+            )
         val context = setupContext(TestImplementation::class, TestImplementation())
 
         val results = sut.executeScenarios(context)

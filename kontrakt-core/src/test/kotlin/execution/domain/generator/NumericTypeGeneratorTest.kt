@@ -21,7 +21,6 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class NumericTypeGeneratorTest {
-
     private lateinit var generator: NumericTypeGenerator
     private lateinit var context: GenerationContext
     private val seed = 12345
@@ -31,17 +30,23 @@ class NumericTypeGeneratorTest {
         generator = NumericTypeGenerator()
         val random = Random(seed)
         val fixedClock = Clock.fixed(Instant.parse("2024-01-01T00:00:00Z"), ZoneId.of("UTC"))
-        context = GenerationContext(
-            seededRandom = random,
-            clock = fixedClock
-        )
+        context =
+            GenerationContext(
+                seededRandom = random,
+                clock = fixedClock,
+            )
     }
 
     @Test
     fun verifyContractSupportsValidNumericTypes() {
-        val supportedTypes = listOf(
-            Int::class, Long::class, Double::class, Float::class, BigDecimal::class
-        )
+        val supportedTypes =
+            listOf(
+                Int::class,
+                Long::class,
+                Double::class,
+                Float::class,
+                BigDecimal::class,
+            )
 
         supportedTypes.forEach { kClass ->
             val request = createRequest(kClass)
@@ -51,9 +56,12 @@ class NumericTypeGeneratorTest {
 
     @Test
     fun verifyContractRejectsUnsupportedTypes() {
-        val unsupportedTypes = listOf(
-            String::class, Boolean::class, List::class
-        )
+        val unsupportedTypes =
+            listOf(
+                String::class,
+                Boolean::class,
+                List::class,
+            )
 
         unsupportedTypes.forEach { kClass ->
             val request = createRequest(kClass)
@@ -232,12 +240,11 @@ class NumericTypeGeneratorTest {
 
     private fun createRequest(
         kClass: KClass<*>,
-        annotations: List<Annotation> = emptyList()
-    ): GenerationRequest {
-        return GenerationRequest.from(
+        annotations: List<Annotation> = emptyList(),
+    ): GenerationRequest =
+        GenerationRequest.from(
             type = kClass.starProjectedType,
             annotations = annotations,
-            name = "testParam"
+            name = "testParam",
         )
-    }
 }

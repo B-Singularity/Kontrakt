@@ -6,10 +6,8 @@ import kotlin.test.assertIs
 import kotlin.test.assertTrue
 
 class DiscoveredTestTargetTest {
-
     @Test
     fun `create should succeed when invalid arguments are provided`() {
-
         val kClass = String::class
         val displayName = "String"
         val fullyQualifiedName = "java.lang.String"
@@ -25,7 +23,6 @@ class DiscoveredTestTargetTest {
 
     @Test
     fun `create should fail when displayName is blank`() {
-
         val kClass = String::class
         val invalidDisplayName = "   "
         val fullyQualifiedName = "java.lang.String"
@@ -41,7 +38,6 @@ class DiscoveredTestTargetTest {
 
     @Test
     fun `create should fail when fullyQualifiedName is blank`() {
-
         val kClass = String::class
         val displayName = "String"
         val invalidQualifiedName = ""

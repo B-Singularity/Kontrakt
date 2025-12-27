@@ -16,7 +16,6 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 abstract class TestScenarioExecutorTest {
-
     protected abstract val executor: TestScenarioExecutor
 
     interface TestContract {
@@ -27,17 +26,23 @@ abstract class TestScenarioExecutorTest {
 
         fun errorMethod()
 
-        fun complexParams(a: Int, b: String): String
+        fun complexParams(
+            a: Int,
+            b: String,
+        ): String
     }
 
     class TestImplementation : TestContract {
         override fun validMethod(input: String): String = "Echo: $input"
-        override fun violationMethod(): Int = -1
-        override fun errorMethod() {
-            throw IllegalStateException("Boom!")
-        }
 
-        override fun complexParams(a: Int, b: String): String = "$a-$b"
+        override fun violationMethod(): Int = -1
+
+        override fun errorMethod(): Unit = throw IllegalStateException("Boom!")
+
+        override fun complexParams(
+            a: Int,
+            b: String,
+        ): String = "$a-$b"
     }
 
     interface GhostContract {
@@ -46,10 +51,8 @@ abstract class TestScenarioExecutorTest {
 
     class GhostImplementation
 
-
     @Test
     fun `executeScenarios - should execute valid method and return PASSED`() {
-
         val context = setupContext(TestImplementation::class, TestImplementation())
 
         val results = executor.executeScenarios(context)
@@ -61,7 +64,6 @@ abstract class TestScenarioExecutorTest {
 
     @Test
     fun `executeScenarios - should inject generated arguments for multiple parameters`() {
-
         val context = setupContext(TestImplementation::class, TestImplementation())
 
         val results = executor.executeScenarios(context)
@@ -72,7 +74,6 @@ abstract class TestScenarioExecutorTest {
 
     @Test
     fun `executeScenarios - should capture ContractViolationException and return FAILED`() {
-
         val context = setupContext(TestImplementation::class, TestImplementation())
 
         val results = executor.executeScenarios(context)
@@ -85,7 +86,6 @@ abstract class TestScenarioExecutorTest {
 
     @Test
     fun `executeScenarios - should capture RuntimeException and return FAILED`() {
-
         val context = setupContext(TestImplementation::class, TestImplementation())
 
         val results = executor.executeScenarios(context)
@@ -98,7 +98,6 @@ abstract class TestScenarioExecutorTest {
 
     @Test
     fun `executeScenarios - should return empty list if implementation does not implement interface`() {
-
         val context = setupContext(GhostImplementation::class, GhostImplementation())
 
         val results = executor.executeScenarios(context)
@@ -106,8 +105,10 @@ abstract class TestScenarioExecutorTest {
         assertTrue(results.isEmpty(), "Should return empty list when no interface is found")
     }
 
-
-    protected fun setupContext(targetClass: kotlin.reflect.KClass<*>, implInstance: Any): EphemeralTestContext {
+    protected fun setupContext(
+        targetClass: kotlin.reflect.KClass<*>,
+        implInstance: Any,
+    ): EphemeralTestContext {
         val mockContext = mock<EphemeralTestContext>()
         val mockSpec = mock<TestSpecification>()
         val mockTarget = mock<DiscoveredTestTarget>()

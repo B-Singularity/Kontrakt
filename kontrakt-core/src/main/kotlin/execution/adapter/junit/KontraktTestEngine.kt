@@ -20,7 +20,7 @@ import org.junit.platform.engine.discovery.ClassSelector
 import org.junit.platform.engine.discovery.PackageSelector
 
 class KontraktTestEngine(
-    private val runtimeFactory: KontraktRuntimeFactory = DefaultRuntimeFactory()
+    private val runtimeFactory: KontraktRuntimeFactory = DefaultRuntimeFactory(),
 ) : TestEngine {
     private val logger = KotlinLogging.logger {}
 
@@ -79,7 +79,6 @@ class KontraktTestEngine(
         listener.executionStarted(descriptor)
 
         try {
-
             val scenarioExecutor = runtimeFactory.createExecutor()
 
             val execution = runtimeFactory.createExecution(descriptor.spec!!, scenarioExecutor)
@@ -108,9 +107,9 @@ class KontraktTestEngine(
                 val error =
                     AssertionError(
                         "❌ ASSERTION FAILED: ${descriptor.displayName}\n" +
-                                "   Expected: ${status.expected}\n" +
-                                "   Actual:   ${status.actual}\n" +
-                                "   Message:  ${status.message}",
+                            "   Expected: ${status.expected}\n" +
+                            "   Actual:   ${status.actual}\n" +
+                            "   Message:  ${status.message}",
                     )
                 logger.error { error.message }
                 listener.executionFinished(descriptor, TestExecutionResult.failed(error))

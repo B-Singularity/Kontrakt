@@ -6,7 +6,6 @@ import kotlin.test.assertIs
 import kotlin.test.assertTrue
 
 class DependencyMetadataTest {
-
     @Test
     fun `create should fail when name is blank`() {
         val invalidNames = listOf("", "   ", "\t\n")
@@ -25,7 +24,6 @@ class DependencyMetadataTest {
 
     @Test
     fun `create should succeed when name is valid`() {
-
         val validName = "userRepository"
         val type = String::class
         val strategy = DependencyMetadata.MockingStrategy.Real
@@ -41,14 +39,14 @@ class DependencyMetadataTest {
 
     @Test
     fun `create should correctly store all types of mocking strategies`() {
-
-        val strategies = listOf(
-            DependencyMetadata.MockingStrategy.Real,
-            DependencyMetadata.MockingStrategy.StatelessMock,
-            DependencyMetadata.MockingStrategy.StatefulFake,
-            DependencyMetadata.MockingStrategy.Environment(DependencyMetadata.EnvType.TIME),
-            DependencyMetadata.MockingStrategy.Environment(DependencyMetadata.EnvType.SECURITY)
-        )
+        val strategies =
+            listOf(
+                DependencyMetadata.MockingStrategy.Real,
+                DependencyMetadata.MockingStrategy.StatelessMock,
+                DependencyMetadata.MockingStrategy.StatefulFake,
+                DependencyMetadata.MockingStrategy.Environment(DependencyMetadata.EnvType.TIME),
+                DependencyMetadata.MockingStrategy.Environment(DependencyMetadata.EnvType.SECURITY),
+            )
 
         val name = "dependency"
         val type = Any::class

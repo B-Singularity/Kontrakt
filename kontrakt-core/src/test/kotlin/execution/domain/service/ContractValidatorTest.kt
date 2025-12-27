@@ -31,7 +31,6 @@ import kotlin.reflect.KAnnotatedElement
 import kotlin.test.Test
 
 class ContractValidatorTest {
-
     // Test environment: Fixed at 2025-01-01 12:00:00 UTC
     private val fixedInstant = Instant.parse("2025-01-01T12:00:00Z")
     private val clock = Clock.fixed(fixedInstant, ZoneId.of("UTC"))
@@ -89,20 +88,22 @@ class ContractValidatorTest {
     @Test
     fun `validate numeric ranges`() {
         // @IntRange(min=1, max=10)
-        val intRange = mockAnnotation<IntRange> {
-            Mockito.`when`(min).thenReturn(1)
-            Mockito.`when`(max).thenReturn(10)
-        }
+        val intRange =
+            mockAnnotation<IntRange> {
+                Mockito.`when`(min).thenReturn(1)
+                Mockito.`when`(max).thenReturn(10)
+            }
         val intElement = mockElement(intRange)
 
         assertDoesNotThrow { validator.validate(intElement, 5) }
         assertThrows<ContractViolationException> { validator.validate(intElement, 11) }
 
         // @DecimalMin(value="10.5", inclusive=true)
-        val decimalMin = mockAnnotation<DecimalMin> {
-            Mockito.`when`(value).thenReturn("10.5")
-            Mockito.`when`(inclusive).thenReturn(true)
-        }
+        val decimalMin =
+            mockAnnotation<DecimalMin> {
+                Mockito.`when`(value).thenReturn("10.5")
+                Mockito.`when`(inclusive).thenReturn(true)
+            }
         val decimalElement = mockElement(decimalMin)
 
         assertDoesNotThrow { validator.validate(decimalElement, 10.5) }
@@ -131,23 +132,24 @@ class ContractValidatorTest {
     @Test
     fun `validate digits`() {
         // @Digits(integer=3, fraction=2)
-        val digits = mockAnnotation<Digits> {
-            Mockito.`when`(integer).thenReturn(3)
-            Mockito.`when`(fraction).thenReturn(2)
-        }
+        val digits =
+            mockAnnotation<Digits> {
+                Mockito.`when`(integer).thenReturn(3)
+                Mockito.`when`(fraction).thenReturn(2)
+            }
         val element = mockElement(digits)
 
         assertDoesNotThrow { validator.validate(element, BigDecimal("123.45")) }
         assertThrows<ContractViolationException> {
             validator.validate(
                 element,
-                BigDecimal("1234.5")
+                BigDecimal("1234.5"),
             )
         } // integer part fail
         assertThrows<ContractViolationException> {
             validator.validate(
                 element,
-                BigDecimal("123.456")
+                BigDecimal("123.456"),
             )
         } // fraction part fail
     }
@@ -159,10 +161,11 @@ class ContractValidatorTest {
     @Test
     fun `validate string length and blank`() {
         // @StringLength(min=2, max=5)
-        val length = mockAnnotation<StringLength> {
-            Mockito.`when`(min).thenReturn(2)
-            Mockito.`when`(max).thenReturn(5)
-        }
+        val length =
+            mockAnnotation<StringLength> {
+                Mockito.`when`(min).thenReturn(2)
+                Mockito.`when`(max).thenReturn(5)
+            }
         val lenElement = mockElement(length)
 
         assertDoesNotThrow { validator.validate(lenElement, "Hi") }
@@ -179,9 +182,10 @@ class ContractValidatorTest {
     @Test
     fun `validate pattern`() {
         // @Pattern(regexp="^[a-z]+$")
-        val pattern = mockAnnotation<Pattern> {
-            Mockito.`when`(regexp).thenReturn("^[a-z]+$")
-        }
+        val pattern =
+            mockAnnotation<Pattern> {
+                Mockito.`when`(regexp).thenReturn("^[a-z]+$")
+            }
         val element = mockElement(pattern)
 
         assertDoesNotThrow { validator.validate(element, "abc") }
@@ -191,10 +195,11 @@ class ContractValidatorTest {
     @Test
     fun `validate email`() {
         // @Email(allow=["company.com"], block=["spam.com"])
-        val email = mockAnnotation<Email> {
-            Mockito.`when`(allow).thenReturn(arrayOf("company.com"))
-            Mockito.`when`(block).thenReturn(arrayOf("spam.com"))
-        }
+        val email =
+            mockAnnotation<Email> {
+                Mockito.`when`(allow).thenReturn(arrayOf("company.com"))
+                Mockito.`when`(block).thenReturn(arrayOf("spam.com"))
+            }
         val element = mockElement(email)
 
         assertDoesNotThrow { validator.validate(element, "user@company.com") }
@@ -206,11 +211,12 @@ class ContractValidatorTest {
     @Test
     fun `validate url`() {
         // @Url(protocol=["https"], hostAllow=["secure.com"])
-        val url = mockAnnotation<Url> {
-            Mockito.`when`(protocol).thenReturn(arrayOf("https"))
-            Mockito.`when`(hostAllow).thenReturn(arrayOf("secure.com"))
-            Mockito.`when`(hostBlock).thenReturn(emptyArray())
-        }
+        val url =
+            mockAnnotation<Url> {
+                Mockito.`when`(protocol).thenReturn(arrayOf("https"))
+                Mockito.`when`(hostAllow).thenReturn(arrayOf("secure.com"))
+                Mockito.`when`(hostBlock).thenReturn(emptyArray())
+            }
         val element = mockElement(url)
 
         assertDoesNotThrow { validator.validate(element, "https://secure.com/api") }
@@ -225,10 +231,11 @@ class ContractValidatorTest {
     @Test
     fun `validate collection size`() {
         // @Size(min=1, max=2)
-        val size = mockAnnotation<Size> {
-            Mockito.`when`(min).thenReturn(1)
-            Mockito.`when`(max).thenReturn(2)
-        }
+        val size =
+            mockAnnotation<Size> {
+                Mockito.`when`(min).thenReturn(1)
+                Mockito.`when`(max).thenReturn(2)
+            }
         val element = mockElement(size)
 
         assertDoesNotThrow { validator.validate(element, listOf(1)) }
@@ -282,16 +289,16 @@ class ContractValidatorTest {
      * [Core] Helper method to mock Annotations.
      * solved generic type inference and `annotationType()` call issues.
      */
-    private inline fun <reified T : Annotation> mockAnnotation(
-        crossinline configure: T.() -> Unit = {}
-    ): T {
+    private inline fun <reified T : Annotation> mockAnnotation(crossinline configure: T.() -> Unit = {}): T {
         val annotationClass = T::class.java
         val annotation = Mockito.mock(annotationClass)
 
         // Use doReturn(...).when(...) to bypass generic type inference issues.
         // We must cast the mock to java.lang.annotation.Annotation to access `annotationType()`.
-        Mockito.doReturn(annotationClass)
-            .`when`(annotation as java.lang.annotation.Annotation).annotationType()
+        Mockito
+            .doReturn(annotationClass)
+            .`when`(annotation as java.lang.annotation.Annotation)
+            .annotationType()
 
         annotation.configure()
         return annotation

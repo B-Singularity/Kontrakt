@@ -17,7 +17,9 @@ import kotlin.reflect.full.memberProperties
 import kotlin.reflect.jvm.isAccessible
 import kotlin.reflect.jvm.kotlinFunction
 
-class MockitoEngineAdapter : MockingEngine, ScenarioControl {
+class MockitoEngineAdapter :
+    MockingEngine,
+    ScenarioControl {
     private val logger = KotlinLogging.logger {}
 
     // [Circular Dependency Resolution]
@@ -27,9 +29,8 @@ class MockitoEngineAdapter : MockingEngine, ScenarioControl {
     override fun <T : Any> createMock(classToMock: KClass<T>): T =
         Mockito.mock(classToMock.java, GenerativeAnswer(fixtureGenerator, classToMock, logger))
 
-    override fun <T : Any> createFake(classToFake: KClass<T>): T {
-        return Mockito.mock(classToFake.java, StatefulOrGenerativeAnswer(fixtureGenerator))
-    }
+    override fun <T : Any> createFake(classToFake: KClass<T>): T =
+        Mockito.mock(classToFake.java, StatefulOrGenerativeAnswer(fixtureGenerator))
 
     override fun createScenarioContext(): ScenarioContext = MockitoScenarioContext()
 
@@ -48,8 +49,8 @@ class MockitoEngineAdapter : MockingEngine, ScenarioControl {
             if (isSuspiciousStatefulMethod(methodName)) {
                 logger.warn {
                     "⚠️ Potential Configuration Issue: " +
-                            "Method '$methodName' was called on Stateless Mock '${mockType.simpleName}'. " +
-                            "If this is a Repository, please annotate interface '${mockType.simpleName}' with '@Stateful' to enable In-Memory storage."
+                        "Method '$methodName' was called on Stateless Mock '${mockType.simpleName}'. " +
+                        "If this is a Repository, please annotate interface '${mockType.simpleName}' with '@Stateful' to enable In-Memory storage."
                 }
             }
 
@@ -58,21 +59,22 @@ class MockitoEngineAdapter : MockingEngine, ScenarioControl {
 
             // [Conversion] KType -> GenerationRequest
             // Transforms the external 'return type' concept into the domain's 'generation request'.
-            val request = GenerationRequest.from(
-                type = returnType,
-                name = "${invocation.method.name}:ReturnValue"
-            )
+            val request =
+                GenerationRequest.from(
+                    type = returnType,
+                    name = "${invocation.method.name}:ReturnValue",
+                )
 
             return generator.generate(request)
         }
 
         private fun isSuspiciousStatefulMethod(name: String): Boolean =
             name.startsWith("save") ||
-                    name.startsWith("insert") ||
-                    name.startsWith("update") ||
-                    name.startsWith("delete") ||
-                    name.startsWith("remove") ||
-                    name.startsWith("store")
+                name.startsWith("insert") ||
+                name.startsWith("update") ||
+                name.startsWith("delete") ||
+                name.startsWith("remove") ||
+                name.startsWith("store")
     }
 
     private class StatefulOrGenerativeAnswer(
@@ -125,19 +127,23 @@ class MockitoEngineAdapter : MockingEngine, ScenarioControl {
             if (returnType == null || returnType.classifier == Unit::class) return null
 
             // [Conversion] KType -> GenerationRequest
-            val request = GenerationRequest.from(
-                type = returnType,
-                name = "${invocation.method.name}:ReturnValue"
-            )
+            val request =
+                GenerationRequest.from(
+                    type = returnType,
+                    name = "${invocation.method.name}:ReturnValue",
+                )
 
             return generator.generate(request)
         }
 
         private fun isSave(n: String) = n.startsWith("save") || n.startsWith("create") || n.startsWith("register")
 
-        private fun isFindById(n: String, args: Array<Any>) =
-            (n == "findById" || n == "getById") && args.size == 1 ||
-                    ((n.startsWith("find") || n.startsWith("get")) && args.size == 1 && !n.contains("By"))
+        private fun isFindById(
+            n: String,
+            args: Array<Any>,
+        ) = (n == "findById" || n == "getById") &&
+            args.size == 1 ||
+            ((n.startsWith("find") || n.startsWith("get")) && args.size == 1 && !n.contains("By"))
 
         private fun isFindAll(n: String) = n.contains("All") || n.contains("findAll") || n == "list"
 

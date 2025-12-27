@@ -36,12 +36,13 @@ sealed interface ValidationRule {
 data class MutuallyExclusiveRule(
     val name: String,
     val annotations: Set<KClass<out Annotation>>,
-    val reason: String
+    val reason: String,
 ) : ValidationRule {
     override fun validate(request: GenerationRequest) {
-        val presentAnnotations = request.annotations
-            .map { it.annotationClass }
-            .toSet()
+        val presentAnnotations =
+            request.annotations
+                .map { it.annotationClass }
+                .toSet()
 
         val intersection = annotations.intersect(presentAnnotations)
 
@@ -49,7 +50,7 @@ data class MutuallyExclusiveRule(
             throw ConflictingAnnotationsException(
                 fieldName = request.name,
                 annotations = intersection.map { "@${it.simpleName}" },
-                reason = this.reason // Passing the mandatory reason
+                reason = this.reason, // Passing the mandatory reason
             )
         }
     }
@@ -73,15 +74,16 @@ data class ForbiddenCombinationRule(
     val name: String,
     val trigger: KClass<out Annotation>,
     val forbidden: Set<KClass<out Annotation>>,
-    val reason: String
+    val reason: String,
 ) : ValidationRule {
     override fun validate(request: GenerationRequest) {
         // If the trigger annotation is not present, this rule does not apply.
         if (request.annotations.none { it.annotationClass == trigger }) return
 
-        val presentAnnotations = request.annotations
-            .map { it.annotationClass }
-            .toSet()
+        val presentAnnotations =
+            request.annotations
+                .map { it.annotationClass }
+                .toSet()
 
         val conflicts = forbidden.intersect(presentAnnotations)
 
@@ -89,7 +91,7 @@ data class ForbiddenCombinationRule(
             throw ConflictingAnnotationsException(
                 fieldName = request.name,
                 annotations = (conflicts + trigger).map { "@${it.simpleName}" },
-                reason = this.reason // Passing the mandatory reason
+                reason = this.reason, // Passing the mandatory reason
             )
         }
     }
@@ -108,7 +110,7 @@ data class TypeCompatibilityRule(
     val name: String,
     val targetAnnotation: KClass<out Annotation>,
     val allowedTypes: Set<KClass<*>>,
-    val reason: String
+    val reason: String,
 ) : ValidationRule {
     override fun validate(request: GenerationRequest) {
         // 1. If the annotation is not present, skip validation.
@@ -118,15 +120,16 @@ data class TypeCompatibilityRule(
 
         // 2. Compatibility Check (Is fieldType a subtype of any allowedType?)
         // handling nullable types implicitly by checking the classifier
-        val isCompatible = allowedTypes.any { allowed ->
-            allowed.java.isAssignableFrom(fieldType.java)
-        }
+        val isCompatible =
+            allowedTypes.any { allowed ->
+                allowed.java.isAssignableFrom(fieldType.java)
+            }
 
         if (!isCompatible) {
             throw ConflictingAnnotationsException(
                 fieldName = request.name,
                 annotations = listOf("@${targetAnnotation.simpleName}"),
-                reason = "$reason (Actual Type: '${fieldType.simpleName}', Allowed: ${allowedTypes.map { it.simpleName }})"
+                reason = "$reason (Actual Type: '${fieldType.simpleName}', Allowed: ${allowedTypes.map { it.simpleName }})",
             )
         }
     }
@@ -150,12 +153,13 @@ data class TypeCompatibilityRule(
 class AnnotationValueRule<T : Annotation>(
     val name: String,
     val target: KClass<T>,
-    val validator: (GenerationRequest, T) -> Unit
+    val validator: (GenerationRequest, T) -> Unit,
 ) : ValidationRule {
     override fun validate(request: GenerationRequest) {
         @Suppress("UNCHECKED_CAST")
-        val annotation = request.annotations
-            .find { it.annotationClass == target } as? T ?: return
+        val annotation =
+            request.annotations
+                .find { it.annotationClass == target } as? T ?: return
 
         validator(request, annotation)
     }

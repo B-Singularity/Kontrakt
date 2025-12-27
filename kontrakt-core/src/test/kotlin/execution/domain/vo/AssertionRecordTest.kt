@@ -7,8 +7,8 @@ import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
 
 class AssertionRecordTest {
-    private val STATUS_PASS = AssertionStatus.PASSED
-    private val STATUS_FAIL = AssertionStatus.FAILED
+    private val statusPass = AssertionStatus.PASSED
+    private val statusFail = AssertionStatus.FAILED
 
     @Test
     fun `should retain values provided in constructor`() {
@@ -16,14 +16,15 @@ class AssertionRecordTest {
         val expected = 5
         val actual = 3
 
-        val record = AssertionRecord(
-            status = STATUS_FAIL,
-            message = message,
-            expected = expected,
-            actual = actual
-        )
+        val record =
+            AssertionRecord(
+                status = statusFail,
+                message = message,
+                expected = expected,
+                actual = actual,
+            )
 
-        assertEquals(STATUS_FAIL, record.status)
+        assertEquals(statusFail, record.status)
         assertEquals(message, record.message)
         assertEquals(expected, record.expected)
         assertEquals(actual, record.actual)
@@ -31,12 +32,13 @@ class AssertionRecordTest {
 
     @Test
     fun `should handle null values for expected and actual`() {
-        val record = AssertionRecord(
-            status = STATUS_PASS,
-            message = "Both are null",
-            expected = null,
-            actual = null
-        )
+        val record =
+            AssertionRecord(
+                status = statusPass,
+                message = "Both are null",
+                expected = null,
+                actual = null,
+            )
 
         assertEquals(null, record.expected)
         assertEquals(null, record.actual)
@@ -44,8 +46,8 @@ class AssertionRecordTest {
 
     @Test
     fun `equals should return true for records with same data`() {
-        val record1 = AssertionRecord(STATUS_PASS, "Msg", 1, 1)
-        val record2 = AssertionRecord(STATUS_PASS, "Msg", 1, 1)
+        val record1 = AssertionRecord(statusPass, "Msg", 1, 1)
+        val record2 = AssertionRecord(statusPass, "Msg", 1, 1)
 
         assertEquals(record1, record2)
         assertEquals(record1.hashCode(), record2.hashCode())
@@ -53,9 +55,9 @@ class AssertionRecordTest {
 
     @Test
     fun `equals should return false for records with different data`() {
-        val record1 = AssertionRecord(STATUS_PASS, "Msg", 1, 1)
-        val record2 = AssertionRecord(STATUS_FAIL, "Msg", 1, 1) // Status different
-        val record3 = AssertionRecord(STATUS_PASS, "Diff", 1, 1) // Message different
+        val record1 = AssertionRecord(statusPass, "Msg", 1, 1)
+        val record2 = AssertionRecord(statusFail, "Msg", 1, 1) // Status different
+        val record3 = AssertionRecord(statusPass, "Diff", 1, 1) // Message different
 
         assertNotEquals(record1, record2)
         assertNotEquals(record1, record3)
@@ -63,7 +65,7 @@ class AssertionRecordTest {
 
     @Test
     fun `copy should create new instance with modified values`() {
-        val original = AssertionRecord(STATUS_PASS, "Original", 10, 10)
+        val original = AssertionRecord(statusPass, "Original", 10, 10)
         val copied = original.copy(message = "Modified", actual = 11)
 
         // Modified fields
@@ -80,7 +82,7 @@ class AssertionRecordTest {
 
     @Test
     fun `toString contains all field values`() {
-        val record = AssertionRecord(STATUS_PASS, "TestMessage", "A", "B")
+        val record = AssertionRecord(statusPass, "TestMessage", "A", "B")
         val stringRep = record.toString()
 
         assertTrue(stringRep.contains("TestMessage"))

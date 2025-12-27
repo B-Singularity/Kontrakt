@@ -6,7 +6,6 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class GeneratorUtilsTest {
-
     private val testRandom = Random(42) // Fixed seed for reproducibility
 
     @Test

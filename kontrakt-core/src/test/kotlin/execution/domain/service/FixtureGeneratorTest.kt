@@ -25,18 +25,18 @@ import kotlin.reflect.KParameter
 import kotlin.reflect.KType
 
 class FixtureGeneratorTest {
-
     private lateinit var mockingEngine: MockingEngine
     private lateinit var fixtureGenerator: FixtureGenerator
 
     @BeforeEach
     fun setup() {
         mockingEngine = mock(MockingEngine::class.java)
-        fixtureGenerator = FixtureGenerator(
-            mockingEngine = mockingEngine,
-            clock = Clock.systemDefaultZone(),
-            seed = 12345L
-        )
+        fixtureGenerator =
+            FixtureGenerator(
+                mockingEngine = mockingEngine,
+                clock = Clock.systemDefaultZone(),
+                seed = 12345L,
+            )
     }
 
     // =================================================================
@@ -44,6 +44,7 @@ class FixtureGeneratorTest {
     // =================================================================
 
     private fun dummyFuncString(p: String) {}
+
     private fun dummyFuncNullableString(p: String?) {}
 
     // =================================================================
@@ -77,9 +78,10 @@ class FixtureGeneratorTest {
         injectGenerators(listOf(mockGenerator))
         val request = mockRequest()
 
-        val ex = assertThrows<GenerationFailedException> {
-            fixtureGenerator.generate(request)
-        }
+        val ex =
+            assertThrows<GenerationFailedException> {
+                fixtureGenerator.generate(request)
+            }
         assertTrue(ex.message!!.contains("No suitable generator found"))
     }
 
@@ -107,11 +109,12 @@ class FixtureGeneratorTest {
         whenever(recursiveGenerator.supports(any())).thenReturn(true)
 
         val dummyType = mock(KType::class.java)
-        val recursionException = RecursiveGenerationFailedException(
-            type = dummyType,
-            path = listOf("root", "circularField"),
-            cause = RuntimeException("Cause")
-        )
+        val recursionException =
+            RecursiveGenerationFailedException(
+                type = dummyType,
+                path = listOf("root", "circularField"),
+                cause = RuntimeException("Cause"),
+            )
 
         whenever(recursiveGenerator.generator(any(), any(), any())).thenThrow(recursionException)
 
@@ -133,11 +136,12 @@ class FixtureGeneratorTest {
         whenever(recursiveGenerator.supports(any())).thenReturn(true)
 
         val dummyType = mock(KType::class.java)
-        val recursionException = RecursiveGenerationFailedException(
-            type = dummyType,
-            path = listOf("root", "circularField"),
-            cause = RuntimeException("Cause")
-        )
+        val recursionException =
+            RecursiveGenerationFailedException(
+                type = dummyType,
+                path = listOf("root", "circularField"),
+                cause = RuntimeException("Cause"),
+            )
 
         whenever(recursiveGenerator.generator(any(), any(), any())).thenThrow(recursionException)
 
@@ -146,9 +150,10 @@ class FixtureGeneratorTest {
         injectGenerators(listOf(recursiveGenerator))
         val request = mockRequest()
 
-        val ex = assertThrows<GenerationFailedException> {
-            fixtureGenerator.generate(request)
-        }
+        val ex =
+            assertThrows<GenerationFailedException> {
+                fixtureGenerator.generate(request)
+            }
         assertTrue(ex.message!!.contains("Failed to handle recursion via Mocking"))
     }
 
@@ -166,9 +171,10 @@ class FixtureGeneratorTest {
         injectGenerators(listOf(nullGenerator))
         val request = mockRequest(isNullable = false)
 
-        val ex = assertThrows<GenerationFailedException> {
-            fixtureGenerator.generate(request)
-        }
+        val ex =
+            assertThrows<GenerationFailedException> {
+                fixtureGenerator.generate(request)
+            }
         assertTrue(ex.message!!.contains("returned null for non-nullable"))
     }
 
@@ -313,7 +319,7 @@ class FixtureGeneratorTest {
 
     private fun mockRequest(
         isNullable: Boolean = false,
-        annotations: List<Annotation> = emptyList()
+        annotations: List<Annotation> = emptyList(),
     ): GenerationRequest {
         val request = mock(GenerationRequest::class.java)
         val kType = mock(KType::class.java)
@@ -329,7 +335,5 @@ class FixtureGeneratorTest {
         return request
     }
 
-    private fun getFirstParameter(func: KFunction<*>): KParameter {
-        return func.parameters.first()
-    }
+    private fun getFirstParameter(func: KFunction<*>): KParameter = func.parameters.first()
 }

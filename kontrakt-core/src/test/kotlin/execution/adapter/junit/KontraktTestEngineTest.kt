@@ -28,7 +28,6 @@ import java.time.Duration
 import kotlin.test.Test
 
 class KontraktTestEngineTest {
-
     private val mockFactory: KontraktRuntimeFactory = mock()
     private val mockExecutor: TestScenarioExecutor = mock()
     private val mockExecution: TestExecution = mock()
@@ -51,7 +50,6 @@ class KontraktTestEngineTest {
 
     @Test
     fun `discover - should handle PackageSelector correctly`() {
-
         val selector = DiscoverySelectors.selectPackage("com.example")
 
         whenever(discoveryRequest.getSelectorsByType(ClassSelector::class.java)).thenReturn(emptyList())
@@ -64,7 +62,6 @@ class KontraktTestEngineTest {
 
     @Test
     fun `discover - should fallback to All scan if no selectors provided`() {
-
         whenever(discoveryRequest.getSelectorsByType(ClassSelector::class.java)).thenReturn(emptyList())
         whenever(discoveryRequest.getSelectorsByType(PackageSelector::class.java)).thenReturn(emptyList())
 
@@ -75,7 +72,6 @@ class KontraktTestEngineTest {
 
     @Test
     fun `execute - should report SUCCESS when TestStatus is Passed`() {
-
         val (request, childDescriptor) = setupExecutionEnvironment()
 
         val successResult = createTestResult(TestStatus.Passed)
@@ -92,12 +88,12 @@ class KontraktTestEngineTest {
 
     @Test
     fun `execute - should report FAILED with AssertionError when TestStatus is AssertionFailed`() {
-
         val (request, childDescriptor) = setupExecutionEnvironment()
 
-        val failedResult = createTestResult(
-            TestStatus.AssertionFailed("Value mismatch", "10", "20")
-        )
+        val failedResult =
+            createTestResult(
+                TestStatus.AssertionFailed("Value mismatch", "10", "20"),
+            )
 
         whenever(mockFactory.createExecutor()).thenReturn(mockExecutor)
         whenever(mockFactory.createExecution(any(), any())).thenReturn(mockExecution)
@@ -111,12 +107,16 @@ class KontraktTestEngineTest {
         val result = captor.firstValue
         assertEquals(TestExecutionResult.Status.FAILED, result.status)
         assertTrue(result.throwable.get() is AssertionError, "Should wrap in AssertionError")
-        assertTrue(result.throwable.get().message!!.contains("Value mismatch"))
+        assertTrue(
+            result.throwable
+                .get()
+                .message!!
+                .contains("Value mismatch"),
+        )
     }
 
     @Test
     fun `execute - should report FAILED with Original Exception when TestStatus is ExecutionError`() {
-
         val (request, childDescriptor) = setupExecutionEnvironment()
 
         val originalError = IllegalStateException("Logic Error")
@@ -137,20 +137,23 @@ class KontraktTestEngineTest {
 
     @Test
     fun `execute - should catch Framework Crash and report as FAILED`() {
-
         val (request, childDescriptor) = setupExecutionEnvironment()
 
         whenever(mockFactory.createExecutor()).doThrow(RuntimeException("Factory Explosion"))
 
         engine.execute(request)
-        
+
         val captor = argumentCaptor<TestExecutionResult>()
         verify(listener).executionFinished(org.mockito.kotlin.eq(childDescriptor), captor.capture())
 
         assertEquals(TestExecutionResult.Status.FAILED, captor.firstValue.status)
-        assertTrue(captor.firstValue.throwable.get().message!!.contains("Factory Explosion"))
+        assertTrue(
+            captor.firstValue.throwable
+                .get()
+                .message!!
+                .contains("Factory Explosion"),
+        )
     }
-
 
     private fun setupExecutionEnvironment(): Pair<ExecutionRequest, KontraktTestDescriptor> {
         val rootDescriptor = KontraktTestDescriptor(UniqueId.forEngine(engine.id), "Root")
@@ -166,12 +169,11 @@ class KontraktTestEngineTest {
         return Pair(ExecutionRequest(rootDescriptor, listener, configParams), childDescriptor)
     }
 
-    private fun createTestResult(status: TestStatus): TestResult {
-        return TestResult(
+    private fun createTestResult(status: TestStatus): TestResult =
+        TestResult(
             target = DiscoveredTestTarget.create(String::class, "T", "T").getOrThrow(),
             finalStatus = status,
             duration = Duration.ZERO,
-            assertionRecords = emptyList()
+            assertionRecords = emptyList(),
         )
-    }
 }

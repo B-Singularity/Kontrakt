@@ -13,7 +13,6 @@ import kotlin.random.Random
 import kotlin.reflect.KClass
 
 class StringTypeGenerator : TerminalGenerator {
-
     override fun supports(request: GenerationRequest): Boolean {
         val type = request.type.classifier as? KClass<*>
         return type == String::class
@@ -21,23 +20,24 @@ class StringTypeGenerator : TerminalGenerator {
 
     override fun generateValidBoundaries(
         request: GenerationRequest,
-        context: GenerationContext
-    ): List<Any?> = buildList {
-        val (minLen, maxLen) = calculateEffectiveLength(request)
+        context: GenerationContext,
+    ): List<Any?> =
+        buildList {
+            val (minLen, maxLen) = calculateEffectiveLength(request)
 
-        if (minLen > 0) add("a".repeat(minLen))
-        if (maxLen < 1000) add("a".repeat(maxLen))
+            if (minLen > 0) add("a".repeat(minLen))
+            if (maxLen < 1000) add("a".repeat(maxLen))
 
-        if (request.has<NotBlank>() && minLen <= 1 && !contains("a")) {
-            add("a")
+            if (request.has<NotBlank>() && minLen <= 1 && !contains("a")) {
+                add("a")
+            }
+            if (request.has<Email>()) add("test@example.com")
+            if (request.has<Uuid>()) add(generateDeterministicUuid(context.seededRandom))
         }
-        if (request.has<Email>()) add("test@example.com")
-        if (request.has<Uuid>()) add(generateDeterministicUuid(context.seededRandom))
-    }
 
     override fun generate(
         request: GenerationRequest,
-        context: GenerationContext
+        context: GenerationContext,
     ): Any {
         val random = context.seededRandom
         val length = request.find<StringLength>()
@@ -55,22 +55,23 @@ class StringTypeGenerator : TerminalGenerator {
 
     override fun generateInvalid(
         request: GenerationRequest,
-        context: GenerationContext
-    ): List<Any?> = buildList {
-        val (min, max) = calculateEffectiveLength(request)
+        context: GenerationContext,
+    ): List<Any?> =
+        buildList {
+            val (min, max) = calculateEffectiveLength(request)
 
-        if (min > 0) add("x".repeat(min - 1))
-        if (max < Int.MAX_VALUE - 100) add("x".repeat(max + 1))
+            if (min > 0) add("x".repeat(min - 1))
+            if (max < Int.MAX_VALUE - 100) add("x".repeat(max + 1))
 
-        if (request.has<NotBlank>()) {
-            add("")
-            add("   ")
+            if (request.has<NotBlank>()) {
+                add("")
+                add("   ")
+            }
+            if (request.has<Email>()) {
+                add("not-an-email")
+                add("@domain.com")
+            }
         }
-        if (request.has<Email>()) {
-            add("not-an-email")
-            add("@domain.com")
-        }
-    }
 
     private fun calculateEffectiveLength(request: GenerationRequest): Pair<Int, Int> {
         var minLen = 0
@@ -90,7 +91,10 @@ class StringTypeGenerator : TerminalGenerator {
         return minLen to maxLen
     }
 
-    private fun generateStringConstraint(request: GenerationRequest, random: Random): String {
+    private fun generateStringConstraint(
+        request: GenerationRequest,
+        random: Random,
+    ): String {
         val length = request.find<StringLength>()
         if (length != null) {
             val effectiveMax =
@@ -103,12 +107,14 @@ class StringTypeGenerator : TerminalGenerator {
         return GeneratorUtils.generateRandomString(
             GeneratorUtils.DEFAULT_STRING_MIN_LENGTH,
             GeneratorUtils.DEFAULT_STRING_MAX_LENGTH,
-            random
+            random,
         )
     }
 
-
-    private fun generateFromRegex(regex: String, random: Random): String =
+    private fun generateFromRegex(
+        regex: String,
+        random: Random,
+    ): String =
         when (regex) {
             "\\d+", "[0-9]+" -> GeneratorUtils.generateRandomNumericString(5, random)
             "\\w+", "[a-zA-Z]+" -> GeneratorUtils.generateRandomString(5, 10, random)
@@ -117,7 +123,11 @@ class StringTypeGenerator : TerminalGenerator {
             else -> "Pattern_Placeholder_for_$regex"
         }
 
-    private fun generateComplexEmail(limit: Int, rule: Email, random: Random): String {
+    private fun generateComplexEmail(
+        limit: Int,
+        rule: Email,
+        random: Random,
+    ): String {
         val availableDomains =
             if (rule.allow.isNotEmpty()) rule.allow.toList() else listOf("com", "net", "org", "io", "co.kr", "gov")
         val suffix = availableDomains.random(random)
@@ -134,7 +144,11 @@ class StringTypeGenerator : TerminalGenerator {
         return "$account@$domainPart"
     }
 
-    private fun generateComplexUrl(limit: Int, rule: Url, random: Random): String {
+    private fun generateComplexUrl(
+        limit: Int,
+        rule: Url,
+        random: Random,
+    ): String {
         val scheme = (if (rule.protocol.isNotEmpty()) rule.protocol.random(random) else "http") + "://"
         val overhead = scheme.length
         val remaining = limit - overhead
@@ -142,11 +156,12 @@ class StringTypeGenerator : TerminalGenerator {
         if (remaining < 5) return "${scheme}a.co"
 
         val host = if (rule.hostAllow.isNotEmpty()) rule.hostAllow.random(random) else generateHost(rule, random)
-        val effectiveHost = if (host.length > remaining) {
-            if (remaining >= 6) "a.com" else host.take(remaining)
-        } else {
-            host
-        }
+        val effectiveHost =
+            if (host.length > remaining) {
+                if (remaining >= 6) "a.com" else host.take(remaining)
+            } else {
+                host
+            }
 
         var currentUrl = "$scheme$effectiveHost"
 
@@ -167,7 +182,10 @@ class StringTypeGenerator : TerminalGenerator {
         return currentUrl
     }
 
-    private fun generateHost(rule: Url, random: Random): String {
+    private fun generateHost(
+        rule: Url,
+        random: Random,
+    ): String {
         val subDomains = listOf("www", "api", "")
         val sub = subDomains.random(random).let { if (it.isBlank()) "" else "$it." }
         val domain = GeneratorUtils.generateRandomString(3, 10, random).lowercase()
@@ -189,8 +207,5 @@ class StringTypeGenerator : TerminalGenerator {
         return "?key=" + GeneratorUtils.generateRandomString(3, 5, random)
     }
 
-    private fun generateDeterministicUuid(random: Random): String {
-        return UUID(random.nextLong(), random.nextLong()).toString()
-    }
-
+    private fun generateDeterministicUuid(random: Random): String = UUID(random.nextLong(), random.nextLong()).toString()
 }

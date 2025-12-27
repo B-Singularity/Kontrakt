@@ -5,7 +5,6 @@ import discovery.spi.ClasspathScanner
 import kotlin.reflect.KClass
 
 class FakeClasspathScanner : ClasspathScanner {
-
     private var interfaces: List<KClass<*>> = emptyList()
     private var classes: List<KClass<*>> = emptyList()
     private var implementations: Map<KClass<*>, List<KClass<*>>> = emptyMap()
@@ -13,7 +12,7 @@ class FakeClasspathScanner : ClasspathScanner {
     fun setup(
         interfaces: List<KClass<*>> = emptyList(),
         classes: List<KClass<*>> = emptyList(),
-        implementations: Map<KClass<*>, List<KClass<*>>> = emptyMap()
+        implementations: Map<KClass<*>, List<KClass<*>>> = emptyMap(),
     ) {
         this.interfaces = interfaces
         this.classes = classes
@@ -22,22 +21,16 @@ class FakeClasspathScanner : ClasspathScanner {
 
     override suspend fun findAnnotatedInterfaces(
         scope: ScanScope,
-        annotation: KClass<out Annotation>
-    ): List<KClass<*>> {
-        return interfaces
-    }
+        annotation: KClass<out Annotation>,
+    ): List<KClass<*>> = interfaces
 
     override suspend fun findAnnotatedClasses(
         scope: ScanScope,
-        annotation: KClass<out Annotation>
-    ): List<KClass<*>> {
-        return classes
-    }
+        annotation: KClass<out Annotation>,
+    ): List<KClass<*>> = classes
 
     override suspend fun findAllImplementations(
         scope: ScanScope,
-        targetInterface: KClass<*>
-    ): List<KClass<*>> {
-        return implementations[targetInterface] ?: emptyList()
-    }
+        targetInterface: KClass<*>,
+    ): List<KClass<*>> = implementations[targetInterface] ?: emptyList()
 }

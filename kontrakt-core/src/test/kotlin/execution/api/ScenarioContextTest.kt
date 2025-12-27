@@ -7,7 +7,6 @@ import org.mockito.Mockito
 import kotlin.test.assertFailsWith
 
 abstract class ScenarioContextTest {
-
     protected abstract fun createScenarioContext(): ScenarioContext
 
     interface TestService {
@@ -16,12 +15,10 @@ abstract class ScenarioContextTest {
 
     @Test
     fun `every-returns should successfully stub return value on a mock`() {
-
         val context = createScenarioContext()
         val mockService = Mockito.mock(TestService::class.java)
 
         context every { mockService.perform("input") } returns "stubbed-output"
-
 
         assertEquals("stubbed-output", mockService.perform("input"))
         assertEquals(null, mockService.perform("other"))
@@ -29,16 +26,16 @@ abstract class ScenarioContextTest {
 
     @Test
     fun `every-throws should successfully stub exception on a mock`() {
-
         val context = createScenarioContext()
         val mockService = Mockito.mock(TestService::class.java)
         val expectedError = IllegalStateException("Boom")
 
         context every { mockService.perform("bomb") } throws expectedError
 
-        val exception = assertFailsWith<IllegalStateException> {
-            mockService.perform("bomb")
-        }
+        val exception =
+            assertFailsWith<IllegalStateException> {
+                mockService.perform("bomb")
+            }
         assertEquals("Boom", exception.message)
     }
 

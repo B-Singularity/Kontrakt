@@ -15,9 +15,7 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import kotlin.test.fail
 
-
-class SealedTypeGeneratorBranchTest {
-
+class SealedTypeGeneratorTest {
     private lateinit var generator: SealedTypeGenerator
     private lateinit var context: GenerationContext
 
@@ -28,7 +26,10 @@ class SealedTypeGeneratorBranchTest {
     // 1. Sealed Class for Valid Logic
     sealed class Result {
         object Success : Result()
-        data class Failure(val msg: String) : Result()
+
+        data class Failure(
+            val msg: String,
+        ) : Result()
     }
 
     // 2. Sealed Class with No Subclasses (Empty)
@@ -42,10 +43,11 @@ class SealedTypeGeneratorBranchTest {
     @BeforeTest
     fun setup() {
         generator = SealedTypeGenerator()
-        context = GenerationContext(
-            seededRandom = Random(12345),
-            clock = Clock.fixed(Instant.EPOCH, ZoneId.of("UTC"))
-        )
+        context =
+            GenerationContext(
+                seededRandom = Random(12345),
+                clock = Clock.fixed(Instant.EPOCH, ZoneId.of("UTC")),
+            )
     }
 
     // =================================================================
@@ -54,20 +56,23 @@ class SealedTypeGeneratorBranchTest {
 
     @Test
     fun verifySupports_ReturnsFalse_WhenClassifierIsNotKClass() {
-        val typeParameterType = Container::class.declaredMemberProperties
-            .first { it.name == "item" }
-            .returnType
+        val typeParameterType =
+            Container::class
+                .declaredMemberProperties
+                .first { it.name == "item" }
+                .returnType
 
         // Ensure our setup is correct (it is a TypeParameter, not a Class)
         assertFalse(
             typeParameterType.classifier is kotlin.reflect.KClass<*>,
-            "Setup Check: Classifier should be a TypeParameter"
+            "Setup Check: Classifier should be a TypeParameter",
         )
 
-        val request = GenerationRequest.from(
-            type = typeParameterType,
-            name = "genericItem"
-        )
+        val request =
+            GenerationRequest.from(
+                type = typeParameterType,
+                name = "genericItem",
+            )
 
         assertFalse(generator.supports(request), "Should return false for TypeParameter classifiers")
     }
@@ -166,10 +171,9 @@ class SealedTypeGeneratorBranchTest {
     // Helper
     // =================================================================
 
-    private fun createRequest(kClass: kotlin.reflect.KClass<*>): GenerationRequest {
-        return GenerationRequest.from(
+    private fun createRequest(kClass: kotlin.reflect.KClass<*>): GenerationRequest =
+        GenerationRequest.from(
             type = kClass.starProjectedType,
-            name = "testParam"
+            name = "testParam",
         )
-    }
 }

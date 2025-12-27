@@ -5,7 +5,6 @@ import kotlin.reflect.KClass
 import kotlin.reflect.full.starProjectedType
 
 class SealedTypeGenerator : RecursiveGenerator {
-
     override fun supports(request: GenerationRequest): Boolean {
         val kClass = request.type.classifier as? KClass<*> ?: return false
         return kClass.isSealed
@@ -14,7 +13,7 @@ class SealedTypeGenerator : RecursiveGenerator {
     override fun generator(
         request: GenerationRequest,
         context: GenerationContext,
-        regenerator: (GenerationRequest, GenerationContext) -> Any?
+        regenerator: (GenerationRequest, GenerationContext) -> Any?,
     ): Any? {
         val kClass = request.type.classifier as KClass<*>
         val subclasses = kClass.sealedSubclasses
@@ -32,7 +31,7 @@ class SealedTypeGenerator : RecursiveGenerator {
     override fun generateValidBoundaries(
         request: GenerationRequest,
         context: GenerationContext,
-        regenerator: (GenerationRequest, GenerationContext) -> Any?
+        regenerator: (GenerationRequest, GenerationContext) -> Any?,
     ): List<Any?> {
         val kClass = request.type.classifier as KClass<*>
 

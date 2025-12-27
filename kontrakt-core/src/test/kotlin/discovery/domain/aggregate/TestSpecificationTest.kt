@@ -10,26 +10,24 @@ import kotlin.test.assertIs
 import kotlin.test.assertTrue
 
 class TestSpecificationTest {
-
     @Test
     fun `create should succeed for all valid mode combinations`() {
-        val validScenarios = listOf(
-            // Case 1: Only UserScenario
-            setOf(TestSpecification.TestMode.UserScenario),
-
-            // Case 2: Only ContractAuto
-            setOf(TestSpecification.TestMode.ContractAuto(String::class)),
-
-            // Case 3: Both (Hybrid)
-            setOf(TestSpecification.TestMode.UserScenario, TestSpecification.TestMode.ContractAuto(String::class))
-        )
+        val validScenarios =
+            listOf(
+                // Case 1: Only UserScenario
+                setOf(TestSpecification.TestMode.UserScenario),
+                // Case 2: Only ContractAuto
+                setOf(TestSpecification.TestMode.ContractAuto(String::class)),
+                // Case 3: Both (Hybrid)
+                setOf(TestSpecification.TestMode.UserScenario, TestSpecification.TestMode.ContractAuto(String::class)),
+            )
 
         val target = createDummyTarget()
         val dependencies = listOf(createDummyDependency())
 
         validScenarios.forEachIndexed { index, modes ->
             val result = TestSpecification.create(target, modes, dependencies)
-            
+
             assertTrue(result.isSuccess, "Scenario #$index failed. Modes: $modes")
 
             val spec = result.getOrThrow()
@@ -53,14 +51,13 @@ class TestSpecificationTest {
         assertEquals("At least one test mode is required.", exception.message)
     }
 
-
     private fun createDummyTarget(): DiscoveredTestTarget {
         val constructor = DiscoveredTestTarget::class.primaryConstructor!!
         constructor.isAccessible = true
         return constructor.call(
             Any::class, // kClass
             "DummyTarget", // displayName
-            "com.example.DummyTarget" // fullyQualifiedName
+            "com.example.DummyTarget", // fullyQualifiedName
         )
     }
 
@@ -73,7 +70,7 @@ class TestSpecificationTest {
         return constructor.call(
             "dummyDep",
             String::class,
-            realStrategy
+            realStrategy,
         )
     }
 }

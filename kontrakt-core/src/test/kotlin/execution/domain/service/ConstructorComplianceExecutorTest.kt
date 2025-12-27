@@ -15,7 +15,6 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class ConstructorComplianceExecutorTest {
-
     // Subject under test and collaborators
     private lateinit var fixtureGenerator: FixtureGenerator
     private lateinit var executor: ConstructorComplianceExecutor
@@ -155,25 +154,36 @@ class ConstructorComplianceExecutorTest {
     }
 
     // Standard class
-    class SimpleClass(val a: String)
+    class SimpleClass(
+        val a: String,
+    )
 
     // Class that always fails construction
-    class AlwaysThrowingClass(val a: String) {
+    class AlwaysThrowingClass(
+        val a: String,
+    ) {
         init {
             throw IllegalArgumentException("Boom")
         }
     }
 
     // Class with validation logic
-    class ValidatedClass(val a: String) {
+    class ValidatedClass(
+        val a: String,
+    ) {
         init {
             if (a == "invalid") throw IllegalArgumentException()
         }
     }
 
     // Class with no validation (Vulnerable)
-    class OpenClass(val a: String)
+    class OpenClass(
+        val a: String,
+    )
 
     // Class with multiple parameters
-    class MultiParamClass(val p1: String, val p2: String)
+    class MultiParamClass(
+        val p1: String,
+        val p2: String,
+    )
 }

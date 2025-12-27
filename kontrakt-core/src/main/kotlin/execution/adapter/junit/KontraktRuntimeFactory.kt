@@ -9,17 +9,19 @@ import execution.domain.service.TestInstanceFactory
 
 interface KontraktRuntimeFactory {
     fun createExecutor(): TestScenarioExecutor
-    fun createExecution(spec: TestSpecification, executor: TestScenarioExecutor): TestExecution
+
+    fun createExecution(
+        spec: TestSpecification,
+        executor: TestScenarioExecutor,
+    ): TestExecution
 }
 
 class DefaultRuntimeFactory : KontraktRuntimeFactory {
-    override fun createExecutor(): TestScenarioExecutor {
-        return DefaultScenarioExecutor()
-    }
+    override fun createExecutor(): TestScenarioExecutor = DefaultScenarioExecutor()
 
     override fun createExecution(
         spec: TestSpecification,
-        executor: TestScenarioExecutor
+        executor: TestScenarioExecutor,
     ): TestExecution {
         val engineAdapter = MockitoEngineAdapter()
         val instanceFactory = TestInstanceFactory(engineAdapter, engineAdapter)
