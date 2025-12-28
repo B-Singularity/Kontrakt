@@ -12,6 +12,7 @@ import discovery.domain.vo.ScanScope
 import discovery.spi.ClasspathScanner
 import exception.KontraktConfigurationException
 import io.github.oshai.kotlinlogging.KotlinLogging
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlin.reflect.KClass
@@ -20,6 +21,7 @@ import kotlin.reflect.full.primaryConstructor
 
 class TestDiscovererImpl(
     private val scanner: ClasspathScanner,
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) : TestDiscoverer {
     private val logger = KotlinLogging.logger {}
 
@@ -30,7 +32,8 @@ class TestDiscovererImpl(
         runCatching {
             logger.info { "Starting test discovery with scope: $scope" }
 
-            withContext(Dispatchers.IO) {
+            withContext(ioDispatcher) {
+                // 1. @Contract Test
                 val contractSpecs =
                     scanner
                         .findAnnotatedInterfaces(scope, contractMarker)
@@ -39,16 +42,17 @@ class TestDiscovererImpl(
                                 .findAllImplementations(scope, contract)
                                 .map { impl -> impl to contract }
                         }.mapNotNull { (impl, contract) ->
-                            createSpecificationForClass(impl, setOf(TestMode.ContractAuto(contract)))
+                            createSpecificationForClass(impl, setOf(TestMode.ContractAuto(contract)), scope)
                                 .onFailure { e ->
                                     logger.warn { "Failed to create spec for implementation '${impl.simpleName}': ${e.message}" }
                                 }.getOrNull()
                         }
+                // 2. @KontraktTest custom test
                 val manualSpecs =
                     scanner
                         .findAnnotatedClasses(scope, KontraktTest::class)
                         .mapNotNull { testClass ->
-                            createSpecificationForClass(testClass, setOf(TestMode.UserScenario))
+                            createSpecificationForClass(testClass, setOf(TestMode.UserScenario), scope)
                                 .onFailure { e ->
                                     logger.warn { "Failed to create spec for test class '${testClass.simpleName}': ${e.message}" }
                                 }.getOrNull()
@@ -69,9 +73,10 @@ class TestDiscovererImpl(
             }
         }
 
-    private fun createSpecificationForClass(
+    private suspend fun createSpecificationForClass(
         kClass: KClass<*>,
         initialModes: Set<TestMode>,
+        scope: ScanScope,
     ): Result<TestSpecification> {
         val targetResult =
             DiscoveredTestTarget.create(
@@ -92,7 +97,7 @@ class TestDiscovererImpl(
                 ?: return Result.failure(
                     KontraktConfigurationException(
                         "Target class '${target.displayName}' must have a primary constructor for dependency injection.\n" +
-                            "Tip: Interfaces, Objects, or Abstract classes cannot be tested directly as a Target.",
+                                "Tip: Interfaces, Objects, or Abstract classes cannot be tested directly as a Target.",
                     ),
                 )
 
@@ -103,11 +108,11 @@ class TestDiscovererImpl(
                         ?: return Result.failure(
                             KontraktConfigurationException(
                                 "Cannot determine type for parameter '${param.name}' " +
-                                    "in '${target.displayName}'.",
+                                        "in '${target.displayName}'.",
                             ),
                         )
 
-                val strategy = determineMockingStrategy(paramType)
+                val strategy = determineMockingStrategy(paramType, scope)
 
                 DependencyMetadata
                     .create(param.name ?: "unknown", paramType, strategy)
@@ -117,7 +122,10 @@ class TestDiscovererImpl(
         return TestSpecification.create(target, initialModes, dependencies)
     }
 
-    private fun determineMockingStrategy(type: KClass<*>): MockingStrategy {
+    private suspend fun determineMockingStrategy(
+        type: KClass<*>,
+        scope: ScanScope
+    ): MockingStrategy {
         if (type.qualifiedName == "java.time.Clock") {
             return MockingStrategy.Environment(DependencyMetadata.EnvType.TIME)
         }
@@ -126,6 +134,16 @@ class TestDiscovererImpl(
             return MockingStrategy.StatefulFake
         }
 
-        return MockingStrategy.Real
+        if (type.java.isInterface || type.isAbstract) {
+            val implementations = scanner.findAllImplementations(scope, type)
+
+            return if (implementations.isNotEmpty()) {
+                MockingStrategy.Real(implementation = implementations.first())
+            } else {
+                MockingStrategy.StatelessMock
+            }
+        }
+
+        return MockingStrategy.Real(implementation = type)
     }
 }

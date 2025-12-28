@@ -1,6 +1,8 @@
 package execution.domain.service
 
 import common.reflection.unwrapped
+import discovery.api.Test
+import discovery.domain.aggregate.TestSpecification
 import exception.ContractViolationException
 import execution.api.TestScenarioExecutor
 import execution.domain.AssertionStatus
@@ -14,6 +16,7 @@ import java.time.Instant
 import java.time.ZoneId
 import kotlin.reflect.KFunction
 import kotlin.reflect.KParameter
+import kotlin.reflect.full.findAnnotation
 import kotlin.reflect.full.functions
 import kotlin.reflect.jvm.javaMethod
 import kotlin.reflect.jvm.kotlinFunction
@@ -34,30 +37,93 @@ class DefaultScenarioExecutor(
         val fixtureGenerator = fixtureFactory(context.mockingEngine, fixedClock)
         val contractValidator = validatorFactory(fixedClock)
 
+        val records = mutableListOf<AssertionRecord>()
+
+        if (context.specification.modes.contains(TestSpecification.TestMode.UserScenario)) {
+            records.addAll(
+                executeUserTestMethods(context, fixtureGenerator)
+            )
+        }
+
+        val contractModes = context.specification.modes.filterIsInstance<TestSpecification.TestMode.ContractAuto>()
+        contractModes.forEach { mode ->
+            records.addAll(
+                executeContractFuzzing(context, mode.contractInterface.java, fixtureGenerator, contractValidator)
+            )
+        }
+
+        return records
+    }
+
+    private fun executeUserTestMethods(
+        context: EphemeralTestContext,
+        fixtureGenerator: FixtureGenerator
+    ): List<AssertionRecord> {
+        val testInstance = context.getTestTarget()
+        val kClass = testInstance::class
+
+        val testFunctions = kClass.functions.filter { it.findAnnotation<Test>() != null }
+
+        if (testFunctions.isEmpty()) {
+            logger.warn { "UserScenario mode active but no methods annotated with @Test found in ${kClass.simpleName}" }
+            return emptyList()
+        }
+
+        return testFunctions.map { kFunc ->
+            try {
+                val args = createArguments(kFunc, context, fixtureGenerator)
+
+                kFunc.callBy(args)
+
+                AssertionRecord(
+                    status = AssertionStatus.PASSED,
+                    message = "Test '${kFunc.name}' passed",
+                    expected = "Success",
+                    actual = "Success"
+                )
+            } catch (e: Throwable) {
+                val cause = e.unwrapped
+                if (cause is AssertionError) {
+                    AssertionRecord(
+                        status = AssertionStatus.FAILED,
+                        message = "Test '${kFunc.name}' failed: ${cause.message}",
+                        expected = "Assertion Pass",
+                        actual = "Assertion Fail"
+                    )
+                } else {
+                    logger.error(cause) { "Test '${kFunc.name}' threw unexpected exception" }
+                    AssertionRecord(
+                        status = AssertionStatus.FAILED,
+                        message = "Test '${kFunc.name}' error: ${cause.message}",
+                        expected = "Success",
+                        actual = cause.javaClass.simpleName
+                    )
+                }
+            }
+        }
+    }
+
+    private fun executeContractFuzzing(
+        context: EphemeralTestContext,
+        contractClass: Class<*>,
+        fixtureGenerator: FixtureGenerator,
+        contractValidator: ContractValidator
+    ): List<AssertionRecord> {
         val testTargetInstance = context.getTestTarget()
-        val specification = context.specification
-        val targetClass = specification.target.kClass.java
-
-        val contractInterface =
-            targetClass.interfaces.firstOrNull()
-                ?: return emptyList()
-
         val implementationKClass = testTargetInstance::class
 
-        return contractInterface.methods
+        return contractClass.methods
             .filter { !it.isBridge && !it.isSynthetic }
             .map { contractMethod ->
                 val implementationFunction =
                     implementationKClass.functions.find { kFunc ->
                         if (kFunc.name != contractMethod.name) return@find false
-
                         val kFuncAsJava = kFunc.javaMethod ?: return@find false
-
                         kFuncAsJava.name == contractMethod.name &&
-                            kFuncAsJava.parameterTypes.contentEquals(contractMethod.parameterTypes)
+                                kFuncAsJava.parameterTypes.contentEquals(contractMethod.parameterTypes)
                     } ?: return@map AssertionRecord(
                         AssertionStatus.FAILED,
-                        "Method '${contractMethod.name}' not found",
+                        "Method '${contractMethod.name}' not found in implementation",
                         null,
                         null,
                     )

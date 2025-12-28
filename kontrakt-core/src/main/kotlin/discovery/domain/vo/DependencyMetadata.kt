@@ -18,7 +18,7 @@ data class DependencyMetadata private constructor(
             val type: EnvType,
         ) : MockingStrategy
 
-        data object Real : MockingStrategy
+        data class Real(val implementation: KClass<*>) : MockingStrategy
     }
 
     enum class EnvType {

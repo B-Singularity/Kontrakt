@@ -7,6 +7,7 @@ import kotlin.reflect.jvm.isAccessible
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class TestSpecificationTest {
@@ -34,6 +35,7 @@ class TestSpecificationTest {
             assertEquals(modes, spec.modes, "Modes mismatch in scenario #$index")
             assertEquals(target, spec.target)
             assertEquals(dependencies, spec.requiredDependencies)
+            assertNull(spec.seed, "Seed should be null by default")
         }
     }
 
@@ -51,6 +53,21 @@ class TestSpecificationTest {
         assertEquals("At least one test mode is required.", exception.message)
     }
 
+    @Test
+    fun `create should store seed when provided`() {
+        val target = createDummyTarget()
+        val modes = setOf(TestSpecification.TestMode.UserScenario)
+        val dependencies = listOf(createDummyDependency())
+        val expectedSeed = 123456789L
+
+        // Explicitly pass the seed
+        val result = TestSpecification.create(target, modes, dependencies, expectedSeed)
+
+        assertTrue(result.isSuccess)
+        val spec = result.getOrThrow()
+        assertEquals(expectedSeed, spec.seed, "Seed should be stored correctly")
+    }
+
     private fun createDummyTarget(): DiscoveredTestTarget {
         val constructor = DiscoveredTestTarget::class.primaryConstructor!!
         constructor.isAccessible = true
@@ -65,7 +82,9 @@ class TestSpecificationTest {
         val constructor = DependencyMetadata::class.primaryConstructor!!
         constructor.isAccessible = true
 
-        val realStrategy = DependencyMetadata.MockingStrategy.Real
+        // Updated: Real strategy now requires an implementation class.
+        // We use String::class as a dummy implementation.
+        val realStrategy = DependencyMetadata.MockingStrategy.Real(String::class)
 
         return constructor.call(
             "dummyDep",

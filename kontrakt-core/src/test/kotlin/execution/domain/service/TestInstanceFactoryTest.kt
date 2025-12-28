@@ -16,6 +16,7 @@ import org.mockito.Mockito.mock
 import org.mockito.Mockito.verify
 import org.mockito.kotlin.whenever
 import kotlin.reflect.KClass
+import kotlin.test.assertNull
 
 class TestInstanceFactoryTest {
     private lateinit var mockingEngine: MockingEngine
@@ -53,6 +54,22 @@ class TestInstanceFactoryTest {
 
     class CircularB(
         val a: CircularA,
+    )
+
+    class ServiceWithComplexValues(
+        val active: Boolean,
+        val count: Long,
+        val items: List<String>,
+        val config: Map<String, Any>,
+    )
+
+    class ServiceWithNullable(
+        val description: String?,
+    )
+
+    class ServiceWithInfra(
+        val scenarioControl: ScenarioControl,
+        val mockingEngine: MockingEngine,
     )
 
     // =================================================================
@@ -144,6 +161,40 @@ class TestInstanceFactoryTest {
 
         assertEquals("", target.name)
         assertEquals(0, target.age)
+    }
+
+    @Test
+    fun `create injects default values for boolean long and collections`() {
+        val spec = createSpecification(ServiceWithComplexValues::class)
+
+        val context = factory.create(spec)
+        val target = context.getTestTarget() as ServiceWithComplexValues
+
+        assertEquals(false, target.active)
+        assertEquals(0L, target.count)
+        assertTrue(target.items.isEmpty())
+        assertTrue(target.config.isEmpty())
+    }
+
+    @Test
+    fun `create injects null for nullable types`() {
+        val spec = createSpecification(ServiceWithNullable::class)
+
+        val context = factory.create(spec)
+        val target = context.getTestTarget() as ServiceWithNullable
+
+        assertNull(target.description)
+    }
+
+    @Test
+    fun `create injects infrastructure components directly`() {
+        val spec = createSpecification(ServiceWithInfra::class)
+
+        val context = factory.create(spec)
+        val target = context.getTestTarget() as ServiceWithInfra
+
+        assertEquals(scenarioControl, target.scenarioControl)
+        assertEquals(mockingEngine, target.mockingEngine)
     }
 
     // =================================================================
