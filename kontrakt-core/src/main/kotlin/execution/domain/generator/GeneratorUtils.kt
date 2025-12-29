@@ -17,7 +17,7 @@ object GeneratorUtils {
         val targetMin = min.coerceAtLeast(0)
         val targetMax = max.coerceAtLeast(targetMin)
         val length = if (targetMin == targetMax) targetMin else random.nextInt(targetMin, targetMax + 1)
-        return (1..length).map { ALPHANUMERIC_POOL.random() }.joinToString("")
+        return (1..length).map { ALPHANUMERIC_POOL.random(random) }.joinToString("")
     }
 
     fun generateRandomNumericString(
@@ -32,7 +32,7 @@ object GeneratorUtils {
         val chars = range.toList()
         val length = random.nextInt(5, 11)
         return (1..length)
-            .map { chars.random() }
+            .map { chars.random(random) }
             .joinToString("")
     }
 }

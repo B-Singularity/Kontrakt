@@ -73,7 +73,7 @@ class TestInstanceFactory(
                             type.starProjectedType,
                             name = type.simpleName ?: "dependency"
                         )
-                        fixtureGenerator.generate(request)!!
+                        fixtureGenerator.generate(request, generationContext)!!
                     }.getOrNull()?.let { return it }
                 }
 
@@ -120,7 +120,7 @@ class TestInstanceFactory(
                         val paramType = param.type.classifier as KClass<*>
 
                         if (isBasicValueType(paramType)) {
-                            fixtureGenerator.generate(GenerationRequest.from(param))
+                            fixtureGenerator.generate(param, generationContext)
                                 ?: resolve(paramType, context, generationContext, fixtureGenerator)
                         } else {
                             resolve(paramType, context, generationContext, fixtureGenerator)

@@ -7,6 +7,7 @@ import exception.ContractViolationException
 import execution.api.TestScenarioExecutor
 import execution.domain.AssertionStatus
 import execution.domain.entity.EphemeralTestContext
+import execution.domain.generator.GenerationContext
 import execution.domain.vo.AssertionRecord
 import execution.spi.MockingEngine
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -14,6 +15,7 @@ import java.lang.reflect.Method
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneId
+import kotlin.random.Random
 import kotlin.reflect.KFunction
 import kotlin.reflect.KParameter
 import kotlin.reflect.full.findAnnotation
@@ -37,18 +39,30 @@ class DefaultScenarioExecutor(
         val fixtureGenerator = fixtureFactory(context.mockingEngine, fixedClock)
         val contractValidator = validatorFactory(fixedClock)
 
+        val seed = context.specification.seed ?: System.currentTimeMillis()
+        val generationContext = GenerationContext(
+            seededRandom = Random(seed),
+            clock = fixedClock
+        )
+
         val records = mutableListOf<AssertionRecord>()
 
         if (context.specification.modes.contains(TestSpecification.TestMode.UserScenario)) {
             records.addAll(
-                executeUserTestMethods(context, fixtureGenerator)
+                executeUserTestMethods(context, fixtureGenerator, generationContext)
             )
         }
 
         val contractModes = context.specification.modes.filterIsInstance<TestSpecification.TestMode.ContractAuto>()
         contractModes.forEach { mode ->
             records.addAll(
-                executeContractFuzzing(context, mode.contractInterface.java, fixtureGenerator, contractValidator)
+                executeContractFuzzing(
+                    context,
+                    mode.contractInterface.java,
+                    fixtureGenerator,
+                    contractValidator,
+                    generationContext
+                )
             )
         }
 
@@ -57,7 +71,8 @@ class DefaultScenarioExecutor(
 
     private fun executeUserTestMethods(
         context: EphemeralTestContext,
-        fixtureGenerator: FixtureGenerator
+        fixtureGenerator: FixtureGenerator,
+        generationContext: GenerationContext
     ): List<AssertionRecord> {
         val testInstance = context.getTestTarget()
         val kClass = testInstance::class
@@ -71,7 +86,7 @@ class DefaultScenarioExecutor(
 
         return testFunctions.map { kFunc ->
             try {
-                val args = createArguments(kFunc, context, fixtureGenerator)
+                val args = createArguments(kFunc, context, fixtureGenerator, generationContext)
 
                 kFunc.callBy(args)
 
@@ -107,7 +122,8 @@ class DefaultScenarioExecutor(
         context: EphemeralTestContext,
         contractClass: Class<*>,
         fixtureGenerator: FixtureGenerator,
-        contractValidator: ContractValidator
+        contractValidator: ContractValidator,
+        generationContext: GenerationContext
     ): List<AssertionRecord> {
         val testTargetInstance = context.getTestTarget()
         val implementationKClass = testTargetInstance::class
@@ -144,6 +160,7 @@ class DefaultScenarioExecutor(
                     context,
                     fixtureGenerator,
                     contractValidator,
+                    generationContext
                 )
             }
     }
@@ -155,9 +172,10 @@ class DefaultScenarioExecutor(
         context: EphemeralTestContext,
         fixtureGenerator: FixtureGenerator,
         contractValidator: ContractValidator,
+        generationContext: GenerationContext
     ): AssertionRecord =
         try {
-            val args = createArguments(implFunc, context, fixtureGenerator)
+            val args = createArguments(implFunc, context, fixtureGenerator, generationContext)
 
             val result = implFunc.callBy(args)
 
@@ -195,6 +213,7 @@ class DefaultScenarioExecutor(
         function: KFunction<*>,
         context: EphemeralTestContext,
         fixtureGenerator: FixtureGenerator,
+        generationContext: GenerationContext
     ): Map<KParameter, Any?> {
         val arguments = mutableMapOf<KParameter, Any?>()
 
@@ -205,7 +224,7 @@ class DefaultScenarioExecutor(
             }
 
             if (param.isOptional) return@forEach
-            arguments[param] = fixtureGenerator.generate(param)
+            arguments[param] = fixtureGenerator.generate(param, generationContext)
         }
         return arguments
     }
