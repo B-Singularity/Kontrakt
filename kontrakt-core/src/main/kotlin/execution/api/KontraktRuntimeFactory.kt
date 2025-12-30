@@ -1,8 +1,7 @@
-package execution.adapter.junit
+package execution.api
 
 import discovery.domain.aggregate.TestSpecification
 import execution.adapter.MockitoEngineAdapter
-import execution.api.TestScenarioExecutor
 import execution.domain.aggregate.TestExecution
 import execution.domain.service.DefaultScenarioExecutor
 import execution.domain.service.TestInstanceFactory

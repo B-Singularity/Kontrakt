@@ -5,6 +5,8 @@ import discovery.api.Contract
 import discovery.domain.service.TestDiscovererImpl
 import discovery.domain.vo.ScanScope
 import exception.KontraktInternalException
+import execution.api.DefaultRuntimeFactory
+import execution.api.KontraktRuntimeFactory
 import execution.domain.TestStatus
 import execution.domain.vo.TestResult
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -107,9 +109,9 @@ class KontraktTestEngine(
                 val error =
                     AssertionError(
                         "❌ ASSERTION FAILED: ${descriptor.displayName}\n" +
-                            "   Expected: ${status.expected}\n" +
-                            "   Actual:   ${status.actual}\n" +
-                            "   Message:  ${status.message}",
+                                "   Expected: ${status.expected}\n" +
+                                "   Actual:   ${status.actual}\n" +
+                                "   Message:  ${status.message}",
                     )
                 logger.error { error.message }
                 listener.executionFinished(descriptor, TestExecutionResult.failed(error))
