@@ -223,7 +223,7 @@ class TestInstanceFactoryTest {
         val spec2 = createSpecification(ServiceWithValue::class, seed = 99999L)
         val context2 = factory.create(spec2)
         val target2 = context2.getTestTarget() as ServiceWithValue
-        
+
         assertNotEquals(target1.name, target2.name)
     }
 
@@ -314,7 +314,7 @@ class TestInstanceFactoryTest {
         type: KClass<*>,
         dependencies: List<DependencyMetadata> = emptyList(),
         modes: Set<TestSpecification.TestMode> = setOf(TestSpecification.TestMode.UserScenario),
-        seed: Long? = null
+        seed: Long? = null,
     ): TestSpecification {
         val target =
             DiscoveredTestTarget
@@ -329,7 +329,7 @@ class TestInstanceFactoryTest {
                 target = target,
                 modes = modes,
                 requiredDependencies = dependencies,
-                seed = seed
+                seed = seed,
             ).getOrThrow()
     }
 }

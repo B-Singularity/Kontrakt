@@ -46,8 +46,12 @@ abstract class TestDiscovererTest {
 
     // [New] Interface Resolution Test Classes
     interface Repo
+
     class RepoImpl : Repo
-    class ServiceWithInterfaceDep(val repo: Repo) : TargetContract
+
+    class ServiceWithInterfaceDep(
+        val repo: Repo,
+    ) : TargetContract
 
     // ---------------------------------
 
@@ -131,11 +135,12 @@ abstract class TestDiscovererTest {
         runTest {
             setupScanResult(
                 interfaces = listOf(TargetContract::class),
-                implementations = mapOf(
-                    TargetContract::class to listOf(ServiceWithInterfaceDep::class),
-                    // [Crucial] mapping the dependency interface to its implementation
-                    Repo::class to listOf(RepoImpl::class)
-                )
+                implementations =
+                    mapOf(
+                        TargetContract::class to listOf(ServiceWithInterfaceDep::class),
+                        // [Crucial] mapping the dependency interface to its implementation
+                        Repo::class to listOf(RepoImpl::class),
+                    ),
             )
 
             val result = discoverer.discover(ScanScope.All, Contract::class).getOrThrow()
@@ -148,7 +153,7 @@ abstract class TestDiscovererTest {
             assertEquals(
                 RepoImpl::class,
                 strategy.implementation,
-                "Should resolve interface dependency to its implementation class"
+                "Should resolve interface dependency to its implementation class",
             )
         }
 
@@ -158,10 +163,11 @@ abstract class TestDiscovererTest {
             // Given: A service depending on 'Repo', but 'RepoImpl' is NOT in classpath
             setupScanResult(
                 interfaces = listOf(TargetContract::class),
-                implementations = mapOf(
-                    TargetContract::class to listOf(ServiceWithInterfaceDep::class)
-                    // No entry for Repo::class
-                )
+                implementations =
+                    mapOf(
+                        TargetContract::class to listOf(ServiceWithInterfaceDep::class),
+                        // No entry for Repo::class
+                    ),
             )
 
             val result = discoverer.discover(ScanScope.All, Contract::class).getOrThrow()
@@ -172,7 +178,7 @@ abstract class TestDiscovererTest {
             // Should fallback to StatelessMock
             assertIs<DependencyMetadata.MockingStrategy.StatelessMock>(
                 repoDep.strategy,
-                "Should fallback to Mock when implementation is missing"
+                "Should fallback to Mock when implementation is missing",
             )
         }
 }

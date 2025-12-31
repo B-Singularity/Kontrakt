@@ -26,10 +26,11 @@ class TestInstanceFactory(
 
             val fixtureGenerator = FixtureGenerator(mockingEngine, clock, seed)
 
-            val generationContext = GenerationContext(
-                seededRandom = Random(seed),
-                clock = clock
-            )
+            val generationContext =
+                GenerationContext(
+                    seededRandom = Random(seed),
+                    clock = clock,
+                )
 
             val targetInstance = resolve(spec.target.kClass, context, generationContext, fixtureGenerator)
             context.registerTarget(targetInstance)
@@ -53,26 +54,31 @@ class TestInstanceFactory(
 
         if (type in generationContext.history) {
             throw KontraktConfigurationException(
-                "Circular dependency detected: ${generationContext.history.joinToString(" -> ") { it.simpleName.toString() }} -> ${type.simpleName}",
+                "Circular dependency detected: ${generationContext.history.joinToString(
+                    " -> ",
+                ) { it.simpleName.toString() }} -> ${type.simpleName}",
             )
         }
 
-        val nextGenerationContext = generationContext.copy(
-            history = generationContext.history + type
-        )
+        val nextGenerationContext =
+            generationContext.copy(
+                history = generationContext.history + type,
+            )
 
         try {
-            val explicitStrategy = context.specification.requiredDependencies
-                .find { it.type == type }
-                ?.strategy
+            val explicitStrategy =
+                context.specification.requiredDependencies
+                    .find { it.type == type }
+                    ?.strategy
 
             if (explicitStrategy == null) {
                 if (isBasicValueType(type)) {
                     runCatching {
-                        val request = GenerationRequest.from(
-                            type.starProjectedType,
-                            name = type.simpleName ?: "dependency"
-                        )
+                        val request =
+                            GenerationRequest.from(
+                                type.starProjectedType,
+                                name = type.simpleName ?: "dependency",
+                            )
                         fixtureGenerator.generate(request, generationContext)!!
                     }.getOrNull()?.let { return it }
                 }
@@ -81,23 +87,22 @@ class TestInstanceFactory(
                     .also { context.registerDependency(type, it) }
             }
 
-
-            val instance = when (explicitStrategy) {
-                is DependencyMetadata.MockingStrategy.StatefulFake -> mockingEngine.createFake(type)
-                is DependencyMetadata.MockingStrategy.StatelessMock -> mockingEngine.createMock(type)
-                is DependencyMetadata.MockingStrategy.Environment -> mockingEngine.createMock(type)
-                is DependencyMetadata.MockingStrategy.Real -> {
-                    createByConstructor(
-                        explicitStrategy.implementation,
-                        context,
-                        nextGenerationContext,
-                        fixtureGenerator
-                    )
-                }
-            }.also { context.registerDependency(type, it) }
+            val instance =
+                when (explicitStrategy) {
+                    is DependencyMetadata.MockingStrategy.StatefulFake -> mockingEngine.createFake(type)
+                    is DependencyMetadata.MockingStrategy.StatelessMock -> mockingEngine.createMock(type)
+                    is DependencyMetadata.MockingStrategy.Environment -> mockingEngine.createMock(type)
+                    is DependencyMetadata.MockingStrategy.Real -> {
+                        createByConstructor(
+                            explicitStrategy.implementation,
+                            context,
+                            nextGenerationContext,
+                            fixtureGenerator,
+                        )
+                    }
+                }.also { context.registerDependency(type, it) }
 
             return instance
-
         } catch (e: Throwable) {
             throw e
         }
@@ -139,11 +144,11 @@ class TestInstanceFactory(
 
     private fun isBasicValueType(type: KClass<*>): Boolean =
         type == String::class ||
-                type == Int::class ||
-                type == Long::class ||
-                type == Double::class ||
-                type == Boolean::class ||
-                type == List::class ||
-                type == Map::class ||
-                type == Set::class
+            type == Int::class ||
+            type == Long::class ||
+            type == Double::class ||
+            type == Boolean::class ||
+            type == List::class ||
+            type == Map::class ||
+            type == Set::class
 }

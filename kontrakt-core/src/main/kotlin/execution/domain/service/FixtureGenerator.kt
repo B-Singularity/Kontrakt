@@ -127,7 +127,10 @@ class FixtureGenerator(
      * @param context The existing generation context to use.
      * @return The generated value.
      */
-    fun generate(request: GenerationRequest, context: GenerationContext): Any? {
+    fun generate(
+        request: GenerationRequest,
+        context: GenerationContext,
+    ): Any? {
         ContractConfigurationValidator.validate(request)
         // Use the provided context as the receiver ('this')
         return with(context) {
@@ -147,8 +150,10 @@ class FixtureGenerator(
      * Convenience wrapper for [generate(GenerationRequest, GenerationContext)].
      * Converts a [KParameter] into a [GenerationRequest] automatically while preserving context.
      */
-    fun generate(param: KParameter, context: GenerationContext): Any? =
-        generate(GenerationRequest.from(param), context)
+    fun generate(
+        param: KParameter,
+        context: GenerationContext,
+    ): Any? = generate(GenerationRequest.from(param), context)
 
     // =================================================================
     // Boundary & Negative Testing
@@ -210,8 +215,9 @@ class FixtureGenerator(
      * @return The generated value.
      */
     private fun GenerationContext.generateInternal(request: GenerationRequest): Any? {
-        val generator = findGenerator(request)
-            ?: throw GenerationFailedException(request.type, "No suitable generator found for type: ${request.type}")
+        val generator =
+            findGenerator(request)
+                ?: throw GenerationFailedException(request.type, "No suitable generator found for type: ${request.type}")
 
         return try {
             when (generator) {
@@ -255,14 +261,16 @@ class FixtureGenerator(
         // 3. Delegate to strategies
         val generator = findGenerator(request)
         if (generator != null) {
-            val generated = when (generator) {
-                is RecursiveGenerator -> generator.generateValidBoundaries(request, this) { req, ctx ->
-                    with(ctx) { generateInternal(req) }
-                }
+            val generated =
+                when (generator) {
+                    is RecursiveGenerator ->
+                        generator.generateValidBoundaries(request, this) { req, ctx ->
+                            with(ctx) { generateInternal(req) }
+                        }
 
-                is TerminalGenerator -> generator.generateValidBoundaries(request, this)
-                else -> emptyList()
-            }
+                    is TerminalGenerator -> generator.generateValidBoundaries(request, this)
+                    else -> emptyList()
+                }
             boundaries.addAll(generated)
         }
 
@@ -288,14 +296,16 @@ class FixtureGenerator(
         // 2. Delegate to strategies
         val generator = findGenerator(request)
         if (generator != null) {
-            val generated = when (generator) {
-                is RecursiveGenerator -> generator.generateInvalid(request, this) { req, ctx ->
-                    with(ctx) { generateInternal(req) }
-                }
+            val generated =
+                when (generator) {
+                    is RecursiveGenerator ->
+                        generator.generateInvalid(request, this) { req, ctx ->
+                            with(ctx) { generateInternal(req) }
+                        }
 
-                is TerminalGenerator -> generator.generateInvalid(request, this)
-                else -> emptyList()
-            }
+                    is TerminalGenerator -> generator.generateInvalid(request, this)
+                    else -> emptyList()
+                }
             invalids.addAll(generated)
         }
         return invalids
@@ -320,28 +330,31 @@ class FixtureGenerator(
         return try {
             mockingEngine.createMock(kClass)
         } catch (mockEx: Exception) {
-            val combinedEx = GenerationFailedException(
-                request.type,
-                "Failed to handle recursion via Mocking. (Recursion: ${recursionEx.message})",
-                mockEx
-            )
+            val combinedEx =
+                GenerationFailedException(
+                    request.type,
+                    "Failed to handle recursion via Mocking. (Recursion: ${recursionEx.message})",
+                    mockEx,
+                )
             combinedEx.addSuppressed(recursionEx)
             throw combinedEx
         }
     }
 
-    private fun findGenerator(request: GenerationRequest): TypeGenerator? =
-        generators.firstOrNull { it.supports(request) }
+    private fun findGenerator(request: GenerationRequest): TypeGenerator? = generators.firstOrNull { it.supports(request) }
 
     /**
      * Performs final integrity checks on the generated result.
      * Currently enforces non-nullability constraints.
      */
-    private fun validateResult(result: Any?, request: GenerationRequest) {
+    private fun validateResult(
+        result: Any?,
+        request: GenerationRequest,
+    ) {
         if (result == null && !request.type.isMarkedNullable && !request.has<Null>()) {
             throw GenerationFailedException(
                 request.type,
-                "Generator returned null for non-nullable type '${request.type}'. Check the logic of the generator handling this type."
+                "Generator returned null for non-nullable type '${request.type}'. Check the logic of the generator handling this type.",
             )
         }
     }

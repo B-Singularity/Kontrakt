@@ -48,15 +48,11 @@ class TestDiscovererImplTest : TestDiscovererTest() {
         override suspend fun findAnnotatedClasses(
             scope: ScanScope,
             annotation: KClass<out Annotation>,
-        ): List<KClass<*>> {
-            return classes
-        }
+        ): List<KClass<*>> = classes
 
         override suspend fun findAllImplementations(
             scope: ScanScope,
             targetInterface: KClass<*>,
-        ): List<KClass<*>> {
-            return implementations[targetInterface] ?: emptyList()
-        }
+        ): List<KClass<*>> = implementations[targetInterface] ?: emptyList()
     }
 }

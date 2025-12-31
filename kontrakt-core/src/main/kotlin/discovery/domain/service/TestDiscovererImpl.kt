@@ -97,7 +97,7 @@ class TestDiscovererImpl(
                 ?: return Result.failure(
                     KontraktConfigurationException(
                         "Target class '${target.displayName}' must have a primary constructor for dependency injection.\n" +
-                                "Tip: Interfaces, Objects, or Abstract classes cannot be tested directly as a Target.",
+                            "Tip: Interfaces, Objects, or Abstract classes cannot be tested directly as a Target.",
                     ),
                 )
 
@@ -108,7 +108,7 @@ class TestDiscovererImpl(
                         ?: return Result.failure(
                             KontraktConfigurationException(
                                 "Cannot determine type for parameter '${param.name}' " +
-                                        "in '${target.displayName}'.",
+                                    "in '${target.displayName}'.",
                             ),
                         )
 
@@ -124,7 +124,7 @@ class TestDiscovererImpl(
 
     private suspend fun determineMockingStrategy(
         type: KClass<*>,
-        scope: ScanScope
+        scope: ScanScope,
     ): MockingStrategy {
         if (type.qualifiedName == "java.time.Clock") {
             return MockingStrategy.Environment(DependencyMetadata.EnvType.TIME)

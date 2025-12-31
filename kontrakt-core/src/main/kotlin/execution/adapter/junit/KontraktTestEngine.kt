@@ -109,9 +109,9 @@ class KontraktTestEngine(
                 val error =
                     AssertionError(
                         "❌ ASSERTION FAILED: ${descriptor.displayName}\n" +
-                                "   Expected: ${status.expected}\n" +
-                                "   Actual:   ${status.actual}\n" +
-                                "   Message:  ${status.message}",
+                            "   Expected: ${status.expected}\n" +
+                            "   Actual:   ${status.actual}\n" +
+                            "   Message:  ${status.message}",
                     )
                 logger.error { error.message }
                 listener.executionFinished(descriptor, TestExecutionResult.failed(error))

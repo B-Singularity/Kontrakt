@@ -28,9 +28,10 @@ class DefaultScenarioExecutorTest : TestScenarioExecutorTest() {
     @Test
     fun `should delegate validation to the injected ContractValidator`() {
         val mockValidator = mock<ContractValidator>()
-        val sut = DefaultScenarioExecutor(
-            validatorFactory = { _ -> mockValidator }
-        )
+        val sut =
+            DefaultScenarioExecutor(
+                validatorFactory = { _ -> mockValidator },
+            )
         val context = setupContext(TestImplementation::class, TestImplementation())
 
         sut.executeScenarios(context)
@@ -52,9 +53,10 @@ class DefaultScenarioExecutorTest : TestScenarioExecutorTest() {
             }
         }.whenever(mockGenerator).generate(any<KParameter>(), any())
 
-        val sut = DefaultScenarioExecutor(
-            fixtureFactory = { _, _ -> mockGenerator }
-        )
+        val sut =
+            DefaultScenarioExecutor(
+                fixtureFactory = { _, _ -> mockGenerator },
+            )
         val context = setupContext(TestImplementation::class, TestImplementation())
 
         val results = sut.executeScenarios(context)
@@ -85,9 +87,10 @@ class DefaultScenarioExecutorTest : TestScenarioExecutorTest() {
             .whenever(mockValidator)
             .validate(any(), any())
 
-        val sut = DefaultScenarioExecutor(
-            validatorFactory = { _ -> mockValidator }
-        )
+        val sut =
+            DefaultScenarioExecutor(
+                validatorFactory = { _ -> mockValidator },
+            )
         val context = setupContext(TestImplementation::class, TestImplementation())
 
         val results = sut.executeScenarios(context)

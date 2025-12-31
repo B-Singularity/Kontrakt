@@ -22,14 +22,23 @@ interface TestContract {
 
     fun errorMethod()
 
-    fun complexParams(a: Int, b: String): String
+    fun complexParams(
+        a: Int,
+        b: String,
+    ): String
 }
 
 open class TestImplementation : TestContract {
     override fun validMethod(input: String): String = "Echo: $input"
+
     override fun violationMethod(): Int = -1
+
     override fun errorMethod(): Unit = throw IllegalStateException("Boom!")
-    override fun complexParams(a: Int, b: String): String = "$a-$b"
+
+    override fun complexParams(
+        a: Int,
+        b: String,
+    ): String = "$a-$b"
 }
 
 interface GhostContract {
@@ -112,11 +121,12 @@ abstract class TestScenarioExecutorTest {
         val mockEngine = mock<MockingEngine>()
 
         // Configure ContractAuto mode (Required for the loop to run)
-        val modes = if (implInstance is TestContract) {
-            setOf(TestSpecification.TestMode.ContractAuto(TestContract::class))
-        } else {
-            emptySet()
-        }
+        val modes =
+            if (implInstance is TestContract) {
+                setOf(TestSpecification.TestMode.ContractAuto(TestContract::class))
+            } else {
+                emptySet()
+            }
         whenever(mockSpec.modes).thenReturn(modes)
         whenever(mockSpec.seed).thenReturn(12345L)
 

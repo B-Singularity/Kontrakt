@@ -40,16 +40,17 @@ class DefaultScenarioExecutor(
         val contractValidator = validatorFactory(fixedClock)
 
         val seed = context.specification.seed ?: System.currentTimeMillis()
-        val generationContext = GenerationContext(
-            seededRandom = Random(seed),
-            clock = fixedClock
-        )
+        val generationContext =
+            GenerationContext(
+                seededRandom = Random(seed),
+                clock = fixedClock,
+            )
 
         val records = mutableListOf<AssertionRecord>()
 
         if (context.specification.modes.contains(TestSpecification.TestMode.UserScenario)) {
             records.addAll(
-                executeUserTestMethods(context, fixtureGenerator, generationContext)
+                executeUserTestMethods(context, fixtureGenerator, generationContext),
             )
         }
 
@@ -61,8 +62,8 @@ class DefaultScenarioExecutor(
                     mode.contractInterface.java,
                     fixtureGenerator,
                     contractValidator,
-                    generationContext
-                )
+                    generationContext,
+                ),
             )
         }
 
@@ -72,7 +73,7 @@ class DefaultScenarioExecutor(
     private fun executeUserTestMethods(
         context: EphemeralTestContext,
         fixtureGenerator: FixtureGenerator,
-        generationContext: GenerationContext
+        generationContext: GenerationContext,
     ): List<AssertionRecord> {
         val testInstance = context.getTestTarget()
         val kClass = testInstance::class
@@ -94,7 +95,7 @@ class DefaultScenarioExecutor(
                     status = AssertionStatus.PASSED,
                     message = "Test '${kFunc.name}' passed",
                     expected = "Success",
-                    actual = "Success"
+                    actual = "Success",
                 )
             } catch (e: Throwable) {
                 val cause = e.unwrapped
@@ -103,7 +104,7 @@ class DefaultScenarioExecutor(
                         status = AssertionStatus.FAILED,
                         message = "Test '${kFunc.name}' failed: ${cause.message}",
                         expected = "Assertion Pass",
-                        actual = "Assertion Fail"
+                        actual = "Assertion Fail",
                     )
                 } else {
                     logger.error(cause) { "Test '${kFunc.name}' threw unexpected exception" }
@@ -111,7 +112,7 @@ class DefaultScenarioExecutor(
                         status = AssertionStatus.FAILED,
                         message = "Test '${kFunc.name}' error: ${cause.message}",
                         expected = "Success",
-                        actual = cause.javaClass.simpleName
+                        actual = cause.javaClass.simpleName,
                     )
                 }
             }
@@ -123,7 +124,7 @@ class DefaultScenarioExecutor(
         contractClass: Class<*>,
         fixtureGenerator: FixtureGenerator,
         contractValidator: ContractValidator,
-        generationContext: GenerationContext
+        generationContext: GenerationContext,
     ): List<AssertionRecord> {
         val testTargetInstance = context.getTestTarget()
         val implementationKClass = testTargetInstance::class
@@ -136,7 +137,7 @@ class DefaultScenarioExecutor(
                         if (kFunc.name != contractMethod.name) return@find false
                         val kFuncAsJava = kFunc.javaMethod ?: return@find false
                         kFuncAsJava.name == contractMethod.name &&
-                                kFuncAsJava.parameterTypes.contentEquals(contractMethod.parameterTypes)
+                            kFuncAsJava.parameterTypes.contentEquals(contractMethod.parameterTypes)
                     } ?: return@map AssertionRecord(
                         AssertionStatus.FAILED,
                         "Method '${contractMethod.name}' not found in implementation",
@@ -160,7 +161,7 @@ class DefaultScenarioExecutor(
                     context,
                     fixtureGenerator,
                     contractValidator,
-                    generationContext
+                    generationContext,
                 )
             }
     }
@@ -172,7 +173,7 @@ class DefaultScenarioExecutor(
         context: EphemeralTestContext,
         fixtureGenerator: FixtureGenerator,
         contractValidator: ContractValidator,
-        generationContext: GenerationContext
+        generationContext: GenerationContext,
     ): AssertionRecord =
         try {
             val args = createArguments(implFunc, context, fixtureGenerator, generationContext)
@@ -213,7 +214,7 @@ class DefaultScenarioExecutor(
         function: KFunction<*>,
         context: EphemeralTestContext,
         fixtureGenerator: FixtureGenerator,
-        generationContext: GenerationContext
+        generationContext: GenerationContext,
     ): Map<KParameter, Any?> {
         val arguments = mutableMapOf<KParameter, Any?>()
 
