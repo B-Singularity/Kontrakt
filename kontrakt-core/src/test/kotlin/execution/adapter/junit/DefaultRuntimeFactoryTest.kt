@@ -1,6 +1,7 @@
 package execution.adapter.junit
 
 import discovery.domain.aggregate.TestSpecification
+import execution.api.DefaultRuntimeFactory
 import execution.api.TestScenarioExecutor
 import execution.domain.aggregate.TestExecution
 import execution.domain.service.DefaultScenarioExecutor

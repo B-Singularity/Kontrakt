@@ -20,6 +20,7 @@ abstract class TestDiscovererTest {
         implementations: Map<KClass<*>, List<KClass<*>>> = emptyMap(),
     )
 
+    // --- Dummy Classes for Testing ---
     @Contract
     interface TargetContract
 
@@ -42,6 +43,17 @@ abstract class TestDiscovererTest {
         val clock: Clock,
         val helper: String,
     ) : TargetContract
+
+    // [New] Interface Resolution Test Classes
+    interface Repo
+
+    class RepoImpl : Repo
+
+    class ServiceWithInterfaceDep(
+        val repo: Repo,
+    ) : TargetContract
+
+    // ---------------------------------
 
     @Test
     fun `Implicit Mode - should create ContractAuto spec`() =
@@ -113,6 +125,60 @@ abstract class TestDiscovererTest {
             assertIs<DependencyMetadata.MockingStrategy.Environment>(clockDep.strategy)
 
             val helperDep = deps.find { it.type == String::class }!!
-            assertIs<DependencyMetadata.MockingStrategy.Real>(helperDep.strategy)
+            val realStrategy = assertIs<DependencyMetadata.MockingStrategy.Real>(helperDep.strategy)
+            // [Updated] Verify that Real strategy points to String class itself
+            assertEquals(String::class, realStrategy.implementation)
+        }
+
+    @Test
+    fun `Strategy Resolution - should find implementation for interface dependency`() =
+        runTest {
+            setupScanResult(
+                interfaces = listOf(TargetContract::class),
+                implementations =
+                    mapOf(
+                        TargetContract::class to listOf(ServiceWithInterfaceDep::class),
+                        // [Crucial] mapping the dependency interface to its implementation
+                        Repo::class to listOf(RepoImpl::class),
+                    ),
+            )
+
+            val result = discoverer.discover(ScanScope.All, Contract::class).getOrThrow()
+
+            val spec = result.first()
+            val repoDep = spec.requiredDependencies.single { it.type == Repo::class }
+            val strategy = assertIs<DependencyMetadata.MockingStrategy.Real>(repoDep.strategy)
+
+            // The Strategy should point to RepoImpl, not the Repo interface
+            assertEquals(
+                RepoImpl::class,
+                strategy.implementation,
+                "Should resolve interface dependency to its implementation class",
+            )
+        }
+
+    @Test
+    fun `Strategy Resolution - should fallback to Mock if implementation not found`() =
+        runTest {
+            // Given: A service depending on 'Repo', but 'RepoImpl' is NOT in classpath
+            setupScanResult(
+                interfaces = listOf(TargetContract::class),
+                implementations =
+                    mapOf(
+                        TargetContract::class to listOf(ServiceWithInterfaceDep::class),
+                        // No entry for Repo::class
+                    ),
+            )
+
+            val result = discoverer.discover(ScanScope.All, Contract::class).getOrThrow()
+
+            val spec = result.first()
+            val repoDep = spec.requiredDependencies.single { it.type == Repo::class }
+
+            // Should fallback to StatelessMock
+            assertIs<DependencyMetadata.MockingStrategy.StatelessMock>(
+                repoDep.strategy,
+                "Should fallback to Mock when implementation is missing",
+            )
         }
 }

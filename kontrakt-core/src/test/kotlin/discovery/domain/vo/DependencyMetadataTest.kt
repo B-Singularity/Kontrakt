@@ -10,7 +10,8 @@ class DependencyMetadataTest {
     fun `create should fail when name is blank`() {
         val invalidNames = listOf("", "   ", "\t\n")
         val type = String::class
-        val strategy = DependencyMetadata.MockingStrategy.Real
+        // Updated: Real strategy requires an implementation class argument.
+        val strategy = DependencyMetadata.MockingStrategy.Real(String::class)
 
         invalidNames.forEach { invalidName ->
             val result = DependencyMetadata.create(invalidName, type, strategy)
@@ -26,7 +27,8 @@ class DependencyMetadataTest {
     fun `create should succeed when name is valid`() {
         val validName = "userRepository"
         val type = String::class
-        val strategy = DependencyMetadata.MockingStrategy.Real
+        // Updated: Pass the implementation class (using String::class for dummy test)
+        val strategy = DependencyMetadata.MockingStrategy.Real(String::class)
 
         val result = DependencyMetadata.create(validName, type, strategy)
 
@@ -41,7 +43,8 @@ class DependencyMetadataTest {
     fun `create should correctly store all types of mocking strategies`() {
         val strategies =
             listOf(
-                DependencyMetadata.MockingStrategy.Real,
+                // Updated: Instantiating Real strategy with a dummy implementation class
+                DependencyMetadata.MockingStrategy.Real(Any::class),
                 DependencyMetadata.MockingStrategy.StatelessMock,
                 DependencyMetadata.MockingStrategy.StatefulFake,
                 DependencyMetadata.MockingStrategy.Environment(DependencyMetadata.EnvType.TIME),

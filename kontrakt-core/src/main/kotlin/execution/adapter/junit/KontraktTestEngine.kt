@@ -5,6 +5,8 @@ import discovery.api.Contract
 import discovery.domain.service.TestDiscovererImpl
 import discovery.domain.vo.ScanScope
 import exception.KontraktInternalException
+import execution.api.DefaultRuntimeFactory
+import execution.api.KontraktRuntimeFactory
 import execution.domain.TestStatus
 import execution.domain.vo.TestResult
 import io.github.oshai.kotlinlogging.KotlinLogging

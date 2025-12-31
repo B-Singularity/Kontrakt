@@ -10,6 +10,7 @@ data class TestSpecification private constructor(
     val target: DiscoveredTestTarget,
     val modes: Set<TestMode>,
     val requiredDependencies: List<DependencyMetadata>,
+    val seed: Long? = null,
 ) {
     sealed interface TestMode {
         data class ContractAuto(
@@ -24,11 +25,12 @@ data class TestSpecification private constructor(
             target: DiscoveredTestTarget,
             modes: Set<TestMode>,
             requiredDependencies: List<DependencyMetadata>,
+            seed: Long? = null,
         ): Result<TestSpecification> {
             if (modes.isEmpty()) {
                 return Result.failure(IllegalArgumentException("At least one test mode is required."))
             }
-            return Result.success(TestSpecification(target, modes, requiredDependencies))
+            return Result.success(TestSpecification(target, modes, requiredDependencies, seed))
         }
     }
 }

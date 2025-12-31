@@ -2,6 +2,7 @@ package execution.adapter.junit
 
 import discovery.domain.aggregate.TestSpecification
 import discovery.domain.vo.DiscoveredTestTarget
+import execution.api.KontraktRuntimeFactory
 import execution.api.TestScenarioExecutor
 import execution.domain.TestStatus
 import execution.domain.aggregate.TestExecution
