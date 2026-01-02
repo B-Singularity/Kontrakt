@@ -145,8 +145,10 @@ the test suite.
 ## 7. Implementation Guidance
 
 * **Core Classes:** `TraceRecorderPool`, `RecyclingJournalRecorder`.
-* **I/O Mechanism:** Use `java.io.RandomAccessFile` with mode `"rwd"` (Read/Write + Synchronous Update to Disk) to
-  ensure data is flushed without explicit `force()` calls.
+* **Data Format**: We use NDJSON (Newline Delimited JSON) format. Since each line is a valid JSON object, the log
+  remains parseable even if the process crashes mid-write (fixing the "Broken JSON Array" issue).
+  Serialization: To minimize external dependencies and maximize throughput, we use Manual String Templates instead of
+  heavy reflection-based libraries (Jackson/Gson).
 * **Artifact Location:**
     * Active Worker Logs: `build/reports/kontrakt/logs/workers/`
     * Archived Failures: `build/reports/kontrakt/logs/failures/`
