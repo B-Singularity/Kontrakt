@@ -6,7 +6,7 @@ data class DesignDecision(
     val subject: String,
     val strategy: String,
     val generatedValue: String,
-    override val timestamp: Long // 필수 입력
+    override val timestamp: Long
 ) : TraceEvent {
     override val phase = TracePhase.DESIGN
     override fun toNdjson(): String =
