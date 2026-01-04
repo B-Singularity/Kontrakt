@@ -13,10 +13,10 @@ data class ExecutionTrace(
     override fun toNdjson(): String {
         val sb = StringBuilder()
 
-        sb.append("""{"ts":""").append(timestamp)
-            .append(""","ph":"$phase"""")
-            .append(""","sig":"""").append(methodSignature.escapeJson()).append("\"")
-            .append(""","args":[""")
+        sb.append("""{"timestamp":""").append(timestamp)
+            .append(""","phase":"$phase"""")
+            .append(""","methodSignature":"""").append(methodSignature.escapeJson()).append("\"")
+            .append(""","arguments":[""")
 
         val iterator = arguments.iterator()
         while (iterator.hasNext()) {
@@ -25,7 +25,7 @@ data class ExecutionTrace(
         }
 
         sb.append("""]""")
-            .append(""","dur":""").append(durationMs)
+            .append(""","durationMs":""").append(durationMs)
             .append("}")
 
         return sb.toString()

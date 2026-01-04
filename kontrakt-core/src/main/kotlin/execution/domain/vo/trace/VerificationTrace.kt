@@ -12,6 +12,7 @@ data class VerificationTrace(
 ) : TraceEvent {
     override val phase = TracePhase.VERIFICATION
 
-    override fun toNdjson(): String =
-        """{"ts":$timestamp,"ph":"$phase","rule":"${rule.escapeJson()}","st":"$status","det":"${detail.escapeJson()}"}"""
+    override fun toNdjson(): String {
+        return """{"timestamp":$timestamp,"phase":"$phase","rule":"${rule.escapeJson()}","status":"$status","detail":"${detail.escapeJson()}"}"""
+    }
 }
