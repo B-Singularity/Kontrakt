@@ -4,6 +4,7 @@ import discovery.domain.aggregate.TestSpecification
 import discovery.domain.vo.DependencyMetadata
 import discovery.domain.vo.DiscoveredTestTarget
 import exception.KontraktConfigurationException
+import execution.domain.service.generation.TestInstanceFactory
 import execution.spi.MockingEngine
 import execution.spi.ScenarioControl
 import org.junit.jupiter.api.Assertions.assertEquals

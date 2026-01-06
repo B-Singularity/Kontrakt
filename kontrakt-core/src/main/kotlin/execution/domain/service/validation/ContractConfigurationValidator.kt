@@ -1,4 +1,4 @@
-package execution.domain.service
+package execution.domain.service.validation
 
 import discovery.api.AssertFalse
 import discovery.api.AssertTrue
@@ -34,7 +34,7 @@ import java.util.Date
 /**
  * Validates the logical consistency of annotations *before* any value generation attempts.
  *
- * Unlike [execution.domain.service.ContractValidator] (which checks actual values),
+ * Unlike [ContractValidator] (which checks actual values),
  * this validator checks if the *annotations themselves* form a valid contract configuration.
  */
 object ContractConfigurationValidator {

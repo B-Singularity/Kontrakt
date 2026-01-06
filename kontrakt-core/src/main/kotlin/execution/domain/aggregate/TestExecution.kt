@@ -6,7 +6,7 @@ import exception.KontraktInternalException
 import execution.api.TestScenarioExecutor
 import execution.domain.AssertionStatus
 import execution.domain.TestStatus
-import execution.domain.service.TestInstanceFactory
+import execution.domain.service.generation.TestInstanceFactory
 import execution.domain.vo.AssertionRecord
 import execution.domain.vo.TestResult
 import io.github.oshai.kotlinlogging.KotlinLogging

@@ -12,6 +12,7 @@ import discovery.api.Positive
 import discovery.api.Size
 import discovery.api.StringLength
 import execution.domain.generator.GenerationRequest
+import execution.domain.service.validation.ContractConfigurationValidator
 import execution.exception.InvalidAnnotationValueException
 import java.lang.reflect.Proxy
 import kotlin.reflect.KClass

@@ -1,4 +1,4 @@
-package execution.domain.service
+package execution.domain.service.generation
 
 import common.reflection.unwrapped
 import discovery.domain.aggregate.TestSpecification
@@ -54,9 +54,11 @@ class TestInstanceFactory(
 
         if (type in generationContext.history) {
             throw KontraktConfigurationException(
-                "Circular dependency detected: ${generationContext.history.joinToString(
-                    " -> ",
-                ) { it.simpleName.toString() }} -> ${type.simpleName}",
+                "Circular dependency detected: ${
+                    generationContext.history.joinToString(
+                        " -> ",
+                    ) { it.simpleName.toString() }
+                } -> ${type.simpleName}",
             )
         }
 
@@ -144,11 +146,11 @@ class TestInstanceFactory(
 
     private fun isBasicValueType(type: KClass<*>): Boolean =
         type == String::class ||
-            type == Int::class ||
-            type == Long::class ||
-            type == Double::class ||
-            type == Boolean::class ||
-            type == List::class ||
-            type == Map::class ||
-            type == Set::class
+                type == Int::class ||
+                type == Long::class ||
+                type == Double::class ||
+                type == Boolean::class ||
+                type == List::class ||
+                type == Map::class ||
+                type == Set::class
 }

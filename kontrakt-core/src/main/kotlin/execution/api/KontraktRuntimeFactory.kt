@@ -3,8 +3,8 @@ package execution.api
 import discovery.domain.aggregate.TestSpecification
 import execution.adapter.MockitoEngineAdapter
 import execution.domain.aggregate.TestExecution
-import execution.domain.service.DefaultScenarioExecutor
-import execution.domain.service.TestInstanceFactory
+import execution.domain.service.generation.TestInstanceFactory
+import execution.domain.service.orchestration.DefaultScenarioExecutor
 
 interface KontraktRuntimeFactory {
     fun createExecutor(): TestScenarioExecutor

@@ -1,4 +1,4 @@
-package execution.domain.service
+package execution.domain.service.validation
 
 import execution.domain.generator.GenerationRequest
 import execution.exception.ConflictingAnnotationsException

@@ -4,7 +4,7 @@ import discovery.domain.aggregate.TestSpecification
 import execution.api.DefaultRuntimeFactory
 import execution.api.TestScenarioExecutor
 import execution.domain.aggregate.TestExecution
-import execution.domain.service.DefaultScenarioExecutor
+import execution.domain.service.orchestration.DefaultScenarioExecutor
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.mock
 import kotlin.test.assertIs

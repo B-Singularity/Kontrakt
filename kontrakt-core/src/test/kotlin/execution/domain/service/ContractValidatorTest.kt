@@ -19,6 +19,7 @@ import discovery.api.Size
 import discovery.api.StringLength
 import discovery.api.Url
 import exception.ContractViolationException
+import execution.domain.service.validation.ContractValidator
 import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows
 import org.mockito.Mockito

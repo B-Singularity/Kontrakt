@@ -1,4 +1,4 @@
-package execution.domain.service
+package execution.domain.service.validation
 
 import discovery.api.AssertFalse
 import discovery.api.AssertTrue
@@ -288,10 +288,10 @@ class ContractValidator(
 
     private fun isTimeType(value: Any): Boolean =
         value is Instant ||
-            value is Date ||
-            value is ChronoLocalDate ||
-            value is ChronoLocalDateTime<*> ||
-            value is ChronoZonedDateTime<*>
+                value is Date ||
+                value is ChronoLocalDate ||
+                value is ChronoLocalDateTime<*> ||
+                value is ChronoZonedDateTime<*>
 
     private fun toInstant(value: Any): Instant? =
         when (value) {

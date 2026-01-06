@@ -2,6 +2,8 @@ package execution.domain.service
 
 import execution.domain.AssertionStatus
 import execution.domain.entity.EphemeralTestContext
+import execution.domain.service.generation.FixtureGenerator
+import execution.domain.service.validation.ConstructorComplianceExecutor
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.any

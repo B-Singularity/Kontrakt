@@ -4,6 +4,7 @@ import execution.domain.generator.GenerationRequest
 import execution.domain.generator.RecursiveGenerator
 import execution.domain.generator.TerminalGenerator
 import execution.domain.generator.TypeGenerator
+import execution.domain.service.generation.FixtureGenerator
 import execution.exception.GenerationFailedException
 import execution.exception.RecursiveGenerationFailedException
 import execution.exception.UnsupportedGeneratorException

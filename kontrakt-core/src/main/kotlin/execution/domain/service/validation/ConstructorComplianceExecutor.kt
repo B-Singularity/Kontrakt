@@ -1,8 +1,9 @@
-package execution.domain.service
+package execution.domain.service.validation
 
 import common.reflection.unwrapped
 import execution.domain.AssertionStatus
 import execution.domain.entity.EphemeralTestContext
+import execution.domain.service.generation.FixtureGenerator
 import execution.domain.vo.AssertionRecord
 import kotlin.reflect.KFunction
 import kotlin.reflect.full.primaryConstructor

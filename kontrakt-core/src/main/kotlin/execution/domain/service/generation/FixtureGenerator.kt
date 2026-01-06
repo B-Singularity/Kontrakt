@@ -1,4 +1,4 @@
-package execution.domain.service
+package execution.domain.service.generation
 
 import discovery.api.NotNull
 import discovery.api.Null
@@ -16,6 +16,7 @@ import execution.domain.generator.StringTypeGenerator
 import execution.domain.generator.TerminalGenerator
 import execution.domain.generator.TimeTypeGenerator
 import execution.domain.generator.TypeGenerator
+import execution.domain.service.validation.ContractConfigurationValidator
 import execution.exception.GenerationFailedException
 import execution.exception.RecursiveGenerationFailedException
 import execution.exception.UnsupportedGeneratorException
@@ -217,7 +218,10 @@ class FixtureGenerator(
     private fun GenerationContext.generateInternal(request: GenerationRequest): Any? {
         val generator =
             findGenerator(request)
-                ?: throw GenerationFailedException(request.type, "No suitable generator found for type: ${request.type}")
+                ?: throw GenerationFailedException(
+                    request.type,
+                    "No suitable generator found for type: ${request.type}"
+                )
 
         return try {
             when (generator) {
@@ -341,7 +345,8 @@ class FixtureGenerator(
         }
     }
 
-    private fun findGenerator(request: GenerationRequest): TypeGenerator? = generators.firstOrNull { it.supports(request) }
+    private fun findGenerator(request: GenerationRequest): TypeGenerator? =
+        generators.firstOrNull { it.supports(request) }
 
     /**
      * Performs final integrity checks on the generated result.

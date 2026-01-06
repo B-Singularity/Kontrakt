@@ -2,7 +2,7 @@ package execution.adapter
 
 import execution.api.ScenarioContext
 import execution.domain.generator.GenerationRequest
-import execution.domain.service.FixtureGenerator
+import execution.domain.service.generation.FixtureGenerator
 import execution.spi.MockingEngine
 import execution.spi.ScenarioControl
 import io.github.oshai.kotlinlogging.KLogger
@@ -49,8 +49,8 @@ class MockitoEngineAdapter :
             if (isSuspiciousStatefulMethod(methodName)) {
                 logger.warn {
                     "⚠️ Potential Configuration Issue: " +
-                        "Method '$methodName' was called on Stateless Mock '${mockType.simpleName}'. " +
-                        "If this is a Repository, please annotate interface '${mockType.simpleName}' with '@Stateful' to enable In-Memory storage."
+                            "Method '$methodName' was called on Stateless Mock '${mockType.simpleName}'. " +
+                            "If this is a Repository, please annotate interface '${mockType.simpleName}' with '@Stateful' to enable In-Memory storage."
                 }
             }
 
@@ -70,11 +70,11 @@ class MockitoEngineAdapter :
 
         private fun isSuspiciousStatefulMethod(name: String): Boolean =
             name.startsWith("save") ||
-                name.startsWith("insert") ||
-                name.startsWith("update") ||
-                name.startsWith("delete") ||
-                name.startsWith("remove") ||
-                name.startsWith("store")
+                    name.startsWith("insert") ||
+                    name.startsWith("update") ||
+                    name.startsWith("delete") ||
+                    name.startsWith("remove") ||
+                    name.startsWith("store")
     }
 
     private class StatefulOrGenerativeAnswer(
@@ -142,8 +142,8 @@ class MockitoEngineAdapter :
             n: String,
             args: Array<Any>,
         ) = (n == "findById" || n == "getById") &&
-            args.size == 1 ||
-            ((n.startsWith("find") || n.startsWith("get")) && args.size == 1 && !n.contains("By"))
+                args.size == 1 ||
+                ((n.startsWith("find") || n.startsWith("get")) && args.size == 1 && !n.contains("By"))
 
         private fun isFindAll(n: String) = n.contains("All") || n.contains("findAll") || n == "list"
 
