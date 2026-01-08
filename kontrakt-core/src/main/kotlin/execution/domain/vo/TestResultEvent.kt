@@ -9,27 +9,58 @@ data class TestResultEvent(
     val status: TestStatus,
     val durationMs: Long,
     val journalPath: String,
-    val failureMessage: String? = null,
     val timestamp: Long
 ) {
     fun toJson(): String {
         val sb = StringBuilder()
         sb.append("""{"runId":"""").append(runId.escapeJson()).append("\"")
             .append(""","workerId":""").append(workerId)
-            .append(""","status":"""").append(status).append("\"")
+
+            .append(""","status":""").append(statusToJson(status))
+
             .append(""","durationMs":""").append(durationMs)
             .append(""","journalPath":"""").append(journalPath.escapeJson()).append("\"")
-            .append(""","failureMessage":""")
-
-        if (failureMessage != null) {
-            sb.append("\"").append(failureMessage.escapeJson()).append("\"")
-        } else {
-            sb.append("null")
-        }
-
-        sb.append(""","timestamp":""").append(timestamp)
+            .append(""","timestamp":""").append(timestamp)
             .append("}")
 
+        return sb.toString()
+    }
+
+    private fun statusToJson(status: TestStatus): String {
+        val sb = StringBuilder()
+        sb.append("{")
+
+        sb.append(""""type":"""")
+
+        when (status) {
+            is TestStatus.Passed -> {
+                sb.append("Passed").append("\"")
+            }
+
+            is TestStatus.AssertionFailed -> {
+                sb.append("AssertionFailed").append("\"")
+                sb.append(""","message":"""").append(status.message.escapeJson()).append("\"")
+                sb.append(""","expected":"""").append(status.expected.toString().escapeJson()).append("\"")
+                sb.append(""","actual":"""").append(status.actual.toString().escapeJson()).append("\"")
+            }
+
+            is TestStatus.ExecutionError -> {
+                sb.append("ExecutionError").append("\"")
+                sb.append(""","cause":"""").append(status.cause.javaClass.name.escapeJson()).append("\"")
+                sb.append(""","message":"""").append(status.cause.message?.escapeJson() ?: "null").append("\"")
+            }
+
+            is TestStatus.Disabled -> {
+                sb.append("Disabled").append("\"")
+            }
+
+            is TestStatus.Aborted -> {
+                sb.append("Aborted").append("\"")
+                sb.append(""","reason":"""").append(status.reason.escapeJson()).append("\"")
+            }
+        }
+
+        sb.append("}")
         return sb.toString()
     }
 }

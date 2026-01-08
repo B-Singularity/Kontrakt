@@ -13,7 +13,7 @@ data class ExceptionTrace(
     override fun toNdjson(): String {
         val sb = StringBuilder()
         sb.append("""{"timestamp":""").append(timestamp)
-            .append(""","phase":"EXCEPTION"""")
+            .append(""","phase":"$phase"""")
             .append(""","exceptionType":"""").append(exceptionType.escapeJson()).append("\"")
             .append(""","message":"""").append(message.escapeJson()).append("\"")
             .append(""","stackTrace":[""")
