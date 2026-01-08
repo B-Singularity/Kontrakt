@@ -1,6 +1,6 @@
 package execution.domain.service.validation
 
-import common.reflection.unwrapped
+import common.util.unwrapped
 import execution.domain.AssertionStatus
 import execution.domain.entity.EphemeralTestContext
 import execution.domain.generator.GenerationContext

@@ -1,6 +1,6 @@
 package execution.domain.service.generation
 
-import common.reflection.unwrapped
+import common.util.unwrapped
 import discovery.domain.aggregate.TestSpecification
 import discovery.domain.vo.DependencyMetadata
 import exception.KontraktConfigurationException

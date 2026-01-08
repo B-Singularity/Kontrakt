@@ -1,4 +1,4 @@
-package common.reflection
+package common.util
 
 import java.lang.reflect.InvocationTargetException
 import kotlin.test.Test
