@@ -1,5 +1,6 @@
 package common.util
 
+import execution.domain.vo.SourceLocation
 import java.lang.reflect.InvocationTargetException
 import kotlin.reflect.KClass
 
@@ -22,44 +23,42 @@ val Throwable.unwrapped: Throwable
         return current
     }
 
-fun Throwable.extractCoordinate(targetClass: KClass<*>? = null): SourceCoordinate {
+/**
+ * Extracts the strict [SourceLocation] from the stack trace.
+ */
+fun Throwable.extractSourceLocation(targetClass: KClass<*>? = null): SourceLocation {
     val frames = this.stackTrace
 
+    // 1. Priority Search
     if (targetClass != null) {
         val targetName = targetClass.qualifiedName
         val specificFrame = frames.firstOrNull { it.className == targetName }
-
-        if (specificFrame != null) {
-            return specificFrame.toCoordinate()
-        }
+        if (specificFrame != null) return specificFrame.toDefinedLocation()
     }
 
+    // 2. Smart Filter
     val userFrame = frames.firstOrNull { it.isUserCode() }
 
-    return userFrame?.toCoordinate() ?: SourceCoordinate()
+    // 3. Return types instead of nulls
+    return userFrame?.toDefinedLocation() ?: SourceLocation.Unknown
 }
+
+// --- Internal Helper Extensions ---
 
 private fun StackTraceElement.isUserCode(): Boolean {
     val name = this.className
     return IGNORED_PREFIXES.none { name.startsWith(it) }
 }
 
-private fun StackTraceElement.toCoordinate() = SourceCoordinate(
-    fileName = this.fileName,
+private fun StackTraceElement.toDefinedLocation() = SourceLocation.Exact(
+    fileName = this.fileName ?: "UnknownSource",
     lineNumber = this.lineNumber,
     className = this.className,
     methodName = this.methodName
 )
 
 private val IGNORED_PREFIXES = setOf(
-    "execution.",
-    "discovery.",
-    "infrastructure.",
-    "common.",
-    "java.lang.reflect",
-    "jdk.internal",
-    "sun.reflect",
-    "org.junit",
-    "kotlinx.coroutines",
-    "kotlin.reflect"
+    "execution.", "discovery.", "infrastructure.", "common.",
+    "java.lang.reflect", "jdk.internal", "sun.reflect",
+    "org.junit", "kotlinx.coroutines", "kotlin.reflect"
 )

@@ -6,25 +6,19 @@ import execution.domain.AssertionStatus
  * [Value Object] Assertion Record
  *
  * Represents the normalized outcome (Verdict) of a single verification step.
- * It links the result (Status) with the applied standard (Rule).
+ * Includes both the result status and the source coordinates for deep-linking.
  */
 data class AssertionRecord(
     val status: AssertionStatus,
-
-    /**
-     * The specific rule or standard that was applied.
-     * Replaces the legacy String-based 'ruleName'.
-     */
     val rule: AssertionRule,
-
     val message: String,
-    val expected: Any?,
-    val actual: Any?
+    val expected: Any? = null,
+    val actual: Any? = null,
+
+
+    // [ADR-020] Metadata for Deep Linking
+    // Replaces (file, line, method) with a strict Value Object.
+    val location: SourceLocation = SourceLocation.NotCaptured,
 ) {
-    /**
-     * Convenience property for legacy support and simple logging.
-     * Delegates to the rule's key.
-     */
-    val ruleName: String
-        get() = rule.key
+    val ruleName: String get() = rule.key
 }
