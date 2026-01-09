@@ -12,17 +12,34 @@ import execution.spi.ScenarioControl
 import java.time.Clock
 import kotlin.random.Random
 import kotlin.reflect.KClass
+import kotlin.reflect.full.primaryConstructor
 import kotlin.reflect.full.starProjectedType
 
+/**
+ * [Domain Service] Test Instance Factory.
+ *
+ * Responsible for constructing the **Test Target** (SUT) and its entire dependency graph.
+ * It combines:
+ * 1. **Dependency Injection**: Resolves dependencies based on [TestSpecification] (Mock, Fake, Real).
+ * 2. **Fixture Generation**: Generates primitive values and value objects via [FixtureGenerator].
+ * 3. **Recursion Safety**: Detects and prevents circular dependencies during instantiation.
+ */
 class TestInstanceFactory(
     private val mockingEngine: MockingEngine,
     private val scenarioControl: ScenarioControl,
+    private val clock: Clock = Clock.systemUTC()
 ) {
+    /**
+     * Creates a fully initialized test context containing the Target Instance.
+     *
+     * @param spec The test specification defining the target and mocking strategies.
+     * @return A context holding the instantiated target and its dependencies.
+     * @throws KontraktConfigurationException If instantiation fails due to config or runtime errors.
+     */
     fun create(spec: TestSpecification): EphemeralTestContext {
         val context = EphemeralTestContext(spec, mockingEngine, scenarioControl)
         try {
             val seed = spec.seed ?: System.currentTimeMillis()
-            val clock = Clock.systemUTC()
 
             val fixtureGenerator = FixtureGenerator(mockingEngine, clock, seed)
 
@@ -34,6 +51,7 @@ class TestInstanceFactory(
 
             val targetInstance = resolve(spec.target.kClass, context, generationContext, fixtureGenerator)
             context.registerTarget(targetInstance)
+
         } catch (e: Throwable) {
             val cause = e.unwrapped
             throw KontraktConfigurationException(
@@ -44,6 +62,18 @@ class TestInstanceFactory(
         return context
     }
 
+
+    /**
+     * Recursively resolves an instance of the given [type].
+     *
+     * Resolution Strategy:
+     * 1. **Cache**: Check if already resolved in the context.
+     * 2. **Cycle Check**: Ensure we aren't in an infinite recursion loop.
+     * 3. **Strategy Lookup**: Check if the user defined a specific strategy (Mock/Fake/Real).
+     * 4. **Generator**: Try to generate simple values (String, Int, Data Classes).
+     * 5. **Constructor**: Attempt to instantiate via constructor injection.
+     * 6. **Fallback**: Create a Mock if no other way exists (e.g., Interfaces).
+     */
     private fun resolve(
         type: KClass<*>,
         context: EphemeralTestContext,
@@ -116,9 +146,11 @@ class TestInstanceFactory(
         generationContext: GenerationContext,
         fixtureGenerator: FixtureGenerator,
     ): Any {
-        val constructor =
-            type.constructors.firstOrNull()
-                ?: return mockingEngine.createMock(type)
+        val constructor = type.primaryConstructor ?: type.constructors.firstOrNull()
+
+        if (constructor == null) {
+            return mockingEngine.createMock(type)
+        }
 
         try {
             val args =
@@ -152,5 +184,6 @@ class TestInstanceFactory(
                 type == Boolean::class ||
                 type == List::class ||
                 type == Map::class ||
-                type == Set::class
+                type == Set::class ||
+                type.isData
 }
