@@ -23,9 +23,8 @@ class ScenarioExecutionChain(
     private val interceptors: List<ScenarioInterceptor>,
     private val index: Int,
     override val context: EphemeralTestContext,
-    private val finalDelegate: TestScenarioExecutor
+    private val finalDelegate: TestScenarioExecutor,
 ) : ScenarioInterceptor.Chain {
-
     override fun proceed(context: EphemeralTestContext): List<AssertionRecord> {
         // Base Case: If we have iterated through all interceptors, execute the actual test.
         if (index >= interceptors.size) {
@@ -33,12 +32,13 @@ class ScenarioExecutionChain(
         }
 
         // Recursive Step: Create the next link in the chain, advancing the index.
-        val nextChain = ScenarioExecutionChain(
-            interceptors = interceptors,
-            index = index + 1,
-            context = context,
-            finalDelegate = finalDelegate
-        )
+        val nextChain =
+            ScenarioExecutionChain(
+                interceptors = interceptors,
+                index = index + 1,
+                context = context,
+                finalDelegate = finalDelegate,
+            )
 
         // Retrieve the current interceptor and delegate control to it.
         val currentInterceptor = interceptors[index]

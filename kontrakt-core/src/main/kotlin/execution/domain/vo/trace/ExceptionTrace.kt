@@ -6,16 +6,22 @@ data class ExceptionTrace(
     val exceptionType: String,
     val message: String,
     val stackTraceElements: List<StackTraceElement>,
-    override val timestamp: Long
+    override val timestamp: Long,
 ) : TraceEvent {
     override val phase = TracePhase.VERIFICATION
 
     override fun toNdjson(): String {
         val sb = StringBuilder()
-        sb.append("""{"timestamp":""").append(timestamp)
+        sb
+            .append("""{"timestamp":""")
+            .append(timestamp)
             .append(""","phase":"$phase"""")
-            .append(""","exceptionType":"""").append(exceptionType.escapeJson()).append("\"")
-            .append(""","message":"""").append(message.escapeJson()).append("\"")
+            .append(""","exceptionType":"""")
+            .append(exceptionType.escapeJson())
+            .append("\"")
+            .append(""","message":"""")
+            .append(message.escapeJson())
+            .append("\"")
             .append(""","stackTrace":[""")
 
         val iterator = stackTraceElements.iterator()

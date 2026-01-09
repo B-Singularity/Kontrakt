@@ -13,5 +13,5 @@ enum class TracePhase {
     EXECUTION,
 
     /** [THEN] Contract validation. */
-    VERIFICATION
+    VERIFICATION,
 }

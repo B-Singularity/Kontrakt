@@ -13,7 +13,6 @@ import execution.domain.vo.AssertionRecord
  * @see Chain
  */
 fun interface ScenarioInterceptor {
-
     /**
      * Executes the interceptor logic and delegates control to the next step in the chain.
      *

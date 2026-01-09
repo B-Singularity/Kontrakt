@@ -5,9 +5,14 @@ import discovery.api.Contract
 import discovery.domain.service.TestDiscovererImpl
 import discovery.domain.vo.ScanScope
 import exception.KontraktInternalException
+import execution.adapter.MockitoEngineAdapter
+import execution.adapter.console.ConsoleResultPublisher
+import execution.adapter.state.ThreadLocalScenarioControl
+import execution.adapter.trace.FileTraceSink
 import execution.api.DefaultRuntimeFactory
 import execution.api.KontraktRuntimeFactory
 import execution.domain.TestStatus
+import execution.domain.factory.ExecutionEnvironmentFactory
 import execution.domain.vo.TestResult
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.runBlocking
@@ -20,11 +25,22 @@ import org.junit.platform.engine.TestExecutionResult
 import org.junit.platform.engine.UniqueId
 import org.junit.platform.engine.discovery.ClassSelector
 import org.junit.platform.engine.discovery.PackageSelector
+import java.time.Clock
 
-class KontraktTestEngine(
-    private val runtimeFactory: KontraktRuntimeFactory = DefaultRuntimeFactory(),
-) : TestEngine {
+/**
+ * [Adapter] JUnit Platform Engine Implementation.
+ *
+ * This acts as the **Composition Root** of the framework.
+ * It is responsible for bridging the JUnit Platform Lifecycle with the Kontrakt Domain.
+ *
+ * **Architectural Role:**
+ * - Instantiates concrete [Infrastructure] components (Clock, Mockito, FileSystem).
+ * - Injects them into the [Domain] via [DefaultRuntimeFactory].
+ * - Delegates execution to the configured Runtime.
+ */
+class KontraktTestEngine : TestEngine {
     private val logger = KotlinLogging.logger {}
+    private lateinit var runtimeFactory: KontraktRuntimeFactory
 
     override fun getId(): String = "kontrakt-engine"
 
@@ -63,6 +79,23 @@ class KontraktTestEngine(
         val engineDescriptor = request.rootTestDescriptor
         val listener = request.engineExecutionListener
 
+        // 1. [Infrastructure] Instantiate Concrete Adapters
+        val clock = Clock.systemDefaultZone()
+        val mockingEngine = MockitoEngineAdapter()
+        val scenarioControl = ThreadLocalScenarioControl()
+        val traceSink = FileTraceSink()
+        val resultPublisher = ConsoleResultPublisher()
+
+        // 2. [Composition] Wire components into the Runtime Factory
+        runtimeFactory =
+            DefaultRuntimeFactory(
+                mockingEngine = mockingEngine,
+                scenarioControl = scenarioControl,
+                traceSink = traceSink,
+                resultPublisher = resultPublisher,
+                clock = clock,
+            )
+
         listener.executionStarted(engineDescriptor)
 
         engineDescriptor.children.forEach { descriptor ->
@@ -80,6 +113,11 @@ class KontraktTestEngine(
     ) {
         listener.executionStarted(descriptor)
 
+        val envFactory = ExecutionEnvironmentFactory(Clock.systemDefaultZone())
+        val environment = envFactory.create()
+
+        ThreadLocalScenarioControl.bind(environment)
+
         try {
             val scenarioExecutor = runtimeFactory.createExecutor()
 
@@ -91,6 +129,8 @@ class KontraktTestEngine(
         } catch (e: Exception) {
             logger.error(e) { "💥 Framework CRASH: ${descriptor.displayName}" }
             listener.executionFinished(descriptor, TestExecutionResult.failed(e))
+        } finally {
+            ThreadLocalScenarioControl.clear()
         }
     }
 

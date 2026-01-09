@@ -12,7 +12,6 @@ import execution.domain.vo.SourceLocation
 import kotlin.reflect.KFunction
 import kotlin.reflect.full.primaryConstructor
 
-
 /**
  * [Domain Service] Constructor Compliance Executor.
  *
@@ -26,7 +25,6 @@ import kotlin.reflect.full.primaryConstructor
 class ConstructorComplianceExecutor(
     private val fixtureGenerator: FixtureGenerator,
 ) {
-
     /**
      * orchestrates the validation process:
      * 1. **Sanity Check**: Ensures the constructor works with valid data.
@@ -34,7 +32,7 @@ class ConstructorComplianceExecutor(
      */
     fun validateConstructor(
         context: EphemeralTestContext,
-        generationContext: GenerationContext
+        generationContext: GenerationContext,
     ): List<AssertionRecord> {
         val targetClass = context.specification.target.kClass
         val constructor = targetClass.primaryConstructor ?: return emptyList()
@@ -48,7 +46,7 @@ class ConstructorComplianceExecutor(
 
             invalidValues.forEach { badValue ->
                 records.add(
-                    testInvalidConstructor(constructor, param.name, badValue, generationContext)
+                    testInvalidConstructor(constructor, param.name, badValue, generationContext),
                 )
             }
         }
@@ -57,12 +55,13 @@ class ConstructorComplianceExecutor(
 
     private fun testValidConstructor(
         constructor: KFunction<*>,
-        generationContext: GenerationContext
+        generationContext: GenerationContext,
     ): AssertionRecord =
         try {
-            val args = constructor.parameters.associateWith {
-                fixtureGenerator.generate(it, generationContext)
-            }
+            val args =
+                constructor.parameters.associateWith {
+                    fixtureGenerator.generate(it, generationContext)
+                }
 
             constructor.callBy(args)
 
@@ -72,7 +71,7 @@ class ConstructorComplianceExecutor(
                 message = "Constructor Sanity Check: Instance created successfully.",
                 expected = "Instance Created",
                 actual = "Success",
-                location = SourceLocation.NotCaptured
+                location = SourceLocation.NotCaptured,
             )
         } catch (e: Throwable) {
             val cause = e.unwrapped
@@ -82,7 +81,7 @@ class ConstructorComplianceExecutor(
                 message = "Constructor Sanity Check Failed: ${cause.message}",
                 expected = "Instance Created",
                 actual = cause.javaClass.simpleName,
-                location = SourceLocation.NotCaptured
+                location = SourceLocation.NotCaptured,
             )
         }
 
@@ -90,12 +89,14 @@ class ConstructorComplianceExecutor(
         constructor: KFunction<*>,
         paramName: String?,
         badValue: Any?,
-        generationContext: GenerationContext
+        generationContext: GenerationContext,
     ): AssertionRecord =
         try {
-            val args = constructor.parameters.associateWith {
-                fixtureGenerator.generate(it, generationContext)
-            }.toMutableMap()
+            val args =
+                constructor.parameters
+                    .associateWith {
+                        fixtureGenerator.generate(it, generationContext)
+                    }.toMutableMap()
 
             val targetParam = constructor.parameters.find { it.name == paramName }!!
             args[targetParam] = badValue
@@ -108,7 +109,7 @@ class ConstructorComplianceExecutor(
                 message = "Defensive Check Failed: Constructor accepted invalid '$paramName' = $badValue",
                 expected = "Exception Thrown",
                 actual = "Instance Created",
-                location = SourceLocation.NotCaptured
+                location = SourceLocation.NotCaptured,
             )
         } catch (e: Throwable) {
             val cause = e.unwrapped
@@ -118,7 +119,7 @@ class ConstructorComplianceExecutor(
                 message = "Defensive Check Passed: Constructor rejected invalid '$paramName' = $badValue",
                 expected = "Exception",
                 actual = cause.javaClass.simpleName,
-                location = SourceLocation.NotCaptured
+                location = SourceLocation.NotCaptured,
             )
         }
 }

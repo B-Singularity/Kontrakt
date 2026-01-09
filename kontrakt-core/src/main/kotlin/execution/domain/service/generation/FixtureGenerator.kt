@@ -58,8 +58,8 @@ import kotlin.reflect.KParameter
  */
 class FixtureGenerator(
     private val mockingEngine: MockingEngine,
-    private val clock: Clock = Clock.systemDefaultZone(),
-    seed: Long = System.nanoTime(),
+    private val clock: Clock,
+    seed: Long,
 ) {
     private val logger = KotlinLogging.logger {}
 
@@ -75,9 +75,14 @@ class FixtureGenerator(
     }
 
     /**
-     * The registry of generation strategies.
-     * The order is significant: specific types (like primitives and collections) must be
-     * checked before the general [ObjectGenerator] fallback.
+     * The Strategy Registry.
+     *
+     * **Evaluation Order is Critical:**
+     * The generator iterates through this list and picks the **first** one that supports the request.
+     * 1. **Primitives/Scalars** (Boolean, Time, Numeric, String) are checked first.
+     * 2. **Containers** (Collection, Array) are checked next.
+     * 3. **Complex Structures** (Enum, Sealed) follow.
+     * 4. **ObjectGenerator** acts as the "Catch-All" fallback for arbitrary POJOs.
      */
     private val generators: List<TypeGenerator> =
         listOf(
@@ -97,19 +102,18 @@ class FixtureGenerator(
     // =================================================================
 
     /**
-     * [Entry Point 1] Generates data using a fresh, independent context.
+     * [Primary Entry Point] Generates a value for a fresh request.
      *
-     * This method is typically used for simple, standalone generation requests where
-     * continuity with previous generation steps is not required. It creates a new
-     * root [GenerationContext] derived from the shared seed.
+     * Use this method when starting a **new** generation cycle (e.g., generating the Test Target).
+     * It creates a pristine [GenerationContext] rooted at this call.
      *
-     * @param request The request object describing the target type and constraints.
-     * @return The generated value (nullable).
-     * @throws GenerationFailedException If generation fails or integrity checks fail.
+     * @param request Describes the type and constraints of the data to generate.
+     * @return The generated artifact.
+     * @throws GenerationFailedException If generation fails due to logic errors or validation.
      */
     fun generate(request: GenerationRequest): Any? {
         ContractConfigurationValidator.validate(request)
-        // Create a new context and enter its scope
+        // Bootstrap a new context
         return with(createRootContext()) {
             val result = generateInternal(request)
             validateResult(result, request)
@@ -118,22 +122,20 @@ class FixtureGenerator(
     }
 
     /**
-     * [Entry Point 2] Generates data using an existing, externally provided context.
+     * [Recursive Entry Point] Generates a value within an existing scope.
      *
-     * **Core API:** This is used by orchestrators like `TestInstanceFactory` to maintain
-     * consistency across a complex object graph. By accepting an external [context],
-     * it ensures that the random seed stream and recursion history are preserved.
+     * **Critical for internal use:** This method is called by child generators (like ObjectGenerator)
+     * to populate fields. It preserves the [context] (Recursion History + Random State).
      *
-     * @param request The request object describing the target type.
-     * @param context The existing generation context to use.
-     * @return The generated value.
+     * @param request Describes the type to generate.
+     * @param context The current execution context carrying the history and random stream.
      */
     fun generate(
         request: GenerationRequest,
         context: GenerationContext,
     ): Any? {
         ContractConfigurationValidator.validate(request)
-        // Use the provided context as the receiver ('this')
+        // Continue using the existing context
         return with(context) {
             val result = generateInternal(request)
             validateResult(result, request)
@@ -220,7 +222,7 @@ class FixtureGenerator(
             findGenerator(request)
                 ?: throw GenerationFailedException(
                     request.type,
-                    "No suitable generator found for type: ${request.type}"
+                    "No suitable generator found for type: ${request.type}",
                 )
 
         return try {
@@ -332,7 +334,7 @@ class FixtureGenerator(
         val kClass = request.type.classifier as? KClass<*> ?: throw recursionEx
 
         return try {
-            mockingEngine.createMock(kClass)
+            mockingEngine.createMock(kClass, this)
         } catch (mockEx: Exception) {
             val combinedEx =
                 GenerationFailedException(
@@ -345,8 +347,7 @@ class FixtureGenerator(
         }
     }
 
-    private fun findGenerator(request: GenerationRequest): TypeGenerator? =
-        generators.firstOrNull { it.supports(request) }
+    private fun findGenerator(request: GenerationRequest): TypeGenerator? = generators.firstOrNull { it.supports(request) }
 
     /**
      * Performs final integrity checks on the generated result.

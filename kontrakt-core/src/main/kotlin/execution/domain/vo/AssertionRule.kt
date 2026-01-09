@@ -27,7 +27,7 @@ sealed interface AssertionRule {
  * e.g., @NotNull, @Positive, @Size
  */
 data class AnnotationRule(
-    val annotation: KClass<out Annotation>
+    val annotation: KClass<out Annotation>,
 ) : AssertionRule {
     override val key: String = annotation.simpleName ?: "AnonymousAnnotation"
 }
@@ -80,7 +80,7 @@ data object StandardAssertion : AssertionRule {
  * (e.g., NullPointerException, IndexOutOfBoundsException)
  */
 data class UserExceptionRule(
-    val exceptionType: String
+    val exceptionType: String,
 ) : AssertionRule {
     override val key: String = exceptionType
 }
@@ -90,7 +90,7 @@ data class UserExceptionRule(
  * This implies a bug in the Kontrakt framework itself.
  */
 data class SystemErrorRule(
-    val exceptionType: String
+    val exceptionType: String,
 ) : AssertionRule {
     override val key: String = "SystemError"
 }

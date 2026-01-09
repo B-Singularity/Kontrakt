@@ -1,8 +1,10 @@
 package execution.adapter
 
+import execution.adapter.state.ThreadLocalScenarioControl
 import execution.api.ScenarioContext
 import execution.domain.generator.GenerationRequest
 import execution.domain.service.generation.FixtureGenerator
+import execution.domain.vo.trace.ExecutionTrace
 import execution.spi.MockingEngine
 import execution.spi.ScenarioControl
 import io.github.oshai.kotlinlogging.KLogger
@@ -17,20 +19,42 @@ import kotlin.reflect.full.memberProperties
 import kotlin.reflect.jvm.isAccessible
 import kotlin.reflect.jvm.kotlinFunction
 
+/**
+ * [Adapter] Smart Mockito Engine.
+ *
+ * This adapter bridges Mockito with the Kontrakt framework's generation and tracing systems.
+ *
+ * ### Architecture Note: Method Injection Pattern
+ * Unlike the previous ThreadLocal approach, this adapter is **Stateless**.
+ * It receives the [FixtureGenerator] explicitly as an argument during mock creation,
+ * ensuring thread safety and clearer dependency flow.
+ *
+ * **Strategies:**
+ * - **Stateless Mocks:** Delegate directly to [FixtureGenerator] via [GenerativeAnswer].
+ * - **Stateful Fakes:** Maintain an internal `ConcurrentHashMap` for CRUD operations via [StatefulOrGenerativeAnswer].
+ */
 class MockitoEngineAdapter :
     MockingEngine,
     ScenarioControl {
     private val logger = KotlinLogging.logger {}
 
-    // [Circular Dependency Resolution]
-    // Uses lazy initialization to handle the bidirectional dependency with FixtureGenerator.
-    private val fixtureGenerator by lazy { FixtureGenerator(this) }
+    override fun <T : Any> createMock(
+        classToMock: KClass<T>,
+        generator: FixtureGenerator,
+    ): T =
+        Mockito.mock(
+            classToMock.java,
+            GenerativeAnswer(generator, classToMock, logger),
+        )
 
-    override fun <T : Any> createMock(classToMock: KClass<T>): T =
-        Mockito.mock(classToMock.java, GenerativeAnswer(fixtureGenerator, classToMock, logger))
-
-    override fun <T : Any> createFake(classToFake: KClass<T>): T =
-        Mockito.mock(classToFake.java, StatefulOrGenerativeAnswer(fixtureGenerator))
+    override fun <T : Any> createFake(
+        classToFake: KClass<T>,
+        generator: FixtureGenerator,
+    ): T =
+        Mockito.mock(
+            classToFake.java,
+            StatefulOrGenerativeAnswer(generator),
+        )
 
     override fun createScenarioContext(): ScenarioContext = MockitoScenarioContext()
 
@@ -45,20 +69,17 @@ class MockitoEngineAdapter :
         override fun answer(invocation: InvocationOnMock): Any? {
             val methodName = invocation.method.name
 
-            // Warn on suspicious usage
+            // [UX] Warn if user tries to use stateful methods on a stateless mock
             if (isSuspiciousStatefulMethod(methodName)) {
                 logger.warn {
-                    "⚠️ Potential Configuration Issue: " +
-                            "Method '$methodName' was called on Stateless Mock '${mockType.simpleName}'. " +
-                            "If this is a Repository, please annotate interface '${mockType.simpleName}' with '@Stateful' to enable In-Memory storage."
+                    "⚠️ Suspicious call '$methodName' on Stateless Mock '${mockType.simpleName}'. " +
+                        "Use 'createFake()' (or @Stateful) if you need In-Memory DB behavior."
                 }
             }
 
             val returnType = invocation.method.kotlinFunction?.returnType
             if (returnType == null || returnType.classifier == Unit::class) return null
 
-            // [Conversion] KType -> GenerationRequest
-            // Transforms the external 'return type' concept into the domain's 'generation request'.
             val request =
                 GenerationRequest.from(
                     type = returnType,
@@ -70,13 +91,17 @@ class MockitoEngineAdapter :
 
         private fun isSuspiciousStatefulMethod(name: String): Boolean =
             name.startsWith("save") ||
-                    name.startsWith("insert") ||
-                    name.startsWith("update") ||
-                    name.startsWith("delete") ||
-                    name.startsWith("remove") ||
-                    name.startsWith("store")
+                name.startsWith("insert") ||
+                name.startsWith("update") ||
+                name.startsWith("delete") ||
+                name.startsWith("remove") ||
+                name.startsWith("store")
     }
 
+    /**
+     * Strategy for Stateful Fakes (In-Memory DB).
+     * Handles CRUD operations internally and logs traces to [ThreadLocalScenarioControl].
+     */
     private class StatefulOrGenerativeAnswer(
         private val generator: FixtureGenerator,
     ) : Answer<Any?> {
@@ -91,35 +116,23 @@ class MockitoEngineAdapter :
             if (name == "hashCode") return System.identityHashCode(this)
             if (name == "equals") return invocation.mock === args.getOrNull(0)
 
-            // Smart CRUD Logic (Map Operations)
-            try {
-                if (isSave(name)) {
-                    val entity = args.firstOrNull() ?: return null
-                    val id = extractId(entity) ?: "auto-id-${store.size + 1}"
-                    store[id] = entity
-                    return entity
-                }
-                if (isFindById(name, args)) {
-                    val key = args.firstOrNull()
-                    val result = store[key]
-                    if (method.returnType == Optional::class.java) {
-                        return Optional.ofNullable(result)
+            val startTime = System.currentTimeMillis()
+
+            val (result, handled) =
+                runCatching {
+                    when {
+                        isSave(name) -> handleSave(args)
+                        isFindById(name, args) -> handleFindById(args, method.returnType)
+                        isFindAll(name) -> store.values.toList() to true
+                        isDelete(name) -> handleDelete(args)
+                        name == "count" -> store.size.toLong() to true
+                        else -> null to false
                     }
-                    return result
-                }
-                if (isFindAll(name)) {
-                    return store.values.toList()
-                }
-                if (isDelete(name)) {
-                    val arg = args.firstOrNull()
-                    if (arg != null) {
-                        val id = extractId(arg) ?: arg
-                        store.remove(id)
-                    }
-                    return null
-                }
-                if (name == "count") return store.size.toLong()
-            } catch (ignored: Exception) {
+                }.getOrDefault(null to false)
+
+            if (handled) {
+                recordTrace(invocation, args, startTime)
+                return result
             }
 
             // Generative Fallback
@@ -133,7 +146,61 @@ class MockitoEngineAdapter :
                     name = "${invocation.method.name}:ReturnValue",
                 )
 
-            return generator.generate(request)
+            return generator.generate(
+                request,
+            )
+        }
+
+        private fun handleSave(args: Array<Any>): Pair<Any?, Boolean> {
+            val entity = args.firstOrNull() ?: return null to false
+            val id = extractId(entity) ?: "auto-id-${store.size + 1}"
+            store[id] = entity
+            return entity to true
+        }
+
+        private fun handleFindById(
+            args: Array<Any>,
+            returnType: Class<*>,
+        ): Pair<Any?, Boolean> {
+            val key = args.firstOrNull()
+            val found = store[key]
+            val result = if (returnType == Optional::class.java) Optional.ofNullable(found) else found
+            return result to true
+        }
+
+        private fun handleDelete(args: Array<Any>): Pair<Any?, Boolean> {
+            args.firstOrNull()?.let { arg ->
+                val id = extractId(arg) ?: arg
+                store.remove(id)
+            }
+            return null to true
+        }
+
+        private fun recordTrace(
+            invocation: InvocationOnMock,
+            args: Array<Any>,
+            startTime: Long,
+        ) {
+            val duration = System.currentTimeMillis() - startTime
+            val interfaceName =
+                invocation.mock::class.java.interfaces
+                    .firstOrNull()
+                    ?.simpleName ?: "Mock"
+
+            val traceEvent =
+                ExecutionTrace(
+                    methodSignature = "$interfaceName.${invocation.method.name}",
+                    arguments = args.map { it.toString() },
+                    durationMs = duration,
+                    timestamp = startTime,
+                )
+
+            runCatching {
+                ThreadLocalScenarioControl
+                    .get()
+                    .trace.decisions
+                    .add(traceEvent)
+            }
         }
 
         private fun isSave(n: String) = n.startsWith("save") || n.startsWith("create") || n.startsWith("register")
@@ -142,22 +209,21 @@ class MockitoEngineAdapter :
             n: String,
             args: Array<Any>,
         ) = (n == "findById" || n == "getById") &&
-                args.size == 1 ||
-                ((n.startsWith("find") || n.startsWith("get")) && args.size == 1 && !n.contains("By"))
+            args.size == 1 ||
+            ((n.startsWith("find") || n.startsWith("get")) && args.size == 1 && !n.contains("By"))
 
         private fun isFindAll(n: String) = n.contains("All") || n.contains("findAll") || n == "list"
 
         private fun isDelete(n: String) = n.startsWith("delete") || n.startsWith("remove")
 
         private fun extractId(entity: Any): Any? =
-            try {
-                val kClass = entity::class
-                kClass.memberProperties.firstOrNull { it.name.equals("id", ignoreCase = true) }?.let {
-                    it.isAccessible = true
-                    it.getter.call(entity)
-                }
-            } catch (e: Exception) {
-                null
-            }
+            runCatching {
+                entity::class
+                    .memberProperties
+                    .firstOrNull { it.name.equals("id", ignoreCase = true) }
+                    ?.apply { isAccessible = true }
+                    ?.getter
+                    ?.call(entity)
+            }.getOrNull()
     }
 }

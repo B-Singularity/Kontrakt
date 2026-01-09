@@ -14,8 +14,6 @@ data class AssertionRecord(
     val message: String,
     val expected: Any? = null,
     val actual: Any? = null,
-
-
     // [ADR-020] Metadata for Deep Linking
     // Replaces (file, line, method) with a strict Value Object.
     val location: SourceLocation = SourceLocation.NotCaptured,

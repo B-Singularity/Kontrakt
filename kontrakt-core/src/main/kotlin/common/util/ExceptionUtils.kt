@@ -13,7 +13,6 @@ data class SourceCoordinate(
     val isUnknown: Boolean get() = fileName == null
 }
 
-
 val Throwable.unwrapped: Throwable
     get() {
         var current = this
@@ -50,15 +49,24 @@ private fun StackTraceElement.isUserCode(): Boolean {
     return IGNORED_PREFIXES.none { name.startsWith(it) }
 }
 
-private fun StackTraceElement.toDefinedLocation() = SourceLocation.Exact(
-    fileName = this.fileName ?: "UnknownSource",
-    lineNumber = this.lineNumber,
-    className = this.className,
-    methodName = this.methodName
-)
+private fun StackTraceElement.toDefinedLocation() =
+    SourceLocation.Exact(
+        fileName = this.fileName ?: "UnknownSource",
+        lineNumber = this.lineNumber,
+        className = this.className,
+        methodName = this.methodName,
+    )
 
-private val IGNORED_PREFIXES = setOf(
-    "execution.", "discovery.", "infrastructure.", "common.",
-    "java.lang.reflect", "jdk.internal", "sun.reflect",
-    "org.junit", "kotlinx.coroutines", "kotlin.reflect"
-)
+private val IGNORED_PREFIXES =
+    setOf(
+        "execution.",
+        "discovery.",
+        "infrastructure.",
+        "common.",
+        "java.lang.reflect",
+        "jdk.internal",
+        "sun.reflect",
+        "org.junit",
+        "kotlinx.coroutines",
+        "kotlin.reflect",
+    )

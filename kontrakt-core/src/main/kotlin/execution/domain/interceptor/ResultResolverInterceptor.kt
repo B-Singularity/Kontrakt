@@ -34,9 +34,8 @@ import execution.spi.interceptor.ScenarioInterceptor
  */
 class ResultResolverInterceptor(
     private val spec: TestSpecification,
-    private val traceMode: Boolean = false
+    private val traceMode: Boolean = false,
 ) : ScenarioInterceptor {
-
     override fun intercept(chain: ScenarioInterceptor.Chain): List<AssertionRecord> =
         runCatching {
             // 1. Proceed with the execution chain.
@@ -72,58 +71,63 @@ class ResultResolverInterceptor(
         return when (rootCause) {
             // Case A: Contract Violation (Business Logic Error)
             // The user's implementation failed to meet the defined contract (e.g., @Positive).
-            is ContractViolationException -> createAssertionRecord(
-                status = AssertionStatus.FAILED,
-                rule = rootCause.rule,
-                message = rootCause.message ?: "Contract violated",
-                expected = "Constraint Compliance",
-                actual = "Violation",
-                location = location
-            )
+            is ContractViolationException ->
+                createAssertionRecord(
+                    status = AssertionStatus.FAILED,
+                    rule = rootCause.rule,
+                    message = rootCause.message ?: "Contract violated",
+                    expected = "Constraint Compliance",
+                    actual = "Violation",
+                    location = location,
+                )
 
             // Case B: Standard Assertion Failure (JUnit/Kotlin Assertions)
             // A standard assertion (e.g., assert x == y) failed in the user's test code.
-            is AssertionError -> createAssertionRecord(
-                status = AssertionStatus.FAILED,
-                rule = StandardAssertion,
-                message = rootCause.message ?: "Assertion failed",
-                expected = "True",
-                actual = "False",
-                location = location
-            )
+            is AssertionError ->
+                createAssertionRecord(
+                    status = AssertionStatus.FAILED,
+                    rule = StandardAssertion,
+                    message = rootCause.message ?: "Assertion failed",
+                    expected = "True",
+                    actual = "False",
+                    location = location,
+                )
 
             // Case C: Configuration Failure (User Fault)
             // The user provided invalid input (e.g., ambiguous annotations, invalid dependency).
-            is KontraktConfigurationException -> createAssertionRecord(
-                status = AssertionStatus.FAILED,
-                rule = ConfigurationErrorRule,
-                message = "Configuration Error: ${rootCause.message}",
-                expected = "Valid Configuration",
-                actual = "Invalid Configuration",
-                location = location
-            )
+            is KontraktConfigurationException ->
+                createAssertionRecord(
+                    status = AssertionStatus.FAILED,
+                    rule = ConfigurationErrorRule,
+                    message = "Configuration Error: ${rootCause.message}",
+                    expected = "Valid Configuration",
+                    actual = "Invalid Configuration",
+                    location = location,
+                )
 
             // Case D: Internal Framework Error (System Fault)
             // Something went wrong within Kontrakt itself. This is a bug in the framework.
-            is KontraktInternalException -> createAssertionRecord(
-                status = AssertionStatus.FAILED,
-                rule = SystemErrorRule("InternalError"),
-                message = "Internal Framework Error: ${rootCause.message}",
-                expected = "Framework Stability",
-                actual = "Crash",
-                location = location
-            )
+            is KontraktInternalException ->
+                createAssertionRecord(
+                    status = AssertionStatus.FAILED,
+                    rule = SystemErrorRule("InternalError"),
+                    message = "Internal Framework Error: ${rootCause.message}",
+                    expected = "Framework Stability",
+                    actual = "Crash",
+                    location = location,
+                )
 
             // Case E: Unexpected Runtime Exception (User Code Crash)
             // The user's code threw an unexpected exception (e.g., NPE, IndexOutOfBounds).
-            else -> createAssertionRecord(
-                status = AssertionStatus.FAILED,
-                rule = UserExceptionRule(rootCause.javaClass.simpleName),
-                message = "Unexpected Exception: ${rootCause.message}",
-                expected = "Normal Execution",
-                actual = rootCause.javaClass.simpleName,
-                location = location
-            )
+            else ->
+                createAssertionRecord(
+                    status = AssertionStatus.FAILED,
+                    rule = UserExceptionRule(rootCause.javaClass.simpleName),
+                    message = "Unexpected Exception: ${rootCause.message}",
+                    expected = "Normal Execution",
+                    actual = rootCause.javaClass.simpleName,
+                    location = location,
+                )
         }
     }
 
@@ -137,14 +141,14 @@ class ResultResolverInterceptor(
         message: String,
         location: SourceLocation,
         expected: String? = null,
-        actual: String? = null
+        actual: String? = null,
     ) = AssertionRecord(
         status = status,
         rule = rule,
         message = message,
         expected = expected,
         actual = actual,
-        location = location
+        location = location,
     )
 
     /**
@@ -153,16 +157,16 @@ class ResultResolverInterceptor(
      * If an assertion passed but has [SourceLocation.NotCaptured], this attempts to provide
      * at least the [SourceLocation.Approximate] context (Class Level) so the report isn't empty.
      */
-    private fun AssertionRecord.enrichLocationIfMissing(spec: TestSpecification): AssertionRecord {
-        return if (this.location is SourceLocation.NotCaptured) {
+    private fun AssertionRecord.enrichLocationIfMissing(spec: TestSpecification): AssertionRecord =
+        if (this.location is SourceLocation.NotCaptured) {
             copy(
-                location = SourceLocation.Approximate(
-                    className = spec.target.fullyQualifiedName,
-                    displayName = spec.target.displayName
-                )
+                location =
+                    SourceLocation.Approximate(
+                        className = spec.target.fullyQualifiedName,
+                        displayName = spec.target.displayName,
+                    ),
             )
         } else {
             this
         }
-    }
 }

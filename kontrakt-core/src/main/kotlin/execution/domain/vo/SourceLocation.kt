@@ -7,7 +7,6 @@ package execution.domain.vo
  * Replaces the nullable/string-based coordinate system with a strict type hierarchy.
  */
 sealed interface SourceLocation {
-
     /**
      * [Case 1] Location is captured and defined.
      * Used when TraceMode is ON or when an Exception stacktrace is analyzed.
@@ -16,7 +15,7 @@ sealed interface SourceLocation {
         val fileName: String,
         val lineNumber: Int,
         val className: String,
-        val methodName: String? = null
+        val methodName: String? = null,
     ) : SourceLocation {
         override fun toString(): String = "$fileName:$lineNumber ($methodName)"
     }
@@ -28,7 +27,7 @@ sealed interface SourceLocation {
      */
     data class Approximate(
         val className: String,
-        val displayName: String? = null
+        val displayName: String? = null,
     ) : SourceLocation {
         override fun toString(): String = className
     }

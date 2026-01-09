@@ -9,18 +9,25 @@ data class TestResultEvent(
     val status: TestStatus,
     val durationMs: Long,
     val journalPath: String,
-    val timestamp: Long
+    val timestamp: Long,
 ) {
     fun toJson(): String {
         val sb = StringBuilder()
-        sb.append("""{"runId":"""").append(runId.escapeJson()).append("\"")
-            .append(""","workerId":""").append(workerId)
-
-            .append(""","status":""").append(statusToJson(status))
-
-            .append(""","durationMs":""").append(durationMs)
-            .append(""","journalPath":"""").append(journalPath.escapeJson()).append("\"")
-            .append(""","timestamp":""").append(timestamp)
+        sb
+            .append("""{"runId":"""")
+            .append(runId.escapeJson())
+            .append("\"")
+            .append(""","workerId":""")
+            .append(workerId)
+            .append(""","status":""")
+            .append(statusToJson(status))
+            .append(""","durationMs":""")
+            .append(durationMs)
+            .append(""","journalPath":"""")
+            .append(journalPath.escapeJson())
+            .append("\"")
+            .append(""","timestamp":""")
+            .append(timestamp)
             .append("}")
 
         return sb.toString()
@@ -46,7 +53,12 @@ data class TestResultEvent(
 
             is TestStatus.ExecutionError -> {
                 sb.append("ExecutionError").append("\"")
-                sb.append(""","cause":"""").append(status.cause.javaClass.name.escapeJson()).append("\"")
+                sb
+                    .append(""","cause":"""")
+                    .append(
+                        status.cause.javaClass.name
+                            .escapeJson(),
+                    ).append("\"")
                 sb.append(""","message":"""").append(status.cause.message?.escapeJson() ?: "null").append("\"")
             }
 

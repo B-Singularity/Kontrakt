@@ -6,16 +6,20 @@ data class ExecutionTrace(
     val methodSignature: String,
     val arguments: List<String>,
     val durationMs: Long,
-    override val timestamp: Long
+    override val timestamp: Long,
 ) : TraceEvent {
     override val phase = TracePhase.EXECUTION
 
     override fun toNdjson(): String {
         val sb = StringBuilder()
 
-        sb.append("""{"timestamp":""").append(timestamp)
+        sb
+            .append("""{"timestamp":""")
+            .append(timestamp)
             .append(""","phase":"$phase"""")
-            .append(""","methodSignature":"""").append(methodSignature.escapeJson()).append("\"")
+            .append(""","methodSignature":"""")
+            .append(methodSignature.escapeJson())
+            .append("\"")
             .append(""","arguments":[""")
 
         val iterator = arguments.iterator()
@@ -24,8 +28,10 @@ data class ExecutionTrace(
             if (iterator.hasNext()) sb.append(',')
         }
 
-        sb.append("""]""")
-            .append(""","durationMs":""").append(durationMs)
+        sb
+            .append("""]""")
+            .append(""","durationMs":""")
+            .append(durationMs)
             .append("}")
 
         return sb.toString()

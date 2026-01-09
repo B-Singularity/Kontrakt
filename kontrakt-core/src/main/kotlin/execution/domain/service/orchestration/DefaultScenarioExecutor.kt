@@ -27,7 +27,6 @@ import kotlin.reflect.full.functions
 import kotlin.reflect.jvm.javaMethod
 import kotlin.reflect.jvm.kotlinFunction
 
-
 /**
  * [Core Service] Default Scenario Executor.
  *
@@ -44,12 +43,11 @@ import kotlin.reflect.jvm.kotlinFunction
  */
 class DefaultScenarioExecutor(
     private val clock: Clock = Clock.systemDefaultZone(),
-    private val fixtureFactory: (MockingEngine, Clock) -> FixtureGenerator =
-        { engine, clock -> FixtureGenerator(engine, clock) },
+    private val fixtureFactory: (MockingEngine, Clock, Long) -> FixtureGenerator =
+        { engine, clock, seed -> FixtureGenerator(engine, clock, seed) },
     private val validatorFactory: (Clock) -> ContractValidator =
         { clock -> ContractValidator(clock) },
 ) : TestScenarioExecutor {
-
     private val logger = KotlinLogging.logger {}
 
     override fun executeScenarios(context: EphemeralTestContext): List<AssertionRecord> {
@@ -57,7 +55,7 @@ class DefaultScenarioExecutor(
         val fixedClock = Clock.fixed(currentInstant, ZoneId.systemDefault())
         val seed = context.specification.seed ?: System.currentTimeMillis()
 
-        val fixtureGenerator = fixtureFactory(context.mockingEngine, fixedClock)
+        val fixtureGenerator = fixtureFactory(context.mockingEngine, fixedClock, seed)
         val contractValidator = validatorFactory(fixedClock)
 
         val generationContext =
@@ -109,7 +107,7 @@ class DefaultScenarioExecutor(
             context.targetMethod = kFunc.javaMethod
                 ?: throw KontraktInternalException(
                     "Failed to resolve Java method for Kotlin function: '${kFunc.name}'. " +
-                            "This indicates a reflection issue with the target class '${kClass.simpleName}'."
+                        "This indicates a reflection issue with the target class '${kClass.simpleName}'.",
                 )
 
             val args = createArguments(kFunc, context, fixtureGenerator, generationContext)
@@ -121,11 +119,10 @@ class DefaultScenarioExecutor(
                 message = "Test '${kFunc.name}' passed",
                 expected = "Success",
                 actual = "Success",
-                location = SourceLocation.NotCaptured
+                location = SourceLocation.NotCaptured,
             )
         }
     }
-
 
     private fun executeContractFuzzing(
         context: EphemeralTestContext,
@@ -145,7 +142,7 @@ class DefaultScenarioExecutor(
                         if (kFunc.name != contractMethod.name) return@find false
                         val kFuncAsJava = kFunc.javaMethod ?: return@find false
                         kFuncAsJava.name == contractMethod.name &&
-                                kFuncAsJava.parameterTypes.contentEquals(contractMethod.parameterTypes)
+                            kFuncAsJava.parameterTypes.contentEquals(contractMethod.parameterTypes)
                     } ?: return@map AssertionRecord(
                         status = AssertionStatus.FAILED,
                         rule = SystemErrorRule("MethodNotFound"),
@@ -163,7 +160,7 @@ class DefaultScenarioExecutor(
                             message = "Could not resolve Kotlin function for '${contractMethod.name}'",
                             expected = "KFunction",
                             actual = "null",
-                            location = SourceLocation.NotCaptured
+                            location = SourceLocation.NotCaptured,
                         )
 
                 executeMethod(
@@ -199,10 +196,9 @@ class DefaultScenarioExecutor(
             message = "Method '${contractMethod.name}' executed successfully and satisfied contract.",
             expected = "Contract Compliance",
             actual = "Compliant",
-            location = SourceLocation.NotCaptured
+            location = SourceLocation.NotCaptured,
         )
     }
-
 
     private fun createArguments(
         function: KFunction<*>,

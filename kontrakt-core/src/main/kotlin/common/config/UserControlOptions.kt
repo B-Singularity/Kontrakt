@@ -14,7 +14,6 @@ data class UserControlOptions(
      * This incurs a slight performance penalty but provides full transparency.
      */
     val traceMode: Boolean = false,
-
     /**
      * [--tests "pattern"]
      * Filter patterns to execute only specific classes or methods.
@@ -22,14 +21,12 @@ data class UserControlOptions(
      * If empty, a full scan is performed.
      */
     val testPatterns: Set<String> = emptySet(),
-
     /**
      * [--package "name"]
      * Limits the scanning scope to a specific package to support fast feedback loops.
      * If null, scanning starts from the root package.
      */
     val packageScope: String? = null,
-
     /**
      * [--archive]
      * [ADR-015] Report retention policy.
@@ -37,24 +34,22 @@ data class UserControlOptions(
      * If false, `index.html` is overwritten (Default).
      */
     val archiveMode: Boolean = false,
-
     /**
      * [--verbose / --quiet]
      * Controls the verbosity level of the console output.
      */
     val verbosity: Verbosity = Verbosity.NORMAL,
-
     /**
      * [--seed 12345]
      * Fixes the random seed for Deterministic Reproduction.
      * If null, a new random seed is generated for each run.
      */
-    val seed: Long? = null
+    val seed: Long? = null,
 ) {
     enum class Verbosity {
-        QUIET,   // Outputs only failure summaries.
-        NORMAL,  // Outputs smart summaries and failure details (Default).
-        VERBOSE  // Outputs full details including successful logs.
+        QUIET, // Outputs only failure summaries.
+        NORMAL, // Outputs smart summaries and failure details (Default).
+        VERBOSE, // Outputs full details including successful logs.
     }
 
     companion object {
