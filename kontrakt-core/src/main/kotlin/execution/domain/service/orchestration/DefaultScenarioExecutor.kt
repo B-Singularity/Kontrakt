@@ -1,10 +1,7 @@
 package execution.domain.service.orchestration
 
-import common.util.unwrapped
 import discovery.api.Test
 import discovery.domain.aggregate.TestSpecification
-import exception.ContractViolationException
-import exception.KontraktException
 import exception.KontraktInternalException
 import execution.api.TestScenarioExecutor
 import execution.domain.AssertionStatus
@@ -13,9 +10,9 @@ import execution.domain.generator.GenerationContext
 import execution.domain.service.generation.FixtureGenerator
 import execution.domain.service.validation.ContractValidator
 import execution.domain.vo.AssertionRecord
+import execution.domain.vo.SourceLocation
+import execution.domain.vo.StandardAssertion
 import execution.domain.vo.SystemErrorRule
-import execution.domain.vo.UserAssertionRule
-import execution.domain.vo.UserExceptionRule
 import execution.spi.MockingEngine
 import io.github.oshai.kotlinlogging.KotlinLogging
 import java.lang.reflect.Method
@@ -30,6 +27,21 @@ import kotlin.reflect.full.functions
 import kotlin.reflect.jvm.javaMethod
 import kotlin.reflect.jvm.kotlinFunction
 
+
+/**
+ * [Core Service] Default Scenario Executor.
+ *
+ * This component orchestrates the **reflection-based invocation** of test scenarios.
+ * It handles:
+ * 1. **Dependency Generation**: Creates fixtures via [FixtureGenerator].
+ * 2. **Mode Switching**: Supports 'UserScenario' (@Test) and 'ContractAuto' (Fuzzing).
+ * 3. **Validation**: Enforces contracts via [ContractValidator].
+ *
+ * This executor is now **Exception Transparent**. It **DOES NOT** catch exceptions.
+ * - **Success**: Returns [AssertionStatus.PASSED] records.
+ * - **Failure**: Propagates exceptions to the [execution.domain.interceptor.ResultResolverInterceptor]
+ * for centralized error handling and source coordinate mining.
+ */
 class DefaultScenarioExecutor(
     private val clock: Clock = Clock.systemDefaultZone(),
     private val fixtureFactory: (MockingEngine, Clock) -> FixtureGenerator =
@@ -37,16 +49,17 @@ class DefaultScenarioExecutor(
     private val validatorFactory: (Clock) -> ContractValidator =
         { clock -> ContractValidator(clock) },
 ) : TestScenarioExecutor {
+
     private val logger = KotlinLogging.logger {}
 
     override fun executeScenarios(context: EphemeralTestContext): List<AssertionRecord> {
         val currentInstant = Instant.now(clock)
         val fixedClock = Clock.fixed(currentInstant, ZoneId.systemDefault())
+        val seed = context.specification.seed ?: System.currentTimeMillis()
 
         val fixtureGenerator = fixtureFactory(context.mockingEngine, fixedClock)
         val contractValidator = validatorFactory(fixedClock)
 
-        val seed = context.specification.seed ?: System.currentTimeMillis()
         val generationContext =
             GenerationContext(
                 seededRandom = Random(seed),
@@ -99,61 +112,20 @@ class DefaultScenarioExecutor(
                             "This indicates a reflection issue with the target class '${kClass.simpleName}'."
                 )
 
-            try {
-                val args = createArguments(kFunc, context, fixtureGenerator, generationContext)
+            val args = createArguments(kFunc, context, fixtureGenerator, generationContext)
+            kFunc.callBy(args)
 
-                kFunc.callBy(args)
-
-                AssertionRecord(
-                    status = AssertionStatus.PASSED,
-                    rule = UserAssertionRule,
-                    message = "Test '${kFunc.name}' passed",
-                    expected = "Success",
-                    actual = "Success",
-                )
-            } catch (e: Throwable) {
-                val cause = e.unwrapped
-                handleUserTestFailure(kFunc, cause)
-            }
+            AssertionRecord(
+                status = AssertionStatus.PASSED,
+                rule = StandardAssertion,
+                message = "Test '${kFunc.name}' passed",
+                expected = "Success",
+                actual = "Success",
+                location = SourceLocation.NotCaptured
+            )
         }
     }
 
-
-    private fun handleUserTestFailure(kFunc: KFunction<*>, cause: Throwable): AssertionRecord {
-        return when (cause) {
-            is AssertionError -> {
-                AssertionRecord(
-                    status = AssertionStatus.FAILED,
-                    rule = UserAssertionRule,
-                    message = "Test '${kFunc.name}' failed: ${cause.message}",
-                    expected = "Assertion Pass",
-                    actual = "Assertion Fail",
-                )
-            }
-
-            is KontraktException -> {
-                logger.error(cause) { "Framework error in test '${kFunc.name}'" }
-                AssertionRecord(
-                    status = AssertionStatus.FAILED,
-                    rule = SystemErrorRule(cause.javaClass.simpleName),
-                    message = "Framework Error: ${cause.message}",
-                    expected = "Normal Execution",
-                    actual = "Framework Crash",
-                )
-            }
-
-            else -> {
-                logger.error(cause) { "User code crashed in test '${kFunc.name}'" }
-                AssertionRecord(
-                    status = AssertionStatus.FAILED,
-                    rule = UserExceptionRule(cause.javaClass.simpleName),
-                    message = "Unexpected exception in user code: ${cause.message}",
-                    expected = "Normal Execution",
-                    actual = cause.javaClass.simpleName,
-                )
-            }
-        }
-    }
 
     private fun executeContractFuzzing(
         context: EphemeralTestContext,
@@ -179,7 +151,8 @@ class DefaultScenarioExecutor(
                         rule = SystemErrorRule("MethodNotFound"),
                         message = "Method '${contractMethod.name}' not found in implementation",
                         expected = "Method Implementation",
-                        actual = "Missing"
+                        actual = "Missing",
+                        location = SourceLocation.NotCaptured,
                     )
 
                 val contractKFunc =
@@ -189,7 +162,8 @@ class DefaultScenarioExecutor(
                             rule = SystemErrorRule("ReflectionError"),
                             message = "Could not resolve Kotlin function for '${contractMethod.name}'",
                             expected = "KFunction",
-                            actual = "null"
+                            actual = "null",
+                            location = SourceLocation.NotCaptured
                         )
 
                 executeMethod(
@@ -212,25 +186,22 @@ class DefaultScenarioExecutor(
         fixtureGenerator: FixtureGenerator,
         contractValidator: ContractValidator,
         generationContext: GenerationContext,
-    ): AssertionRecord =
-        try {
-            val args = createArguments(implFunc, context, fixtureGenerator, generationContext)
+    ): AssertionRecord {
+        val args = createArguments(implFunc, context, fixtureGenerator, generationContext)
 
-            val result = implFunc.callBy(args)
+        val result = implFunc.callBy(args)
 
-            contractValidator.validate(contractKFunc, result)
+        contractValidator.validate(contractKFunc, result)
 
-            AssertionRecord(
-                status = AssertionStatus.PASSED,
-                rule = UserAssertionRule,
-                message = "Method '${contractMethod.name}' executed successfully and satisfied contract.",
-                expected = "No Exception & Valid Return",
-                actual = "Success",
-            )
-        } catch (e: Throwable) {
-            val cause = e.unwrapped
-            handleExecutionFailure(contractMethod.name, cause)
-        }
+        return AssertionRecord(
+            status = AssertionStatus.PASSED,
+            rule = StandardAssertion,
+            message = "Method '${contractMethod.name}' executed successfully and satisfied contract.",
+            expected = "Contract Compliance",
+            actual = "Compliant",
+            location = SourceLocation.NotCaptured
+        )
+    }
 
 
     private fun createArguments(
@@ -251,59 +222,5 @@ class DefaultScenarioExecutor(
             arguments[param] = fixtureGenerator.generate(param, generationContext)
         }
         return arguments
-    }
-
-    /**
-     * Handles exceptions thrown during test execution and maps them to the appropriate [AssertionRule].
-     */
-    private fun handleExecutionFailure(methodName: String, cause: Throwable): AssertionRecord {
-        return when (cause) {
-            // 1. [Failure] Contract Violation (Specific Rule from Validator)
-            is ContractViolationException -> {
-                logger.warn { "Contract Violation in $methodName: ${cause.message}" }
-                AssertionRecord(
-                    status = AssertionStatus.FAILED,
-                    rule = cause.rule, // Use the specific rule (e.g., NotNull, Size)
-                    message = "Contract Violation in method '$methodName': ${cause.message}",
-                    expected = "Constraint Compliance",
-                    actual = "Violation",
-                )
-            }
-
-            // 2. [Failure] Simple Assertion Failed (User Logic Error)
-            is AssertionError -> {
-                AssertionRecord(
-                    status = AssertionStatus.FAILED,
-                    rule = UserAssertionRule,
-                    message = "Test '$methodName' failed: ${cause.message}",
-                    expected = "Assertion Pass",
-                    actual = "Assertion Fail",
-                )
-            }
-
-            // 3. [System Error] Framework Internal Error (Not User's Fault)
-            is KontraktException -> {
-                logger.error(cause) { "Framework error in test '$methodName'" }
-                AssertionRecord(
-                    status = AssertionStatus.FAILED,
-                    rule = SystemErrorRule(cause.javaClass.simpleName),
-                    message = "Framework Error: ${cause.message}",
-                    expected = "Normal Execution",
-                    actual = "Framework Crash",
-                )
-            }
-
-            // 4. [User Exception] Unexpected Runtime Exception in User Code (NPE, OOM, etc.)
-            else -> {
-                logger.error(cause) { "User code crashed in test '$methodName'" }
-                AssertionRecord(
-                    status = AssertionStatus.FAILED,
-                    rule = UserExceptionRule(cause.javaClass.simpleName),
-                    message = "Unexpected exception in user code: ${cause.message}",
-                    expected = "Normal Execution",
-                    actual = cause.javaClass.simpleName,
-                )
-            }
-        }
     }
 }

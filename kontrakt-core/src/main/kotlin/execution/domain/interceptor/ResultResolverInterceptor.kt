@@ -108,7 +108,7 @@ class ResultResolverInterceptor(
             is KontraktInternalException -> createAssertionRecord(
                 status = AssertionStatus.FAILED,
                 rule = SystemErrorRule("InternalError"),
-                message = "💥 Internal Framework Error: ${rootCause.message}",
+                message = "Internal Framework Error: ${rootCause.message}",
                 expected = "Framework Stability",
                 actual = "Crash",
                 location = location
