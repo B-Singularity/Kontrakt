@@ -8,21 +8,30 @@ import execution.domain.service.generation.FixtureGenerator
 import execution.domain.vo.AssertionRecord
 import execution.domain.vo.ConstructorSanityRule
 import execution.domain.vo.DefensiveCheckRule
+import execution.domain.vo.SourceLocation
 import kotlin.reflect.KFunction
 import kotlin.reflect.full.primaryConstructor
 
 
 /**
- * [Executor] Constructor Compliance
+ * [Domain Service] Constructor Compliance Executor.
  *
- * Validates the structural integrity and defensive mechanisms of the target class's constructor.
- * It performs two types of checks:
- * 1. [ConstructorSanityRule]: Ensures the object can be instantiated with valid arguments.
- * 2. [DefensiveCheckRule]: Ensures the object rejects invalid arguments (Fuzzing).
+ * Verifies the structural integrity and defensive logic of the target class's constructor.
+ *
+ * **Design Note**:
+ * Unlike the `DefaultScenarioExecutor`, this component **MUST catch exceptions**.
+ * For defensive checks (Fuzzing), an exception thrown by the constructor is often
+ * the **expected outcome (Success)**, indicating that the class correctly rejected invalid input.
  */
 class ConstructorComplianceExecutor(
     private val fixtureGenerator: FixtureGenerator,
 ) {
+
+    /**
+     * orchestrates the validation process:
+     * 1. **Sanity Check**: Ensures the constructor works with valid data.
+     * 2. **Defensive Check**: Ensures the constructor throws exceptions for invalid data.
+     */
     fun validateConstructor(
         context: EphemeralTestContext,
         generationContext: GenerationContext
@@ -63,6 +72,7 @@ class ConstructorComplianceExecutor(
                 message = "Constructor Sanity Check: Instance created successfully.",
                 expected = "Instance Created",
                 actual = "Success",
+                location = SourceLocation.NotCaptured
             )
         } catch (e: Throwable) {
             val cause = e.unwrapped
@@ -72,6 +82,7 @@ class ConstructorComplianceExecutor(
                 message = "Constructor Sanity Check Failed: ${cause.message}",
                 expected = "Instance Created",
                 actual = cause.javaClass.simpleName,
+                location = SourceLocation.NotCaptured
             )
         }
 
@@ -93,10 +104,11 @@ class ConstructorComplianceExecutor(
 
             AssertionRecord(
                 status = AssertionStatus.FAILED,
-                rule = DefensiveCheckRule, // ✨ Applies the Defensive Rule
+                rule = DefensiveCheckRule,
                 message = "Defensive Check Failed: Constructor accepted invalid '$paramName' = $badValue",
                 expected = "Exception Thrown",
                 actual = "Instance Created",
+                location = SourceLocation.NotCaptured
             )
         } catch (e: Throwable) {
             val cause = e.unwrapped
@@ -106,6 +118,7 @@ class ConstructorComplianceExecutor(
                 message = "Defensive Check Passed: Constructor rejected invalid '$paramName' = $badValue",
                 expected = "Exception",
                 actual = cause.javaClass.simpleName,
+                location = SourceLocation.NotCaptured
             )
         }
 }
