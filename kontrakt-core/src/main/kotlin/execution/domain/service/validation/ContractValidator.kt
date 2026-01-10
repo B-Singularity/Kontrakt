@@ -27,6 +27,8 @@ import discovery.api.StringLength
 import discovery.api.Url
 import discovery.api.Uuid
 import exception.ContractViolationException
+import execution.domain.vo.AnnotationRule
+import execution.domain.vo.AssertionRule
 import java.math.BigDecimal
 import java.time.Clock
 import java.time.Instant
@@ -48,13 +50,19 @@ class ContractValidator(
     ) {
         if (value == null) {
             if (element.has<NotNull>()) {
-                throw ContractViolationException("NotNull violation: value is null")
+                throw ContractViolationException(
+                    rule = AnnotationRule(NotNull::class),
+                    message = "NotNull violation: value is null"
+                )
             }
             return
         }
 
         if (element.has<Null>()) {
-            throw ContractViolationException("Null violation: value must be null but got '$value'")
+            throw ContractViolationException(
+                rule = AnnotationRule(Null::class),
+                message = "Null violation: value must be null but got '$value'"
+            )
         }
 
         when (value) {
@@ -77,10 +85,10 @@ class ContractValidator(
         value: Boolean,
     ) {
         if (element.has<AssertTrue>()) {
-            ensure(value) { "AssertTrue violation: expected true but got false" }
+            ensure(value, AnnotationRule(AssertTrue::class)) { "AssertTrue violation: expected true but got false" }
         }
         if (element.has<AssertFalse>()) {
-            ensure(!value) { "AssertFalse violation: expected false but got true" }
+            ensure(!value, AnnotationRule(AssertFalse::class)) { "AssertFalse violation: expected false but got true" }
         }
     }
 
@@ -92,7 +100,7 @@ class ContractValidator(
 
         element.find<IntRange>()?.let { range ->
             if (value is Int) {
-                ensure(value in range.min..range.max) {
+                ensure(value in range.min..range.max, AnnotationRule(IntRange::class)) {
                     "IntRange violation: expected [${range.min}..${range.max}] but got $value"
                 }
             }
@@ -100,7 +108,7 @@ class ContractValidator(
 
         element.find<LongRange>()?.let { range ->
             if (value is Long) {
-                ensure(value in range.min..range.max) {
+                ensure(value in range.min..range.max, AnnotationRule(LongRange::class)) {
                     "LongRange violation: expected [${range.min}..${range.max}] but got $value"
                 }
             }
@@ -108,7 +116,7 @@ class ContractValidator(
 
         element.find<DoubleRange>()?.let { range ->
             if (value is Double) {
-                ensure(value >= range.min && value <= range.max) {
+                ensure(value >= range.min && value <= range.max, AnnotationRule(DoubleRange::class)) {
                     "DoubleRange violation: expected [${range.min}..${range.max}] but got $value"
                 }
             }
@@ -117,47 +125,60 @@ class ContractValidator(
         element.find<DecimalMin>()?.let { min ->
             val minVal = BigDecimal(min.value)
             val result = decimalValue.compareTo(minVal)
+            val rule = AnnotationRule(DecimalMin::class)
             if (min.inclusive) {
-                ensure(result >= 0) { "DecimalMin violation: expected >= ${min.value} but got $value" }
+                ensure(result >= 0, rule) { "DecimalMin violation: expected >= ${min.value} but got $value" }
             } else {
-                ensure(result > 0) { "DecimalMin violation: expected > ${min.value} but got $value" }
+                ensure(result > 0, rule) { "DecimalMin violation: expected > ${min.value} but got $value" }
             }
         }
 
         element.find<DecimalMax>()?.let { max ->
             val maxVal = BigDecimal(max.value)
             val result = decimalValue.compareTo(maxVal)
+            val rule = AnnotationRule(DecimalMax::class)
             if (max.inclusive) {
-                ensure(result <= 0) { "DecimalMax violation: expected <= ${max.value} but got $value" }
+                ensure(result <= 0, rule) { "DecimalMax violation: expected <= ${max.value} but got $value" }
             } else {
-                ensure(result < 0) { "DecimalMax violation: expected < ${max.value} but got $value" }
+                ensure(result < 0, rule) { "DecimalMax violation: expected < ${max.value} but got $value" }
             }
         }
 
         element.find<Digits>()?.let { digits ->
             val integerPart = decimalValue.precision() - decimalValue.scale()
             val fractionPart = if (decimalValue.scale() < 0) 0 else decimalValue.scale()
+            val rule = AnnotationRule(Digits::class)
 
-            ensure(integerPart <= digits.integer) { "Digits integer violation: expected max ${digits.integer} digits but got $integerPart" }
-            ensure(
-                fractionPart <= digits.fraction,
-            ) { "Digits fraction violation: expected max ${digits.fraction} digits but got $fractionPart" }
+            ensure(integerPart <= digits.integer, rule) {
+                "Digits integer violation: expected max ${digits.integer} digits but got $integerPart"
+            }
+            ensure(fractionPart <= digits.fraction, rule) {
+                "Digits fraction violation: expected max ${digits.fraction} digits but got $fractionPart"
+            }
         }
 
         if (element.has<Positive>()) {
-            ensure(decimalValue > BigDecimal.ZERO) { "Positive violation: expected > 0 but got $value" }
+            ensure(decimalValue > BigDecimal.ZERO, AnnotationRule(Positive::class)) {
+                "Positive violation: expected > 0 but got $value"
+            }
         }
 
         if (element.has<PositiveOrZero>()) {
-            ensure(decimalValue >= BigDecimal.ZERO) { "PositiveOrZero violation: expected >= 0 but got $value" }
+            ensure(decimalValue >= BigDecimal.ZERO, AnnotationRule(PositiveOrZero::class)) {
+                "PositiveOrZero violation: expected >= 0 but got $value"
+            }
         }
 
         if (element.has<Negative>()) {
-            ensure(decimalValue < BigDecimal.ZERO) { "Negative violation: expected < 0 but got $value" }
+            ensure(decimalValue < BigDecimal.ZERO, AnnotationRule(Negative::class)) {
+                "Negative violation: expected < 0 but got $value"
+            }
         }
 
         if (element.has<NegativeOrZero>()) {
-            ensure(decimalValue <= BigDecimal.ZERO) { "NegativeOrZero violation: expected <= 0 but got $value" }
+            ensure(decimalValue <= BigDecimal.ZERO, AnnotationRule(NegativeOrZero::class)) {
+                "NegativeOrZero violation: expected <= 0 but got $value"
+            }
         }
     }
 
@@ -166,23 +187,24 @@ class ContractValidator(
         value: String,
     ) {
         element.find<StringLength>()?.let { limit ->
-            ensure(value.length in limit.min..limit.max) {
+            ensure(value.length in limit.min..limit.max, AnnotationRule(StringLength::class)) {
                 "StringLength violation: expected length [${limit.min}..${limit.max}] but got ${value.length}"
             }
         }
 
         if (element.has<NotBlank>()) {
-            ensure(value.isNotBlank()) { "NotBlank violation: result was blank" }
+            ensure(value.isNotBlank(), AnnotationRule(NotBlank::class)) { "NotBlank violation: result was blank" }
         }
 
         element.find<Pattern>()?.let { pattern ->
-            ensure(value.matches(Regex(pattern.regexp))) {
+            ensure(value.matches(Regex(pattern.regexp)), AnnotationRule(Pattern::class)) {
                 "Pattern violation: expected regex '${pattern.regexp}' but got '$value'"
             }
         }
 
         element.find<Email>()?.let { rule ->
-            ensure(value.contains("@") && value.contains(".")) {
+            val assertionRule = AnnotationRule(Email::class)
+            ensure(value.contains("@") && value.contains("."), assertionRule) {
                 "Email violation: '$value' is not a valid email format"
             }
 
@@ -190,35 +212,44 @@ class ContractValidator(
 
             if (rule.allow.isNotEmpty()) {
                 val isAllowed = rule.allow.any { allowed -> domain == allowed || domain.endsWith(".$allowed") }
-                ensure(isAllowed) { "Email domain violation: '$domain' is not in allowed list ${rule.allow.toList()}" }
+                ensure(isAllowed, assertionRule) {
+                    "Email domain violation: '$domain' is not in allowed list ${rule.allow.toList()}"
+                }
             }
 
             if (rule.block.isNotEmpty()) {
                 val isBlocked = rule.block.any { blocked -> domain == blocked || domain.endsWith(".$blocked") }
-                ensure(!isBlocked) { "Email domain violation: '$domain' is blocked" }
+                ensure(!isBlocked, assertionRule) { "Email domain violation: '$domain' is blocked" }
             }
         }
 
         element.find<Url>()?.let { rule ->
+            val assertionRule = AnnotationRule(Url::class)
             val isValidProtocol = rule.protocol.any { value.startsWith("$it://") }
-            ensure(isValidProtocol) { "Url protocol violation: '$value' does not start with ${rule.protocol.toList()}" }
+            ensure(isValidProtocol, assertionRule) {
+                "Url protocol violation: '$value' does not start with ${rule.protocol.toList()}"
+            }
 
             val host = value.substringAfter("://").substringBefore("/").substringBefore("?")
 
             if (rule.hostAllow.isNotEmpty()) {
                 val isAllowed = rule.hostAllow.any { allowed -> host == allowed || host.endsWith(".$allowed") }
-                ensure(isAllowed) { "Url host violation: '$host' is not in allowed list ${rule.hostAllow.toList()}" }
+                ensure(isAllowed, assertionRule) {
+                    "Url host violation: '$host' is not in allowed list ${rule.hostAllow.toList()}"
+                }
             }
 
             if (rule.hostBlock.isNotEmpty()) {
                 val isBlocked = rule.hostBlock.any { blocked -> host == blocked || host.endsWith(".$blocked") }
-                ensure(!isBlocked) { "Url host violation: '$host' is blocked" }
+                ensure(!isBlocked, assertionRule) { "Url host violation: '$host' is blocked" }
             }
         }
 
         if (element.has<Uuid>()) {
             val uuidRegex = Regex("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
-            ensure(uuidRegex.matches(value)) { "Uuid violation: '$value' is not a valid UUID format" }
+            ensure(uuidRegex.matches(value), AnnotationRule(Uuid::class)) {
+                "Uuid violation: '$value' is not a valid UUID format"
+            }
         }
     }
 
@@ -227,13 +258,15 @@ class ContractValidator(
         value: Collection<*>,
     ) {
         element.find<Size>()?.let { limit ->
-            ensure(value.size in limit.min..limit.max) {
+            ensure(value.size in limit.min..limit.max, AnnotationRule(Size::class)) {
                 "Size violation: expected size [${limit.min}..${limit.max}] but got ${value.size}"
             }
         }
 
         if (element.has<NotEmpty>()) {
-            ensure(value.isNotEmpty()) { "NotEmpty violation: collection was empty" }
+            ensure(value.isNotEmpty(), AnnotationRule(NotEmpty::class)) {
+                "NotEmpty violation: collection was empty"
+            }
         }
     }
 
@@ -242,12 +275,14 @@ class ContractValidator(
         value: Map<*, *>,
     ) {
         element.find<Size>()?.let { limit ->
-            ensure(value.size in limit.min..limit.max) {
+            ensure(value.size in limit.min..limit.max, AnnotationRule(Size::class)) {
                 "Size violation: expected size [${limit.min}..${limit.max}] but got ${value.size}"
             }
         }
         if (element.has<NotEmpty>()) {
-            ensure(value.isNotEmpty()) { "NotEmpty violation: map was empty" }
+            ensure(value.isNotEmpty(), AnnotationRule(NotEmpty::class)) {
+                "NotEmpty violation: map was empty"
+            }
         }
     }
 
@@ -256,12 +291,14 @@ class ContractValidator(
         value: Array<*>,
     ) {
         element.find<Size>()?.let { limit ->
-            ensure(value.size in limit.min..limit.max) {
+            ensure(value.size in limit.min..limit.max, AnnotationRule(Size::class)) {
                 "Size violation: expected size [${limit.min}..${limit.max}] but got ${value.size}"
             }
         }
         if (element.has<NotEmpty>()) {
-            ensure(value.isNotEmpty()) { "NotEmpty violation: array was empty" }
+            ensure(value.isNotEmpty(), AnnotationRule(NotEmpty::class)) {
+                "NotEmpty violation: array was empty"
+            }
         }
     }
 
@@ -273,25 +310,33 @@ class ContractValidator(
         val target = toInstant(value) ?: return
 
         if (element.has<Past>()) {
-            ensure(target.isBefore(now)) { "Past violation: expected past date but got $value" }
+            ensure(target.isBefore(now), AnnotationRule(Past::class)) {
+                "Past violation: expected past date but got $value"
+            }
         }
         if (element.has<PastOrPresent>()) {
-            ensure(!target.isAfter(now)) { "PastOrPresent violation: expected past or present date but got $value" }
+            ensure(!target.isAfter(now), AnnotationRule(PastOrPresent::class)) {
+                "PastOrPresent violation: expected past or present date but got $value"
+            }
         }
         if (element.has<Future>()) {
-            ensure(target.isAfter(now)) { "Future violation: expected future date but got $value" }
+            ensure(target.isAfter(now), AnnotationRule(Future::class)) {
+                "Future violation: expected future date but got $value"
+            }
         }
         if (element.has<FutureOrPresent>()) {
-            ensure(!target.isBefore(now)) { "FutureOrPresent violation: expected future or present date but got $value" }
+            ensure(!target.isBefore(now), AnnotationRule(FutureOrPresent::class)) {
+                "FutureOrPresent violation: expected future or present date but got $value"
+            }
         }
     }
 
     private fun isTimeType(value: Any): Boolean =
         value is Instant ||
-            value is Date ||
-            value is ChronoLocalDate ||
-            value is ChronoLocalDateTime<*> ||
-            value is ChronoZonedDateTime<*>
+                value is Date ||
+                value is ChronoLocalDate ||
+                value is ChronoLocalDateTime<*> ||
+                value is ChronoZonedDateTime<*>
 
     private fun toInstant(value: Any): Instant? =
         when (value) {
@@ -325,10 +370,11 @@ class ContractValidator(
 
     private inline fun ensure(
         condition: Boolean,
+        rule: AssertionRule,
         lazyMessage: () -> String,
     ) {
         if (!condition) {
-            throw ContractViolationException(lazyMessage())
+            throw ContractViolationException(rule, lazyMessage())
         }
     }
 }

@@ -5,8 +5,10 @@ import execution.api.ScenarioContext
 import execution.domain.generator.GenerationRequest
 import execution.domain.service.generation.FixtureGenerator
 import execution.domain.vo.trace.ExecutionTrace
+import execution.spi.MockingContext
 import execution.spi.MockingEngine
 import execution.spi.ScenarioControl
+import execution.spi.trace.ScenarioTrace
 import io.github.oshai.kotlinlogging.KLogger
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.mockito.Mockito
@@ -24,10 +26,9 @@ import kotlin.reflect.jvm.kotlinFunction
  *
  * This adapter bridges Mockito with the Kontrakt framework's generation and tracing systems.
  *
- * ### Architecture Note: Method Injection Pattern
- * Unlike the previous ThreadLocal approach, this adapter is **Stateless**.
- * It receives the [FixtureGenerator] explicitly as an argument during mock creation,
- * ensuring thread safety and clearer dependency flow.
+ * ### Architecture Note: Method Injection Pattern (Stateless)
+ * This adapter receives dependencies via [MockingContext] during mock creation.
+ * It does NOT rely on ThreadLocal, making it safe for parallel execution and cleaner in design.
  *
  * **Strategies:**
  * - **Stateless Mocks:** Delegate directly to [FixtureGenerator] via [GenerativeAnswer].
@@ -40,20 +41,20 @@ class MockitoEngineAdapter :
 
     override fun <T : Any> createMock(
         classToMock: KClass<T>,
-        generator: FixtureGenerator,
+        context: MockingContext
     ): T =
         Mockito.mock(
             classToMock.java,
-            GenerativeAnswer(generator, classToMock, logger),
+            GenerativeAnswer(context.generator, classToMock, logger, context.trace),
         )
 
     override fun <T : Any> createFake(
         classToFake: KClass<T>,
-        generator: FixtureGenerator,
+        context: MockingContext
     ): T =
         Mockito.mock(
             classToFake.java,
-            StatefulOrGenerativeAnswer(generator),
+            StatefulOrGenerativeAnswer(context.generator, context.trace)
         )
 
     override fun createScenarioContext(): ScenarioContext = MockitoScenarioContext()
@@ -65,20 +66,26 @@ class MockitoEngineAdapter :
         private val generator: FixtureGenerator,
         private val mockType: KClass<*>,
         private val logger: KLogger,
+        private val trace: ScenarioTrace,
     ) : Answer<Any?> {
         override fun answer(invocation: InvocationOnMock): Any? {
             val methodName = invocation.method.name
+            val args = invocation.arguments ?: emptyArray()
+            val startTime = System.currentTimeMillis()
 
             // [UX] Warn if user tries to use stateful methods on a stateless mock
             if (isSuspiciousStatefulMethod(methodName)) {
                 logger.warn {
                     "⚠️ Suspicious call '$methodName' on Stateless Mock '${mockType.simpleName}'. " +
-                        "Use 'createFake()' (or @Stateful) if you need In-Memory DB behavior."
+                            "Use 'createFake()' (or @Stateful) if you need In-Memory DB behavior."
                 }
             }
 
             val returnType = invocation.method.kotlinFunction?.returnType
-            if (returnType == null || returnType.classifier == Unit::class) return null
+            if (returnType == null || returnType.classifier == Unit::class) {
+                trace.recordCapture(invocation, args, startTime)
+                return null
+            }
 
             val request =
                 GenerationRequest.from(
@@ -86,16 +93,20 @@ class MockitoEngineAdapter :
                     name = "${invocation.method.name}:ReturnValue",
                 )
 
-            return generator.generate(request)
+            val result = generator.generate(request)
+
+            trace.recordCapture(invocation, args, startTime)
+
+            return result
         }
 
         private fun isSuspiciousStatefulMethod(name: String): Boolean =
             name.startsWith("save") ||
-                name.startsWith("insert") ||
-                name.startsWith("update") ||
-                name.startsWith("delete") ||
-                name.startsWith("remove") ||
-                name.startsWith("store")
+                    name.startsWith("insert") ||
+                    name.startsWith("update") ||
+                    name.startsWith("delete") ||
+                    name.startsWith("remove") ||
+                    name.startsWith("store")
     }
 
     /**
@@ -104,6 +115,7 @@ class MockitoEngineAdapter :
      */
     private class StatefulOrGenerativeAnswer(
         private val generator: FixtureGenerator,
+        private val trace: ScenarioTrace,
     ) : Answer<Any?> {
         private val store = ConcurrentHashMap<Any, Any>()
 
@@ -196,10 +208,7 @@ class MockitoEngineAdapter :
                 )
 
             runCatching {
-                ThreadLocalScenarioControl
-                    .get()
-                    .trace.decisions
-                    .add(traceEvent)
+                trace.decisions.add(traceEvent)
             }
         }
 
@@ -209,8 +218,8 @@ class MockitoEngineAdapter :
             n: String,
             args: Array<Any>,
         ) = (n == "findById" || n == "getById") &&
-            args.size == 1 ||
-            ((n.startsWith("find") || n.startsWith("get")) && args.size == 1 && !n.contains("By"))
+                args.size == 1 ||
+                ((n.startsWith("find") || n.startsWith("get")) && args.size == 1 && !n.contains("By"))
 
         private fun isFindAll(n: String) = n.contains("All") || n.contains("findAll") || n == "list"
 
@@ -225,5 +234,28 @@ class MockitoEngineAdapter :
                     ?.getter
                     ?.call(entity)
             }.getOrNull()
+    }
+}
+
+private fun ScenarioTrace.recordCapture(
+    invocation: InvocationOnMock,
+    args: Array<Any>,
+    startTime: Long
+) {
+    val duration = System.currentTimeMillis() - startTime
+
+    val interfaceName = invocation.mock::class.java.interfaces
+        .firstOrNull()
+        ?.simpleName ?: "Mock"
+
+    val traceEvent = ExecutionTrace(
+        methodSignature = "$interfaceName.${invocation.method.name}",
+        arguments = args.map { it.toString() }, // 인자 사용
+        durationMs = duration,
+        timestamp = startTime,
+    )
+
+    runCatching {
+        this.decisions.add(traceEvent)
     }
 }

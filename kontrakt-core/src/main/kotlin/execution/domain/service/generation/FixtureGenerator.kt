@@ -20,7 +20,9 @@ import execution.domain.service.validation.ContractConfigurationValidator
 import execution.exception.GenerationFailedException
 import execution.exception.RecursiveGenerationFailedException
 import execution.exception.UnsupportedGeneratorException
+import execution.spi.MockingContext
 import execution.spi.MockingEngine
+import execution.spi.trace.ScenarioTrace
 import io.github.oshai.kotlinlogging.KotlinLogging
 import java.time.Clock
 import kotlin.random.Random
@@ -59,6 +61,7 @@ import kotlin.reflect.KParameter
 class FixtureGenerator(
     private val mockingEngine: MockingEngine,
     private val clock: Clock,
+    private val trace: ScenarioTrace,
     seed: Long,
 ) {
     private val logger = KotlinLogging.logger {}
@@ -334,7 +337,8 @@ class FixtureGenerator(
         val kClass = request.type.classifier as? KClass<*> ?: throw recursionEx
 
         return try {
-            mockingEngine.createMock(kClass, this)
+            val context = MockingContext(this, trace)
+            mockingEngine.createMock(kClass, context)
         } catch (mockEx: Exception) {
             val combinedEx =
                 GenerationFailedException(
@@ -347,7 +351,8 @@ class FixtureGenerator(
         }
     }
 
-    private fun findGenerator(request: GenerationRequest): TypeGenerator? = generators.firstOrNull { it.supports(request) }
+    private fun findGenerator(request: GenerationRequest): TypeGenerator? =
+        generators.firstOrNull { it.supports(request) }
 
     /**
      * Performs final integrity checks on the generated result.

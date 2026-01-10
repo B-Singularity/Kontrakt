@@ -14,6 +14,7 @@ import execution.domain.vo.SourceLocation
 import execution.domain.vo.StandardAssertion
 import execution.domain.vo.SystemErrorRule
 import execution.spi.MockingEngine
+import execution.spi.trace.ScenarioTrace
 import io.github.oshai.kotlinlogging.KotlinLogging
 import java.lang.reflect.Method
 import java.time.Clock
@@ -43,8 +44,8 @@ import kotlin.reflect.jvm.kotlinFunction
  */
 class DefaultScenarioExecutor(
     private val clock: Clock = Clock.systemDefaultZone(),
-    private val fixtureFactory: (MockingEngine, Clock, Long) -> FixtureGenerator =
-        { engine, clock, seed -> FixtureGenerator(engine, clock, seed) },
+    private val fixtureFactory: (MockingEngine, Clock, ScenarioTrace, Long) -> FixtureGenerator =
+        { engine, clock, trace, seed -> FixtureGenerator(engine, clock, trace, seed) },
     private val validatorFactory: (Clock) -> ContractValidator =
         { clock -> ContractValidator(clock) },
 ) : TestScenarioExecutor {
@@ -55,7 +56,7 @@ class DefaultScenarioExecutor(
         val fixedClock = Clock.fixed(currentInstant, ZoneId.systemDefault())
         val seed = context.specification.seed ?: System.currentTimeMillis()
 
-        val fixtureGenerator = fixtureFactory(context.mockingEngine, fixedClock, seed)
+        val fixtureGenerator = fixtureFactory(context.mockingEngine, fixedClock, context.trace, seed)
         val contractValidator = validatorFactory(fixedClock)
 
         val generationContext =
@@ -107,7 +108,7 @@ class DefaultScenarioExecutor(
             context.targetMethod = kFunc.javaMethod
                 ?: throw KontraktInternalException(
                     "Failed to resolve Java method for Kotlin function: '${kFunc.name}'. " +
-                        "This indicates a reflection issue with the target class '${kClass.simpleName}'.",
+                            "This indicates a reflection issue with the target class '${kClass.simpleName}'.",
                 )
 
             val args = createArguments(kFunc, context, fixtureGenerator, generationContext)
@@ -142,7 +143,7 @@ class DefaultScenarioExecutor(
                         if (kFunc.name != contractMethod.name) return@find false
                         val kFuncAsJava = kFunc.javaMethod ?: return@find false
                         kFuncAsJava.name == contractMethod.name &&
-                            kFuncAsJava.parameterTypes.contentEquals(contractMethod.parameterTypes)
+                                kFuncAsJava.parameterTypes.contentEquals(contractMethod.parameterTypes)
                     } ?: return@map AssertionRecord(
                         status = AssertionStatus.FAILED,
                         rule = SystemErrorRule("MethodNotFound"),

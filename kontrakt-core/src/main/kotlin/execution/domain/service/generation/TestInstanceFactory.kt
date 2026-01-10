@@ -4,14 +4,15 @@ import common.util.unwrapped
 import discovery.domain.aggregate.TestSpecification
 import discovery.domain.vo.DependencyMetadata
 import exception.KontraktConfigurationException
-import execution.adapter.state.ThreadLocalScenarioControl
 import execution.domain.entity.EphemeralTestContext
 import execution.domain.generator.GenerationContext
 import execution.domain.generator.GenerationRequest
 import execution.domain.trace.InMemoryScenarioTrace
+import execution.spi.MockingContext
 import execution.spi.MockingEngine
 import execution.spi.ScenarioControl
 import java.time.Clock
+import java.util.UUID
 import kotlin.random.Random
 import kotlin.reflect.KClass
 import kotlin.reflect.full.primaryConstructor
@@ -40,7 +41,7 @@ class TestInstanceFactory(
      * @throws KontraktConfigurationException If instantiation fails due to config or runtime errors.
      */
     fun create(spec: TestSpecification): EphemeralTestContext {
-        val currentTraceId = ThreadLocalScenarioControl.get().trace.traceId
+        val currentTraceId = UUID.randomUUID().toString()
 
         val trace = InMemoryScenarioTrace(runId = currentTraceId)
 
@@ -49,7 +50,9 @@ class TestInstanceFactory(
         try {
             val seed = spec.seed ?: System.currentTimeMillis()
 
-            val fixtureGenerator = FixtureGenerator(mockingEngine, clock, seed)
+            val fixtureGenerator = FixtureGenerator(mockingEngine, clock, trace, seed)
+
+            val mockingContext = MockingContext(fixtureGenerator, trace)
 
             val generationContext =
                 GenerationContext(
@@ -57,7 +60,7 @@ class TestInstanceFactory(
                     clock = clock,
                 )
 
-            val targetInstance = resolve(spec.target.kClass, context, generationContext, fixtureGenerator)
+            val targetInstance = resolve(spec.target.kClass, context, generationContext, mockingContext)
             context.registerTarget(targetInstance)
         } catch (e: Throwable) {
             val cause = e.unwrapped
@@ -84,7 +87,7 @@ class TestInstanceFactory(
         type: KClass<*>,
         context: EphemeralTestContext,
         generationContext: GenerationContext,
-        fixtureGenerator: FixtureGenerator,
+        mockingContext: MockingContext,
     ): Any {
         context.getDependency(type)?.let { return it }
 
@@ -117,11 +120,11 @@ class TestInstanceFactory(
                                 type.starProjectedType,
                                 name = type.simpleName ?: "dependency",
                             )
-                        fixtureGenerator.generate(request, generationContext)!!
+                        mockingContext.generator.generate(request, generationContext)!!
                     }.getOrNull()?.let { return it }
                 }
 
-                return createByConstructor(type, context, nextGenerationContext, fixtureGenerator)
+                return createByConstructor(type, context, nextGenerationContext, mockingContext)
                     .also { context.registerDependency(type, it) }
             }
 
@@ -130,19 +133,19 @@ class TestInstanceFactory(
                     is DependencyMetadata.MockingStrategy.StatefulFake ->
                         mockingEngine.createFake(
                             type,
-                            fixtureGenerator,
+                            mockingContext,
                         )
 
                     is DependencyMetadata.MockingStrategy.StatelessMock ->
                         mockingEngine.createMock(
                             type,
-                            fixtureGenerator,
+                            mockingContext,
                         )
 
                     is DependencyMetadata.MockingStrategy.Environment ->
                         mockingEngine.createMock(
                             type,
-                            fixtureGenerator,
+                            mockingContext,
                         )
 
                     is DependencyMetadata.MockingStrategy.Real -> {
@@ -150,7 +153,7 @@ class TestInstanceFactory(
                             explicitStrategy.implementation,
                             context,
                             nextGenerationContext,
-                            fixtureGenerator,
+                            mockingContext,
                         )
                     }
                 }.also { context.registerDependency(type, it) }
@@ -165,12 +168,12 @@ class TestInstanceFactory(
         type: KClass<*>,
         context: EphemeralTestContext,
         generationContext: GenerationContext,
-        fixtureGenerator: FixtureGenerator,
+        mockingContext: MockingContext,
     ): Any {
         val constructor = type.primaryConstructor ?: type.constructors.firstOrNull()
 
         if (constructor == null) {
-            return mockingEngine.createMock(type, fixtureGenerator)
+            return mockingEngine.createMock(type, mockingContext)
         }
 
         try {
@@ -180,10 +183,10 @@ class TestInstanceFactory(
                         val paramType = param.type.classifier as KClass<*>
 
                         if (isBasicValueType(paramType)) {
-                            fixtureGenerator.generate(param, generationContext)
-                                ?: resolve(paramType, context, generationContext, fixtureGenerator)
+                            mockingContext.generator.generate(param, generationContext)
+                                ?: resolve(paramType, context, generationContext, mockingContext)
                         } else {
-                            resolve(paramType, context, generationContext, fixtureGenerator)
+                            resolve(paramType, context, generationContext, mockingContext)
                         }
                     }.toTypedArray()
 
@@ -199,12 +202,12 @@ class TestInstanceFactory(
 
     private fun isBasicValueType(type: KClass<*>): Boolean =
         type == String::class ||
-            type == Int::class ||
-            type == Long::class ||
-            type == Double::class ||
-            type == Boolean::class ||
-            type == List::class ||
-            type == Map::class ||
-            type == Set::class ||
-            type.isData
+                type == Int::class ||
+                type == Long::class ||
+                type == Double::class ||
+                type == Boolean::class ||
+                type == List::class ||
+                type == Map::class ||
+                type == Set::class ||
+                type.isData
 }
