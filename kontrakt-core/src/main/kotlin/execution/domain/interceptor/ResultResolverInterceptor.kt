@@ -1,6 +1,7 @@
 package execution.domain.interceptor
 
 import common.util.extractSourceLocation
+import common.util.sanitizeStackTrace
 import common.util.unwrapped
 import discovery.domain.aggregate.TestSpecification
 import exception.ContractViolationException
@@ -17,17 +18,19 @@ import execution.domain.vo.UserExceptionRule
 import execution.spi.interceptor.ScenarioInterceptor
 
 /**
- * [ADR-020] Centralized Result Resolution Interceptor.
+ * [Domain Service] Centralized Result Resolution Interceptor.
+ *
+ * Implements **ADR-020 (Centralized Execution & Result Resolution)**.
  *
  * Acting as the "Brain" of the execution pipeline, this interceptor sits at the very top of the chain.
  * It is responsible for transforming raw execution outcomes (including exceptions) into a standardized
  * list of [AssertionRecord]s.
  *
- * Its core responsibilities include:
- * 1. **Error Handling**: Catches all unhandled exceptions thrown by downstream interceptors or the executor.
- * 2. **Blame Assignment**: Distinguishes between User Errors (Logic/Config) and Framework Bugs using semantic rules.
- * 3. **Coordinate Mining**: Extracts precise source locations (File:Line) using [extractSourceLocation].
- * 4. **Result Normalization**: Ensures every outcome, whether success or failure, has a consistent format.
+ * **Key Responsibilities:**
+ * 1. **Error Handling:** Catches all unhandled exceptions thrown by downstream interceptors or the executor.
+ * 2. **Blame Assignment:** Distinguishes between User Errors (Logic/Config) and Framework Bugs using semantic rules.
+ * 3. **Coordinate Mining:** Extracts precise source locations (File:Line) using [extractSourceLocation].
+ * 4. **Stack Trace Filtering:** Sanitizes stack traces to remove internal framework noise via [sanitizeStackTrace].
  *
  * @property spec The test specification containing target class metadata.
  * @property traceMode If true, enables expensive location enrichment for successful assertions.
@@ -42,18 +45,36 @@ class ResultResolverInterceptor(
             chain.proceed(chain.context)
         }.map { results ->
             // 2. [Success Path] Lazy Optimization:
-            // If Trace Mode is ON, we attempt to enrich 'NotCaptured' locations
-            // with the Test Target's class location as a fallback context.
-            // If OFF, we skip this to save performance.
-            if (traceMode) {
-                results.map { it.enrichLocationIfMissing(spec) }
+            // If Trace Mode is ON, enrich 'NotCaptured' locations with approximate context.
+            if (traceMode) results.enrichLocations(spec) else results
+        }.getOrElse { error ->
+            // 3. [Failure Path] Centralized Error Resolution.
+
+            // [Side Effect Warning]
+            // We mutate the exception's stack trace in-place to remove framework noise.
+            // This is a deliberate trade-off to avoid the high cost of deep-cloning exceptions.
+            // Since this interceptor is the final handler, modifying the original error is safe.
+            error.sanitizeStackTrace()
+
+            // Convert the sanitized exception into a structured Failure Record.
+            listOf(error.toFailureRecord(spec))
+        }
+
+    /**
+     * Batch processes a list of assertions to provide context for successful checks.
+     */
+    private fun List<AssertionRecord>.enrichLocations(spec: TestSpecification): List<AssertionRecord> =
+        this.map { record ->
+            if (record.location is SourceLocation.NotCaptured) {
+                record.copy(
+                    location = SourceLocation.Approximate(
+                        className = spec.target.fullyQualifiedName,
+                        displayName = spec.target.displayName,
+                    )
+                )
             } else {
-                results
+                record
             }
-        }.getOrElse { exception ->
-            // 3. [Failure Path] Single point of failure resolution.
-            // Any exception bubbling up is caught here and converted into a failure record.
-            listOf(exception.toFailureRecord(spec))
         }
 
     // -------------------------------------------------------------------------
@@ -150,23 +171,4 @@ class ResultResolverInterceptor(
         actual = actual,
         location = location,
     )
-
-    /**
-     * Fallback mechanism for successful assertions when Trace Mode is enabled.
-     *
-     * If an assertion passed but has [SourceLocation.NotCaptured], this attempts to provide
-     * at least the [SourceLocation.Approximate] context (Class Level) so the report isn't empty.
-     */
-    private fun AssertionRecord.enrichLocationIfMissing(spec: TestSpecification): AssertionRecord =
-        if (this.location is SourceLocation.NotCaptured) {
-            copy(
-                location =
-                    SourceLocation.Approximate(
-                        className = spec.target.fullyQualifiedName,
-                        displayName = spec.target.displayName,
-                    ),
-            )
-        } else {
-            this
-        }
 }

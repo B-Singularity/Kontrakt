@@ -7,6 +7,7 @@ sealed interface TestStatus {
         val message: String,
         val expected: Any?,
         val actual: Any?,
+        val cause: Throwable? = null
     ) : TestStatus
 
     data class ExecutionError(

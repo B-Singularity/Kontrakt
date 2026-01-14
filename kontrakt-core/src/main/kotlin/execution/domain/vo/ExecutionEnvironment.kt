@@ -1,15 +1,29 @@
 package execution.domain.vo
 
 import execution.domain.vo.trace.ExecutionTrace
+import java.time.Clock
 import java.time.Instant
 import java.time.ZoneId
 import java.util.concurrent.CopyOnWriteArrayList
+import kotlin.random.Random
 
 data class ExecutionEnvironment(
+    /**
+     * The source of randomness for this execution.
+     * Seeded by the Engine to ensure reproducibility.
+     */
+    val random: Random,
+
+    /**
+     * The time provider. Fixed or Real-time depending on configuration.
+     */
+    val clock: Clock,
+
+    // --- Metadata (Context) ---
     val trace: TraceInfo,
     val auth: AuthInfo,
     val tenant: TenantInfo,
-    val request: RequestInfo,
+    val request: RequestInfo
 )
 
 data class TraceInfo(
@@ -19,15 +33,6 @@ data class TraceInfo(
     val sampled: Boolean,
     val decisions: MutableList<ExecutionTrace> = CopyOnWriteArrayList(),
 ) {
-    fun nextSpan(): TraceInfo =
-        copy(
-            spanId =
-                java.util.UUID
-                    .randomUUID()
-                    .toString(),
-            parentSpanId = this.spanId,
-            decisions = CopyOnWriteArrayList(),
-        )
 }
 
 data class AuthInfo(

@@ -1,4 +1,4 @@
-package common.config
+package execution.adapter
 
 /**
  * [ADR-016] User Control Surface
@@ -45,12 +45,23 @@ data class UserControlOptions(
      * If null, a new random seed is generated for each run.
      */
     val seed: Long? = null,
+
+    /**
+     * [--stacktrace-limit 15]
+     * Limits the number of stack frames reported in exceptions to reduce noise.
+     * Default is 15. Set to -1 for unlimited.
+     */
+    val stackTraceLimit: Int = 15
 ) {
     enum class Verbosity {
         QUIET, // Outputs only failure summaries.
         NORMAL, // Outputs smart summaries and failure details (Default).
         VERBOSE, // Outputs full details including successful logs.
     }
+
+    /** Helper to check if full logging is enabled. */
+    val isVerbose: Boolean
+        get() = verbosity == Verbosity.VERBOSE
 
     companion object {
         val DEFAULT = UserControlOptions()

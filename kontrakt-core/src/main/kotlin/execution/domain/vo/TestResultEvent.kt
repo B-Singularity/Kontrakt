@@ -5,11 +5,13 @@ import infrastructure.json.escapeJson
 
 data class TestResultEvent(
     val runId: String,
-    val workerId: Int,
+    val testName: String,
+    val workerId: WorkerId,
     val status: TestStatus,
     val durationMs: Long,
     val journalPath: String,
     val timestamp: Long,
+    val seed: Long
 ) {
     fun toJson(): String {
         val sb = StringBuilder()
@@ -17,8 +19,11 @@ data class TestResultEvent(
             .append("""{"runId":"""")
             .append(runId.escapeJson())
             .append("\"")
+            .append(""","testName":"""")
+            .append(testName.escapeJson())
             .append(""","workerId":""")
-            .append(workerId)
+            .append(workerId.value)
+            .append(""","seed":""").append(seed)
             .append(""","status":""")
             .append(statusToJson(status))
             .append(""","durationMs":""")

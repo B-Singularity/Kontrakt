@@ -1,11 +1,12 @@
 package execution.api
 
 import discovery.domain.aggregate.TestSpecification
+import execution.adapter.trace.WorkerTraceSinkPool
 import execution.domain.aggregate.TestExecution
 import execution.domain.service.generation.TestInstanceFactory
 import execution.domain.service.orchestration.DefaultScenarioExecutor
+import execution.domain.vo.ExecutionPolicy
 import execution.port.outgoing.TestResultPublisher
-import execution.port.outgoing.TraceSink
 import execution.spi.MockingEngine
 import execution.spi.ScenarioControl
 import java.time.Clock
@@ -24,10 +25,12 @@ import java.time.Clock
 class DefaultRuntimeFactory(
     private val mockingEngine: MockingEngine,
     private val scenarioControl: ScenarioControl,
-    private val traceSink: TraceSink,
+    private val traceSinkPool: WorkerTraceSinkPool,
     private val resultPublisher: TestResultPublisher,
     private val clock: Clock,
+    private val executionPolicy: ExecutionPolicy,
 ) : KontraktRuntimeFactory {
+
     override fun createExecutor(): TestScenarioExecutor =
         DefaultScenarioExecutor(
             clock = clock,
@@ -48,9 +51,10 @@ class DefaultRuntimeFactory(
             spec = spec,
             instanceFactory = instanceFactory,
             scenarioExecutor = executor,
-            traceSink = traceSink,
+            traceSinkPool = traceSinkPool,
             resultPublisher = resultPublisher,
             clock = clock,
+            executionPolicy = executionPolicy,
         )
     }
 }

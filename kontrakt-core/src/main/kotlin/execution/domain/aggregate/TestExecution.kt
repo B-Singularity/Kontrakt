@@ -1,9 +1,9 @@
 package execution.domain.aggregate
 
-import common.config.UserControlOptions
 import common.util.unwrapped
 import discovery.domain.aggregate.TestSpecification
 import exception.KontraktInternalException
+import execution.adapter.trace.WorkerTraceSinkPool
 import execution.api.TestScenarioExecutor
 import execution.domain.AssertionStatus
 import execution.domain.TestStatus
@@ -12,14 +12,17 @@ import execution.domain.interceptor.ResultResolverInterceptor
 import execution.domain.service.generation.TestInstanceFactory
 import execution.domain.service.orchestration.ScenarioExecutionChain
 import execution.domain.vo.AssertionRecord
+import execution.domain.vo.AuditDepth
+import execution.domain.vo.ExecutionPolicy
 import execution.domain.vo.TestResult
+import execution.domain.vo.WorkerId
 import execution.port.outgoing.TestResultPublisher
-import execution.port.outgoing.TraceSink
 import io.github.oshai.kotlinlogging.KotlinLogging
 import java.time.Clock
 import java.time.Duration
 import java.time.Instant
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.random.Random
 
 /**
  * [Aggregate Root] Test Execution Lifecycle Manager.
@@ -35,10 +38,10 @@ class TestExecution(
     private val spec: TestSpecification,
     private val instanceFactory: TestInstanceFactory,
     private val scenarioExecutor: TestScenarioExecutor,
-    private val traceSink: TraceSink,
+    private val traceSinkPool: WorkerTraceSinkPool,
     private val resultPublisher: TestResultPublisher,
     private val clock: Clock,
-    private val options: UserControlOptions = UserControlOptions(),
+    private val executionPolicy: ExecutionPolicy,
 ) {
     private val logger = KotlinLogging.logger {}
 
@@ -52,22 +55,33 @@ class TestExecution(
         val startTime = Instant.now(clock)
 
         try {
+            val actualSeed = executionPolicy.determinism.seed ?: Random.nextLong()
+
             // 2. [Setup Phase] Create Test Context & Target
             // If this fails (e.g. DI error), it happens BEFORE the interceptor chain.
             val context = instanceFactory.create(spec)
+
+            // This ensures that parallel JUnit execution gets unique IDs and Log Sinks.
+            val currentWorkerId = WorkerId.fromCurrentThread()
+
+            val currentSink = traceSinkPool.getSink(currentWorkerId)
 
             // 3. [Assembly Phase] Build Interceptor Chain
             // Order matters: Resolver (Outer) -> Auditing (Middle) -> Executor (Inner/Leaf)
             val interceptors =
                 listOf(
-                    ResultResolverInterceptor(spec, traceMode = options.traceMode),
+                    ResultResolverInterceptor(
+                        spec,
+                        traceMode = executionPolicy.auditing.depth == AuditDepth.EXPLAINABLE,
+                    ),
                     AuditingInterceptor(
-                        traceSink,
-                        resultPublisher,
-                        options,
-                        clock,
-                        workerId = 0,
-                    ), // WorkerID can be dynamic later
+                        traceSink = currentSink,
+                        resultPublisher = resultPublisher,
+                        policy = executionPolicy.auditing,
+                        seed = actualSeed,
+                        clock = clock,
+                        workerId = currentWorkerId,
+                    ),
                 )
 
             val chain =
@@ -122,6 +136,7 @@ class TestExecution(
                 message = firstFailure.message,
                 expected = firstFailure.expected,
                 actual = firstFailure.actual,
+                cause = null
             )
         } else {
             TestStatus.Passed

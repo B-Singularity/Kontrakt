@@ -32,4 +32,10 @@ interface ScenarioTrace {
      * Used to reset the state when reusing the trace object (e.g., in object pooling).
      */
     fun clear()
+
+    /**
+     * [New] Encapsulated method to update generated arguments.
+     * Replaces the manual .clear() / .addAll() pattern in the Executor.
+     */
+    fun recordGeneratedArguments(args: List<Any?>)
 }

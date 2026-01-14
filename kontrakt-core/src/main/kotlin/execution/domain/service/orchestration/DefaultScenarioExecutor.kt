@@ -2,6 +2,7 @@ package execution.domain.service.orchestration
 
 import discovery.api.Test
 import discovery.domain.aggregate.TestSpecification
+import exception.KontraktConfigurationException
 import exception.KontraktInternalException
 import execution.api.TestScenarioExecutor
 import execution.domain.AssertionStatus
@@ -12,10 +13,10 @@ import execution.domain.service.validation.ContractValidator
 import execution.domain.vo.AssertionRecord
 import execution.domain.vo.SourceLocation
 import execution.domain.vo.StandardAssertion
-import execution.domain.vo.SystemErrorRule
 import execution.spi.MockingEngine
 import execution.spi.trace.ScenarioTrace
 import io.github.oshai.kotlinlogging.KotlinLogging
+import kotlinx.coroutines.runBlocking
 import java.lang.reflect.Method
 import java.time.Clock
 import java.time.Instant
@@ -23,6 +24,7 @@ import java.time.ZoneId
 import kotlin.random.Random
 import kotlin.reflect.KFunction
 import kotlin.reflect.KParameter
+import kotlin.reflect.full.callSuspendBy
 import kotlin.reflect.full.findAnnotation
 import kotlin.reflect.full.functions
 import kotlin.reflect.jvm.javaMethod
@@ -34,13 +36,12 @@ import kotlin.reflect.jvm.kotlinFunction
  * This component orchestrates the **reflection-based invocation** of test scenarios.
  * It handles:
  * 1. **Dependency Generation**: Creates fixtures via [FixtureGenerator].
- * 2. **Mode Switching**: Supports 'UserScenario' (@Test) and 'ContractAuto' (Fuzzing).
+ * 2. **Trace Population**: Delegates auditing data collection to [ScenarioTrace].
  * 3. **Validation**: Enforces contracts via [ContractValidator].
  *
- * This executor is now **Exception Transparent**. It **DOES NOT** catch exceptions.
- * - **Success**: Returns [AssertionStatus.PASSED] records.
- * - **Failure**: Propagates exceptions to the [execution.domain.interceptor.ResultResolverInterceptor]
- * for centralized error handling and source coordinate mining.
+ * **Architecture Note (ADR-020):**
+ * This executor follows the **Exception Transparency** principle.
+ * It strictly propagates exceptions (including reflection errors) to the upstream [ResultResolverInterceptor].
  */
 class DefaultScenarioExecutor(
     private val clock: Clock = Clock.systemDefaultZone(),
@@ -112,7 +113,15 @@ class DefaultScenarioExecutor(
                 )
 
             val args = createArguments(kFunc, context, fixtureGenerator, generationContext)
-            kFunc.callBy(args)
+            captureArgumentsToTrace(context, args)
+
+            if (kFunc.isSuspend) {
+                runBlocking {
+                    kFunc.callSuspendBy(args)
+                }
+            } else {
+                kFunc.callBy(args)
+            }
 
             AssertionRecord(
                 status = AssertionStatus.PASSED,
@@ -144,25 +153,18 @@ class DefaultScenarioExecutor(
                         val kFuncAsJava = kFunc.javaMethod ?: return@find false
                         kFuncAsJava.name == contractMethod.name &&
                                 kFuncAsJava.parameterTypes.contentEquals(contractMethod.parameterTypes)
-                    } ?: return@map AssertionRecord(
-                        status = AssertionStatus.FAILED,
-                        rule = SystemErrorRule("MethodNotFound"),
-                        message = "Method '${contractMethod.name}' not found in implementation",
-                        expected = "Method Implementation",
-                        actual = "Missing",
-                        location = SourceLocation.NotCaptured,
+                    } ?: throw KontraktConfigurationException(
+                        "Contract violation: Implementation of method '${contractMethod.name}' not found in '${implementationKClass.simpleName}'. " +
+                                "Ensure the class strictly adheres to the contract interface."
                     )
 
                 val contractKFunc =
                     contractMethod.kotlinFunction
-                        ?: return@map AssertionRecord(
-                            status = AssertionStatus.FAILED,
-                            rule = SystemErrorRule("ReflectionError"),
-                            message = "Could not resolve Kotlin function for '${contractMethod.name}'",
-                            expected = "KFunction",
-                            actual = "null",
-                            location = SourceLocation.NotCaptured,
+                        ?: throw KontraktInternalException(
+                            "Reflection failure: Could not resolve Kotlin function metadata for contract method '${contractMethod.name}'."
                         )
+
+                context.targetMethod = contractMethod
 
                 executeMethod(
                     contractMethod,
@@ -187,7 +189,15 @@ class DefaultScenarioExecutor(
     ): AssertionRecord {
         val args = createArguments(implFunc, context, fixtureGenerator, generationContext)
 
-        val result = implFunc.callBy(args)
+        captureArgumentsToTrace(context, args)
+
+        val result = if (implFunc.isSuspend) {
+            runBlocking {
+                implFunc.callSuspendBy(args)
+            }
+        } else {
+            implFunc.callBy(args)
+        }
 
         contractValidator.validate(contractKFunc, result)
 
@@ -215,9 +225,22 @@ class DefaultScenarioExecutor(
                 return@forEach
             }
 
+            // [Strategy Note]
+            // We deliberately skip optional parameters to respect Kotlin's default argument mechanisms.
+            // TODO: Extract this logic into a 'GenerationStrategy' to allow users to override (e.g., force-fuzz optionals).
             if (param.isOptional) return@forEach
             arguments[param] = fixtureGenerator.generate(param, generationContext)
         }
         return arguments
     }
+
+    private fun captureArgumentsToTrace(context: EphemeralTestContext, args: Map<KParameter, Any?>) {
+        val valueArguments = args.filterKeys { it.kind == KParameter.Kind.VALUE }
+            .entries
+            .sortedBy { it.key.index }
+            .map { it.value }
+
+        context.trace.recordGeneratedArguments(valueArguments)
+    }
+
 }

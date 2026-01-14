@@ -1,12 +1,17 @@
 package execution.domain.interceptor
 
-import common.config.UserControlOptions
-import execution.domain.AssertionStatus
+import exception.ContractViolationException
 import execution.domain.TestStatus
 import execution.domain.vo.AssertionRecord
+import execution.domain.vo.AuditDepth
+import execution.domain.vo.AuditPolicy
+import execution.domain.vo.LogRetention
 import execution.domain.vo.TestResultEvent
+import execution.domain.vo.WorkerId
 import execution.domain.vo.trace.ExceptionTrace
 import execution.domain.vo.trace.ExecutionTrace
+import execution.domain.vo.trace.TestVerdict
+import execution.domain.vo.trace.TracePhase
 import execution.domain.vo.trace.VerificationTrace
 import execution.port.outgoing.TestResultPublisher
 import execution.port.outgoing.TraceSink
@@ -14,117 +19,196 @@ import execution.spi.interceptor.ScenarioInterceptor
 import execution.spi.trace.ScenarioTrace
 import java.time.Clock
 
+
+/**
+ * [Domain Service] Auditing & Reporting Interceptor.
+ *
+ * Implements **ADR-021 (Log Diet & Smart Snapshot)** strategies.
+ *
+ * This interceptor acts as the "Black Box Recorder" for the test execution.
+ * It sits between the Result Resolver and the actual execution, capturing every
+ * significant event and writing it to the [TraceSink].
+ *
+ * **Core Responsibilities:**
+ * 1. **Log Diet:** Filters out high-volume `DESIGN` logs unless verbose mode is enabled.
+ * 2. **Event Journaling:** Records Execution, Verification, and Exception events in real-time.
+ * 3. **Smart Snapshot:** Persists the log file to disk only when a test fails (or trace mode is on).
+ * 4. **Result Publishing:** Notifies the [TestResultPublisher] of the final outcome.
+ */
+/**
+ * [Domain Service] Auditing & Reporting Interceptor.
+ *
+ * Implements **ADR-021 (Log Diet & Smart Snapshot)** strategies using the new [AuditPolicy].
+ *
+ * This interceptor acts as the "Black Box Recorder" for the test execution.
+ * It sits between the Result Resolver and the actual execution, capturing every
+ * significant event and writing it to the [TraceSink].
+ *
+ * **Core Responsibilities:**
+ * 1. **Log Diet:** Filters out high-volume `DESIGN` logs based on [AuditDepth].
+ * 2. **Event Journaling:** Records Execution, Verification, and Exception events in real-time.
+ * 3. **Smart Snapshot:** Persists the log file to disk based on [LogRetention].
+ * 4. **Result Publishing:** Notifies the [TestResultPublisher] of the final outcome.
+ */
 class AuditingInterceptor(
     private val traceSink: TraceSink,
     private val resultPublisher: TestResultPublisher,
-    private val options: UserControlOptions,
+    private val policy: AuditPolicy,
+    private val seed: Long,
     private val clock: Clock,
-    private val workerId: Int,
+    private val workerId: WorkerId,
 ) : ScenarioInterceptor {
+
     override fun intercept(chain: ScenarioInterceptor.Chain): List<AssertionRecord> =
         with(chain.context) {
-            trace.decisions.forEach(traceSink::emit)
-
             val startTime = clock.millis()
-            var executionError: Throwable? = null
-            val records = mutableListOf<AssertionRecord>()
+            val testName = targetMethod.name
+            var caughtException: Throwable? = null
+
+            // 1. [GIVEN] Log Design Decisions (Applied Log Diet)
+            emitDesignDecisions(trace)
 
             try {
-                // 2. [WHEN] Proceed with the execution chain.
-                // 'this' refers to 'chain.context' due to the 'with' scope function.
-                val result = chain.proceed(this)
-                records.addAll(result)
+                // 2. [WHEN] Proceed with execution
+                val records = chain.proceed(this)
+                val executionDurationMs = clock.millis() - startTime
 
-                val durationMs = clock.millis() - startTime
-
-                // Log execution metadata (arguments, duration).
-                traceSink.emit(
-                    ExecutionTrace(
-                        methodSignature = targetMethod.name,
-                        arguments = trace.generatedArguments.map { it.toString() },
-                        durationMs = durationMs,
-                        timestamp = clock.millis(),
-                    ),
-                )
-
-                // 3. [THEN] Log verification results.
-                result.forEach { record ->
-                    traceSink.emit(
-                        VerificationTrace(
-                            rule = record.ruleName,
-                            status = record.status,
-                            detail = record.message,
-                            timestamp = clock.millis(),
-                        ),
-                    )
-                }
+                // 3. [THEN] Log Execution & Verification
+                emitExecutionTrace(testName, trace.generatedArguments, executionDurationMs)
+                emitVerificationTraces(records)
 
                 return records
             } catch (e: Throwable) {
-                executionError = e
-                traceSink.emit(
-                    ExceptionTrace(
-                        exceptionType = e.javaClass.name,
-                        message = e.message.orEmpty(),
-                        stackTraceElements = e.stackTrace.take(15),
-                        timestamp = clock.millis(),
-                    ),
-                )
-                throw e
-            } finally {
-                publishFinalReport(trace, records, executionError, startTime)
+                caughtException = e
+                // 4. [ERROR] Log Exception immediately (Critical)
+                emitExceptionTrace(e)
+                throw e // Re-throw for ResultResolverInterceptor to handle
 
-                traceSink.reset()
+            } finally {
+                // 5. [FINALLY] Seal the log and publish report
+                finalizeSession(trace, testName, caughtException, startTime)
             }
         }
 
     /**
-     * Determines the final [TestStatus] (Passed, AssertionFailed, or ExecutionError)
-     * and publishes the result event.
+     * Emits generated fixture data to the sink.
+     * Applies strict filtering based on [AuditDepth] to prevent IO saturation.
      */
-    private fun publishFinalReport(
-        trace: ScenarioTrace,
-        records: List<AssertionRecord>,
-        error: Throwable?,
-        startTime: Long,
-    ) {
-        // 1. Determine the rich status object based on priority: Error > Failure > Pass
-        val failedRecord = records.firstOrNull { it.status == AssertionStatus.FAILED }
+    private fun emitDesignDecisions(trace: ScenarioTrace) {
+        // [Optimization] Fast-exit if no logs to process
+        if (trace.decisions.isEmpty()) return
 
-        val status: TestStatus =
-            when {
-                error != null -> TestStatus.ExecutionError(error)
-                failedRecord != null ->
-                    TestStatus.AssertionFailed(
-                        message = failedRecord.message,
-                        expected = failedRecord.expected,
-                        actual = failedRecord.actual,
-                    )
+        val includeDesign = policy.depth == AuditDepth.EXPLAINABLE
 
-                else -> TestStatus.Passed
+        trace.decisions.forEach { event ->
+            if (includeDesign || event.phase != TracePhase.DESIGN) {
+                traceSink.emit(event)
             }
+        }
+    }
 
-        // 2. Snapshot strategy: Save if not passed OR trace mode is enabled.
-        val shouldSnapshot = status !is TestStatus.Passed || options.traceMode
+    private fun emitExecutionTrace(methodName: String, args: List<Any?>, durationMs: Long) {
+        traceSink.emit(
+            ExecutionTrace(
+                methodSignature = methodName,
+                arguments = args.map { it.toString() },
+                durationMs = durationMs,
+                timestamp = clock.millis()
+            )
+        )
+    }
 
-        val journalPath =
-            shouldSnapshot
-                .takeIf { it }
-                ?.let {
-                    // "failures" for Error/Failed, "traces" for passed tests with trace mode on
-                    val subDir = if (status !is TestStatus.Passed) "failures" else "traces"
-                    traceSink.snapshotTo("$subDir/run-${trace.runId}.log")
-                }.orEmpty()
+    private fun emitVerificationTraces(records: List<AssertionRecord>) {
+        records.forEach { record ->
+            traceSink.emit(
+                VerificationTrace(
+                    rule = record.rule.key,
+                    status = record.status,
+                    detail = record.message,
+                    timestamp = clock.millis()
+                )
+            )
+        }
+    }
 
+    private fun emitExceptionTrace(e: Throwable) {
+        traceSink.emit(
+            ExceptionTrace(
+                exceptionType = e.javaClass.name,
+                message = e.message.orEmpty(),
+                stackTraceElements = e.stackTrace.take(15),
+                timestamp = clock.millis()
+            )
+        )
+    }
+
+    // -------------------------------------------------------------------------
+    // Finalization & Reporting
+    // -------------------------------------------------------------------------
+
+    /**
+     * Determines the final verdict, flushes the sink, snapshots if necessary,
+     * and publishes the result to the UI layer.
+     */
+    private fun finalizeSession(
+        trace: ScenarioTrace,
+        testName: String,
+        error: Throwable?,
+        startTime: Long
+    ) {
+        val totalDurationMs = clock.millis() - startTime
+
+        // 1. Determine Status
+        val status = when (error) {
+            null -> TestStatus.Passed
+            is AssertionError,
+            is ContractViolationException -> TestStatus.AssertionFailed(
+                message = error.message ?: "Assertion Failed",
+                expected = "Contract Compliance",
+                actual = "Violation"
+            )
+
+            else -> TestStatus.ExecutionError(error)
+        }
+
+        // 2. Emit Final Verdict (The Seal)
+        traceSink.emit(
+            TestVerdict(
+                status = status,
+                durationTotalMs = totalDurationMs,
+                timestamp = clock.millis()
+            )
+        )
+
+        // 3. Snapshot Strategy (Smart Flush via LogRetention Policy)
+        val shouldSnapshot = when (policy.retention) {
+            LogRetention.NONE -> false
+            LogRetention.ALWAYS -> true
+            LogRetention.ON_FAILURE -> status !is TestStatus.Passed
+        }
+
+        val journalPath = if (shouldSnapshot) {
+            val subDir = if (status !is TestStatus.Passed) "failures" else "traces"
+            traceSink.snapshotTo("$subDir/run-${trace.runId}.log")
+        } else {
+            ""
+        }
+
+        // 4. Reset Sink for next run (Recycling)
+        traceSink.reset()
+
+        // 5. Publish Result
         resultPublisher.publish(
             TestResultEvent(
                 runId = trace.runId,
+                testName = testName,
                 workerId = workerId,
                 status = status,
-                durationMs = clock.millis() - startTime,
+                durationMs = totalDurationMs,
                 journalPath = journalPath,
                 timestamp = clock.millis(),
-            ),
+                seed = seed
+            )
         )
     }
 }

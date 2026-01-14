@@ -8,6 +8,7 @@ import execution.domain.vo.TraceInfo
 import java.time.Clock
 import java.time.ZoneId
 import java.util.UUID
+import kotlin.random.Random
 
 class ExecutionEnvironmentFactory(
     private val clock: Clock,
@@ -15,13 +16,18 @@ class ExecutionEnvironmentFactory(
     private val zoneIdProvider: () -> ZoneId = { ZoneId.systemDefault() },
     private val traceSampled: Boolean = true,
 ) {
-    fun create(): ExecutionEnvironment =
-        ExecutionEnvironment(
+    fun create(seed: Long): ExecutionEnvironment {
+        val randomSource = Random(seed)
+        
+        return ExecutionEnvironment(
+            random = randomSource,
+            clock = clock,
             trace = createTrace(),
             auth = createAnonymousAuth(),
             tenant = createDefaultTenant(),
             request = createRequest(),
         )
+    }
 
     private fun createTrace(): TraceInfo =
         TraceInfo(

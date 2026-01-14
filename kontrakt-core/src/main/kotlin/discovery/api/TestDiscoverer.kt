@@ -1,7 +1,7 @@
 package discovery.api
 
 import discovery.domain.aggregate.TestSpecification
-import discovery.domain.vo.ScanScope
+import discovery.domain.vo.DiscoveryPolicy
 import kotlin.reflect.KClass
 
 interface TestDiscoverer {
@@ -15,12 +15,12 @@ interface TestDiscoverer {
      *
      * This is a `suspend` function as classpath scanning is a blocking I/O operation. (See ADR-003)
      *
-     * @param scope The scope defining where to scan (e.g., specific packages, classes, or everything).
+     * @param policy The policy defining discovery rules (scope, filters, etc.). [Modified]
      * @param contractMarker The annotation class used to identify a `Contract` interface.
      * @return A [Result] containing a list of all discovered [TestSpecification]s, or an exception if the scan fails.
      */
     suspend fun discover(
-        scope: ScanScope,
+        policy: DiscoveryPolicy,
         contractMarker: KClass<out Annotation>,
     ): Result<List<TestSpecification>>
 }

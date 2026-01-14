@@ -3,18 +3,27 @@ package execution.port.outgoing
 import execution.domain.vo.TestResultEvent
 
 /**
- * [Port] Test Result Publisher (Output Port)
+ * [Port] Test Result Publisher
  *
- * Serves as the dedicated exit point for the Execution Engine (Core) to transmit
- * test result events (Claim Checks) to the Reporting System or an asynchronous messaging channel.
+ * The output port for the Reporting Architecture.
+ * Implementations are responsible for handling events (Displaying, Writing, Sending).
  *
- * * **Pattern**: Implements the [Fire-and-Forget] pattern to avoid blocking the execution flow.
+ * Implements [AutoCloseable] to support resource cleanup (Flushing buffers, closing files)
+ * at the end of the test lifecycle.
  */
-fun interface TestResultPublisher {
+interface TestResultPublisher : AutoCloseable {
     /**
      * Publishes a test result event to the configured channel.
      *
      * @param event The lightweight event object containing the Claim Check (journal path).
      */
     fun publish(event: TestResultEvent)
+
+    /**
+     * Default implementation to strictly enforce backward compatibility
+     * for reporters that don't hold resources (like Console).
+     */
+    override fun close() {
+        // No-op by default
+    }
 }
