@@ -7,5 +7,5 @@ package discovery.domain.vo
  * This policy is exclusively used during the "Discovery Phase" before the execution engine starts.
  */
 data class DiscoveryPolicy(
-    val scope: ScanScope = ScanScope.All
+    val scope: ScanScope = ScanScope.All,
 )

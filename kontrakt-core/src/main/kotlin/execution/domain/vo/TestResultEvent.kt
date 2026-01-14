@@ -11,7 +11,7 @@ data class TestResultEvent(
     val durationMs: Long,
     val journalPath: String,
     val timestamp: Long,
-    val seed: Long
+    val seed: Long,
 ) {
     fun toJson(): String {
         val sb = StringBuilder()
@@ -23,7 +23,8 @@ data class TestResultEvent(
             .append(testName.escapeJson())
             .append(""","workerId":""")
             .append(workerId.value)
-            .append(""","seed":""").append(seed)
+            .append(""","seed":""")
+            .append(seed)
             .append(""","status":""")
             .append(statusToJson(status))
             .append(""","durationMs":""")

@@ -18,9 +18,8 @@ import io.github.oshai.kotlinlogging.KotlinLogging
  */
 class BroadcastingResultPublisher(
     private val publishers: List<TestResultPublisher>,
-    private val onPublishFailure: (String, Throwable) -> Unit = { _, _ -> }
+    private val onPublishFailure: (String, Throwable) -> Unit = { _, _ -> },
 ) : TestResultPublisher {
-
     private val logger = KotlinLogging.logger {}
 
     init {
@@ -55,7 +54,7 @@ class BroadcastingResultPublisher(
     private fun executeSafely(
         publisher: TestResultPublisher,
         actionName: String,
-        block: (TestResultPublisher) -> Unit
+        block: (TestResultPublisher) -> Unit,
     ) {
         try {
             block(publisher)
@@ -64,14 +63,19 @@ class BroadcastingResultPublisher(
         }
     }
 
-    private fun handleFailure(publisher: TestResultPublisher, action: String, cause: Throwable) {
+    private fun handleFailure(
+        publisher: TestResultPublisher,
+        action: String,
+        cause: Throwable,
+    ) {
         val publisherName = publisher::class.simpleName ?: "UnknownPublisher"
 
         // 1. Semantic Exception wrapping
-        val internalError = KontraktInternalException(
-            message = "Reporting failed during '$action' in adapter: $publisherName",
-            cause = cause
-        )
+        val internalError =
+            KontraktInternalException(
+                message = "Reporting failed during '$action' in adapter: $publisherName",
+                cause = cause,
+            )
 
         // 2. Structured Logging
         logger.error(internalError) { internalError.message }
@@ -82,5 +86,4 @@ class BroadcastingResultPublisher(
         // 4. Notify Observer
         onPublishFailure(publisherName, internalError)
     }
-
 }

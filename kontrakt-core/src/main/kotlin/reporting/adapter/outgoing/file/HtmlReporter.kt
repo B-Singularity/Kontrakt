@@ -11,9 +11,8 @@ import java.util.concurrent.ConcurrentLinkedQueue
  * Generates a human-readable HTML dashboard.
  */
 class HtmlReporter(
-    private val config: ReportingDirectives
+    private val config: ReportingDirectives,
 ) : TestResultPublisher {
-
     private val events = ConcurrentLinkedQueue<TestResultEvent>()
 
     override fun publish(event: TestResultEvent) {
@@ -26,7 +25,8 @@ class HtmlReporter(
         val reportFile = config.baseReportDir.resolve("index.html").toFile()
         reportFile.parentFile.mkdirs()
 
-        val htmlContent = """
+        val htmlContent =
+            """
             <!DOCTYPE html>
             <html lang="en">
             <head>
@@ -52,7 +52,7 @@ class HtmlReporter(
                 </table>
             </body>
             </html>
-        """.trimIndent()
+            """.trimIndent()
 
         reportFile.writeText(htmlContent)
     }

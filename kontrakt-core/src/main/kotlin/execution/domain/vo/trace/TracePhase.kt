@@ -19,5 +19,5 @@ enum class TracePhase {
     VERIFICATION,
 
     /** [END] Final verdict and teardown. */
-    RESULT
+    RESULT,
 }

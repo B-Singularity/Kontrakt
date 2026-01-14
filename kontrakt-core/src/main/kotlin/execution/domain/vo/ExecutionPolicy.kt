@@ -11,16 +11,14 @@ data class ExecutionPolicy(
      * [Control] Reproducibility settings (e.g., Random Seed).
      */
     val determinism: DeterminismPolicy = DeterminismPolicy.DEFAULT,
-
     /**
      * [Observability] Logging and Auditing settings (Retention, Depth).
      */
     val auditing: AuditPolicy = AuditPolicy.DEFAULT,
-
     /**
      * [Infrastructure] Resource limits and concurrency settings.
      */
-    val resources: ResourcePolicy = ResourcePolicy.DEFAULT
+    val resources: ResourcePolicy = ResourcePolicy.DEFAULT,
 ) {
     companion object {
         val DEFAULT = ExecutionPolicy()
@@ -35,7 +33,7 @@ data class DeterminismPolicy(
      * The seed for random number generation.
      * If null, the engine generates a new random seed for every run.
      */
-    val seed: Long? = null
+    val seed: Long? = null,
 ) {
     companion object {
         val DEFAULT = DeterminismPolicy()
@@ -50,11 +48,10 @@ data class AuditPolicy(
      * Determines which log files to keep on disk.
      */
     val retention: LogRetention = LogRetention.ON_FAILURE,
-
     /**
      * Determines the level of detail written to the log files.
      */
-    val depth: AuditDepth = AuditDepth.SIMPLE
+    val depth: AuditDepth = AuditDepth.SIMPLE,
 ) {
     companion object {
         val DEFAULT = AuditPolicy()
@@ -69,11 +66,10 @@ data class ResourcePolicy(
      * The maximum time (in milliseconds) allowed for a single test scenario.
      */
     val timeoutMs: Long = 5000L,
-
     /**
      * The number of parallel workers. 1 implies sequential execution.
      */
-    val parallelism: Int = 1
+    val parallelism: Int = 1,
 ) {
     companion object {
         val DEFAULT = ResourcePolicy()

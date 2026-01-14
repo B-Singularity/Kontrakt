@@ -136,7 +136,7 @@ class TestExecution(
                 message = firstFailure.message,
                 expected = firstFailure.expected,
                 actual = firstFailure.actual,
-                cause = null
+                cause = null,
             )
         } else {
             TestStatus.Passed

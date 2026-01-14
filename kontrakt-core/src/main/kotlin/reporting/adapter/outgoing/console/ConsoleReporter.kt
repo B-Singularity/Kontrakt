@@ -17,17 +17,9 @@ import java.util.concurrent.atomic.AtomicInteger
  * - **CI/CD Friendly**: Automatically disables colors if `NO_COLOR` environment variable is set.
  * - **Thread-Safe**: Uses synchronization to prevent interleaved output during parallel execution.
  */
-/**
- * [Controller] Console Dashboard Adapter
- *
- * Implements a "Buffered Reporting" strategy:
- * 1. Collects events silently during execution.
- * 2. Delegates the final rendering to the injected [ConsoleLayout].
- */
 class ConsoleReporter(
-    private val layout: ConsoleLayout
+    private val layout: ConsoleLayout,
 ) : TestResultPublisher {
-
     private val passedCount = AtomicInteger(0)
     private val failedCount = AtomicInteger(0)
     private val abortedCount = AtomicInteger(0)
@@ -72,7 +64,7 @@ class ConsoleReporter(
             passed = passedCount.get(),
             failed = failedCount.get(),
             ignored = abortedCount.get(),
-            duration = duration
+            duration = duration,
         )
 
         // 2. Print Failure Details

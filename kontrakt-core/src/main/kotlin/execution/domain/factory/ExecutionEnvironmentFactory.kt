@@ -18,7 +18,7 @@ class ExecutionEnvironmentFactory(
 ) {
     fun create(seed: Long): ExecutionEnvironment {
         val randomSource = Random(seed)
-        
+
         return ExecutionEnvironment(
             random = randomSource,
             clock = clock,

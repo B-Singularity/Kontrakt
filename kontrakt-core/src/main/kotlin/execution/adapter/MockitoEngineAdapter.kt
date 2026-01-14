@@ -41,7 +41,7 @@ class MockitoEngineAdapter :
 
     override fun <T : Any> createMock(
         classToMock: KClass<T>,
-        context: MockingContext
+        context: MockingContext,
     ): T =
         Mockito.mock(
             classToMock.java,
@@ -50,11 +50,11 @@ class MockitoEngineAdapter :
 
     override fun <T : Any> createFake(
         classToFake: KClass<T>,
-        context: MockingContext
+        context: MockingContext,
     ): T =
         Mockito.mock(
             classToFake.java,
-            StatefulOrGenerativeAnswer(context.generator, context.trace)
+            StatefulOrGenerativeAnswer(context.generator, context.trace),
         )
 
     override fun createScenarioContext(): ScenarioContext = MockitoScenarioContext()
@@ -77,7 +77,7 @@ class MockitoEngineAdapter :
             if (isSuspiciousStatefulMethod(methodName)) {
                 logger.warn {
                     "⚠️ Suspicious call '$methodName' on Stateless Mock '${mockType.simpleName}'. " +
-                            "Use 'createFake()' (or @Stateful) if you need In-Memory DB behavior."
+                        "Use 'createFake()' (or @Stateful) if you need In-Memory DB behavior."
                 }
             }
 
@@ -102,11 +102,11 @@ class MockitoEngineAdapter :
 
         private fun isSuspiciousStatefulMethod(name: String): Boolean =
             name.startsWith("save") ||
-                    name.startsWith("insert") ||
-                    name.startsWith("update") ||
-                    name.startsWith("delete") ||
-                    name.startsWith("remove") ||
-                    name.startsWith("store")
+                name.startsWith("insert") ||
+                name.startsWith("update") ||
+                name.startsWith("delete") ||
+                name.startsWith("remove") ||
+                name.startsWith("store")
     }
 
     /**
@@ -218,8 +218,8 @@ class MockitoEngineAdapter :
             n: String,
             args: Array<Any>,
         ) = (n == "findById" || n == "getById") &&
-                args.size == 1 ||
-                ((n.startsWith("find") || n.startsWith("get")) && args.size == 1 && !n.contains("By"))
+            args.size == 1 ||
+            ((n.startsWith("find") || n.startsWith("get")) && args.size == 1 && !n.contains("By"))
 
         private fun isFindAll(n: String) = n.contains("All") || n.contains("findAll") || n == "list"
 
@@ -240,20 +240,22 @@ class MockitoEngineAdapter :
 private fun ScenarioTrace.recordCapture(
     invocation: InvocationOnMock,
     args: Array<Any>,
-    startTime: Long
+    startTime: Long,
 ) {
     val duration = System.currentTimeMillis() - startTime
 
-    val interfaceName = invocation.mock::class.java.interfaces
-        .firstOrNull()
-        ?.simpleName ?: "Mock"
+    val interfaceName =
+        invocation.mock::class.java.interfaces
+            .firstOrNull()
+            ?.simpleName ?: "Mock"
 
-    val traceEvent = ExecutionTrace(
-        methodSignature = "$interfaceName.${invocation.method.name}",
-        arguments = args.map { it.toString() }, // 인자 사용
-        durationMs = duration,
-        timestamp = startTime,
-    )
+    val traceEvent =
+        ExecutionTrace(
+            methodSignature = "$interfaceName.${invocation.method.name}",
+            arguments = args.map { it.toString() }, // 인자 사용
+            durationMs = duration,
+            timestamp = startTime,
+        )
 
     runCatching {
         this.decisions.add(traceEvent)

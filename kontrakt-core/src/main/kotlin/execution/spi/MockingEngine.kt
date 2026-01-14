@@ -6,12 +6,12 @@ import kotlin.reflect.KClass
 interface MockingEngine {
     fun <T : Any> createMock(
         classToMock: KClass<T>,
-        context: MockingContext
+        context: MockingContext,
     ): T
 
     fun <T : Any> createFake(
         classToFake: KClass<T>,
-        context: MockingContext
+        context: MockingContext,
     ): T
 
     fun createScenarioContext(): ScenarioContext

@@ -202,12 +202,12 @@ class TestInstanceFactory(
 
     private fun isBasicValueType(type: KClass<*>): Boolean =
         type == String::class ||
-                type == Int::class ||
-                type == Long::class ||
-                type == Double::class ||
-                type == Boolean::class ||
-                type == List::class ||
-                type == Map::class ||
-                type == Set::class ||
-                type.isData
+            type == Int::class ||
+            type == Long::class ||
+            type == Double::class ||
+            type == Boolean::class ||
+            type == List::class ||
+            type == Map::class ||
+            type == Set::class ||
+            type.isData
 }

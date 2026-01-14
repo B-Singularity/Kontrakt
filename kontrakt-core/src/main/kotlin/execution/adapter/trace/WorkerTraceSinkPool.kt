@@ -48,7 +48,7 @@ class WorkerTraceSinkPool(
             throw KontraktLifecycleException(
                 componentName = "WorkerTraceSinkPool",
                 action = "lease new sink",
-                reason = "the pool is already closed (Engine Shutdown Phase)."
+                reason = "the pool is already closed (Engine Shutdown Phase).",
             )
         }
         // [Optimization] Atomic check-then-act.
@@ -83,5 +83,4 @@ class WorkerTraceSinkPool(
         }
         pool.clear()
     }
-
 }

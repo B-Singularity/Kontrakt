@@ -8,7 +8,9 @@ package execution.domain.vo
  */
 
 @JvmInline
-value class WorkerId(val value: Int) {
+value class WorkerId(
+    val value: Int,
+) {
     init {
         require(value >= 0) { "WorkerId must be non-negative" }
     }

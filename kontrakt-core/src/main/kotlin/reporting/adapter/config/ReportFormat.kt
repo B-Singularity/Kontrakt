@@ -17,5 +17,5 @@ enum class ReportFormat {
     /**
      * Generates a machine-readable JSON report for external tools or CI integration.
      */
-    JSON
+    JSON,
 }

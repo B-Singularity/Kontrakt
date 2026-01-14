@@ -109,7 +109,7 @@ class DefaultScenarioExecutor(
             context.targetMethod = kFunc.javaMethod
                 ?: throw KontraktInternalException(
                     "Failed to resolve Java method for Kotlin function: '${kFunc.name}'. " +
-                            "This indicates a reflection issue with the target class '${kClass.simpleName}'.",
+                        "This indicates a reflection issue with the target class '${kClass.simpleName}'.",
                 )
 
             val args = createArguments(kFunc, context, fixtureGenerator, generationContext)
@@ -152,16 +152,17 @@ class DefaultScenarioExecutor(
                         if (kFunc.name != contractMethod.name) return@find false
                         val kFuncAsJava = kFunc.javaMethod ?: return@find false
                         kFuncAsJava.name == contractMethod.name &&
-                                kFuncAsJava.parameterTypes.contentEquals(contractMethod.parameterTypes)
+                            kFuncAsJava.parameterTypes.contentEquals(contractMethod.parameterTypes)
                     } ?: throw KontraktConfigurationException(
-                        "Contract violation: Implementation of method '${contractMethod.name}' not found in '${implementationKClass.simpleName}'. " +
-                                "Ensure the class strictly adheres to the contract interface."
+                        "Contract violation: Implementation of method '${contractMethod.name}' " +
+                            "not found in '${implementationKClass.simpleName}'.\n" +
+                            "Ensure the class strictly adheres to the contract interface.",
                     )
 
                 val contractKFunc =
                     contractMethod.kotlinFunction
                         ?: throw KontraktInternalException(
-                            "Reflection failure: Could not resolve Kotlin function metadata for contract method '${contractMethod.name}'."
+                            "Reflection failure: Could not resolve Kotlin function metadata for contract method '${contractMethod.name}'.",
                         )
 
                 context.targetMethod = contractMethod
@@ -191,13 +192,14 @@ class DefaultScenarioExecutor(
 
         captureArgumentsToTrace(context, args)
 
-        val result = if (implFunc.isSuspend) {
-            runBlocking {
-                implFunc.callSuspendBy(args)
+        val result =
+            if (implFunc.isSuspend) {
+                runBlocking {
+                    implFunc.callSuspendBy(args)
+                }
+            } else {
+                implFunc.callBy(args)
             }
-        } else {
-            implFunc.callBy(args)
-        }
 
         contractValidator.validate(contractKFunc, result)
 
@@ -234,13 +236,17 @@ class DefaultScenarioExecutor(
         return arguments
     }
 
-    private fun captureArgumentsToTrace(context: EphemeralTestContext, args: Map<KParameter, Any?>) {
-        val valueArguments = args.filterKeys { it.kind == KParameter.Kind.VALUE }
-            .entries
-            .sortedBy { it.key.index }
-            .map { it.value }
+    private fun captureArgumentsToTrace(
+        context: EphemeralTestContext,
+        args: Map<KParameter, Any?>,
+    ) {
+        val valueArguments =
+            args
+                .filterKeys { it.kind == KParameter.Kind.VALUE }
+                .entries
+                .sortedBy { it.key.index }
+                .map { it.value }
 
         context.trace.recordGeneratedArguments(valueArguments)
     }
-
 }

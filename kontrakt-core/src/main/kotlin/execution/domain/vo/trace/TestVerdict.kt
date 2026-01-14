@@ -12,11 +12,14 @@ data class TestVerdict(
     override fun toNdjson(): String {
         // Performance Optimization: Using StringBuilder to avoid allocation overhead
         val sb = StringBuilder()
-        sb.append("""{"timestamp":""").append(timestamp)
+        sb
+            .append("""{"timestamp":""")
+            .append(timestamp)
             .append(""","phase":"$phase"""")
             // Serialize status as a simple string (e.g., "Passed", "AssertionFailed")
             .append(""","status":"${status::class.simpleName}"""")
-            .append(""","durationTotalMs":""").append(durationTotalMs)
+            .append(""","durationTotalMs":""")
+            .append(durationTotalMs)
             .append("}")
         return sb.toString()
     }

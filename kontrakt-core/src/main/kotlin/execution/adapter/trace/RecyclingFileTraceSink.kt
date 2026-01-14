@@ -105,10 +105,9 @@ class RecyclingFileTraceSink(
                 destination = buffer,
                 destinationOffset = bufferPos,
                 startIndex = 0,
-                endIndex = bytes.size
+                endIndex = bytes.size,
             )
             bufferPos += bytes.size
-
         } catch (e: Exception) {
             // Intentionally swallow logging errors to keep the test runner alive
         }
@@ -119,8 +118,8 @@ class RecyclingFileTraceSink(
      * * - **Critical:** Must be written to disk immediately to prevent data loss on crash.
      * - **Non-Critical:** Can be buffered to save IOPS.
      */
-    private fun isCriticalEvent(event: TraceEvent): Boolean {
-        return when (event) {
+    private fun isCriticalEvent(event: TraceEvent): Boolean =
+        when (event) {
             // [MUST SAVE] The final verdict is the most important record (Graceful Shutdown proof).
             is TestVerdict -> true
 
@@ -139,7 +138,6 @@ class RecyclingFileTraceSink(
             // Losing the last 20 generated values is acceptable if we have the Execution context.
             is DesignDecision -> false
         }
-    }
 
     /**
      * Flushes the memory buffer to the OS Kernel (via RandomAccessFile).
@@ -191,9 +189,7 @@ class RecyclingFileTraceSink(
         }
     }
 
-    override fun getJournalPath(): String {
-        return workerLogPath.toAbsolutePath().toString()
-    }
+    override fun getJournalPath(): String = workerLogPath.toAbsolutePath().toString()
 
     /**
      * Resets the sink for the next test execution.
@@ -225,5 +221,3 @@ class RecyclingFileTraceSink(
         }
     }
 }
-
-

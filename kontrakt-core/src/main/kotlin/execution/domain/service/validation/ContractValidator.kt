@@ -52,7 +52,7 @@ class ContractValidator(
             if (element.has<NotNull>()) {
                 throw ContractViolationException(
                     rule = AnnotationRule(NotNull::class),
-                    message = "NotNull violation: value is null"
+                    message = "NotNull violation: value is null",
                 )
             }
             return
@@ -61,7 +61,7 @@ class ContractValidator(
         if (element.has<Null>()) {
             throw ContractViolationException(
                 rule = AnnotationRule(Null::class),
-                message = "Null violation: value must be null but got '$value'"
+                message = "Null violation: value must be null but got '$value'",
             )
         }
 
@@ -333,10 +333,10 @@ class ContractValidator(
 
     private fun isTimeType(value: Any): Boolean =
         value is Instant ||
-                value is Date ||
-                value is ChronoLocalDate ||
-                value is ChronoLocalDateTime<*> ||
-                value is ChronoZonedDateTime<*>
+            value is Date ||
+            value is ChronoLocalDate ||
+            value is ChronoLocalDateTime<*> ||
+            value is ChronoZonedDateTime<*>
 
     private fun toInstant(value: Any): Instant? =
         when (value) {

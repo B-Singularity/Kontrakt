@@ -8,10 +8,15 @@ import execution.domain.TestStatus
  */
 interface ConsoleTheme {
     fun red(text: String): String
+
     fun green(text: String): String
+
     fun yellow(text: String): String
+
     fun bold(text: String): String
+
     fun line(): String
+
     fun icon(status: TestStatus): String
 }
 
@@ -27,14 +32,20 @@ object AnsiTheme : ConsoleTheme {
     private const val GRAY = "\u001B[90m"
 
     override fun red(text: String) = "$RED$text$RESET"
+
     override fun green(text: String) = "$GREEN$text$RESET"
+
     override fun yellow(text: String) = "$YELLOW$text$RESET"
+
     override fun bold(text: String) = "$BOLD$text$RESET"
+
     override fun line() = "$GRAY──────────────────────────────────────────────────────$RESET"
-    override fun icon(status: TestStatus) = when (status) {
-        is TestStatus.AssertionFailed, is TestStatus.ExecutionError -> "✖"
-        else -> "✔"
-    }
+
+    override fun icon(status: TestStatus) =
+        when (status) {
+            is TestStatus.AssertionFailed, is TestStatus.ExecutionError -> "✖"
+            else -> "✔"
+        }
 }
 
 /**
@@ -42,9 +53,14 @@ object AnsiTheme : ConsoleTheme {
  */
 object NoColorTheme : ConsoleTheme {
     override fun red(text: String) = text
+
     override fun green(text: String) = text
+
     override fun yellow(text: String) = text
+
     override fun bold(text: String) = text
+
     override fun line() = "------------------------------------------------------"
+
     override fun icon(status: TestStatus) = if (status is TestStatus.Passed) "[PASS]" else "[FAIL]"
 }

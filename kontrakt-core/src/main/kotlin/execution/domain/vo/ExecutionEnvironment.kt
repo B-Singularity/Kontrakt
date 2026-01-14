@@ -13,17 +13,15 @@ data class ExecutionEnvironment(
      * Seeded by the Engine to ensure reproducibility.
      */
     val random: Random,
-
     /**
      * The time provider. Fixed or Real-time depending on configuration.
      */
     val clock: Clock,
-
     // --- Metadata (Context) ---
     val trace: TraceInfo,
     val auth: AuthInfo,
     val tenant: TenantInfo,
-    val request: RequestInfo
+    val request: RequestInfo,
 )
 
 data class TraceInfo(
@@ -32,8 +30,7 @@ data class TraceInfo(
     val parentSpanId: String? = null,
     val sampled: Boolean,
     val decisions: MutableList<ExecutionTrace> = CopyOnWriteArrayList(),
-) {
-}
+)
 
 data class AuthInfo(
     val userId: String,

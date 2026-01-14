@@ -22,7 +22,7 @@ enum class LogRetention {
      * [Verbose] All log files are preserved regardless of the test outcome.
      * Enabled via `--verbose` or `--archive`.
      */
-    ALWAYS
+    ALWAYS,
 }
 
 /**
@@ -42,5 +42,5 @@ enum class AuditDepth {
      * Records the full BDD lifecycle: Design (Strategy/Mocking) -> Execution -> Verification.
      * Enables "Time-Travel" debugging to understand *why* a specific value was generated.
      */
-    EXPLAINABLE
+    EXPLAINABLE,
 }

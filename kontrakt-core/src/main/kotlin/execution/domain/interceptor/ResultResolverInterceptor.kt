@@ -67,10 +67,11 @@ class ResultResolverInterceptor(
         this.map { record ->
             if (record.location is SourceLocation.NotCaptured) {
                 record.copy(
-                    location = SourceLocation.Approximate(
-                        className = spec.target.fullyQualifiedName,
-                        displayName = spec.target.displayName,
-                    )
+                    location =
+                        SourceLocation.Approximate(
+                            className = spec.target.fullyQualifiedName,
+                            displayName = spec.target.displayName,
+                        ),
                 )
             } else {
                 record

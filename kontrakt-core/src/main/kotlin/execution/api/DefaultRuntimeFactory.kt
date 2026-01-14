@@ -30,7 +30,6 @@ class DefaultRuntimeFactory(
     private val clock: Clock,
     private val executionPolicy: ExecutionPolicy,
 ) : KontraktRuntimeFactory {
-
     override fun createExecutor(): TestScenarioExecutor =
         DefaultScenarioExecutor(
             clock = clock,

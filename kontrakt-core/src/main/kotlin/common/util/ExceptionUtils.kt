@@ -72,11 +72,12 @@ fun Throwable.sanitizeStackTrace(verbose: Boolean = false): Throwable {
  * [ADR-020] Blame Assignment.
  * Determines the category of the error for reporting purposes.
  */
-fun Throwable.analyzeBlame(): Blame {
-    return when (this) {
+fun Throwable.analyzeBlame(): Blame =
+    when (this) {
         // Business Logic Failure (Assertion / Contract)
         is AssertionError,
-        is ContractViolationException -> Blame.TEST_FAILURE
+        is ContractViolationException,
+        -> Blame.TEST_FAILURE
 
         // User Configuration Error
         is KontraktConfigurationException -> Blame.SETUP_FAILURE
@@ -87,7 +88,6 @@ fun Throwable.analyzeBlame(): Blame {
         // Unexpected Runtime Exception (NPE, etc.) in User Code
         else -> Blame.EXECUTION_FAILURE
     }
-}
 
 /**
  * [ADR-020] Blame Category.
@@ -95,7 +95,9 @@ fun Throwable.analyzeBlame(): Blame {
  *
  * @property description Human-readable description for UI/Logs.
  */
-enum class Blame(val description: String) {
+enum class Blame(
+    val description: String,
+) {
     /**
      * Indicates incorrect usage of the framework by the user.
      * Examples: Invalid annotations, circular dependencies, missing constructors.
@@ -122,9 +124,8 @@ enum class Blame(val description: String) {
      * Examples: Lifecycle violations, internal reflection errors.
      * Action: Report issue to framework maintainers.
      */
-    INTERNAL_ERROR("Internal Framework Error")
+    INTERNAL_ERROR("Internal Framework Error"),
 }
-
 
 // --- Internal Helper Extensions ---
 

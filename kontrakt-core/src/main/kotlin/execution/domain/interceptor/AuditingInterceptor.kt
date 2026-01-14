@@ -19,22 +19,6 @@ import execution.spi.interceptor.ScenarioInterceptor
 import execution.spi.trace.ScenarioTrace
 import java.time.Clock
 
-
-/**
- * [Domain Service] Auditing & Reporting Interceptor.
- *
- * Implements **ADR-021 (Log Diet & Smart Snapshot)** strategies.
- *
- * This interceptor acts as the "Black Box Recorder" for the test execution.
- * It sits between the Result Resolver and the actual execution, capturing every
- * significant event and writing it to the [TraceSink].
- *
- * **Core Responsibilities:**
- * 1. **Log Diet:** Filters out high-volume `DESIGN` logs unless verbose mode is enabled.
- * 2. **Event Journaling:** Records Execution, Verification, and Exception events in real-time.
- * 3. **Smart Snapshot:** Persists the log file to disk only when a test fails (or trace mode is on).
- * 4. **Result Publishing:** Notifies the [TestResultPublisher] of the final outcome.
- */
 /**
  * [Domain Service] Auditing & Reporting Interceptor.
  *
@@ -58,7 +42,6 @@ class AuditingInterceptor(
     private val clock: Clock,
     private val workerId: WorkerId,
 ) : ScenarioInterceptor {
-
     override fun intercept(chain: ScenarioInterceptor.Chain): List<AssertionRecord> =
         with(chain.context) {
             val startTime = clock.millis()
@@ -83,7 +66,6 @@ class AuditingInterceptor(
                 // 4. [ERROR] Log Exception immediately (Critical)
                 emitExceptionTrace(e)
                 throw e // Re-throw for ResultResolverInterceptor to handle
-
             } finally {
                 // 5. [FINALLY] Seal the log and publish report
                 finalizeSession(trace, testName, caughtException, startTime)
@@ -107,14 +89,18 @@ class AuditingInterceptor(
         }
     }
 
-    private fun emitExecutionTrace(methodName: String, args: List<Any?>, durationMs: Long) {
+    private fun emitExecutionTrace(
+        methodName: String,
+        args: List<Any?>,
+        durationMs: Long,
+    ) {
         traceSink.emit(
             ExecutionTrace(
                 methodSignature = methodName,
                 arguments = args.map { it.toString() },
                 durationMs = durationMs,
-                timestamp = clock.millis()
-            )
+                timestamp = clock.millis(),
+            ),
         )
     }
 
@@ -125,8 +111,8 @@ class AuditingInterceptor(
                     rule = record.rule.key,
                     status = record.status,
                     detail = record.message,
-                    timestamp = clock.millis()
-                )
+                    timestamp = clock.millis(),
+                ),
             )
         }
     }
@@ -137,8 +123,8 @@ class AuditingInterceptor(
                 exceptionType = e.javaClass.name,
                 message = e.message.orEmpty(),
                 stackTraceElements = e.stackTrace.take(15),
-                timestamp = clock.millis()
-            )
+                timestamp = clock.millis(),
+            ),
         )
     }
 
@@ -154,45 +140,50 @@ class AuditingInterceptor(
         trace: ScenarioTrace,
         testName: String,
         error: Throwable?,
-        startTime: Long
+        startTime: Long,
     ) {
         val totalDurationMs = clock.millis() - startTime
 
         // 1. Determine Status
-        val status = when (error) {
-            null -> TestStatus.Passed
-            is AssertionError,
-            is ContractViolationException -> TestStatus.AssertionFailed(
-                message = error.message ?: "Assertion Failed",
-                expected = "Contract Compliance",
-                actual = "Violation"
-            )
+        val status =
+            when (error) {
+                null -> TestStatus.Passed
+                is AssertionError,
+                is ContractViolationException,
+                ->
+                    TestStatus.AssertionFailed(
+                        message = error.message ?: "Assertion Failed",
+                        expected = "Contract Compliance",
+                        actual = "Violation",
+                    )
 
-            else -> TestStatus.ExecutionError(error)
-        }
+                else -> TestStatus.ExecutionError(error)
+            }
 
         // 2. Emit Final Verdict (The Seal)
         traceSink.emit(
             TestVerdict(
                 status = status,
                 durationTotalMs = totalDurationMs,
-                timestamp = clock.millis()
-            )
+                timestamp = clock.millis(),
+            ),
         )
 
         // 3. Snapshot Strategy (Smart Flush via LogRetention Policy)
-        val shouldSnapshot = when (policy.retention) {
-            LogRetention.NONE -> false
-            LogRetention.ALWAYS -> true
-            LogRetention.ON_FAILURE -> status !is TestStatus.Passed
-        }
+        val shouldSnapshot =
+            when (policy.retention) {
+                LogRetention.NONE -> false
+                LogRetention.ALWAYS -> true
+                LogRetention.ON_FAILURE -> status !is TestStatus.Passed
+            }
 
-        val journalPath = if (shouldSnapshot) {
-            val subDir = if (status !is TestStatus.Passed) "failures" else "traces"
-            traceSink.snapshotTo("$subDir/run-${trace.runId}.log")
-        } else {
-            ""
-        }
+        val journalPath =
+            if (shouldSnapshot) {
+                val subDir = if (status !is TestStatus.Passed) "failures" else "traces"
+                traceSink.snapshotTo("$subDir/run-${trace.runId}.log")
+            } else {
+                ""
+            }
 
         // 4. Reset Sink for next run (Recycling)
         traceSink.reset()
@@ -207,8 +198,8 @@ class AuditingInterceptor(
                 durationMs = totalDurationMs,
                 journalPath = journalPath,
                 timestamp = clock.millis(),
-                seed = seed
-            )
+                seed = seed,
+            ),
         )
     }
 }

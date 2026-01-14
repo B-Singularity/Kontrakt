@@ -72,9 +72,8 @@ class KontraktTestEngine : TestEngine {
                 discoverer
                     .discover(
                         policy = discoveryPolicy,
-                        contractMarker = Contract::class
-                    )
-                    .onFailure { logger.error(it) { "Discovery failed" } }
+                        contractMarker = Contract::class,
+                    ).onFailure { logger.error(it) { "Discovery failed" } }
                     .getOrDefault(emptyList())
             }
 
@@ -102,10 +101,11 @@ class KontraktTestEngine : TestEngine {
         val traceSinkPool = WorkerTraceSinkPool(Path.of("build/kontrakt"))
 
         // 2. [Boundary] Load User Input
-        val userOptions = UserControlOptions(
-            traceMode = System.getProperty("kontrakt.trace")?.toBoolean() ?: false,
-            seed = System.getProperty("kontrakt.seed")?.toLongOrNull(),
-        )
+        val userOptions =
+            UserControlOptions(
+                traceMode = System.getProperty("kontrakt.trace")?.toBoolean() ?: false,
+                seed = System.getProperty("kontrakt.seed")?.toLongOrNull(),
+            )
 
         // 3. [Translation] DTO -> Domain Policy
         val executionPolicy = userOptions.toExecutionPolicy()
@@ -128,23 +128,25 @@ class KontraktTestEngine : TestEngine {
             publishers.add(HtmlReporter(reportingDirectives))
         }
 
-        val resultPublisher = BroadcastingResultPublisher(
-            publishers = publishers,
-            onPublishFailure = { name, error ->
-                System.err.println("[Kontrakt Engine] Reporter '$name' failed: ${error.message}")
-            }
-        )
+        val resultPublisher =
+            BroadcastingResultPublisher(
+                publishers = publishers,
+                onPublishFailure = { name, error ->
+                    System.err.println("[Kontrakt Engine] Reporter '$name' failed: ${error.message}")
+                },
+            )
 
         try {
             // 5. [Runtime] Create Runtime Factory
-            runtimeFactory = DefaultRuntimeFactory(
-                mockingEngine = mockingEngine,
-                scenarioControl = scenarioControl,
-                traceSinkPool = traceSinkPool,
-                resultPublisher = resultPublisher,
-                clock = clock,
-                executionPolicy = executionPolicy
-            )
+            runtimeFactory =
+                DefaultRuntimeFactory(
+                    mockingEngine = mockingEngine,
+                    scenarioControl = scenarioControl,
+                    traceSinkPool = traceSinkPool,
+                    resultPublisher = resultPublisher,
+                    clock = clock,
+                    executionPolicy = executionPolicy,
+                )
 
             listener.executionStarted(engineDescriptor)
 
@@ -158,7 +160,6 @@ class KontraktTestEngine : TestEngine {
 
             // 6. [Finalize] Print Console Summary
             consoleReporter.printFinalReport()
-
         } finally {
             traceSinkPool.close()
         }
@@ -191,23 +192,30 @@ class KontraktTestEngine : TestEngine {
         }
     }
 
-    private fun reportResult(descriptor: TestDescriptor, result: TestResult, listener: EngineExecutionListener) {
+    private fun reportResult(
+        descriptor: TestDescriptor,
+        result: TestResult,
+        listener: EngineExecutionListener,
+    ) {
         when (val status = result.finalStatus) {
             is TestStatus.Passed -> listener.executionFinished(descriptor, TestExecutionResult.successful())
-            is TestStatus.AssertionFailed -> listener.executionFinished(
-                descriptor,
-                TestExecutionResult.failed(AssertionError(status.message))
-            )
+            is TestStatus.AssertionFailed ->
+                listener.executionFinished(
+                    descriptor,
+                    TestExecutionResult.failed(AssertionError(status.message)),
+                )
 
-            is TestStatus.ExecutionError -> listener.executionFinished(
-                descriptor,
-                TestExecutionResult.failed(status.cause)
-            )
+            is TestStatus.ExecutionError ->
+                listener.executionFinished(
+                    descriptor,
+                    TestExecutionResult.failed(status.cause),
+                )
 
-            else -> listener.executionFinished(
-                descriptor,
-                TestExecutionResult.failed(KontraktInternalException("Unknown status"))
-            )
+            else ->
+                listener.executionFinished(
+                    descriptor,
+                    TestExecutionResult.failed(KontraktInternalException("Unknown status")),
+                )
         }
     }
 

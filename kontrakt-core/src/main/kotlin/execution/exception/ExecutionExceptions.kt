@@ -9,62 +9,62 @@ internal class GenerationFailedException(
     part: String? = null,
     cause: Throwable? = null,
 ) : KontraktConfigurationException(
-    "Failed to generate value for type: $type${part?.let { " (at $it)" } ?: ""}",
-    cause,
-)
+        "Failed to generate value for type: $type${part?.let { " (at $it)" } ?: ""}",
+        cause,
+    )
 
 internal class RecursiveGenerationFailedException(
     type: KType,
     val path: List<String>,
     cause: Throwable,
 ) : KontraktConfigurationException(
-    "Failed to generate recursive structure for type: $type (at field: '${path.joinToString(".")}')",
-    cause,
-)
+        "Failed to generate recursive structure for type: $type (at field: '${path.joinToString(".")}')",
+        cause,
+    )
 
 internal class ConflictingAnnotationsException(
     fieldName: String,
     annotations: List<String>,
     reason: String,
 ) : KontraktConfigurationException(
-    "[Ambiguous Contract] Field '$fieldName' has conflicting annotations: ${annotations.joinToString(", ")}. " +
+        "[Ambiguous Contract] Field '$fieldName' has conflicting annotations: ${annotations.joinToString(", ")}. " +
             "Please use only one. (Reason: $reason)",
-)
+    )
 
 internal class InvalidAnnotationValueException(
     fieldName: String,
     value: Any?,
     reason: String,
 ) : KontraktConfigurationException(
-    "[Invalid Value] Field '$fieldName' has invalid configuration value '$value'. Reason: $reason",
-)
+        "[Invalid Value] Field '$fieldName' has invalid configuration value '$value'. Reason: $reason",
+    )
 
 internal class CollectionSizeLimitExceededException(
     targetSize: Int,
     limit: Int,
 ) : KontraktConfigurationException(
-    "[Safety Limit Exceeded] Collection size ($targetSize) exceeds the global limit ($limit). " +
+        "[Safety Limit Exceeded] Collection size ($targetSize) exceeds the global limit ($limit). " +
             "To force execution, use '@Size(..., ignoreLimit = true)'.",
-)
+    )
 
 internal class SealedClassHasNoSubclassesException(
     type: kotlin.reflect.KType,
 ) : KontraktConfigurationException(
-    "Sealed class '$type' has no permitted subclasses. Please ensure at least one subclass is defined and accessible.",
-)
+        "Sealed class '$type' has no permitted subclasses. Please ensure at least one subclass is defined and accessible.",
+    )
 
 internal class UnsupportedGeneratorException(
     generatorClass: kotlin.reflect.KClass<*>,
 ) : KontraktConfigurationException(
-    "Encountered an unsupported generator type: '${generatorClass.simpleName}'. " +
+        "Encountered an unsupported generator type: '${generatorClass.simpleName}'. " +
             "Generators must implement either 'RecursiveGenerator' or 'TerminalGenerator'.",
-)
+    )
 
 internal class KontraktLifecycleException(
     val componentName: String,
     val action: String,
-    val reason: String
+    val reason: String,
 ) : KontraktException(
-    "[Lifecycle Violation] Invalid state in component '$componentName'. " +
-            "Cannot perform '$action' because: $reason"
-)
+        "[Lifecycle Violation] Invalid state in component '$componentName'. " +
+            "Cannot perform '$action' because: $reason",
+    )

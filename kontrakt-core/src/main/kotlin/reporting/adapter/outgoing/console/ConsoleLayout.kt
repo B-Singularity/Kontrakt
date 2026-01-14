@@ -12,7 +12,15 @@ import execution.domain.vo.TestResultEvent
  */
 interface ConsoleLayout {
     fun printProgress(status: TestStatus)
-    fun printSummary(total: Int, passed: Int, failed: Int, ignored: Int, duration: Long)
+
+    fun printSummary(
+        total: Int,
+        passed: Int,
+        failed: Int,
+        ignored: Int,
+        duration: Long,
+    )
+
     fun printFailures(failures: List<Pair<TestResultEvent, TestStatus>>)
 }
 
@@ -22,9 +30,8 @@ interface ConsoleLayout {
  */
 class StandardConsoleLayout(
     private val theme: ConsoleTheme,
-    private val policy: AuditPolicy
+    private val policy: AuditPolicy,
 ) : ConsoleLayout {
-
     override fun printProgress(status: TestStatus) {
         // [Policy Check] Only print progress dots if retention is ALWAYS (Verbose).
         // Otherwise, keep the console silent.
@@ -33,14 +40,21 @@ class StandardConsoleLayout(
         }
     }
 
-    override fun printSummary(total: Int, passed: Int, failed: Int, ignored: Int, duration: Long) {
+    override fun printSummary(
+        total: Int,
+        passed: Int,
+        failed: Int,
+        ignored: Int,
+        duration: Long,
+    ) {
         val colorFunc = if (failed > 0) theme::red else theme::green
 
-        val icon = if (failed > 0) {
-            theme.icon(TestStatus.AssertionFailed("", "", ""))
-        } else {
-            theme.icon(TestStatus.Passed)
-        }
+        val icon =
+            if (failed > 0) {
+                theme.icon(TestStatus.AssertionFailed("", "", ""))
+            } else {
+                theme.icon(TestStatus.Passed)
+            }
 
         println(
             """
@@ -55,7 +69,7 @@ class StandardConsoleLayout(
             
             Duration: ${duration}ms
             ${theme.line()}
-        """.trimIndent()
+            """.trimIndent(),
         )
     }
 
@@ -77,18 +91,22 @@ class StandardConsoleLayout(
         println("\n")
     }
 
-    private fun printFailureCard(event: TestResultEvent, status: TestStatus.AssertionFailed) {
+    private fun printFailureCard(
+        event: TestResultEvent,
+        status: TestStatus.AssertionFailed,
+    ) {
         val location = findUserLocation(status.cause)
 
         // [Policy Check] Show trace badge if depth is EXPLAINABLE
         val traceBadge = if (policy.depth == AuditDepth.EXPLAINABLE) " ${theme.yellow("[TRACE]")}" else ""
 
         // [Policy Check] Hide log path if retention is NONE
-        val logInfo = if (policy.retention != LogRetention.NONE) {
-            "\n(ℹ️ Log: file://${event.journalPath})"
-        } else {
-            ""
-        }
+        val logInfo =
+            if (policy.retention != LogRetention.NONE) {
+                "\n(ℹ️ Log: file://${event.journalPath})"
+            } else {
+                ""
+            }
 
         println(
             """
@@ -100,21 +118,25 @@ class StandardConsoleLayout(
             📍 ${theme.bold("Location:")}
                $location
             🌱 ${theme.bold("Reproduction:")} --seed ${event.seed} $logInfo
-        """.trimIndent()
+            """.trimIndent(),
         )
     }
 
-    private fun printErrorCard(event: TestResultEvent, status: TestStatus.ExecutionError) {
+    private fun printErrorCard(
+        event: TestResultEvent,
+        status: TestStatus.ExecutionError,
+    ) {
         val location = findUserLocation(status.cause)
         val exName = status.cause::class.simpleName ?: "UnknownException"
 
         val traceBadge = if (policy.depth == AuditDepth.EXPLAINABLE) " ${theme.yellow("[TRACE]")}" else ""
 
-        val logInfo = if (policy.retention != LogRetention.NONE) {
-            "\n(ℹ️ Log: file://${event.journalPath})"
-        } else {
-            ""
-        }
+        val logInfo =
+            if (policy.retention != LogRetention.NONE) {
+                "\n(ℹ️ Log: file://${event.journalPath})"
+            } else {
+                ""
+            }
 
         println(
             """
@@ -126,7 +148,7 @@ class StandardConsoleLayout(
                $location
             
             🌱 ${theme.bold("Reproduction:")} --seed ${event.seed} $logInfo
-        """.trimIndent()
+            """.trimIndent(),
         )
     }
 

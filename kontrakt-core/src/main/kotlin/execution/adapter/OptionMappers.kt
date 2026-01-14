@@ -21,25 +21,27 @@ fun UserControlOptions.toExecutionPolicy(): ExecutionPolicy {
     // --archive or --verbose implies keeping ALL logs.
     // --quiet implies keeping NO logs.
     // Default is keeping logs only ON_FAILURE.
-    val retention = when {
-        this.archiveMode || this.isVerbose -> LogRetention.ALWAYS
-        this.verbosity == UserControlOptions.Verbosity.QUIET -> LogRetention.NONE
-        else -> LogRetention.ON_FAILURE
-    }
+    val retention =
+        when {
+            this.archiveMode || this.isVerbose -> LogRetention.ALWAYS
+            this.verbosity == UserControlOptions.Verbosity.QUIET -> LogRetention.NONE
+            else -> LogRetention.ON_FAILURE
+        }
 
     // 2. Resolve Audit Depth (Quality)
     // --trace enables "Explainable" mode (full BDD history).
     // Default is "Simple" mode (Result only).
-    val depth = if (this.traceMode) {
-        AuditDepth.EXPLAINABLE
-    } else {
-        AuditDepth.SIMPLE
-    }
+    val depth =
+        if (this.traceMode) {
+            AuditDepth.EXPLAINABLE
+        } else {
+            AuditDepth.SIMPLE
+        }
 
     return ExecutionPolicy(
         determinism = DeterminismPolicy(seed = this.seed),
         auditing = AuditPolicy(retention = retention, depth = depth),
-        resources = ResourcePolicy(timeoutMs = 5000L)
+        resources = ResourcePolicy(timeoutMs = 5000L),
     )
 }
 
@@ -48,23 +50,23 @@ fun UserControlOptions.toExecutionPolicy(): ExecutionPolicy {
  * Resolves the ScanScope based on provided patterns or package names.
  */
 fun UserControlOptions.toDiscoveryPolicy(): DiscoveryPolicy {
-    val scope = when {
-        this.testPatterns.isNotEmpty() -> ScanScope.Classes(classNames = this.testPatterns)
-        !this.packageScope.isNullOrBlank() -> ScanScope.Packages(packageNames = setOf(this.packageScope))
-        else -> ScanScope.All
-    }
+    val scope =
+        when {
+            this.testPatterns.isNotEmpty() -> ScanScope.Classes(classNames = this.testPatterns)
+            !this.packageScope.isNullOrBlank() -> ScanScope.Packages(packageNames = setOf(this.packageScope))
+            else -> ScanScope.All
+        }
     return DiscoveryPolicy(scope)
 }
 
 /**
  * Maps UserControlOptions to ReportingDirectives.
  */
-fun UserControlOptions.toReportingDirectives(): ReportingDirectives {
-    return ReportingDirectives(
+fun UserControlOptions.toReportingDirectives(): ReportingDirectives =
+    ReportingDirectives(
         baseReportDir = Paths.get("build", "reports", "kontrakt"),
         verbose = this.verbosity == UserControlOptions.Verbosity.VERBOSE,
         archiveMode = this.archiveMode,
         stackTraceLimit = this.stackTraceLimit,
-        formats = setOf(ReportFormat.CONSOLE, ReportFormat.HTML, ReportFormat.JSON)
+        formats = setOf(ReportFormat.CONSOLE, ReportFormat.HTML, ReportFormat.JSON),
     )
-}

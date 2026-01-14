@@ -12,9 +12,8 @@ import java.util.concurrent.ConcurrentLinkedQueue
  * Useful for CI/CD integration or external analysis tools.
  */
 class JsonReporter(
-    private val config: ReportingDirectives
+    private val config: ReportingDirectives,
 ) : TestResultPublisher {
-
     private val events = ConcurrentLinkedQueue<TestResultEvent>()
 
     override fun publish(event: TestResultEvent) {
@@ -32,16 +31,17 @@ class JsonReporter(
         reportFile.parentFile.mkdirs()
 
         // Manual JSON construction
-        val jsonContent = buildString {
-            append("[")
-            val iterator = events.iterator()
-            while (iterator.hasNext()) {
-                val event = iterator.next()
-                append(eventToJson(event))
-                if (iterator.hasNext()) append(",")
+        val jsonContent =
+            buildString {
+                append("[")
+                val iterator = events.iterator()
+                while (iterator.hasNext()) {
+                    val event = iterator.next()
+                    append(eventToJson(event))
+                    if (iterator.hasNext()) append(",")
+                }
+                append("]")
             }
-            append("]")
-        }
 
         reportFile.writeText(jsonContent)
     }
@@ -55,6 +55,6 @@ class JsonReporter(
               "duration": ${event.durationMs},
               "seed": ${event.seed}
             }
-        """.trimIndent()
+            """.trimIndent()
     }
 }
