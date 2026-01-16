@@ -58,7 +58,63 @@ data object DefensiveCheckRule : IntegrityRule {
 }
 
 // =============================================================================
-// [Category 3] Standard Assertions (User Test Logic)
+// [Category 3] Data Contract Specific Rules
+// =============================================================================
+
+/**
+ * Represents strict compliance rules for Data Classes and Value Objects.
+ * These rules ensure the object behaves correctly as a data carrier in collections and equality checks.
+ *
+ * @property checkName The specific aspect of the data contract being verified.
+ */
+sealed class DataContractRule(
+    val checkName: String,
+) : AssertionRule {
+    override val key: String = "DataContract.$checkName"
+
+    /**
+     * Rule: Reflexivity (x.equals(x) must be true).
+     * Ensures an object effectively identifies itself.
+     */
+    data object Reflexivity : DataContractRule("Reflexivity")
+
+    /**
+     * Rule: Symmetry (x.equals(y) must imply y.equals(x)).
+     * Ensures equality is bidirectional.
+     */
+    data object Symmetry : DataContractRule("Symmetry")
+
+    /**
+     * Rule: HashCode Consistency (x.equals(y) must imply x.hashCode() == y.hashCode()).
+     * Crucial for correct behavior in HashMaps and HashSets.
+     */
+    data object HashCodeConsistency : DataContractRule("HashCodeConsistency")
+
+    /**
+     * Rule: Non-nullity (x.equals(null) must be false).
+     * Ensures strict null-safety handling in equality logic.
+     */
+    data object NotNullEquality : DataContractRule("NotNullEquality")
+
+    /**
+     * Rule: Structural Requirements.
+     * Checks meta-requirements, such as the existence of a Primary Constructor
+     * or specific visibility modifiers required for data classes.
+     */
+    data object Structure : DataContractRule("Structure")
+
+    /**
+     * Rule: Consistency & Stability.
+     * Ensures that repeated calls to `equals()` or `hashCode()` on the same object
+     * (with no state change) return the same result.
+     * Detects reliance on unstable values like `Random` or `System.nanoTime()` within identity logic.
+     */
+    data object Consistency : DataContractRule("Consistency")
+}
+
+
+// =============================================================================
+// [Category 4] Standard Assertions (User Test Logic)
 // =============================================================================
 
 /**
@@ -72,7 +128,7 @@ data object StandardAssertion : AssertionRule {
 }
 
 // =============================================================================
-// [Category 4] Exceptions & Errors (Runtime Failures)
+// [Category 5] Exceptions & Errors (Runtime Failures)
 // =============================================================================
 
 /**

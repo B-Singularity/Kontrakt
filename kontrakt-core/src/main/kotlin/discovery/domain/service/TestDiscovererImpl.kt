@@ -4,6 +4,7 @@ import discovery.api.KontraktTest
 import discovery.api.Stateful
 import discovery.api.TestDiscoverer
 import discovery.domain.aggregate.TestSpecification
+import discovery.domain.aggregate.TestSpecification.Companion.create
 import discovery.domain.aggregate.TestSpecification.TestMode
 import discovery.domain.vo.DependencyMetadata
 import discovery.domain.vo.DependencyMetadata.MockingStrategy
@@ -20,6 +21,12 @@ import kotlin.reflect.KClass
 import kotlin.reflect.full.findAnnotation
 import kotlin.reflect.full.primaryConstructor
 
+/**
+ * [Domain Service] Test Discoverer Implementation.
+ *
+ * Scans the classpath to identify test candidates based on the provided policy.
+ * It maps annotations (@Contract, @KontraktTest, @DataContract) to executable [TestSpecification]s.
+ */
 class TestDiscovererImpl(
     private val scanner: ClasspathScanner,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
@@ -35,7 +42,7 @@ class TestDiscovererImpl(
             logger.info { "Starting test discovery with scope: $scope" }
 
             withContext(ioDispatcher) {
-                // 1. @Contract Test
+                // 1. Discover @Contract interfaces (Auto-generated tests)
                 val contractSpecs =
                     scanner
                         .findAnnotatedInterfaces(scope, contractMarker)
@@ -49,7 +56,7 @@ class TestDiscovererImpl(
                                     logger.warn { "Failed to create spec for implementation '${impl.simpleName}': ${e.message}" }
                                 }.getOrNull()
                         }
-                // 2. @KontraktTest custom test
+                // 2. Discover @KontraktTest classes (User scenarios)
                 val manualSpecs =
                     scanner
                         .findAnnotatedClasses(scope, KontraktTest::class)
@@ -60,18 +67,24 @@ class TestDiscovererImpl(
                                 }.getOrNull()
                         }
 
-                (contractSpecs + manualSpecs)
-                    .groupBy { it.target.fullyQualifiedName }
-                    .map { (_, specs) ->
-                        if (specs.size == 1) {
-                            specs.first()
-                        } else {
-                            val base = specs.first()
-                            val mergedModes = specs.flatMap { it.modes }.toSet()
-
-                            TestSpecification.create(base.target, mergedModes, base.requiredDependencies).getOrThrow()
+                // 3. Discover @DataContract classes (Data compliance tests)
+                val dataContractSpecs =
+                    scanner.findAnnotatedClasses(scope, discovery.api.DataContract::class)
+                        .mapNotNull { dataClass ->
+                            createSpecificationForClass(
+                                dataClass,
+                                setOf(TestMode.DataCompliance(dataClass)),
+                                scope
+                            ).getOrNull()
                         }
-                    }
+
+
+                // Merge duplicates (A class might be picked up by multiple scanners)
+                val allSpecs = contractSpecs + manualSpecs + dataContractSpecs
+
+                allSpecs
+                    .groupBy { it.target.fullyQualifiedName }
+                    .map { (_, specs) -> mergeSpecifications(specs) }
             }
         }
 
@@ -99,7 +112,7 @@ class TestDiscovererImpl(
                 ?: return Result.failure(
                     KontraktConfigurationException(
                         "Target class '${target.displayName}' must have a primary constructor for dependency injection.\n" +
-                            "Tip: Interfaces, Objects, or Abstract classes cannot be tested directly as a Target.",
+                                "Tip: Interfaces, Objects, or Abstract classes cannot be tested directly as a Target.",
                     ),
                 )
 
@@ -110,7 +123,7 @@ class TestDiscovererImpl(
                         ?: return Result.failure(
                             KontraktConfigurationException(
                                 "Cannot determine type for parameter '${param.name}' " +
-                                    "in '${target.displayName}'.",
+                                        "in '${target.displayName}'.",
                             ),
                         )
 
@@ -121,7 +134,7 @@ class TestDiscovererImpl(
                     .getOrElse { return Result.failure(it) }
             }
 
-        return TestSpecification.create(target, initialModes, dependencies)
+        return create(target, initialModes, dependencies)
     }
 
     private suspend fun determineMockingStrategy(
@@ -147,5 +160,32 @@ class TestDiscovererImpl(
         }
 
         return MockingStrategy.Real(implementation = type)
+    }
+
+    /**
+     * [Logic] Safely merges multiple specifications for the same target class.
+     * Addresses:
+     * 1. Seed Priority: Explicit seed wins over null.
+     * 2. Mode Union: Combines all test modes.
+     * 3. Dependency Safety: Validates that dependencies are consistent.
+     */
+    private fun mergeSpecifications(specs: List<TestSpecification>): TestSpecification {
+        // Target is invariant for the same class, so taking the first is safe.
+        val base = specs.first()
+
+        // 1. Merge Modes (Union)
+        val mergedModes = specs.flatMap { it.modes }.toSet()
+
+        // 2. Resolve Seed (Priority: First non-null seed wins)
+        val resolvedSeed = specs.mapNotNull { it.seed }.firstOrNull()
+
+        // 3. Dependencies Consistency Check
+
+        return create(
+            target = base.target,
+            modes = mergedModes,
+            requiredDependencies = base.requiredDependencies,
+            seed = resolvedSeed
+        ).getOrThrow()
     }
 }

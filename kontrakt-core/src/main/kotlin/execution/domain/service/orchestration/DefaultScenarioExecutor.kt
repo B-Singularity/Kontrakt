@@ -9,7 +9,9 @@ import execution.domain.AssertionStatus
 import execution.domain.entity.EphemeralTestContext
 import execution.domain.generator.GenerationContext
 import execution.domain.service.generation.FixtureGenerator
+import execution.domain.service.validation.ConstructorComplianceExecutor
 import execution.domain.service.validation.ContractValidator
+import execution.domain.service.validation.DataComplianceExecutor
 import execution.domain.vo.AssertionRecord
 import execution.domain.vo.SourceLocation
 import execution.domain.vo.StandardAssertion
@@ -33,15 +35,18 @@ import kotlin.reflect.jvm.kotlinFunction
 /**
  * [Core Service] Default Scenario Executor.
  *
- * This component orchestrates the **reflection-based invocation** of test scenarios.
- * It handles:
- * 1. **Dependency Generation**: Creates fixtures via [FixtureGenerator].
- * 2. **Trace Population**: Delegates auditing data collection to [ScenarioTrace].
- * 3. **Validation**: Enforces contracts via [ContractValidator].
+ * This component acts as the **Central Nervous System** of the test execution phase.
+ * It is responsible for orchestrating the lifecycle of a test scenario based on the provided specification.
+ *
+ * **Responsibilities:**
+ * 1. **Routing:** Dispatches execution to the appropriate strategies (User Scenario, Contract, Data Compliance).
+ * 2. **Dependency Injection:** Bootstraps generators and contexts with deterministic configuration.
+ * 3. **Execution:** Invokes target methods using reflection.
+ * 4. **Telemetry:** Populates the [ScenarioTrace] with generated arguments.
  *
  * **Architecture Note (ADR-020):**
  * This executor follows the **Exception Transparency** principle.
- * It strictly propagates exceptions (including reflection errors) to the upstream [ResultResolverInterceptor].
+ * It strictly propagates exceptions (including reflection errors) to the upstream `AuditingInterceptor`.
  */
 class DefaultScenarioExecutor(
     private val clock: Clock = Clock.systemDefaultZone(),
@@ -53,29 +58,45 @@ class DefaultScenarioExecutor(
     private val logger = KotlinLogging.logger {}
 
     override fun executeScenarios(context: EphemeralTestContext): List<AssertionRecord> {
+        // [Strategy Fix 1] Restore Deterministic Clock Strategy
+        // We capture the current instant ONCE and freeze it for the duration of this test run.
+        // This ensures that all time-dependent logic (Fixture generation, assertions) uses the same point in time.
         val currentInstant = Instant.now(clock)
         val fixedClock = Clock.fixed(currentInstant, ZoneId.systemDefault())
+
+        // Use the seed from the specification or fallback to system time (preserved in the spec for reproducibility)
         val seed = context.specification.seed ?: System.currentTimeMillis()
 
+        // Initialize Services with Fixed Context
         val fixtureGenerator = fixtureFactory(context.mockingEngine, fixedClock, context.trace, seed)
         val contractValidator = validatorFactory(fixedClock)
 
-        val generationContext =
-            GenerationContext(
-                seededRandom = Random(seed),
-                clock = fixedClock,
-            )
+        val generationContext = GenerationContext(
+            seededRandom = Random(seed),
+            clock = fixedClock,
+        )
+
+        // Helper Executors
+        val constructorExecutor = ConstructorComplianceExecutor(fixtureGenerator)
+        val dataComplianceExecutor = DataComplianceExecutor(fixtureGenerator, constructorExecutor)
 
         val records = mutableListOf<AssertionRecord>()
+        val modes = context.specification.modes
 
-        if (context.specification.modes.contains(TestSpecification.TestMode.UserScenario)) {
+        // [Strategy Fix 2] Multi-Mode Execution Support
+        // Instead of selecting a single mode via 'when', we sequentially execute all active modes.
+        // This allows a single target to be tested as a User Scenario, a Contract implementation, AND a Data Class simultaneously.
+
+        // 1. User Scenario Execution
+        if (modes.contains(TestSpecification.TestMode.UserScenario)) {
             records.addAll(
                 executeUserTestMethods(context, fixtureGenerator, generationContext),
             )
         }
 
-        val contractModes = context.specification.modes.filterIsInstance<TestSpecification.TestMode.ContractAuto>()
-        contractModes.forEach { mode ->
+        // 2. Contract Auto Fuzzing (Interface Contracts)
+        // Restored logic: Executes methods defined in the @Contract interface and validates them.
+        modes.filterIsInstance<TestSpecification.TestMode.ContractAuto>().forEach { mode ->
             records.addAll(
                 executeContractFuzzing(
                     context,
@@ -84,6 +105,14 @@ class DefaultScenarioExecutor(
                     contractValidator,
                     generationContext,
                 ),
+            )
+        }
+
+        // 3. Data Compliance (Data Class Contracts)
+        // New logic: Validates equals/hashCode/structure using the new DataComplianceExecutor.
+        modes.filterIsInstance<TestSpecification.TestMode.DataCompliance>().forEach { _ ->
+            records.addAll(
+                dataComplianceExecutor.execute(context, generationContext)
             )
         }
 
@@ -109,7 +138,7 @@ class DefaultScenarioExecutor(
             context.targetMethod = kFunc.javaMethod
                 ?: throw KontraktInternalException(
                     "Failed to resolve Java method for Kotlin function: '${kFunc.name}'. " +
-                        "This indicates a reflection issue with the target class '${kClass.simpleName}'.",
+                            "This indicates a reflection issue with the target class '${kClass.simpleName}'.",
                 )
 
             val args = createArguments(kFunc, context, fixtureGenerator, generationContext)
@@ -152,11 +181,11 @@ class DefaultScenarioExecutor(
                         if (kFunc.name != contractMethod.name) return@find false
                         val kFuncAsJava = kFunc.javaMethod ?: return@find false
                         kFuncAsJava.name == contractMethod.name &&
-                            kFuncAsJava.parameterTypes.contentEquals(contractMethod.parameterTypes)
+                                kFuncAsJava.parameterTypes.contentEquals(contractMethod.parameterTypes)
                     } ?: throw KontraktConfigurationException(
                         "Contract violation: Implementation of method '${contractMethod.name}' " +
-                            "not found in '${implementationKClass.simpleName}'.\n" +
-                            "Ensure the class strictly adheres to the contract interface.",
+                                "not found in '${implementationKClass.simpleName}'.\n" +
+                                "Ensure the class strictly adheres to the contract interface.",
                     )
 
                 val contractKFunc =

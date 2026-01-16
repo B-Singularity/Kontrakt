@@ -1,9 +1,11 @@
 package execution.domain.service.generation
 
 import common.util.unwrapped
+import discovery.api.Test
 import discovery.domain.aggregate.TestSpecification
 import discovery.domain.vo.DependencyMetadata
 import exception.KontraktConfigurationException
+import exception.KontraktInternalException
 import execution.domain.entity.EphemeralTestContext
 import execution.domain.generator.GenerationContext
 import execution.domain.generator.GenerationRequest
@@ -15,8 +17,12 @@ import java.time.Clock
 import java.util.UUID
 import kotlin.random.Random
 import kotlin.reflect.KClass
+import kotlin.reflect.KFunction
+import kotlin.reflect.full.findAnnotation
+import kotlin.reflect.full.functions
 import kotlin.reflect.full.primaryConstructor
 import kotlin.reflect.full.starProjectedType
+import kotlin.reflect.jvm.javaMethod
 
 /**
  * [Domain Service] Test Instance Factory.
@@ -31,16 +37,19 @@ import kotlin.reflect.full.starProjectedType
 class TestInstanceFactory(
     private val mockingEngine: MockingEngine,
     private val scenarioControl: ScenarioControl,
-    private val clock: Clock = Clock.systemUTC(),
 ) {
     /**
      * Creates a fully initialized test context containing the Target Instance.
      *
      * @param spec The test specification defining the target and mocking strategies.
+     * @param clock The fixed clock to ensure temporal determinism across the entire test lifecycle.
      * @return A context holding the instantiated target and its dependencies.
      * @throws KontraktConfigurationException If instantiation fails due to config or runtime errors.
      */
-    fun create(spec: TestSpecification): EphemeralTestContext {
+    fun create(
+        spec: TestSpecification,
+        clock: Clock,
+    ): EphemeralTestContext {
         val currentTraceId = UUID.randomUUID().toString()
 
         val trace = InMemoryScenarioTrace(runId = currentTraceId)
@@ -62,6 +71,19 @@ class TestInstanceFactory(
 
             val targetInstance = resolve(spec.target.kClass, context, generationContext, mockingContext)
             context.registerTarget(targetInstance)
+
+            // 5. Resolve Entry Point
+            val targetMethod = resolveTargetMethod(spec, targetInstance::class)
+            context.targetMethod = targetMethod.javaMethod
+                ?: throw KontraktInternalException(
+                    "Reflection failure: Could not resolve Java method for Kotlin function '${targetMethod.name}' " +
+                            "in class '${spec.target.displayName}'."
+                )
+
+        } catch (e: KontraktConfigurationException) {
+            throw e
+        } catch (e: KontraktInternalException) {
+            throw e
         } catch (e: Throwable) {
             val cause = e.unwrapped
             throw KontraktConfigurationException(
@@ -70,6 +92,36 @@ class TestInstanceFactory(
             )
         }
         return context
+    }
+
+    /**
+     * Identifies the primary method to be executed based on the TestMode.
+     * This helper was missing in the previous snippet.
+     */
+    private fun resolveTargetMethod(
+        spec: TestSpecification,
+        type: KClass<*>,
+    ): KFunction<*> {
+        return when (val mode = spec.modes.first()) {
+            is TestSpecification.TestMode.UserScenario -> {
+                // Try to find the first @Test method to set as the initial context
+                type.functions.find { it.findAnnotation<Test>() != null }
+                    ?: type.functions.firstOrNull()
+                    ?: throw KontraktConfigurationException("No executable methods found in '${type.simpleName}' for UserScenario.")
+            }
+
+            is TestSpecification.TestMode.ContractAuto -> {
+                type.functions.firstOrNull()
+                    ?: throw KontraktConfigurationException("No methods found in implementation '${type.simpleName}'.")
+            }
+
+            is TestSpecification.TestMode.DataCompliance -> {
+                // For Data Classes, use constructor or toString as a safe placeholder
+                type.primaryConstructor
+                    ?: type.functions.find { it.name == "toString" }
+                    ?: throw KontraktConfigurationException("Data class '${type.simpleName}' has no accessible members.")
+            }
+        }
     }
 
     /**
@@ -202,12 +254,12 @@ class TestInstanceFactory(
 
     private fun isBasicValueType(type: KClass<*>): Boolean =
         type == String::class ||
-            type == Int::class ||
-            type == Long::class ||
-            type == Double::class ||
-            type == Boolean::class ||
-            type == List::class ||
-            type == Map::class ||
-            type == Set::class ||
-            type.isData
+                type == Int::class ||
+                type == Long::class ||
+                type == Double::class ||
+                type == Boolean::class ||
+                type == List::class ||
+                type == Map::class ||
+                type == Set::class ||
+                type.isData
 }

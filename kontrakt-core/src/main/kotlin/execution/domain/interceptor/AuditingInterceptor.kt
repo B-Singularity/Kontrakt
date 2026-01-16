@@ -1,7 +1,6 @@
 package execution.domain.interceptor
 
-import exception.ContractViolationException
-import execution.domain.TestStatus
+import execution.domain.service.VerdictDecider
 import execution.domain.vo.AssertionRecord
 import execution.domain.vo.AuditDepth
 import execution.domain.vo.AuditPolicy
@@ -18,6 +17,7 @@ import execution.port.outgoing.TraceSink
 import execution.spi.interceptor.ScenarioInterceptor
 import execution.spi.trace.ScenarioTrace
 import java.time.Clock
+import kotlin.math.max
 
 /**
  * [Domain Service] Auditing & Reporting Interceptor.
@@ -41,43 +41,122 @@ class AuditingInterceptor(
     private val seed: Long,
     private val clock: Clock,
     private val workerId: WorkerId,
+    private val verdictDecider: VerdictDecider = VerdictDecider(),
 ) : ScenarioInterceptor {
     override fun intercept(chain: ScenarioInterceptor.Chain): List<AssertionRecord> =
         with(chain.context) {
-            val startTime = clock.millis()
-            val testName = targetMethod.name
-            var caughtException: Throwable? = null
+            val sessionStartTime = clock.millis()
 
-            // 1. [GIVEN] Log Design Decisions (Applied Log Diet)
-            emitDesignDecisions(trace)
+            val testIdentifier = targetMethod.toString()
+            var caughtException: Throwable? = null
+            var capturedRecords: List<AssertionRecord> = emptyList()
+
 
             try {
                 // 2. [WHEN] Proceed with execution
-                val records = chain.proceed(this)
-                val executionDurationMs = clock.millis() - startTime
+                capturedRecords = chain.proceed(this)
+                val executionEndTime = clock.millis()
 
-                // 3. [THEN] Log Execution & Verification
-                emitExecutionTrace(testName, trace.generatedArguments, executionDurationMs)
-                emitVerificationTraces(records)
+                // 2.1 Emit Filtered Fixture Logs (Design Decisions)
+                // Dump the decision history stored in the trace.
+                emitFilteredDesignDecisions(trace)
 
-                return records
+                // 2.2 Emit Execution Trace
+                // [Safety] Defensive copy: Handle cases where arguments might be missing or partial.
+                // TODO: (Refactoring) Move argument recording responsibility to Executor for better reliability.
+                val safeArgs = trace.generatedArguments.takeIf { it.isNotEmpty() } ?: emptyList()
+
+                // [Time] executionDurationMs: Pure method execution time (excluding interceptor overhead)
+                emitExecutionTrace(
+                    methodName = testIdentifier,
+                    args = safeArgs,
+                    durationMs = max(0L, executionEndTime - sessionStartTime)
+                )
+                emitVerificationTraces(capturedRecords)
+
+                return capturedRecords
+
             } catch (e: Throwable) {
                 caughtException = e
                 // 4. [ERROR] Log Exception immediately (Critical)
                 emitExceptionTrace(e)
                 throw e // Re-throw for ResultResolverInterceptor to handle
             } finally {
-                // 5. [FINALLY] Seal the log and publish report
-                finalizeSession(trace, testName, caughtException, startTime)
+                finalizeSession(
+                    trace = trace,
+                    testName = testIdentifier,
+                    error = caughtException,
+                    records = capturedRecords,
+                    startTime = sessionStartTime
+                )
             }
         }
+
+    /**
+     * Wrap-up logic: Verdict -> Snapshot -> Publish
+     */
+    private fun finalizeSession(
+        trace: ScenarioTrace,
+        testName: String,
+        error: Throwable?,
+        records: List<AssertionRecord>,
+        startTime: Long,
+    ) {
+        val endTime = clock.millis()
+        val totalDurationMs = max(0L, endTime - startTime)
+
+        // 1. Decide Final Verdict
+        val status = verdictDecider.decide(error, records)
+
+        // 2. Emit Verdict Trace
+        traceSink.emit(
+            TestVerdict(
+                status = status,
+                durationTotalMs = totalDurationMs,
+                timestamp = endTime,
+            ),
+        )
+
+        // 3. Snapshot Strategy (Persistence)
+        val shouldSnapshot = when (policy.retention) {
+            LogRetention.NONE -> false
+            LogRetention.ALWAYS -> true
+            LogRetention.ON_FAILURE -> !status.isPassed
+        }
+
+        val journalPath = if (shouldSnapshot) {
+            val subDir = if (!status.isPassed) "failures" else "traces"
+            traceSink.snapshotTo("$subDir/run-${trace.runId}.log")
+        } else {
+            ""
+        }
+
+        // 4. Publish Result
+        val resultEvent = TestResultEvent(
+            runId = trace.runId,
+            testName = testName,
+            workerId = workerId,
+            status = status,
+            durationMs = totalDurationMs,
+            journalPath = journalPath,
+            timestamp = endTime,
+            seed = seed,
+        )
+
+        try {
+            resultPublisher.publish(resultEvent)
+        } finally {
+            // [Safety] Always reset the sink to prevent memory leaks and state pollution
+            traceSink.reset()
+        }
+    }
+
 
     /**
      * Emits generated fixture data to the sink.
      * Applies strict filtering based on [AuditDepth] to prevent IO saturation.
      */
-    private fun emitDesignDecisions(trace: ScenarioTrace) {
-        // [Optimization] Fast-exit if no logs to process
+    private fun emitFilteredDesignDecisions(trace: ScenarioTrace) {
         if (trace.decisions.isEmpty()) return
 
         val includeDesign = policy.depth == AuditDepth.EXPLAINABLE
@@ -128,78 +207,4 @@ class AuditingInterceptor(
         )
     }
 
-    // -------------------------------------------------------------------------
-    // Finalization & Reporting
-    // -------------------------------------------------------------------------
-
-    /**
-     * Determines the final verdict, flushes the sink, snapshots if necessary,
-     * and publishes the result to the UI layer.
-     */
-    private fun finalizeSession(
-        trace: ScenarioTrace,
-        testName: String,
-        error: Throwable?,
-        startTime: Long,
-    ) {
-        val totalDurationMs = clock.millis() - startTime
-
-        // 1. Determine Status
-        val status =
-            when (error) {
-                null -> TestStatus.Passed
-                is AssertionError,
-                is ContractViolationException,
-                ->
-                    TestStatus.AssertionFailed(
-                        message = error.message ?: "Assertion Failed",
-                        expected = "Contract Compliance",
-                        actual = "Violation",
-                    )
-
-                else -> TestStatus.ExecutionError(error)
-            }
-
-        // 2. Emit Final Verdict (The Seal)
-        traceSink.emit(
-            TestVerdict(
-                status = status,
-                durationTotalMs = totalDurationMs,
-                timestamp = clock.millis(),
-            ),
-        )
-
-        // 3. Snapshot Strategy (Smart Flush via LogRetention Policy)
-        val shouldSnapshot =
-            when (policy.retention) {
-                LogRetention.NONE -> false
-                LogRetention.ALWAYS -> true
-                LogRetention.ON_FAILURE -> status !is TestStatus.Passed
-            }
-
-        val journalPath =
-            if (shouldSnapshot) {
-                val subDir = if (status !is TestStatus.Passed) "failures" else "traces"
-                traceSink.snapshotTo("$subDir/run-${trace.runId}.log")
-            } else {
-                ""
-            }
-
-        // 4. Reset Sink for next run (Recycling)
-        traceSink.reset()
-
-        // 5. Publish Result
-        resultPublisher.publish(
-            TestResultEvent(
-                runId = trace.runId,
-                testName = testName,
-                workerId = workerId,
-                status = status,
-                durationMs = totalDurationMs,
-                journalPath = journalPath,
-                timestamp = clock.millis(),
-                seed = seed,
-            ),
-        )
-    }
 }

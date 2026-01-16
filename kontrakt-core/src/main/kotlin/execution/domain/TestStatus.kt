@@ -1,6 +1,9 @@
 package execution.domain
 
 sealed interface TestStatus {
+    val isPassed: Boolean
+        get() = this is Passed
+
     data object Passed : TestStatus
 
     data class AssertionFailed(
