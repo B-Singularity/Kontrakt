@@ -17,6 +17,7 @@ import execution.api.DefaultRuntimeFactory
 import execution.api.KontraktRuntimeFactory
 import execution.domain.TestStatus
 import execution.domain.factory.ExecutionEnvironmentFactory
+import execution.domain.vo.ExecutionPolicy
 import execution.domain.vo.TestResult
 import execution.port.outgoing.TestResultPublisher
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -43,13 +44,19 @@ import java.time.Clock
 /**
  * [Adapter] JUnit Platform Engine Implementation.
  *
- * This acts as the **Composition Root** of the framework.
- * It is responsible for bridging the JUnit Platform Lifecycle with the Kontrakt Domain.
+ * This class acts as the **Composition Root** of the Kontrakt framework.
+ * It serves as the bridge between the JUnit Platform Lifecycle and the Kontrakt Domain logic.
  *
- * **Architectural Role:**
- * - Instantiates concrete [Infrastructure] components (Clock, Mockito, FileSystem).
- * - Injects them into the [Domain] via [DefaultRuntimeFactory].
- * - Delegates execution to the configured Runtime.
+ * ### Architectural Role
+ * 1. **Lifecycle Management:** Orchestrates the Discovery, Setup, Execution, and Reporting phases.
+ * 2. **Dependency Injection:** Instantiates infrastructure components (Clock, FileSystem, MockingEngine)
+ * and injects them into the Domain layer via [DefaultRuntimeFactory].
+ * 3. **Consistency Guardian:** Defines the **Master Seed** for the entire test run to guarantee reproducibility.
+ *
+ * ### Seed Management Strategy (ADR)
+ * To ensure deterministic execution across all components (Environment, Fuzzing, Mocking),
+ * the **Random Seed** is determined ONCE at the beginning of the [execute] method.
+ * This seed is baked into the [ExecutionPolicy] and propagated down to every child component.
  */
 class KontraktTestEngine : TestEngine {
     private val logger = KotlinLogging.logger {}
@@ -57,6 +64,10 @@ class KontraktTestEngine : TestEngine {
 
     override fun getId(): String = "kontrakt-engine"
 
+    /**
+     * Phase 1: Discovery
+     * Scans the classpath to find classes marked with `@Contract` or implementing [Contract].
+     */
     override fun discover(
         request: EngineDiscoveryRequest,
         uniqueId: UniqueId,
@@ -64,6 +75,8 @@ class KontraktTestEngine : TestEngine {
         val engineDescriptor = KontraktTestDescriptor(uniqueId, "kontrakt")
         val scanScope = resolveScanScope(request)
         val discoveryPolicy = DiscoveryPolicy(scope = scanScope)
+
+        // Infrastructure: Use ClassGraph for efficient scanning
         val scanner = ClassGraphScannerAdapter()
         val discoverer = TestDiscovererImpl(scanner)
 
@@ -90,37 +103,54 @@ class KontraktTestEngine : TestEngine {
         return engineDescriptor
     }
 
+    /**
+     * Phase 2: Execution & Orchestration
+     *
+     * This is the entry point for the actual test run. It initializes the infrastructure,
+     * determines the global execution policy, and iterates through discovered tests.
+     */
     override fun execute(request: ExecutionRequest) {
         val engineDescriptor = request.rootTestDescriptor
         val listener = request.engineExecutionListener
 
-        // 1. [Infrastructure] Setup basic components
+        // 1. [Infrastructure] Instantiate Infrastructure Adapters
         val clock = Clock.systemDefaultZone()
         val mockingEngine = MockitoEngineAdapter()
         val scenarioControl = ThreadLocalScenarioControl()
         val traceSinkPool = WorkerTraceSinkPool(Path.of("build/kontrakt"))
 
-        // 2. [Boundary] Load User Input
+        // 2. [Boundary] Load User Configuration (System Properties)
         val userOptions =
             UserControlOptions(
                 traceMode = System.getProperty("kontrakt.trace")?.toBoolean() ?: false,
                 seed = System.getProperty("kontrakt.seed")?.toLongOrNull(),
             )
 
-        // 3. [Translation] DTO -> Domain Policy
-        val executionPolicy = userOptions.toExecutionPolicy()
+        // 3. [Policy] Establish the "Source of Truth" for Determinism
+        // ADR: Determine the Master Seed HERE. If the user didn't provide one, generate it.
+        // This ensures consistent seeding across Environment, Generators, and Logs.
+        val masterSeed = userOptions.seed ?: System.currentTimeMillis()
+
+        // Bake the master seed into the ExecutionPolicy.
+        // Now, policy.determinism.seed is GUARANTEED to be non-null for downstream consumers.
+        val basePolicy = userOptions.toExecutionPolicy()
+        val executionPolicy =
+            basePolicy.copy(
+                determinism = basePolicy.determinism.copy(seed = masterSeed),
+            )
+
         val reportingDirectives = userOptions.toReportingDirectives()
 
         // 4. [Wiring] Assemble Reporters
         val publishers = mutableListOf<TestResultPublisher>()
 
-        // 1. Console Reporter
+        // 4-1. Console Reporter setup
         val theme = if (System.getenv("NO_COLOR").isNullOrEmpty()) AnsiTheme else NoColorTheme
         val layout = StandardConsoleLayout(theme, executionPolicy.auditing)
         val consoleReporter = ConsoleReporter(layout)
         publishers.add(consoleReporter)
 
-        // 2. File Reporters
+        // 4-2. File Reporters setup
         if (ReportFormat.JSON in reportingDirectives.formats) {
             publishers.add(JsonReporter(reportingDirectives))
         }
@@ -137,7 +167,8 @@ class KontraktTestEngine : TestEngine {
             )
 
         try {
-            // 5. [Runtime] Create Runtime Factory
+            // 5. [Runtime] Initialize the Runtime Factory
+            // Inject the finalized ExecutionPolicy (with Master Seed) and Infrastructure components.
             runtimeFactory =
                 DefaultRuntimeFactory(
                     mockingEngine = mockingEngine,
@@ -148,46 +179,68 @@ class KontraktTestEngine : TestEngine {
                     executionPolicy = executionPolicy,
                 )
 
+            // Notify JUnit: Execution Started
             listener.executionStarted(engineDescriptor)
 
+            // Execute each discovered spec
             engineDescriptor.children.forEach { descriptor ->
                 if (descriptor is KontraktTestDescriptor && descriptor.spec != null) {
-                    executeSpec(descriptor, listener)
+                    // Pass the Global Execution Policy to ensure consistency
+                    executeSpec(descriptor, listener, executionPolicy)
                 }
             }
 
+            // Notify JUnit: Execution Finished
             listener.executionFinished(engineDescriptor, TestExecutionResult.successful())
 
-            // 6. [Finalize] Print Console Summary
+            // 6. [Finalize] Print Executive Summary to Console
             consoleReporter.printFinalReport()
         } finally {
+            // [Cleanup] Ensure resources are released (e.g., flush logs, close file handles)
             traceSinkPool.close()
         }
     }
 
+    /**
+     * Phase 3: Spec Execution
+     *
+     * Sets up the isolation environment (ThreadLocal) and triggers the execution pipeline
+     * for a single test specification.
+     *
+     * @param policy The global execution policy containing the Master Seed.
+     */
     private fun executeSpec(
         descriptor: KontraktTestDescriptor,
         listener: EngineExecutionListener,
+        policy: ExecutionPolicy,
     ) {
         listener.executionStarted(descriptor)
 
         val envFactory = ExecutionEnvironmentFactory(Clock.systemDefaultZone())
-        val environment = envFactory.create()
 
+        // [Determinism] Create the Execution Environment using the Master Seed.
+        // This ensures that Random instances inside the test use the exact seed defined in the Policy.
+        // The '!!' assertion is safe here because we baked the seed in step 3 of execute().
+        val environment = envFactory.create(seed = policy.determinism.seed!!)
+
+        // [Isolation] Bind the environment to the current thread.
         ThreadLocalScenarioControl.bind(environment)
 
         try {
+            // Create Executor and Execution Aggregate
             val scenarioExecutor = runtimeFactory.createExecutor()
-
             val execution = runtimeFactory.createExecution(descriptor.spec!!, scenarioExecutor)
 
+            // Trigger the Interceptor Chain
             val result = execution.execute()
 
+            // Report results back to JUnit
             reportResult(descriptor, result, listener)
         } catch (e: Exception) {
             logger.error(e) { "💥 Framework CRASH: ${descriptor.displayName}" }
             listener.executionFinished(descriptor, TestExecutionResult.failed(e))
         } finally {
+            // [Cleanup] Always clear ThreadLocal to prevent pollution across tests
             ThreadLocalScenarioControl.clear()
         }
     }

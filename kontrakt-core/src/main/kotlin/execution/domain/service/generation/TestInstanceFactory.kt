@@ -77,9 +77,8 @@ class TestInstanceFactory(
             context.targetMethod = targetMethod.javaMethod
                 ?: throw KontraktInternalException(
                     "Reflection failure: Could not resolve Java method for Kotlin function '${targetMethod.name}' " +
-                            "in class '${spec.target.displayName}'."
+                        "in class '${spec.target.displayName}'.",
                 )
-
         } catch (e: KontraktConfigurationException) {
             throw e
         } catch (e: KontraktInternalException) {
@@ -101,8 +100,8 @@ class TestInstanceFactory(
     private fun resolveTargetMethod(
         spec: TestSpecification,
         type: KClass<*>,
-    ): KFunction<*> {
-        return when (val mode = spec.modes.first()) {
+    ): KFunction<*> =
+        when (val mode = spec.modes.first()) {
             is TestSpecification.TestMode.UserScenario -> {
                 // Try to find the first @Test method to set as the initial context
                 type.functions.find { it.findAnnotation<Test>() != null }
@@ -122,7 +121,6 @@ class TestInstanceFactory(
                     ?: throw KontraktConfigurationException("Data class '${type.simpleName}' has no accessible members.")
             }
         }
-    }
 
     /**
      * Recursively resolves an instance of the given [type].
@@ -254,12 +252,12 @@ class TestInstanceFactory(
 
     private fun isBasicValueType(type: KClass<*>): Boolean =
         type == String::class ||
-                type == Int::class ||
-                type == Long::class ||
-                type == Double::class ||
-                type == Boolean::class ||
-                type == List::class ||
-                type == Map::class ||
-                type == Set::class ||
-                type.isData
+            type == Int::class ||
+            type == Long::class ||
+            type == Double::class ||
+            type == Boolean::class ||
+            type == List::class ||
+            type == Map::class ||
+            type == Set::class ||
+            type.isData
 }

@@ -8,8 +8,8 @@
 ## 1. Context & Problem Statement
 
 In **ADR-017**, we adopted a "Worker-Based Synchronous Journaling" strategy (`RandomAccessFile`) to ensure forensic data
-safety during JVM crashes. While this solved the "Data Loss" problem, it introduced a new bottleneck when deployed in *
-*Enterprise Cloud Environments**.
+safety during JVM crashes. While this solved the "Data Loss" problem, it introduced a new bottleneck when deployed in
+**Enterprise Cloud Environments**.
 
 **The Cloud Reality (IOPS Bottleneck):**
 Modern CI/CD pipelines (AWS EC2, GitHub Actions Runners, Kubernetes Pods) utilize network-attached storage (e.g., AWS
@@ -38,8 +38,8 @@ performance and safety dynamically.
 
 ### 2.1. Micro-Batching (The Accelerator)
 
-Instead of invoking a System Call for every log line, the `RecyclingFileTraceSink` will maintain a small, fixed-size *
-*Memory Buffer (4KB)** per worker.
+Instead of invoking a System Call for every log line, the `RecyclingFileTraceSink` will maintain a small, fixed-size
+**Memory Buffer (4KB)** per worker.
 
 * **Mechanism:** Log events are written to this byte array first.
 * **Trigger:** The buffer is flushed to disk (`write()`) only when full.
@@ -50,10 +50,10 @@ Instead of invoking a System Call for every log line, the `RecyclingFileTraceSin
 
 To prevent data loss during a crash, we bypass the buffer for **Critical Events**.
 
-* **Logic:** If an incoming event is of type `EXECUTION`, `VERIFICATION`, or `ERROR`, the buffer is **force-flushed
-  immediately** before writing the new event.
+* **Logic:** If an incoming event is of type `EXECUTION`, `VERIFICATION`, `ERROR`, or **`ARGUMENT_RECORDING`**, the
+  buffer is **force-flushed immediately** before writing the new event.
 * **Guarantee:** The sequential order of logs is preserved (Buffer -> Critical Event), ensuring that the "Cause of
-  Death" is always persisted physically to the disk.
+  Death" (specifically the input arguments) is always persisted physically to the disk.
 
 ### 2.3. The "Last Will" Shutdown Hook
 

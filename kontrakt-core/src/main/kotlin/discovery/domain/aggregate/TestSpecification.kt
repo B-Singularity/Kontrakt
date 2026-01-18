@@ -39,7 +39,9 @@ data class TestSpecification private constructor(
          * 2. Validation Constraints (Fuzzing).
          * 3. standard Data Contracts (equals, hashCode consistency).
          */
-        data class DataCompliance(val dataClass: KClass<*>) : TestMode
+        data class DataCompliance(
+            val dataClass: KClass<*>,
+        ) : TestMode
 
         /**
          * Mode for executing user-defined scenarios annotated with `@KontraktTest`.

@@ -63,7 +63,7 @@ data object DefensiveCheckRule : IntegrityRule {
 
 /**
  * Represents strict compliance rules for Data Classes and Value Objects.
- * These rules ensure the object behaves correctly as a data carrier in collections and equality checks.
+ * These rules ensure the object behaves correctly as a data carrier.
  *
  * @property checkName The specific aspect of the data contract being verified.
  */
@@ -72,46 +72,58 @@ sealed class DataContractRule(
 ) : AssertionRule {
     override val key: String = "DataContract.$checkName"
 
+    // --- Structural Integrity ---
+
+    /**
+     * Rule: Structure Validity.
+     * Checks meta-requirements, such as the existence of a Primary Constructor.
+     */
+    data object Structure : DataContractRule("Structure")
+
+    /**
+     * Rule: Constructor Constraint (Fuzzing).
+     * The constructor must reject invalid inputs (defensive programming).
+     */
+    data object ConstructorConstraint : DataContractRule("ConstructorConstraint")
+
+    // --- Equality Contract (equals) ---
+
+    /**
+     * Rule: Not-Null Equality (x.equals(null) must be false).
+     */
+    data object NotNullEquality : DataContractRule("NotNullEquality")
+
     /**
      * Rule: Reflexivity (x.equals(x) must be true).
-     * Ensures an object effectively identifies itself.
      */
     data object Reflexivity : DataContractRule("Reflexivity")
 
     /**
      * Rule: Symmetry (x.equals(y) must imply y.equals(x)).
-     * Ensures equality is bidirectional.
      */
     data object Symmetry : DataContractRule("Symmetry")
 
     /**
-     * Rule: HashCode Consistency (x.equals(y) must imply x.hashCode() == y.hashCode()).
-     * Crucial for correct behavior in HashMaps and HashSets.
-     */
-    data object HashCodeConsistency : DataContractRule("HashCodeConsistency")
-
-    /**
-     * Rule: Non-nullity (x.equals(null) must be false).
-     * Ensures strict null-safety handling in equality logic.
-     */
-    data object NotNullEquality : DataContractRule("NotNullEquality")
-
-    /**
-     * Rule: Structural Requirements.
-     * Checks meta-requirements, such as the existence of a Primary Constructor
-     * or specific visibility modifiers required for data classes.
-     */
-    data object Structure : DataContractRule("Structure")
-
-    /**
-     * Rule: Consistency & Stability.
-     * Ensures that repeated calls to `equals()` or `hashCode()` on the same object
-     * (with no state change) return the same result.
-     * Detects reliance on unstable values like `Random` or `System.nanoTime()` within identity logic.
+     * Rule: Equals Consistency.
+     * Repeated calls to `equals()` on the same object must return the same result.
+     * (Formerly just 'Consistency')
      */
     data object Consistency : DataContractRule("Consistency")
-}
 
+    // --- Hashing Contract (hashCode) ---
+
+    /**
+     * Rule: HashCode Stability.
+     * hashCode() must remain constant for the same object (assuming immutable state).
+     */
+    data object HashStability : DataContractRule("HashStability")
+
+    /**
+     * Rule: HashCode Consistency.
+     * x.equals(y) must imply x.hashCode() == y.hashCode().
+     */
+    data object HashConsistency : DataContractRule("HashConsistency")
+}
 
 // =============================================================================
 // [Category 4] Standard Assertions (User Test Logic)

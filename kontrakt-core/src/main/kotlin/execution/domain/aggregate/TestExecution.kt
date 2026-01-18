@@ -59,7 +59,7 @@ class TestExecution(
 
             // 2. [Setup Phase] Create Test Context & Target
             // If this fails (e.g. DI error), it happens BEFORE the interceptor chain.
-            val context = instanceFactory.create(spec)
+            val context = instanceFactory.create(spec, clock)
 
             // This ensures that parallel JUnit execution gets unique IDs and Log Sinks.
             val currentWorkerId = WorkerId.fromCurrentThread()

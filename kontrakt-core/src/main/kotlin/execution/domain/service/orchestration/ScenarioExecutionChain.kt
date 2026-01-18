@@ -28,7 +28,7 @@ class ScenarioExecutionChain(
     override fun proceed(context: EphemeralTestContext): List<AssertionRecord> {
         // Base Case: If we have iterated through all interceptors, execute the actual test.
         if (index >= interceptors.size) {
-            return finalDelegate.executeScenarios(context)
+            return finalDelegate.executeScenarios(context).records
         }
 
         // Recursive Step: Create the next link in the chain, advancing the index.

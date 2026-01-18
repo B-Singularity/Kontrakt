@@ -43,7 +43,6 @@ class DefaultRuntimeFactory(
             TestInstanceFactory(
                 mockingEngine = mockingEngine,
                 scenarioControl = scenarioControl,
-                clock = clock,
             )
 
         return TestExecution(

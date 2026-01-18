@@ -69,15 +69,15 @@ class TestDiscovererImpl(
 
                 // 3. Discover @DataContract classes (Data compliance tests)
                 val dataContractSpecs =
-                    scanner.findAnnotatedClasses(scope, discovery.api.DataContract::class)
+                    scanner
+                        .findAnnotatedClasses(scope, discovery.api.DataContract::class)
                         .mapNotNull { dataClass ->
                             createSpecificationForClass(
                                 dataClass,
                                 setOf(TestMode.DataCompliance(dataClass)),
-                                scope
+                                scope,
                             ).getOrNull()
                         }
-
 
                 // Merge duplicates (A class might be picked up by multiple scanners)
                 val allSpecs = contractSpecs + manualSpecs + dataContractSpecs
@@ -112,7 +112,7 @@ class TestDiscovererImpl(
                 ?: return Result.failure(
                     KontraktConfigurationException(
                         "Target class '${target.displayName}' must have a primary constructor for dependency injection.\n" +
-                                "Tip: Interfaces, Objects, or Abstract classes cannot be tested directly as a Target.",
+                            "Tip: Interfaces, Objects, or Abstract classes cannot be tested directly as a Target.",
                     ),
                 )
 
@@ -123,7 +123,7 @@ class TestDiscovererImpl(
                         ?: return Result.failure(
                             KontraktConfigurationException(
                                 "Cannot determine type for parameter '${param.name}' " +
-                                        "in '${target.displayName}'.",
+                                    "in '${target.displayName}'.",
                             ),
                         )
 
@@ -185,7 +185,7 @@ class TestDiscovererImpl(
             target = base.target,
             modes = mergedModes,
             requiredDependencies = base.requiredDependencies,
-            seed = resolvedSeed
+            seed = resolvedSeed,
         ).getOrThrow()
     }
 }

@@ -2,7 +2,6 @@ package execution.domain.entity
 
 import discovery.domain.aggregate.TestSpecification
 import exception.KontraktInternalException
-import execution.domain.trace.InMemoryScenarioTrace
 import execution.spi.MockingEngine
 import execution.spi.ScenarioControl
 import execution.spi.trace.ScenarioTrace
@@ -13,7 +12,7 @@ class EphemeralTestContext(
     val specification: TestSpecification,
     val mockingEngine: MockingEngine,
     val scenarioControl: ScenarioControl,
-    val trace: ScenarioTrace = InMemoryScenarioTrace(),
+    val trace: ScenarioTrace,
 ) {
     lateinit var targetMethod: Method
 

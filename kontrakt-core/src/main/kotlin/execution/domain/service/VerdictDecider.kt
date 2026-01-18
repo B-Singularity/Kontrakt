@@ -13,7 +13,6 @@ import execution.domain.vo.AssertionRecord
  * making the logic easily testable via Unit Tests without mocking infrastructure.
  */
 class VerdictDecider {
-
     /**
      * Decides the final status based on exceptions and assertion records.
      *
@@ -26,7 +25,10 @@ class VerdictDecider {
      * @param records The list of assertion records collected during execution.
      * @return The comprehensive [TestStatus].
      */
-    fun decide(error: Throwable?, records: List<AssertionRecord>): TestStatus {
+    fun decide(
+        error: Throwable?,
+        records: List<AssertionRecord>,
+    ): TestStatus {
         // Priority 1: Handle Exceptions
         if (error != null) {
             return mapErrorToStatus(error)
@@ -40,7 +42,7 @@ class VerdictDecider {
                 message = firstFailure.message,
                 expected = firstFailure.expected,
                 actual = firstFailure.actual,
-                cause = null
+                cause = null,
             )
         }
 
@@ -51,8 +53,8 @@ class VerdictDecider {
     /**
      * Maps raw exceptions to domain-specific statuses.
      */
-    private fun mapErrorToStatus(error: Throwable): TestStatus {
-        return when (error) {
+    private fun mapErrorToStatus(error: Throwable): TestStatus =
+        when (error) {
             // Logical Failures (Contract / Assertion)
             is AssertionError, is ContractViolationException ->
                 TestStatus.AssertionFailed(
@@ -65,5 +67,4 @@ class VerdictDecider {
             // System / Runtime Errors
             else -> TestStatus.ExecutionError(error)
         }
-    }
 }
