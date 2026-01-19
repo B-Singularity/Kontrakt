@@ -22,8 +22,8 @@ slf4j-api = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
 kotlin-logging-jvm = { module = "io.github.oshai:kotlin-logging-jvm", version.ref = "kotlin-logging" }
 mockito-core = { module = "org.mockito:mockito-core", version.ref = "mockito-core" }
 mockito-kotlin = { module = "org.mockito.kotlin:mockito-kotlin", version.ref = "mockito-kotlin" }
-junit-platform-engine = { module = "org.junit.platform:junit-platform-engine", version = "6.0.1" }
-junit-platform-commons = { module = "org.junit.platform:junit-platform-commons", version = "6.0.1" }
+junit-platform-engine = { module = "org.junit.platform:junit-platform-engine", version = "6.0.2" }
+junit-platform-commons = { module = "org.junit.platform:junit-platform-commons", version = "6.0.2" }
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
 
 [plugins]
