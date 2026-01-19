@@ -1,14 +1,14 @@
 package execution.domain.service.validation
 
 import common.util.unwrapped
-import execution.domain.AssertionStatus
 import execution.domain.entity.EphemeralTestContext
-import execution.domain.generator.GenerationContext
 import execution.domain.service.generation.FixtureGenerator
-import execution.domain.vo.AssertionRecord
-import execution.domain.vo.ConstructorSanityRule
-import execution.domain.vo.DefensiveCheckRule
-import execution.domain.vo.SourceLocation
+import execution.domain.vo.context.generation.GenerationContext
+import execution.domain.vo.verification.AssertionRecord
+import execution.domain.vo.verification.AssertionStatus
+import execution.domain.vo.verification.ConstructorSanityRule
+import execution.domain.vo.verification.DefensiveCheckRule
+import execution.domain.vo.verification.SourceLocation
 import kotlin.reflect.KFunction
 import kotlin.reflect.full.primaryConstructor
 

@@ -1,6 +1,6 @@
 package execution.domain.vo.trace
 
-import execution.domain.TestStatus
+import execution.domain.vo.result.TestStatus
 
 data class TestVerdict(
     val status: TestStatus,

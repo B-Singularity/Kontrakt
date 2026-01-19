@@ -1,7 +1,7 @@
 package discovery.adapter
 
 import discovery.domain.vo.ScanScope
-import discovery.spi.ClasspathScanner
+import discovery.port.outcoming.ClasspathScanner
 import io.github.classgraph.ClassGraph
 import io.github.classgraph.ScanResult
 import kotlinx.coroutines.Dispatchers

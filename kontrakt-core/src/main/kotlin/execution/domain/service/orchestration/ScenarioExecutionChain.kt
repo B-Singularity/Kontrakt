@@ -1,9 +1,9 @@
 package execution.domain.service.orchestration
 
-import execution.api.TestScenarioExecutor
 import execution.domain.entity.EphemeralTestContext
-import execution.domain.vo.AssertionRecord
-import execution.spi.interceptor.ScenarioInterceptor
+import execution.domain.vo.verification.AssertionRecord
+import execution.port.incoming.TestScenarioExecutor
+import execution.port.outgoing.ScenarioInterceptor
 
 /**
  * [Infrastructure] Scenario Execution Chain

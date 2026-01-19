@@ -7,12 +7,12 @@ import discovery.domain.vo.DependencyMetadata
 import exception.KontraktConfigurationException
 import exception.KontraktInternalException
 import execution.domain.entity.EphemeralTestContext
-import execution.domain.generator.GenerationContext
-import execution.domain.generator.GenerationRequest
 import execution.domain.trace.InMemoryScenarioTrace
-import execution.spi.MockingContext
-import execution.spi.MockingEngine
-import execution.spi.ScenarioControl
+import execution.domain.vo.context.generation.GenerationContext
+import execution.domain.vo.context.generation.GenerationRequest
+import execution.port.outgoing.MockingContext
+import execution.port.outgoing.MockingEngine
+import execution.port.outgoing.ScenarioControl
 import java.time.Clock
 import java.util.UUID
 import kotlin.random.Random
@@ -32,7 +32,7 @@ import kotlin.reflect.jvm.javaMethod
  * 1. **Dependency Injection**: Resolves dependencies based on [TestSpecification] (Mock, Fake, Real).
  * 2. **Fixture Generation**: Generates primitive values and value objects via [FixtureGenerator].
  * 3. **Recursion Safety**: Detects and prevents circular dependencies during instantiation.
- * 4. **Lifecycle Management**: Binds the generator to the mocking engine context.
+ * 4. **Lifecycle Management**: Binds the generation to the mocking engine context.
  */
 class TestInstanceFactory(
     private val mockingEngine: MockingEngine,

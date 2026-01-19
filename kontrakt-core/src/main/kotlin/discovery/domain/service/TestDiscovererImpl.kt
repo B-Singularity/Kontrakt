@@ -2,7 +2,6 @@ package discovery.domain.service
 
 import discovery.api.KontraktTest
 import discovery.api.Stateful
-import discovery.api.TestDiscoverer
 import discovery.domain.aggregate.TestSpecification
 import discovery.domain.aggregate.TestSpecification.Companion.create
 import discovery.domain.aggregate.TestSpecification.TestMode
@@ -11,7 +10,8 @@ import discovery.domain.vo.DependencyMetadata.MockingStrategy
 import discovery.domain.vo.DiscoveredTestTarget
 import discovery.domain.vo.DiscoveryPolicy
 import discovery.domain.vo.ScanScope
-import discovery.spi.ClasspathScanner
+import discovery.port.incoming.TestDiscoverer
+import discovery.port.outcoming.ClasspathScanner
 import exception.KontraktConfigurationException
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.CoroutineDispatcher

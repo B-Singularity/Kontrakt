@@ -1,6 +1,6 @@
 package reporting.adapter.outgoing.console
 
-import execution.domain.TestStatus
+import execution.domain.vo.result.TestStatus
 
 /**
  * [Style] Console Theme Strategy

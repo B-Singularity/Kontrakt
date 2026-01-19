@@ -1,6 +1,6 @@
 package execution.port.outgoing
 
-import execution.domain.vo.TestResultEvent
+import execution.domain.vo.result.TestResultEvent
 
 /**
  * [Port] Test Result Publisher

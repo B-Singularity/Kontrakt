@@ -1,7 +1,7 @@
 package reporting.adapter.outgoing.console
 
-import execution.domain.TestStatus
-import execution.domain.vo.TestResultEvent
+import execution.domain.vo.result.TestResultEvent
+import execution.domain.vo.result.TestStatus
 import execution.port.outgoing.TestResultPublisher
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicInteger

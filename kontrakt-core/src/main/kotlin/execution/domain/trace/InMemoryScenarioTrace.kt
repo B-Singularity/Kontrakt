@@ -1,7 +1,7 @@
 package execution.domain.trace
 
 import execution.domain.vo.trace.TraceEvent
-import execution.spi.trace.ScenarioTrace
+import execution.port.outgoing.ScenarioTrace
 import java.util.Collections
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue

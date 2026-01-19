@@ -1,6 +1,6 @@
 package reporting.adapter.outgoing.file
 
-import execution.domain.vo.TestResultEvent
+import execution.domain.vo.result.TestResultEvent
 import execution.port.outgoing.TestResultPublisher
 import reporting.adapter.config.ReportingDirectives
 import java.util.concurrent.ConcurrentLinkedQueue

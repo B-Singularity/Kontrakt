@@ -1,6 +1,6 @@
 package exception
 
-import execution.domain.vo.AssertionRule
+import execution.domain.vo.verification.AssertionRule
 
 /**
  * The root exception for the Kontrakt framework.

@@ -1,10 +1,10 @@
 package execution.domain.factory
 
-import execution.domain.vo.AuthInfo
-import execution.domain.vo.ExecutionEnvironment
-import execution.domain.vo.RequestInfo
-import execution.domain.vo.TenantInfo
-import execution.domain.vo.TraceInfo
+import execution.domain.vo.context.AuthInfo
+import execution.domain.vo.context.ExecutionEnvironment
+import execution.domain.vo.context.RequestInfo
+import execution.domain.vo.context.TenantInfo
+import execution.domain.vo.context.TraceInfo
 import java.time.Clock
 import java.time.ZoneId
 import java.util.UUID

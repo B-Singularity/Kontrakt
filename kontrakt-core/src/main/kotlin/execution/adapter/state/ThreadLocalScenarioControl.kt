@@ -1,10 +1,10 @@
 package execution.adapter.state
 
 import exception.KontraktInternalException
-import execution.adapter.MockitoScenarioContext
-import execution.api.ScenarioContext
-import execution.domain.vo.ExecutionEnvironment
-import execution.spi.ScenarioControl
+import execution.adapter.mockito.MockitoScenarioContext
+import execution.domain.vo.context.ExecutionEnvironment
+import execution.port.outgoing.ScenarioContext
+import execution.port.outgoing.ScenarioControl
 import kotlinx.coroutines.asContextElement
 import kotlin.coroutines.CoroutineContext
 

@@ -1,9 +1,9 @@
 package execution.domain.service
 
 import exception.ContractViolationException
-import execution.domain.AssertionStatus
-import execution.domain.TestStatus
-import execution.domain.vo.AssertionRecord
+import execution.domain.vo.result.TestStatus
+import execution.domain.vo.verification.AssertionRecord
+import execution.domain.vo.verification.AssertionStatus
 
 /**
  * [Domain Service] Test Verdict Decider.

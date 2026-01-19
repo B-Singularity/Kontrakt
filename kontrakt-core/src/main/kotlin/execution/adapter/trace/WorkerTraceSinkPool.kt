@@ -1,6 +1,6 @@
 package execution.adapter.trace
 
-import execution.domain.vo.WorkerId
+import execution.domain.vo.context.WorkerId
 import execution.exception.KontraktLifecycleException
 import execution.port.outgoing.TraceSink
 import io.github.oshai.kotlinlogging.KotlinLogging

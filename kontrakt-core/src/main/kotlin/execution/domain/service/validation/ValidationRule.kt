@@ -1,6 +1,6 @@
 package execution.domain.service.validation
 
-import execution.domain.generator.GenerationRequest
+import execution.domain.vo.context.generation.GenerationRequest
 import execution.exception.ConflictingAnnotationsException
 import kotlin.reflect.KClass
 

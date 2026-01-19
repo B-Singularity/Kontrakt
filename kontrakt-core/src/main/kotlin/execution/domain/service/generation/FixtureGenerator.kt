@@ -2,27 +2,27 @@ package execution.domain.service.generation
 
 import discovery.api.NotNull
 import discovery.api.Null
-import execution.domain.generator.ArrayTypeGenerator
-import execution.domain.generator.BooleanTypeGenerator
-import execution.domain.generator.CollectionTypeGenerator
-import execution.domain.generator.EnumTypeGenerator
-import execution.domain.generator.GenerationContext
-import execution.domain.generator.GenerationRequest
-import execution.domain.generator.NumericTypeGenerator
-import execution.domain.generator.ObjectGenerator
-import execution.domain.generator.RecursiveGenerator
-import execution.domain.generator.SealedTypeGenerator
-import execution.domain.generator.StringTypeGenerator
-import execution.domain.generator.TerminalGenerator
-import execution.domain.generator.TimeTypeGenerator
-import execution.domain.generator.TypeGenerator
 import execution.domain.service.validation.ContractConfigurationValidator
+import execution.domain.strategy.generation.ArrayTypeGenerator
+import execution.domain.strategy.generation.BooleanTypeGenerator
+import execution.domain.strategy.generation.CollectionTypeGenerator
+import execution.domain.strategy.generation.EnumTypeGenerator
+import execution.domain.strategy.generation.NumericTypeGenerator
+import execution.domain.strategy.generation.ObjectGenerator
+import execution.domain.strategy.generation.RecursiveGenerator
+import execution.domain.strategy.generation.SealedTypeGenerator
+import execution.domain.strategy.generation.StringTypeGenerator
+import execution.domain.strategy.generation.TerminalGenerator
+import execution.domain.strategy.generation.TimeTypeGenerator
+import execution.domain.strategy.generation.TypeGenerator
+import execution.domain.vo.context.generation.GenerationContext
+import execution.domain.vo.context.generation.GenerationRequest
 import execution.exception.GenerationFailedException
 import execution.exception.RecursiveGenerationFailedException
 import execution.exception.UnsupportedGeneratorException
-import execution.spi.MockingContext
-import execution.spi.MockingEngine
-import execution.spi.trace.ScenarioTrace
+import execution.port.outgoing.MockingContext
+import execution.port.outgoing.MockingEngine
+import execution.port.outgoing.ScenarioTrace
 import io.github.oshai.kotlinlogging.KotlinLogging
 import java.time.Clock
 import kotlin.random.Random
@@ -56,7 +56,7 @@ import kotlin.reflect.KParameter
  *
  * @property mockingEngine The engine used to create mock objects when POJO generation fails due to recursion.
  * @property clock The clock used for time-based generation (default: system default zone).
- * @property seed The seed value for the random number generator. Fixed for reproducibility.
+ * @property seed The seed value for the random number generation. Fixed for reproducibility.
  */
 class FixtureGenerator(
     private val mockingEngine: MockingEngine,
@@ -67,7 +67,7 @@ class FixtureGenerator(
     private val logger = KotlinLogging.logger {}
 
     /**
-     * The single source of randomness for this generator instance.
+     * The single source of randomness for this generation instance.
      * It is initialized with the provided [seed], ensuring that the sequence of generated values
      * remains consistent across multiple executions with the same seed.
      */
@@ -81,7 +81,7 @@ class FixtureGenerator(
      * The Strategy Registry.
      *
      * **Evaluation Order is Critical:**
-     * The generator iterates through this list and picks the **first** one that supports the request.
+     * The generation iterates through this list and picks the **first** one that supports the request.
      * 1. **Primitives/Scalars** (Boolean, Time, Numeric, String) are checked first.
      * 2. **Containers** (Collection, Array) are checked next.
      * 3. **Complex Structures** (Enum, Sealed) follow.
@@ -225,7 +225,7 @@ class FixtureGenerator(
             findGenerator(request)
                 ?: throw GenerationFailedException(
                     request.type,
-                    "No suitable generator found for type: ${request.type}",
+                    "No suitable generation found for type: ${request.type}",
                 )
 
         return try {
@@ -364,7 +364,7 @@ class FixtureGenerator(
         if (result == null && !request.type.isMarkedNullable && !request.has<Null>()) {
             throw GenerationFailedException(
                 request.type,
-                "Generator returned null for non-nullable type '${request.type}'. Check the logic of the generator handling this type.",
+                "Generator returned null for non-nullable type '${request.type}'. Check the logic of the generation handling this type.",
             )
         }
     }

@@ -27,8 +27,8 @@ import discovery.api.StringLength
 import discovery.api.Url
 import discovery.api.Uuid
 import exception.ContractViolationException
-import execution.domain.vo.AnnotationRule
-import execution.domain.vo.AssertionRule
+import execution.domain.vo.verification.AnnotationRule
+import execution.domain.vo.verification.AssertionRule
 import java.math.BigDecimal
 import java.time.Clock
 import java.time.Instant

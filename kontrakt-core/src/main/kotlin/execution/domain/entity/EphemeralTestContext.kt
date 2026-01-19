@@ -2,9 +2,9 @@ package execution.domain.entity
 
 import discovery.domain.aggregate.TestSpecification
 import exception.KontraktInternalException
-import execution.spi.MockingEngine
-import execution.spi.ScenarioControl
-import execution.spi.trace.ScenarioTrace
+import execution.port.outgoing.MockingEngine
+import execution.port.outgoing.ScenarioControl
+import execution.port.outgoing.ScenarioTrace
 import java.lang.reflect.Method
 import kotlin.reflect.KClass
 

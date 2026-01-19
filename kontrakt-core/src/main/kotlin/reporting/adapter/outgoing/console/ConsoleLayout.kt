@@ -1,10 +1,10 @@
 package reporting.adapter.outgoing.console
 
-import execution.domain.TestStatus
-import execution.domain.vo.AuditDepth
-import execution.domain.vo.AuditPolicy
-import execution.domain.vo.LogRetention
-import execution.domain.vo.TestResultEvent
+import execution.domain.vo.config.AuditDepth
+import execution.domain.vo.config.AuditPolicy
+import execution.domain.vo.config.LogRetention
+import execution.domain.vo.result.TestResultEvent
+import execution.domain.vo.result.TestStatus
 
 /**
  * [View] Console Layout Strategy

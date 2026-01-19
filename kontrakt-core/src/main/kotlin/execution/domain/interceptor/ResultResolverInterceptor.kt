@@ -7,15 +7,15 @@ import discovery.domain.aggregate.TestSpecification
 import exception.ContractViolationException
 import exception.KontraktConfigurationException
 import exception.KontraktInternalException
-import execution.domain.AssertionStatus
-import execution.domain.vo.AssertionRecord
-import execution.domain.vo.AssertionRule
-import execution.domain.vo.ConfigurationErrorRule
-import execution.domain.vo.SourceLocation
-import execution.domain.vo.StandardAssertion
-import execution.domain.vo.SystemErrorRule
-import execution.domain.vo.UserExceptionRule
-import execution.spi.interceptor.ScenarioInterceptor
+import execution.domain.vo.verification.AssertionRecord
+import execution.domain.vo.verification.AssertionRule
+import execution.domain.vo.verification.AssertionStatus
+import execution.domain.vo.verification.ConfigurationErrorRule
+import execution.domain.vo.verification.SourceLocation
+import execution.domain.vo.verification.StandardAssertion
+import execution.domain.vo.verification.SystemErrorRule
+import execution.domain.vo.verification.UserExceptionRule
+import execution.port.outgoing.ScenarioInterceptor
 
 /**
  * [Domain Service] Centralized Result Resolution Interceptor.

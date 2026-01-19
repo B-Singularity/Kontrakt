@@ -3,7 +3,7 @@ package common.util
 import exception.ContractViolationException
 import exception.KontraktConfigurationException
 import exception.KontraktException
-import execution.domain.vo.SourceLocation
+import execution.domain.vo.verification.SourceLocation
 import java.lang.reflect.InvocationTargetException
 import kotlin.reflect.KClass
 

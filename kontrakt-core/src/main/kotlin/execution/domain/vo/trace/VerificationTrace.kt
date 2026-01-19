@@ -1,6 +1,6 @@
 package execution.domain.vo.trace
 
-import execution.domain.AssertionStatus
+import execution.domain.vo.verification.AssertionStatus
 import infrastructure.json.escapeJson
 
 data class VerificationTrace(

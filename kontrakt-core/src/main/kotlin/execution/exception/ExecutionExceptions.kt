@@ -56,7 +56,7 @@ internal class SealedClassHasNoSubclassesException(
 internal class UnsupportedGeneratorException(
     generatorClass: kotlin.reflect.KClass<*>,
 ) : KontraktConfigurationException(
-        "Encountered an unsupported generator type: '${generatorClass.simpleName}'. " +
+        "Encountered an unsupported generation type: '${generatorClass.simpleName}'. " +
             "Generators must implement either 'RecursiveGenerator' or 'TerminalGenerator'.",
     )
 
