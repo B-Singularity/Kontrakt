@@ -1,5 +1,7 @@
 package exception
 
+import execution.domain.vo.verification.AssertionRule
+
 /**
  * The root exception for the Kontrakt framework.
  * All custom exceptions thrown by Kontrakt should inherit from this class.
@@ -35,6 +37,7 @@ open class KontraktConfigurationException(
  * This exception indicates a "Bug" in the user's implementation code.
  */
 open class ContractViolationException(
+    val rule: AssertionRule,
     message: String,
     cause: Throwable? = null,
 ) : KontraktException("[Contract Violation] $message", cause)

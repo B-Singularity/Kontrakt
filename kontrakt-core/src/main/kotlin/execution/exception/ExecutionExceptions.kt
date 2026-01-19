@@ -1,6 +1,7 @@
 package execution.exception
 
 import exception.KontraktConfigurationException
+import exception.KontraktException
 import kotlin.reflect.KType
 
 internal class GenerationFailedException(
@@ -55,6 +56,15 @@ internal class SealedClassHasNoSubclassesException(
 internal class UnsupportedGeneratorException(
     generatorClass: kotlin.reflect.KClass<*>,
 ) : KontraktConfigurationException(
-        "Encountered an unsupported generator type: '${generatorClass.simpleName}'. " +
+        "Encountered an unsupported generation type: '${generatorClass.simpleName}'. " +
             "Generators must implement either 'RecursiveGenerator' or 'TerminalGenerator'.",
+    )
+
+internal class KontraktLifecycleException(
+    val componentName: String,
+    val action: String,
+    val reason: String,
+) : KontraktException(
+        "[Lifecycle Violation] Invalid state in component '$componentName'. " +
+            "Cannot perform '$action' because: $reason",
     )
