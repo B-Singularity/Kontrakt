@@ -7,15 +7,6 @@ import execution.domain.vo.verification.SourceLocation
 import java.lang.reflect.InvocationTargetException
 import kotlin.reflect.KClass
 
-data class SourceCoordinate(
-    val fileName: String? = null,
-    val lineNumber: Int? = null,
-    val className: String? = null,
-    val methodName: String? = null,
-) {
-    val isUnknown: Boolean get() = fileName == null
-}
-
 val Throwable.unwrapped: Throwable
     get() {
         var current = this
@@ -77,7 +68,7 @@ fun Throwable.analyzeBlame(): Blame =
         // Business Logic Failure (Assertion / Contract)
         is AssertionError,
         is ContractViolationException,
-        -> Blame.TEST_FAILURE
+            -> Blame.TEST_FAILURE
 
         // User Configuration Error
         is KontraktConfigurationException -> Blame.SETUP_FAILURE
