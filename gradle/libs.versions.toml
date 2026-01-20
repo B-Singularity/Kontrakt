@@ -11,21 +11,40 @@ mockito-core = "5.21.0"
 mockito-kotlin = "6.1.0"
 junit-platform = "6.0.1"
 
+jacoco = "0.8.14"
+assertj = "3.27.6"
+mockk = "1.14.7"
+pitest = "1.19.0-rc.3"
+
 [libraries]
+# Testing - Core
 junit-jupiter-api = { module = "org.junit.jupiter:junit-jupiter-api", version.ref = "junit" }
 junit-jupiter-engine = { module = "org.junit.jupiter:junit-jupiter-engine", version.ref = "junit" }
+junit-platform-engine = { module = "org.junit.platform:junit-platform-engine", version.ref = "junit-platform" }
+junit-platform-commons = { module = "org.junit.platform:junit-platform-commons", version.ref = "junit-platform" }
+kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
+
+# Testing - Assertions & Mocking (Added for QA Plan)
+assertj-core = { module = "org.assertj:assertj-core", version.ref = "assertj" }
+mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
+
+# Legacy Mocking (If you still need it, otherwise consider removing)
+mockito-core = { module = "org.mockito:mockito-core", version.ref = "mockito-core" }
+mockito-kotlin = { module = "org.mockito.kotlin:mockito-kotlin", version.ref = "mockito-kotlin" }
+
+# Runtime & Util
 classgraph = { module = "io.github.classgraph:classgraph", version.ref = "classgraph" }
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
 kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinx-coroutines" }
 kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlin" }
+
+# Logging
 slf4j-api = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
 kotlin-logging-jvm = { module = "io.github.oshai:kotlin-logging-jvm", version.ref = "kotlin-logging" }
-mockito-core = { module = "org.mockito:mockito-core", version.ref = "mockito-core" }
-mockito-kotlin = { module = "org.mockito.kotlin:mockito-kotlin", version.ref = "mockito-kotlin" }
-junit-platform-engine = { module = "org.junit.platform:junit-platform-engine", version = "6.0.1" }
-junit-platform-commons = { module = "org.junit.platform:junit-platform-commons", version = "6.0.1" }
-kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
 
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlint-gradle" }
+
+# Mutation Testing Plugin
+pitest = { id = "info.solidsoft.pitest", version.ref = "pitest" }

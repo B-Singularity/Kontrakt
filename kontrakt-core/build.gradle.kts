@@ -2,6 +2,8 @@ plugins {
     `java-library`
     alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.ktlint)
+    id("jacoco")
+    alias(libs.plugins.pitest)
 }
 
 group = "com.bsingularity.kontrakt"
@@ -11,7 +13,12 @@ repositories {
     mavenCentral()
 }
 
+jacoco {
+    toolVersion = libs.versions.jacoco.get()
+}
+
 dependencies {
+    // 1. Logging & Runtime
     compileOnly(libs.slf4j.api)
     testImplementation(libs.slf4j.api)
     implementation(libs.kotlin.logging.jvm)
@@ -19,22 +26,77 @@ dependencies {
     implementation(libs.classgraph)
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlin.reflect)
+
+    implementation(libs.junit.platform.engine)
+
     implementation(libs.mockito.core)
     implementation(libs.mockito.kotlin)
-    implementation(libs.junit.platform.engine)
 
     testImplementation(kotlin("test"))
     testImplementation(libs.junit.jupiter.api)
     testImplementation(libs.kotlinx.coroutines.test)
     testRuntimeOnly(libs.junit.jupiter.engine)
+
+    testImplementation(libs.assertj.core)
+    testImplementation(libs.mockk)
 }
 
-testing {
-    suites {
-        val test by getting(JvmTestSuite::class) {
-            useJUnitJupiter()
+tasks.test {
+    useJUnitPlatform()
+    finalizedBy(tasks.named("jacocoTestReport"))
+}
+
+tasks.named<JacocoReport>("jacocoTestReport") {
+    dependsOn(tasks.test)
+
+    reports {
+        xml.required.set(true)
+        html.required.set(true)
+    }
+
+    finalizedBy(tasks.named("jacocoTestCoverageVerification"))
+}
+
+tasks.named<JacocoCoverageVerification>("jacocoTestCoverageVerification") {
+    dependsOn(tasks.test)
+
+    violationRules {
+        rule {
+            element = "CLASS"
+
+            excludes =
+                listOf(
+                    "**.vo.**",
+                    "**.logging.**",
+                    "**.adapter.**",
+                )
+
+            limit {
+                counter = "BRANCH"
+                value = "COVEREDRATIO"
+                minimum = "0.00".toBigDecimal()
+            }
         }
     }
+}
+
+pitest {
+    junit5PluginVersion.set("1.2.1")
+
+    targetClasses.set(
+        setOf(
+            "com.bsingularity.kontrakt.core.generation.*",
+            "com.bsingularity.kontrakt.core.execution.*",
+        ),
+    )
+
+    threads.set(4)
+    outputFormats.set(setOf("XML", "HTML"))
+    timestampedReports.set(false)
+}
+
+tasks.named("pitest").configure {
+    onlyIf { gradle.startParameter.projectProperties.containsKey("mutation") }
 }
 
 kotlin {
