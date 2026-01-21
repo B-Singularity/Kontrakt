@@ -112,7 +112,7 @@ class TestDiscovererImpl(
                 ?: return Result.failure(
                     KontraktConfigurationException(
                         "Target class '${target.displayName}' must have a primary constructor for dependency injection.\n" +
-                            "Tip: Interfaces, Objects, or Abstract classes cannot be tested directly as a Target.",
+                                "Tip: Interfaces, Objects, or Abstract classes cannot be tested directly as a Target.",
                     ),
                 )
 
@@ -123,7 +123,7 @@ class TestDiscovererImpl(
                         ?: return Result.failure(
                             KontraktConfigurationException(
                                 "Cannot determine type for parameter '${param.name}' " +
-                                    "in '${target.displayName}'.",
+                                        "in '${target.displayName}'.",
                             ),
                         )
 
@@ -167,24 +167,47 @@ class TestDiscovererImpl(
      * Addresses:
      * 1. Seed Priority: Explicit seed wins over null.
      * 2. Mode Union: Combines all test modes.
-     * 3. Dependency Safety: Validates that dependencies are consistent.
+     * 3. Dependency Safety: Validates consistency using direct equality check.
+     *
+     * @throws KontraktConfigurationException if dependency resolution conflicts are detected.
      */
     private fun mergeSpecifications(specs: List<TestSpecification>): TestSpecification {
-        // Target is invariant for the same class, so taking the first is safe.
         val base = specs.first()
 
-        // 1. Merge Modes (Union)
+        // 1. Dependencies Consistency Check (Fail Fast)
+        // [Design Decision] We use strict List equality check (order matters).
+        // Since these dependencies map 1:1 to the class constructor parameters,
+        // the order MUST be identical across all specifications.
+        val conflictingSpecs = specs.filter { it.requiredDependencies != base.requiredDependencies }
+
+        if (conflictingSpecs.isNotEmpty()) {
+            throw KontraktConfigurationException(
+                """
+                Dependency resolution conflict detected for target '${base.target.displayName}'.
+                Multiple discovery paths produced different dependency specifications.
+                
+                [Base Spec]:
+                Modes: ${base.modes}
+                Dependencies: ${base.requiredDependencies}
+                
+                [Conflicting Specs]:
+                ${conflictingSpecs.joinToString("\n") { "Modes: ${it.modes} -> Dependencies: ${it.requiredDependencies}" }}
+                
+                This indicates non-deterministic scanning or unstable mocking strategy resolution.
+                """.trimIndent()
+            )
+        }
+
+        // 2. Merge Modes (Union)
         val mergedModes = specs.flatMap { it.modes }.toSet()
 
-        // 2. Resolve Seed (Priority: First non-null seed wins)
+        // 3. Resolve Seed (Priority: First non-null seed wins)
         val resolvedSeed = specs.mapNotNull { it.seed }.firstOrNull()
-
-        // 3. Dependencies Consistency Check
 
         return create(
             target = base.target,
             modes = mergedModes,
-            requiredDependencies = base.requiredDependencies,
+            requiredDependencies = base.requiredDependencies, // Safe to use base now
             seed = resolvedSeed,
         ).getOrThrow()
     }

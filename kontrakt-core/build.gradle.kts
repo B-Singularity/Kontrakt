@@ -36,6 +36,7 @@ dependencies {
     testImplementation(libs.junit.jupiter.api)
     testImplementation(libs.junit.jupiter.params)
     testImplementation(libs.kotlinx.coroutines.test)
+    testRuntimeOnly(libs.slf4j.simple)
     testRuntimeOnly(libs.junit.jupiter.engine)
 
     testImplementation(libs.assertj.core)
@@ -64,17 +65,28 @@ tasks.named<JacocoCoverageVerification>("jacocoTestCoverageVerification") {
     violationRules {
         rule {
             element = "CLASS"
+            includes = listOf("discovery.domain.service.TestDiscovererImpl")
 
-            excludes =
-                listOf(
-                    "**.vo.**",
-                    "**.logging.**",
-                    "**.adapter.**",
-                )
+            excludes = listOf(
+                "discovery.domain.service.TestDiscovererImpl\$*"
+            )
 
             limit {
+                counter = "INSTRUCTION"
+                minimum = "0.90".toBigDecimal()
+            }
+        }
+
+        rule {
+            element = "CLASS"
+            excludes = listOf(
+                "discovery.domain.service.TestDiscovererImpl",
+                "**.vo.**",
+                "**.adapter.**",
+                "**.logging.**"
+            )
+            limit {
                 counter = "BRANCH"
-                value = "COVEREDRATIO"
                 minimum = "0.00".toBigDecimal()
             }
         }

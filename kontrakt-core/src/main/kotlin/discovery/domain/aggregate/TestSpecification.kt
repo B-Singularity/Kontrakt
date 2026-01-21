@@ -18,7 +18,7 @@ data class TestSpecification private constructor(
     val target: DiscoveredTestTarget,
     val modes: Set<TestMode>,
     val requiredDependencies: List<DependencyMetadata>,
-    val seed: Long? = null,
+    val seed: Long?,
 ) {
     /**
      * Defines the strategy used to execute the test.

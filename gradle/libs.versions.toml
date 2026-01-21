@@ -5,6 +5,7 @@ ktlint-gradle = "14.0.1"
 classgraph = "4.8.184"
 kotlinx-coroutines = "1.10.2"
 slf4j = "2.0.17"
+slf4j-simple = "2.0.17"
 logback = "1.5.19"
 kotlin-logging = "7.0.13"
 mockito-core = "5.21.0"
@@ -41,6 +42,7 @@ kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref =
 
 # Logging
 slf4j-api = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
+slf4j-simple = { module = "org.slf4j:slf4j-simple", version.ref = "slf4j-simple" }
 kotlin-logging-jvm = { module = "io.github.oshai:kotlin-logging-jvm", version.ref = "kotlin-logging" }
 
 [plugins]
