@@ -4,16 +4,19 @@ import discovery.domain.vo.ScanScope
 import discovery.port.outcoming.ClasspathScanner
 import io.github.classgraph.ClassGraph
 import io.github.classgraph.ScanResult
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlin.reflect.KClass
 
-class ClassGraphScannerAdapter : ClasspathScanner {
+class ClassGraphScannerAdapter(
+    private val dispatcher: CoroutineDispatcher = Dispatchers.IO
+) : ClasspathScanner {
     override suspend fun findAnnotatedInterfaces(
         scope: ScanScope,
         annotation: KClass<out Annotation>,
     ): List<KClass<*>> =
-        withContext(Dispatchers.IO) {
+        withContext(dispatcher) {
             scan(scope) { scanResult ->
                 scanResult
                     .getClassesWithAnnotation(annotation.java.name)
@@ -27,7 +30,7 @@ class ClassGraphScannerAdapter : ClasspathScanner {
         scope: ScanScope,
         annotation: KClass<out Annotation>,
     ): List<KClass<*>> =
-        withContext(Dispatchers.IO) {
+        withContext(dispatcher) {
             scan(scope) { scanResult ->
                 scanResult
                     .getClassesWithAnnotation(annotation.java.name)
@@ -41,11 +44,11 @@ class ClassGraphScannerAdapter : ClasspathScanner {
         scope: ScanScope,
         targetInterface: KClass<*>,
     ): List<KClass<*>> =
-        withContext(Dispatchers.IO) {
+        withContext(dispatcher) {
             scan(scope) { scanResult ->
                 scanResult
                     .getClassesImplementing(targetInterface.java.name)
-                    .filter { !it.isInterface && !it.isAbstract }
+                    .filter { !it.isAbstract }
                     .loadClasses()
                     .map { it.kotlin }
             }
