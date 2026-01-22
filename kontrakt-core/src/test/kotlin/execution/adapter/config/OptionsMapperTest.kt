@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test
 import reporting.adapter.config.ReportFormat
 import java.nio.file.Paths
 
-class UserControlOptionsMapperTest {
+class OptionsMapperTest {
 
     // =================================================================================================================
     // toExecutionPolicy() Tests
