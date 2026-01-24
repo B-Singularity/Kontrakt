@@ -4,11 +4,109 @@ import discovery.domain.vo.ScanScope
 import execution.domain.vo.config.AuditDepth
 import execution.domain.vo.config.LogRetention
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import reporting.adapter.config.ReportFormat
 import java.nio.file.Paths
 
 class OptionsMapperTest {
+
+    private val keysToClear = listOf(
+        "kontrakt.trace",
+        "kontrakt.archive",
+        "kontrakt.seed",
+        "kontrakt.reports.html",
+        "kontrakt.reports.json",
+        "kontrakt.reports.console"
+    )
+
+    @BeforeEach
+    @AfterEach
+    fun clearProperties() {
+        keysToClear.forEach { System.clearProperty(it) }
+    }
+
+    @Test
+    fun `fromSystemProperties should use default values when properties are missing`() {
+        // Given: No system properties set (cleared in Setup)
+
+        // When
+        val options = UserControlOptions.fromSystemProperties()
+
+        // Then
+        assertThat(options.traceMode).isFalse()
+        assertThat(options.archiveMode).isFalse()
+        assertThat(options.seed).isNull()
+
+        // Default Report Formats (Opt-out strategy: Enabled by default)
+        assertThat(options.reportFormats).containsExactlyInAnyOrder(
+            ReportFormat.HTML,
+            ReportFormat.JSON,
+            ReportFormat.CONSOLE
+        )
+    }
+
+    @Test
+    fun `fromSystemProperties should parse boolean flags and seed correctly`() {
+        // Given
+        System.setProperty("kontrakt.trace", "true")
+        System.setProperty("kontrakt.archive", "true")
+        System.setProperty("kontrakt.seed", "9999")
+
+        // When
+        val options = UserControlOptions.fromSystemProperties()
+
+        // Then
+        assertThat(options.traceMode).isTrue()
+        assertThat(options.archiveMode).isTrue()
+        assertThat(options.seed).isEqualTo(9999L)
+    }
+
+    @Test
+    fun `fromSystemProperties should handle invalid seed gracefully`() {
+        // Given: Seed is not a number
+        System.setProperty("kontrakt.seed", "not-a-number")
+
+        // When
+        val options = UserControlOptions.fromSystemProperties()
+
+        // Then
+        assertThat(options.seed).isNull() // Should return null safely
+    }
+
+    @Test
+    fun `fromSystemProperties should disable reports when explicitly set to false`() {
+        // Given: All reports explicitly disabled
+        System.setProperty("kontrakt.reports.html", "false")
+        System.setProperty("kontrakt.reports.json", "false")
+        System.setProperty("kontrakt.reports.console", "false")
+
+        // When
+        val options = UserControlOptions.fromSystemProperties()
+
+        // Then
+        assertThat(options.reportFormats).isEmpty()
+    }
+
+    @Test
+    fun `fromSystemProperties should enable reports when set to true or explicit value`() {
+        // Given
+        System.setProperty("kontrakt.reports.html", "true")
+
+        // "false"가 아니면 무조건 켜지는지 확인 (예: 오타나 임의의 문자열)
+        System.setProperty("kontrakt.reports.json", "yes")
+
+        System.setProperty("kontrakt.reports.console", "false")
+
+        // When
+        val options = UserControlOptions.fromSystemProperties()
+
+        // Then
+        assertThat(options.reportFormats).contains(ReportFormat.HTML, ReportFormat.JSON)
+        assertThat(options.reportFormats).doesNotContain(ReportFormat.CONSOLE)
+    }
+
 
     // =================================================================================================================
     // toExecutionPolicy() Tests

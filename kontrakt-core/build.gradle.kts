@@ -65,29 +65,19 @@ tasks.named<JacocoCoverageVerification>("jacocoTestCoverageVerification") {
     violationRules {
         rule {
             element = "CLASS"
-            includes = listOf("discovery.domain.service.TestDiscovererImpl")
 
             excludes = listOf(
-                "discovery.domain.service.TestDiscovererImpl\$*"
-            )
+                "execution.adapter.mockito.MockitoEngineAdapter",
+                "execution.adapter.mockito.MockitoEngineAdapter\$*",
+
+                "discovery.domain.service.TestDiscovererImpl",
+                "discovery.domain.service.TestDiscovererImpl\$*",
+
+                )
 
             limit {
                 counter = "INSTRUCTION"
                 minimum = "0.90".toBigDecimal()
-            }
-        }
-
-        rule {
-            element = "CLASS"
-            excludes = listOf(
-                "discovery.domain.service.TestDiscovererImpl",
-                "**.vo.**",
-                "**.adapter.**",
-                "**.logging.**"
-            )
-            limit {
-                counter = "BRANCH"
-                minimum = "0.00".toBigDecimal()
             }
         }
     }

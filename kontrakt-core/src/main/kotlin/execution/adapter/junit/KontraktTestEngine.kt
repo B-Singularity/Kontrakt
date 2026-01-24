@@ -10,10 +10,8 @@ import execution.adapter.config.UserControlOptions
 import execution.adapter.config.toExecutionPolicy
 import execution.adapter.config.toReportingDirectives
 import execution.adapter.mockito.MockitoEngineAdapter
-import execution.adapter.reporting.BroadcastingResultPublisher
 import execution.adapter.runtime.DefaultRuntimeFactory
 import execution.adapter.state.ThreadLocalScenarioControl
-import execution.adapter.trace.WorkerTraceSinkPool
 import execution.domain.factory.ExecutionEnvironmentFactory
 import execution.domain.vo.config.ExecutionPolicy
 import execution.domain.vo.result.TestResult
@@ -32,10 +30,6 @@ import org.junit.platform.engine.UniqueId
 import org.junit.platform.engine.discovery.ClassSelector
 import org.junit.platform.engine.discovery.PackageSelector
 import reporting.adapter.config.ReportFormat
-import reporting.adapter.outgoing.console.AnsiTheme
-import reporting.adapter.outgoing.console.ConsoleReporter
-import reporting.adapter.outgoing.console.NoColorTheme
-import reporting.adapter.outgoing.console.StandardConsoleLayout
 import reporting.adapter.outgoing.file.HtmlReporter
 import reporting.adapter.outgoing.file.JsonReporter
 import java.nio.file.Path
@@ -58,7 +52,14 @@ import java.time.Clock
  * the **Random Seed** is determined ONCE at the beginning of the [execute] method.
  * This seed is baked into the [ExecutionPolicy] and propagated down to every child component.
  */
-class KontraktTestEngine : TestEngine {
+class KontraktTestEngine(
+    private val reportingFactory: ReportingInfrastructureFactory,
+    private val tracingFactory: TracingInfrastructureFactory,
+    private val options: UserControlOptions = UserControlOptions.fromSystemProperties()
+) : TestEngine {
+
+    constructor() : this(DefaultInfrastructureFactory, DefaultInfrastructureFactory)
+
     private val logger = KotlinLogging.logger {}
     private lateinit var runtimeFactory: KontraktRuntimeFactory
 
@@ -117,40 +118,31 @@ class KontraktTestEngine : TestEngine {
         val clock = Clock.systemDefaultZone()
         val mockingEngine = MockitoEngineAdapter()
         val scenarioControl = ThreadLocalScenarioControl()
-        val traceSinkPool = WorkerTraceSinkPool(Path.of("build/kontrakt"))
+        val traceSinkPool = tracingFactory.createTraceSinkPool(Path.of("build/kontrakt"))
 
-        // 2. [Boundary] Load User Configuration (System Properties)
-        val userOptions =
-            UserControlOptions(
-                traceMode = System.getProperty("kontrakt.trace")?.toBoolean() ?: false,
-                seed = System.getProperty("kontrakt.seed")?.toLongOrNull(),
-            )
 
-        // 3. [Policy] Establish the "Source of Truth" for Determinism
+        // 2. [Policy] Establish the "Source of Truth" for Determinism
         // ADR: Determine the Master Seed HERE. If the user didn't provide one, generate it.
         // This ensures consistent seeding across Environment, Generators, and Logs.
-        val masterSeed = userOptions.seed ?: System.currentTimeMillis()
+        val masterSeed = options.seed ?: System.currentTimeMillis()
 
         // Bake the master seed into the ExecutionPolicy.
         // Now, policy.determinism.seed is GUARANTEED to be non-null for downstream consumers.
-        val basePolicy = userOptions.toExecutionPolicy()
-        val executionPolicy =
-            basePolicy.copy(
-                determinism = basePolicy.determinism.copy(seed = masterSeed),
-            )
+        val basePolicy = options.toExecutionPolicy()
+        val executionPolicy = basePolicy.copy(
+            determinism = basePolicy.determinism.copy(seed = masterSeed),
+        )
 
-        val reportingDirectives = userOptions.toReportingDirectives()
+        val reportingDirectives = options.toReportingDirectives()
 
-        // 4. [Wiring] Assemble Reporters
+        // 3. [Wiring] Assemble Reporters
         val publishers = mutableListOf<TestResultPublisher>()
 
-        // 4-1. Console Reporter setup
-        val theme = if (System.getenv("NO_COLOR").isNullOrEmpty()) AnsiTheme else NoColorTheme
-        val layout = StandardConsoleLayout(theme, executionPolicy.auditing)
-        val consoleReporter = ConsoleReporter(layout)
+        // 3-1. Console Reporter setup
+        val consoleReporter = reportingFactory.createConsoleReporter(executionPolicy.auditing)
         publishers.add(consoleReporter)
 
-        // 4-2. File Reporters setup
+        // 3-2. File Reporters setup
         if (ReportFormat.JSON in reportingDirectives.formats) {
             publishers.add(JsonReporter(reportingDirectives))
         }
@@ -158,16 +150,15 @@ class KontraktTestEngine : TestEngine {
             publishers.add(HtmlReporter(reportingDirectives))
         }
 
-        val resultPublisher =
-            BroadcastingResultPublisher(
-                publishers = publishers,
-                onPublishFailure = { name, error ->
-                    System.err.println("[Kontrakt Engine] Reporter '$name' failed: ${error.message}")
-                },
-            )
+        val resultPublisher = reportingFactory.createResultPublisher(
+            publishers = publishers,
+            onPublishFailure = { name, error ->
+                System.err.println("[Kontrakt Engine] Reporter '$name' failed: ${error.message}")
+            }
+        )
 
         try {
-            // 5. [Runtime] Initialize the Runtime Factory
+            // 4. [Runtime] Initialize the Runtime Factory
             // Inject the finalized ExecutionPolicy (with Master Seed) and Infrastructure components.
             runtimeFactory =
                 DefaultRuntimeFactory(
@@ -193,7 +184,7 @@ class KontraktTestEngine : TestEngine {
             // Notify JUnit: Execution Finished
             listener.executionFinished(engineDescriptor, TestExecutionResult.successful())
 
-            // 6. [Finalize] Print Executive Summary to Console
+            // 5. [Finalize] Print Executive Summary to Console
             consoleReporter.printFinalReport()
         } finally {
             // [Cleanup] Ensure resources are released (e.g., flush logs, close file handles)

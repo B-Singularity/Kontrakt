@@ -16,6 +16,16 @@ infrastructure tool, its reliability requirements are significantly higher than 
 3. **Complexity of Generative Logic**: The core `FixtureGenerator` and `InterceptorChain` involve complex recursion,
    reflection, and state management. Standard "Happy Path" testing is insufficient to guarantee stability.
 
+### ⚠️ Scope of Applicability (CRITICAL)
+
+**This ADR defines the internal Quality Assurance process for the Kontrakt Framework itself.**
+
+* **Target Audience**: Framework Contributors and Maintainers.
+* **Target Domain**: The `kontrakt-core` codebase and its internal test suite.
+* **Exclusion**: This strategy **DOES NOT** apply to end-users (developers using Kontrakt to test their applications).
+  End-users are provided with a stable, simplified API and are not expected to configure stress tests or mutation
+  testing for their own projects.
+
 Therefore, we need a Quality Assurance strategy that goes beyond standard industry practices—a "Paranoid" approach.
 
 ## Decision
@@ -49,15 +59,18 @@ To ensure test quality without excessive build times, we apply Mutation Testing 
 * **Exclusion**: Adapters and Reporting layers are exempted unless critical logic resides there.
 * **Success Criteria**: The test suite must kill at least 80% of mutants in the core scope.
 
-### 4. Tiered Generative Verification (Tiered CI)
+### 4. Tiered Generative Verification (Internal CI Strategy)
 
-To mitigate the cost of repetitive generative testing (`FixtureGenerator` reliability), we separate validation into two
-tiers using System Properties (e.g., `kontrakt.profile`).
+To mitigate the cost of repetitive generative testing (`FixtureGenerator` reliability), we separate our **internal
+validation** into two tiers using System Properties (e.g., `kontrakt.profile`).
 
 * **Tier 1 (Local/PR):** Quick verification (e.g., **100 repetitions**) to catch obvious regressions immediately. This
   allows for rapid feedback cycles during development.
 * **Tier 2 (Nightly/Release):** Deep verification (e.g., **10,000 repetitions**) running on a scheduled pipeline (or via
   `./gradlew stressTest`) to detect rare edge cases and race conditions.
+
+*Note: This strictly controls the framework's own test suite. End-users will utilize the framework via standard
+execution modes defined in ADR-016.*
 
 ### 5. Meta-Testing (Testing the Failure)
 
@@ -82,9 +95,9 @@ we must rigorously test the **validity of the contracts themselves**.
 
 * **Managed Build Time**: By scoping Pitest and segmenting generative tests, we keep PR build times reasonable while
   maintaining rigorous nightly checks.
-* **Reproducibility**: Developers can reproduce Nightly CI failures locally by running the specific `stressTest` task.
+* **Reproducibility**: Contributors can reproduce Nightly CI failures locally by running the specific `stressTest` task.
 * **Core Stability**: The most critical parts of the framework are mathematically proven to be robust via extensive
-  repetition.
+  repetition, ensuring end-users receive a reliable tool.
 
 ## Compliance
 
