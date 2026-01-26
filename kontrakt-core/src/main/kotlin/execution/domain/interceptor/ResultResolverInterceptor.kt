@@ -162,8 +162,8 @@ class ResultResolverInterceptor(
         rule: AssertionRule,
         message: String,
         location: SourceLocation,
-        expected: String? = null,
-        actual: String? = null,
+        expected: String?,
+        actual: String?,
     ) = AssertionRecord(
         status = status,
         rule = rule,
