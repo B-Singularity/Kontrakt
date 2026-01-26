@@ -41,7 +41,7 @@ class WorkerTraceSinkPoolTest {
     @Test
     fun `getSink - creates new sink if not present (Atomic Initialization)`() {
         // Given
-        val workerId = WorkerId(1)
+        val workerId = WorkerId.of(1)
 
         // When
         val sink = sut.getSink(workerId)
@@ -54,7 +54,7 @@ class WorkerTraceSinkPoolTest {
     @Test
     fun `getSink - returns existing cached sink if already present`() {
         // Given
-        val workerId = WorkerId(1)
+        val workerId = WorkerId.of(1)
         val firstCall = sut.getSink(workerId)
 
         // When
@@ -71,7 +71,7 @@ class WorkerTraceSinkPoolTest {
 
         // When & Then
         assertThatThrownBy {
-            sut.getSink(WorkerId(1))
+            sut.getSink(WorkerId.of(1))
         }.isInstanceOf(KontraktLifecycleException::class.java)
             .hasMessageContaining("pool is already closed")
     }
@@ -86,14 +86,14 @@ class WorkerTraceSinkPoolTest {
         sut.close()
 
         // Then: No exception, safe exit
-        assertThatThrownBy { sut.getSink(WorkerId(1)) }
+        assertThatThrownBy { sut.getSink(WorkerId.of(1)) }
             .isInstanceOf(KontraktLifecycleException::class.java)
     }
 
     @Test
     fun `close - is idempotent`() {
         // Given: Pool with resources
-        sut.getSink(WorkerId(1))
+        sut.getSink(WorkerId.of(1))
         sut.close() // First close
 
         // When: Second close
@@ -110,8 +110,8 @@ class WorkerTraceSinkPoolTest {
             every { anyConstructed<RecyclingFileTraceSink>().close() } just Runs
 
             // Given: Two active workers
-            sut.getSink(WorkerId(1))
-            sut.getSink(WorkerId(2))
+            sut.getSink(WorkerId.of(1))
+            sut.getSink(WorkerId.of(2))
 
             // When
             sut.close()
@@ -124,8 +124,8 @@ class WorkerTraceSinkPoolTest {
     @Test
     fun `close - continues closing other sinks even if one fails`() {
         mockkConstructor(RecyclingFileTraceSink::class) {
-            val worker1 = WorkerId(1)
-            val worker2 = WorkerId(2)
+            val worker1 = WorkerId.of(1)
+            val worker2 = WorkerId.of(2)
 
             // Setup:
             // We use a counter to make the FIRST closed sink fail, and the SECOND succeed.
