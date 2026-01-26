@@ -95,6 +95,14 @@ class RecyclingFileTraceSink(
                 return
             }
 
+            // If the single event is larger than the buffer itself, we cannot copy it into the buffer.
+            // We must flush existing data and write this large chunk directly.
+            if (bytes.size > buffer.size) {
+                flushBuffer()
+                fileHandle?.write(bytes)
+                return
+            }
+
             // [Strategy: Micro-Batching]
             // Flush only if the buffer is full
             if (bufferPos + bytes.size > buffer.size) {
