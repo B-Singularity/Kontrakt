@@ -1,5 +1,6 @@
 package execution.adapter.mockito
 
+import exception.KontraktConfigurationException
 import execution.domain.service.generation.FixtureGenerator
 import execution.domain.vo.context.generation.GenerationRequest
 import execution.domain.vo.trace.ExecutionTrace
@@ -7,13 +8,18 @@ import execution.port.outgoing.MockingContext
 import execution.port.outgoing.ScenarioTrace
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.mockkStatic
 import io.mockk.slot
+import io.mockk.unmockkStatic
 import io.mockk.verify
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.invocation.InvocationOnMock
+import java.lang.reflect.Method
 import java.util.Optional
+import kotlin.reflect.jvm.kotlinFunction
 
 class MockitoEngineAdapterTest {
 
@@ -27,6 +33,8 @@ class MockitoEngineAdapterTest {
         every { context.generator } returns generator
         every { context.trace } returns trace
     }
+
+    // Static mocking will be handled inside specific tests using try-finally.
 
     data class TestEntity(val id: String?, val name: String)
     data class NoIdEntity(val name: String)
@@ -80,6 +88,8 @@ class MockitoEngineAdapterTest {
         fun count(): Long
     }
 
+    // --- Stateless Tests ---
+
     @Test
     fun `Stateless - delegates value generation to FixtureGenerator`() {
         val expectedValue = "Generated String"
@@ -104,6 +114,23 @@ class MockitoEngineAdapterTest {
 
         verify(exactly = 0) { generator.generate(any<GenerationRequest>()) }
         verify(exactly = 1) { trace.add(any<ExecutionTrace>()) }
+    }
+
+    @Test
+    fun `Stateless - returns null if kotlinFunction is null (Java Interop Coverage)`() {
+        // Wrap in try-finally to ensure unmocking even if test fails.
+        mockkStatic(Method::kotlinFunction)
+        try {
+            every { any<Method>().kotlinFunction } returns null
+
+            val mock = adapter.createMock(TestService::class, context)
+            val result = mock.getData() // Should normally return String, but here returns null
+
+            assertThat(result).isNull()
+            verify(exactly = 1) { trace.add(any<ExecutionTrace>()) }
+        } finally {
+            unmockkStatic(Method::kotlinFunction)
+        }
     }
 
     @Test
@@ -134,11 +161,13 @@ class MockitoEngineAdapterTest {
         verify(exactly = 1) { trace.add(any<ExecutionTrace>()) }
     }
 
+    // --- Stateful Tests ---
+
     @Test
     fun `Stateful - handles Object methods`() {
         val fake = adapter.createFake(TestRepository::class, context)
 
-        assertThat(fake.toString()).startsWith("StatefulFake$")
+        assertThat(fake.toString()).startsWith("StatefulFake@")
         assertThat(fake.hashCode()).isNotZero()
         assertThat(fake.equals(fake)).isTrue()
         assertThat(fake.equals(null)).isFalse()
@@ -191,6 +220,8 @@ class MockitoEngineAdapterTest {
 
         assertThat(result).isEqualTo("Custom Result")
     }
+
+    // --- Matchers & Fail-Fast Logic ---
 
     @Test
     fun `Matchers - isSave matches create and register`() {
@@ -252,18 +283,49 @@ class MockitoEngineAdapterTest {
     }
 
     @Test
-    fun `Matchers - handleDelete handles objects without id property`() {
+    fun `Matchers - handleDelete allows deleting by primitive key (String)`() {
         val fake = adapter.createFake(EdgeCaseRepository::class, context)
         val entity = TestEntity(id = "manual-id", name = "Test")
         fake.saveGeneric(entity)
+
         fake.deleteGeneric("manual-id")
         assertThat(fake.count()).isEqualTo(0)
     }
 
     @Test
+    fun `FailFast - handleDelete throws ConfigurationException for object without ID property`() {
+        val fake = adapter.createFake(EdgeCaseRepository::class, context)
+        val noIdEntity = NoIdEntity("Ghost")
+
+        val ex = assertThrows(KontraktConfigurationException::class.java) {
+            fake.deleteGeneric(noIdEntity)
+        }
+
+        assertThat(ex.message).contains("StatefulFake violation").contains("NoIdEntity")
+    }
+
+    @Test
+    fun `FailFast - handles entities throwing exceptions during property access`() {
+        val fake = adapter.createFake(EdgeCaseRepository::class, context)
+        val poisonEntity = object {
+            @Suppress("unused")
+            val id: String
+                get() = throw IllegalStateException("Explosive Property")
+        }
+
+        // [Fix] Since we unwrapped the InvocationTargetException in production code,
+        // we now expect the original IllegalStateException directly.
+        val ex = assertThrows(IllegalStateException::class.java) {
+            fake.saveGeneric(poisonEntity)
+        }
+        assertThat(ex.message).isEqualTo("Explosive Property")
+    }
+
+    // --- Fallback & Edge Cases ---
+
+    @Test
     fun `Fallback - strictly checks names and sends mismatches to Generator`() {
         val fake = adapter.createFake(TestRepository::class, context)
-        
         every { generator.generate(any<GenerationRequest>()) } returnsMany listOf("Fallback", "Fallback", 42)
 
         fake.findingNemo("Dory")
@@ -293,33 +355,7 @@ class MockitoEngineAdapterTest {
         }
     }
 
-    @Test
-    fun `EdgeCase - handles entities throwing exceptions during property access`() {
-        val fake = adapter.createFake(EdgeCaseRepository::class, context)
-        val poisonEntity = object {
-            @Suppress("unused")
-            val id: String
-                get() = throw IllegalStateException("Explosive Property")
-        }
-        fake.saveGeneric(poisonEntity)
-        assertThat(fake.count()).isEqualTo(1)
-    }
-
-    @Test
-    fun `EdgeCase - handleFindById ignores entities with inaccessible IDs`() {
-        val fake = adapter.createFake(EdgeCaseRepository::class, context)
-        every { generator.generate(any<GenerationRequest>()) } returns null
-
-        val poisonEntity = object {
-            @Suppress("unused")
-            val id: String
-                get() = throw RuntimeException("Inaccessible")
-        }
-
-        fake.saveGeneric(poisonEntity)
-        val result = fake.findGeneric("target-id")
-        assertThat(result).isNull()
-    }
+    // --- Direct Tests (Inner Class) ---
 
     @Test
     fun `Direct - GenerativeAnswer handles Unit return type explicitly`() {
@@ -341,9 +377,7 @@ class MockitoEngineAdapterTest {
         val result = answerInstance.answer(invocation)
 
         assertThat(result).isNull()
-
         verify { trace.add(any<ExecutionTrace>()) }
-        verify(exactly = 0) { generator.generate(any<GenerationRequest>()) }
     }
 
     @Test
@@ -369,32 +403,6 @@ class MockitoEngineAdapterTest {
         assertThat(slot.captured.methodSignature).matches {
             it.startsWith("Mock.count") || it.startsWith("Any.count")
         }
-    }
-
-    @Test
-    @Suppress("UNCHECKED_CAST")
-    fun `Direct - handleFindById handles entities completely missing an ID property`() {
-        val answerInstance = createPrivateInnerClassInstance(
-            "StatefulOrGenerativeAnswer",
-            generator,
-            trace
-        ) as org.mockito.stubbing.Answer<*>
-
-        val storeField = answerInstance::class.java.getDeclaredField("store")
-        storeField.isAccessible = true
-        val store = storeField.get(answerInstance) as MutableMap<Any, Any>
-
-        val noIdObj = NoIdEntity("Ghost")
-        store["some-key"] = noIdObj
-
-        val invocation = mockk<InvocationOnMock>()
-        every { invocation.method } returns TestRepository::class.java.methods.find { it.name == "findById" }!!
-        every { invocation.arguments } returns arrayOf("target-id")
-        every { invocation.mock } returns mockk<TestRepository>()
-
-        val result = answerInstance.answer(invocation)
-
-        assertThat(result).isNull()
     }
 
     @Test

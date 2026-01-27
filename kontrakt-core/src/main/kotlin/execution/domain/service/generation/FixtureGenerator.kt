@@ -77,28 +77,18 @@ class FixtureGenerator(
         logger.info { "FixtureGenerator initialized. Seed: $seed" }
     }
 
-    /**
-     * The Strategy Registry.
-     *
-     * **Evaluation Order is Critical:**
-     * The generation iterates through this list and picks the **first** one that supports the request.
-     * 1. **Primitives/Scalars** (Boolean, Time, Numeric, String) are checked first.
-     * 2. **Containers** (Collection, Array) are checked next.
-     * 3. **Complex Structures** (Enum, Sealed) follow.
-     * 4. **ObjectGenerator** acts as the "Catch-All" fallback for arbitrary POJOs.
-     */
-    private val generators: List<TypeGenerator> =
-        listOf(
-            BooleanTypeGenerator(),
-            TimeTypeGenerator(clock),
-            NumericTypeGenerator(),
-            StringTypeGenerator(),
-            CollectionTypeGenerator(),
-            ArrayTypeGenerator(),
-            EnumTypeGenerator(),
-            SealedTypeGenerator(),
-            ObjectGenerator(), // Final fallback for POJOs
-        )
+    private val generators: List<TypeGenerator> = listOf(
+        BooleanTypeGenerator(),
+        TimeTypeGenerator(clock),
+        NumericTypeGenerator(),
+        StringTypeGenerator(),
+        CollectionTypeGenerator(),
+        ArrayTypeGenerator(),
+        EnumTypeGenerator(),
+        SealedTypeGenerator(),
+        ObjectGenerator(), // The Catch-All Fallback
+    )
+
 
     // =================================================================
     // Public Entry Points (API)
@@ -351,7 +341,8 @@ class FixtureGenerator(
         }
     }
 
-    private fun findGenerator(request: GenerationRequest): TypeGenerator? = generators.firstOrNull { it.supports(request) }
+    private fun findGenerator(request: GenerationRequest): TypeGenerator? =
+        generators.firstOrNull { it.supports(request) }
 
     /**
      * Performs final integrity checks on the generated result.
@@ -367,5 +358,16 @@ class FixtureGenerator(
                 "Generator returned null for non-nullable type '${request.type}'. Check the logic of the generation handling this type.",
             )
         }
+    }
+
+    /**
+     * [Engine Internal] Safe Annotation Check Helper.
+     *
+     * This method replaces brittle `reified T` calls with explicit `KClass` checks.
+     * It ensures the engine logic remains robust even in reflection-heavy or mocked contexts
+     * where compile-time type inference might be unavailable or misleading.
+     */
+    private fun GenerationRequest.hasAnnotation(annotationClass: KClass<out Annotation>): Boolean {
+        return this.annotations.any { it.annotationClass == annotationClass }
     }
 }

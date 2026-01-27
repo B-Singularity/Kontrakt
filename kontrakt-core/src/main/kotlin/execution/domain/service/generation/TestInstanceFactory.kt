@@ -77,7 +77,7 @@ class TestInstanceFactory(
             context.targetMethod = targetMethod.javaMethod
                 ?: throw KontraktInternalException(
                     "Reflection failure: Could not resolve Java method for Kotlin function '${targetMethod.name}' " +
-                        "in class '${spec.target.displayName}'.",
+                            "in class '${spec.target.displayName}'.",
                 )
         } catch (e: KontraktConfigurationException) {
             throw e
@@ -100,27 +100,36 @@ class TestInstanceFactory(
     private fun resolveTargetMethod(
         spec: TestSpecification,
         type: KClass<*>,
-    ): KFunction<*> =
-        when (val mode = spec.modes.first()) {
-            is TestSpecification.TestMode.UserScenario -> {
-                // Try to find the first @Test method to set as the initial context
-                type.functions.find { it.findAnnotation<Test>() != null }
-                    ?: type.functions.firstOrNull()
-                    ?: throw KontraktConfigurationException("No executable methods found in '${type.simpleName}' for UserScenario.")
+    ): KFunction<*> {
+        val functions = type.functions
+
+        return when (val mode = spec.modes.first()) {
+            is TestSpecification.TestMode.ContractAuto -> {
+                functions
+                    .filterNot { it.isStandardMethod }
+                    .firstOrNull()
+                    ?: throw KontraktConfigurationException(
+                        "No executable business methods found in implementation '${type.simpleName}'. " +
+                                "Standard methods (toString, equals, hashCode) are excluded from ContractAuto discovery."
+                    )
             }
 
-            is TestSpecification.TestMode.ContractAuto -> {
-                type.functions.firstOrNull()
-                    ?: throw KontraktConfigurationException("No methods found in implementation '${type.simpleName}'.")
+            is TestSpecification.TestMode.UserScenario -> {
+                functions.firstOrNull { it.findAnnotation<Test>() != null }
+                    ?: functions.firstOrNull { !it.isStandardMethod }
+                    ?: throw KontraktInternalException(
+                        "Invariant violation: Class '${type.simpleName}' passed discovery but has no executable methods."
+                    )
             }
 
             is TestSpecification.TestMode.DataCompliance -> {
-                // For Data Classes, use constructor or toString as a safe placeholder
                 type.primaryConstructor
-                    ?: type.functions.find { it.name == "toString" }
-                    ?: throw KontraktConfigurationException("Data class '${type.simpleName}' has no accessible members.")
+                    ?: throw KontraktConfigurationException(
+                        "Data Compliance check requires a primary constructor in class '${type.simpleName}'."
+                    )
             }
         }
+    }
 
     /**
      * Recursively resolves an instance of the given [type].
@@ -168,7 +177,7 @@ class TestInstanceFactory(
                         val request =
                             GenerationRequest.from(
                                 type.starProjectedType,
-                                name = type.simpleName ?: "dependency",
+                                name = type.simpleName!!
                             )
                         mockingContext.generator.generate(request, generationContext)!!
                     }.getOrNull()?.let { return it }
@@ -233,8 +242,11 @@ class TestInstanceFactory(
                         val paramType = param.type.classifier as KClass<*>
 
                         if (isBasicValueType(paramType)) {
+                            // [Explicit Contract]
+                            // Generator is the single authority for basic types.
+                            // Failure is signaled via exception, not null.
+                            // Null here is a valid, intentional value (e.g. nullable types).
                             mockingContext.generator.generate(param, generationContext)
-                                ?: resolve(paramType, context, generationContext, mockingContext)
                         } else {
                             resolve(paramType, context, generationContext, mockingContext)
                         }
@@ -252,12 +264,27 @@ class TestInstanceFactory(
 
     private fun isBasicValueType(type: KClass<*>): Boolean =
         type == String::class ||
-            type == Int::class ||
-            type == Long::class ||
-            type == Double::class ||
-            type == Boolean::class ||
-            type == List::class ||
-            type == Map::class ||
-            type == Set::class ||
-            type.isData
+                type == Int::class ||
+                type == Long::class ||
+                type == Double::class ||
+                type == Boolean::class ||
+                type == List::class ||
+                type == Map::class ||
+                type == Set::class ||
+                type.isData
+
+    // --- Extensions & Constants ---
+
+    private val KFunction<*>.isStandardMethod: Boolean
+        get() = this.name in STANDARD_JVM_METHODS
+
+    companion object {
+        private val STANDARD_JVM_METHODS = setOf(
+            "equals",
+            "hashCode",
+            "toString"
+            // "notify", "notifyAll", "wait" are final in Java/Kotlin, usually not exposed via KFunction unless strictly reflective,
+            // but safe to exclude if they ever appear.
+        )
+    }
 }

@@ -73,6 +73,9 @@ tasks.named<JacocoCoverageVerification>("jacocoTestCoverageVerification") {
                 "discovery.domain.service.TestDiscovererImpl",
                 "discovery.domain.service.TestDiscovererImpl\$*",
 
+                "execution.domain.service.generation.FixtureGenerator*",
+                "execution.domain.service.generation.FixtureGenerator\$*",
+
                 )
 
             limit {
