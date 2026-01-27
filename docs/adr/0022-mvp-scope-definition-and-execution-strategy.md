@@ -74,14 +74,16 @@ To maintain architectural purity, we explicitly define the limitations of the cu
 * **Limitation:** We do not support complex graph resolution strategies (e.g., Proxy injection or delayed setting) for
   strong cycles. Users should design DTOs as DAGs (Directed Acyclic Graphs).
 
-### 2. Interfaces & Abstract Classes: "Concrete Only"
+### 2. Interfaces & Abstract Classes: "Explicit Contract Only"
 
-* **Status:** Unsupported
+* **Status:** **Supported (Conditional)**
 * **Implementation Details:**
-    * Dependency injection requires **Concrete Classes**. The generator will throw an exception if asked to instantiate
-      an Interface or Abstract Class.
-* **Limitation:** We do not include an Auto-Mocking engine (like Mockito) in the MVP to keep the framework lightweight.
-  Users must use concrete implementations for data-driven testing.
+    * **Raw Interfaces:** Generating raw interfaces or abstract classes without metadata is **Unsupported** (throws
+      exception).
+    * **Annotated Interfaces:** If an interface is annotated with **`@Contract(implementingClass = ...)`**, the
+      generator will resolve and instantiate the specified concrete class.
+* **Limitation:** We do not include an implicit Auto-Mocking engine (like Mockito) in the MVP. All interface
+  dependencies must be explicitly mapped to a concrete implementation via the `@Contract` annotation.
 
 ### 3. Lifecycle Hooks: "Pure Isolation"
 
@@ -106,12 +108,12 @@ To maintain architectural purity, we explicitly define the limitations of the cu
 * **High Reproducibility:** A specific Seed guarantees the exact same execution path, parameter values, and result every
   time.
 * **Simple Debugging:** "Single-Pass" execution eliminates the noise of loop-based failures.
-* **Safety:** Circular dependencies cause immediate, clear failures instead of `StackOverflowError` or hanging
-  processes.
+* **Flexibility:** Users can test interface-based designs by simply providing a `@Contract` mapping, preserving
+  decoupling while enabling fuzzing.
 
 ### Negative
 
 * **Coverage Gaps:** Bugs that only appear when optional parameters are explicitly set to non-default values will not be
   detected by default.
-* **Strict Migration:** Users migrating from legacy frameworks may find the lack of Lifecycle Hooks (`@Before`)
-  inconvenient for heavy resource setup.
+* **Boilerplate:** Testing interfaces requires adding `@Contract` annotations, which creates a slight coupling between
+  the interface and its test implementation details (though this is often acceptable in DTO-heavy codebases).
