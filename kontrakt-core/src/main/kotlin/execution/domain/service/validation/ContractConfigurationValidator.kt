@@ -26,8 +26,8 @@ import discovery.api.Size
 import discovery.api.StringLength
 import discovery.api.Url
 import discovery.api.Uuid
+import execution.domain.exception.InvalidAnnotationValueException
 import execution.domain.vo.context.generation.GenerationRequest
-import execution.exception.InvalidAnnotationValueException
 import java.time.temporal.Temporal
 import java.util.Date
 

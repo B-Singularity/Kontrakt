@@ -19,12 +19,19 @@ sealed interface TypeReference {
     val source: TypeSource
 
     /**
+     * A human-readable name for this type (e.g., "String", "com.example.User").
+     * Essential for debugging and error messages.
+     */
+    val name: String
+
+    /**
      * [Phase 1 Primary] A reference based on JVM Runtime information.
      * The Adapter determines the implementation of [source] (typically wrapping KType).
      */
     data class Runtime(
         override val source: TypeSource,
-        override val typeId: TypeId
+        override val typeId: TypeId,
+        override val name: String
     ) : TypeReference
 
     /**
@@ -42,6 +49,9 @@ sealed interface TypeReference {
 
         // Internal implementation to satisfy TypeSource, exposed via interface
         override val source: TypeSource = FqcnSource(fullyQualifiedClassName)
+
+        // Use FQCN as the name
+        override val name: String = fullyQualifiedClassName
 
         private data class FqcnSource(val fqcn: String) : TypeSource
     }

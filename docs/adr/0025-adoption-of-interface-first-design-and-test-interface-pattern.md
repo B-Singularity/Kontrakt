@@ -1,114 +1,107 @@
-# ADR-025: Adoption of Interface-First Design and Test Interface Pattern
+# ADR-025: Interface-Driven Contract Verification and Test Interface Pattern
 
-* **Status:** Accepted
-* **Date:** 2026-01-20
+* **Status:** Revised
+* **Date:** 2026-01-30
 * **Context:** Core Architecture & Test Strategy
-* **Relies on:** [ADR-001] Hexagonal Architecture, [ADR-005] Unified Two-Pillar Strategy
+* **Relies on:** [ADR-001] Hexagonal Architecture, [ADR-009] Dual-Layer Contract Verification Strategy
 
 ## 1. Context
 
-As `Kontrakt` evolves, we need a consistent guideline for defining component boundaries and sharing test logic.
-In traditional Java ecosystems, developers often rely on **Abstract Base Classes** (e.g., `BaseRepositoryTest`) to share
-common logic.
+In a polymorphic system, interfaces define the behavioral contract. However, verifying strict adherence to these
+contracts (Liskov Substitution Principle) across all implementations is tedious and error-prone.
 
-However, this "Inheritance-First" approach introduces critical architectural limitations:
+We need a mechanism where:
 
-1. **"Is-A" vs "Can-Do" Mismatch:** Abstract classes force a rigid "Is-A" taxonomy. However, capabilities like
-   `Traceable` or `Verifiable` are "Can-Do" behaviors that should be composed (Mixed-in), not inherited linearly.
-2. **State Coupling:** Abstract classes often hold mutable state (e.g., `protected Database db`), creating hidden
-   coupling between the parent and children. This leads to flaky tests and hinders parallel execution.
-3. **Forced Environment (All-or-Nothing):** Subclasses inherit the *entire* environment of the parent. They cannot "
-   opt-out" of expensive setups or conflicting rules defined in the base class.
-
-Since Kotlin Interfaces support **Default Implementations**, we can decouple "Contract Definition" from "Implementation
-Details."
+1. **Constraints are defined directly on the Interface** (Single Source of Truth).
+2. **Tests are written once against the Interface**, and the framework automatically runs them against all
+   implementations.
+3. **Developer Experience (DX) is seamless**, avoiding boilerplate like `@get:` prefixes or manual subject retrieval.
 
 ## 2. Decision
 
-We will adopt an **"Interface-First"** Design Strategy and the **"Test Interface Pattern"** as the standard.
+We adopt an **Interface-First Design** with a **declarative contract testing model**.
 
-### 2.1. Design Rule: Prefer Interfaces over Abstract Classes
+### 2.1. Clean Constraint Declaration
 
-* **Default Choice:** All contracts, shared behaviors, and domain boundaries MUST be defined as **Interfaces**.
-* **Exception (When to use Abstract Class):** Use `abstract class` **ONLY IF**:
-    * **Shared Mutable Infrastructure** is required (e.g., TestContainers, Embedded DB setup, heavy shared test
-      infrastructure).
-    * **Protected State** must be strictly preserved and shared across subclasses.
-    * *Note:* Even in these cases, **prefer composition** (e.g., JUnit Extensions, Delegates) first before resorting to
-      inheritance.
+* **Property-Level Annotations:** All validation annotations (e.g., `@StringLength`, `@IntRange`) defined in
+  `discovery.api` MUST target `AnnotationTarget.PROPERTY`.
+* **No Syntax Noise:** This allows developers to annotate interface properties directly (e.g., `@StringLength(5)`)
+  without the Kotlin `@get:` prefix.
+* **Planner Responsibility:** The `Planner` extracts these annotations from the interface properties to build the
+  validation plan.
 
-### 2.2. Adoption of Test Interface Pattern
+### 2.2. The `Contract<T>` Base Interface
 
-We reject "Base Test Classes" for behavioral verification in favor of **Test Interfaces**.
+We introduce a standard `Contract<T>` interface that all contract tests must extend.
 
-* **Definition:** A test suite verifying a functional contract must be declared as an `interface` containing `@Test`
-  methods.
-* **Scope & Restrictions:** Test Interfaces should avoid `@Disabled`, `@Nested`, or stateful fields to ensure they
-  remain pure contracts.
-* **Lifecycle Policy:**
-    * **Interface:** Strictly focus on **Behavior Verification** (`@Test`).
-    * **Implementation:** Handle **Lifecycle Management** (`@BeforeEach`) and state initialization.
-* **Composition (Mixin):** Concrete test classes should implement multiple Test Interfaces to verify all aspects of the
-  component.
+* **Automatic Injection:** The framework injects the system under test (SUT) into the `subject` property of
+  `Contract<T>`.
+* **Polymorphic Execution:** When a developer writes `interface UserTest : Contract<User>`, the `Linker`:
+    1. Scans for all implementations of `User` (e.g., `Admin`, `Customer`).
+    2. Expands the test suite to run for *each* implementation.
+    3. Injects the specific implementation instance into `subject` for each run.
 
-#### Example: Composition (Mixin) of Contracts
+### 2.3. Generative Boundary Testing
 
-This demonstrates the power of the Interface pattern: verifying multiple behaviors on a single SUT.
+The `subject` provided to the test is not just a random object.
+
+* **Constraint-Based Generation:** The framework generates the `subject` instance using the constraints defined on the
+  interface itself.
+* **Constructor Injection:** Generated values (e.g., a String of length 5) are injected into the implementation's
+  constructor to ensure it can be instantiated validly before testing behaviors.
+
+## 3. Example Usage (Zero Boilerplate)
+
+This represents the final, approved UX for defining and testing contracts.
 
 ```kotlin
-// Contract A: Verifies tracing capability ("Can-Do")
-interface TraceableContract {
-    fun traceEnabledComponent(): Traceable
 
-    @Test
-    fun `must record execution trace`() {
-        val sut = traceEnabledComponent()
-        val trace = sut.run()
-        assertTrue(trace.events.isNotEmpty())
+// 1. The Interface (Clean Constraints)
+interface User {
+    // No '@get:' needed. Just pure intent.
+    @StringLength(min = 5, max = 20)
+    val username: String
+
+    @IntRange(min = 18, max = 100)
+    val age: Int
+}
+
+// 2. The Implementation
+data class AdminUser(
+    override val username: String,
+    override val age: Int
+) : User {
+    init {
+        // Business logic ensuring constraints are met
+        require(username.length >= 5)
     }
 }
 
-// Concrete Test: Implements BOTH contracts (Mixin)
-class DefaultExecutorTest :
-    ScenarioExecutorContract,
-    TraceableContract {
+// 3. The Contract Test (No 'subject()' implementation needed)
+// User just extends Contract<T>, and 'subject' is magically available.
+interface UserSpec : Contract<User> {
 
-    // Lifecycle management is explicit here (Opt-in)
-    private val resources = ResourcePool()
-
-    @BeforeEach
-    fun setup() {
-        resources.init()
-    } // Explicitly controlled setup
-
-    @AfterEach
-    fun tearDown() {
-        resources.close()
+    @Test
+    fun `must maintain username constraints`() {
+        // 'subject' is automatically injected by the framework
+        // for EVERY implementation found (AdminUser, GuestUser, etc.)
+        assertTrue(subject.username.length >= 5)
     }
-
-    override fun executor() = DefaultScenarioExecutor(resources)
-    override fun traceEnabledComponent() = DefaultScenarioExecutor(resources)
 }
 ```
 
-## 3. Consequences
+## 4. Consequences
 
 ### ✅ Positive Consequences
 
-* **Perfect Isolation via Opt-in:** Unlike inheritance where the parent's environment is forced upon children,
-  interfaces allow an **"Opt-in"** approach. The implementation explicitly selects which contracts to fulfill and which
-  resources to initialize. This prevents "Hidden State Pollution" from unused parent features.
-* **Composition over Inheritance:** We can verify complex objects by mixing in multiple contract tests (e.g.,
-  `class SmartExecutorTest : ExecutorContract, LoggingContract`).
-* **Decoupling State from Behavior:** Tests define *what* needs to happen (Interface), while implementations define
-  *how* the environment is set up (Class).
+* **Developer Experience:** Removes all syntactic noise (`@get:`) and boilerplate (`fun subject()`). Writing a contract
+  test feels like writing a standard spec.
+* **LSP Enforcement:** Automatically verifies that all implementations honor the interface's annotations.
+* **Zero-Config Discovery:** The developer doesn't need to manually register implementations; the `Linker` finds them.
 
 ### ⚠️ Negative Consequences
 
-* **Infrastructure Limits:** Interfaces cannot reliably manage stateful JUnit extensions or shared mutable
-  infrastructure. Heavy infrastructure tests (Integration Tests) will still strictly require `abstract class` or JUnit
-  Extensions.
-* **Trade-off Justification:** This tradeoff is acceptable because **behavioral correctness is prioritized over
-  infrastructure convenience** in our framework design.
-* **JUnit Constraints:** Using `@BeforeEach` inside interfaces can sometimes lead to unexpected behavior. We mitigate
-  this by pushing lifecycle hooks to the concrete class.
+* **Framework Complexity:** The `Linker` and `VM` must handle the complex logic of finding implementations and injecting
+  them into the generic `Contract<T>` interface.
+* **Annotation Targeting:** We must strictly ensure all custom annotations in `Constraints.kt` include
+  `AnnotationTarget.PROPERTY` to support this syntax.

@@ -7,6 +7,8 @@ import java.time.temporal.ChronoUnit
     AnnotationTarget.FIELD,
     AnnotationTarget.FUNCTION,
     AnnotationTarget.PROPERTY_GETTER,
+    AnnotationTarget.PROPERTY,
+    AnnotationTarget.TYPE,
 )
 @Retention(AnnotationRetention.RUNTIME)
 annotation class NotNull
@@ -16,6 +18,8 @@ annotation class NotNull
     AnnotationTarget.FIELD,
     AnnotationTarget.FUNCTION,
     AnnotationTarget.PROPERTY_GETTER,
+    AnnotationTarget.PROPERTY,
+    AnnotationTarget.TYPE,
 )
 @Retention(AnnotationRetention.RUNTIME)
 annotation class Null
@@ -25,6 +29,8 @@ annotation class Null
     AnnotationTarget.FIELD,
     AnnotationTarget.FUNCTION,
     AnnotationTarget.PROPERTY_GETTER,
+    AnnotationTarget.PROPERTY,
+    AnnotationTarget.TYPE,
 )
 @Retention(AnnotationRetention.RUNTIME)
 annotation class AssertTrue
@@ -34,6 +40,8 @@ annotation class AssertTrue
     AnnotationTarget.FIELD,
     AnnotationTarget.FUNCTION,
     AnnotationTarget.PROPERTY_GETTER,
+    AnnotationTarget.PROPERTY,
+    AnnotationTarget.TYPE,
 )
 @Retention(AnnotationRetention.RUNTIME)
 annotation class AssertFalse
@@ -43,6 +51,8 @@ annotation class AssertFalse
     AnnotationTarget.FIELD,
     AnnotationTarget.FUNCTION,
     AnnotationTarget.PROPERTY_GETTER,
+    AnnotationTarget.PROPERTY,
+    AnnotationTarget.TYPE,
 )
 @Retention(AnnotationRetention.RUNTIME)
 annotation class IntRange(
@@ -55,6 +65,8 @@ annotation class IntRange(
     AnnotationTarget.FIELD,
     AnnotationTarget.FUNCTION,
     AnnotationTarget.PROPERTY_GETTER,
+    AnnotationTarget.PROPERTY,
+    AnnotationTarget.TYPE,
 )
 @Retention(AnnotationRetention.RUNTIME)
 annotation class LongRange(
@@ -67,6 +79,8 @@ annotation class LongRange(
     AnnotationTarget.FIELD,
     AnnotationTarget.FUNCTION,
     AnnotationTarget.PROPERTY_GETTER,
+    AnnotationTarget.PROPERTY,
+    AnnotationTarget.TYPE,
 )
 @Retention(AnnotationRetention.RUNTIME)
 annotation class DoubleRange(
@@ -79,6 +93,8 @@ annotation class DoubleRange(
     AnnotationTarget.FIELD,
     AnnotationTarget.FUNCTION,
     AnnotationTarget.PROPERTY_GETTER,
+    AnnotationTarget.PROPERTY,
+    AnnotationTarget.TYPE,
 )
 @Retention(AnnotationRetention.RUNTIME)
 annotation class DecimalMin(
@@ -91,6 +107,8 @@ annotation class DecimalMin(
     AnnotationTarget.FIELD,
     AnnotationTarget.FUNCTION,
     AnnotationTarget.PROPERTY_GETTER,
+    AnnotationTarget.PROPERTY,
+    AnnotationTarget.TYPE,
 )
 @Retention(AnnotationRetention.RUNTIME)
 annotation class DecimalMax(
@@ -103,6 +121,8 @@ annotation class DecimalMax(
     AnnotationTarget.FIELD,
     AnnotationTarget.FUNCTION,
     AnnotationTarget.PROPERTY_GETTER,
+    AnnotationTarget.PROPERTY,
+    AnnotationTarget.TYPE,
 )
 @Retention(AnnotationRetention.RUNTIME)
 annotation class Digits(
@@ -115,6 +135,8 @@ annotation class Digits(
     AnnotationTarget.FIELD,
     AnnotationTarget.FUNCTION,
     AnnotationTarget.PROPERTY_GETTER,
+    AnnotationTarget.PROPERTY,
+    AnnotationTarget.TYPE,
 )
 @Retention(AnnotationRetention.RUNTIME)
 annotation class Positive
@@ -124,6 +146,8 @@ annotation class Positive
     AnnotationTarget.FIELD,
     AnnotationTarget.FUNCTION,
     AnnotationTarget.PROPERTY_GETTER,
+    AnnotationTarget.PROPERTY,
+    AnnotationTarget.TYPE,
 )
 @Retention(AnnotationRetention.RUNTIME)
 annotation class PositiveOrZero
@@ -133,6 +157,8 @@ annotation class PositiveOrZero
     AnnotationTarget.FIELD,
     AnnotationTarget.FUNCTION,
     AnnotationTarget.PROPERTY_GETTER,
+    AnnotationTarget.PROPERTY,
+    AnnotationTarget.TYPE,
 )
 @Retention(AnnotationRetention.RUNTIME)
 annotation class Negative
@@ -142,6 +168,8 @@ annotation class Negative
     AnnotationTarget.FIELD,
     AnnotationTarget.FUNCTION,
     AnnotationTarget.PROPERTY_GETTER,
+    AnnotationTarget.PROPERTY,
+    AnnotationTarget.TYPE,
 )
 @Retention(AnnotationRetention.RUNTIME)
 annotation class NegativeOrZero
@@ -151,6 +179,8 @@ annotation class NegativeOrZero
     AnnotationTarget.FIELD,
     AnnotationTarget.FUNCTION,
     AnnotationTarget.PROPERTY_GETTER,
+    AnnotationTarget.PROPERTY,
+    AnnotationTarget.TYPE,
 )
 @Retention(AnnotationRetention.RUNTIME)
 annotation class StringLength(
@@ -163,6 +193,8 @@ annotation class StringLength(
     AnnotationTarget.FIELD,
     AnnotationTarget.FUNCTION,
     AnnotationTarget.PROPERTY_GETTER,
+    AnnotationTarget.PROPERTY,
+    AnnotationTarget.TYPE,
 )
 @Retention(AnnotationRetention.RUNTIME)
 annotation class NotBlank
@@ -172,6 +204,8 @@ annotation class NotBlank
     AnnotationTarget.FIELD,
     AnnotationTarget.FUNCTION,
     AnnotationTarget.PROPERTY_GETTER,
+    AnnotationTarget.PROPERTY,
+    AnnotationTarget.TYPE,
 )
 @Retention(AnnotationRetention.RUNTIME)
 annotation class Pattern(
@@ -183,6 +217,8 @@ annotation class Pattern(
     AnnotationTarget.FIELD,
     AnnotationTarget.FUNCTION,
     AnnotationTarget.PROPERTY_GETTER,
+    AnnotationTarget.PROPERTY,
+    AnnotationTarget.TYPE,
 )
 @Retention(AnnotationRetention.RUNTIME)
 annotation class Email(
@@ -195,6 +231,8 @@ annotation class Email(
     AnnotationTarget.FIELD,
     AnnotationTarget.FUNCTION,
     AnnotationTarget.PROPERTY_GETTER,
+    AnnotationTarget.PROPERTY,
+    AnnotationTarget.TYPE,
 )
 @Retention(AnnotationRetention.RUNTIME)
 annotation class Url(
@@ -208,6 +246,8 @@ annotation class Url(
     AnnotationTarget.FIELD,
     AnnotationTarget.FUNCTION,
     AnnotationTarget.PROPERTY_GETTER,
+    AnnotationTarget.PROPERTY,
+    AnnotationTarget.TYPE,
 )
 @Retention(AnnotationRetention.RUNTIME)
 annotation class Uuid
@@ -217,6 +257,8 @@ annotation class Uuid
     AnnotationTarget.FIELD,
     AnnotationTarget.FUNCTION,
     AnnotationTarget.PROPERTY_GETTER,
+    AnnotationTarget.PROPERTY,
+    AnnotationTarget.TYPE,
 )
 @Retention(AnnotationRetention.RUNTIME)
 annotation class Past(
@@ -231,6 +273,8 @@ annotation class Past(
     AnnotationTarget.FIELD,
     AnnotationTarget.FUNCTION,
     AnnotationTarget.PROPERTY_GETTER,
+    AnnotationTarget.PROPERTY,
+    AnnotationTarget.TYPE,
 )
 @Retention(AnnotationRetention.RUNTIME)
 annotation class PastOrPresent(
@@ -245,6 +289,8 @@ annotation class PastOrPresent(
     AnnotationTarget.FIELD,
     AnnotationTarget.FUNCTION,
     AnnotationTarget.PROPERTY_GETTER,
+    AnnotationTarget.PROPERTY,
+    AnnotationTarget.TYPE,
 )
 @Retention(AnnotationRetention.RUNTIME)
 annotation class Future(
@@ -259,6 +305,8 @@ annotation class Future(
     AnnotationTarget.FIELD,
     AnnotationTarget.FUNCTION,
     AnnotationTarget.PROPERTY_GETTER,
+    AnnotationTarget.PROPERTY,
+    AnnotationTarget.TYPE,
 )
 @Retention(AnnotationRetention.RUNTIME)
 annotation class FutureOrPresent(
@@ -273,6 +321,8 @@ annotation class FutureOrPresent(
     AnnotationTarget.FIELD,
     AnnotationTarget.FUNCTION,
     AnnotationTarget.PROPERTY_GETTER,
+    AnnotationTarget.PROPERTY,
+    AnnotationTarget.TYPE,
 )
 @Retention(AnnotationRetention.RUNTIME)
 annotation class Size(
@@ -286,6 +336,8 @@ annotation class Size(
     AnnotationTarget.FIELD,
     AnnotationTarget.FUNCTION,
     AnnotationTarget.PROPERTY_GETTER,
+    AnnotationTarget.PROPERTY,
+    AnnotationTarget.TYPE,
 )
 @Retention(AnnotationRetention.RUNTIME)
 annotation class NotEmpty
