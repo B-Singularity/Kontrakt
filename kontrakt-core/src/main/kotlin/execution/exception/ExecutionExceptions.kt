@@ -1,123 +1,129 @@
 package execution.domain.exception
 
-import execution.domain.vo.plan.Attribute
-import metamodel.domain.vo.TypeReference
+import exception.KontraktException
+import metamodel.domain.vo.TypeId
 
-internal class GenerationFailedException(
-    val type: TypeReference,
-    part: String? = null,
+enum class LifecyclePhase { SETUP, EXECUTION, CLEANUP }
+enum class FaultKind { USER_CONFIG, GRAPH_CONTRACT, SYSTEM_INTERNAL, SAFETY_GUARD, LIFECYCLE, ENVIRONMENT }
+
+abstract class ExecutionDomainException(
+    message: String,
     cause: Throwable? = null,
-) : RuntimeException(
-    // or KontraktConfigurationException
-    "Failed to generate value for type: ${type.name}${part?.let { " (at $it)" } ?: ""}",
-    cause,
-)
+    val faultKind: FaultKind,
+    val lifecyclePhase: LifecyclePhase = LifecyclePhase.SETUP
+) : KontraktException(message, cause) {
 
-internal class RecursiveGenerationFailedException(
-    val type: TypeReference,
-    val path: List<String>,
-    cause: Throwable,
-) : RuntimeException(
-    "Failed to generate recursive structure for type: ${type.name} (at field: '${path.joinToString(".")}')",
-    cause,
-)
+    final override val domain: String = "EXECUTION"
+    protected abstract val errorCode: String
+    protected open val errorData: Map<String, Any?> = emptyMap()
 
-internal class ConflictingAnnotationsException(
-    fieldName: String,
-    annotations: List<String>,
-    reason: String,
-) : RuntimeException(
-    "[Ambiguous Contract] Field '$fieldName' has conflicting annotations: ${annotations.joinToString(", ")}. " +
-            "Please use only one. (Reason: $reason)",
-)
+    final override val details: Map<String, Any?> by lazy(LazyThreadSafetyMode.PUBLICATION) {
+        mapOf(
+            "domain" to domain,
+            "code" to "EXEC.$errorCode",
+            "phase" to lifecyclePhase.name,
+            "faultKind" to faultKind.name,
+            "data" to errorData
+        ).also { validateJsonSafety(it) } // Safe: passing local map
+    }
+}
 
-internal class InvalidAnnotationValueException(
-    fieldName: String,
-    value: Any?,
-    reason: String,
-) : RuntimeException(
-    "[Invalid Value] Field '$fieldName' has invalid configuration value '$value'. Reason: $reason",
-)
+// --- Bucket 1: Configuration ---
+sealed class TestConfigurationException(msg: String, cause: Throwable? = null) :
+    ExecutionDomainException(msg, cause, FaultKind.USER_CONFIG)
 
-internal class CollectionSizeLimitExceededException(
-    targetSize: Int,
-    limit: Int,
-) : RuntimeException(
-    "[Safety Limit Exceeded] Collection size ($targetSize) exceeds the global limit ($limit). " +
-            "To force execution, use '@Size(..., ignoreLimit = true)'.",
-)
+class GeneratorNotFoundException(val typeId: TypeId, val attributes: Set<String>) :
+    TestConfigurationException("No generator for '$typeId'.") {
+    override val errorCode = "GENERATOR_NOT_FOUND"
+    override val errorData = mapOf("typeId" to typeId.toString(), "attributes" to attributes.toList())
+}
 
-internal class SealedClassHasNoSubclassesException(
-    type: TypeReference, // 👈 KType -> TypeReference
-) : RuntimeException(
-    "Sealed class '${type.name}' has no permitted subclasses. Please ensure at least one subclass is defined and accessible.",
-)
+class ImplementationResolutionException(val typeId: TypeId, details: String) :
+    TestConfigurationException("Missing impl for '$typeId': $details") {
+    override val errorCode = "IMPLEMENTATION_MISSING"
+    override val errorData = mapOf("typeId" to typeId.toString(), "reason" to details)
+}
 
-internal class UnsupportedGeneratorException(
-    generatorClassName: String, // 👈 KClass -> String (Name only)
-) : RuntimeException(
-    "Encountered an unsupported generation type: '$generatorClassName'. " +
-            "Generators must implement either 'RecursiveGenerator' or 'TerminalGenerator'.",
-)
+class ConfigurationConflictException(val typeId: TypeId, val fieldName: String?, details: String) :
+    TestConfigurationException("Config conflict in '$typeId': $details") {
+    override val errorCode = "CONFIG_CONFLICT"
+    override val errorData = mapOf("typeId" to typeId.toString(), "fieldName" to fieldName, "reason" to details)
+}
 
-internal class KontraktLifecycleException(
-    val componentName: String,
+class InvalidConfigurationValueException(val typeId: TypeId, val fieldName: String?, val value: Any?, reason: String) :
+    TestConfigurationException("Invalid value '$value' in '$typeId': $reason") {
+    override val errorCode = "CONFIG_INVALID_VALUE"
+    override val errorData = mapOf(
+        "typeId" to typeId.toString(),
+        "fieldName" to fieldName,
+        "value" to (value?.toString() ?: "null"),
+        "reason" to reason
+    )
+}
+
+// --- Bucket 2: Synthesis ---
+sealed class TestSynthesisException(
+    msg: String,
+    cause: Throwable? = null,
+    kind: FaultKind = FaultKind.SYSTEM_INTERNAL
+) : ExecutionDomainException(msg, cause, kind)
+
+class StructuralPlanningException(val typeId: TypeId, details: String, cause: Throwable? = null) :
+    TestSynthesisException("Planning failed for '$typeId': $details", cause) {
+    override val errorCode = "PLANNING_FAILED"
+    override val errorData = mapOf("typeId" to typeId.toString(), "reason" to details)
+}
+
+sealed class LinkageException(msg: String, cause: Throwable? = null, kind: FaultKind = FaultKind.SYSTEM_INTERNAL) :
+    TestSynthesisException(msg, cause, kind)
+
+class CircularDependencyException(val path: List<TypeId>, details: String) : LinkageException(
+    "[Cycle] Path: ${path.joinToString(" -> ")}. $details",
+    null,
+    FaultKind.GRAPH_CONTRACT
+) {
+    override val errorCode = "CYCLE_DETECTED"
+    override val errorData = mapOf("path" to path.map { it.toString() }, "reason" to details)
+}
+
+// --- Bucket 3: Runtime ---
+sealed class VirtualMachineException(
+    msg: String,
+    cause: Throwable? = null,
+    kind: FaultKind = FaultKind.SYSTEM_INTERNAL
+) : ExecutionDomainException(msg, cause, kind)
+
+class VMRuntimeException(val typeId: TypeId, msg: String, cause: Throwable? = null) :
+    VirtualMachineException("VM failed for '$typeId': $msg", cause) {
+    override val errorCode = "VM_EXECUTION_FAILED"
+    override val errorData = mapOf("typeId" to typeId.toString())
+}
+
+class CollectionSizeLimitExceededException(val typeId: TypeId, val current: Int, val limit: Int) :
+    VirtualMachineException("Size $current > $limit for '$typeId'.", null, FaultKind.SAFETY_GUARD) {
+    override val errorCode = "SIZE_LIMIT_EXCEEDED"
+    override val errorData = mapOf("typeId" to typeId.toString(), "current" to current, "limit" to limit)
+}
+
+// --- Cross-Cutting ---
+class KontraktLifecycleException(
+    val component: String,
     val action: String,
     val reason: String,
-) : RuntimeException(
-    // or KontraktException
-    "[Lifecycle Violation] Invalid state in component '$componentName'. " +
-            "Cannot perform '$action' because: $reason",
-)
-
-
-sealed class ExecutionException(message: String, cause: Throwable? = null) : RuntimeException(message, cause)
-
-/**
- * Thrown when the Planner fails to analyze a type structure or detects an invalid state.
- * (e.g., Unresolvable cycle, Missing generic type info)
- */
-class StructuralPlanningException(
-    val type: TypeReference,
-    message: String,
+    phase: LifecyclePhase,
     cause: Throwable? = null
-) : ExecutionException("Failed to plan structure for type '${type.name}': $message", cause)
+) : ExecutionDomainException("Lifecycle violation: $reason", cause, FaultKind.LIFECYCLE, phase) {
+    override val errorCode = "LIFECYCLE_VIOLATION"
+    override val errorData = mapOf("component" to component, "action" to action, "reason" to reason)
+}
 
-/**
- * Thrown when the Linker cannot find a suitable Generator strategy for a given node.
- * Holds the raw set of attributes to assist in debugging strategy mismatches.
- */
-class GeneratorNotFoundException(
-    val type: TypeReference,
-    val attributes: Set<Attribute>
-) : ExecutionException(
-    "No suitable generator found for type '${type.name}' with attributes: ${attributes.joinToString { it.toString() }}"
-)
-
-/**
- * Thrown when the Linker fails to resolve a concrete implementation for an interface.
- * [ADR-025] Interface-First Design requires strict resolution of implementations.
- */
-class ImplementationResolutionException(
-    val type: TypeReference,
-    message: String
-) : ExecutionException("Failed to resolve implementation for interface '${type.name}': $message")
-
-/**
- * Thrown during the expansion phase if policies or overrides are invalid.
- * (e.g., Invalid path in user override, collection size policy conflict)
- */
-class LinkageException(
-    val path: String,
-    message: String,
+class KontraktEnvironmentException(
+    val component: String,
+    val resource: String,
+    val reason: String,
+    phase: LifecyclePhase,
     cause: Throwable? = null
-) : ExecutionException("Linkage failed at path '$path': $message", cause)
-
-/**
- * Thrown when the Virtual Machine fails to execute a generator or assemble an object.
- */
-class VMExecutionException(
-    val type: TypeReference,
-    message: String,
-    cause: Throwable? = null
-) : ExecutionException("VM execution failed for type '${type.name}': $message", cause)
+) : ExecutionDomainException("Environment error: $reason", cause, FaultKind.ENVIRONMENT, phase) {
+    override val errorCode = "ENVIRONMENT_ERROR"
+    override val errorData = mapOf("component" to component, "resource" to resource, "reason" to reason)
+}

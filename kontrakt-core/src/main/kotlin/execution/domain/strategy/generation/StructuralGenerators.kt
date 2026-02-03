@@ -88,15 +88,14 @@ class ObjectAssembler(
 /**
  * [Polymorphic Strategy]
  * Responsible for selecting one implementation from a set of candidates.
- * used for Sealed Classes, Interfaces, or Abstract Classes.
  *
- * ### Architectural Role: Pure Executor
- * - **DOES NOT** perform reflection to find subclasses (Delegated to Linker).
- * - **DOES NOT** handle recursion (Delegated to Linker).
- * - **Merely delegates** execution to one of the injected [candidates].
+ * ### Architectural Role: Pure Executor & Selector
+ * - **Lazy Execution:** This generator selects a strategy *first*, then executes ONLY that strategy.
+ * It does NOT generate instances for all candidates and discard them.
+ * - **Deterministic Selection:** Relies on [GenerationContext.seededRandom] for reproducibility.
  *
  * @param candidates List of concrete generators for each subtype.
- * Must be pre-validated by the Linker to ensure exhaustive coverage.
+ * The Linker guarantees that this list represents the exhaustive closed set of subtypes.
  */
 class SealedClassGenerator(
     private val candidates: List<Generator<Any>>
@@ -110,17 +109,14 @@ class SealedClassGenerator(
     }
 
     override fun generate(context: GenerationContext): Any {
-        // Smart Fuzzing: Randomly select one concrete implementation strategy.
-        // This simulates polymorphic behavior at runtime.
+        // [Critical] Lazy Evaluation Strategy
+        // We pick the generator class first, avoiding the cost of instantiating unselected branches.
         val selectedGenerator = candidates.random(context.seededRandom)
         return selectedGenerator.generate(context)
     }
 
     /**
-     * ### Philosophy: Breadth over Depth
-     * Instead of drilling down into edge cases of *each* candidate (which causes combinatorial explosion),
-     * this strategy ensures **Type Coverage**.
-     *
+     * ### Philosophy: Type Coverage over Combinatorics
      * - Returns one valid instance from **EVERY** candidate.
      * - Guarantees that the consumer handles every concrete subtype at least once.
      */

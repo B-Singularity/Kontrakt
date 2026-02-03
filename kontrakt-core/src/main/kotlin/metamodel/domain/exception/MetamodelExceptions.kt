@@ -2,36 +2,40 @@ package metamodel.domain.exception
 
 import exception.KontraktException
 import metamodel.domain.vo.TypeId
-import metamodel.domain.vo.TypeSource
+import metamodel.domain.vo.TypeReference
 
-/**
- * [Domain Root] Base exception for the Metamodel bounded context.
- * It inherits from the framework's shared kernel exception [KontraktException].
- */
-sealed class MetamodelException(message: String, cause: Throwable? = null) : KontraktException(message, cause)
+abstract class MetamodelException(
+    message: String,
+    cause: Throwable? = null
+) : KontraktException(message, cause) {
 
-/**
- * [Invariant Violation]
- * Thrown when accessing a closed Resolver.
- * This enforces the lifecycle policy of the Metamodel domain.
- */
-class ResolverSessionClosedException : MetamodelException(
-    "The TypeResolver session is closed. Do not reuse the resolver across analysis sessions."
-)
+    final override val domain: String = "METAMODEL"
+    protected abstract val errorCode: String
+    protected open val errorData: Map<String, Any?> = emptyMap()
 
-/**
- * [Policy Violation]
- * Thrown when the Resolver receives a TypeSource that violates the adapter's contract.
- */
-class UnsupportedSourceException(source: TypeSource) : MetamodelException(
-    "Unsupported TypeSource: ${source::class.simpleName}. This resolver does not support this source type."
-)
+    final override val details: Map<String, Any?> by lazy(LazyThreadSafetyMode.PUBLICATION) {
+        mapOf(
+            "domain" to domain,
+            "code" to "META.$errorCode",
+            "data" to errorData
+        ).also { validateJsonSafety(it) } // Safe: passing local map
+    }
+}
 
-/**
- * [Validation Failure]
- * Thrown when the structure of the type is invalid according to Domain Rules.
- */
-class MalformedTypeException(
-    val typeId: TypeId,
-    details: String
-) : MetamodelException("Failed to parse type '$typeId': $details")
+class ResolverSessionClosedException : MetamodelException("The TypeSystem session is closed.") {
+    override val errorCode = "RESOLVER_CLOSED"
+}
+
+class UnsupportedReferenceException(val reference: TypeReference) : MetamodelException(
+    "Unsupported TypeReference: ${reference::class.simpleName}"
+) {
+    override val errorCode = "UNSUPPORTED_REFERENCE"
+    override val errorData = mapOf("referenceName" to reference.name)
+}
+
+class MalformedTypeException(val typeId: TypeId, details: String) : MetamodelException(
+    "Failed to parse type structure for '$typeId': $details"
+) {
+    override val errorCode = "MALFORMED_TYPE"
+    override val errorData = mapOf("typeId" to typeId.toString(), "reason" to details)
+}
