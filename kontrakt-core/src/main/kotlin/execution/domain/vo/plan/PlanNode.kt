@@ -3,22 +3,20 @@ package execution.domain.vo.plan
 import metamodel.domain.vo.TypeReference
 
 /**
- * [IR Core]
- * The common interface for all nodes in the generation plan.
- * Acts as the backbone for both the "Request" (Unlinked) and the "Instruction" (Executable).
+ * [Base Contract] Root interface for all plan nodes (Unlinked, Executable).
+ *
+ * ## Architectural Role
+ * - **Type Identity**: Every node MUST point to a specific pure TypeReference.
+ * - **Attribute Container**: Every node MUST carry attributes (merged from Decl/Use/Inherited)
+ * in a deterministic [Map] structure to support the Last-Wins policy.
  */
-sealed interface PlanNode {
+interface PlanNode {
     val type: TypeReference
 
     /**
-     * [Audit Metadata] ("The Receipt")
-     * A human-readable set of constraints and metadata applied to this node.
-     * e.g., "@Size(min=1)", "@Email", "@Past"
-     *
-     * ### Design Choice: Why String?
-     * - **Audit Traceability:** Primary purpose is logging and reporting ("Why was this value generated?").
-     * - **Serialization:** Strings are universally serializable (JSON/HTML) without custom adapters.
-     * - **Decoupling:** Prevents the VM from depending on complex Metamodel/Annotation structures.
+     * Effective attributes applied to this node.
+     * Changed from Set<String> (Legacy) to Map<String, Attribute> (Strict)
+     * to support value-carrying attributes (e.g. min=1, max=10).
      */
-    val attributes: Set<String>
+    val attributes: Map<String, Attribute>
 }

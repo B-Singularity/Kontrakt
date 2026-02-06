@@ -1,37 +1,20 @@
 package execution.domain.vo.trace
 
-import infrastructure.json.escapeJson
+import exception.KontraktException
 
 data class ExceptionTrace(
-    val exceptionType: String,
-    val message: String,
-    val stackTraceElements: List<StackTraceElement>,
+    val exception: Throwable,
     override val timestamp: Long,
+    override val phase: TracePhase
 ) : TraceEvent {
-    override val phase = TracePhase.VERIFICATION
+    override val eventType: String = "EXCEPTION"
 
-    override fun toNdjson(): String {
-        val sb = StringBuilder()
-        sb
-            .append("""{"timestamp":""")
-            .append(timestamp)
-            .append(""","phase":"$phase"""")
-            .append(""","exceptionType":"""")
-            .append(exceptionType.escapeJson())
-            .append("\"")
-            .append(""","message":"""")
-            .append(message.escapeJson())
-            .append("\"")
-            .append(""","stackTrace":[""")
+    override val details: Map<String, Any?> = mapOf(
+        "type" to exception.javaClass.name,
+        "message" to (exception.message ?: ""),
+        "stackTrace" to exception.stackTrace.take(5).map { it.toString() }, // Stack summary
+        "domain" to if (exception is KontraktException) exception.domain else "UNKNOWN"
+    )
 
-        val iterator = stackTraceElements.iterator()
-        while (iterator.hasNext()) {
-            val elem = iterator.next()
-            val line = "${elem.className}.${elem.methodName}(${elem.fileName}:${elem.lineNumber})"
-            sb.append("\"").append(line.escapeJson()).append("\"")
-            if (iterator.hasNext()) sb.append(",")
-        }
-        sb.append("]}")
-        return sb.toString()
-    }
+    override val isCritical: Boolean = true
 }

@@ -13,6 +13,12 @@ import execution.domain.vo.trace.TraceEvent
  * * **Scope**: Following [ADR-017], one Sink is assigned per Worker Thread and is reused.
  */
 interface TraceSink : AutoCloseable {
+
+    /**
+     * The ID of the thread that exclusively owns this sink.
+     */
+    val ownerThreadId: Long
+
     /**
      * Emits a trace event to the underlying stream immediately.
      * This supports the "Streaming WAL" pattern to ensure data safety in case of crashes.
@@ -44,4 +50,6 @@ interface TraceSink : AutoCloseable {
      * and clearing any internal buffers without closing the file handle.
      */
     fun reset()
+
+    override fun close()
 }

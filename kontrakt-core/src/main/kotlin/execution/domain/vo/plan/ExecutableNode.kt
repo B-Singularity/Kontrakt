@@ -6,82 +6,84 @@ import metamodel.domain.vo.TypeReference
 /**
  * [Execution Blueprint]
  * Represents a fully resolved, deterministic execution plan ready for the Virtual Machine.
+ *
+ * ## Architectural Changes (Legacy vs New)
+ * 1. **Attributes:** Changed to [Map] to carry values (e.g. min=1) merged by the Planner.
+ * 2. **Structure:** Collections hold a [recipe] (elementNode) instead of expanded instances (children) to allow runtime sizing.
+ * 3. **Polymorphism:** [ExecutableInterfaceNode] is merged into [ExecutablePolymorphicNode].
  */
 sealed class ExecutableNode : PlanNode {
     abstract val generator: Generator<*>
     abstract val source: DecisionSource
 
     /**
-     * [Preserved Metadata] ("The Receipt")
-     * Constraints and annotations that were applied to this node.
-     *
-     * ### Design Intent
-     * - **Not Consumed:** The Linker has already 'consumed' structural constraints (like @Size) to build the tree.
-     * - **Preserved:** These are kept purely for:
-     * 1. **Verification:** The VM can assert these rules post-generation.
-     * 2. **Auditing:** The report can show "Why this value was generated" (e.g., "Because of @Email").
+     * [Preserved Metadata]
+     * Attributes merged from declaration and usage sites.
+     * Used by the VM for verification (Assertions) and Auditing.
      */
-    abstract override val attributes: Set<String> // [Fix] Added 'override' modifier
+    abstract override val attributes: Map<String, Attribute>
 }
 
 data class ExecutableAtomicNode(
     override val type: TypeReference,
-    override val attributes: Set<String>,
+    override val attributes: Map<String, Attribute>,
     override val generator: Generator<*>,
     override val source: DecisionSource
 ) : ExecutableNode()
 
 data class ExecutableCompositeNode(
     override val type: TypeReference,
-    override val attributes: Set<String>,
+    override val attributes: Map<String, Attribute>,
     val fields: Map<String, ExecutableNode>,
     override val generator: Generator<*>,
     override val source: DecisionSource
 ) : ExecutableNode()
 
+/**
+ * Represents a Collection (List, Set, Array).
+ * Holds the 'elementNode' recipe instead of expanded children.
+ */
 data class ExecutableCollectionNode(
     override val type: TypeReference,
-    override val attributes: Set<String>,
-    val children: List<ExecutableNode>, // Expanded children
+    override val attributes: Map<String, Attribute>,
+    val elementNode: ExecutableNode, // The recipe for elements
     val isFixedSize: Boolean,
     override val generator: Generator<*>,
     override val source: DecisionSource
 ) : ExecutableNode()
 
+/**
+ * Represents a Map.
+ * Holds 'keyNode' and 'valueNode' recipes.
+ */
 data class ExecutableMapNode(
     override val type: TypeReference,
-    override val attributes: Set<String>,
-    val entries: List<Pair<ExecutableNode, ExecutableNode>>, // Expanded Entries
+    override val attributes: Map<String, Attribute>,
+    val keyNode: ExecutableNode,   // Recipe for keys
+    val valueNode: ExecutableNode, // Recipe for values
     override val generator: Generator<*>,
     override val source: DecisionSource
 ) : ExecutableNode()
 
 /**
- * [Polymorphic Branch Node]
- * Represents a Sealed Class or Interface where execution delegates to one of several concrete implementations.
- * (This was missing in your snippet but is required for the new architecture)
+ * [Polymorphic Node] (Supersedes ExecutableInterfaceNode)
+ * Handles Interfaces, Abstract Classes, and Sealed Classes.
  */
 data class ExecutablePolymorphicNode(
     override val type: TypeReference,
-    override val attributes: Set<String>,
-    val implementations: List<ExecutableNode>,
+    override val attributes: Map<String, Attribute>,
+    val implementations: List<ExecutableNode>, // Candidates
     override val generator: Generator<*>,
     override val source: DecisionSource
 ) : ExecutableNode()
 
-data class ExecutableInterfaceNode(
+/**
+ * [Cycle Node] (Supersedes ExecutableReferenceNode)
+ * Explicitly marks where a cycle was broken (ADR-027).
+ */
+data class ExecutableCycleNode(
     override val type: TypeReference,
-    override val attributes: Set<String>,
-    val concreteType: TypeReference,
-    val implementationNode: ExecutableNode,
-    override val source: DecisionSource
-) : ExecutableNode() {
-    override val generator: Generator<*> = implementationNode.generator
-}
-
-data class ExecutableReferenceNode(
-    override val type: TypeReference,
-    override val attributes: Set<String>,
-    override val generator: Generator<*>,
+    override val attributes: Map<String, Attribute>,
+    override val generator: Generator<*>, // Usually CycleBreakingGenerator
     override val source: DecisionSource
 ) : ExecutableNode()

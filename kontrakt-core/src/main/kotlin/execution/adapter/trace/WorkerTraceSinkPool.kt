@@ -1,86 +1,67 @@
 package execution.adapter.trace
 
+import execution.domain.exception.KontraktLifecycleException
 import execution.domain.vo.context.WorkerId
-import execution.exception.KontraktLifecycleException
 import execution.port.outgoing.TraceSink
-import io.github.oshai.kotlinlogging.KotlinLogging
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicBoolean
 
 /**
- * [Infrastructure] Trace Sink Manager.
+ * [Adapter] Manages a pool of TraceSinks.
  *
- * Implements **ADR-017 (Worker-Based Isolation)** strategy.
- * This component is responsible for managing the lifecycle of [RecyclingFileTraceSink] instances.
- *
- * **Key Responsibilities:**
- * 1. **Isolation:** Ensures that each worker thread interacts with its own dedicated log file (Sink).
- * 2. **Lifecycle Safety:** Prevents usage after closure and ensures atomic initialization using [computeIfAbsent].
- * 3. **Thread Safety:** Uses [ConcurrentHashMap] for non-blocking concurrent access.
+ * ## Shutdown Contract
+ * The [close] method MUST only be called after all worker threads have been joined/stopped.
+ * This prevents "Team Kill" scenarios where a late borrow races with the pool shutdown.
  */
 class WorkerTraceSinkPool(
-    private val rootDir: Path = Path.of("build/kontrakt"),
+    private val logDirectory: Path
 ) : AutoCloseable {
-    private val logger = KotlinLogging.logger {}
 
-    // Registry to hold active sinks mapped by Worker ID.
-    // ConcurrentHashMap ensures thread safety for parallel test execution.
-    private val pool = ConcurrentHashMap<WorkerId, RecyclingFileTraceSink>()
+    private val pool = ConcurrentHashMap<WorkerId, TraceSink>()
+    private val isClosed = AtomicBoolean(false)
 
-    // [Safety] Volatile flag to prevent usage after shutdown.
-    @Volatile
-    private var isClosed = false
+    fun borrowSink(workerId: WorkerId): TraceSink {
+        if (isClosed.get()) {
+            throw IllegalStateException("WorkerTraceSinkPool is closed. Cannot borrow sink for $workerId")
+        }
 
-    /**
-     * Retrieves the dedicated [TraceSink] for the specified worker.
-     *
-     * **Concurrency Note:**
-     * Uses [ConcurrentHashMap.computeIfAbsent] instead of `getOrPut`.
-     * This guarantees that the initialization lambda (file creation) is executed **atomically and at most once** per key,
-     * preventing potential race conditions where multiple file handles could be opened for the same worker.
-     *
-     * @param workerId The strongly typed identifier of the worker.
-     * @return The dedicated sink instance.
-     * @throws KontraktLifecycleException if the pool has already been closed.
-     */
-    fun getSink(workerId: WorkerId): TraceSink {
-        if (isClosed) {
-            throw KontraktLifecycleException(
-                componentName = "WorkerTraceSinkPool",
-                action = "lease new sink",
-                reason = "the pool is already closed (Engine Shutdown Phase).",
+        val sink = pool.computeIfAbsent(workerId) { id ->
+            RecyclingFileTraceSink(
+                workerId = id.value,
+                rootDir = logDirectory
             )
         }
-        // [Optimization] Atomic check-then-act.
-        // Ensures only one file handle is created per worker ID, even under heavy contention.
-        return pool.computeIfAbsent(workerId) { id ->
-            logger.debug { "Initializing new TraceSink for Worker-${id.value}" }
-            RecyclingFileTraceSink(id.value, rootDir)
+
+        // Race Condition Check
+        if (isClosed.get()) {
+            // Because we enforce "Close after Join", hitting this means a logic error in the Engine.
+            // We clean up to prevent leaks, even if it might technically be a "Team Kill" for a rogue worker.
+            pool.remove(workerId, sink)
+            runCatching { sink.close() }
+            throw IllegalStateException("WorkerTraceSinkPool closed during borrow operation for $workerId")
         }
+
+        // Thread Confinement Check
+        if (sink.ownerThreadId != Thread.currentThread().id) {
+            // Strategy: Throw-only (Protect the Victim)
+            // We do NOT close the sink here to avoid killing a legitimate worker if this is a spurious check.
+            throw KontraktLifecycleException(
+                component = "WorkerTraceSinkPool",
+                action = "borrowSink",
+                reason = "Thread Confinement Violation! Sink for $workerId is owned by thread ${sink.ownerThreadId} but borrowed by ${Thread.currentThread().id}."
+            )
+        }
+
+        return sink
     }
 
-    /**
-     * Closes all managed sinks and releases file system resources.
-     *
-     * Sets the [isClosed] flag immediately to reject subsequent requests.
-     * Uses [runCatching] to ensure a failure in one sink does not block others from closing.
-     */
     override fun close() {
-        if (isClosed) return
-        isClosed = true
-
-        if (pool.isEmpty()) return
-
-        logger.debug { "Closing TraceSinkPool: Releasing ${pool.size} file handles..." }
-
-        pool.values.forEach { sink ->
-            // Robust Shutdown: Ensure one failure doesn't stop the cleanup process.
-            runCatching {
-                sink.close()
-            }.onFailure { e ->
-                logger.warn(e) { "Failed to close a worker sink during pool shutdown" }
+        if (isClosed.compareAndSet(false, true)) {
+            pool.values.forEach {
+                runCatching { it.close() }
             }
+            pool.clear()
         }
-        pool.clear()
     }
 }

@@ -2,13 +2,20 @@ package execution.domain.service.planner
 
 import execution.domain.exception.StructuralPlanningException
 import execution.domain.vo.plan.*
+import metamodel.domain.model.PropertySource
 import metamodel.domain.port.outgoing.TypeResolver
+import metamodel.domain.vo.AnnotationDescriptor
 import metamodel.domain.vo.TypeKind
 import metamodel.domain.vo.TypeReference
 import java.util.ArrayDeque
 
 /**
- * Analyzes the type structure and produces an [UnlinkedNode] tree.
+ * [Domain Service] Structural Planner.
+ *
+ * Responsibilities:
+ * 1. **Traversal**: DFS traversal of the type graph.
+ * 2. **Cycle Detection**: Identifies recursive structures using [cycleId].
+ * 3. **Attribute Merging**: Merges attributes from Use-site, Inheritance, and Declaration-site deterministically.
  */
 class StructuralPlanner(
     private val typeResolver: TypeResolver
@@ -16,91 +23,218 @@ class StructuralPlanner(
 
     fun plan(rootType: TypeReference): UnlinkedNode {
         val context = PlanningContext()
-        return traverse(rootType, context, emptySet())
+        return traverse(
+            type = rootType,
+            context = context,
+            inheritedAttributes = emptyMap(),
+            currentOrigin = AttributeOrigin.TYPE_DECLARATION,
+            edgeKind = EdgeKind.TYPE_ARGUMENT,
+            edgeName = null
+        )
     }
 
-    /**
-     * Traverses the type graph and builds the structural plan.
-     *
-     * **Attribute Scope Rule:**
-     * Attributes passed to this method apply *strictly* to the current node being created.
-     * They do NOT implicitly propagate to children nodes.
-     * For example, @NotNull on a parent field does not imply @NotNull on its children's fields.
-     */
     private fun traverse(
         type: TypeReference,
         context: PlanningContext,
-        attributes: Set<String>
+        inheritedAttributes: Map<String, Attribute>,
+        currentOrigin: AttributeOrigin,
+        edgeKind: EdgeKind,
+        edgeName: String?
     ): UnlinkedNode {
-
-        // 1. Cycle Detection (재귀 방지)
-        // 스택을 검사하여 순환이 감지되면 구조 생성을 멈추고 ReferenceNode(토큰)를 반환합니다.
-        if (context.hasAncestor(type)) {
-            return UnlinkedReferenceNode(
-                type = type,
-                recursionDepth = context.getDepth(type),
-                attributes = attributes
-            )
-        }
-
-        context.push(type)
+        // Push CycleId (Nullability Stripped)
+        context.push(type.cycleId)
+        var pushed = true
 
         try {
-            val descriptor = typeResolver.resolve(type)
+            // [Determinism] 1. Pre-calculate Use-Site Attributes (Last-Wins strategy)
+            val useSiteAttrs = LinkedHashMap<String, Attribute>()
+            type.useSiteAnnotations.forEach {
+                val attr = toAttribute(it, currentOrigin)
+                putLastWins(useSiteAttrs, attr.name, attr)
+            }
 
+            val effectiveForCycle = mergeAttributes(inheritedAttributes, useSiteAttrs)
+
+            // [Safety] 2. Cycle Check
+            if (context.isCycleDetected(type.cycleId)) {
+                return UnlinkedCycleNode(
+                    type = type,
+                    attributes = effectiveForCycle,
+                    edgeKind = edgeKind,
+                    edgeName = edgeName,
+                    targetTypeId = type.cycleId,
+                    pathSnapshot = context.getPathSnapshot()
+                )
+            }
+
+            // [Contract] 3. Shallow Resolve (Must not trigger recursion)
+            val descriptor = try {
+                typeResolver.resolve(type)
+            } catch (e: Exception) {
+                throw StructuralPlanningException(type.id, "Resolution failed", e)
+            }
+
+            // [Determinism] 4. Decl-Site Attributes
+            val declAttrs = LinkedHashMap<String, Attribute>()
+            descriptor.annotations.forEach {
+                val attr = toAttribute(it, AttributeOrigin.TYPE_DECLARATION)
+                putLastWins(declAttrs, attr.name, attr)
+            }
+
+            // Merge Priority: Decl < Inherited < UseSite
+            val fullEffectiveAttributes = mergeFullAttributes(declAttrs, inheritedAttributes, useSiteAttrs)
+
+            // 5. Structural Branching
             return when (descriptor.kind) {
-                // [Atomic] 더 이상 쪼갤 수 없는 단위 (String, Int, Enum 등)
-                TypeKind.ATOMIC -> UnlinkedAtomicNode(type, attributes)
+                TypeKind.ATOMIC -> UnlinkedAtomicNode(type, fullEffectiveAttributes)
 
-                // [Collection] 요소 타입을 찾아 하위 구조 생성
+                TypeKind.COMPOSITE -> {
+                    val fields = LinkedHashMap<String, UnlinkedNode>()
+                    descriptor.properties.forEach { prop ->
+                        val propDeclAttrs = LinkedHashMap<String, Attribute>()
+                        prop.annotations.forEach {
+                            val attr = toAttribute(it, AttributeOrigin.FIELD_DECLARATION)
+                            putLastWins(propDeclAttrs, attr.name, attr)
+                        }
+
+                        val childEdgeKind = when (prop.source) {
+                            PropertySource.CONSTRUCTOR_PARAMETER -> EdgeKind.CTOR_PARAM
+                            else -> EdgeKind.FIELD
+                        }
+
+                        fields[prop.name] = traverse(
+                            type = prop.type,
+                            context = context,
+                            inheritedAttributes = propDeclAttrs,
+                            currentOrigin = AttributeOrigin.FIELD_TYPE_USE,
+                            edgeKind = childEdgeKind,
+                            edgeName = prop.name
+                        )
+                    }
+                    UnlinkedCompositeNode(type, fields, fullEffectiveAttributes)
+                }
+
                 TypeKind.COLLECTION -> {
                     val elementType = descriptor.elementType
-                        ?: throw StructuralPlanningException(type, "Collection missing element type")
+                        ?: throw StructuralPlanningException(type.id, "Collection missing element type")
 
-                    // 주의: @Size 같은 속성은 컬렉션 자체에 붙고, 내부 요소는 속성 없이 시작함
                     UnlinkedCollectionNode(
                         type = type,
-                        elementNode = traverse(elementType, context, emptySet()),
-                        attributes = attributes
+                        elementNode = traverse(
+                            type = elementType,
+                            context = context,
+                            inheritedAttributes = emptyMap(),
+                            currentOrigin = AttributeOrigin.ELEMENT_TYPE_USE,
+                            edgeKind = EdgeKind.ELEMENT,
+                            edgeName = null
+                        ),
+                        isFixedSize = false,
+                        attributes = fullEffectiveAttributes
                     )
                 }
 
-                // [Interface/Abstract] Linker가 나중에 구현체를 찾도록 위임
-                TypeKind.INTERFACE, TypeKind.ABSTRACT -> {
-                    UnlinkedInterfaceNode(type, attributes)
+                TypeKind.ARRAY -> {
+                    val componentType = descriptor.componentType
+                        ?: throw StructuralPlanningException(type.id, "Array missing component type")
+
+                    UnlinkedCollectionNode(
+                        type = type,
+                        elementNode = traverse(
+                            type = componentType,
+                            context = context,
+                            inheritedAttributes = emptyMap(),
+                            currentOrigin = AttributeOrigin.ELEMENT_TYPE_USE,
+                            edgeKind = EdgeKind.ELEMENT,
+                            edgeName = null
+                        ),
+                        isFixedSize = true,
+                        attributes = fullEffectiveAttributes
+                    )
                 }
 
-                // [Composite] 필드를 순회하며 구조 확장
-                TypeKind.COMPOSITE -> {
-                    val fields = descriptor.fields.associate { field ->
-                        // 필드에 붙은 어노테이션을 추출하여 자식 노드의 Attribute로 변환
-                        val fieldAttributes = field.annotations.map {
-                            AnnotationAttribute(it.name, it.values)
-                        }.toSet()
-
-                        field.name to traverse(field.type, context, fieldAttributes)
-                    }
-                    UnlinkedCompositeNode(type, fields, attributes)
+                TypeKind.MAP -> {
+                    val keyType = descriptor.keyType!!
+                    val valueType = descriptor.valueType!!
+                    UnlinkedMapNode(
+                        type = type,
+                        keyNode = traverse(
+                            keyType,
+                            context,
+                            emptyMap(),
+                            AttributeOrigin.MAP_KEY_TYPE_USE,
+                            EdgeKind.MAP_KEY,
+                            "key"
+                        ),
+                        valueNode = traverse(
+                            valueType,
+                            context,
+                            emptyMap(),
+                            AttributeOrigin.MAP_VALUE_TYPE_USE,
+                            EdgeKind.MAP_VALUE,
+                            "value"
+                        ),
+                        attributes = fullEffectiveAttributes
+                    )
                 }
 
-                // Fallback
-                else -> UnlinkedAtomicNode(type, attributes)
+                else -> throw StructuralPlanningException(type.id, "Unsupported TypeKind: ${descriptor.kind}")
             }
-
-        } catch (e: Exception) {
-            if (e is execution.domain.exception.ExecutionException) throw e
-            throw StructuralPlanningException(type, "Unexpected error during traversal", e)
         } finally {
-            context.pop()
+            if (pushed) context.pop()
         }
     }
 
-    // 순환 참조 감지를 위한 Context
+    /**
+     * Helper to enforce "Last Wins" policy while preserving iteration order of the winner.
+     */
+    private fun <K, V> putLastWins(map: LinkedHashMap<K, V>, key: K, value: V) {
+        if (map.containsKey(key)) map.remove(key)
+        map[key] = value
+    }
+
+    private fun mergeFullAttributes(
+        decl: Map<String, Attribute>,
+        inherited: Map<String, Attribute>,
+        useSite: Map<String, Attribute>
+    ): Map<String, Attribute> {
+        val result = LinkedHashMap<String, Attribute>()
+        decl.forEach { (k, v) -> putLastWins(result, k, v) }
+        inherited.forEach { (k, v) -> putLastWins(result, k, v) }
+        useSite.forEach { (k, v) -> putLastWins(result, k, v) }
+        return result
+    }
+
+    private fun mergeAttributes(
+        base: Map<String, Attribute>,
+        overrides: Map<String, Attribute>
+    ): Map<String, Attribute> {
+        val result = LinkedHashMap<String, Attribute>(base)
+        overrides.forEach { (k, v) -> putLastWins(result, k, v) }
+        return result
+    }
+
+    private fun toAttribute(desc: AnnotationDescriptor, origin: AttributeOrigin): Attribute.AnnotationAttribute {
+        return Attribute.AnnotationAttribute(desc.qualifiedName, origin, desc.values)
+    }
+
     private class PlanningContext {
-        private val stack = ArrayDeque<TypeReference>()
-        fun push(type: TypeReference) = stack.push(type)
-        fun pop() = stack.pop()
-        fun hasAncestor(type: TypeReference) = stack.contains(type)
-        fun getDepth(type: TypeReference) = stack.indexOf(type)
+        private val counts = HashMap<String, Int>()
+        private val cycleIdStack = ArrayDeque<String>()
+
+        fun push(cycleId: String) {
+            counts[cycleId] = (counts[cycleId] ?: 0) + 1
+            cycleIdStack.push(cycleId)
+        }
+
+        fun pop() {
+            if (cycleIdStack.isEmpty()) throw StructuralPlanningException.IntegrityError("Stack Underflow")
+            val cycleId = cycleIdStack.pop()
+            val c = counts[cycleId] ?: 1
+            if (c <= 1) counts.remove(cycleId) else counts[cycleId] = c - 1
+        }
+
+        fun isCycleDetected(cycleId: String) = (counts[cycleId] ?: 0) >= 2
+
+        fun getPathSnapshot() = cycleIdStack.joinToString(" <- ")
     }
 }

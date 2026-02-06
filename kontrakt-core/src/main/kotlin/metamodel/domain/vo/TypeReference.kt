@@ -1,59 +1,38 @@
 package metamodel.domain.vo
 
 /**
- * [Marker Annotation] Indicates that the marked API is provisional
- * and assumes best-effort resolution (e.g., Static Analysis, KSP).
- */
-@RequiresOptIn(message = "This API is provisional and assumes best-effort resolution.")
-@Retention(AnnotationRetention.BINARY)
-@Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION, AnnotationTarget.CONSTRUCTOR)
-annotation class ProvisionalApi
-
-/**
- * [Value Object] An opaque carrier used to transport external type information into the Domain.
+ * [Value Object] Type Reference (Strictly Pure)
  *
- * This class mirrors the **"Token/Symbol Handle"** concept in compiler architecture.
+ * Represents a static reference to a type in the source code.
+ * This interface is completely agnostic of runtime technologies (No JVM classes).
  */
-sealed interface TypeReference {
-    val typeId: TypeId
-    val source: TypeSource
+interface TypeReference {
+    /**
+     * The canonical identity (e.g., "com.example.User<java.lang.String>?").
+     */
+    val id: String
 
     /**
-     * A human-readable name for this type (e.g., "String", "com.example.User").
-     * Essential for debugging and error messages.
+     * The identity used for cycle detection (ADR-027).
+     *
+     * ## Contract
+     * 1. **Nullability Stripped**: "String?" and "String" share the same cycleId.
+     * 2. **Generics Preserved**: "List<String>" != "List<Int>".
+     * 3. **Normalized**: Inner classes must use '.' instead of '$'.
      */
-    val name: String
+    val cycleId: String
+
+    val signature: String
 
     /**
-     * [Phase 1 Primary] A reference based on JVM Runtime information.
-     * The Adapter determines the implementation of [source] (typically wrapping KType).
+     * Annotations present at the usage site.
+     * The creating Adapter MUST guarantee deterministic ordering (e.g., sorted by name).
      */
-    data class Runtime(
-        override val source: TypeSource,
-        override val typeId: TypeId,
-        override val name: String
-    ) : TypeReference
-
-    /**
-     * [Phase 2 Provisional] A reference based on pure Name (String).
-     * Used when the class is not loaded, or for simple name-based matching.
-     */
-    @ProvisionalApi
-    data class Static(
-        val fullyQualifiedClassName: String,
-        override val typeId: TypeId
-    ) : TypeReference {
-        init {
-            require(fullyQualifiedClassName.isNotBlank()) { "fullyQualifiedClassName cannot be blank" }
-        }
-
-        // Internal implementation to satisfy TypeSource, exposed via interface
-        override val source: TypeSource = FqcnSource(fullyQualifiedClassName)
-
-        // Use FQCN as the name
-        override val name: String = fullyQualifiedClassName
-
-        private data class FqcnSource(val fqcn: String) : TypeSource
-    }
-
+    val useSiteAnnotations: List<AnnotationDescriptor>
 }
+
+data class AnnotationDescriptor(
+    val qualifiedName: String,
+    // Using Any? for simplicity in this snippet, ideally MetamodelAnnotationValue
+    val values: Map<String, MetamodelAnnotationValue>
+)

@@ -1,118 +1,134 @@
 package execution.domain.service.linker
 
-import execution.domain.exception.LinkageException
-import execution.domain.vo.context.linker.LinkerContext
-import execution.domain.vo.plan.*
+import execution.domain.strategy.generation.CycleBreakingGenerator
+import execution.domain.vo.plan.Attribute
+import execution.domain.vo.plan.AttributeOrigin
+import execution.domain.vo.plan.DecisionSource
+import execution.domain.vo.plan.ExecutableAtomicNode
+import execution.domain.vo.plan.ExecutableCollectionNode
+import execution.domain.vo.plan.ExecutableCompositeNode
+import execution.domain.vo.plan.ExecutableCycleNode
+import execution.domain.vo.plan.ExecutableMapNode
+import execution.domain.vo.plan.ExecutableNode
+import execution.domain.vo.plan.UnlinkedAtomicNode
+import execution.domain.vo.plan.UnlinkedCollectionNode
+import execution.domain.vo.plan.UnlinkedCompositeNode
+import execution.domain.vo.plan.UnlinkedCycleNode
+import execution.domain.vo.plan.UnlinkedMapNode
+import execution.domain.vo.plan.UnlinkedNode
+import execution.port.outgoing.RuntimeInstantiator
+import execution.port.outgoing.RuntimeTypeResolver
+import metamodel.domain.port.outgoing.TypeResolver
 
 /**
- * Converts the structural plan into a deterministic execution plan.
- * Handles collection expansion, map expansion, and interface polymorphism.
+ * [Domain Service] Expansion Linker.
+ * Converts UnlinkedNode tree into ExecutableNode tree.
+ * Matches the strict constructor signatures of ExecutableNodes.
  */
 class ExpansionLinker(
-    private val registry: GeneratorRegistry
+    private val typeResolver: TypeResolver,
+    private val runtimeResolver: RuntimeTypeResolver,
+    private val instantiator: RuntimeInstantiator,
+    private val generatorRegistry: GeneratorRegistry
 ) {
-
-    fun link(
-        unlinked: UnlinkedNode,
-        context: LinkerContext,
-        path: String = "$"
-    ): ExecutableNode {
-        try {
-            // 1. Check User Override
-            val overrideGenerator = context.getOverride(path)
-            if (overrideGenerator != null) {
-                // When overridden, we treat it as an Atomic leaf node (structure collapsed)
-                return ExecutableAtomicNode(
-                    type = unlinked.type,
-                    attributes = unlinked.attributes,
-                    generator = overrideGenerator,
-                    source = DecisionSource.User("Explicit Override at $path")
-                )
-            }
-
-            // 2. Select Default Generator
-            val (generator, source) = registry.select(unlinked)
-
-            return when (unlinked) {
-                is UnlinkedAtomicNode -> {
-                    ExecutableAtomicNode(unlinked.type, unlinked.attributes, generator, source)
-                }
-
-                is UnlinkedCompositeNode -> {
-                    val linkedFields = unlinked.fields.mapValues { (name, childNode) ->
-                        link(childNode, context, "$path.$name")
-                    }
-                    ExecutableCompositeNode(unlinked.type, unlinked.attributes, linkedFields, generator, source)
-                }
-
-                is UnlinkedCollectionNode -> {
-                    // [Policy] Determine size using the context
-                    val size =
-                        context.generateStructuralSize(0, 10) // Should use constraints from attributes if available
-
-                    val children = (0 until size).map { index ->
-                        link(unlinked.elementNode, context, "$path[$index]")
-                    }
-
-                    ExecutableCollectionNode(
-                        type = unlinked.type,
-                        attributes = unlinked.attributes,
-                        children = children,
-                        isFixedSize = unlinked.isFixedSize,
-                        generator = generator,
-                        source = source
-                    )
-                }
-
-                is UnlinkedMapNode -> {
-                    // [Map Expansion] Similar to Collection, we determine number of entries
-                    val size = context.generateStructuralSize(0, 10)
-
-                    val entries = (0 until size).map { index ->
-                        // Link Key and Value separately
-                        // Path notation: map[0].key, map[0].value
-                        val keyNode = link(unlinked.keyNode, context, "$path[$index].key")
-                        val valueNode = link(unlinked.valueNode, context, "$path[$index].value")
-                        keyNode to valueNode
-                    }
-
-                    ExecutableMapNode(
-                        type = unlinked.type,
-                        attributes = unlinked.attributes,
-                        entries = entries,
-                        generator = generator,
-                        source = source
-                    )
-                }
-
-                is UnlinkedInterfaceNode -> {
-                    // [ADR-025] Resolve Polymorphism
-                    val resolution = registry.resolveImplementation(unlinked)
-
-                    // [PHASE 1] Atomic Implementation
-                    val implementationNode = ExecutableAtomicNode(
-                        type = resolution.concreteType,
-                        attributes = emptySet(),
-                        generator = resolution.generator,
-                        source = resolution.source
-                    )
-
-                    ExecutableInterfaceNode(
-                        type = unlinked.type,
-                        attributes = unlinked.attributes,
-                        concreteType = resolution.concreteType,
-                        implementationNode = implementationNode,
-                        source = resolution.source
-                    )
-                }
-
-                is UnlinkedReferenceNode -> {
-                    ExecutableReferenceNode(unlinked.type, unlinked.attributes, generator, source)
-                }
-            }
-        } catch (e: Exception) {
-            if (e is execution.domain.exception.ExecutionException) throw e
-            throw LinkageException(path, e.message ?: "Unknown linkage error", e)
+    fun link(unlinked: UnlinkedNode): ExecutableNode {
+        return when (unlinked) {
+            is UnlinkedCycleNode -> linkCycleNode(unlinked)
+            is UnlinkedAtomicNode -> linkAtomicNode(unlinked)
+            is UnlinkedCompositeNode -> linkCompositeNode(unlinked)
+            is UnlinkedCollectionNode -> linkCollectionNode(unlinked)
+            is UnlinkedMapNode -> linkMapNode(unlinked)
         }
+    }
+
+    private fun linkCycleNode(unlinked: UnlinkedCycleNode): ExecutableNode {
+        val descriptor = typeResolver.resolve(unlinked.type)
+
+        val declAttributes = LinkedHashMap<String, Attribute>()
+        descriptor.annotations.forEach {
+            val attr = toAttribute(it, AttributeOrigin.TYPE_DECLARATION)
+            putLastWins(declAttributes, attr.name, attr)
+        }
+
+        val fullAttributes = LinkedHashMap<String, Attribute>(declAttributes)
+        unlinked.attributes.forEach { (k, v) -> putLastWins(fullAttributes, k, v) }
+
+        val handle = runtimeResolver.resolveHandle(unlinked.type)
+
+        return ExecutableCycleNode(
+            type = unlinked.type,
+            attributes = fullAttributes,
+            generator = CycleBreakingGenerator(
+                descriptor = descriptor,
+                attributes = fullAttributes,
+                diagnosticInfo = unlinked,
+                runtimeHandle = handle,
+                instantiator = instantiator
+            ),
+            source = DecisionSource.Framework("Cycle Truncation (ADR-027)")
+        )
+    }
+
+    private fun linkAtomicNode(node: UnlinkedAtomicNode): ExecutableNode {
+        return ExecutableAtomicNode(
+            type = node.type,
+            attributes = node.attributes,
+            generator = generatorRegistry.findGenerator(node.type, node.attributes),
+            source = DecisionSource.User.DEFAULT // [Fix] Use instance, not Companion
+        )
+    }
+
+    private fun linkCompositeNode(node: UnlinkedCompositeNode): ExecutableNode {
+        val linkedFields = node.fields.mapValues { (_, child) -> link(child) }
+        val generator = generatorRegistry.findCompositeGenerator(node.type, linkedFields)
+
+        return ExecutableCompositeNode(
+            type = node.type,
+            attributes = node.attributes,
+            fields = linkedFields,
+            generator = generator,
+            source = DecisionSource.Strategy.DEFAULT
+        )
+    }
+
+    private fun linkCollectionNode(node: UnlinkedCollectionNode): ExecutableNode {
+        val linkedElement = link(node.elementNode)
+        val generator = generatorRegistry.findCollectionGenerator(node.type, linkedElement, node.isFixedSize)
+
+        return ExecutableCollectionNode(
+            type = node.type,
+            attributes = node.attributes,
+            elementNode = linkedElement,
+            isFixedSize = node.isFixedSize,
+            generator = generator,
+            source = DecisionSource.Strategy.DEFAULT
+        )
+    }
+
+    private fun linkMapNode(node: UnlinkedMapNode): ExecutableNode {
+        val k = link(node.keyNode)
+        val v = link(node.valueNode)
+        val gen = generatorRegistry.findMapGenerator(node.type, k, v)
+
+        return ExecutableMapNode(
+            type = node.type,
+            attributes = node.attributes,
+            keyNode = k,
+            valueNode = v,
+            generator = gen,
+            source = DecisionSource.Strategy.DEFAULT
+        )
+    }
+
+    private fun <K, V> putLastWins(map: LinkedHashMap<K, V>, key: K, value: V) {
+        if (map.containsKey(key)) map.remove(key)
+        map[key] = value
+    }
+
+    private fun toAttribute(
+        desc: metamodel.domain.vo.AnnotationDescriptor,
+        origin: AttributeOrigin
+    ): Attribute.AnnotationAttribute {
+        return Attribute.AnnotationAttribute(desc.qualifiedName, origin, desc.values)
     }
 }

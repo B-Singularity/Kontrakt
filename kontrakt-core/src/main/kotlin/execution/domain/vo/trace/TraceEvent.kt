@@ -1,18 +1,24 @@
 package execution.domain.vo.trace
 
 /**
- * [Domain] Trace Event Interface
- * Represents an atomic audit event captured during test execution.
- * * Marked as [sealed] because the test lifecycle phases are finite and known.
- * This allows exhaustive pattern matching in the reporting layer without 'else' branches.
+ * [Domain Event] Represents an atomic event captured during test execution.
+ * Pure data object with no dependencies on serialization libraries.
  */
-sealed interface TraceEvent {
+interface TraceEvent {
     val timestamp: Long
     val phase: TracePhase
+    val eventType: String
 
     /**
-     * Serializes the event into a single-line NDJSON string.
-     * This method avoids heavy reflection-based libraries for performance and safety.
+     * Contextual data for the event.
+     * Adapters (JSON, HTML) will serialize this map.
      */
-    fun toNdjson(): String
+    val details: Map<String, Any?>
+
+    /**
+     * Indicates if this event is critical and should trigger an immediate flush.
+     * Defaults to false.
+     */
+    val isCritical: Boolean
+        get() = false
 }

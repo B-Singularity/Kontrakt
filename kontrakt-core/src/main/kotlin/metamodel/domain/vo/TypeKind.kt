@@ -1,51 +1,43 @@
 package metamodel.domain.vo
 
 /**
- * [Value Object] The top-level structural classification of a Type.
- *
- * The Generator uses this 'Kind' to determine the primary generation strategy.
- * This enum defines **"What it is" (Structure)**, not **"How to generate it" (Strategy)**.
+ * [Taxonomy] High-level classification of types for structural planning.
+ * Used by the Planner to determine the traversal strategy.
  */
 enum class TypeKind {
     /**
-     * An atomic value that cannot be decomposed further.
-     * e.g., String, Int, Enum, UUID, Primitives.
+     * Leaf nodes (e.g. String, Int, UUID, Enum).
+     * No further traversal is needed; handled by simple generators.
      */
-    VALUE,
+    ATOMIC,
 
     /**
-     * A collection of elements (excluding Maps).
-     * e.g., List, Set, Iterable, Collection.
-     * Note: Whether it is ordered or unique is determined by the implementation (Generator).
+     * Complex objects composed of fields (e.g. Class, Data Class).
+     * Requires traversal of properties.
      */
-    CONTAINER,
+    COMPOSITE,
 
     /**
-     * A Key-Value pair structure.
-     * e.g., Map, HashMap, Dictionary.
+     * Linear containers (e.g. List, Set).
+     * Requires traversal of the element type.
      */
-    MAP,
+    COLLECTION,
 
     /**
-     * A fixed-size, continuous memory structure.
-     * e.g., Array, IntArray.
+     * Fixed-size memory chunks (e.g. Array).
+     * Similar to COLLECTION but with fixed size constraints.
      */
     ARRAY,
 
     /**
-     * A complex object with properties/fields.
-     * e.g., Data Class, POJO.
+     * Key-Value pairs (e.g. Map).
+     * Requires traversal of both key and value types.
      */
-    STRUCTURAL,
+    MAP,
 
     /**
-     * An abstract definition without implementation.
-     * e.g., Interface, Abstract Class.
+     * Polymorphic types (e.g. Interface, Abstract Class).
+     * Requires resolution to a concrete implementation type before linking.
      */
-    INTERFACE,
-
-    /**
-     * Types that cannot be analyzed or are not supported.
-     */
-    UNKNOWN
+    INTERFACE
 }

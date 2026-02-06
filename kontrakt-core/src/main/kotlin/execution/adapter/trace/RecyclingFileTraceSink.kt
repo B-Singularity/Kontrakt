@@ -1,231 +1,203 @@
 package execution.adapter.trace
 
-import execution.domain.vo.trace.DesignDecision
-import execution.domain.vo.trace.ExceptionTrace
-import execution.domain.vo.trace.ExecutionTrace
-import execution.domain.vo.trace.TestVerdict
+import exception.safety.PayloadSanitizer
+import execution.domain.exception.KontraktLifecycleException
 import execution.domain.vo.trace.TraceEvent
-import execution.domain.vo.trace.VerificationTrace
+import execution.domain.vo.trace.TracePhase
 import execution.port.outgoing.TraceSink
+import infrastructure.json.JsonUtils
 import io.github.oshai.kotlinlogging.KotlinLogging
 import java.io.RandomAccessFile
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.StandardCopyOption
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
- * [Infrastructure] Worker-Based Hybrid Journaling Sink.
+ * [Adapter] File-based Trace Sink implementation of [TraceSink].
  *
- * Implements **ADR-017 (Worker-Based Isolation)** and **ADR-021 (Zero-Config Hybrid Journaling)**.
+ * ## Responsibilities
+ * - **Persistence:** Writes [TraceEvent]s to an append-only NDJSON file.
+ * - **Concurrency:** Enforces strict thread confinement to a single Worker Thread.
+ * - **Resiliency:** Handles IO and Serialization failures without crashing the worker.
+ * - **Lifecycle:** Supports recycling (reset/truncate) to avoid file open/close overhead.
  *
- * This component acts as a high-performance "Black Box Recorder" for Generative Testing.
- * It balances **Forensic Safety** (crash resilience) with **Cloud Efficiency** (IOPS reduction).
+ * ## Safety Mechanisms
+ * - **Sanitization:** Uses [PayloadSanitizer] to protect against malicious or huge payloads.
+ * - **FD Leak Prevention:** Ensures file descriptors are closed on initialization failures.
+ * - **Safety Net:** Forces flush on [TracePhase.RESULT] to prevent log loss.
  *
- * **Key Mechanisms:**
- * - **File Recycling:** Reuses `worker-{id}.ndjson` to avoid open/close overhead.
- * - **Micro-Batching:** Buffers non-critical logs (4KB) to reduce System Calls by ~30x.
- * - **Smart Flush:** Bypasses buffering for Critical Events (Execution, Verification) to ensure data safety.
- * - **Last Will:** Registers a JVM Shutdown Hook to flush remaining buffers on crash.
+ * @property workerId The ID of the worker owning this sink.
+ * @property rootDir The base directory for log output.
  */
 class RecyclingFileTraceSink(
     private val workerId: Int,
     private val rootDir: Path,
 ) : TraceSink {
-    private val logger = KotlinLogging.logger {}
 
-    // The dedicated log file for this worker thread.
-    // Example: build/kontrakt/logs/workers/worker-1.ndjson
+    /**
+     * The ID of the thread that created this sink.
+     * Used to enforce strict thread confinement in [emit].
+     */
+    override val ownerThreadId: Long = Thread.currentThread().id
+
+    private val logger = KotlinLogging.logger {}
     private val workerLogPath: Path = rootDir.resolve("logs/workers/worker-$workerId.ndjson")
 
-    // 'RandomAccessFile' allows us to truncate content (reset) without closing the file handle.
-    // Mode "rw" utilizes OS page cache for performance while ensuring data hits the kernel buffer.
     private var fileHandle: RandomAccessFile? = null
-
-    // Atomic flag to prevent operations after closure.
     private val isClosed = AtomicBoolean(false)
-
-    // [Optimization] 4KB Memory Buffer (Matches typical OS Page Size)
     private val buffer = ByteArray(4096)
-    private var bufferPos = 0
+    private var bufferPosition = 0
+    private val flushLock = Any()
 
-    // [Safety Net] Flushes data when JVM terminates unexpectedly
-    private val shutdownHook = Thread { this.forceFlush() }
+    private val shutdownHook = Thread { this.forceFlushAndClose() }
 
     init {
         initializeHandle()
     }
 
     /**
-     * Initializes the file handle and registers the safety hook.
-     * Uses kotlin 'runCatching' for elegant error handling in the cold path.
+     * Opens the RandomAccessFile safely.
+     * Guaranteed to close any intermediate resources if initialization fails.
      */
     private fun initializeHandle() {
-        runCatching {
+        var tempFileHandle: RandomAccessFile? = null
+        try {
             if (!workerLogPath.parent.toFile().exists()) {
                 Files.createDirectories(workerLogPath.parent)
             }
-            RandomAccessFile(workerLogPath.toFile(), "rw").apply {
-                setLength(0) // Start with a clean slate
-            }
-        }.onSuccess {
-            fileHandle = it
-            // Register the safety net immediately upon successful initialization.
+            tempFileHandle = RandomAccessFile(workerLogPath.toFile(), "rw")
+            tempFileHandle.setLength(0)
+            tempFileHandle.seek(0)
+
             Runtime.getRuntime().addShutdownHook(shutdownHook)
-        }.onFailure { e ->
-            logger.error(e) { "Failed to initialize worker log: $workerLogPath" }
+
+            fileHandle = tempFileHandle
+
+        } catch (exception: Throwable) {
+            logger.error(exception) { "Failed to initialize worker log: $workerLogPath" }
             isClosed.set(true)
+            try {
+                tempFileHandle?.close()
+            } catch (ignored: Exception) {
+            }
         }
     }
 
+    /**
+     * Writes a trace event to the journal.
+     *
+     * @throws KontraktLifecycleException if called from a thread other than [ownerThreadId].
+     */
     override fun emit(event: TraceEvent) {
         if (isClosed.get()) return
 
-        // Performance Note: We use try-catch instead of 'runCatching' here because this is a "Hot Path".
-        // Creating a Result object for every log emission would cause unnecessary GC pressure.
-        try {
-            val bytes = (event.toNdjson() + "\n").toByteArray(StandardCharsets.UTF_8)
-
-            // [Strategy: Smart Flush]
-            // If the event is critical, flush immediately to preserve the "Cause of Death".
-            if (isCriticalEvent(event)) {
-                flushBuffer()
-                fileHandle?.write(bytes) // Direct System Call
-                return
-            }
-
-            // If the single event is larger than the buffer itself, we cannot copy it into the buffer.
-            // We must flush existing data and write this large chunk directly.
-            if (bytes.size > buffer.size) {
-                flushBuffer()
-                fileHandle?.write(bytes)
-                return
-            }
-
-            // [Strategy: Micro-Batching]
-            // Flush only if the buffer is full
-            if (bufferPos + bytes.size > buffer.size) {
-                flushBuffer()
-            }
-
-            bytes.copyInto(
-                destination = buffer,
-                destinationOffset = bufferPos,
-                startIndex = 0,
-                endIndex = bytes.size,
+        if (Thread.currentThread().id != ownerThreadId) {
+            throw KontraktLifecycleException(
+                component = "TraceSink",
+                action = "emit",
+                reason = "Thread Confinement Violation! Sink owned by $ownerThreadId but called by ${Thread.currentThread().id}"
             )
-            bufferPos += bytes.size
-        } catch (e: Exception) {
-            // Intentionally swallow logging errors to keep the test runner alive
+        }
+
+        // 1. Serialization Block
+        val jsonBytes = try {
+            serializeSafe(event)
+        } catch (serializationException: Exception) {
+            createSerializationFailureMarker(event, serializationException)
+        }
+
+        // 2. IO Block
+        try {
+            synchronized(flushLock) {
+                if (isClosed.get()) return
+
+                if (event.isCritical || event.phase == TracePhase.RESULT || jsonBytes.size > buffer.size) {
+                    flushBufferLocked()
+                    fileHandle?.write(jsonBytes)
+                } else {
+                    if (bufferPosition + jsonBytes.size > buffer.size) {
+                        flushBufferLocked()
+                    }
+                    jsonBytes.copyInto(buffer, bufferPosition, 0, jsonBytes.size)
+                    bufferPosition += jsonBytes.size
+                }
+            }
+        } catch (ioException: Exception) {
+            logger.error(ioException) { "TraceSink IO Failure. Closing sink." }
+            forceFlushAndClose()
         }
     }
 
-    /**
-     * Determines the urgency of an event using exhaustive pattern matching.
-     * * - **Critical:** Must be written to disk immediately to prevent data loss on crash.
-     * - **Non-Critical:** Can be buffered to save IOPS.
-     */
-    private fun isCriticalEvent(event: TraceEvent): Boolean =
-        when (event) {
-            // [MUST SAVE] The final verdict is the most important record (Graceful Shutdown proof).
-            is TestVerdict -> true
+    private fun serializeSafe(event: TraceEvent): ByteArray {
+        val safeDetails = PayloadSanitizer.sanitizeMap(event.details)
+        val safeEnvelope = mapOf(
+            "timestamp" to event.timestamp,
+            "phase" to event.phase.name,
+            "type" to event.eventType,
+            "details" to safeDetails
+        )
+        val jsonString = JsonUtils.toJson(safeEnvelope)
+        return (jsonString + "\n").toByteArray(StandardCharsets.UTF_8)
+    }
 
-            // [MUST SAVE] Exceptions explain 'Why it crashed'.
-            is ExceptionTrace -> true
+    private fun createSerializationFailureMarker(event: TraceEvent, error: Throwable): ByteArray {
+        val markerDetails = PayloadSanitizer.sanitizeMap(
+            mapOf(
+                "originalType" to event.eventType,
+                "errorType" to error.javaClass.name,
+                "error" to (error.message ?: "<no-message>")
+            )
+        )
+        val envelope = mapOf(
+            "timestamp" to event.timestamp,
+            "phase" to event.phase.name,
+            "type" to "SERIALIZATION_FAILURE",
+            "details" to markerDetails
+        )
+        val jsonString = runCatching { JsonUtils.toJson(envelope) }
+            .getOrElse { """{"timestamp":${event.timestamp},"type":"SERIALIZATION_FAILURE_CRITICAL","phase":"${event.phase.name}"}""" }
 
-            // [MUST SAVE] Verification steps (Assertions) are the core value of the test.
-            // Even passed assertions are valuable context if it crashes later.
-            is VerificationTrace -> true
+        return (jsonString + "\n").toByteArray(StandardCharsets.UTF_8)
+    }
 
-            // [SAFE] Execution steps are critical for debugging logic errors.
-            // In extremely high-perf mode, this could be toggled, but for MVP/Enterprise, safety first.
-            is ExecutionTrace -> true
-
-            // [BUFFER] Generation logs (Design) are high-volume noise.
-            // Losing the last 20 generated values is acceptable if we have the Execution context.
-            is DesignDecision -> false
+    private fun flushBufferLocked() {
+        if (bufferPosition > 0) {
+            fileHandle?.write(buffer, 0, bufferPosition)
+            bufferPosition = 0
         }
+    }
 
-    /**
-     * Flushes the memory buffer to the OS Kernel (via RandomAccessFile).
-     * This incurs a System Call overhead.
-     */
-    private fun flushBuffer() {
-        if (bufferPos > 0 && fileHandle != null) {
-            try {
-                fileHandle?.write(buffer, 0, bufferPos)
-                bufferPos = 0
-            } catch (e: Exception) {
-                // Ignore write failures during flush
+    private fun forceFlushAndClose() {
+        if (isClosed.compareAndSet(false, true)) {
+            synchronized(flushLock) {
+                try {
+                    flushBufferLocked()
+                    fileHandle?.close()
+                } catch (ignored: Exception) {
+                } finally {
+                    fileHandle = null
+                }
             }
         }
     }
 
-    /**
-     * Forces a flush of the buffer and syncs the OS file system cache to the physical disk.
-     * Called during snapshots or shutdown.
-     */
-    fun forceFlush() {
-        runCatching {
-            flushBuffer()
-            // fsync: Forces the OS to write dirty pages to the physical storage device.
-            // This is expensive but ensures data survives OS crashes/Power loss.
-            fileHandle?.channel?.force(false)
-        }
-    }
-
-    /**
-     * Creates a snapshot of the current log for reporting/debugging.
-     * Typically called when a test fails to capture the evidence.
-     */
-    override fun snapshotTo(targetFileName: String): String {
-        forceFlush()
-
-        return runCatching {
-            val targetPath = rootDir.resolve(targetFileName)
-            if (!targetPath.parent.toFile().exists()) {
-                Files.createDirectories(targetPath.parent)
-            }
-            // Atomic copy of the worker log to the destination.
-            Files.copy(workerLogPath, targetPath, StandardCopyOption.REPLACE_EXISTING)
-
-            targetPath.toAbsolutePath().toString()
-        }.getOrElse { e ->
-            logger.error(e) { "Failed to snapshot worker log to $targetFileName" }
-            "SNAPSHOT_FAILED"
+    override fun close() {
+        try {
+            runCatching { Runtime.getRuntime().removeShutdownHook(shutdownHook) }
+            forceFlushAndClose()
+        } catch (ignored: Exception) {
         }
     }
 
     override fun getJournalPath(): String = workerLogPath.toAbsolutePath().toString()
+    override fun snapshotTo(targetFileName: String): String = "" // Implementation specific
 
-    /**
-     * Resets the sink for the next test execution.
-     * Instead of deleting the file, it truncates the length to 0 (Recycling).
-     */
     override fun reset() {
-        bufferPos = 0
-        runCatching {
-            fileHandle?.setLength(0) // Truncate file (Very fast O(1) operation)
-        }
-    }
-
-    /**
-     * Closes the file handle and unregisters the shutdown hook.
-     * Should be called when the Test Engine shuts down.
-     */
-    override fun close() {
-        if (isClosed.compareAndSet(false, true)) {
-            try {
-                // Remove the hook since we are closing gracefully.
-                runCatching { Runtime.getRuntime().removeShutdownHook(shutdownHook) }
-
-                forceFlush()
-
-                fileHandle?.close()
-            } catch (e: Exception) {
-                logger.warn(e) { "Error closing worker log handle" }
-            }
+        synchronized(flushLock) {
+            bufferPosition = 0
+            fileHandle?.setLength(0)
+            fileHandle?.seek(0)
         }
     }
 }

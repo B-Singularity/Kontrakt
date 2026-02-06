@@ -1,41 +1,24 @@
 package metamodel.domain.exception
 
 import exception.KontraktException
-import metamodel.domain.vo.TypeId
-import metamodel.domain.vo.TypeReference
 
-abstract class MetamodelException(
-    message: String,
-    cause: Throwable? = null
-) : KontraktException(message, cause) {
-
-    final override val domain: String = "METAMODEL"
-    protected abstract val errorCode: String
-    protected open val errorData: Map<String, Any?> = emptyMap()
-
-    final override val details: Map<String, Any?> by lazy(LazyThreadSafetyMode.PUBLICATION) {
-        mapOf(
-            "domain" to domain,
-            "code" to "META.$errorCode",
-            "data" to errorData
-        ).also { validateJsonSafety(it) } // Safe: passing local map
-    }
+/**
+ * Base exception for Metamodel domain errors.
+ * Extends [KontraktException] to integrate with the framework's error reporting.
+ */
+open class MetamodelException(message: String, cause: Throwable? = null) : KontraktException(message, cause) {
+    // Override domain to distinguish from EXECUTION or INFRASTRUCTURE
+    override val domain: String = "METAMODEL"
 }
 
-class ResolverSessionClosedException : MetamodelException("The TypeSystem session is closed.") {
-    override val errorCode = "RESOLVER_CLOSED"
-}
+/**
+ * Thrown when strict mode policies are violated.
+ * Example: Using Unresolved Generics (T, ?) or Wildcards in a TypeReference.
+ */
+class StrictModeViolationException(message: String) : MetamodelException(message)
 
-class UnsupportedReferenceException(val reference: TypeReference) : MetamodelException(
-    "Unsupported TypeReference: ${reference::class.simpleName}"
-) {
-    override val errorCode = "UNSUPPORTED_REFERENCE"
-    override val errorData = mapOf("referenceName" to reference.name)
-}
-
-class MalformedTypeException(val typeId: TypeId, details: String) : MetamodelException(
-    "Failed to parse type structure for '$typeId': $details"
-) {
-    override val errorCode = "MALFORMED_TYPE"
-    override val errorData = mapOf("typeId" to typeId.toString(), "reason" to details)
-}
+/**
+ * Thrown when non-deterministic behavior is detected.
+ * Example: Duplicate Annotations found via Reflection where order is undefined.
+ */
+class DeterminismViolationException(message: String) : MetamodelException(message)
