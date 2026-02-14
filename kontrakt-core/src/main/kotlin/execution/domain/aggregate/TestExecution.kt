@@ -1,7 +1,6 @@
 package execution.domain.aggregate
 
 import common.util.unwrapped
-import discovery.domain.aggregate.TestSpecification
 import exception.KontraktInternalException
 import execution.adapter.trace.WorkerTraceSinkPool
 import execution.domain.interceptor.AuditingInterceptor
@@ -18,6 +17,7 @@ import execution.domain.vo.verification.AssertionStatus
 import execution.port.incoming.TestScenarioExecutor
 import execution.port.outgoing.TestResultPublisher
 import io.github.oshai.kotlinlogging.KotlinLogging
+import ir.TestSpecification
 import java.time.Clock
 import java.time.Duration
 import java.time.Instant

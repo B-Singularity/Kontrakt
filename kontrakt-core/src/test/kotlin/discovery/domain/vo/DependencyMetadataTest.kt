@@ -1,7 +1,5 @@
 package discovery.domain.vo
 
-import discovery.domain.vo.DependencyMetadata.EnvType
-import discovery.domain.vo.DependencyMetadata.MockingStrategy
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 

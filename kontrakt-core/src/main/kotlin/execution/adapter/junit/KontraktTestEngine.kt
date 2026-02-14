@@ -2,8 +2,6 @@ package execution.adapter.junit
 
 import discovery.adapter.ClassGraphScannerAdapter
 import discovery.api.Contract
-import discovery.domain.service.TestDiscovererImpl
-import discovery.domain.vo.DiscoveryPolicy
 import discovery.domain.vo.ScanScope
 import exception.KontraktInternalException
 import execution.adapter.config.UserControlOptions

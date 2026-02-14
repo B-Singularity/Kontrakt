@@ -1,8 +1,5 @@
 package execution.adapter.junit
 
-import discovery.domain.aggregate.TestSpecification
-import discovery.domain.service.TestDiscovererImpl
-import discovery.domain.vo.DiscoveredTestTarget
 import discovery.domain.vo.ScanScope
 import execution.adapter.runtime.DefaultRuntimeFactory
 import execution.adapter.state.ThreadLocalScenarioControl
@@ -29,6 +26,7 @@ import io.mockk.unmockkConstructor
 import io.mockk.unmockkObject
 import io.mockk.verify
 import io.mockk.verifyOrder
+import ir.TestSpecification
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach

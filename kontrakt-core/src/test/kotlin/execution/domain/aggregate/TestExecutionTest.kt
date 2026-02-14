@@ -1,6 +1,5 @@
 package execution.domain.aggregate
 
-import discovery.domain.aggregate.TestSpecification
 import exception.KontraktInternalException
 import execution.adapter.trace.WorkerTraceSinkPool
 import execution.domain.entity.EphemeralTestContext
@@ -20,6 +19,7 @@ import execution.port.outgoing.TraceSink
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
+import ir.TestSpecification
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.BeforeEach

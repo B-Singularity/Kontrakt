@@ -1,6 +1,5 @@
 package execution.adapter.runtime
 
-import discovery.domain.aggregate.TestSpecification
 import execution.adapter.trace.WorkerTraceSinkPool
 import execution.domain.aggregate.TestExecution
 import execution.domain.service.generation.TestInstanceFactory
@@ -11,6 +10,7 @@ import execution.port.incoming.TestScenarioExecutor
 import execution.port.outgoing.MockingEngine
 import execution.port.outgoing.ScenarioControl
 import execution.port.outgoing.TestResultPublisher
+import ir.TestSpecification
 import java.time.Clock
 
 /**

@@ -1,7 +1,7 @@
 package execution.port.incoming
 
-import discovery.domain.aggregate.TestSpecification
 import execution.domain.aggregate.TestExecution
+import ir.TestSpecification
 
 /**
  * [Extension Point] Runtime Factory API

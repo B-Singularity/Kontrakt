@@ -3,7 +3,6 @@ package execution.domain.interceptor
 import common.util.extractSourceLocation
 import common.util.sanitizeStackTrace
 import common.util.unwrapped
-import discovery.domain.aggregate.TestSpecification
 import exception.ContractViolationException
 import exception.KontraktConfigurationException
 import exception.KontraktInternalException
@@ -16,6 +15,7 @@ import execution.domain.vo.verification.StandardAssertion
 import execution.domain.vo.verification.SystemErrorRule
 import execution.domain.vo.verification.UserExceptionRule
 import execution.port.outgoing.ScenarioInterceptor
+import ir.TestSpecification
 
 /**
  * [Domain Service] Centralized Result Resolution Interceptor.

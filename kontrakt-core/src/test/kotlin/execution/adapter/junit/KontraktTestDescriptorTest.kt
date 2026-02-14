@@ -1,9 +1,8 @@
 package execution.adapter.junit
 
-import discovery.domain.aggregate.TestSpecification
-import discovery.domain.vo.DiscoveredTestTarget
 import io.mockk.every
 import io.mockk.mockk
+import ir.TestSpecification
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.platform.engine.TestDescriptor

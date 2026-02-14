@@ -2,8 +2,6 @@ package execution.domain.service.generation
 
 import common.util.unwrapped
 import discovery.api.Test
-import discovery.domain.aggregate.TestSpecification
-import discovery.domain.vo.DependencyMetadata
 import exception.KontraktConfigurationException
 import exception.KontraktInternalException
 import execution.domain.entity.EphemeralTestContext
@@ -13,6 +11,7 @@ import execution.domain.vo.context.generation.GenerationRequest
 import execution.port.outgoing.MockingContext
 import execution.port.outgoing.MockingEngine
 import execution.port.outgoing.ScenarioControl
+import ir.TestSpecification
 import java.time.Clock
 import java.util.UUID
 import kotlin.random.Random

@@ -1,5 +1,6 @@
 package metamodel.adapter.reflection
 
+import ir.TypeId
 import metamodel.domain.exception.MalformedTypeException
 import metamodel.domain.exception.ResolverSessionClosedException
 import metamodel.domain.exception.UnsupportedSourceException
@@ -9,7 +10,6 @@ import metamodel.domain.model.ParameterDescriptor
 import metamodel.domain.model.PropertyDescriptor
 import metamodel.domain.model.TypeDescriptor
 import metamodel.domain.port.outgoing.TypeResolver
-import metamodel.domain.vo.TypeId
 import metamodel.domain.vo.TypeReference
 import metamodel.domain.vo.TypeSource
 import java.util.concurrent.ConcurrentHashMap

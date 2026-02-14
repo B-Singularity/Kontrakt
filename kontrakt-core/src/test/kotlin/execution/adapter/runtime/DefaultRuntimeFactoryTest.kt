@@ -1,6 +1,5 @@
 package execution.adapter.runtime
 
-import discovery.domain.aggregate.TestSpecification
 import execution.adapter.trace.WorkerTraceSinkPool
 import execution.domain.vo.config.ExecutionPolicy
 import execution.port.incoming.KontraktRuntimeFactory
@@ -10,6 +9,7 @@ import execution.port.outgoing.MockingEngine
 import execution.port.outgoing.ScenarioControl
 import execution.port.outgoing.TestResultPublisher
 import io.mockk.mockk
+import ir.TestSpecification
 import java.time.Clock
 
 class DefaultRuntimeFactoryTest : KontraktRuntimeFactoryContract {

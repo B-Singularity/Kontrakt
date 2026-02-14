@@ -1,7 +1,7 @@
 package discovery.adapter
 
 import discovery.domain.vo.ScanScope
-import discovery.port.outcoming.ClasspathScanner
+import discovery.port.outgoing.ClasspathScanner
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestDispatcher
 import kotlinx.coroutines.test.runTest

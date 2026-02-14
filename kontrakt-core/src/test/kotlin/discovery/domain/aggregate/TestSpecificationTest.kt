@@ -1,9 +1,8 @@
 package discovery.domain.aggregate
 
-import discovery.domain.aggregate.TestSpecification.TestMode
-import discovery.domain.vo.DependencyMetadata
-import discovery.domain.vo.DiscoveredTestTarget
 import io.mockk.mockk
+import ir.TestSpecification
+import ir.TestSpecification.TestMode
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
@@ -91,6 +90,6 @@ class TestSpecificationTest {
         assertThat(spec1).isNotEqualTo(spec3)
         assertThat(spec1.hashCode()).isEqualTo(spec2.hashCode())
         assertThat(spec1.toString()).isNotBlank()
-        
+
     }
 }

@@ -2,8 +2,6 @@ package execution.domain.interceptor
 
 import common.util.extractSourceLocation
 import common.util.sanitizeStackTrace
-import discovery.domain.aggregate.TestSpecification
-import discovery.domain.vo.DiscoveredTestTarget
 import exception.ContractViolationException
 import exception.KontraktConfigurationException
 import exception.KontraktInternalException
@@ -20,6 +18,7 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
 import io.mockk.unmockkAll
+import ir.TestSpecification
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach

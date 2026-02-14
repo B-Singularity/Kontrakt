@@ -1,11 +1,11 @@
 package execution.domain.entity
 
-import discovery.domain.aggregate.TestSpecification
 import exception.KontraktInternalException
 import execution.port.outgoing.MockingEngine
 import execution.port.outgoing.ScenarioControl
 import execution.port.outgoing.ScenarioTrace
 import io.mockk.mockk
+import ir.TestSpecification
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.BeforeEach

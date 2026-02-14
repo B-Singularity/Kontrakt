@@ -1,6 +1,6 @@
 package execution.adapter.junit
 
-import discovery.domain.aggregate.TestSpecification
+import ir.TestSpecification
 import org.junit.platform.engine.TestDescriptor
 import org.junit.platform.engine.TestSource
 import org.junit.platform.engine.UniqueId
@@ -13,7 +13,8 @@ class KontraktTestDescriptor(
     displayName: String,
     val spec: TestSpecification? = null,
 ) : AbstractTestDescriptor(uniqueId, displayName) {
-    override fun getType(): TestDescriptor.Type = if (spec == null) TestDescriptor.Type.CONTAINER else TestDescriptor.Type.TEST
+    override fun getType(): TestDescriptor.Type =
+        if (spec == null) TestDescriptor.Type.CONTAINER else TestDescriptor.Type.TEST
 
     override fun getSource(): Optional<TestSource> =
         if (spec != null) {

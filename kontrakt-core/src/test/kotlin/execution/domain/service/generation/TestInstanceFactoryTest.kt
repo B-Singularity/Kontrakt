@@ -1,9 +1,6 @@
 package execution.domain.service.generation
 
 import discovery.api.Test
-import discovery.domain.aggregate.TestSpecification
-import discovery.domain.vo.DependencyMetadata
-import discovery.domain.vo.DiscoveredTestTarget
 import exception.KontraktConfigurationException
 import exception.KontraktInternalException
 import execution.domain.entity.EphemeralTestContext
@@ -12,6 +9,7 @@ import execution.port.outgoing.MockingEngine
 import execution.port.outgoing.ScenarioControl
 import io.mockk.every
 import io.mockk.mockk
+import ir.TestSpecification
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertSame

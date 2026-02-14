@@ -1,6 +1,5 @@
 package execution.adapter.config
 
-import discovery.domain.vo.DiscoveryPolicy
 import discovery.domain.vo.ScanScope
 import execution.domain.vo.config.AuditDepth
 import execution.domain.vo.config.AuditPolicy

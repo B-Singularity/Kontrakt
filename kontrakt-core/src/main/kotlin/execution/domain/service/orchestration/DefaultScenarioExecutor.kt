@@ -1,7 +1,6 @@
 package execution.domain.service.orchestration
 
 import discovery.api.Test
-import discovery.domain.aggregate.TestSpecification
 import exception.KontraktConfigurationException
 import exception.KontraktInternalException
 import execution.domain.entity.EphemeralTestContext
@@ -20,6 +19,7 @@ import execution.port.incoming.TestScenarioExecutor
 import execution.port.outgoing.MockingEngine
 import execution.port.outgoing.ScenarioTrace
 import io.github.oshai.kotlinlogging.KotlinLogging
+import ir.TestSpecification
 import kotlinx.coroutines.runBlocking
 import java.lang.reflect.Method
 import java.time.Clock
