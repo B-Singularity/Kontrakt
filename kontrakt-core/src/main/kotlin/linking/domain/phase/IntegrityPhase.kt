@@ -4,6 +4,7 @@ import linking.domain.exception.LinkingAmbiguityException
 import linking.domain.exception.LinkingInputException
 import linking.domain.exception.LinkingProtocolException
 import linking.domain.model.ResolvedSpec
+import linking.domain.vo.FeatureName
 import java.util.SortedSet
 
 /**
@@ -19,8 +20,7 @@ class IntegrityPhase {
             throw LinkingInputException("Linking failed: empty specifications.")
         }
 
-        // 1. STRICT CONSTITUTION CHECK (Framework Invariant)
-        // Verify that the Set is governed by the EXACT Constitutional Comparator object via reference check (===).
+        // 1. STRICT CONSTITUTION CHECK
         if (specs.comparator() !== ResolvedSpec.CANONICAL_ORDER) {
             val actual = specs.comparator()
             throw LinkingProtocolException(
@@ -35,44 +35,40 @@ class IntegrityPhase {
 
         val violations = mutableListOf<String>()
         var previousSpec: ResolvedSpec? = null
-        var currentName: String? = null
+        var currentFeatureName: FeatureName? = null
 
-        // Use LinkedHashSet to ensure deterministic order in error reports.
+        // Deterministic error reporting
         val currentGroupImpls = linkedSetOf<String>()
 
         for (spec in specs) {
             // 2. RUNTIME PROTOCOL CHECK (Monotonicity)
-            // Ensures strict adherence to the sorting contract during iteration.
             if (previousSpec != null && ResolvedSpec.CANONICAL_ORDER.compare(previousSpec, spec) > 0) {
                 throw LinkingProtocolException(
                     "Internal Protocol Violation: Specs are not monotonically increasing.",
                     context = mapOf(
-                        "prev_name" to previousSpec.name,
+                        "prev_name" to previousSpec.featureName.value,
                         "prev_impl" to previousSpec.implementationClass,
-                        "curr_name" to spec.name,
+                        "curr_name" to spec.featureName.value,
                         "curr_impl" to spec.implementationClass
                     )
                 )
             }
             previousSpec = spec
 
-            // 3. CONTRADICTION CHECK (Ambiguity Detection)
-            if (spec.name != currentName) {
-                // New group detected. Check previous group for ambiguity.
+            // 3. CONTRADICTION CHECK (Ambiguity)
+            if (spec.featureName != currentFeatureName) {
                 if (currentGroupImpls.size > 1) {
-                    violations.add("Contradictory contracts for feature '$currentName': $currentGroupImpls")
+                    violations.add("Contradictory contracts for feature '$currentFeatureName': $currentGroupImpls")
                 }
 
-                // Reset for new group
-                currentName = spec.name
+                currentFeatureName = spec.featureName
                 currentGroupImpls.clear()
             }
             currentGroupImpls.add(spec.implementationClass)
         }
 
-        // Flush the last group
         if (currentGroupImpls.size > 1) {
-            violations.add("Contradictory contracts for feature '$currentName': $currentGroupImpls")
+            violations.add("Contradictory contracts for feature '$currentFeatureName': $currentGroupImpls")
         }
 
         if (violations.isNotEmpty()) {

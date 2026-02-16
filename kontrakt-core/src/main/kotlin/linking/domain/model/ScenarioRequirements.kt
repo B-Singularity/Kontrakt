@@ -1,6 +1,8 @@
 package linking.domain.model
 
 import linking.domain.exception.LinkingInputException
+import linking.domain.vo.FeatureName
+import linking.domain.vo.ScenarioId
 import java.util.Collections
 import java.util.SortedSet
 import java.util.TreeSet
@@ -12,39 +14,34 @@ import java.util.TreeSet
  * Actively performs silent deduplication of features via SortedSet.
  */
 class ScenarioRequirements(
-    val scenarioId: String,
+    val scenarioId: ScenarioId,
     rawFeatures: Collection<String?>
 ) {
-    /**
-     * The set of required features, guaranteed to be non-null, non-blank, and sorted.
-     */
-    val requiredFeatures: SortedSet<String>
+    // VO based SortedSet
+    val requiredFeatures: SortedSet<FeatureName>
 
     init {
-        if (scenarioId.isBlank()) {
-            throw LinkingInputException("Scenario ID cannot be blank")
-        }
-
-        // Active Deduplication & Sorting & Fail-Fast
-        val safeSortedSet = TreeSet<String>()
+        val safeSortedSet = TreeSet<FeatureName>()
 
         rawFeatures.forEach { feature ->
             if (feature == null) {
                 throw LinkingInputException(
                     "Null feature detected.",
-                    mapOf("scenarioId" to scenarioId)
+                    mapOf("scenarioId" to scenarioId.value)
                 )
             }
-            if (feature.isBlank()) {
+            // VO creation implicitly validates 'isNotBlank'
+            // We catch potential VO validation errors if needed, or let them propagate.
+            try {
+                safeSortedSet.add(FeatureName(feature))
+            } catch (e: LinkingInputException) {
                 throw LinkingInputException(
-                    "Blank feature detected.",
-                    mapOf("scenarioId" to scenarioId)
+                    "Invalid feature name detected.",
+                    mapOf("scenarioId" to scenarioId.value, "cause" to e.message)
                 )
             }
-            safeSortedSet.add(feature)
         }
 
-        // Enforce Immutability
         this.requiredFeatures = Collections.unmodifiableSortedSet(safeSortedSet)
     }
 }

@@ -2,6 +2,7 @@ package linking.domain.model
 
 import linking.domain.exception.LinkingProtocolException
 import linking.domain.model.ResolvedSpec.Companion.CANONICAL_ORDER
+import linking.domain.vo.FeatureName
 
 /**
  * Represents a fully resolved specification ready for provisioning.
@@ -11,18 +12,15 @@ import linking.domain.model.ResolvedSpec.Companion.CANONICAL_ORDER
  * **CRITICAL:** Sorting and Deduplication MUST rely exclusively on [CANONICAL_ORDER].
  */
 data class ResolvedSpec(
-    val name: String,
+    val featureName: FeatureName,
     val implementationClass: String
 ) {
     init {
         // Enforce invariants using Domain Exceptions (Fail-Fast)
-        if (name.isBlank()) {
-            throw LinkingProtocolException("ResolvedSpec invariant violated: name is blank")
-        }
         if (implementationClass.isBlank()) {
             throw LinkingProtocolException(
                 "ResolvedSpec invariant violated: implementationClass is blank",
-                context = mapOf("name" to name)
+                context = mapOf("featureName" to featureName.value)
             )
         }
     }
@@ -33,7 +31,7 @@ data class ResolvedSpec(
          * Used by BindingStrategy and IntegrityPhase to guarantee determinism.
          */
         val CANONICAL_ORDER: Comparator<ResolvedSpec> = compareBy(
-            { it.name },
+            { it.featureName },
             { it.implementationClass }
         )
     }
