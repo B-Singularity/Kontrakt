@@ -4,3 +4,5 @@ plugins {
 
 rootProject.name = "Kontrakt"
 include("kontrakt-core", "kontrakt-examples")
+
+include("compiler-core-enforcement")
