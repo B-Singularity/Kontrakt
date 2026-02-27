@@ -4,11 +4,11 @@ import execution.domain.exception.RuntimeInstantiationException
 import execution.domain.vo.context.generation.GenerationContext
 import execution.domain.vo.generation.TruncationRecord
 import execution.domain.vo.generation.TruncationRule
-import execution.domain.vo.plan.Attribute
 import execution.domain.vo.plan.UnlinkedCycleNode
 import execution.domain.vo.trace.TracePhase
 import execution.port.outgoing.RuntimeInstantiator
 import execution.port.outgoing.RuntimeTypeHandle
+import ir.Attribute
 import metamodel.domain.model.TypeDescriptor
 import metamodel.domain.vo.TypeKind
 

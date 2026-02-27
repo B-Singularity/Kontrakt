@@ -1,6 +1,6 @@
 # ADR-0029: Runtime Link Handle Protocol & Integrity
 
-* **Status:** Accepted (Final)
+* **Status:** Accepted
 * **Date:** 2026-02-11
 * **Context:** MVP Phase. Single Producer Deployment (Reflection-only OR KSP-only).
 

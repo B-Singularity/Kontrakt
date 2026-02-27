@@ -34,7 +34,7 @@ data class PropertyDescriptor(
 
     /**
      * Metadata indicating the origin of the property.
-     * Essential for the Planner to determine the correct EdgeKind.
+     * Essential for the Planner to determine the correct EdgeModel.
      */
     val source: PropertySource
 )

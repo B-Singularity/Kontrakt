@@ -1,6 +1,7 @@
 package execution.domain.vo.plan
 
 import execution.domain.strategy.generation.Generator
+import ir.Attribute
 import metamodel.domain.vo.TypeReference
 
 /**

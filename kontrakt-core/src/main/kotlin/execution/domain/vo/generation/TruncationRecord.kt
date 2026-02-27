@@ -1,15 +1,15 @@
 package execution.domain.vo.generation
 
-import execution.domain.vo.plan.EdgeKind
 import execution.domain.vo.trace.TraceEvent
 import execution.domain.vo.trace.TracePhase
+import ir.EdgeModel
 
 /**
  * [Trace Event] Records a decision made to truncate a recursive cycle.
  */
 data class TruncationRecord(
     val path: String,
-    val edgeKind: EdgeKind,
+    val edgeKind: EdgeModel,
     val edgeName: String?,
     val typeId: String,
     val rule: TruncationRule,

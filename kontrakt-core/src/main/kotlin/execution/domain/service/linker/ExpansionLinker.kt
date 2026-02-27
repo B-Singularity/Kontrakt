@@ -1,8 +1,6 @@
 package execution.domain.service.linker
 
 import execution.domain.strategy.generation.CycleBreakingGenerator
-import execution.domain.vo.plan.Attribute
-import execution.domain.vo.plan.AttributeOrigin
 import execution.domain.vo.plan.DecisionSource
 import execution.domain.vo.plan.ExecutableAtomicNode
 import execution.domain.vo.plan.ExecutableCollectionNode
@@ -18,6 +16,8 @@ import execution.domain.vo.plan.UnlinkedMapNode
 import execution.domain.vo.plan.UnlinkedNode
 import execution.port.outgoing.RuntimeInstantiator
 import execution.port.outgoing.RuntimeTypeResolver
+import ir.Attribute
+import ir.AttributeOrigin
 import metamodel.domain.port.outgoing.TypeResolver
 
 /**

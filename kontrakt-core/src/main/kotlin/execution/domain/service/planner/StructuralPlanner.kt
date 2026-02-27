@@ -2,6 +2,9 @@ package execution.domain.service.planner
 
 import execution.domain.exception.StructuralPlanningException
 import execution.domain.vo.plan.*
+import ir.Attribute
+import ir.AttributeOrigin
+import ir.EdgeModel
 import metamodel.domain.model.PropertySource
 import metamodel.domain.port.outgoing.TypeResolver
 import metamodel.domain.vo.AnnotationDescriptor
@@ -28,7 +31,7 @@ class StructuralPlanner(
             context = context,
             inheritedAttributes = emptyMap(),
             currentOrigin = AttributeOrigin.TYPE_DECLARATION,
-            edgeKind = EdgeKind.TYPE_ARGUMENT,
+            edgeKind = EdgeModel.TYPE_ARGUMENT,
             edgeName = null
         )
     }
@@ -38,7 +41,7 @@ class StructuralPlanner(
         context: PlanningContext,
         inheritedAttributes: Map<String, Attribute>,
         currentOrigin: AttributeOrigin,
-        edgeKind: EdgeKind,
+        edgeKind: EdgeModel,
         edgeName: String?
     ): UnlinkedNode {
         // Push CycleId (Nullability Stripped)
@@ -98,8 +101,8 @@ class StructuralPlanner(
                         }
 
                         val childEdgeKind = when (prop.source) {
-                            PropertySource.CONSTRUCTOR_PARAMETER -> EdgeKind.CTOR_PARAM
-                            else -> EdgeKind.FIELD
+                            PropertySource.CONSTRUCTOR_PARAMETER -> EdgeModel.CTOR_PARAM
+                            else -> EdgeModel.FIELD
                         }
 
                         fields[prop.name] = traverse(
@@ -125,7 +128,7 @@ class StructuralPlanner(
                             context = context,
                             inheritedAttributes = emptyMap(),
                             currentOrigin = AttributeOrigin.ELEMENT_TYPE_USE,
-                            edgeKind = EdgeKind.ELEMENT,
+                            edgeKind = EdgeModel.ELEMENT,
                             edgeName = null
                         ),
                         isFixedSize = false,
@@ -144,7 +147,7 @@ class StructuralPlanner(
                             context = context,
                             inheritedAttributes = emptyMap(),
                             currentOrigin = AttributeOrigin.ELEMENT_TYPE_USE,
-                            edgeKind = EdgeKind.ELEMENT,
+                            edgeKind = EdgeModel.ELEMENT,
                             edgeName = null
                         ),
                         isFixedSize = true,
@@ -162,7 +165,7 @@ class StructuralPlanner(
                             context,
                             emptyMap(),
                             AttributeOrigin.MAP_KEY_TYPE_USE,
-                            EdgeKind.MAP_KEY,
+                            EdgeModel.MAP_KEY,
                             "key"
                         ),
                         valueNode = traverse(
@@ -170,7 +173,7 @@ class StructuralPlanner(
                             context,
                             emptyMap(),
                             AttributeOrigin.MAP_VALUE_TYPE_USE,
-                            EdgeKind.MAP_VALUE,
+                            EdgeModel.MAP_VALUE,
                             "value"
                         ),
                         attributes = fullEffectiveAttributes
