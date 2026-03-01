@@ -25,17 +25,140 @@
     * The transition from `Local` to `Canonical` MUST only occur via a single, strictly typed `commit()` factory method
       that delegates to `L2.intern()`.
 
-### 3. Deep Immutability & Safe Publication Physical Seal
+### 3. Deep Immutability, Deterministic Collections, and Safe Publication Physical Seal
 
-* **[A] Compile-Time:** `CanonicalPlanNode` MUST be a `sealed interface` as its public surface. All concrete
-  implementations MUST be strictly `final class`es with zero `open` methods. All internal collections MUST be typed as
-  `PersistentList`/`PersistentMap` (from `kotlinx.collections.immutable`) or encapsulated primitive arrays with no
-  mutable exposure.
-* **[B] Static Analysis:** ArchUnit MUST block the presence of `var`, `lazy` delegates, or mutable buffers within
-  Canonical implementations. `this-escape` during initialization (e.g., callback registration, global registry pushing)
-  is strictly forbidden.
-* **[A] Compile-Time:** Safe publication is guaranteed by strictly routing the instantiation of publicly visible nodes
-  through `ConcurrentHashMap.putIfAbsent` (or equivalent JMM happens-before structures) in the L2 adapter.
+This protocol is intentionally **behavioral** rather than library-prescriptive. The goal is **byte-for-byte
+reproducibility**, **cache-blind semantics**, and **JMM-safe publication**.
+
+#### 3.1 Canonical Surface (Type Seal)
+
+* **[A] Compile-Time:** `CanonicalPlanNode` MUST be a `sealed interface` as its public surface.
+* **[A] Compile-Time:** All concrete implementations MUST be strictly `final class`es with zero `open` methods.
+* **[A] Compile-Time:** Canonical implementations MUST NOT be `data class` (the `copy()` backdoor is forbidden).
+* **[A] Compile-Time:** Constructors MUST be non-public (prefer `private`) and instantiation MUST be routed via an
+  authorized factory (e.g., `PlanInterner`, sealed deterministic wrappers).
+
+#### 3.2 Deep Immutability (Including Element-Type Seal)
+
+* **[B] Static Analysis:** ArchUnit MUST block the presence of `var`, `lazy` delegates, mutable buffers, or exposed
+  mutable references within Canonical implementations.
+* **[A] Compile-Time:** All fields reachable from a `CanonicalPlanNode` MUST be deeply immutable by construction:
+    * Value Objects must be physically sealed (e.g., `TypeId`, `CanonicalIdentifier`, `CanonicalSignature`).
+    * Byte arrays / primitive arrays MUST be encapsulated and MUST NOT leak references. Any inbound arrays MUST be
+      defensively copied.
+    * Nested collections MUST be deterministic sealed types (see 3.3). Raw `List`/`Set`/`Map` fields are forbidden.
+* **[B] Static Analysis:** `this-escape` during initialization (callback registration, global registry pushing,
+  publishing `this` to another thread) is strictly forbidden.
+
+#### 3.3 Deterministic Collections (Total Order + Canonical List Semantics)
+
+**BANNED (always):**
+
+* `java.util.HashMap`, `java.util.HashSet`, and standard `MutableList`/`MutableMap`/`MutableSet` as stored state in
+  Canonical nodes.
+* `kotlinx.collections.immutable.PersistentMap` / Hash-Trie based maps when they do not guarantee deterministic key
+  order.
+
+**REQUIRED (canonical storage types):**
+
+All collections stored inside `CanonicalPlanNode` MUST be wrapped in sealed deterministic types:
+
+* `DeterministicMap<K, V>`
+* `DeterministicSet<T>`
+* `DeterministicList<T>`
+
+##### 3.3.1 Map/Set Total Order (Comparator Consistency)
+
+* **[A] Compile-Time:** `DeterministicMap/Set` MUST enforce a total order internally (e.g., `TreeMap`/`TreeSet`).
+* **[A] Compile-Time:** The comparator MUST be consistent with equals. If `compare(a,b) == 0` then the keys MUST be
+  semantically equal for canonical identity purposes. Comparator inconsistencies are a correctness bug (key loss) and
+  are constitutionally forbidden.
+* **[A] Compile-Time:** Ordering MUST NOT depend on:
+    * Reflection enumeration order
+    * HashMap iteration order
+    * JVM identity hash codes
+    * per-run random seeds
+* **[A] Compile-Time:** If ordering is derived from versions (e.g., `edgeOrderingVersion`), the lowering function MUST
+  be deterministic and version-bound (no per-process randomization).
+
+##### 3.3.2 DeterministicList Semantics (Canonical Set-as-List)
+
+`DeterministicList` is a **canonicalization wrapper** for “order-insensitive multi-sources”.
+
+* **[A] Compile-Time:** `DeterministicList` MUST:
+    * **deduplicate** (set semantics at construction),
+    * **sort** (total order),
+    * and then **freeze** into an unmodifiable view.
+* **[A] Compile-Time:** Therefore, `DeterministicList` MUST NOT be used when:
+    * duplicate elements are semantically meaningful,
+    * or original source order must be preserved.
+      In those cases, define a separate sealed wrapper with explicitly specified ordering rules (and corresponding
+      ArchUnit enforcement). (Do NOT store raw `List`.)
+
+#### 3.4 Safe Publication (JMM Happens-Before Seal)
+
+* **[A] Compile-Time:** Safe publication for cross-thread reuse MUST be guaranteed by routing Canonical node publication
+  through a JMM-compliant happens-before mechanism in L2:
+    * `ConcurrentHashMap.putIfAbsent` (or equivalent), OR
+    * an in-flight gate that ultimately publishes via `putIfAbsent` and only completes waiters after publication.
+* **[A] Compile-Time:** If the L2 cache transitions to CircuitOpen and the session bypasses L2, the returned node MUST
+  remain deeply immutable, but reference-uniqueness is best-effort (semantic determinism remains mandatory).
+
+#### 3.5 Reference Implementation (Normative Shape, Kotlin)
+
+> **NOTE:** Illustrative Kotlin. Exact APIs may differ. Invariants are normative.
+
+```kotlin
+class DeterministicMap<K : Comparable<K>, V> private constructor(
+    private val delegate: Map<K, V>
+) : Map<K, V> by delegate {
+    companion object {
+        fun <K : Comparable<K>, V> of(
+            input: Map<K, V>,
+            limit: Int,
+            valueValidator: (V) -> Unit = {}
+        ): DeterministicMap<K, V> {
+            if (input.size > limit) throw IrProtocolViolationException("DeterministicMap entry limit exceeded ($limit).")
+            input.values.forEach(valueValidator)
+
+            val normalized = TreeMap<K, V>() // total order
+            normalized.putAll(input)
+
+            return DeterministicMap(Collections.unmodifiableMap(normalized))
+        }
+    }
+}
+
+class DeterministicSet<T : Comparable<T>> private constructor(
+    private val delegate: Set<T>
+) : Set<T> by delegate {
+    companion object {
+        fun <T : Comparable<T>> of(elements: Collection<T>, limit: Int): DeterministicSet<T> {
+            val uniqueSorted = TreeSet<T>() // total order + dedup
+            for (e in elements) {
+                uniqueSorted.add(e)
+                if (uniqueSorted.size > limit) throw IrProtocolViolationException("DeterministicSet unique limit exceeded ($limit).")
+            }
+            return DeterministicSet(Collections.unmodifiableSet(uniqueSorted))
+        }
+    }
+}
+
+class DeterministicList<T : Comparable<T>> private constructor(
+    private val delegate: List<T>
+) : List<T> by delegate {
+    companion object {
+        fun <T : Comparable<T>> of(elements: Collection<T>, limit: Int): DeterministicList<T> {
+            val uniqueSorted = TreeSet<T>() // canonical set-as-list: total order + dedup
+            for (e in elements) {
+                uniqueSorted.add(e)
+                if (uniqueSorted.size > limit) throw IrProtocolViolationException("DeterministicList unique limit exceeded ($limit).")
+            }
+            return DeterministicList(Collections.unmodifiableList(ArrayList(uniqueSorted)))
+        }
+    }
+}
+```
 
 ### 4. Centralized Fuel (Budget) Gateway
 
@@ -49,8 +172,19 @@
 
 * **[B] Static Analysis:** The Domain Core MUST NOT import `kotlin.reflect.*`, `java.lang.reflect.*`, or `KS*`. ArchUnit
   MUST enforce zero reflections in the core. The core MUST only consume `TypeFactsDTO`.
+
 * **[A] Compile-Time:** Hot-path Outbound Ports (`NodeIdIndexer`, `CanonicalEdgeKeyProvider`) MUST use narrow primitive
   signatures (`ULong`, `Int`).
+
+* **[A] Compile-Time (AMENDED — ULong Boxing Avoidance):**
+  Kotlin/JVM unsigned value classes (`ULong`, `UInt`) are **boxed when used as type arguments** in generic collections.
+  Therefore, within hot-path core logic:
+    * **BANNED:** `Map<ULong, *>`, `Set<ULong>`, `List<ULong>` (and the same for `UInt`) in `kontrakt-planning` hot
+      paths.
+    * **REQUIRED:** store 64-bit identities as **raw `Long` bit patterns** in primitive arrays / primitive maps.
+      `ULong` may exist at API boundaries (DTOs, port method parameters) but MUST be converted immediately to `Long`
+      for indexing/storage.
+
 * **[A] Compile-Time:** The DI or binding mechanism MUST inject these ports exactly once at initialization. Reassignment
   or mutable delegate bindings are forbidden to guarantee JIT Devirtualization (Monomorphic callsites).
 
@@ -67,11 +201,19 @@
   `nodeId: Int`.
     * *Phase 1:* Fast bucket routing via `nodeIdentity64: ULong`.
     * *Phase 2:* Absolute byte-equality comparison of the Canonical Signature.
+
+* **[A] Compile-Time (AMENDED — Primitive Map Enforcement):**
+  `NodeIdIndexer` MUST be implemented as a **primitive open-addressing index**:
+    * Routing/index keys stored as `Long` bit patterns (`identity64.toLong()`).
+    * Core tables MUST be `LongArray`/`IntArray` plus an epoch/stamp array for O(1) reset.
+    * **BANNED:** `HashMap`, `MutableMap`, or any `Map<ULong, *>` usage inside `NodeIdIndexer` (boxing + GC storm).
+
 * **[A] Compile-Time (Resolution):** The Canonical Signature used in Phase 2 MUST be generated by a Single Source of
   Truth (SSOT) function **strictly bound to the `normalizationVersion`**. This function MUST output a stable UTF-8 byte
   array with complete determinism by: strictly stripping nullability, type aliases, and use-site annotations; enforcing
   exact ordering of generic arguments; standardizing nested type notation; and resolving absolute canonical
   package/class names.
+
 * **[A] Compile-Time:** `edgeRank` collisions are treated as equivalent. The SSOT `less()` function MUST
   deterministically break ties favoring the smaller `stackIndex`.
 
@@ -98,3 +240,6 @@
 * **[C] Runtime / CI:** The test MUST assert that the resulting `treeSemanticCostUpperBound` and the topological
   structure are bit-for-bit identical, and that concurrent linearizability (no dirty reads of incomplete nodes) is
   strictly maintained.
+* **[C] Runtime / CI (AMENDED):** The above MUST also run under:
+    * In-Flight Gate OFF vs ON/AUTO
+    * Partition bulk-drop between runs ensuring semantics remain cache-blind.
