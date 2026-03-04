@@ -32,6 +32,8 @@ dependencies {
     implementation(libs.mockito.core)
     implementation(libs.mockito.kotlin)
 
+    implementation(libs.icu4j)
+
     testImplementation(kotlin("test"))
     testImplementation(libs.junit.jupiter.api)
     testImplementation(libs.junit.jupiter.params)
@@ -41,6 +43,8 @@ dependencies {
 
     testImplementation(libs.assertj.core)
     testImplementation(libs.mockk)
+
+
 }
 
 tasks.test {

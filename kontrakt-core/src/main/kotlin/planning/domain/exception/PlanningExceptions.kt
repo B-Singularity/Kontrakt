@@ -1,0 +1,62 @@
+package planning.domain.exception
+
+import exception.KontraktException
+
+/**
+ * Root exception for Planning Protocol SSOT violations.
+ *
+ * Use this only for failures that must crash the app during boot / classloading,
+ * or for hard invariants where continuing would corrupt determinism.
+ */
+open class PlanningProtocolException(
+    message: String,
+    cause: Throwable? = null,
+) : KontraktException(message, cause) {
+    override val domain: String = "PLANNING_PROTOCOL"
+}
+
+/**
+ * Domain-specific integrity violation for planning protocol SSOT types.
+ *
+ * Raised during class loading / bootstrapping to prevent running with a corrupted protocol definition.
+ */
+class PlanningProtocolIntegrityException(
+    message: String,
+    cause: Throwable? = null,
+) : PlanningProtocolException(message, cause)
+
+/**
+ * Raised when sentinel remapping fails to produce a non-reserved value.
+ *
+ * Hard protocol failure: continuing would corrupt the canonical identity space.
+ */
+class SentinelIntegrityException(
+    message: String,
+    cause: Throwable? = null,
+) : PlanningProtocolException(message, cause)
+
+/**
+ * Raised when an input violates the port contract before entering the protocol layer.
+ */
+class PortContractViolationException(
+    message: String,
+    cause: Throwable? = null,
+) : KontraktException(message, cause) {
+    override val domain: String = "PLANNING_PORT"
+}
+
+/**
+ * Raised when the current runtime does not satisfy the protocol's pinned environment behavior.
+ *
+ * This is an application boot failure by design.
+ */
+class EnvironmentIntegrityException(
+    message: String,
+    cause: Throwable? = null,
+) : KontraktException(message, cause) {
+    override val domain: String = "ENVIRONMENT_LAW"
+}
+
+
+class PlanningProtocolDecodingException(message: String, cause: Throwable? = null) :
+    PlanningProtocolException(message, cause)
