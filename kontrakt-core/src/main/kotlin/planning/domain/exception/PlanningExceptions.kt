@@ -60,3 +60,14 @@ class EnvironmentIntegrityException(
 
 class PlanningProtocolDecodingException(message: String, cause: Throwable? = null) :
     PlanningProtocolException(message, cause)
+
+/**
+ * Runtime abort due to budget exhaustion.
+ *
+ * This is NOT a protocol SSOT violation:
+ * - It is an expected fail-closed guardrail during execution.
+ * - The protocol remains valid; the current run is aborted by design.
+ */
+class FuelExhaustedException(msg: String) : KontraktException(msg) {
+    override val domain: String = "PLANNING_RUNTIME"
+}
