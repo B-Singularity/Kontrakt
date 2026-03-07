@@ -117,3 +117,20 @@ To maintain architectural purity, we explicitly define the limitations of the cu
   detected by default.
 * **Boilerplate:** Testing interfaces requires adding `@Contract` annotations, which creates a slight coupling between
   the interface and its test implementation details (though this is often acceptable in DTO-heavy codebases).
+
+## 5. Budget Configuration Surface (MVP)
+
+Default: zero-config. Users do not configure planner budgets.
+
+We MAY expose a single high-level knob in the future:
+
+- `resourceProfile = AUTO | SMALL_HEAP | DEFAULT | SERVER`
+
+The profile maps to internal `PlannerSessionConfig` budgets.
+Detailed knobs (bytes/steps/semantic units) remain advanced and undocumented unless required by production incidents.
+
+Notes:
+
+- **Cap reverse-calc is SSOT; numeric runtime budgets are policy defaults and may become environment-aware.**
+- Environment-aware auto-sizing (heap-aware or cgroup-aware) belongs to the execution policy layer, not the core
+  planner.

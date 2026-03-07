@@ -17,6 +17,12 @@ MUST be implemented with **primitive maps** over raw `Long` bit patterns.
 > Preallocating arrays once and reusing via epoch reset is the preferred form. Recreating the indexer per request is
 > allowed **only** if it does not create a burst of allocations proportional to graph size.
 
+> **Policy Boundary Note (AMENDED):** This document fixes **layout and invariants** (SSOT-level requirements).
+> Numeric budgets (bytes/steps/semantic units) are **policy defaults** and may become environment-aware later.
+> The protocol MUST remain independent of environment introspection; any environment discovery MUST be via
+> ports/adapters,
+> and the selected policy values are injected into `PlannerSessionConfig`.
+
 ## Core Structures
 
 ### 1. Active Path (`ActiveStack`) & Membership (`GreyMap`)
@@ -66,6 +72,18 @@ sigByNodeId:  Array<CanonicalSignature?> // only used when scanning candidates (
 
 *Why chain?* Multiple distinct signatures can (rarely) share the same 64-bit identity. We must store all candidates and
 verify by signature bytes to prevent false cycles.
+
+> **Signature Storage Note (AMENDED — Hot-Path Allocation Avoidance):**
+> `sigByNodeId: Array<CanonicalSignature?>` is illustrative. A production SOTA layout SHOULD avoid per-node object
+> allocation
+> by storing signature bytes in a pooled slab:
+>
+> - `sigSlab: ByteArray`
+> - `sigOffsets: IntArray`
+> - `sigLengths: IntArray`
+>
+> Phase-2 equality then becomes byte-equality against the slab region.
+> This preserves the normative rule (**absolute byte-equality**) while remaining allocation-free on the hot path.
 
 #### 2.3 Kotlin Reference Shape (Illustrative)
 
@@ -187,6 +205,16 @@ fun less(rankA: Long, idxA: Int, rankB: Long, idxB: Int): Boolean {
       guarantee that the virtual back-edge index (`currentDepth + 1`) is always representable as a positive 32-bit
       signed integer without overflow.
 
+> **RMQ Initialization Law (AMENDED — Sentinel Safety, MUST):**
+> RMQ tables MUST NOT use JVM default zeros as meaning-bearing values.
+> The following sentinel initialization is mandatory before first use (and must be preserved under pooling):
+>
+> - `incomingEdgeRankAtDepth[*]` MUST initialize to `-1L` (`+INF` under unsigned compare).
+> - `flatMinEdgeRankUp[*]` MUST initialize to `-1L` (`+INF`).
+> - `flatArgminUp[*]` MUST initialize to `Int.MAX_VALUE` (`EMPTY`).
+>
+> Rationale: `0L` is a valid unsigned rank and would corrupt ordering if treated as sentinel.
+
 * **Push DP Update & Mechanical `backEdge` Inclusion (CRITICAL MUST):**
     * **DP Population:** During the DP update phase, the `less` comparator MUST be used to evaluate the lexicographical
       tuple `(edgeRank, argmin)`.
@@ -249,6 +277,12 @@ can differ between Hot/Cold cache states.
 * `NODEID_PHASE2_SCAN` (each candidate signature compare)
 * `NODEID_ALLOCATE` (dense id allocation / chain append)
 * `NODEID_RESET_EPOCH` (epoch wrap / stamp clear path)
+* `NODEID_ROLLBACK_STEP` (each undo replay step during transactional
+  rollback)  <!-- AMENDED: rollback metering is mandatory -->
+
+> **Tick Naming Note (AMENDED):** In some documents the atomic probe unit is referred to as `NODEID_PROBE_TICK`.
+> The required invariant is: **one `step()` per open-addressing probe slot inspection**.
+> Whether the enum constant is named `*_TICK` or `*_STEP` is secondary; the tick semantics are normative.
 
 **L2 (Partitioned Tier-2 Governance)**
 
@@ -275,3 +309,35 @@ can differ between Hot/Cold cache states.
 * If the session enters L2 bypass mode (`CircuitOpen`), L2 cost centers MUST still be recorded (for telemetry and
   audits),
   but interning is skipped.
+
+> **Budget Counter Symmetry Note (AMENDED):** If physical budgets are enforced per-session using a baseline, semantic
+> budgets MUST follow the same per-session baseline rule unless a global cumulative semantic budget is explicitly
+> specified as policy. Budget policy MUST be fixed in an ADR / execution strategy note to avoid silent asymmetry.
+
+### Budget Defaults Are Policy, Not Protocol
+
+The following values in `PlannerSessionConfig` are **policy defaults**:
+
+- `maxPlannerBytes`
+- `maxPhysicalSteps`
+- `maxSemanticWorkUnits`
+
+They are **NOT** protocol (SSOT) constants.
+The protocol defines:
+
+- the **unit of measurement** (CostCenter tick semantics),
+- the **dual-track mapping** (PhysicalOnly vs SemanticAlso),
+- and the **invariants** (monotonic counters, zero-residue reset, fail-closed behavior).
+
+The numeric budgets are allowed to evolve based on:
+
+- runtime environment constraints (heap size, worker count),
+- product-level performance targets,
+- and empirically validated workload characteristics.
+
+Any change to policy defaults MUST NOT change deterministic semantic output, and MUST preserve cache-blind semantic
+invariants.
+
+> **MVP Policy Surface Note (AMENDED):** The MVP SHOULD remain “zero-config” for most users.
+> If a high-level policy knob is exposed (e.g., `resourceProfile = AUTO | SMALL_HEAP | DEFAULT | SERVER`),
+> it MUST map to these internal budgets without exposing low-level knobs unless production incidents require it.

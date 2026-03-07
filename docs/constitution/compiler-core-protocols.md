@@ -243,3 +243,21 @@ class DeterministicList<T : Comparable<T>> private constructor(
 * **[C] Runtime / CI (AMENDED):** The above MUST also run under:
     * In-Flight Gate OFF vs ON/AUTO
     * Partition bulk-drop between runs ensuring semantics remain cache-blind.
+
+### 11. SSOT vs Policy Boundary (Resource Budgets)
+
+SSOT (protocol) fixes:
+
+- CostCenter identities and tick definitions,
+- track mapping (PhysicalOnly / SemanticAlso),
+- determinism invariants (cache-blind semantic determinism),
+- fail-closed conditions for overflow and contract violations.
+
+Policy (runtime/execution strategy) provides:
+
+- numeric budget defaults and environment-sensitive sizing,
+- worker count and per-worker memory budget selection.
+
+Protocol MUST NOT depend on environment introspection.
+Environment discovery MUST be implemented via ports/adapters, and policy values are injected into protocol-bound runtime
+objects.
