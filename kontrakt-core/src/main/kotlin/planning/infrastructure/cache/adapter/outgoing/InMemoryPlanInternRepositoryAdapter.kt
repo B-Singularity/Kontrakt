@@ -1,6 +1,7 @@
 package planning.infrastructure.cache.adapter.outgoing
 
 import ir.plan.signature.PlanCacheKey
+import planning.domain.exception.PlanningProtocolIntegrityException
 import planning.domain.port.outgoing.PlanInternRepository
 import planning.domain.port.outgoing.PlanInternResult
 import planning.domain.protocol.CostCenter
@@ -14,40 +15,23 @@ import java.util.concurrent.ConcurrentHashMap
  * Top-level routing is intentionally partition-first:
  * regions: ConcurrentHashMap<PartitionId, PartitionRegion>
  *
- * This map is not the hot routing surface.
- * Hot-path routing by 64-bit plan keys is delegated to primitive shard-local tables.
+ * This registry is not the hot routing surface.
+ * Hot-path routing by 64-bit plan keys is delegated to shard-local primitive tables.
+ *
+ * This adapter is a Planning-protocol-specific outbound adapter.
+ * Therefore, issuance-time structural violations are treated as
+ * protocol-integrity failures and fail closed.
  */
-class InMemoryPlanInternRepositoryAdapter(
-    private val maxEntriesPerPartition: Long = 1_000_000L,
-    private val shardCount: Int = 16,
-    private val bucketTableCapacity: Int = 1 shl 16,
-    private val inflightTableCapacity: Int = 1 shl 10,
-    private val maxJoinPolls: Int = 128,
-    private val joinPollNanos: Long = 50_000L,
+class InMemoryPlanInternRepositoryAdapter private constructor(
+    private val maxEntriesPerPartition: Long,
+    private val shardCount: Int,
+    private val bucketTableCapacity: Int,
+    private val inflightTableCapacity: Int,
+    private val maxJoinPolls: Int,
+    private val joinPollNanos: Long,
 ) : PlanInternRepository {
 
     private val regions = ConcurrentHashMap<PartitionId, PartitionRegion>()
-
-    init {
-        if (maxEntriesPerPartition <= 0L) {
-            throw IllegalStateException("maxEntriesPerPartition must be positive.")
-        }
-        if (shardCount <= 0 || shardCount.countOneBits() != 1) {
-            throw IllegalStateException("shardCount must be a positive power-of-two.")
-        }
-        if (bucketTableCapacity <= 0) {
-            throw IllegalStateException("bucketTableCapacity must be positive.")
-        }
-        if (inflightTableCapacity <= 0) {
-            throw IllegalStateException("inflightTableCapacity must be positive.")
-        }
-        if (maxJoinPolls <= 0) {
-            throw IllegalStateException("maxJoinPolls must be positive.")
-        }
-        if (joinPollNanos < 0L) {
-            throw IllegalStateException("joinPollNanos must be >= 0.")
-        }
-    }
 
     override fun resolveOrIntern(
         partitionId: PartitionId,
@@ -59,7 +43,7 @@ class InMemoryPlanInternRepositoryAdapter(
         val routeKeyBits = PlanCacheRouteKeyDeriver.derive(key, session)
 
         val region = regions.computeIfAbsent(partitionId) {
-            PartitionRegion(
+            PartitionRegion.issue(
                 id = it,
                 maxEntries = maxEntriesPerPartition,
                 shardCount = shardCount,
@@ -96,5 +80,80 @@ class InMemoryPlanInternRepositoryAdapter(
          * if a new request races after close.
          */
         regions.remove(partitionId, region)
+    }
+
+    companion object {
+        @JvmStatic
+        fun issue(
+            maxEntriesPerPartition: Long = 1_000_000L,
+            shardCount: Int = 16,
+            bucketTableCapacity: Int = 1 shl 16,
+            inflightTableCapacity: Int = 1 shl 10,
+            maxJoinPolls: Int = 128,
+            joinPollNanos: Long = 50_000L,
+        ): InMemoryPlanInternRepositoryAdapter {
+            validate(
+                maxEntriesPerPartition = maxEntriesPerPartition,
+                shardCount = shardCount,
+                bucketTableCapacity = bucketTableCapacity,
+                inflightTableCapacity = inflightTableCapacity,
+                maxJoinPolls = maxJoinPolls,
+                joinPollNanos = joinPollNanos,
+            )
+
+            return InMemoryPlanInternRepositoryAdapter(
+                maxEntriesPerPartition = maxEntriesPerPartition,
+                shardCount = shardCount,
+                bucketTableCapacity = bucketTableCapacity,
+                inflightTableCapacity = inflightTableCapacity,
+                maxJoinPolls = maxJoinPolls,
+                joinPollNanos = joinPollNanos,
+            )
+        }
+
+        private fun validate(
+            maxEntriesPerPartition: Long,
+            shardCount: Int,
+            bucketTableCapacity: Int,
+            inflightTableCapacity: Int,
+            maxJoinPolls: Int,
+            joinPollNanos: Long,
+        ) {
+            if (maxEntriesPerPartition <= 0L) {
+                throw PlanningProtocolIntegrityException(
+                    "InMemoryPlanInternRepositoryAdapter.maxEntriesPerPartition must be positive: $maxEntriesPerPartition"
+                )
+            }
+
+            if (shardCount <= 0 || shardCount.countOneBits() != 1) {
+                throw PlanningProtocolIntegrityException(
+                    "InMemoryPlanInternRepositoryAdapter.shardCount must be a positive power-of-two: $shardCount"
+                )
+            }
+
+            if (bucketTableCapacity <= 0) {
+                throw PlanningProtocolIntegrityException(
+                    "InMemoryPlanInternRepositoryAdapter.bucketTableCapacity must be positive: $bucketTableCapacity"
+                )
+            }
+
+            if (inflightTableCapacity <= 0) {
+                throw PlanningProtocolIntegrityException(
+                    "InMemoryPlanInternRepositoryAdapter.inflightTableCapacity must be positive: $inflightTableCapacity"
+                )
+            }
+
+            if (maxJoinPolls <= 0) {
+                throw PlanningProtocolIntegrityException(
+                    "InMemoryPlanInternRepositoryAdapter.maxJoinPolls must be positive: $maxJoinPolls"
+                )
+            }
+
+            if (joinPollNanos < 0L) {
+                throw PlanningProtocolIntegrityException(
+                    "InMemoryPlanInternRepositoryAdapter.joinPollNanos must be >= 0: $joinPollNanos"
+                )
+            }
+        }
     }
 }

@@ -1,6 +1,7 @@
 package planning.infrastructure.cache.adapter.outgoing
 
 import ir.plan.signature.PlanCacheKey
+import planning.domain.exception.PlanningProtocolIntegrityException
 import planning.domain.fault.L2FaultKind
 import planning.domain.port.outgoing.PlanInternResult
 import planning.domain.protocol.CostCenter
@@ -18,7 +19,7 @@ import java.util.concurrent.atomic.LongAdder
  * - deterministic shard routing
  * - partition-level sealing for bulk drop
  */
-internal class PartitionRegion(
+class PartitionRegion private constructor(
     val id: PartitionId,
     private val maxEntries: Long,
     shardCount: Int,
@@ -34,7 +35,7 @@ internal class PartitionRegion(
     private val shardMask = shardCount - 1
 
     private val shards: Array<L2Shard> = Array(shardCount) {
-        L2Shard(
+        L2Shard.issue(
             owner = this,
             bucketTableCapacity = bucketTableCapacity,
             inflightTableCapacity = inflightTableCapacity,
@@ -74,13 +75,6 @@ internal class PartitionRegion(
         )
     }
 
-    /**
-     * Builder-path admission gate executed after the in-flight slot is acquired.
-     *
-     * This is the proactive capacity checkpoint required by the design:
-     * the expensive build must not start if the region is already sealed/open or
-     * if capacity has already been breached.
-     */
     fun allowBuilderAfterAcquire(session: PlannerSession): Boolean {
         session.step(CostCenter.L2_CAPACITY_CHECK)
 
@@ -95,40 +89,23 @@ internal class PartitionRegion(
         return !circuitOpen.get()
     }
 
-    /**
-     * Called only when an actual new canonical entry was appended to Tier-2.
-     */
     fun onEntryCommitted(session: PlannerSession) {
         entryCount.increment()
-
-        /*
-         * Post-commit governance:
-         * the entry is already published; now we update the survival policy.
-         */
         session.step(CostCenter.L2_CAPACITY_CHECK)
+
         if (isCapacityExceeded()) {
             forceCircuitOpen(session)
         }
     }
 
-    /**
-     * Idempotent circuit-open transition.
-     */
     fun forceCircuitOpen(session: PlannerSession) {
         if (circuitOpen.compareAndSet(false, true)) {
             session.step(CostCenter.L2_CIRCUIT_OPEN_TRANSITION)
         }
     }
 
-    /**
-     * Returns true when new Tier-2 publication is still allowed.
-     */
     fun isPublishAllowed(): Boolean = !closed.get() && !circuitOpen.get()
 
-    /**
-     * Returns true when the caller should stop relying on Tier-2 and fall back
-     * to Domain-level bypass/degrade policy.
-     */
     fun isBypassRequired(): Boolean = closed.get() || circuitOpen.get()
 
     fun close() {
@@ -142,4 +119,76 @@ internal class PartitionRegion(
     }
 
     private fun isCapacityExceeded(): Boolean = entryCount.sum() >= maxEntries
+
+    companion object {
+        @JvmStatic
+        fun issue(
+            id: PartitionId,
+            maxEntries: Long,
+            shardCount: Int,
+            bucketTableCapacity: Int,
+            inflightTableCapacity: Int,
+            maxJoinPolls: Int,
+            joinPollNanos: Long,
+        ): PartitionRegion {
+            validate(
+                maxEntries = maxEntries,
+                shardCount = shardCount,
+                bucketTableCapacity = bucketTableCapacity,
+                inflightTableCapacity = inflightTableCapacity,
+                maxJoinPolls = maxJoinPolls,
+                joinPollNanos = joinPollNanos,
+            )
+
+            return PartitionRegion(
+                id = id,
+                maxEntries = maxEntries,
+                shardCount = shardCount,
+                bucketTableCapacity = bucketTableCapacity,
+                inflightTableCapacity = inflightTableCapacity,
+                maxJoinPolls = maxJoinPolls,
+                joinPollNanos = joinPollNanos,
+            )
+        }
+
+        private fun validate(
+            maxEntries: Long,
+            shardCount: Int,
+            bucketTableCapacity: Int,
+            inflightTableCapacity: Int,
+            maxJoinPolls: Int,
+            joinPollNanos: Long,
+        ) {
+            if (maxEntries <= 0L) {
+                throw PlanningProtocolIntegrityException(
+                    "PartitionRegion.maxEntries must be positive: $maxEntries"
+                )
+            }
+            if (shardCount <= 0 || shardCount.countOneBits() != 1) {
+                throw PlanningProtocolIntegrityException(
+                    "PartitionRegion.shardCount must be a positive power-of-two: $shardCount"
+                )
+            }
+            if (bucketTableCapacity <= 0) {
+                throw PlanningProtocolIntegrityException(
+                    "PartitionRegion.bucketTableCapacity must be positive: $bucketTableCapacity"
+                )
+            }
+            if (inflightTableCapacity <= 0) {
+                throw PlanningProtocolIntegrityException(
+                    "PartitionRegion.inflightTableCapacity must be positive: $inflightTableCapacity"
+                )
+            }
+            if (maxJoinPolls <= 0) {
+                throw PlanningProtocolIntegrityException(
+                    "PartitionRegion.maxJoinPolls must be positive: $maxJoinPolls"
+                )
+            }
+            if (joinPollNanos < 0L) {
+                throw PlanningProtocolIntegrityException(
+                    "PartitionRegion.joinPollNanos must be >= 0: $joinPollNanos"
+                )
+            }
+        }
+    }
 }

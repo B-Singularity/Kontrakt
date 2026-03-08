@@ -1,5 +1,6 @@
 package planning.infrastructure.cache
 
+import planning.domain.exception.PlanningProtocolIntegrityException
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.atomic.LongAdder
 
@@ -9,9 +10,9 @@ import java.util.concurrent.atomic.LongAdder
  * Keeps hot-key contention local and prevents duplicate expensive builds.
  * Wait/degrade/fuel policy belongs to the owning adapter/service layer.
  */
-class InFlightSlot<V : Any>(
-    val future: CompletableFuture<V> = CompletableFuture(),
-    val startedAtNanos: Long = System.nanoTime(),
+class InFlightSlot<V : Any> private constructor(
+    val future: CompletableFuture<V>,
+    val startedAtNanos: Long,
 ) {
     private val waiters = LongAdder()
 
@@ -31,5 +32,23 @@ class InFlightSlot<V : Any>(
         timeoutNanos: Long,
     ): Boolean {
         return nowNanos - startedAtNanos > timeoutNanos
+    }
+
+    companion object {
+        @JvmStatic
+        fun <V : Any> issue(
+            startedAtNanos: Long = System.nanoTime(),
+        ): InFlightSlot<V> {
+            if (startedAtNanos < 0L) {
+                throw PlanningProtocolIntegrityException(
+                    "InFlightSlot.startedAtNanos must be >= 0: $startedAtNanos"
+                )
+            }
+
+            return InFlightSlot(
+                future = CompletableFuture(),
+                startedAtNanos = startedAtNanos,
+            )
+        }
     }
 }

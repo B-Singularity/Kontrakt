@@ -2,6 +2,7 @@ package planning.infrastructure.cache.adapter.outgoing
 
 import ir.plan.node.CanonicalPlanNode
 import ir.plan.signature.PlanCacheKey
+import planning.domain.exception.PlanningProtocolIntegrityException
 import planning.domain.fault.L2FaultKind
 import planning.domain.port.outgoing.InternHandle
 import planning.domain.port.outgoing.PlanInternResult
@@ -21,7 +22,7 @@ import java.util.concurrent.locks.LockSupport
  * - buckets: committed canonical storage
  * - inflight: per-key builder gate
  */
-internal class L2Shard(
+class L2Shard private constructor(
     private val owner: PartitionRegion,
     bucketTableCapacity: Int,
     inflightTableCapacity: Int,
@@ -37,9 +38,6 @@ internal class L2Shard(
         session: PlannerSession,
     ): PlanInternResult {
         try {
-            /*
-             * Step 1: pre-screen exact hit from committed storage.
-             */
             session.step(CostCenter.L2_PRE_SCREEN_GET)
             val bucket = buckets.get(routeKeyBits)
             if (bucket != null) {
@@ -51,23 +49,15 @@ internal class L2Shard(
                 }
             }
 
-            /*
-             * Step 2: acquire the per-key in-flight gate.
-             */
             session.step(CostCenter.L2_INFLIGHT_ACQUIRE)
-            val mySlot = InFlightSlot<CanonicalPlanNode>()
+            val mySlot = InFlightSlot.issue<CanonicalPlanNode>()
             val existing = inflight.putIfAbsent(routeKeyBits, mySlot)
 
             if (existing == null) {
-                /*
-                 * Builder path.
-                 * We own the in-flight slot, but we must still apply the proactive
-                 * governance gate before the expensive build starts.
-                 */
                 if (!owner.allowBuilderAfterAcquire(session)) {
                     session.step(CostCenter.L2_FAULT_CIRCUIT_OPEN)
                     mySlot.future.completeExceptionally(
-                        CancellationException("Tier-2 builder admission rejected."),
+                        CancellationException("Tier-2 builder admission rejected.")
                     )
                     inflight.removeIfSame(routeKeyBits, mySlot)
                     return PlanInternResult.fault(L2FaultKind.CIRCUIT_OPEN)
@@ -79,13 +69,10 @@ internal class L2Shard(
                         routeKeyBits = routeKeyBits,
                         slot = mySlot,
                         session = session,
-                    ),
+                    )
                 )
             }
 
-            /*
-             * Joiner path.
-             */
             return joinInFlight(
                 slot = existing,
                 targetKey = key,
@@ -114,11 +101,7 @@ internal class L2Shard(
 
                 val immediate = slot.future.getNow(null)
                 if (immediate != null) {
-                    return reverifyCommittedWinner(
-                        targetKey = targetKey,
-                        routeKeyBits = routeKeyBits,
-                        session = session,
-                    )
+                    return reverifyCommittedWinner(targetKey, routeKeyBits, session)
                 }
 
                 if (slot.future.isCompletedExceptionally) {
@@ -131,12 +114,6 @@ internal class L2Shard(
                 }
             }
 
-            /*
-             * Bounded wait exhaustion.
-             *
-             * If the region is already open/closed, report CircuitOpen.
-             * Otherwise report Transient so the Domain can degrade to a miss.
-             */
             return if (owner.isBypassRequired()) {
                 session.step(CostCenter.L2_FAULT_CIRCUIT_OPEN)
                 PlanInternResult.fault(L2FaultKind.CIRCUIT_OPEN)
@@ -154,10 +131,6 @@ internal class L2Shard(
         routeKeyBits: Long,
         session: PlannerSession,
     ): PlanInternResult {
-        /*
-         * The future result itself is not trusted as the final correctness seal
-         * because route-key collisions are resolved only by exact full-key match.
-         */
         session.step(CostCenter.L2_BUCKET_SCAN)
 
         val bucket = buckets.get(routeKeyBits)
@@ -180,12 +153,7 @@ internal class L2Shard(
         session: PlannerSession,
     ): PlanInternResult {
         return try {
-            /*
-             * join() is safe here because the future is already completed exceptionally.
-             * We use it only to inspect the terminal cause.
-             */
             slot.future.join()
-
             session.step(CostCenter.L2_FAULT_TRANSIENT)
             PlanInternResult.fault(L2FaultKind.TRANSIENT)
         } catch (e: CancellationException) {
@@ -211,15 +179,10 @@ internal class L2Shard(
         }
     }
 
-    /**
-     * Wakes all in-flight waiters during partition drop.
-     *
-     * This is intentionally linear and used only on the administrative drop path.
-     */
     fun abortAllInFlight() {
         inflight.forEachOccupiedValueForClosedPartitionDrop { slot ->
             slot.future.completeExceptionally(
-                CancellationException("Partition dropped."),
+                CancellationException("Partition dropped.")
             )
         }
     }
@@ -233,17 +196,10 @@ internal class L2Shard(
 
         override fun commit(localNode: CanonicalPlanNode): CanonicalPlanNode {
             try {
-                /*
-                 * A builder may finish after a concurrent drop or open transition.
-                 * In that case, we must not publish into Tier-2 anymore.
-                 *
-                 * Returning localNode is valid because the Domain still needs a
-                 * usable immutable node even when interning is bypassed.
-                 */
                 if (!owner.isPublishAllowed()) {
                     session.step(CostCenter.L2_FAULT_CIRCUIT_OPEN)
                     slot.future.completeExceptionally(
-                        CancellationException("Tier-2 publication rejected after seal/open."),
+                        CancellationException("Tier-2 publication rejected after seal/open.")
                     )
                     return localNode
                 }
@@ -258,9 +214,6 @@ internal class L2Shard(
                 val existingBucket = buckets.putIfAbsent(routeKeyBits, freshBucket)
 
                 if (existingBucket == null) {
-                    /*
-                     * First bucket install is itself a successful canonical commit.
-                     */
                     owner.onEntryCommitted(session)
                     slot.future.complete(localNode)
                     return localNode
@@ -276,11 +229,9 @@ internal class L2Shard(
             } catch (e: L2TableSegmentSaturatedException) {
                 owner.forceCircuitOpen(session)
                 session.step(CostCenter.L2_FAULT_CIRCUIT_OPEN)
-
                 slot.future.completeExceptionally(
-                    CancellationException("Tier-2 publication failed: primitive table saturated."),
+                    CancellationException("Tier-2 publication failed: primitive table saturated.")
                 )
-
                 return localNode
             } catch (e: Throwable) {
                 slot.future.completeExceptionally(e)
@@ -295,6 +246,60 @@ internal class L2Shard(
                 slot.future.completeExceptionally(reason)
             } finally {
                 inflight.removeIfSame(routeKeyBits, slot)
+            }
+        }
+    }
+
+    companion object {
+        @JvmStatic
+        fun issue(
+            owner: PartitionRegion,
+            bucketTableCapacity: Int,
+            inflightTableCapacity: Int,
+            maxJoinPolls: Int,
+            joinPollNanos: Long,
+        ): L2Shard {
+            validate(
+                bucketTableCapacity = bucketTableCapacity,
+                inflightTableCapacity = inflightTableCapacity,
+                maxJoinPolls = maxJoinPolls,
+                joinPollNanos = joinPollNanos,
+            )
+
+            return L2Shard(
+                owner = owner,
+                bucketTableCapacity = bucketTableCapacity,
+                inflightTableCapacity = inflightTableCapacity,
+                maxJoinPolls = maxJoinPolls,
+                joinPollNanos = joinPollNanos,
+            )
+        }
+
+        private fun validate(
+            bucketTableCapacity: Int,
+            inflightTableCapacity: Int,
+            maxJoinPolls: Int,
+            joinPollNanos: Long,
+        ) {
+            if (bucketTableCapacity <= 0) {
+                throw PlanningProtocolIntegrityException(
+                    "L2Shard.bucketTableCapacity must be positive: $bucketTableCapacity"
+                )
+            }
+            if (inflightTableCapacity <= 0) {
+                throw PlanningProtocolIntegrityException(
+                    "L2Shard.inflightTableCapacity must be positive: $inflightTableCapacity"
+                )
+            }
+            if (maxJoinPolls <= 0) {
+                throw PlanningProtocolIntegrityException(
+                    "L2Shard.maxJoinPolls must be positive: $maxJoinPolls"
+                )
+            }
+            if (joinPollNanos < 0L) {
+                throw PlanningProtocolIntegrityException(
+                    "L2Shard.joinPollNanos must be >= 0: $joinPollNanos"
+                )
             }
         }
     }
