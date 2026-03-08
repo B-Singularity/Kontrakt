@@ -14,7 +14,7 @@ import java.util.concurrent.ConcurrentHashMap
  * Top-level routing is intentionally partition-first:
  * regions: ConcurrentHashMap<PartitionId, PartitionRegion>
  *
- * This top-level map is not the hot routing surface.
+ * This map is not the hot routing surface.
  * Hot-path routing by 64-bit plan keys is delegated to primitive shard-local tables.
  */
 class InMemoryPlanInternRepositoryAdapter(
@@ -29,23 +29,23 @@ class InMemoryPlanInternRepositoryAdapter(
     private val regions = ConcurrentHashMap<PartitionId, PartitionRegion>()
 
     init {
-        require(maxEntriesPerPartition > 0L) {
-            "maxEntriesPerPartition must be positive."
+        if (maxEntriesPerPartition <= 0L) {
+            throw IllegalStateException("maxEntriesPerPartition must be positive.")
         }
-        require(shardCount > 0 && shardCount.countOneBits() == 1) {
-            "shardCount must be a positive power-of-two."
+        if (shardCount <= 0 || shardCount.countOneBits() != 1) {
+            throw IllegalStateException("shardCount must be a positive power-of-two.")
         }
-        require(bucketTableCapacity > 0) {
-            "bucketTableCapacity must be positive."
+        if (bucketTableCapacity <= 0) {
+            throw IllegalStateException("bucketTableCapacity must be positive.")
         }
-        require(inflightTableCapacity > 0) {
-            "inflightTableCapacity must be positive."
+        if (inflightTableCapacity <= 0) {
+            throw IllegalStateException("inflightTableCapacity must be positive.")
         }
-        require(maxJoinPolls > 0) {
-            "maxJoinPolls must be positive."
+        if (maxJoinPolls <= 0) {
+            throw IllegalStateException("maxJoinPolls must be positive.")
         }
-        require(joinPollNanos >= 0L) {
-            "joinPollNanos must be >= 0."
+        if (joinPollNanos < 0L) {
+            throw IllegalStateException("joinPollNanos must be >= 0.")
         }
     }
 

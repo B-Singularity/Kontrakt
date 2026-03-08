@@ -51,7 +51,7 @@ internal class PartitionRegion(
         if (closed.get()) {
             session.step(CostCenter.L2_BYPASS_READ)
             session.step(CostCenter.L2_FAULT_CIRCUIT_OPEN)
-            return PlanInternResult.Fault(L2FaultKind.CIRCUIT_OPEN)
+            return PlanInternResult.fault(L2FaultKind.CIRCUIT_OPEN)
         }
 
         if (isCapacityExceeded()) {
@@ -61,7 +61,7 @@ internal class PartitionRegion(
         if (circuitOpen.get()) {
             session.step(CostCenter.L2_BYPASS_READ)
             session.step(CostCenter.L2_FAULT_CIRCUIT_OPEN)
-            return PlanInternResult.Fault(L2FaultKind.CIRCUIT_OPEN)
+            return PlanInternResult.fault(L2FaultKind.CIRCUIT_OPEN)
         }
 
         session.step(CostCenter.L2_SHARD_ROUTE)

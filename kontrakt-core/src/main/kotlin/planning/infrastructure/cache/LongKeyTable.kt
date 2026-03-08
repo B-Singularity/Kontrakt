@@ -1,5 +1,6 @@
 package planning.infrastructure.cache
 
+import planning.domain.exception.PlanningProtocolIntegrityException
 import java.util.concurrent.atomic.AtomicIntegerArray
 import java.util.concurrent.atomic.AtomicLongArray
 import java.util.concurrent.atomic.AtomicReferenceArray
@@ -15,26 +16,32 @@ import java.util.concurrent.locks.ReentrantLock
  * - writers are segment-linearizable
  * - correctness does not depend on read linearizability
  *
- * This is a fixed-capacity variant. Capacity governance belongs to the owning
- * shard/region adapter, not to this primitive itself.
+ * This is a fixed-capacity variant.
+ * Capacity governance belongs to the owning shard/region adapter, not to this primitive itself.
+ *
+ * Normative invariants:
+ * - keyBits == 0L is forbidden (EMPTY sentinel is reserved)
+ * - publication is State-Last:
+ *   values.set(i, v) -> keysBits.set(i, k) -> states.set(i, OCCUPIED)
+ * - readers MUST consult state first
+ * - writers are serialized per segment by stripe lock
+ *
+ * This primitive is NOT a general-purpose utility.
+ * It is a Planning-protocol-specific machine for Tier-2 hot-path routing.
+ * Therefore, protocol-integrity failures are surfaced as
+ * [PlanningProtocolIntegrityException].
  */
-class LongKeyTable<V : Any>(
+class LongKeyTable<V : Any> private constructor(
     capacity: Int,
-    stripeCount: Int = 64,
+    stripeCount: Int,
 ) {
-    companion object {
-        private const val STATE_EMPTY = 0
-        private const val STATE_OCCUPIED = 1
-        private const val STATE_TOMBSTONE = 2
-    }
+    private val tableCapacity: Int = capacity
+    private val tableMask: Int = capacity - 1
 
-    private val tableCapacity = capacity
-    private val tableMask = capacity - 1
-
-    private val stripesCount = stripeCount
-    private val segmentSize = capacity / stripeCount
-    private val segmentMask = segmentSize - 1
-    private val segmentShift = Integer.numberOfTrailingZeros(segmentSize)
+    private val stripesCount: Int = stripeCount
+    private val segmentSize: Int = capacity / stripeCount
+    private val segmentMask: Int = segmentSize - 1
+    private val segmentShift: Int = Integer.numberOfTrailingZeros(segmentSize)
 
     private val keysBits = AtomicLongArray(capacity)
     private val states = AtomicIntegerArray(capacity)
@@ -44,28 +51,25 @@ class LongKeyTable<V : Any>(
 
     /**
      * Telemetry / governance hint only.
-     * Do not treat this as a linearization oracle.
+     *
+     * This is not a linearization oracle.
+     * It is acceptable for this counter to lag or race slightly relative to exact table state.
      */
     private val occupiedCount = LongAdder()
 
     val approxSize: Long
         get() = occupiedCount.sum()
 
-    init {
-        require(capacity > 0 && (capacity and tableMask) == 0) {
-            "capacity must be power-of-two"
-        }
-        require(stripeCount > 0 && (stripeCount and (stripeCount - 1)) == 0) {
-            "stripeCount must be power-of-two"
-        }
-        require(capacity % stripeCount == 0) {
-            "capacity must be divisible by stripeCount"
-        }
-        require(segmentSize >= 8) {
-            "segmentSize must be >= 8"
-        }
-    }
-
+    /**
+     * Lock-free bounded read.
+     *
+     * Reader rule:
+     * - consult state first
+     * - only if state == OCCUPIED may key/value be read
+     *
+     * A racy miss is acceptable by design.
+     * Correctness does not depend on read linearizability.
+     */
     fun get(keyBits: Long): V? {
         requireNonZeroKey(keyBits)
 
@@ -78,10 +82,19 @@ class LongKeyTable<V : Any>(
             val idx = segmentBase + ((offset + i) and segmentMask)
             val state = states.get(idx)
 
-            if (state == STATE_EMPTY) return null
+            if (state == STATE_EMPTY) {
+                return null
+            }
+
             if (state == STATE_OCCUPIED && keysBits.get(idx) == keyBits) {
                 @Suppress("UNCHECKED_CAST")
                 return values.get(idx) as V?
+            }
+
+            if (state != STATE_EMPTY && state != STATE_OCCUPIED && state != STATE_TOMBSTONE) {
+                throw PlanningProtocolIntegrityException(
+                    "LongKeyTable state corruption: unknown state=$state at index=$idx."
+                )
             }
         }
 
@@ -92,6 +105,10 @@ class LongKeyTable<V : Any>(
      * Returns:
      * - existing value if key already exists
      * - null if newly installed
+     *
+     * Writer rule:
+     * - linearized per segment under stripe lock
+     * - publication MUST be State-Last
      */
     fun putIfAbsent(keyBits: Long, value: V): V? {
         requireNonZeroKey(keyBits)
@@ -125,7 +142,15 @@ class LongKeyTable<V : Any>(
                     }
 
                     STATE_TOMBSTONE -> {
-                        if (firstTombstone < 0) firstTombstone = idx
+                        if (firstTombstone < 0) {
+                            firstTombstone = idx
+                        }
+                    }
+
+                    else -> {
+                        throw PlanningProtocolIntegrityException(
+                            "LongKeyTable state corruption: unknown state=${states.get(idx)} at index=$idx."
+                        )
                     }
                 }
             }
@@ -147,6 +172,12 @@ class LongKeyTable<V : Any>(
         }
     }
 
+    /**
+     * Removes the entry only if the current stored reference is exactly [expectedValue].
+     *
+     * Removal is linearized under the segment stripe lock.
+     * State transitions to TOMBSTONE; the key slot is left intact intentionally.
+     */
     fun removeIfSame(keyBits: Long, expectedValue: V): Boolean {
         requireNonZeroKey(keyBits)
 
@@ -162,13 +193,20 @@ class LongKeyTable<V : Any>(
                 val idx = segmentBase + ((offset + i) and segmentMask)
                 val state = states.get(idx)
 
-                if (state == STATE_EMPTY) return false
+                if (state == STATE_EMPTY) {
+                    return false
+                }
 
                 if (state == STATE_OCCUPIED && keysBits.get(idx) == keyBits) {
                     @Suppress("UNCHECKED_CAST")
                     val actual = values.get(idx) as V?
 
                     if (actual === expectedValue) {
+                        /*
+                         * Tombstone commit:
+                         * - mark tombstone first so future readers no longer treat the slot as live
+                         * - clear reference afterwards to release the payload strongly
+                         */
                         states.set(idx, STATE_TOMBSTONE)
                         values.set(idx, null)
                         occupiedCount.decrement()
@@ -176,6 +214,12 @@ class LongKeyTable<V : Any>(
                     }
 
                     return false
+                }
+
+                if (state != STATE_EMPTY && state != STATE_OCCUPIED && state != STATE_TOMBSTONE) {
+                    throw PlanningProtocolIntegrityException(
+                        "LongKeyTable state corruption: unknown state=$state at index=$idx."
+                    )
                 }
             }
 
@@ -189,15 +233,23 @@ class LongKeyTable<V : Any>(
      * Restricted lifecycle hook for adapter-owned partition drop.
      *
      * Must be called only after the owning region is already closed.
+     * This path is intentionally linear and not a hot-path operation.
      */
-    internal inline fun forEachOccupiedValueForClosedPartitionDrop(
+    internal fun forEachOccupiedValueForClosedPartitionDrop(
         action: (V) -> Unit,
     ) {
         for (i in 0 until tableCapacity) {
-            if (states.get(i) == STATE_OCCUPIED) {
+            val state = states.get(i)
+            if (state == STATE_OCCUPIED) {
                 @Suppress("UNCHECKED_CAST")
                 val value = values.get(i) as V?
-                if (value != null) action(value)
+                if (value != null) {
+                    action(value)
+                }
+            } else if (state != STATE_EMPTY && state != STATE_TOMBSTONE) {
+                throw PlanningProtocolIntegrityException(
+                    "LongKeyTable state corruption: unknown state=$state at index=$i."
+                )
             }
         }
     }
@@ -205,7 +257,8 @@ class LongKeyTable<V : Any>(
     /**
      * Internal mixer for table distribution only.
      *
-     * NOT the protocol SSOT hash.
+     * This is NOT the protocol SSOT hash.
+     * It exists solely to spread already-derived route keys across table indices.
      */
     private fun mixForIndex(keyBits: Long): Int {
         var h = keyBits
@@ -217,6 +270,16 @@ class LongKeyTable<V : Any>(
         return h.toInt() and Int.MAX_VALUE
     }
 
+    /**
+     * State-Last publication.
+     *
+     * Publication order is normative:
+     * 1. values.set
+     * 2. keysBits.set
+     * 3. states.set(OCCUPIED)
+     *
+     * Readers MUST consult state first.
+     */
     private fun publishOccupied(idx: Int, keyBits: Long, value: V) {
         values.set(idx, value)
         keysBits.set(idx, keyBits)
@@ -236,8 +299,61 @@ class LongKeyTable<V : Any>(
         startIdx and segmentMask
 
     private fun requireNonZeroKey(keyBits: Long) {
-        require(keyBits != 0L) {
-            "0L is reserved as EMPTY sentinel; upstream must remap deterministically."
+        if (keyBits == 0L) {
+            throw PlanningProtocolIntegrityException(
+                "0L is reserved as EMPTY sentinel; upstream must remap deterministically."
+            )
+        }
+    }
+
+    companion object {
+        private const val STATE_EMPTY = 0
+        private const val STATE_OCCUPIED = 1
+        private const val STATE_TOMBSTONE = 2
+
+        /**
+         * Canonical factory for LongKeyTable issuance.
+         *
+         * We intentionally centralize layout validation here so that
+         * "table existence eligibility" is decided before instance construction.
+         */
+        @JvmStatic
+        fun <V : Any> issue(
+            capacity: Int,
+            stripeCount: Int = 64,
+        ): LongKeyTable<V> {
+            validateLayout(capacity, stripeCount)
+            return LongKeyTable(capacity, stripeCount)
+        }
+
+        private fun validateLayout(
+            capacity: Int,
+            stripeCount: Int,
+        ) {
+            if (capacity <= 0 || (capacity and (capacity - 1)) != 0) {
+                throw PlanningProtocolIntegrityException(
+                    "LongKeyTable capacity must be a positive power-of-two: capacity=$capacity"
+                )
+            }
+
+            if (stripeCount <= 0 || (stripeCount and (stripeCount - 1)) != 0) {
+                throw PlanningProtocolIntegrityException(
+                    "LongKeyTable stripeCount must be a positive power-of-two: stripeCount=$stripeCount"
+                )
+            }
+
+            if (capacity % stripeCount != 0) {
+                throw PlanningProtocolIntegrityException(
+                    "LongKeyTable capacity must be divisible by stripeCount: capacity=$capacity, stripeCount=$stripeCount"
+                )
+            }
+
+            val segmentSize = capacity / stripeCount
+            if (segmentSize < 8) {
+                throw PlanningProtocolIntegrityException(
+                    "LongKeyTable segmentSize must be >= 8: segmentSize=$segmentSize"
+                )
+            }
         }
     }
 }

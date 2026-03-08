@@ -5,14 +5,13 @@ import kontrakt.planning.domain.protocol.PrimitiveHash
 import kontrakt.planning.domain.protocol.SentinelRemapper
 import planning.domain.protocol.CostCenter
 import planning.domain.session.PlannerSession
-import java.nio.charset.StandardCharsets
 
 /**
  * Adapter-private deterministic lowering from the full PlanCacheKey tuple
  * to a primitive 64-bit routing key for hot-path Tier-2 tables.
  *
  * Why this helper exists in Phase 3:
- * - the L2 adapter constitutionally requires primitive 64-bit routing
+ * - Tier-2 constitutionally requires primitive 64-bit hot routing
  * - PlanKeyFactory belongs to a later phase
  * - therefore Phase 3 needs a temporary but deterministic lowering path
  *
@@ -21,16 +20,6 @@ import java.nio.charset.StandardCharsets
  * - include partition and equality dimensions
  * - use deterministic hashing only
  * - remap reserved sentinel values deterministically
- *
- * IMPORTANT:
- * This helper currently uses the stable textual form of partition/equality keys
- * because dedicated canonical-byte APIs are not yet available in the provided types.
- * Once those types expose direct canonical bytes, replace only the string-lowering
- * portion while preserving:
- * - field order
- * - length-prefix framing
- * - hash algorithm
- * - remap policy
  */
 internal object PlanCacheRouteKeyDeriver {
 
@@ -41,8 +30,8 @@ internal object PlanCacheRouteKeyDeriver {
         session.step(CostCenter.PLAN_CACHE_KEY_MATERIALIZE)
         session.step(CostCenter.CANONICAL_SIGNATURE_MATERIALIZE)
 
-        val partitionBytes = key.partitionKey.toString().toByteArray(StandardCharsets.UTF_8)
-        val equalityBytes = key.equalityKey.toString().toByteArray(StandardCharsets.UTF_8)
+        val partitionBytes = key.partitionKey.value.encodeToByteArray()
+        val equalityBytes = key.equalityKey.bytesCopy()
 
         val totalSize =
             (5 * Long.SIZE_BYTES) +
@@ -61,16 +50,27 @@ internal object PlanCacheRouteKeyDeriver {
         offset = putBytesLengthPrefixed(payload, offset, partitionBytes)
         putBytesLengthPrefixed(payload, offset, equalityBytes)
 
-        val raw = PrimitiveHash.hash64(payload, key.normalizationVersion)
+        val seed = deriveSeed(key)
+        val raw = PrimitiveHash.hash64(payload, seed)
 
         /*
-         * The L2 key generation path must route through SentinelRemapper.
+         * The Tier-2 key path must route through SentinelRemapper.
          * We seal both reserved spaces:
-         * - -1L : reserved by other protocol surfaces (+INF sentinel family)
+         * - -1L : reserved sentinel family
          * -  0L : reserved by LongKeyTable as EMPTY
          */
         val nonMax = SentinelRemapper.remapNonMax(raw, key.edgeOrderingVersion)
         return SentinelRemapper.remapNonZero(nonMax, key.normalizationVersion)
+    }
+
+    private fun deriveSeed(key: PlanCacheKey): Long {
+        var seed = 0L
+        seed = PrimitiveHash.mix64(seed xor key.workAccountingVersion)
+        seed = PrimitiveHash.mix64(seed xor key.normalizationVersion)
+        seed = PrimitiveHash.mix64(seed xor key.edgeOrderingVersion)
+        seed = PrimitiveHash.mix64(seed xor key.capabilityProfileVersion)
+        seed = PrimitiveHash.mix64(seed xor key.entropyVersion)
+        return seed
     }
 
     private fun putBytesLengthPrefixed(

@@ -28,8 +28,8 @@ internal class L2Shard(
     private val maxJoinPolls: Int,
     private val joinPollNanos: Long,
 ) {
-    private val buckets = LongKeyTable<L2Bucket>(capacity = bucketTableCapacity)
-    private val inflight = LongKeyTable<InFlightSlot<CanonicalPlanNode>>(capacity = inflightTableCapacity)
+    private val buckets = LongKeyTable.issue<L2Bucket>(capacity = bucketTableCapacity)
+    private val inflight = LongKeyTable.issue<InFlightSlot<CanonicalPlanNode>>(capacity = inflightTableCapacity)
 
     fun getOrIntern(
         key: PlanCacheKey,
@@ -47,7 +47,7 @@ internal class L2Shard(
                 val exact = bucket.findExact(key)
                 if (exact != null) {
                     session.step(CostCenter.L2_HIT)
-                    return PlanInternResult.Hit(exact)
+                    return PlanInternResult.hit(exact)
                 }
             }
 
@@ -70,10 +70,10 @@ internal class L2Shard(
                         CancellationException("Tier-2 builder admission rejected."),
                     )
                     inflight.removeIfSame(routeKeyBits, mySlot)
-                    return PlanInternResult.Fault(L2FaultKind.CIRCUIT_OPEN)
+                    return PlanInternResult.fault(L2FaultKind.CIRCUIT_OPEN)
                 }
 
-                return PlanInternResult.Miss(
+                return PlanInternResult.miss(
                     L2InternHandle(
                         key = key,
                         routeKeyBits = routeKeyBits,
@@ -95,7 +95,7 @@ internal class L2Shard(
         } catch (e: L2TableSegmentSaturatedException) {
             owner.forceCircuitOpen(session)
             session.step(CostCenter.L2_FAULT_CIRCUIT_OPEN)
-            return PlanInternResult.Fault(L2FaultKind.CIRCUIT_OPEN)
+            return PlanInternResult.fault(L2FaultKind.CIRCUIT_OPEN)
         }
     }
 
@@ -139,10 +139,10 @@ internal class L2Shard(
              */
             return if (owner.isBypassRequired()) {
                 session.step(CostCenter.L2_FAULT_CIRCUIT_OPEN)
-                PlanInternResult.Fault(L2FaultKind.CIRCUIT_OPEN)
+                PlanInternResult.fault(L2FaultKind.CIRCUIT_OPEN)
             } else {
                 session.step(CostCenter.L2_FAULT_TRANSIENT)
-                PlanInternResult.Fault(L2FaultKind.TRANSIENT)
+                PlanInternResult.fault(L2FaultKind.TRANSIENT)
             }
         } finally {
             slot.decrementWaiters()
@@ -165,13 +165,13 @@ internal class L2Shard(
 
         return if (exact != null) {
             session.step(CostCenter.L2_HIT)
-            PlanInternResult.Hit(exact)
+            PlanInternResult.hit(exact)
         } else if (owner.isBypassRequired()) {
             session.step(CostCenter.L2_FAULT_CIRCUIT_OPEN)
-            PlanInternResult.Fault(L2FaultKind.CIRCUIT_OPEN)
+            PlanInternResult.fault(L2FaultKind.CIRCUIT_OPEN)
         } else {
             session.step(CostCenter.L2_FAULT_TRANSIENT)
-            PlanInternResult.Fault(L2FaultKind.TRANSIENT)
+            PlanInternResult.fault(L2FaultKind.TRANSIENT)
         }
     }
 
@@ -186,31 +186,27 @@ internal class L2Shard(
              */
             slot.future.join()
 
-            /*
-             * Defensive fallback. A correctly completed-exceptional future should
-             * not reach this path normally.
-             */
             session.step(CostCenter.L2_FAULT_TRANSIENT)
-            PlanInternResult.Fault(L2FaultKind.TRANSIENT)
+            PlanInternResult.fault(L2FaultKind.TRANSIENT)
         } catch (e: CancellationException) {
             session.step(CostCenter.L2_FAULT_CIRCUIT_OPEN)
-            PlanInternResult.Fault(L2FaultKind.CIRCUIT_OPEN)
+            PlanInternResult.fault(L2FaultKind.CIRCUIT_OPEN)
         } catch (e: CompletionException) {
             val cause = e.cause
             if (cause is CancellationException || owner.isBypassRequired()) {
                 session.step(CostCenter.L2_FAULT_CIRCUIT_OPEN)
-                PlanInternResult.Fault(L2FaultKind.CIRCUIT_OPEN)
+                PlanInternResult.fault(L2FaultKind.CIRCUIT_OPEN)
             } else {
                 session.step(CostCenter.L2_FAULT_TRANSIENT)
-                PlanInternResult.Fault(L2FaultKind.TRANSIENT)
+                PlanInternResult.fault(L2FaultKind.TRANSIENT)
             }
         } catch (e: Throwable) {
             if (owner.isBypassRequired()) {
                 session.step(CostCenter.L2_FAULT_CIRCUIT_OPEN)
-                PlanInternResult.Fault(L2FaultKind.CIRCUIT_OPEN)
+                PlanInternResult.fault(L2FaultKind.CIRCUIT_OPEN)
             } else {
                 session.step(CostCenter.L2_FAULT_TRANSIENT)
-                PlanInternResult.Fault(L2FaultKind.TRANSIENT)
+                PlanInternResult.fault(L2FaultKind.TRANSIENT)
             }
         }
     }

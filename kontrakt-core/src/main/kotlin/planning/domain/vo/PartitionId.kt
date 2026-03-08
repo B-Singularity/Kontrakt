@@ -1,5 +1,7 @@
 package planning.domain.vo
 
+import planning.domain.exception.PlanningProtocolIntegrityException
+
 /**
  * Domain-safe physical partition boundary for Tier-2 storage.
  *
@@ -10,12 +12,23 @@ package planning.domain.vo
  * - shard ownership
  */
 @JvmInline
-value class PartitionId(val value: String) {
-    init {
-        require(value.isNotBlank()) {
-            "PartitionId must not be blank."
-        }
-    }
+value class PartitionId private constructor(val value: String) {
 
     override fun toString(): String = value
+
+    companion object {
+        /**
+         * Canonical factory for PartitionId.
+         *
+         * We intentionally avoid require()/check() to preserve consistent
+         * protocol-specific exception semantics.
+         */
+        @JvmStatic
+        fun issue(value: String): PartitionId {
+            if (value.isBlank()) {
+                throw PlanningProtocolIntegrityException("PartitionId must not be blank.")
+            }
+            return PartitionId(value)
+        }
+    }
 }

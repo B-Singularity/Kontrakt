@@ -10,7 +10,7 @@ import planning.domain.vo.PartitionId
  * Outbound port for Tier-2 structural interning.
  *
  * The Domain Core owns the policy:
- * - Hit(node)              -> reuse exact canonical instance
+ * - Hit(node)              -> reuse the exact canonical instance
  * - Miss(handle)           -> build locally, then publish through the handle
  * - Fault(TRANSIENT)       -> degrade to miss
  * - Fault(CIRCUIT_OPEN)    -> bypass Tier-2 for the remainder of the session
@@ -30,15 +30,21 @@ interface PlanInternRepository {
 }
 
 /**
- * Result of an interning attempt.
+ * Result of a Tier-2 interning attempt.
+ *
+ * This is intentionally modeled as protocol state, not as a data record.
+ * We do NOT want copy()/componentN()/structural value semantics here.
  */
 sealed interface PlanInternResult {
+
     /**
      * Exact canonical instance already exists in Tier-2.
      */
-    data class Hit(
+    class Hit internal constructor(
         val node: CanonicalPlanNode,
-    ) : PlanInternResult
+    ) : PlanInternResult {
+        override fun toString(): String = "PlanInternResult.Hit(node=$node)"
+    }
 
     /**
      * The caller won the in-flight gate and is now the designated builder.
@@ -47,18 +53,28 @@ sealed interface PlanInternResult {
      * - handle.commit(localNode)
      * - handle.abort(reason)
      */
-    data class Miss(
+    class Miss internal constructor(
         val handle: InternHandle,
-    ) : PlanInternResult
+    ) : PlanInternResult {
+        override fun toString(): String = "PlanInternResult.Miss"
+    }
 
     /**
      * Governance signal from the adapter.
      *
      * Semantics are defined solely by [L2FaultKind].
      */
-    data class Fault(
+    class Fault internal constructor(
         val kind: L2FaultKind,
-    ) : PlanInternResult
+    ) : PlanInternResult {
+        override fun toString(): String = "PlanInternResult.Fault(kind=$kind)"
+    }
+
+    companion object {
+        internal fun hit(node: CanonicalPlanNode): PlanInternResult = Hit(node)
+        internal fun miss(handle: InternHandle): PlanInternResult = Miss(handle)
+        internal fun fault(kind: L2FaultKind): PlanInternResult = Fault(kind)
+    }
 }
 
 /**

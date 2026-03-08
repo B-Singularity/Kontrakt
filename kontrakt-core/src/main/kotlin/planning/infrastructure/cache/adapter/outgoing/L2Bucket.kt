@@ -35,12 +35,12 @@ internal class L2Bucket(
      * - winner   : the exact canonical instance to return
      * - inserted : true iff a new canonical entry was appended
      */
-    internal data class PutResult(
+    internal class PutResult(
         val winner: CanonicalPlanNode,
         val inserted: Boolean,
     )
 
-    private data class Entry(
+    private class Entry(
         val key: PlanCacheKey,
         val node: CanonicalPlanNode,
         val approxBytes: Int,
