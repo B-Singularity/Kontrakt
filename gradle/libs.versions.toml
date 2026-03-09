@@ -1,7 +1,7 @@
 [versions]
 kotlin = "2.3.0"
 junit = "6.0.2"
-ktlint-gradle = "14.0.1"
+ktlint-gradle = "14.1.0"
 classgraph = "4.8.184"
 kotlinx-coroutines = "1.10.2"
 slf4j = "2.0.17"
