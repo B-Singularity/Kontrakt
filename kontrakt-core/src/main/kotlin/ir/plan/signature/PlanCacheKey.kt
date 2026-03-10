@@ -8,12 +8,18 @@ import java.util.Objects
 /**
  * Deterministic cache key for canonical plans.
  *
- * Requirements:
- * - MUST include all versioning fields that affect plan semantics.
- * - MUST include partition and equality keys.
- * - MUST be immutable and have complete equals/hashCode.
+ * Semantics:
+ * - Exact equality is defined by the full 7-tuple:
+ *   workAccountingVersion, normalizationVersion, edgeOrderingVersion,
+ *   capabilityProfileVersion, entropyVersion, partitionKey, equalityKey.
  *
- * If any field is omitted, cache pollution and silent plan mismatch becomes possible.
+ * Routing:
+ * - [route64] is a deterministic primitive routing artifact for Tier-2 hot paths.
+ * - It MUST be derived from the same semantic tuple, but it does NOT participate in equality.
+ *
+ * Rationale:
+ * - exact-match correctness belongs to the full tuple
+ * - fast routing belongs to the primitive route key
  */
 class PlanCacheKey private constructor(
     val workAccountingVersion: Long,
@@ -22,7 +28,8 @@ class PlanCacheKey private constructor(
     val capabilityProfileVersion: Long,
     val entropyVersion: Long,
     val partitionKey: CanonicalIdentifier,
-    val equalityKey: CanonicalSignature
+    val equalityKey: CanonicalSignature,
+    val route64: Long,
 ) {
 
     override fun equals(other: Any?): Boolean {
@@ -38,6 +45,12 @@ class PlanCacheKey private constructor(
                 equalityKey == other.equalityKey
     }
 
+    /**
+     * Hash code follows exact-match semantics, not routing semantics.
+     *
+     * This intentionally excludes [route64] so that equality and hashCode remain aligned
+     * with the full exact-match tuple.
+     */
     override fun hashCode(): Int = Objects.hash(
         workAccountingVersion,
         normalizationVersion,
@@ -45,14 +58,23 @@ class PlanCacheKey private constructor(
         capabilityProfileVersion,
         entropyVersion,
         partitionKey,
-        equalityKey
+        equalityKey,
     )
 
     override fun toString(): String =
-        "PlanCacheKey(w=$workAccountingVersion,n=$normalizationVersion,e=$edgeOrderingVersion," +
-                "c=$capabilityProfileVersion,r=$entropyVersion,partition=$partitionKey,eq=$equalityKey)"
+        "PlanCacheKey(" +
+                "w=$workAccountingVersion," +
+                "n=$normalizationVersion," +
+                "e=$edgeOrderingVersion," +
+                "c=$capabilityProfileVersion," +
+                "r=$entropyVersion," +
+                "partition=$partitionKey," +
+                "eq=$equalityKey," +
+                "route64=$route64" +
+                ")"
 
     companion object {
+        @JvmStatic
         fun issue(
             workAccountingVersion: Long,
             normalizationVersion: Long,
@@ -60,16 +82,18 @@ class PlanCacheKey private constructor(
             capabilityProfileVersion: Long,
             entropyVersion: Long,
             partitionKey: CanonicalIdentifier,
-            equalityKey: CanonicalSignature
+            equalityKey: CanonicalSignature,
+            route64: Long,
         ): PlanCacheKey {
             return PlanCacheKey(
-                workAccountingVersion,
-                normalizationVersion,
-                edgeOrderingVersion,
-                capabilityProfileVersion,
-                entropyVersion,
-                partitionKey,
-                equalityKey
+                workAccountingVersion = workAccountingVersion,
+                normalizationVersion = normalizationVersion,
+                edgeOrderingVersion = edgeOrderingVersion,
+                capabilityProfileVersion = capabilityProfileVersion,
+                entropyVersion = entropyVersion,
+                partitionKey = partitionKey,
+                equalityKey = equalityKey,
+                route64 = route64,
             )
         }
     }

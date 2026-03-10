@@ -43,6 +43,14 @@ class CanonicalIdentifier private constructor(val value: String) : Comparable<Ca
     override fun toString(): String = value
 
     companion object {
+        @JvmStatic
+        fun issue(value: String): CanonicalIdentifier {
+            if (!Normalizer.isNormalized(value, Normalizer.Form.NFC)) {
+                throw IrProtocolViolationException("CanonicalIdentifier requires NFC.")
+            }
+            return CanonicalIdentifier(value)
+        }
+
         /**
          * Trusted boundary constructor.
          *

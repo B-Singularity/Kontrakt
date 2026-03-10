@@ -71,3 +71,93 @@ class PlanningProtocolDecodingException(message: String, cause: Throwable? = nul
 class FuelExhaustedException(msg: String) : KontraktException(msg) {
     override val domain: String = "PLANNING_RUNTIME"
 }
+
+
+/**
+ * Machine-readable domain fault attribution used by planning diagnostics.
+ */
+enum class FaultKind {
+    USER_MODEL_INVALID,
+    CAPABILITY_RESTRICTED,
+    FRAMEWORK_INVARIANT_BROKEN,
+    RESOURCE_EXHAUSTED,
+}
+
+/**
+ * Root for planning-domain failures that are neither pure protocol boot failures
+ * nor infrastructure-local exceptions.
+ */
+open class PlanningDomainException(
+    message: String,
+    cause: Throwable? = null,
+) : KontraktException(message, cause) {
+    override val domain: String = "PLANNING_DOMAIN"
+}
+
+/**
+ * Runtime invariant failure inside the planner execution machine.
+ *
+ * This class intentionally replaces generic IllegalStateException / UnsupportedOperationException
+ * within the planning core.
+ */
+class PlanningRuntimeInvariantException(
+    message: String,
+    cause: Throwable? = null,
+) : KontraktException(message, cause) {
+    override val domain: String = "PLANNING_RUNTIME"
+}
+
+/**
+ * Raised when a user/schema-side component violates canonical key assembly rules.
+ */
+class InvalidCanonicalKeyComponentException(
+    val component: String,
+    val reason: String,
+    val faultKind: FaultKind = FaultKind.USER_MODEL_INVALID,
+) : PlanningDomainException(
+    message = "Invalid canonical key component '$component': $reason"
+)
+
+/**
+ * Raised when CanonicalEdgeKey collision is detected inside the Active Member Set.
+ */
+class AmbiguousEdgeKeyException(
+    val key: Long,
+    val faultKind: FaultKind,
+    val evidence: List<String>,
+) : PlanningDomainException(
+    message = "Ambiguous CanonicalEdgeKey: key=$key evidence=$evidence"
+)
+
+/**
+ * Raised when EntropyTargetKey collision is detected inside the Active Member Set.
+ */
+class AmbiguousEntropyTargetKeyException(
+    val key: Long,
+    val faultKind: FaultKind,
+    val evidence: List<String>,
+) : PlanningDomainException(
+    message = "Ambiguous EntropyTargetKey: key=$key evidence=$evidence"
+)
+
+/**
+ * Raised when deterministic cycle breaking fails after Stage-1 / Stage-2 attempts.
+ */
+class CycleDetectedException(
+    val faultKind: FaultKind,
+    val capabilityDemotions: List<String>,
+    val truncated: Boolean,
+) : PlanningDomainException(
+    message = "Deterministic cycle break failed. truncated=$truncated demotions=$capabilityDemotions"
+)
+
+/**
+ * Raised when a hard semantic/resource cap is exceeded.
+ */
+class CapacityExceededException(
+    val limitType: String,
+    val value: Long,
+    val faultKind: FaultKind = FaultKind.RESOURCE_EXHAUSTED,
+) : PlanningDomainException(
+    message = "Capacity exceeded: limitType=$limitType value=$value"
+)

@@ -1,42 +1,68 @@
 package planning.domain.session
 
 /**
- * [Internal Primitive] Transactional snapshot for backtracking.
+ * Transactional snapshot for backtracking.
  *
- * Snapshot scope (fixed list):
- * 1) stackPointer
- * 2) nodeId watermark (indexer.size)
- * 3) indexer undo pointer
- * 4) signature slab pointer
+ * Responsibility:
+ * - capture ONLY rollback-relevant state
+ * - restore ONLY rollback-relevant state
  *
- * Invariant:
- * - Budget counters MUST be monotonic and MUST NOT be rolled back.
+ * It MUST NOT carry execution semantics such as:
+ * - frame kind
+ * - type reference
+ * - member cursor
+ * - edge context
+ *
+ * Important:
+ * - monotonic physical/semantic counters are NOT part of this snapshot
+ * - the "soft checkpoint" below is a frame-local planner checkpoint,
+ *   not the session-global semantic budget counter
  */
-class TransactionalFrame {
+internal class TransactionalFrame private constructor() {
     private var savedStackPointer: Int = 0
     private var savedNodeCount: Int = 0
     private var savedIndexerUndoPtr: Int = 0
     private var savedSigPtr: Int = 0
 
+    // Frame-local rollback checkpoints
+    private var savedSoftCheckpoint: Long = 0L
+    private var savedPlaceholderCounter: Int = 0
+    private var savedBuilderLogPos: Int = 0
+    private var savedCacheLogPos: Int = 0
+
     fun snap(session: PlannerSession) {
-        this.savedStackPointer = session.structures.stackPointer
-        this.savedNodeCount = session.indexer.size
-        this.savedIndexerUndoPtr = session.indexer.snap()
-        this.savedSigPtr = session.indexer.currentSigPtr()
+        savedStackPointer = session.structures.stackPointer
+        savedNodeCount = session.indexer.size
+        savedIndexerUndoPtr = session.indexer.snap()
+        savedSigPtr = session.indexer.currentSigPtr()
+
+        savedSoftCheckpoint = session.currentSoftCheckpoint()
+        savedPlaceholderCounter = session.currentPlaceholderCounter()
+        savedBuilderLogPos = session.currentBuilderLogPos()
+        savedCacheLogPos = session.currentCacheLogPos()
     }
 
     fun rollback(session: PlannerSession) {
-        // 1) Restore stack pointer and clear GreyMap entries for popped nodes.
         val structures = session.structures
-        while (structures.stackPointer > this.savedStackPointer) {
+
+        while (structures.stackPointer > savedStackPointer) {
             val poppedNodeId = structures.activeStack[--structures.stackPointer]
             structures.depthOfNodeId[poppedNodeId] = 0
         }
 
-        // 2) Restore sparse table via undo log replay (metered).
-        session.performIndexerRollback(this.savedIndexerUndoPtr)
+        session.performIndexerRollback(savedIndexerUndoPtr)
+        session.indexer.rollbackCount(savedNodeCount, savedSigPtr)
 
-        // 3) Restore dense watermarks (logical free).
-        session.indexer.rollbackCount(this.savedNodeCount, this.savedSigPtr)
+        session.restoreCheckpointState(
+            softCheckpoint = savedSoftCheckpoint,
+            placeholderCounter = savedPlaceholderCounter,
+            builderLogPos = savedBuilderLogPos,
+            cacheLogPos = savedCacheLogPos,
+        )
+    }
+
+    companion object {
+        @JvmStatic
+        fun issue(): TransactionalFrame = TransactionalFrame()
     }
 }

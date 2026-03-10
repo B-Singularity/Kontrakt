@@ -1,111 +1,194 @@
 package planning.domain.session
 
 import planning.domain.exception.PlanningProtocolException
+import planning.domain.exception.PlanningProtocolIntegrityException
 import kotlin.math.ln
 
 /**
- * [Value Object] Session configuration + capacity (memory) law.
+ * Constitutional session configuration + capacity law.
  *
- * This is not a "tuning bag". It is a *protocol-enforced* capacity model.
+ * This is a protocol-governed runtime configuration object, not a tuning bag.
  *
- * Key goals:
- * - OOM defense: derive dense capacities from a fixed memory budget.
- * - Determinism: keep the capacity model stable and explicit (no hidden allocations).
- * - Fail-closed: when resources exceed caps, the runtime must throw rather than degrade silently.
+ * Key properties:
+ * - plain class + private constructor + factory issuance
+ * - deterministic reverse-calculation of dense capacities from maxPlannerBytes
+ * - version tuple carried explicitly for cache-key stability and protocol traceability
  *
- * Memory model overview (Conservative Worst-Case):
- * - Indexer table (sparse, power-of-two)
- * - Dense per-node arrays (nodeIdCap)
- * - RMQ tables (depth-based, O(depth * log depth))
- * - Undo log (depth-based upper bound)
- * - Traversal stack (depth)
- * - Signature slab (bounded by ratio)
- * - JVM slack (fixed margin)
- *
- * IMPORTANT:
- * - This model is intentionally conservative: it should err on the side of underestimating capacity.
+ * Notes:
+ * - reverse-calc remains SSOT
+ * - numeric limits are policy defaults
+ * - environment-aware auto-sizing may be layered above this config later
  */
-data class PlannerSessionConfig(
+class PlannerSessionConfig private constructor(
+    // Version tuple
     val normalizationSpecVersion: Long,
-    val entropySeed: Long = 0L,
+    val edgeOrderingVersion: Long,
+    val capabilityProfileVersion: Long,
+    val workAccountingVersion: Long,
+    val entropyVersion: Long,
+    val entropySeed: Long,
 
-    // Limits
-    val maxPlannerBytes: Long = 10 * 1024 * 1024, // 10MB
-    val maxPhysicalSteps: Int = 1_000_000,
-    val maxSemanticWorkUnits: Int = 100_000, // Semantic budget (units)
+    // Runtime limits
+    val maxPlannerBytes: Long,
+    val maxPhysicalSteps: Int,
+    val maxSemanticWorkUnits: Int,
 
-    // DoS defense
-    val maxSignatureLen: Int = 8192,
+    // DoS / protocol limits
+    val maxSignatureLen: Int,
+    val signatureMemoryRatio: Double,
 
-    // Signature slab sizing ratio
-    val signatureMemoryRatio: Double = 0.2
+    // Derived caps
+    val maxNodeIdCap: Int,
+    val indexerTableCap: Int,
+    val undoLogCap: Int,
+    val maxSemanticDepth: Int,
+    val maxSignatureBytes: Int,
 ) {
-    val maxSignatureBytes: Int = (maxPlannerBytes * signatureMemoryRatio).toInt()
-    private val structBytesAvailable: Long = maxPlannerBytes - maxSignatureBytes - 16384 // 16KB JVM slack
 
-    val maxNodeIdCap: Int
-    val indexerTableCap: Int
-    val undoLogCap: Int
-    val maxSemanticDepth: Int
+    companion object {
+        /**
+         * Canonical issuance path.
+         *
+         * Performs strict validation and deterministic capacity reverse-calculation.
+         */
+        @JvmStatic
+        fun issue(
+            normalizationSpecVersion: Long = 1L,
+            edgeOrderingVersion: Long = 1L,
+            capabilityProfileVersion: Long = 1L,
+            workAccountingVersion: Long = 1L,
+            entropyVersion: Long = 1L,
+            entropySeed: Long = 0L,
+            maxPlannerBytes: Long = 10L * 1024L * 1024L,
+            maxPhysicalSteps: Int = 1_000_000,
+            maxSemanticWorkUnits: Int = 100_000,
+            maxSignatureLen: Int = 8192,
+            signatureMemoryRatio: Double = 0.2,
+        ): PlannerSessionConfig {
+            validateInputs(
+                normalizationSpecVersion = normalizationSpecVersion,
+                edgeOrderingVersion = edgeOrderingVersion,
+                capabilityProfileVersion = capabilityProfileVersion,
+                workAccountingVersion = workAccountingVersion,
+                entropyVersion = entropyVersion,
+                maxPlannerBytes = maxPlannerBytes,
+                maxPhysicalSteps = maxPhysicalSteps,
+                maxSemanticWorkUnits = maxSemanticWorkUnits,
+                maxSignatureLen = maxSignatureLen,
+                signatureMemoryRatio = signatureMemoryRatio,
+            )
 
-    init {
-        var low = 1
-        var high = 2_000_000
-        var bestNodeCap = 0
-        var bestTableCap = 0
-        var bestUndoCap = 0
-        var bestDepth = 0
+            val maxSignatureBytes = (maxPlannerBytes * signatureMemoryRatio).toInt()
+            val structBytesAvailable = maxPlannerBytes - maxSignatureBytes - 16_384L
 
-        while (low <= high) {
-            val midNodeCap = (low + high) / 2
+            var low = 1
+            var high = 2_000_000
+            var bestNodeCap = 0
+            var bestTableCap = 0
+            var bestUndoCap = 0
+            var bestDepth = 0
 
-            // Depth policy: derived from node cap with explicit bounds (as provided).
-            val targetDepth = (midNodeCap / 10).coerceIn(256, 4096)
+            while (low <= high) {
+                val midNodeCap = (low + high) / 2
+                val targetDepth = (midNodeCap / 10).coerceIn(256, 4096)
+                val tableCap = nextPowerOfTwo((midNodeCap * 2).coerceAtLeast(1024))
+                val undoCap = targetDepth * 8
 
-            val tableCap = nextPowerOfTwo((midNodeCap * 2).coerceAtLeast(1024))
-            val undoCap = targetDepth * 8
+                val tableBytes = tableCap.toLong() * 16L
+                val nodeBytes = midNodeCap.toLong() * 24L
 
-            // 1) Indexer table (keys 8 + heads 4 + stamps 4 = 16 bytes)
-            val tableBytes = tableCap.toLong() * 16
+                val logDepth = (ln(targetDepth.toDouble()) / ln(2.0)).toInt() + 2
+                val flatSize = targetDepth * logDepth
+                val rmqBytes = (targetDepth * 12L) + (flatSize.toLong() * 12L)
 
-            // 2) Dense node arrays (Indexer 12 + L1 topo/grey 12 = 24 bytes)
-            val nodeBytes = midNodeCap.toLong() * 24
+                val undoBytes = undoCap.toLong() * 24L
+                val stackBytes = targetDepth.toLong() * 4L
 
-            // 3) RMQ depth-based structures
-            val logDepth = (ln(targetDepth.toDouble()) / ln(2.0)).toInt() + 2
-            val flatSize = targetDepth * logDepth
-            val rmqBytes = (targetDepth * 12) + (flatSize * 12)
+                val total = tableBytes + nodeBytes + rmqBytes + undoBytes + stackBytes
 
-            // 4) Undo log (6 ints = 24 bytes per record)
-            val undoBytes = undoCap.toLong() * 24
+                if (total <= structBytesAvailable) {
+                    bestNodeCap = midNodeCap
+                    bestTableCap = tableCap
+                    bestUndoCap = undoCap
+                    bestDepth = targetDepth
+                    low = midNodeCap + 1
+                } else {
+                    high = midNodeCap - 1
+                }
+            }
 
-            // 5) Stack (IntArray depth = 4 bytes per slot)
-            val stackBytes = targetDepth.toLong() * 4
+            if (bestNodeCap == 0) {
+                throw PlanningProtocolException(
+                    "Insufficient memory for minimal planner session."
+                )
+            }
 
-            val total = tableBytes + nodeBytes + rmqBytes + undoBytes + stackBytes
+            return PlannerSessionConfig(
+                normalizationSpecVersion = normalizationSpecVersion,
+                edgeOrderingVersion = edgeOrderingVersion,
+                capabilityProfileVersion = capabilityProfileVersion,
+                workAccountingVersion = workAccountingVersion,
+                entropyVersion = entropyVersion,
+                entropySeed = entropySeed,
+                maxPlannerBytes = maxPlannerBytes,
+                maxPhysicalSteps = maxPhysicalSteps,
+                maxSemanticWorkUnits = maxSemanticWorkUnits,
+                maxSignatureLen = maxSignatureLen,
+                signatureMemoryRatio = signatureMemoryRatio,
+                maxNodeIdCap = bestNodeCap,
+                indexerTableCap = bestTableCap,
+                undoLogCap = bestUndoCap,
+                maxSemanticDepth = bestDepth,
+                maxSignatureBytes = maxSignatureBytes,
+            )
+        }
 
-            if (total <= structBytesAvailable) {
-                bestNodeCap = midNodeCap
-                bestTableCap = tableCap
-                bestUndoCap = undoCap
-                bestDepth = targetDepth
-                low = midNodeCap + 1
-            } else {
-                high = midNodeCap - 1
+        private fun validateInputs(
+            normalizationSpecVersion: Long,
+            edgeOrderingVersion: Long,
+            capabilityProfileVersion: Long,
+            workAccountingVersion: Long,
+            entropyVersion: Long,
+            maxPlannerBytes: Long,
+            maxPhysicalSteps: Int,
+            maxSemanticWorkUnits: Int,
+            maxSignatureLen: Int,
+            signatureMemoryRatio: Double,
+        ) {
+            if (normalizationSpecVersion < 0L) {
+                throw PlanningProtocolIntegrityException("normalizationSpecVersion must be >= 0")
+            }
+            if (edgeOrderingVersion < 0L) {
+                throw PlanningProtocolIntegrityException("edgeOrderingVersion must be >= 0")
+            }
+            if (capabilityProfileVersion < 0L) {
+                throw PlanningProtocolIntegrityException("capabilityProfileVersion must be >= 0")
+            }
+            if (workAccountingVersion < 0L) {
+                throw PlanningProtocolIntegrityException("workAccountingVersion must be >= 0")
+            }
+            if (entropyVersion < 0L) {
+                throw PlanningProtocolIntegrityException("entropyVersion must be >= 0")
+            }
+            if (maxPlannerBytes <= 0L) {
+                throw PlanningProtocolIntegrityException("maxPlannerBytes must be > 0")
+            }
+            if (maxPhysicalSteps <= 0) {
+                throw PlanningProtocolIntegrityException("maxPhysicalSteps must be > 0")
+            }
+            if (maxSemanticWorkUnits <= 0) {
+                throw PlanningProtocolIntegrityException("maxSemanticWorkUnits must be > 0")
+            }
+            if (maxSignatureLen <= 0) {
+                throw PlanningProtocolIntegrityException("maxSignatureLen must be > 0")
+            }
+            if (signatureMemoryRatio <= 0.0 || signatureMemoryRatio >= 1.0) {
+                throw PlanningProtocolIntegrityException(
+                    "signatureMemoryRatio must be in (0, 1)"
+                )
             }
         }
 
-        if (bestNodeCap == 0) {
-            throw PlanningProtocolException("Insufficient memory for minimal planner session.")
-        }
-
-        maxNodeIdCap = bestNodeCap
-        indexerTableCap = bestTableCap
-        undoLogCap = bestUndoCap
-        maxSemanticDepth = bestDepth
-    }
-
-    companion object {
         private fun nextPowerOfTwo(v: Int): Int {
             var n = v - 1
             n = n or (n ushr 1)
