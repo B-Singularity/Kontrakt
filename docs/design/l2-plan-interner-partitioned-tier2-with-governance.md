@@ -1,5 +1,3 @@
-# File: docs/design/l2-plan-interner-partitioned-tier2-with-governance.md
-
 # Design Note: L2 Plan Interner (Partition → Shard → Bucket(2-Phase)) with Governance
 
 Date: 2026-03-01  
@@ -297,3 +295,227 @@ thresholds.
 6. **Boxing Regression Guard (AMENDED):**
     * Bench / allocation tests MUST assert no `Long`/`ULong` key boxing allocations on the hot routing path:
       `shard.buckets.*`, `shard.inflight.*`, and `NodeIdIndexer` operations.
+
+## 8. Governance Budget Boundary & Bridge Alignment (AMENDED)
+
+### 8.1 L2 Governance Budget vs L1 Structural Budget
+
+L2 governance budgets and L1 planner-session structural budgets MUST remain distinct.
+
+**L2 governance budgets** control repository survival and retention behavior, including:
+
+- `maxEntries`
+- `maxApproxBytes`
+- partition retention / bulk-drop thresholds
+- `CircuitOpen` transition thresholds
+
+**L1 structural budgets** control worker-local planner structures, including:
+
+- `MaxNodeIdCap`
+- `MaxDepthCap`
+- `indexerTableCap`
+- `undoLogCap`
+- `maxSignatureBytes`
+
+Normative rule:
+
+- L2 MUST NOT reinterpret `maxApproxBytes` as an L1 structural byte ledger.
+- L2 MUST NOT directly expose internal planner sizing parameters to users/operators.
+- L2 MAY influence whether interning is attempted, but MUST NOT redefine worker-local primitive layout on the hot path.
+
+### 8.2 Bridge Alignment Rule
+
+If an L2 lookup path causes a planner session to be created or reused, the session MUST be created from already-resolved
+inputs:
+
+- resolved numeric runtime budget,
+- resolved planner-session caps,
+- immutable version tuple,
+- implementation-internal resolved calibration (if any).
+
+L2 MUST treat those values as injected inputs.
+
+L2 MUST NOT, on its own hot path:
+
+- inspect runtime heap state,
+- inspect container memory,
+- recompute environment-derived planner budgets,
+- dynamically resize planner-session primitive capacities.
+
+### 8.3 Zero-Config Surface Preservation
+
+The external execution surface SHOULD remain zero-config by default.
+
+If a high-level policy surface is exposed, it SHOULD remain at the level of:
+
+- `AUTO`
+- `SMALL_HEAP`
+- `DEFAULT`
+- `SERVER`
+
+L2 MUST NOT require the user to understand or provide internal budget-allocation parameters such as:
+
+- signature reserve ratios,
+- depth divisors,
+- undo density,
+- planner-internal structural split ratios.
+
+Those remain internal policy/calibration concerns outside the public L2 contract.
+
+---
+
+## 9. Governance Estimate Law (`maxApproxBytes`) (AMENDED)
+
+### 9.1 Meaning of `maxApproxBytes`
+
+`maxApproxBytes` is a governance estimate used for repository pressure decisions.
+
+It is:
+
+- approximate,
+- conservative,
+- retention-oriented,
+- allowed to slightly over- or under-estimate real repository payload size within implementation policy.
+
+It is **NOT**:
+
+- a semantic identity criterion,
+- an exact planner-session structural byte ledger,
+- an L1 `MaxPlannerBytesPerWorker` substitute,
+- a correctness authority for canonical equality.
+
+### 9.2 Allowed Consequences of Estimate Error
+
+An estimate error MAY change:
+
+- when a partition is dropped,
+- when `CircuitOpen` is triggered,
+- reuse rate,
+- retention duration,
+- memory survival characteristics.
+
+An estimate error MUST NOT change:
+
+- final topology,
+- semantic budget outcome,
+- exact identity verification result,
+- canonical equality outcome.
+
+### 9.3 Implementation Rule
+
+Any use of `maxApproxBytes` MUST remain strictly inside governance logic:
+
+- capacity checks,
+- bulk-drop decisions,
+- circuit transitions,
+- telemetry.
+
+It MUST NOT participate in exact-match verification.
+
+---
+
+## 10. Identity Hierarchy Clarification (AMENDED)
+
+### 10.1 Routing Identity is Non-Authoritative
+
+The following are routing identities:
+
+- `planKey64`
+- other identity64-derived routing keys used only for shard / bucket location
+
+Routing identities are:
+
+- deterministic,
+- version-bound,
+- collision-tolerant,
+- non-authoritative.
+
+A routing hit is only a pre-screen signal.
+
+### 10.2 Semantic Identity is Authoritative
+
+Authoritative identity remains the full semantic tuple carried by the bucket entry:
+
+- full `PlanCacheKey`
+- canonical signature bytes or equivalent exact identity material
+
+Normative rule:
+
+- a bucket candidate MUST be verified by exact full-tuple comparison before reuse.
+
+### 10.3 Collision Is Not a Fault
+
+Routing-key collision under the same bucket is a normal condition, not a repository fault.
+
+Allowed behavior on collision:
+
+- continue bucket scan,
+- exact mismatch -> continue scan or miss,
+- publish new entry if no exact match exists.
+
+Forbidden interpretation:
+
+- treating routing collision itself as corruption,
+- treating routing collision as grounds for semantic failure.
+
+Only storage/governance/state-transition failures may surface as repository faults.
+
+---
+
+## 11. Additional Compliance Checks (AMENDED)
+
+The following checks are required in addition to the existing verification checklist.
+
+### 11.1 Budget Delegation Boundary
+
+`BudgetDelegationBoundaryTest`
+
+Verifies:
+
+- L2 never computes environment-derived planner budgets on the hot path,
+- planner-session creation uses injected resolved values only,
+- L1 structural sizing remains outside L2 governance logic.
+
+### 11.2 Approx-Bytes Governance Separation
+
+`ApproxBytesGovernanceOnlyTest`
+
+Verifies:
+
+- `maxApproxBytes` affects retention/governance only,
+- it does not affect exact verification,
+- it does not affect semantic output.
+
+### 11.3 Routing vs Authority Separation
+
+`RoutingVsSemanticIdentitySeparationTest`
+
+Verifies:
+
+- collisions under `planKey64` are handled by exact scan,
+- routing collisions do not produce false hits,
+- correctness is recovered exclusively by authoritative verification.
+
+### 11.4 L1 / L2 Budget Separation
+
+`L1L2BudgetSeparationTest`
+
+Verifies:
+
+- changing L2 governance caps does not mutate resolved L1 planner caps,
+- changing L1 planner caps does not redefine L2 exact-match semantics,
+- both layers remain linked only through injected runtime policy, not through hidden hot-path introspection.
+
+### 11.5 Warm / Cold / Governance-Churn Equivalence
+
+`GovernanceChurnSemanticEquivalenceTest`
+
+Verifies semantic equivalence under:
+
+- warm vs cold cache,
+- partition drop timing differences,
+- shard-count differences,
+- gate `OFF` / `ON` / `AUTO`,
+- `CircuitOpen` / bypass transitions.
+
+Only operational metrics may differ.

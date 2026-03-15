@@ -341,3 +341,229 @@ invariants.
 > **MVP Policy Surface Note (AMENDED):** The MVP SHOULD remain “zero-config” for most users.
 > If a high-level policy knob is exposed (e.g., `resourceProfile = AUTO | SMALL_HEAP | DEFAULT | SERVER`),
 > it MUST map to these internal budgets without exposing low-level knobs unless production incidents require it.
+
+## Amendment: Primitive Byte Ledger & Capacity Solver Law (CRITICAL MUST)
+
+This amendment refines the existing **Memory Lifecycle & Holistic Bytes Cap** rule into an explicit, auditable
+primitive byte ledger.
+
+### A. Explicit Primitive Byte Ledger (Normative)
+
+The reverse-calculation of `MaxDepthCap` and `MaxNodeIdCap` from `MaxPlannerBytesPerWorker` MUST be based on explicit
+line items, not bundled heuristic categories.
+
+The minimum required line items are:
+
+| Line Item                      | Byte Formula                   | Notes                                                                                                       |
+|--------------------------------|--------------------------------|-------------------------------------------------------------------------------------------------------------|
+| `nodeIdIndexerTableBytes`      | `tableCap * 16L`               | `LongArray(keysBits)` + `IntArray(heads)` + `IntArray(stamps)`                                              |
+| `nodeIdIndexerDenseBytes`      | `nodeCap * DENSE_NODE_BYTES`   | MUST explicitly cover `nextByNodeId`, `sigOffsets`, `sigLengths`, and any additional dense primitive arrays |
+| `activeStackBytes`             | `depthCap * 4L`                | `IntArray`                                                                                                  |
+| `depthOfNodeIdBytes`           | `nodeCap * 4L`                 | `IntArray` membership/depth cache                                                                           |
+| `incomingEdgeRankAtDepthBytes` | `depthCap * 8L`                | `LongArray` (unsigned ordering stored as raw bits)                                                          |
+| `floorLog2Bytes`               | `depthCap * 4L`                | `IntArray`                                                                                                  |
+| `flatMinEdgeRankUpBytes`       | `depthCap * logDepth * 8L`     | `LongArray` sparse-table tier                                                                               |
+| `flatArgminUpBytes`            | `depthCap * logDepth * 4L`     | `IntArray` sparse-table tier                                                                                |
+| `undoLogBytes`                 | `undoCap * 24L`                | 6 `Int` fields per record                                                                                   |
+| `signatureSlabBytes`           | `maxSignatureBytes`            | Reserved separately; MUST NOT be double-counted                                                             |
+| `fixedHeadroomBytes`           | `FIXED_SESSION_HEADROOM_BYTES` | Policy-calibrated reserve for non-ledger runtime noise                                                      |
+
+Where:
+
+```text
+logDepth = floor(log2(depthCap)) + 1
+```
+
+> **Normative Rule:** `DENSE_NODE_BYTES` MUST NOT remain an unexplained magic number.
+> It MUST be justified against the actual primitive layout of `NodeIdIndexer`.
+
+### B. Total Structured Bytes
+
+The total worker-local structured bytes MUST be calculated as:
+
+```text
+TotalStructBytes =
+  nodeIdIndexerTableBytes +
+  nodeIdIndexerDenseBytes +
+  activeStackBytes +
+  depthOfNodeIdBytes +
+  incomingEdgeRankAtDepthBytes +
+  floorLog2Bytes +
+  flatMinEdgeRankUpBytes +
+  flatArgminUpBytes +
+  undoLogBytes +
+  fixedHeadroomBytes
+```
+
+`signatureSlabBytes` is reserved separately and MUST NOT be counted twice.
+
+### C. Capacity Solver: Desired vs. Feasible
+
+The capacity solver MUST distinguish:
+
+- **Desired Capacity:** policy preference (for example, a preferred node/depth growth curve),
+- **Feasible Capacity:** the maximum values that fit within the injected byte budget.
+
+Normative rule:
+
+```text
+targetDepth = min(desiredDepth(nodeCap), feasibleDepth(nodeCap, structBudget))
+```
+
+The protocol MUST NOT encode undocumented hard ceilings/floors as semantic law.
+
+### D. Solver Safety Constraints (Fail-Closed)
+
+The solver MUST fail closed if any of the following hold:
+
+- `maxSignatureBytes < maxSignatureLen`
+- `maxSignatureBytes > Int.MAX_VALUE`
+- `structBudget <= 0`
+- the minimal valid planner layout does not fit
+- any intermediate byte arithmetic overflows
+- `nextPowerOfTwo(...)` would overflow or produce an invalid routing mask
+- `MaxDepthCap > Int.MAX_VALUE - 2`
+- any derived primitive capacity becomes non-positive
+
+All intermediate byte totals MUST be computed in `Long`.
+Silent wraparound is constitutionally forbidden.
+
+### E. Determinism Rule
+
+For identical:
+
+- version tuple,
+- injected policy values,
+- injected numeric budgets,
+
+the capacity solver MUST produce identical capacities.
+
+Environment discovery MUST remain outside the Domain Core and MUST NOT influence capacity solving except through
+already-resolved injected values.
+
+## Amendment: Semantic Zero-Residue Reachability Law (CRITICAL MUST)
+
+This amendment refines the existing **Absolute Zero-Residue Unwinding** rule.
+
+### A. Definition
+
+“Zero-Residue” means **semantic non-reachability**, not mandatory physical zero-filling of all pooled arrays.
+
+This means that after reset or rollback:
+
+- no reachable membership entry may remain from the discarded branch/session,
+- no reachable `nodeId` may be `>= currentNodeCount`,
+- no reachable signature slice may read beyond `currentSlabPtr`,
+- no reachable table head / collision chain may retain a reference into discarded node space.
+
+Stale bytes MAY remain physically present in pooled slabs/arrays,
+but they MUST remain semantically unreachable.
+
+### B. Rollback Restore Boundary
+
+`rollback(snapPtr)` and `rollbackCount(targetCount, targetSigPtr)` together form one logical restore boundary.
+
+Required invariants after restore:
+
+- all table/head mutations after `snapPtr` are undone,
+- `_nextId == targetCount`,
+- `sigSlabPtr == targetSigPtr`,
+- every reachable `nodeId` in any active chain satisfies `nodeId < targetCount`,
+- every reachable signature range satisfies `offset + len <= targetSigPtr`.
+
+### C. Frontier Law
+
+Rollback/reset MUST move the active frontier so that discarded state becomes semantically invisible.
+
+For slab-backed signature storage, this means:
+
+- bytes beyond `sigSlabPtr` are outside the active frontier,
+- future writes MAY overwrite those bytes,
+- correctness MUST NOT depend on physical zeroing of discarded bytes.
+
+### D. Secure Wipe Policy (Optional)
+
+Physical zero-filling of slabs/arrays MAY be offered as a policy option for secure or regulated environments.
+
+If enabled:
+
+- it MUST NOT alter semantic output,
+- it MAY increase reset latency,
+- it remains a policy concern, not a protocol requirement.
+
+## Amendment: Capacity / Overflow / Contract Edge Cases (CRITICAL MUST)
+
+The following edge cases are constitutionally significant and MUST be enforced fail-closed.
+
+### A. Tiny Budget Failure
+
+If the smallest valid worker-local layout cannot fit inside the resolved budget,
+`PlannerSessionConfig.issue(...)` MUST fail closed.
+
+### B. Signature Slab Contract
+
+The reserved signature slab MUST be able to hold at least one maximum-sized valid signature.
+
+Normative rule:
+
+```text
+maxSignatureBytes >= maxSignatureLen
+```
+
+Any violation is a configuration contract failure and MUST be rejected during issuance.
+
+### C. Integer & Power-of-Two Safety
+
+The following MUST be guarded:
+
+- `nextPowerOfTwo(...)` overflow,
+- invalid routing mask derivation,
+- invalid narrowing from `Long` to `Int`,
+- any arithmetic that would make `tableCap`, `depthCap`, `nodeCap`, or `undoCap` non-representable.
+
+### D. Sentinel Preservation Under Pooling
+
+Pooling/reset MUST preserve sentinel initialization law.
+
+Required sentinel states before semantic use:
+
+- `incomingEdgeRankAtDepth[*] = -1L`
+- `flatMinEdgeRankUp[*] = -1L`
+- `flatArgminUp[*] = Int.MAX_VALUE`
+
+No reset strategy may reintroduce JVM default zero as a meaning-bearing sentinel where zero is a valid semantic value.
+
+### E. Worker Reuse After Hard Abort
+
+If a worker is immediately reused after a Hard Abort, the next session MUST observe:
+
+- `currentDepth == 0`,
+- no reachable `GreyMap` residue,
+- no reachable stale `NodeIdIndexer` chain,
+- no reachable stale signature slice,
+- preserved cost-center monotonicity for the aborted session.
+
+## Amendment: Capacity-Law Compliance Tests (CRITICAL MUST)
+
+The following tests are mandatory complements to this design note:
+
+- `PrimitiveLedgerComplianceTest`
+    - verifies that the implementation’s primitive structures match the ledger line items
+
+- `CapacitySolverDeterminismTest`
+    - identical injected budgets and policy inputs produce identical derived capacities
+
+- `RollbackReachabilityComplianceTest`
+    - verifies semantic non-reachability after rollback/reset
+
+- `ArithmeticOverflowGuardTest`
+    - verifies fail-closed behavior for all unsafe arithmetic / narrowing / table-cap derivations
+
+- `MinimalLayoutFailClosedTest`
+    - verifies planner-session issuance fails when even minimal valid layout cannot fit
+
+- `SentinelInitializationComplianceTest`
+    - verifies pooled reset does not break sentinel law
+
+- `ZeroResidueWorkerReuseStressTest`
+    - verifies immediate reuse after Hard Abort does not leak reachable state

@@ -46,6 +46,13 @@ class PlannerSessionConfig private constructor(
 ) {
 
     companion object {
+
+        /**
+         * The minimum overhead reserved for the Session object itself,
+         * basic stack space, and JVM alignment padding.
+         */
+        private const val FIXED_SESSION_HEADROOM_BYTES = 16_384L // 16KB
+
         /**
          * Canonical issuance path.
          *
@@ -79,7 +86,7 @@ class PlannerSessionConfig private constructor(
             )
 
             val maxSignatureBytes = (maxPlannerBytes * signatureMemoryRatio).toInt()
-            val structBytesAvailable = maxPlannerBytes - maxSignatureBytes - 16_384L
+            val structBytesAvailable = maxPlannerBytes - maxSignatureBytes - FIXED_SESSION_HEADROOM_BYTES
 
             var low = 1
             var high = 2_000_000
