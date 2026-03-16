@@ -290,7 +290,11 @@ can differ between Hot/Cold cache states.
 * `L2_SHARD_ROUTE`
 * `L2_PRE_SCREEN_GET`
 * `L2_INFLIGHT_ACQUIRE`
-* `L2_INFLIGHT_WAIT` (each wait tick / bounded join attempt)
+* `L2_INFLIGHT_ATTACH` (waiter attach / slot admission)
+* `L2_INFLIGHT_RESUME` (successful or exceptional waiter resumption)
+* `L2_INFLIGHT_TIMEOUT` (monotonic join deadline expiration)
+* `L2_INFLIGHT_QUOTA_EXHAUST` (speculative builder quota exhaustion)
+* `L2_INFLIGHT_CANCEL` (waiter cancellation cleanup)
 * `L2_BUCKET_SCAN` (two-phase equality scan)
 * `L2_PUBLISH_PUT_IF_ABSENT`
 * `L2_CAPACITY_CHECK`
@@ -305,7 +309,9 @@ can differ between Hot/Cold cache states.
 ### Governance Rules
 
 * `MaxFinalizeSteps` MUST be strictly monotonic and MUST NOT be rolled back during transaction unwinds.
-* Join/wait operations MUST consume fuel, preventing indefinite waits.
+* Join/wait operations MUST consume fuel, but the unit of charging is the **wait lifecycle event** (`ATTACH`, `RESUME`,
+  `TIMEOUT`, `QUOTA_EXHAUST`, `CANCEL`) rather than polling ticks.
+* Timeout MUST be interpreted as a monotonic elapsed-time deadline event, not as slot failure.
 * If the session enters L2 bypass mode (`CircuitOpen`), L2 cost centers MUST still be recorded (for telemetry and
   audits),
   but interning is skipped.

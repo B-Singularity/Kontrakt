@@ -84,9 +84,9 @@ Rules:
 
 - A high-level `ResourceProfile` surface MAY exist:
     - `AUTO`
-    - `SMALL_HEAP`
-    - `DEFAULT`
-    - `SERVER`
+    - `SMALL`
+    - `STANDARD`
+    - `LARGE`
 
 - Resolution from `ResourceProfile -> ResolvedSessionBudget` MUST happen in a Port/Adapter boundary.
 
@@ -256,7 +256,10 @@ L2 governance and L1 planner-session sizing are related but distinct.
     - `maxApproxBytes`,
     - per-partition caps,
     - circuit-open thresholds,
-    - bulk-drop policy.
+    - bulk-drop policy,
+    - resolved join-wait deadlines,
+    - per-key waiter caps,
+    - speculative-build quotas.
 
 Governance changes MUST NOT alter semantic output.
 They may alter only:
@@ -266,6 +269,11 @@ They may alter only:
 - throughput,
 - latency,
 - memory survival behavior.
+
+Additional normative rule:
+
+- join-timeout expiration is a waiter lifecycle event, not a semantic failure of the canonical result,
+- L2 wait/join governance MUST remain outside L1 planner-session sizing and primitive byte-ledger math.
 
 ### 12. Consequences
 
@@ -298,7 +306,10 @@ They may alter only:
     - align routing-vs-authority hierarchy,
     - clarify collision vs fault,
     - clarify governance cap scope,
-    - clarify `maxApproxBytes` as governance estimate.
+    - clarify `maxApproxBytes` as governance estimate,
+    - add async join governance,
+    - separate shared-slot state from waiter lifecycle,
+    - specify partition-drop wake-up completeness and attach/drop race handling.
 
 3. Add compliance tests
     - `PrimitiveLedgerComplianceTest`

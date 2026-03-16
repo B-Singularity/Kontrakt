@@ -1,9 +1,11 @@
 # Design Note: L2 Plan Interner (Partition → Shard → Bucket(2-Phase)) with Governance
 
-Date: 2026-03-01  
-Status: Draft (Normative shape for implementation; details may refine without changing invariants)  
+Date: 2026-03-01
+
+Status: Accepted
+
 Scope: `kontrakt-planning` adapter implementing `PlanInternRepository`  
-References: Constitution Protocols (#3, #4, #8, #10), ADR-0031
+References: Constitution Protocols (#3, #4, #8, #10), ADR-0031, ADR-0032
 
 > **AMENDED (ULong/Long Boxing Avoidance for Hot Routing):**
 > Kotlin/JVM value classes (`ULong`) are boxed as type arguments, and `Long` is also boxed when used as a generic key
@@ -125,8 +127,18 @@ We avoid storing a giant `Map<PlanCacheKey, Node>` by:
 * `val future: CompletableFuture<CanonicalPlanNode>` (or equivalent)
 * `val startedAtNanos: Long`
 * `val waiters: LongAdder` (telemetry)
+* `val state: AtomicReference<SharedSlotState>` where `SharedSlotState ∈ {PENDING, SUCCESS, FAILED, DROPPED}`
+* `val speculativeBuilders: AtomicInteger` (quota-governed duplicate-builder allowance)
 
-> Rationale: per-key joining avoids bucket-level locking during expensive builds.
+**Normative rules**
+
+* `future` completion MUST agree with `state` terminalization.
+* waiter timeout / waiter cancellation MUST NOT change shared-slot terminal state.
+* `SUCCESS` MUST correspond only to a publication that has already linearized at the bucket insertion point.
+* `DROPPED` MUST be used for partition close / bulk-drop terminalization.
+
+> Rationale: per-key joining avoids bucket-level locking during expensive builds, while keeping shared-slot state
+> separate from individual waiter lifecycle.
 
 ---
 
@@ -210,21 +222,38 @@ shardIndex = planKey64 & (shards.size - 1)
 **Atomicity guarantee:** publication is linearizable at the bucket lock insertion point; waiters only observe after
 future completion.
 
-**Step 3B: Joiner path (bounded)**
+**Step 3B: Joiner path (peek-then-suspend, bounded by monotonic deadline)**
 
-1. Loop with bounded fuel:
-    * `session.step(L2_INFLIGHT_WAIT)`
-    * try `slot.future.getNow(null)`; if done return
-    * else optionally `LockSupport.parkNanos(pollNanos)` (pollNanos may be 0..small)
-    * if fuel low or wait exceeds threshold => degrade:
-        - either bypass and `builder()` (no intern)
-        - or fallback to pre-screened race (build + publish) depending on policy
-2. If slot completes exceptionally => treat as `Fault(Transient)`:
-    * `session.step(L2_FAULT_TRANSIENT)`
-    * degrade to miss: attempt builder path without gate (or bypass if circuit is open)
+1. Fast-path peek:
+    * `session.step(L2_INFLIGHT_ATTACH)`
+    * try `slot.future.getNow(null)`; if done return immediately
+2. If not done, attempt waiter attach subject to governance:
+    * reject attach if `region.closed == true` or shared-slot state is already `DROPPED`
+    * reject attach if `slot.waiters >= maxWaitersPerKey`
+3. On successful attach:
+    * the waiter transitions to `ATTACHED`
+    * the current worker thread MUST be released; waiting MUST proceed via completion continuation / callback rather
+      than bounded `parkNanos` polling
+    * the wait deadline is `slot.startedAtNanos + joinWaitTimeoutNanos`, interpreted as a **monotonic elapsed-time
+      deadline**
+4. Completion path:
+    * if `slot.future` completes normally, waiter transitions to `RESUMED` and returns winner
+    * if `slot.future` completes exceptionally, treat as `Fault(Transient)` or `PartitionDropped` according to cause
+5. Timeout path:
+    * `session.step(L2_INFLIGHT_TIMEOUT)`
+    * timeout transitions only the waiter to `TIMED_OUT`; it MUST NOT fail the shared slot
+    * timeout MUST NOT automatically promote the waiter to builder
+    * speculative builder promotion is allowed only if `slot.speculativeBuilders < maxSpeculativeBuildersPerKey`
+    * speculative builder promotion MUST record `session.step(L2_INFLIGHT_QUOTA_EXHAUST)` when quota is exhausted
+    * if quota is exhausted, policy MUST choose one of:
+        - bypass and `builder()` (no intern), or
+        - fail-fast / degraded miss according to policy
+6. Cancellation path:
+    * waiter cancellation transitions only that waiter to `CANCELLED`
+    * waiter cancellation MUST NOT cancel the shared slot
 
-**Blocking note:** joiner waiting is not a global lock; it is per-key joining. Degrade + fuel-bounding prevents
-unbounded blocking.
+**Non-blocking note:** joiner waiting is not a global lock and MUST NOT monopolize a worker thread while attached.
+Correctness still comes exclusively from bucket exact re-check plus publication-before-completion.
 
 > **AMENDED (No Boxed-Key Gate):**
 > The in-flight gate MUST NOT be implemented with `ConcurrentHashMap<Long, InFlight>` or `Map<ULong, InFlight>` because
@@ -238,12 +267,14 @@ unbounded blocking.
 ### 4.1 Transient faults
 
 * Examples: telemetry sink failure, sporadic map exceptions (rare), unexpected runtime exception during build.
-* Policy: complete slot exceptionally, remove inflight, treat as miss (Domain sees cache miss).
+* Policy: transition shared slot to `FAILED`, complete slot exceptionally, remove inflight, treat as miss (Domain sees
+  cache miss).
 
 ### 4.2 CircuitOpen faults
 
 * Trigger: capacity breach, region closed (bulk drop), or explicit admin policy.
 * Policy: bypass L2 for session remainder (Domain-level). Persistent payload store is bypassed as well (ADR-0031).
+* On partition close / drop, shared in-flight slots MUST transition to `DROPPED` before region reclamation.
 
 ---
 
@@ -255,10 +286,11 @@ unbounded blocking.
 * Implementation:
     1. region = `regions.remove(partitionKey)`
     2. if region != null:
-        * `region.closed.set(true)`
-        * for each shard: `shard.inflight.forEachValue { it.future.completeExceptionally(PartitionDropped(...)) }`  
-          *(AMENDED: scan primitive inflight table; wake waiters)*
-        * (optional) clear shard tables by dropping region reference (bulk GC)
+        * `region.closed.compareAndSet(false, true)` MUST be the one-way close transition
+        * after close is observed, no new inflight admission is permitted
+        * for each shard: snapshot / scan `shard.inflight` and transition every visible slot to `DROPPED`
+        * complete every visible slot exceptionally with `PartitionDropped(...)`
+        * region reclamation / bulk GC MUST occur only after the wake-up sweep has run
 
 ### 5.2 Concurrency rule
 
@@ -266,6 +298,14 @@ unbounded blocking.
     * builder returns a valid immutable node but it is not interned (post-drop)
     * joiners awaken and rebuild/bypass
 * Forbidden: joiners waiting forever; thus inflight futures MUST be completed on drop.
+
+### 5.3 Attach / Drop Race Rule
+
+* Waiter attach and partition drop MAY race.
+* If `DROPPED` wins before attach linearizes, attach MUST fail immediately with dropped terminalization.
+* If attach linearizes before `DROPPED`, the later drop sweep MUST wake that waiter exceptionally before region
+  reclamation.
+* No waiter that was successfully attached before reclamation may remain indefinitely pending.
 
 ---
 
@@ -275,6 +315,10 @@ unbounded blocking.
 * `hotKeyRate = inflightWaiters / l2Lookups`
 * `circuitOpenCount`, `partitionDropCount`
 * `avgJoinWaitNanos`, `maxJoinWaitNanos`
+* `joinTimeoutCount`
+* `waiterAttachRejectedCount`
+* `speculativeQuotaExhaustCount`
+* `cancelledWaiterCount`
 
 Telemetry is used to decide **AUTO gating**: default is Pre-Screened Race; enable gate if hotKey/dup ratio exceeds
 thresholds.
@@ -291,8 +335,13 @@ thresholds.
 3. Partition drop mid-flight: no deadlocks, no hangs, no dirty reads.
 4. Linearizability: no partial nodes observable; publication happens-before completion.
 5. Zero-residue: after hard abort, reused workers show clean session state (depth=0, empty greymap).
+6. Async join observe-after-completion: no waiter observes a winner before completion.
+7. Waiter timeout does not fail shared slot.
+8. Cancelled waiter does not cancel shared slot.
+9. Partition drop / attach race: every attached waiter is either resumed or exceptionally completed before reclamation.
+10. Per-key speculative quota prevents unbounded duplicate-builder storms.
 
-6. **Boxing Regression Guard (AMENDED):**
+11. **Boxing Regression Guard (AMENDED):**
     * Bench / allocation tests MUST assert no `Long`/`ULong` key boxing allocations on the hot routing path:
       `shard.buckets.*`, `shard.inflight.*`, and `NodeIdIndexer` operations.
 
@@ -519,3 +568,53 @@ Verifies semantic equivalence under:
 - `CircuitOpen` / bypass transitions.
 
 Only operational metrics may differ.
+
+### 11.6 Async Join Contract
+
+`AsyncJoinObserveAfterCompletionTest`
+
+Verifies:
+
+- waiters only observe after completion,
+- completion resumes attached waiters without worker-thread polling,
+- exceptional completion is propagated deterministically.
+
+### 11.7 Timeout / Slot Independence
+
+`WaiterTimeoutDoesNotFailSharedSlotTest`
+
+Verifies:
+
+- waiter timeout does not change shared-slot terminal state,
+- other attached waiters may still observe later success,
+- timeout semantics remain non-semantic governance.
+
+### 11.8 Cancel / Slot Independence
+
+`CancelledWaiterDoesNotCancelSharedSlotTest`
+
+Verifies:
+
+- one waiter cancellation does not cancel the shared slot,
+- remaining waiters still receive terminal completion,
+- slot lifecycle remains builder-owned.
+
+### 11.9 Drop / Attach Race Wake-up Completeness
+
+`PartitionDropAttachRaceWakeupCompletenessTest`
+
+Verifies:
+
+- attach vs drop races are linearizable,
+- attached waiters do not remain indefinitely pending,
+- dropped terminalization completes before region reclamation.
+
+### 11.10 Speculative Quota Guard
+
+`PerKeySpeculativeQuotaPreventsStormTest`
+
+Verifies:
+
+- timeout/degrade paths do not permit unbounded speculative builders,
+- quota exhaustion results in bypass or fail-fast only,
+- semantic output remains unchanged.

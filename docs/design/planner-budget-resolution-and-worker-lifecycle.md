@@ -74,9 +74,9 @@ The default user experience SHOULD remain zero-config.
 If any high-level control surface is exposed, it SHOULD remain at the level of:
 
 - `AUTO`
-- `SMALL_HEAP`
-- `DEFAULT`
-- `SERVER`
+- `SMALL`
+- `STANDARD`
+- `LARGE`
 
 Users MUST NOT be required to understand or configure internal budget-allocation parameters such as:
 
@@ -87,9 +87,17 @@ Users MUST NOT be required to understand or configure internal budget-allocation
 
 ### 3.2 Public / Cross-Boundary Contract
 
-The only cross-boundary budget contract required by the planner core is a resolved numeric budget.
+The planner runtime consumes two resolved contracts at the boundary:
 
-That contract is represented by `ResolvedSessionBudget`.
+- the planner-core structural/runtime budget contract, represented by `ResolvedSessionBudget`, and
+- the L2 join/governance contract, represented by `ResolvedJoinGovernance`.
+
+Normative boundary rule:
+
+- `ResolvedSessionBudget` governs planner-core structural execution limits,
+- `ResolvedJoinGovernance` governs L2 wait / join / degrade behavior,
+- the two contracts MAY be resolved from the same external `ResourceProfile`,
+- but they MUST remain semantically distinct and MUST NOT be collapsed into one byte-budget formula.
 
 ### 3.3 Internal Calibration Contract
 
@@ -129,6 +137,54 @@ data class ResolvedSessionBudget(
     val fixedHeadroomBytes: Long,
 )
 ```
+
+### 4.4 `ResolvedJoinGovernance`
+
+`ResolvedJoinGovernance` represents already-resolved L2 wait / join / degrade policy.
+
+Required fields:
+
+- `joinWaitTimeoutNanos: Long`
+- `maxWaitersPerKey: Int`
+- `maxSpeculativeBuildersPerKey: Int`
+- `failFastOnQuotaExhaustion: Boolean`
+
+### 4.5 Invariants
+
+- all fields MUST be immutable once resolved;
+- `joinWaitTimeoutNanos > 0`;
+- `maxWaitersPerKey > 0`;
+- `maxSpeculativeBuildersPerKey >= 0`;
+- timeout MUST be interpreted as a **monotonic elapsed-time deadline**, not wall-clock time;
+- timeout expiration MUST be treated as a **waiter lifecycle event**, not as shared-slot failure.
+
+### 4.6 Kotlin Reference Shape
+
+```kotlin
+data class ResolvedJoinGovernance(
+    val joinWaitTimeoutNanos: Long,
+    val maxWaitersPerKey: Int,
+    val maxSpeculativeBuildersPerKey: Int,
+    val failFastOnQuotaExhaustion: Boolean,
+)
+```
+
+### 4.7 `ResolvedRuntimePolicy`
+
+`ResolvedRuntimePolicy` is the top-level resolved runtime policy bundle passed into the runtime boundary.
+
+```kotlin
+data class ResolvedRuntimePolicy(
+    val sessionBudget: ResolvedSessionBudget,
+    val joinGovernance: ResolvedJoinGovernance,
+)
+```
+
+Normative rule:
+
+- `ResolvedRuntimePolicy` MAY be created from one external profile,
+- but `sessionBudget` and `joinGovernance` MUST remain independently reasoned contracts,
+- and L2 timeout/quota policy MUST NOT be back-propagated into L1 byte-ledger math.
 
 ---
 
@@ -218,7 +274,12 @@ ResourceProfile
   -> ResolvedSizingCalibration (internal)
   -> Capacity Solver
   -> ResolvedPlannerSessionCaps
-  -> PlannerSessionConfig
+
+ResourceProfile
+  -> ResolvedJoinGovernance
+
+ResolvedPlannerSessionCaps + ResolvedJoinGovernance
+  -> PlannerSessionConfig + L2GovernanceConfig
 ```
 
 ### 7.2 Determinism Rule
@@ -256,9 +317,60 @@ Internal implementations MAY depend on internal calibration, but that dependency
 
 ---
 
-## 8. Worker Lifecycle Contract
+## 8. Join Governance State Model
 
-### 8.1 Acquire
+### 8.1 Shared Slot State
+
+`SharedSlotState` models the lifecycle of the per-key shared in-flight slot.
+
+Allowed states:
+
+- `PENDING`
+- `SUCCESS`
+- `FAILED`
+- `DROPPED`
+
+Normative rule:
+
+- a shared slot MUST have exactly one terminal state;
+- `SUCCESS` MUST correspond to publication that has already linearized at the bucket insertion point;
+- `FAILED` MUST correspond to transient or implementation failure propagated to all attached waiters;
+- `DROPPED` MUST correspond to partition close / bulk-drop terminalization.
+
+### 8.2 Waiter State
+
+`WaiterState` models the lifecycle of one attached joiner/waiter.
+
+Allowed states:
+
+- `ATTACHED`
+- `TIMED_OUT`
+- `CANCELLED`
+- `RESUMED`
+
+Normative rule:
+
+- waiter timeout MUST NOT transition the shared slot to `FAILED`;
+- waiter cancellation MUST NOT cancel the shared slot;
+- shared-slot terminalization MUST resume or fail all still-attached waiters;
+- no waiter may remain indefinitely pending after shared-slot terminalization or partition drop.
+
+### 8.3 Attach / Drop Race Rule
+
+Attach and partition-drop MAY race.
+
+Required behavior:
+
+- if `DROPPED` wins before attach linearizes, attach MUST fail immediately with a dropped terminal result;
+- if attach linearizes before `DROPPED`, the subsequent drop sweep MUST wake that waiter exceptionally before region
+  reclamation;
+- region reclamation MUST NOT occur until all inflight slots visible at close have been terminalized.
+
+---
+
+## 9. Worker Lifecycle Contract
+
+### 9.1 Acquire
 
 When a worker-local planner state is acquired from the pool:
 
@@ -272,7 +384,7 @@ Required acquire-time assumptions:
 - no reachable stale `NodeIdIndexer` chain
 - no reachable stale signature slice
 
-### 8.2 Use
+### 9.2 Use
 
 During session execution:
 
@@ -280,7 +392,7 @@ During session execution:
 - no concurrent session may mutate the same worker-local planner state;
 - hot-path data structures remain primitive and allocation-free per operation.
 
-### 8.3 Reset / Return
+### 9.3 Reset / Return
 
 On any exit path, including hard abort:
 
@@ -290,7 +402,7 @@ On any exit path, including hard abort:
 - `currentDepth` MUST return to sentinel baseline;
 - semantic zero-residue MUST hold before the state is returned to the pool.
 
-### 8.4 Quarantine
+### 9.4 Quarantine
 
 If reset fails, or if post-reset invariants cannot be proven:
 
@@ -298,7 +410,7 @@ If reset fails, or if post-reset invariants cannot be proven:
 - it MUST NOT be returned to the pool,
 - it MUST be discarded or rebuilt according to runtime policy.
 
-### 8.5 Kotlin Reference Shape
+### 9.5 Kotlin Reference Shape
 
 ```kotlin
 interface PlannerStatePool {
@@ -310,9 +422,9 @@ interface PlannerStatePool {
 
 ---
 
-## 9. Semantic Output Boundary
+## 10. Semantic Output Boundary
 
-### 9.1 Semantic Output
+### 10.1 Semantic Output
 
 The following are semantic:
 
@@ -321,7 +433,7 @@ The following are semantic:
 - cycle-truncation choice as determined by the protocol comparator,
 - semantic work accounting outputs explicitly defined as semantic.
 
-### 9.2 Non-Semantic Internal Variation
+### 10.2 Non-Semantic Internal Variation
 
 The following are non-semantic implementation details:
 
@@ -334,15 +446,15 @@ The following are non-semantic implementation details:
 - telemetry payload shape,
 - secure wipe enablement.
 
-### 9.3 Rule
+### 10.3 Rule
 
 Changes in non-semantic internal details MUST NOT alter semantic output.
 
 ---
 
-## 10. L1 / L2 Boundary
+## 11. L1 / L2 Boundary
 
-### 10.1 L1 Structural Budget
+### 11.1 L1 Structural Budget
 
 L1 uses `ResolvedPlannerSessionCaps` to size worker-local primitive structures such as:
 
@@ -353,7 +465,7 @@ L1 uses `ResolvedPlannerSessionCaps` to size worker-local primitive structures s
 - undo log
 - signature slab
 
-### 10.2 L2 Governance Budget
+### 11.2 L2 Governance Budget
 
 L2 governance budgets remain repository-level controls, such as:
 
@@ -367,9 +479,9 @@ They do not redefine L1 planner structural caps.
 
 ---
 
-## 11. Failure Semantics
+## 12. Failure Semantics
 
-### 11.1 L1
+### 12.1 L1
 
 L1 sizing and structural-cap failures are fail-closed.
 
@@ -381,7 +493,7 @@ Examples:
 - impossible `nextPowerOfTwo(...)`,
 - cap exceeded during execution.
 
-### 11.2 L2
+### 12.2 L2
 
 L2 governance failure degrades by:
 
@@ -393,20 +505,24 @@ L2 governance changes MUST NOT alter semantic output.
 
 ---
 
-## 12. Compliance Tests
+## 13. Compliance Tests
 
 The following tests are required for this bridge layer:
 
 - `ResolvedSessionBudgetDeterminismTest`
+- `ResolvedJoinGovernanceDeterminismTest`
 - `CapacitySolverDeterminismTest`
 - `ResolvedPlannerSessionCapsInvariantTest`
 - `WorkerLifecycleResetComplianceTest`
 - `WorkerQuarantineOnResetFailureTest`
 - `SemanticOutputBoundaryEquivalenceTest`
+- `JoinTimeoutNonSemanticEquivalenceTest`
+- `SharedSlotAndWaiterStateIndependenceTest`
+- `PartitionDropAttachRaceWakeupCompletenessTest`
 
 ---
 
-## 13. Amendment Targets
+## 14. Amendment Targets
 
 This note is intended to be referenced by:
 
