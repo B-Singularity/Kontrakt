@@ -1,7 +1,8 @@
 # Design Note: Planner Budget Resolution and Worker Lifecycle
 
-Date: 2026-03-14  
-Status: Proposed
+Date: 2026-03-14
+
+Status: Accepted
 
 ## Overview
 
@@ -528,4 +529,252 @@ This note is intended to be referenced by:
 
 - `ADR-0032`
 - `docs/design/l1-planner-session-primitive-data-structures.md`
-- `docs/design/l2-plan-interner-partitioned-tier2-with-governance.md`
+
+---
+
+## 15. Policy Resolution Epoch Rule (AMENDED)
+
+### 15.1 Stable Resolution Time Only
+
+Adaptive policy resolution, including `AUTO` mode, MUST occur only at a stable policy-resolution boundary outside the
+planner hot path, for example:
+
+- process bootstrap,
+- explicit policy refresh,
+- worker-pool generation rollover,
+- another equivalent runtime-boundary installation point.
+
+The following are forbidden during an already-running session:
+
+- recomputing `ResolvedSessionBudget`,
+- recomputing `ResolvedSizingCalibration`,
+- recomputing `ResolvedPlannerSessionCaps`,
+- recomputing `ResolvedJoinGovernance`,
+- mutating already-installed resolved values in response to live telemetry.
+
+### 15.2 Session-Fixed Snapshot Rule
+
+Each `PlannerSession` MUST observe one fixed resolved runtime-policy snapshot for its entire lifetime.
+
+Normative consequences:
+
+- a session starts with one resolved budget/governance snapshot,
+- all planner/lifecycle/join decisions for that session MUST use that snapshot only,
+- a newer resolved snapshot may apply only to subsequently created sessions.
+
+### 15.3 Determinism Rationale
+
+This rule prevents mid-session policy drift from changing:
+
+- capacity solving inputs,
+- join timeout behavior,
+- speculative quota behavior,
+- worker reset/reuse assumptions,
+- bypass vs fail-fast governance decisions,
+
+for an already-running session.
+
+### 15.4 Kotlin Reference Shape (Illustrative)
+
+```kotlin
+data class PolicyEpoch(
+    val id: Long,
+    val policy: ResolvedRuntimePolicy,
+)
+```
+
+If an implementation uses an epoch-tagged snapshot like `PolicyEpoch`, the identifier MUST increase monotonically and
+the tagged policy snapshot MUST remain immutable after installation.
+
+---
+
+## 16. Adaptive Resolver Stability & Cold-Start Rules (AMENDED)
+
+### 16.1 Stability Requirement
+
+If `AUTO` mode or any adaptive policy resolver uses telemetry feedback, it MUST include a stability mechanism to avoid
+epoch-to-epoch oscillation.
+
+Allowed techniques include:
+
+- exponential moving average (EMA),
+- hysteresis bands,
+- minimum hold epochs,
+- clamped update steps,
+- equivalent smoothing/stability controls.
+
+Forbidden anti-pattern:
+
+- immediate threshold-crossing flips on every epoch without damping.
+
+### 16.2 Cold-Start Rule
+
+If no usable historical telemetry exists, the resolver MUST choose deterministic conservative defaults.
+
+Cold-start defaults SHOULD favor:
+
+- non-aggressively short join timeouts,
+- low speculative-builder quota,
+- fail-fast or bypass-safe behavior on quota exhaustion,
+- stable initial behavior over premature aggressiveness.
+
+### 16.3 Telemetry Scope Rule
+
+Telemetry gathered during session `S` MAY influence a later resolved snapshot, but it MUST NOT mutate the already-fixed
+resolved policy of session `S`.
+
+### 16.4 Policy Boundary Rule
+
+Adaptive policy resolution remains outside the Domain Core.
+
+The core and worker-local planner state MUST consume only already-resolved values.
+
+---
+
+## 17. Runtime Policy Registry Publication Safety (AMENDED)
+
+### 17.1 Safe Publication Rule
+
+If resolved runtime-policy snapshots are installed into a runtime registry for future sessions, the registry MUST
+provide safe cross-thread publication.
+
+Minimum acceptable implementations include:
+
+- a `@Volatile` snapshot reference, or
+- `AtomicReference<PolicyEpoch>` (preferred when monotonic installation checks are required).
+
+### 17.2 One-Way Installation Rule
+
+Installing a newer policy snapshot MUST NOT silently roll back to an older snapshot.
+
+If concurrent installation is possible, the runtime SHOULD enforce monotonic policy progression.
+
+### 17.3 Stale Read Tolerance Rule
+
+A newly created session may observe either the old or the new fully-published snapshot depending on the exact handoff
+timing, but it MUST NEVER observe a partially-installed snapshot.
+
+### 17.4 Kotlin Reference Shape (Illustrative)
+
+```kotlin
+class RuntimePolicyRegistry(initial: PolicyEpoch) {
+    private val ref = java.util.concurrent.atomic.AtomicReference(initial)
+
+    fun currentEpoch(): PolicyEpoch = ref.get()
+
+    fun install(next: PolicyEpoch) {
+        while (true) {
+            val prev = ref.get()
+            require(next.id > prev.id)
+            if (ref.compareAndSet(prev, next)) return
+        }
+    }
+}
+```
+
+---
+
+## 18. Wall-Clock Policy Separation (AMENDED)
+
+### 18.1 Rationale
+
+Planner structural/runtime budget and elapsed wall-clock watchdog policy are related operational concerns, but they are
+not the same kind of contract.
+
+`ResolvedSessionBudget` describes:
+
+- planner-core structural bytes,
+- physical steps,
+- semantic work units,
+- signature length / headroom constraints.
+
+Elapsed wall-clock policy depends more directly on external runtime conditions such as:
+
+- JIT warmup,
+- GC pause behavior,
+- scheduler delays,
+- host/container variability.
+
+### 18.2 Separation Rule
+
+A session-level elapsed-time limit, if introduced, SHOULD be represented as a separate runtime contract rather than
+folded into `ResolvedSessionBudget`.
+
+Illustrative shape:
+
+```kotlin
+data class ResolvedWallClockPolicy(
+    val maxSessionElapsedNanos: Long,
+)
+```
+
+### 18.3 Boundary Rule
+
+Elapsed wall-clock policy MUST NOT be folded into:
+
+- primitive byte-ledger math,
+- `PlannerCapacityResolver` sizing formulas,
+- `PlannerSession.step(costCenter)` semantics,
+- `ResolvedJoinGovernance` waiter-lifecycle meaning.
+
+### 18.4 Failure Rule
+
+If a runtime introduces session-level elapsed-time watchdog behavior, that watchdog belongs to the runtime boundary /
+worker lifecycle side, not to the planner-core capacity solver itself.
+
+A session elapsed-time timeout is therefore a runtime-boundary execution limit, not an L2 waiter timeout and not an
+exact-match/cache-correctness signal.
+
+---
+
+## 19. Telemetry / Storage Boundary Clarification (AMENDED)
+
+### 19.1 Worker-State Purity Rule
+
+Worker-local planner state MUST NOT retain references to external telemetry storage objects as part of its semantic
+planner state.
+
+### 19.2 Adapter / Boundary Telemetry Rule
+
+Telemetry collection MAY exist at the runtime boundary or adapter layer, provided that:
+
+- telemetry failures are best-effort / non-throwing,
+- planner object graphs are not retained,
+- planner-session purity and zero-residue are preserved.
+
+### 19.3 Numeric/Event Payload Rule
+
+Telemetry intended for adaptive policy resolution SHOULD remain numeric/event-oriented, such as:
+
+- timeout counts,
+- join wait distributions,
+- hot-key ratios,
+- duplicate build ratios,
+- circuit-open counts.
+
+Such telemetry MAY inform future policy resolution but MUST NOT become a hidden semantic input to the current session.
+
+---
+
+## 20. Extended Compliance Tests (AMENDED)
+
+The following additional tests are required for this bridge layer:
+
+- `PolicyEpochFreezeTest`
+    - verifies that the current session remains bound to its initial resolved policy even if a newer snapshot is
+      installed concurrently
+
+- `AdaptiveResolverStabilityTest`
+    - verifies adaptive control does not oscillate violently under small telemetry fluctuations
+
+- `ColdStartConservativeDefaultsTest`
+    - verifies deterministic conservative defaults when telemetry is absent
+
+- `PolicyRegistryPublicationSafetyTest`
+    - verifies sessions never observe partially-installed policy snapshots
+
+- `WallClockPolicyBoundaryTest`
+    - verifies elapsed-time policy is not folded into capacity-solver math or join-timeout semantics
+
+- `FutureEpochAffectsOnlyFutureSessionsTest`
+    - verifies a newer resolved policy snapshot only affects subsequently created sessions

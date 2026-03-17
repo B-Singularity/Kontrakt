@@ -1,9 +1,15 @@
 # 30. Edge-Aware Deterministic Cycle Truncation Strategy
 
 Date: 2026-02-19
+
 Status: Accepted
+
 Supersedes: [ADR-0010](0010-strict-circular-reference-detection-strategy.md), [ADR-0027](0027-deterministic-cycle-truncation-policy.md)
+
 Normative References: [ADR-0029](0029-runtime-link-handle-protocol-and-integrity.md)
+
+Related Consistency References (
+AMENDED): [ADR-0032](0032-capacity-law-resource-policy-resolution-identity-hierarchy-and-zero-residue-semantics.md)
 
 ## Context
 
@@ -16,21 +22,21 @@ We identified that relying on JVM recursion for graph traversal is **inherently 
 2. **Indeterminate State:** Managing rollback of state across recursive stack frames is error-prone.
 3. **Lack of Control:** "Pausing" or "limiting" execution steps is difficult with native recursion.
 
-To achieve commercial-grade reliability, we require a strategy that **bounds structural growth** (Space & Time) and *
-*deterministically handles cycles** using a controlled execution model. This execution model must adhere strictly to
+To achieve commercial-grade reliability, we require a strategy that **bounds structural growth** (Space & Time) and
+**deterministically handles cycles** using a controlled execution model. This execution model must adhere strictly to
 Hexagonal Architecture principles, keeping the Domain (Planner) pure from infrastructure details.
 
 ## Decision
 
-We adopt the **Edge-Aware Hybrid Truncation Strategy** powered by an **Iterative Explicit Stack Architecture** and *
-*Stateless Determinism**.
+We adopt the **Edge-Aware Hybrid Truncation Strategy** powered by an **Iterative Explicit Stack Architecture** and
+**Stateless Determinism**.
 
 ### 1. Execution Model & Domain Purity (MUST)
 
 To guarantee safety, determinism, and domain purity, the Planner **MUST** adhere to the following rules:
 
-* **Recursion Ban:** The traversal logic **MUST NOT** use native method recursion. It **MUST** be implemented using an *
-  *Iterative Depth-First Search (DFS)** loop.
+* **Recursion Ban:** The traversal logic **MUST NOT** use native method recursion. It **MUST** be implemented using an
+  **Iterative Depth-First Search (DFS)** loop.
 * **Explicit Stack Frame:** The Planner MUST maintain its own heap-based stack.
     * **Frame Types:** `PLAN_NODE`, `ITERATE_MEMBERS`, `EXPAND_EDGE`, `ALLOCATE`.
 * **Inbound Port Contracts & Value Objects (DDD):**
@@ -62,6 +68,24 @@ To guarantee safety, determinism, and domain purity, the Planner **MUST** adhere
     * **Rollback Rule:** When a branch is discarded, the Planner **MUST** restore the snapshot.
     * **Monotonic Step Counter (MUST):** To prevent CPU-DoS attacks, the `CumulativeStepCount` is **strictly excluded**
       from the snapshot. It MUST strictly and monotonically increase across all branch explorations and rollbacks.
+
+#### 1.1. Rollback-Scoped Checkpoints vs. Monotonic Counters (AMENDED)
+
+To remove ambiguity between rollback-local planner state and cumulative runtime metering, the following clarification is
+normative:
+
+* The frame snapshot fields (`CurrentSoftBudget`, `PlaceholderId Counter`, `Builder Log Position`, `Cache Log Position`)
+  are **rollback-scoped checkpoints**, not cumulative metering state.
+* `CurrentSoftBudget` is a planner-local checkpoint value and **MUST NOT** be interpreted as the global semantic budget
+  counter.
+* The planner runtime **MUST** maintain monotonic cumulative counters outside the snapshot boundary:
+    * `CumulativePhysicalStepCount`
+    * `CumulativeSemanticWorkCount`
+* **Rollback Rule (AMENDED):** rollback may restore rollback-scoped checkpoints, stack-local planner state, and local
+  builder/cache log positions, but it **MUST NOT** reduce already-consumed cumulative physical or semantic work.
+* **Reason:** rollback is a control-flow recovery mechanism, not a physical time reversal mechanism. Already-consumed
+  CPU
+  work and semantic budget consumption remain spent.
 
 ### 2. Structural Cycle Detection & Identity
 
@@ -123,13 +147,34 @@ Collision detection MUST NOT be performed globally across all possible construct
     * **Subtype B: Deferred:** `lateinit var` or provably uninitialized non-null fields.
 * **Ignored Edge:** Read-only `val`, delegated properties, computed properties.
     * **Capability Demotion (MUST RECORD):** If restricted by the `CapabilityProfile`, the Core demotes it to **Ignored
-      ** and MUST record a `DemotionRecord` for diagnostics.
+      **
+      and MUST record a `DemotionRecord` for diagnostics.
 
 #### 3.6. Cycle Breakpoint Strategy (Tri-Stage)
 
 1. **Stage 1:** Min Canonical Key among **Deferred Edges** -> Insert `UnlinkedDeferredNode`.
 2. **Stage 2:** Min Canonical Key among **Substitutable Edges** -> Insert `SubstitutionNode`.
 3. **Stage 3:** Fail-Fast (`PlanningException.CycleDetected`).
+
+#### 3.6.1. Governance / Cache Blindness of Truncation Choice (AMENDED)
+
+The selected cycle breakpoint is a **semantic planner decision** and therefore MUST be independent of infrastructure or
+governance conditions.
+
+* The chosen breakpoint **MUST** depend only on:
+    * the Active Stack,
+    * domain-visible facts,
+    * the deterministic comparator rules defined by this ADR.
+* The chosen breakpoint **MUST NOT** depend on:
+    * cache hit/miss state,
+    * Tier-2 join wait outcomes,
+    * speculative builder admission,
+    * timeout behavior,
+    * thread scheduling,
+    * GC pauses,
+    * hot/cold cache state.
+* Therefore, any governance or infrastructure change may alter reuse, retention, waiting, or throughput behavior, but
+  **MUST NOT** alter the protocol-comparator-driven truncation choice.
 
 #### 3.7. Constructor Selection Strategy
 
@@ -144,6 +189,38 @@ Collision detection MUST NOT be performed globally across all possible construct
 ### 5. Budgeting & Capacity Control
 
 * **Max Live Node Cap / Planning Steps:** Hard caps resulting in `CapacityExceededException` (FATAL).
+
+#### 5.1. Capacity Law Terminology Alignment (AMENDED)
+
+To align this ADR with the later capacity-law documents without changing the original meaning:
+
+* The hard-cap concept in this ADR corresponds to the resolved runtime caps later formalized as
+  **`ResolvedPlannerSessionCaps`**.
+* Representative cap categories include, but are not limited to:
+    * `maxNodeIdCap`
+    * `maxDepthCap`
+    * `indexerTableCap`
+    * `undoLogCap`
+    * `maxSignatureBytes`
+* A cap violation is a **hard failure boundary**, not a soft degradation signal.
+* The planner **MUST** fail closed on hard cap exhaustion.
+
+#### 5.2. Zero-Residue Clarification for Capacity Failures (AMENDED)
+
+Following a fatal capacity violation:
+
+* the current planning run **MUST** be aborted,
+* rollback-scoped state **MUST** be unwound as applicable,
+* worker-local session state **MUST** be reset before reuse.
+
+However:
+
+* zero-residue **does not require** byte-for-byte zero-filling of every primitive array or slab.
+* zero-residue **does require** that discarded state becomes **semantically unreachable** from any subsequent planning
+  run.
+
+This means stale bytes may remain in memory physically, but they MUST NOT remain reachable via active stack pointers,
+node counts, indexer heads/epochs, builder log positions, or equivalent runtime access paths.
 
 ### 6. Polymorphism & Determinism Contracts
 
@@ -174,6 +251,26 @@ Global mutable RNG streams and Path-based entropy are **STRICTLY FORBIDDEN**.
 * **Site-Independent Resolution:** `LinkerContext` bindings **MUST be context-free**.
 * **Immutability:** Cached `PlanNode` instances MUST be **Deeply Immutable**.
 
+#### 6.2.1. Cache-Blind Determinism Boundary (AMENDED)
+
+The cache layer exists to improve reuse and throughput, not to alter semantic planner meaning.
+
+Therefore, changes in cache state or cache governance **MUST NOT** alter:
+
+* final IR topology,
+* canonical signatures,
+* protocol-comparator-driven truncation choice,
+* semantic outputs explicitly defined as semantic by the protocol,
+* `treeSemanticCostUpperBound` (or any later equivalent semantic cost contract).
+
+Cache/governance changes may alter only non-semantic dimensions such as:
+
+* instance sharing,
+* retention,
+* latency,
+* throughput,
+* memory survival behavior.
+
 #### 6.3. Time & Clock Determinism
 
 * **Temporal Variance:** Offset `[0, MaxOffsetMillis)` generated via TDE (label: `TIME_OFFSET`). Computed as unsigned
@@ -202,27 +299,24 @@ exclusively for schema collisions (`AmbiguousEdgeKey`, `AmbiguousEntropyTargetKe
 
 * **`PlanningException`** (Sealed Domain Exception):
     *
-  `CycleDetected(path, cycleSegment, capabilityDemotions: List<DemotionRecord>, truncated: Boolean, faultKind: PlanningFaultKind)`
-    * *Demotion Evidence:* `DemotionRecord` MUST contain `ownerType, memberKind, name, typeSignature, reason` and an
-      optional `requiredCapabilityHint`.
-    * *FaultKind Rule:* If `capabilityDemotions` is not empty, set to `CAPABILITY_RESTRICTED`. Otherwise,
-      `USER_MODEL_INVALID`.
-    * *Safety Rule:* `MAX_DIAGNOSTIC_ENTRIES` MUST be exactly `50`. Collections MUST be tail-truncated.
-      `capabilityDemotions` MUST be sorted by **`EntropyTargetKey`** ascending before truncation to ensure
-      index-independent deterministic reporting. If truncated, the `truncated` flag MUST be `true`.
-        * `AmbiguousEdgeKey(ownerType, serializedKey, conflictingMembers, faultKind: PlanningFaultKind)` (Uses Dynamic
-          Fault
-          Rule).
-        * `AmbiguousEntropyTargetKey(ownerType, targetKey, conflictingMembers, faultKind: PlanningFaultKind)` (Uses
-          Dynamic
-          Fault Rule).
-        * `InvalidCanonicalKeyComponent(invalidComponent, reason, faultKind = USER_MODEL_INVALID)`
-            * *Rule:* Thrown strictly when Reality Defense detects `|`. Always attributed to the user's model or their
-              build
-              pipeline (e.g., obfuscator/plugin).
-        * `PortContractViolation(detail, faultKind = FRAMEWORK_INVARIANT_BROKEN)`
-            * *Rule:* Thrown strictly when Reality Defense detects non-NFC normalized strings or malformed Capability
-              Profiles, definitively indicating an Adapter bug.
+    `CycleDetected(path, cycleSegment, capabilityDemotions: List<DemotionRecord>, truncated: Boolean, faultKind: PlanningFaultKind)`
+        * *Demotion Evidence:* `DemotionRecord` MUST contain `ownerType, memberKind, name, typeSignature, reason` and an
+          optional `requiredCapabilityHint`.
+        * *FaultKind Rule:* If `capabilityDemotions` is not empty, set to `CAPABILITY_RESTRICTED`. Otherwise,
+          `USER_MODEL_INVALID`.
+        * *Safety Rule:* `MAX_DIAGNOSTIC_ENTRIES` MUST be exactly `50`. Collections MUST be tail-truncated.
+          `capabilityDemotions` MUST be sorted by **`EntropyTargetKey`** ascending before truncation to ensure
+          index-independent deterministic reporting. If truncated, the `truncated` flag MUST be `true`.
+    * `AmbiguousEdgeKey(ownerType, serializedKey, conflictingMembers, faultKind: PlanningFaultKind)` (Uses Dynamic
+      Fault Rule).
+    * `AmbiguousEntropyTargetKey(ownerType, targetKey, conflictingMembers, faultKind: PlanningFaultKind)` (Uses Dynamic
+      Fault Rule).
+    * `InvalidCanonicalKeyComponent(invalidComponent, reason, faultKind = USER_MODEL_INVALID)`
+        * *Rule:* Thrown strictly when Reality Defense detects `|`. Always attributed to the user's model or their
+          build pipeline (e.g., obfuscator/plugin).
+    * `PortContractViolation(detail, faultKind = FRAMEWORK_INVARIANT_BROKEN)`
+        * *Rule:* Thrown strictly when Reality Defense detects non-NFC normalized strings or malformed Capability
+          Profiles, definitively indicating an Adapter bug.
 * **`CapacityExceededException`** (Domain Exception): Payload: `limitType`, `currentValue`,
   `faultKind = RESOURCE_EXHAUSTED`.
 * **`PlanViolationException`** (VM/Runtime Exception): Payload includes `runtimeFaultKind`.
@@ -231,3 +325,22 @@ exclusively for schema collisions (`AmbiguousEdgeKey`, `AmbiguousEntropyTargetKe
 warnings based strictly on the `faultKind` and provided Domain descriptors.
 
 * Examples: [cycle-truncation-examples](../design/cycle-truncation-examples.md)
+
+## Consequences
+
+### Positive
+
+* Eliminates JVM stack-overflow risk from deep or cyclic graphs.
+* Makes rollback behavior explicit, inspectable, and testable.
+* Preserves deterministic cycle handling through comparator-driven breakpoint selection.
+* Keeps Domain/Core responsibilities pure under Hexagonal Architecture.
+* Aligns cycle truncation with later capacity-law and cache-blind determinism rules without changing the core decision
+  logic of this ADR.
+
+### Negative / Trade-offs
+
+* The explicit frame machine is more verbose than native recursion.
+* Rollback/checkpoint management requires disciplined implementation and compliance testing.
+* Determinism now depends on stricter Port contract enforcement (normalization, origin/version reporting,
+  canonical component hygiene).
+* Additional governance/capacity documents must remain consistent with this ADR to avoid semantic drift.

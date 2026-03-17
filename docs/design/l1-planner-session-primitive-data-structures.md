@@ -573,3 +573,61 @@ The following tests are mandatory complements to this design note:
 
 - `ZeroResidueWorkerReuseStressTest`
     - verifies immediate reuse after Hard Abort does not leak reachable state
+
+## Amendment: Session-Fixed Structural Policy Boundary (CRITICAL MUST)
+
+This document defines the primitive layout, byte-ledger law, reset/reachability law, and hot-path cost-center
+requirements for L1 worker-local planner structures.
+
+To keep L1 deterministic and independent from runtime environment fluctuation, the following clarification is normative:
+
+### A. Session-Fixed Structural Inputs
+
+The values consumed by L1 during a single session — including resolved numeric budgets, internal sizing calibration,
+and the derived `ResolvedPlannerSessionCaps` / `PlannerSessionConfig` fields — MUST remain fixed for the lifetime of
+that session.
+
+L1 structures MUST NOT:
+
+- resize themselves mid-session based on telemetry,
+- re-solve depth/node/table capacities during a session,
+- read heap state, GC state, CPU count, or similar environment signals directly.
+
+### B. Policy Adaptation Boundary
+
+Adaptive policy resolution MAY occur outside the Domain Core before a session starts, but the result of that adaptation
+MUST be injected as already-resolved values.
+
+Therefore:
+
+- environment discovery belongs outside L1,
+- telemetry-based adaptation belongs outside L1,
+- any new policy snapshot applies only to subsequently created sessions.
+
+### C. Wall-Clock Boundary
+
+Elapsed wall-clock limits are NOT part of the primitive byte ledger and are NOT a replacement for `CostCenter`
+semantics.
+
+If a runtime introduces session-level elapsed-time limits, those limits MUST remain a separate runtime policy concern
+and MUST NOT be folded into:
+
+- `MaxPlannerBytesPerWorker`,
+- `MaxNodeIdCap` / `MaxDepthCap` solver math,
+- `PlannerSession.step(costCenter)` tick semantics,
+- RMQ / NodeIdIndexer primitive invariants.
+
+### D. Consequence
+
+L1 remains authoritative for:
+
+- primitive worker-local sizing,
+- deterministic capacity solving from already-resolved numeric inputs,
+- rollback/reset reachability,
+- hot-path metering semantics.
+
+L1 is not authoritative for:
+
+- environment introspection,
+- runtime policy adaptation loops,
+- session wall-clock watchdog policy.

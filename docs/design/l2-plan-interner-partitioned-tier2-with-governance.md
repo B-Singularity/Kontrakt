@@ -618,3 +618,171 @@ Verifies:
 - timeout/degrade paths do not permit unbounded speculative builders,
 - quota exhaustion results in bypass or fail-fast only,
 - semantic output remains unchanged.
+
+---
+
+## 12. Session-Fixed Governance Epoch Rule (AMENDED)
+
+### 12.1 Stable Resolution Time Only
+
+Adaptive governance resolution (including `AUTO` mode) MUST occur only at a **stable policy-resolution boundary**
+outside the planner hot path, for example:
+
+- process bootstrap,
+- explicit policy refresh,
+- worker-pool generation rollover,
+- another equivalent runtime-boundary installation point.
+
+The following are forbidden on the L2 hot path:
+
+- reading environment state in order to recompute governance values,
+- mutating `joinWaitTimeoutNanos` mid-session,
+- mutating `maxWaitersPerKey` mid-session,
+- mutating `maxSpeculativeBuildersPerKey` mid-session,
+- mutating quota / fail-fast policy in response to live telemetry for the currently running session.
+
+### 12.2 Session-Fixed Snapshot
+
+Each planning session MUST observe a single fixed resolved governance snapshot for its entire lifetime.
+
+Normative rule:
+
+- a session starts with one resolved L2 governance snapshot,
+- all join/wait/degrade decisions for that session MUST use that snapshot only,
+- a newer governance snapshot may apply only to subsequently created sessions.
+
+### 12.3 Consequence
+
+If telemetry gathered during session `S` suggests that a better timeout/quota policy exists, the runtime MAY compute
+a new governance snapshot, but that new snapshot MUST NOT alter the behavior of session `S`.
+It may only affect later sessions.
+
+### 12.4 Determinism Rationale
+
+This rule prevents mid-session policy drift from changing:
+
+- which waiter times out,
+- whether speculative promotion becomes available,
+- whether quota exhaustion is reached,
+- whether bypass vs fail-fast is selected,
+
+for an already-running session.
+
+---
+
+## 13. Adaptive Resolver Stability & Cold-Start Rules (AMENDED)
+
+### 13.1 Stability Requirement
+
+If `AUTO` mode or any adaptive policy resolver uses telemetry feedback, it MUST include a stability mechanism to avoid
+epoch-to-epoch oscillation.
+
+Allowed implementation techniques include:
+
+- exponential moving average (EMA),
+- hysteresis bands,
+- minimum hold epochs,
+- clamped update steps,
+- equivalent smoothing/stability controls.
+
+The exact formula is implementation policy, but the following anti-pattern is forbidden:
+
+- one-threshold instantaneous policy flipping on every epoch.
+
+### 13.2 Cold-Start Rule
+
+If no usable historical telemetry exists, the resolver MUST choose deterministic conservative defaults.
+
+Cold-start defaults SHOULD favor:
+
+- non-aggressively short join timeouts,
+- low speculative-builder quota,
+- fail-fast or bypass-safe behavior when quota is exhausted,
+- stable initial behavior over premature aggressiveness.
+
+### 13.3 Telemetry Scope
+
+Adaptive telemetry is an **input to the next governance snapshot**, not a signal that mutates the current one.
+
+### 13.4 Semantic Boundary
+
+Any adaptive policy change MUST preserve the semantic/cache-blind guarantees already stated in this note.
+Adaptive control may change throughput, waiting, retention, or survival behavior only.
+
+---
+
+## 14. Telemetry Emission Boundary & Publication Safety (AMENDED)
+
+### 14.1 Adapter-Internal Telemetry Sink
+
+L2 telemetry emission MAY be implemented through an adapter-internal sink abstraction
+(e.g., `L2TelemetrySink`) or equivalent adapter-local mechanism.
+
+Normative rule:
+
+- telemetry emission from L2 MUST NOT require the Domain Core to depend on telemetry storage infrastructure,
+- telemetry emission failure MUST remain best-effort / non-throwing,
+- telemetry payloads SHOULD remain numeric/event-oriented and MUST NOT retain planner object graphs.
+
+### 14.2 Store / Sink Responsibility Split
+
+An implementation MAY distinguish:
+
+- a hot-path-facing adapter-local telemetry sink,
+- and a slower policy/operations telemetry store used by the adaptive resolver.
+
+If this split exists:
+
+- the hot path records events into the sink,
+- the resolver reads aggregated snapshots from the store,
+- neither operation may mutate the already-installed governance snapshot of the current session.
+
+### 14.3 Policy Registry Publication
+
+If resolved governance snapshots are installed into a runtime registry for future sessions, that registry MUST provide
+safe cross-thread publication.
+
+Minimum acceptable implementations include:
+
+- `@Volatile` snapshot reference, or
+- `AtomicReference<PolicyEpoch>` (preferred when monotonic installation checks are needed).
+
+If epoch identifiers are used, they MUST increase monotonically.
+
+### 14.4 One-Way Installation Rule
+
+Installing a newer policy snapshot MUST NOT silently roll back to an older snapshot.
+If concurrent installation is possible, the runtime SHOULD enforce monotonic epoch progression.
+
+---
+
+## 15. Wall-Clock Separation Clarification (AMENDED)
+
+Join wait timeout and session elapsed-time timeout are distinct concerns.
+
+### 15.1 Join Wait Timeout
+
+`joinWaitTimeoutNanos` belongs to L2 join governance and applies only to waiter lifecycle.
+
+It is:
+
+- non-semantic,
+- slot-local / waiter-local,
+- allowed to degrade to bypass or miss according to governance.
+
+### 15.2 Session Elapsed Timeout
+
+A session-level elapsed wall-clock limit, if introduced by the runtime, belongs to a separate runtime / watchdog policy
+and MUST NOT be folded into:
+
+- `maxEntries`,
+- `maxApproxBytes`,
+- `planKey64` routing,
+- bucket exact-match semantics,
+- hot-path reconfiguration of join governance.
+
+A session elapsed-time timeout is an execution-boundary concern, not an exact-match governance signal.
+
+### 15.3 Separation Rule
+
+L2 MUST NOT reinterpret elapsed wall-clock timeout as semantic cache corruption or exact-match failure.

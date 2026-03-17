@@ -261,3 +261,80 @@ Policy (runtime/execution strategy) provides:
 Protocol MUST NOT depend on environment introspection.
 Environment discovery MUST be implemented via ports/adapters, and policy values are injected into protocol-bound runtime
 objects.
+
+### 12. Session-Fixed Policy Snapshot Immutability (AMENDED)
+
+* **[A] Compile-Time / Boundary Rule:** Protocol-bound runtime objects inside the compiler/planner core MUST consume
+  only
+  already-resolved, immutable policy snapshots.
+* **[A] Compile-Time:** The core MUST NOT read live environment signals such as:
+    * heap state,
+    * cgroup/container memory,
+    * CPU count,
+    * GC kind,
+    * scheduler state.
+* **[A] Compile-Time:** The core MUST NOT read live adaptive telemetry in order to mutate:
+    * step budgets,
+    * semantic budgets,
+    * join timeout values,
+    * speculative quota,
+    * or any equivalent governance value
+      during an already-running session.
+* **[C] Runtime / CI:** If a newer policy snapshot is installed concurrently, an already-running session MUST continue
+  using the snapshot it started with. Newer snapshots may apply only to subsequently created sessions.
+
+### 13. Telemetry Payload Discipline & Zero-Residue Boundary (AMENDED)
+
+* **[A] Compile-Time:** Telemetry payloads emitted from planner/L2 code MUST be numeric/event-oriented and MUST NOT
+  retain references to planner object graphs, mutable worker-local state, or canonical node subgraphs.
+* **[A] Compile-Time:** If an adapter-local telemetry sink exists, it MUST remain best-effort / non-throwing and MUST
+  NOT become a semantic dependency of the planner core.
+* **[B] Static Analysis:** ArchUnit / bytecode inspection SHOULD verify that telemetry helpers do not capture
+  `PlannerSession`, `CanonicalPlanNode`, `LocalPlanNode`, or equivalent mutable session state into long-lived stores.
+* **[C] Runtime / CI:** Worker reuse tests MUST verify no semantic state remains reachable through telemetry pipelines
+  after reset / hard abort.
+
+### 14. Wall-Clock Policy Separation (AMENDED)
+
+* **[A] Compile-Time:** Wall-clock elapsed-time policy is NOT protocol fuel semantics.
+* **[A] Compile-Time:** Step counters and cost-center tick semantics MUST NOT be reinterpreted as wall-clock durations
+  through a dynamic exchange-rate inside the core.
+* **[A] Compile-Time:** If the runtime introduces a session-level elapsed-time watchdog, it belongs to a separate
+  runtime/boundary policy concern and MUST NOT be folded into:
+    * `step(costCenter)` semantics,
+    * `DeterministicList/Map/Set` rules,
+    * `NodeIdIndexer` two-phase identity law,
+    * or cache exact-match correctness.
+* **[C] Runtime / CI:** Wall-clock policy changes may alter abort timing or operational survivability, but MUST NOT
+  alter:
+    * topology,
+    * canonical signatures,
+    * protocol-comparator-driven truncation choice,
+    * or semantic outputs declared semantic by protocol.
+
+### 15. Policy Registry Publication Safety (AMENDED)
+
+* **[A] Compile-Time / Boundary Rule:** If a resolved policy snapshot is published to future sessions through a runtime
+  registry, that publication MUST be safe under the JVM memory model.
+* **[A] Compile-Time:** Minimum acceptable publication forms include:
+    * `@Volatile` immutable snapshot reference, or
+    * `AtomicReference<PolicyEpoch>` / equivalent immutable snapshot holder.
+* **[A] Compile-Time:** If epoch identifiers are used, they MUST increase monotonically.
+* **[C] Runtime / CI:** Tests MUST verify that newly created sessions observe either the old or the new fully-published
+  snapshot, but never a partially-installed one.
+
+### 16. Adaptive Resolver Stability & Cold-Start Rule (AMENDED)
+
+* **[A] Compile-Time / Boundary Rule:** Adaptive policy resolution is allowed only outside the protocol core.
+* **[A] Compile-Time:** If `AUTO` or telemetry-driven resolution is used, the resolver MUST include a stability control
+  to prevent oscillation between successive policy snapshots.
+  Allowed techniques include:
+    * exponential moving average (EMA),
+    * hysteresis bands,
+    * minimum hold epochs,
+    * clamped update steps,
+    * equivalent smoothing controls.
+* **[A] Compile-Time:** Cold-start resolution (no usable historical telemetry) MUST choose deterministic conservative
+  defaults.
+* **[C] Runtime / CI:** Adaptive policy changes may alter throughput / waiting / survivability behavior only.
+  They MUST NOT alter semantic output.
