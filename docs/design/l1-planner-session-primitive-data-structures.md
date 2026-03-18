@@ -345,7 +345,7 @@ Any change to policy defaults MUST NOT change deterministic semantic output, and
 invariants.
 
 > **MVP Policy Surface Note (AMENDED):** The MVP SHOULD remain “zero-config” for most users.
-> If a high-level policy knob is exposed (e.g., `resourceProfile = AUTO | SMALL_HEAP | DEFAULT | SERVER`),
+> If a high-level policy knob is exposed (e.g., `resourceProfile = AUTO | SMALL | STANDARD | LARGE`),
 > it MUST map to these internal budgets without exposing low-level knobs unless production incidents require it.
 
 ## Amendment: Primitive Byte Ledger & Capacity Solver Law (CRITICAL MUST)
