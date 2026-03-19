@@ -2,7 +2,7 @@
 
 Date: 2026-03-18
 
-Status: Proposed
+Status: Accepted
 
 Related / Normative References:
 
@@ -85,6 +85,26 @@ The core MUST NOT:
 - inspect live telemetry,
 - mutate already-installed budgets or governance during an already-running session.
 
+In addition, policy snapshot objects themselves MUST follow snapshot-integrity rules.
+
+Normative rule:
+
+- policy snapshot objects MUST be immutable,
+- policy snapshot objects MUST NOT expose public primary constructors for arbitrary reconstruction,
+- policy snapshot objects MUST NOT use `data class`-generated `copy()` as a mutation/reconstruction backdoor,
+- policy snapshot objects SHOULD be issued through factory methods,
+- invariant enforcement MUST throw explicit custom exceptions,
+- `require()`, `check()`, `error()`, and standard `IllegalArgumentException`-style validation paths are forbidden for
+  snapshot-integrity enforcement.
+
+This rule applies to the policy snapshot family, including:
+
+- `ResolvedSessionBudget`
+- `ResolvedJoinGovernance`
+- `ResolvedStorageGovernance`
+- `ResolvedRuntimePolicy`
+- optional `ResolvedWallClockPolicy`
+
 ---
 
 ### 2. Public resource surface remains high-level
@@ -163,11 +183,37 @@ v1 formally adds a separate L2 storage-governance contract.
 Illustrative shape:
 
 ```kotlin
-data class ResolvedStorageGovernance(
+class ResolvedStorageGovernance private constructor(
     val maxApproxBytesPerPartition: Long,
     val maxEntriesPerPartition: Int,
     val circuitOpenOnStorageExhaustion: Boolean,
-)
+) {
+    companion object {
+        @JvmStatic
+        fun issue(
+            maxApproxBytesPerPartition: Long,
+            maxEntriesPerPartition: Int,
+            circuitOpenOnStorageExhaustion: Boolean,
+        ): ResolvedStorageGovernance {
+            if (maxApproxBytesPerPartition <= 0L) {
+                throw PlanningProtocolIntegrityException(
+                    "ResolvedStorageGovernance.maxApproxBytesPerPartition must be > 0: $maxApproxBytesPerPartition"
+                )
+            }
+            if (maxEntriesPerPartition <= 0) {
+                throw PlanningProtocolIntegrityException(
+                    "ResolvedStorageGovernance.maxEntriesPerPartition must be > 0: $maxEntriesPerPartition"
+                )
+            }
+
+            return ResolvedStorageGovernance(
+                maxApproxBytesPerPartition = maxApproxBytesPerPartition,
+                maxEntriesPerPartition = maxEntriesPerPartition,
+                circuitOpenOnStorageExhaustion = circuitOpenOnStorageExhaustion,
+            )
+        }
+    }
+}
 ```
 
 Normative rule:
@@ -175,6 +221,8 @@ Normative rule:
 - storage governance is distinct from L1 structural planner sizing,
 - storage governance is distinct from L2 waiter/join governance,
 - storage governance affects retention, survivability, and degradation behavior only,
+- storage governance MUST follow policy snapshot integrity rules,
+- issuance-time invariant enforcement MUST use explicit custom exceptions,
 - storage governance MUST NOT redefine:
     - exact-match semantics,
     - routing identity,
@@ -225,19 +273,85 @@ These must be treated honestly as:
 `ResolvedSessionBudget` remains:
 
 ```kotlin
-data class ResolvedSessionBudget(
+
+class ResolvedSessionBudget private constructor(
     val maxPlannerBytesPerWorker: Long,
     val maxPhysicalSteps: Int,
     val maxSemanticWorkUnits: Int,
     val maxSignatureLen: Int,
     val fixedHeadroomBytes: Long,
-)
+    val physicalStepMultiplier: Int,
+    val semanticWorkMultiplier: Int,
+) {
+    companion object {
+        @JvmStatic
+        fun issue(
+            maxPlannerBytesPerWorker: Long,
+            maxPhysicalSteps: Int,
+            maxSemanticWorkUnits: Int,
+            maxSignatureLen: Int,
+            fixedHeadroomBytes: Long,
+            physicalStepMultiplier: Int,
+            semanticWorkMultiplier: Int,
+        ): ResolvedSessionBudget {
+            if (maxPlannerBytesPerWorker <= 0L) {
+                throw PlanningProtocolIntegrityException(
+                    "ResolvedSessionBudget.maxPlannerBytesPerWorker must be > 0: $maxPlannerBytesPerWorker"
+                )
+            }
+            if (maxPhysicalSteps <= 0) {
+                throw PlanningProtocolIntegrityException(
+                    "ResolvedSessionBudget.maxPhysicalSteps must be > 0: $maxPhysicalSteps"
+                )
+            }
+            if (maxSemanticWorkUnits <= 0) {
+                throw PlanningProtocolIntegrityException(
+                    "ResolvedSessionBudget.maxSemanticWorkUnits must be > 0: $maxSemanticWorkUnits"
+                )
+            }
+            if (maxSignatureLen <= 0) {
+                throw PlanningProtocolIntegrityException(
+                    "ResolvedSessionBudget.maxSignatureLen must be > 0: $maxSignatureLen"
+                )
+            }
+            if (fixedHeadroomBytes < 0L) {
+                throw PlanningProtocolIntegrityException(
+                    "ResolvedSessionBudget.fixedHeadroomBytes must be >= 0: $fixedHeadroomBytes"
+                )
+            }
+            if (physicalStepMultiplier <= 0) {
+                throw PlanningProtocolIntegrityException(
+                    "ResolvedSessionBudget.physicalStepMultiplier must be > 0: $physicalStepMultiplier"
+                )
+            }
+            if (semanticWorkMultiplier <= 0) {
+                throw PlanningProtocolIntegrityException(
+                    "ResolvedSessionBudget.semanticWorkMultiplier must be > 0: $semanticWorkMultiplier"
+                )
+            }
+
+            return ResolvedSessionBudget(
+                maxPlannerBytesPerWorker = maxPlannerBytesPerWorker,
+                maxPhysicalSteps = maxPhysicalSteps,
+                maxSemanticWorkUnits = maxSemanticWorkUnits,
+                maxSignatureLen = maxSignatureLen,
+                fixedHeadroomBytes = fixedHeadroomBytes,
+                physicalStepMultiplier = physicalStepMultiplier,
+                semanticWorkMultiplier = semanticWorkMultiplier,
+            )
+        }
+    }
+}
 ```
 
 Normative rule:
 
 - this contract is resolved outside the Domain Core,
 - all fields are immutable once installed,
+- issuance MUST validate basic invariants,
+- issuance-time invariant enforcement MUST use explicit custom exceptions,
+- policy snapshot integrity rules apply,
+- `physicalStepMultiplier` and `semanticWorkMultiplier` are explicit policy constants, not hidden implementation ratios,
 - identical resolved inputs MUST produce identical `ResolvedPlannerSessionCaps`.
 
 ---
@@ -319,22 +433,29 @@ They are Kontrakt-approved bootstrap plateaus.
 `maxPhysicalSteps` and `maxSemanticWorkUnits` are not intended as performance-tuning knobs.
 They are runaway-prevention fuses.
 
-For v1 bootstrap policy:
+For v1 bootstrap policy, the current step/work-unit derivation is made explicit through policy constants:
 
 ```text
-maxPhysicalSteps     = 16 × derived maxNodeIdCap
-maxSemanticWorkUnits =  4 × derived maxNodeIdCap
-```
+physicalStepMultiplier = 16
+semanticWorkMultiplier = 4
 
-This keeps step/work-unit ceilings tied to the currently derived structural plateau instead of inventing unrelated
-arbitrary limits.
+maxPhysicalSteps     = physicalStepMultiplier × derived maxNodeIdCap
+maxSemanticWorkUnits = semanticWorkMultiplier × derived maxNodeIdCap
+```
 
 Normative intent:
 
 - structural byte budget remains the primary capacity control,
 - physical/semantic step ceilings remain secondary runaway fuses,
 - these counters are not wall-clock substitutes,
-- these counters are not mutable mid-session.
+- these counters are not mutable mid-session,
+- the multipliers themselves are policy constants and MUST NOT be hidden as unexplained implementation defaults.
+
+Classification:
+
+- `physicalStepMultiplier` and `semanticWorkMultiplier` are Kontrakt bootstrap policy constants,
+- they are not externally standardized laws,
+- they MUST be explicitly ratified against the representative corpus.
 
 ---
 
@@ -382,12 +503,39 @@ Notes:
 Illustrative shape:
 
 ```kotlin
-data class ResolvedJoinGovernance(
+class ResolvedJoinGovernance private constructor(
     val joinWaitTimeoutNanos: Long,
     val maxWaitersPerKey: Int,
     val maxSpeculativeBuildersPerKey: Int,
     val failFastOnQuotaExhaustion: Boolean,
-)
+) {
+    companion object {
+        @JvmStatic
+        fun issue(
+            joinWaitTimeoutNanos: Long,
+            maxWaitersPerKey: Int,
+            maxSpeculativeBuildersPerKey: Int,
+            failFastOnQuotaExhaustion: Boolean,
+        ): ResolvedJoinGovernance {
+            if (joinWaitTimeoutNanos <= 0L) {
+                throw PlanningProtocolIntegrityException("...")
+            }
+            if (maxWaitersPerKey <= 0) {
+                throw PlanningProtocolIntegrityException("...")
+            }
+            if (maxSpeculativeBuildersPerKey < 0) {
+                throw PlanningProtocolIntegrityException("...")
+            }
+
+            return ResolvedJoinGovernance(
+                joinWaitTimeoutNanos = joinWaitTimeoutNanos,
+                maxWaitersPerKey = maxWaitersPerKey,
+                maxSpeculativeBuildersPerKey = maxSpeculativeBuildersPerKey,
+                failFastOnQuotaExhaustion = failFastOnQuotaExhaustion,
+            )
+        }
+    }
+}
 ```
 
 Normative v1 rule:
@@ -464,19 +612,35 @@ It does not change:
 For v1 bootstrap policy:
 
 ```text
-maxApproxBytesPerPartition = 2 × maxPlannerBytesPerWorker
-maxEntriesPerPartition     = lowerPowerOfTwo(maxApproxBytesPerPartition / 1024)
+storageMultiplier         = 2.0x
+storageEntryBytesBaseline = 1024
+
+maxApproxBytesPerPartition =
+  storageMultiplier × maxPlannerBytesPerWorker
+
+maxEntriesPerPartition =
+  lowerPowerOfTwo(maxApproxBytesPerPartition / storageEntryBytesBaseline)
+
 circuitOpenOnStorageExhaustion = true
 ```
 
 Rationale:
 
-- `2×` is a simple bootstrap law that makes L2 meaningfully larger than the worker-local structural planner budget,
-  while remaining conservative enough for shared build/CI JVM environments.
-- `maxEntriesPerPartition` is a secondary hard fuse and deliberately avoids pretending to know the exact average entry
-  size.
+- `storageMultiplier` is a bootstrap storage-policy constant that makes L2 meaningfully larger than the worker-local
+  structural planner budget, while remaining conservative enough for shared build/CI JVM environments.
+- `storageEntryBytesBaseline` is a bootstrap storage-calibration constant used only to derive a conservative secondary
+  entry fuse from the approximate byte budget.
+- `storageEntryBytesBaseline` is NOT an exact statement about real entry size.
+- `maxEntriesPerPartition` deliberately avoids pretending to know the exact average entry size.
 - `circuitOpenOnStorageExhaustion = true` matches the approved L2 survivability model:
   storage exhaustion is governance degradation, not semantic corruption.
+
+Classification:
+
+- `storageMultiplier` is a Kontrakt bootstrap constant and ratification target.
+- `storageEntryBytesBaseline` is a Kontrakt bootstrap calibration constant and ratification target.
+- the entry-cap derivation law is approved.
+- `circuitOpenOnStorageExhaustion = true` is approved.
 
 ---
 
@@ -484,20 +648,33 @@ Rationale:
 
 ```text
 SMALL
+- storageMultiplier               = 2.0x         (bootstrap ratification target)
+- storageEntryBytesBaseline       = 1024         (bootstrap ratification target)
 - maxApproxBytesPerPartition      = 20 MiB
 - maxEntriesPerPartition          = 16,384
 - circuitOpenOnStorageExhaustion  = true
 
 STANDARD
+- storageMultiplier               = 2.0x         (bootstrap ratification target)
+- storageEntryBytesBaseline       = 1024         (bootstrap ratification target)
 - maxApproxBytesPerPartition      = 40 MiB
 - maxEntriesPerPartition          = 32,768
 - circuitOpenOnStorageExhaustion  = true
 
 LARGE
+- storageMultiplier               = 2.0x         (bootstrap ratification target)
+- storageEntryBytesBaseline       = 1024         (bootstrap ratification target)
 - maxApproxBytesPerPartition      = 80 MiB
 - maxEntriesPerPartition          = 65,536
 - circuitOpenOnStorageExhaustion  = true
 ```
+
+Notes:
+
+- `storageMultiplier = 2.0x` is not claimed to be an externally standardized law.
+  It is a Kontrakt bootstrap storage-policy constant.
+- `storageEntryBytesBaseline = 1024` is not claimed to be a true average entry-size law.
+  It is a Kontrakt bootstrap calibration constant used only for deriving a secondary entry fuse.
 
 Classification:
 
@@ -517,7 +694,10 @@ The following are v1 bootstrap constants requiring explicit ratification.
 2. `joinWaitTimeoutNanos`
 3. `maxWaitersPerKey`
 4. `storageMultiplier`
-5. `depthCap sufficiency for each approved worker-budget plateau`
+5. `storageEntryBytesBaseline`
+6. `depthCap sufficiency for each approved worker-budget plateau`
+7. `physicalStepMultiplier`
+8. `semanticWorkMultiplier`
 
 Important clarification:
 
@@ -525,6 +705,10 @@ Important clarification:
 - It is a derived solver output.
 - However, each approved worker-budget plateau MUST be ratified by verifying that its derived `maxDepthCap` is
   sufficient for the representative corpus.
+- `physicalStepMultiplier` and `semanticWorkMultiplier` are explicit policy constants governing runaway-prevention
+  fuses.
+- `storageEntryBytesBaseline` is a storage-calibration constant used only to derive the secondary entry fuse from the
+  approximate byte budget.
 
 ---
 
@@ -699,31 +883,117 @@ Re-ratification trigger:
 - partition/shard/bucket retention behavior changes materially,
 - representative corpus observes storage-triggered circuit-open under the approved multiplier.
 
----
-
-### 11.8 `depthCap` sufficiency ratification rule
+### 11.8 `storageEntryBytesBaseline` ratification rule
 
 Method:
 
-- for each approved worker-byte plateau, observe the derived `maxDepthCap`,
-- run the representative corpus under that plateau,
-- record whether any session exceeds the derived depth cap.
+- sweep a small approved candidate set, e.g.:
+    - `512`
+    - `1024`
+    - `2048`
+
+Observe:
+
+- entry-cap-triggered `CircuitOpen` or degradation,
+- whether entry-cap exhaustion occurs materially earlier than approximate-byte exhaustion,
+- duplicate-build ratio,
+- partition-drop pressure.
 
 Approval rule:
 
-- a worker-byte plateau is approvable only if the representative corpus observes **zero depth-cap breaches** under that
-  plateau.
-- if multiple candidate plateaus satisfy this condition, approve the smallest plateau.
+- choose the smallest baseline for which the representative corpus does not observe premature entry-cap-triggered
+  degradation relative to the approximate-byte budget.
 
-This is not a separate public depth constant.
-It is the sufficiency rule for approving worker-byte plateaus.
+Tie-breaker rule:
+
+- if multiple candidates satisfy the condition,
+  prefer the smallest candidate;
+- duplicate-build ratio and partition-drop pressure MAY be used as tie-breakers.
+
+Initial v1 bootstrap candidate:
+
+```text
+storageEntryBytesBaseline = 1024
+```
 
 Re-ratification trigger:
 
-- primitive ledger changes materially,
-- desired-depth / feasible-depth solver logic changes materially,
-- representative corpus adds deeper graph families,
-- any approved profile observes a real depth-cap breach.
+- canonical storage entry shape changes materially,
+- approximate-byte accounting changes materially,
+- representative corpus shows repeated premature entry-cap-triggered degradation,
+- or storage-governance derivation is revised.
+
+---
+
+### 11.9 `physicalStepMultiplier` ratification rule
+
+Method:
+
+- sweep a small approved candidate set, e.g.:
+    - `8`
+    - `16`
+    - `32`
+
+Observe:
+
+- premature physical-step exhaustion under ordinary representative workloads,
+- deterministic abort under pathological rollback / branch-storm scenarios,
+- whether physical-step exhaustion occurs materially earlier than structural byte exhaustion in non-pathological
+  workloads.
+
+Approval rule:
+
+- choose the smallest multiplier that:
+    - produces zero premature physical-step exhaustion in ordinary representative workloads,
+    - and still acts as an effective deterministic runaway fuse for pathological workloads.
+
+Initial v1 bootstrap candidate:
+
+```text
+physicalStepMultiplier = 16
+```
+
+Re-ratification trigger:
+
+- planner step accounting semantics change materially,
+- rollback accounting semantics change materially,
+- representative corpus shows premature physical-step exhaustion in ordinary workloads,
+- or step/fuel protocol boundaries change.
+
+---
+
+### 11.10 `semanticWorkMultiplier` ratification rule
+
+Method:
+
+- sweep a small approved candidate set, e.g.:
+    - `2`
+    - `4`
+    - `8`
+
+Observe:
+
+- premature semantic-work exhaustion under ordinary representative workloads,
+- deterministic abort under semantic expansion storms,
+- whether semantic-work exhaustion becomes so loose that it loses value as a coarse runaway fuse.
+
+Approval rule:
+
+- choose the smallest multiplier that:
+    - produces zero premature semantic-work exhaustion in ordinary representative workloads,
+    - while preserving coarse-grained runaway protection.
+
+Initial v1 bootstrap candidate:
+
+```text
+semanticWorkMultiplier = 4
+```
+
+Re-ratification trigger:
+
+- semantic work-unit accounting changes materially,
+- representative corpus shows premature semantic-work exhaustion in ordinary workloads,
+- or semantic-work accounting becomes materially broader or narrower than the current protocol meaning.
 
 ---
 
@@ -736,13 +1006,11 @@ Until the first explicit ratification pass completes, the following are treated 
 - worker-byte profile definition by plateau
 - `AUTO = STANDARD`
 - `tableCap = nextPowerOfTwo(max(8, 2 * nodeCap))`
-- `maxPhysicalSteps = 16 × derived maxNodeIdCap`
-- `maxSemanticWorkUnits = 4 × derived maxNodeIdCap`
 - join governance is profile-independent in v1
 - `maxSpeculativeBuildersPerKey = 0`
 - `failFastOnQuotaExhaustion = false`
-- `maxApproxBytesPerPartition = 2 × maxPlannerBytesPerWorker`
-- `maxEntriesPerPartition = lowerPowerOfTwo(maxApproxBytesPerPartition / 1024)`
+- `maxApproxBytesPerPartition = storageMultiplier × maxPlannerBytesPerWorker`
+- `maxEntriesPerPartition = lowerPowerOfTwo(maxApproxBytesPerPartition / storageEntryBytesBaseline)`
 - `circuitOpenOnStorageExhaustion = true`
 
 ### 12.2 Approved v1 bootstrap candidates pending ratification
@@ -751,6 +1019,9 @@ Until the first explicit ratification pass completes, the following are treated 
 - `joinWaitTimeoutNanos = 2 ms`
 - `maxWaitersPerKey = 8`
 - `storageMultiplier = 2.0x`
+- `storageEntryBytesBaseline = 1024`
+- `physicalStepMultiplier = 16`
+- `semanticWorkMultiplier = 4`
 - worker-byte plateaus `10 / 20 / 40 MiB` as approved candidate plateaus pending depth-cap sufficiency ratification
 
 ---
@@ -769,31 +1040,179 @@ If a session-level elapsed-time watchdog is introduced, it belongs to a separate
 
 ---
 
-## 14. Deferred Platform-Aware Autotuning
+## 14. Deferred Compiler-Style Policy Optimization and Platform Specialization
 
 v1 does NOT standardize:
 
 - live policy mutation,
 - hot-path policy search,
-- NAS-style structure search,
-- reinforcement-learning policy controllers,
-- runtime policy adaptation that changes an already-running session.
+- runtime policy adaptation that changes an already-running session,
+- online search over semantic/planner-core decisions,
+- reinforcement-learning controllers on the planner hot path.
 
-However, v1 preserves extension points for v2.
+However, v1 preserves explicit extension points for v2.
 
-Future v2 work MAY introduce:
+Future v2 work MAY introduce **compiler-/systems-style policy optimization** techniques, provided they remain outside
+the semantic planner core and outside the already-running session.
 
-- compiler-style cost-based policy search,
-- equality-preserving / semantics-preserving policy extraction,
-- program-autotuning-style platform specialization,
-- Pareto-frontier selection across non-semantic runtime-governance surfaces.
+The currently acknowledged candidate families are:
 
-Any such future work MUST remain confined to:
+### 14.1 Cascades / Volcano Family (DB Optimizer Theory)
 
-- non-semantic runtime governance,
-- stable boundary resolution,
-- immutable per-session snapshots,
-- and separate follow-up ADRs.
+Core idea:
+
+- memoization,
+- cost-based search,
+- budgeted extraction.
+
+Interpretation:
+
+This family provides the most direct explanatory model for Kontrakt’s future policy optimization surface.
+
+The relevant viewpoint is:
+
+> maintain a space of equivalent or acceptable candidates,
+> then choose one by explicit cost rather than by ad hoc threshold heuristics.
+
+Why this is relevant to Kontrakt:
+
+- Kontrakt already contains memoization/interning structure,
+- reuse and governance choices can be modeled as candidate operational policies,
+- future optimization may need to choose among approved policy points under bounded resource budgets.
+
+Intended future use:
+
+- memoized search over approved runtime-policy candidates,
+- cost-based comparison across policy points,
+- bounded extraction under explicit memory / latency / survivability budgets.
+
+Normative boundary:
+
+- this family may optimize only **non-semantic runtime governance**,
+- it MUST NOT mutate canonical semantic identity, exact-match law, or truncation correctness.
+
+### 14.2 E-Graph / Equality Saturation Family
+
+Core idea:
+
+- preserve semantically equivalent alternatives in one space,
+- perform equality-preserving search,
+- extract the cheapest acceptable alternative under an explicit cost model.
+
+Interpretation:
+
+This family matches Kontrakt’s requirement that semantic output remain fixed.
+
+The relevant viewpoint is:
+
+> maintain equivalence,
+> then extract the most operationally efficient choice without changing semantic meaning.
+
+Why this is relevant to Kontrakt:
+
+- Kontrakt requires cache-blind semantic determinism,
+- governance changes may alter latency, memory, throughput, and survivability,
+  but MUST NOT alter semantic output,
+- future optimization may therefore need an equality-preserving extraction mindset rather than unconstrained search.
+
+Intended future use:
+
+- equality-preserving selection among approved non-semantic governance alternatives,
+- cost-guided extraction under fixed semantic constraints,
+- explicit separation between semantic equivalence and operational optimization.
+
+Normative boundary:
+
+- this family may be used only where semantic equivalence is already guaranteed by protocol law,
+- it MUST NOT enlarge the semantic tuning surface.
+
+### 14.3 Program Autotuning / Autoscheduling Family
+
+Core idea:
+
+- program autotuning,
+- autoscheduler-style search,
+- beam-search or bounded-search over schedule/policy spaces,
+- cost-model-guided platform specialization,
+- multi-objective / Pareto-frontier selection.
+
+Interpretation:
+
+This family provides the most accurate future model for platform-aware specialization in Kontrakt.
+
+The relevant viewpoint is:
+
+> search a bounded operational space,
+> evaluate cost under deployment-specific constraints,
+> then choose a platform-specialized policy point.
+
+Why this is relevant to Kontrakt:
+
+- Kontrakt is expected to operate across diverse deployment envelopes,
+- future policy optimization may need to balance memory, latency, throughput, and survivability,
+- platform-aware specialization is better explained by program autotuning than by NAS-style semantic structure search.
+
+Intended future use:
+
+- benchmark-driven runtime-policy specialization,
+- Pareto-frontier selection across approved governance surfaces,
+- deployment-envelope-specific policy selection,
+- future v2 compiler-/KSP-era optimization workflows.
+
+Normative boundary:
+
+- specialization MUST occur only at stable boundary resolution points,
+- specialization MUST publish only immutable per-session snapshots,
+- specialization MUST NOT alter an already-running session.
+
+### 14.4 Candidate Priority and Current Position
+
+For future v2 exploration, the currently preferred order of interest is:
+
+1. **Cascades / Volcano-style cost-based memo search**
+2. **Program autotuning / autoscheduling / Pareto-frontier specialization**
+3. **E-graph / equality-preserving extraction**
+
+Interpretation:
+
+- cost-based memo search is the most direct theoretical analogue for bounded policy selection,
+- program autotuning is the most direct analogue for platform specialization,
+- equality-preserving extraction is the clearest semantic-safety framing for non-semantic optimization.
+
+At the present time, these are acknowledged as **future candidate families only**.
+
+v1 does NOT standardize:
+
+- any exact future optimization algorithm,
+- any exact future cost-model formulation,
+- any exact future benchmark corpus,
+- any exact future Pareto objective set,
+- any learned ranking or learned controller.
+
+Normative restrictions for any future v2 optimization remain unchanged:
+
+- optimization MUST remain confined to **non-semantic runtime governance**,
+- optimization MUST occur only at a **stable boundary resolution point**,
+- optimization MUST publish only **immutable per-session snapshots**,
+- optimization MUST NOT mutate the behavior of an already-running session,
+- optimization MUST NOT tune:
+    - canonical semantic identity,
+    - exact-match verification law,
+    - protocol comparator semantics,
+    - truncation correctness rules,
+    - semantic output topology,
+    - cache-blind semantic guarantees,
+    - or L1 primitive byte-ledger laws.
+
+Any future standardization of these techniques requires a separate follow-up ADR that defines:
+
+- the allowed optimization surface,
+- candidate representation,
+- objective metrics,
+- benchmark corpus requirements,
+- cost-model / search / extraction method,
+- publication / rollout rules,
+- and required semantic-equivalence / determinism compliance tests.
 
 ---
 
@@ -801,18 +1220,64 @@ Any such future work MUST remain confined to:
 
 ### 15.1 Runtime policy model
 
-`ResolvedRuntimePolicy` MUST be expanded to include storage governance.
+`ResolvedRuntimePolicy` MUST be expanded to include storage governance and MUST use factory-issued immutable snapshot
+objects rather than `data class`-style copyable value carriers.
+
+All issuance-time invariant enforcement in the policy snapshot family MUST use explicit custom exceptions.
+Standard precondition helpers such as `require()`, `check()`, `error()`, and standard `IllegalArgumentException` paths
+are forbidden.
 
 Illustrative shape:
 
 ```kotlin
-data class ResolvedRuntimePolicy(
+class ResolvedRuntimePolicy private constructor(
     val sessionBudget: ResolvedSessionBudget,
     val joinGovernance: ResolvedJoinGovernance,
     val storageGovernance: ResolvedStorageGovernance,
     val wallClockPolicy: ResolvedWallClockPolicy? = null,
-)
+) {
+    companion object {
+        @JvmStatic
+        fun issue(
+            sessionBudget: ResolvedSessionBudget?,
+            joinGovernance: ResolvedJoinGovernance?,
+            storageGovernance: ResolvedStorageGovernance?,
+            wallClockPolicy: ResolvedWallClockPolicy? = null,
+        ): ResolvedRuntimePolicy {
+            if (sessionBudget == null) {
+                throw PlanningProtocolIntegrityException(
+                    "ResolvedRuntimePolicy.sessionBudget must not be null"
+                )
+            }
+            if (joinGovernance == null) {
+                throw PlanningProtocolIntegrityException(
+                    "ResolvedRuntimePolicy.joinGovernance must not be null"
+                )
+            }
+            if (storageGovernance == null) {
+                throw PlanningProtocolIntegrityException(
+                    "ResolvedRuntimePolicy.storageGovernance must not be null"
+                )
+            }
+
+            return ResolvedRuntimePolicy(
+                sessionBudget = sessionBudget,
+                joinGovernance = joinGovernance,
+                storageGovernance = storageGovernance,
+                wallClockPolicy = wallClockPolicy,
+            )
+        }
+    }
+}
 ```
+
+Normative rule:
+
+- `ResolvedRuntimePolicy` is a policy snapshot object, not a mutable configuration bag,
+- `ResolvedRuntimePolicy` MUST follow policy snapshot integrity rules,
+- issuance MUST occur only at the stable policy-resolution boundary,
+- issuance-time invariant enforcement MUST use explicit custom exceptions,
+- installed instances MUST be treated as immutable session-fixed snapshots.
 
 ### 15.2 Resolver responsibilities
 
@@ -822,6 +1287,8 @@ The runtime policy resolver for v1 MUST:
 - emit the approved worker-byte plateau for the selected profile,
 - emit the profile-independent bootstrap join governance,
 - emit the derived storage governance by the approved storage law,
+- issue validated immutable policy snapshot objects,
+- use explicit custom exceptions for invariant failures,
 - avoid all live hot-path mutation.
 
 ### 15.3 Adapter/runtime responsibilities
@@ -831,7 +1298,8 @@ The runtime boundary MUST preserve:
 - session-fixed snapshot installation,
 - monotonic policy epoch publication,
 - best-effort/non-throwing telemetry emission,
-- and strict separation between current-session behavior and future policy inputs.
+- strict separation between current-session behavior and future policy inputs,
+- and no post-install reconstruction or mutation path through public copy-style APIs.
 
 ---
 
@@ -919,7 +1387,10 @@ Kontrakt v1 adopts:
 - explicit storage governance,
 - worker-byte plateaus as the primary profile definition,
 - profile-independent cold-start join governance,
-- and an explicit ratification framework for Kontrakt-specific bootstrap constants.
+- explicit `physicalStepMultiplier` and `semanticWorkMultiplier` policy constants for runaway-prevention fuses,
+- explicit `storageMultiplier` and `storageEntryBytesBaseline` bootstrap storage-policy/calibration constants,
+- an explicit ratification framework for Kontrakt-specific bootstrap constants,
+- and factory-issued immutable policy snapshot objects without `data class copy()` backdoors.
 
 Kontrakt v1 does NOT claim that all exact numeric values are externally standardized.
 
@@ -927,6 +1398,8 @@ Instead:
 
 - external law justifies structure and range,
 - the deterministic solver justifies derived outputs,
-- and Kontrakt-specific exact bootstrap constants are ratified against a representative corpus.
+- Kontrakt-specific exact bootstrap constants are ratified against a representative corpus,
+- installed policy snapshots remain immutable for the lifetime of the session,
+- and issuance-time invariant enforcement uses explicit custom exceptions rather than standard precondition helpers.
 
 This is the approved v1 policy posture until a later ADR standardizes platform-aware autotuning.
