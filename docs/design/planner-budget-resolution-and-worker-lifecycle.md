@@ -9,6 +9,9 @@ speculative-builder reservation release, and close-gate terminalization complete
 without changing previously accepted runtime-policy semantics. -->
 <!-- AMENDED(2026-03-21): Corrected policy snapshot reference shapes to remove data-class / copy()-backdoor examples
 for the policy snapshot family, and removed require()-style validation from illustrative runtime-policy registry code. -->
+<!-- AMENDED(2026-03-21): Clarified request-bounded restart semantics for joined waiters, explicit boundary-orchestrated
+fresh-session restart, slot-owned speculative leases, and wall-clock separation from protocol fuel / waiter-local join
+governance. -->
 
 ## Overview
 
@@ -220,7 +223,7 @@ class ResolvedJoinGovernance private constructor(
 
 `ResolvedRuntimePolicy` is the top-level resolved runtime policy bundle passed into the runtime boundary.
 
-```kotlin
+````kotlin
 class ResolvedRuntimePolicy private constructor(
     val sessionBudget: ResolvedSessionBudget,
     val joinGovernance: ResolvedJoinGovernance,
@@ -238,7 +241,7 @@ class ResolvedRuntimePolicy private constructor(
         }
     }
 }
-```
+````
 
 Normative rule:
 
@@ -477,6 +480,19 @@ This MAY be achieved by:
 This requirement also applies to any slot created after close-gate publication but before final reclamation; such slots
 MUST be terminalized before region removal completes.
 
+### 8.4 Slot-Owned Speculative Leases (AMENDED)
+
+If timeout/degrade handling promotes a waiter into a speculative builder under governance quota, the resulting
+speculative reservation MUST be modeled as a **slot-owned lease**.
+
+Normative rule:
+
+- lease issuance originates from the shared slot,
+- normal speculative-builder completion MAY release the lease,
+- but shared-slot terminalization MUST also force-release any still-live speculative leases owned by that slot.
+
+This rule prevents lease-release correctness from depending on caller/handle discipline alone.
+
 ---
 
 ## 9. Worker Lifecycle Contract
@@ -530,6 +546,32 @@ interface PlannerStatePool {
     fun quarantine(state: PlannerWorkerState, cause: Throwable)
 }
 ```
+
+### 9.6 Joined-Waiter Fresh-Session Restart Rule (AMENDED)
+
+If an attached/joined waiter is resumed through fresh-session restart rather than suspended-session continuation, the
+current session MUST still obey the ordinary worker lifecycle contract above.
+
+Normative consequences:
+
+- the current session MUST exit through the same `finally`-guarded cleanup path as any other session exit,
+- worker-local primitive state MUST NOT remain suspended in partially-executed form while awaiting L2 completion,
+- resumed work MUST start from a fresh planner session rather than by mutating a half-retained worker-local state.
+
+This keeps join resumption compatible with zero-residue worker reuse.
+
+### 9.7 Request-Scoped Physical-Budget Carry-Forward (AMENDED)
+
+If joined-waiter resumption uses fresh-session restart, boundedness MUST be enforced by carrying forward
+request-scoped **physical-step** budget into the restarted session.
+
+Normative rule:
+
+- each restarted session receives an effective physical-step bound clamped by the remaining request-scoped physical
+  budget,
+- exhaustion of that carried-forward physical budget MUST terminate through the existing hard-abort / fail-closed
+  budget path,
+- no additional retry-count policy surface or retry fault kind is introduced by this note.
 
 ---
 
@@ -653,6 +695,16 @@ If local building or pre-publication preparation throws before `commit(...)`, th
 Implementations SHOULD document or provide a usage discipline equivalent to `try/finally` so that pending miss-owned
 slots do not remain orphaned.
 
+### 12.4 Handle-Level vs Slot-Level Terminalization Defense (AMENDED)
+
+If builder-owned handles are used, implementations MAY enforce terminalization safety at two distinct layers:
+
+- handle-level terminalization guards, which prevent caller misuse such as double `commit/abort` or abandoned handles,
+- slot-level CAS terminalization, which arbitrates concurrent shared-slot terminal races such as `SUCCESS`, `FAILED`,
+  or `DROPPED`.
+
+These two layers serve different failure paths and MUST NOT be treated as redundant by default.
+
 ---
 
 ## 13. Compliance Tests
@@ -670,6 +722,8 @@ The following tests are required for this bridge layer:
 - `SharedSlotAndWaiterStateIndependenceTest`
 - `PartitionDropAttachRaceWakeupCompletenessTest`
 - `AttachRejectedVsQuotaExhaustedTelemetrySeparationTest`
+- `RequestScopedPhysicalBudgetCarryForwardTest`
+- `SpeculativeLeaseForceReleaseOnSlotTerminalizationTest`
 
 ---
 
@@ -726,7 +780,7 @@ for an already-running session.
 
 ### 15.4 Kotlin Reference Shape (Illustrative)
 
-```kotlin
+`````kotlin
 class PolicyEpoch private constructor(
     val id: Long,
     val policy: ResolvedRuntimePolicy,
@@ -744,7 +798,7 @@ class PolicyEpoch private constructor(
         }
     }
 }
-```
+`````
 
 If an implementation uses an epoch-tagged snapshot like `PolicyEpoch`, the identifier MUST increase monotonically and
 the tagged policy snapshot MUST remain immutable after installation.
@@ -819,7 +873,7 @@ timing, but it MUST NEVER observe a partially-installed snapshot.
 
 ### 17.4 Kotlin Reference Shape (Illustrative)
 
-```kotlin
+``````kotlin
 class RuntimePolicyRegistry(initial: PolicyEpoch) {
     private val ref = java.util.concurrent.atomic.AtomicReference(initial)
 
@@ -837,9 +891,8 @@ class RuntimePolicyRegistry(initial: PolicyEpoch) {
         }
     }
 }
-```
 
----
+``````
 
 ## 18. Wall-Clock Policy Separation (AMENDED)
 
@@ -906,61 +959,151 @@ worker lifecycle side, not to the planner-core capacity solver itself.
 A session elapsed-time timeout is therefore a runtime-boundary execution limit, not an L2 waiter timeout and not an
 exact-match/cache-correctness signal.
 
+### 18.5 Restart Boundedness Separation (AMENDED)
+
+If joined-waiter resumption uses fresh-session restart, restart boundedness MUST still be enforced through
+carried-forward
+request-scoped physical-step budget rather than through elapsed wall-clock timeout thresholds.
+
+Elapsed wall-clock limits MAY still abort work at the runtime boundary, but they MUST NOT become the authority for
+L2 restart boundedness or L1 structural budget exhaustion.
+
+## 19. Adapter-Owned Completion Dispatch Lifecycle (AMENDED)
+
+### 19.1 Rationale
+
+If joined waiters are resumed through non-blocking completion delivery rather than worker-thread polling, the runtime
+requires explicit completion-dispatch infrastructure.
+
+That infrastructure is not part of planner-core structural budget solving, but it does affect:
+
+- worker lifecycle boundaries,
+- join completion delivery,
+- fresh-session restart orchestration,
+- shutdown safety.
+
+Therefore this note must state where that infrastructure is owned and how it relates to worker/session lifecycle.
+
+### 19.2 Ownership Rule
+
+If the runtime uses any of the following to implement joined-waiter completion delivery:
+
+- completion mailbox,
+- completion executor,
+- timeout scheduler,
+- equivalent dispatch queue / mailbox infrastructure,
+
+that infrastructure MUST be **adapter-owned** rather than:
+
+- slot-owned,
+- waiter-owned,
+- worker-owned,
+- or partition-owned.
+
+Normative consequences:
+
+- completion-dispatch resources are created and destroyed at adapter lifecycle boundaries,
+- partition drop MUST NOT implicitly destroy adapter-owned completion-dispatch resources,
+- worker-local planner state MUST NOT own or retain completion-dispatch resources across session cleanup.
+
+### 19.3 Shutdown Rule
+
+Adapter shutdown MUST proceed in an order that preserves terminal-signal delivery guarantees.
+
+Required order:
+
+1. prevent new joined-waiter admission,
+2. force shared-slot terminalization visibility (`SUCCESS`, `FAILED`, or `DROPPED`),
+3. allow bounded completion drain,
+4. only then perform final dispatch-resource shutdown.
+
+Abrupt shutdown that discards pending completion work before corresponding terminalization has been made visible is
+forbidden.
+
+### 19.4 Partition Drop Rule
+
+Partition drop and adapter shutdown are distinct lifecycle events.
+
+Normative rule:
+
+- dropping one partition MUST NOT destroy adapter-owned completion-dispatch infrastructure,
+- a dropped partition MAY enqueue exceptional completion work for already-attached waiters,
+- that completion work remains the responsibility of the adapter-owned completion-dispatch path until delivered or
+  deterministically closed during adapter shutdown.
+
+### 19.5 Worker Boundary Rule
+
+Completion dispatch MUST remain outside worker-local planner-state ownership.
+
+That means:
+
+- worker-local planner state MAY be cleaned, returned, or quarantined independently of completion-dispatch resources,
+- joined-waiter fresh-session restart MUST be scheduled through the runtime boundary,
+- no worker-local planner primitive state may remain retained merely because completion delivery has not yet occurred.
+
 ---
 
-## 19. Telemetry / Storage Boundary Clarification (AMENDED)
+## 20. Implementation Order Dependency for Joined-Waiter Dispatch (AMENDED)
 
-### 19.1 Worker-State Purity Rule
+### 20.1 Rationale
 
-Worker-local planner state MUST NOT retain references to external telemetry storage objects as part of its semantic
-planner state.
+Timeout handling and completion handling may execute on different runtime threads once non-blocking join is introduced.
 
-### 19.2 Adapter / Boundary Telemetry Rule
+Examples:
 
-Telemetry collection MAY exist at the runtime boundary or adapter layer, provided that:
+- timeout scheduler thread,
+- completion executor thread,
+- partition-drop sweep thread.
 
-- telemetry failures are best-effort / non-throwing,
-- planner object graphs are not retained,
-- planner-session purity and zero-residue are preserved.
+If waiter terminalization semantics are not already centralized, these threads can race outside a single state machine
+and
+re-open the exact attach/timeout/drop correctness gaps that the amendments are trying to close.
 
-### 19.3 Numeric/Event Payload Rule
+### 20.2 Ordering Rule
 
-Telemetry intended for adaptive policy resolution SHOULD remain numeric/event-oriented, such as:
+The runtime MUST establish waiter-state terminalization semantics as the single source of truth **before**
+attaching timeout-scheduler or completion-dispatch infrastructure.
 
-- timeout counts,
-- join wait distributions,
-- hot-key ratios,
-- duplicate build ratios,
-- circuit-open counts.
+In practice this means:
 
-Such telemetry MAY inform future policy resolution but MUST NOT become a hidden semantic input to the current session.
+1. dual-axis slot/waiter state machine first,
+2. waiter-state CAS terminalization semantics second,
+3. timeout and completion dispatch infrastructure only after that.
 
-### 19.4 Telemetry Signal Distinction Rule (AMENDED)
+### 20.3 Single Terminalization Authority Rule
 
-Telemetry for ordinary waiter-attach rejection and telemetry for speculative-builder quota exhaustion MUST remain
-distinct signals and MUST NOT be merged into a single counter or event kind.
+Exactly one waiter-terminal transition must win for any attached waiter.
 
----
+Allowed winning terminal waiter states are:
 
-## 20. Extended Compliance Tests (AMENDED)
+- `RESUMED`
+- `TIMED_OUT`
+- `CANCELLED`
 
-The following additional tests are required for this bridge layer:
+Normative rule:
 
-- `PolicyEpochFreezeTest`
-    - verifies that the current session remains bound to its initial resolved policy even if a newer snapshot is
-      installed concurrently
+- timeout-triggered transition and completion-triggered transition MUST race only through waiter-state CAS,
+- external dispatch infrastructure MUST NOT invent a second terminalization path outside the waiter state machine,
+- attach success semantics remain valid only if terminalization remains centralized this way.
 
-- `AdaptiveResolverStabilityTest`
-    - verifies adaptive control does not oscillate violently under small telemetry fluctuations
+### 20.4 Fresh-Session Restart Dependency
 
-- `ColdStartConservativeDefaultsTest`
-    - verifies deterministic conservative defaults when telemetry is absent
+If joined waiters resume through fresh-session restart, completion-dispatch infrastructure MUST NOT be attached before
+the
+runtime has already fixed the following restart semantics:
 
-- `PolicyRegistryPublicationSafetyTest`
-    - verifies sessions never observe partially-installed policy snapshots
+- current session exits through ordinary `finally` cleanup,
+- worker-local primitive state is reset before reuse,
+- resumed work starts from a fresh planner session,
+- carried-forward request-scoped physical budget is applied to the restarted session.
 
-- `WallClockPolicyBoundaryTest`
-    - verifies elapsed-time policy is not folded into capacity-solver math or join-timeout semantics
+Without this ordering, completion delivery could resume work against an undefined session-lifecycle boundary.
 
-- `FutureEpochAffectsOnlyFutureSessionsTest`
-    - verifies a newer resolved policy snapshot only affects subsequently created sessions
+### 20.5 Verification Requirement
+
+Implementations of non-blocking joined-waiter resumption MUST include a compliance check ensuring that dispatch
+infrastructure was introduced only after waiter-state CAS semantics became the sole terminalization authority.
+
+Illustrative test name:
+
+- `WaiterStateCasBeforeDispatchInfrastructureTest`

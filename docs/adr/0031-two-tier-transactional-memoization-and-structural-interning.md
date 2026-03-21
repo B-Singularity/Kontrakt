@@ -5,6 +5,7 @@ Date: 2026-02-22
 Status: Accepted (Amended: 2026-03-01)
 <!-- AMENDED(2026-03-02): Added ULong boxing avoidance + NodeIdIndexer primitive-map mandate -->
 <!-- AMENDED(2026-03-21): Clarified in-flight attach terminal-signal guarantees, commit/abort terminalization discipline, speculative-builder reservation release, drop-sweep linearizability, and callback execution-path safety without changing prior semantic policy. -->
+<!-- AMENDED(2026-03-21): Clarified slot-owned speculative leases and attach-rejection vs quota-exhaustion distinction without introducing new domain fault surfaces. -->
 
 Normative
 
@@ -206,6 +207,40 @@ without violating cache-blind determinism.
 * **CRITICAL MUST:** This requirement does not change publication-before-completion ordering; it only constrains how
   waiter continuations may execute after terminalization becomes observable.
 
+### I. Slot-Owned Speculative Lease Rule (AMENDED)
+
+* **CRITICAL MUST:** If timeout/degrade handling promotes a waiter into a speculative builder under governance quota,
+  the
+  resulting speculative reservation MUST be modeled as a **slot-owned lease**, not as handle-owned or session-owned
+  state.
+* **CRITICAL MUST:** Lease issuance MUST originate from the shared in-flight slot.
+* **CRITICAL MUST:** Shared-slot terminalization (`SUCCESS`, `FAILED`, or `DROPPED`) MUST force-release any still-live
+  speculative leases owned by that slot.
+* **CRITICAL MUST:** Lease-release correctness MUST therefore survive successful publish, builder failure, and
+  partition-drop sweep.
+
+### J. Attach Rejection vs Quota Exhaustion Distinction (AMENDED)
+
+* **CRITICAL MUST:** Ordinary attach rejection and speculative-builder quota exhaustion are distinct events.
+* **CRITICAL MUST:** Examples of ordinary attach rejection include:
+    * region already closed,
+    * shared slot already terminalized,
+    * waiter cap reached.
+* **CRITICAL MUST:** `QUOTA_EXHAUST` applies only to speculative-builder quota denial after timeout/degrade handling.
+  It MUST NOT be used as a generic label for all attach rejection paths.
+
+### K. Drop-Sweep Linearizability (AMENDED)
+
+* **CRITICAL MUST:** A close-gate publication MUST occur before final partition reclamation.
+* **CRITICAL MUST:** The implementation MUST ensure that any in-flight slot visible after close publication is
+  terminalized before final region removal.
+* **CRITICAL MUST:** This MAY be achieved by:
+    * stable repeated sweep,
+    * post-insert close check with immediate drop,
+    * or an equivalent linearizable mechanism.
+* **CRITICAL MUST:** This requirement also applies to any slot created after close publication but before final
+  reclamation; such slots MUST be terminalized before region removal completes.
+
 ---
 
 ## Invariant Checklist for Property-Based Testing
@@ -228,9 +263,15 @@ without violating cache-blind determinism.
 * [ ] **Attach Terminal Signal Completeness:** Every successfully attached waiter eventually receives exactly one
   terminal signal.
 * [ ] **Attach Post-Insertion Reconciliation:** No attach that succeeds past insertion may remain orphaned after a
-  shared
-  slot has already terminalized.
+  shared slot has already terminalized.
 * [ ] **Publication-Path Continuation Safety:** Waiter continuation dispatch MUST NOT re-enter the L2 shard path on the
   builder publication path.
 * [ ] **Handle Terminalization Discipline:** Builder-owned handles returned on miss paths are always eventually
   terminalized by exactly one of `commit(...)` or `abort(...)`.
+* [ ] **Slot-Owned Speculative Lease Release:** Any speculative-builder reservation acquired from a shared slot is
+  released either by normal speculative-builder termination or by shared-slot terminalization, including `DROPPED`
+  during partition close.
+* [ ] **Attach Rejection / Quota Distinction:** Telemetry and governance handling can distinguish ordinary attach
+  rejection from speculative quota exhaustion.
+* [ ] **Drop-Sweep Linearizability:** Any slot visible after close publication is terminalized before final region
+  reclamation, including slots that appear after close publication but before final removal.

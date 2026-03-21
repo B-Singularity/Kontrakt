@@ -17,7 +17,11 @@ References: Constitution Protocols (#3, #4, #8, #10), ADR-0031, ADR-0032
 > **AMENDED (2026-03-21):**
 > The amendments below clarify attach terminal-signal completeness, post-insertion attach reconciliation,
 > completion-continuation execution-path safety, speculative-builder reservation release,
-> attach-rejection vs quota-exhaustion distinction, and close-gate terminalization completeness.
+> attach-rejection vs quota-exhaustion distinction, close-gate terminalization completeness,
+> request-bounded restart semantics for joined waiters, adapter-owned completion-dispatch lifecycle,
+> implementation-order dependency for waiter-state CAS before dispatch attachment,
+> reserve/confirm/rollback governance accounting,
+> and wall-clock separation from waiter-local join governance.
 > These amendments do **not** introduce new semantic policy; they make explicit the implementation obligations already
 > implied by this note, ADR-0031, ADR-0032, and the compiler-core protocols.
 
@@ -183,6 +187,19 @@ That reservation MUST be released exactly once when the speculative build attemp
 
 The release of speculative-builder reservation MUST NOT depend on the shared slot’s own terminal transition.
 
+#### 1.4.4 Slot-Owned Speculative Lease Enforcement (AMENDED)
+
+Speculative-builder reservations are **slot-owned leases**, not handle-owned state.
+
+Normative consequences:
+
+* lease issuance MUST originate from the shared slot,
+* normal speculative-builder completion MAY release the lease directly,
+* but shared-slot terminalization (`SUCCESS`, `FAILED`, `DROPPED`) MUST also force-release any still-live speculative
+  leases owned by that slot,
+* therefore lease release correctness MUST remain sound even if the terminating path is `tryDrop(...)` during bulk
+  partition close.
+
 ---
 
 ## 2. Deterministic Routing Functions (SSOT)
@@ -326,6 +343,29 @@ Examples of ordinary attach rejection include:
 `L2_INFLIGHT_QUOTA_EXHAUST` applies only to speculative-builder quota denial after timeout/degrade handling.
 It MUST NOT be used as a generic label for all attach rejection paths.
 
+#### 3.1.3 Request-Bounded Restart Rule for Joined Waiters (AMENDED)
+
+If a joined waiter is resumed by **fresh-session restart** rather than by suspended-session continuation, restart
+boundedness MUST be enforced by carrying forward **request-scoped physical-step budget**.
+
+Normative consequences:
+
+* this note does **not** introduce a retry-count policy surface,
+* this note does **not** introduce a new retry fault kind,
+* boundedness is achieved by reducing the remaining request-scoped physical budget carried into any restarted session,
+* if the remaining request-scoped physical budget is exhausted, the system MUST terminate through the already-existing
+  hard-abort / fail-closed budget path rather than through a new L2-specific retry fault.
+
+#### 3.1.4 Explicit Boundary-Orchestrated Restart Rule (AMENDED)
+
+This design does **not** rely on any central-dispatcher restart model.
+
+If a joined waiter is resumed by fresh-session restart, that restart remains an explicit boundary/orchestrator decision
+made by the caller that receives the joined/await signal.
+
+This note therefore constrains L2 join semantics and terminalization guarantees, but does not define a hidden framework
+that centrally replays planning sessions.
+
 ---
 
 ## 4. Fault Governance
@@ -431,6 +471,23 @@ distinct signals and MUST NOT be merged into a single counter or event kind.
 11. **Boxing Regression Guard (AMENDED):**
     * Bench / allocation tests MUST assert no `Long`/`ULong` key boxing allocations on the hot routing path:
       `shard.buckets.*`, `shard.inflight.*`, and `NodeIdIndexer` operations.
+
+12. **Request-Bounded Restart Equivalence (AMENDED):**
+    * If joined waiters resume through fresh-session restart, restart-boundedness MUST be enforced through
+      carried-forward
+      request-scoped physical budget, not through any new retry fault kind or retry-count policy surface.
+
+13. **Speculative-Lease Release Correctness (AMENDED):**
+    * Any speculative-builder reservation acquired from a slot MUST be released either by normal speculative-builder
+      termination or by slot terminalization, including `DROPPED` caused by partition close.
+
+14. **Completion/Timeout CAS Safety (AMENDED):**
+    * Timeout-triggered waiter state transition and completion-triggered waiter state transition MUST race only through
+      waiter-state CAS, with exactly one terminal waiter state winning.
+
+15. **Wall-Clock Separation Compliance (AMENDED):**
+    * Join waiter timeout, session elapsed watchdog, and protocol fuel accounting MUST remain distinct in implementation
+      and MUST NOT be collapsed into one mixed timing/step budget.
 
 ---
 
@@ -549,6 +606,16 @@ Any use of `maxApproxBytes` MUST remain strictly inside governance logic:
 - telemetry.
 
 It MUST NOT participate in exact-match verification.
+
+### 9.4 Reserve / Confirm / Rollback Accounting Rule (AMENDED)
+
+If approximate-byte accounting is performed during publication, the implementation MUST support the distinction between:
+
+- reservation before publication attempt,
+- confirmation on actual insertion,
+- rollback when exact re-check returns an already-existing winner and no new insertion occurs.
+
+This accounting distinction belongs to governance logic only and MUST NOT affect exact-match correctness.
 
 ---
 
@@ -708,6 +775,26 @@ Verifies:
 - quota exhaustion results in bypass or fail-fast only,
 - semantic output remains unchanged.
 
+### 11.11 Completion Executor Lifecycle (AMENDED)
+
+`CompletionExecutorLifecycleTest`
+
+Verifies:
+
+- adapter-owned completion-dispatch resources are created once per adapter lifecycle,
+- partition drop does not implicitly destroy adapter-owned completion-dispatch infrastructure,
+- adapter shutdown does not discard pending completion work before corresponding slot terminalization is made visible.
+
+### 11.12 Implementation Order Dependency (AMENDED)
+
+`WaiterStateCasBeforeDispatchInfrastructureTest`
+
+Verifies:
+
+- waiter-state CAS semantics are established as the single source of truth before timeout-scheduler and
+  completion-dispatch infrastructure are attached,
+- therefore completion/timeouts cannot race outside the waiter-state machine.
+
 ---
 
 ## 12. Session-Fixed Governance Epoch Rule (AMENDED)
@@ -843,35 +930,83 @@ If epoch identifiers are used, they MUST increase monotonically.
 Installing a newer policy snapshot MUST NOT silently roll back to an older snapshot.
 If concurrent installation is possible, the runtime SHOULD enforce monotonic epoch progression.
 
+### 14.5 Adapter-Owned Completion Dispatch Lifecycle (AMENDED)
+
+If a completion mailbox / completion executor / timeout scheduler is used to implement non-blocking joined-waiter
+delivery, that infrastructure MUST be adapter-owned rather than slot-owned or partition-owned.
+
+Normative consequences:
+
+- completion-dispatch resources are created and destroyed at adapter lifecycle boundaries,
+- partition drop MUST NOT implicitly destroy adapter-owned completion-dispatch infrastructure,
+- adapter shutdown MUST first prevent new join admission, then force slot terminalization visibility, then permit
+  bounded completion drain before final shutdown,
+- abrupt executor termination that discards pending completion work before corresponding terminalization has been made
+  visible is forbidden.
+
 ---
 
 ## 15. Wall-Clock Separation Clarification (AMENDED)
 
-Join wait timeout and session elapsed-time timeout are distinct concerns.
+### 15.1 Join Wait Timeout Is Not Protocol Fuel
 
-### 15.1 Join Wait Timeout
-
-`joinWaitTimeoutNanos` belongs to L2 join governance and applies only to waiter lifecycle.
+`joinWaitTimeoutNanos` is a waiter-local governance deadline.
 
 It is:
 
+- monotonic elapsed-time based,
 - non-semantic,
-- slot-local / waiter-local,
-- allowed to degrade to bypass or miss according to governance.
+- local to waiter lifecycle,
+- independent of `step(costCenter)` protocol accounting.
 
-### 15.2 Session Elapsed Timeout
+Normative rule:
 
-A session-level elapsed wall-clock limit, if introduced by the runtime, belongs to a separate runtime / watchdog policy
-and MUST NOT be folded into:
+- `joinWaitTimeoutNanos` MUST NOT be reinterpreted as protocol fuel,
+- `step(costCenter)` MUST NOT be reinterpreted as elapsed-time allowance.
 
-- `maxEntries`,
-- `maxApproxBytes`,
-- `planKey64` routing,
-- bucket exact-match semantics,
-- hot-path reconfiguration of join governance.
+### 15.2 Session Elapsed Watchdog Is a Separate Boundary Concern
 
-A session elapsed-time timeout is an execution-boundary concern, not an exact-match governance signal.
+If the runtime introduces a session-level elapsed watchdog such as `maxSessionElapsedNanos`, that watchdog belongs to
+runtime/session orchestration rather than to L2 waiter governance.
 
-### 15.3 Separation Rule
+It therefore MUST NOT be folded into:
 
-L2 MUST NOT reinterpret elapsed wall-clock timeout as semantic cache corruption or exact-match failure.
+- `joinWaitTimeoutNanos`,
+- speculative-builder quota semantics,
+- `CircuitOpen` exact-match behavior,
+- bucket exact re-check correctness,
+- restart boundedness for joined waiters.
+
+### 15.3 Restart Boundedness Must Not Depend on Wall Clock
+
+If joined waiters resume through fresh-session restart, restart boundedness MUST be enforced through carried-forward
+request-scoped physical-step budget rather than through elapsed wall-clock thresholds.
+
+Elapsed wall-clock limits MAY still abort execution at the runtime boundary, but they MUST NOT become the semantic or
+governance authority for L2 retry/restart behavior.
+
+### 15.4 Timeout Semantics Separation
+
+The following three ledgers are distinct and MUST remain distinct:
+
+- `step(costCenter)` = protocol fuel / structural work accounting
+- `joinWaitTimeoutNanos` = waiter-local L2 governance deadline
+- `maxSessionElapsedNanos` (or equivalent) = runtime/session boundary watchdog
+
+Implementations MUST NOT collapse these into one mixed timing/budget model.
+
+```kotlin
+// Illustrative separation only.
+class ResolvedJoinGovernance private constructor(
+    val joinWaitTimeoutNanos: Long,
+    val maxWaitersPerKey: Int,
+    val maxSpeculativeBuildersPerKey: Int,
+    val failFastOnQuotaExhaustion: Boolean,
+)
+
+class ResolvedWallClockPolicy private constructor(
+    val maxSessionElapsedNanos: Long,
+)
+```
+
+---

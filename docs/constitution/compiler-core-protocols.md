@@ -1,4 +1,4 @@
-# [FINAL] SOTA Compiler Core: 10 Absolute Enforcement Protocols
+# [FINAL] SOTA Compiler Core: Absolute Enforcement Protocols
 
 **Enforcement Mechanism Key:**
 
@@ -330,6 +330,23 @@ objects.
     * canonical signatures,
     * protocol-comparator-driven truncation choice,
     * or semantic outputs declared semantic by protocol.
+
+#### 14.1 Waiter-Local Timeout Clarification (AMENDED)
+
+* **[A] Compile-Time / Boundary Rule:** `joinWaitTimeoutNanos` is a waiter-local L2 governance deadline and MUST NOT be
+  reinterpreted as shared-slot semantic failure.
+* **[A] Compile-Time / Boundary Rule:** Waiter timeout semantics MUST remain distinct from:
+    * `step(costCenter)` protocol fuel,
+    * session-level elapsed-time watchdog policy,
+    * and exact-match/cache-correctness rules.
+
+#### 14.2 Restart-Boundedness Separation (AMENDED)
+
+* **[A] Compile-Time / Boundary Rule:** If joined waiters resume through fresh-session restart, restart boundedness
+  MUST be enforced through carried-forward request-scoped physical-step budget rather than through elapsed wall-clock
+  thresholds.
+* **[A] Compile-Time / Boundary Rule:** Elapsed wall-clock limits MAY still abort execution at the runtime boundary,
+  but they MUST NOT become the authority for L2 retry/restart boundedness.
 
 ### 15. Policy Registry Publication Safety (AMENDED)
 
