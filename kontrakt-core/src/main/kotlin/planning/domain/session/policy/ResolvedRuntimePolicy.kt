@@ -1,18 +1,37 @@
 package planning.domain.session.policy
 
-// ResolvedRuntimePolicy.kt
-
 /**
- * Top-level immutable policy bundle installed at session bootstrap.
+ * Top-level immutable runtime-policy snapshot pinned at session start.
  *
- * Normative:
- * - planner-budget-resolution-and-worker-lifecycle.md, Section 4.7
+ * This is the runtime-boundary bundle consumed by bootstrap assembly.
+ * The planner core and worker-local state MUST observe only already-resolved
+ * immutable values derived from this snapshot.
  *
- * The bundle keeps structural/runtime budget, L2 join governance, and optional
- * wall-clock watchdog policy separate but compatible.
+ * ADR alignment:
+ * - ADR-0033 v1 runtime-policy surface:
+ *   ResolvedSessionBudget + ResolvedJoinGovernance + ResolvedStorageGovernance
+ *   + optional ResolvedWallClockPolicy
  */
-data class ResolvedRuntimePolicy(
+class ResolvedRuntimePolicy private constructor(
     val sessionBudget: ResolvedSessionBudget,
     val joinGovernance: ResolvedJoinGovernance,
-    val wallClockPolicy: ResolvedWallClockPolicy? = null,
-)
+    val storageGovernance: ResolvedStorageGovernance,
+    val wallClockPolicy: ResolvedWallClockPolicy?,
+) {
+    companion object {
+        @JvmStatic
+        fun issue(
+            sessionBudget: ResolvedSessionBudget,
+            joinGovernance: ResolvedJoinGovernance,
+            storageGovernance: ResolvedStorageGovernance,
+            wallClockPolicy: ResolvedWallClockPolicy? = null,
+        ): ResolvedRuntimePolicy {
+            return ResolvedRuntimePolicy(
+                sessionBudget = sessionBudget,
+                joinGovernance = joinGovernance,
+                storageGovernance = storageGovernance,
+                wallClockPolicy = wallClockPolicy,
+            )
+        }
+    }
+}

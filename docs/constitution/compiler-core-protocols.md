@@ -6,6 +6,8 @@
 * **[B] Static Analysis & Architecture Tests:** ArchUnit, Detekt, Bytecode Inspection.
 * **[C] Runtime / Property / Stress Tests:** CI Gates, Fuzzing, Linearizability Verification.
 
+<!-- AMENDED(2026-03-21): Clarified completion-continuation execution-path safety and telemetry signal distinction without changing protocol semantics. -->
+
 ---
 
 ### 1. Iterative Explicit Stack (Native Recursion Ban)
@@ -293,6 +295,23 @@ objects.
   `PlannerSession`, `CanonicalPlanNode`, `LocalPlanNode`, or equivalent mutable session state into long-lived stores.
 * **[C] Runtime / CI:** Worker reuse tests MUST verify no semantic state remains reachable through telemetry pipelines
   after reset / hard abort.
+
+#### 13.1 Completion Continuation Execution-Path Safety (AMENDED)
+
+* **[A] Compile-Time / Boundary Rule:** Completion continuation execution on the builder publication path MUST NOT
+  re-enter the L2 shard path.
+* **[A] Compile-Time / Boundary Rule:** Implementations MAY dispatch waiter continuations to a separate executor or an
+  equivalent completion queue to prevent lock inversion or publication-path contamination.
+* **[A] Compile-Time / Boundary Rule:** This requirement does not alter publication-before-completion ordering; it only
+  constrains how waiter continuations may execute after terminalization becomes observable.
+
+#### 13.2 Telemetry Signal Distinction Rule (AMENDED)
+
+* **[A] Compile-Time / Boundary Rule:** Telemetry for waiter-attach rejection and telemetry for speculative-builder
+  quota exhaustion MUST remain distinct signals and MUST NOT be merged into a single counter or event kind.
+* **[C] Runtime / CI:** Telemetry validation tests SHOULD verify that implementations can distinguish:
+    * ordinary attach rejection, and
+    * speculative quota exhaustion after timeout/degrade handling.
 
 ### 14. Wall-Clock Policy Separation (AMENDED)
 

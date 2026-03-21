@@ -3,6 +3,12 @@
 Date: 2026-03-14
 
 Status: Accepted
+<!-- AMENDED(2026-03-21): Clarified attach terminal-signal completeness, post-insertion attach reconciliation,
+completion-continuation execution-path safety, builder-handle terminalization discipline,
+speculative-builder reservation release, and close-gate terminalization completeness
+without changing previously accepted runtime-policy semantics. -->
+<!-- AMENDED(2026-03-21): Corrected policy snapshot reference shapes to remove data-class / copy()-backdoor examples
+for the policy snapshot family, and removed require()-style validation from illustrative runtime-policy registry code. -->
 
 ## Overview
 
@@ -125,18 +131,39 @@ Required fields:
 
 - all fields MUST be immutable once resolved;
 - the same resolved budget MUST produce the same planner caps;
-- the resolved budget MUST remain fixed for the lifetime of a `PlannerSession`.
+- the resolved budget MUST remain fixed for the lifetime of a `PlannerSession`;
+- as part of the policy snapshot family, this type SHOULD be factory-issued and MUST NOT rely on `data class`-generated
+  `copy()` semantics as a reconstruction backdoor.
 
 ### 4.3 Kotlin Reference Shape
 
 ```kotlin
-data class ResolvedSessionBudget(
+class ResolvedSessionBudget private constructor(
     val maxPlannerBytesPerWorker: Long,
     val maxPhysicalSteps: Int,
     val maxSemanticWorkUnits: Int,
     val maxSignatureLen: Int,
     val fixedHeadroomBytes: Long,
-)
+) {
+    companion object {
+        @JvmStatic
+        fun issue(
+            maxPlannerBytesPerWorker: Long,
+            maxPhysicalSteps: Int,
+            maxSemanticWorkUnits: Int,
+            maxSignatureLen: Int,
+            fixedHeadroomBytes: Long,
+        ): ResolvedSessionBudget {
+            return ResolvedSessionBudget(
+                maxPlannerBytesPerWorker = maxPlannerBytesPerWorker,
+                maxPhysicalSteps = maxPhysicalSteps,
+                maxSemanticWorkUnits = maxSemanticWorkUnits,
+                maxSignatureLen = maxSignatureLen,
+                fixedHeadroomBytes = fixedHeadroomBytes,
+            )
+        }
+    }
+}
 ```
 
 ### 4.4 `ResolvedJoinGovernance`
@@ -157,17 +184,36 @@ Required fields:
 - `maxWaitersPerKey > 0`;
 - `maxSpeculativeBuildersPerKey >= 0`;
 - timeout MUST be interpreted as a **monotonic elapsed-time deadline**, not wall-clock time;
-- timeout expiration MUST be treated as a **waiter lifecycle event**, not as shared-slot failure.
+- timeout expiration MUST be treated as a **waiter lifecycle event**, not as shared-slot failure;
+- as part of the policy snapshot family, this type SHOULD be factory-issued and MUST NOT rely on `data class`-generated
+  `copy()` semantics as a reconstruction backdoor.
 
 ### 4.6 Kotlin Reference Shape
 
 ```kotlin
-data class ResolvedJoinGovernance(
+class ResolvedJoinGovernance private constructor(
     val joinWaitTimeoutNanos: Long,
     val maxWaitersPerKey: Int,
     val maxSpeculativeBuildersPerKey: Int,
     val failFastOnQuotaExhaustion: Boolean,
-)
+) {
+    companion object {
+        @JvmStatic
+        fun issue(
+            joinWaitTimeoutNanos: Long,
+            maxWaitersPerKey: Int,
+            maxSpeculativeBuildersPerKey: Int,
+            failFastOnQuotaExhaustion: Boolean,
+        ): ResolvedJoinGovernance {
+            return ResolvedJoinGovernance(
+                joinWaitTimeoutNanos = joinWaitTimeoutNanos,
+                maxWaitersPerKey = maxWaitersPerKey,
+                maxSpeculativeBuildersPerKey = maxSpeculativeBuildersPerKey,
+                failFastOnQuotaExhaustion = failFastOnQuotaExhaustion,
+            )
+        }
+    }
+}
 ```
 
 ### 4.7 `ResolvedRuntimePolicy`
@@ -175,17 +221,32 @@ data class ResolvedJoinGovernance(
 `ResolvedRuntimePolicy` is the top-level resolved runtime policy bundle passed into the runtime boundary.
 
 ```kotlin
-data class ResolvedRuntimePolicy(
+class ResolvedRuntimePolicy private constructor(
     val sessionBudget: ResolvedSessionBudget,
     val joinGovernance: ResolvedJoinGovernance,
-)
+) {
+    companion object {
+        @JvmStatic
+        fun issue(
+            sessionBudget: ResolvedSessionBudget,
+            joinGovernance: ResolvedJoinGovernance,
+        ): ResolvedRuntimePolicy {
+            return ResolvedRuntimePolicy(
+                sessionBudget = sessionBudget,
+                joinGovernance = joinGovernance,
+            )
+        }
+    }
+}
 ```
 
 Normative rule:
 
 - `ResolvedRuntimePolicy` MAY be created from one external profile,
 - but `sessionBudget` and `joinGovernance` MUST remain independently reasoned contracts,
-- and L2 timeout/quota policy MUST NOT be back-propagated into L1 byte-ledger math.
+- and L2 timeout/quota policy MUST NOT be back-propagated into L1 byte-ledger math;
+- as part of the policy snapshot family, `ResolvedRuntimePolicy` MUST be immutable and SHOULD be factory-issued rather
+  than reconstructed through `data class` copy semantics.
 
 ---
 
@@ -356,6 +417,39 @@ Normative rule:
 - shared-slot terminalization MUST resume or fail all still-attached waiters;
 - no waiter may remain indefinitely pending after shared-slot terminalization or partition drop.
 
+### 8.2.1 Attach Terminal-Signal Completeness (AMENDED)
+
+A waiter attachment is considered successful only if the implementation guarantees that the attachment will later
+receive exactly one terminal outcome:
+
+- normal resume,
+- exceptional completion caused by shared-slot terminalization,
+- waiter timeout,
+- or waiter cancellation.
+
+No successfully attached waiter may remain in a state where no terminal signal is any longer reachable.
+
+### 8.2.2 Post-Insertion Attach Reconciliation (AMENDED)
+
+After waiter-list insertion, the implementation MUST re-verify shared-slot state.
+
+If the shared slot has already transitioned out of `PENDING` at that point, the implementation MUST either:
+
+- immediately deliver the terminal signal to that attachment, or
+- remove the attachment and reject the attach.
+
+An implementation MUST NOT leave a post-insertion attachment in a state where terminalization is no longer reachable.
+
+### 8.2.3 Completion Continuation Execution-Path Safety (AMENDED)
+
+Completion continuation execution on the builder publication path MUST NOT re-enter the L2 shard path.
+
+Implementations MAY dispatch waiter continuations to a separate executor or equivalent completion queue to prevent lock
+inversion or publication-path contamination.
+
+This requirement does not alter publication-before-completion ordering; it only constrains how waiter continuations may
+execute after terminalization becomes observable.
+
 ### 8.3 Attach / Drop Race Rule
 
 Attach and partition-drop MAY race.
@@ -366,6 +460,22 @@ Required behavior:
 - if attach linearizes before `DROPPED`, the subsequent drop sweep MUST wake that waiter exceptionally before region
   reclamation;
 - region reclamation MUST NOT occur until all inflight slots visible at close have been terminalized.
+
+### 8.3.1 Close-Gate Terminalization Completeness (AMENDED)
+
+A close-gate publication MUST occur before final region reclamation.
+
+The implementation MUST ensure that any in-flight slot visible after close publication is terminalized before final
+region removal.
+
+This MAY be achieved by:
+
+- stable repeated sweep,
+- post-insert close check with immediate drop,
+- or an equivalent linearizable mechanism.
+
+This requirement also applies to any slot created after close-gate publication but before final reclamation; such slots
+MUST be terminalized before region removal completes.
 
 ---
 
@@ -504,6 +614,45 @@ L2 governance failure degrades by:
 
 L2 governance changes MUST NOT alter semantic output.
 
+### 12.2.1 Attach Rejection vs Quota Exhaustion (AMENDED)
+
+Ordinary attach rejection and speculative-builder quota exhaustion are distinct events.
+
+Examples of ordinary attach rejection include:
+
+- region already closed,
+- shared slot already terminalized,
+- waiter cap reached.
+
+`L2_INFLIGHT_QUOTA_EXHAUST` applies only to speculative-builder quota denial after timeout/degrade handling.
+It MUST NOT be used as a generic label for all attach rejection paths.
+
+### 12.2.2 Speculative-Builder Reservation Lifecycle (AMENDED)
+
+If timeout handling promotes a waiter into a speculative builder under governance quota, that promotion MUST acquire a
+speculative-builder reservation.
+
+That reservation MUST be released exactly once when the speculative build attempt terminates, whether by:
+
+- successful publish,
+- abort,
+- or unrecoverable fault.
+
+The release of speculative-builder reservation MUST NOT depend on the shared slot’s own terminal transition.
+
+### 12.3 Builder-Handle Terminalization Discipline (AMENDED)
+
+If the L2 port returns a builder-owned handle (or equivalent miss-commit token), the caller MUST guarantee eventual
+terminalization of that handle by invoking exactly one of:
+
+- `commit(...)`, or
+- `abort(cause)`.
+
+If local building or pre-publication preparation throws before `commit(...)`, the caller MUST invoke `abort(cause)`.
+
+Implementations SHOULD document or provide a usage discipline equivalent to `try/finally` so that pending miss-owned
+slots do not remain orphaned.
+
 ---
 
 ## 13. Compliance Tests
@@ -520,6 +669,7 @@ The following tests are required for this bridge layer:
 - `JoinTimeoutNonSemanticEquivalenceTest`
 - `SharedSlotAndWaiterStateIndependenceTest`
 - `PartitionDropAttachRaceWakeupCompletenessTest`
+- `AttachRejectedVsQuotaExhaustedTelemetrySeparationTest`
 
 ---
 
@@ -577,10 +727,23 @@ for an already-running session.
 ### 15.4 Kotlin Reference Shape (Illustrative)
 
 ```kotlin
-data class PolicyEpoch(
+class PolicyEpoch private constructor(
     val id: Long,
     val policy: ResolvedRuntimePolicy,
-)
+) {
+    companion object {
+        @JvmStatic
+        fun issue(
+            id: Long,
+            policy: ResolvedRuntimePolicy,
+        ): PolicyEpoch {
+            return PolicyEpoch(
+                id = id,
+                policy = policy,
+            )
+        }
+    }
+}
 ```
 
 If an implementation uses an epoch-tagged snapshot like `PolicyEpoch`, the identifier MUST increase monotonically and
@@ -665,7 +828,11 @@ class RuntimePolicyRegistry(initial: PolicyEpoch) {
     fun install(next: PolicyEpoch) {
         while (true) {
             val prev = ref.get()
-            require(next.id > prev.id)
+            if (next.id <= prev.id) {
+                throw PlanningProtocolIntegrityException(
+                    "RuntimePolicyRegistry.install requires monotonically increasing PolicyEpoch.id: next=${next.id}, prev=${prev.id}"
+                )
+            }
             if (ref.compareAndSet(prev, next)) return
         }
     }
@@ -703,10 +870,24 @@ folded into `ResolvedSessionBudget`.
 Illustrative shape:
 
 ```kotlin
-data class ResolvedWallClockPolicy(
+class ResolvedWallClockPolicy private constructor(
     val maxSessionElapsedNanos: Long,
-)
+) {
+    companion object {
+        @JvmStatic
+        fun issue(
+            maxSessionElapsedNanos: Long,
+        ): ResolvedWallClockPolicy {
+            return ResolvedWallClockPolicy(
+                maxSessionElapsedNanos = maxSessionElapsedNanos,
+            )
+        }
+    }
+}
 ```
+
+As part of the policy snapshot family, `ResolvedWallClockPolicy` SHOULD be factory-issued and MUST NOT rely on
+`data class`-generated `copy()` semantics as a reconstruction backdoor.
 
 ### 18.3 Boundary Rule
 
@@ -753,6 +934,11 @@ Telemetry intended for adaptive policy resolution SHOULD remain numeric/event-or
 - circuit-open counts.
 
 Such telemetry MAY inform future policy resolution but MUST NOT become a hidden semantic input to the current session.
+
+### 19.4 Telemetry Signal Distinction Rule (AMENDED)
+
+Telemetry for ordinary waiter-attach rejection and telemetry for speculative-builder quota exhaustion MUST remain
+distinct signals and MUST NOT be merged into a single counter or event kind.
 
 ---
 

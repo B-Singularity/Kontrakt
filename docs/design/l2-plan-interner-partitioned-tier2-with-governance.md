@@ -14,6 +14,13 @@ References: Constitution Protocols (#3, #4, #8, #10), ADR-0031, ADR-0032
 *primitive/atomic-array
 > tables** (open addressing) over raw `Long` bit patterns — not generic maps keyed by `Long`/`ULong`.
 
+> **AMENDED (2026-03-21):**
+> The amendments below clarify attach terminal-signal completeness, post-insertion attach reconciliation,
+> completion-continuation execution-path safety, speculative-builder reservation release,
+> attach-rejection vs quota-exhaustion distinction, and close-gate terminalization completeness.
+> These amendments do **not** introduce new semantic policy; they make explicit the implementation obligations already
+> implied by this note, ADR-0031, ADR-0032, and the compiler-core protocols.
+
 ## 0. Goals & Non-Goals
 
 ### Goals
@@ -47,8 +54,7 @@ regions: ConcurrentHashMap<PartitionKey, PartitionRegion>
 * `val closed: AtomicBoolean` (set true on bulk-drop)
 
 > Note: `regions` is not a hot per-node structure; `PartitionKey` cardinality is expected to be small. Boxing here is
-> not
-> a primary risk surface compared to the per-request hot routing keyed by `planKey64`.
+> not a primary risk surface compared to the per-request hot routing keyed by `planKey64`.
 
 ### 1.2 Shard
 
@@ -139,6 +145,43 @@ We avoid storing a giant `Map<PlanCacheKey, Node>` by:
 
 > Rationale: per-key joining avoids bucket-level locking during expensive builds, while keeping shared-slot state
 > separate from individual waiter lifecycle.
+
+#### 1.4.1 Attach Terminal-Signal Completeness (AMENDED)
+
+A waiter attachment is considered successful only if the implementation guarantees that the attachment will later
+receive
+exactly one terminal outcome:
+
+* normal resume,
+* exceptional completion caused by shared-slot terminalization,
+* waiter timeout,
+* or waiter cancellation.
+
+No successfully attached waiter may remain in a state where no terminal signal is any longer reachable.
+
+#### 1.4.2 Post-Insertion Attach Reconciliation (AMENDED)
+
+After waiter-list insertion, the implementation MUST re-verify shared-slot state.
+
+If the shared slot has already transitioned out of `PENDING` at that point, the implementation MUST either:
+
+* immediately deliver the terminal signal to that attachment, or
+* remove the attachment and reject the attach.
+
+An implementation MUST NOT leave a post-insertion attachment in a state where terminalization is no longer reachable.
+
+#### 1.4.3 Speculative-Builder Reservation Lifecycle (AMENDED)
+
+If timeout/degrade handling promotes a waiter into a speculative builder under governance quota, that promotion MUST
+acquire a speculative-builder reservation.
+
+That reservation MUST be released exactly once when the speculative build attempt terminates, whether by:
+
+* successful publish,
+* abort,
+* or unrecoverable fault.
+
+The release of speculative-builder reservation MUST NOT depend on the shared slot’s own terminal transition.
 
 ---
 
@@ -260,6 +303,29 @@ Correctness still comes exclusively from bucket exact re-check plus publication-
 > those keys are boxed and create GC pressure under hot-key storms. The shard-local `LongKeyTable<InFlight>` exists
 > specifically to keep hot routing allocation-free.
 
+#### 3.1.1 Completion Continuation Execution-Path Safety (AMENDED)
+
+Completion continuation execution on the builder publication path MUST NOT re-enter the L2 shard path.
+
+Implementations MAY dispatch waiter continuations to a separate executor or equivalent completion queue to prevent lock
+inversion or publication-path contamination.
+
+This requirement does not alter publication-before-completion ordering; it only constrains how waiter continuations may
+execute after terminalization becomes observable.
+
+#### 3.1.2 Attach Rejection vs Quota Exhaustion Distinction (AMENDED)
+
+Ordinary attach rejection and speculative-builder quota exhaustion are distinct events.
+
+Examples of ordinary attach rejection include:
+
+* region already closed,
+* shared slot already terminalized,
+* waiter cap reached.
+
+`L2_INFLIGHT_QUOTA_EXHAUST` applies only to speculative-builder quota denial after timeout/degrade handling.
+It MUST NOT be used as a generic label for all attach rejection paths.
+
 ---
 
 ## 4. Fault Governance
@@ -307,6 +373,22 @@ Correctness still comes exclusively from bucket exact re-check plus publication-
   reclamation.
 * No waiter that was successfully attached before reclamation may remain indefinitely pending.
 
+### 5.4 Close-Gate Terminalization Completeness (AMENDED)
+
+A close-gate publication MUST occur before final region reclamation.
+
+The implementation MUST ensure that any in-flight slot visible after close publication is terminalized before final
+region removal.
+
+This MAY be achieved by:
+
+* stable repeated sweep,
+* post-insert close check with immediate drop,
+* or an equivalent linearizable mechanism.
+
+This requirement also applies to any slot created after close-gate publication but before final reclamation; such slots
+MUST be terminalized before region removal completes.
+
 ---
 
 ## 6. Telemetry (Required Signals)
@@ -326,6 +408,11 @@ thresholds.
 * `avgTableProbeSteps`, `maxTableProbeSteps`
 * `tableResizeCount`
 
+#### 6.1 Telemetry Signal Distinction Rule (AMENDED)
+
+Telemetry for ordinary waiter-attach rejection and telemetry for speculative-builder quota exhaustion MUST remain
+distinct signals and MUST NOT be merged into a single counter or event kind.
+
 ---
 
 ## 7. Verification Checklist (CI / Stress)
@@ -344,6 +431,8 @@ thresholds.
 11. **Boxing Regression Guard (AMENDED):**
     * Bench / allocation tests MUST assert no `Long`/`ULong` key boxing allocations on the hot routing path:
       `shard.buckets.*`, `shard.inflight.*`, and `NodeIdIndexer` operations.
+
+---
 
 ## 8. Governance Budget Boundary & Bridge Alignment (AMENDED)
 

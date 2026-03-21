@@ -3,46 +3,56 @@ package planning.domain.session.policy
 import planning.domain.exception.PlanningProtocolIntegrityException
 
 /**
- * Governs L2 join / wait / degrade behavior.
+ * Immutable snapshot of L2 waiter/join governance.
  *
- * Normative:
- * - planner-budget-resolution-and-worker-lifecycle.md, Section 4.4
- * - l2-plan-interner-partitioned-tier2-with-governance.md (AMENDED)
+ * This contract is intentionally independent from L1 worker-byte profile scaling.
+ * It governs bounded waiting, admission, and degrade behavior only.
  *
- * These policies may alter latency, throughput, reuse rate, and survivability.
- * They MUST NOT alter semantic output.
+ * Design rules:
+ * - Factory-issued only.
+ * - No data-class copy() backdoor.
+ * - Timeout is a monotonic elapsed-time waiter deadline.
+ * - Timeout/cancellation are waiter lifecycle events and MUST NOT fail the shared slot.
+ *
+ * ADR alignment:
+ * - ADR-0032: L2 governance boundary distinct from L1 structural sizing.
+ * - ADR-0033: profile-independent bootstrap join governance for v1.
  */
-data class ResolvedJoinGovernance(
-    /**
-     * Monotonic elapsed-time deadline for in-flight join waiting.
-     *
-     * This is interpreted as a waiter-lifecycle event, not as shared-slot failure.
-     */
+class ResolvedJoinGovernance private constructor(
     val joinWaitTimeoutNanos: Long,
-
-    /** Maximum number of waiters that may attach to one in-flight key. */
     val maxWaitersPerKey: Int,
-
-    /** Maximum speculative builders allowed after waiter timeout. */
     val maxSpeculativeBuildersPerKey: Int,
-
-    /** If true, fail fast or bypass immediately when speculative quota is exhausted. */
     val failFastOnQuotaExhaustion: Boolean,
 ) {
-    init {
-        if (joinWaitTimeoutNanos <= 0L) {
-            throw PlanningProtocolIntegrityException(
-                "ResolvedJoinGovernance.joinWaitTimeoutNanos must be > 0: $joinWaitTimeoutNanos"
-            )
-        }
-        if (maxWaitersPerKey <= 0) {
-            throw PlanningProtocolIntegrityException(
-                "ResolvedJoinGovernance.maxWaitersPerKey must be > 0: $maxWaitersPerKey"
-            )
-        }
-        if (maxSpeculativeBuildersPerKey < 0) {
-            throw PlanningProtocolIntegrityException(
-                "ResolvedJoinGovernance.maxSpeculativeBuildersPerKey must be >= 0: $maxSpeculativeBuildersPerKey"
+    companion object {
+        @JvmStatic
+        fun issue(
+            joinWaitTimeoutNanos: Long,
+            maxWaitersPerKey: Int,
+            maxSpeculativeBuildersPerKey: Int,
+            failFastOnQuotaExhaustion: Boolean,
+        ): ResolvedJoinGovernance {
+            if (joinWaitTimeoutNanos <= 0L) {
+                throw PlanningProtocolIntegrityException(
+                    "ResolvedJoinGovernance.joinWaitTimeoutNanos must be > 0: $joinWaitTimeoutNanos"
+                )
+            }
+            if (maxWaitersPerKey <= 0) {
+                throw PlanningProtocolIntegrityException(
+                    "ResolvedJoinGovernance.maxWaitersPerKey must be > 0: $maxWaitersPerKey"
+                )
+            }
+            if (maxSpeculativeBuildersPerKey < 0) {
+                throw PlanningProtocolIntegrityException(
+                    "ResolvedJoinGovernance.maxSpeculativeBuildersPerKey must be >= 0: $maxSpeculativeBuildersPerKey"
+                )
+            }
+
+            return ResolvedJoinGovernance(
+                joinWaitTimeoutNanos = joinWaitTimeoutNanos,
+                maxWaitersPerKey = maxWaitersPerKey,
+                maxSpeculativeBuildersPerKey = maxSpeculativeBuildersPerKey,
+                failFastOnQuotaExhaustion = failFastOnQuotaExhaustion,
             )
         }
     }

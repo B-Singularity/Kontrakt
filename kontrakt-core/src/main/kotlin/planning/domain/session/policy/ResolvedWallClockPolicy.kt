@@ -1,27 +1,32 @@
 package planning.domain.session.policy
 
-// ResolvedWallClockPolicy.kt
-
 import planning.domain.exception.PlanningProtocolIntegrityException
 
 /**
- * Optional runtime-boundary watchdog policy for total session elapsed time.
+ * Optional runtime-boundary wall-clock watchdog policy.
  *
- * Normative:
- * - planner-budget-resolution-and-worker-lifecycle.md, Section 18 (AMENDED)
+ * This contract is deliberately separated from:
+ * - ResolvedSessionBudget
+ * - ResolvedJoinGovernance
+ * - ResolvedStorageGovernance
+ * - step(costCenter) semantics
  *
- * This policy is intentionally separate from:
- * - structural byte budgets
- * - step/fuel semantics
- * - L2 waiter timeout semantics
+ * It exists only if the runtime chooses to install a session-level elapsed-time watchdog.
  */
-data class ResolvedWallClockPolicy(
+class ResolvedWallClockPolicy private constructor(
     val maxSessionElapsedNanos: Long,
 ) {
-    init {
-        if (maxSessionElapsedNanos <= 0L) {
-            throw PlanningProtocolIntegrityException(
-                "ResolvedWallClockPolicy.maxSessionElapsedNanos must be > 0: $maxSessionElapsedNanos"
+    companion object {
+        @JvmStatic
+        fun issue(maxSessionElapsedNanos: Long): ResolvedWallClockPolicy {
+            if (maxSessionElapsedNanos <= 0L) {
+                throw PlanningProtocolIntegrityException(
+                    "ResolvedWallClockPolicy.maxSessionElapsedNanos must be > 0: $maxSessionElapsedNanos"
+                )
+            }
+
+            return ResolvedWallClockPolicy(
+                maxSessionElapsedNanos = maxSessionElapsedNanos,
             )
         }
     }

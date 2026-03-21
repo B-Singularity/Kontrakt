@@ -4,6 +4,7 @@ Date: 2026-02-22
 
 Status: Accepted (Amended: 2026-03-01)
 <!-- AMENDED(2026-03-02): Added ULong boxing avoidance + NodeIdIndexer primitive-map mandate -->
+<!-- AMENDED(2026-03-21): Clarified in-flight attach terminal-signal guarantees, commit/abort terminalization discipline, speculative-builder reservation release, drop-sweep linearizability, and callback execution-path safety without changing prior semantic policy. -->
 
 Normative
 
@@ -22,7 +23,7 @@ strictly cache-blind.
 
 Kotlin/JVM note: ULong is a value class and can BOX when it crosses generic/Any boundaries.
 Therefore, all hot-path indexing (NodeIdIndexer, GreyMap membership, etc.) MUST be implemented using primitive storage
-(Long/Int arrays + primitive hashing), and MUST NOT use Map<ULong, *> or other boxed-key generic collections.
+(Long/Int arrays + primitive hashing), and MUST NOT use `Map<ULong, *>` or other boxed-key generic collections.
 This amendment is performance-critical and constitutionally enforced as part of "Monomorphic Hot-Paths".
 
 ## Decision
@@ -39,11 +40,9 @@ We adopt a **Two-Tier Transactional Memoization Architecture** enhanced by **Det
     * **CRITICAL MUST:** If a keyed hash is used, the key MUST be deterministic and version-bound (derived solely from
       `normalizationVersion` and stable configuration) and MUST NOT be randomized per process/run.
     * **CRITICAL MUST (Hot-Path Physical Constraint):** Although `nodeIdentity64` is modeled as `ULong` at the DTO
-      surface,
-      the Domain Core MUST immediately extract and route it as a **primitive 64-bit bitpattern** (e.g.,
-      `identityBits: Long`)
-      for all indexing and membership operations. The core MUST NOT store `ULong` inside generic collections (boxing
-      risk).
+      surface, the Domain Core MUST immediately extract and route it as a **primitive 64-bit bitpattern**
+      (e.g., `identityBits: Long`) for all indexing and membership operations. The core MUST NOT store `ULong` inside
+      generic collections (boxing risk).
 
 2. **`PlanCacheKey` (Memoization / Interning):** A comprehensive tuple:
    `[workAccountingVersion, normalizationVersion, edgeOrderingVersion, capabilityProfileVersion, entropyVersion, partitionKey, equalityKey]`.
@@ -59,8 +58,7 @@ We adopt a **Two-Tier Transactional Memoization Architecture** enhanced by **Det
       an identical `edgeRank` (due to hash abbreviation), they MUST be treated as semantically equivalent for ordering
       purposes. Ties MUST be resolved solely via the stack-index rule (prioritizing the edge closest to the root).
     * **NOTE (Performance):** Any hot-path storage of `edgeRank` sequences (e.g., RMQ inputs, stack-edge arrays) MUST
-      use
-      primitive arrays (`LongArray` / `ULongArray`) and MUST NOT route `edgeRank` through boxed generic collections.
+      use primitive arrays (`LongArray` / `ULongArray`) and MUST NOT route `edgeRank` through boxed generic collections.
 
 ### 2. Tier 1 (L1): Domain Session (Worker-Local Transaction)
 
@@ -71,8 +69,7 @@ We adopt a **Two-Tier Transactional Memoization Architecture** enhanced by **Det
   resetting the `NodeIdIndexer` (e.g., via epoch increment or safe per-request recreation), and clearing membership
   strictly along the active stack.
 * **CRITICAL MUST (Primitive Reset):** `NodeIdIndexer` reset MUST be O(1) epoch-based or O(n_active) stack-based and
-  MUST
-  NOT depend on clearing boxed maps. Any membership/index tables used by GreyMap MUST be primitive structures.
+  MUST NOT depend on clearing boxed maps. Any membership/index tables used by GreyMap MUST be primitive structures.
 
 * **Dual-Track Budgeting Model (CRITICAL MUST):**
     1. **Physical DoS Limits (Cache-Sensitive):** `MaxFinalizeSteps`, `MaxDepthCap`, and `MaxNodeIdCap`.
@@ -98,10 +95,24 @@ We adopt a **Two-Tier Transactional Memoization Architecture** enhanced by **Det
 
 1. **Pre-Commit Isolation:** `L2.intern` MUST ONLY be invoked during the bottom-up commit phase. A Hard Abort MAY occur
    during the commit phase; any partial L2 writes that occurred before the abort are semantically harmless.
+
 2. **DAG Consistency Guarantee:** On `Fault(_)`, the Core MUST store `nodeToIntern` into the `CanonicalSubstitutionMap`.
+
 3. **Persistent Canonicalization Rule:** Data retrieved from the Persistent Payload Store MUST be immediately routed
    through the `L2.intern` operation. The raw deserialized payload instance MUST be instantly discarded. If the L2 port
    transitions to `CircuitOpen`, the Persistent Payload Store MUST concurrently be bypassed.
+
+4. **Builder Handle Terminalization Discipline (AMENDED):**
+   If the L2 Port returns a builder-owned handle (or equivalent builder-right token) on a miss path, the caller MUST
+   guarantee eventual terminalization of that handle by invoking exactly one of:
+    * `commit(...)`, or
+    * `abort(cause)`.
+
+   If local building or pre-publication preparation throws before `commit(...)`, the caller MUST invoke
+   `abort(cause)`.
+
+   Implementations SHOULD document or provide a usage pattern equivalent to `try/finally` so that builder-owned pending
+   slots do not remain orphaned indefinitely.
 
 ### 5. Hexagonal Port Boundaries (CRITICAL MUST)
 
@@ -147,8 +158,7 @@ without violating cache-blind determinism.
 ### C. In-Flight Gate (Hot-Key Duplicate Build Storm Defense)
 
 * **CRITICAL MUST:** The adapter MUST support an **in-flight gate** so that when N threads miss the same hot key, only
-  one
-  thread performs the expensive build while others join (bounded).
+  one thread performs the expensive build while others join (bounded).
 * **CRITICAL MUST:** In-flight joining MUST NOT introduce global locks; contention must be per-key (or per-bucket).
 * **CRITICAL MUST:** The gate MUST be compatible with Fuel governance:
   join operations MUST consume `MaxFinalizeSteps` and MUST have a bounded wait/degrade policy.
@@ -157,7 +167,7 @@ without violating cache-blind determinism.
 
 * **CRITICAL MUST:** `PartitionRegion` MUST be subdivided into shards (striping) to reduce CHM contention:
   `PartitionRegion(shards: Array<Shard>)`.
-* **CRITICAL MUST:** Routing MUST be deterministic and based on stable hashes derived from the PlanCacheKey tuple.
+* **CRITICAL MUST:** Routing MUST be deterministic and based on stable hashes derived from the `PlanCacheKey` tuple.
 
 ### E. Determinism Requirements under Governance
 
@@ -165,6 +175,36 @@ without violating cache-blind determinism.
     1) graph topology, 2) `treeSemanticCostUpperBound`, 3) semantic hard-abort outcomes.
 * **CRITICAL MUST:** Only cache-sensitive operational counters (`MaxFinalizeSteps`) may differ between hot vs cold
   caches.
+
+### F. In-Flight Attach Terminalization Guarantee (AMENDED)
+
+* **CRITICAL MUST:** A waiter attachment is considered successful only if the implementation guarantees that attachment
+  will later receive exactly one terminal outcome:
+    * normal resume,
+    * exceptional completion caused by shared-slot terminalization,
+    * waiter timeout,
+    * or waiter cancellation.
+* **CRITICAL MUST:** No successfully attached waiter may remain in a state where no terminal signal is any longer
+  reachable.
+
+### G. Post-Insertion Attach Re-Verification Rule (AMENDED)
+
+* **CRITICAL MUST:** After waiter-list insertion, the implementation MUST re-verify shared-slot state.
+* **CRITICAL MUST:** If the shared slot has already transitioned out of `PENDING` at that point, the implementation MUST
+  either:
+    * immediately deliver the terminal signal to that attachment, or
+    * remove the attachment and reject the attach.
+* **CRITICAL MUST:** An implementation MUST NOT leave a post-insertion attachment in a state where terminalization is no
+  longer reachable.
+
+### H. Completion Continuation Execution-Path Safety (AMENDED)
+
+* **CRITICAL MUST:** Completion continuation execution on the builder publication path MUST NOT re-enter the L2 shard
+  path.
+* **CRITICAL MUST:** Implementations MAY dispatch continuations to a separate executor or equivalent completion queue to
+  prevent lock inversion or publication-path contamination.
+* **CRITICAL MUST:** This requirement does not change publication-before-completion ordering; it only constrains how
+  waiter continuations may execute after terminalization becomes observable.
 
 ---
 
@@ -182,3 +222,15 @@ without violating cache-blind determinism.
   instances from that partition.
 * [ ] **In-Flight Gate Correctness:** Joiners MUST never observe partially constructed nodes; completion MUST occur only
   after safe publication.
+
+### Additional In-Flight / Governance Compliance Checks (AMENDED)
+
+* [ ] **Attach Terminal Signal Completeness:** Every successfully attached waiter eventually receives exactly one
+  terminal signal.
+* [ ] **Attach Post-Insertion Reconciliation:** No attach that succeeds past insertion may remain orphaned after a
+  shared
+  slot has already terminalized.
+* [ ] **Publication-Path Continuation Safety:** Waiter continuation dispatch MUST NOT re-enter the L2 shard path on the
+  builder publication path.
+* [ ] **Handle Terminalization Discipline:** Builder-owned handles returned on miss paths are always eventually
+  terminalized by exactly one of `commit(...)` or `abort(...)`.
