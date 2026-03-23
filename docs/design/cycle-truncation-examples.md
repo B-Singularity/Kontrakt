@@ -22,6 +22,14 @@ This document provides concrete examples for `StructuralPlanner` implementing th
     >   **primitive arrays / primitive maps** over raw `Long` bit patterns (store `identity64.toLong()`),
     >   and MUST NOT use `Map<ULong, *>` / `Map<Long, *>` in the hot path.
 
+> **AMENDED (Breakpoint Interpretation Boundary):**
+> Cycle breakpoint selection in these examples is a **planner-time semantic decision**.
+> Therefore:
+> * the candidate breakpoint MUST be chosen from the **current active cycle segment**,
+> * the examples MUST NOT be interpreted as permitting selection based on previously materialized child results,
+> * concrete realization forms (`null`, empty collection, skip assignment, diagnostic stub) belong to downstream
+    >   linking/materialization behavior, not to the breakpoint-selection comparator itself.
+
 ---
 
 ## 1. Exception Mapping, Domain Purity & Reality Defense
@@ -80,6 +88,179 @@ The JVM retains this without marking it synthetic.
       `DeclarationIndex` changes.
     * `truncated`: `false`
     * `faultKind`: `CAPABILITY_RESTRICTED`
+
+### Scenario 2.2 (AMENDED): Candidate Breakpoint Is Chosen from the Active Cycle Segment
+
+**Context:**  
+Traversal reaches the following active stack:
+
+* `Root`
+* `Order`
+* `Customer`
+* `Address`
+* `Order`
+
+The re-entry into `Order` is detected while expanding `Address.owner`.
+
+The active cycle segment is therefore:
+
+* `Order -> Customer -> Address -> Order`
+
+Visible edges in that segment:
+
+* `Order.customer` = **Strong**
+* `Customer.primaryAddress` = **Deferred**
+* `Address.owner` = **Substitutable**
+
+1. The planner detects active-path re-entry for `Order`.
+2. The planner computes the **current active cycle segment** only.
+3. The planner evaluates only the participating active edges of that segment.
+4. The planner applies tri-stage ordering:
+    * Deferred first
+    * then Substitutable
+    * otherwise fail-fast
+5. Result:
+    * `Customer.primaryAddress` wins because it is the minimum eligible **Deferred** candidate in the cycle segment.
+
+> **Rule:**  
+> The planner MUST NOT pick a breakpoint from:
+> * a non-participating sibling edge,
+> * a previously materialized child result,
+> * a cache winner that happened to complete earlier.
+
+### Scenario 2.3 (NEW): Stage 1 Deferred Edge Wins over a Lower-Priority Substitutable Edge
+
+**Context:** Cycle `A -> B -> C -> A`.
+
+Cycle-segment edges:
+
+* `A.depB` = **Strong**
+* `B.lateService` = **Deferred**
+* `C.optionalBackRef` = **Substitutable**
+
+Comparator inputs:
+
+* `B.lateService` canonical key = `com.example.B|PROPERTY|lateService|com.example.Service|2`
+* `C.optionalBackRef` canonical key = `com.example.C|PROPERTY|optionalBackRef|com.example.A?|0`
+
+1. The planner detects the cycle.
+2. It first filters only **Deferred** edges.
+3. The candidate set contains exactly one edge: `B.lateService`.
+4. The planner inserts `UnlinkedDeferredNode` at that breakpoint.
+5. The Substitutable candidate is ignored because Stage 1 already succeeded.
+
+**Interpretation:**  
+Even if `C.optionalBackRef` has a lexicographically smaller or "more convenient" downstream runtime realization, Stage 1
+priority dominates.
+
+### Scenario 2.4 (NEW): Stage 2 Substitutable Edge Wins When No Deferred Edge Exists
+
+**Context:** Cycle `Parent -> Child -> Parent`.
+
+Cycle-segment edges:
+
+* `Parent.child` = **Strong**
+* `Child.parent` = **Substitutable** (`Parent?`)
+
+No Deferred edges exist.
+
+1. The planner detects the cycle on `Parent`.
+2. Stage 1 finds no eligible Deferred edge.
+3. Stage 2 evaluates Substitutable candidates.
+4. `Child.parent` is selected.
+5. The planner inserts `SubstitutionNode(reason = NULL, structuralPath = "...")`.
+
+**Important Boundary:**  
+The planner-time selection ends at `SubstitutionNode`.
+The later effect may be realized downstream as:
+
+* `null`,
+* skipped assignment,
+* an empty substitute for a protocol-specific container,
+* or another valid protocol realization.
+
+The planner comparator itself does **not** choose among those runtime realization forms.
+
+### Scenario 2.5 (NEW): No Breakable Edge Exists -> Deterministic Fail-Fast
+
+**Context:** Cycle `Engine -> Piston -> Engine`.
+
+Cycle-segment edges:
+
+* `Engine.primaryPiston` = **Strong**
+* `Piston.engine` = **Strong**
+
+There are:
+
+* no Deferred edges
+* no Substitutable edges
+* no capability-based demotions that would make either edge breakable
+
+1. The planner detects the cycle.
+2. Stage 1 finds no Deferred candidate.
+3. Stage 2 finds no Substitutable candidate.
+4. Stage 3 triggers deterministic failure.
+5. Result:
+    * `PlanningException.CycleDetected`
+    * `truncated = false`
+
+> **Reason:**  
+> The planner must not invent unsafe dummy values merely to avoid failure.
+
+### Scenario 2.6 (NEW): Cache State Must Not Perturb Breakpoint Choice
+
+**Context:**  
+The same recursive schema is planned twice with identical semantic inputs:
+
+* same root seed
+* same `CapabilityProfile`
+* same normalized type facts
+* same constructor selection
+
+The cycle segment is:
+
+* `Invoice -> LineItem -> Invoice`
+
+Eligible candidates in the segment:
+
+* `Invoice.lines` = **Substitutable**
+* `LineItem.owner` = **Deferred**
+
+#### Run A: Cold Cache
+
+* no Tier-2 entry exists
+* all children are planned freshly
+
+#### Run B: Hot Cache / Reuse / Different Join Timing
+
+* some neighboring children are Tier-2 hits
+* one branch returns earlier due to reuse
+* thread scheduling differs
+
+#### Required Outcome
+
+Both runs MUST choose the same breakpoint:
+
+* `LineItem.owner` wins in both runs because it is the Stage 1 Deferred candidate.
+
+The following are allowed to differ:
+
+* reuse count
+* object sharing
+* retention
+* throughput
+* latency
+
+The following MUST NOT differ:
+
+* chosen breakpoint
+* final IR topology
+* canonical signatures
+* semantic truncation meaning
+
+> **Boundary Rule:**  
+> Cache state and governance may change performance characteristics, but MUST NOT alter the protocol-comparator-driven
+> truncation choice.
 
 ---
 

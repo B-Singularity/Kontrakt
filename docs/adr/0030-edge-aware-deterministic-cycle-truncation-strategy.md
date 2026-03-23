@@ -94,6 +94,33 @@ normative:
     * **Generics:** **REIFIED**.
     * *Rule:* If the Active Stack contains a frame with the same Identity, it is a **Cycle**.
 
+#### 2.1. Identity Representation Boundary (AMENDED)
+
+To remove ambiguity between semantic identity rules and hot-path runtime representation:
+
+* The stripped identity used for cycle detection **MUST** be bound to the active normalization / type-signature version.
+* The planner/session hot-path representation of that identity **MUST** use a stable primitive 64-bit representation
+  (for example, `nodeIdentity64` as a raw bit pattern), not boxed generic map keys.
+* Richer descriptors MAY still exist for diagnostics, but active-path membership and cycle detection **MUST** be driven
+  by the stable primitive identity representation.
+* **Reason:** cycle detection is a hot-path planner operation and must remain stable across boxing differences, adapter
+  representation details, and non-semantic runtime variation.
+
+#### 2.2. Immediate Active-Path Re-entry Rule (AMENDED)
+
+To make the cycle trigger threshold explicit:
+
+* Re-observing the same stripped identity on the **current Active Stack** MUST be treated as an **immediate cycle**.
+* The Planner MUST NOT allow:
+    * bounded "grace" re-entry counts,
+    * "N-times allowed" recursion policies,
+    * cache/governance-dependent delayed cycle recognition,
+    * retry-based postponement of cycle classification.
+* Once active-path re-entry is observed, the Planner MUST immediately proceed to the deterministic breakpoint strategy
+  defined by this ADR.
+* **Reason:** delayed recognition would undermine bounded growth, complicate rollback semantics, and make semantic
+  behavior sensitive to non-semantic execution conditions.
+
 ### 3. Edge Strength Classification & Ordering
 
 #### 3.1. Capability Profile vs. Fingerprint (MUST)
@@ -156,7 +183,23 @@ Collision detection MUST NOT be performed globally across all possible construct
 2. **Stage 2:** Min Canonical Key among **Substitutable Edges** -> Insert `SubstitutionNode`.
 3. **Stage 3:** Fail-Fast (`PlanningException.CycleDetected`).
 
-#### 3.6.1. Governance / Cache Blindness of Truncation Choice (AMENDED)
+#### 3.6.1. Cycle Segment Candidate Scope (AMENDED)
+
+The tri-stage breakpoint selection MUST be evaluated over the **current active cycle segment**, not over arbitrary
+previously materialized child outputs.
+
+* The candidate set MUST be derived from the **active edges that participate in the currently detected cycle segment**.
+* The Planner MUST evaluate those active edges using the comparator rules of this ADR.
+* The Planner MUST NOT shortcut breakpoint selection by consulting:
+    * cache materialization timing,
+    * previously published child results,
+    * Tier-2 reuse timing,
+    * builder/join completion order.
+
+*Reason:* the truncation choice is a semantic planner decision over the active traversal structure, not a byproduct of
+materialization history.
+
+#### 3.6.2. Governance / Cache Blindness of Truncation Choice (AMENDED)
 
 The selected cycle breakpoint is a **semantic planner decision** and therefore MUST be independent of infrastructure or
 governance conditions.
@@ -172,7 +215,10 @@ governance conditions.
     * timeout behavior,
     * thread scheduling,
     * GC pauses,
-    * hot/cold cache state.
+    * hot/cold cache state,
+    * circuit-open transitions,
+    * partition close/drop timing,
+    * worker resumption order.
 * Therefore, any governance or infrastructure change may alter reuse, retention, waiting, or throughput behavior, but
   **MUST NOT** alter the protocol-comparator-driven truncation choice.
 
@@ -185,6 +231,21 @@ governance conditions.
 ### 4. Explicit Substitution & Mapping
 
 * `SubstitutionNode` **MUST carry** `reason` and `structuralPath`. `Nullable Property` = `NULL` (Skip Assignment).
+
+#### 4.1. Planner Boundary vs. Downstream Materialization (AMENDED)
+
+To prevent confusion between planner-time semantic decisions and later runtime realization:
+
+* The Planner's responsibility ends at selecting the deterministic breakpoint and inserting either:
+    * `UnlinkedDeferredNode`, or
+    * `SubstitutionNode`.
+* The Planner MUST NOT treat concrete runtime realization forms (e.g. assigning `null`, returning an empty collection,
+  skipping assignment, or constructing a throwing diagnostic stub) as part of the breakpoint-selection algorithm.
+* Those concrete realization forms belong to downstream linking/materialization rules and MAY vary by protocol, but the
+  planner-time breakpoint choice itself MUST remain unchanged.
+
+*Reason:* breakpoint selection is semantic and protocol-comparator-driven; concrete substitute realization is a later
+phase concern.
 
 ### 5. Budgeting & Capacity Control
 
@@ -299,24 +360,25 @@ exclusively for schema collisions (`AmbiguousEdgeKey`, `AmbiguousEntropyTargetKe
 
 * **`PlanningException`** (Sealed Domain Exception):
     *
-    `CycleDetected(path, cycleSegment, capabilityDemotions: List<DemotionRecord>, truncated: Boolean, faultKind: PlanningFaultKind)`
-        * *Demotion Evidence:* `DemotionRecord` MUST contain `ownerType, memberKind, name, typeSignature, reason` and an
-          optional `requiredCapabilityHint`.
-        * *FaultKind Rule:* If `capabilityDemotions` is not empty, set to `CAPABILITY_RESTRICTED`. Otherwise,
-          `USER_MODEL_INVALID`.
-        * *Safety Rule:* `MAX_DIAGNOSTIC_ENTRIES` MUST be exactly `50`. Collections MUST be tail-truncated.
-          `capabilityDemotions` MUST be sorted by **`EntropyTargetKey`** ascending before truncation to ensure
-          index-independent deterministic reporting. If truncated, the `truncated` flag MUST be `true`.
-    * `AmbiguousEdgeKey(ownerType, serializedKey, conflictingMembers, faultKind: PlanningFaultKind)` (Uses Dynamic
-      Fault Rule).
-    * `AmbiguousEntropyTargetKey(ownerType, targetKey, conflictingMembers, faultKind: PlanningFaultKind)` (Uses Dynamic
-      Fault Rule).
-    * `InvalidCanonicalKeyComponent(invalidComponent, reason, faultKind = USER_MODEL_INVALID)`
-        * *Rule:* Thrown strictly when Reality Defense detects `|`. Always attributed to the user's model or their
-          build pipeline (e.g., obfuscator/plugin).
-    * `PortContractViolation(detail, faultKind = FRAMEWORK_INVARIANT_BROKEN)`
-        * *Rule:* Thrown strictly when Reality Defense detects non-NFC normalized strings or malformed Capability
-          Profiles, definitively indicating an Adapter bug.
+  `CycleDetected(path, cycleSegment, capabilityDemotions: List<DemotionRecord>, truncated: Boolean, faultKind: PlanningFaultKind)`
+    * *Demotion Evidence:* `DemotionRecord` MUST contain `ownerType, memberKind, name, typeSignature, reason` and an
+      optional `requiredCapabilityHint`.
+    * *FaultKind Rule:* If `capabilityDemotions` is not empty, set to `CAPABILITY_RESTRICTED`. Otherwise,
+      `USER_MODEL_INVALID`.
+    * *Safety Rule:* `MAX_DIAGNOSTIC_ENTRIES` MUST be exactly `50`. Collections MUST be tail-truncated.
+      `capabilityDemotions` MUST be sorted by **`EntropyTargetKey`** ascending before truncation to ensure
+      index-independent deterministic reporting. If truncated, the `truncated` flag MUST be `true`.
+        * `AmbiguousEdgeKey(ownerType, serializedKey, conflictingMembers, faultKind: PlanningFaultKind)` (Uses Dynamic
+          Fault Rule).
+        * `AmbiguousEntropyTargetKey(ownerType, targetKey, conflictingMembers, faultKind: PlanningFaultKind)` (Uses
+          Dynamic
+          Fault Rule).
+        * `InvalidCanonicalKeyComponent(invalidComponent, reason, faultKind = USER_MODEL_INVALID)`
+            * *Rule:* Thrown strictly when Reality Defense detects `|`. Always attributed to the user's model or their
+              build pipeline (e.g., obfuscator/plugin).
+        * `PortContractViolation(detail, faultKind = FRAMEWORK_INVARIANT_BROKEN)`
+            * *Rule:* Thrown strictly when Reality Defense detects non-NFC normalized strings or malformed Capability
+              Profiles, definitively indicating an Adapter bug.
 * **`CapacityExceededException`** (Domain Exception): Payload: `limitType`, `currentValue`,
   `faultKind = RESOURCE_EXHAUSTED`.
 * **`PlanViolationException`** (VM/Runtime Exception): Payload includes `runtimeFaultKind`.
