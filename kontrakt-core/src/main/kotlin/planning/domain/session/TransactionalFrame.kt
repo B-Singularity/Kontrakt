@@ -10,21 +10,20 @@ package planning.domain.session
  * It MUST NOT carry execution semantics such as:
  * - frame kind
  * - type reference
- * - member cursor
+ * - member cursor value
  * - edge context
  *
- * Important:
- * - monotonic physical/semantic counters are NOT part of this snapshot
- * - the "soft checkpoint" below is a frame-local planner checkpoint,
- *   not the session-global semantic budget counter
+ * Note:
+ * - member cursor values remain session-owned primitive state
+ * - only the cursor-stack pointer is captured here
  */
 internal class TransactionalFrame private constructor() {
     private var savedStackPointer: Int = 0
     private var savedNodeCount: Int = 0
     private var savedIndexerUndoPtr: Int = 0
     private var savedSigPtr: Int = 0
+    private var savedMemberCursorStackPointer: Int = 0
 
-    // Frame-local rollback checkpoints
     private var savedSoftCheckpoint: Long = 0L
     private var savedPlaceholderCounter: Int = 0
     private var savedBuilderLogPos: Int = 0
@@ -35,6 +34,7 @@ internal class TransactionalFrame private constructor() {
         savedNodeCount = session.indexer.size
         savedIndexerUndoPtr = session.indexer.snap()
         savedSigPtr = session.indexer.currentSigPtr()
+        savedMemberCursorStackPointer = session.currentMemberCursorStackPointer()
 
         savedSoftCheckpoint = session.currentSoftCheckpoint()
         savedPlaceholderCounter = session.currentPlaceholderCounter()
@@ -46,8 +46,10 @@ internal class TransactionalFrame private constructor() {
         val structures = session.structures
 
         while (structures.stackPointer > savedStackPointer) {
+            val depth = structures.stackPointer
             val poppedNodeId = structures.activeStack[--structures.stackPointer]
             structures.depthOfNodeId[poppedNodeId] = 0
+            structures.clearDepthMetadata(depth)
         }
 
         session.performIndexerRollback(savedIndexerUndoPtr)
@@ -58,6 +60,7 @@ internal class TransactionalFrame private constructor() {
             placeholderCounter = savedPlaceholderCounter,
             builderLogPos = savedBuilderLogPos,
             cacheLogPos = savedCacheLogPos,
+            memberCursorStackPointer = savedMemberCursorStackPointer,
         )
     }
 

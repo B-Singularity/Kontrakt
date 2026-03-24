@@ -2,218 +2,142 @@ package planning.domain.session
 
 import ir.identity.CanonicalSignature
 import ir.plan.signature.PlanCacheKey
-import metamodel.domain.dto.TypeFactsDTO
+import metamodel.domain.dto.MemberFact
 import planning.domain.exception.FuelExhaustedException
 import planning.domain.exception.PlanningProtocolIntegrityException
 import planning.domain.exception.PlanningRuntimeInvariantException
+import planning.domain.port.outgoing.BreakpointStage
+import planning.domain.port.outgoing.ChildResultSlice
+import planning.domain.port.outgoing.OrderedActiveMembers
 import planning.domain.protocol.BudgetTrack
 import planning.domain.protocol.CostCenter
 import planning.domain.runtime.CommittedPlanNode
-import planning.domain.runtime.DeferredCommittedPlanNode
-import planning.domain.runtime.SubstitutionCommittedPlanNode
-import planning.domain.session.PlannerSession.Companion.issue
 
 /**
- * Aggregate root for the worker-local planning runtime.
+ * Aggregate root for the worker-local semantic planning runtime.
  *
- * This object is the constitutional owner of the Phase-4 planning session state.
- * It centralizes:
+ * Architectural role:
+ * - owns the worker-local L1 substrate
+ * - owns the execution-frame stack
+ * - owns session-local rollback checkpoints and transient child-result buffers
+ * - owns runtime-only governance flags such as session-remainder L2 bypass
  *
- * 1. Budget metering
- *    - [step] is the single legal mutation gate for physical/semantic counters.
- *    - counters are monotonic and are never rolled back.
+ * Important boundary rules:
+ * - execution frames are immutable descriptors
+ * - mutable traversal state is stored in session-owned primitive structures
+ * - rollback restores checkpointed session state, not arbitrary object fields
+ * - physical / semantic counters remain monotonic and are NOT rolled back
  *
- * 2. Worker-local execution substrate
- *    - [L1Structures]
- *    - [NodeIdIndexer]
- *    - explicit execution-frame stack
- *
- * 3. Runtime orchestration state
- *    - child result accumulation
- *    - local substitution consistency during L2 degradation / bypass
- *    - primitive uniqueness trackers reused across hot paths
- *
- * 4. Zero-residue cleanup
- *    - all worker-local mutable state is reset in [resetToCleanState]
- *    - this is required to make session reuse deterministic after abort / unwind
- *
- * Design notes:
- * - This is intentionally NOT a generic state bag.
- * - It is the aggregate boundary that enforces the planning runtime laws.
- * - Constructors are blocked to force creation through [issue].
+ * This type is intentionally stateful:
+ * it is the runtime aggregate that governs one worker-local planning session lifecycle.
  */
 class PlannerSession private constructor(
-    /**
-     * Immutable session configuration.
-     *
-     * This contains:
-     * - memory/capacity ceilings
-     * - version seeds
-     * - physical/semantic budget limits
-     */
     val config: PlannerSessionConfig,
 ) : SessionKernel, AutoCloseable {
 
     /**
-     * Worker-local pooled primitive structures.
+     * Worker-local primitive planning substrate.
      *
      * Owns:
-     * - active stack
-     * - GREY map
-     * - RMQ-related dense arrays
+     * - active path topology
+     * - incoming edge metadata at each active depth
+     * - member cursor stack
+     * - RMQ state for breakpoint selection
      */
-    internal val structures = L1Structures(config)
+    internal val structures = L1Structures.issue(
+        maxNodeIdCap = config.caps.maxNodeIdCap,
+        maxSemanticDepth = config.caps.maxDepthCap,
+    )
 
     /**
-     * Dense node identity allocator / indexer.
+     * Dense node identity indexer used by the planner hot path.
      *
-     * Maps deterministic identity bits + signature bytes to a dense node id.
+     * This is worker-local and reset between sessions.
      */
     internal val indexer = NodeIdIndexer(config)
 
     /**
-     * Internal bridge reference used when primitives need to call back into the session
-     * for metering or lifecycle hooks without depending on the concrete aggregate type.
+     * SessionKernel self-reference used by components that require kernel callbacks.
      */
     private val kernel: SessionKernel = this
 
-    // -------------------------------------------------------------------------
-    // Monotonic counters
-    // -------------------------------------------------------------------------
-
     /**
-     * Cumulative physical work consumed since the lifetime of this session object.
+     * Monotonic cumulative counters.
      *
-     * Important:
-     * - this is monotonic
-     * - this is NOT rolled back by transactional unwind
-     * - session-local usage is computed via per-session baselines
+     * These counters represent already-consumed work and MUST NOT be rolled back.
+     * Session-local budget usage is measured relative to [sessionStartPhysical] and
+     * [sessionStartSemantic].
      */
     private var cumulativePhysicalSteps: Long = 0L
-
-    /**
-     * Cumulative semantic work consumed since the lifetime of this session object.
-     *
-     * Important:
-     * - this is monotonic
-     * - this is NOT rolled back by transactional unwind
-     * - it follows the same baseline scheme as physical counters
-     */
     private var cumulativeSemanticWork: Long = 0L
-
-    // -------------------------------------------------------------------------
-    // Session baselines
-    // -------------------------------------------------------------------------
-
-    /**
-     * Physical baseline captured at [startSession].
-     *
-     * The current session's physical usage is:
-     * current cumulative physical - this baseline
-     */
     private var sessionStartPhysical: Long = 0L
-
-    /**
-     * Semantic baseline captured at [startSession].
-     *
-     * The current session's semantic usage is:
-     * current cumulative semantic - this baseline
-     */
     private var sessionStartSemantic: Long = 0L
 
     /**
-     * Sticky abort flag for the current session run.
-     *
-     * This is set only when the runtime fails closed due to budget exhaustion.
+     * Sticky abort flag for the current session.
      */
     var isAborted: Boolean = false
         private set
 
-    // -------------------------------------------------------------------------
-    // Frame-local checkpoints
-    // -------------------------------------------------------------------------
-
     /**
-     * Frame-local soft checkpoint.
+     * Rollback-scoped planner checkpoints.
      *
-     * This is intentionally NOT the global semantic budget counter.
-     * It represents rollback-scoped local planner state that may be restored by
-     * [TransactionalFrame.rollback].
+     * These values are restored by TransactionalFrame snapshots and represent
+     * session-local mutable state that is safe to rewind.
      */
     private var softCheckpoint: Long = 0L
-
-    /**
-     * Local placeholder counter used during assembly / planning.
-     *
-     * This belongs to rollback-scoped execution state, not to global monotonic budgets.
-     */
     private var placeholderCounter: Int = 0
-
-    /**
-     * Watermark into [childResults].
-     *
-     * Transactional rollback may restore this to discard children produced by
-     * a failed speculative branch.
-     */
     private var builderLogPos: Int = 0
-
-    /**
-     * Cache/local governance log position checkpoint.
-     *
-     * This is rollback-scoped local state, not a global cost counter.
-     */
     private var cacheLogPos: Int = 0
 
-    // -------------------------------------------------------------------------
-    // Runtime-owned collections
-    // -------------------------------------------------------------------------
-
     /**
-     * Explicit execution stack for the iterative DFS machine.
+     * Explicit execution-frame stack.
      *
-     * Native recursion is constitutionally forbidden; execution state must be carried here.
+     * Capacity is fixed from session caps so runtime expansion does not allocate.
      */
-    private val executionStack = ArrayList<ExecutionFrame>(64)
+    private val executionStack = ExecutionFrameStack.issue(config.caps.maxDepthCap + 8)
 
     /**
-     * Session-local substitution map.
+     * Session-local substitution table.
      *
-     * Purpose:
-     * - preserve local canonical consistency when L2 degrades or is bypassed
-     * - guarantee "same key -> same committed node" within the current session
+     * Used when a computed canonical result is replaced by a semantically equivalent
+     * substitution / deferred form for downstream observation.
      */
     private val substitutionMap = HashMap<PlanCacheKey, CommittedPlanNode>()
 
     /**
-     * Accumulated committed child results.
+     * Child results produced by completed frames.
      *
-     * Allocate frames consume a suffix of this list according to their child-result watermark.
+     * AllocateFrame uses [childResultStart] as a watermark to interpret the suffix
+     * belonging to one local assembly operation.
      */
     private val childResults = ArrayList<CommittedPlanNode>(128)
 
     /**
-     * Reusable primitive tracker for CanonicalEdgeKey uniqueness checks.
+     * Primitive collision trackers reused across uniqueness checks.
      */
     private val edgeTracker = PrimitiveMemberTracker.issue(256)
-
-    /**
-     * Reusable primitive tracker for EntropyTargetKey uniqueness checks.
-     */
     private val entropyTracker = PrimitiveMemberTracker.issue(256)
 
+    /**
+     * Reusable cursor view over [childResults].
+     *
+     * This avoids per-allocation child descriptor list churn.
+     */
+    private val childCursor = SessionChildDescriptorCursor.issue(childResults)
+
+    /**
+     * Session-remainder L2 bypass flag.
+     *
+     * Once raised, the planner no longer attempts L2 reads during the same session.
+     */
     private var l2Bypassed: Boolean = false
 
     /**
-     * Starts a new logical planning run on this session object.
+     * Starts a new logical planning session on this worker-local runtime.
      *
-     * This does not allocate a fresh aggregate; instead it:
-     * - captures new baselines for physical/semantic counters
-     * - resets frame-local checkpoint state
-     * - clears the abort flag for the new run
-     *
-     * Important:
-     * - cumulative counters remain monotonic across runs
-     * - session-local usage is computed relative to the newly captured baselines
+     * This does NOT recreate the object; instead, it resets the session-relative
+     * baseline against the monotonic counters.
      */
     fun startSession() {
         sessionStartPhysical = cumulativePhysicalSteps
@@ -228,85 +152,69 @@ class PlannerSession private constructor(
     }
 
     /**
-     * Single legal mutation gate for cost accounting.
+     * Charges one unit of work to the configured cost center.
      *
-     * Rules enforced here:
-     * - every call increments the physical counter
-     * - only [BudgetTrack.SEMANTIC_ALSO] increments the semantic counter
-     * - both are checked against per-session baselines
-     * - any overflow fails closed through [FuelExhaustedException]
-     *
-     * This method is the constitutional choke point for runtime metering.
+     * Rules:
+     * - physical work always increments
+     * - semantic work increments only when the center is semantic-also
+     * - budgets are fail-closed
      */
     override fun step(center: CostCenter) {
         cumulativePhysicalSteps++
         val physicalUsed = cumulativePhysicalSteps - sessionStartPhysical
-        if (physicalUsed > config.maxPhysicalSteps.toLong()) {
+        if (physicalUsed > config.budget.maxPhysicalSteps.toLong()) {
             abort("Physical budget exhausted ($physicalUsed steps)")
         }
 
         if (center.track == BudgetTrack.SEMANTIC_ALSO) {
             cumulativeSemanticWork++
             val semanticUsed = cumulativeSemanticWork - sessionStartSemantic
-            if (semanticUsed > config.maxSemanticWorkUnits.toLong()) {
+            if (semanticUsed > config.budget.maxSemanticWorkUnits.toLong()) {
                 abort("Semantic budget exhausted ($semanticUsed units)")
             }
         }
     }
 
     /**
-     * Lifecycle hook invoked strictly when a fresh dense node id is allocated.
+     * Callback invoked when a new dense node id becomes live for this session.
      *
-     * This ensures reused dense arrays are initialized before being observed by the runtime.
+     * This is the authoritative moment where worker-local per-node primitive state
+     * is reinitialized before semantic reuse.
      */
     override fun onNodeAllocated(nodeId: Int) {
         structures.initNode(nodeId)
     }
 
     /**
-     * Bridge method used by transactional rollback.
-     *
-     * The rollback loop inside [NodeIdIndexer] is metered via the session kernel,
-     * so unwind work is not "free".
+     * Delegates an indexer rollback to the underlying node id indexer.
      */
     fun performIndexerRollback(ptr: Int) {
         indexer.rollback(ptr, kernel)
     }
 
     /**
-     * Returns the current frame-local soft checkpoint.
-     *
-     * This is rollback-scoped local state, not the global semantic budget counter.
+     * Snapshot accessors used by TransactionalFrame.
      */
     fun currentSoftCheckpoint(): Long = softCheckpoint
-
-    /**
-     * Returns the current placeholder counter.
-     */
     fun currentPlaceholderCounter(): Int = placeholderCounter
-
-    /**
-     * Returns the current builder log position.
-     */
     fun currentBuilderLogPos(): Int = builderLogPos
-
-    /**
-     * Returns the current cache log position.
-     */
     fun currentCacheLogPos(): Int = cacheLogPos
+    fun currentMemberCursorStackPointer(): Int = structures.memberCursorStackPointer
 
     /**
-     * Restores rollback-scoped checkpoint state after transactional unwind.
+     * Restores rollback-scoped session state from a transaction snapshot.
      *
      * Important:
-     * - this does NOT touch monotonic physical/semantic counters
-     * - this may truncate [childResults] back to the saved builder watermark
+     * - this method does NOT touch monotonic counters
+     * - childResults are rewound to the saved builder watermark
+     * - member cursor values are logically rewound by reducing the cursor-stack pointer
      */
     fun restoreCheckpointState(
         softCheckpoint: Long,
         placeholderCounter: Int,
         builderLogPos: Int,
         cacheLogPos: Int,
+        memberCursorStackPointer: Int,
     ) {
         this.softCheckpoint = softCheckpoint
         this.placeholderCounter = placeholderCounter
@@ -316,107 +224,113 @@ class PlannerSession private constructor(
         while (childResults.size > builderLogPos) {
             childResults.removeAt(childResults.size - 1)
         }
+
+        while (structures.memberCursorStackPointer > memberCursorStackPointer) {
+            structures.memberCursorStack[--structures.memberCursorStackPointer] = 0
+        }
     }
 
     /**
-     * Returns true iff there is at least one active execution frame.
+     * Returns whether there are frames left to execute.
      */
     fun hasActiveFrames(): Boolean = executionStack.isNotEmpty()
 
     /**
-     * Peeks the current execution frame.
-     *
-     * Fails with a custom runtime invariant exception if the stack is empty.
+     * Returns the current frame at the top of the explicit execution stack.
      */
-    internal fun peekExecutionFrame(): ExecutionFrame {
-        if (executionStack.isEmpty()) {
-            throw PlanningRuntimeInvariantException(
-                "peekExecutionFrame() called on an empty execution stack."
-            )
-        }
-        return executionStack.last()
-    }
+    internal fun peekExecutionFrame(): ExecutionFrame = executionStack.last()
 
     /**
-     * Pushes a new execution frame.
+     * Returns the current top execution index.
      *
-     * The frame's transactional snapshot is captured immediately at push time.
+     * This is used when a child PlanNodeFrame needs to remember the ExpandEdgeFrame
+     * that emitted the incoming edge.
+     */
+    internal fun currentExecutionIndex(): Int = executionStack.lastIndex()
+
+    /**
+     * Pushes a new execution frame after first taking its transactional snapshot.
      */
     internal fun pushExecutionFrame(frame: ExecutionFrame) {
         frame.tx.snap(this)
-        executionStack.add(frame)
+        executionStack.push(frame)
     }
 
     /**
      * Pops the current execution frame.
-     *
-     * Fails with a custom runtime invariant exception if the stack is empty.
      */
-    internal fun popExecutionFrame(): ExecutionFrame {
-        if (executionStack.isEmpty()) {
-            throw PlanningRuntimeInvariantException(
-                "popExecutionFrame() called on an empty execution stack."
-            )
-        }
-        return executionStack.removeAt(executionStack.size - 1)
-    }
+    internal fun popExecutionFrame(): ExecutionFrame = executionStack.pop()
 
     /**
-     * Replaces the current top frame with a new frame.
+     * Replaces the current top execution frame.
      *
-     * This is used for explicit state-machine transitions between planning phases.
+     * The incoming frame is snapshotted against the post-transition state.
      */
     private fun replaceTopExecutionFrame(frame: ExecutionFrame) {
-        if (executionStack.isEmpty()) {
-            throw PlanningRuntimeInvariantException(
-                "replaceTopExecutionFrame() called on an empty execution stack."
-            )
-        }
-        executionStack.removeAt(executionStack.size - 1)
-        pushExecutionFrame(frame)
+        frame.tx.snap(this)
+        executionStack.replaceTop(frame)
     }
 
     /**
-     * Transitions a [PlanNodeFrame] into the member-iteration phase.
+     * Transitions from PLAN_NODE to ITERATE_MEMBERS.
      */
     internal fun transitionToIterate(
         frame: PlanNodeFrame,
-        facts: TypeFactsDTO,
+        orderedMembers: OrderedActiveMembers,
     ) {
         replaceTopExecutionFrame(
             IterateMembersFrame.issue(
                 typeReference = frame.typeReference,
-                facts = facts,
+                orderedMembers = orderedMembers,
             )
         )
     }
 
     /**
-     * Transitions an [IterateMembersFrame] into the edge-expansion phase.
+     * Transitions from ITERATE_MEMBERS to EXPAND_EDGE.
+     *
+     * A session-owned cursor slot is allocated first and then attached to the frame.
+     * If the frame transition fails before ownership transfer completes, the allocation
+     * is rolled back in LIFO order.
      */
     internal fun transitionToExpand(
         frame: IterateMembersFrame,
-        facts: TypeFactsDTO,
     ) {
-        replaceTopExecutionFrame(
-            ExpandEdgeFrame.issue(
-                typeReference = frame.typeReference,
-                facts = facts,
+        val cursorSlot = allocateMemberCursorSlot()
+        try {
+            replaceTopExecutionFrame(
+                ExpandEdgeFrame.issue(
+                    typeReference = frame.typeReference,
+                    orderedMembers = frame.orderedMembers,
+                    memberCursorSlot = cursorSlot,
+                    memberCount = frame.orderedMembers.size(),
+                )
             )
-        )
+        } catch (t: Throwable) {
+            rollbackMemberCursorAllocation(cursorSlot)
+            throw t
+        }
     }
 
     /**
-     * Transitions an [ExpandEdgeFrame] into the bottom-up allocation/commit phase.
+     * Transitions from EXPAND_EDGE to ALLOCATE.
+     *
+     * Ordering is intentional:
+     * 1. release the expansion cursor slot
+     * 2. snapshot the post-release state for ALLOCATE
+     *
+     * ALLOCATE no longer owns traversal-cursor state.
      */
     internal fun transitionToAllocate(
         frame: ExpandEdgeFrame,
         signature: CanonicalSignature,
     ) {
+        releaseMemberCursorSlot(frame)
+
         replaceTopExecutionFrame(
             AllocateFrame.issue(
                 typeReference = frame.typeReference,
-                facts = frame.facts,
+                orderedMembers = frame.orderedMembers,
                 signature = signature,
                 childResultStart = builderLogPos,
             )
@@ -424,22 +338,25 @@ class PlannerSession private constructor(
     }
 
     /**
-     * Completes the current execution frame and appends its committed result.
+     * Completes the current frame and appends its committed result to the child buffer.
      *
-     * Special rule:
-     * - only [AllocateFrame] completion unwinds active-path GREY membership
-     * - this keeps cycle membership aligned with bottom-up canonical completion
+     * For ALLOCATE completion:
+     * - active-path membership is unwound here
+     * - per-depth edge metadata is cleared here
+     *
+     * This preserves the rule that active-path membership is removed only after
+     * the node result has reached completed state.
      */
     internal fun completeFrame(
         frame: ExecutionFrame,
         result: CommittedPlanNode,
     ) {
-        if (executionStack.isEmpty() || executionStack.last() !== frame) {
+        if (peekExecutionFrame() !== frame) {
             throw PlanningRuntimeInvariantException(
                 "completeFrame() observed an execution-frame order violation."
             )
         }
-        executionStack.removeAt(executionStack.size - 1)
+        popExecutionFrame()
 
         if (frame is AllocateFrame) {
             if (structures.stackPointer <= 0) {
@@ -447,8 +364,13 @@ class PlannerSession private constructor(
                     "Missing active-stack membership for ALLOCATE completion."
                 )
             }
-            val nodeId = structures.activeStack[--structures.stackPointer]
+
+            val depth = structures.stackPointer
+            structures.stackPointer--
+
+            val nodeId = structures.activeStack[structures.stackPointer]
             structures.depthOfNodeId[nodeId] = 0
+            structures.clearDepthMetadata(depth)
         }
 
         childResults.add(result)
@@ -456,36 +378,40 @@ class PlannerSession private constructor(
     }
 
     /**
-     * Returns the final root result.
-     *
-     * Fails with a custom runtime invariant exception if no result was produced.
+     * Returns the final root result after DFS completion.
      */
     fun getRootResult(): CommittedPlanNode {
         if (childResults.isEmpty()) {
-            throw PlanningRuntimeInvariantException(
-                "Planner produced no root result."
-            )
+            throw PlanningRuntimeInvariantException("Planner produced no root result.")
         }
         return childResults.last()
     }
 
     /**
-     * Returns the child-result slice owned by the supplied allocate frame.
+     * Rebinds the reusable child cursor to the suffix owned by [frame].
      *
-     * The slice starts at the frame's child-result watermark and extends to the current tail.
+     * This is the bounded child-result window used by passive assembly.
      */
-    internal fun collectChildResults(frame: AllocateFrame): List<CommittedPlanNode> {
-        val start = frame.childResultStart
-        if (start < 0 || start > childResults.size) {
-            throw PlanningProtocolIntegrityException(
-                "Invalid child-result watermark: $start"
-            )
-        }
-        return ArrayList(childResults.subList(start, childResults.size))
+    internal fun bindChildDescriptorCursor(frame: AllocateFrame): ChildResultSlice {
+        childCursor.rebind(frame.childResultStart, childResults.size)
+        return childCursor
     }
 
     /**
-     * Records a session-local substitution result.
+     * Computes the total semantic cost of the child-result suffix owned by [frame].
+     */
+    internal fun collectChildSemanticCost(frame: AllocateFrame): Long {
+        var total = 0L
+        var idx = frame.childResultStart
+        while (idx < childResults.size) {
+            total += childResults[idx].treeSemanticCostUpperBound
+            idx++
+        }
+        return total
+    }
+
+    /**
+     * Records a substitution result under the given cache key.
      */
     fun recordSubstitution(
         key: PlanCacheKey,
@@ -495,31 +421,22 @@ class PlannerSession private constructor(
     }
 
     /**
-     * Looks up a session-local substitution result by full cache key.
+     * Returns a substitution result if one was recorded for the key.
      */
     fun findSubstitution(key: PlanCacheKey): CommittedPlanNode? = substitutionMap[key]
 
     /**
-     * Returns the reusable edge uniqueness tracker, reset to empty state.
+     * Reusable trackers for edge-key and entropy-key uniqueness checks.
      */
     internal fun acquireEdgeTracker(): PrimitiveMemberTracker = edgeTracker.apply { reset() }
-
-    /**
-     * Returns the reusable entropy uniqueness tracker, reset to empty state.
-     */
     internal fun acquireEntropyTracker(): PrimitiveMemberTracker = entropyTracker.apply { reset() }
 
     /**
-     * Two-phase active-path membership check.
-     *
-     * Algorithm:
-     * 1. resolve/assign a dense node id via [NodeIdIndexer]
-     * 2. inspect GREY membership via [L1Structures.depthOfNodeId]
-     * 3. if absent, push onto the active path
+     * Enters the active path for the given identity or reports an existing active depth.
      *
      * Returns:
-     * - -1 if this node is not yet on the active path
-     * - existing 1-based depth if a cycle is detected
+     * - `-1` when the node was newly entered
+     * - existing active depth when the identity is already on the active path
      */
     fun enterOrDetectCycle(
         identityBits: Long,
@@ -538,64 +455,180 @@ class PlannerSession private constructor(
     }
 
     /**
-     * Minimal deterministic break selector.
+     * Binds the incoming edge metadata of the current node to the active depth
+     * that was just entered by [enterOrDetectCycle].
      *
-     * Current conservative rule:
-     * - pick minimum route64 among already-materialized deferred results
-     * - otherwise pick minimum route64 among already-materialized substitution results
-     *
-     * This is intentionally narrow and can be refined by a richer capability-based
-     * candidate collector later without changing the external contract.
+     * Root frames carry sentinel incoming-edge metadata and therefore clear the slot.
      */
-    fun attemptDeterministicBreak(cycleDepth: Int): CommittedPlanNode? {
-        val deferred = childResults.filterIsInstance<DeferredCommittedPlanNode>()
-        val minDeferred = deferred.minByOrNull { it.cacheKey.route64 }
-        if (minDeferred != null) {
-            return minDeferred
+    internal fun bindIncomingEdgeAtCurrentDepth(frame: PlanNodeFrame) {
+        val depth = structures.stackPointer
+        if (depth <= 0) {
+            throw PlanningProtocolIntegrityException(
+                "bindIncomingEdgeAtCurrentDepth() requires an active depth."
+            )
         }
 
-        val substitutable = childResults.filterIsInstance<SubstitutionCommittedPlanNode>()
-        return substitutable.minByOrNull { it.cacheKey.route64 }
+        if (!frame.hasIncomingEdge()) {
+            structures.clearDepthMetadata(depth)
+            return
+        }
+
+        structures.bindIncomingEdge(
+            depth = depth,
+            edgeRank = frame.incomingEdgeRank,
+            stageTag = frame.incomingEdgeStageTag,
+            ownerExecutionIndex = frame.incomingExpandExecutionIndex,
+            memberIndex = frame.incomingMemberIndex,
+        )
     }
 
     /**
-     * Collects deterministic demotion evidence for diagnostics.
+     * Returns whether EXPAND_EDGE still has members left to consume.
+     */
+    internal fun hasMoreMembers(frame: ExpandEdgeFrame): Boolean {
+        return structures.memberCursorStack[frame.memberCursorSlot] < frame.memberCount
+    }
+
+    /**
+     * Consumes one protocol-ordered member index from the session-owned cursor slot.
      *
-     * Evidence is gathered from the current execution stack and sorted for stability.
+     * The cursor lives in the session substrate, never in the frame object.
+     */
+    internal fun consumeNextMemberIndex(frame: ExpandEdgeFrame): Int {
+        val slot = frame.memberCursorSlot
+        val current = structures.memberCursorStack[slot]
+        if (current >= frame.memberCount) {
+            throw PlanningProtocolIntegrityException(
+                "Member cursor overflow for slot=${frame.memberCursorSlot}, count=${frame.memberCount}"
+            )
+        }
+        structures.memberCursorStack[slot] = current + 1
+        return current
+    }
+
+    /**
+     * Returns the deterministic breakpoint decision for the current active cycle segment.
+     *
+     * Ordering:
+     * - DEFERRED stage first
+     * - then SUBSTITUTABLE stage
+     * - inside one stage: smaller unsigned edgeRank wins
+     * - tie-breaker: smaller depth / stack position wins
+     *
+     * Candidate universe:
+     * - current active cycle segment incoming edges
+     * - current back-edge
+     */
+    internal fun attemptDeterministicBreak(
+        cycleDepth: Int,
+        backEdge: PlanNodeFrame,
+    ): CycleBreakpointDecision? {
+        val currentDepth = structures.stackPointer
+        val segmentStart = cycleDepth + 1
+
+        val deferredWinner = structures.queryBestDeferred(segmentStart, currentDepth)
+        val backIsDeferred =
+            backEdge.hasIncomingEdge() && backEdge.incomingEdgeStageTag == BreakpointStage.DEFERRED.tag
+        if (deferredWinner != null || backIsDeferred) {
+            return chooseBestStageWinner(
+                stage = BreakpointStage.DEFERRED,
+                segmentWinner = deferredWinner,
+                backEdge = backEdge,
+                currentDepth = currentDepth,
+            )
+        }
+
+        val substitutableWinner = structures.queryBestSubstitutable(segmentStart, currentDepth)
+        val backIsSubstitutable =
+            backEdge.hasIncomingEdge() && backEdge.incomingEdgeStageTag == BreakpointStage.SUBSTITUTABLE.tag
+        if (substitutableWinner != null || backIsSubstitutable) {
+            return chooseBestStageWinner(
+                stage = BreakpointStage.SUBSTITUTABLE,
+                segmentWinner = substitutableWinner,
+                backEdge = backEdge,
+                currentDepth = currentDepth,
+            )
+        }
+
+        return null
+    }
+
+    /**
+     * Resolves the ordered-member owner view for the winning breakpoint edge.
+     */
+    internal fun resolveBreakpointOwnerFacts(
+        decision: CycleBreakpointDecision,
+    ): OrderedActiveMembers {
+        val frame = executionStack.get(decision.ownerExecutionIndex) as? ExpandEdgeFrame
+            ?: throw PlanningProtocolIntegrityException(
+                "Breakpoint owner must resolve to ExpandEdgeFrame at index=${decision.ownerExecutionIndex}"
+            )
+        return frame.orderedMembers
+    }
+
+    /**
+     * Resolves the concrete member selected by the winning breakpoint decision.
+     */
+    internal fun resolveBreakpointMember(
+        decision: CycleBreakpointDecision,
+    ): MemberFact {
+        val frame = executionStack.get(decision.ownerExecutionIndex) as? ExpandEdgeFrame
+            ?: throw PlanningProtocolIntegrityException(
+                "Breakpoint owner must resolve to ExpandEdgeFrame at index=${decision.ownerExecutionIndex}"
+            )
+        return frame.orderedMembers.memberAt(decision.memberIndex)
+    }
+
+    /**
+     * Collects deterministic cycle-demotion evidence for diagnostics.
+     *
+     * This is intentionally cold-path and explicit.
      */
     fun collectDemotionEvidence(cycleDepth: Int): List<String> {
-        val start = (cycleDepth - 1).coerceAtLeast(0)
-        return executionStack
-            .subList(start, executionStack.size)
-            .map { it.typeReference.toString() }
-            .sorted()
+        val out = ArrayList<String>(8)
+        val startDepth = cycleDepth.coerceAtLeast(1)
+        var depth = startDepth
+        while (depth <= structures.stackPointer) {
+            val execIndex = structures.incomingExpandExecutionIndexAtDepth[depth]
+            val memberIndex = structures.incomingMemberIndexAtDepth[depth]
+            if (execIndex >= 0 && memberIndex >= 0) {
+                val frame = executionStack.get(execIndex) as? ExpandEdgeFrame
+                if (frame != null) {
+                    val member = frame.orderedMembers.memberAt(memberIndex)
+                    out.add("${frame.typeReference}#${member.name}")
+                }
+            }
+            depth++
+        }
+        out.sort()
+        return out
     }
 
     /**
-     * Returns the normalization version currently observed by the core.
-     *
-     * This is session-bound and derived from the pinned configuration.
+     * Returns the normalization version pinned for the current session.
      */
-    fun currentNormalizationVersion(): Long = config.normalizationSpecVersion
+    fun currentNormalizationVersion(): Long =
+        config.versions.normalizationSpecVersion.toLong()
 
     /**
-     * Zero-residue cleanup for all worker-local mutable state.
+     * Returns whether the session is in remainder-bypass mode for L2.
+     */
+    internal fun isL2Bypassed(): Boolean = l2Bypassed
+
+    /**
+     * Raises the session-remainder L2 bypass flag.
+     */
+    internal fun markL2Bypassed() {
+        l2Bypassed = true
+    }
+
+    /**
+     * Restores the entire worker-local session state to a clean reusable baseline.
      *
-     * Guarantees:
-     * - GREY membership is cleared
-     * - indexer is reset
-     * - substitution map and execution stack are cleared
-     * - reusable trackers are reset
-     * - frame-local checkpoints are zeroed
-     *
-     * Monotonic counters are intentionally preserved.
+     * This is the authoritative session cleanup boundary.
      */
     internal fun resetToCleanState() {
-        while (structures.stackPointer > 0) {
-            val id = structures.activeStack[--structures.stackPointer]
-            structures.depthOfNodeId[id] = 0
-        }
-
+        structures.reset()
         indexer.reset(this)
         substitutionMap.clear()
         executionStack.clear()
@@ -609,37 +642,209 @@ class PlannerSession private constructor(
         cacheLogPos = 0
     }
 
-    /**
-     * Delegates to zero-residue cleanup.
-     */
     override fun close() {
         resetToCleanState()
     }
 
     /**
-     * Fails closed due to runtime budget exhaustion.
+     * Fail-closed abort path used by budget enforcement.
      */
     private fun abort(reason: String): Nothing {
         isAborted = true
         throw FuelExhaustedException(reason)
     }
 
-    internal fun isL2Bypassed(): Boolean = l2Bypassed
+    /**
+     * Allocates one member cursor slot in session-owned primitive storage.
+     */
+    private fun allocateMemberCursorSlot(): Int {
+        val slot = structures.memberCursorStackPointer
+        if (slot >= structures.memberCursorStack.size) {
+            throw PlanningProtocolIntegrityException(
+                "Member cursor stack exhausted at slot=$slot"
+            )
+        }
+        structures.memberCursorStack[slot] = 0
+        structures.memberCursorStackPointer = slot + 1
+        return slot
+    }
 
-    internal fun markL2Bypassed() {
-        l2Bypassed = true
+    /**
+     * Rolls back a just-allocated cursor slot when frame-transition ownership fails.
+     *
+     * This is a structural guard for transition failure before the new frame has been
+     * successfully installed on the execution stack.
+     */
+    private fun rollbackMemberCursorAllocation(slot: Int) {
+        if (structures.memberCursorStackPointer != slot + 1) {
+            throw PlanningProtocolIntegrityException(
+                "Cursor allocation rollback must be LIFO. slot=$slot, pointer=${structures.memberCursorStackPointer}"
+            )
+        }
+        structures.memberCursorStack[slot] = 0
+        structures.memberCursorStackPointer = slot
+    }
+
+    /**
+     * Releases the cursor slot owned by an EXPAND_EDGE frame.
+     *
+     * The release must be LIFO to preserve stack-discipline guarantees.
+     */
+    private fun releaseMemberCursorSlot(frame: ExpandEdgeFrame) {
+        val expectedTop = frame.memberCursorSlot + 1
+        if (structures.memberCursorStackPointer != expectedTop) {
+            throw PlanningProtocolIntegrityException(
+                "Member cursor release must be LIFO. slot=${frame.memberCursorSlot}, pointer=${structures.memberCursorStackPointer}"
+            )
+        }
+        structures.memberCursorStack[frame.memberCursorSlot] = 0
+        structures.memberCursorStackPointer = frame.memberCursorSlot
+    }
+
+    /**
+     * Chooses the winning breakpoint candidate within one stage.
+     *
+     * Candidates:
+     * - the best segment winner from RMQ
+     * - the current back-edge, modeled as a virtual depth `currentDepth + 1`
+     */
+    private fun chooseBestStageWinner(
+        stage: BreakpointStage,
+        segmentWinner: DepthWinner?,
+        backEdge: PlanNodeFrame,
+        currentDepth: Int,
+    ): CycleBreakpointDecision {
+        val backEdgePresent = backEdge.hasIncomingEdge() && backEdge.incomingEdgeStageTag == stage.tag
+
+        if (!backEdgePresent && segmentWinner != null) {
+            return buildDecisionFromDepth(stage, segmentWinner.depth)
+        }
+
+        if (backEdgePresent && segmentWinner == null) {
+            return CycleBreakpointDecision.issue(
+                stage = stage,
+                ownerExecutionIndex = backEdge.incomingExpandExecutionIndex,
+                memberIndex = backEdge.incomingMemberIndex,
+                selectedStackIndex = currentDepth + 1,
+                isBackEdge = true,
+            )
+        }
+
+        val segment = segmentWinner
+            ?: throw PlanningProtocolIntegrityException("Expected segment winner for stage=$stage")
+
+        val virtualIndex = currentDepth + 1
+        val backRank = backEdge.incomingEdgeRank
+        val segRank = segment.edgeRank
+
+        val cmp = java.lang.Long.compareUnsigned(backRank, segRank)
+        return if (cmp < 0 || (cmp == 0 && virtualIndex < segment.depth)) {
+            return CycleBreakpointDecision.issue(
+                stage = stage,
+                ownerExecutionIndex = backEdge.incomingExpandExecutionIndex,
+                memberIndex = backEdge.incomingMemberIndex,
+                selectedStackIndex = virtualIndex,
+                isBackEdge = true,
+            )
+        } else {
+            buildDecisionFromDepth(stage, segment.depth)
+        }
+    }
+
+    /**
+     * Builds a breakpoint decision from one active depth.
+     */
+    private fun buildDecisionFromDepth(
+        stage: BreakpointStage,
+        depth: Int,
+    ): CycleBreakpointDecision {
+        return CycleBreakpointDecision.issue(
+            stage = stage,
+            ownerExecutionIndex = structures.incomingExpandExecutionIndexAtDepth[depth],
+            memberIndex = structures.incomingMemberIndexAtDepth[depth],
+            selectedStackIndex = depth,
+            isBackEdge = false,
+        )
     }
 
     companion object {
-        /**
-         * Canonical factory for session issuance.
-         *
-         * Construction is intentionally blocked at the primary constructor to force
-         * creation through this explicit issuance path.
-         */
         @JvmStatic
         fun issue(config: PlannerSessionConfig): PlannerSession {
             return PlannerSession(config)
+        }
+    }
+}
+
+/**
+ * Immutable planner-time breakpoint decision.
+ *
+ * This is cold-path output:
+ * - produced only when a cycle is detected
+ * - consumed by the orchestration layer to drive downstream materialization
+ */
+internal class CycleBreakpointDecision private constructor(
+    val stage: BreakpointStage,
+    val ownerExecutionIndex: Int,
+    val memberIndex: Int,
+    val selectedStackIndex: Int,
+    val isBackEdge: Boolean,
+) {
+    companion object {
+        @JvmStatic
+        fun issue(
+            stage: BreakpointStage,
+            ownerExecutionIndex: Int,
+            memberIndex: Int,
+            selectedStackIndex: Int,
+            isBackEdge: Boolean,
+        ): CycleBreakpointDecision {
+            return CycleBreakpointDecision(
+                stage = stage,
+                ownerExecutionIndex = ownerExecutionIndex,
+                memberIndex = memberIndex,
+                selectedStackIndex = selectedStackIndex,
+                isBackEdge = isBackEdge,
+            )
+        }
+    }
+}
+
+/**
+ * Reusable zero-allocation child-result slice view.
+ *
+ * This object never owns child results.
+ * It merely exposes a bounded suffix window over the session-local child buffer.
+ */
+internal class SessionChildDescriptorCursor private constructor(
+    private val backing: ArrayList<CommittedPlanNode>,
+) : ChildResultSlice {
+    private var start: Int = 0
+    private var endExclusive: Int = 0
+
+    /**
+     * Rebinds this view to a new suffix window.
+     */
+    fun rebind(
+        start: Int,
+        endExclusive: Int,
+    ) {
+        this.start = start
+        this.endExclusive = endExclusive
+    }
+
+    override fun size(): Int = endExclusive - start
+
+    override fun canonicalIrNodeAt(index: Int) = backing[start + index].irNode
+
+    override fun semanticCostUpperBoundAt(index: Int): Long =
+        backing[start + index].treeSemanticCostUpperBound
+
+    companion object {
+        @JvmStatic
+        fun issue(
+            backing: ArrayList<CommittedPlanNode>,
+        ): SessionChildDescriptorCursor {
+            return SessionChildDescriptorCursor(backing)
         }
     }
 }

@@ -264,6 +264,32 @@ Protocol MUST NOT depend on environment introspection.
 Environment discovery MUST be implemented via ports/adapters, and policy values are injected into protocol-bound runtime
 objects.
 
+### 11.1 Semantic Cost Contract & Ownership Boundary (AMENDED)
+
+* **[A] Compile-Time / Protocol Rule:** `treeSemanticCostUpperBound` is a **semantic contract value**, not a
+  runtime-performance hint.
+* **[A] Compile-Time:** The value MUST remain cache-blind and governance-blind, exactly like canonical semantic
+  structure.
+* **[A] Compile-Time:** The SSOT for computing `treeSemanticCostUpperBound` MUST live in the **upper assembly /
+  materialization boundary**, not inside committed-result wrapper subclasses.
+* **[A] Compile-Time:** Therefore:
+    * `FinalCommittedPlanNode`,
+    * `DeferredCommittedPlanNode`,
+    * `SubstitutionCommittedPlanNode`,
+      MUST act only as **carriers of an already-computed semantic cost bound**.
+* **[A] Compile-Time:** Wrapper types MUST NOT embed hidden semantic-cost defaults such as:
+    * hardcoded `1L`,
+    * implicit inheritance from an arbitrary target node,
+    * ad hoc fallback rules not owned by the semantic assembly contract.
+* **[A] Compile-Time:** If a deferred or substitution result has a semantic cost bound, that bound MUST be passed
+  explicitly from the upstream semantic assembly / cycle-break materialization boundary.
+* **[A] Compile-Time:** Any historical default such as `self-cost = 1` or `DeferredCommittedPlanNode = 1L` is treated as
+  a **legacy transitional rule**, not the final ownership model.
+* **[B] Static Analysis:** Wrapper classes SHOULD be inspected to ensure they do not hide semantic-cost policy inside
+  type-local constants or implicit inheritance tricks.
+* **[C] Runtime / CI:** Cold-cache vs hot-cache runs, L2 bypass runs, and partition-drop runs MUST continue to produce
+  identical `treeSemanticCostUpperBound` values for identical semantic requests.
+
 ### 12. Session-Fixed Policy Snapshot Immutability (AMENDED)
 
 * **[A] Compile-Time / Boundary Rule:** Protocol-bound runtime objects inside the compiler/planner core MUST consume

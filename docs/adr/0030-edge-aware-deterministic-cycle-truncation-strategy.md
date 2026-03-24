@@ -247,6 +247,31 @@ To prevent confusion between planner-time semantic decisions and later runtime r
 *Reason:* breakpoint selection is semantic and protocol-comparator-driven; concrete substitute realization is a later
 phase concern.
 
+#### 4.2. Semantic Cost Ownership Boundary (AMENDED)
+
+To prevent semantic-cost policy from leaking into planner-internal wrapper types:
+
+* The planner's responsibility is:
+    * detect active-path re-entry,
+    * choose the deterministic breakpoint,
+    * and emit semantic breakpoint intent.
+* The planner MUST NOT encode the final `treeSemanticCostUpperBound` by relying on type-local wrapper defaults.
+* The semantic cost bound for:
+    * deferred break results,
+    * substitution results,
+    * and fully materialized results
+      MUST be computed by the upstream semantic assembly / materialization boundary and then passed explicitly into the
+      committed-result layer.
+* Therefore, committed-result wrapper types MUST NOT be treated as the SSOT location for semantic-cost policy.
+* This keeps:
+    * breakpoint choice,
+    * concrete realization form,
+    * and semantic-cost ownership
+      on distinct boundaries.
+
+*Reason:* breakpoint selection is semantic and comparator-driven, while semantic-cost computation is a separate contract
+that must remain explicit, cache-blind, and centrally owned.
+
 ### 5. Budgeting & Capacity Control
 
 * **Max Live Node Cap / Planning Steps:** Hard caps resulting in `CapacityExceededException` (FATAL).
