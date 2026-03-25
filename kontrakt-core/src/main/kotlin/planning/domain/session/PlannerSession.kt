@@ -54,7 +54,10 @@ class PlannerSession private constructor(
      *
      * This is worker-local and reset between sessions.
      */
-    internal val indexer = NodeIdIndexer(config)
+    internal val indexer = NodeIdIndexer.issue(
+        caps = config.caps,
+        maxSignatureLen = config.budget.maxSignatureLen,
+    )
 
     /**
      * SessionKernel self-reference used by components that require kernel callbacks.

@@ -88,19 +88,10 @@ class PlanKeyFactory private constructor(
         return nonMax
     }
 
-    /**
-     * Converts the domain partition VO into the IR-level canonical identifier shape.
-     *
-     * Replace the factory call below with the actual issuance API exposed by CanonicalIdentifier
-     * in your codebase.
-     */
     private fun lowerPartitionId(partitionId: PartitionId): CanonicalIdentifier {
         return CanonicalIdentifier.issue(partitionId.value)
     }
 
-    /**
-     * Applies the same length-prefix law to already-materialized raw bytes.
-     */
     private fun wrapLengthPrefix(bytes: ByteArray): ByteArray {
         val result = ByteArray(Int.SIZE_BYTES + bytes.size)
         val len = bytes.size
@@ -129,9 +120,7 @@ class PlanKeyFactory private constructor(
         fun issue(
             encodingSpec: HashInputEncodingSpec,
         ): PlanKeyFactory {
-            return PlanKeyFactory(
-                encodingSpec = encodingSpec,
-            )
+            return PlanKeyFactory(encodingSpec = encodingSpec)
         }
     }
 }
