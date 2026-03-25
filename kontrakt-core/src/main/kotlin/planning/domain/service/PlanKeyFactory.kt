@@ -34,6 +34,8 @@ class PlanKeyFactory private constructor(
         session.step(CostCenter.PLAN_CACHE_KEY_MATERIALIZE)
         session.step(CostCenter.CANONICAL_SIGNATURE_MATERIALIZE)
 
+        val versions = session.config.versions
+
         val route64 = deriveRoute64(
             partitionId = partitionId,
             equalityKey = equalityKey,
@@ -41,11 +43,11 @@ class PlanKeyFactory private constructor(
         )
 
         return PlanCacheKey.issue(
-            workAccountingVersion = session.config.workAccountingVersion,
-            normalizationVersion = session.config.normalizationSpecVersion,
-            edgeOrderingVersion = session.config.edgeOrderingVersion,
-            capabilityProfileVersion = session.config.capabilityProfileVersion,
-            entropyVersion = session.config.entropyVersion,
+            workAccountingVersion = versions.workAccountingVersion,
+            normalizationVersion = versions.normalizationSpecVersion,
+            edgeOrderingVersion = versions.edgeOrderingVersion,
+            capabilityProfileVersion = versions.capabilityProfileVersion,
+            entropyVersion = versions.entropyVersion,
             partitionKey = lowerPartitionId(partitionId),
             equalityKey = equalityKey,
             route64 = route64,
@@ -57,6 +59,8 @@ class PlanKeyFactory private constructor(
         equalityKey: CanonicalSignature,
         session: PlannerSession,
     ): Long {
+        val versions = session.config.versions
+
         val partitionEncoded = encodingSpec.encodeStrict(partitionId.value)
         val equalityEncoded = wrapLengthPrefix(equalityKey.bytesCopy())
 
@@ -65,15 +69,15 @@ class PlanKeyFactory private constructor(
         System.arraycopy(equalityEncoded, 0, payload, partitionEncoded.size, equalityEncoded.size)
 
         var seed = 0L
-        seed = PrimitiveHash.mix64(seed xor session.config.workAccountingVersion)
-        seed = PrimitiveHash.mix64(seed xor session.config.normalizationSpecVersion)
-        seed = PrimitiveHash.mix64(seed xor session.config.edgeOrderingVersion)
-        seed = PrimitiveHash.mix64(seed xor session.config.capabilityProfileVersion)
-        seed = PrimitiveHash.mix64(seed xor session.config.entropyVersion)
+        seed = PrimitiveHash.mix64(seed xor versions.workAccountingVersion)
+        seed = PrimitiveHash.mix64(seed xor versions.normalizationSpecVersion)
+        seed = PrimitiveHash.mix64(seed xor versions.edgeOrderingVersion)
+        seed = PrimitiveHash.mix64(seed xor versions.capabilityProfileVersion)
+        seed = PrimitiveHash.mix64(seed xor versions.entropyVersion)
 
         val raw = PrimitiveHash.hash64(payload, seed)
-        val nonZero = SentinelRemapper.remapNonZero(raw, session.config.normalizationSpecVersion)
-        val nonMax = SentinelRemapper.remapNonMax(nonZero, session.config.edgeOrderingVersion)
+        val nonZero = SentinelRemapper.remapNonZero(raw, versions.normalizationSpecVersion)
+        val nonMax = SentinelRemapper.remapNonMax(nonZero, versions.edgeOrderingVersion)
 
         if (nonMax == 0L || nonMax == -1L) {
             throw SentinelIntegrityException(
@@ -111,9 +115,10 @@ class PlanKeyFactory private constructor(
     }
 
     private fun ensureNormalizationVersionMatches(session: PlannerSession) {
-        if (session.config.normalizationSpecVersion != encodingSpec.normalizationSpecVersion) {
+        val sessionVersion = session.config.versions.normalizationSpecVersion
+        if (sessionVersion != encodingSpec.normalizationSpecVersion) {
             throw EnvironmentIntegrityException(
-                "Normalization version mismatch: session=${session.config.normalizationSpecVersion}, " +
+                "Normalization version mismatch: session=$sessionVersion, " +
                         "encodingSpec=${encodingSpec.normalizationSpecVersion}"
             )
         }

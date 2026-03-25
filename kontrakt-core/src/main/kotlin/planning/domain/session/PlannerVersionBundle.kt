@@ -10,21 +10,21 @@ import planning.domain.exception.PlanningProtocolIntegrityException
  * of collapsing it into a single opaque string.
  */
 class PlannerVersionBundle private constructor(
-    val normalizationSpecVersion: Int,
-    val edgeOrderingVersion: Int,
-    val capabilityProfileVersion: Int,
-    val workAccountingVersion: Int,
-    val entropyVersion: Int,
+    val normalizationSpecVersion: Long,
+    val edgeOrderingVersion: Long,
+    val capabilityProfileVersion: Long,
+    val workAccountingVersion: Long,
+    val entropyVersion: Long,
     val entropySeed: Long,
 ) {
     companion object {
         @JvmStatic
         fun issue(
-            normalizationSpecVersion: Int,
-            edgeOrderingVersion: Int,
-            capabilityProfileVersion: Int,
-            workAccountingVersion: Int,
-            entropyVersion: Int,
+            normalizationSpecVersion: Long,
+            edgeOrderingVersion: Long,
+            capabilityProfileVersion: Long,
+            workAccountingVersion: Long,
+            entropyVersion: Long,
             entropySeed: Long,
         ): PlannerVersionBundle {
             if (normalizationSpecVersion < 0) {
