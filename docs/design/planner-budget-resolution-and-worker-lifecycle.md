@@ -402,6 +402,12 @@ Normative rule:
 - `FAILED` MUST correspond to transient or implementation failure propagated to all attached waiters;
 - `DROPPED` MUST correspond to partition close / bulk-drop terminalization.
 
+Mechanical clarification:
+
+- this note defines the vocabulary and lifecycle meaning, not a mandatory slab/index representation;
+- the preferred initial L2 implementation MAY realize the shared slot as an object identity shell (`InFlightSlot`)
+  whose lifecycle truth is still carried by primitive authority fields.
+
 ### 8.2 Waiter State
 
 `WaiterState` models the lifecycle of one attached joiner/waiter.
@@ -419,6 +425,12 @@ Normative rule:
 - waiter cancellation MUST NOT cancel the shared slot;
 - shared-slot terminalization MUST resume or fail all still-attached waiters;
 - no waiter may remain indefinitely pending after shared-slot terminalization or partition drop.
+
+Mechanical clarification:
+
+- the preferred initial implementation MAY realize the waiter as an object identity shell (`WaiterCell`)
+  with a primitive waiter authority word,
+- no immediate pooling is permitted before grace-aware reclamation conditions are satisfied.
 
 ### 8.2.1 Attach Terminal-Signal Completeness (AMENDED)
 
@@ -518,6 +530,13 @@ During session execution:
 - planner state is exclusively owned by one active session;
 - no concurrent session may mutate the same worker-local planner state;
 - hot-path data structures remain primitive and allocation-free per operation.
+
+Boundary clarification:
+
+- the worker-local primitive discipline above applies to L1 planner state,
+- but it does not require L2 async lifecycle hosts to be slab/index cells,
+- because joined-waiter / builder / slot identity isolation belongs to a different lifecycle problem than
+  worker-local structural sizing.
 
 ### 9.3 Reset / Return
 
@@ -1004,7 +1023,9 @@ Normative consequences:
 
 - completion-dispatch resources are created and destroyed at adapter lifecycle boundaries,
 - partition drop MUST NOT implicitly destroy adapter-owned completion-dispatch resources,
-- worker-local planner state MUST NOT own or retain completion-dispatch resources across session cleanup.
+- worker-local planner state MUST NOT own or retain completion-dispatch resources across session cleanup,
+- and async lifecycle hosts such as `InFlightSlot`, `WaiterCell`, and builder handles remain object identity shells
+  rather than becoming implicit owners of the delivery plane.
 
 ### 19.3 Shutdown Rule
 

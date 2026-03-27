@@ -67,17 +67,23 @@ Each shard is a contention-reduction strip.
 **Shard fields (AMENDED)**
 
 * `val buckets: LongKeyTable<Bucket>`  *(primitive/atomic open addressing; see §1.2.1)*
-* `val inflight: LongKeyTable<InFlight>` *(primitive/atomic open addressing + tombstones; see §1.2.1)*
+* `val inflight: LongKeyTable<InFlightSlot>` *(primitive-key routing to object identity shells; see §1.2.1)*
 * `val shardEntryCount: LongAdder` (optional)
 
 #### 1.2.1 LongKeyTable<V> (Primitive / Atomic Routing Table) — AMENDED
 
-**Purpose:** route `planKey64: Long` → `Bucket` / `InFlight` with:
+**Purpose:** route `planKey64: Long` → `Bucket` / `InFlightSlot` with:
 
 * **no boxed keys** (`Long`/`ULong` in generics),
 * high throughput under contention (striped writers, lock-free reads),
 * optional **remove** support (needed for `inflight` cleanup),
 * deterministic behavior (no per-run randomness).
+
+**Clarification (Object Identity Shells):**
+The primitive table requirement applies to the **routing key surface**.
+It does **not** require the lifecycle host value to be an index-slab cell.
+For the initial compliant implementation, `LongKeyTable` MAY route directly to object identity shells such as
+`InFlightSlot`, provided that lifecycle truth remains inside primitive authority fields owned by those objects.
 
 **Normative properties**
 
@@ -132,23 +138,34 @@ We avoid storing a giant `Map<PlanCacheKey, Node>` by:
 
 ### 1.4 In-Flight Slot
 
-**InFlight fields**
+**InFlightSlot fields**
 
-* `val future: CompletableFuture<CanonicalPlanNode>` (or equivalent)
+* identity shell object per routed shared key
+* `@Volatile var slotWord: Long`  
+  shared-slot authority surface; MUST encode at least:
+    - `SharedSlotState`
+    - attached waiter count
+    - implementation-defined hot flags
 * `val startedAtNanos: Long`
-* `val waiters: LongAdder` (telemetry)
-* `val state: AtomicReference<SharedSlotState>` where `SharedSlotState ∈ {PENDING, SUCCESS, FAILED, DROPPED}`
-* `val speculativeBuilders: AtomicInteger` (quota-governed duplicate-builder allowance)
+* `@Volatile var successNode: CanonicalPlanNode?`
+* `@Volatile var terminalFailure: Throwable?`
+* `@Volatile var waiterHead: WaiterCell?`
+* `@Volatile var builderHead: BuilderHandleCell?`
+* `@Volatile var commitRightWord: Int`
+* `@Volatile var leaseWord: Long`
 
 **Normative rules**
 
-* `future` completion MUST agree with `state` terminalization.
+* `InFlightSlot` MUST be an explicit lifecycle host, not a thin `future + counter` helper.
 * waiter timeout / waiter cancellation MUST NOT change shared-slot terminal state.
 * `SUCCESS` MUST correspond only to a publication that has already linearized at the bucket insertion point.
 * `DROPPED` MUST be used for partition close / bulk-drop terminalization.
+* attached waiter count MUST be part of the shared-slot authority surface rather than an external telemetry-only adder.
+* the initial compliant implementation SHOULD use an object identity shell for `InFlightSlot`; this note does not
+  require index-slab lifecycle hosts.
 
-> Rationale: per-key joining avoids bucket-level locking during expensive builds, while keeping shared-slot state
-> separate from individual waiter lifecycle.
+> Rationale: per-key joining still avoids bucket-level locking during expensive builds, but lifecycle ownership now
+> resides in explicit slot/waiter/builder state rather than in `CompletableFuture` continuation state.
 
 #### 1.4.1 Attach Terminal-Signal Completeness (AMENDED)
 
@@ -254,7 +271,8 @@ shardIndex = planKey64 & (shards.size - 1)
 **Step 2: In-flight acquisition (hot-key gate)**
 
 1. `session.step(L2_INFLIGHT_ACQUIRE)`
-2. existing = `shard.inflight.putIfAbsent(planKey64, new InFlight())` *(AMENDED: primitive table putIfAbsent)*
+2. existing = `shard.inflight.putIfAbsent(planKey64, new InFlightSlot())` *(AMENDED: primitive-key routing to
+   lifecycle-host object)*
     * if `existing == null` => we won => builder thread
     * else => joiner, slot = existing
 
@@ -264,46 +282,56 @@ shardIndex = planKey64 & (shards.size - 1)
 2. if `region.entryCount >= maxEntries` (or bytes cap) => transition OPEN:
     * `session.step(L2_CIRCUIT_OPEN_TRANSITION)`
     * `region.circuit.set(OPEN)`
-    * complete slot exceptionally or with bypass result (policy)
+    * terminalize the slot through lawful shared failure or bypass result visibility (policy)
     * `shard.inflight.removeIfSame(planKey64, slot)` *(AMENDED: tombstone removal)*
     * return `builder()` (bypass; still immutable)
 3. node = `builder()` (build outside locks)
-4. publish:
+4. claim commit-right before authoritative publication
+5. publish:
     * `session.step(L2_PUBLISH_PUT_IF_ABSENT)`
     * bucket = `shard.buckets.putIfAbsent(planKey64, new Bucket()) ?: shard.buckets.get(planKey64)`  
       *(AMENDED: primitive table; tolerate benign duplicate Bucket allocations if racing)*
     * `synchronized(bucket.lock)`:
         - re-scan exact key; if found, winner = existing
         - else append entry; increment counters
-5. `slot.future.complete(winner)`
-6. `shard.inflight.removeIfSame(planKey64, slot)` (best-effort)
-7. return winner
+6. publish winner payload into the slot
+7. execute release publication boundary
+8. CAS `slot.slotWord` from `PENDING` to `SUCCESS`
+9. mark terminal delivery pending if required and enqueue / schedule waiter delivery through the adapter-owned
+   completion-dispatch path
+10. release commit-right
+11. `shard.inflight.removeIfSame(planKey64, slot)` (best-effort after terminal visibility)
+12. return winner
 
-**Atomicity guarantee:** publication is linearizable at the bucket lock insertion point; waiters only observe after
-future completion.
+**Atomicity guarantee:** publication is linearizable at the bucket lock insertion point; waiters observe only after
+shared-slot terminal visibility becomes authoritative.
 
-**Step 3B: Joiner path (peek-then-suspend, bounded by monotonic deadline)**
+**Step 3B: Joiner path (attach-then-yield, bounded by monotonic deadline)**
 
-1. Fast-path peek:
+1. Fast-path shared-state read:
     * `session.step(L2_INFLIGHT_ATTACH)`
-    * try `slot.future.getNow(null)`; if done return immediately
-2. If not done, attempt waiter attach subject to governance:
+    * read `slot.slotWord`
+    * if shared state is already terminal, consume the terminal signal immediately and return / fail accordingly
+2. If not terminal, attempt waiter attach subject to governance:
     * reject attach if `region.closed == true` or shared-slot state is already `DROPPED`
-    * reject attach if `slot.waiters >= maxWaitersPerKey`
+    * reject attach if the attached waiter count encoded in `slot.slotWord` is already `>= maxWaitersPerKey`
 3. On successful attach:
+    * a fresh `WaiterCell` is created for that attach episode
     * the waiter transitions to `ATTACHED`
     * the current worker thread MUST be released; waiting MUST proceed via completion continuation / callback rather
       than bounded `parkNanos` polling
     * the wait deadline is `slot.startedAtNanos + joinWaitTimeoutNanos`, interpreted as a **monotonic elapsed-time
       deadline**
+    * after insertion, shared-slot state MUST be re-checked to satisfy post-insertion attach reconciliation
 4. Completion path:
-    * if `slot.future` completes normally, waiter transitions to `RESUMED` and returns winner
-    * if `slot.future` completes exceptionally, treat as `Fault(Transient)` or `PartitionDropped` according to cause
+    * if shared terminal visibility is observed, the waiter transitions to `RESUMED`
+    * if the shared terminal payload represents failure or drop, the waiter still converges through `RESUMED`
+      with an exceptional outcome payload
 5. Timeout path:
     * `session.step(L2_INFLIGHT_TIMEOUT)`
     * timeout transitions only the waiter to `TIMED_OUT`; it MUST NOT fail the shared slot
     * timeout MUST NOT automatically promote the waiter to builder
-    * speculative builder promotion is allowed only if `slot.speculativeBuilders < maxSpeculativeBuildersPerKey`
+    * speculative builder promotion is allowed only if slot-owned speculative quota permits it
     * speculative builder promotion MUST record `session.step(L2_INFLIGHT_QUOTA_EXHAUST)` when quota is exhausted
     * if quota is exhausted, policy MUST choose one of:
         - bypass and `builder()` (no intern), or
@@ -314,6 +342,16 @@ future completion.
 
 **Non-blocking note:** joiner waiting is not a global lock and MUST NOT monopolize a worker thread while attached.
 Correctness still comes exclusively from bucket exact re-check plus publication-before-completion.
+
+> **AMENDED (Identity Shell Clarification):**
+> Primitive/atomic routing tables are mandatory for hot **key routing**.
+> They do **not** imply that async lifecycle hosts such as `InFlightSlot`, `WaiterCell`, or builder handles
+> must themselves be replaced by index-slabs in the initial implementation.
+> For this note, the preferred initial model is:
+> - primitive key routing,
+> - object identity shells for async lifecycle hosts,
+> - primitive authority words inside those identity shells,
+> - no immediate pooling before grace completion.
 
 > **AMENDED (No Boxed-Key Gate):**
 > The in-flight gate MUST NOT be implemented with `ConcurrentHashMap<Long, InFlight>` or `Map<ULong, InFlight>` because

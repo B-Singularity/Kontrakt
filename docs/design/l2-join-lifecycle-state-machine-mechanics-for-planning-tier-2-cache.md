@@ -234,16 +234,31 @@ It owns:
 
 `InFlightSlot` must no longer be treated as a thin `future + counter` helper.
 
+**Initial preferred realization**
+
+For the initial compliant implementation, `InFlightSlot` SHOULD remain an **object identity shell**
+whose interior is driven by primitive authority words.
+
+Normative consequences:
+
+- object identity is used to isolate lifecycle ownership and prevent accidental cross-slot aliasing,
+- shared-slot truth remains governed by primitive authority fields such as `slotWord` and `commitRightWord`,
+- payload visibility remains separate from lifecycle authority,
+- and this note does **not** require an index-slab representation for lifecycle hosts.
+
+This preserves semantic authority in primitive fields while keeping asynchronous identity boundaries explicit.
+
 ### 5.4 WaiterCell
 
-Each successful attach creates or reuses one `WaiterCell`.
+Each successful attach creates one `WaiterCell` for the corresponding attach episode.
 
 A waiter cell owns:
 
 - waiter terminal state,
 - waiter-local cancellation/timeout race coordination,
 - result delivery bookkeeping,
-- and callback delivery linkage.
+- callback delivery linkage,
+- and generation-tagged stale-callback defense where required.
 
 A waiter cell is **not** a semantic owner of shared-slot state.
 
@@ -251,19 +266,30 @@ The waiter registry must be **bounded** by slot-level governance.
 A compliant implementation must enforce a maximum admitted waiter count per slot, and attach rejection on waiter-cap
 exhaustion must occur before a waiter becomes semantically attached.
 
+For the initial compliant implementation, `WaiterCell` SHOULD remain an **object identity shell** with:
+
+- one primitive waiter authority word,
+- immutable generation issued at creation time,
+- no immediate pooling,
+- and no reuse before grace completion.
+
 ### 5.5 BuilderHandle
 
 A builder handle owns:
 
 - exactly-once commit/abort authority for the builder winner path,
 - supervisory convergence bookkeeping,
-- and builder identity needed for orphan detection where applicable.
+- builder identity needed for orphan detection where applicable,
+- and immutable generation / deadline material where required by supervision mechanics.
 
 It is logically separate from:
 
 - shared-slot terminal state,
 - waiter state,
 - and commit-right state.
+
+For the initial compliant implementation, a builder handle SHOULD also remain an **object identity shell**
+whose terminalization truth is carried by a primitive handle word.
 
 ### 5.6 CommitRight
 
@@ -1106,6 +1132,10 @@ At minimum, a compliant delivery plane must provide:
 - an overflow/pending-delivery representation,
 - and bounded shutdown/drain semantics.
 
+The existence of an adapter-owned delivery plane does **not** require a slab/index lifecycle-host model.
+Object-identity shells remain compatible with a fully adapter-owned delivery plane as long as lifecycle truth
+continues to reside in primitive authority fields.
+
 ### 18.4 Retry limit semantics
 
 This design does **not** permit arbitrary “max N retries then convert to timeout” behavior.
@@ -1197,6 +1227,8 @@ re-entering a reclaimed region.
 
 The preferred JVM-friendly model is:
 
+- object identity shells for `InFlightSlot`, `WaiterCell`, and builder handles,
+- primitive authority words inside those identity shells,
 - no immediate pooling of waiter cells or lifecycle hosts,
 - generation tagging where needed,
 - drain/barrier coordination,
@@ -1226,9 +1258,13 @@ The simplest compliant initial implementation is:
 
 - no waiter-cell pooling,
 - no immediate slot-host reuse,
+- no builder-handle pooling,
+- object-shell identity preserved for the entire lifecycle episode,
 - and delayed reuse only after grace completion.
 
-Pooling may be introduced later only if it preserves the same stale-generation safety law.
+Pooling or index-slab replacement may be introduced later only if it preserves the same stale-generation safety law
+and fully replaces identity isolation with an explicit correctness framework
+(e.g. generation-stamped handles plus grace-aware reuse discipline).
 
 ---
 
@@ -1260,7 +1296,6 @@ serialization.
 Preferred choices:
 
 - slot-local queue gate,
-- slot-local monitor gate,
 - or equivalent bounded serialized arbitration.
 
 ### 21.4 Semantic invariance

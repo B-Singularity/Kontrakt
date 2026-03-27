@@ -409,4 +409,40 @@ object L2LifecycleLaw {
             )
         }
     }
+
+    /**
+     * Constitutional invariant:
+     * waiter-local terminalization must never mutate shared-slot terminal state.
+     *
+     * This is intentionally represented as an explicit API even though the answer is
+     * always false, because runtime code and tests should be able to call it directly
+     * and express the invariant at the call site.
+     */
+    @JvmStatic
+    fun canWaiterEventAffectSharedSlot(
+        waiterEvent: WaiterState,
+    ): Boolean {
+        return false
+    }
+
+    /**
+     * Preferred runtime enforcement surface.
+     *
+     * Use this at call sites such as:
+     * - waiter timeout
+     * - waiter cancellation
+     *
+     * The method name is phrased from the event perspective because these call sites
+     * are event-driven in infrastructure code.
+     */
+    @JvmStatic
+    fun requireWaiterEventDoesNotAffectSharedSlot(
+        waiterEvent: WaiterState,
+    ) {
+        if (canWaiterEventAffectSharedSlot(waiterEvent)) {
+            throw PlanningProtocolIntegrityException(
+                "Illegal cross-axis coupling: waiterEvent=$waiterEvent must not mutate shared-slot state"
+            )
+        }
+    }
 }
