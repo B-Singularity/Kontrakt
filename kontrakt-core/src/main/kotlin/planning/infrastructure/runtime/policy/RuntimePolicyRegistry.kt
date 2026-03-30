@@ -19,18 +19,18 @@ import java.util.concurrent.atomic.AtomicReference
  * - already-running sessions must not observe mid-session policy drift
  * - resolved policy snapshots are immutable
  */
-class RuntimePolicyRegistry(initial: PolicyEpoch) {
+class RuntimePolicyRegistry(initial: RuntimePolicyEpoch) {
     private val ref = AtomicReference(initial)
 
-    fun currentEpoch(): PolicyEpoch = ref.get()
+    fun currentEpoch(): RuntimePolicyEpoch = ref.get()
 
     @Synchronized
-    fun install(next: PolicyEpoch): PolicyInstallResult {
+    fun install(next: RuntimePolicyEpoch): PolicyInstallResult {
         val previous = ref.get()
 
         if (next.id < previous.id) {
             throw PlanningProtocolIntegrityException(
-                "PolicyEpoch integrity violation: attempted to install stale epoch. " +
+                "RuntimePolicyEpoch integrity violation: attempted to install stale epoch. " +
                         "current=${previous.id}, rejected=${next.id}"
             )
         }
@@ -41,7 +41,7 @@ class RuntimePolicyRegistry(initial: PolicyEpoch) {
             }
 
             throw PlanningProtocolIntegrityException(
-                "PolicyEpoch integrity violation: same epoch id carries a different payload. " +
+                "RuntimePolicyEpoch integrity violation: same epoch id carries a different payload. " +
                         "id=${next.id}"
             )
         }
@@ -59,20 +59,20 @@ class RuntimePolicyRegistry(initial: PolicyEpoch) {
  * only the registry may create concrete result instances.
  */
 sealed interface PolicyInstallResult {
-    val epoch: PolicyEpoch
+    val epoch: RuntimePolicyEpoch
     val installed: Boolean
 
     companion object {
-        internal fun installed(epoch: PolicyEpoch): PolicyInstallResult =
+        internal fun installed(epoch: RuntimePolicyEpoch): PolicyInstallResult =
             InstalledImpl(epoch)
 
-        internal fun alreadyCurrent(epoch: PolicyEpoch): PolicyInstallResult =
+        internal fun alreadyCurrent(epoch: RuntimePolicyEpoch): PolicyInstallResult =
             AlreadyCurrentImpl(epoch)
     }
 }
 
 private class InstalledImpl(
-    override val epoch: PolicyEpoch,
+    override val epoch: RuntimePolicyEpoch,
 ) : PolicyInstallResult {
     override val installed: Boolean = true
 
@@ -81,7 +81,7 @@ private class InstalledImpl(
 }
 
 private class AlreadyCurrentImpl(
-    override val epoch: PolicyEpoch,
+    override val epoch: RuntimePolicyEpoch,
 ) : PolicyInstallResult {
     override val installed: Boolean = false
 

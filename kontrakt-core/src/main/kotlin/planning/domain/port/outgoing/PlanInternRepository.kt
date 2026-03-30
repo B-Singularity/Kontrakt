@@ -9,91 +9,193 @@ import planning.domain.vo.PartitionId
 /**
  * Outbound port for Tier-2 structural interning.
  *
- * The Domain Core owns the policy:
- * - Hit(node)              -> reuse the exact canonical instance
- * - Miss(handle)           -> build locally, then publish through the handle
- * - Fault(TRANSIENT)       -> degrade to miss
- * - Fault(CIRCUIT_OPEN)    -> bypass Tier-2 for the remainder of the session
+ * -----------------------------------------------------------------------------
+ * ARCHITECTURAL ROLE
+ * -----------------------------------------------------------------------------
  *
- * Implementations MUST preserve:
- * - exact-instance return
- * - safe publication
- * - bounded in-flight joining
- * - partition-scoped lifecycle governance
+ * This is a hexagonal outbound port.
+ *
+ * The Domain Core asks the adapter:
+ *
+ *   "For this semantic cache key, what is the next lawful interning step?"
+ *
+ * The adapter answers with a closed, immutable next-step algebra:
+ *
+ * - Hit   : exact canonical winner already exists
+ * - Build : caller owns build/publication authority for this episode
+ * - Join  : caller must suspend and later restart through continuation delivery
+ * - Fault : governance reaction is required
+ *
+ * -----------------------------------------------------------------------------
+ * IMPORTANT DISTINCTION
+ * -----------------------------------------------------------------------------
+ *
+ * This sealed result family is NOT a mutable lifecycle state machine.
+ *
+ * It is:
+ * - immutable
+ * - one-shot
+ * - boundary-local
+ * - action-oriented
+ *
+ * Lifecycle state machines remain elsewhere:
+ * - shared-slot lifecycle
+ * - waiter lifecycle
+ * - builder-handle lifecycle
+ * - commit-right lifecycle
+ * - region lifecycle
+ * - speculative-lease lifecycle
+ *
+ * -----------------------------------------------------------------------------
+ * NON-BLOCKING JOIN REQUIREMENT
+ * -----------------------------------------------------------------------------
+ *
+ * Implementations MUST preserve non-blocking join semantics.
+ *
+ * In particular:
+ * - Join MUST NOT imply worker-thread monopolization
+ * - Join MUST NOT require wait()/get()/join()/poll()-style blocking
+ * - completion delivery belongs to adapter-owned dispatch infrastructure
  */
 interface PlanInternRepository {
+
+    /**
+     * Resolves the next Tier-2 interning step for the given semantic plan-cache key.
+     *
+     * This method itself remains synchronous as a boundary call.
+     * "Synchronous" here means only that the next-step result is returned immediately.
+     *
+     * It does NOT mean that joined waiting is blocking.
+     */
     fun resolveOrIntern(
         partitionId: PartitionId,
         key: PlanCacheKey,
         session: PlannerSession,
-    ): PlanInternResult
+    ): PlanInternStep
 }
 
-/**
- * Result of a Tier-2 interning attempt.
- *
- * This is intentionally modeled as protocol state, not as a data record.
- * We do NOT want copy()/componentN()/structural value semantics here.
- */
-sealed interface PlanInternResult {
+sealed interface PlanInternStep {
 
-    /**
-     * Exact canonical instance already exists in Tier-2.
-     */
     class Hit internal constructor(
         val node: CanonicalPlanNode,
-    ) : PlanInternResult {
-        override fun toString(): String = "PlanInternResult.Hit(node=$node)"
+    ) : PlanInternStep {
+        override fun toString(): String = "PlanInternStep.Hit(node=$node)"
     }
 
-    /**
-     * The caller won the in-flight gate and is now the designated builder.
-     *
-     * The caller MUST eventually invoke exactly one of:
-     * - handle.commit(localNode)
-     * - handle.abort(reason)
-     */
-    class Miss internal constructor(
-        val handle: InternHandle,
-    ) : PlanInternResult {
-        override fun toString(): String = "PlanInternResult.Miss"
+    class Build internal constructor(
+        val handle: BuildHandle,
+    ) : PlanInternStep {
+        override fun toString(): String = "PlanInternStep.Build"
     }
 
-    /**
-     * Governance signal from the adapter.
-     *
-     * Semantics are defined solely by [L2FaultKind].
-     */
+    class Join internal constructor(
+        val handle: JoinHandle,
+    ) : PlanInternStep {
+        override fun toString(): String = "PlanInternStep.Join"
+    }
+
     class Fault internal constructor(
         val kind: L2FaultKind,
-    ) : PlanInternResult {
-        override fun toString(): String = "PlanInternResult.Fault(kind=$kind)"
+    ) : PlanInternStep {
+        override fun toString(): String = "PlanInternStep.Fault(kind=$kind)"
     }
 
     companion object {
-        internal fun hit(node: CanonicalPlanNode): PlanInternResult = Hit(node)
-        internal fun miss(handle: InternHandle): PlanInternResult = Miss(handle)
-        internal fun fault(kind: L2FaultKind): PlanInternResult = Fault(kind)
+        internal fun hit(node: CanonicalPlanNode): PlanInternStep = Hit(node)
+        internal fun build(handle: BuildHandle): PlanInternStep = Build(handle)
+        internal fun join(handle: JoinHandle): PlanInternStep = Join(handle)
+        internal fun fault(kind: L2FaultKind): PlanInternStep = Fault(kind)
     }
 }
 
 /**
  * Builder-owned publication handle.
  *
- * The caller builds outside adapter locks, then publishes through this handle.
+ * -----------------------------------------------------------------------------
+ * REQUEST-SCOPE RULE
+ * -----------------------------------------------------------------------------
+ *
+ * This handle represents publication authority for one build episode.
+ *
+ * It MUST be converged within the same request scope that issued it.
+ * The handle itself intentionally does NOT retain a PlannerSession reference.
+ *
+ * Instead, the live request-scope session is supplied explicitly at commit time.
  */
-interface InternHandle {
-    /**
-     * Publishes the locally built node.
-     *
-     * @return the exact canonical winner instance.
-     *         This MAY differ from [localNode] if another exact canonical instance
-     *         is already present in the target bucket.
-     */
-    fun commit(localNode: CanonicalPlanNode): CanonicalPlanNode
+interface BuildHandle {
+
+    fun commit(
+        localNode: CanonicalPlanNode,
+        session: PlannerSession,
+    ): CanonicalPlanNode
+
+    fun abort(reason: Throwable)
+}
+
+/**
+ * Non-blocking join handle returned by the adapter.
+ *
+ * This interface intentionally does NOT expose blocking wait primitives.
+ */
+interface JoinHandle {
+
+    fun registerContinuation(
+        continuation: JoinContinuation,
+    ): JoinRegistrationDecision
 
     /**
-     * Aborts the in-flight build and wakes any joiners exceptionally.
+     * Consumes the ready join result through a fresh planner session.
+     *
+     * -----------------------------------------------------------------------------
+     * FRESH-SESSION RULE
+     * -----------------------------------------------------------------------------
+     *
+     * The caller MUST supply a fresh or freshly-reset PlannerSession.
+     *
+     * Rationale:
+     * - resumed work is request-level continuation, not worker-local state retention
+     * - cost accounting on resumed bucket re-verification belongs to the resumed session
+     * - the previously active worker-local session must already have exited through
+     *   ordinary cleanup
      */
-    fun abort(reason: Throwable)
+    fun consumeReadyResult(
+        session: PlannerSession,
+    ): JoinResumeStep
+
+    fun cancel(reason: Throwable): Boolean
+
+    fun deadlineNanos(): Long
+}
+
+sealed interface JoinRegistrationDecision {
+    data object Registered : JoinRegistrationDecision
+    data object AlreadyReady : JoinRegistrationDecision
+}
+
+fun interface JoinContinuation {
+    fun resume(signal: JoinResumeSignal)
+}
+
+sealed interface JoinResumeSignal {
+    data object ReadyForRestart : JoinResumeSignal
+}
+
+sealed interface JoinResumeStep {
+
+    class Hit internal constructor(
+        val node: CanonicalPlanNode,
+    ) : JoinResumeStep {
+        override fun toString(): String = "JoinResumeStep.Hit(node=$node)"
+    }
+
+    class Fault internal constructor(
+        val kind: L2FaultKind,
+    ) : JoinResumeStep {
+        override fun toString(): String = "JoinResumeStep.Fault(kind=$kind)"
+    }
+
+    companion object {
+        internal fun hit(node: CanonicalPlanNode): JoinResumeStep = Hit(node)
+        internal fun fault(kind: L2FaultKind): JoinResumeStep = Fault(kind)
+    }
 }

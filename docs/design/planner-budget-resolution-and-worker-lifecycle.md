@@ -7,11 +7,17 @@ Status: Accepted
 completion-continuation execution-path safety, builder-handle terminalization discipline,
 speculative-builder reservation release, and close-gate terminalization completeness
 without changing previously accepted runtime-policy semantics. -->
+
 <!-- AMENDED(2026-03-21): Corrected policy snapshot reference shapes to remove data-class / copy()-backdoor examples
 for the policy snapshot family, and removed require()-style validation from illustrative runtime-policy registry code. -->
 <!-- AMENDED(2026-03-21): Clarified request-bounded restart semantics for joined waiters, explicit boundary-orchestrated
 fresh-session restart, slot-owned speculative leases, and wall-clock separation from protocol fuel / waiter-local join
 governance. -->
+
+<!-- AMENDED(2026-03-30): Added explicit planning-run continuity terminology (`PlanningRunEpoch`),
+runtime-policy epoch naming (`RuntimePolicyEpoch`), worker-backing freshness/versioning terminology
+(`WorkerBackingEpoch`), logical-freshness vs physical-backing-reuse law for fresh-session restart,
+and immutable/open-ended resume-point contract aligned with ADR-0034 amendment. -->
 
 ## Overview
 
@@ -26,7 +32,9 @@ It defines:
 1. how resolved runtime budget becomes concrete planner caps,
 2. how worker-local planner state is acquired / used / reset / returned,
 3. what is semantic output vs internal implementation detail,
-4. how L1 structural budgets and L2 governance budgets remain separate but compatible.
+4. how L1 structural budgets and L2 governance budgets remain separate but compatible,
+5. and how fresh-session restart preserves logical planning-run continuity without requiring mandatory fresh physical
+   worker-backing allocation.
 
 This note does **not** redefine the primitive byte ledger itself.
 The primitive byte ledger remains normative in the L1 planner-session design note.
@@ -43,6 +51,11 @@ The primitive byte ledger remains normative in the L1 planner-session design not
 - worker lifecycle contract
 - quarantine / reset-failure behavior
 - semantic output boundary
+- request-bounded fresh-session restart compatibility with worker lifecycle
+- logical freshness vs physical worker-backing reuse law
+- pinned runtime-policy continuity for one logical planning run
+- worker-backing freshness/versioning semantics at the worker lifecycle boundary
+- immutable resume-point constraints relevant to worker/session restart compatibility
 
 ### 1.2 This note does not define
 
@@ -50,6 +63,7 @@ The primitive byte ledger remains normative in the L1 planner-session design not
 - primitive byte ledger formulas
 - L2 bucket/shard internals
 - canonical identity materialization details
+- the top-level planning-run orchestration state machine semantics themselves
 
 Those remain defined elsewhere.
 
@@ -347,6 +361,12 @@ ResolvedPlannerSessionCaps + ResolvedJoinGovernance
   -> PlannerSessionConfig + L2GovernanceConfig
 ```
 
+Fresh-session restart clarification (AMENDED):
+
+- one logical planning run MAY consume more than one `PlannerSession`,
+- but each such session still consumes already-resolved numeric/runtime policy input only,
+- and restart does not reopen capacity solving against live environment state mid-run.
+
 ### 7.2 Determinism Rule
 
 For identical:
@@ -592,6 +612,127 @@ Normative rule:
   budget path,
 - no additional retry-count policy surface or retry fault kind is introduced by this note.
 
+### 9.7.1 Planning-Run Continuity Rule (AMENDED)
+
+If fresh-session restart is enabled, the runtime boundary MUST distinguish:
+
+- one logical planning run, identified by `PlanningRunEpoch`,
+- from one worker-local planner session,
+- from one worker-backing freshness/version marker.
+
+Normative consequences:
+
+- a logical planning run MAY span more than one `PlannerSession`,
+- all sessions of that run belong to the same `PlanningRunEpoch`,
+- the worker lifecycle note does not redefine the full run-state machine,
+  but worker/session mechanics MUST remain compatible with that run-level continuity.
+
+### 9.7.2 Pinned Runtime-Policy Continuity Rule (AMENDED)
+
+All sessions belonging to one logical planning run MUST observe the same pinned `RuntimePolicyEpoch`.
+
+Normative consequences:
+
+- fresh-session restart does not reopen policy resolution for that run,
+- a restarted session begins with a fresh worker-local session boundary,
+  but not with a newly chosen runtime-policy snapshot,
+- and request/run continuity remains deterministic even if a newer runtime-policy snapshot is installed for later runs.
+
+### 9.7.3 Logical Freshness vs Physical Backing Reuse (AMENDED)
+
+Fresh-session restart requires **logical freshness**, not mandatory fresh physical allocation.
+
+Normative rule:
+
+- a restarted session MUST begin as a fresh worker-local session boundary,
+- but the underlying primitive arrays / slabs / worker-backing MAY be reused,
+- provided that the existing reset/quarantine law proves semantic zero-residue before reuse.
+
+Therefore:
+
+- “fresh session” does **not** imply “fresh heap object graph for every primitive backing,”
+- and this note does **not** require per-restart reallocation of worker-local slabs or arrays.
+
+### 9.7.4 Worker-Backing Epoch Rule (AMENDED)
+
+If the runtime models worker-backing freshness/version explicitly, that version axis SHALL be named
+`WorkerBackingEpoch`.
+
+Normative rule:
+
+- `WorkerBackingEpoch` belongs to worker-backing reuse/freshness only,
+- it MUST remain distinct from `PlanningRunEpoch`,
+- and it MUST remain distinct from `RuntimePolicyEpoch`.
+
+A compliant implementation MAY represent `WorkerBackingEpoch` as a factory-issued immutable wrapper, an inline/value
+class, or an equivalent monotonically-issued version token.
+
+### 9.7.5 Planning Resume Point Contract (AMENDED)
+
+If fresh-session restart is enabled, restart sites MUST be represented by immutable resume-point descriptors.
+
+Normative rule:
+
+- a resume point MUST NOT retain `PlannerSession`,
+- MUST NOT retain worker-local primitive arrays/slabs directly,
+- MUST NOT retain partially-live frame-stack objects as mutable suspended execution state,
+- and MUST carry only immutable data sufficient for lawful restart.
+
+Extensibility rule:
+
+- the current implementation MAY initially support only a small number of resume sites,
+- but the resume-point contract MUST remain open to future site additions driven by profiling, KSP/compile-time
+  optimization, or later runtime specialization work.
+
+### 9.7.6 Kotlin Reference Shape (Illustrative) (AMENDED)
+
+````kotlin
+interface PlanningResumePoint {
+    val siteId: String
+    val schemaVersion: Int
+}
+````
+
+Illustrative compatibility rule:
+
+- `siteId` identifies the restart site family,
+- `schemaVersion` protects payload evolution,
+- and concrete payloads remain immutable.
+
+### 9.7.7 Planning-Run / Worker Boundary Shape (Illustrative) (AMENDED)
+
+`````kotlin
+class PlanningRunContext private constructor(
+    val runEpoch: PlanningRunEpoch,
+    val pinnedRuntimePolicyEpoch: RuntimePolicyEpoch,
+    val remainingPhysicalBudget: Int,
+    val resumePoint: PlanningResumePoint?,
+) {
+    companion object {
+        @JvmStatic
+        fun issue(
+            runEpoch: PlanningRunEpoch,
+            pinnedRuntimePolicyEpoch: RuntimePolicyEpoch,
+            remainingPhysicalBudget: Int,
+            resumePoint: PlanningResumePoint?,
+        ): PlanningRunContext {
+            return PlanningRunContext(
+                runEpoch = runEpoch,
+                pinnedRuntimePolicyEpoch = pinnedRuntimePolicyEpoch,
+                remainingPhysicalBudget = remainingPhysicalBudget,
+                resumePoint = resumePoint,
+            )
+        }
+    }
+}
+`````
+
+This illustrative shape is not intended to freeze one final API, but it does show the required ownership split:
+
+- planning-run continuity belongs to the run context,
+- runtime-policy pinning belongs to the run context,
+- worker-local primitive backing remains elsewhere.
+
 ---
 
 ## 10. Semantic Output Boundary
@@ -724,6 +865,17 @@ If builder-owned handles are used, implementations MAY enforce terminalization s
 
 These two layers serve different failure paths and MUST NOT be treated as redundant by default.
 
+### 12.5 Planning-Run Abort vs Worker-Boundary Abort (AMENDED)
+
+If fresh-session restart is enabled, implementations MUST distinguish:
+
+- planning-run abortion,
+- from one worker-local session exit/cleanup.
+
+A worker-local session MAY exit cleanly because the run has suspended on join without that implying final run abortion.
+
+Conversely, a planning run MAY abort while no worker-local session remains live.
+
 ---
 
 ## 13. Compliance Tests
@@ -743,6 +895,9 @@ The following tests are required for this bridge layer:
 - `AttachRejectedVsQuotaExhaustedTelemetrySeparationTest`
 - `RequestScopedPhysicalBudgetCarryForwardTest`
 - `SpeculativeLeaseForceReleaseOnSlotTerminalizationTest`
+- `PlanningRunPinnedRuntimePolicyEpochTest`
+- `LogicalFreshnessWithoutMandatoryFreshBackingAllocationTest`
+- `ResumePointDoesNotRetainWorkerLocalPlannerStateTest`
 
 ---
 
@@ -752,10 +907,11 @@ This note is intended to be referenced by:
 
 - `ADR-0032`
 - `docs/design/l1-planner-session-primitive-data-structures.md`
+- `ADR-0034`
 
 ---
 
-## 15. Policy Resolution Epoch Rule (AMENDED)
+## 15. Runtime Policy Epoch Rule (AMENDED)
 
 ### 15.1 Stable Resolution Time Only
 
@@ -785,6 +941,17 @@ Normative consequences:
 - all planner/lifecycle/join decisions for that session MUST use that snapshot only,
 - a newer resolved snapshot may apply only to subsequently created sessions.
 
+### 15.2.1 Planning-Run Pinned Policy Rule (AMENDED)
+
+If one logical planning run spans more than one `PlannerSession`, all sessions of that run MUST observe the same pinned
+`RuntimePolicyEpoch`.
+
+Normative consequences:
+
+- a restarted session is fresh at the worker/session boundary,
+- but it does not choose a new runtime-policy snapshot for that run,
+- and runtime-policy drift across one `PlanningRunEpoch` is forbidden.
+
 ### 15.3 Determinism Rationale
 
 This rule prevents mid-session policy drift from changing:
@@ -797,10 +964,12 @@ This rule prevents mid-session policy drift from changing:
 
 for an already-running session.
 
+The planning-run pinning rule above additionally prevents cross-restart policy drift inside one logical run.
+
 ### 15.4 Kotlin Reference Shape (Illustrative)
 
 `````kotlin
-class PolicyEpoch private constructor(
+class RuntimePolicyEpoch private constructor(
     val id: Long,
     val policy: ResolvedRuntimePolicy,
 ) {
@@ -809,8 +978,8 @@ class PolicyEpoch private constructor(
         fun issue(
             id: Long,
             policy: ResolvedRuntimePolicy,
-        ): PolicyEpoch {
-            return PolicyEpoch(
+        ): RuntimePolicyEpoch {
+            return RuntimePolicyEpoch(
                 id = id,
                 policy = policy,
             )
@@ -819,8 +988,11 @@ class PolicyEpoch private constructor(
 }
 `````
 
-If an implementation uses an epoch-tagged snapshot like `PolicyEpoch`, the identifier MUST increase monotonically and
-the tagged policy snapshot MUST remain immutable after installation.
+If an implementation uses an epoch-tagged snapshot like `RuntimePolicyEpoch`, the identifier MUST increase monotonically
+and the tagged policy snapshot MUST remain immutable after installation.
+
+`RuntimePolicyEpoch` remains a governance/policy snapshot version only.  
+It MUST NOT be reused as `PlanningRunEpoch` or `WorkerBackingEpoch`.
 
 ---
 
@@ -859,6 +1031,9 @@ Cold-start defaults SHOULD favor:
 Telemetry gathered during session `S` MAY influence a later resolved snapshot, but it MUST NOT mutate the already-fixed
 resolved policy of session `S`.
 
+Telemetry gathered during one `PlanningRunEpoch` MAY influence future `RuntimePolicyEpoch` installation for later runs,
+but it MUST NOT mutate the already-pinned runtime-policy snapshot of the currently active run.
+
 ### 16.4 Policy Boundary Rule
 
 Adaptive policy resolution remains outside the Domain Core.
@@ -877,7 +1052,7 @@ provide safe cross-thread publication.
 Minimum acceptable implementations include:
 
 - a `@Volatile` snapshot reference, or
-- `AtomicReference<PolicyEpoch>` (preferred when monotonic installation checks are required).
+- `AtomicReference<RuntimePolicyEpoch>` (preferred when monotonic installation checks are required).
 
 ### 17.2 One-Way Installation Rule
 
@@ -890,28 +1065,32 @@ If concurrent installation is possible, the runtime SHOULD enforce monotonic pol
 A newly created session may observe either the old or the new fully-published snapshot depending on the exact handoff
 timing, but it MUST NEVER observe a partially-installed snapshot.
 
+A planning run that has already pinned one `RuntimePolicyEpoch` MUST NOT switch to a later one merely because a newer
+snapshot becomes globally visible.
+
 ### 17.4 Kotlin Reference Shape (Illustrative)
 
 ``````kotlin
-class RuntimePolicyRegistry(initial: PolicyEpoch) {
+class RuntimePolicyRegistry(initial: RuntimePolicyEpoch) {
     private val ref = java.util.concurrent.atomic.AtomicReference(initial)
 
-    fun currentEpoch(): PolicyEpoch = ref.get()
+    fun currentEpoch(): RuntimePolicyEpoch = ref.get()
 
-    fun install(next: PolicyEpoch) {
+    fun install(next: RuntimePolicyEpoch) {
         while (true) {
             val prev = ref.get()
             if (next.id <= prev.id) {
                 throw PlanningProtocolIntegrityException(
-                    "RuntimePolicyRegistry.install requires monotonically increasing PolicyEpoch.id: next=${next.id}, prev=${prev.id}"
+                    "RuntimePolicyRegistry.install requires monotonically increasing RuntimePolicyEpoch.id: next=${next.id}, prev=${prev.id}"
                 )
             }
             if (ref.compareAndSet(prev, next)) return
         }
     }
 }
-
 ``````
+
+---
 
 ## 18. Wall-Clock Policy Separation (AMENDED)
 
@@ -986,6 +1165,8 @@ request-scoped physical-step budget rather than through elapsed wall-clock timeo
 
 Elapsed wall-clock limits MAY still abort work at the runtime boundary, but they MUST NOT become the authority for
 L2 restart boundedness or L1 structural budget exhaustion.
+
+---
 
 ## 19. Adapter-Owned Completion Dispatch Lifecycle (AMENDED)
 
@@ -1062,6 +1243,21 @@ That means:
 - joined-waiter fresh-session restart MUST be scheduled through the runtime boundary,
 - no worker-local planner primitive state may remain retained merely because completion delivery has not yet occurred.
 
+### 19.6 Planning-Run Handoff Rule (AMENDED)
+
+Completion-dispatch infrastructure MAY signal that one suspended planning run is now ready to restart.
+
+However, that infrastructure MUST NOT become the owner of:
+
+- `PlanningRunEpoch`,
+- pinned `RuntimePolicyEpoch`,
+- or `WorkerBackingEpoch`.
+
+Normative rule:
+
+- dispatch infrastructure may publish readiness,
+- but planning-run admission/restart remains a runtime-boundary orchestration concern.
+
 ---
 
 ## 20. Implementation Order Dependency for Joined-Waiter Dispatch (AMENDED)
@@ -1116,7 +1312,10 @@ runtime has already fixed the following restart semantics:
 - current session exits through ordinary `finally` cleanup,
 - worker-local primitive state is reset before reuse,
 - resumed work starts from a fresh planner session,
-- carried-forward request-scoped physical budget is applied to the restarted session.
+- carried-forward request-scoped physical budget is applied to the restarted session,
+- the restarted session belongs to the same `PlanningRunEpoch`,
+- the restarted session observes the same pinned `RuntimePolicyEpoch`,
+- and worker-backing freshness/versioning remains distinct from run continuity.
 
 Without this ordering, completion delivery could resume work against an undefined session-lifecycle boundary.
 
@@ -1128,3 +1327,16 @@ infrastructure was introduced only after waiter-state CAS semantics became the s
 Illustrative test name:
 
 - `WaiterStateCasBeforeDispatchInfrastructureTest`
+
+### 20.6 Resume-Site Openness Requirement (AMENDED)
+
+The runtime MAY initially implement only a small set of restart sites.
+
+However, it MUST structure restart-site handling so that additional immutable resume-site payload schemas can be added
+in
+later compiler/runtime waves without redefining:
+
+- worker lifecycle law,
+- pinned runtime-policy continuity,
+- logical freshness vs physical backing reuse,
+- or joined-waiter terminalization authority.

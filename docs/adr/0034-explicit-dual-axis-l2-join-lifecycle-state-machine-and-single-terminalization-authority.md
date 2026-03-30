@@ -1,8 +1,12 @@
 # ADR-0034: Explicit Dual-Axis L2 Join Lifecycle State Machine and Single Terminalization Authority
 
-- Status: Proposed
--
+- Status: Accepted
 - Date: 2026-03-26
+
+<!-- AMENDED(2026-03-30): Added explicit planning-run orchestration lifecycle axis,
+named epoch/generation taxonomy (`RuntimePolicyEpoch`, `PlanningRunEpoch`, `WorkerBackingEpoch`, `L2HostGeneration`),
+fresh-session restart authority boundaries, and run-level transition / invariant law
+without weakening any previously declared L2 lifecycle semantics. -->
 
 ## Document Relationship and Precedence
 
@@ -163,6 +167,36 @@ converged, then stale callbacks, stale timeout signals, or recycled lifecycle ho
 
 Therefore reclamation meaning must be strengthened at the lifecycle-law level, not left entirely to mechanical cleanup.
 
+### 11. Fresh-session restart introduces a new runtime-boundary lifecycle axis (AMENDED)
+
+Once joined-waiter resumption is modeled as fresh-session restart rather than blocked-worker continuation, the runtime
+no longer has only L2-internal lifecycle concerns.
+
+It also acquires a separate runtime-boundary orchestration concern:
+
+- one logical planning run may span more than one `PlannerSession`,
+- the old session must still exit through ordinary cleanup,
+- a later fresh session may resume the same logical run,
+- and that run must preserve deterministic continuity across restart.
+
+This is not reducible to shared-slot state, waiter state, builder-handle state, or region state.
+
+### 12. Policy-version continuity and worker-backing freshness must not be conflated (AMENDED)
+
+The runtime already distinguishes policy snapshots from worker-local state cleanup.
+
+Fresh-session restart makes that separation architectural rather than merely operational.
+
+The system now requires explicit separation among:
+
+- runtime policy versioning,
+- logical planning-run continuity,
+- worker-backing freshness for reset/reuse,
+- and L2 lifecycle-host generation for stale-reference defense.
+
+Without explicit naming and ownership boundaries, these different “time axes” drift into one another and weaken
+determinism.
+
 Kontrakt requires compiler-grade runtime semantics: explicit, enumerable, sealed, deterministic, and testable.  
 Therefore the L2 join lifecycle must be promoted from an implicit coordination pattern to an explicit state machine.
 
@@ -183,6 +217,21 @@ The lifecycle model is intentionally split across orthogonal axes:
 
 These axes MUST remain semantically distinct.
 
+This ADR further declares that when joined-waiter completion is consumed through fresh-session restart, the runtime
+boundary SHALL introduce an additional **planning-run orchestration lifecycle axis** that is orthogonal to the L2
+lifecycle axes above.
+
+Therefore the full semantic model covered by this ADR consists of:
+
+1. shared-slot lifecycle,
+2. per-waiter lifecycle,
+3. builder-handle lifecycle,
+4. partition-region lifecycle,
+5. speculative-lease lifecycle where enabled,
+6. and planning-run orchestration lifecycle where fresh-session restart is enabled.
+
+These axes MUST remain semantically distinct.
+
 This ADR defines:
 
 - the top-level lifecycle states,
@@ -197,6 +246,10 @@ This ADR does **not** freeze one exact low-level implementation technique such a
 `AtomicLongFieldUpdater`, or one exact bit-packing layout.  
 Those mechanical details belong in a separate design note.  
 However, this ADR does define the normative implementation constraints that any compliant implementation must satisfy.
+
+This ADR also does **not** define the full worker-backing reset mechanics for fresh-session restart.  
+Those remain governed by the worker-lifecycle design note.  
+However, the orchestration state semantics and version-axis naming law introduced here are normative.
 
 ---
 
@@ -255,6 +308,26 @@ Future changes must first attempt to evolve through:
 
 Only if those are insufficient may top-level lifecycle state be revisited.
 
+### 7. Explicit naming for version axes (AMENDED)
+
+Epoch and generation names are semantic boundary labels and MUST be explicit.
+
+Normative naming rule:
+
+- `*Epoch` names are reserved for immutable versioned snapshots at governance, planning-run orchestration, or
+  worker-backing reuse boundaries.
+- `*Generation` names are reserved for reusable lifecycle-host episode discriminators used for stale-reference defense
+  and future reclamation safety.
+
+Bare names such as:
+
+- `Epoch`,
+- `Generation`,
+- `RequestEpoch`,
+- `SessionEpoch`,
+
+are forbidden as normative architecture vocabulary because they conceal ownership and semantic purpose.
+
 ---
 
 ## Scope
@@ -270,6 +343,9 @@ This ADR covers the L2 lifecycle semantics for:
 - attach/timeout/cancel/complete/drop race interaction,
 - and the ordering rules required before adapter-owned dispatch infrastructure may be attached.
 
+This ADR additionally covers the planning-run orchestration semantics that become normative once joined-waiter
+resumption is modeled as fresh-session restart.
+
 This ADR does not redefine:
 
 - cost-center IDs,
@@ -277,9 +353,35 @@ This ADR does not redefine:
 - L1 structural budget math,
 - canonical equality semantics,
 - exact-match bucket authority,
-- or bootstrap policy resolution.
+- bootstrap policy resolution,
+- worker-backing reset mechanics,
+- worker-pool quarantine mechanics,
+- or planner-session primitive slab layout.
 
 Those remain governed by their respective ADRs and design notes.
+
+---
+
+## Version-Axis Separation (AMENDED)
+
+The runtime SHALL distinguish the following version / episode axes.
+
+| Name                 | Owner / Boundary                       | Semantic Role                                                                 | Must Not Be Confused With                                       |
+|----------------------|----------------------------------------|-------------------------------------------------------------------------------|-----------------------------------------------------------------|
+| `RuntimePolicyEpoch` | runtime policy registry / governance   | immutable runtime-policy snapshot version                                     | run continuity, worker-backing freshness, L2 host reuse         |
+| `PlanningRunEpoch`   | planning-run orchestration boundary    | one logical planning run continuity, including suspend / restart identity     | policy snapshot version, worker-backing freshness               |
+| `WorkerBackingEpoch` | worker-backing / planner-state backing | freshness/version marker for worker-local backing reuse after reset           | logical planning-run identity                                   |
+| `L2HostGeneration`   | L2 shard / lifecycle-host issuance     | stale-reference defense and future reclamation safety for slot/waiter/handles | policy snapshot version, planning-run continuity, backing reuse |
+
+Normative consequences:
+
+- `RuntimePolicyEpoch` MUST remain about runtime-policy snapshot version only.
+- `PlanningRunEpoch` MUST remain about one end-to-end planning run continuity only.
+- `WorkerBackingEpoch` MUST remain about worker-backing freshness / reuse only.
+- `L2HostGeneration` MUST remain an episode discriminator for reusable L2 lifecycle hosts only.
+
+A compliant implementation MAY physically represent these with plain `Long` values, inline/value classes, or other
+factory-issued immutable wrappers, but the semantic naming separation above is normative.
 
 ---
 
@@ -430,6 +532,57 @@ Lease absence is modeled as **absence of a lease object**, not as a lifecycle st
 This sub-machine is orthogonal.  
 It does not replace or redefine shared-slot, waiter, builder-handle, or commit-right states.
 
+## PlanningRunState (AMENDED)
+
+Where joined-waiter completion is consumed through fresh-session restart, the runtime boundary MUST expose exactly the
+following top-level planning-run orchestration states:
+
+- `RUNNING`
+- `SUSPENDED_ON_JOIN`
+- `READY_TO_RESTART`
+- `COMPLETED`
+- `ABORTED`
+
+These states have the following meanings.
+
+`RUNNING` means one logical planning run is actively executing through one live `PlannerSession`.
+
+`SUSPENDED_ON_JOIN` means the logical planning run has suspended because it is awaiting a non-blocking joined-waiter
+outcome, and the current `PlannerSession` is no longer permitted to remain retained as half-live worker-local state.
+
+`READY_TO_RESTART` means the joined-waiter outcome has become available and the runtime boundary may now create a fresh
+`PlannerSession` to continue the same logical planning run.
+
+`COMPLETED` means the logical planning run has produced its final semantic result and no further restart is reachable.
+
+`ABORTED` means the logical planning run has terminalized unsuccessfully and no restart is reachable.
+
+### Planning-run state is not a replacement for L2 state
+
+`PlanningRunState` is orthogonal to:
+
+- shared-slot state,
+- waiter state,
+- builder-handle state,
+- commit-right state,
+- and partition-region state.
+
+It exists because fresh-session restart introduces a separate runtime-boundary concern:
+logical run continuity across more than one worker-local session.
+
+### Planning-run identity and pinned policy meaning
+
+A planning run, once created, owns one immutable `PlanningRunEpoch`.
+
+A compliant implementation MUST also define which `RuntimePolicyEpoch` is pinned for that run.
+
+This ADR adopts the following rule:
+
+- all sessions belonging to one logical planning run MUST observe the same pinned `RuntimePolicyEpoch`.
+
+A fresh restarted session therefore begins with a fresh worker-local session boundary, but not with a newly chosen
+runtime-policy snapshot.
+
 ---
 
 ## State Meanings Must Remain Stable
@@ -462,6 +615,29 @@ It must never be interpreted as a merely local flag with no admission consequenc
 `RECLAIMED` always means the region is no longer allowed to host mutable lifecycle state and the required grace barrier
 has completed.
 
+`RUNNING` for planning-run orchestration always means exactly one live worker-local session currently owns execution for
+that logical run.
+
+`SUSPENDED_ON_JOIN` always means the logical run is waiting on joined completion without retaining a half-live
+worker-local planner substrate as the continuation owner.
+
+`READY_TO_RESTART` always means joined completion is available and a fresh worker-local session may lawfully resume the
+same logical run.
+
+`COMPLETED` and `ABORTED` for planning-run orchestration are terminal.  
+They must not be reopened.
+
+`RuntimePolicyEpoch` always means runtime-policy snapshot version only.  
+It must not be overloaded to mean logical run identity.
+
+`PlanningRunEpoch` always means end-to-end planning-run continuity only.  
+It must not be reused as backing-freshness or policy-snapshot version.
+
+`WorkerBackingEpoch` always means worker-backing freshness / reuse version only.  
+It must not be reused as planning-run continuity.
+
+`L2HostGeneration` always means reusable L2 lifecycle-host episode discrimination only.
+
 ---
 
 ## Failure Taxonomy
@@ -484,6 +660,9 @@ For example, an integrity-shattering failure may trigger immediate partition iso
 operational failure may permit degrade/retry handling.
 
 This distinction belongs to **reason taxonomy and governance reaction**, not to top-level lifecycle-state proliferation.
+
+Planning-run `ABORTED` remains a closed top-level run outcome.  
+Its root cause taxonomy MAY evolve independently from shared-slot failure taxonomy.
 
 ---
 
@@ -587,6 +766,28 @@ Where speculative leases exist, the only legal conceptual transitions are:
 No speculative lease may survive terminal shared-slot completion, shared-slot failure, shared-slot drop, or region
 reclamation.
 
+### Planning-run transitions (AMENDED)
+
+The only legal planning-run orchestration transitions are:
+
+- `RUNNING -> SUSPENDED_ON_JOIN`
+- `SUSPENDED_ON_JOIN -> READY_TO_RESTART`
+- `READY_TO_RESTART -> RUNNING`
+- `RUNNING -> COMPLETED`
+- `RUNNING -> ABORTED`
+- `SUSPENDED_ON_JOIN -> ABORTED`
+- `READY_TO_RESTART -> ABORTED`
+
+All other planning-run transitions are forbidden.
+
+In particular, the following are forbidden:
+
+- `COMPLETED -> RUNNING`,
+- `ABORTED -> RUNNING`,
+- `READY_TO_RESTART -> COMPLETED` without an intervening lawful resumed execution path,
+- retaining more than one live worker-local session for the same `PlanningRunEpoch`,
+- and reopening a terminal planning run.
+
 ---
 
 ## Cross-Axis Invariants
@@ -616,6 +817,15 @@ The following invariants are constitutional.
 18. Every issued builder handle MUST converge under supervision; orphaned builder authority is illegal.
 19. Delivery failure or delivery delay MUST NOT rewrite lifecycle truth.
 20. Cost-center metering may observe lifecycle events, but must never replace lifecycle legality.
+21. A planning run suspended on joined wait MUST NOT retain worker-local mutable planner substrate as suspended
+    continuation state.
+22. All sessions belonging to one `PlanningRunEpoch` MUST observe the same pinned `RuntimePolicyEpoch`.
+23. Fresh-session restart MUST create a new worker-local session boundary even when the logical planning run remains the
+    same.
+24. `WorkerBackingEpoch` continuity/reuse correctness MUST remain orthogonal to `PlanningRunEpoch` continuity.
+25. Completion dispatch MAY advance planning-run orchestration state, but it MUST NOT rewrite L2 lifecycle truth.
+26. `L2HostGeneration` MUST NOT be used as a substitute for `RuntimePolicyEpoch`, `PlanningRunEpoch`, or
+    `WorkerBackingEpoch`.
 
 ---
 
@@ -655,6 +865,33 @@ It does not replace builder-handle authority and does not replace shared-slot te
 
 Partition/region lifecycle changes must also pass through explicit lifecycle authority.  
 Close publication and reclamation must not be inferred from incidental cleanup side effects.
+
+### Planning-run orchestration authority (AMENDED)
+
+Exactly one planning-run state transition may win for the authoritative run-state surface at any point in time.
+
+The planning-run orchestration authority governs:
+
+- run suspension on joined wait,
+- readiness for restart,
+- restart admission,
+- run completion,
+- run abortion.
+
+It does not replace:
+
+- shared-slot terminalization authority,
+- waiter terminalization authority,
+- builder-handle terminalization authority,
+- commit-right authority,
+- or region authority.
+
+### Runtime-policy snapshot authority (AMENDED)
+
+`RuntimePolicyEpoch` publication remains governance authority, not run-state authority.
+
+A planning run may pin one `RuntimePolicyEpoch`, but the pinning rule does not turn runtime-policy publication into
+planning-run state authority.
 
 ### Dispatch and scheduling are not semantic authorities
 
@@ -754,6 +991,22 @@ Failure to enqueue or deliver an observation does not invalidate terminal lifecy
 
 It is an infrastructure-plane failure and must be handled without reopening lifecycle state.
 
+### Fresh-session restart race law (AMENDED)
+
+The following events may race at the planning-run boundary:
+
+- joined completion becomes available,
+- current session exits through cleanup,
+- restart admission is attempted,
+- runtime-boundary abort wins.
+
+A compliant implementation MUST ensure:
+
+- no resumed execution starts before the previous worker-local session has lawfully exited,
+- no more than one fresh restarted session may enter `RUNNING` for the same `PlanningRunEpoch`,
+- no stale restart signal may reopen a planning run already in `COMPLETED` or `ABORTED`,
+- and no stale signal may pin a different `RuntimePolicyEpoch` for the same planning run.
+
 ---
 
 ## Ordering and Visibility Law
@@ -816,6 +1069,20 @@ Therefore the verification strategy for this law MUST include, at minimum:
 The exact harness/tool choice belongs to the design note and verification plan, but the requirement to validate this law
 beyond ordinary unit tests is normative.
 
+### Fresh-session restart ordering law (AMENDED)
+
+If joined-waiter completion is consumed through fresh-session restart, the following order is normative:
+
+1. joined completion becomes lawfully visible through waiter-terminal and run-boundary signaling,
+2. the currently active `PlannerSession` exits through ordinary cleanup,
+3. the planning run transitions to `READY_TO_RESTART`,
+4. a fresh worker-local session is acquired,
+5. resumed execution re-enters `RUNNING` under the same `PlanningRunEpoch`,
+6. the resumed session observes the same pinned `RuntimePolicyEpoch` as the original run.
+
+This law does not require new physical array/slab allocation for each restart.  
+It requires fresh worker-local session semantics, not mandatory fresh backing allocation.
+
 ---
 
 ## Physical Sealing and Irreversibility
@@ -842,6 +1109,12 @@ After a terminal builder-handle transition wins:
 After a commit-right transition reaches `RELEASED`:
 
 - no later contender may lawfully enter authoritative publication for that publication episode.
+
+After a planning run reaches `COMPLETED` or `ABORTED`:
+
+- no restart signal may reopen it,
+- no stale completion signal may transition it back to `RUNNING`,
+- and no new `RuntimePolicyEpoch` may be pinned for that run.
 
 Terminal slots, waiters, handles, and arbitration surfaces may remain readable.  
 They must not remain writable.
@@ -870,6 +1143,14 @@ However, any compliant implementation MUST satisfy the following hot-path mechan
 A compliant implementation MAY satisfy layout isolation using padding, `@Contended`, equivalent field separation, packed
 primitive fields, or another mechanically sound JVM-compatible strategy.  
 The exact strategy belongs to the design note.
+
+A compliant implementation using fresh-session restart MUST additionally satisfy:
+
+- planning-run state storage remains distinct from worker-local primitive planner backing,
+- worker-backing freshness/versioning remains distinct from planning-run continuity,
+- `L2HostGeneration` remains distinct from both `PlanningRunEpoch` and `WorkerBackingEpoch`,
+- and no restart protocol may require retaining a half-live worker-local backing merely to preserve logical run
+  continuity.
 
 This ADR intentionally does not freeze one exact API surface such as `VarHandle` or `AtomicLongFieldUpdater`, nor one
 exact packed-field layout.  
@@ -900,6 +1181,9 @@ may a new top-level lifecycle state be considered.
 
 Adding a new top-level lifecycle state is a constitutional change.
 
+Adding a new planning-run resume site, new immutable resume payload schema, or refined worker-backing reset mechanics
+does not by itself require a new top-level lifecycle state, provided the existing state meanings remain stable.
+
 ---
 
 ## Evolution Policy
@@ -914,13 +1198,17 @@ The following changes are ordinary refactors and do **not** require ADR amendmen
 - adding or refining a speculative-lease policy,
 - refining supervisory deadlines without changing builder-handle meaning,
 - adding an orthogonal sub-machine,
-- changing telemetry or governance calibration.
+- changing telemetry or governance calibration,
+- adding new immutable planning-run resume-site payload schemas while preserving existing run-state meanings,
+- refining worker-backing reset mechanics while preserving the fresh-session restart law,
+- refining `L2HostGeneration` mechanics while preserving its episode-discriminator meaning.
 
 The following changes **do** require ADR amendment:
 
 - adding or removing a top-level lifecycle state,
 - changing the meaning of `SUCCESS`, `FAILED`, `DROPPED`, `ATTACHED`, `RESUMED`, `TIMED_OUT`, `CANCELLED`, `OPEN`,
-  `COMMITTED`, `ABORTED`, `UNCLAIMED`, `CLAIMED`, `RELEASED`, `OPEN`, `CLOSE_PUBLISHED`, or `RECLAIMED`,
+  `COMMITTED`, `ABORTED`, `UNCLAIMED`, `CLAIMED`, `RELEASED`, `OPEN`, `CLOSE_PUBLISHED`, `RECLAIMED`,
+  `RUNNING`, `SUSPENDED_ON_JOIN`, `READY_TO_RESTART`, `COMPLETED`, or `ABORTED`,
 - changing publication-before-completion law,
 - changing exact-once terminalization law,
 - allowing waiter-local timeout/cancel to mutate shared-slot terminal state,
@@ -928,7 +1216,10 @@ The following changes **do** require ADR amendment:
 - changing the single terminalization authority rule,
 - weakening the region close-before-reclaim invariant,
 - weakening builder liveness convergence,
-- or allowing build permission and publication permission to collapse back into one undifferentiated authority.
+- allowing build permission and publication permission to collapse back into one undifferentiated authority,
+- collapsing `RuntimePolicyEpoch`, `PlanningRunEpoch`, `WorkerBackingEpoch`, and `L2HostGeneration` back into one
+  semantically ambiguous version axis,
+- or allowing one planning run to drift across more than one pinned `RuntimePolicyEpoch`.
 
 ---
 
@@ -995,6 +1286,20 @@ Any transition not listed here is illegal.
 | `ISSUED`      | slot terminalizes or lease is otherwise lawfully released | `RELEASED` | Yes   |
 | `RELEASED`    | any mutable lease event                                   | —          | No    |
 
+### Planning-run matrix (AMENDED)
+
+| Current State       | Event                                        | Next State          | Legal |
+|---------------------|----------------------------------------------|---------------------|-------|
+| `RUNNING`           | joined-wait suspension becomes authoritative | `SUSPENDED_ON_JOIN` | Yes   |
+| `SUSPENDED_ON_JOIN` | joined completion becomes restart-eligible   | `READY_TO_RESTART`  | Yes   |
+| `READY_TO_RESTART`  | fresh-session restart admission wins         | `RUNNING`           | Yes   |
+| `RUNNING`           | final semantic result becomes authoritative  | `COMPLETED`         | Yes   |
+| `RUNNING`           | fatal run-boundary abort wins                | `ABORTED`           | Yes   |
+| `SUSPENDED_ON_JOIN` | fatal run-boundary abort wins                | `ABORTED`           | Yes   |
+| `READY_TO_RESTART`  | fatal run-boundary abort wins                | `ABORTED`           | Yes   |
+| `COMPLETED`         | any state-changing event                     | —                   | No    |
+| `ABORTED`           | any state-changing event                     | —                   | No    |
+
 ### Race arbitration matrix
 
 | Contention Case                                | Winner Rule                                                                        | Loser Rule                                                                                  |
@@ -1006,6 +1311,7 @@ Any transition not listed here is illegal.
 | `OPEN->COMMITTED` vs `OPEN->ABORTED`           | first successful builder-handle terminal authority wins                            | losing contender must not overwrite handle state                                            |
 | `UNCLAIMED->CLAIMED` among multiple contenders | first successful commit-right arbitration wins                                     | losing contenders must not enter authoritative publication                                  |
 | attach success vs close/terminal publication   | whichever authoritative transition wins first determines whether waiter is created | loser must not create a contradictory second outcome                                        |
+| `READY_TO_RESTART->RUNNING` vs run abort       | first successful planning-run state transition wins                                | losing contender must not reopen or duplicate run execution                                 |
 
 ---
 
@@ -1034,6 +1340,11 @@ The following verification obligations become mandatory.
 19. Cost-center traces remain consistent with the lifecycle model, but cost-center metering is not itself a substitute
     for lifecycle law.
 20. Visibility law is validated through stress-oriented concurrency testing rather than ordinary unit tests alone.
+21. One logical planning run does not drift across more than one pinned `RuntimePolicyEpoch`.
+22. Fresh-session restart does not retain worker-local mutable planner substrate across suspension.
+23. `WorkerBackingEpoch` freshness is not used as a substitute for `PlanningRunEpoch` continuity.
+24. Stale `L2HostGeneration` signals do not reopen a terminated planning run.
+25. Any planning-run transition absent from the normative matrix is rejected as illegal.
 
 ---
 
@@ -1048,7 +1359,8 @@ At minimum, the implementation will require explicit state types for:
 - builder-handle lifecycle,
 - commit-right arbitration lifecycle,
 - partition-region lifecycle,
-- and speculative-lease lifecycle where applicable.
+- speculative-lease lifecycle where applicable,
+- and planning-run orchestration lifecycle where fresh-session restart is enabled.
 
 The existing in-flight coordination structure must be upgraded into a true lifecycle owner rather than remaining a thin
 coordination helper.
@@ -1056,6 +1368,13 @@ coordination helper.
 The shard-level coordinator must be reduced to orchestration, routing, publication, authoritative re-verification, and
 interaction with lifecycle authorities.  
 It must not remain the hidden owner of lifecycle truth.
+
+The runtime boundary must additionally introduce explicit objects or equivalents for:
+
+- one planning-run context owning `PlanningRunEpoch`,
+- one pinned `RuntimePolicyEpoch` reference for that run,
+- immutable resume-point descriptors for restart sites,
+- and worker-backing freshness/versioning separate from the run epoch.
 
 A dedicated design note will define:
 
@@ -1068,7 +1387,10 @@ A dedicated design note will define:
 - builder supervision mechanics,
 - commit-right arbitration mechanics,
 - grace-barrier reclamation mechanics,
-- and lifecycle-host layout constraints.
+- lifecycle-host layout constraints,
+- run-context and resume-point mechanics,
+- worker-backing freshness/versioning mechanics,
+- and fresh-session restart compatibility with primitive-array / slab reuse.
 
 ---
 
@@ -1094,19 +1416,31 @@ Separate build execution from commit-right arbitration and introduce builder sup
 
 Reduce shard logic to orchestration and move terminalization legality into lifecycle authorities.
 
-### Phase F — Dispatch attachment
+### Phase F — Planning-run orchestration introduction (AMENDED)
 
-Attach timeout scheduling and completion dispatch only after lifecycle authority is centralized.
+Introduce:
 
-### Phase G — Verification closure
+- planning-run orchestration state,
+- `PlanningRunEpoch`,
+- pinned `RuntimePolicyEpoch` continuity for one logical planning run,
+- immutable resume-point descriptors,
+- and explicit restart admission law.
+
+### Phase G — Dispatch attachment
+
+Attach timeout scheduling and completion dispatch only after lifecycle authority is centralized and fresh-session
+restart
+semantics are fixed.
+
+### Phase H — Verification closure
 
 Update tests, golden vectors, and race coverage so that all lifecycle law is mechanically enforced.
 
-### Phase H — Mechanical closure
+### Phase I — Mechanical closure
 
 Publish the companion design note defining low-level layout, CAS encoding, visibility mechanics, attach/close atomic
-coordination, builder supervision, commit-right arbitration, grace-barrier reclamation, and false-sharing mitigation
-strategy consistent with this ADR.
+coordination, builder supervision, commit-right arbitration, grace-barrier reclamation, run-context / resume-point
+mechanics, worker-backing freshness/versioning, and false-sharing mitigation strategy consistent with this ADR.
 
 ---
 
@@ -1136,6 +1470,23 @@ the exact runtime mechanical strategy.
 Rejected because speculative or duplicate-builder scenarios require build execution and authoritative publication to
 remain distinct.
 
+### Reuse `PolicyEpoch` as the logical planning-run epoch (AMENDED)
+
+Rejected because runtime-policy snapshot version and logical planning-run continuity are distinct semantic axes.
+
+`RuntimePolicyEpoch` belongs to governance snapshot publication.  
+`PlanningRunEpoch` belongs to run continuity across suspend / restart.
+
+Collapsing them would make policy publication semantics and run-orchestration semantics ambiguous.
+
+### Require fresh physical backing allocation for every fresh-session restart (AMENDED)
+
+Rejected because fresh-session restart requires fresh worker-local session semantics, not mandatory fresh
+primitive-array
+or slab allocation.
+
+Worker-backing freshness/versioning must remain a distinct axis from logical run continuity.
+
 ---
 
 ## Consequences
@@ -1145,6 +1496,15 @@ remain distinct.
 The runtime gains an explicit, enumerable, verifiable lifecycle law.  
 The implementation becomes more compatible with DDD, hexagonal architecture, and compiler-style determinism.  
 Future operational changes can be absorbed without destabilizing the semantic core.
+
+The runtime also gains explicit separation among:
+
+- runtime-policy snapshot version,
+- planning-run continuity,
+- worker-backing freshness,
+- and L2 lifecycle-host generation,
+
+which reduces semantic drift across future optimization waves.
 
 ### Negative
 
@@ -1164,11 +1524,16 @@ It does not change exact-match authority, canonical equality, or semantic result
 Kontrakt SHALL treat L2 join lifecycle semantics as an explicit dual-axis state machine with single terminalization
 authority.
 
+Where fresh-session restart is enabled, Kontrakt SHALL additionally treat planning-run orchestration as an explicit
+orthogonal runtime-boundary lifecycle axis.
+
 Cost-center metering remains a separate protocol vocabulary.  
 Lifecycle legality, exact-once terminalization, visibility ordering, irreversibility, race arbitration, region-aware
-terminalization, builder supervision, publication-right arbitration, grace-aware reclamation, and panic-grade integrity
-handling become explicit runtime law.
+terminalization, builder supervision, publication-right arbitration, grace-aware reclamation, planning-run continuity,
+runtime-policy pinning, and panic-grade integrity handling become explicit runtime law.
 
 From this ADR onward, any implementation that relies on implicit future semantics, polling-era coordination as lifecycle
 truth, fragmented terminalization authority, undefined race resolution, silent degradation after integrity failure,
-indefinite orphaned builder authority, or conflation of build permission with publish permission is non-compliant.
+indefinite orphaned builder authority, conflation of build permission with publish permission, conflation of
+`RuntimePolicyEpoch` with `PlanningRunEpoch`, conflation of `PlanningRunEpoch` with `WorkerBackingEpoch`, or conflation
+of governance snapshot version with L2 host generation is non-compliant.

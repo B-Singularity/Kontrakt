@@ -18,18 +18,18 @@ import planning.domain.session.policy.ResolvedRuntimePolicy
  * - benign duplicate delivery of the exact same snapshot
  * - same-id / different-payload integrity violations
  */
-class PolicyEpoch private constructor(
+class RuntimePolicyEpoch private constructor(
     val id: Long,
     val policy: ResolvedRuntimePolicy,
 ) {
 
     override fun toString(): String {
-        return "PolicyEpoch(id=$id, policy=$policy)"
+        return "RuntimePolicyEpoch(id=$id, policy=$policy)"
     }
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
-        if (other !is PolicyEpoch) return false
+        if (other !is RuntimePolicyEpoch) return false
 
         return id == other.id && policy == other.policy
     }
@@ -45,14 +45,14 @@ class PolicyEpoch private constructor(
         fun issue(
             id: Long,
             policy: ResolvedRuntimePolicy,
-        ): PolicyEpoch {
+        ): RuntimePolicyEpoch {
             if (id < 0L) {
                 throw PlanningProtocolIntegrityException(
-                    "PolicyEpoch.id must be >= 0: $id"
+                    "RuntimePolicyEpoch.id must be >= 0: $id"
                 )
             }
 
-            return PolicyEpoch(
+            return RuntimePolicyEpoch(
                 id = id,
                 policy = policy,
             )

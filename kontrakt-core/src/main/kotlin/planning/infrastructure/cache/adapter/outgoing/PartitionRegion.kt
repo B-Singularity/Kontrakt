@@ -3,7 +3,7 @@ package planning.infrastructure.cache.adapter.outgoing
 import ir.plan.signature.PlanCacheKey
 import planning.domain.exception.PlanningProtocolIntegrityException
 import planning.domain.fault.L2FaultKind
-import planning.domain.port.outgoing.PlanInternResult
+import planning.domain.port.outgoing.PlanInternStep
 import planning.domain.protocol.CostCenter
 import planning.domain.session.PlannerSession
 import planning.domain.vo.PartitionId
@@ -48,11 +48,11 @@ class PartitionRegion private constructor(
         key: PlanCacheKey,
         routeKeyBits: Long,
         session: PlannerSession,
-    ): PlanInternResult {
+    ): PlanInternStep {
         if (closed.get()) {
             session.step(CostCenter.L2_BYPASS_READ)
             session.step(CostCenter.L2_FAULT_CIRCUIT_OPEN)
-            return PlanInternResult.fault(L2FaultKind.CIRCUIT_OPEN)
+            return PlanInternStep.fault(L2FaultKind.CIRCUIT_OPEN)
         }
 
         if (isCapacityExceeded()) {
@@ -62,7 +62,7 @@ class PartitionRegion private constructor(
         if (circuitOpen.get()) {
             session.step(CostCenter.L2_BYPASS_READ)
             session.step(CostCenter.L2_FAULT_CIRCUIT_OPEN)
-            return PlanInternResult.fault(L2FaultKind.CIRCUIT_OPEN)
+            return PlanInternStep.fault(L2FaultKind.CIRCUIT_OPEN)
         }
 
         session.step(CostCenter.L2_SHARD_ROUTE)
