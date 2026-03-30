@@ -2,6 +2,7 @@ package planning.infrastructure.runtime.orchestration
 
 import planning.domain.runtime.orchestration.PlanningResumePoint
 import planning.domain.runtime.orchestration.PlanningRunEpoch
+import planning.domain.runtime.orchestration.PlanningRunRemainingBudget
 import planning.infrastructure.runtime.policy.RuntimePolicyEpoch
 
 /**
@@ -11,14 +12,14 @@ import planning.infrastructure.runtime.policy.RuntimePolicyEpoch
  * - acquire/build a fresh worker-local PlannerSession,
  * - pin the already-selected RuntimePolicyEpoch,
  * - continue the same PlanningRunEpoch,
- * - debit/request remaining physical budget under the same run.
+ * - carry forward the same remaining run-scoped execution budget.
  */
 class PlanningRunRestartAdmission private constructor(
     val workerSessionLease: PlanningRunWorkerSessionLease,
     val runEpoch: PlanningRunEpoch,
     val pinnedRuntimePolicyEpoch: RuntimePolicyEpoch,
     val resumePoint: PlanningResumePoint,
-    val remainingPhysicalBudget: Int,
+    val remainingBudget: PlanningRunRemainingBudget,
 ) {
     companion object {
         @JvmStatic
@@ -27,14 +28,14 @@ class PlanningRunRestartAdmission private constructor(
             runEpoch: PlanningRunEpoch,
             pinnedRuntimePolicyEpoch: RuntimePolicyEpoch,
             resumePoint: PlanningResumePoint,
-            remainingPhysicalBudget: Int,
+            remainingBudget: PlanningRunRemainingBudget,
         ): PlanningRunRestartAdmission {
             return PlanningRunRestartAdmission(
                 workerSessionLease = workerSessionLease,
                 runEpoch = runEpoch,
                 pinnedRuntimePolicyEpoch = pinnedRuntimePolicyEpoch,
                 resumePoint = resumePoint,
-                remainingPhysicalBudget = remainingPhysicalBudget,
+                remainingBudget = remainingBudget,
             )
         }
     }

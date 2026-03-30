@@ -6,6 +6,7 @@ import planning.domain.runtime.lifecycle.PlanningRunLifecycleLaw
 import planning.domain.runtime.lifecycle.PlanningRunState
 import planning.domain.runtime.orchestration.PlanningResumePoint
 import planning.domain.runtime.orchestration.PlanningRunEpoch
+import planning.domain.runtime.orchestration.PlanningRunRemainingBudget
 import planning.infrastructure.runtime.policy.RuntimePolicyEpoch
 
 /**
@@ -15,21 +16,30 @@ import planning.infrastructure.runtime.policy.RuntimePolicyEpoch
  * - one PlanningRunEpoch
  * - one pinned RuntimePolicyEpoch
  * - one PlanningRunState
- * - one run-scoped remaining physical budget
+ * - one run-scoped remaining execution budget ledger
  * - zero or one active worker-session lease
  * - zero or one current joined-wait suspension descriptor
  * - and one terminal cause when aborted or panic-isolated
  *
- * This object deliberately uses one monitor-protected authority surface.
- * It is a runtime-boundary orchestration aggregate, not a planner hot-path primitive host.
+ * This aggregate does NOT own:
+ * - worker-local primitive backing
+ * - planner-core frame stack
+ * - L2 lifecycle-host truth
+ * - runtime-policy installation
+ * - adapter-owned completion-dispatch infrastructure
+ *
+ * Concurrency stance:
+ * - one monitor-protected authority surface
+ * - explicit state-machine invariant checks
+ * - no volatile/mixed authority surface
  */
 class PlanningRunContext private constructor(
     val runEpoch: PlanningRunEpoch,
     val pinnedRuntimePolicyEpoch: RuntimePolicyEpoch,
-    initialRemainingPhysicalBudget: Int,
+    initialRemainingBudget: PlanningRunRemainingBudget,
 ) {
     private var state: PlanningRunState = PlanningRunState.INITIALIZED
-    private var remainingPhysicalBudget: Int = initialRemainingPhysicalBudget
+    private var remainingBudget: PlanningRunRemainingBudget = initialRemainingBudget
     private var activeWorkerSessionLease: PlanningRunWorkerSessionLease? = null
     private var currentSuspension: PlanningRunSuspension? = null
     private var terminalCause: Throwable? = null
@@ -39,7 +49,13 @@ class PlanningRunContext private constructor(
     fun stateAcquire(): PlanningRunState = state
 
     @Synchronized
-    fun remainingPhysicalBudgetAcquire(): Int = remainingPhysicalBudget
+    fun remainingBudgetAcquire(): PlanningRunRemainingBudget = remainingBudget
+
+    @Synchronized
+    fun remainingPhysicalStepsAcquire(): Int = remainingBudget.remainingPhysicalSteps
+
+    @Synchronized
+    fun remainingSemanticWorkUnitsAcquire(): Int = remainingBudget.remainingSemanticWorkUnits
 
     @Synchronized
     fun activeWorkerSessionLeaseAcquire(): PlanningRunWorkerSessionLease? = activeWorkerSessionLease
@@ -59,8 +75,7 @@ class PlanningRunContext private constructor(
     /**
      * INITIALIZED -> RUNNING
      *
-     * This is the lawful first admission of one worker-local session lease.
-     * It exists so that the run may be queued/admitted before first execution.
+     * Lawful first admission of one worker-local session lease.
      */
     @Synchronized
     fun admitInitialRun(): PlanningRunWorkerSessionLease {
@@ -77,47 +92,55 @@ class PlanningRunContext private constructor(
             )
         }
 
-        val newLease = issueNextLease()
-        activeWorkerSessionLease = newLease
+        val lease = issueNextLease()
+        activeWorkerSessionLease = lease
         state = PlanningRunState.RUNNING
 
         assertStructuralInvariant()
-        return newLease
+        return lease
     }
 
     /**
-     * Debits run-scoped remaining physical budget.
+     * Debits run-scoped remaining physical-step budget.
      *
-     * This budget is run-scoped, not session-scoped.
-     * A restarted session therefore continues consuming from the same remaining pool.
-     *
-     * This operation is legal only while the run is actively executing.
+     * This is separate from pinned policy snapshot ownership.
      */
     @Synchronized
-    fun debitPhysicalBudget(
+    fun debitPhysicalSteps(
         units: Int,
-    ): Int {
+    ): PlanningRunRemainingBudget {
         assertStructuralInvariant()
 
         if (state != PlanningRunState.RUNNING) {
             throw PlanningProtocolIntegrityException(
-                "Physical-budget debit requires RUNNING state: $state"
-            )
-        }
-        if (units <= 0) {
-            throw PlanningProtocolIntegrityException(
-                "PlanningRunContext.debitPhysicalBudget requires units > 0: $units"
-            )
-        }
-        if (units > remainingPhysicalBudget) {
-            throw CapacityExceededException(
-                limitType = "RUN_SCOPED_PHYSICAL_BUDGET",
-                value = units.toLong(),
+                "Physical-step debit requires RUNNING state: $state"
             )
         }
 
-        remainingPhysicalBudget -= units
-        return remainingPhysicalBudget
+        remainingBudget = remainingBudget.debitPhysicalSteps(units)
+        return remainingBudget
+    }
+
+    /**
+     * Debits run-scoped remaining semantic-work budget.
+     *
+     * This keeps run-level boundedness aligned with the fact that the current
+     * PlannerSession model tracks both physical and semantic counters.
+     */
+    @Synchronized
+    fun debitSemanticWorkUnits(
+        units: Int,
+    ): PlanningRunRemainingBudget {
+        assertStructuralInvariant()
+
+        if (state != PlanningRunState.RUNNING) {
+            throw PlanningProtocolIntegrityException(
+                "Semantic-work debit requires RUNNING state: $state"
+            )
+        }
+
+        remainingBudget = remainingBudget.debitSemanticWorkUnits(units)
+        return remainingBudget
     }
 
     /**
@@ -148,8 +171,6 @@ class PlanningRunContext private constructor(
 
     /**
      * SUSPENDED_ON_JOIN -> READY_TO_RESTART
-     *
-     * Joined completion is now available and a fresh worker-local session may be admitted.
      */
     @Synchronized
     fun markReadyToRestart() {
@@ -163,8 +184,8 @@ class PlanningRunContext private constructor(
             from = state,
             to = PlanningRunState.READY_TO_RESTART,
         )
-        state = PlanningRunState.READY_TO_RESTART
 
+        state = PlanningRunState.READY_TO_RESTART
         assertStructuralInvariant()
     }
 
@@ -187,9 +208,9 @@ class PlanningRunContext private constructor(
             expectedState = PlanningRunState.READY_TO_RESTART,
         )
 
-        if (remainingPhysicalBudget <= 0) {
+        if (!remainingBudget.hasRemainingPhysicalSteps()) {
             throw CapacityExceededException(
-                limitType = "RUN_SCOPED_PHYSICAL_BUDGET",
+                limitType = "RUN_SCOPED_PHYSICAL_STEPS",
                 value = 1L,
             )
         }
@@ -199,19 +220,19 @@ class PlanningRunContext private constructor(
             )
         }
 
-        val newLease = issueNextLease()
-        activeWorkerSessionLease = newLease
+        val lease = issueNextLease()
+        activeWorkerSessionLease = lease
         currentSuspension = null
         state = PlanningRunState.RUNNING
 
         assertStructuralInvariant()
 
         return PlanningRunRestartAdmission.issue(
-            workerSessionLease = newLease,
+            workerSessionLease = lease,
             runEpoch = runEpoch,
             pinnedRuntimePolicyEpoch = pinnedRuntimePolicyEpoch,
             resumePoint = suspension.resumePoint,
-            remainingPhysicalBudget = remainingPhysicalBudget,
+            remainingBudget = remainingBudget,
         )
     }
 
@@ -239,13 +260,7 @@ class PlanningRunContext private constructor(
     }
 
     /**
-     * Non-panic terminalization.
-     *
-     * Allowed from:
-     * - INITIALIZED
-     * - RUNNING
-     * - SUSPENDED_ON_JOIN
-     * - READY_TO_RESTART
+     * Non-panic unsuccessful terminalization.
      */
     @Synchronized
     fun abort(
@@ -260,10 +275,7 @@ class PlanningRunContext private constructor(
     }
 
     /**
-     * Panic-grade terminalization.
-     *
-     * This state records that the failure is not merely logical/request-level failure,
-     * but one that may require worker/backing quarantine or stronger isolation policy.
+     * Panic-grade isolated terminalization.
      */
     @Synchronized
     fun panicIsolate(
@@ -298,6 +310,7 @@ class PlanningRunContext private constructor(
                         "INITIALIZED -> $targetState must not receive an active worker-session lease."
                     )
                 }
+
                 PlanningRunLifecycleLaw.requireTransition(
                     from = state,
                     to = targetState,
@@ -309,6 +322,7 @@ class PlanningRunContext private constructor(
                     ?: throw PlanningProtocolIntegrityException(
                         "RUNNING -> $targetState requires the active worker-session lease."
                     )
+
                 requireMatchingActiveLease(lease)
 
                 PlanningRunLifecycleLaw.requireTransition(
@@ -413,6 +427,7 @@ class PlanningRunContext private constructor(
      * - suspension absent
      * - terminal cause present
      */
+
     private fun assertStructuralInvariant() {
         when (state) {
             PlanningRunState.INITIALIZED -> {
@@ -510,22 +525,38 @@ class PlanningRunContext private constructor(
     }
 
     companion object {
+        /**
+         * Creates a new logical planning run with its initial remaining execution budget
+         * derived from the pinned runtime-policy snapshot.
+         */
         @JvmStatic
         fun issue(
             runEpoch: PlanningRunEpoch,
             pinnedRuntimePolicyEpoch: RuntimePolicyEpoch,
-            initialRemainingPhysicalBudget: Int,
         ): PlanningRunContext {
-            if (initialRemainingPhysicalBudget <= 0) {
-                throw PlanningProtocolIntegrityException(
-                    "PlanningRunContext.initialRemainingPhysicalBudget must be > 0: $initialRemainingPhysicalBudget"
-                )
-            }
-
             return PlanningRunContext(
                 runEpoch = runEpoch,
                 pinnedRuntimePolicyEpoch = pinnedRuntimePolicyEpoch,
-                initialRemainingPhysicalBudget = initialRemainingPhysicalBudget,
+                initialRemainingBudget = PlanningRunRemainingBudget.issueFrom(
+                    pinnedRuntimePolicyEpoch.policy.sessionBudget
+                ),
+            )
+        }
+
+        /**
+         * Explicit testing / recovery-oriented constructor for cases that must restore
+         * a specific remaining run budget while keeping the same pinned policy snapshot.
+         */
+        @JvmStatic
+        fun issueWithRemainingBudget(
+            runEpoch: PlanningRunEpoch,
+            pinnedRuntimePolicyEpoch: RuntimePolicyEpoch,
+            initialRemainingBudget: PlanningRunRemainingBudget,
+        ): PlanningRunContext {
+            return PlanningRunContext(
+                runEpoch = runEpoch,
+                pinnedRuntimePolicyEpoch = pinnedRuntimePolicyEpoch,
+                initialRemainingBudget = initialRemainingBudget,
             )
         }
     }
