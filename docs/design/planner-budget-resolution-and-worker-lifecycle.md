@@ -576,6 +576,18 @@ If reset fails, or if post-reset invariants cannot be proven:
 - it MUST NOT be returned to the pool,
 - it MUST be discarded or rebuilt according to runtime policy.
 
+### 9.4.1 Panic-Isolated Run Quarantine Rule (AMENDED)
+
+If a logical planning run terminates through panic-grade isolation rather than ordinary abort, the runtime boundary MUST
+treat the surrounding worker-local backing as quarantine-requiring unless safety is proven by stronger implementation
+mechanics.
+
+Normative consequences:
+
+- panic-isolated termination MUST NOT be treated as an ordinary reusable-session exit by default,
+- the backing MUST NOT be returned to the ordinary reusable pool unless post-panic safety is explicitly proven,
+- and quarantine remains the default fail-closed response for potential worker-backing contamination.
+
 ### 9.5 Kotlin Reference Shape
 
 ```kotlin
@@ -585,6 +597,17 @@ interface PlannerStatePool {
     fun quarantine(state: PlannerWorkerState, cause: Throwable)
 }
 ```
+
+### 9.5.1 Initial Run Admission Rule (AMENDED)
+
+If the runtime supports queueing or deferred admission before first execution, one logical planning run MAY exist in an
+initialized-but-not-yet-running state before the first worker-local planner session is admitted.
+
+Normative consequences:
+
+- no worker-local planner backing is considered actively owned by that run before first admission,
+- no worker-local planner state may be retained merely because the logical run object already exists,
+- and the first worker-local execution session begins only after explicit runtime-boundary admission.
 
 ### 9.6 Joined-Waiter Fresh-Session Restart Rule (AMENDED)
 
@@ -599,6 +622,12 @@ Normative consequences:
 
 This keeps join resumption compatible with zero-residue worker reuse.
 
+This rule also implies that fresh-session restart preserves logical run continuity rather than retaining one suspended
+worker-local session as the continuation owner.
+
+If the runtime distinguishes an initialized planning run from an actively running one, that distinction remains a
+runtime-boundary orchestration concern and does not weaken the worker cleanup/reset obligations above.
+
 ### 9.7 Request-Scoped Physical-Budget Carry-Forward (AMENDED)
 
 If joined-waiter resumption uses fresh-session restart, boundedness MUST be enforced by carrying forward
@@ -612,7 +641,19 @@ Normative rule:
   budget path,
 - no additional retry-count policy surface or retry fault kind is introduced by this note.
 
-### 9.7.1 Planning-Run Continuity Rule (AMENDED)
+### 9.7.1 Ordinary Abort vs Panic-Isolated Terminalization (AMENDED)
+
+Fresh-session restart boundedness and worker lifecycle cleanup must distinguish:
+
+- ordinary unsuccessful run termination,
+- from panic-grade isolated termination.
+
+Normative rule:
+
+- ordinary abort MAY still permit ordinary worker-backing reuse after lawful reset,
+- but panic-isolated terminalization MUST default to quarantine unless stronger post-failure safety proof exists.
+
+### 9.7.2 Planning-Run Continuity Rule (AMENDED)
 
 If fresh-session restart is enabled, the runtime boundary MUST distinguish:
 
@@ -627,7 +668,7 @@ Normative consequences:
 - the worker lifecycle note does not redefine the full run-state machine,
   but worker/session mechanics MUST remain compatible with that run-level continuity.
 
-### 9.7.2 Pinned Runtime-Policy Continuity Rule (AMENDED)
+### 9.7.3 Pinned Runtime-Policy Continuity Rule (AMENDED)
 
 All sessions belonging to one logical planning run MUST observe the same pinned `RuntimePolicyEpoch`.
 
@@ -638,7 +679,7 @@ Normative consequences:
   but not with a newly chosen runtime-policy snapshot,
 - and request/run continuity remains deterministic even if a newer runtime-policy snapshot is installed for later runs.
 
-### 9.7.3 Logical Freshness vs Physical Backing Reuse (AMENDED)
+### 9.7.4 Logical Freshness vs Physical Backing Reuse (AMENDED)
 
 Fresh-session restart requires **logical freshness**, not mandatory fresh physical allocation.
 
@@ -653,7 +694,7 @@ Therefore:
 - “fresh session” does **not** imply “fresh heap object graph for every primitive backing,”
 - and this note does **not** require per-restart reallocation of worker-local slabs or arrays.
 
-### 9.7.4 Worker-Backing Epoch Rule (AMENDED)
+### 9.7.5 Worker-Backing Epoch Rule (AMENDED)
 
 If the runtime models worker-backing freshness/version explicitly, that version axis SHALL be named
 `WorkerBackingEpoch`.
@@ -667,7 +708,7 @@ Normative rule:
 A compliant implementation MAY represent `WorkerBackingEpoch` as a factory-issued immutable wrapper, an inline/value
 class, or an equivalent monotonically-issued version token.
 
-### 9.7.5 Planning Resume Point Contract (AMENDED)
+### 9.7.6 Planning Resume Point Contract (AMENDED)
 
 If fresh-session restart is enabled, restart sites MUST be represented by immutable resume-point descriptors.
 
@@ -684,7 +725,7 @@ Extensibility rule:
 - but the resume-point contract MUST remain open to future site additions driven by profiling, KSP/compile-time
   optimization, or later runtime specialization work.
 
-### 9.7.6 Kotlin Reference Shape (Illustrative) (AMENDED)
+### 9.7.7 Kotlin Reference Shape (Illustrative) (AMENDED)
 
 ````kotlin
 interface PlanningResumePoint {
@@ -699,7 +740,7 @@ Illustrative compatibility rule:
 - `schemaVersion` protects payload evolution,
 - and concrete payloads remain immutable.
 
-### 9.7.7 Planning-Run / Worker Boundary Shape (Illustrative) (AMENDED)
+### 9.7.8 Planning-Run / Worker Boundary Shape (Illustrative) (AMENDED)
 
 `````kotlin
 class PlanningRunContext private constructor(
@@ -865,7 +906,21 @@ If builder-owned handles are used, implementations MAY enforce terminalization s
 
 These two layers serve different failure paths and MUST NOT be treated as redundant by default.
 
-### 12.5 Planning-Run Abort vs Worker-Boundary Abort (AMENDED)
+### 12.5 Panic-Isolated Run Failure (AMENDED)
+
+If a runtime-boundary failure is classified as panic-grade rather than ordinary unsuccessful completion, the logical
+planning run MUST terminate under stronger isolation semantics than ordinary abort.
+
+Examples may include:
+
+- worker-local backing contamination suspicion,
+- integrity-class runtime failure requiring stronger boundary isolation,
+- equivalent implementation-defined panic-grade faults.
+
+This note does not redefine the full planning-run state machine, but worker lifecycle behavior MUST remain compatible
+with a distinct panic-isolated terminal run outcome.
+
+### 12.6 Planning-Run Abort vs Worker-Boundary Abort (AMENDED)
 
 If fresh-session restart is enabled, implementations MUST distinguish:
 
@@ -898,6 +953,9 @@ The following tests are required for this bridge layer:
 - `PlanningRunPinnedRuntimePolicyEpochTest`
 - `LogicalFreshnessWithoutMandatoryFreshBackingAllocationTest`
 - `ResumePointDoesNotRetainWorkerLocalPlannerStateTest`
+- `InitialRunAdmissionDoesNotRetainWorkerBackingTest`
+- `PanicIsolatedRunTriggersWorkerQuarantineTest`
+- `PanicIsolatedRunDoesNotPermitOrdinaryRestartTest`
 
 ---
 

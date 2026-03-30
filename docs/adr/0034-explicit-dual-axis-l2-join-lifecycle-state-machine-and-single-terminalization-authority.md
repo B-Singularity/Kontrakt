@@ -537,13 +537,21 @@ It does not replace or redefine shared-slot, waiter, builder-handle, or commit-r
 Where joined-waiter completion is consumed through fresh-session restart, the runtime boundary MUST expose exactly the
 following top-level planning-run orchestration states:
 
+- `INITIALIZED`
 - `RUNNING`
 - `SUSPENDED_ON_JOIN`
 - `READY_TO_RESTART`
 - `COMPLETED`
 - `ABORTED`
+- `PANIC_ISOLATED`
 
 These states have the following meanings.
+
+`INITIALIZED` means the logical planning run has been created, but no worker-local session lease has yet been admitted
+into active execution.
+
+This state exists to support queueing, admission control, or equivalent runtime-boundary delay before the first
+`RUNNING` session begins.
 
 `RUNNING` means one logical planning run is actively executing through one live `PlannerSession`.
 
@@ -556,6 +564,13 @@ outcome, and the current `PlannerSession` is no longer permitted to remain retai
 `COMPLETED` means the logical planning run has produced its final semantic result and no further restart is reachable.
 
 `ABORTED` means the logical planning run has terminalized unsuccessfully and no restart is reachable.
+
+`PANIC_ISOLATED` means the logical planning run terminalized under panic-grade isolation semantics.
+
+This state is stronger than ordinary `ABORTED`.
+It records that the runtime boundary must treat the surrounding worker/backing or equivalent execution substrate as
+potentially contaminated, quarantine-requiring, or otherwise unsafe for ordinary reuse until the worker lifecycle
+boundary proves safety.
 
 ### Planning-run state is not a replacement for L2 state
 
@@ -614,6 +629,16 @@ It must never be interpreted as a merely local flag with no admission consequenc
 
 `RECLAIMED` always means the region is no longer allowed to host mutable lifecycle state and the required grace barrier
 has completed.
+
+`INITIALIZED` always means the run exists but no worker-local session lease has yet been admitted into active
+execution.
+
+It must not be collapsed into `RUNNING` merely because creation and first admission happen close together in one
+implementation.
+
+`PANIC_ISOLATED` always means panic-grade terminalization with stronger isolation semantics than ordinary `ABORTED`.
+
+It must not be reused as a synonym for ordinary logical failure.
 
 `RUNNING` for planning-run orchestration always means exactly one live worker-local session currently owns execution for
 that logical run.
@@ -770,20 +795,29 @@ reclamation.
 
 The only legal planning-run orchestration transitions are:
 
+- `INITIALIZED -> RUNNING`
+- `INITIALIZED -> ABORTED`
+- `INITIALIZED -> PANIC_ISOLATED`
 - `RUNNING -> SUSPENDED_ON_JOIN`
-- `SUSPENDED_ON_JOIN -> READY_TO_RESTART`
-- `READY_TO_RESTART -> RUNNING`
 - `RUNNING -> COMPLETED`
 - `RUNNING -> ABORTED`
+- `RUNNING -> PANIC_ISOLATED`
+- `SUSPENDED_ON_JOIN -> READY_TO_RESTART`
 - `SUSPENDED_ON_JOIN -> ABORTED`
+- `SUSPENDED_ON_JOIN -> PANIC_ISOLATED`
+- `READY_TO_RESTART -> RUNNING`
 - `READY_TO_RESTART -> ABORTED`
+- `READY_TO_RESTART -> PANIC_ISOLATED`
 
 All other planning-run transitions are forbidden.
 
 In particular, the following are forbidden:
 
-- `COMPLETED -> RUNNING`,
-- `ABORTED -> RUNNING`,
+- `INITIALIZED -> READY_TO_RESTART`
+- `INITIALIZED -> SUSPENDED_ON_JOIN`
+- `COMPLETED -> RUNNING`
+- `ABORTED -> RUNNING`
+- `PANIC_ISOLATED -> RUNNING`
 - `READY_TO_RESTART -> COMPLETED` without an intervening lawful resumed execution path,
 - retaining more than one live worker-local session for the same `PlanningRunEpoch`,
 - and reopening a terminal planning run.
@@ -826,6 +860,10 @@ The following invariants are constitutional.
 25. Completion dispatch MAY advance planning-run orchestration state, but it MUST NOT rewrite L2 lifecycle truth.
 26. `L2HostGeneration` MUST NOT be used as a substitute for `RuntimePolicyEpoch`, `PlanningRunEpoch`, or
     `WorkerBackingEpoch`.
+27. `INITIALIZED` planning runs MUST NOT retain an active worker-session lease.
+28. `PANIC_ISOLATED` planning runs MUST NOT retain an active worker-session lease or a restartable suspension handle.
+29. Panic-grade terminalization of a planning run MUST remain stronger than ordinary `ABORTED`; it is not permitted to
+    degrade to ordinary abort merely because the worker/session boundary cleanup succeeded.
 
 ---
 
@@ -885,6 +923,14 @@ It does not replace:
 - builder-handle terminalization authority,
 - commit-right authority,
 - or region authority.
+
+The planning-run orchestration authority also governs:
+
+- initial admission from `INITIALIZED` to `RUNNING`,
+- ordinary unsuccessful terminalization to `ABORTED`,
+- and panic-grade terminalization to `PANIC_ISOLATED`.
+
+It is therefore the single authority for run-level queue/admit/suspend/restart/terminal decisions.
 
 ### Runtime-policy snapshot authority (AMENDED)
 
@@ -1202,6 +1248,9 @@ The following changes are ordinary refactors and do **not** require ADR amendmen
 - adding new immutable planning-run resume-site payload schemas while preserving existing run-state meanings,
 - refining worker-backing reset mechanics while preserving the fresh-session restart law,
 - refining `L2HostGeneration` mechanics while preserving its episode-discriminator meaning.
+- changing the meaning of `INITIALIZED` or `PANIC_ISOLATED`,
+- collapsing `PANIC_ISOLATED` back into ordinary `ABORTED`,
+- or removing the explicit initial-admission state while queueing/admission remains a supported runtime behavior,
 
 The following changes **do** require ADR amendment:
 
@@ -1290,15 +1339,22 @@ Any transition not listed here is illegal.
 
 | Current State       | Event                                        | Next State          | Legal |
 |---------------------|----------------------------------------------|---------------------|-------|
+| `INITIALIZED`       | first worker-session admission wins          | `RUNNING`           | Yes   |
+| `INITIALIZED`       | ordinary run-boundary abort wins             | `ABORTED`           | Yes   |
+| `INITIALIZED`       | panic-grade isolation wins                   | `PANIC_ISOLATED`    | Yes   |
 | `RUNNING`           | joined-wait suspension becomes authoritative | `SUSPENDED_ON_JOIN` | Yes   |
-| `SUSPENDED_ON_JOIN` | joined completion becomes restart-eligible   | `READY_TO_RESTART`  | Yes   |
-| `READY_TO_RESTART`  | fresh-session restart admission wins         | `RUNNING`           | Yes   |
 | `RUNNING`           | final semantic result becomes authoritative  | `COMPLETED`         | Yes   |
-| `RUNNING`           | fatal run-boundary abort wins                | `ABORTED`           | Yes   |
-| `SUSPENDED_ON_JOIN` | fatal run-boundary abort wins                | `ABORTED`           | Yes   |
-| `READY_TO_RESTART`  | fatal run-boundary abort wins                | `ABORTED`           | Yes   |
+| `RUNNING`           | ordinary run-boundary abort wins             | `ABORTED`           | Yes   |
+| `RUNNING`           | panic-grade isolation wins                   | `PANIC_ISOLATED`    | Yes   |
+| `SUSPENDED_ON_JOIN` | joined completion becomes restart-eligible   | `READY_TO_RESTART`  | Yes   |
+| `SUSPENDED_ON_JOIN` | ordinary run-boundary abort wins             | `ABORTED`           | Yes   |
+| `SUSPENDED_ON_JOIN` | panic-grade isolation wins                   | `PANIC_ISOLATED`    | Yes   |
+| `READY_TO_RESTART`  | fresh-session restart admission wins         | `RUNNING`           | Yes   |
+| `READY_TO_RESTART`  | ordinary run-boundary abort wins             | `ABORTED`           | Yes   |
+| `READY_TO_RESTART`  | panic-grade isolation wins                   | `PANIC_ISOLATED`    | Yes   |
 | `COMPLETED`         | any state-changing event                     | —                   | No    |
 | `ABORTED`           | any state-changing event                     | —                   | No    |
+| `PANIC_ISOLATED`    | any state-changing event                     | —                   | No    |
 
 ### Race arbitration matrix
 
@@ -1345,6 +1401,11 @@ The following verification obligations become mandatory.
 23. `WorkerBackingEpoch` freshness is not used as a substitute for `PlanningRunEpoch` continuity.
 24. Stale `L2HostGeneration` signals do not reopen a terminated planning run.
 25. Any planning-run transition absent from the normative matrix is rejected as illegal.
+26. `INITIALIZED` planning runs do not retain an active worker-session lease before first admission.
+27. `PANIC_ISOLATED` planning runs do not admit restart and require stronger isolation semantics than ordinary
+    `ABORTED`.
+28. Panic-grade terminalization during `SUSPENDED_ON_JOIN` cancels the current suspension handle and closes restart
+    reachability.
 
 ---
 

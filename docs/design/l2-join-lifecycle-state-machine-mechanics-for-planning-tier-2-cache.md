@@ -998,6 +998,16 @@ It is a protocol integrity break.
 
 Treating that as a recoverable operational miss would hide corruption.
 
+### Run-boundary handoff for panic isolation (AMENDED)
+
+If L2 lifecycle mechanics detect or publish panic-grade isolation, the runtime boundary MUST map that outcome to the
+stronger planning-run terminal path rather than to ordinary unsuccessful completion.
+
+Normative consequence:
+
+- L2 panic isolation may still remain distinct from ordinary shared-slot failure,
+- and when propagated across the runtime boundary it MUST remain stronger than ordinary run abort.
+
 ---
 
 ## 15. Builder Supervision Mechanics
