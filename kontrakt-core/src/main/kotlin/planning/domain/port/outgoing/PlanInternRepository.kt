@@ -1,8 +1,8 @@
 package planning.domain.port.outgoing
 
 import ir.plan.node.CanonicalPlanNode
-import ir.plan.signature.PlanCacheKey
 import planning.domain.fault.L2FaultKind
+import planning.domain.interner.PlanCacheKey
 import planning.domain.session.PlannerSession
 import planning.domain.vo.PartitionId
 

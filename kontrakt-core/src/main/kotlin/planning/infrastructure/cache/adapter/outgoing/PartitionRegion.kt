@@ -1,8 +1,8 @@
 package planning.infrastructure.cache.adapter.outgoing
 
-import ir.plan.signature.PlanCacheKey
 import planning.domain.exception.PlanningProtocolIntegrityException
 import planning.domain.fault.L2FaultKind
+import planning.domain.interner.PlanCacheKey
 import planning.domain.port.outgoing.PlanInternStep
 import planning.domain.protocol.CostCenter
 import planning.domain.session.PlannerSession

@@ -1,7 +1,7 @@
 package ir.plan.node
 
 import ir.exception.IrProtocolViolationException
-import planning.domain.port.outgoing.BreakpointStage
+import planning.domain.protocol.BreakpointStage
 
 /**
  * Raw planner-originated payload for deterministic cycle truncation.

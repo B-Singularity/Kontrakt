@@ -1,9 +1,10 @@
-package planning.domain.port.outgoing
+package planning.domain.vo
 
 import ir.identity.CanonicalSignature
 import ir.plan.node.RawCycleBreakPayload
 import planning.domain.exception.FaultKind
 import planning.domain.exception.PlanningProtocolIntegrityException
+import planning.domain.protocol.BreakpointStage
 
 /**
  * Deterministic cycle-break assembly below canonical sealing.

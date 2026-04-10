@@ -1,4 +1,4 @@
-package planning.domain.port.outgoing
+package planning.domain.vo
 
 import metamodel.domain.dto.MemberFact
 import metamodel.domain.dto.TypeFactsDTO
@@ -41,13 +41,4 @@ class OrderedActiveMembers private constructor(
             )
         }
     }
-}
-
-/**
- * Port that ratifies protocol ordering for active members.
- *
- * The planner core MUST NOT trust arbitrary adapter list order.
- */
-interface ActiveMemberOrderingGate {
-    fun ratify(facts: TypeFactsDTO): OrderedActiveMembers
 }

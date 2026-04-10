@@ -1,4 +1,4 @@
-package planning.domain.port.outgoing
+package planning.domain.vo
 
 import ir.identity.CanonicalSignature
 import ir.plan.node.RawPayloadNode

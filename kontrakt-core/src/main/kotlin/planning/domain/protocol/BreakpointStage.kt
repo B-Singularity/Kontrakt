@@ -1,4 +1,4 @@
-package planning.domain.port.outgoing
+package planning.domain.protocol
 
 import planning.domain.exception.PlanningProtocolIntegrityException
 

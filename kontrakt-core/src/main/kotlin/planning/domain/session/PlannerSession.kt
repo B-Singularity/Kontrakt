@@ -1,17 +1,17 @@
 package planning.domain.session
 
 import ir.identity.CanonicalSignature
-import ir.plan.signature.PlanCacheKey
 import metamodel.domain.dto.MemberFact
 import planning.domain.exception.FuelExhaustedException
 import planning.domain.exception.PlanningProtocolIntegrityException
 import planning.domain.exception.PlanningRuntimeInvariantException
-import planning.domain.port.outgoing.BreakpointStage
-import planning.domain.port.outgoing.ChildResultSlice
-import planning.domain.port.outgoing.OrderedActiveMembers
+import planning.domain.interner.PlanCacheKey
+import planning.domain.protocol.BreakpointStage
 import planning.domain.protocol.BudgetTrack
 import planning.domain.protocol.CostCenter
 import planning.domain.runtime.CommittedPlanNode
+import planning.domain.service.assembly.ChildResultSlice
+import planning.domain.vo.OrderedActiveMembers
 
 /**
  * Aggregate root for the worker-local semantic planning runtime.

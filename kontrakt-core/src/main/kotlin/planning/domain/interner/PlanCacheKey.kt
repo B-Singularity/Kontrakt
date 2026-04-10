@@ -1,9 +1,8 @@
-package ir.plan.signature
+package planning.domain.interner
 
 import ir.identity.CanonicalIdentifier
 import ir.identity.CanonicalSignature
 import java.util.Objects
-
 
 /**
  * Deterministic cache key for canonical plans.

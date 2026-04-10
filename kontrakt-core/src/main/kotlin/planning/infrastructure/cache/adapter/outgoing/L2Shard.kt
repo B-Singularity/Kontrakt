@@ -1,9 +1,9 @@
 package planning.infrastructure.cache.adapter.outgoing
 
 import ir.plan.node.CanonicalPlanNode
-import ir.plan.signature.PlanCacheKey
 import planning.domain.exception.PlanningProtocolIntegrityException
 import planning.domain.fault.L2FaultKind
+import planning.domain.interner.PlanCacheKey
 import planning.domain.port.outgoing.BuildHandle
 import planning.domain.port.outgoing.JoinContinuation
 import planning.domain.port.outgoing.JoinHandle

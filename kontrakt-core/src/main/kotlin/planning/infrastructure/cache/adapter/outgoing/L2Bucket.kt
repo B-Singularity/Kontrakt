@@ -1,7 +1,7 @@
 package planning.infrastructure.cache.adapter.outgoing
 
 import ir.plan.node.CanonicalPlanNode
-import ir.plan.signature.PlanCacheKey
+import planning.domain.interner.PlanCacheKey
 
 /**
  * Small collision bucket keyed by routeKeyBits at the shard-table level.

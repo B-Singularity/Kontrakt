@@ -1,4 +1,4 @@
-package planning.domain.port.outgoing
+package planning.domain.service.assembly
 
 import ir.plan.node.CanonicalPlanNode
 

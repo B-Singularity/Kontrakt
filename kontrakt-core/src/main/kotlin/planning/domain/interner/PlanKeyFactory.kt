@@ -1,8 +1,7 @@
-package planning.domain.service
+package planning.domain.interner
 
 import ir.identity.CanonicalIdentifier
 import ir.identity.CanonicalSignature
-import ir.plan.signature.PlanCacheKey
 import kontrakt.planning.domain.protocol.HashInputEncodingSpec
 import kontrakt.planning.domain.protocol.PrimitiveHash
 import kontrakt.planning.domain.protocol.SentinelRemapper
@@ -17,7 +16,7 @@ import planning.domain.vo.PartitionId
  *
  * Current alignment:
  * - [PlanCacheKey] carries the full exact-match tuple and route64.
- * - [PartitionId] remains the domain-level argument.
+ * - [planning.domain.vo.PartitionId] remains the domain-level argument.
  * - lowering to [ir.identity.CanonicalIdentifier] happens only inside this service.
  */
 class PlanKeyFactory private constructor(
@@ -89,7 +88,7 @@ class PlanKeyFactory private constructor(
     }
 
     private fun lowerPartitionId(partitionId: PartitionId): CanonicalIdentifier {
-        return CanonicalIdentifier.issue(partitionId.value)
+        return CanonicalIdentifier.Companion.issue(partitionId.value)
     }
 
     private fun wrapLengthPrefix(bytes: ByteArray): ByteArray {

@@ -3,7 +3,7 @@ package planning.domain.session
 import ir.identity.CanonicalSignature
 import metamodel.domain.vo.TypeReference
 import planning.domain.exception.PlanningProtocolIntegrityException
-import planning.domain.port.outgoing.OrderedActiveMembers
+import planning.domain.vo.OrderedActiveMembers
 
 /**
  * Explicit execution frame for the iterative DFS machine.

@@ -8,18 +8,20 @@ import planning.domain.exception.CapacityExceededException
 import planning.domain.exception.CycleDetectedException
 import planning.domain.exception.InvalidCanonicalKeyComponentException
 import planning.domain.exception.PortContractViolationException
-import planning.domain.port.outgoing.ActiveMemberOrderingGate
-import planning.domain.port.outgoing.CanonicalEdgeKeyProvider
-import planning.domain.port.outgoing.CanonicalSignatureProvider
-import planning.domain.port.outgoing.CycleBreakPayloadAssembler
+import planning.domain.interner.PlanInterner
+import planning.domain.interner.PlanKeyFactory
 import planning.domain.port.outgoing.CycleEdgeSemanticsProvider
-import planning.domain.port.outgoing.EntropyTargetKeyProvider
 import planning.domain.port.outgoing.NormalizationEngine
-import planning.domain.port.outgoing.PassiveIrAssembler
 import planning.domain.port.outgoing.TraversalDisposition
 import planning.domain.port.outgoing.TypeFactsProvider
 import planning.domain.protocol.CostCenter
 import planning.domain.runtime.CommittedPlanNode
+import planning.domain.service.assembly.CycleBreakPayloadAssembler
+import planning.domain.service.assembly.PassiveIrAssembler
+import planning.domain.service.derivation.ActiveMemberOrdering
+import planning.domain.service.derivation.CanonicalEdgeKeyProvider
+import planning.domain.service.derivation.CanonicalSignatureProvider
+import planning.domain.service.derivation.EntropyTargetKeyProvider
 import planning.domain.session.AllocateFrame
 import planning.domain.session.ExpandEdgeFrame
 import planning.domain.session.IterateMembersFrame
@@ -43,7 +45,7 @@ import planning.domain.vo.PartitionId
  */
 class StructuralPlannerCore private constructor(
     private val factsProvider: TypeFactsProvider,
-    private val orderingGate: ActiveMemberOrderingGate,
+    private val orderingGate: ActiveMemberOrdering,
     private val signatureProvider: CanonicalSignatureProvider,
     private val edgeKeyProvider: CanonicalEdgeKeyProvider,
     private val entropyTargetKeyProvider: EntropyTargetKeyProvider,
@@ -325,7 +327,7 @@ class StructuralPlannerCore private constructor(
         @JvmStatic
         fun issue(
             factsProvider: TypeFactsProvider,
-            orderingGate: ActiveMemberOrderingGate,
+            orderingGate: ActiveMemberOrdering,
             signatureProvider: CanonicalSignatureProvider,
             edgeKeyProvider: CanonicalEdgeKeyProvider,
             entropyTargetKeyProvider: EntropyTargetKeyProvider,

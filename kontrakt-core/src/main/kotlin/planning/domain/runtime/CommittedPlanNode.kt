@@ -1,8 +1,8 @@
 package planning.domain.runtime
 
 import ir.plan.node.CanonicalPlanNode
-import ir.plan.signature.PlanCacheKey
 import planning.domain.exception.FaultKind
+import planning.domain.interner.PlanCacheKey
 
 /**
  * Runtime wrapper around a passive IR node.

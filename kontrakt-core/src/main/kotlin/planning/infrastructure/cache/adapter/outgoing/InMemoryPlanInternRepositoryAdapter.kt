@@ -1,10 +1,10 @@
 package planning.infrastructure.cache.adapter.outgoing
 
-import ir.plan.signature.PlanCacheKey
 import planning.domain.exception.PlanningProtocolIntegrityException
+import planning.domain.interner.PlanCacheKey
 import planning.domain.port.outgoing.PlanInternRepository
+import planning.domain.port.outgoing.PlanInternStep
 import planning.domain.protocol.CostCenter
-import planning.domain.service.InternerStepResult
 import planning.domain.session.PlannerSession
 import planning.domain.vo.PartitionId
 import java.util.concurrent.ConcurrentHashMap
@@ -37,10 +37,10 @@ class InMemoryPlanInternRepositoryAdapter private constructor(
         partitionId: PartitionId,
         key: PlanCacheKey,
         session: PlannerSession,
-    ): InternerStepResult {
+    ): PlanInternStep {
         session.step(CostCenter.L2_REGION_LOOKUP)
 
-        val routeKeyBits = PlanCacheRouteKeyDeriver.derive(key, session)
+        val routeKeyBits = key.route64
 
         val region = regions.computeIfAbsent(partitionId) {
             PartitionRegion.issue(

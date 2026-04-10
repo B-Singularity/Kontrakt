@@ -1,8 +1,8 @@
-package planning.adapter.normalization
+package planning.infrastructure.normalization
 
 import com.ibm.icu.text.Normalizer2
 import com.ibm.icu.util.VersionInfo
-import kontrakt.planning.domain.protocol.EnvironmentIntegrityException
+import planning.domain.exception.EnvironmentIntegrityException
 import planning.domain.port.outgoing.NormalizationEngine
 
 /**
