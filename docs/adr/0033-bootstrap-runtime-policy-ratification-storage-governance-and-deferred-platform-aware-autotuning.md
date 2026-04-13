@@ -684,11 +684,212 @@ Classification:
 
 ---
 
-## 10. Ratification Targets
+### 10. Dispatch Lane Governance Law
+
+#### 10.1 Separation rule
+
+Dispatch-lane execution governance is distinct from:
+
+- L1 structural planner sizing,
+- L2 join governance,
+- L2 storage governance.
+
+It exists to control only:
+
+- adapter-owned joined-wait completion delivery throughput,
+- bounded delivery infrastructure sizing,
+- bounded replay/recovery work,
+- lane-local queue/store saturation thresholds.
+
+It does not change:
+
+- semantic output,
+- shared-slot lifecycle meaning,
+- waiter lifecycle meaning,
+- exact-match law,
+- routing identity,
+- or planner-core structural caps.
+
+#### 10.2 Internal policy snapshot rule
+
+v1 formally adds a separate internal runtime-policy snapshot:
+
+- `ResolvedDispatchLanePolicy`
+
+This snapshot is:
+
+- immutable,
+- factory-issued,
+- resolved only at the stable runtime-policy boundary,
+- fixed for the lifetime of the installed adapter/runtime-policy epoch.
+
+It is intentionally an internal runtime-policy concern.
+It is not a user-facing low-level tuning surface.
+
+#### 10.3 Public profile binding rule
+
+`ResolvedDispatchLanePolicy` is derived from the same high-level public profile surface:
+
+- `AUTO`
+- `SMALL`
+- `STANDARD`
+- `LARGE`
+
+For v1:
+
+- `AUTO = STANDARD`
+
+Dispatch-lane policy values are therefore bootstrap-profile-bound and do not adapt during the lifetime of an
+already-installed policy snapshot.
+
+#### 10.4 Required fields
+
+`ResolvedDispatchLanePolicy` MUST define at least:
+
+- `laneCount`
+- `commandBatchBudget`
+- `timeoutBatchBudget`
+- `dirtyShardBatchBudget`
+- `replayBatchBudgetPerShard`
+- `deliveryBatchBudget`
+- `commandRingCapacity`
+- `readyQueueCapacity`
+- `registrationStoreCapacityPerShard`
+- `deadlineHeapCapacity`
+- `partitionDropQuiescenceTimeoutNanos`
+- `adapterCloseQuiescenceTimeoutNanos`
+
+#### 10.5 Semantics
+
+`commandBatchBudget`
+: maximum number of lane commands drained in one worker-loop iteration
+
+`timeoutBatchBudget`
+: maximum number of due timeout entries processed in one worker-loop iteration
+
+`dirtyShardBatchBudget`
+: maximum number of dirty shards selected for replay in one worker-loop iteration
+
+`replayBatchBudgetPerShard`
+: maximum number of replayed registration entries for one selected dirty shard in one replay visit
+
+`deliveryBatchBudget`
+: maximum number of ready-queue deliveries executed in one worker-loop iteration
+
+`commandRingCapacity`
+: maximum number of pending lane commands
+
+`readyQueueCapacity`
+: maximum number of queued delivery-ready entries
+
+`registrationStoreCapacityPerShard`
+: maximum number of live registration entries allowed in one shard-owned registration segment within a lane
+
+`deadlineHeapCapacity`
+: maximum number of timeout-owned live registrations in one lane
+
+`partitionDropQuiescenceTimeoutNanos`
+: maximum wall-clock grace allowed when waiting for dispatch-lane quiescence during one partition-drop operation
+
+`adapterCloseQuiescenceTimeoutNanos`
+: maximum wall-clock grace allowed when waiting for dispatch-lane quiescence during whole-adapter shutdown
+
+Normative clarification:
+
+These values are **not** planner-session elapsed-time watchdogs.
+They are adapter-owned shutdown/drop grace limits for dispatch convergence only.
+
+#### 10.6 v1 ratified bootstrap dispatch-lane profile table
+
+`````text
+AUTO -> STANDARD
+
+SMALL:
+  laneCount                         = 2
+  commandBatchBudget                = 32
+  timeoutBatchBudget                = 16
+  dirtyShardBatchBudget             = 4
+  replayBatchBudgetPerShard         = 16
+  deliveryBatchBudget               = 32
+  commandRingCapacity               = 256
+  readyQueueCapacity                = 256
+  registrationStoreCapacityPerShard = 128
+  deadlineHeapCapacity              = 512
+  partitionDropQuiescenceTimeoutNanos = 5_000_000_000
+  adapterCloseQuiescenceTimeoutNanos  = 30_000_000_000
+
+STANDARD:
+  laneCount                         = 4
+  commandBatchBudget                = 64
+  timeoutBatchBudget                = 32
+  dirtyShardBatchBudget             = 8
+  replayBatchBudgetPerShard         = 32
+  deliveryBatchBudget               = 64
+  commandRingCapacity               = 512
+  readyQueueCapacity                = 512
+  registrationStoreCapacityPerShard = 256
+  deadlineHeapCapacity              = 1024
+  partitionDropQuiescenceTimeoutNanos = 5_000_000_000
+  adapterCloseQuiescenceTimeoutNanos  = 30_000_000_000
+
+LARGE:
+  laneCount                         = 8
+  commandBatchBudget                = 128
+  timeoutBatchBudget                = 64
+  dirtyShardBatchBudget             = 16
+  replayBatchBudgetPerShard         = 64
+  deliveryBatchBudget               = 128
+  commandRingCapacity               = 1024
+  readyQueueCapacity                = 1024
+  registrationStoreCapacityPerShard = 512
+  deadlineHeapCapacity              = 2048
+  partitionDropQuiescenceTimeoutNanos = 5_000_000_000
+  adapterCloseQuiescenceTimeoutNanos  = 30_000_000_000
+  
+`````
+
+For v1, quiescence grace values are profile-carried but currently profile-invariant.
+They remain part of the immutable dispatch-lane policy snapshot so that adapter shutdown/drop behavior is stable for the
+installed runtime-policy epoch.
+
+#### 10.7 Effective lane-count rule
+
+The effective lane count must be:
+
+`````text
+effectiveLaneCount = min(configuredLaneCount, shardCount)
+`````
+
+If needed, the effective value must still satisfy the power-of-two rule.
+
+#### 10.8 v1 fixed-policy rule
+
+v1 does not standardize:
+
+- adaptive batch resizing,
+- runtime feedback control,
+- live queue-capacity retuning,
+- live lane-count mutation.
+
+Any future optimization of these values requires a later ADR and a newly ratified policy snapshot family.
+
+#### 10.9 Ratification classification
+
+The exact dispatch-lane constants above are Kontrakt-specific bootstrap constants.
+
+They are not claimed as externally standardized values.
+They are v1 ratification targets in the same sense as other Kontrakt bootstrap runtime-policy constants.
+
+The exact quiescence grace values are also Kontrakt-specific bootstrap constants.
+They are not claimed as externally standardized values.
+
+---
+
+## 11. Ratification Targets
 
 The following are v1 bootstrap constants requiring explicit ratification.
 
-### 10.1 Target List
+### 11.1 Target List
 
 1. `maxSignatureLen`
 2. `joinWaitTimeoutNanos`
@@ -698,6 +899,8 @@ The following are v1 bootstrap constants requiring explicit ratification.
 6. `depthCap sufficiency for each approved worker-budget plateau`
 7. `physicalStepMultiplier`
 8. `semanticWorkMultiplier`
+9. `partitionDropQuiescenceTimeoutNanos`
+   10 .`adapterCloseQuiescenceTimeoutNanos`
 
 Important clarification:
 
@@ -712,9 +915,9 @@ Important clarification:
 
 ---
 
-## 11. Ratification Rules
+## 12. Ratification Rules
 
-### 11.1 Representative Corpus
+### 12.1 Representative Corpus
 
 Ratification MUST use a small representative Kontrakt corpus.
 
@@ -731,7 +934,7 @@ This is not global environment benchmarking.
 
 It is targeted ratification of Kontrakt-specific bootstrap constants.
 
-### 11.2 Execution Discipline
+### 12.2 Execution Discipline
 
 Ratification SHOULD be run under the framework’s existing quality discipline:
 
@@ -740,7 +943,7 @@ Ratification SHOULD be run under the framework’s existing quality discipline:
 - deterministic seed capture,
 - reproducible stress invocation.
 
-### 11.3 Approval Rule Style
+### 12.3 Approval Rule Style
 
 Unless otherwise stated, bootstrap ratification chooses:
 
@@ -750,7 +953,7 @@ This keeps v1 conservative.
 
 ---
 
-### 11.4 `maxSignatureLen` ratification rule
+### 12.4 `maxSignatureLen` ratification rule
 
 Method:
 
@@ -778,7 +981,7 @@ Re-ratification trigger:
 
 ---
 
-### 11.5 `joinWaitTimeoutNanos` ratification rule
+### 12.5 `joinWaitTimeoutNanos` ratification rule
 
 Method:
 
@@ -816,7 +1019,7 @@ Re-ratification trigger:
 
 ---
 
-### 11.6 `maxWaitersPerKey` ratification rule
+### 12.6 `maxWaitersPerKey` ratification rule
 
 Method:
 
@@ -841,7 +1044,7 @@ Re-ratification trigger:
 
 ---
 
-### 11.7 `storageMultiplier` ratification rule
+### 12.7 `storageMultiplier` ratification rule
 
 Method:
 
@@ -883,7 +1086,7 @@ Re-ratification trigger:
 - partition/shard/bucket retention behavior changes materially,
 - representative corpus observes storage-triggered circuit-open under the approved multiplier.
 
-### 11.8 `storageEntryBytesBaseline` ratification rule
+### 12.8 `storageEntryBytesBaseline` ratification rule
 
 Method:
 
@@ -925,7 +1128,7 @@ Re-ratification trigger:
 
 ---
 
-### 11.9 `physicalStepMultiplier` ratification rule
+### 12.9 `physicalStepMultiplier` ratification rule
 
 Method:
 
@@ -962,7 +1165,7 @@ Re-ratification trigger:
 
 ---
 
-### 11.10 `semanticWorkMultiplier` ratification rule
+### 12.10 `semanticWorkMultiplier` ratification rule
 
 Method:
 
@@ -997,11 +1200,11 @@ Re-ratification trigger:
 
 ---
 
-## 12. Current v1 Bootstrap Approval State
+## 13. Current v1 Bootstrap Approval State
 
 Until the first explicit ratification pass completes, the following are treated as:
 
-### 12.1 Approved v1 bootstrap laws
+### 13.1 Approved v1 bootstrap laws
 
 - worker-byte profile definition by plateau
 - `AUTO = STANDARD`
@@ -1013,7 +1216,7 @@ Until the first explicit ratification pass completes, the following are treated 
 - `maxEntriesPerPartition = lowerPowerOfTwo(maxApproxBytesPerPartition / storageEntryBytesBaseline)`
 - `circuitOpenOnStorageExhaustion = true`
 
-### 12.2 Approved v1 bootstrap candidates pending ratification
+### 13.2 Approved v1 bootstrap candidates pending ratification
 
 - `maxSignatureLen = 4096`
 - `joinWaitTimeoutNanos = 2 ms`
@@ -1022,11 +1225,13 @@ Until the first explicit ratification pass completes, the following are treated 
 - `storageEntryBytesBaseline = 1024`
 - `physicalStepMultiplier = 16`
 - `semanticWorkMultiplier = 4`
+- `partitionDropQuiescenceTimeoutNanos = 5 s`
+- `adapterCloseQuiescenceTimeoutNanos = 30 s`
 - worker-byte plateaus `10 / 20 / 40 MiB` as approved candidate plateaus pending depth-cap sufficiency ratification
 
 ---
 
-## 13. Wall-Clock Separation
+## 14. Wall-Clock Separation
 
 This ADR does NOT fold elapsed wall-clock policy into:
 
@@ -1040,7 +1245,7 @@ If a session-level elapsed-time watchdog is introduced, it belongs to a separate
 
 ---
 
-## 14. Deferred Compiler-Style Policy Optimization and Platform Specialization
+## 15. Deferred Compiler-Style Policy Optimization and Platform Specialization
 
 v1 does NOT standardize:
 
@@ -1057,7 +1262,7 @@ the semantic planner core and outside the already-running session.
 
 The currently acknowledged candidate families are:
 
-### 14.1 Cascades / Volcano Family (DB Optimizer Theory)
+### 15.1 Cascades / Volcano Family (DB Optimizer Theory)
 
 Core idea:
 
@@ -1091,7 +1296,7 @@ Normative boundary:
 - this family may optimize only **non-semantic runtime governance**,
 - it MUST NOT mutate canonical semantic identity, exact-match law, or truncation correctness.
 
-### 14.2 E-Graph / Equality Saturation Family
+### 15.2 E-Graph / Equality Saturation Family
 
 Core idea:
 
@@ -1126,7 +1331,7 @@ Normative boundary:
 - this family may be used only where semantic equivalence is already guaranteed by protocol law,
 - it MUST NOT enlarge the semantic tuning surface.
 
-### 14.3 Program Autotuning / Autoscheduling Family
+### 15.3 Program Autotuning / Autoscheduling Family
 
 Core idea:
 
@@ -1165,7 +1370,7 @@ Normative boundary:
 - specialization MUST publish only immutable per-session snapshots,
 - specialization MUST NOT alter an already-running session.
 
-### 14.4 Candidate Priority and Current Position
+### 15.4 Candidate Priority and Current Position
 
 For future v2 exploration, the currently preferred order of interest is:
 
@@ -1216,9 +1421,9 @@ Any future standardization of these techniques requires a separate follow-up ADR
 
 ---
 
-## 15. Required Implementation Consequences
+## 16. Required Implementation Consequences
 
-### 15.1 Runtime policy model
+### 16.1 Runtime policy model
 
 `ResolvedRuntimePolicy` MUST be expanded to include storage governance and MUST use factory-issued immutable snapshot
 objects rather than `data class`-style copyable value carriers.
@@ -1279,7 +1484,7 @@ Normative rule:
 - issuance-time invariant enforcement MUST use explicit custom exceptions,
 - installed instances MUST be treated as immutable session-fixed snapshots.
 
-### 15.2 Resolver responsibilities
+### 16.2 Resolver responsibilities
 
 The runtime policy resolver for v1 MUST:
 
@@ -1291,7 +1496,7 @@ The runtime policy resolver for v1 MUST:
 - use explicit custom exceptions for invariant failures,
 - avoid all live hot-path mutation.
 
-### 15.3 Adapter/runtime responsibilities
+### 16.3 Adapter/runtime responsibilities
 
 The runtime boundary MUST preserve:
 
@@ -1303,11 +1508,11 @@ The runtime boundary MUST preserve:
 
 ---
 
-## 16. Required Compliance Tests
+## 17. Required Compliance Tests
 
 The following tests are required in addition to already-existing L1/L2 policy tests.
 
-### 16.1 Bootstrap policy tests
+### 17.1 Bootstrap policy tests
 
 - `BootstrapPolicyTableDeterminismTest`
     - verifies identical resolved profile inputs produce identical `ResolvedRuntimePolicy`
@@ -1318,7 +1523,7 @@ The following tests are required in addition to already-existing L1/L2 policy te
 - `AutoAliasesStandardTest`
     - verifies v1 `AUTO` resolves exactly to `STANDARD`
 
-### 16.2 Ratification gate tests
+### 17.2 Ratification gate tests
 
 - `SignatureLengthHistogramRatificationTest`
 - `JoinTimeoutSweepRatificationTest`
@@ -1329,7 +1534,7 @@ The following tests are required in addition to already-existing L1/L2 policy te
 These may begin as build-internal verification tasks if they are too heavy for ordinary PR execution,
 but they MUST exist before v1 freeze.
 
-### 16.3 Existing invariants remain mandatory
+### 17.3 Existing invariants remain mandatory
 
 Nothing in this ADR weakens existing mandatory tests for:
 
@@ -1344,7 +1549,7 @@ Nothing in this ADR weakens existing mandatory tests for:
 
 ---
 
-## 17. Non-Goals
+## 18. Non-Goals
 
 This ADR does NOT decide:
 
