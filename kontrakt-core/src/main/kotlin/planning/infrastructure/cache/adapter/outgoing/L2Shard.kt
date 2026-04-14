@@ -21,107 +21,64 @@ import planning.infrastructure.cache.LongKeyTable
 import planning.infrastructure.cache.PublicationEntryDecision
 import planning.infrastructure.cache.SharedTerminalResolution
 import planning.infrastructure.cache.WaiterCell
+import planning.infrastructure.cache.adapter.outgoing.dispatch.L2JoinDispatchPlane
+import planning.infrastructure.runtime.time.MonotonicTimeSource
 import java.util.concurrent.CancellationException
 import java.util.concurrent.atomic.AtomicLong
 
 /**
- * Contention-reduction strip inside one partition region.
+ * Contention-reduction shard inside one partition region.
  *
- * -----------------------------------------------------------------------------
- * ARCHITECTURAL ROLE
- * -----------------------------------------------------------------------------
- *
- * This class is orchestration-only.
- *
- * It owns:
- * - deterministic hot-path routing across shard-local primitive tables
- * - exact-match pre-screening
+ * Architectural role:
+ * - deterministic shard-local routing across primitive tables
+ * - exact-hit pre-screening
  * - in-flight slot acquisition
  * - builder vs join branching
  * - governance reaction mapping
- * - authoritative bucket re-verification
+ * - authoritative success-path bucket re-verification
  *
  * It does NOT own:
  * - shared-slot lifecycle truth
  * - waiter lifecycle truth
  * - builder-handle lifecycle truth
- * - partition-region lifecycle truth
+ * - region lifecycle truth
+ * - callback execution policy
  *
- * Those remain owned by:
+ * Those remain with:
  * - InFlightSlot
  * - WaiterCell
  * - BuilderHandleCell
  * - PartitionRegion
- * - L2LifecycleLaw
+ * - L2JoinDispatchPlane
  *
- * -----------------------------------------------------------------------------
- * NON-BLOCKING JOIN RULE
- * -----------------------------------------------------------------------------
- *
- * Join never blocks here.
- *
- * If attach succeeds and the slot remains pending:
- * - return PlanInternStep.Join(handle) immediately
- * - let adapter-owned dispatch infrastructure perform delivery later
- * - let the runtime boundary resume through a fresh PlannerSession
- *
- * -----------------------------------------------------------------------------
- * GENERATION SOURCE
- * -----------------------------------------------------------------------------
- *
- * This shard owns a local monotonic episode-generation source used for:
- * - waiter episodes
- * - builder-handle episodes
- *
- * The generation is:
- * - monotonic within the shard instance
- * - opaque
- * - not wall-clock based
- * - suitable for stale-reference defense and future reclamation hardening
- *
- * -----------------------------------------------------------------------------
- * CURRENT HARDENING BOUNDARY
- * -----------------------------------------------------------------------------
- *
- * This cut does NOT yet perform generation-based consume-time validation for
- * resumed joins.
- *
- * That omission is intentional for now because current lifecycle hosts still
- * assume:
- * - no immediate pooling
- * - no reuse before grace completion
- *
- * A generation validity gate becomes meaningful only once true reuse/reclamation
- * machinery is introduced.
+ * Important current boundary:
+ * - abortAllInFlight() guarantees visible shared-slot terminalization
+ * - full primitive-table slot reclamation still depends on LongKeyTable capabilities
  */
-class L2Shard private constructor(
+internal class L2Shard private constructor(
     private val owner: PartitionRegion,
+    private val shardIndex: Int,
     bucketTableCapacity: Int,
     inflightTableCapacity: Int,
     private val maxWaitersPerKey: Int,
     private val joinWaitTimeoutNanos: Long,
     private val dispatchPlane: L2JoinDispatchPlane,
+    private val timeSource: MonotonicTimeSource,
 ) {
     private val buckets = LongKeyTable.issue<L2Bucket>(capacity = bucketTableCapacity)
     private val inflight = LongKeyTable.issue<InFlightSlot<CanonicalPlanNode>>(capacity = inflightTableCapacity)
 
     /**
-     * Shard-local monotonic episode generation source.
+     * Monotonic shard-local lifecycle episode source.
      */
     private val episodeGenerationSeq = AtomicLong(0L)
 
-    /**
-     * Resolves the next lawful interning step for this shard.
-     */
     fun getOrIntern(
         key: PlanCacheKey,
         routeKeyBits: Long,
         session: PlannerSession,
     ): PlanInternStep {
         try {
-            // -----------------------------------------------------------------
-            // 1. Pre-screen exact hit
-            // -----------------------------------------------------------------
             session.step(CostCenter.L2_PRE_SCREEN_GET)
 
             val bucket = buckets.get(routeKeyBits)
@@ -134,14 +91,11 @@ class L2Shard private constructor(
                 }
             }
 
-            // -----------------------------------------------------------------
-            // 2. In-flight acquire
-            // -----------------------------------------------------------------
             session.step(CostCenter.L2_INFLIGHT_ACQUIRE)
 
             val freshSlot = InFlightSlot.issue<CanonicalPlanNode>(
                 maxAttachedWaiters = maxWaitersPerKey,
-                startedAtNanos = System.nanoTime().coerceAtLeast(0L),
+                startedAtNanos = timeSource.nowNanos().coerceAtLeast(0L),
                 generation = nextEpisodeGeneration(),
             )
 
@@ -162,9 +116,8 @@ class L2Shard private constructor(
                     session = session,
                 )
             }
-        } catch (e: L2TableSegmentSaturatedException) {
+        } catch (_: L2TableSegmentSaturatedException) {
             owner.forceCircuitOpen(session)
-            session.step(CostCenter.L2_CIRCUIT_OPEN_TRANSITION)
             return PlanInternStep.fault(L2FaultKind.CIRCUIT_OPEN)
         }
     }
@@ -172,14 +125,21 @@ class L2Shard private constructor(
     /**
      * Administrative partition-drop sweep.
      *
-     * Partition lifecycle ownership remains with PartitionRegion.
-     * This method only terminalizes visible shared-slot hosts and delegates
-     * joined-waiter delivery to the adapter-owned dispatch plane.
+     * This method only performs shard-lawful work:
+     * - terminalize visible shared slots through the slot lifecycle host
+     * - enqueue terminal sweeps to the adapter-owned dispatch plane
+     *
+     * It intentionally does NOT pretend that primitive routing-table entry reuse is
+     * already solved if the underlying LongKeyTable has not yet provided a dedicated
+     * key-aware partition-drop removal sweep.
      */
     fun abortAllInFlight() {
         inflight.forEachOccupiedValueForClosedPartitionDrop { slot ->
             if (slot.tryDropShared(CancellationException("Partition dropped."))) {
-                dispatchPlane.enqueueTerminalSweep(slot)
+                dispatchPlane.enqueueTerminalSweep(
+                    shardIndex = shardIndex,
+                    slot = slot,
+                )
             }
         }
     }
@@ -196,28 +156,22 @@ class L2Shard private constructor(
     ): PlanInternStep {
         val builderHandle = BuilderHandleCell.issue(
             supervisoryDeadlineNanos = computeBuilderSupervisoryDeadlineNanos(
-                nowNanos = System.nanoTime().coerceAtLeast(0L),
+                nowNanos = timeSource.nowNanos().coerceAtLeast(0L),
             ),
             generation = nextEpisodeGeneration(),
         )
 
         when (slot.registerBuilderHandle(builderHandle)) {
             is BuilderHandleRegisterDecision.RejectedSlotTerminal -> {
-                /*
-                 * The handle was never durably registered into the slot-local builder
-                 * registry, so supervision scans cannot discover it later.
-                 *
-                 * Therefore we must converge it immediately here rather than leaving an
-                 * orphaned OPEN builder handle behind.
-                 */
                 builderHandle.tryAbort()
                 inflight.removeIfSame(routeKeyBits, slot)
+
                 return consumeTerminalResolution(
                     targetKey = key,
                     routeKeyBits = routeKeyBits,
                     resolution = slot.resolveSharedTerminalAcquire()
                         ?: throw PlanningProtocolIntegrityException(
-                            "Builder registration rejected without visible terminal resolution."
+                            "Builder registration was rejected without visible shared terminal truth."
                         ),
                     session = session,
                 )
@@ -228,27 +182,19 @@ class L2Shard private constructor(
 
         if (!owner.allowBuilderAfterAcquire(session)) {
             builderHandle.tryAbort()
-            if (slot.tryDropShared(CancellationException("Builder admission rejected after governance close/open."))) {
-                dispatchPlane.enqueueTerminalSweep(slot)
+
+            if (slot.tryDropShared(CancellationException("Builder admission rejected after region close/circuit-open."))) {
+                dispatchPlane.enqueueTerminalSweep(
+                    shardIndex = shardIndex,
+                    slot = slot,
+                )
             }
+
             inflight.removeIfSame(routeKeyBits, slot)
             return PlanInternStep.fault(L2FaultKind.CIRCUIT_OPEN)
         }
 
         if (!slot.tryClaimCommitRight()) {
-            /*
-             * Commit-right claim failure does NOT imply that this slot should be
-             * removed from the in-flight routing table.
-             *
-             * Another contender may already own or still converge the publication
-             * episode for this very slot. Removing the slot here would make later
-             * joiners unable to discover the still-live in-flight coordination host.
-             *
-             * Therefore:
-             * - abort only this builder-handle episode
-             * - leave the slot discoverable in inflight
-             * - surface a degrade signal to the caller
-             */
             builderHandle.tryAbort()
             return PlanInternStep.fault(L2FaultKind.TRANSIENT)
         }
@@ -290,16 +236,11 @@ class L2Shard private constructor(
                         deadlineNanos = computeJoinDeadlineNanos(
                             slotStartedAtNanos = slot.readStartedAtNanos(),
                         ),
-                        dispatchPlane = dispatchPlane,
                     )
                 )
             }
 
             JoinAdmissionDecision.WaiterCapExceeded -> {
-                /*
-                 * Governance reaction belongs here.
-                 * Waiter-cap exhaustion is not itself a shared terminal taxonomy.
-                 */
                 if (owner.isBypassRequired()) {
                     PlanInternStep.fault(L2FaultKind.CIRCUIT_OPEN)
                 } else {
@@ -349,12 +290,8 @@ class L2Shard private constructor(
     /**
      * Single authoritative helper for success-path bucket re-verification.
      *
-     * Important:
-     * - immediate path uses the currently active request-scope session
-     * - resumed path uses a fresh restart session
-     *
-     * This is intentional. Cost accounting belongs to the session that is
-     * actually performing the verification work.
+     * Request-scope path and resumed path both converge here.
+     * Cost accounting belongs to whichever session is actually performing the work.
      */
     private fun verifyBucketWinnerOrFault(
         targetKey: PlanCacheKey,
@@ -376,11 +313,6 @@ class L2Shard private constructor(
         }
     }
 
-    /**
-     * Returns the next shard-local lifecycle episode generation.
-     *
-     * Fail-closed on overflow rather than silently wrapping into a reused space.
-     */
     private fun nextEpisodeGeneration(): Long {
         val next = episodeGenerationSeq.incrementAndGet()
         if (next <= 0L) {
@@ -391,29 +323,12 @@ class L2Shard private constructor(
         return next
     }
 
-    /**
-     * Computes the supervisory deadline for a builder-handle episode.
-     *
-     * The builder supervisory deadline is semantically distinct from the joined-waiter
-     * deadline even though both currently use the same joinWaitTimeoutNanos policy input.
-     *
-     * We intentionally keep this as a dedicated helper rather than a generic
-     * string-labeled addition utility so that:
-     * - the meaning is fixed by the function name,
-     * - diagnostics remain closed and typo-safe,
-     * - call sites do not carry arbitrary label strings.
-     */
     private fun computeBuilderSupervisoryDeadlineNanos(
         nowNanos: Long,
     ): Long {
         if (nowNanos < 0L) {
             throw PlanningProtocolIntegrityException(
                 "Builder supervisory deadline base nanos must be >= 0: $nowNanos"
-            )
-        }
-        if (joinWaitTimeoutNanos <= 0L) {
-            throw PlanningProtocolIntegrityException(
-                "L2Shard.joinWaitTimeoutNanos must be > 0: $joinWaitTimeoutNanos"
             )
         }
 
@@ -426,29 +341,12 @@ class L2Shard private constructor(
         }
     }
 
-    /**
-     * Computes the joined-waiter deadline for one slot episode.
-     *
-     * This helper is intentionally separate from builder supervisory deadline
-     * computation because the two deadlines belong to different lifecycle meanings:
-     *
-     * - builder supervisory deadline -> builder-handle convergence authority
-     * - join deadline                -> waiter/orchestration restart timing
-     *
-     * Keeping them separate avoids diagnostic drift and removes the need for
-     * call-site string labels.
-     */
     private fun computeJoinDeadlineNanos(
         slotStartedAtNanos: Long,
     ): Long {
         if (slotStartedAtNanos < 0L) {
             throw PlanningProtocolIntegrityException(
                 "Join deadline base nanos must be >= 0: $slotStartedAtNanos"
-            )
-        }
-        if (joinWaitTimeoutNanos <= 0L) {
-            throw PlanningProtocolIntegrityException(
-                "L2Shard.joinWaitTimeoutNanos must be > 0: $joinWaitTimeoutNanos"
             )
         }
 
@@ -472,15 +370,6 @@ class L2Shard private constructor(
         private val builderHandle: BuilderHandleCell,
     ) : BuildHandle {
 
-        /**
-         * Request-scope rule:
-         *
-         * This build handle must be committed or aborted within the same request
-         * scope as the interning step that issued it.
-         *
-         * The handle intentionally does not retain PlannerSession.
-         * The live request-scope session is supplied explicitly at commit time.
-         */
         override fun commit(
             localNode: CanonicalPlanNode,
             session: PlannerSession,
@@ -504,9 +393,14 @@ class L2Shard private constructor(
 
                 if (!owner.isPublishAllowed()) {
                     builderHandle.tryAbort()
-                    if (slot.tryDropShared(CancellationException("Publication rejected after governance close/open."))) {
-                        dispatchPlane.enqueueTerminalSweep(slot)
+
+                    if (slot.tryDropShared(CancellationException("Publication rejected after region close/circuit-open."))) {
+                        dispatchPlane.enqueueTerminalSweep(
+                            shardIndex = shardIndex,
+                            slot = slot,
+                        )
                     }
+
                     return localNode
                 }
 
@@ -523,43 +417,67 @@ class L2Shard private constructor(
                     owner.onEntryCommitted(session)
                     localNode
                 } else {
+                    session.step(CostCenter.L2_BUCKET_SCAN)
+
                     val put = existingBucket.putIfAbsentOrGet(key, localNode)
+
                     if (put.inserted) {
                         owner.onEntryCommitted(session)
+                    } else {
+                        session.step(CostCenter.L2_HIT)
                     }
+
                     put.winner
                 }
 
                 if (slot.tryPublishSuccess(winner)) {
-                    dispatchPlane.enqueueTerminalSweep(slot)
+                    dispatchPlane.enqueueTerminalSweep(
+                        shardIndex = shardIndex,
+                        slot = slot,
+                    )
                 }
 
                 builderHandle.tryCommit()
                 slot.tryReleaseCommitRight()
                 return winner
-            } catch (e: L2TableSegmentSaturatedException) {
+            } catch (_: L2TableSegmentSaturatedException) {
                 owner.forceCircuitOpen(session)
                 builderHandle.tryAbort()
-                if (slot.tryDropShared(CancellationException("Primitive routing table saturated during publication."))) {
-                    dispatchPlane.enqueueTerminalSweep(slot)
+
+                if (slot.tryDropShared(CancellationException("Primitive table saturated during publication."))) {
+                    dispatchPlane.enqueueTerminalSweep(
+                        shardIndex = shardIndex,
+                        slot = slot,
+                    )
                 }
+
                 return localNode
             } catch (t: Throwable) {
                 builderHandle.tryAbort()
+
                 if (slot.tryFailShared(t)) {
-                    dispatchPlane.enqueueTerminalSweep(slot)
+                    dispatchPlane.enqueueTerminalSweep(
+                        shardIndex = shardIndex,
+                        slot = slot,
+                    )
                 }
+
                 throw t
             } finally {
                 inflight.removeIfSame(routeKeyBits, slot)
             }
         }
 
-        override fun abort(reason: Throwable) {
+        override fun abort(
+            reason: Throwable,
+        ) {
             try {
                 builderHandle.tryAbort()
                 if (slot.tryFailShared(reason)) {
-                    dispatchPlane.enqueueTerminalSweep(slot)
+                    dispatchPlane.enqueueTerminalSweep(
+                        shardIndex = shardIndex,
+                        slot = slot,
+                    )
                 }
             } finally {
                 inflight.removeIfSame(routeKeyBits, slot)
@@ -577,35 +495,20 @@ class L2Shard private constructor(
         private val slot: InFlightSlot<CanonicalPlanNode>,
         private val waiter: WaiterCell,
         private val deadlineNanos: Long,
-        private val dispatchPlane: L2JoinDispatchPlane,
     ) : JoinHandle {
 
-        /**
-         * Delegates both "already terminal" and "future delivery" cases to the
-         * adapter-owned dispatch plane.
-         *
-         * The shard never invokes the continuation directly.
-         */
         override fun registerContinuation(
             continuation: JoinContinuation,
         ): JoinRegistrationDecision {
             return dispatchPlane.registerOrDeliverImmediate(
+                shardIndex = shardIndex,
                 slot = slot,
                 waiter = waiter,
                 continuation = continuation,
+                deadlineNanos = deadlineNanos,
             )
         }
 
-        /**
-         * Consumes the ready join result through a fresh restart session.
-         *
-         * The supplied session is the session that pays:
-         * - resumed bucket-scan accounting
-         * - resumed hit accounting
-         * - resumed fault-degrade accounting
-         *
-         * No stale pre-suspension session is reused here.
-         */
         override fun consumeReadyResult(
             session: PlannerSession,
         ): JoinResumeStep {
@@ -632,19 +535,34 @@ class L2Shard private constructor(
             }
         }
 
-        override fun cancel(reason: Throwable): Boolean {
-            return waiter.tryCancel(reason)
+        override fun cancel(
+            reason: Throwable,
+        ): Boolean {
+            val accepted = waiter.tryCancel(reason)
+            if (accepted) {
+                /*
+                 * Cancellation truth is waiter-owned.
+                 * Dispatch cleanup is best-effort and adapter-owned.
+                 */
+                dispatchPlane.enqueueCancellation(
+                    shardIndex = shardIndex,
+                    waiter = waiter,
+                )
+            }
+            return accepted
         }
 
         override fun deadlineNanos(): Long = deadlineNanos
     }
 
-    /**
-     * Internal canonical result for success-path bucket re-verification.
-     */
     private sealed interface BucketVerificationResult {
-        class Hit(val node: CanonicalPlanNode) : BucketVerificationResult
-        class Fault(val kind: L2FaultKind) : BucketVerificationResult
+        class Hit(
+            val node: CanonicalPlanNode,
+        ) : BucketVerificationResult
+
+        class Fault(
+            val kind: L2FaultKind,
+        ) : BucketVerificationResult
     }
 
     companion object {
@@ -652,13 +570,16 @@ class L2Shard private constructor(
         @JvmStatic
         internal fun issue(
             owner: PartitionRegion,
+            shardIndex: Int,
             bucketTableCapacity: Int,
             inflightTableCapacity: Int,
             maxWaitersPerKey: Int,
             joinWaitTimeoutNanos: Long,
             dispatchPlane: L2JoinDispatchPlane,
+            timeSource: MonotonicTimeSource,
         ): L2Shard {
             validate(
+                shardIndex = shardIndex,
                 bucketTableCapacity = bucketTableCapacity,
                 inflightTableCapacity = inflightTableCapacity,
                 maxWaitersPerKey = maxWaitersPerKey,
@@ -667,20 +588,28 @@ class L2Shard private constructor(
 
             return L2Shard(
                 owner = owner,
+                shardIndex = shardIndex,
                 bucketTableCapacity = bucketTableCapacity,
                 inflightTableCapacity = inflightTableCapacity,
                 maxWaitersPerKey = maxWaitersPerKey,
                 joinWaitTimeoutNanos = joinWaitTimeoutNanos,
                 dispatchPlane = dispatchPlane,
+                timeSource = timeSource,
             )
         }
 
         private fun validate(
+            shardIndex: Int,
             bucketTableCapacity: Int,
             inflightTableCapacity: Int,
             maxWaitersPerKey: Int,
             joinWaitTimeoutNanos: Long,
         ) {
+            if (shardIndex < 0) {
+                throw PlanningProtocolIntegrityException(
+                    "L2Shard.shardIndex must be >= 0: $shardIndex"
+                )
+            }
             if (bucketTableCapacity <= 0) {
                 throw PlanningProtocolIntegrityException(
                     "L2Shard.bucketTableCapacity must be positive: $bucketTableCapacity"
@@ -703,52 +632,4 @@ class L2Shard private constructor(
             }
         }
     }
-}
-
-/**
- * Adapter-owned completion dispatch plane for non-blocking joined-waiter delivery.
- *
- * -----------------------------------------------------------------------------
- * OWNERSHIP
- * -----------------------------------------------------------------------------
- *
- * This plane owns:
- * - continuation registration
- * - already-terminal delivery path
- * - delivery-thread / queue ownership
- * - terminal sweep scheduling
- *
- * It does NOT own:
- * - slot lifecycle authority
- * - waiter lifecycle authority
- * - governance taxonomy
- *
- * -----------------------------------------------------------------------------
- * CRITICAL RULE
- * -----------------------------------------------------------------------------
- *
- * Even when terminal truth is already visible, delivery-path execution policy
- * remains adapter-owned.
- *
- * The shard must not invoke continuations directly.
- */
-internal interface L2JoinDispatchPlane {
-
-    /**
-     * Registers a continuation or performs already-terminal delivery through the
-     * dispatch plane's own execution-path policy.
-     */
-    fun registerOrDeliverImmediate(
-        slot: InFlightSlot<CanonicalPlanNode>,
-        waiter: WaiterCell,
-        continuation: JoinContinuation,
-    ): JoinRegistrationDecision
-
-    /**
-     * Enqueues a terminal sweep for a slot whose authoritative terminal truth
-     * is already visible.
-     */
-    fun enqueueTerminalSweep(
-        slot: InFlightSlot<CanonicalPlanNode>,
-    )
 }

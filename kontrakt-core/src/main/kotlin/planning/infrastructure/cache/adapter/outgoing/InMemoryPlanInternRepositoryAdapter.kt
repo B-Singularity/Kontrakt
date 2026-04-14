@@ -6,32 +6,67 @@ import planning.domain.port.outgoing.PlanInternRepository
 import planning.domain.port.outgoing.PlanInternStep
 import planning.domain.protocol.CostCenter
 import planning.domain.session.PlannerSession
+import planning.domain.session.policy.ResolvedJoinGovernance
+import planning.domain.session.policy.ResolvedStorageGovernance
 import planning.domain.vo.PartitionId
-import java.util.concurrent.ConcurrentHashMap
+import planning.infrastructure.cache.adapter.outgoing.dispatch.DeterministicL2JoinDispatchPlane
+import planning.infrastructure.cache.adapter.outgoing.dispatch.L2JoinDispatchPlane
+import planning.infrastructure.runtime.policy.ResolvedDispatchLanePolicy
+import planning.infrastructure.runtime.time.MonotonicTimeSource
+import planning.infrastructure.runtime.time.SystemMonotonicTimeSource
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicReference
 
 /**
- * In-memory Tier-2 adapter.
+ * In-memory Tier-2 outbound adapter.
  *
- * Top-level routing is intentionally partition-first:
- * regions: ConcurrentHashMap<PartitionId, PartitionRegion>
+ * Architectural role:
+ * - partition-first physical composition root
+ * - owner of the partition-region directory
+ * - owner of dispatch-plane installation and partition-drop / adapter-close orchestration
  *
- * This registry is not the hot routing surface.
- * Hot-path routing by 64-bit plan keys is delegated to shard-local primitive tables.
+ * Deliberate design properties:
+ * - no polling-era join knobs remain on the public surface
+ * - no public method exposes internal dispatch/time collaborators
+ * - no ConcurrentHashMap
+ * - no lock-based region directory
+ * - no concurrent administrative operation interleaving
  *
- * This adapter is a Planning-protocol-specific outbound adapter.
- * Therefore, issuance-time structural violations are treated as
- * protocol-integrity failures and fail closed.
+ * The partition directory is intentionally implemented as an immutable-snapshot CAS map.
+ *
+ * Rationale:
+ * - partition lookup is not the primitive shard-local hot path
+ * - region creation/removal is expected to be rare compared to steady-state lookups
+ * - immutable snapshot replacement is easier to reason about than striped locks or CHM
+ *
+ * Consequence:
+ * - regionDirectoryStripeCount is intentionally removed in this cut
+ * - the old striped-lock directory has been retired by design
  */
 class InMemoryPlanInternRepositoryAdapter private constructor(
-    private val maxEntriesPerPartition: Long,
+    private val joinGovernance: ResolvedJoinGovernance,
+    private val storageGovernance: ResolvedStorageGovernance,
+    private val dispatchLanePolicy: ResolvedDispatchLanePolicy,
     private val shardCount: Int,
     private val bucketTableCapacity: Int,
     private val inflightTableCapacity: Int,
-    private val maxJoinPolls: Int,
-    private val joinPollNanos: Long,
-) : PlanInternRepository {
+    private val dispatchPlane: L2JoinDispatchPlane,
+    private val timeSource: MonotonicTimeSource,
+) : PlanInternRepository, AutoCloseable {
 
-    private val regions = ConcurrentHashMap<PartitionId, PartitionRegion>()
+    private val regions = PartitionRegionDirectory()
+
+    /**
+     * Adapter-level administrative state.
+     *
+     * We intentionally serialize all administrative operations:
+     * - partition drop
+     * - whole-adapter close
+     *
+     * This prevents multiple concurrent quiescence waiters and keeps shutdown/drop
+     * authority singular and explicit.
+     */
+    private val adminState = AtomicReference(AdminState.OPEN)
 
     override fun resolveOrIntern(
         partitionId: PartitionId,
@@ -40,91 +75,179 @@ class InMemoryPlanInternRepositoryAdapter private constructor(
     ): PlanInternStep {
         session.step(CostCenter.L2_REGION_LOOKUP)
 
-        val routeKeyBits = key.route64
-
-        val region = regions.computeIfAbsent(partitionId) {
+        val region = regions.getOrCreate(partitionId) {
             PartitionRegion.issue(
-                id = it,
-                maxEntries = maxEntriesPerPartition,
+                id = partitionId,
+                joinGovernance = joinGovernance,
+                storageGovernance = storageGovernance,
                 shardCount = shardCount,
                 bucketTableCapacity = bucketTableCapacity,
                 inflightTableCapacity = inflightTableCapacity,
-                maxJoinPolls = maxJoinPolls,
-                joinPollNanos = joinPollNanos,
+                dispatchPlane = dispatchPlane,
+                timeSource = timeSource,
             )
         }
 
         return region.resolveOrIntern(
             key = key,
-            routeKeyBits = routeKeyBits,
+            routeKeyBits = key.route64,
             session = session,
         )
     }
 
     /**
-     * Administrative bulk reclamation for a single partition.
+     * Administrative bulk drop for one partition.
      *
-     * Strict drop sequence:
-     * 1. seal the region against new entrants
-     * 2. wake all in-flight waiters exceptionally
-     * 3. remove the region from the registry
+     * Sequence:
+     * 1. acquire exclusive admin authority
+     * 2. publish region close
+     * 3. abort visible in-flight activity
+     * 4. wait for dispatch-plane quiescence using policy-managed grace
+     * 5. mark reclaimed
+     * 6. remove by identity from the directory
+     *
+     * If quiescence is not reached in time, the region remains close-published and
+     * discoverable in the directory. This is deliberate fail-closed behavior.
      */
-    fun dropPartition(partitionId: PartitionId) {
-        val region = regions[partitionId] ?: return
+    fun dropPartition(
+        partitionId: PartitionId,
+    ): Boolean {
+        if (!adminState.compareAndSet(AdminState.OPEN, AdminState.DROP_IN_PROGRESS)) {
+            return when (adminState.get()) {
+                AdminState.CLOSING,
+                AdminState.CLOSED -> false
 
-        region.close()
-        region.abortAllInFlight()
+                AdminState.DROP_IN_PROGRESS -> {
+                    throw PlanningProtocolIntegrityException(
+                        "Concurrent partition-drop operations are forbidden."
+                    )
+                }
 
-        /*
-         * Remove by identity to avoid deleting a freshly recreated region
-         * if a new request races after close.
-         */
-        regions.remove(partitionId, region)
+                AdminState.OPEN -> false
+            }
+        }
+
+        try {
+            val region = regions.get(partitionId) ?: return true
+
+            region.closePublished()
+            region.abortAllInFlight()
+
+            val quiesced = dispatchPlane.awaitQuiescence(
+                timeout = dispatchLanePolicy.partitionDropQuiescenceTimeoutNanos,
+                unit = TimeUnit.NANOSECONDS,
+            )
+            if (!quiesced) {
+                return false
+            }
+
+            region.markReclaimed()
+            regions.removeIfSame(partitionId, region)
+            return true
+        } finally {
+            adminState.compareAndSet(AdminState.DROP_IN_PROGRESS, AdminState.OPEN)
+        }
+    }
+
+    /**
+     * Whole-adapter shutdown.
+     *
+     * Shutdown is intentionally strong and conservative:
+     * - no concurrent partition-drop may overlap
+     * - all visible regions are close-published
+     * - all visible in-flight activity is aborted
+     * - dispatch convergence is awaited under policy-managed grace
+     * - regions are marked reclaimed
+     * - directory is cleared
+     * - dispatch plane is closed last
+     *
+     * If quiescence grace expires, plane.close() must still force lane-owned
+     * abandonment/clear from within the lane worker threads themselves.
+     */
+    override fun close() {
+        if (!adminState.compareAndSet(AdminState.OPEN, AdminState.CLOSING)) {
+            when (adminState.get()) {
+                AdminState.CLOSED,
+                AdminState.CLOSING -> return
+
+                AdminState.DROP_IN_PROGRESS -> {
+                    throw PlanningProtocolIntegrityException(
+                        "Adapter close cannot start while a partition-drop operation is in progress."
+                    )
+                }
+
+                AdminState.OPEN -> return
+            }
+        }
+
+        try {
+            val snapshot = regions.snapshot()
+
+            for (region in snapshot) {
+                region.closePublished()
+            }
+            for (region in snapshot) {
+                region.abortAllInFlight()
+            }
+
+            dispatchPlane.awaitQuiescence(
+                timeout = dispatchLanePolicy.adapterCloseQuiescenceTimeoutNanos,
+                unit = TimeUnit.NANOSECONDS,
+            )
+
+            for (region in snapshot) {
+                region.markReclaimed()
+            }
+
+            regions.clear()
+            dispatchPlane.close()
+        } finally {
+            adminState.set(AdminState.CLOSED)
+        }
     }
 
     companion object {
         @JvmStatic
         fun issue(
-            maxEntriesPerPartition: Long = 1_000_000L,
+            joinGovernance: ResolvedJoinGovernance,
+            storageGovernance: ResolvedStorageGovernance,
+            dispatchLanePolicy: ResolvedDispatchLanePolicy,
             shardCount: Int = 16,
             bucketTableCapacity: Int = 1 shl 16,
             inflightTableCapacity: Int = 1 shl 10,
-            maxJoinPolls: Int = 128,
-            joinPollNanos: Long = 50_000L,
         ): InMemoryPlanInternRepositoryAdapter {
             validate(
-                maxEntriesPerPartition = maxEntriesPerPartition,
+                dispatchLanePolicy = dispatchLanePolicy,
                 shardCount = shardCount,
                 bucketTableCapacity = bucketTableCapacity,
                 inflightTableCapacity = inflightTableCapacity,
-                maxJoinPolls = maxJoinPolls,
-                joinPollNanos = joinPollNanos,
+            )
+
+            val timeSource = SystemMonotonicTimeSource
+            val dispatchPlane = DeterministicL2JoinDispatchPlane.issue(
+                policy = dispatchLanePolicy,
+                shardCount = shardCount,
+                timeSource = timeSource,
             )
 
             return InMemoryPlanInternRepositoryAdapter(
-                maxEntriesPerPartition = maxEntriesPerPartition,
+                joinGovernance = joinGovernance,
+                storageGovernance = storageGovernance,
+                dispatchLanePolicy = dispatchLanePolicy,
                 shardCount = shardCount,
                 bucketTableCapacity = bucketTableCapacity,
                 inflightTableCapacity = inflightTableCapacity,
-                maxJoinPolls = maxJoinPolls,
-                joinPollNanos = joinPollNanos,
+                dispatchPlane = dispatchPlane,
+                timeSource = timeSource,
             )
         }
 
         private fun validate(
-            maxEntriesPerPartition: Long,
+            dispatchLanePolicy: ResolvedDispatchLanePolicy,
             shardCount: Int,
             bucketTableCapacity: Int,
             inflightTableCapacity: Int,
-            maxJoinPolls: Int,
-            joinPollNanos: Long,
         ) {
-            if (maxEntriesPerPartition <= 0L) {
-                throw PlanningProtocolIntegrityException(
-                    "InMemoryPlanInternRepositoryAdapter.maxEntriesPerPartition must be positive: $maxEntriesPerPartition"
-                )
-            }
-
             if (shardCount <= 0 || shardCount.countOneBits() != 1) {
                 throw PlanningProtocolIntegrityException(
                     "InMemoryPlanInternRepositoryAdapter.shardCount must be a positive power-of-two: $shardCount"
@@ -143,17 +266,105 @@ class InMemoryPlanInternRepositoryAdapter private constructor(
                 )
             }
 
-            if (maxJoinPolls <= 0) {
+            val effectiveLaneCount = minOf(dispatchLanePolicy.laneCount, shardCount)
+            if (effectiveLaneCount <= 0 || effectiveLaneCount.countOneBits() != 1) {
                 throw PlanningProtocolIntegrityException(
-                    "InMemoryPlanInternRepositoryAdapter.maxJoinPolls must be positive: $maxJoinPolls"
+                    "InMemoryPlanInternRepositoryAdapter.effectiveLaneCount must be a positive power-of-two: " +
+                            effectiveLaneCount
                 )
             }
 
-            if (joinPollNanos < 0L) {
+            val maxShardsOwnedByOneLane = shardCount / effectiveLaneCount
+            val minRequiredDeadlineHeapCapacity =
+                dispatchLanePolicy.registrationStoreCapacityPerShard * maxShardsOwnedByOneLane
+
+            if (dispatchLanePolicy.deadlineHeapCapacity < minRequiredDeadlineHeapCapacity) {
                 throw PlanningProtocolIntegrityException(
-                    "InMemoryPlanInternRepositoryAdapter.joinPollNanos must be >= 0: $joinPollNanos"
+                    "ResolvedDispatchLanePolicy.deadlineHeapCapacity is too small for the maximum lane-owned " +
+                            "registration population: ${dispatchLanePolicy.deadlineHeapCapacity} < " +
+                            minRequiredDeadlineHeapCapacity
                 )
             }
         }
+    }
+
+    /**
+     * Immutable-snapshot CAS directory.
+     *
+     * This avoids:
+     * - ConcurrentHashMap
+     * - striped locks
+     * - external mutation visibility ambiguity
+     *
+     * Mutation is expected to be relatively rare.
+     * We therefore prefer explicit immutable replacement over hidden shared mutation.
+     */
+    private class PartitionRegionDirectory {
+        private val state = AtomicReference(DirectoryState(emptyMap()))
+
+        fun get(
+            partitionId: PartitionId,
+        ): PartitionRegion? {
+            return state.get().regions[partitionId]
+        }
+
+        fun getOrCreate(
+            partitionId: PartitionId,
+            factory: () -> PartitionRegion,
+        ): PartitionRegion {
+            while (true) {
+                val observed = state.get()
+                observed.regions[partitionId]?.let { return it }
+
+                val created = factory()
+                val nextMap = HashMap(observed.regions)
+                nextMap[partitionId] = created
+                val updated = DirectoryState(nextMap)
+
+                if (state.compareAndSet(observed, updated)) {
+                    return created
+                }
+            }
+        }
+
+        fun removeIfSame(
+            partitionId: PartitionId,
+            expected: PartitionRegion,
+        ): Boolean {
+            while (true) {
+                val observed = state.get()
+                val current = observed.regions[partitionId] ?: return false
+                if (current !== expected) {
+                    return false
+                }
+
+                val nextMap = HashMap(observed.regions)
+                nextMap.remove(partitionId)
+                val updated = DirectoryState(nextMap)
+
+                if (state.compareAndSet(observed, updated)) {
+                    return true
+                }
+            }
+        }
+
+        fun snapshot(): List<PartitionRegion> {
+            return ArrayList(state.get().regions.values)
+        }
+
+        fun clear() {
+            state.set(DirectoryState(emptyMap()))
+        }
+
+        private class DirectoryState(
+            val regions: Map<PartitionId, PartitionRegion>,
+        )
+    }
+
+    private enum class AdminState {
+        OPEN,
+        DROP_IN_PROGRESS,
+        CLOSING,
+        CLOSED,
     }
 }
