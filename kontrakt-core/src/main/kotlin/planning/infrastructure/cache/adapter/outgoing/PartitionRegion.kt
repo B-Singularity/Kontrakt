@@ -9,7 +9,7 @@ import planning.domain.session.PlannerSession
 import planning.domain.session.policy.ResolvedJoinGovernance
 import planning.domain.session.policy.ResolvedStorageGovernance
 import planning.domain.vo.PartitionId
-import planning.infrastructure.cache.L2JoinDispatchPlane
+import planning.infrastructure.cache.adapter.outgoing.dispatch.L2JoinDispatchPlane
 import planning.infrastructure.runtime.time.MonotonicTimeSource
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
