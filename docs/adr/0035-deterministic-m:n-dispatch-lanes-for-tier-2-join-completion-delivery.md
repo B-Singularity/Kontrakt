@@ -60,6 +60,17 @@ In this model:
 This decision standardizes the execution boundary for non-blocking join completion delivery while preserving shard-local
 authority and avoiding both global delivery contention and thread explosion.
 
+This decision also requires that the dispatch plane use explicit operational lifecycle law rather than scattered
+implicit
+branch legality.
+
+At minimum, the dispatch implementation must define:
+
+- one delivery-entry operational lifecycle axis
+- one dispatch-lane operational lifecycle axis
+
+These axes are adapter-owned operational state, not semantic lifecycle truth.
+
 ## Decision Rules
 
 ### 1. Shards remain authority units
@@ -179,6 +190,96 @@ However, the architectural direction is explicit:
 
 Concrete implementation details are intentionally delegated to a separate Design document.
 
+### 10. Explicit operational state machines are required
+
+The dispatch plane must use explicit closed operational lifecycle vocabularies.
+
+At minimum, the implementation must define:
+
+- one delivery-entry lifecycle axis
+- one dispatch-lane lifecycle axis
+
+These operational axes are intentionally distinct from:
+
+- `SharedSlotState`
+- `WaiterState`
+- `BuilderHandleState`
+- `CommitRightState`
+- `PartitionRegionState`
+
+The delivery-entry axis models callback-delivery progress only.
+The dispatch-lane axis models lane-owned execution lifecycle only.
+
+Transition legality for these axes must not remain implicit in scattered branch logic.
+The implementation must provide explicit transition-law surfaces and runtime enforcement.
+
+Rationale:
+
+- keep operational legality visible
+- prevent ad hoc lifecycle drift
+- preserve consistency with the broader closed-state discipline already used in the planning runtime
+
+### 11. Lane-owned final clear is required
+
+Lane-owned mutable delivery state must be cleared only by the owning lane thread.
+
+Forbidden:
+
+- external thread direct clearing of lane-owned registration state
+- external thread direct clearing of lane-owned ready-queue state
+- external thread direct clearing of lane-owned timeout ownership state
+
+External administrative authority may:
+
+- publish close intent
+- stop fresh admission
+- wait for bounded convergence
+- fail closed if bounded convergence does not complete
+
+But final abandonment, reclamation, and final clear of lane-owned mutable state must remain lane-owned.
+
+Rationale:
+
+- preserve single-writer authority
+- avoid close/reclaim races
+- prevent external corruption of in-flight delivery state
+
+### 12. Quiescence must be judged from published state only
+
+Administrative quiescence judgment must not inspect lane-owned mutable arrays directly.
+
+Quiescence must instead be derived from lane-published operational state, such as:
+
+- lane lifecycle state
+- command-ring emptiness
+- ready-queue published size
+- active callback count
+- live operational registration count
+- dirty-shard published count
+
+Rationale:
+
+- avoid visibility ambiguity
+- preserve lane ownership boundaries
+- keep administrative observation bounded and mechanically explicit
+
+### 13. Administrative authority must be serialized
+
+Administrative operations that publish close / drop / shutdown intent must be serialized.
+
+Forbidden:
+
+- overlapping concurrent shutdown authority
+- multiple concurrent quiescence-wait authorities for the same adapter instance
+
+The implementation may choose a single administrative gate or equivalent serialized-authority mechanism.
+
+Rationale:
+
+- keep close/drop semantics singular
+- avoid competing terminalization coordinators
+- prevent ambiguous shutdown ownership
+
 ## Rationale
 
 This decision was chosen because it best preserves all already-adopted planning/runtime principles simultaneously.
@@ -195,6 +296,16 @@ delivery mechanism to physical execution resources.
 The deterministic M:N lane model keeps the important part of shard isolation—the authority boundary—while choosing a
 more realistic physical execution model for the JVM. It provides stable affinity, avoids a single global delivery
 bottleneck, and avoids thread explosion.
+
+This model also provides a clean place to enforce single-writer operational law.
+
+Because lanes are execution units only, the design can keep:
+
+- semantic lifecycle truth outside the lane layer,
+- operational delivery progression inside the lane layer,
+- and administrative quiescence observation on published operational state only.
+
+That separation is essential to preserve both authority clarity and bounded runtime behavior.
 
 ## Rejected Alternatives
 
@@ -245,6 +356,15 @@ Examples include:
 Rejected for this cut because the primary architectural requirement is clear authority separation and deterministic
 bounded execution, not maximal synchronization sophistication. Such techniques may be evaluated later in
 design/optimization work, but they are not adopted here as the baseline architectural choice.
+
+### F. External-thread direct lane cleanup
+
+Rejected because it would:
+
+- violate lane single-writer ownership
+- introduce close/reclaim races against in-flight delivery work
+- weaken the distinction between close publication and lane-owned final convergence
+- make quiescence harder to reason about mechanically
 
 ## Consequences
 

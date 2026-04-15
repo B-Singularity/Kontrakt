@@ -68,6 +68,20 @@ This keeps the architecture aligned with the rest of the planning engine:
 - bounded replay
 - no hidden global contention points
 
+This design also adopts two explicit operational lifecycle axes inside the dispatch plane:
+
+- a delivery-entry lifecycle axis
+- a dispatch-lane lifecycle axis
+
+These are closed operational vocabularies with explicit transition law.
+They are intentionally distinct from semantic lifecycle truth such as:
+
+- shared-slot truth
+- waiter truth
+- builder-handle truth
+- commit-right truth
+- region lifecycle truth
+
 ---
 
 ## 3. Architectural Position
@@ -137,6 +151,9 @@ The following are architectural constraints, not implementation suggestions.
 8. No silent delivery-task drop
 9. No unbounded queue growth
 10. No independent dispatch routing authority
+11. No external-thread direct lane-state clear
+12. No administrative quiescence check by direct inspection of lane-owned mutable arrays
+13. No implicit operational lifecycle legality encoded only in scattered branch logic
 
 ---
 
@@ -234,6 +251,44 @@ Responsibilities:
 
 The lane thread is the only writer of lane-local mutable state.
 
+### 6.1.1 Dispatch-Lane Lifecycle Axis
+
+Each lane also carries one closed operational lifecycle axis:
+
+- `OPEN`
+- `CLOSE_REQUESTED`
+- `DRAINING`
+- `STOPPED`
+
+This axis is adapter-owned operational state, not domain semantic state.
+
+Required transition law:
+
+- `OPEN -> CLOSE_REQUESTED`
+- `CLOSE_REQUESTED -> DRAINING`
+- `DRAINING -> STOPPED`
+
+Interpretation:
+
+- `OPEN`
+    - fresh registration may still be admitted
+- `CLOSE_REQUESTED`
+    - external authority has published close intent
+    - fresh registration must no longer be admitted
+- `DRAINING`
+    - the lane thread is converging live operational work under its own authority
+- `STOPPED`
+    - lane-owned mutable delivery state has terminalized and final lane-owned clear has completed
+
+Important rule:
+
+- external threads may publish close intent
+- external threads may wait for bounded convergence
+- external threads may fail closed if bounded convergence does not complete
+- but external threads must not directly clear lane-owned delivery state
+
+That final clear remains lane-owned.
+
 ### 6.2 Command Ring
 
 Each lane owns one bounded MPSC command ring.
@@ -256,6 +311,29 @@ The target implementation should use:
 - object references only where unavoidable (for example slot reference, waiter reference, continuation reference)
 - sequence-based bounded ring discipline
 - no blocking queue abstraction
+
+#### Sequence-slot publication requirement
+
+The command ring must not treat a nullable command slot as the sole publication signal.
+
+The following pattern is forbidden:
+
+- producer reserves a tail position first
+- publication to the slot is delayed
+- consumer observes `null` and treats that as a terminal drain boundary
+
+That pattern can lose visibility for already-published later commands.
+
+Therefore the baseline implementation must use:
+
+- per-slot publication sequence values, or
+- an equivalent explicit publication marker discipline
+
+Consumer rule:
+
+- the consumer must judge the current head slot only
+- it must not skip ahead of an unpublished head slot
+- it must not infer "fully drained" merely from `null` payload observation
 
 #### Why one command ring?
 
@@ -308,6 +386,34 @@ Segmenting by shard gives:
 - no need for global lane-wide scans
 - better conceptual alignment with static shard affinity
 
+#### Published operational count
+
+Administrative quiescence logic must not scan registration-store backing arrays directly.
+
+Instead, the lane publishes a bounded operational count snapshot derived from lane-owned local counters.
+
+This count covers only live operational entries, namely entries still in:
+
+- `REGISTERED`
+- `SIGNALED`
+- `QUEUED`
+- `DELIVERING`
+
+Terminal entries (`DONE`, `ABANDONED`) do not contribute to quiescence debt.
+
+#### Tombstone note
+
+The baseline v1 design keeps open addressing plus tombstones.
+
+This is accepted for the current cut because the first-order concerns are:
+
+- delivery correctness
+- close/reclaim authority
+- quiescence visibility
+- explicit lifecycle legality
+
+Tombstone-ratio management, rebuild policy, or stronger anti-clustering countermeasures remain future hardening work.
+
 ### 6.4 Deadline Heap
 
 Each lane owns one bounded deadline heap.
@@ -334,6 +440,18 @@ We choose a deadline heap rather than a timing wheel for this cut because:
 
 A future timing-wheel variant may be explored later if profiling justifies it.
 It is not the baseline design.
+
+#### Baseline timeout substrate choice
+
+The baseline implementation keeps a bounded lane-local heap.
+
+A hashed-wheel timer is explicitly left as future evaluation work rather than a baseline requirement.
+
+Rationale:
+
+- joined-wait completion remains a secondary path
+- no approved evidence currently shows lane-local timeout populations large enough to justify changing the baseline
+- correctness, boundedness, and lifecycle-law clarity currently dominate over timer-substrate sophistication
 
 ### 6.5 Ready Queue
 
@@ -363,6 +481,24 @@ Optional payload extensions may include:
 - diagnostic flags
 
 The ready queue must not be globally shared and must not be implemented as a global blocking queue.
+
+#### Local counters vs published observation
+
+The queue cursor fields and local size are lane-owned mutable state.
+
+Administrative readers must not inspect those mutable fields directly.
+
+Instead, the lane publishes quiescence-facing snapshot data at worker-loop boundaries or other semantically meaningful
+operational boundaries.
+
+This document deliberately does not require per-operation atomic publishing.
+
+The baseline implementation prefers:
+
+- lane-owned plain local counters
+- loop-boundary snapshot publication
+
+rather than a strong atomic publish after every offer / poll / micro-step.
 
 ### 6.6 Dirty-Shard Bitmap
 
@@ -437,6 +573,12 @@ This state machine is intentionally distinct from:
 
 Those axes describe semantic/runtime truth.
 The delivery entry state machine describes only callback delivery progress inside the adapter-owned lane infrastructure.
+
+Transition legality for this axis must not remain implicit in scattered branch logic.
+
+The implementation must expose an explicit lifecycle-law surface for delivery-entry transitions and must enforce that
+law
+at runtime (for example through `requireTransition(from, to)` style guards).
 
 ### 8.1 States
 
@@ -644,12 +786,13 @@ Algorithm:
     - if registration already gone, discard heap entry
     - if entry is `REGISTERED`, ask waiter to timeout
     - if timeout wins:
-        - transition `REGISTERED -> SIGNALED`
-        - attempt `SIGNALED -> QUEUED`
-        - on queue failure, leave `SIGNALED` and set dirty shard
-    - if entry is already `QUEUED`, `DELIVERING`, `DONE`, or `ABANDONED`, no timeout transition is applied
+        - transition `REGISTERED -> ABANDONED`
+        - reclaim through `ABANDONED -> EMPTY`
+    - if entry is already `SIGNALED`, `QUEUED`, `DELIVERING`, `DONE`, or `ABANDONED`, no timeout transition is applied
 
 Timeout remains waiter-local and does not mutate shared-slot truth.
+
+Timeout is not a callback-delivery trigger in the baseline design.
 
 ### 9.5 Delivery Execution Path
 
@@ -693,23 +836,76 @@ Without `DONE -> EMPTY` and `ABANDONED -> EMPTY`, the store would eventually sat
 
 ---
 
-## 10. Bounded Replay Instead of Full Rescan
+## 10. Close and Final Clear Protocol
+
+### 10.1 Administrative close publication
+
+External administrative authority may:
+
+- publish close intent
+- stop fresh admission
+- wait for bounded convergence
+- fail closed if bounded convergence does not complete
+
+### 10.2 Lane-owned convergence
+
+The lane thread remains the sole authority for:
+
+- abandoning closeable entries
+- reclaiming terminal entries
+- performing final mutable-state clear
+
+External threads must not directly clear:
+
+- registration-store state
+- ready-queue state
+- deadline ownership state
+- dirty-shard state
+
+### 10.3 Close-time abandonment rule
+
+At close time, the lane may abandon only entries that have not yet entered callback execution:
+
+- `REGISTERED`
+- `SIGNALED`
+- `QUEUED`
+
+`DELIVERING` must not be forcibly abandoned by external or incidental control-path threads.
+
+Once callback execution has begun, the lane must let that execution converge normally and reclaim through:
+
+- `DELIVERING -> DONE -> EMPTY`
+
+### 10.4 Final-stop precondition
+
+The lane may publish `STOPPED` only after all quiescence debt is cleared through published state.
+
+That includes:
+
+- no command debt
+- no ready-queue debt
+- no active callback debt
+- no live registration debt
+- no dirty-shard debt
+- final lane-owned clear completed
+
+## 11. Bounded Replay Instead of Full Rescan
 
 The previous draft used a full-table rescan concept.
 That design is rejected.
 
-### 10.1 Rejected Mechanism
+### 11.1 Rejected Mechanism
 
 - lane-wide or table-wide O(N) rescan after overflow
 
-### 10.2 Reason for Rejection
+### 11.2 Reason for Rejection
 
 - too much latency jitter
 - weak execution-time predictability
 - overbroad replay scope
 - poor fit for a bounded deterministic engine
 
-### 10.3 Chosen Mechanism
+### 11.3 Chosen Mechanism
 
 **dirty-shard bounded replay**
 
@@ -746,7 +942,7 @@ into:
 
 - shard-affine O(batch) replay with stable upper bounds per worker iteration
 
-### 10.4 Why This Is Acceptable
+### 11.4 Why This Is Acceptable
 
 - no silent delivery loss
 - no caller blocking
@@ -756,12 +952,12 @@ into:
 
 ---
 
-## 11. Overflow and Saturation Policy
+## 12. Overflow and Saturation Policy
 
 Boundedness is mandatory.
 Therefore overflow handling must be explicit.
 
-### 11.1 Registration Command Ring Full
+### 12.1 Registration Command Ring Full
 
 If `REGISTER` cannot be enqueued:
 
@@ -779,7 +975,7 @@ Recommended handling:
 This is intentionally strict.
 If the system cannot own the continuation safely, it must not pretend that registration succeeded.
 
-### 11.2 Slot-Terminal-Visible Command Ring Full
+### 12.2 Slot-Terminal-Visible Command Ring Full
 
 If `SLOT_TERMINAL_VISIBLE` cannot be enqueued:
 
@@ -791,7 +987,7 @@ If `SLOT_TERMINAL_VISIBLE` cannot be enqueued:
 
 This is valid because registrations already exist in lane-owned storage.
 
-### 11.3 Cancellation Command Ring Full
+### 12.3 Cancellation Command Ring Full
 
 If `CANCEL` cannot be enqueued:
 
@@ -801,7 +997,7 @@ If `CANCEL` cannot be enqueued:
 
 This path should be rare and operationally visible.
 
-### 11.4 Ready Queue Full
+### 12.4 Ready Queue Full
 
 If an entry in `SIGNALED` cannot acquire ready-queue ownership:
 
@@ -813,7 +1009,7 @@ If an entry in `SIGNALED` cannot acquire ready-queue ownership:
 
 This is the precise case for bounded dirty-shard replay.
 
-### 11.5 Deadline Heap Saturation
+### 12.5 Deadline Heap Saturation
 
 If the deadline heap is full:
 
@@ -825,7 +1021,7 @@ Because timeout is a correctness-related operational contract, missing timeout o
 
 ---
 
-## 12. Lane Worker Loop
+## 13. Lane Worker Loop
 
 ### Required policy-managed budgets
 
@@ -861,7 +1057,12 @@ This document treats them as fixed bounded infrastructure limits, not as live tu
 
 ---
 
-## 13. Quiescence Definition
+## 14. Quiescence Definition
+
+Administrative quiescence observation is defined only over lane-published operational state.
+
+Administrative readers must not inspect lane-owned mutable arrays, queue cursors, registration backing arrays, or
+dirty-bitmap backing words directly.
 
 A lane is quiescent only when all of the following hold:
 
@@ -876,7 +1077,37 @@ A lane is quiescent only when all of the following hold:
 
 Queue emptiness alone is not sufficient for quiescence.
 
-### 13.1 Quiescence Grace Policy
+### 14.1 Published Observation Rule
+
+Each lane must publish a quiescence-facing operational snapshot containing at minimum:
+
+- lane lifecycle state
+- command-ring emptiness
+- ready-queue size
+- active callback count
+- live operational registration count
+- dirty-shard count
+
+Administrative quiescence judgment must be based on that published snapshot only.
+
+### 14.2 Local vs published counters
+
+The lane thread may keep local mutable counters as plain lane-owned fields.
+
+The baseline implementation should publish those values:
+
+- at worker-loop boundaries, and/or
+- at semantically meaningful operational boundaries
+
+rather than issuing a strong atomic publish after every micro-step.
+
+This preserves:
+
+- single-writer ownership
+- bounded administrative observation
+- lower barrier overhead on the JVM baseline
+
+### 14.3 Quiescence Grace Policy
 
 Quiescence detection and quiescence grace are distinct concerns.
 
@@ -897,7 +1128,7 @@ These values are:
 
 ---
 
-## 14. Telemetry and Hot-Lane Skew
+## 15. Telemetry and Hot-Lane Skew
 
 This design intentionally does not solve skew with live rebalance.
 
@@ -943,9 +1174,9 @@ already-installed policy snapshot of the current adapter lifetime.
 
 ---
 
-## 15. Trade-Off Analysis
+## 16. Trade-Off Analysis
 
-### 15.1 Chosen Design
+### 16.1 Chosen Design
 
 #### Primitive single-writer lane model
 
@@ -968,7 +1199,7 @@ Chosen because it provides:
 
 This complexity is accepted because it buys deterministic ownership and avoids long-term architectural debt.
 
-### 15.2 Rejected: lane-local `HashMap` plus `LinkedBlockingQueue`
+### 16.2 Rejected: lane-local `HashMap` plus `LinkedBlockingQueue`
 
 Rejected as the target design because:
 
@@ -980,7 +1211,7 @@ Rejected as the target design because:
 This combination may be useful only as a bring-up prototype.
 It is not the target design.
 
-### 15.3 Rejected: caller-thread direct registration-table insertion
+### 16.3 Rejected: caller-thread direct registration-table insertion
 
 Rejected because:
 
@@ -989,7 +1220,16 @@ Rejected because:
 - it complicates correctness reasoning
 - it weakens lane ownership discipline
 
-### 15.4 Rejected: full-table rescan
+### 16.4 Rejected: external-thread direct lane cleanup
+
+Rejected because it would:
+
+- violate lane single-writer ownership
+- introduce close/reclaim races against in-flight delivery work
+- weaken the distinction between close publication and lane-owned final convergence
+- make quiescence harder to reason about mechanically
+
+### 16.5 Rejected: full-table rescan
 
 Rejected because:
 
@@ -997,7 +1237,7 @@ Rejected because:
 - it introduces avoidable latency spikes
 - it is too blunt for a bounded deterministic delivery engine
 
-### 15.5 Rejected: live adaptive rebalance
+### 16.6 Rejected: live adaptive rebalance
 
 Rejected because:
 
@@ -1007,7 +1247,7 @@ Rejected because:
 
 ---
 
-## 16. File / Type Impact
+## 17. File / Type Impact
 
 Expected implementation impact:
 
@@ -1018,6 +1258,10 @@ Expected implementation impact:
 - new internal `LaneDeadlineHeap`
 - new internal `LaneReadyQueue`
 - new internal `DirtyShardBitmap`
+- new internal `DeliveryEntryState`
+- new internal `DispatchLaneState`
+- new internal `DispatchLifecycleLaw`
+- lane implementation publishes quiescence-facing operational snapshots rather than exposing lane-owned mutable arrays
 - `WaiterCell` or related registration machinery gains `deliveryKey64`
 - `L2Shard` enqueues registration, cancel, and slot-terminal commands to the owning lane
 - `PartitionRegion` and adapter bootstrap own lane count and lane construction
@@ -1026,7 +1270,7 @@ The design does **not** move semantic authority into the lane layer.
 
 ---
 
-## 17. Recommended Implementation Sequence
+## 18. Recommended Implementation Sequence
 
 1. Add `deliveryKey64` issuance for registration episodes.
 2. Implement lane-local bounded command ring.
@@ -1037,20 +1281,25 @@ The design does **not** move semantic authority into the lane layer.
 7. Implement static `shardIndex -> laneIndex` mapping.
 8. Convert registration to command-enqueued single-writer ownership.
 9. Convert terminal-visible delivery to lane-owned sweep commands.
-10. Implement delivery entry state machine with `SIGNALED` and `QUEUED`.
-11. Implement dirty-shard bounded replay.
-12. Add saturation exceptions and telemetry.
-13. Integrate lane quiescence into partition drop / adapter shutdown.
-14. Only then profile for further micro-optimizations.
-15. Implement lane-owned reclamation from DONE / ABANDONED back to EMPTY.
-16. resolve dispatch-lane budgets and capacities from `ResolvedDispatchLanePolicy` rather than from local ad hoc
-    constants
-17. route partition-drop and adapter-close quiescence waiting through `ResolvedDispatchLanePolicy` rather than through
-    local default timeout literals
+10. Implement delivery-entry state machine with `REGISTERED`, `SIGNALED`, `QUEUED`, `DELIVERING`, `DONE`, and
+    `ABANDONED`.
+11. Implement dispatch-lane lifecycle axis with `OPEN`, `CLOSE_REQUESTED`, `DRAINING`, and `STOPPED`.
+12. Implement explicit lifecycle-law enforcement rather than scattered implicit branch legality.
+13. Implement dirty-shard bounded replay.
+14. Implement published quiescence snapshots from lane-owned local counters.
+15. Integrate lane quiescence into partition drop / adapter shutdown.
+16. Implement lane-owned reclamation from `DONE` / `ABANDONED` back to `EMPTY`.
+17. Implement lane-owned final clear and forbid external-thread direct lane-state clear.
+18. Add saturation exceptions and telemetry.
+19. Only then profile for further micro-optimizations.
+20. Resolve dispatch-lane budgets and capacities from `ResolvedDispatchLanePolicy` rather than from local ad hoc
+    constants.
+21. Route partition-drop and adapter-close quiescence waiting through `ResolvedDispatchLanePolicy` rather than through
+    local default timeout literals.
 
 ---
 
-## 18. Final Recommendation
+## 19. Final Recommendation
 
 The target implementation for ADR-0035 is:
 
