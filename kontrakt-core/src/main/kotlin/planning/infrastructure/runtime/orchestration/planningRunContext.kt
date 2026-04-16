@@ -180,14 +180,36 @@ class PlanningRunContext private constructor(
             expectedState = PlanningRunState.SUSPENDED_ON_JOIN,
         )
 
-        PlanningRunLifecycleLaw.requireTransition(
-            from = state,
-            to = PlanningRunState.READY_TO_RESTART,
-        )
-
-        state = PlanningRunState.READY_TO_RESTART
-        assertStructuralInvariant()
+        markReadyToRestartUnderLock()
     }
+
+    /**
+     * Best-effort asynchronous readiness publication for joined completion.
+     *
+     * This method exists so that adapter-owned completion delivery may safely notify
+     * the planning-run axis without treating post-abort / post-complete races as
+     * hard failures.
+     *
+     * Semantics:
+     * - SUSPENDED_ON_JOIN -> READY_TO_RESTART : returns true
+     * - all other states                     : returns false
+     *
+     * This method is intentionally callback-safe.
+     * Async delivery callbacks must not be required to throw in order to report that
+     * readiness publication is no longer meaningful.
+     */
+    @Synchronized
+    fun tryMarkReadyToRestart(): Boolean {
+        assertStructuralInvariant()
+
+        return if (state == PlanningRunState.SUSPENDED_ON_JOIN) {
+            markReadyToRestartUnderLock()
+            true
+        } else {
+            false
+        }
+    }
+
 
     /**
      * READY_TO_RESTART -> RUNNING
@@ -233,6 +255,7 @@ class PlanningRunContext private constructor(
             pinnedRuntimePolicyEpoch = pinnedRuntimePolicyEpoch,
             resumePoint = suspension.resumePoint,
             remainingBudget = remainingBudget,
+            suspensionHandle = suspension.suspensionHandle,
         )
     }
 
@@ -522,6 +545,27 @@ class PlanningRunContext private constructor(
                 }
             }
         }
+    }
+
+    /**
+     * Non-reentrant helper for READY_TO_RESTART publication.
+     *
+     * This helper assumes the caller already owns the PlanningRunContext monitor.
+     * It exists to avoid nested synchronized method calls while keeping the
+     * state-transition logic single-sourced.
+     *
+     * Precondition:
+     * - state == SUSPENDED_ON_JOIN
+     * - structural invariant already holds
+     */
+    private fun markReadyToRestartUnderLock() {
+        PlanningRunLifecycleLaw.requireTransition(
+            from = state,
+            to = PlanningRunState.READY_TO_RESTART,
+        )
+
+        state = PlanningRunState.READY_TO_RESTART
+        assertStructuralInvariant()
     }
 
     companion object {
