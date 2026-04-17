@@ -5,13 +5,14 @@ import planning.domain.fault.L2FaultKind
 import planning.domain.interner.PlanCacheKey
 import planning.domain.port.outgoing.PlanInternStep
 import planning.domain.protocol.CostCenter
+import planning.domain.runtime.lifecycle.L2LifecycleLaw
+import planning.domain.runtime.lifecycle.PartitionRegionState
 import planning.domain.session.PlannerSession
 import planning.domain.session.policy.ResolvedJoinGovernance
 import planning.domain.session.policy.ResolvedStorageGovernance
 import planning.domain.vo.PartitionId
 import planning.infrastructure.cache.adapter.outgoing.dispatch.L2JoinDispatchPlane
 import planning.infrastructure.runtime.time.MonotonicTimeSource
-import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.LongAdder
 
@@ -48,7 +49,7 @@ internal class PartitionRegion private constructor(
      *
      * OPEN -> CLOSE_PUBLISHED -> RECLAIMED
      */
-    private val stateCode = AtomicInteger(RegionLifecycle.OPEN.code)
+    private val stateCode = AtomicInteger(PartitionRegionState.OPEN.code)
 
     /**
      * Storage-governance circuit-open flag.
@@ -57,13 +58,13 @@ internal class PartitionRegion private constructor(
      * - a region may still be OPEN but circuit-open
      * - once not OPEN, new work must bypass regardless
      */
-    private val circuitOpen = AtomicBoolean(false)
+    private val circuitOpen = AtomicInteger(0)
 
     /**
-     * Approximate storage accounting.
+     * Storage accounting.
      *
-     * Both entry count and approximate bytes are tracked because storage governance
-     * is defined along both axes.
+     * We track both entry count and approximate bytes because storage governance is
+     * defined along both axes.
      */
     private val entryCount = LongAdder()
     private val approxByteCount = LongAdder()
@@ -88,7 +89,7 @@ internal class PartitionRegion private constructor(
         routeKeyBits: Long,
         session: PlannerSession,
     ): PlanInternStep {
-        if (readLifecycle() != RegionLifecycle.OPEN) {
+        if (readLifecycle() != PartitionRegionState.OPEN) {
             session.step(CostCenter.L2_BYPASS_READ)
             session.step(CostCenter.L2_FAULT_CIRCUIT_OPEN)
             return PlanInternStep.fault(L2FaultKind.CIRCUIT_OPEN)
@@ -98,7 +99,7 @@ internal class PartitionRegion private constructor(
             forceCircuitOpen(session)
         }
 
-        if (circuitOpen.get()) {
+        if (isCircuitOpen()) {
             session.step(CostCenter.L2_BYPASS_READ)
             session.step(CostCenter.L2_FAULT_CIRCUIT_OPEN)
             return PlanInternStep.fault(L2FaultKind.CIRCUIT_OPEN)
@@ -126,7 +127,7 @@ internal class PartitionRegion private constructor(
     ): Boolean {
         session.step(CostCenter.L2_CAPACITY_CHECK)
 
-        if (readLifecycle() != RegionLifecycle.OPEN) {
+        if (readLifecycle() != PartitionRegionState.OPEN) {
             return false
         }
 
@@ -134,7 +135,7 @@ internal class PartitionRegion private constructor(
             forceCircuitOpen(session)
         }
 
-        return readLifecycle() == RegionLifecycle.OPEN && !circuitOpen.get()
+        return readLifecycle() == PartitionRegionState.OPEN && !isCircuitOpen()
     }
 
     /**
@@ -169,17 +170,17 @@ internal class PartitionRegion private constructor(
     fun forceCircuitOpen(
         session: PlannerSession,
     ) {
-        if (circuitOpen.compareAndSet(false, true)) {
+        if (circuitOpen.compareAndSet(0, 1)) {
             session.step(CostCenter.L2_CIRCUIT_OPEN_TRANSITION)
         }
     }
 
     fun isPublishAllowed(): Boolean {
-        return readLifecycle() == RegionLifecycle.OPEN && !circuitOpen.get()
+        return readLifecycle() == PartitionRegionState.OPEN && !isCircuitOpen()
     }
 
     fun isBypassRequired(): Boolean {
-        return readLifecycle() != RegionLifecycle.OPEN || circuitOpen.get()
+        return readLifecycle() != PartitionRegionState.OPEN || isCircuitOpen()
     }
 
     /**
@@ -189,26 +190,23 @@ internal class PartitionRegion private constructor(
      */
     fun closePublished() {
         while (true) {
-            when (readLifecycle()) {
-                RegionLifecycle.OPEN -> {
-                    if (
-                        stateCode.compareAndSet(
-                            RegionLifecycle.OPEN.code,
-                            RegionLifecycle.CLOSE_PUBLISHED.code,
-                        )
-                    ) {
+            when (val current = readLifecycle()) {
+                PartitionRegionState.OPEN -> {
+                    val target = PartitionRegionState.CLOSE_PUBLISHED
+                    L2LifecycleLaw.requireTransition(current, target)
+                    if (stateCode.compareAndSet(current.code, target.code)) {
                         return
                     }
                 }
 
-                RegionLifecycle.CLOSE_PUBLISHED,
-                RegionLifecycle.RECLAIMED -> return
+                PartitionRegionState.CLOSE_PUBLISHED,
+                PartitionRegionState.RECLAIMED -> return
             }
         }
     }
 
     /**
-     * Backward-compatibility alias.
+     * Backward-compatibility alias for older call sites.
      */
     fun close() {
         closePublished()
@@ -219,11 +217,6 @@ internal class PartitionRegion private constructor(
      *
      * This assumes close publication has already happened, or is being published
      * immediately before this call.
-     *
-     * Important nuance:
-     * this method is about visible terminalization, not guaranteed primitive-table
-     * slot reclamation. Primitive routing-table reuse still depends on the shard /
-     * table implementation converging those entries lawfully.
      */
     fun abortAllInFlight() {
         closePublished()
@@ -237,32 +230,31 @@ internal class PartitionRegion private constructor(
      */
     fun markReclaimed() {
         while (true) {
-            when (readLifecycle()) {
-                RegionLifecycle.OPEN -> {
+            when (val current = readLifecycle()) {
+                PartitionRegionState.OPEN -> {
                     throw PlanningProtocolIntegrityException(
                         "PartitionRegion.markReclaimed requires CLOSE_PUBLISHED first."
                     )
                 }
 
-                RegionLifecycle.CLOSE_PUBLISHED -> {
-                    if (
-                        stateCode.compareAndSet(
-                            RegionLifecycle.CLOSE_PUBLISHED.code,
-                            RegionLifecycle.RECLAIMED.code,
-                        )
-                    ) {
+                PartitionRegionState.CLOSE_PUBLISHED -> {
+                    val target = PartitionRegionState.RECLAIMED
+                    L2LifecycleLaw.requireTransition(current, target)
+                    if (stateCode.compareAndSet(current.code, target.code)) {
                         return
                     }
                 }
 
-                RegionLifecycle.RECLAIMED -> return
+                PartitionRegionState.RECLAIMED -> return
             }
         }
     }
 
-    private fun readLifecycle(): RegionLifecycle {
-        return RegionLifecycle.fromCode(stateCode.get())
+    private fun readLifecycle(): PartitionRegionState {
+        return PartitionRegionState.fromCode(stateCode.get())
     }
+
+    private fun isCircuitOpen(): Boolean = circuitOpen.get() != 0
 
     private fun isStorageExceeded(): Boolean {
         val entriesExceeded =
@@ -276,7 +268,7 @@ internal class PartitionRegion private constructor(
 
     companion object {
         @JvmStatic
-        internal fun issue(
+        fun issue(
             id: PartitionId,
             joinGovernance: ResolvedJoinGovernance,
             storageGovernance: ResolvedStorageGovernance,
@@ -325,35 +317,6 @@ internal class PartitionRegion private constructor(
                 throw PlanningProtocolIntegrityException(
                     "PartitionRegion.inflightTableCapacity must be positive: $inflightTableCapacity"
                 )
-            }
-        }
-    }
-
-    /**
-     * Minimal explicit lifecycle for partition hosting.
-     *
-     * Kept file-local for now because the current rewrite scope is limited to
-     * adapter / region / dispatch composition.
-     */
-    private enum class RegionLifecycle(
-        val code: Int,
-    ) {
-        OPEN(0),
-        CLOSE_PUBLISHED(1),
-        RECLAIMED(2),
-        ;
-
-        companion object {
-            @JvmStatic
-            fun fromCode(code: Int): RegionLifecycle {
-                return when (code) {
-                    OPEN.code -> OPEN
-                    CLOSE_PUBLISHED.code -> CLOSE_PUBLISHED
-                    RECLAIMED.code -> RECLAIMED
-                    else -> throw PlanningProtocolIntegrityException(
-                        "PartitionRegion.RegionLifecycle code is invalid: $code"
-                    )
-                }
             }
         }
     }

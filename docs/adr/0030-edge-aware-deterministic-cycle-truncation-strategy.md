@@ -11,6 +11,8 @@ Normative References: [ADR-0029](0029-runtime-link-handle-protocol-and-integrity
 Related Consistency References (
 AMENDED): [ADR-0032](0032-capacity-law-resource-policy-resolution-identity-hierarchy-and-zero-residue-semantics.md)
 
+<!-- AMENDED(2026-04-16): Added deterministic planning preconditions for active-member selection timing, projection freeze, iteration stability, source-artifact reconciliation, explicit unknown/unavailable sentinel law, entropy exclusion, integer arithmetic discipline, mutable-global contamination prohibition, and deterministic diagnostic evidence ordering without changing prior semantic cycle-truncation policy. -->
+
 ## Context
 
 Our framework's approach to handling recursive object graphs has evolved to address the conflict between **safety** and
@@ -87,6 +89,33 @@ normative:
   CPU
   work and semantic budget consumption remain spent.
 
+#### 1.2. Mutable Global Contamination Prohibition Law (AMENDED)
+
+Mutable global state MUST NOT participate in semantic planning.
+
+Forbidden on the semantic planning path:
+
+* mutable static scratch state,
+* singleton mutable planning residue,
+* previous-run frontier residue,
+* mutable global clocks or RNG streams used as semantic inputs,
+* mutable global counters used as semantic choice inputs,
+* or equivalent hidden shared mutable state outside explicit session / frame ownership.
+
+Allowed:
+
+* immutable constants,
+* immutable protocol tables,
+* immutable version metadata,
+* immutable snapshot registries.
+
+Normative rule:
+
+All mutable planning state MUST remain owned by explicit runtime/session/frame boundaries and MUST become semantically
+unreachable after reset / rollback / terminal cleanup according to zero-residue law.
+
+Reason: replayability and pooled-worker cleanliness are impossible under hidden mutable-global contamination.
+
 ### 2. Structural Cycle Detection & Identity
 
 * **Node Identity (MUST):** For cycle detection, a node is identified strictly by its **Stripped Identity Signature**.
@@ -141,9 +170,42 @@ To make the cycle trigger threshold explicit:
 
 The Domain Core MUST assemble this key from Port-provided components to ensure deterministic selection.
 
-* **Serialization Format:** `OwnerTypeFQCN|MemberKind|Name|TypeSignature|DeclarationIndex`.
+* **Serialization Format:** `OwnerTypeFQCN|MemberKind|Name|TypeSignature|DeclarationOrdinal`.
 * **Ordering Priority:** Ascending String Order -> `CTOR_PARAM` < `PROPERTY` -> Name -> Full Normalized Signature ->
-  DeclarationIndex (default `-1` if unavailable).
+  DeclarationOrdinal according to the explicit availability law below.
+
+#### 3.2.1. Declaration Ordinal Availability Law (AMENDED)
+
+`DeclarationOrdinal` is a semantic fact, not a magic integer.
+
+It MUST be modeled conceptually as one of:
+
+* `Present(n)`
+* `Unavailable`
+
+Normative rule:
+
+* `Present(n)` means the adapter has deterministically reconstructed a declaration ordinal.
+* `Unavailable` means the adapter could not deterministically reconstruct a declaration ordinal.
+* `Unavailable` MUST NOT be treated as:
+    * first declaration,
+    * zero,
+    * backend-native raw iteration order,
+    * or any invented fallback ordinal.
+
+For protocol semantics, `DeclarationOrdinal` remains an explicit fact with the two states above.
+
+For primitive hot-path lowering only, a compliant implementation MAY encode:
+
+* `Present(n)` -> `n`
+* `Unavailable` -> `-1`
+
+provided that this encoding remains purely mechanical and does not change the semantic meaning of the ordering law.
+
+Reason:
+
+The semantic protocol must expose **availability** explicitly.
+A sentinel such as `-1` may be used for primitive lowering, but it must not replace the semantic fact model.
 
 #### 3.3. Entropy Target Key (Index Shift Immunity)
 
@@ -163,6 +225,63 @@ Collision detection MUST NOT be performed globally across all possible construct
     * Duplicate `EntropyTargetKey` -> `PlanningException.AmbiguousEntropyTargetKey`.
     * *(Note: `faultKind` attribution for these collisions is dynamic and strictly evidence-based. See Section 7.2).*
 
+#### 3.4.1. Active Member Selection Point Law (AMENDED)
+
+To guarantee deterministic planning order, Active Member Set construction MUST occur at one explicit point and only
+once per logical node-expansion episode.
+
+Normative rule:
+
+1. raw normalized structural facts are resolved from the outbound port,
+2. the single deterministic constructor is selected,
+3. eligible-property classification / demotion is evaluated,
+4. the Active Member Set is projected,
+5. uniqueness is verified,
+6. canonical ordering is ratified,
+7. and only then may traversal proceed.
+
+Forbidden:
+
+* deferring constructor selection into child-expansion control flow,
+* recomputing the Active Member Set after partial child traversal,
+* allowing cache state, join/publication timing, or materialization history to affect member selection,
+* allowing backend enumeration order to become the semantic traversal order.
+
+Reason: the selection point itself is part of semantic determinism.
+
+#### 3.4.2. Projection Freeze Law (AMENDED)
+
+Once the Active Member Set for one node-expansion episode is projected and canonically ordered, that view MUST be
+treated as frozen traversal input.
+
+Normative rule:
+
+* traversal state MUST carry only the fully projected, uniqueness-verified, canonically ordered Active Member Set;
+* raw structural member collections MUST NOT remain the semantic traversal input once projection is complete;
+* rollback MAY restore traversal position, but MUST NOT mutate or recompute the already-frozen ordered member view for
+  the same expansion episode.
+
+Reason: deterministic traversal requires an immutable, already-ratified frontier.
+
+#### 3.4.3. Comparator vs. Uniqueness Separation Law (AMENDED)
+
+Deterministic ordering and semantic uniqueness are distinct protocol concerns and MUST NOT be conflated.
+
+Normative rule:
+
+* canonical ordering exists only to order already-distinct members inside the Active Member Set;
+* ordering MUST NOT be used to conceal semantic ambiguity;
+* if two active members collide on the canonical ordering identity domain, the planner MUST fail closed through the
+  collision law rather than "pick one anyway" through extra tie-breaking.
+
+Therefore:
+
+* duplicate `CanonicalEdgeKey` remains a semantic ambiguity,
+* duplicate `EntropyTargetKey` remains a semantic ambiguity,
+* deterministic ordering does not override collision failure.
+
+Reason: a deterministic order over an ambiguous model is still an ambiguous model.
+
 #### 3.5. Edge Classification & Demotion (Domain Core Responsibility)
 
 *Constraint:* The Planner Core MUST evaluate raw facts against the `CapabilityProfile`.
@@ -176,6 +295,35 @@ Collision detection MUST NOT be performed globally across all possible construct
     * **Capability Demotion (MUST RECORD):** If restricted by the `CapabilityProfile`, the Core demotes it to **Ignored
       **
       and MUST record a `DemotionRecord` for diagnostics.
+
+#### 3.5.1. Unknown / Unavailable Sentinel Law (AMENDED)
+
+Planning-relevant structural facts MUST represent unknown or unavailable metadata explicitly.
+
+Forbidden:
+
+* silently collapsing unknown into ordinary `false`,
+* silently collapsing unavailable ordinals into `0`,
+* silently treating missing backend facts as if they were confirmed semantic facts.
+
+Required categories include, where applicable:
+
+* nullability certainty,
+* default-value presence,
+* declaration-order availability,
+* accessibility / writability availability,
+* origin/version availability.
+
+Normative rule:
+
+* backend omission MUST be represented explicitly,
+* deterministic conservative fallback rules MUST be documented,
+* and those fallback rules MUST remain cache-blind, backend-blind, and concurrency-blind.
+
+This amendment preserves the existing rule that unknown nullability MUST be treated conservatively rather than as an
+ordinary nullable fact.
+
+Reason: deterministic planning requires deterministic treatment of incomplete fact surfaces.
 
 #### 3.6. Cycle Breakpoint Strategy (Tri-Stage)
 
@@ -227,6 +375,35 @@ governance conditions.
 * **Candidate Eligibility:** Visible under `CapabilityProfile` and **Non-Synthetic**.
 * **Selection Tuple:** `#StrongSatisfiable` -> `#DefaultAvailable` -> `#NullableAvailable` -> `#TotalParams` ->
   `SignatureStability`.
+
+#### 3.7.1. Iteration Stability Law (AMENDED)
+
+No semantic planning decision may depend on unstable adapter iteration order.
+
+Normative rule:
+
+* raw fact gathering may internally use any data structure,
+  but unstable iteration order MUST NOT cross the domain boundary as semantic truth;
+* insertion-order-preserving containers are insufficient if their insertion order is already unstable upstream;
+* the Core MUST treat backend-provided raw member ordering as non-authoritative and rely only on the deterministic
+  selection + projection + canonical ordering protocol of this ADR.
+
+Reason: semantic determinism must not depend on incidental collection order.
+
+#### 3.7.2. Source Artifact Drift Reconciliation Law (AMENDED)
+
+Different structural fact sources (for example reflection, source analysis, bytecode analysis, or equivalent future
+adapters) MUST reconcile to the same planning-relevant semantic fact surface.
+
+Normative rule:
+
+* if one source cannot natively provide a required planning fact,
+  the adapter MUST either reconstruct it deterministically or emit an explicit unavailable sentinel handled by the Core
+  under deterministic fallback law;
+* source-specific capability differences MUST NOT silently rewrite constructor selection, property eligibility,
+  canonical ordering, collision behavior, or diagnostic evidence order.
+
+Reason: source backend diversity must not become semantic nondeterminism.
 
 ### 4. Explicit Substitution & Mapping
 
@@ -308,6 +485,33 @@ However:
 This means stale bytes may remain in memory physically, but they MUST NOT remain reachable via active stack pointers,
 node counts, indexer heads/epochs, builder log positions, or equivalent runtime access paths.
 
+#### 5.3. Integer Arithmetic Law (AMENDED)
+
+Planning protocol arithmetic MUST remain integer-domain deterministic unless a separately ratified fixed-point law
+states otherwise.
+
+Normative rule:
+
+The following categories MUST use deterministic integer arithmetic:
+
+* budget accounting,
+* semantic-work accounting,
+* structural capacity accounting,
+* deterministic counters,
+* canonical ordering rank lowering,
+* threshold / cap evaluation,
+* and equivalent planner-control arithmetic.
+
+Floating-point arithmetic MUST NOT become a hidden semantic choice surface for:
+
+* active-member selection,
+* ordering legality,
+* collision classification,
+* capacity-abort timing,
+* or semantic output shape.
+
+Reason: planner control arithmetic is protocol law, not approximation heuristics.
+
 ### 6. Polymorphism & Determinism Contracts
 
 #### 6.1. Type-Derived Entropy Contract (MUST)
@@ -362,6 +566,46 @@ Cache/governance changes may alter only non-semantic dimensions such as:
 * **Temporal Variance:** Offset `[0, MaxOffsetMillis)` generated via TDE (label: `TIME_OFFSET`). Computed as unsigned
   64-bit `long`. `TargetTime = RootTime.plusMillis(OffsetMillis)`.
 
+#### 6.3.1. Global Entropy Exclusion Law (AMENDED)
+
+Planning semantics MUST exclude non-semantic global entropy.
+
+Forbidden semantic inputs include:
+
+* wall-clock time outside explicitly versioned deterministic entropy law,
+* process-random UUIDs,
+* mutable global RNG streams,
+* object identity / memory-address effects,
+* backend-specific incidental ordering,
+* or any equivalent environment-coupled entropy source.
+
+Normative rule:
+
+* semantic identity,
+* semantic ordering,
+* active-member selection,
+* canonical lowering,
+* and semantic diagnostic ordering
+
+MUST depend only on:
+
+* domain-visible normalized structural facts,
+* explicit deterministic version tuples,
+* deterministic capability state,
+* and explicitly injected deterministic seed surfaces already ratified by protocol.
+
+This law does not require every identifier to be content-hash based.
+It requires explicit separation among:
+
+* routing identity,
+* semantic identity,
+* local dense ordinal,
+* and runtime episode identifiers,
+
+so that forbidden entropy does not leak into semantic planning meaning.
+
+Reason: global entropy leakage destroys replayability and cache-blind semantic determinism.
+
 ### 7. Exception & Fault Taxonomy (MUST)
 
 #### 7.1. Fault Kinds Namespaces
@@ -404,6 +648,27 @@ exclusively for schema collisions (`AmbiguousEdgeKey`, `AmbiguousEntropyTargetKe
         * `PortContractViolation(detail, faultKind = FRAMEWORK_INVARIANT_BROKEN)`
             * *Rule:* Thrown strictly when Reality Defense detects non-NFC normalized strings or malformed Capability
               Profiles, definitively indicating an Adapter bug.
+* **Diagnostic Determinism Rule (AMENDED):**
+  Any planner-produced diagnostic evidence set MUST be deterministically ordered before truncation, rendering, or
+  adapter translation.
+
+  This applies to:
+    * capability demotion evidence,
+    * collision evidence,
+    * candidate lists,
+    * active-member projection rejection evidence,
+    * constructor-selection tie evidence where surfaced for diagnostics,
+    * and equivalent future planner evidence collections.
+
+  Forbidden:
+    * preserving backend iteration order as diagnostic order,
+    * preserving concurrency race order as diagnostic order,
+    * unstable truncation caused by incidental collection order.
+
+  Normative rule:
+    * every planner-visible evidence family MUST define one deterministic ordering key,
+    * truncation MUST occur after deterministic ordering,
+    * and the `truncated` flag MUST reflect that deterministic post-order truncation result only.
 * **`CapacityExceededException`** (Domain Exception): Payload: `limitType`, `currentValue`,
   `faultKind = RESOURCE_EXHAUSTED`.
 * **`PlanViolationException`** (VM/Runtime Exception): Payload includes `runtimeFaultKind`.

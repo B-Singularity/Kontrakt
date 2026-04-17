@@ -6,6 +6,7 @@ Status: Accepted (Amended: 2026-03-01)
 <!-- AMENDED(2026-03-02): Added ULong boxing avoidance + NodeIdIndexer primitive-map mandate -->
 <!-- AMENDED(2026-03-21): Clarified in-flight attach terminal-signal guarantees, commit/abort terminalization discipline, speculative-builder reservation release, drop-sweep linearizability, and callback execution-path safety without changing prior semantic policy. -->
 <!-- AMENDED(2026-03-21): Clarified slot-owned speculative leases and attach-rejection vs quota-exhaustion distinction without introducing new domain fault surfaces. -->
+<!-- AMENDED(2026-04-16): Clarified raw-fact DTO boundary, source-artifact reconciliation, explicit unknown/unavailable sentinel requirements, DTO-level normalization/version binding, and the separation between raw structural facts and Core-owned active-member semantic choice without changing prior cache-blind determinism or interning semantics. -->
 
 Normative
 
@@ -45,8 +46,104 @@ We adopt a **Two-Tier Transactional Memoization Architecture** enhanced by **Det
       (e.g., `identityBits: Long`) for all indexing and membership operations. The core MUST NOT store `ULong` inside
       generic collections (boxing risk).
 
-2. **`PlanCacheKey` (Memoization / Interning):** A comprehensive tuple:
-   `[workAccountingVersion, normalizationVersion, edgeOrderingVersion, capabilityProfileVersion, entropyVersion, partitionKey, equalityKey]`.
+#### 1.1. Raw Structural Fact Boundary Law (AMENDED)
+
+The `TypeFactsDTO` family belongs to the outbound fact boundary and MUST represent **raw normalized structural facts**,
+not planner-policy results.
+
+Normative rule:
+
+* `TypeFactsProvider` MUST supply normalized raw structural facts and precomputed routing/identity material;
+* `TypeFactsDTO` MUST NOT smuggle planner-owned semantic choices such as:
+    * the already-selected Active Member Set,
+    * finalized capability-based demotion outcomes,
+    * finalized cycle-break choices,
+    * or equivalent Core-owned semantic policy results;
+* the Core remains responsible for semantic choice over those facts under ADR-0030.
+
+Reason: the DTO boundary is a fact boundary, not a semantic-planning authority surface.
+
+#### 1.2. Source Artifact Reconciliation Law (AMENDED)
+
+If different adapters (for example reflection, source analysis, bytecode analysis, or equivalent future backends)
+describe the same semantic type under the same version tuple, they MUST reconcile to the same planning-relevant fact
+meaning.
+
+Normative rule:
+
+* if a source backend cannot natively expose one required fact,
+  the adapter MUST either reconstruct it deterministically or emit an explicit unavailable sentinel;
+* backend capability differences MUST NOT silently rewrite:
+    * node-identity meaning,
+    * canonical ordering inputs,
+    * collision behavior,
+    * or planner-visible diagnostic evidence ordering.
+
+Reason: adapter diversity must not become semantic nondeterminism.
+
+#### 1.3. Unknown / Unavailable Sentinel Requirement (AMENDED)
+
+Planning-relevant DTOs MUST represent unknown or unavailable metadata explicitly.
+
+Examples include, where applicable:
+
+* declaration ordinal unavailable,
+* nullability unknown,
+* default-value presence unknown,
+* accessibility / writability unknown,
+* origin or version metadata unavailable.
+
+Forbidden:
+
+* silently collapsing unknown into ordinary `false`,
+* silently collapsing unavailable ordinals into `0`,
+* or letting backend omission mutate semantic interpretation implicitly.
+
+Reason: deterministic planning requires deterministic treatment of incomplete fact surfaces.
+
+2. **`PlanCacheKey` (Memoization / Interning):**  
+   `PlanCacheKey` consists of two explicitly separated identity surfaces carried together:
+
+   **A. Authoritative semantic key material**
+   `[workAccountingVersion, normalizationVersion, edgeOrderingVersion, capabilityProfileVersion, entropyVersion, partitionKey, equalityKey]`
+
+   **B. Non-authoritative routing identity**
+   `route64`
+
+   Normative rule:
+
+    * the authoritative semantic meaning of a plan-cache entry is the full semantic tuple only;
+    * `route64` is a fast deterministic routing identity carried alongside that tuple;
+    * `route64` MUST NOT replace exact semantic verification;
+    * reuse / publication correctness MUST depend on authoritative full-key verification, not on `route64` uniqueness;
+    * `partitionKey` lowering into canonical identifier material MUST remain deterministic and version-stable;
+    * `equalityKey` MUST remain immutable authoritative semantic identity material.
+
+   This separation is constitutional:
+
+    * full semantic tuple = authoritative identity
+    * `route64` = routing / shard / bucket / probing identity only
+
+#### 1.2.1. `route64` Derivation Law (AMENDED)
+
+`route64` MUST be deterministically derived from semantic key material and version-bound lowering inputs.
+
+Normative rule:
+
+* `route64` MUST be derived from:
+    * `workAccountingVersion`,
+    * `normalizationVersion`,
+    * `edgeOrderingVersion`,
+    * `capabilityProfileVersion`,
+    * `entropyVersion`,
+    * lowered `partitionKey`,
+    * and authoritative `equalityKey` material;
+* `route64` MUST NOT use process-random seeds, JVM identity hash, wall-clock entropy, or backend-incidental ordering;
+* if reserved routing sentinels exist, `route64` MUST be deterministically remapped away from them;
+* `route64` remains collision-tolerant and non-authoritative even when deterministically derived from the full semantic
+  tuple.
+
+Reason: routing identity must be reproducible and stable without becoming a substitute for semantic identity.
 
 3. **`CanonicalEdgeKey` (Deterministic Choice):** Derived from the canonical ordering tuple via a deterministic lowering
    into a 64-bit ordering key (`edgeRank: UInt64`).
@@ -60,6 +157,48 @@ We adopt a **Two-Tier Transactional Memoization Architecture** enhanced by **Det
       purposes. Ties MUST be resolved solely via the stack-index rule (prioritizing the edge closest to the root).
     * **NOTE (Performance):** Any hot-path storage of `edgeRank` sequences (e.g., RMQ inputs, stack-edge arrays) MUST
       use primitive arrays (`LongArray` / `ULongArray`) and MUST NOT route `edgeRank` through boxed generic collections.
+
+#### 1.3.1. Ordering Identity vs. Routing Identity Law (AMENDED)
+
+`CanonicalEdgeKey` lowering and `route64` derivation are related only in that both must be deterministic and
+version-bound.
+
+They are not the same identity surface.
+
+Normative rule:
+
+* `CanonicalEdgeKey` governs deterministic choice/order inside planner semantics;
+* `route64` governs fast routing for memoization/interning infrastructure;
+* neither may silently substitute for the other;
+* collisions on routing identity remain ordinary routing collisions;
+* collisions or ambiguity in canonical ordering space remain planner-semantic concerns governed by ADR-0030.
+
+Reason: routing identity, ordering identity, and full semantic identity must remain explicitly separated.
+
+#### 1.4. Ordering-Version Boundary Law (AMENDED)
+
+`edgeOrderingVersion` governs the deterministic lowering boundary for canonical ordering inputs.
+
+Normative rule:
+
+* lowering into `edgeRank` MUST depend only on:
+    * normalized structural fact components,
+    * the ratified canonical ordering tuple,
+    * and the deterministic version-bound lowering law;
+* lowering MUST NOT depend on:
+    * raw adapter iteration order,
+    * backend-specific incidental enumeration order,
+    * process-local randomness,
+    * or concurrency timing.
+
+This ADR does not redefine the semantic ordering tuple itself.
+That remains governed by ADR-0030.
+
+This ADR defines the DTO/cache-side consequence:
+the DTO and lowering boundary MUST provide all normalized inputs required to keep that ordering law version-bound and
+backend-independent.
+
+Reason: memoization and interning correctness rely on ordering-version stability, not merely on cache-key stability.
 
 ### 2. Tier 1 (L1): Domain Session (Worker-Local Transaction)
 
@@ -120,7 +259,36 @@ We adopt a **Two-Tier Transactional Memoization Architecture** enhanced by **Det
 The Domain Core MUST NEVER interact directly with `KClass`, `java.lang.reflect.*`, or `KS*` types.
 
 * **Outbound (Driven) Ports:**
-    * `TypeFactsProvider`: Supplies normalized `TypeFactsDTO` (including precomputed `nodeIdentity64`).
+    * `TypeFactsProvider`: Supplies normalized raw `TypeFactsDTO` families (including precomputed `nodeIdentity64`)
+      under the fact-boundary law of this ADR.
+    * **CRITICAL MUST:** The provider supplies raw normalized structural facts, not planner-policy outputs and not
+      memoization/interner key material.
+    * **CRITICAL MUST:** The provider MUST NOT precompute or smuggle:
+        * finalized Active Member Set choice,
+        * finalized capability demotion result,
+        * `PlanCacheKey`,
+        * `route64`,
+        * or equivalent Core/service-owned semantic or routing decisions.
+    * **CRITICAL MUST:** If a backend cannot provide a planning-relevant fact directly, it MUST either:
+        * reconstruct it deterministically, or
+        * emit an explicit unavailable sentinel.
+    * **CRITICAL MUST:** The provider MUST NOT let unstable backend enumeration order cross the boundary as semantic
+      ordering truth.
+
+    * `TypeFactsDTO` Family Richness Requirement (AMENDED):
+        * **CRITICAL MUST:** The DTO surface MUST be rich enough to support the deterministic planning laws governed by
+          ADR-0030 without consulting raw reflection/bytecode APIs from the Core.
+        * **CRITICAL MUST:** DTO evolution MUST make it possible to represent, deterministically and explicitly, facts
+          required for:
+            * constructor-candidate identity,
+            * property structural facts,
+            * nullability certainty,
+            * default-value presence where relevant,
+            * mutability / storage classification where relevant,
+            * declaration-ordinal availability,
+            * origin provenance,
+            * and version-bound signature provenance.
+        * **CRITICAL MUST:** A DTO that hides required fact distinctions behind accidental defaults is non-compliant.
     * `NodeIdIndexer`: Maps abstract keys to dense integers.
       **CRITICAL MUST (Primitive Map):** `NodeIdIndexer` MUST be implemented using primitive storage
       (`LongArray`/`IntArray` + open addressing or equivalent). It MUST NOT use boxed-key generic maps
@@ -128,9 +296,46 @@ The Domain Core MUST NEVER interact directly with `KClass`, `java.lang.reflect.*
       and primitive (e.g., accept `identityBits: Long` and compare `CanonicalSignature` bytes in Phase 2).
     * `CanonicalSignatureProvider`
     * `CanonicalEdgeKeyProvider`: Guarantees the `edgeOrderingVersion` and outputs `edgeRank: UInt64`.
+    * **Plan-cache key issuance boundary (AMENDED):**
+        * **CRITICAL MUST:** Lowering from domain partition identity into `partitionKey` canonical material and
+          derivation of
+          `route64` belong to deterministic key-issuance/service logic, not to `TypeFactsProvider`.
+        * **CRITICAL MUST:** The boundary that issues `PlanCacheKey` MUST preserve the explicit separation between:
+            * authoritative semantic tuple,
+            * and non-authoritative routing identity.
+        * **CRITICAL MUST:** Exact-match reuse/publication MUST always verify the full semantic key, never `route64`
+          alone.
     * `PlanInternRepository` (L2 Port)
     * `PlanPayloadStore` (Persistent Load Port)
     * `CacheTelemetrySink`
+
+#### 5.1. Fact Boundary vs. Semantic Choice vs. Key-Issuance Boundary (AMENDED)
+
+The following boundaries are distinct and MUST NOT collapse into one another:
+
+1. **Fact Boundary**
+    * normalized raw structural facts (`TypeFactsDTO`, `nodeIdentity64`)
+
+2. **Semantic Choice Boundary**
+    * deterministic active-member selection,
+    * capability-based demotion,
+    * projection,
+    * uniqueness verification,
+    * canonical ordering ratification
+
+3. **Key-Issuance Boundary**
+    * authoritative `PlanCacheKey` semantic tuple issuance,
+    * deterministic `partitionKey` lowering,
+    * deterministic `route64` derivation
+
+Normative rule:
+
+* outbound fact adapters transport facts only;
+* the Core owns semantic choice over those facts;
+* deterministic key issuance owns semantic-key material packaging plus routing-identity derivation;
+* none of these boundaries may silently absorb the others.
+
+Reason: fact transport, semantic choice, and routing/key issuance are distinct architectural authorities.
 
 ---
 
@@ -275,3 +480,19 @@ without violating cache-blind determinism.
   rejection from speculative quota exhaustion.
 * [ ] **Drop-Sweep Linearizability:** Any slot visible after close publication is terminalized before final region
   reclamation, including slots that appear after close publication but before final removal.
+
+### Additional DTO / Identity-Boundary Compliance Checks (AMENDED)
+
+* [ ] **Source Artifact Reconciliation:** Equivalent source backends produce the same planning-relevant fact meaning
+  under the same normalization/version tuple.
+* [ ] **Unknown / Unavailable Sentinel Stability:** Backend omission is surfaced through explicit sentinels rather than
+  accidental defaults.
+* [ ] **Ordering-Version Stability:** Equivalent normalized fact inputs produce identical canonical ordering-lowering
+  inputs under the same `edgeOrderingVersion`.
+* [ ] **Raw Fact Boundary Purity:** `TypeFactsProvider` does not leak planner-policy outputs or key-issuance outputs as
+  if they were raw facts.
+* [ ] **Backend Iteration Neutrality:** Unstable adapter iteration order does not cross the boundary as semantic
+  ordering truth.
+* [ ] **Semantic Tuple vs. Routing Identity Separation:** `route64` may vary only according to its ratified derivation
+  law, but correctness always remains sealed by full semantic-key verification.
+* [ ] **Reserved Routing Sentinel Stability:** `route64` derivation deterministically avoids reserved routing sentinels.

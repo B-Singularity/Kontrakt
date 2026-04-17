@@ -11,11 +11,13 @@ import planning.domain.session.policy.ResolvedStorageGovernance
 import planning.domain.vo.PartitionId
 import planning.infrastructure.cache.adapter.outgoing.dispatch.DeterministicL2JoinDispatchPlane
 import planning.infrastructure.cache.adapter.outgoing.dispatch.L2JoinDispatchPlane
+import planning.infrastructure.cache.adapter.outgoing.lifecycle.AdapterAdminLifecycleLaw
+import planning.infrastructure.cache.adapter.outgoing.lifecycle.AdapterAdminState
 import planning.infrastructure.runtime.policy.ResolvedDispatchLanePolicy
 import planning.infrastructure.runtime.time.MonotonicTimeSource
 import planning.infrastructure.runtime.time.SystemMonotonicTimeSource
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicReference
+import java.util.concurrent.atomic.AtomicInteger
 
 /**
  * In-memory Tier-2 outbound adapter.
@@ -29,19 +31,23 @@ import java.util.concurrent.atomic.AtomicReference
  * - no polling-era join knobs remain on the public surface
  * - no public method exposes internal dispatch/time collaborators
  * - no ConcurrentHashMap
- * - no lock-based region directory
- * - no concurrent administrative operation interleaving
+ * - no striped lock directory
+ * - no monitor-based admin directory coordination
  *
  * The partition directory is intentionally implemented as an immutable-snapshot CAS map.
  *
  * Rationale:
  * - partition lookup is not the primitive shard-local hot path
  * - region creation/removal is expected to be rare compared to steady-state lookups
- * - immutable snapshot replacement is easier to reason about than striped locks or CHM
+ * - immutable snapshot replacement is easier to reason about than CHM or striped locks
  *
- * Consequence:
- * - regionDirectoryStripeCount is intentionally removed in this cut
- * - the old striped-lock directory has been retired by design
+ * Administrative coordination is modeled as an explicit adapter-local lifecycle:
+ * - OPEN
+ * - DROP_IN_PROGRESS
+ * - CLOSING
+ * - CLOSED
+ *
+ * This keeps drop/close serialization explicit rather than burying it in ad hoc branches.
  */
 class InMemoryPlanInternRepositoryAdapter private constructor(
     private val joinGovernance: ResolvedJoinGovernance,
@@ -57,22 +63,30 @@ class InMemoryPlanInternRepositoryAdapter private constructor(
     private val regions = PartitionRegionDirectory()
 
     /**
-     * Adapter-level administrative state.
+     * Adapter-local administrative lifecycle host.
      *
-     * We intentionally serialize all administrative operations:
+     * This state is intentionally orthogonal to:
+     * - partition-region lifecycle
+     * - dispatch-lane lifecycle
+     * - planning-run lifecycle
+     *
+     * It exists only to serialize:
      * - partition drop
      * - whole-adapter close
-     *
-     * This prevents multiple concurrent quiescence waiters and keeps shutdown/drop
-     * authority singular and explicit.
      */
-    private val adminState = AtomicReference(AdminState.OPEN)
+    private val adminStateCode = AtomicInteger(AdapterAdminState.OPEN.code)
 
     override fun resolveOrIntern(
         partitionId: PartitionId,
         key: PlanCacheKey,
         session: PlannerSession,
     ): PlanInternStep {
+        if (adminStateAcquire() == AdapterAdminState.CLOSED) {
+            throw PlanningProtocolIntegrityException(
+                "resolveOrIntern() is illegal after adapter close completion."
+            )
+        }
+
         session.step(CostCenter.L2_REGION_LOOKUP)
 
         val region = regions.getOrCreate(partitionId) {
@@ -112,18 +126,18 @@ class InMemoryPlanInternRepositoryAdapter private constructor(
     fun dropPartition(
         partitionId: PartitionId,
     ): Boolean {
-        if (!adminState.compareAndSet(AdminState.OPEN, AdminState.DROP_IN_PROGRESS)) {
-            return when (adminState.get()) {
-                AdminState.CLOSING,
-                AdminState.CLOSED -> false
+        if (!beginDrop()) {
+            return when (adminStateAcquire()) {
+                AdapterAdminState.CLOSING,
+                AdapterAdminState.CLOSED -> false
 
-                AdminState.DROP_IN_PROGRESS -> {
+                AdapterAdminState.DROP_IN_PROGRESS -> {
                     throw PlanningProtocolIntegrityException(
                         "Concurrent partition-drop operations are forbidden."
                     )
                 }
 
-                AdminState.OPEN -> false
+                AdapterAdminState.OPEN -> false
             }
         }
 
@@ -145,7 +159,7 @@ class InMemoryPlanInternRepositoryAdapter private constructor(
             regions.removeIfSame(partitionId, region)
             return true
         } finally {
-            adminState.compareAndSet(AdminState.DROP_IN_PROGRESS, AdminState.OPEN)
+            finishDrop()
         }
     }
 
@@ -162,21 +176,21 @@ class InMemoryPlanInternRepositoryAdapter private constructor(
      * - dispatch plane is closed last
      *
      * If quiescence grace expires, plane.close() must still force lane-owned
-     * abandonment/clear from within the lane worker threads themselves.
+     * abandonment/final clear from within the lane worker threads themselves.
      */
     override fun close() {
-        if (!adminState.compareAndSet(AdminState.OPEN, AdminState.CLOSING)) {
-            when (adminState.get()) {
-                AdminState.CLOSED,
-                AdminState.CLOSING -> return
+        if (!beginClose()) {
+            when (adminStateAcquire()) {
+                AdapterAdminState.CLOSED,
+                AdapterAdminState.CLOSING -> return
 
-                AdminState.DROP_IN_PROGRESS -> {
+                AdapterAdminState.DROP_IN_PROGRESS -> {
                     throw PlanningProtocolIntegrityException(
                         "Adapter close cannot start while a partition-drop operation is in progress."
                     )
                 }
 
-                AdminState.OPEN -> return
+                AdapterAdminState.OPEN -> return
             }
         }
 
@@ -202,7 +216,79 @@ class InMemoryPlanInternRepositoryAdapter private constructor(
             regions.clear()
             dispatchPlane.close()
         } finally {
-            adminState.set(AdminState.CLOSED)
+            finishClose()
+        }
+    }
+
+    private fun adminStateAcquire(): AdapterAdminState {
+        return AdapterAdminState.fromCode(adminStateCode.get())
+    }
+
+    private fun beginDrop(): Boolean {
+        while (true) {
+            val from = adminStateAcquire()
+
+            if (!AdapterAdminLifecycleLaw.canStartDrop(from)) {
+                return false
+            }
+
+            val to = AdapterAdminState.DROP_IN_PROGRESS
+            AdapterAdminLifecycleLaw.requireTransition(from, to)
+
+            if (adminStateCode.compareAndSet(from.code, to.code)) {
+                return true
+            }
+        }
+    }
+
+    private fun finishDrop() {
+        while (true) {
+            val from = adminStateAcquire()
+
+            if (from == AdapterAdminState.OPEN) {
+                return
+            }
+
+            val to = AdapterAdminState.OPEN
+            AdapterAdminLifecycleLaw.requireTransition(from, to)
+
+            if (adminStateCode.compareAndSet(from.code, to.code)) {
+                return
+            }
+        }
+    }
+
+    private fun beginClose(): Boolean {
+        while (true) {
+            val from = adminStateAcquire()
+
+            if (!AdapterAdminLifecycleLaw.canStartClose(from)) {
+                return false
+            }
+
+            val to = AdapterAdminState.CLOSING
+            AdapterAdminLifecycleLaw.requireTransition(from, to)
+
+            if (adminStateCode.compareAndSet(from.code, to.code)) {
+                return true
+            }
+        }
+    }
+
+    private fun finishClose() {
+        while (true) {
+            val from = adminStateAcquire()
+
+            if (from == AdapterAdminState.CLOSED) {
+                return
+            }
+
+            val to = AdapterAdminState.CLOSED
+            AdapterAdminLifecycleLaw.requireTransition(from, to)
+
+            if (adminStateCode.compareAndSet(from.code, to.code)) {
+                return
+            }
         }
     }
 
@@ -294,13 +380,13 @@ class InMemoryPlanInternRepositoryAdapter private constructor(
      * This avoids:
      * - ConcurrentHashMap
      * - striped locks
-     * - external mutation visibility ambiguity
+     * - mixed visibility through shared mutable map state
      *
      * Mutation is expected to be relatively rare.
      * We therefore prefer explicit immutable replacement over hidden shared mutation.
      */
     private class PartitionRegionDirectory {
-        private val state = AtomicReference(DirectoryState(emptyMap()))
+        private val state = java.util.concurrent.atomic.AtomicReference(DirectoryState(emptyMap()))
 
         fun get(
             partitionId: PartitionId,
@@ -359,12 +445,5 @@ class InMemoryPlanInternRepositoryAdapter private constructor(
         private class DirectoryState(
             val regions: Map<PartitionId, PartitionRegion>,
         )
-    }
-
-    private enum class AdminState {
-        OPEN,
-        DROP_IN_PROGRESS,
-        CLOSING,
-        CLOSED,
     }
 }

@@ -7,20 +7,22 @@ import planning.domain.exception.AmbiguousEntropyTargetKeyException
 import planning.domain.exception.CapacityExceededException
 import planning.domain.exception.CycleDetectedException
 import planning.domain.exception.InvalidCanonicalKeyComponentException
+import planning.domain.exception.PlanningProtocolIntegrityException
 import planning.domain.exception.PortContractViolationException
+import planning.domain.interner.InternerInvocationSite
+import planning.domain.interner.InternerStepResult
 import planning.domain.interner.PlanInterner
 import planning.domain.interner.PlanKeyFactory
-import planning.domain.port.outgoing.CycleEdgeSemanticsProvider
 import planning.domain.port.outgoing.NormalizationEngine
-import planning.domain.port.outgoing.TraversalDisposition
 import planning.domain.port.outgoing.TypeFactsProvider
 import planning.domain.protocol.CostCenter
+import planning.domain.protocol.TraversalDisposition
 import planning.domain.runtime.CommittedPlanNode
 import planning.domain.service.assembly.CycleBreakPayloadAssembler
 import planning.domain.service.assembly.PassiveIrAssembler
-import planning.domain.service.derivation.ActiveMemberOrdering
 import planning.domain.service.derivation.CanonicalEdgeKeyProvider
 import planning.domain.service.derivation.CanonicalSignatureProvider
+import planning.domain.service.derivation.CycleEdgeSemanticsProvider
 import planning.domain.service.derivation.EntropyTargetKeyProvider
 import planning.domain.session.AllocateFrame
 import planning.domain.session.ExpandEdgeFrame
@@ -30,6 +32,7 @@ import planning.domain.session.PlannerSession
 import planning.domain.vo.PartitionId
 
 /**
+ * Compiler-style structural planner core.
  *
  * Guarantees:
  * - no native recursion
@@ -42,10 +45,19 @@ import planning.domain.vo.PartitionId
  * - fault-kind policy
  * - committed-node wrapper selection
  * - stage-specific cycle-break defaulting
+ * - planning-run suspension orchestration
+ *
+ * Phase-6 position:
+ * - old lambda-based interner calls are removed
+ * - the core now speaks the explicit InternerStepResult algebra
+ * - actual SUSPENDED_ON_JOIN orchestration uplift remains a later phase
+ *
+ * Therefore this file currently fails closed if the runtime boundary has not yet
+ * been uplifted to consume InternerStepResult.SuspendedOnJoin.
  */
 class StructuralPlannerCore private constructor(
     private val factsProvider: TypeFactsProvider,
-    private val orderingGate: ActiveMemberOrdering,
+    private val orderingGate: ActiveMemberOrderingGate,
     private val signatureProvider: CanonicalSignatureProvider,
     private val edgeKeyProvider: CanonicalEdgeKeyProvider,
     private val entropyTargetKeyProvider: EntropyTargetKeyProvider,
@@ -135,13 +147,15 @@ class StructuralPlannerCore private constructor(
                     session = session,
                 )
 
-                val canonical = interner.resolveCycleBreak(
-                    partitionId = partitionId,
-                    key = cacheKey,
-                    session = session,
-                ) {
-                    assembly.payload
-                }
+                val canonical = requireImmediateInternerCompletion(
+                    result = interner.resolveCycleBreak(
+                        partitionId = partitionId,
+                        key = cacheKey,
+                        session = session,
+                        rawPayload = assembly.payload,
+                    ),
+                    site = InternerInvocationSite.CYCLE_BREAK,
+                )
 
                 val committed = committedPlanNodeFactory.createCycleBreak(
                     irNode = canonical,
@@ -187,13 +201,13 @@ class StructuralPlannerCore private constructor(
             if (member.name.contains('|')) {
                 throw InvalidCanonicalKeyComponentException(
                     component = member.name,
-                    reason = "Reserved delimiter '|' detected."
+                    reason = "Reserved delimiter '|' detected.",
                 )
             }
 
             if (!normalizationEngine.isNfc(member.name)) {
                 throw PortContractViolationException(
-                    "Non-NFC component provided by Port: '${member.name}'"
+                    "Non-NFC component provided by Port: '${member.name}'",
                 )
             }
 
@@ -281,7 +295,7 @@ class StructuralPlannerCore private constructor(
                 incomingEdgeStageTag = edge.breakpointStage.tag,
                 incomingExpandExecutionIndex = session.currentExecutionIndex(),
                 incomingMemberIndex = memberIndex,
-            )
+            ),
         )
     }
 
@@ -301,13 +315,15 @@ class StructuralPlannerCore private constructor(
             session = session,
         )
 
-        val canonicalIrNode = interner.resolve(
-            partitionId = partitionId,
-            key = cacheKey,
-            session = session,
-        ) {
-            assembly.payload
-        }
+        val canonicalIrNode = requireImmediateInternerCompletion(
+            result = interner.resolve(
+                partitionId = partitionId,
+                key = cacheKey,
+                session = session,
+                rawPayload = assembly.payload,
+            ),
+            site = InternerInvocationSite.ORDINARY_PAYLOAD,
+        )
 
         val totalSemanticCost =
             assembly.selfSemanticCostUpperBound + session.collectChildSemanticCost(frame)
@@ -323,11 +339,37 @@ class StructuralPlannerCore private constructor(
         session.completeFrame(frame, finalResult)
     }
 
+    /**
+     * Phase-6 bridge-prep helper.
+     *
+     * This helper makes the new step algebra explicit at current core call sites
+     * while intentionally refusing to fake blocking or stale-session reuse.
+     *
+     * Phase 7 replaces this fail-closed branch with real planning-run suspension
+     * orchestration.
+     */
+    private fun requireImmediateInternerCompletion(
+        result: InternerStepResult,
+        site: InternerInvocationSite,
+    ): ir.plan.node.CanonicalPlanNode {
+        return when (result) {
+            is InternerStepResult.Completed -> result.node
+
+            is InternerStepResult.SuspendedOnJoin -> {
+                throw PlanningProtocolIntegrityException(
+                    "StructuralPlannerCore encountered InternerStepResult.SuspendedOnJoin during ${site.diagnosticLabel} " +
+                            "before runtime-boundary orchestration uplift. Phase 7 must route this through " +
+                            "PlanningRunContext / PlanningRunJoinBridge instead of forcing immediate completion.",
+                )
+            }
+        }
+    }
+
     companion object {
         @JvmStatic
         fun issue(
             factsProvider: TypeFactsProvider,
-            orderingGate: ActiveMemberOrdering,
+            orderingGate: ActiveMemberOrderingGate,
             signatureProvider: CanonicalSignatureProvider,
             edgeKeyProvider: CanonicalEdgeKeyProvider,
             entropyTargetKeyProvider: EntropyTargetKeyProvider,
