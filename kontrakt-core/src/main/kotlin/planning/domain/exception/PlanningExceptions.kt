@@ -1,6 +1,7 @@
 package planning.domain.exception
 
 import exception.KontraktException
+import planning.domain.projection.ConstructorRejectionRecord
 
 /**
  * Root exception for Planning Protocol SSOT violations.
@@ -160,4 +161,54 @@ class CapacityExceededException(
     val faultKind: FaultKind = FaultKind.RESOURCE_EXHAUSTED,
 ) : PlanningDomainException(
     message = "Capacity exceeded: limitType=$limitType value=$value"
+)
+
+
+/**
+ * Base exception for Active Member projection / ordering semantic-choice failures.
+ *
+ * This exception is intentionally not a MetamodelException.
+ *
+ * MetamodelException is for raw metamodel fact-boundary violations.
+ * This exception is for Planning Core semantic-choice failures over already emitted facts.
+ */
+open class ActiveMemberProjectionException(
+    message: String,
+    cause: Throwable? = null,
+) : KontraktException(message, cause) {
+    override val domain: String = "PLANNING"
+}
+
+
+/**
+ * Raised when the Core cannot select any constructor for an expansion episode.
+ *
+ * This is distinct from AmbiguousConstructorSelectionException.
+ *
+ * Meaning:
+ * - zero raw constructor candidates, or
+ * - all candidates rejected by capability profile / synthetic filtering / conservative unknown rules.
+ */
+class NoEligibleConstructorSelectionException(
+    val ownerTypeFqcn: String,
+    val candidateCount: Int,
+    val rejectionEvidence: List<ConstructorRejectionRecord>,
+) : ActiveMemberProjectionException(
+    "No eligible constructor can be selected for ownerType=$ownerTypeFqcn, " +
+            "candidateCount=$candidateCount, rejectionEvidenceCount=${rejectionEvidence.size}"
+)
+
+
+/**
+ * Raised when constructor selection survives every deterministic selection dimension
+ * with more than one candidate still tied.
+ *
+ * This is distinct from NoEligibleConstructorSelectionException.
+ */
+class AmbiguousConstructorSelectionException(
+    val ownerTypeFqcn: String,
+    val tiedConstructorSignatures: List<String>,
+) : ActiveMemberProjectionException(
+    "Ambiguous constructor selection for ownerType=$ownerTypeFqcn, " +
+            "tiedConstructorSignatures=$tiedConstructorSignatures"
 )

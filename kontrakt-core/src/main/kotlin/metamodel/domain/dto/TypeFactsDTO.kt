@@ -5,17 +5,6 @@ import metamodel.domain.vo.TypeReference
 import java.util.Collections
 
 /**
- * Structural provenance of a member returned by an outbound port.
- *
- * This is a raw fact from the adapter layer, not a planning-policy result.
- */
-enum class MemberOrigin {
-    DECLARED,
-    INHERITED,
-    SYNTHETIC,
-}
-
-/**
  * Immutable structural member fact consumed by the planning core.
  *
  * The planner uses these facts for:
