@@ -212,3 +212,27 @@ class AmbiguousConstructorSelectionException(
     "Ambiguous constructor selection for ownerType=$ownerTypeFqcn, " +
             "tiedConstructorSignatures=$tiedConstructorSignatures"
 )
+
+/**
+ * Raised when projected active members collide on a uniqueness key.
+ *
+ * This is a Planning semantic violation, not a raw metamodel fact-boundary error.
+ */
+class DuplicateActiveMemberKeyException(
+    val ownerTypeFqcn: String,
+    val keyKind: String,
+    val duplicateKey: String,
+) : ActiveMemberProjectionException(
+    "Duplicate active member key: ownerType=$ownerTypeFqcn, keyKind=$keyKind, duplicateKey=$duplicateKey",
+)
+
+/**
+ * Raised when canonical ordering comparator cannot produce a strict deterministic
+ * order over already projected active members.
+ */
+class AmbiguousActiveMemberOrderingException(
+    val ownerTypeFqcn: String,
+    val reason: String,
+) : ActiveMemberProjectionException(
+    "Ambiguous active member ordering: ownerType=$ownerTypeFqcn, reason=$reason",
+)
