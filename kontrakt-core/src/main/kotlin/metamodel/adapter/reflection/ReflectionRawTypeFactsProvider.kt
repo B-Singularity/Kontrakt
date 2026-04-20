@@ -85,6 +85,8 @@ class ReflectionRawTypeFactsProvider private constructor(
 
         return RawTypeFactsDTO.issue(
             typeIdentity64 = typeIdentity64Deriver.deriveIdentity64(reference),
+            typeIdentityAlgorithmId = typeIdentity64Deriver.identityAlgorithmId,
+            typeIdentityAlgorithmVersion = typeIdentity64Deriver.identityAlgorithmVersion,
             ownerTypeFqcn = ownerTypeFqcn,
             normalizationVersion = referenceFactory.typeSignatureNormalizationVersion,
             constructors = constructors,

@@ -7,12 +7,13 @@ import metamodel.domain.structure.MetamodelFactSequence
 /**
  * Raw normalized type-facts DTO.
  *
- * This is the new raw-fact boundary DTO used by RawTypeFactsProvider.
+ * This is the raw-fact boundary DTO used by RawTypeFactsProvider.
  *
  * It intentionally separates:
  * - raw constructor candidates
  * - raw property facts
- * - precomputed primitive node identity
+ * - lowered type identity
+ * - identity algorithm surface
  * - normalization version
  *
  * It must not carry:
@@ -27,34 +28,49 @@ import metamodel.domain.structure.MetamodelFactSequence
  */
 class RawTypeFactsDTO private constructor(
     val typeIdentity64: Long,
+    val typeIdentityAlgorithmId: String,
+    val typeIdentityAlgorithmVersion: Long,
     val ownerTypeFqcn: String,
     val normalizationVersion: Long,
     val constructors: MetamodelFactSequence<ConstructorCandidateFact>,
-    val properties: MetamodelFactSequence<PropertyFact>
+    val properties: MetamodelFactSequence<PropertyFact>,
 ) {
     companion object {
         @JvmStatic
         fun issue(
             typeIdentity64: Long,
+            typeIdentityAlgorithmId: String,
+            typeIdentityAlgorithmVersion: Long,
             ownerTypeFqcn: String,
             normalizationVersion: Long,
             constructors: Collection<ConstructorCandidateFact>,
-            properties: Collection<PropertyFact>
+            properties: Collection<PropertyFact>,
         ): RawTypeFactsDTO {
             validateCanonicalComponent("RawTypeFactsDTO.ownerTypeFqcn", ownerTypeFqcn)
+            validateCanonicalComponent("RawTypeFactsDTO.typeIdentityAlgorithmId", typeIdentityAlgorithmId)
+
+            if (typeIdentityAlgorithmVersion < 0L) {
+                throw InvalidTypeFactShapeException(
+                    owner = ownerTypeFqcn,
+                    factKind = "RawTypeFactsDTO",
+                    reason = "typeIdentityAlgorithmVersion must be >= 0: $typeIdentityAlgorithmVersion",
+                )
+            }
 
             if (normalizationVersion < 0L) {
                 throw InvalidTypeFactShapeException(
                     owner = ownerTypeFqcn,
                     factKind = "RawTypeFactsDTO",
-                    reason = "normalizationVersion must be >= 0: $normalizationVersion"
+                    reason = "normalizationVersion must be >= 0: $normalizationVersion",
                 )
             }
 
             /*
-             * Ownership validation must happen before deterministic sorting and
-             * duplicate-key validation. A wrong-owner fact is a boundary corruption,
-             * not an ordering problem.
+             * Do not reject all negative typeIdentity64 values.
+             *
+             * The identity is a 64-bit lowered bit pattern stored in signed Long.
+             * Negative values can be valid. Reserved sentinels are rejected later at
+             * the planning expansion boundary where sentinel policy is owned.
              */
             validateConstructorOwnership(ownerTypeFqcn, constructors)
             validatePropertyOwnership(ownerTypeFqcn, properties)
@@ -68,20 +84,16 @@ class RawTypeFactsDTO private constructor(
                 keyOf = { fact ->
                     ConstructorDuplicateKey.issue(
                         signature = fact.constructorSignature,
-                        version = fact.constructorSignatureNormalizationVersion
+                        version = fact.constructorSignatureNormalizationVersion,
                     )
                 },
                 keyComparator = CONSTRUCTOR_DUPLICATE_KEY_COMPARATOR,
-                keyToString = { key -> key.render() }
+                keyToString = { key -> key.render() },
             )
 
             /*
              * Exact duplicate properties are detected by RawPropertyDuplicateKey
              * before PROPERTY_COMPARATOR tie validation.
-             *
-             * Therefore, if PROPERTY_COMPARATOR later reports a tie, that means the
-             * comparator is underspecified relative to the duplicate-key model, not
-             * that an exact duplicate property slipped through.
              */
             val orderedProperties = MetamodelFactSequence.orderedUniqueBy(
                 owner = ownerTypeFqcn,
@@ -91,15 +103,17 @@ class RawTypeFactsDTO private constructor(
                 orderingComparator = PROPERTY_COMPARATOR,
                 keyOf = { fact -> RawPropertyDuplicateKey.issue(fact) },
                 keyComparator = RAW_PROPERTY_DUPLICATE_KEY_COMPARATOR,
-                keyToString = { key -> key.render() }
+                keyToString = { key -> key.render() },
             )
 
             return RawTypeFactsDTO(
                 typeIdentity64 = typeIdentity64,
+                typeIdentityAlgorithmId = typeIdentityAlgorithmId,
+                typeIdentityAlgorithmVersion = typeIdentityAlgorithmVersion,
                 ownerTypeFqcn = ownerTypeFqcn,
                 normalizationVersion = normalizationVersion,
                 constructors = orderedConstructors,
-                properties = orderedProperties
+                properties = orderedProperties,
             )
         }
 
@@ -109,9 +123,6 @@ class RawTypeFactsDTO private constructor(
          * The constructor signature is expected to be the full normalized constructor
          * signature. If two constructor candidates share this identity, the adapter
          * emitted duplicate raw facts even if other metadata differs.
-         *
-         * Do not widen this key with visibility/origin/ordinal/parameterCount; that
-         * would allow conflicting duplicate constructor facts to pass as distinct.
          */
         private val CONSTRUCTOR_COMPARATOR: Comparator<ConstructorCandidateFact> =
             Comparator { left, right ->
@@ -119,19 +130,19 @@ class RawTypeFactsDTO private constructor(
                     .takeIfNonZero()
                     ?: compareLongs(
                         left.constructorSignatureNormalizationVersion,
-                        right.constructorSignatureNormalizationVersion
+                        right.constructorSignatureNormalizationVersion,
                     ).takeIfNonZero()
                     ?: compareInts(
                         left.declarationOrdinal.lowerForPrimitiveOrdering(),
-                        right.declarationOrdinal.lowerForPrimitiveOrdering()
+                        right.declarationOrdinal.lowerForPrimitiveOrdering(),
                     ).takeIfNonZero()
                     ?: compareInts(
                         MetamodelFactRanks.visibilityRank(left.visibility),
-                        MetamodelFactRanks.visibilityRank(right.visibility)
+                        MetamodelFactRanks.visibilityRank(right.visibility),
                     ).takeIfNonZero()
                     ?: compareInts(
                         MetamodelFactRanks.originRank(left.origin),
-                        MetamodelFactRanks.originRank(right.origin)
+                        MetamodelFactRanks.originRank(right.origin),
                     ).takeIfNonZero()
                     ?: compareInts(left.parameters.size, right.parameters.size)
             }
@@ -146,35 +157,35 @@ class RawTypeFactsDTO private constructor(
                         .takeIfNonZero()
                     ?: compareLongs(
                         left.typeSignatureNormalizationVersion,
-                        right.typeSignatureNormalizationVersion
+                        right.typeSignatureNormalizationVersion,
                     ).takeIfNonZero()
                     ?: compareInts(
                         left.declarationOrdinal.lowerForPrimitiveOrdering(),
-                        right.declarationOrdinal.lowerForPrimitiveOrdering()
+                        right.declarationOrdinal.lowerForPrimitiveOrdering(),
                     ).takeIfNonZero()
                     ?: compareInts(
                         MetamodelFactRanks.nullabilityRank(left.nullability),
-                        MetamodelFactRanks.nullabilityRank(right.nullability)
+                        MetamodelFactRanks.nullabilityRank(right.nullability),
                     ).takeIfNonZero()
                     ?: compareInts(
                         MetamodelFactRanks.visibilityRank(left.declaredVisibility),
-                        MetamodelFactRanks.visibilityRank(right.declaredVisibility)
+                        MetamodelFactRanks.visibilityRank(right.declaredVisibility),
                     ).takeIfNonZero()
                     ?: compareInts(
                         MetamodelFactRanks.nullableVisibilityRank(left.setterVisibility),
-                        MetamodelFactRanks.nullableVisibilityRank(right.setterVisibility)
+                        MetamodelFactRanks.nullableVisibilityRank(right.setterVisibility),
                     ).takeIfNonZero()
                     ?: compareInts(
                         MetamodelFactRanks.originRank(left.origin),
-                        MetamodelFactRanks.originRank(right.origin)
+                        MetamodelFactRanks.originRank(right.origin),
                     ).takeIfNonZero()
                     ?: compareInts(
                         MetamodelFactRanks.mutabilityRank(left.mutability),
-                        MetamodelFactRanks.mutabilityRank(right.mutability)
+                        MetamodelFactRanks.mutabilityRank(right.mutability),
                     ).takeIfNonZero()
                     ?: compareInts(
                         MetamodelFactRanks.storageKindRank(left.storageKind),
-                        MetamodelFactRanks.storageKindRank(right.storageKind)
+                        MetamodelFactRanks.storageKindRank(right.storageKind),
                     )
             }
 
@@ -212,7 +223,7 @@ class RawTypeFactsDTO private constructor(
 
         private fun validateConstructorOwnership(
             ownerTypeFqcn: String,
-            constructors: Collection<ConstructorCandidateFact>
+            constructors: Collection<ConstructorCandidateFact>,
         ) {
             val iterator = constructors.iterator()
             while (iterator.hasNext()) {
@@ -222,7 +233,7 @@ class RawTypeFactsDTO private constructor(
                     throw MetamodelFactOwnershipMismatchException(
                         expectedOwner = ownerTypeFqcn,
                         actualOwner = constructor.ownerTypeFqcn,
-                        factKind = "ConstructorCandidateFact"
+                        factKind = "ConstructorCandidateFact",
                     )
                 }
             }
@@ -230,7 +241,7 @@ class RawTypeFactsDTO private constructor(
 
         private fun validatePropertyOwnership(
             ownerTypeFqcn: String,
-            properties: Collection<PropertyFact>
+            properties: Collection<PropertyFact>,
         ) {
             val iterator = properties.iterator()
             while (iterator.hasNext()) {
@@ -240,7 +251,7 @@ class RawTypeFactsDTO private constructor(
                     throw MetamodelFactOwnershipMismatchException(
                         expectedOwner = ownerTypeFqcn,
                         actualOwner = property.ownerTypeFqcn,
-                        factKind = "PropertyFact"
+                        factKind = "PropertyFact",
                     )
                 }
             }
@@ -264,14 +275,9 @@ class RawTypeFactsDTO private constructor(
     }
 }
 
-/**
- * Internal duplicate key for constructor candidate raw-fact duplication detection.
- *
- * Not a data class: copy-style reconstruction is intentionally avoided.
- */
 private class ConstructorDuplicateKey private constructor(
     val signature: String,
-    val version: Long
+    val version: Long,
 ) {
     fun render(): String {
         return "signature=${renderField(signature)};version=$version"
@@ -281,22 +287,16 @@ private class ConstructorDuplicateKey private constructor(
         @JvmStatic
         fun issue(
             signature: String,
-            version: Long
+            version: Long,
         ): ConstructorDuplicateKey {
             return ConstructorDuplicateKey(
                 signature = signature,
-                version = version
+                version = version,
             )
         }
     }
 }
 
-/**
- * Internal duplicate key for exact raw property fact duplication detection.
- *
- * This is not the Active Member semantic collision key.
- * Semantic CanonicalEdgeKey / EntropyTargetKey collisions remain Core-owned.
- */
 private class RawPropertyDuplicateKey private constructor(
     val name: String,
     val typeSignature: String,
@@ -308,7 +308,7 @@ private class RawPropertyDuplicateKey private constructor(
     val setterVisibilityRank: Int,
     val originRank: Int,
     val mutabilityRank: Int,
-    val storageKindRank: Int
+    val storageKindRank: Int,
 ) {
     fun render(): String {
         return "name=${renderField(name)};" +
@@ -327,7 +327,7 @@ private class RawPropertyDuplicateKey private constructor(
     companion object {
         @JvmStatic
         fun issue(
-            fact: PropertyFact
+            fact: PropertyFact,
         ): RawPropertyDuplicateKey {
             return RawPropertyDuplicateKey(
                 name = fact.name,
@@ -340,14 +340,14 @@ private class RawPropertyDuplicateKey private constructor(
                 setterVisibilityRank = MetamodelFactRanks.nullableVisibilityRank(fact.setterVisibility),
                 originRank = MetamodelFactRanks.originRank(fact.origin),
                 mutabilityRank = MetamodelFactRanks.mutabilityRank(fact.mutability),
-                storageKindRank = MetamodelFactRanks.storageKindRank(fact.storageKind)
+                storageKindRank = MetamodelFactRanks.storageKindRank(fact.storageKind),
             )
         }
     }
 }
 
 private fun renderField(
-    value: String
+    value: String,
 ): String {
     return value.length.toString() + ":" + value
 }

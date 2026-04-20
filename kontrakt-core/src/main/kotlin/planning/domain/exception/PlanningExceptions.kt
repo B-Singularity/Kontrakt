@@ -332,13 +332,38 @@ class InvalidLoweredTypeIdentityException(
 )
 
 
+/**
+ * Raised when RawTypeFactsProvider returns raw facts that do not belong to the
+ * TypeReference requested by the expansion pipeline.
+ *
+ * This prevents adapter subject drift from reaching cache/interner/canonical
+ * planning surfaces.
+ */
 class RawTypeFactsSubjectMismatchException(
-    val expectedTypeIdentity64: Long,
-    val actualTypeIdentity64: Long,
     val expectedTypeId: String,
+    val expectedSignature: String,
+    val expectedCycleId: String,
+    val expectedTypeIdentity64: Long,
+    val actualOwnerTypeFqcn: String,
+    val actualTypeIdentity64: Long,
+    val expectedAlgorithmId: String,
+    val actualAlgorithmId: String,
+    val expectedAlgorithmVersion: Long,
+    val actualAlgorithmVersion: Long,
+    val mismatchFields: String,
 ) : PlanningExpansionException(
     "Raw type facts subject mismatch: " +
+            "mismatchFields=$mismatchFields, " +
             "expectedTypeId=$expectedTypeId, " +
+            "expectedSignature=$expectedSignature, " +
+            "expectedCycleId=$expectedCycleId, " +
             "expectedTypeIdentity64=$expectedTypeIdentity64, " +
-            "actualTypeIdentity64=$actualTypeIdentity64",
+            "actualOwnerTypeFqcn=$actualOwnerTypeFqcn, " +
+            "actualTypeIdentity64=$actualTypeIdentity64, " +
+            "expectedAlgorithm=$expectedAlgorithmId@$expectedAlgorithmVersion, " +
+            "actualAlgorithm=$actualAlgorithmId@$actualAlgorithmVersion",
 )
+
+
+
+

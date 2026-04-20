@@ -1,5 +1,6 @@
 package planning.domain.expansion
 
+import metamodel.domain.dto.RawTypeFactsDTO
 import metamodel.domain.dto.ResolvedTypeShape
 import metamodel.domain.service.TypeIdentity64Deriver
 import metamodel.domain.vo.TypeKind
@@ -35,6 +36,7 @@ import planning.domain.projection.CapabilityProfile
  *
  *   TypeReference
  *   -> RawTypeFactsDTO
+ *   -> subject-continuity verification
  *   -> ActiveMemberProjectionResult
  *   -> OrderedActiveMembers
  *   -> CompositeExpansionPlan
@@ -43,20 +45,13 @@ import planning.domain.projection.CapabilityProfile
  * - The pipeline does not own PlannerSession.
  * - The caller must pass a session/run-bound TypeExpansionWorkMeter.
  * - Every meaningful stage records a closed TypeExpansionWorkEvent.
- *
- * Non-responsibilities:
- * - creating CanonicalPlanNode
- * - mutating PlannerSession directly
- * - owning traversal cursors
- * - joining L2 intern slots
- * - generator payload creation
  */
 class TypeExpansionPipeline private constructor(
     private val typeShapeProvider: TypeShapeProvider,
     private val rawTypeFactsProvider: RawTypeFactsProvider,
+    private val typeIdentity64Deriver: TypeIdentity64Deriver,
     private val activeMemberProjector: ActiveMemberProjector,
     private val activeMemberOrderer: ActiveMemberOrderer,
-    private val typeIdentity64Deriver: TypeIdentity64Deriver,
 ) {
     fun prepareExpansion(
         reference: TypeReference,
@@ -176,9 +171,14 @@ class TypeExpansionPipeline private constructor(
 
         val rawFacts = rawTypeFactsProvider.resolveRawFacts(reference)
 
+        workMeter.record(
+            event = TypeExpansionWorkEvent.COMPOSITE_RAW_FACT_SUBJECT_CONTINUITY_CHECK,
+            subject = reference,
+        )
+
         requireRawFactsSubjectMatchesReference(
             reference = reference,
-            actualTypeIdentity64 = rawFacts.typeIdentity64,
+            rawFacts = rawFacts,
         )
 
         workMeter.record(
@@ -217,6 +217,38 @@ class TypeExpansionPipeline private constructor(
         )
     }
 
+    private fun requireRawFactsSubjectMatchesReference(
+        reference: TypeReference,
+        rawFacts: RawTypeFactsDTO,
+    ) {
+        val expectedTypeIdentity64 = typeIdentity64Deriver.deriveIdentity64(reference)
+
+        val identityMismatch = rawFacts.typeIdentity64 != expectedTypeIdentity64
+        val algorithmIdMismatch = rawFacts.typeIdentityAlgorithmId != typeIdentity64Deriver.identityAlgorithmId
+        val algorithmVersionMismatch =
+            rawFacts.typeIdentityAlgorithmVersion != typeIdentity64Deriver.identityAlgorithmVersion
+
+        if (identityMismatch || algorithmIdMismatch || algorithmVersionMismatch) {
+            throw RawTypeFactsSubjectMismatchException(
+                expectedTypeId = reference.id,
+                expectedSignature = reference.signature,
+                expectedCycleId = reference.cycleId,
+                expectedTypeIdentity64 = expectedTypeIdentity64,
+                actualOwnerTypeFqcn = rawFacts.ownerTypeFqcn,
+                actualTypeIdentity64 = rawFacts.typeIdentity64,
+                expectedAlgorithmId = typeIdentity64Deriver.identityAlgorithmId,
+                actualAlgorithmId = rawFacts.typeIdentityAlgorithmId,
+                expectedAlgorithmVersion = typeIdentity64Deriver.identityAlgorithmVersion,
+                actualAlgorithmVersion = rawFacts.typeIdentityAlgorithmVersion,
+                mismatchFields = renderRawFactMismatchFields(
+                    identityMismatch = identityMismatch,
+                    algorithmIdMismatch = algorithmIdMismatch,
+                    algorithmVersionMismatch = algorithmVersionMismatch,
+                ),
+            )
+        }
+    }
+
     private fun requireShapeSubjectMatchesReference(
         expected: TypeReference,
         shape: ResolvedTypeShape,
@@ -233,7 +265,7 @@ class TypeExpansionPipeline private constructor(
                 actualSignature = shape.subject.signature,
                 expectedCycleId = expected.cycleId,
                 actualCycleId = shape.subject.cycleId,
-                mismatchFields = renderMismatchFields(
+                mismatchFields = renderShapeMismatchFields(
                     idMismatch = idMismatch,
                     signatureMismatch = signatureMismatch,
                     cycleIdMismatch = cycleIdMismatch,
@@ -242,7 +274,7 @@ class TypeExpansionPipeline private constructor(
         }
     }
 
-    private fun renderMismatchFields(
+    private fun renderShapeMismatchFields(
         idMismatch: Boolean,
         signatureMismatch: Boolean,
         cycleIdMismatch: Boolean,
@@ -268,6 +300,37 @@ class TypeExpansionPipeline private constructor(
                 builder.append(',')
             }
             builder.append("cycleId")
+        }
+
+        return builder.toString()
+    }
+
+    private fun renderRawFactMismatchFields(
+        identityMismatch: Boolean,
+        algorithmIdMismatch: Boolean,
+        algorithmVersionMismatch: Boolean,
+    ): String {
+        val builder = StringBuilder()
+        var wrote = false
+
+        if (identityMismatch) {
+            builder.append("typeIdentity64")
+            wrote = true
+        }
+
+        if (algorithmIdMismatch) {
+            if (wrote) {
+                builder.append(',')
+            }
+            builder.append("typeIdentityAlgorithmId")
+            wrote = true
+        }
+
+        if (algorithmVersionMismatch) {
+            if (wrote) {
+                builder.append(',')
+            }
+            builder.append("typeIdentityAlgorithmVersion")
         }
 
         return builder.toString()
@@ -317,21 +380,6 @@ class TypeExpansionPipeline private constructor(
             )
     }
 
-    private fun requireRawFactsSubjectMatchesReference(
-        reference: TypeReference,
-        actualTypeIdentity64: Long,
-    ) {
-        val expectedTypeIdentity64 = typeIdentity64Deriver.deriveIdentity64(reference)
-
-        if (actualTypeIdentity64 != expectedTypeIdentity64) {
-            throw RawTypeFactsSubjectMismatchException(
-                expectedTypeIdentity64 = expectedTypeIdentity64,
-                actualTypeIdentity64 = actualTypeIdentity64,
-                expectedTypeId = reference.id,
-            )
-        }
-    }
-
     companion object {
         @JvmStatic
         fun issue(
@@ -344,9 +392,9 @@ class TypeExpansionPipeline private constructor(
             return TypeExpansionPipeline(
                 typeShapeProvider = typeShapeProvider,
                 rawTypeFactsProvider = rawTypeFactsProvider,
+                typeIdentity64Deriver = typeIdentity64Deriver,
                 activeMemberProjector = activeMemberProjector,
                 activeMemberOrderer = activeMemberOrderer,
-                typeIdentity64Deriver = typeIdentity64Deriver,
             )
         }
     }
