@@ -14,7 +14,6 @@ import planning.domain.interner.InternerStepResult
 import planning.domain.interner.PlanInterner
 import planning.domain.interner.PlanKeyFactory
 import planning.domain.port.outgoing.NormalizationEngine
-import planning.domain.port.outgoing.TypeFactsProvider
 import planning.domain.protocol.CostCenter
 import planning.domain.protocol.TraversalDisposition
 import planning.domain.runtime.CommittedPlanNode

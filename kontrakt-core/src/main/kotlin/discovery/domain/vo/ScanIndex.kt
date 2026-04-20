@@ -1,7 +1,7 @@
 package discovery.domain.vo
 
 import discovery.domain.vo.ScanIndex.Companion.of
-import kontrakt.ir.TypeId
+import ir.spec.TypeId
 import java.util.Collections
 import java.util.SortedMap
 import java.util.TreeMap

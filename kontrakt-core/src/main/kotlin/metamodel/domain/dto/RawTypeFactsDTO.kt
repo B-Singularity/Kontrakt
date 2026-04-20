@@ -26,7 +26,7 @@ import metamodel.domain.structure.MetamodelFactSequence
  * They are deterministically ordered and never silently deduplicated.
  */
 class RawTypeFactsDTO private constructor(
-    val nodeIdentity64: Long,
+    val typeIdentity64: Long,
     val ownerTypeFqcn: String,
     val normalizationVersion: Long,
     val constructors: MetamodelFactSequence<ConstructorCandidateFact>,
@@ -35,7 +35,7 @@ class RawTypeFactsDTO private constructor(
     companion object {
         @JvmStatic
         fun issue(
-            nodeIdentity64: Long,
+            typeIdentity64: Long,
             ownerTypeFqcn: String,
             normalizationVersion: Long,
             constructors: Collection<ConstructorCandidateFact>,
@@ -95,7 +95,7 @@ class RawTypeFactsDTO private constructor(
             )
 
             return RawTypeFactsDTO(
-                nodeIdentity64 = nodeIdentity64,
+                typeIdentity64 = typeIdentity64,
                 ownerTypeFqcn = ownerTypeFqcn,
                 normalizationVersion = normalizationVersion,
                 constructors = orderedConstructors,

@@ -44,7 +44,7 @@ class InvalidMetamodelCanonicalComponentException(
     val value: String,
     val reason: String,
 ) : MetamodelFactContractViolationException(
-    "Invalid metamodel canonical component: field=$field, reason=$reason, value=$value"
+    "Invalid metamodel canonical component: field=$field, reason=$reason, value=${safeDiagnosticValue(value)}"
 )
 
 /**
@@ -86,7 +86,7 @@ class DuplicateMetamodelFactException(
     val duplicateKey: String,
     val reason: String,
 ) : MetamodelFactContractViolationException(
-    "Duplicate metamodel fact: owner=$owner, factKind=$factKind, duplicateKey=$duplicateKey, reason=$reason"
+    "Duplicate metamodel fact: owner=$owner, factKind=$factKind, duplicateKey=${safeDiagnosticValue(duplicateKey)}, reason=$reason"
 )
 
 /**
@@ -122,3 +122,34 @@ class StrictModeViolationException(
 class DeterminismViolationException(
     message: String,
 ) : MetamodelException(message)
+
+
+/**
+ * Thrown when a caller passes a TypeReference that this adapter cannot resolve.
+ *
+ * Example:
+ * - ReflectionRawTypeFactsProvider receives a KSP-backed TypeReference.
+ */
+class UnsupportedMetamodelSourceException(
+    message: String,
+) : MetamodelException(message)
+
+
+/**
+ * Thrown when the adapter emits or receives a component that violates the
+ * ratified Kontrakt normalization boundary.
+ *
+ * Kontrakt uses NFC-REJECT at this boundary.
+ * The adapter may canonicalize JVM-specific spelling such as '$' to '.', but it
+ * must not silently Unicode-normalize strings behind the protocol's back.
+ */
+class MetamodelNormalizationViolationException(
+    val field: String,
+    val valueSample: String,
+    val engineId: String,
+    val engineVersion: String,
+    val reason: String,
+) : MetamodelFactContractViolationException(
+    "Metamodel normalization violation: field=$field, engine=$engineId@$engineVersion, " +
+            "reason=$reason, valueSample=$valueSample"
+)
