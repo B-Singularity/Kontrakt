@@ -236,3 +236,109 @@ class AmbiguousActiveMemberOrderingException(
 ) : ActiveMemberProjectionException(
     "Ambiguous active member ordering: ownerType=$ownerTypeFqcn, reason=$reason",
 )
+
+
+/**
+ * Raised when a shape says a child type exists, but the corresponding child
+ * reference is missing at the point where the expansion pipeline lowers the
+ * shape into a concrete expansion decision.
+ *
+ * This should normally be unreachable because ResolvedTypeShape validates shape
+ * cardinality at construction.
+ */
+class InvalidResolvedTypeShapeException(
+    val subjectTypeId: String,
+    val shapeKind: String,
+    val reason: String,
+) : PlanningExpansionException(
+    "Invalid resolved type shape: subjectTypeId=$subjectTypeId, shapeKind=$shapeKind, reason=$reason"
+)
+
+/**
+ * Base exception for planning type-expansion pipeline failures.
+ *
+ * This exception family belongs to Planning domain orchestration.
+ * It is not a metamodel raw-fact error and not an adapter error.
+ */
+open class PlanningExpansionException(
+    message: String,
+    cause: Throwable? = null,
+) : KontraktException(message, cause) {
+    override val domain: String = "PLANNING"
+}
+
+/**
+ * Raised when TypeShapeProvider returns a shape for a different TypeReference.
+ *
+ * The mismatch fields are explicit because id, signature, and cycleId can drift
+ * independently.
+ */
+class TypeShapeSubjectMismatchException(
+    val expectedTypeId: String,
+    val actualTypeId: String,
+    val expectedSignature: String,
+    val actualSignature: String,
+    val expectedCycleId: String,
+    val actualCycleId: String,
+    val mismatchFields: String,
+) : PlanningExpansionException(
+    "Type shape subject mismatch: " +
+            "mismatchFields=$mismatchFields, " +
+            "expectedTypeId=$expectedTypeId, actualTypeId=$actualTypeId, " +
+            "expectedSignature=$expectedSignature, actualSignature=$actualSignature, " +
+            "expectedCycleId=$expectedCycleId, actualCycleId=$actualCycleId",
+)
+
+/**
+ * Defensive guard for a ResolvedTypeShape whose cardinality law is violated.
+ *
+ * For shapes created through ResolvedTypeShape factories this should not happen.
+ * It is still kept as a fail-closed guard against binary drift, future enum
+ * expansion, malformed test fixtures, or non-factory construction mistakes.
+ */
+class CorruptResolvedTypeShapeException(
+    val subjectTypeId: String,
+    val shapeKind: String,
+    val reason: String,
+) : PlanningExpansionException(
+    "Corrupt resolved type shape: subjectTypeId=$subjectTypeId, shapeKind=$shapeKind, reason=$reason",
+)
+
+/**
+ * Raised when the planner reaches a type expansion kind that is intentionally
+ * not implemented in the current step.
+ *
+ * The core must not silently treat unsupported expansion kinds as COMPOSITE or ATOMIC.
+ */
+class UnsupportedTypeExpansionException(
+    val subjectTypeId: String,
+    val shapeKind: String,
+    val reason: String,
+) : PlanningExpansionException(
+    "Unsupported type expansion: subjectTypeId=$subjectTypeId, shapeKind=$shapeKind, reason=$reason",
+)
+
+/**
+ * Raised when a lowered primitive identity uses a reserved sentinel value.
+ *
+ * Negative values are not rejected in general because a signed Long may carry
+ * a valid 64-bit identity bit pattern. Only reserved sentinels are rejected.
+ */
+class InvalidLoweredTypeIdentityException(
+    val ownerTypeFqcn: String,
+    val typeIdentity64: Long,
+) : PlanningExpansionException(
+    "Invalid lowered type identity: ownerType=$ownerTypeFqcn, typeIdentity64=$typeIdentity64",
+)
+
+
+class RawTypeFactsSubjectMismatchException(
+    val expectedTypeIdentity64: Long,
+    val actualTypeIdentity64: Long,
+    val expectedTypeId: String,
+) : PlanningExpansionException(
+    "Raw type facts subject mismatch: " +
+            "expectedTypeId=$expectedTypeId, " +
+            "expectedTypeIdentity64=$expectedTypeIdentity64, " +
+            "actualTypeIdentity64=$actualTypeIdentity64",
+)
