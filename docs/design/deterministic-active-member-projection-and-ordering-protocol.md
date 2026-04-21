@@ -1,6 +1,6 @@
 # Design: Deterministic Active Member Projection and Ordering Protocol
 
-- Status: Draft
+- Status: Accepted
 - Date: 2026-04-16
 - Scope: Planning-domain projection, ordering, traversal-input freezing, and raw-fact boundary obligations
 - Audience: Planning Core, Metamodel Adapters, Interner Boundary, Runtime / Verification
@@ -159,7 +159,8 @@ The raw fact boundary owns:
 - normalized structural fact extraction,
 - backend-specific reconciliation,
 - explicit unavailable sentinel emission,
-- precomputed routing/identity facts such as `nodeIdentity64`.
+- precomputed lowered type identity facts such as `typeIdentity64`,
+- identity algorithm id/version material required to validate that lowered type identity.
 
 This boundary belongs to outbound adapters.
 
@@ -240,16 +241,17 @@ They must not alter the semantic projection or ordering protocol defined here.
 
 For one node-expansion episode, the protocol is:
 
-1. resolve raw normalized structural facts
-2. derive or validate the stripped node identity
-3. perform deterministic constructor selection
-4. evaluate eligible properties against capability profile
-5. project the Active Member Set
-6. verify uniqueness inside that Active Member Set
-7. ratify canonical ordering
-8. freeze the ordered member view
-9. hand the frozen ordered view to traversal
-10. forbid any later semantic recomputation for that same expansion episode
+1. resolve or retrieve raw normalized structural facts
+2. distinguish raw-fact cache hit from actual raw-fact resolution
+3. validate lowered type identity continuity against the requested `TypeReference`
+4. perform deterministic constructor selection
+5. evaluate eligible properties against capability profile
+6. project the Active Member Set
+7. verify uniqueness inside that Active Member Set
+8. ratify canonical ordering
+9. freeze the ordered member view
+10. hand the frozen ordered view to traversal
+11. forbid any later semantic recomputation for that same expansion episode
 
 This protocol executes before child expansion begins.
 
@@ -287,6 +289,77 @@ Traversal frames consume only the frozen ordered active-member view.
 
 Raw structural facts must not remain the live traversal authority once the view has been frozen.
 
+### 8.4 Type Expansion Metering Boundary
+
+Active-member projection and ordering are not cost-free helper calls.
+
+They are deterministic semantic lowering stages and MUST be metered through the planner runtime accounting model.
+
+However, metering must preserve the semantic distinction between:
+
+- raw-fact cache hit,
+- actual raw-fact resolution,
+- projection,
+- ordering,
+- mechanical continuity checks,
+- and dispatch decisions.
+
+#### 8.4.1 Raw-Fact Hit / Resolve Split
+
+The raw-fact provider boundary MUST eventually expose whether raw facts were:
+
+- returned from an already-ratified cache/memoized source, or
+- freshly resolved/reconciled from an adapter/backend source.
+
+The required metering distinction is:
+
+- raw-fact cache hit -> physical-only,
+- actual raw-fact resolution -> semantic-also.
+
+This mirrors the existing cache/governance principle that hit, miss, bypass, and publication are not the same accounting
+event.
+
+The implementation MUST NOT collapse both cases into one `COMPOSITE_RAW_FACT_RESOLUTION` cost center unless it
+conservatively charges the combined path as actual resolution and documents the overcharge.
+
+#### 8.4.2 Projection and Ordering Are Semantic-Also
+
+The following stages MUST be charged as semantic-also:
+
+- active-member projection,
+- active-member ordering.
+
+Reason:
+
+Projection determines which constructor parameters and properties become traversal inputs.
+Ordering determines the canonical traversal sequence.
+Both can affect final graph topology and therefore belong to semantic planner progress.
+
+#### 8.4.3 Mechanical Validation Is Physical-Only
+
+The following stages are physical-only:
+
+- raw-fact subject continuity check,
+- type-shape lowering,
+- atomic expansion decision,
+- container expansion decision.
+
+Reason:
+
+These stages validate or route already-known information.
+They do not by themselves ratify a new active-member semantic choice.
+
+#### 8.4.4 Pipeline / Session Boundary
+
+`TypeExpansionPipeline` MUST NOT own or mutate `PlannerSession`.
+
+The lawful boundary is:
+
+1. `TypeExpansionPipeline` emits closed `TypeExpansionWorkEvent` values.
+2. A caller-owned, session-bound work meter maps those events to ratified `CostCenter` values.
+3. `PlannerSession.step(center)` remains the only legal runtime-metering mutation gate.
+
+This keeps the semantic pipeline independent from worker/session lifecycle ownership.
 ---
 
 ## 9. Target DTO Model
@@ -296,15 +369,25 @@ The target DTO model therefore separates constructor candidates from property fa
 
 ### 9.1 TypeFactsDTO
 
-````kotlin
-class TypeFactsDTO private constructor(
-    val nodeIdentity64: Long,
+### 9.1 RawTypeFactsDTO
+
+``````kotlin
+class RawTypeFactsDTO private constructor(
+    val typeIdentity64: Long,
+    val typeIdentityAlgorithmId: String,
+    val typeIdentityAlgorithmVersion: Long,
     val ownerTypeFqcn: String,
     val normalizationVersion: Long,
-    val constructors: List<ConstructorCandidateFact>,
-    val properties: List<PropertyFact>,
+    val constructors: MetamodelFactSequence<ConstructorCandidateFact>,
+    val properties: MetamodelFactSequence<PropertyFact>,
 )
-````
+``````
+
+`typeIdentity64` is a lowered metamodel type identity.
+It is not a canonical plan-node identity.
+
+The algorithm id/version fields are required so the Planning Core can verify that the raw facts returned by an adapter
+belong to the same identity derivation law used by the current pipeline.
 
 ### 9.2 ConstructorCandidateFact
 
@@ -1199,6 +1282,11 @@ This design implies future introduction or refactoring of types equivalent to:
 - `CapabilityProfile`
 - `ActiveMemberProjectionLaw`
 - `ActiveMemberOrderingLaw`
+- `TypeExpansionWorkEvent`
+- `TypeExpansionWorkMeter`
+- `TypeExpansionCostCenterMapper`
+- `RawTypeFactsResolutionKind` or equivalent provider result surface
+- `SessionTypeExpansionWorkMeter`
 
 The exact packaging may evolve.
 The boundary meaning defined here must not.
@@ -1235,6 +1323,11 @@ At minimum, the verification plan must include:
 - rollback freeze integrity tests
 - hot/cold cache equivalence for projection/order/traversal semantics
 - concurrency-blind semantic equivalence tests
+- raw-fact cache-hit vs actual-resolution accounting split tests
+- active-member projection semantic-also accounting tests
+- active-member ordering semantic-also accounting tests
+- type-expansion pipeline does not depend on PlannerSession tests
+- raw-fact subject continuity mismatch fail-fast tests
 
 ---
 

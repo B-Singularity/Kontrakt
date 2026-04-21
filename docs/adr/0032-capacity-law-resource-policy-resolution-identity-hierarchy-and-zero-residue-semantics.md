@@ -57,6 +57,10 @@ The following are **Protocol / SSOT**:
 - zero-residue semantics,
 - primitive byte ledger law shape,
 - capacity solver safety constraints.
+- cost-center family banding and budget-track assignment,
+- monotonic physical / semantic metering counter semantics,
+- type-expansion metering boundary,
+- raw-fact resolution hit/miss metering distinction.
 
 The following are **Policy**:
 
@@ -177,6 +181,46 @@ Protocol requirements:
 
 Physical zero-filling of arrays/slabs is NOT a protocol requirement.
 
+### 6.1 Monotonic Runtime Metering Is Outside Rollback and Zero-Residue
+
+Runtime metering counters are monotonic execution ledgers.
+
+The following counters, or their equivalent implementation representation, MUST remain outside rollback-scoped planner
+snapshots:
+
+- cumulative physical step count,
+- cumulative semantic work count.
+
+Rollback and reset may restore:
+
+- frame cursor state,
+- active traversal frontier,
+- rollback-local checkpoints,
+- semantic reachability frontiers,
+- worker-local reusable structure baselines.
+
+Rollback and reset MUST NOT erase already-consumed physical or semantic work.
+
+Reason:
+
+- rollback is control-flow recovery, not physical time reversal;
+- already-performed CPU work must remain charged;
+- semantic work already ratified before a failure remains part of the run's consumed budget unless the implementation
+  explicitly defines a stronger run-level abort policy outside the rollback boundary.
+
+Zero-residue remains defined as semantic non-reachability of discarded planner state.
+It does not mean runtime metering counters are physically or logically rewound.
+
+If a logical planning run spans multiple fresh worker-local sessions, any request/run-scoped remaining execution budget
+MUST carry forward both:
+
+- remaining physical steps,
+- remaining semantic work units,
+
+unless a separate ADR explicitly ratifies physical-only carry-forward.
+
+A single `remainingPhysicalSteps` value is insufficient for a dual-track budget model.
+
 ### 7. Optional Secure Wipe Policy
 
 Physical zero-filling MAY be offered as a policy mode for secure or regulated environments.
@@ -275,6 +319,139 @@ Additional normative rule:
 - join-timeout expiration is a waiter lifecycle event, not a semantic failure of the canonical result,
 - L2 wait/join governance MUST remain outside L1 planner-session sizing and primitive byte-ledger math.
 
+### 11.1 Type Expansion Metering Boundary
+
+Type expansion work is part of planner runtime metering, but it is not Tier-2 cache governance.
+
+The planner distinguishes the following cost-center families:
+
+1. **L1 Session**
+   Worker-local runtime substrate work such as frame dispatch, node-id indexing, rollback replay, and primitive state
+   management.
+
+2. **Graph**
+   Direct graph traversal and graph-topology expansion work.
+
+3. **L2 Cache / Governance**
+   Plan interning, route derivation, shard/bucket lookup, in-flight slot lifecycle, waiter lifecycle, and L2
+   survival/governance reactions.
+
+4. **Type Expansion**
+   Metamodel-to-planning semantic lowering work, including:
+    - type-shape resolution,
+    - shape lowering,
+    - raw type-fact cache hit observation,
+    - raw type-fact actual resolution,
+    - raw-fact subject continuity checks,
+    - active-member projection,
+    - active-member ordering,
+    - container/atomic expansion decisions.
+
+Type Expansion MUST NOT be charged through the `L2_CACHE` band.
+
+Reason:
+
+L2 cache governance controls sharing/reuse infrastructure.
+Type expansion controls semantic preparation for graph expansion.
+Merging these two cost families would make cache policy appear to affect semantic preparation cost and would obscure
+budget diagnostics.
+
+#### 11.1.1 Raw Fact Cache Hit vs Actual Resolution
+
+Raw type-fact retrieval MUST distinguish cache hit from actual resolution.
+
+A cached raw-fact hit is not semantic work by itself.
+It is already-ratified fact reuse and MUST be charged as physical-only validation / retrieval work.
+
+Actual raw-fact resolution is semantic lowering input acquisition and MAY be charged as semantic-also work.
+
+Therefore the protocol MUST NOT define one ambiguous `COMPOSITE_RAW_FACT_RESOLUTION` cost center that is used for both
+hit and miss paths.
+
+Required split:
+
+- `COMPOSITE_RAW_FACT_CACHE_HIT`
+    - `BudgetTrack.PHYSICAL_ONLY`
+    - used when a previously ratified raw-fact DTO is retrieved and revalidated.
+
+- `COMPOSITE_RAW_FACT_RESOLVE`
+    - `BudgetTrack.SEMANTIC_ALSO`
+    - used when the adapter/backend performs actual fact discovery/reconciliation for the current expansion episode.
+
+If the implementation cannot tell whether raw facts came from a hit or actual resolution, it MUST conservatively treat
+the path as actual resolution until the provider contract is refined.
+
+#### 11.1.2 Type Expansion Budget Tracks
+
+Type Expansion cost centers use the same `BudgetTrack` model as the rest of the planner.
+
+`PHYSICAL_ONLY` applies to:
+
+- type-shape resolution,
+- shape lowering,
+- raw-fact cache hit observation,
+- raw-fact subject continuity checks,
+- atomic expansion decisions,
+- container expansion decisions.
+
+`SEMANTIC_ALSO` applies to:
+
+- actual raw type-fact resolution,
+- active-member projection,
+- active-member ordering.
+
+Projection and ordering are semantic-also because they ratify constructor/property traversal inputs and can affect final
+graph topology.
+
+Continuity checks and dispatch decisions are physical-only because they validate or route already-known facts without
+creating a new semantic choice.
+
+#### 11.1.3 Interface Expansion Cost Deferral
+
+`INTERFACE_EXPANSION_DECISION` MUST NOT be introduced as a ratified cost center until the interface/implementation
+resolution path exists.
+
+Before that path is implemented, interface shape handling MUST fail closed or remain explicitly unsupported.
+
+Forbidden:
+
+- charging a cost center for a path that has no executable implementation,
+- silently falling through from interface shape to composite expansion,
+- treating abstract-class handling and interface-resolution policy as the same decision without a ratified rule.
+
+#### 11.1.4 Composite Expansion Plan Issuance Is Not a Separate Cost Center
+
+`CompositeExpansionPlan.issue(...)` is validation and object issuance around already-ratified projection/order outputs.
+
+It MUST NOT receive a separate cost center in the initial protocol.
+
+Its cost is accounted as part of:
+
+- active-member ordering, or
+- the surrounding physical frame dispatch / lowering step.
+
+A future implementation MAY add a dedicated cost center only if measurement shows plan issuance is a meaningful and
+independently diagnosable cost surface.
+
+#### 11.1.5 Session Accounting Boundary
+
+`TypeExpansionPipeline` MUST NOT mutate `PlannerSession` directly.
+
+Instead, the caller MUST provide a session-bound `TypeExpansionWorkMeter` or equivalent bridge that maps closed
+`TypeExpansionWorkEvent` values to ratified `CostCenter` values and then calls the session's authoritative accounting
+gate.
+
+This preserves the boundary:
+
+- `TypeExpansionPipeline` owns deterministic type-expansion stage ordering.
+- `PlannerSession` owns runtime metering mutation.
+- `RequiredCostCentersSpec` owns cost-center and budget-track semantics.
+
+Implementation constraint:
+
+`TypeExpansionPipeline` MUST NOT accept `PlannerSession` in its constructor or factory.
+Any future constructor/factory shape that directly depends on `PlannerSession` is non-compliant.
+
 ### 12. Consequences
 
 #### Positive
@@ -319,3 +496,20 @@ Additional normative rule:
     - `ColdHotCacheBlindDeterminismTest`
     - `GateOffOnAutoEquivalenceTest`
     - `ArithmeticOverflowGuardTest`
+
+4. Amend `docs/design/deterministic-active-member-projection-and-ordering-protocol.md`
+    - clarify type-expansion metering,
+    - split raw-fact cache hit from actual raw-fact resolution,
+    - bind projection/order to semantic-also accounting,
+    - forbid PlannerSession mutation inside TypeExpansionPipeline.
+
+5. Amend `docs/design/l1-planner-session-primitive-data-structures.md`
+    - add the `TYPE_EXPANSION` cost-center band,
+    - add required Type Expansion cost centers,
+    - document that decode bounds must be derived from actual protocol IDs or band maxima, not hand-maintained as a
+      stale literal.
+
+6. Amend `docs/design/planner-budget-resolution-and-worker-lifecycle.md`
+    - clarify that physical and semantic counters are monotonic and rollback-resistant,
+    - clarify that fresh-session restart must carry forward both remaining physical and remaining semantic budget if
+      semantic work is bounded for the logical run.

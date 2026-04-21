@@ -306,6 +306,100 @@ can differ between Hot/Cold cache states.
 * `L2_FAULT_TRANSIENT`
 * `L2_FAULT_CIRCUIT_OPEN`
 
+**Type Expansion / Metamodel Lowering**
+
+Type expansion is a planner metering family distinct from L1 session substrate, graph traversal, and L2 cache
+governance.
+
+Required cost centers:
+
+* `TYPE_SHAPE_RESOLUTION`
+    * track: `PHYSICAL_ONLY`
+    * meaning: resolve the coarse type shape used for expansion dispatch.
+
+* `TYPE_SHAPE_LOWERING`
+    * track: `PHYSICAL_ONLY`
+    * meaning: lower a validated `ResolvedTypeShape` into an expansion decision.
+
+* `COMPOSITE_RAW_FACT_CACHE_HIT`
+    * track: `PHYSICAL_ONLY`
+    * meaning: retrieve an already-ratified raw-fact DTO from a cache/memoized provider surface.
+
+* `COMPOSITE_RAW_FACT_RESOLVE`
+    * track: `SEMANTIC_ALSO`
+    * meaning: perform actual raw structural fact discovery/reconciliation for composite expansion.
+
+* `COMPOSITE_RAW_FACT_SUBJECT_CONTINUITY_CHECK`
+    * track: `PHYSICAL_ONLY`
+    * meaning: verify returned raw facts belong to the requested `TypeReference` and identity derivation law.
+
+* `COMPOSITE_ACTIVE_MEMBER_PROJECTION`
+    * track: `SEMANTIC_ALSO`
+    * meaning: ratify constructor/property active-member projection under the active capability profile.
+
+* `COMPOSITE_ACTIVE_MEMBER_ORDERING`
+    * track: `SEMANTIC_ALSO`
+    * meaning: ratify canonical traversal order over the projected active-member set.
+
+* `CONTAINER_EXPANSION_DECISION`
+    * track: `PHYSICAL_ONLY`
+    * meaning: lower collection/array/map shape into child expansion frame inputs.
+
+* `ATOMIC_EXPANSION_DECISION`
+    * track: `PHYSICAL_ONLY`
+    * meaning: lower atomic shape into a leaf/no-member-expansion decision.
+
+The following are intentionally not ratified in the initial cost-center set:
+
+* `COMPOSITE_EXPANSION_PLAN_ISSUE`
+    * plan issuance is covered by projection/order plus surrounding dispatch cost;
+    * it may become a separate cost center only after measurement justifies it.
+
+* `INTERFACE_EXPANSION_DECISION`
+    * interface implementation-resolution policy is not yet implemented;
+    * no cost center may be ratified for a non-existent executable path.
+
+### Cost-Center Banding Rule for Type Expansion
+
+`TYPE_EXPANSION` MUST be a separate `CostCenterBand`.
+
+It MUST NOT reuse:
+
+- `L2_CACHE`, because type expansion is not cache governance;
+- `GRAPH`, because type expansion prepares graph traversal but is not itself edge traversal;
+- `L1_SESSION`, because it is not merely worker-local substrate mechanics.
+
+Recommended initial band:
+
+``````kotlin
+TYPE_EXPANSION(300, 399)
+``````
+
+The exact numeric range is protocol-owned and may be amended later, but IDs already assigned MUST NOT be renumbered.
+
+### CostCenter Decode Bound Rule
+
+The decode table maximum MUST NOT be a stale hand-maintained literal.
+
+Compliant options:
+
+1. derive the decode-table bound from the maximum assigned `CostCenter.id`;
+2. derive it from the maximum `CostCenterBand.maxInclusive` among ratified bands;
+3. use an equivalent build-time verified constant generated from the protocol table.
+
+Non-compliant:
+
+``````kotlin
+private const val MAX_ID: Int = 399
+``````
+
+if that value can drift from the actual ratified protocol set.
+
+Reason:
+
+Additional future bands such as KSP-specific, bytecode-specific, or dispatch-lane-specific accounting must not require
+unsafe manual edits in unrelated decode-table code.
+
 ### Governance Rules
 
 * `MaxFinalizeSteps` MUST be strictly monotonic and MUST NOT be rolled back during transaction unwinds.

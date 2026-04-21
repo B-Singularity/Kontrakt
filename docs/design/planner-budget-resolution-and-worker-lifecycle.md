@@ -568,6 +568,28 @@ On any exit path, including hard abort:
 - `currentDepth` MUST return to sentinel baseline;
 - semantic zero-residue MUST hold before the state is returned to the pool.
 
+### 9.3.1 Runtime Metering Counters Are Not Reset-State Residue
+
+Worker-local zero-residue cleanup does not roll back cumulative runtime metering.
+
+After ordinary reset/return:
+
+- worker-local primitive state must become semantically unreachable,
+- active membership must be cleared,
+- reusable backing state must return to its lawful baseline,
+- but already-consumed physical and semantic counters remain consumed.
+
+This is intentional.
+
+Physical and semantic counters model already-performed runtime work.
+They are not rollback-scoped frame state and they are not worker-local residue.
+
+A reset failure may quarantine worker backing, but it must not erase the run/session accounting history that led to the
+failure.
+
+If one logical planning run spans multiple worker-local sessions, the run context must carry forward the remaining
+execution budget rather than re-opening a full fresh budget each time.
+
 ### 9.4 Quarantine
 
 If reset fails, or if post-reset invariants cannot be proven:
@@ -628,18 +650,49 @@ worker-local session as the continuation owner.
 If the runtime distinguishes an initialized planning run from an actively running one, that distinction remains a
 runtime-boundary orchestration concern and does not weaken the worker cleanup/reset obligations above.
 
-### 9.7 Request-Scoped Physical-Budget Carry-Forward (AMENDED)
+### 9.7 Request-Scoped Execution-Budget Carry-Forward (AMENDED)
 
-If joined-waiter resumption uses fresh-session restart, boundedness MUST be enforced by carrying forward
-request-scoped **physical-step** budget into the restarted session.
+If joined-waiter resumption uses fresh-session restart, boundedness MUST be enforced by carrying forward request-scoped
+execution budget into the restarted session.
+
+Because planner metering is dual-track, the carry-forward surface MUST include both:
+
+- remaining physical steps,
+- remaining semantic work units.
 
 Normative rule:
 
 - each restarted session receives an effective physical-step bound clamped by the remaining request-scoped physical
   budget,
-- exhaustion of that carried-forward physical budget MUST terminate through the existing hard-abort / fail-closed
-  budget path,
+- each restarted session receives an effective semantic-work bound clamped by the remaining request-scoped semantic
+  budget,
+- exhaustion of either carried-forward budget MUST terminate through the existing hard-abort / fail-closed budget path,
 - no additional retry-count policy surface or retry fault kind is introduced by this note.
+
+Illustrative shape:
+
+``````kotlin
+class PlanningRunRemainingBudget private constructor(
+    val remainingPhysicalSteps: Int,
+    val remainingSemanticWorkUnits: Int,
+) {
+    companion object {
+        @JvmStatic
+        fun issue(
+            remainingPhysicalSteps: Int,
+            remainingSemanticWorkUnits: Int,
+        ): PlanningRunRemainingBudget {
+            return PlanningRunRemainingBudget(
+                remainingPhysicalSteps = remainingPhysicalSteps,
+                remainingSemanticWorkUnits = remainingSemanticWorkUnits,
+            )
+        }
+    }
+}
+``````
+
+`PlanningRunRemainingBudget` is not a runtime-policy snapshot.
+It is the run-scoped remaining execution ledger under an already-pinned `RuntimePolicyEpoch`.
 
 ### 9.7.1 Ordinary Abort vs Panic-Isolated Terminalization (AMENDED)
 
@@ -742,31 +795,33 @@ Illustrative compatibility rule:
 
 ### 9.7.8 Planning-Run / Worker Boundary Shape (Illustrative) (AMENDED)
 
-`````kotlin
+``````kotlin
 class PlanningRunContext private constructor(
     val runEpoch: PlanningRunEpoch,
     val pinnedRuntimePolicyEpoch: RuntimePolicyEpoch,
-    val remainingPhysicalBudget: Int,
+    initialRemainingBudget: PlanningRunRemainingBudget,
     val resumePoint: PlanningResumePoint?,
 ) {
+    private var remainingBudget: PlanningRunRemainingBudget = initialRemainingBudget
+
     companion object {
         @JvmStatic
         fun issue(
             runEpoch: PlanningRunEpoch,
             pinnedRuntimePolicyEpoch: RuntimePolicyEpoch,
-            remainingPhysicalBudget: Int,
+            initialRemainingBudget: PlanningRunRemainingBudget,
             resumePoint: PlanningResumePoint?,
         ): PlanningRunContext {
             return PlanningRunContext(
                 runEpoch = runEpoch,
                 pinnedRuntimePolicyEpoch = pinnedRuntimePolicyEpoch,
-                remainingPhysicalBudget = remainingPhysicalBudget,
+                initialRemainingBudget = initialRemainingBudget,
                 resumePoint = resumePoint,
             )
         }
     }
 }
-`````
+``````
 
 This illustrative shape is not intended to freeze one final API, but it does show the required ownership split:
 
