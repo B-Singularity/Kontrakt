@@ -16,6 +16,7 @@ import metamodel.domain.vo.DeclarationOrdinal
 import metamodel.domain.vo.TypeReference
 import planning.domain.port.outgoing.NormalizationEngine
 import planning.domain.port.outgoing.RawTypeFactsProvider
+import planning.domain.port.outgoing.RawTypeFactsResolution
 import kotlin.reflect.KClass
 import kotlin.reflect.KFunction
 import kotlin.reflect.KMutableProperty1
@@ -65,7 +66,7 @@ class ReflectionRawTypeFactsProvider private constructor(
 
     override fun resolveRawFacts(
         reference: TypeReference,
-    ): RawTypeFactsDTO {
+    ): RawTypeFactsResolution {
         val kType = ReflectionTypeReferenceAccess.requireKType(reference)
         val kClass = kType.jvmErasure
         val ownerTypeFqcn = renderOwnerTypeFqcn(kClass)
@@ -83,14 +84,16 @@ class ReflectionRawTypeFactsProvider private constructor(
             ownerHasKotlinMetadata = ownerHasKotlinMetadata,
         )
 
-        return RawTypeFactsDTO.issue(
-            typeIdentity64 = typeIdentity64Deriver.deriveIdentity64(reference),
-            typeIdentityAlgorithmId = typeIdentity64Deriver.identityAlgorithmId,
-            typeIdentityAlgorithmVersion = typeIdentity64Deriver.identityAlgorithmVersion,
-            ownerTypeFqcn = ownerTypeFqcn,
-            normalizationVersion = referenceFactory.typeSignatureNormalizationVersion,
-            constructors = constructors,
-            properties = properties,
+        return RawTypeFactsResolution.actualResolution(
+            facts = RawTypeFactsDTO.issue(
+                typeIdentity64 = typeIdentity64Deriver.deriveIdentity64(reference),
+                typeIdentityAlgorithmId = typeIdentity64Deriver.identityAlgorithmId,
+                typeIdentityAlgorithmVersion = typeIdentity64Deriver.identityAlgorithmVersion,
+                ownerTypeFqcn = ownerTypeFqcn,
+                normalizationVersion = referenceFactory.typeSignatureNormalizationVersion,
+                constructors = constructors,
+                properties = properties,
+            ),
         )
     }
 

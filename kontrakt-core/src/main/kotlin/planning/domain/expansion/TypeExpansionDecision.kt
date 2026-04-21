@@ -8,14 +8,15 @@ import metamodel.domain.vo.TypeReference
  * This is not a plan node.
  * It is a compiler-style dispatch result that tells StructuralPlannerCore which
  * expansion frame to create next.
+ *
+ * Interface expansion is intentionally not represented yet.
+ * Until implementation-resolution policy exists, interface shape is fail-closed
+ * inside TypeExpansionPipeline.
  */
 sealed interface TypeExpansionDecision {
 
     val subject: TypeReference
 
-    /**
-     * Leaf-like type. No active-member traversal should be performed.
-     */
     class AtomicExpansion private constructor(
         override val subject: TypeReference,
     ) : TypeExpansionDecision {
@@ -29,10 +30,6 @@ sealed interface TypeExpansionDecision {
         }
     }
 
-    /**
-     * Composite object type. Traversal must consume orderedMembers from
-     * CompositeExpansionPlan.
-     */
     class CompositeExpansion private constructor(
         override val subject: TypeReference,
         val plan: CompositeExpansionPlan,
@@ -51,9 +48,6 @@ sealed interface TypeExpansionDecision {
         }
     }
 
-    /**
-     * Iterable-like container. The next frame should handle element expansion.
-     */
     class CollectionExpansion private constructor(
         override val subject: TypeReference,
         val elementType: TypeReference,
@@ -72,9 +66,6 @@ sealed interface TypeExpansionDecision {
         }
     }
 
-    /**
-     * Array-like container. The next frame should handle component expansion.
-     */
     class ArrayExpansion private constructor(
         override val subject: TypeReference,
         val componentType: TypeReference,
@@ -93,9 +84,6 @@ sealed interface TypeExpansionDecision {
         }
     }
 
-    /**
-     * Map-like container. The next frame should handle key/value expansion.
-     */
     class MapExpansion private constructor(
         override val subject: TypeReference,
         val keyType: TypeReference,
@@ -113,26 +101,6 @@ sealed interface TypeExpansionDecision {
                     keyType = keyType,
                     valueType = valueType,
                 )
-            }
-        }
-    }
-
-    /**
-     * Interface/protocol-like type.
-     *
-     * This is separated from Composite so implementation-resolution policy can
-     * be introduced explicitly instead of accidentally treating interfaces as
-     * ordinary objects.
-     */
-    class InterfaceExpansion private constructor(
-        override val subject: TypeReference,
-    ) : TypeExpansionDecision {
-        companion object {
-            @JvmStatic
-            fun issue(
-                subject: TypeReference,
-            ): InterfaceExpansion {
-                return InterfaceExpansion(subject)
             }
         }
     }
