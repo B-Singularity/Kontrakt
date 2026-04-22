@@ -4,6 +4,11 @@ Date: 2026-03-13
 
 Status: Accepted
 
+Related Consistency References:
+
+- [ADR-0030](0030-edge-aware-deterministic-cycle-truncation-strategy.md)
+- [ADR-0037](0037-cycle-identity-preflight-and-deferred-raw-fact-resolution.md)
+
 ## Context
 
 Kontrakt’s planning engine is a deterministic compiler-style state machine.
@@ -60,7 +65,9 @@ The following are **Protocol / SSOT**:
 - cost-center family banding and budget-track assignment,
 - monotonic physical / semantic metering counter semantics,
 - type-expansion metering boundary,
-- raw-fact resolution hit/miss metering distinction.
+- type-cycle identity preflight metering boundary,
+- raw-fact resolution hit/miss metering distinction,
+- identity-first / fact-lazy active-cycle preflight staging.
 
 The following are **Policy**:
 
@@ -279,6 +286,47 @@ Properties:
 - immutable,
 - exact-match based.
 
+#### 9.3 Cycle Identity
+
+`TypeCycleIdentity` is the active-cycle detection identity introduced by ADR-0037.
+
+It bridges routing identity and semantic identity:
+
+- `identityBits64`
+    - fast primitive routing / probing / dense-indexing identity;
+    - collision-tolerant;
+    - non-authoritative by itself.
+
+- `canonicalSignature`
+    - exact verification material;
+    - authoritative for equality after primitive routing.
+
+- `identityAlgorithmId` / `identityAlgorithmVersion`
+    - protocol version surface for detecting identity derivation drift.
+
+Cycle identity is not raw type facts.
+
+It MUST NOT depend on:
+
+- constructor enumeration,
+- property enumeration,
+- declaration ordinal,
+- active-member projection,
+- active-member ordering,
+- capability profile,
+- adapter enumeration order,
+- object identity,
+- wall-clock time,
+- UUID.
+
+Cycle identity MUST be resolved before raw facts on the active-cycle detection path.
+
+Reason:
+
+Cycle detection asks whether a type identity is already active on the planning stack.
+It must not require the planner to enumerate the type's constructors/properties before deciding that the current node is
+a cycle hit.
+
 ### 10. Verification Law
 
 A routing hit MUST ALWAYS be followed by authoritative verification before reuse or publication.
@@ -289,6 +337,13 @@ Implications:
 - routing collision is NOT a repository fault;
 - exact mismatch under the same routing key means “continue scan or miss”;
 - correctness MUST NOT depend on routing uniqueness.
+
+For active-cycle detection, this law applies to `TypeCycleIdentity` as follows:
+
+- `identityBits64` may route/probe the active-path index;
+- `canonicalSignature` MUST verify exact identity equality;
+- algorithm id/version MUST be checked against the pipeline's identity-law snapshot;
+- a primitive identity hit without canonical-signature equality MUST NOT be treated as a cycle.
 
 ### 11. L2 Governance Boundary
 
@@ -340,6 +395,8 @@ The planner distinguishes the following cost-center families:
    Metamodel-to-planning semantic lowering work, including:
     - type-shape resolution,
     - shape lowering,
+    - type-cycle identity resolution,
+    - type-cycle identity subject / algorithm continuity checks,
     - raw type-fact cache hit observation,
     - raw type-fact actual resolution,
     - raw-fact subject continuity checks,
@@ -356,7 +413,46 @@ Type expansion controls semantic preparation for graph expansion.
 Merging these two cost families would make cache policy appear to affect semantic preparation cost and would obscure
 budget diagnostics.
 
-#### 11.1.1 Raw Fact Cache Hit vs Actual Resolution
+#### 11.1.1 Type Cycle Identity Preflight
+
+ADR-0037 introduces an identity-first / fact-lazy active-cycle preflight stage.
+
+Type-cycle identity work is part of the Type Expansion family, but it is not raw-fact resolution.
+
+Required distinction:
+
+- `TYPE_CYCLE_IDENTITY_RESOLUTION`
+    - `BudgetTrack.PHYSICAL_ONLY`
+    - used after `TypeCycleIdentityProvider.resolveCycleIdentity(reference)` succeeds.
+
+- `TYPE_CYCLE_IDENTITY_CONTINUITY_CHECK`
+    - `BudgetTrack.PHYSICAL_ONLY`
+    - used after returned `TypeCycleIdentity` is verified against:
+        - requested `TypeReference`,
+        - identity algorithm id snapshot,
+        - identity algorithm version snapshot.
+
+These cost centers are physical-only because they materialize and validate active-cycle detection identity.
+They do not by themselves ratify raw structural facts, active-member projection, or traversal order.
+
+Cycle identity resolution MUST occur before raw-fact resolution on the active-cycle detection path.
+
+If active-cycle detection reports a cycle hit, the implementation MUST NOT charge:
+
+- `COMPOSITE_RAW_FACT_CACHE_HIT`,
+- `COMPOSITE_RAW_FACT_RESOLVE`,
+- `COMPOSITE_RAW_FACT_SUBJECT_CONTINUITY_CHECK`,
+- `COMPOSITE_ACTIVE_MEMBER_PROJECTION`,
+- `COMPOSITE_ACTIVE_MEMBER_ORDERING`
+
+for the current cycle-hit type.
+
+Reason:
+
+A cycle-hit node is resolved by active-stack identity.
+Raw facts, projection, and ordering are traversal preparation and must be deferred until cycle miss.
+
+#### 11.1.2 Raw Fact Cache Hit vs Actual Resolution
 
 Raw type-fact retrieval MUST distinguish cache hit from actual resolution.
 
@@ -381,7 +477,7 @@ Required split:
 If the implementation cannot tell whether raw facts came from a hit or actual resolution, it MUST conservatively treat
 the path as actual resolution until the provider contract is refined.
 
-#### 11.1.2 Type Expansion Budget Tracks
+#### 11.1.3 Type Expansion Budget Tracks
 
 Type Expansion cost centers use the same `BudgetTrack` model as the rest of the planner.
 
@@ -389,6 +485,8 @@ Type Expansion cost centers use the same `BudgetTrack` model as the rest of the 
 
 - type-shape resolution,
 - shape lowering,
+- type-cycle identity resolution,
+- type-cycle identity subject / algorithm continuity checks,
 - raw-fact cache hit observation,
 - raw-fact subject continuity checks,
 - atomic expansion decisions,
@@ -403,10 +501,10 @@ Type Expansion cost centers use the same `BudgetTrack` model as the rest of the 
 Projection and ordering are semantic-also because they ratify constructor/property traversal inputs and can affect final
 graph topology.
 
-Continuity checks and dispatch decisions are physical-only because they validate or route already-known facts without
-creating a new semantic choice.
+Cycle-identity checks, raw-fact continuity checks, and dispatch decisions are physical-only because they validate or
+route already-known identity/fact material without creating a new semantic traversal choice.
 
-#### 11.1.3 Interface Expansion Cost Deferral
+#### 11.1.4 Interface Expansion Cost Deferral
 
 `INTERFACE_EXPANSION_DECISION` MUST NOT be introduced as a ratified cost center until the interface/implementation
 resolution path exists.
@@ -419,7 +517,7 @@ Forbidden:
 - silently falling through from interface shape to composite expansion,
 - treating abstract-class handling and interface-resolution policy as the same decision without a ratified rule.
 
-#### 11.1.4 Composite Expansion Plan Issuance Is Not a Separate Cost Center
+#### 11.1.5 Composite Expansion Plan Issuance Is Not a Separate Cost Center
 
 `CompositeExpansionPlan.issue(...)` is validation and object issuance around already-ratified projection/order outputs.
 
@@ -433,7 +531,7 @@ Its cost is accounted as part of:
 A future implementation MAY add a dedicated cost center only if measurement shows plan issuance is a meaningful and
 independently diagnosable cost surface.
 
-#### 11.1.5 Session Accounting Boundary
+#### 11.1.6 Session Accounting Boundary
 
 `TypeExpansionPipeline` MUST NOT mutate `PlannerSession` directly.
 
@@ -452,6 +550,18 @@ Implementation constraint:
 `TypeExpansionPipeline` MUST NOT accept `PlannerSession` in its constructor or factory.
 Any future constructor/factory shape that directly depends on `PlannerSession` is non-compliant.
 
+ADR-0037 further requires that `TypeExpansionPipeline` emit metering events only after each corresponding stage
+succeeds.
+
+For the identity-first preflight path, this means:
+
+- `TYPE_SHAPE_RESOLUTION` is recorded after shape resolution succeeds;
+- `TYPE_CYCLE_IDENTITY_RESOLUTION` is recorded after cycle identity resolution succeeds;
+- `TYPE_CYCLE_IDENTITY_CONTINUITY_CHECK` is recorded after cycle identity continuity succeeds;
+- raw-fact hit/resolve events are recorded only after active-cycle detection reports cycle miss and raw-fact retrieval
+  succeeds;
+- projection/order events are recorded only after the corresponding stage succeeds.
+
 ### 12. Consequences
 
 #### Positive
@@ -462,6 +572,9 @@ Any future constructor/factory shape that directly depends on `PlannerSession` i
 - scalable capacity without undocumented structural walls,
 - precise identity hierarchy,
 - O(1)-class semantic resets under pooled primitive state.
+- cleaner separation between active-cycle identity work and raw-fact traversal preparation,
+- lower cycle-hit overhead because raw facts are not resolved for the current cycle-hit type,
+- stronger budget diagnostics for shape, cycle identity, raw facts, projection, and ordering.
 
 #### Negative
 
@@ -469,6 +582,9 @@ Any future constructor/factory shape that directly depends on `PlannerSession` i
 - more required compliance tests,
 - tighter coupling between design documents and implementation formulas,
 - explicit need for calibration policy outside the core.
+- requires an additional Type Expansion cost-center pair for cycle identity preflight,
+- requires `TypeCycleIdentityProvider` to be budgeted and tested separately from raw-fact resolution,
+- requires stricter continuity checks before active-cycle detection.
 
 ## Required Follow-up
 
@@ -498,7 +614,9 @@ Any future constructor/factory shape that directly depends on `PlannerSession` i
     - `ArithmeticOverflowGuardTest`
 
 4. Amend `docs/design/deterministic-active-member-projection-and-ordering-protocol.md`
+    - clarify identity-first / fact-lazy active-cycle preflight,
     - clarify type-expansion metering,
+    - add type-cycle identity resolution and continuity-check metering,
     - split raw-fact cache hit from actual raw-fact resolution,
     - bind projection/order to semantic-also accounting,
     - forbid PlannerSession mutation inside TypeExpansionPipeline.
@@ -506,6 +624,8 @@ Any future constructor/factory shape that directly depends on `PlannerSession` i
 5. Amend `docs/design/l1-planner-session-primitive-data-structures.md`
     - add the `TYPE_EXPANSION` cost-center band,
     - add required Type Expansion cost centers,
+    - add `TYPE_CYCLE_IDENTITY_RESOLUTION`,
+    - add `TYPE_CYCLE_IDENTITY_CONTINUITY_CHECK`,
     - document that decode bounds must be derived from actual protocol IDs or band maxima, not hand-maintained as a
       stale literal.
 
@@ -513,3 +633,12 @@ Any future constructor/factory shape that directly depends on `PlannerSession` i
     - clarify that physical and semantic counters are monotonic and rollback-resistant,
     - clarify that fresh-session restart must carry forward both remaining physical and remaining semantic budget if
       semantic work is bounded for the logical run.
+
+7. Add ADR-0037 compliance tests
+    - cycle-hit path does not call `RawTypeFactsProvider`,
+    - cycle-hit path does not call `ActiveMemberProjector`,
+    - cycle-hit path does not call `ActiveMemberOrderer`,
+    - cycle identity resolution is metered as physical-only,
+    - cycle identity continuity check is metered as physical-only,
+    - raw-fact hit/resolve is metered only on cycle miss,
+    - cycle identity algorithm drift fails closed.

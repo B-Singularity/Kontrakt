@@ -1,6 +1,6 @@
 # ADR-0036: Joined-Wait Planning-Run Suspension Bridge and Fresh-Session Restart Authority
 
-- Status: Proposed
+- Status: Accepted
 - Date: 2026-04-15
 - Related:
     - ADR-0034: Explicit dual-axis L2 join lifecycle and single terminalization authority

@@ -7,6 +7,8 @@
 - Normative Dependencies:
     - ADR-0030: Edge-Aware Deterministic Cycle Truncation Strategy
     - ADR-0031: Two-Tier Transactional Memoization and Structural Interning
+    - ADR-0032: Capacity Law, Resource Policy Resolution, Identity Hierarchy, and Zero-Residue Semantics
+    - ADR-0037: Cycle Identity Preflight and Deferred Raw Fact Resolution
 
 ---
 
@@ -14,6 +16,12 @@
 
 This design note defines the **deterministic protocol** that transforms raw structural type facts into the frozen,
 ordered traversal input consumed by the Planning Core.
+
+ADR-0037 refines when this protocol may run:
+
+- active-cycle detection is identity-first;
+- raw structural facts are fact-lazy;
+- active-member projection and ordering run only after active-cycle detection reports a cycle miss.
 
 It exists because the current architecture already commits to the following:
 
@@ -68,7 +76,10 @@ This protocol must preserve clear boundaries among:
 
 The protocol must fit the compiler-style frame machine already used by planning:
 
-- raw fact resolution occurs once,
+- type shape resolution occurs before raw-fact traversal preparation,
+- cycle identity resolution occurs before raw-fact traversal preparation,
+- active-cycle detection occurs before raw-fact resolution for the current node,
+- raw fact resolution occurs only on the cycle-miss path,
 - semantic selection occurs once,
 - ordering occurs once,
 - traversal consumes a frozen ordered set,
@@ -164,6 +175,34 @@ The raw fact boundary owns:
 
 This boundary belongs to outbound adapters.
 
+### 4.6 Cycle Identity Preflight
+
+Cycle Identity Preflight is the stage introduced by ADR-0037 that resolves the minimal identity material needed for
+active-cycle detection before raw structural facts are resolved.
+
+It answers:
+
+> Is this canonical type identity already active on the planning stack?
+
+It does not answer:
+
+> Which constructor and properties will be traversed?
+
+Cycle Identity Preflight owns:
+
+- `TypeCycleIdentity` resolution,
+- cycle identity subject continuity validation,
+- identity algorithm id/version validation.
+
+It must not own:
+
+- raw constructor enumeration,
+- raw property enumeration,
+- constructor selection,
+- property eligibility,
+- active-member projection,
+- active-member ordering.
+
 ---
 
 ## 5. Existing Type Contract: `TypeReference`
@@ -193,9 +232,9 @@ Without this rule, DTO schema and normalization responsibility would conflict.
 
 ## 6. Architectural Boundary Model
 
-### 6.1 Fact Boundary
+### 6.1 Raw Fact Boundary
 
-`TypeFactsProvider` returns normalized raw structural facts only.
+`RawTypeFactsProvider` returns normalized raw structural facts only.
 
 It must not return:
 
@@ -203,7 +242,13 @@ It must not return:
 - pre-demoted capability results,
 - finalized planner ordering decisions,
 - memoization/interner key issuance artifacts,
+- cycle-detection shortcuts,
 - or semantic-choice shortcuts.
+
+ADR-0037 additionally requires that `RawTypeFactsProvider` is not called for the current type on active-cycle-hit paths.
+
+Raw facts are traversal preparation.
+They are not prerequisites for active-cycle detection.
 
 ### 6.2 Semantic Choice Boundary
 
@@ -235,25 +280,71 @@ Fresh-session restart, joined wait, dispatch lanes, and callback timing are runt
 
 They must not alter the semantic projection or ordering protocol defined here.
 
+### 6.6 Cycle Identity Boundary
+
+`TypeCycleIdentityProvider` returns the minimal identity material used for active-cycle detection.
+
+It must not return:
+
+- constructor candidates,
+- property facts,
+- projected members,
+- ordered members,
+- capability-filtered facts,
+- or traversal-ready facts.
+
+The Planning Core uses cycle identity before raw facts.
+
+Required order:
+
+1. shape resolution;
+2. cycle identity resolution;
+3. active-cycle detection;
+4. raw facts only on cycle miss;
+5. projection/order only on cycle miss.
+
+This preserves the separation between:
+
+- identity: **who this type is for active-cycle detection**;
+- facts: **what raw structural members exist**;
+- projection: **which members are active under capability policy**;
+- ordering: **how traversal proceeds deterministically**.
+
 ---
 
 ## 7. Deterministic Protocol Overview
 
 For one node-expansion episode, the protocol is:
 
-1. resolve or retrieve raw normalized structural facts
-2. distinguish raw-fact cache hit from actual raw-fact resolution
-3. validate lowered type identity continuity against the requested `TypeReference`
-4. perform deterministic constructor selection
-5. evaluate eligible properties against capability profile
-6. project the Active Member Set
-7. verify uniqueness inside that Active Member Set
-8. ratify canonical ordering
-9. freeze the ordered member view
-10. hand the frozen ordered view to traversal
-11. forbid any later semantic recomputation for that same expansion episode
+1. resolve coarse type shape;
+2. resolve `TypeCycleIdentity`;
+3. validate shape and cycle-identity continuity against the requested `TypeReference`;
+4. perform active-cycle detection;
+5. if active-cycle detection reports a cycle hit:
+
+- do not resolve raw facts for the current cycle-hit type;
+- do not perform constructor selection for the current cycle-hit type;
+- do not project active members for the current cycle-hit type;
+- do not order active members for the current cycle-hit type;
+- delegate to ADR-0030 deterministic cycle truncation / breakpoint logic;
+
+6. if active-cycle detection reports a cycle miss:
+
+- resolve or retrieve raw normalized structural facts;
+- distinguish raw-fact cache hit from actual raw-fact resolution;
+- validate raw-fact identity continuity against the requested `TypeReference`;
+- perform deterministic constructor selection;
+- evaluate eligible properties against capability profile;
+- project the Active Member Set;
+- verify uniqueness inside that Active Member Set;
+- ratify canonical ordering;
+- freeze the ordered member view;
+- hand the frozen ordered view to traversal;
+- forbid any later semantic recomputation for that same expansion episode.
 
 This protocol executes before child expansion begins.
+
+The active-member part of this protocol begins only after cycle miss.
 
 ---
 
@@ -261,13 +352,24 @@ This protocol executes before child expansion begins.
 
 ### 8.1 Selection Point
 
-Selection occurs immediately after fact resolution and before any child traversal.
+Selection occurs after:
+
+1. type shape resolution,
+2. cycle identity resolution,
+3. active-cycle detection,
+4. cycle-miss confirmation,
+5. raw-fact resolution,
+6. raw-fact continuity validation.
+
+Selection MUST NOT occur on active-cycle-hit paths for the current cycle-hit type.
 
 Forbidden:
 
 - selecting constructor lazily during expansion,
 - projecting properties after some children have already been materialized,
-- revisiting semantic member choice based on cache/publication timing.
+- revisiting semantic member choice based on cache/publication timing,
+- resolving raw facts before active-cycle detection merely to support active-member selection,
+- projecting or ordering active members before active-cycle detection.
 
 ### 8.2 Projection Freeze Point
 
@@ -297,14 +399,41 @@ They are deterministic semantic lowering stages and MUST be metered through the 
 
 However, metering must preserve the semantic distinction between:
 
+- type-shape resolution,
+- type-cycle identity resolution,
+- type-cycle identity continuity checks,
 - raw-fact cache hit,
 - actual raw-fact resolution,
+- raw-fact continuity checks,
 - projection,
 - ordering,
 - mechanical continuity checks,
 - and dispatch decisions.
 
-#### 8.4.1 Raw-Fact Hit / Resolve Split
+#### 8.4.1 Type-Cycle Identity Preflight Metering
+
+ADR-0037 requires type-cycle identity work to be metered separately from raw-fact resolution.
+
+Required events:
+
+- `TYPE_CYCLE_IDENTITY_RESOLUTION`
+    - physical-only;
+    - emitted after `TypeCycleIdentityProvider.resolveCycleIdentity(reference)` succeeds.
+
+- `TYPE_CYCLE_IDENTITY_CONTINUITY_CHECK`
+    - physical-only;
+    - emitted after returned `TypeCycleIdentity` is verified against:
+        - requested `TypeReference`,
+        - identity algorithm id snapshot,
+        - identity algorithm version snapshot.
+
+These events are physical-only because they materialize and validate active-cycle detection identity.
+They do not ratify raw structural facts, active-member projection, or traversal order.
+
+If active-cycle detection reports a cycle hit, the implementation MUST NOT emit raw-fact, projection, or ordering events
+for the current cycle-hit type.
+
+#### 8.4.2 Raw-Fact Hit / Resolve Split
 
 The raw-fact provider boundary MUST eventually expose whether raw facts were:
 
@@ -322,7 +451,7 @@ event.
 The implementation MUST NOT collapse both cases into one `COMPOSITE_RAW_FACT_RESOLUTION` cost center unless it
 conservatively charges the combined path as actual resolution and documents the overcharge.
 
-#### 8.4.2 Projection and Ordering Are Semantic-Also
+#### 8.4.3 Projection and Ordering Are Semantic-Also
 
 The following stages MUST be charged as semantic-also:
 
@@ -335,10 +464,12 @@ Projection determines which constructor parameters and properties become travers
 Ordering determines the canonical traversal sequence.
 Both can affect final graph topology and therefore belong to semantic planner progress.
 
-#### 8.4.3 Mechanical Validation Is Physical-Only
+#### 8.4.4 Mechanical Validation Is Physical-Only
 
 The following stages are physical-only:
 
+- type-cycle identity resolution,
+- type-cycle identity continuity check,
 - raw-fact subject continuity check,
 - type-shape lowering,
 - atomic expansion decision,
@@ -349,7 +480,7 @@ Reason:
 These stages validate or route already-known information.
 They do not by themselves ratify a new active-member semantic choice.
 
-#### 8.4.4 Pipeline / Session Boundary
+#### 8.4.5 Pipeline / Session Boundary
 
 `TypeExpansionPipeline` MUST NOT own or mutate `PlannerSession`.
 
@@ -360,14 +491,52 @@ The lawful boundary is:
 3. `PlannerSession.step(center)` remains the only legal runtime-metering mutation gate.
 
 This keeps the semantic pipeline independent from worker/session lifecycle ownership.
+
+ADR-0037 additionally requires successful-stage accounting order:
+
+1. record `TYPE_SHAPE_RESOLUTION` after shape resolution succeeds;
+2. record `TYPE_CYCLE_IDENTITY_RESOLUTION` after cycle identity resolution succeeds;
+3. record `TYPE_CYCLE_IDENTITY_CONTINUITY_CHECK` after cycle identity continuity validation succeeds;
+4. perform active-cycle detection;
+5. on cycle hit:
+
+- do not record raw-fact hit/resolve for the current cycle-hit type;
+- do not record projection/order events for the current cycle-hit type;
+
+6. on cycle miss:
+
+- record raw-fact cache hit or actual raw-fact resolution after retrieval succeeds;
+- record raw-fact subject continuity check after validation succeeds;
+- record projection after projection succeeds;
+- record ordering after ordering succeeds.
+
+### 8.5 Cycle-Hit Path Must Stay Fact-Lazy
+
+For the current cycle-hit type, the following calls are forbidden:
+
+- `RawTypeFactsProvider.resolveRawFacts(...)`,
+- `ActiveMemberProjector.project(...)`,
+- `ActiveMemberOrderer.order(...)`.
+
+The only lawful work on the current cycle-hit path is:
+
+- shape resolution,
+- cycle identity resolution,
+- cycle identity continuity validation,
+- active-cycle detection,
+- ADR-0030 deterministic breakpoint / truncation logic.
+
+Reason:
+
+Raw facts, projection, and ordering are traversal preparation.
+They are not prerequisites for determining whether the current type is already active on the stack.
+
 ---
 
 ## 9. Target DTO Model
 
 The current DTO surface is insufficient to close all deterministic obligations.
 The target DTO model therefore separates constructor candidates from property facts explicitly.
-
-### 9.1 TypeFactsDTO
 
 ### 9.1 RawTypeFactsDTO
 
@@ -388,6 +557,10 @@ It is not a canonical plan-node identity.
 
 The algorithm id/version fields are required so the Planning Core can verify that the raw facts returned by an adapter
 belong to the same identity derivation law used by the current pipeline.
+
+ADR-0037 requires that `RawTypeFactsDTO` is not the active-cycle detection input.
+
+Raw facts are resolved only after active-cycle detection reports a cycle miss.
 
 ### 9.2 ConstructorCandidateFact
 
@@ -842,6 +1015,9 @@ They must not become backend-specific guesses.
 
 Once:
 
+- active-cycle detection has reported a cycle miss,
+- raw facts have been resolved or retrieved,
+- raw-fact continuity has been validated,
 - one constructor has been selected,
 - and eligible properties have been classified,
 
@@ -912,6 +1088,19 @@ The semantic protocol MUST carry this as `DeclarationOrdinal`, not as an invente
 Adapters do not project the Active Member Set.
 Projection belongs to the Core because it is a semantic choice boundary.
 
+### 17.6 Projection is not cycle detection
+
+Projection MUST NOT participate in active-cycle detection.
+
+For the current cycle-hit type:
+
+- constructor selection does not run;
+- property eligibility does not run;
+- active-member projection does not run;
+- active-member ordering does not run.
+
+Projection begins only on the cycle-miss path.
+
 ---
 
 ## 18. Uniqueness Verification Protocol
@@ -956,17 +1145,6 @@ The canonical ordering tuple remains:
 A primitive implementation MAY encode that unavailable-ordering position using sentinel `-1`,
 but the semantic protocol MUST remain expressed in terms of `DeclarationOrdinal`.
 
-### 19.3 Full-tuple collision rule
-
-If two projected active members are equal across the full primary canonical tuple, including the
-`DeclarationOrdinal` availability/value rule above, that condition is **always** semantic ambiguity and MUST fail
-closed.
-
-Normative rule:
-
-* there is no hidden post-tuple semantic tie-break;
-* any further deterministic ordering used for diagnostics is non-semantic and must not rescue traversal legality.
-
 ### 19.2 Ordering scope
 
 Ordering applies only to the projected, already-distinct Active Member Set.
@@ -979,13 +1157,14 @@ It does not apply to:
 
 ### 19.3 Full-tuple collision rule
 
-If two projected active members are equal across the full primary canonical tuple, that condition is **always**
-semantic ambiguity and MUST fail closed.
+If two projected active members are equal across the full primary canonical tuple, including the
+`DeclarationOrdinal` availability/value rule above, that condition is **always** semantic ambiguity and MUST fail
+closed.
 
 Normative rule:
 
-- there is no hidden post-tuple semantic tie-break;
-- any further deterministic ordering used for diagnostics is non-semantic and must not rescue traversal legality.
+* there is no hidden post-tuple semantic tie-break;
+* any further deterministic ordering used for diagnostics is non-semantic and must not rescue traversal legality.
 
 ### 19.4 CanonicalEdgeKey lowering boundary
 
@@ -1014,6 +1193,9 @@ The ordered active-member view MUST guarantee:
 
 The planner must not consult raw structural lists once this view exists.
 
+The planner must also not attempt to create this view on the current cycle-hit path.
+Ordered active members are traversal input, not active-cycle detection input.
+
 ### 20.3 Rollback obligation
 
 Rollback may restore traversal cursor state.
@@ -1029,9 +1211,19 @@ The prohibition against recomputation is enforced structurally, not merely by co
 
 The planner must use a one-way transition model equivalent to:
 
-1. `PlanNodeFrame` owns raw fact resolution,
-2. projection/order completes,
-3. the runtime transitions into an `IterateMembers`-class frame carrying only the frozen ordered view.
+1. `PlanNodeFrame` owns shape/cycle-identity preflight;
+2. active-cycle detection completes;
+3. if cycle hit:
+
+- ADR-0030 breakpoint/truncation logic runs;
+- no raw facts are resolved for the current cycle-hit type;
+- no ordered active-member view is created for the current cycle-hit type;
+
+4. if cycle miss:
+
+- raw fact resolution completes;
+- projection/order completes;
+- the runtime transitions into an `IterateMembers`-class frame carrying only the frozen ordered view.
 
 There must be no lawful transition back from the traversal frame to raw-fact semantic choice for the same expansion
 episode.
@@ -1255,11 +1447,13 @@ As long as the current simplified surface remains:
 
 The target direction is:
 
+- explicit `TypeCycleIdentityProvider`,
+- identity-first / fact-lazy active-cycle preflight,
 - richer raw DTO families,
 - explicit projection law,
 - explicit ordering law,
 - frozen ordered traversal input,
-- and removal of any boundary ambiguity between facts and semantic choice.
+- and removal of any boundary ambiguity between identity, facts, and semantic choice.
 
 ---
 
@@ -1287,6 +1481,8 @@ This design implies future introduction or refactoring of types equivalent to:
 - `TypeExpansionCostCenterMapper`
 - `RawTypeFactsResolutionKind` or equivalent provider result surface
 - `SessionTypeExpansionWorkMeter`
+- `TypeCycleIdentity`
+- `TypeCycleIdentityProvider`
 
 The exact packaging may evolve.
 The boundary meaning defined here must not.
@@ -1297,13 +1493,17 @@ The boundary meaning defined here must not.
 
 Recommended implementation order:
 
-1. enrich raw DTO vocabularies with explicit sentinel-bearing facts
-2. separate constructor candidates from property facts
-3. introduce Core-owned projection law
-4. introduce Core-owned ordering law
-5. freeze ordered traversal input explicitly
-6. update `StructuralPlannerCore` to consume the frozen ordered view
-7. only then remove transitional compatibility surfaces
+1. introduce `TypeCycleIdentity`
+2. introduce `TypeCycleIdentityProvider`
+3. update `TypeExpansionPipeline` to perform shape + cycle-identity preflight before raw facts
+4. update `StructuralPlannerCore` so active-cycle detection occurs before raw-fact resolution
+5. enrich raw DTO vocabularies with explicit sentinel-bearing facts
+6. separate constructor candidates from property facts
+7. introduce Core-owned projection law
+8. introduce Core-owned ordering law
+9. freeze ordered traversal input explicitly
+10. update traversal frames to consume the frozen ordered view only
+11. remove transitional compatibility surfaces
 
 ---
 
@@ -1328,6 +1528,15 @@ At minimum, the verification plan must include:
 - active-member ordering semantic-also accounting tests
 - type-expansion pipeline does not depend on PlannerSession tests
 - raw-fact subject continuity mismatch fail-fast tests
+- cycle-hit path skips raw-fact resolution tests
+- cycle-hit path skips active-member projection tests
+- cycle-hit path skips active-member ordering tests
+- type-cycle identity resolution physical-only accounting tests
+- type-cycle identity continuity check physical-only accounting tests
+- raw-fact hit/resolve metering only on cycle-miss tests
+- cycle identity subject continuity mismatch fail-fast tests
+- cycle identity algorithm drift fail-fast tests
+- projection/order begins only after cycle-miss tests
 
 ---
 
@@ -1337,6 +1546,8 @@ Deterministic planning does not end at deterministic cache keys or deterministic
 
 It also requires deterministic:
 
+- type-cycle identity preflight,
+- active-cycle detection before raw-fact traversal preparation,
 - raw fact boundaries,
 - constructor selection timing,
 - constructor tie closure,
@@ -1350,3 +1561,6 @@ It also requires deterministic:
 - and unknown/unavailable fact treatment.
 
 From this point onward, any implementation that leaves those steps implicit is non-compliant with the planning protocol.
+
+Cycle detection is identity-first and fact-lazy.
+Active-member projection and ordering begin only after the current node is known not to be an active-stack cycle hit.

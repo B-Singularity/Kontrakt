@@ -9,7 +9,9 @@ Supersedes: [ADR-0010](0010-strict-circular-reference-detection-strategy.md), [A
 Normative References: [ADR-0029](0029-runtime-link-handle-protocol-and-integrity.md)
 
 Related Consistency References (
-AMENDED): [ADR-0032](0032-capacity-law-resource-policy-resolution-identity-hierarchy-and-zero-residue-semantics.md)
+AMENDED): Related Consistency References (
+AMENDED): [ADR-0032](0032-capacity-law-resource-policy-resolution-identity-hierarchy-and-zero-residue-semantics.md), [ADR-0037](0037-cycle-identity-preflight-and-deferred-raw-fact-resolution.md)
+
 
 <!-- AMENDED(2026-04-16): Added deterministic planning preconditions for active-member selection timing, projection freeze, iteration stability, source-artifact reconciliation, explicit unknown/unavailable sentinel law, entropy exclusion, integer arithmetic discipline, mutable-global contamination prohibition, and deterministic diagnostic evidence ordering without changing prior semantic cycle-truncation policy. -->
 
@@ -27,6 +29,42 @@ We identified that relying on JVM recursion for graph traversal is **inherently 
 To achieve commercial-grade reliability, we require a strategy that **bounds structural growth** (Space & Time) and
 **deterministically handles cycles** using a controlled execution model. This execution model must adhere strictly to
 Hexagonal Architecture principles, keeping the Domain (Planner) pure from infrastructure details.
+
+### AMENDED — Cycle Detection Input Is Identity-Only
+
+ADR-0037 refines the execution order for active-cycle detection.
+
+Cycle detection MUST be performed from `TypeCycleIdentity`, not from raw type facts.
+
+The following are forbidden as prerequisites for active-cycle detection:
+
+- `RawTypeFactsDTO`,
+- constructor enumeration,
+- property enumeration,
+- active-member projection,
+- active-member ordering,
+- declaration ordinal reconstruction,
+- reflection enumeration order,
+- KSP declaration order,
+- capability-profile filtering.
+
+Reason:
+
+Cycle detection asks:
+
+> Is this type identity already active on the current planning stack?
+
+It does not ask:
+
+> Which constructor/properties will be traversed under the current capability profile?
+
+Therefore, the current node's raw facts, projected members, and ordered traversal view MUST be deferred until after
+active-cycle detection reports a cycle miss.
+
+This amendment is the ADR-0030-facing expression of ADR-0037.
+
+ADR-0030 remains the authority for deterministic breakpoint selection.
+ADR-0037 is the authority for the pre-cycle staging rule that makes breakpoint selection identity-first and fact-lazy.
 
 ## Decision
 
@@ -118,22 +156,103 @@ Reason: replayability and pooled-worker cleanliness are impossible under hidden 
 
 ### 2. Structural Cycle Detection & Identity
 
-* **Node Identity (MUST):** For cycle detection, a node is identified strictly by its **Stripped Identity Signature**.
-    * **Nullability:** **RECURSIVELY STRIPPED**.
-    * **Generics:** **REIFIED**.
-    * *Rule:* If the Active Stack contains a frame with the same Identity, it is a **Cycle**.
+* **Cycle Identity (MUST):** For active-cycle detection, a planning node is identified by `TypeCycleIdentity`.
+    * **Nullability:** usage-site nullability is **RECURSIVELY STRIPPED**.
+    * **Generics:** generic arguments are **REIFIED** under the ratified canonical rendering law.
+    * **Fast Path:** `identityBits64` may be used for primitive routing / index probing.
+    * **Exact Check:** `canonicalSignature` remains the exact identity verification authority.
+    * *Rule:* If the Active Stack contains a frame with the same cycle identity, it is a **Cycle**.
+
+### AMENDED — Identity-First / Fact-Lazy Cycle Pipeline
+
+For one node-expansion episode, the cycle-related part of the pipeline MUST follow this order:
+
+1. resolve coarse type shape;
+2. resolve `TypeCycleIdentity`;
+3. verify cycle-identity subject continuity;
+4. call `PlannerSession.enterOrDetectCycle(...)`;
+5. if active cycle is detected:
+    - run deterministic truncation / breakpoint selection;
+    - do not resolve raw type facts for the current cycle-hit type;
+    - do not project active members for the current cycle-hit type;
+    - do not order active members for the current cycle-hit type;
+6. if no active cycle is detected:
+    - bind incoming edge metadata at the active depth;
+    - then resolve raw facts;
+    - then project/order active members;
+    - then enter traversal.
+
+Normative shape:
+
+``````text
+TypeReference
+-> TypeShapeProvider.resolveTypeShape(reference)
+-> TypeCycleIdentityProvider.resolveCycleIdentity(reference)
+-> PlannerSession.enterOrDetectCycle(
+       identityBits = cycleIdentity.identityBits64,
+       signature = cycleIdentity.canonicalSignature
+   )
+-> if cycle hit:
+       deterministic breakpoint selection
+       no RawTypeFactsProvider call
+   else:
+       RawTypeFactsProvider.resolveRawFacts(reference)
+       ActiveMemberProjector.project(...)
+       ActiveMemberOrderer.order(...)
+       IterateMembersFrame(OrderedActiveMembers)
+``````
+
+#### 2.0.1. TypeCycleIdentity as the Active-Cycle Detection Authority (AMENDED)
+
+Active-cycle detection is driven by `TypeCycleIdentity`.
+
+Illustrative shape:
+
+``````kotlin
+class TypeCycleIdentity private constructor(
+    val subject: TypeReference,
+    val identityBits64: Long,
+    val canonicalSignature: CanonicalSignature,
+    val identityAlgorithmId: String,
+    val identityAlgorithmVersion: Long,
+)
+``````
+
+`identityBits64` is a fast routing / indexing identity.
+
+It is not authoritative by itself.
+
+`canonicalSignature` is the exact identity verification material and MUST be checked after fast routing in the
+`NodeIdIndexer` / active-cycle lookup path.
+
+This preserves the two-phase identity law:
+
+1. route / probe by primitive 64-bit identity;
+2. verify by canonical signature byte equality.
+
+`TypeCycleIdentity` replaces any ambiguous conceptual use of raw `nodeIdentity64` as the cycle-detection input.
+
+Implementation may still store `identityBits64` in primitive `LongArray` form.
+The semantic meaning, however, is cycle identity routing, not raw node payload identity.
 
 #### 2.1. Identity Representation Boundary (AMENDED)
 
 To remove ambiguity between semantic identity rules and hot-path runtime representation:
 
-* The stripped identity used for cycle detection **MUST** be bound to the active normalization / type-signature version.
-* The planner/session hot-path representation of that identity **MUST** use a stable primitive 64-bit representation
-  (for example, `nodeIdentity64` as a raw bit pattern), not boxed generic map keys.
-* Richer descriptors MAY still exist for diagnostics, but active-path membership and cycle detection **MUST** be driven
-  by the stable primitive identity representation.
-* **Reason:** cycle detection is a hot-path planner operation and must remain stable across boxing differences, adapter
-  representation details, and non-semantic runtime variation.
+* The cycle identity used for active-cycle detection MUST be bound to the active normalization / type-signature version.
+* The planner/session hot-path representation of that identity MAY use a stable primitive 64-bit representation
+  (`identityBits64`) for routing, probing, and dense-node indexing.
+* `identityBits64` MUST NOT be treated as the only equality authority.
+* Exact identity equality MUST be verified by `canonicalSignature`.
+* Richer descriptors MAY still exist for diagnostics, but active-path membership and cycle detection MUST be driven by
+  the stable `TypeCycleIdentity` protocol.
+* Ambiguous terminology such as raw `nodeIdentity64` SHOULD be retired from cycle-detection-facing APIs in favor of
+  `cycleIdentityBits64`, `identityBits64`, or an equivalent name that makes the cycle-identity role explicit.
+
+Reason:
+
+Cycle detection is a hot-path planner operation and must remain stable across boxing differences, adapter representation
+details, and non-semantic runtime variation while still protecting against primitive 64-bit collision.
 
 #### 2.2. Immediate Active-Path Re-entry Rule (AMENDED)
 
@@ -149,6 +268,74 @@ To make the cycle trigger threshold explicit:
   defined by this ADR.
 * **Reason:** delayed recognition would undermine bounded growth, complicate rollback semantics, and make semantic
   behavior sensitive to non-semantic execution conditions.
+
+#### 2.3. Cycle Identity Exclusion Rules (AMENDED)
+
+The following MUST NOT participate in cycle identity:
+
+* constructor candidates,
+* constructor parameter lists,
+* properties,
+* declaration ordinal,
+* active-member projection result,
+* active-member ordering result,
+* capability profile,
+* adapter enumeration order,
+* object identity,
+* UUID,
+* wall-clock time.
+
+Cycle identity MUST include only adapter-independent canonical type identity material.
+
+Required rules:
+
+* usage-site nullability is stripped;
+* generic arguments are represented deterministically;
+* type aliases are either resolved to canonical targets or explicitly encoded by a ratified normalization rule;
+* platform nullability uncertainty does not affect cycle identity;
+* identity algorithm id/version are carried and checked.
+
+Reason:
+
+Cycle identity answers whether the type is already active on the stack.
+It must not be contaminated by member traversal policy or adapter-specific fact surfaces.
+
+#### 2.4. Nullability Strip and Generic Reification Law (AMENDED)
+
+Cycle identity MUST strip usage-site nullability.
+
+The following must map to the same cycle identity:
+
+``````text
+User
+User?
+``````
+
+Reason:
+
+Nullability changes absence semantics.
+It does not create a different active-cycle type for structural recursion detection.
+
+Generic arguments MUST be represented deterministically.
+
+The following may map to different cycle identities:
+
+``````text
+Node<String>
+Node<Int>
+``````
+
+Reason:
+
+Generic arguments can change reachable child shape and structural recursion.
+
+Forbidden:
+
+* raw `KType.toString()` as identity authority;
+* raw KSP symbol spelling as identity authority;
+* adapter-native declaration order as identity authority;
+* locale-sensitive rendering;
+* object identity-based rendering.
 
 ### 3. Edge Strength Classification & Ordering
 
@@ -227,27 +414,42 @@ Collision detection MUST NOT be performed globally across all possible construct
 
 #### 3.4.1. Active Member Selection Point Law (AMENDED)
 
-To guarantee deterministic planning order, Active Member Set construction MUST occur at one explicit point and only
-once per logical node-expansion episode.
+To guarantee deterministic planning order, Active Member Set construction MUST occur at one explicit point and only once
+per logical node-expansion episode.
+
+ADR-0037 refines the timing of that point.
 
 Normative rule:
 
-1. raw normalized structural facts are resolved from the outbound port,
-2. the single deterministic constructor is selected,
-3. eligible-property classification / demotion is evaluated,
-4. the Active Member Set is projected,
-5. uniqueness is verified,
-6. canonical ordering is ratified,
-7. and only then may traversal proceed.
+1. coarse type shape is resolved;
+2. `TypeCycleIdentity` is resolved;
+3. active-cycle detection is performed;
+4. if the current type is an active-stack cycle hit:
+    * raw facts MUST NOT be resolved for the current cycle-hit type;
+    * constructor selection MUST NOT run for the current cycle-hit type;
+    * active-member projection MUST NOT run for the current cycle-hit type;
+    * active-member ordering MUST NOT run for the current cycle-hit type;
+5. if active-cycle detection reports a cycle miss:
+    * raw normalized structural facts are resolved from the outbound port;
+    * the single deterministic constructor is selected;
+    * eligible-property classification / demotion is evaluated;
+    * the Active Member Set is projected;
+    * uniqueness is verified;
+    * canonical ordering is ratified;
+    * and only then may traversal proceed.
 
 Forbidden:
 
-* deferring constructor selection into child-expansion control flow,
-* recomputing the Active Member Set after partial child traversal,
-* allowing cache state, join/publication timing, or materialization history to affect member selection,
+* deferring constructor selection into child-expansion control flow;
+* recomputing the Active Member Set after partial child traversal;
+* resolving raw facts before active-cycle detection merely to support cycle detection;
+* allowing cache state, join/publication timing, or materialization history to affect member selection;
 * allowing backend enumeration order to become the semantic traversal order.
 
-Reason: the selection point itself is part of semantic determinism.
+Reason:
+
+The active-member selection point is part of semantic determinism, but it is not a prerequisite for determining whether
+the current type identity is already active on the stack.
 
 #### 3.4.2. Projection Freeze Law (AMENDED)
 
@@ -369,6 +571,27 @@ governance conditions.
     * worker resumption order.
 * Therefore, any governance or infrastructure change may alter reuse, retention, waiting, or throughput behavior, but
   **MUST NOT** alter the protocol-comparator-driven truncation choice.
+
+#### 3.6.3. Current Cycle-Hit Node Does Not Need Raw Facts (AMENDED)
+
+A cycle-hit node MUST NOT require raw facts for the current type.
+
+The current back-edge frame must carry enough incoming-edge metadata for ADR-0030 breakpoint comparison, including the
+ratified fields required by the current edge-ranking protocol.
+
+Examples of required incoming-edge metadata may include:
+
+* incoming edge rank,
+* incoming edge stage tag,
+* incoming member index,
+* incoming expansion execution index.
+
+The current cycle-hit type's own constructors/properties are not required to detect the cycle or select the breakpoint.
+
+Previously entered frames in the active segment may already own `OrderedActiveMembers`.
+That is lawful because those frames passed cycle detection earlier.
+
+The current cycle-hit frame MUST NOT force raw-fact resolution merely to participate in breakpoint selection.
 
 #### 3.7. Constructor Selection Strategy
 
@@ -678,6 +901,24 @@ warnings based strictly on the `faultKind` and provided Domain descriptors.
 
 * Examples: [cycle-truncation-examples](../design/cycle-truncation-examples.md)
 
+## Additional Invariants from ADR-0037
+
+1. Active-cycle detection uses `TypeCycleIdentity`.
+2. Active-cycle detection does not use `RawTypeFactsDTO`.
+3. Active-cycle detection does not use active-member projection.
+4. Active-cycle detection does not use active-member ordering.
+5. Cycle-hit path does not call `RawTypeFactsProvider` for the current cycle-hit type.
+6. Cycle-hit path does not call `ActiveMemberProjector` for the current cycle-hit type.
+7. Cycle-hit path does not call `ActiveMemberOrderer` for the current cycle-hit type.
+8. `identityBits64` is a routing / indexing identity only.
+9. `canonicalSignature` remains the exact identity verification authority.
+10. Cycle identity strips usage-site nullability.
+11. Cycle identity represents generic arguments deterministically.
+12. Cycle identity excludes capability profile.
+13. Cycle identity excludes declaration order.
+14. Breakpoint selection remains governed by this ADR's edge-aware deterministic truncation rules.
+15. ADR-0037 changes pre-cycle staging, not breakpoint ranking law.
+
 ## Consequences
 
 ### Positive
@@ -688,6 +929,12 @@ warnings based strictly on the `faultKind` and provided Domain descriptors.
 * Keeps Domain/Core responsibilities pure under Hexagonal Architecture.
 * Aligns cycle truncation with later capacity-law and cache-blind determinism rules without changing the core decision
   logic of this ADR.
+* Cycle-hit paths avoid raw-fact resolution for the current cycle-hit type.
+* Cycle-hit paths avoid active-member projection/order for the current cycle-hit type.
+* Cycle detection no longer depends on reflection/KSP member enumeration.
+* Cycle detection no longer depends on declaration ordinal availability.
+* Cycle detection no longer depends on capability-profile-specific active-member selection.
+* Breakpoint selection remains edge-aware while the current cycle-hit type remains fact-lazy.
 
 ### Negative / Trade-offs
 
@@ -696,3 +943,7 @@ warnings based strictly on the `faultKind` and provided Domain descriptors.
 * Determinism now depends on stricter Port contract enforcement (normalization, origin/version reporting,
   canonical component hygiene).
 * Additional governance/capacity documents must remain consistent with this ADR to avoid semantic drift.
+* Introduces a separate `TypeCycleIdentityProvider` dependency before raw-fact resolution.
+* Requires stricter subject-continuity checks between `TypeReference`, `ResolvedTypeShape`, and `TypeCycleIdentity`.
+* Requires adapters to derive cycle identity without relying on constructor/property enumeration.
+* Requires tests proving `RawTypeFactsProvider` is not called on cycle-hit paths.

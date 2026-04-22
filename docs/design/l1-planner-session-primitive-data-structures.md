@@ -3,6 +3,12 @@
 Date: 2026-02-22  
 Status: Active
 
+Normative Dependencies:
+
+- ADR-0030: Edge-Aware Deterministic Cycle Truncation Strategy
+- ADR-0032: Capacity Law, Resource Policy Resolution, Identity Hierarchy, and Zero-Residue Semantics
+- ADR-0037: Cycle Identity Preflight and Deferred Raw Fact Resolution
+
 ## Overview
 
 To meet predictable latency, O(Δdepth) Zero-Residue Rollback, and deterministic RMQ requirements, the `PlannerSession`
@@ -11,6 +17,15 @@ MUST utilize primitive, allocation-free data structures.
 This document also defines the **hot-path identity indexing** requirement:
 Kotlin/JVM unsigned value classes (`ULong`) are boxed when used as generic type arguments, therefore identity routing
 MUST be implemented with **primitive maps** over raw `Long` bit patterns.
+
+> **Cycle Identity Clarification (AMENDED — ADR-0037):**
+> Active-cycle detection is driven by `TypeCycleIdentity`, not by `RawTypeFactsDTO`.
+>
+> The L1 hot-path indexer routes by `TypeCycleIdentity.identityBits64` stored as raw `Long` bits and verifies by exact
+> `CanonicalSignature` byte equality.
+>
+> Raw facts, active-member projection, and active-member ordering are traversal preparation and MUST NOT be required
+> for the current cycle-hit type.
 
 > **Clarification (AMENDED):** “allocation-free” here means **no per-operation heap allocation on the hot path**:
 > no boxed `ULong`/`Long` keys via generics, no `HashMap` churn, no iterator allocations in the traversal loop.
@@ -48,8 +63,14 @@ MUST be implemented with **primitive maps** over raw `Long` bit patterns.
 
 #### 2.1 Rules (Normative)
 
-* **Phase 1:** route by `nodeIdentity64: ULong` **as raw bits stored in `LongArray`** (`identity64.toLong()`).
+* **Phase 1:** route by `TypeCycleIdentity.identityBits64` **as raw bits stored in `LongArray`**.
+    * The implementation MAY use names such as `cycleIdentityBits64` or `identityBits64`.
+    * Ambiguous cycle-facing names such as raw `nodeIdentity64` SHOULD be retired.
+    * If a transitional implementation still uses `nodeIdentity64`, its semantic meaning MUST be cycle-identity
+      routing bits, not raw payload identity.
 * **Phase 2:** verify by **Canonical Signature byte-equality**.
+    * `identityBits64` is not authoritative by itself.
+    * A primitive identity hit without canonical-signature equality MUST NOT be treated as a cycle.
 * **BANNED:** `HashMap`, `MutableMap`, or `Map<ULong, *>` inside `NodeIdIndexer` (boxing + allocation).
 * **REQUIRED:** open addressing over primitive arrays + epoch/stamp for O(1) reset.
 
@@ -59,19 +80,19 @@ MUST be implemented with **primitive maps** over raw `Long` bit patterns.
 
 #### 2.2 Minimal Data Layout (Recommended)
 
-```text
+``````text
 // Phase-1 table (open addressing)
-keysBits:   LongArray   // stored identity64 bits
-heads:      IntArray    // head nodeId for this identity64 chain
+keysBits:   LongArray   // stored TypeCycleIdentity.identityBits64 raw bits
+heads:      IntArray    // head nodeId for this identityBits64 chain
 stamps:     IntArray    // epoch-stamp: slot is "occupied in this epoch" iff stamps[i] == epoch
 
 // Per-node storage (dense)
-nextByNodeId: IntArray              // collision chain for same identity64
+nextByNodeId: IntArray              // collision chain for same identityBits64
 sigByNodeId:  Array<CanonicalSignature?> // only used when scanning candidates (phase-2)
-```
+``````
 
-*Why chain?* Multiple distinct signatures can (rarely) share the same 64-bit identity. We must store all candidates and
-verify by signature bytes to prevent false cycles.
+*Why chain?* Multiple distinct canonical signatures can share the same 64-bit cycle identity routing bits. We must store
+all candidates and verify by canonical-signature bytes to prevent false cycles.
 
 > **Signature Storage Note (AMENDED — Hot-Path Allocation Avoidance):**
 > `sigByNodeId: Array<CanonicalSignature?>` is illustrative. A production SOTA layout SHOULD avoid per-node object
@@ -113,9 +134,10 @@ internal class NodeIdIndexer(
         }
     }
 
-    fun intern(identity64: ULong, signature: CanonicalSignature): Int {
-        // AMENDED: avoid ULong as generic key — store raw Long bits
-        val keyBits = identity64.toLong()
+    fun intern(identityBits64: Long, signature: CanonicalSignature): Int {
+        // ADR-0037: route by TypeCycleIdentity.identityBits64 raw bits.
+        // Do not use ULong as a generic key; keep the hot-path representation primitive.
+        val keyBits = identityBits64
 
         // open addressing lookup
         var idx = mix64(keyBits) and mask
@@ -136,7 +158,7 @@ internal class NodeIdIndexer(
                     if (sigByNodeId[cur]!!.bytesEquals(signature)) return cur
                     cur = nextByNodeId[cur]
                 }
-                // miss under same identity64 -> append
+                // miss under same identityBits64 -> append after exact signature mismatch
                 val id = allocateNode(signature)
                 nextByNodeId[id] = heads[idx]
                 heads[idx] = id
@@ -311,6 +333,14 @@ can differ between Hot/Cold cache states.
 Type expansion is a planner metering family distinct from L1 session substrate, graph traversal, and L2 cache
 governance.
 
+ADR-0037 further splits type expansion into:
+
+- shape resolution,
+- cycle identity preflight,
+- active-cycle detection,
+- raw facts only on cycle miss,
+- projection/order only on cycle miss.
+
 Required cost centers:
 
 * `TYPE_SHAPE_RESOLUTION`
@@ -320,6 +350,15 @@ Required cost centers:
 * `TYPE_SHAPE_LOWERING`
     * track: `PHYSICAL_ONLY`
     * meaning: lower a validated `ResolvedTypeShape` into an expansion decision.
+
+* `TYPE_CYCLE_IDENTITY_RESOLUTION`
+    * track: `PHYSICAL_ONLY`
+    * meaning: resolve the minimal `TypeCycleIdentity` required for active-cycle detection.
+
+* `TYPE_CYCLE_IDENTITY_CONTINUITY_CHECK`
+    * track: `PHYSICAL_ONLY`
+    * meaning: verify returned `TypeCycleIdentity` against the requested `TypeReference` and the active identity
+      algorithm id/version snapshot.
 
 * `COMPOSITE_RAW_FACT_CACHE_HIT`
     * track: `PHYSICAL_ONLY`
@@ -359,6 +398,27 @@ The following are intentionally not ratified in the initial cost-center set:
     * interface implementation-resolution policy is not yet implemented;
     * no cost center may be ratified for a non-existent executable path.
 
+### Cycle-Hit Fact-Lazy Metering Rule
+
+For the current cycle-hit type, the implementation MUST NOT charge:
+
+- `COMPOSITE_RAW_FACT_CACHE_HIT`,
+- `COMPOSITE_RAW_FACT_RESOLVE`,
+- `COMPOSITE_RAW_FACT_SUBJECT_CONTINUITY_CHECK`,
+- `COMPOSITE_ACTIVE_MEMBER_PROJECTION`,
+- `COMPOSITE_ACTIVE_MEMBER_ORDERING`.
+
+Only the following Type Expansion work may be charged before active-cycle detection:
+
+- `TYPE_SHAPE_RESOLUTION`,
+- `TYPE_CYCLE_IDENTITY_RESOLUTION`,
+- `TYPE_CYCLE_IDENTITY_CONTINUITY_CHECK`.
+
+Reason:
+
+Raw facts, projection, and ordering are traversal preparation.
+They are not prerequisites for determining whether the current type is already active on the stack.
+
 ### Cost-Center Banding Rule for Type Expansion
 
 `TYPE_EXPANSION` MUST be a separate `CostCenterBand`.
@@ -374,6 +434,25 @@ Recommended initial band:
 ``````kotlin
 TYPE_EXPANSION(300, 399)
 ``````
+
+Initial assignment order:
+
+``````kotlin
+TYPE_SHAPE_RESOLUTION(300)
+TYPE_SHAPE_LOWERING(301)
+TYPE_CYCLE_IDENTITY_RESOLUTION(302)
+TYPE_CYCLE_IDENTITY_CONTINUITY_CHECK(303)
+COMPOSITE_RAW_FACT_CACHE_HIT(304)
+COMPOSITE_RAW_FACT_RESOLVE(305)
+COMPOSITE_RAW_FACT_SUBJECT_CONTINUITY_CHECK(306)
+COMPOSITE_ACTIVE_MEMBER_PROJECTION(307)
+COMPOSITE_ACTIVE_MEMBER_ORDERING(308)
+CONTAINER_EXPANSION_DECISION(309)
+ATOMIC_EXPANSION_DECISION(310)
+``````
+
+IDs are protocol values.
+Once released, they MUST NOT be renumbered.
 
 The exact numeric range is protocol-owned and may be amended later, but IDs already assigned MUST NOT be renumbered.
 
@@ -409,6 +488,11 @@ unsafe manual edits in unrelated decode-table code.
 * If the session enters L2 bypass mode (`CircuitOpen`), L2 cost centers MUST still be recorded (for telemetry and
   audits),
   but interning is skipped.
+
+* ADR-0037 cycle-hit paths MUST remain fact-lazy:
+    * raw-fact hit/resolve cost centers are charged only on cycle miss;
+    * active-member projection/order cost centers are charged only on cycle miss;
+    * cycle identity resolution and continuity checks are physical-only pre-cycle work.
 
 > **Budget Counter Symmetry Note (AMENDED):** If physical budgets are enforced per-session using a baseline, semantic
 > budgets MUST follow the same per-session baseline rule unless a global cumulative semantic budget is explicitly
@@ -668,6 +752,19 @@ The following tests are mandatory complements to this design note:
 - `ZeroResidueWorkerReuseStressTest`
     - verifies immediate reuse after Hard Abort does not leak reachable state
 
+- `TypeCycleIdentityCostCenterComplianceTest`
+    - verifies `TYPE_CYCLE_IDENTITY_RESOLUTION` and `TYPE_CYCLE_IDENTITY_CONTINUITY_CHECK` are registered in the
+      `TYPE_EXPANSION` band and are `PHYSICAL_ONLY`
+
+- `CycleHitFactLazyAccountingTest`
+    - verifies raw-fact, projection, and ordering cost centers are not charged for the current cycle-hit type
+
+- `TypeExpansionCostCenterOrderingTest`
+    - verifies Type Expansion cost-center IDs follow the ratified assignment order and decode correctly
+
+- `CycleIdentityBitsSignatureVerificationTest`
+    - verifies `identityBits64` is not sufficient for equality and canonical signature byte-equality remains required
+
 ## Amendment: Session-Fixed Structural Policy Boundary (CRITICAL MUST)
 
 This document defines the primitive layout, byte-ledger law, reset/reachability law, and hot-path cost-center
@@ -725,3 +822,17 @@ L1 is not authoritative for:
 - environment introspection,
 - runtime policy adaptation loops,
 - session wall-clock watchdog policy.
+
+### E. Cycle Identity Law Stability
+
+For one session, the following must remain fixed:
+
+- cycle identity derivation algorithm id,
+- cycle identity derivation algorithm version,
+- canonical signature normalization version,
+- primitive identity routing law.
+
+L1 MUST NOT switch identity derivation behavior mid-session.
+
+If a new identity law is ratified, it applies only to subsequently created sessions through a new resolved policy /
+protocol snapshot.
