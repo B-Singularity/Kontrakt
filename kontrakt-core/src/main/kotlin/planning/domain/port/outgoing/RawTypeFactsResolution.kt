@@ -3,13 +3,24 @@ package planning.domain.port.outgoing
 import metamodel.domain.dto.RawTypeFactsDTO
 
 /**
+ * Session-bound implementation of TypeExpansionWorkMeter.
+ *
+ * It is intentionally tiny:
+ * - no semantic decisions
+ * - no projection
+ * - no ordering
+ * - no raw fact access
+ *
+ * It only maps event -> CostCenter and calls PlannerSession.step(center).
+ */
+/**
  * Port-return value for raw type-fact retrieval.
  *
- * This exists because the planner must meter raw-fact cache hit and actual
- * raw-fact resolution differently.
+ * This is not telemetry.
+ * It is protocol-level accounting metadata required to distinguish:
  *
- * It is not adapter telemetry.
- * It is protocol-level accounting metadata.
+ * - cached already-ratified facts,
+ * - actual backend fact discovery/reconciliation.
  */
 class RawTypeFactsResolution private constructor(
     val facts: RawTypeFactsDTO,
@@ -20,7 +31,7 @@ class RawTypeFactsResolution private constructor(
         fun cacheHit(
             facts: RawTypeFactsDTO,
         ): RawTypeFactsResolution {
-            return issue(
+            return RawTypeFactsResolution(
                 facts = facts,
                 kind = RawTypeFactsResolutionKind.CACHE_HIT,
             )
@@ -30,30 +41,12 @@ class RawTypeFactsResolution private constructor(
         fun actualResolution(
             facts: RawTypeFactsDTO,
         ): RawTypeFactsResolution {
-            return issue(
+            return RawTypeFactsResolution(
                 facts = facts,
                 kind = RawTypeFactsResolutionKind.ACTUAL_RESOLUTION,
             )
         }
 
-        @JvmStatic
-        fun issue(
-            facts: RawTypeFactsDTO,
-            kind: RawTypeFactsResolutionKind,
-        ): RawTypeFactsResolution {
-            return RawTypeFactsResolution(
-                facts = facts,
-                kind = kind,
-            )
-        }
-
-        /**
-         * Migration bridge for providers that cannot yet distinguish cache hit from
-         * actual backend resolution.
-         *
-         * This intentionally overcharges as ACTUAL_RESOLUTION, which is the safe
-         * semantic accounting choice.
-         */
         @Deprecated(
             message = "Use cacheHit(...) or actualResolution(...). This bridge conservatively charges as actual resolution.",
             replaceWith = ReplaceWith("RawTypeFactsResolution.actualResolution(facts)"),

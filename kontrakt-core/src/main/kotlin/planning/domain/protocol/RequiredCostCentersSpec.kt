@@ -9,7 +9,6 @@ import planning.domain.exception.PlanningProtocolIntegrityException
  *
  * - PHYSICAL_ONLY
  *   Raw runtime work, probing, scanning, coordination, validation, and governance overhead.
- *   This is primarily a throughput / DoS-protection track.
  *
  * - SEMANTIC_ALSO
  *   Operations that are part of semantic planner progress and therefore also
@@ -27,8 +26,8 @@ enum class BudgetTrack {
 /**
  * Stable protocol banding for CostCenter identifiers.
  *
- * Banding is a protocol constraint, not a cosmetic grouping.
- * It prevents accidental ID reuse and provides coarse-grained auditability.
+ * Banding is a protocol constraint.
+ * It prevents accidental ID reuse and keeps cost diagnostics auditable.
  */
 enum class CostCenterBand(
     val minInclusive: Int,
@@ -41,7 +40,7 @@ enum class CostCenterBand(
     /**
      * Metamodel-to-planning semantic lowering.
      *
-     * This is intentionally separate from L2 cache governance.
+     * This band is intentionally distinct from L2 cache governance.
      */
     TYPE_EXPANSION(300, 399),
     ;
@@ -51,13 +50,7 @@ enum class CostCenterBand(
     }
 
     companion object {
-        /*
-         * values() allocates a fresh array on Kotlin/JVM.
-         * Cache it once at class initialization because this protocol class is
-         * loaded once and then used for decode-table construction.
-         */
         private val ALL: Array<CostCenterBand> = values()
-
         private val MAX_REGISTERED_ID: Int = computeMaxRegisteredId()
 
         @JvmStatic
@@ -71,11 +64,9 @@ enum class CostCenterBand(
 
             while (i < ALL.size) {
                 val band = ALL[i]
-
                 if (band.maxInclusive > max) {
                     max = band.maxInclusive
                 }
-
                 i++
             }
 
@@ -88,12 +79,12 @@ enum class CostCenterBand(
  * Required CostCenter protocol set.
  *
  * Design rules:
- * 1) IDs are stable protocol values. Renumbering is forbidden.
- * 2) ID 0 is reserved and may never be assigned.
- * 3) Each ID must belong to its declared CostCenterBand.
- * 4) Track mapping is fixed here and is SSOT.
- * 5) L2 join/wait metering is event-based waiter lifecycle accounting, not polling-tick accounting.
- * 6) Type expansion is not L2 cache governance.
+ * 1. IDs are stable protocol values. Renumbering is forbidden.
+ * 2. ID 0 is reserved and may never be assigned.
+ * 3. Each ID must belong to its declared CostCenterBand.
+ * 4. Track mapping is fixed here and is SSOT.
+ * 5. Type expansion is not L2 cache governance.
+ * 6. ADR-0037 cycle identity preflight is physical-only.
  */
 enum class CostCenter(
     val id: Int,
@@ -152,41 +143,40 @@ enum class CostCenter(
     TYPE_SHAPE_LOWERING(301, CostCenterBand.TYPE_EXPANSION, BudgetTrack.PHYSICAL_ONLY),
 
     /**
-     * Raw facts came from an already-ratified memoized/cache surface.
+     * Resolve the minimal TypeCycleIdentity needed for active-cycle detection.
      */
-    COMPOSITE_RAW_FACT_CACHE_HIT(302, CostCenterBand.TYPE_EXPANSION, BudgetTrack.PHYSICAL_ONLY),
+    TYPE_CYCLE_IDENTITY_RESOLUTION(302, CostCenterBand.TYPE_EXPANSION, BudgetTrack.PHYSICAL_ONLY),
 
     /**
-     * Raw facts required actual backend discovery/reconciliation.
+     * Validate TypeCycleIdentity against requested TypeReference and identity-law snapshot.
      */
-    COMPOSITE_RAW_FACT_RESOLVE(303, CostCenterBand.TYPE_EXPANSION, BudgetTrack.SEMANTIC_ALSO),
+    TYPE_CYCLE_IDENTITY_CONTINUITY_CHECK(303, CostCenterBand.TYPE_EXPANSION, BudgetTrack.PHYSICAL_ONLY),
+
+    /**
+     * Retrieve already-ratified raw facts from a memoized/cache surface.
+     */
+    COMPOSITE_RAW_FACT_CACHE_HIT(304, CostCenterBand.TYPE_EXPANSION, BudgetTrack.PHYSICAL_ONLY),
+
+    /**
+     * Perform actual backend raw structural fact discovery/reconciliation.
+     */
+    COMPOSITE_RAW_FACT_RESOLVE(305, CostCenterBand.TYPE_EXPANSION, BudgetTrack.SEMANTIC_ALSO),
 
     COMPOSITE_RAW_FACT_SUBJECT_CONTINUITY_CHECK(
-        304,
+        306,
         CostCenterBand.TYPE_EXPANSION,
         BudgetTrack.PHYSICAL_ONLY,
     ),
 
-    COMPOSITE_ACTIVE_MEMBER_PROJECTION(305, CostCenterBand.TYPE_EXPANSION, BudgetTrack.SEMANTIC_ALSO),
-    COMPOSITE_ACTIVE_MEMBER_ORDERING(306, CostCenterBand.TYPE_EXPANSION, BudgetTrack.SEMANTIC_ALSO),
-    CONTAINER_EXPANSION_DECISION(307, CostCenterBand.TYPE_EXPANSION, BudgetTrack.PHYSICAL_ONLY),
-    ATOMIC_EXPANSION_DECISION(308, CostCenterBand.TYPE_EXPANSION, BudgetTrack.PHYSICAL_ONLY),
+    COMPOSITE_ACTIVE_MEMBER_PROJECTION(307, CostCenterBand.TYPE_EXPANSION, BudgetTrack.SEMANTIC_ALSO),
+    COMPOSITE_ACTIVE_MEMBER_ORDERING(308, CostCenterBand.TYPE_EXPANSION, BudgetTrack.SEMANTIC_ALSO),
+    CONTAINER_EXPANSION_DECISION(309, CostCenterBand.TYPE_EXPANSION, BudgetTrack.PHYSICAL_ONLY),
+    ATOMIC_EXPANSION_DECISION(310, CostCenterBand.TYPE_EXPANSION, BudgetTrack.PHYSICAL_ONLY),
     ;
 
     companion object {
-        /*
-         * Decode bound is derived from band maxima, not a stale manual MAX_ID.
-         * This intentionally leaves room for future IDs inside already-ratified
-         * bands while still rejecting unknown IDs.
-         */
         private val DECODE_TABLE_UPPER_BOUND: Int = CostCenterBand.maxRegisteredId()
-
-        /*
-         * values() allocates a fresh array on Kotlin/JVM.
-         * Cache it once for validation/decode-table initialization.
-         */
         private val ALL: Array<CostCenter> = values()
-
         private val BY_ID: Array<CostCenter?> = buildDecodeTable()
 
         private fun buildDecodeTable(): Array<CostCenter?> {
@@ -197,7 +187,7 @@ enum class CostCenter(
                 val center = ALL[i]
 
                 if (center.id == 0) {
-                    throw PlanningProtocolIntegrityException("CostCenter ID 0 is RESERVED.")
+                    throw PlanningProtocolIntegrityException("CostCenter ID 0 is reserved.")
                 }
 
                 if (center.id < 0 || center.id > DECODE_TABLE_UPPER_BOUND) {

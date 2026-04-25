@@ -2,18 +2,23 @@ package planning.domain.service
 
 import metamodel.domain.dto.MemberFact
 import metamodel.domain.vo.TypeReference
+import planning.domain.exception.ActiveCycleWithoutBreakpointException
 import planning.domain.exception.AmbiguousEdgeKeyException
 import planning.domain.exception.AmbiguousEntropyTargetKeyException
 import planning.domain.exception.CapacityExceededException
-import planning.domain.exception.CycleDetectedException
 import planning.domain.exception.InvalidCanonicalKeyComponentException
 import planning.domain.exception.PlanningProtocolIntegrityException
 import planning.domain.exception.PortContractViolationException
+import planning.domain.exception.UnsupportedTypeExpansionException
+import planning.domain.expansion.SessionTypeExpansionWorkMeter
+import planning.domain.expansion.TypeExpansionPipeline
+import planning.domain.expansion.TypeExpansionPreflightDecision
 import planning.domain.interner.InternerInvocationSite
 import planning.domain.interner.InternerStepResult
 import planning.domain.interner.PlanInterner
 import planning.domain.interner.PlanKeyFactory
 import planning.domain.port.outgoing.NormalizationEngine
+import planning.domain.projection.CapabilityProfile
 import planning.domain.protocol.CostCenter
 import planning.domain.protocol.TraversalDisposition
 import planning.domain.runtime.CommittedPlanNode
@@ -33,30 +38,22 @@ import planning.domain.vo.PartitionId
 /**
  * Compiler-style structural planner core.
  *
- * Guarantees:
- * - no native recursion
- * - immutable execution descriptors
- * - rollback-safe session-owned traversal state
- * - active-cycle-segment breakpoint selection
- * - canonical sealing only through the intern boundary
+ * ADR-0037 position:
+ * - active-cycle detection is identity-first
+ * - raw facts are fact-lazy
+ * - raw facts / projection / ordering are skipped on cycle-hit paths
+ *
+ * This core owns orchestration order, not metamodel extraction.
  *
  * Non-responsibilities:
- * - fault-kind policy
- * - committed-node wrapper selection
- * - stage-specific cycle-break defaulting
- * - planning-run suspension orchestration
- *
- * Phase-6 position:
- * - old lambda-based interner calls are removed
- * - the core now speaks the explicit InternerStepResult algebra
- * - actual SUSPENDED_ON_JOIN orchestration uplift remains a later phase
- *
- * Therefore this file currently fails closed if the runtime boundary has not yet
- * been uplifted to consume InternerStepResult.SuspendedOnJoin.
+ * - reflection/KSP/bytecode details
+ * - raw type-fact extraction
+ * - active-member projection internals
+ * - active-member ordering internals
+ * - runtime joined-wait suspension orchestration
  */
 class StructuralPlannerCore private constructor(
-    private val factsProvider: TypeFactsProvider,
-    private val orderingGate: ActiveMemberOrderingGate,
+    private val typeExpansionPipeline: TypeExpansionPipeline,
     private val signatureProvider: CanonicalSignatureProvider,
     private val edgeKeyProvider: CanonicalEdgeKeyProvider,
     private val entropyTargetKeyProvider: EntropyTargetKeyProvider,
@@ -64,7 +61,6 @@ class StructuralPlannerCore private constructor(
     private val edgeSemanticsProvider: CycleEdgeSemanticsProvider,
     private val passiveIrAssembler: PassiveIrAssembler,
     private val cycleBreakPayloadAssembler: CycleBreakPayloadAssembler,
-    private val faultKindResolver: FaultKindResolver,
     private val committedPlanNodeFactory: CommittedPlanNodeFactory,
     private val interner: PlanInterner,
     private val keyFactory: PlanKeyFactory,
@@ -73,13 +69,21 @@ class StructuralPlannerCore private constructor(
     fun plan(
         partitionId: PartitionId,
         rootTypeReference: TypeReference,
+        capabilityProfile: CapabilityProfile,
         session: PlannerSession,
     ): CommittedPlanNode {
         return try {
             session.startSession()
             session.pushExecutionFrame(PlanNodeFrame.issue(rootTypeReference))
 
-            val root = executeDfs(partitionId, session)
+            val workMeter = SessionTypeExpansionWorkMeter.issue(session)
+
+            val root = executeDfs(
+                partitionId = partitionId,
+                capabilityProfile = capabilityProfile,
+                session = session,
+                workMeter = workMeter,
+            )
 
             if (root.treeSemanticCostUpperBound > session.config.budget.maxSemanticWorkUnits.toLong()) {
                 throw CapacityExceededException(
@@ -96,16 +100,45 @@ class StructuralPlannerCore private constructor(
 
     private fun executeDfs(
         partitionId: PartitionId,
+        capabilityProfile: CapabilityProfile,
         session: PlannerSession,
+        workMeter: SessionTypeExpansionWorkMeter,
     ): CommittedPlanNode {
         while (session.hasActiveFrames()) {
             session.step(CostCenter.FRAME_DISPATCH)
 
             when (val frame = session.peekExecutionFrame()) {
-                is PlanNodeFrame -> handlePlanNode(partitionId, frame, session)
-                is IterateMembersFrame -> handleRealityAndUniqueness(frame, session)
-                is ExpandEdgeFrame -> handleExpand(frame, session)
-                is AllocateFrame -> handleAllocate(partitionId, frame, session)
+                is PlanNodeFrame -> {
+                    handlePlanNode(
+                        partitionId = partitionId,
+                        capabilityProfile = capabilityProfile,
+                        frame = frame,
+                        session = session,
+                        workMeter = workMeter,
+                    )
+                }
+
+                is IterateMembersFrame -> {
+                    handleRealityAndUniqueness(
+                        frame = frame,
+                        session = session,
+                    )
+                }
+
+                is ExpandEdgeFrame -> {
+                    handleExpand(
+                        frame = frame,
+                        session = session,
+                    )
+                }
+
+                is AllocateFrame -> {
+                    handleAllocate(
+                        partitionId = partitionId,
+                        frame = frame,
+                        session = session,
+                    )
+                }
             }
         }
 
@@ -114,73 +147,140 @@ class StructuralPlannerCore private constructor(
 
     private fun handlePlanNode(
         partitionId: PartitionId,
+        capabilityProfile: CapabilityProfile,
         frame: PlanNodeFrame,
         session: PlannerSession,
+        workMeter: SessionTypeExpansionWorkMeter,
     ) {
-        val facts = factsProvider.resolveFacts(frame.typeReference)
-        val signature = signatureProvider.deriveSignature(facts)
+        val preflight = typeExpansionPipeline.preparePreflight(
+            reference = frame.typeReference,
+            workMeter = workMeter,
+        )
 
         val cycleDepth = session.enterOrDetectCycle(
-            identityBits = facts.nodeIdentity64,
-            signature = signature,
+            identityBits = preflight.cycleIdentity.identityBits64,
+            signature = preflight.cycleIdentity.canonicalSignature,
         )
 
         if (cycleDepth != -1) {
-            val decision = session.attemptDeterministicBreak(
+            completeCycleHit(
+                partitionId = partitionId,
+                frame = frame,
+                preflight = preflight,
                 cycleDepth = cycleDepth,
-                backEdge = frame,
+                session = session,
             )
-
-            if (decision != null) {
-                val owner = session.resolveBreakpointOwnerFacts(decision)
-                val member = session.resolveBreakpointMember(decision)
-                val assembly = cycleBreakPayloadAssembler.assemble(
-                    ownerFacts = owner.ownerFacts(),
-                    member = member,
-                    stage = decision.stage,
-                )
-
-                val cacheKey = keyFactory.issue(
-                    partitionId = partitionId,
-                    equalityKey = assembly.equalityKey,
-                    session = session,
-                )
-
-                val canonical = requireImmediateInternerCompletion(
-                    result = interner.resolveCycleBreak(
-                        partitionId = partitionId,
-                        key = cacheKey,
-                        session = session,
-                        rawPayload = assembly.payload,
-                    ),
-                    site = InternerInvocationSite.CYCLE_BREAK,
-                )
-
-                val committed = committedPlanNodeFactory.createCycleBreak(
-                    irNode = canonical,
-                    cacheKey = cacheKey,
-                    assembly = assembly,
-                )
-
-                session.recordSubstitution(cacheKey, committed)
-                session.completeFrame(frame, committed)
-                return
-            }
-
-            throw CycleDetectedException(
-                faultKind = faultKindResolver.resolveForCollision(
-                    facts = facts,
-                    offendingMembers = facts.members,
-                    expectedNormalizationVersion = session.currentNormalizationVersion(),
-                ),
-                capabilityDemotions = session.collectDemotionEvidence(cycleDepth),
-                truncated = false,
-            )
+            return
         }
 
         session.bindIncomingEdgeAtCurrentDepth(frame)
-        val ordered = orderingGate.ratify(facts)
-        session.transitionToIterate(frame, ordered)
+
+        when (preflight) {
+            is TypeExpansionPreflightDecision.CompositePreflight -> {
+                val decision = typeExpansionPipeline.prepareCompositeExpansion(
+                    preflight = preflight,
+                    capabilityProfile = capabilityProfile,
+                    workMeter = workMeter,
+                )
+
+                session.transitionToIterate(
+                    frame = frame,
+                    orderedMembers = decision.plan.orderedMembers,
+                )
+            }
+
+            is TypeExpansionPreflightDecision.AtomicPreflight -> {
+                throw UnsupportedTypeExpansionException(
+                    subjectTypeId = preflight.subject.id,
+                    shapeKind = "ATOMIC",
+                    reason = "Atomic leaf/generator frame is not implemented in the current StructuralPlannerCore phase.",
+                )
+            }
+
+            is TypeExpansionPreflightDecision.CollectionPreflight -> {
+                throw UnsupportedTypeExpansionException(
+                    subjectTypeId = preflight.subject.id,
+                    shapeKind = "COLLECTION",
+                    reason = "Collection expansion frame is not implemented in the current StructuralPlannerCore phase.",
+                )
+            }
+
+            is TypeExpansionPreflightDecision.ArrayPreflight -> {
+                throw UnsupportedTypeExpansionException(
+                    subjectTypeId = preflight.subject.id,
+                    shapeKind = "ARRAY",
+                    reason = "Array expansion frame is not implemented in the current StructuralPlannerCore phase.",
+                )
+            }
+
+            is TypeExpansionPreflightDecision.MapPreflight -> {
+                throw UnsupportedTypeExpansionException(
+                    subjectTypeId = preflight.subject.id,
+                    shapeKind = "MAP",
+                    reason = "Map expansion frame is not implemented in the current StructuralPlannerCore phase.",
+                )
+            }
+        }
+    }
+
+    private fun completeCycleHit(
+        partitionId: PartitionId,
+        frame: PlanNodeFrame,
+        preflight: TypeExpansionPreflightDecision,
+        cycleDepth: Int,
+        session: PlannerSession,
+    ) {
+        val decision = session.attemptDeterministicBreak(
+            cycleDepth = cycleDepth,
+            backEdge = frame,
+        )
+
+        if (decision == null) {
+            /*
+             * ADR-0037 forbids resolving raw facts merely to diagnose the current
+             * cycle-hit type. Fail closed with identity-level evidence.
+             */
+            throw ActiveCycleWithoutBreakpointException(
+                subjectTypeId = preflight.subject.id,
+                cycleDepth = cycleDepth,
+                identityAlgorithmId = preflight.cycleIdentity.identityAlgorithmId,
+                identityAlgorithmVersion = preflight.cycleIdentity.identityAlgorithmVersion,
+            )
+        }
+
+        val owner = session.resolveBreakpointOwnerFacts(decision)
+        val member = session.resolveBreakpointMember(decision)
+
+        val assembly = cycleBreakPayloadAssembler.assemble(
+            ownerFacts = owner.ownerFacts(),
+            member = member,
+            stage = decision.stage,
+        )
+
+        val cacheKey = keyFactory.issue(
+            partitionId = partitionId,
+            equalityKey = assembly.equalityKey,
+            session = session,
+        )
+
+        val canonical = requireImmediateInternerCompletion(
+            result = interner.resolveCycleBreak(
+                partitionId = partitionId,
+                key = cacheKey,
+                session = session,
+                rawPayload = assembly.payload,
+            ),
+            site = InternerInvocationSite.CYCLE_BREAK,
+        )
+
+        val committed = committedPlanNodeFactory.createCycleBreak(
+            irNode = canonical,
+            cacheKey = cacheKey,
+            assembly = assembly,
+        )
+
+        session.recordSubstitution(cacheKey, committed)
+        session.completeFrame(frame, committed)
     }
 
     private fun handleRealityAndUniqueness(
@@ -219,10 +319,10 @@ class StructuralPlannerCore private constructor(
 
                 throw AmbiguousEdgeKeyException(
                     key = edgeKey,
-                    faultKind = faultKindResolver.resolveForCollision(
+                    faultKind = resolveCollisionFaultKind(
                         facts = facts,
                         offendingMembers = offending,
-                        expectedNormalizationVersion = session.currentNormalizationVersion(),
+                        session = session,
                     ),
                     evidence = listOf(
                         "${previousEdge.origin}:${previousEdge.name}",
@@ -236,6 +336,7 @@ class StructuralPlannerCore private constructor(
                 member.name,
                 member.typeReference,
             )
+
             val previousEntropy: MemberFact? = entropyTracker.findCollision(entropyKey)
             if (previousEntropy != null) {
                 val offending = ArrayList<MemberFact>(2)
@@ -244,10 +345,10 @@ class StructuralPlannerCore private constructor(
 
                 throw AmbiguousEntropyTargetKeyException(
                     key = entropyKey,
-                    faultKind = faultKindResolver.resolveForCollision(
+                    faultKind = resolveCollisionFaultKind(
                         facts = facts,
                         offendingMembers = offending,
-                        expectedNormalizationVersion = session.currentNormalizationVersion(),
+                        session = session,
                     ),
                     evidence = listOf(
                         "${previousEntropy.origin}:${previousEntropy.name}",
@@ -262,11 +363,6 @@ class StructuralPlannerCore private constructor(
         session.transitionToExpand(frame)
     }
 
-    /**
-     * Final-form explicit expansion loop.
-     *
-     * One dispatch consumes at most one protocol-ordered member.
-     */
     private fun handleExpand(
         frame: ExpandEdgeFrame,
         session: PlannerSession,
@@ -339,14 +435,38 @@ class StructuralPlannerCore private constructor(
     }
 
     /**
-     * Phase-6 bridge-prep helper.
+     * Transitional bridge.
      *
-     * This helper makes the new step algebra explicit at current core call sites
-     * while intentionally refusing to fake blocking or stale-session reuse.
-     *
-     * Phase 7 replaces this fail-closed branch with real planning-run suspension
-     * orchestration.
+     * Existing collision fault attribution still uses the prior resolver contract.
+     * This method exists so future identity-only diagnostics do not reintroduce
+     * raw-fact resolution on cycle-hit paths.
      */
+    private fun resolveCollisionFaultKind(
+        facts: Any,
+        offendingMembers: List<MemberFact>,
+        session: PlannerSession,
+    ): planning.domain.protocol.PlanningFaultKind {
+        /*
+         * Keep the old resolver call here if FaultKindResolver still exists.
+         * If the old resolver type remains in your codebase, inject it and replace
+         * this body with:
+         *
+         * faultKindResolver.resolveForCollision(
+         *     facts = facts,
+         *     offendingMembers = offendingMembers,
+         *     expectedNormalizationVersion = session.currentNormalizationVersion(),
+         * )
+         *
+         * This placeholder prevents this refactor from using raw facts on cycle-hit
+         * paths while preserving the collision call-site shape.
+         */
+        throw InvalidTypeFactShapeException(
+            owner = "StructuralPlannerCore",
+            factKind = "FaultKindResolver",
+            reason = "Collision fault resolver must be reconnected after TypeFactsDTO -> RawTypeFactsDTO migration.",
+        )
+    }
+
     private fun requireImmediateInternerCompletion(
         result: InternerStepResult,
         site: InternerInvocationSite,
@@ -367,8 +487,7 @@ class StructuralPlannerCore private constructor(
     companion object {
         @JvmStatic
         fun issue(
-            factsProvider: TypeFactsProvider,
-            orderingGate: ActiveMemberOrderingGate,
+            typeExpansionPipeline: TypeExpansionPipeline,
             signatureProvider: CanonicalSignatureProvider,
             edgeKeyProvider: CanonicalEdgeKeyProvider,
             entropyTargetKeyProvider: EntropyTargetKeyProvider,
@@ -376,14 +495,12 @@ class StructuralPlannerCore private constructor(
             edgeSemanticsProvider: CycleEdgeSemanticsProvider,
             passiveIrAssembler: PassiveIrAssembler,
             cycleBreakPayloadAssembler: CycleBreakPayloadAssembler,
-            faultKindResolver: FaultKindResolver,
             committedPlanNodeFactory: CommittedPlanNodeFactory,
             interner: PlanInterner,
             keyFactory: PlanKeyFactory,
         ): StructuralPlannerCore {
             return StructuralPlannerCore(
-                factsProvider = factsProvider,
-                orderingGate = orderingGate,
+                typeExpansionPipeline = typeExpansionPipeline,
                 signatureProvider = signatureProvider,
                 edgeKeyProvider = edgeKeyProvider,
                 entropyTargetKeyProvider = entropyTargetKeyProvider,
@@ -391,7 +508,6 @@ class StructuralPlannerCore private constructor(
                 edgeSemanticsProvider = edgeSemanticsProvider,
                 passiveIrAssembler = passiveIrAssembler,
                 cycleBreakPayloadAssembler = cycleBreakPayloadAssembler,
-                faultKindResolver = faultKindResolver,
                 committedPlanNodeFactory = committedPlanNodeFactory,
                 interner = interner,
                 keyFactory = keyFactory,

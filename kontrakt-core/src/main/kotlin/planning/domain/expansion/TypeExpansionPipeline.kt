@@ -2,72 +2,72 @@ package planning.domain.expansion
 
 import metamodel.domain.dto.RawTypeFactsDTO
 import metamodel.domain.dto.ResolvedTypeShape
-import metamodel.domain.service.TypeIdentity64Deriver
 import metamodel.domain.vo.TypeKind
 import metamodel.domain.vo.TypeReference
 import planning.domain.exception.CorruptResolvedTypeShapeException
 import planning.domain.exception.PlanningExpansionException
 import planning.domain.exception.RawTypeFactsSubjectMismatchException
+import planning.domain.exception.TypeCycleIdentitySubjectMismatchException
 import planning.domain.exception.TypeShapeSubjectMismatchException
 import planning.domain.exception.UnsupportedTypeExpansionException
 import planning.domain.port.outgoing.RawTypeFactsProvider
 import planning.domain.port.outgoing.RawTypeFactsResolutionKind
+import planning.domain.port.outgoing.TypeCycleIdentityProvider
 import planning.domain.port.outgoing.TypeShapeProvider
 import planning.domain.projection.ActiveMemberOrderer
 import planning.domain.projection.ActiveMemberProjector
 import planning.domain.projection.CapabilityProfile
 
 /**
- * Domain service that prepares type expansion decisions for StructuralPlannerCore.
+ * Compiler-style type expansion pipeline.
  *
- * DDD role:
- * - Planning domain service.
- * - Owns type expansion dispatch rules.
+ * ADR-0037 split:
  *
- * Hexagonal role:
- * - Depends on outbound ports TypeShapeProvider and RawTypeFactsProvider.
- * - Does not know whether facts come from reflection, KSP, bytecode, or static source.
+ *   preflight:
+ *     TypeReference
+ *     -> ResolvedTypeShape
+ *     -> TypeCycleIdentity
+ *     -> TypeExpansionPreflightDecision
  *
- * Compiler-style role:
- * - Performs staged lowering:
+ *   materialization after cycle miss:
+ *     PreflightDecision
+ *     -> TypeExpansionDecision
  *
- *   TypeReference
- *   -> ResolvedTypeShape
- *   -> TypeExpansionDecision
+ * Composite materialization:
+ *     CompositePreflight
+ *     -> RawTypeFactsResolution
+ *     -> ActiveMemberProjectionResult
+ *     -> OrderedActiveMembers
+ *     -> CompositeExpansionPlan
  *
- * Boundary rule:
- * - Does not depend on PlannerSession.
- * - Does not mutate session counters directly.
- * - Emits TypeExpansionWorkEvent through the caller-provided meter.
- *
- * Accounting rule:
- * - Work events are recorded after the corresponding stage succeeds.
- * - If a later stage fails, already-recorded successful work remains consumed.
- * - Rollback/reset must not rewind physical or semantic metering counters.
- * - Failure-path accounting must be added through explicit failure/fault cost centers,
- *   not by pre-charging successful-stage events.
- *
- * Identity rule:
- * - The injected TypeIdentity64Deriver must be resolved before the session/run starts.
- * - Its algorithm id/version are snapshotted at pipeline creation.
- * - Each prepareExpansion call verifies that the deriver has not drifted.
- * - The pipeline independently derives the expected identity to verify adapter output.
+ * Boundary rules:
+ * - no PlannerSession dependency;
+ * - no raw facts on cycle-hit path;
+ * - no projection/order on cycle-hit path;
+ * - non-composite decisions remain in the domain vocabulary even if core frames
+ *   are not implemented yet;
+ * - all work events are recorded after successful stage completion.
  */
 class TypeExpansionPipeline private constructor(
     private val typeShapeProvider: TypeShapeProvider,
+    private val typeCycleIdentityProvider: TypeCycleIdentityProvider,
     private val rawTypeFactsProvider: RawTypeFactsProvider,
-    private val typeIdentity64Deriver: TypeIdentity64Deriver,
     private val identityAlgorithmIdSnapshot: String,
     private val identityAlgorithmVersionSnapshot: Long,
     private val activeMemberProjector: ActiveMemberProjector,
     private val activeMemberOrderer: ActiveMemberOrderer,
 ) {
-    fun prepareExpansion(
+    /**
+     * Prepare only shape + cycle identity.
+     *
+     * This method must not resolve RawTypeFactsDTO.
+     * It is lawful on paths that may later turn out to be active-cycle hits.
+     */
+    fun preparePreflight(
         reference: TypeReference,
-        capabilityProfile: CapabilityProfile,
         workMeter: TypeExpansionWorkMeter,
-    ): TypeExpansionDecision {
-        requireIdentityDeriverStable()
+    ): TypeExpansionPreflightDecision {
+        requireIdentityProviderStable()
 
         val shape = typeShapeProvider.resolveTypeShape(reference)
 
@@ -81,165 +81,148 @@ class TypeExpansionPipeline private constructor(
             shape = shape,
         )
 
-        return lowerShapeToDecision(
+        val cycleIdentity = typeCycleIdentityProvider.resolveCycleIdentity(reference)
+
+        workMeter.record(
+            event = TypeExpansionWorkEvent.TYPE_CYCLE_IDENTITY_RESOLUTION,
+            subject = reference,
+        )
+
+        requireCycleIdentityMatchesReference(
+            expected = reference,
+            cycleIdentity = cycleIdentity,
+        )
+
+        workMeter.record(
+            event = TypeExpansionWorkEvent.TYPE_CYCLE_IDENTITY_CONTINUITY_CHECK,
+            subject = reference,
+        )
+
+        val preflight = lowerShapeToPreflight(
             reference = reference,
             shape = shape,
-            capabilityProfile = capabilityProfile,
-            workMeter = workMeter,
+            cycleIdentity = cycleIdentity,
         )
-    }
 
-    private fun lowerShapeToDecision(
-        reference: TypeReference,
-        shape: ResolvedTypeShape,
-        capabilityProfile: CapabilityProfile,
-        workMeter: TypeExpansionWorkMeter,
-    ): TypeExpansionDecision {
-        return when (shape.kind) {
-            TypeKind.ATOMIC -> {
-                val decision = TypeExpansionDecision.AtomicExpansion.issue(
-                    subject = reference,
-                )
-
-                recordShapeLoweringAndDecision(
-                    workMeter = workMeter,
-                    reference = reference,
-                    decisionEvent = TypeExpansionWorkEvent.ATOMIC_EXPANSION_DECISION,
-                )
-
-                decision
-            }
-
-            TypeKind.COMPOSITE -> {
-                val decision = prepareCompositeExpansion(
-                    reference = reference,
-                    capabilityProfile = capabilityProfile,
-                    workMeter = workMeter,
-                )
-
-                /*
-                 * COMPOSITE lowering is recorded only after the composite decision is
-                 * fully materialized.
-                 *
-                 * Unlike container/atomic shapes, a composite decision requires raw
-                 * fact retrieval, subject-continuity verification, projection, ordering,
-                 * and CompositeExpansionPlan issuance before the decision is usable.
-                 */
-                workMeter.record(
-                    event = TypeExpansionWorkEvent.TYPE_SHAPE_LOWERING,
-                    subject = reference,
-                )
-
-                decision
-            }
-
-            TypeKind.COLLECTION -> {
-                val elementType = requireElementType(shape)
-
-                val decision = TypeExpansionDecision.CollectionExpansion.issue(
-                    subject = reference,
-                    elementType = elementType,
-                )
-
-                recordShapeLoweringAndDecision(
-                    workMeter = workMeter,
-                    reference = reference,
-                    decisionEvent = TypeExpansionWorkEvent.CONTAINER_EXPANSION_DECISION,
-                )
-
-                decision
-            }
-
-            TypeKind.ARRAY -> {
-                val componentType = requireComponentType(shape)
-
-                val decision = TypeExpansionDecision.ArrayExpansion.issue(
-                    subject = reference,
-                    componentType = componentType,
-                )
-
-                recordShapeLoweringAndDecision(
-                    workMeter = workMeter,
-                    reference = reference,
-                    decisionEvent = TypeExpansionWorkEvent.CONTAINER_EXPANSION_DECISION,
-                )
-
-                decision
-            }
-
-            TypeKind.MAP -> {
-                val keyType = requireKeyType(shape)
-                val valueType = requireValueType(shape)
-
-                val decision = TypeExpansionDecision.MapExpansion.issue(
-                    subject = reference,
-                    keyType = keyType,
-                    valueType = valueType,
-                )
-
-                recordShapeLoweringAndDecision(
-                    workMeter = workMeter,
-                    reference = reference,
-                    decisionEvent = TypeExpansionWorkEvent.CONTAINER_EXPANSION_DECISION,
-                )
-
-                decision
-            }
-
-            TypeKind.INTERFACE -> {
-                /*
-                 * Do not record TYPE_SHAPE_LOWERING here.
-                 * There is no implemented interface-resolution path yet.
-                 */
-                throw UnsupportedTypeExpansionException(
-                    subjectTypeId = reference.id,
-                    shapeKind = shape.kind.name,
-                    reason = "Interface implementation-resolution policy is not yet implemented.",
-                )
-            }
-        }
-    }
-
-    private fun recordShapeLoweringAndDecision(
-        workMeter: TypeExpansionWorkMeter,
-        reference: TypeReference,
-        decisionEvent: TypeExpansionWorkEvent,
-    ) {
+        /*
+         * Successful lowering is recorded only after the shape has been converted
+         * into a lawful preflight decision.
+         *
+         * INTERFACE throws before this point because no executable interface
+         * resolution path exists yet. Therefore it does not receive a successful
+         * TYPE_SHAPE_LOWERING charge.
+         */
         workMeter.record(
             event = TypeExpansionWorkEvent.TYPE_SHAPE_LOWERING,
             subject = reference,
         )
 
-        workMeter.record(
-            event = decisionEvent,
-            subject = reference,
-        )
+        return preflight
     }
 
-    private fun prepareCompositeExpansion(
-        reference: TypeReference,
+    /**
+     * Materialize a full expansion decision after active-cycle detection reports
+     * cycle miss.
+     *
+     * This method may resolve raw facts only for composite preflight.
+     * Non-composite decisions are materialized from preflight data alone.
+     */
+    fun materializeAfterCycleMiss(
+        preflight: TypeExpansionPreflightDecision,
+        capabilityProfile: CapabilityProfile,
+        workMeter: TypeExpansionWorkMeter,
+    ): TypeExpansionDecision {
+        requireIdentityProviderStable()
+
+        return when (preflight) {
+            is TypeExpansionPreflightDecision.AtomicPreflight -> {
+                val decision = TypeExpansionDecision.AtomicExpansion.issue(
+                    subject = preflight.subject,
+                )
+
+                workMeter.record(
+                    event = TypeExpansionWorkEvent.ATOMIC_EXPANSION_DECISION,
+                    subject = preflight.subject,
+                )
+
+                decision
+            }
+
+            is TypeExpansionPreflightDecision.CollectionPreflight -> {
+                val decision = TypeExpansionDecision.CollectionExpansion.issue(
+                    subject = preflight.subject,
+                    elementType = preflight.elementType,
+                )
+
+                workMeter.record(
+                    event = TypeExpansionWorkEvent.CONTAINER_EXPANSION_DECISION,
+                    subject = preflight.subject,
+                )
+
+                decision
+            }
+
+            is TypeExpansionPreflightDecision.ArrayPreflight -> {
+                val decision = TypeExpansionDecision.ArrayExpansion.issue(
+                    subject = preflight.subject,
+                    componentType = preflight.componentType,
+                )
+
+                workMeter.record(
+                    event = TypeExpansionWorkEvent.CONTAINER_EXPANSION_DECISION,
+                    subject = preflight.subject,
+                )
+
+                decision
+            }
+
+            is TypeExpansionPreflightDecision.MapPreflight -> {
+                val decision = TypeExpansionDecision.MapExpansion.issue(
+                    subject = preflight.subject,
+                    keyType = preflight.keyType,
+                    valueType = preflight.valueType,
+                )
+
+                workMeter.record(
+                    event = TypeExpansionWorkEvent.CONTAINER_EXPANSION_DECISION,
+                    subject = preflight.subject,
+                )
+
+                decision
+            }
+
+            is TypeExpansionPreflightDecision.CompositePreflight -> {
+                materializeCompositeAfterCycleMiss(
+                    preflight = preflight,
+                    capabilityProfile = capabilityProfile,
+                    workMeter = workMeter,
+                )
+            }
+        }
+    }
+
+    private fun materializeCompositeAfterCycleMiss(
+        preflight: TypeExpansionPreflightDecision.CompositePreflight,
         capabilityProfile: CapabilityProfile,
         workMeter: TypeExpansionWorkMeter,
     ): TypeExpansionDecision.CompositeExpansion {
-        val rawResolution = rawTypeFactsProvider.resolveRawFacts(reference)
+        val rawResolution = rawTypeFactsProvider.resolveRawFacts(preflight.subject)
 
         workMeter.record(
             event = rawFactsResolutionEvent(rawResolution.kind),
-            subject = reference,
+            subject = preflight.subject,
         )
 
         val rawFacts = rawResolution.facts
-        val expectedTypeIdentity64 = typeIdentity64Deriver.deriveIdentity64(reference)
 
-        requireRawFactsSubjectMatchesReference(
-            reference = reference,
+        requireRawFactsSubjectMatchesCycleIdentity(
+            preflight = preflight,
             rawFacts = rawFacts,
-            expectedTypeIdentity64 = expectedTypeIdentity64,
         )
 
         workMeter.record(
             event = TypeExpansionWorkEvent.COMPOSITE_RAW_FACT_SUBJECT_CONTINUITY_CHECK,
-            subject = reference,
+            subject = preflight.subject,
         )
 
         val projection = activeMemberProjector.project(
@@ -249,14 +232,14 @@ class TypeExpansionPipeline private constructor(
 
         workMeter.record(
             event = TypeExpansionWorkEvent.COMPOSITE_ACTIVE_MEMBER_PROJECTION,
-            subject = reference,
+            subject = preflight.subject,
         )
 
         val orderedMembers = activeMemberOrderer.order(projection)
 
         workMeter.record(
             event = TypeExpansionWorkEvent.COMPOSITE_ACTIVE_MEMBER_ORDERING,
-            subject = reference,
+            subject = preflight.subject,
         )
 
         val plan = CompositeExpansionPlan.issue(
@@ -268,9 +251,64 @@ class TypeExpansionPipeline private constructor(
         )
 
         return TypeExpansionDecision.CompositeExpansion.issue(
-            subject = reference,
+            subject = preflight.subject,
             plan = plan,
         )
+    }
+
+    private fun lowerShapeToPreflight(
+        reference: TypeReference,
+        shape: ResolvedTypeShape,
+        cycleIdentity: TypeCycleIdentity,
+    ): TypeExpansionPreflightDecision {
+        return when (shape.kind) {
+            TypeKind.ATOMIC -> {
+                TypeExpansionPreflightDecision.AtomicPreflight.issue(
+                    subject = reference,
+                    cycleIdentity = cycleIdentity,
+                )
+            }
+
+            TypeKind.COMPOSITE -> {
+                TypeExpansionPreflightDecision.CompositePreflight.issue(
+                    subject = reference,
+                    cycleIdentity = cycleIdentity,
+                )
+            }
+
+            TypeKind.COLLECTION -> {
+                TypeExpansionPreflightDecision.CollectionPreflight.issue(
+                    subject = reference,
+                    cycleIdentity = cycleIdentity,
+                    elementType = requireElementType(shape),
+                )
+            }
+
+            TypeKind.ARRAY -> {
+                TypeExpansionPreflightDecision.ArrayPreflight.issue(
+                    subject = reference,
+                    cycleIdentity = cycleIdentity,
+                    componentType = requireComponentType(shape),
+                )
+            }
+
+            TypeKind.MAP -> {
+                TypeExpansionPreflightDecision.MapPreflight.issue(
+                    subject = reference,
+                    cycleIdentity = cycleIdentity,
+                    keyType = requireKeyType(shape),
+                    valueType = requireValueType(shape),
+                )
+            }
+
+            TypeKind.INTERFACE -> {
+                throw UnsupportedTypeExpansionException(
+                    subjectTypeId = reference.id,
+                    shapeKind = shape.kind.name,
+                    reason = "Interface implementation-resolution policy is not yet implemented.",
+                )
+            }
+        }
     }
 
     private fun rawFactsResolutionEvent(
@@ -282,37 +320,6 @@ class TypeExpansionPipeline private constructor(
 
             RawTypeFactsResolutionKind.ACTUAL_RESOLUTION ->
                 TypeExpansionWorkEvent.COMPOSITE_RAW_FACT_RESOLVE
-        }
-    }
-
-    private fun requireRawFactsSubjectMatchesReference(
-        reference: TypeReference,
-        rawFacts: RawTypeFactsDTO,
-        expectedTypeIdentity64: Long,
-    ) {
-        val identityMismatch = rawFacts.typeIdentity64 != expectedTypeIdentity64
-        val algorithmIdMismatch = rawFacts.typeIdentityAlgorithmId != identityAlgorithmIdSnapshot
-        val algorithmVersionMismatch =
-            rawFacts.typeIdentityAlgorithmVersion != identityAlgorithmVersionSnapshot
-
-        if (identityMismatch || algorithmIdMismatch || algorithmVersionMismatch) {
-            throw RawTypeFactsSubjectMismatchException(
-                expectedTypeId = reference.id,
-                expectedSignature = reference.signature,
-                expectedCycleId = reference.cycleId,
-                expectedTypeIdentity64 = expectedTypeIdentity64,
-                actualOwnerTypeFqcn = rawFacts.ownerTypeFqcn,
-                actualTypeIdentity64 = rawFacts.typeIdentity64,
-                expectedAlgorithmId = identityAlgorithmIdSnapshot,
-                actualAlgorithmId = rawFacts.typeIdentityAlgorithmId,
-                expectedAlgorithmVersion = identityAlgorithmVersionSnapshot,
-                actualAlgorithmVersion = rawFacts.typeIdentityAlgorithmVersion,
-                mismatchFields = renderRawFactMismatchFields(
-                    identityMismatch = identityMismatch,
-                    algorithmIdMismatch = algorithmIdMismatch,
-                    algorithmVersionMismatch = algorithmVersionMismatch,
-                ),
-            )
         }
     }
 
@@ -332,88 +339,104 @@ class TypeExpansionPipeline private constructor(
                 actualSignature = shape.subject.signature,
                 expectedCycleId = expected.cycleId,
                 actualCycleId = shape.subject.cycleId,
-                mismatchFields = renderShapeMismatchFields(
-                    idMismatch = idMismatch,
-                    signatureMismatch = signatureMismatch,
-                    cycleIdMismatch = cycleIdMismatch,
+                mismatchFields = renderMismatchFields(
+                    "id" to idMismatch,
+                    "signature" to signatureMismatch,
+                    "cycleId" to cycleIdMismatch,
                 ),
             )
         }
     }
 
-    private fun renderShapeMismatchFields(
-        idMismatch: Boolean,
-        signatureMismatch: Boolean,
-        cycleIdMismatch: Boolean,
-    ): String {
-        val fields = arrayOfNulls<String>(3)
-        var count = 0
+    private fun requireCycleIdentityMatchesReference(
+        expected: TypeReference,
+        cycleIdentity: TypeCycleIdentity,
+    ) {
+        val idMismatch = cycleIdentity.subject.id != expected.id
+        val signatureMismatch = cycleIdentity.subject.signature != expected.signature
+        val cycleIdMismatch = cycleIdentity.subject.cycleId != expected.cycleId
+        val algorithmIdMismatch = cycleIdentity.identityAlgorithmId != identityAlgorithmIdSnapshot
+        val algorithmVersionMismatch =
+            cycleIdentity.identityAlgorithmVersion != identityAlgorithmVersionSnapshot
 
-        if (idMismatch) {
-            fields[count] = "id"
-            count++
+        if (idMismatch ||
+            signatureMismatch ||
+            cycleIdMismatch ||
+            algorithmIdMismatch ||
+            algorithmVersionMismatch
+        ) {
+            throw TypeCycleIdentitySubjectMismatchException(
+                expectedTypeId = expected.id,
+                actualTypeId = cycleIdentity.subject.id,
+                expectedSignature = expected.signature,
+                actualSignature = cycleIdentity.subject.signature,
+                expectedCycleId = expected.cycleId,
+                actualCycleId = cycleIdentity.subject.cycleId,
+                expectedAlgorithmId = identityAlgorithmIdSnapshot,
+                actualAlgorithmId = cycleIdentity.identityAlgorithmId,
+                expectedAlgorithmVersion = identityAlgorithmVersionSnapshot,
+                actualAlgorithmVersion = cycleIdentity.identityAlgorithmVersion,
+                mismatchFields = renderMismatchFields(
+                    "id" to idMismatch,
+                    "signature" to signatureMismatch,
+                    "cycleId" to cycleIdMismatch,
+                    "identityAlgorithmId" to algorithmIdMismatch,
+                    "identityAlgorithmVersion" to algorithmVersionMismatch,
+                ),
+            )
         }
-
-        if (signatureMismatch) {
-            fields[count] = "signature"
-            count++
-        }
-
-        if (cycleIdMismatch) {
-            fields[count] = "cycleId"
-            count++
-        }
-
-        return renderNonEmptyMismatchFields(fields, count)
     }
 
-    private fun renderRawFactMismatchFields(
-        identityMismatch: Boolean,
-        algorithmIdMismatch: Boolean,
-        algorithmVersionMismatch: Boolean,
-    ): String {
-        val fields = arrayOfNulls<String>(3)
-        var count = 0
+    private fun requireRawFactsSubjectMatchesCycleIdentity(
+        preflight: TypeExpansionPreflightDecision.CompositePreflight,
+        rawFacts: RawTypeFactsDTO,
+    ) {
+        val identityMismatch = rawFacts.typeIdentity64 != preflight.cycleIdentity.identityBits64
+        val algorithmIdMismatch = rawFacts.typeIdentityAlgorithmId != identityAlgorithmIdSnapshot
+        val algorithmVersionMismatch =
+            rawFacts.typeIdentityAlgorithmVersion != identityAlgorithmVersionSnapshot
 
-        if (identityMismatch) {
-            fields[count] = "typeIdentity64"
-            count++
+        if (identityMismatch || algorithmIdMismatch || algorithmVersionMismatch) {
+            throw RawTypeFactsSubjectMismatchException(
+                expectedTypeId = preflight.subject.id,
+                expectedSignature = preflight.subject.signature,
+                expectedCycleId = preflight.subject.cycleId,
+                expectedTypeIdentity64 = preflight.cycleIdentity.identityBits64,
+                actualOwnerTypeFqcn = rawFacts.ownerTypeFqcn,
+                actualTypeIdentity64 = rawFacts.typeIdentity64,
+                expectedAlgorithmId = identityAlgorithmIdSnapshot,
+                actualAlgorithmId = rawFacts.typeIdentityAlgorithmId,
+                expectedAlgorithmVersion = identityAlgorithmVersionSnapshot,
+                actualAlgorithmVersion = rawFacts.typeIdentityAlgorithmVersion,
+                mismatchFields = renderMismatchFields(
+                    "typeIdentity64" to identityMismatch,
+                    "typeIdentityAlgorithmId" to algorithmIdMismatch,
+                    "typeIdentityAlgorithmVersion" to algorithmVersionMismatch,
+                ),
+            )
         }
-
-        if (algorithmIdMismatch) {
-            fields[count] = "typeIdentityAlgorithmId"
-            count++
-        }
-
-        if (algorithmVersionMismatch) {
-            fields[count] = "typeIdentityAlgorithmVersion"
-            count++
-        }
-
-        return renderNonEmptyMismatchFields(fields, count)
     }
 
-    private fun renderNonEmptyMismatchFields(
-        fields: Array<String?>,
-        count: Int,
+    private fun renderMismatchFields(
+        vararg fields: Pair<String, Boolean>,
     ): String {
-        if (count == 0) {
-            return "unknown"
-        }
-
         val builder = StringBuilder()
+        var count = 0
 
         var i = 0
-        while (i < count) {
-            if (i > 0) {
-                builder.append(',')
+        while (i < fields.size) {
+            val pair = fields[i]
+            if (pair.second) {
+                if (count > 0) {
+                    builder.append(',')
+                }
+                builder.append(pair.first)
+                count++
             }
-
-            builder.append(fields[i])
             i++
         }
 
-        return builder.toString()
+        return if (count == 0) "unknown" else builder.toString()
     }
 
     private fun requireElementType(
@@ -460,14 +483,14 @@ class TypeExpansionPipeline private constructor(
             )
     }
 
-    private fun requireIdentityDeriverStable() {
-        if (typeIdentity64Deriver.identityAlgorithmId != identityAlgorithmIdSnapshot ||
-            typeIdentity64Deriver.identityAlgorithmVersion != identityAlgorithmVersionSnapshot
+    private fun requireIdentityProviderStable() {
+        if (typeCycleIdentityProvider.identityAlgorithmId != identityAlgorithmIdSnapshot ||
+            typeCycleIdentityProvider.identityAlgorithmVersion != identityAlgorithmVersionSnapshot
         ) {
             throw PlanningExpansionException(
-                "TypeIdentity64Deriver drift detected inside TypeExpansionPipeline: " +
+                "TypeCycleIdentityProvider drift detected: " +
                         "expected=${identityAlgorithmIdSnapshot}@${identityAlgorithmVersionSnapshot}, " +
-                        "actual=${typeIdentity64Deriver.identityAlgorithmId}@${typeIdentity64Deriver.identityAlgorithmVersion}",
+                        "actual=${typeCycleIdentityProvider.identityAlgorithmId}@${typeCycleIdentityProvider.identityAlgorithmVersion}",
             )
         }
     }
@@ -476,34 +499,39 @@ class TypeExpansionPipeline private constructor(
         @JvmStatic
         fun issue(
             typeShapeProvider: TypeShapeProvider,
+            typeCycleIdentityProvider: TypeCycleIdentityProvider,
             rawTypeFactsProvider: RawTypeFactsProvider,
-            typeIdentity64Deriver: TypeIdentity64Deriver,
             activeMemberProjector: ActiveMemberProjector,
             activeMemberOrderer: ActiveMemberOrderer,
         ): TypeExpansionPipeline {
-            val identityAlgorithmId = typeIdentity64Deriver.identityAlgorithmId
+            val algorithmId = typeCycleIdentityProvider.identityAlgorithmId
 
-            if (identityAlgorithmId.isBlank()) {
+            if (algorithmId.isBlank()) {
                 throw PlanningExpansionException(
-                    "TypeExpansionPipeline requires non-blank TypeIdentity64Deriver.identityAlgorithmId.",
+                    "TypeExpansionPipeline requires non-blank TypeCycleIdentityProvider.identityAlgorithmId.",
                 )
             }
 
-            val identityAlgorithmVersion = typeIdentity64Deriver.identityAlgorithmVersion
-
-            if (identityAlgorithmVersion < 0L) {
+            if (algorithmId.contains('|')) {
                 throw PlanningExpansionException(
-                    "TypeExpansionPipeline requires TypeIdentity64Deriver.identityAlgorithmVersion >= 0: " +
-                            identityAlgorithmVersion,
+                    "TypeExpansionPipeline identityAlgorithmId must not contain reserved delimiter '|': $algorithmId",
+                )
+            }
+
+            val algorithmVersion = typeCycleIdentityProvider.identityAlgorithmVersion
+
+            if (algorithmVersion < 0L) {
+                throw PlanningExpansionException(
+                    "TypeExpansionPipeline requires identityAlgorithmVersion >= 0: $algorithmVersion",
                 )
             }
 
             return TypeExpansionPipeline(
                 typeShapeProvider = typeShapeProvider,
+                typeCycleIdentityProvider = typeCycleIdentityProvider,
                 rawTypeFactsProvider = rawTypeFactsProvider,
-                typeIdentity64Deriver = typeIdentity64Deriver,
-                identityAlgorithmIdSnapshot = identityAlgorithmId,
-                identityAlgorithmVersionSnapshot = identityAlgorithmVersion,
+                identityAlgorithmIdSnapshot = algorithmId,
+                identityAlgorithmVersionSnapshot = algorithmVersion,
                 activeMemberProjector = activeMemberProjector,
                 activeMemberOrderer = activeMemberOrderer,
             )

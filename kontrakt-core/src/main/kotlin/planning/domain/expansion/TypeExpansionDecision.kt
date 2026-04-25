@@ -3,20 +3,28 @@ package planning.domain.expansion
 import metamodel.domain.vo.TypeReference
 
 /**
- * Closed expansion decision produced by TypeExpansionPipeline.
+ * Full expansion decision produced after active-cycle detection reports cycle miss.
  *
- * This is not a plan node.
- * It is a compiler-style dispatch result that tells StructuralPlannerCore which
- * expansion frame to create next.
+ * This sealed vocabulary must remain complete even if StructuralPlannerCore only
+ * consumes CompositeExpansion in the current implementation phase.
  *
- * Interface expansion is intentionally not represented yet.
- * Until implementation-resolution policy exists, interface shape is fail-closed
- * inside TypeExpansionPipeline.
+ * Reason:
+ * - the domain decision surface should not shrink merely because execution frames
+ *   for atomic/container/map paths are not implemented yet;
+ * - future frames must attach to a stable closed vocabulary;
+ * - deleting non-composite decisions would make TypeExpansionPipeline less lawful
+ *   than the documented expansion model.
  */
 sealed interface TypeExpansionDecision {
 
     val subject: TypeReference
 
+    /**
+     * Leaf-like type.
+     *
+     * No active-member traversal is required.
+     * The current core may fail closed until a leaf/generator frame exists.
+     */
     class AtomicExpansion private constructor(
         override val subject: TypeReference,
     ) : TypeExpansionDecision {
@@ -30,6 +38,9 @@ sealed interface TypeExpansionDecision {
         }
     }
 
+    /**
+     * Composite object type with frozen projected traversal plan.
+     */
     class CompositeExpansion private constructor(
         override val subject: TypeReference,
         val plan: CompositeExpansionPlan,
@@ -48,6 +59,9 @@ sealed interface TypeExpansionDecision {
         }
     }
 
+    /**
+     * Collection-like container.
+     */
     class CollectionExpansion private constructor(
         override val subject: TypeReference,
         val elementType: TypeReference,
@@ -66,6 +80,9 @@ sealed interface TypeExpansionDecision {
         }
     }
 
+    /**
+     * Array-like container.
+     */
     class ArrayExpansion private constructor(
         override val subject: TypeReference,
         val componentType: TypeReference,
@@ -84,6 +101,9 @@ sealed interface TypeExpansionDecision {
         }
     }
 
+    /**
+     * Map-like container.
+     */
     class MapExpansion private constructor(
         override val subject: TypeReference,
         val keyType: TypeReference,

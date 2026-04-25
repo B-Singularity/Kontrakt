@@ -24,6 +24,12 @@ object TypeExpansionCostCenterMapper {
             TypeExpansionWorkEvent.TYPE_SHAPE_LOWERING ->
                 CostCenter.TYPE_SHAPE_LOWERING
 
+            TypeExpansionWorkEvent.TYPE_CYCLE_IDENTITY_RESOLUTION ->
+                CostCenter.TYPE_CYCLE_IDENTITY_RESOLUTION
+
+            TypeExpansionWorkEvent.TYPE_CYCLE_IDENTITY_CONTINUITY_CHECK ->
+                CostCenter.TYPE_CYCLE_IDENTITY_CONTINUITY_CHECK
+
             TypeExpansionWorkEvent.COMPOSITE_RAW_FACT_CACHE_HIT ->
                 CostCenter.COMPOSITE_RAW_FACT_CACHE_HIT
 

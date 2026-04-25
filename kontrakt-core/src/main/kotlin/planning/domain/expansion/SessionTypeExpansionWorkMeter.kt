@@ -4,16 +4,15 @@ import metamodel.domain.vo.TypeReference
 import planning.domain.session.PlannerSession
 
 /**
- * Session-bound TypeExpansionWorkMeter implementation.
+ * Session-bound implementation of TypeExpansionWorkMeter.
  *
- * Boundary rule:
- * - TypeExpansionPipeline emits closed TypeExpansionWorkEvent values.
- * - This meter maps those events to CostCenter.
- * - PlannerSession.step(center) remains the only runtime-metering mutation gate.
+ * It is intentionally tiny:
+ * - no semantic decisions
+ * - no projection
+ * - no ordering
+ * - no raw fact access
  *
- * This class is intentionally tiny.
- * It must not perform semantic decisions, shape resolution, raw fact resolution,
- * projection, ordering, or traversal.
+ * It only maps event -> CostCenter and calls PlannerSession.step(center).
  */
 class SessionTypeExpansionWorkMeter private constructor(
     private val session: PlannerSession,
@@ -24,11 +23,8 @@ class SessionTypeExpansionWorkMeter private constructor(
         subject: TypeReference,
     ) {
         /*
-         * The subject is intentionally not consumed by this baseline meter.
-         *
-         * It is retained in the interface so future structured diagnostics or
-         * trace sinks can attach deterministic subject identity without changing
-         * TypeExpansionPipeline.
+         * subject is intentionally unused by the baseline meter.
+         * It exists for deterministic diagnostics and future structured tracing.
          */
         session.step(
             TypeExpansionCostCenterMapper.map(event),

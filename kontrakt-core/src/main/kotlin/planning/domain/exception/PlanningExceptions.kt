@@ -365,5 +365,57 @@ class RawTypeFactsSubjectMismatchException(
 )
 
 
+class TypeCycleIdentityContractViolationException(
+    val reason: String,
+) : PlanningExpansionException(
+    "TypeCycleIdentity contract violation: reason=$reason",
+)
 
+
+class TypeCycleIdentitySubjectMismatchException(
+    val expectedTypeId: String,
+    val actualTypeId: String,
+    val expectedSignature: String,
+    val actualSignature: String,
+    val expectedCycleId: String,
+    val actualCycleId: String,
+    val expectedAlgorithmId: String,
+    val actualAlgorithmId: String,
+    val expectedAlgorithmVersion: Long,
+    val actualAlgorithmVersion: Long,
+    val mismatchFields: String,
+) : PlanningExpansionException(
+    "Type cycle identity subject mismatch: " +
+            "mismatchFields=$mismatchFields, " +
+            "expectedTypeId=$expectedTypeId, actualTypeId=$actualTypeId, " +
+            "expectedSignature=$expectedSignature, actualSignature=$actualSignature, " +
+            "expectedCycleId=$expectedCycleId, actualCycleId=$actualCycleId, " +
+            "expectedAlgorithm=$expectedAlgorithmId@$expectedAlgorithmVersion, " +
+            "actualAlgorithm=$actualAlgorithmId@$actualAlgorithmVersion",
+)
+
+class ActiveCycleWithoutBreakpointException(
+    val subjectTypeId: String,
+    val cycleDepth: Int,
+    val identityAlgorithmId: String,
+    val identityAlgorithmVersion: Long,
+) : PlanningExpansionException(
+    "Active cycle detected without deterministic breakpoint: " +
+            "subjectTypeId=$subjectTypeId, cycleDepth=$cycleDepth, " +
+            "identityAlgorithm=$identityAlgorithmId@$identityAlgorithmVersion",
+)
+
+class CompositeExpansionPlanContractViolationException(
+    val reason: String,
+) : PlanningExpansionException(
+    "CompositeExpansionPlan contract violation: reason=$reason",
+)
+
+class UnsupportedPreflightShapeException(
+    val subjectTypeId: String,
+    val shapeKind: String,
+    val reason: String,
+) : PlanningExpansionException(
+    "Unsupported preflight shape: subjectTypeId=$subjectTypeId, shapeKind=$shapeKind, reason=$reason",
+)
 
