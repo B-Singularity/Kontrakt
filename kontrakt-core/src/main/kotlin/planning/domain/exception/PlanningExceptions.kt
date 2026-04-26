@@ -419,3 +419,58 @@ class UnsupportedPreflightShapeException(
     "Unsupported preflight shape: subjectTypeId=$subjectTypeId, shapeKind=$shapeKind, reason=$reason",
 )
 
+
+/**
+ * Raised when canonical material produced under one canonical version tuple is
+ * compared, loaded, or interned under an incompatible version tuple.
+ *
+ * This exception is a protocol guard.
+ *
+ * Version mismatch must not silently degrade into:
+ * - exact-match comparison;
+ * - cache hit;
+ * - replay acceptance;
+ * - structural reuse.
+ */
+class CanonicalVersionMismatchException(
+    val storedVersion: String,
+    val currentVersion: String,
+) : PlanningProtocolException(
+    "Canonical version mismatch: stored=$storedVersion, current=$currentVersion",
+)
+
+/**
+ * Raised when type-expansion domain material violates a ratified expansion
+ * protocol.
+ *
+ * This exception means "Core-owned expansion material is malformed".
+ *
+ * It is not:
+ * - an adapter failure;
+ * - a cache miss;
+ * - a runtime DI failure;
+ * - a recoverable transient L2 event.
+ */
+class TypeExpansionContractViolationException(
+    val reason: String,
+) : PlanningExpansionException(
+    "Type expansion contract violation: reason=$reason",
+)
+
+/**
+ * Raised when canonical-domain material violates a ratified canonical protocol.
+ *
+ * Canonical protocol violations are not adapter failures and must not be
+ * degraded into cache misses.
+ *
+ * Examples:
+ * - malformed canonical version tuple;
+ * - invalid canonical text component;
+ * - invalid canonical signature byte material;
+ * - illegal canonical comparison boundary.
+ */
+class CanonicalContractViolationException(
+    val reason: String,
+) : PlanningProtocolException(
+    "Canonical contract violation: reason=$reason",
+)
