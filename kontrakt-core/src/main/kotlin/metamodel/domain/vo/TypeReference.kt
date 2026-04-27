@@ -1,38 +1,82 @@
 package metamodel.domain.vo
 
 /**
- * [Value Object] Type Reference (Strictly Pure)
+ * Domain-issued type reference.
  *
- * Represents a static reference to a type in the source code.
- * This interface is completely agnostic of runtime technologies (No JVM classes).
+ * Adapters must not implement this type.
+ * Reflection/KSP/bytecode/static-source adapters provide normalized materials;
+ * the domain factory issues TypeReference after enforcing identity coherence.
  */
-interface TypeReference {
-    /**
-     * The canonical identity (e.g., "com.example.User<java.lang.String>?").
-     */
-    val id: String
+class TypeReference private constructor(
+    val id: CanonicalTypeId,
+    val cycleKey: TypeCycleKey,
+    val signature: CanonicalTypeSignature,
+    val useSiteAnnotations: OrderedUseSiteAnnotations,
+    val coherenceProof: TypeIdentityCoherenceProof,
+) {
+    val shapeSummary: TypeShapeSummary
+        get() = signature.shapeSummary
 
-    /**
-     * The identity used for cycle detection (ADR-027).
-     *
-     * ## Contract
-     * 1. **Nullability Stripped**: "String?" and "String" share the same cycleId.
-     * 2. **Generics Preserved**: "List<String>" != "List<Int>".
-     * 3. **Normalized**: Inner classes must use '.' instead of '$'.
-     */
-    val cycleId: String
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is TypeReference) return false
 
-    val signature: String
+        return id == other.id &&
+                cycleKey == other.cycleKey &&
+                signature == other.signature &&
+                useSiteAnnotations == other.useSiteAnnotations &&
+                coherenceProof == other.coherenceProof
+    }
 
-    /**
-     * Annotations present at the usage site.
-     * The creating Adapter MUST guarantee deterministic ordering (e.g., sorted by name).
-     */
-    val useSiteAnnotations: List<AnnotationDescriptor>
+    override fun hashCode(): Int {
+        var result = id.hashCode()
+        result = 31 * result + cycleKey.hashCode()
+        result = 31 * result + signature.hashCode()
+        result = 31 * result + useSiteAnnotations.hashCode()
+        result = 31 * result + coherenceProof.hashCode()
+        return result
+    }
+
+    override fun toString(): String {
+        return "TypeReference(id=$id, cycleKey=$cycleKey, signature=$signature, shape=$shapeSummary, annotations=${useSiteAnnotations.size})"
+    }
+
+    companion object {
+        @JvmStatic
+        fun issue(
+            id: CanonicalTypeId,
+            cycleKey: TypeCycleKey,
+            signature: CanonicalTypeSignature,
+            useSiteAnnotations: OrderedUseSiteAnnotations,
+            coherenceProof: TypeIdentityCoherenceProof,
+        ): TypeReference {
+            requireShapeCoherence(id, cycleKey, signature)
+
+            return TypeReference(
+                id = id,
+                cycleKey = cycleKey,
+                signature = signature,
+                useSiteAnnotations = useSiteAnnotations,
+                coherenceProof = coherenceProof,
+            )
+        }
+
+        private fun requireShapeCoherence(
+            id: CanonicalTypeId,
+            cycleKey: TypeCycleKey,
+            signature: CanonicalTypeSignature,
+        ) {
+            if (id.shapeSummary != signature.shapeSummary) {
+                throw IllegalArgumentException(
+                    "TypeReference incoherent shape: id=${id.shapeSummary}, signature=${signature.shapeSummary}",
+                )
+            }
+
+            if (cycleKey.shapeSummary.kind != signature.shapeSummary.kind) {
+                throw IllegalArgumentException(
+                    "TypeReference incoherent cycle/signature kind: cycle=${cycleKey.shapeSummary}, signature=${signature.shapeSummary}",
+                )
+            }
+        }
+    }
 }
-
-data class AnnotationDescriptor(
-    val qualifiedName: String,
-    // Using Any? for simplicity in this snippet, ideally MetamodelAnnotationValue
-    val values: Map<String, MetamodelAnnotationValue>
-)
