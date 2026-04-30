@@ -2,6 +2,7 @@ package planning.domain.service
 
 import metamodel.domain.dto.MemberFact
 import metamodel.domain.vo.TypeReference
+import metamodel.port.outgoing.NormalizationEngine
 import planning.domain.exception.ActiveCycleWithoutBreakpointException
 import planning.domain.exception.AmbiguousEdgeKeyException
 import planning.domain.exception.AmbiguousEntropyTargetKeyException
@@ -17,7 +18,6 @@ import planning.domain.interner.InternerInvocationSite
 import planning.domain.interner.InternerStepResult
 import planning.domain.interner.PlanInterner
 import planning.domain.interner.PlanKeyFactory
-import planning.domain.port.outgoing.NormalizationEngine
 import planning.domain.projection.CapabilityProfile
 import planning.domain.protocol.CostCenter
 import planning.domain.protocol.TraversalDisposition

@@ -30,10 +30,10 @@ enum class CanonicalTypeShapeKind(
     ),
 
     /**
-     * Kotlin Unit-like value.
+     * Kotlin Unit-like terminal value.
      *
      * Unit has a value-level semantic unlike Java void, but it remains terminal
-     * for planning purposes.
+     * for planning graph expansion.
      */
     UNIT(
         protocolOrder = 6,
@@ -41,10 +41,10 @@ enum class CanonicalTypeShapeKind(
     ),
 
     /**
-     * Primitive/string/number/temporal/UUID/value-object leaf.
+     * Primitive/string/number/temporal/UUID leaf.
      *
-     * ENUM is intentionally not hidden here. Enum is a closed set and receives
-     * its own kind.
+     * User-defined domain leaf/value-object classification is represented by
+     * TypeShapeSummary.atomicFamily, not by changing this enum.
      */
     ATOMIC(
         protocolOrder = 10,
@@ -53,10 +53,6 @@ enum class CanonicalTypeShapeKind(
 
     /**
      * Closed value set.
-     *
-     * Enum is leaf-like in object graph expansion, but it carries contract
-     * material that ordinary atomic values do not: allowed constants, constant
-     * ordering, and future enum-constant metadata.
      */
     ENUM(
         protocolOrder = 15,
@@ -81,10 +77,6 @@ enum class CanonicalTypeShapeKind(
 
     /**
      * Abstract class surface.
-     *
-     * Abstract class is related to polymorphic expansion, but it is not identical
-     * to interface. It may have constructors, state, partial implementation, or
-     * subclass constraints.
      */
     ABSTRACT_CLASS(
         protocolOrder = 35,
@@ -92,7 +84,7 @@ enum class CanonicalTypeShapeKind(
     ),
 
     /**
-     * Container with one element type.
+     * Container with one element role.
      */
     COLLECTION(
         protocolOrder = 40,
@@ -100,7 +92,7 @@ enum class CanonicalTypeShapeKind(
     ),
 
     /**
-     * Array with one component type and a rank.
+     * Array with one component role and one or more dimensions.
      */
     ARRAY(
         protocolOrder = 50,
@@ -109,12 +101,23 @@ enum class CanonicalTypeShapeKind(
 
     /**
      * Container with key/value roles.
-     *
-     * The summary records arity only. Key/value role details belong to
-     * ResolvedTypeShape / MapExpansionPlan.
      */
     MAP(
         protocolOrder = 60,
         protocolToken = "map",
-    ),
+    );
+
+    val isPolymorphicSurface: Boolean
+        get() = this == INTERFACE || this == ABSTRACT_CLASS
+
+    val isTerminalLeaf: Boolean
+        get() = this == VOID ||
+                this == UNIT ||
+                this == ATOMIC ||
+                this == ENUM
+
+    val isContainerSurface: Boolean
+        get() = this == COLLECTION ||
+                this == ARRAY ||
+                this == MAP
 }

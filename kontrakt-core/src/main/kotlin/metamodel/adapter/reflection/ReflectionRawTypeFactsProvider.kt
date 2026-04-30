@@ -14,7 +14,7 @@ import metamodel.domain.exception.StrictModeViolationException
 import metamodel.domain.service.TypeIdentity64Deriver
 import metamodel.domain.vo.DeclarationOrdinal
 import metamodel.domain.vo.TypeReference
-import planning.domain.port.outgoing.NormalizationEngine
+import metamodel.port.outgoing.NormalizationEngine
 import planning.domain.port.outgoing.RawTypeFactsProvider
 import planning.domain.port.outgoing.RawTypeFactsResolution
 import kotlin.reflect.KClass

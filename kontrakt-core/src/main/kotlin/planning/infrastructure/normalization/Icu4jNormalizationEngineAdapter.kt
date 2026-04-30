@@ -2,8 +2,8 @@ package planning.infrastructure.normalization
 
 import com.ibm.icu.text.Normalizer2
 import com.ibm.icu.util.VersionInfo
+import metamodel.port.outgoing.NormalizationEngine
 import planning.domain.exception.EnvironmentIntegrityException
-import planning.domain.port.outgoing.NormalizationEngine
 
 /**
  * Outgoing Adapter: ICU4J-based NFC predicate engine.

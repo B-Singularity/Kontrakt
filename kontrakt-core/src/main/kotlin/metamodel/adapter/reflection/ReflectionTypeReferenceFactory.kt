@@ -3,7 +3,7 @@ package metamodel.adapter.reflection
 import metamodel.domain.exception.StrictModeViolationException
 import metamodel.domain.vo.AnnotationDescriptor
 import metamodel.domain.vo.TypeReference
-import planning.domain.port.outgoing.NormalizationEngine
+import metamodel.port.outgoing.NormalizationEngine
 import kotlin.reflect.KClass
 import kotlin.reflect.KType
 import kotlin.reflect.KTypeProjection

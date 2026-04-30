@@ -1,7 +1,7 @@
 package kontrakt.planning.domain.protocol
 
+import metamodel.port.outgoing.NormalizationEngine
 import planning.domain.exception.PortContractViolationException
-import planning.domain.port.outgoing.NormalizationEngine
 import java.nio.charset.StandardCharsets
 
 /**

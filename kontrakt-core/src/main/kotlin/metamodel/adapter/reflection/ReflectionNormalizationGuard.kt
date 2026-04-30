@@ -2,7 +2,7 @@ package metamodel.adapter.reflection
 
 import metamodel.domain.exception.MetamodelNormalizationViolationException
 import metamodel.domain.exception.safeDiagnosticValue
-import planning.domain.port.outgoing.NormalizationEngine
+import metamodel.port.outgoing.NormalizationEngine
 
 /**
  * Reflection adapter-local normalization guard.
