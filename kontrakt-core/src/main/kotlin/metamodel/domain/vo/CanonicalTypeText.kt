@@ -2,16 +2,13 @@ package metamodel.domain.vo
 
 import metamodel.domain.exception.MetamodelFactContractViolationException
 import metamodel.domain.exception.MetamodelNormalizationViolationException
-import metamodel.port.outgoing.CanonicalTypeLexicalProfile
-import metamodel.port.outgoing.CanonicalTypeTextInspectionPolicy
-import metamodel.port.outgoing.CanonicalTypeTextInspectionResult
-import metamodel.port.outgoing.NormalizationEngine
+import metamodel.domain.port.outgoing.NormalizationEngine
 
 /**
  * Canonical textual material for metamodel type identity.
  *
  * This VO is the ratified entry point from raw adapter/source/reflection/KSP
- * strings into the canonical metamodel identity boundary.
+ * text material into the canonical metamodel identity boundary.
  *
  * Important rules:
  *
@@ -19,31 +16,54 @@ import metamodel.port.outgoing.NormalizationEngine
  * - It does not repair.
  * - It does not call java.text.Normalizer.
  * - It does not call Character.*.
- * - It does not issue "trusted" instances without inspection.
+ * - It does not depend on reflection.
+ * - It does not depend on KSP.
  * - It does not perform byte encoding.
+ * - It does not compute policy fingerprints.
  * - It does not cache hashCode.
- * - Equality remains value-primary.
+ * - It does not choose policy defaults.
+ * - It does not eagerly allocate provenance strings.
  *
- * The NormalizationEngine inspection result is the expensive Unicode / script /
- * scalar / NFC proof. This VO performs only cheap protocol cross-checks against
- * ASCII grammar markers to detect faulty adapter inspection profiles.
+ * The NormalizationEngine is the adapter-owned Unicode inspection boundary.
+ * It returns:
+ *
+ * - an immutable inspected snapshot;
+ * - deterministic lexical facts for that exact snapshot.
+ *
+ * This VO must consume only the snapshot returned by the engine. It must never
+ * build the canonical value from the original caller-owned CharSequence.
+ *
+ * TOCTOU law:
+ *
+ * The caller may pass a mutable CharSequence such as StringBuilder. Therefore
+ * the domain must not trust the original input after inspection. The only text
+ * admitted into this VO is CanonicalTypeTextInspectionResult.Accepted.snapshot.
+ *
+ * Equality law:
+ *
+ * Equality remains text-primary at this VO level. Policy, engine provenance, and
+ * lexical profile are coherence/provenance facts, not direct equality axes here.
+ *
+ * Higher-level identity objects such as CanonicalTypeId include shape,
+ * classifier law, and ratification fingerprint to prevent same-text/different-
+ * shape collapse.
+ *
+ * Diagnostic law:
+ *
+ * Provenance strings are rendered lazily. The VO stores structured fields, not a
+ * pre-joined diagnostic string. This prevents heap churn when many type texts
+ * are ratified but only a small subset requires diagnostics.
  */
 class CanonicalTypeText private constructor(
     val value: String,
     val normalizationEngineId: String,
     val normalizationEngineVersion: String,
     val unicodeProfileVersion: String,
+    val goldenVectorSetId: String,
+    val goldenVectorDigest: String,
     val inspectionPolicy: CanonicalTypeTextInspectionPolicy,
     val lexicalProfile: CanonicalTypeLexicalProfile,
-    private val ratificationProvenance: String,
 ) {
-    /**
-     * Value-primary equality.
-     *
-     * Policy and engine provenance are not equality axes here. Mixing equal text
-     * under incompatible policy/provenance must be rejected by the higher-level
-     * TypeReferenceFactory / coherence registry, not hidden inside equals.
-     */
     override fun equals(other: Any?): Boolean {
         return other is CanonicalTypeText && value == other.value
     }
@@ -57,42 +77,98 @@ class CanonicalTypeText private constructor(
     }
 
     /**
+     * Requires the other value to have the same ratification context.
+     *
+     * This is intentionally separate from equals(...).
+     *
+     * Use this when a caller needs to assert that two equal canonical texts were
+     * accepted under the same engine, Unicode profile, golden-vector set, and
+     * inspection policy.
+     */
+    fun requireSameInspectionContextAs(
+        other: CanonicalTypeText,
+    ) {
+        if (normalizationEngineId != other.normalizationEngineId ||
+            normalizationEngineVersion != other.normalizationEngineVersion ||
+            unicodeProfileVersion != other.unicodeProfileVersion ||
+            goldenVectorSetId != other.goldenVectorSetId ||
+            goldenVectorDigest != other.goldenVectorDigest ||
+            inspectionPolicy != other.inspectionPolicy
+        ) {
+            throw MetamodelFactContractViolationException(
+                "CanonicalTypeText inspection context mismatch: " +
+                        "value=${diagnosticSample(value)}, " +
+                        "this=${renderRatificationProvenance()}, " +
+                        "other=${other.renderRatificationProvenance()}",
+            )
+        }
+    }
+
+    /**
      * Diagnostic-only provenance.
      *
-     * Precomputed once to avoid repeatedly allocating diagnostic strings on
-     * failure paths. This is not canonical byte material and must not be used as
-     * equality or cache identity.
+     * This string is built lazily to avoid permanent heap overhead.
+     *
+     * It is not canonical byte material.
+     * It is not a cache key.
+     * It is not equality material.
      */
     fun renderRatificationProvenance(): String {
-        return ratificationProvenance
+        return buildRatificationProvenance(
+            normalizationEngineId = normalizationEngineId,
+            normalizationEngineVersion = normalizationEngineVersion,
+            unicodeProfileVersion = unicodeProfileVersion,
+            goldenVectorSetId = goldenVectorSetId,
+            goldenVectorDigest = goldenVectorDigest,
+            inspectionPolicy = inspectionPolicy,
+            lexicalProfile = lexicalProfile,
+        )
     }
 
     companion object {
-        private const val MAX_UTF16_UNITS_PER_CODE_POINT: Int = 2
+        private const val MAX_PROVENANCE_TOKEN_CHARS: Int = 192
+        private const val MAX_TOTAL_PROVENANCE_CHARS: Int = 4_096
+        private const val MAX_DIAGNOSTIC_TEXT_SAMPLE_CHARS: Int = 128
 
         /**
          * Ratifies raw type text.
          *
-         * The cheap UTF-16 length precheck prevents obviously oversized input
-         * from entering the normalization engine before policy bounds are even
-         * considered. The engine still remains the authority for exact code-point
-         * counting and Unicode/NFC inspection.
+         * The policy must be supplied by an already-pinned metamodel/runtime
+         * policy boundary. This method deliberately has no default policy.
+         *
+         * Flow:
+         *
+         * 1. Validate engine provenance surface.
+         * 2. Perform a cheap caller-side length precheck.
+         * 3. Delegate Unicode/scalar/NFC/script/token inspection to
+         *    NormalizationEngine.
+         * 4. Consume only Accepted.snapshot.
+         * 5. Assert accepted lexical profile against policy.
+         * 6. Run low-cost ASCII protocol guards over the inspected snapshot.
+         * 7. Issue CanonicalTypeText.
          */
         @JvmStatic
         fun ratify(
-            rawValue: String,
+            rawValue: CharSequence,
             normalizationEngine: NormalizationEngine,
-            inspectionPolicy: CanonicalTypeTextInspectionPolicy =
-                CanonicalTypeTextInspectionPolicy.strictTypeIdentityText(),
+            inspectionPolicy: CanonicalTypeTextInspectionPolicy,
         ): CanonicalTypeText {
             requireEngineProvenance(normalizationEngine)
 
             if (rawValue.isEmpty()) {
                 throw MetamodelFactContractViolationException(
-                    "CanonicalTypeText must not be empty.",
+                    "CanonicalTypeText raw input must not be empty.",
                 )
             }
 
+            /*
+             * This is only a cheap caller-side precheck.
+             *
+             * The NormalizationEngine remains responsible for the authoritative
+             * early-exit guard, bounded snapshot capture, snapshot length recheck,
+             * invalid surrogate fast-fail, exact code-point counting, and NFC
+             * inspection.
+             */
             rejectImpossibleLengthBeforeInspection(
                 rawValue = rawValue,
                 inspectionPolicy = inspectionPolicy,
@@ -103,8 +179,9 @@ class CanonicalTypeText private constructor(
                 policy = inspectionPolicy,
             )
 
-            val lexicalProfile = when (inspection) {
-                is CanonicalTypeTextInspectionResult.Accepted -> inspection.lexicalProfile
+            val accepted = when (inspection) {
+                is CanonicalTypeTextInspectionResult.Accepted -> inspection
+
                 is CanonicalTypeTextInspectionResult.Rejected -> {
                     throw MetamodelNormalizationViolationException(
                         field = "CanonicalTypeText.value",
@@ -116,144 +193,81 @@ class CanonicalTypeText private constructor(
                 }
             }
 
+            val snapshot = accepted.snapshot
+            val lexicalProfile = accepted.lexicalProfile
+
             requireAcceptedProfileWithinPolicy(
-                rawValue = rawValue,
+                snapshot = snapshot,
                 lexicalProfile = lexicalProfile,
                 inspectionPolicy = inspectionPolicy,
                 normalizationEngine = normalizationEngine,
             )
 
-            requireLexicalProfileCrossCheck(
-                rawValue = rawValue,
-                lexicalProfile = lexicalProfile,
+            CanonicalTypeTextGuards.validateInspectedSnapshot(
+                field = "CanonicalTypeText.value",
+                snapshot = snapshot,
+                allowNullableMarker = inspectionPolicy.allowNullableMarker,
+                allowStarProjection = inspectionPolicy.allowStarProjection,
             )
 
             return CanonicalTypeText(
-                value = rawValue,
+                value = snapshot,
                 normalizationEngineId = normalizationEngine.engineId,
                 normalizationEngineVersion = normalizationEngine.engineVersion,
                 unicodeProfileVersion = normalizationEngine.unicodeProfileVersion,
+                goldenVectorSetId = normalizationEngine.goldenVectorSetId,
+                goldenVectorDigest = normalizationEngine.goldenVectorDigest,
                 inspectionPolicy = inspectionPolicy,
                 lexicalProfile = lexicalProfile,
-                ratificationProvenance = buildRatificationProvenance(
-                    normalizationEngine = normalizationEngine,
-                    inspectionPolicy = inspectionPolicy,
-                    lexicalProfile = lexicalProfile,
-                ),
             )
         }
 
         private fun rejectImpossibleLengthBeforeInspection(
-            rawValue: String,
+            rawValue: CharSequence,
             inspectionPolicy: CanonicalTypeTextInspectionPolicy,
         ) {
-            val maxUtf16Units = inspectionPolicy.maxCodePoints.toLong() *
-                    MAX_UTF16_UNITS_PER_CODE_POINT.toLong()
-
-            if (rawValue.length.toLong() > maxUtf16Units) {
+            if (rawValue.length > inspectionPolicy.maxUtf16CodeUnitsBeforeSnapshot) {
                 throw MetamodelFactContractViolationException(
                     "CanonicalTypeText exceeds pre-inspection UTF-16 length guard: " +
-                            "utf16Units=${rawValue.length}, maxPossibleUtf16Units=$maxUtf16Units, " +
-                            "policyMaxCodePoints=${inspectionPolicy.maxCodePoints}",
+                            "utf16Units=${rawValue.length}, " +
+                            "maxUtf16CodeUnitsBeforeSnapshot=${inspectionPolicy.maxUtf16CodeUnitsBeforeSnapshot}",
                 )
             }
         }
 
         private fun requireAcceptedProfileWithinPolicy(
-            rawValue: String,
+            snapshot: String,
             lexicalProfile: CanonicalTypeLexicalProfile,
             inspectionPolicy: CanonicalTypeTextInspectionPolicy,
             normalizationEngine: NormalizationEngine,
         ) {
-            if (!lexicalProfile.isNfc) {
+            if (snapshot.isEmpty()) {
                 throw MetamodelFactContractViolationException(
-                    "NormalizationEngine contract violation: accepted canonical type text is not marked NFC. " +
+                    "NormalizationEngine contract violation: accepted snapshot must not be empty.",
+                )
+            }
+
+            if (snapshot.length != lexicalProfile.utf16CodeUnitCount) {
+                throw MetamodelFactContractViolationException(
+                    "NormalizationEngine contract violation: snapshot length does not match lexical profile. " +
                             "engine=${normalizationEngine.engineId}@${normalizationEngine.engineVersion}, " +
-                            "value=${diagnosticSample(rawValue)}",
+                            "snapshotUtf16Units=${snapshot.length}, " +
+                            "profileUtf16Units=${lexicalProfile.utf16CodeUnitCount}, " +
+                            "value=${diagnosticSample(snapshot)}",
                 )
             }
 
-            if (lexicalProfile.codePointCount > inspectionPolicy.maxCodePoints) {
+            try {
+                lexicalProfile.requireWithinPolicy(inspectionPolicy)
+            } catch (exception: MetamodelFactContractViolationException) {
                 throw MetamodelFactContractViolationException(
-                    "NormalizationEngine contract violation: accepted codePointCount exceeds policy. " +
-                            "codePointCount=${lexicalProfile.codePointCount}, " +
-                            "maxCodePoints=${inspectionPolicy.maxCodePoints}, " +
-                            "value=${diagnosticSample(rawValue)}",
-                )
-            }
-
-            if (lexicalProfile.longestIdentifierTokenCodePoints >
-                inspectionPolicy.maxIdentifierTokenCodePoints
-            ) {
-                throw MetamodelFactContractViolationException(
-                    "NormalizationEngine contract violation: accepted identifier token exceeds policy. " +
-                            "longestIdentifierTokenCodePoints=${lexicalProfile.longestIdentifierTokenCodePoints}, " +
-                            "maxIdentifierTokenCodePoints=${inspectionPolicy.maxIdentifierTokenCodePoints}, " +
-                            "value=${diagnosticSample(rawValue)}",
-                )
-            }
-
-            if (lexicalProfile.hasNullableMarker && !inspectionPolicy.allowNullableMarker) {
-                throw MetamodelFactContractViolationException(
-                    "NormalizationEngine contract violation: nullable marker accepted while policy forbids it. " +
-                            "value=${diagnosticSample(rawValue)}",
-                )
-            }
-
-            if (lexicalProfile.hasStarProjection && !inspectionPolicy.allowStarProjection) {
-                throw MetamodelFactContractViolationException(
-                    "NormalizationEngine contract violation: star projection accepted while policy forbids it. " +
-                            "value=${diagnosticSample(rawValue)}",
-                )
-            }
-        }
-
-        /**
-         * Cheap ASCII-marker cross-check.
-         *
-         * This is not a full parser. It is a defensive consistency check between
-         * adapter-issued lexical facts and obvious ASCII syntax markers. It does
-         * not use Unicode classification and does not replace NormalizationEngine.
-         */
-        private fun requireLexicalProfileCrossCheck(
-            rawValue: String,
-            lexicalProfile: CanonicalTypeLexicalProfile,
-        ) {
-            val actualHasGenericDelimiters =
-                rawValue.indexOf('<') >= 0 || rawValue.indexOf('>') >= 0
-            val actualHasArraySuffix = rawValue.endsWith("[]")
-            val actualHasNullableMarker = rawValue.indexOf('?') >= 0
-            val actualHasStarProjection = rawValue.indexOf('*') >= 0
-
-            if (lexicalProfile.hasGenericDelimiters != actualHasGenericDelimiters) {
-                throw MetamodelFactContractViolationException(
-                    "NormalizationEngine lexical profile mismatch: hasGenericDelimiters. " +
-                            "profile=${lexicalProfile.hasGenericDelimiters}, actual=$actualHasGenericDelimiters, " +
-                            "value=${diagnosticSample(rawValue)}",
-                )
-            }
-
-            if (lexicalProfile.hasArraySuffix != actualHasArraySuffix) {
-                throw MetamodelFactContractViolationException(
-                    "NormalizationEngine lexical profile mismatch: hasArraySuffix. " +
-                            "profile=${lexicalProfile.hasArraySuffix}, actual=$actualHasArraySuffix, " +
-                            "value=${diagnosticSample(rawValue)}",
-                )
-            }
-
-            if (lexicalProfile.hasNullableMarker != actualHasNullableMarker) {
-                throw MetamodelFactContractViolationException(
-                    "NormalizationEngine lexical profile mismatch: hasNullableMarker. " +
-                            "profile=${lexicalProfile.hasNullableMarker}, actual=$actualHasNullableMarker, " +
-                            "value=${diagnosticSample(rawValue)}",
-                )
-            }
-
-            if (lexicalProfile.hasStarProjection != actualHasStarProjection) {
-                throw MetamodelFactContractViolationException(
-                    "NormalizationEngine lexical profile mismatch: hasStarProjection. " +
-                            "profile=${lexicalProfile.hasStarProjection}, actual=$actualHasStarProjection, " +
-                            "value=${diagnosticSample(rawValue)}",
+                    "NormalizationEngine contract violation: accepted lexical profile violates inspection policy. " +
+                            "engine=${normalizationEngine.engineId}@${normalizationEngine.engineVersion}, " +
+                            "unicode=${normalizationEngine.unicodeProfileVersion}, " +
+                            "goldenVectors=${normalizationEngine.goldenVectorSetId}, " +
+                            "policy=${inspectionPolicy.deterministicPolicyToken}, " +
+                            "value=${diagnosticSample(snapshot)}, " +
+                            "reason=${exception.message}",
                 )
             }
         }
@@ -273,6 +287,14 @@ class CanonicalTypeText private constructor(
                 field = "NormalizationEngine.unicodeProfileVersion",
                 value = normalizationEngine.unicodeProfileVersion,
             )
+            requireProtocolComponent(
+                field = "NormalizationEngine.goldenVectorSetId",
+                value = normalizationEngine.goldenVectorSetId,
+            )
+            requireProtocolComponent(
+                field = "NormalizationEngine.goldenVectorDigest",
+                value = normalizationEngine.goldenVectorDigest,
+            )
         }
 
         private fun requireProtocolComponent(
@@ -285,34 +307,79 @@ class CanonicalTypeText private constructor(
                 )
             }
 
-            if (value.contains('|')) {
+            if (value.length > MAX_PROVENANCE_TOKEN_CHARS) {
                 throw MetamodelFactContractViolationException(
-                    "$field must not contain reserved delimiter '|': $value",
+                    "$field exceeds maximum allowed provenance token length.",
+                )
+            }
+
+            if (
+                value.indexOf('|') >= 0 ||
+                value.indexOf('\u0000') >= 0 ||
+                value.indexOf('\n') >= 0 ||
+                value.indexOf('\r') >= 0 ||
+                value.indexOf('\t') >= 0
+            ) {
+                throw MetamodelFactContractViolationException(
+                    "$field contains a reserved protocol/control character.",
                 )
             }
         }
 
         private fun buildRatificationProvenance(
-            normalizationEngine: NormalizationEngine,
+            normalizationEngineId: String,
+            normalizationEngineVersion: String,
+            unicodeProfileVersion: String,
+            goldenVectorSetId: String,
+            goldenVectorDigest: String,
             inspectionPolicy: CanonicalTypeTextInspectionPolicy,
             lexicalProfile: CanonicalTypeLexicalProfile,
         ): String {
-            return "CanonicalTypeText" +
-                    "|engine=${normalizationEngine.engineId}" +
-                    "|engineVersion=${normalizationEngine.engineVersion}" +
-                    "|unicode=${normalizationEngine.unicodeProfileVersion}" +
+            val provenance = "CanonicalTypeText" +
+                    "|engine=$normalizationEngineId" +
+                    "|engineVersion=$normalizationEngineVersion" +
+                    "|unicode=$unicodeProfileVersion" +
+                    "|goldenVectorSet=$goldenVectorSetId" +
+                    "|goldenVectorDigest=$goldenVectorDigest" +
                     "|policy=${inspectionPolicy.deterministicPolicyToken}" +
+                    "|utf16Units=${lexicalProfile.utf16CodeUnitCount}" +
                     "|codePoints=${lexicalProfile.codePointCount}" +
                     "|identifierTokens=${lexicalProfile.identifierTokenCount}" +
-                    "|longestIdentifier=${lexicalProfile.longestIdentifierTokenCodePoints}"
+                    "|longestIdentifier=${lexicalProfile.longestIdentifierTokenCodePoints}" +
+                    "|delimiters=${lexicalProfile.totalDelimiterCodePoints}" +
+                    "|nonIdentifierCodePoints=${lexicalProfile.nonIdentifierCodePointCount}" +
+                    "|grossCombiningMarks=${lexicalProfile.grossCombiningMarkCount}" +
+                    "|maxCombiningMarksPerIdentifier=${lexicalProfile.maxCombiningMarksPerIdentifierToken}" +
+                    "|maxGraphemeClustersPerIdentifier=${lexicalProfile.maxGraphemeClustersPerIdentifierToken}"
+
+            if (provenance.length > MAX_TOTAL_PROVENANCE_CHARS) {
+                throw MetamodelFactContractViolationException(
+                    "CanonicalTypeText ratification provenance exceeds maximum render length.",
+                )
+            }
+
+            return provenance
         }
 
-        private fun diagnosticSample(value: String): String {
-            return if (value.length <= 128) {
-                value
-            } else {
-                value.substring(0, 128) + "...<truncated>"
+        private fun diagnosticSample(
+            value: CharSequence,
+        ): String {
+            if (value.length <= MAX_DIAGNOSTIC_TEXT_SAMPLE_CHARS) {
+                return value.toString()
             }
+
+            if (value is String) {
+                return value.substring(0, MAX_DIAGNOSTIC_TEXT_SAMPLE_CHARS) + "...<truncated>"
+            }
+
+            val builder = StringBuilder(MAX_DIAGNOSTIC_TEXT_SAMPLE_CHARS + 14)
+
+            for (index in 0 until MAX_DIAGNOSTIC_TEXT_SAMPLE_CHARS) {
+                builder.append(value[index])
+            }
+
+            builder.append("...<truncated>")
+            return builder.toString()
         }
     }
 }

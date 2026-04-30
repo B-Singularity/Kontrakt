@@ -1,111 +1,117 @@
 package metamodel.domain.vo
 
-import planning.domain.exception.TypeExpansionContractViolationException
+import metamodel.domain.exception.MetamodelFactContractViolationException
+import metamodel.domain.service.TypeShapeCoherenceReceipt
 
 /**
- * Canonical type identity.
+ * Canonical type identity issued by the metamodel identity boundary.
  *
- * This is not a runtime Class name, not a JVM descriptor, and not an adapter
- * binary name. It is domain-issued identity material.
+ * This is not:
  *
- * Equality is value-primary.
+ * - a JVM class name;
+ * - a JVM descriptor;
+ * - a reflection handle;
+ * - a KSP symbol;
+ * - an adapter binary name;
+ * - a runtime handle registry key;
+ * - or a string-only identity.
  *
- * shapeSummary is coherence metadata, not an additional equality axis.
- * Same text with different shape is forbidden by TypeShapeRatification.
+ * Identity law:
  *
- * This VO deliberately does not cache hashCode and does not implement interning.
- * Type identity interning and eviction policy belong to the later planning
- * cache/memory-governance stage.
+ * CanonicalTypeId equality is not text-only.
+ *
+ * It uses ratified identity equality:
+ *
+ * - canonical text;
+ * - shape summary;
+ * - classifier id;
+ * - classifier version;
+ * - ratification fingerprint.
+ *
+ * This prevents accidental ATOMIC / COLLECTION / COMPOSITE conflation before a
+ * dedicated metamodel interner or singleton identity authority exists.
+ *
+ * Receipt law:
+ *
+ * TypeShapeCoherenceReceipt does not own semantic facts. It only proves that
+ * the supplied TypeShapeRatification was admitted by a coherence scope.
+ *
+ * Hashing note:
+ *
+ * hashCode is intentionally not precomputed in this version. If profiling later
+ * proves CanonicalTypeId is a hot map key, a constructor-time precomputedHash
+ * may be introduced without changing equality semantics.
  */
 class CanonicalTypeId private constructor(
     val text: CanonicalTypeText,
     val shapeSummary: TypeShapeSummary,
-    val shapeRatification: TypeShapeRatification,
+    val classifierId: String,
+    val classifierVersion: String,
+    val ratificationFingerprint: TypeShapeRatificationFingerprint,
 ) {
     val value: String
         get() = text.value
 
-    override fun equals(other: Any?): Boolean {
-        return other is CanonicalTypeId && text.value == other.text.value
+    /**
+     * Explicit text-only comparison for diagnostics and coherence checks.
+     *
+     * Do not use this as object equality.
+     */
+    fun hasSameCanonicalTextAs(
+        other: CanonicalTypeId,
+    ): Boolean {
+        return text.value == other.text.value
     }
 
-    override fun hashCode(): Int {
-        return text.value.hashCode()
-    }
-
-    override fun toString(): String {
-        return text.value
-    }
-
-    companion object {
-        @JvmStatic
-        fun issue(
-            text: CanonicalTypeText,
-            shapeSummary: TypeShapeSummary,
-            shapeRatification: TypeShapeRatification,
-        ): CanonicalTypeId {
-            shapeRatification.requireMatches(
-                text = text,
-                shapeSummary = shapeSummary,
-                reason = "CanonicalTypeId requires shape-ratified text.",
-            )
-
-            return CanonicalTypeId(
-                text = text,
-                shapeSummary = shapeSummary,
-                shapeRatification = shapeRatification,
-            )
-        }
-    }
-}
-
-/**
- * Factory-issued proof that one canonical type text is bound to one shape
- * summary under a pinned classifier.
- *
- * This is the defense against classification drift:
- *
- * - same text, different shape;
- * - same text, different classifier version;
- * - adapter A says COLLECTION while adapter B says ATOMIC.
- *
- * This object does not compute the classification. TypeReferenceFactory or an
- * equivalent metamodel ratifier issues it after consulting normalized metadata.
- */
-class TypeShapeRatification private constructor(
-    val text: CanonicalTypeText,
-    val shapeSummary: TypeShapeSummary,
-    val classifierId: String,
-    val classifierVersion: String,
-    val ratificationToken: String,
-) {
-    fun requireMatches(
-        text: CanonicalTypeText,
-        shapeSummary: TypeShapeSummary,
-        reason: String,
+    /**
+     * Guard for persisted/cached/replayed identity material.
+     */
+    fun requireClassifier(
+        expectedClassifierId: String,
+        expectedClassifierVersion: String,
     ) {
-        if (this.text != text) {
-            throw TypeExpansionContractViolationException(
-                reason = "$reason Text mismatch: expected=${this.text.value}, actual=${text.value}",
+        if (classifierId != expectedClassifierId || classifierVersion != expectedClassifierVersion) {
+            throw MetamodelFactContractViolationException(
+                "CanonicalTypeId classifier mismatch: " +
+                        "expected=$expectedClassifierId@$expectedClassifierVersion, " +
+                        "actual=$classifierId@$classifierVersion, value=$value",
             )
         }
+    }
 
-        if (this.shapeSummary != shapeSummary) {
-            throw TypeExpansionContractViolationException(
-                reason = "$reason Shape mismatch: expected=${this.shapeSummary}, actual=$shapeSummary",
+    /**
+     * Guard for algorithm-law drift.
+     *
+     * classifierVersion should normally include the classifier's semantic law,
+     * but fingerprint algorithm law is still checked independently because
+     * digest/HMAC protocol changes may evolve separately from classifier logic.
+     */
+    fun requireRatificationAlgorithm(
+        expectedAlgorithmId: String,
+        expectedAlgorithmVersion: String,
+    ) {
+        if (
+            ratificationFingerprint.algorithmId != expectedAlgorithmId ||
+            ratificationFingerprint.algorithmVersion != expectedAlgorithmVersion
+        ) {
+            throw MetamodelFactContractViolationException(
+                "CanonicalTypeId ratification algorithm mismatch: " +
+                        "expected=$expectedAlgorithmId@$expectedAlgorithmVersion, " +
+                        "actual=${ratificationFingerprint.algorithmId}@${ratificationFingerprint.algorithmVersion}, " +
+                        "value=$value",
             )
         }
     }
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
-        if (other !is TypeShapeRatification) return false
+        if (other !is CanonicalTypeId) return false
 
         return text == other.text &&
                 shapeSummary == other.shapeSummary &&
                 classifierId == other.classifierId &&
                 classifierVersion == other.classifierVersion &&
-                ratificationToken == other.ratificationToken
+                ratificationFingerprint == other.ratificationFingerprint
     }
 
     override fun hashCode(): Int {
@@ -113,63 +119,35 @@ class TypeShapeRatification private constructor(
         result = 31 * result + shapeSummary.hashCode()
         result = 31 * result + classifierId.hashCode()
         result = 31 * result + classifierVersion.hashCode()
-        result = 31 * result + ratificationToken.hashCode()
+        result = 31 * result + ratificationFingerprint.hashCode()
         return result
     }
 
     override fun toString(): String {
-        return buildString {
-            append("TypeShapeRatification(")
-            append("text=")
-            append(text.value)
-            append(", shapeSummary=")
-            append(shapeSummary)
-            append(", classifierId=")
-            append(classifierId)
-            append(", classifierVersion=")
-            append(classifierVersion)
-            append(", token=<redacted>")
-            append(')')
-        }
+        return value
     }
 
     companion object {
+        /**
+         * Issues an id from verified ratification and scope admission receipt.
+         *
+         * The semantic fact source is TypeShapeRatification.
+         * The receipt only proves coherence-scope admission.
+         */
         @JvmStatic
-        fun issue(
-            text: CanonicalTypeText,
-            shapeSummary: TypeShapeSummary,
-            classifierId: String,
-            classifierVersion: String,
-            ratificationToken: String,
-        ): TypeShapeRatification {
-            requireComponent("classifierId", classifierId)
-            requireComponent("classifierVersion", classifierVersion)
-            requireComponent("ratificationToken", ratificationToken)
+        fun issueVerified(
+            ratification: TypeShapeRatification,
+            coherenceReceipt: TypeShapeCoherenceReceipt,
+        ): CanonicalTypeId {
+            coherenceReceipt.requireAccepts(ratification)
 
-            return TypeShapeRatification(
-                text = text,
-                shapeSummary = shapeSummary,
-                classifierId = classifierId,
-                classifierVersion = classifierVersion,
-                ratificationToken = ratificationToken,
+            return CanonicalTypeId(
+                text = ratification.text,
+                shapeSummary = ratification.shapeSummary,
+                classifierId = ratification.classifierId,
+                classifierVersion = ratification.classifierVersion,
+                ratificationFingerprint = ratification.ratificationFingerprint,
             )
-        }
-
-        private fun requireComponent(
-            field: String,
-            value: String,
-        ) {
-            if (value.isEmpty()) {
-                throw TypeExpansionContractViolationException(
-                    reason = "$field must not be empty.",
-                )
-            }
-
-            if (value.contains('|')) {
-                throw TypeExpansionContractViolationException(
-                    reason = "$field must not contain reserved delimiter '|': $value",
-                )
-            }
         }
     }
 }
