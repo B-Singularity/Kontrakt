@@ -1,12 +1,58 @@
 package metamodel.domain.vo
 
-import planning.domain.canonical.text.CanonicalTextLaw
+import metamodel.domain.exception.MetamodelFactContractViolationException
+import metamodel.domain.protocol.MetamodelProtocolTextGuards
 
+/**
+ * Canonical annotation argument name.
+ *
+ * Identifier law:
+ *
+ * Annotation argument names are restricted to an ASCII identifier subset:
+ *
+ *     [A-Za-z_][A-Za-z0-9_]*
+ *
+ * Additional restrictions:
+ *
+ * - must not start with a digit;
+ * - must not be the single underscore "_";
+ * - must not be a Kotlin/Java reserved word;
+ * - "value" is explicitly allowed because it is the Kotlin/JVM default
+ *   annotation argument name.
+ *
+ * Ordering law:
+ *
+ * Ordering is protocol-defined, not delegated to locale, Collator, or external
+ * text law.
+ *
+ * - "value" sorts first;
+ * - all other names sort by ASCII code-unit order;
+ * - case is significant;
+ * - no Unicode collation is performed.
+ *
+ * Hash law:
+ *
+ * hashCode() may use String.hashCode() for in-memory hash tables only.
+ * It must not be treated as canonical fingerprint, persisted key, route key, or
+ * cross-runtime protocol hash.
+ */
 class AnnotationArgumentName private constructor(
     val value: String,
-) {
-    override fun equals(other: Any?): Boolean {
-        return other is AnnotationArgumentName && value == other.value
+) : Comparable<AnnotationArgumentName> {
+    override fun compareTo(
+        other: AnnotationArgumentName,
+    ): Int {
+        return AnnotationArgumentNameOrder.compare(
+            left = this,
+            right = other,
+        )
+    }
+
+    override fun equals(
+        other: Any?,
+    ): Boolean {
+        return other is AnnotationArgumentName &&
+                value == other.value
     }
 
     override fun hashCode(): Int {
@@ -18,14 +64,207 @@ class AnnotationArgumentName private constructor(
     }
 
     companion object {
+        const val MAX_ANNOTATION_ARGUMENT_NAME_CHARS: Int = 128
+
+        val DEFAULT_VALUE: AnnotationArgumentName = issue("value")
+
+        private val RESERVED_WORDS: Set<String> = setOf(
+            "as",
+            "break",
+            "class",
+            "continue",
+            "do",
+            "else",
+            "false",
+            "for",
+            "fun",
+            "if",
+            "in",
+            "interface",
+            "is",
+            "null",
+            "object",
+            "package",
+            "return",
+            "super",
+            "this",
+            "throw",
+            "true",
+            "try",
+            "typealias",
+            "typeof",
+            "val",
+            "var",
+            "when",
+            "while",
+
+            "actual",
+            "abstract",
+            "annotation",
+            "by",
+            "catch",
+            "companion",
+            "const",
+            "constructor",
+            "crossinline",
+            "data",
+            "dynamic",
+            "enum",
+            "expect",
+            "external",
+            "field",
+            "file",
+            "final",
+            "finally",
+            "get",
+            "import",
+            "init",
+            "inline",
+            "inner",
+            "internal",
+            "lateinit",
+            "noinline",
+            "open",
+            "operator",
+            "out",
+            "override",
+            "param",
+            "private",
+            "property",
+            "protected",
+            "public",
+            "receiver",
+            "reified",
+            "sealed",
+            "set",
+            "setparam",
+            "suspend",
+            "tailrec",
+            "vararg",
+            "where",
+
+            "assert",
+            "boolean",
+            "byte",
+            "case",
+            "char",
+            "default",
+            "double",
+            "extends",
+            "float",
+            "goto",
+            "implements",
+            "instanceof",
+            "int",
+            "long",
+            "native",
+            "new",
+            "short",
+            "static",
+            "strictfp",
+            "switch",
+            "synchronized",
+            "throws",
+            "transient",
+            "void",
+            "volatile",
+        )
+
         @JvmStatic
-        fun issue(value: String): AnnotationArgumentName {
-            CanonicalTextLaw.validateCanonicalComponent(
+        fun issue(
+            value: String,
+        ): AnnotationArgumentName {
+            MetamodelProtocolTextGuards.requireAsciiIdentifierToken(
                 field = "AnnotationArgumentName.value",
                 value = value,
+                maxChars = MAX_ANNOTATION_ARGUMENT_NAME_CHARS,
             )
+
+            requireSourceSafeIdentifier(value)
 
             return AnnotationArgumentName(value)
         }
+
+        private fun requireSourceSafeIdentifier(
+            value: String,
+        ) {
+            if (value == "_") {
+                throw MetamodelFactContractViolationException(
+                    "AnnotationArgumentName.value must not be the single underscore '_'.",
+                )
+            }
+
+            if (value[0] in '0'..'9') {
+                throw MetamodelFactContractViolationException(
+                    "AnnotationArgumentName.value must not start with a digit.",
+                )
+            }
+
+            if (value != "value" && value in RESERVED_WORDS) {
+                throw MetamodelFactContractViolationException(
+                    "AnnotationArgumentName.value must not be a reserved source keyword: $value",
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Protocol-defined ordering for annotation argument names.
+ *
+ * Ordering law:
+ *
+ * - "value" sorts first;
+ * - all other names sort by ASCII code-unit order;
+ * - case is significant;
+ * - locale, Collator, Unicode collation, and planning-domain text law are not used.
+ */
+private object AnnotationArgumentNameOrder {
+    fun compare(
+        left: AnnotationArgumentName,
+        right: AnnotationArgumentName,
+    ): Int {
+        if (left.value == right.value) {
+            return 0
+        }
+
+        val leftIsDefault = left.value == "value"
+        val rightIsDefault = right.value == "value"
+
+        if (leftIsDefault && !rightIsDefault) {
+            return -1
+        }
+
+        if (!leftIsDefault && rightIsDefault) {
+            return 1
+        }
+
+        return compareAsciiCodeUnits(
+            left = left.value,
+            right = right.value,
+        )
+    }
+
+    private fun compareAsciiCodeUnits(
+        left: String,
+        right: String,
+    ): Int {
+        val n1 = left.length
+        val n2 = right.length
+        val minLength = if (n1 < n2) n1 else n2
+
+        var index = 0
+        while (index < minLength) {
+            val c1 = left[index]
+            val c2 = right[index]
+
+            if (c1 != c2) {
+                return c1.code - c2.code
+            }
+
+            index += 1
+        }
+
+        return n1 - n2
     }
 }
