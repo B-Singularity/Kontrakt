@@ -1,115 +1,129 @@
-package metamodel.domain.vo
+package planning.domain.expansion.polymorphic
 
-import metamodel.domain.exception.MetamodelFactContractViolationException
-import metamodel.domain.protocol.MetamodelProtocolTextGuards
+import metamodel.domain.vo.RuntimeBindingRatificationFingerprint
+import metamodel.domain.vo.RuntimeBindingScopeDepth
+import planning.domain.exception.TypeExpansionContractViolationException
 
 /**
- * Identity of one runtime binding scope.
+ * Closed scope id for one runtime binding snapshot.
  *
  * This is not:
  *
- * - a mutable binding context;
- * - a runtime object handle;
- * - a reflection scope;
- * - a KSP symbol scope;
+ * - a mutable runtime binding scope;
+ * - a snapshot payload;
  * - a graph node implementation;
  * - a cache route key;
- * - or a persisted fingerprint.
+ * - a persisted fingerprint;
+ * - or a serialization DTO.
  *
- * Scope law:
+ * Identity law:
  *
- * A scope id is the tuple:
+ * RuntimeBindingScopeId is the composite ratification identity for the current
+ * runtime binding protocol.
+ *
+ * It includes:
  *
  * - scopeName;
- * - parentScopeName;
  * - depth;
+ * - parentScopeName;
  * - ratificationFingerprint;
  * - schemaVersion.
+ *
+ * Snapshot ownership law:
+ *
+ * In the current protocol, RuntimeBindingSnapshotId is a type-safe identity view
+ * over RuntimeBindingScopeId. The relationship is exactly 1:1.
+ *
+ * Therefore RuntimeBindingScopeId owns exactly one RuntimeBindingSnapshotId.
+ *
+ * Callers must obtain the snapshot id through:
+ *
+ *     scopeId.snapshotId()
+ *
+ * RuntimeBindingSnapshotId.issue(scopeId) delegates to the same owned instance.
+ *
+ * This is not global interning. It is local derived identity ownership.
  *
  * Coherence law:
  *
  * - root depth is 0;
  * - root scope must not have a parent scope name;
  * - non-root scope must have a parent scope name;
- * - a scope must not name itself as its own parent.
+ * - a scope must not name itself as parent.
  *
- * This prevents structurally impossible ids such as:
+ * Serialization law:
  *
- * - depth=0 with parent;
- * - depth>0 without parent;
- * - scopeName == parentScopeName.
- *
- * Fingerprint law:
- *
- * ratificationFingerprint proves the ratified runtime binding snapshot surface.
- * This VO includes the fingerprint in equality and hashCode.
- *
- * However, this VO cannot enforce global snapshot replacement rules such as:
- *
- *     "if fingerprint changes, a factory must issue a new scope lineage"
- *
- * That belongs to RuntimeBindingScopeFactory / registry / ratifier policy.
- *
- * Resource law:
- *
- * Scope names are bounded protocol ids. This prevents allocation-based DoS in
- * maps, sorting, diagnostics, and equality paths.
+ * RuntimeBindingScopeId and RuntimeBindingSnapshotId form a deliberate owned
+ * identity cycle. These objects must not be serialized directly by reflective
+ * serializers. Export a dedicated DTO or renderSummary() output instead.
  *
  * Hash law:
  *
- * hashCode is precomputed because RuntimeBindingScopeId is expected to be used
- * frequently as an in-memory map key.
+ * hashCode is precomputed because this id is expected to be used frequently as
+ * an in-memory map key.
  *
- * The cached hash is not:
- *
- * - a canonical fingerprint;
- * - a persisted identity;
- * - a route key;
- * - a cross-runtime protocol hash.
- *
- * Interning law:
- *
- * This class does not intern scope names. Name interning belongs to the later
- * allocation / flyweight / canonical table phase.
+ * This cached hash is not a canonical fingerprint, persisted key, route key, or
+ * cross-runtime protocol hash.
  */
 class RuntimeBindingScopeId private constructor(
     val scopeName: String,
-    val parentScopeName: String?,
     val depth: RuntimeBindingScopeDepth,
+    val parentScopeName: String?,
     val ratificationFingerprint: RuntimeBindingRatificationFingerprint,
     val schemaVersion: Int,
     private val precomputedHashCode: Int,
 ) {
+    private val ownedSnapshotId: RuntimeBindingSnapshotId =
+        RuntimeBindingSnapshotId.issueFromScope(
+            scopeId = this,
+            precomputedHashCode = precomputedHashCode,
+        )
+
     val isRoot: Boolean
         get() = depth.value == 0
+
+    fun snapshotId(): RuntimeBindingSnapshotId {
+        return ownedSnapshotId
+    }
 
     fun renderSummary(): String {
         return "RuntimeBindingScopeId(" +
                 "scopeName=$scopeName, " +
-                "parentScopeName=${parentScopeName ?: "<root>"}, " +
                 "depth=${depth.value}, " +
+                "parentScopeName=${parentScopeName ?: "<root>"}, " +
                 "fingerprint=${ratificationFingerprint.renderSummary()}, " +
                 "schemaVersion=$schemaVersion" +
                 ")"
     }
 
-    override fun equals(
-        other: Any?,
-    ): Boolean {
+    /**
+     * Safe one-line identity view for RuntimeBindingSnapshotId diagnostics.
+     *
+     * This avoids recursive object rendering through the owned identity cycle.
+     */
+    internal fun renderSnapshotIdentitySummary(): String {
+        return "scopeName=$scopeName, " +
+                "depth=${depth.value}, " +
+                "parentScopeName=${parentScopeName ?: "<root>"}, " +
+                "fingerprint=${ratificationFingerprint.renderSummary()}, " +
+                "schemaVersion=$schemaVersion"
+    }
+
+    override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is RuntimeBindingScopeId) return false
 
         /*
-         * Use the precomputed hash only as a cheap negative filter.
-         * Equality remains structural.
+         * Cheap negative filter only.
+         * Structural equality remains authoritative.
          */
         if (precomputedHashCode != other.precomputedHashCode) {
             return false
         }
 
         return scopeName == other.scopeName &&
-                parentScopeName == other.parentScopeName &&
                 depth == other.depth &&
+                parentScopeName == other.parentScopeName &&
                 ratificationFingerprint == other.ratificationFingerprint &&
                 schemaVersion == other.schemaVersion
     }
@@ -125,28 +139,22 @@ class RuntimeBindingScopeId private constructor(
     companion object {
         const val CURRENT_SCHEMA_VERSION: Int = 1
 
-        /**
-         * Protocol cap for scope names.
-         *
-         * Runtime binding scope names should be short internal protocol ids.
-         * Raising this cap should be treated as a metamodel protocol amendment.
-         */
         const val MAX_RUNTIME_BINDING_SCOPE_NAME_CHARS: Int = 128
 
         @JvmStatic
         fun issue(
             scopeName: String,
-            parentScopeName: String?,
             depth: RuntimeBindingScopeDepth,
+            parentScopeName: String?,
             ratificationFingerprint: RuntimeBindingRatificationFingerprint,
         ): RuntimeBindingScopeId {
-            requireScopeName(
+            RuntimeBindingScopeNameLaw.requireScopeName(
                 field = "RuntimeBindingScopeId.scopeName",
                 value = scopeName,
             )
 
             if (parentScopeName != null) {
-                requireScopeName(
+                RuntimeBindingScopeNameLaw.requireScopeName(
                     field = "RuntimeBindingScopeId.parentScopeName",
                     value = parentScopeName,
                 )
@@ -154,20 +162,20 @@ class RuntimeBindingScopeId private constructor(
 
             requireDepthParentCoherence(
                 scopeName = scopeName,
-                parentScopeName = parentScopeName,
                 depth = depth,
+                parentScopeName = parentScopeName,
             )
 
             return RuntimeBindingScopeId(
                 scopeName = scopeName,
-                parentScopeName = parentScopeName,
                 depth = depth,
+                parentScopeName = parentScopeName,
                 ratificationFingerprint = ratificationFingerprint,
                 schemaVersion = CURRENT_SCHEMA_VERSION,
                 precomputedHashCode = computeHashCode(
                     scopeName = scopeName,
-                    parentScopeName = parentScopeName,
                     depth = depth,
+                    parentScopeName = parentScopeName,
                     ratificationFingerprint = ratificationFingerprint,
                     schemaVersion = CURRENT_SCHEMA_VERSION,
                 ),
@@ -181,8 +189,8 @@ class RuntimeBindingScopeId private constructor(
         ): RuntimeBindingScopeId {
             return issue(
                 scopeName = scopeName,
-                parentScopeName = null,
                 depth = RuntimeBindingScopeDepth.root(),
+                parentScopeName = null,
                 ratificationFingerprint = ratificationFingerprint,
             )
         }
@@ -196,45 +204,34 @@ class RuntimeBindingScopeId private constructor(
         ): RuntimeBindingScopeId {
             return issue(
                 scopeName = scopeName,
-                parentScopeName = parentScopeName,
                 depth = parentDepth.next(),
+                parentScopeName = parentScopeName,
                 ratificationFingerprint = ratificationFingerprint,
-            )
-        }
-
-        private fun requireScopeName(
-            field: String,
-            value: String,
-        ) {
-            MetamodelProtocolTextGuards.requireAsciiProtocolIdToken(
-                field = field,
-                value = value,
-                maxChars = MAX_RUNTIME_BINDING_SCOPE_NAME_CHARS,
             )
         }
 
         private fun requireDepthParentCoherence(
             scopeName: String,
-            parentScopeName: String?,
             depth: RuntimeBindingScopeDepth,
+            parentScopeName: String?,
         ) {
             if (depth.value == 0 && parentScopeName != null) {
-                throw MetamodelFactContractViolationException(
-                    "RuntimeBindingScopeId root scope must not have parentScopeName: " +
+                throw TypeExpansionContractViolationException(
+                    reason = "RuntimeBindingScopeId root scope must not have parentScopeName: " +
                             "scopeName=$scopeName, parentScopeName=$parentScopeName",
                 )
             }
 
             if (depth.value > 0 && parentScopeName == null) {
-                throw MetamodelFactContractViolationException(
-                    "RuntimeBindingScopeId non-root scope must have parentScopeName: " +
+                throw TypeExpansionContractViolationException(
+                    reason = "RuntimeBindingScopeId non-root scope must have parentScopeName: " +
                             "scopeName=$scopeName, depth=${depth.value}",
                 )
             }
 
             if (parentScopeName != null && scopeName == parentScopeName) {
-                throw MetamodelFactContractViolationException(
-                    "RuntimeBindingScopeId must not reference itself as parent: " +
+                throw TypeExpansionContractViolationException(
+                    reason = "RuntimeBindingScopeId must not reference itself as parent: " +
                             "scopeName=$scopeName",
                 )
             }
@@ -242,17 +239,72 @@ class RuntimeBindingScopeId private constructor(
 
         private fun computeHashCode(
             scopeName: String,
-            parentScopeName: String?,
             depth: RuntimeBindingScopeDepth,
+            parentScopeName: String?,
             ratificationFingerprint: RuntimeBindingRatificationFingerprint,
             schemaVersion: Int,
         ): Int {
             var result = scopeName.hashCode()
-            result = 31 * result + (parentScopeName?.hashCode() ?: 0)
             result = 31 * result + depth.hashCode()
+            result = 31 * result + (parentScopeName?.hashCode() ?: 0)
             result = 31 * result + ratificationFingerprint.hashCode()
             result = 31 * result + schemaVersion
             return result
+        }
+    }
+}
+
+/**
+ * Local protocol guard for runtime binding scope names.
+ *
+ * This deliberately avoids planning.domain.canonical.text.CanonicalTextLaw.
+ *
+ * Allowed:
+ *
+ * - A-Z
+ * - a-z
+ * - 0-9
+ * - -
+ * - _
+ * - .
+ *
+ * This is an internal protocol id surface, not a user-facing source identifier.
+ */
+private object RuntimeBindingScopeNameLaw {
+    fun requireScopeName(
+        field: String,
+        value: String,
+    ) {
+        if (value.isEmpty()) {
+            throw TypeExpansionContractViolationException(
+                reason = "$field must not be empty.",
+            )
+        }
+
+        if (value.length > RuntimeBindingScopeId.MAX_RUNTIME_BINDING_SCOPE_NAME_CHARS) {
+            throw TypeExpansionContractViolationException(
+                reason = "$field exceeds maximum allowed length.",
+            )
+        }
+
+        var index = 0
+        while (index < value.length) {
+            val c = value[index]
+            val ok =
+                c in 'A'..'Z' ||
+                        c in 'a'..'z' ||
+                        c in '0'..'9' ||
+                        c == '-' ||
+                        c == '_' ||
+                        c == '.'
+
+            if (!ok) {
+                throw TypeExpansionContractViolationException(
+                    reason = "$field contains a non-canonical protocol-id character at index=$index.",
+                )
+            }
+
+            index += 1
         }
     }
 }

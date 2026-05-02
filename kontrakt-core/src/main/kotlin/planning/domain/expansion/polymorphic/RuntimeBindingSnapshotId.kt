@@ -1,29 +1,117 @@
 package planning.domain.expansion.polymorphic
 
 /**
- * Lightweight id for a run-ratified RuntimeBindingSnapshot.
+ * Type-safe id for a run-ratified RuntimeBindingSnapshot.
  *
- * The scope id is the composite ratification identity.
+ * This is not:
+ *
+ * - a Kotlin value class;
+ * - a typealias;
+ * - a mutable snapshot handle;
+ * - a snapshot payload;
+ * - a cache route key;
+ * - or a serialization DTO.
+ *
+ * Identity law:
+ *
+ * RuntimeBindingSnapshotId is currently a type-safe identity view over
+ * RuntimeBindingScopeId.
+ *
+ * The current protocol is 1:1:
+ *
+ *     one RuntimeBindingScopeId -> one RuntimeBindingSnapshotId
+ *
+ * Allocation law:
+ *
+ * RuntimeBindingSnapshotId.issue(scopeId) must not allocate repeatedly.
+ * It delegates to the RuntimeBindingScopeId-owned snapshot id.
+ *
+ * The only allocation happens during RuntimeBindingScopeId construction.
+ *
+ * Serialization law:
+ *
+ * This object points back to its owning RuntimeBindingScopeId. Do not serialize
+ * it directly with reflective serializers. Use renderSummary() or a dedicated
+ * DTO.
+ *
+ * Evolution law:
+ *
+ * If the protocol later allows multiple snapshots inside one scope without
+ * changing RuntimeBindingScopeId.ratificationFingerprint, this class must gain a
+ * new identity axis:
+ *
+ * - snapshotOrdinal;
+ * - snapshotSequence;
+ * - or snapshotFingerprint.
  */
 class RuntimeBindingSnapshotId private constructor(
     val scopeId: RuntimeBindingScopeId,
+    private val precomputedHashCode: Int,
 ) {
+    fun renderSummary(): String {
+        return "RuntimeBindingSnapshotId(" +
+                scopeId.renderSnapshotIdentitySummary() +
+                ")"
+    }
+
     override fun equals(other: Any?): Boolean {
-        return other is RuntimeBindingSnapshotId && scopeId == other.scopeId
+        if (this === other) return true
+        if (other !is RuntimeBindingSnapshotId) return false
+
+        /*
+         * Cheap negative filter only.
+         * Structural equality remains authoritative.
+         */
+        if (precomputedHashCode != other.precomputedHashCode) {
+            return false
+        }
+
+        return scopeId == other.scopeId
     }
 
     override fun hashCode(): Int {
-        return scopeId.hashCode()
+        return precomputedHashCode
     }
 
     override fun toString(): String {
-        return "RuntimeBindingSnapshotId(scope=$scopeId)"
+        return renderSummary()
     }
 
     companion object {
+        /**
+         * Ergonomic entry point.
+         *
+         * This returns the RuntimeBindingScopeId-owned instance and therefore
+         * does not allocate on repeated calls.
+         */
         @JvmStatic
-        fun issue(scopeId: RuntimeBindingScopeId): RuntimeBindingSnapshotId {
-            return RuntimeBindingSnapshotId(scopeId)
+        fun issue(
+            scopeId: RuntimeBindingScopeId,
+        ): RuntimeBindingSnapshotId {
+            return scopeId.snapshotId()
+        }
+
+        @JvmStatic
+        fun fromScopeId(
+            scopeId: RuntimeBindingScopeId,
+        ): RuntimeBindingSnapshotId {
+            return issue(scopeId)
+        }
+
+        /**
+         * Used only by RuntimeBindingScopeId during its own construction.
+         *
+         * Do not call this from arbitrary code. Snapshot identity is owned by
+         * scope identity.
+         */
+        internal fun issueFromScope(
+            scopeId: RuntimeBindingScopeId,
+            precomputedHashCode: Int,
+        ): RuntimeBindingSnapshotId {
+            return RuntimeBindingSnapshotId(
+                scopeId = scopeId,
+                precomputedHashCode = precomputedHashCode,
+            )
         }
     }
 }

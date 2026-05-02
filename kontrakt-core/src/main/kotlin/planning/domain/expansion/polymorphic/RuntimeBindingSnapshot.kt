@@ -1,6 +1,6 @@
 package planning.domain.expansion.polymorphic
 
-import planning.domain.canonical.text.CanonicalTextLaw
+import metamodel.domain.protocol.MetamodelProtocolOrdering
 import planning.domain.exception.TypeExpansionContractViolationException
 import planning.domain.expansion.sequence.ExpansionSequence
 
@@ -10,6 +10,18 @@ import planning.domain.expansion.sequence.ExpansionSequence
  * RuntimeBindingSnapshotProvider must be called at run ratification only.
  * Planning/linking/execution consume this pinned value and must not re-query host
  * DI containers mid-run.
+ *
+ * Identity law:
+ *
+ * The snapshot id is owned by RuntimeBindingScopeId.
+ *
+ * This class treats RuntimeBindingSnapshotId as its stable identity surface and
+ * does not attempt to allocate or derive snapshot ids on its own.
+ *
+ * Diagnostic law:
+ *
+ * toString() is intentionally compact. It does not recursively dump all
+ * bindings.
  */
 class RuntimeBindingSnapshot private constructor(
     val id: RuntimeBindingSnapshotId,
@@ -19,11 +31,16 @@ class RuntimeBindingSnapshot private constructor(
         return bindings.isEmpty()
     }
 
+    fun renderSummary(): String {
+        return "RuntimeBindingSnapshot(id=${id.renderSummary()}, bindings=${bindings.size})"
+    }
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is RuntimeBindingSnapshot) return false
 
-        return id == other.id && bindings == other.bindings
+        return id == other.id &&
+                bindings == other.bindings
     }
 
     override fun hashCode(): Int {
@@ -33,7 +50,7 @@ class RuntimeBindingSnapshot private constructor(
     }
 
     override fun toString(): String {
-        return "RuntimeBindingSnapshot(id=$id, bindings=${bindings.size})"
+        return renderSummary()
     }
 
     companion object {
@@ -47,7 +64,10 @@ class RuntimeBindingSnapshot private constructor(
                     return@Comparator requested
                 }
 
-                val kind = left.bindingKind.protocolOrder.compareTo(right.bindingKind.protocolOrder)
+                val kind = MetamodelProtocolOrdering.compareInt(
+                    left = left.bindingKind.protocolOrder,
+                    right = right.bindingKind.protocolOrder,
+                )
                 if (kind != 0) {
                     return@Comparator kind
                 }
@@ -60,9 +80,9 @@ class RuntimeBindingSnapshot private constructor(
                     return@Comparator selected
                 }
 
-                CanonicalTextLaw.compareCanonicalIdentifiers(
-                    left.selectedImplementation.canonicalIdentifier,
-                    right.selectedImplementation.canonicalIdentifier,
+                return@Comparator MetamodelProtocolOrdering.compareUtf16CodeUnits(
+                    left = left.selectedImplementation.canonicalIdentifier,
+                    right = right.selectedImplementation.canonicalIdentifier,
                 )
             }
 
@@ -71,7 +91,10 @@ class RuntimeBindingSnapshot private constructor(
             id: RuntimeBindingSnapshotId,
             bindings: Collection<ResolvedBinding>,
         ): RuntimeBindingSnapshot {
-            rejectAmbiguousSameRequestAndKind(id, bindings)
+            rejectAmbiguousSameRequestAndKind(
+                snapshotId = id,
+                bindings = bindings,
+            )
 
             return RuntimeBindingSnapshot(
                 id = id,
@@ -80,7 +103,8 @@ class RuntimeBindingSnapshot private constructor(
                     comparator = BINDING_TOTAL_ORDER,
                     duplicateMessage = { left, right ->
                         "Duplicate runtime binding: requested=${left.requestedType.signature}, " +
-                                "kind=${left.bindingKind.protocolToken}, selected=${left.selectedImplementation.canonicalIdentifier}; " +
+                                "kind=${left.bindingKind.protocolToken}, " +
+                                "selected=${left.selectedImplementation.canonicalIdentifier}; " +
                                 "other selected=${right.selectedImplementation.canonicalIdentifier}"
                     },
                 ),
@@ -91,11 +115,6 @@ class RuntimeBindingSnapshot private constructor(
             snapshotId: RuntimeBindingSnapshotId,
             bindings: Collection<ResolvedBinding>,
         ) {
-            /*
-             * This temporary HashMap is ratification-local.
-             * It is not stored in canonical state, and its iteration order is not
-             * observed. It is used only for O(N) ambiguity detection.
-             */
             val seen = HashMap<BindingAmbiguityKey, ConcreteImplementationReference>(
                 bindings.size.coerceAtLeast(16),
             )
@@ -103,6 +122,11 @@ class RuntimeBindingSnapshot private constructor(
             val iterator = bindings.iterator()
             while (iterator.hasNext()) {
                 val binding = iterator.next()
+
+                if (binding.bindingKind.allowsMultipleSelectedImplementations) {
+                    continue
+                }
+
                 val key = BindingAmbiguityKey.issue(
                     snapshotId = snapshotId,
                     binding = binding,
