@@ -1,6 +1,7 @@
 package metamodel.domain.vo
 
 import metamodel.domain.exception.MetamodelFactContractViolationException
+import metamodel.domain.protocol.MetamodelProtocolOrdering
 import metamodel.domain.protocol.MetamodelProtocolTextGuards
 
 /**
@@ -218,13 +219,6 @@ class AnnotationQualifiedName private constructor(
 
 /**
  * Protocol-defined ordering for annotation qualified names.
- *
- * Do not replace this with:
- *
- * - String.compareTo;
- * - locale-sensitive comparison;
- * - Collator;
- * - planning-domain canonical text law.
  */
 private object AnnotationQualifiedNameOrder {
     fun compare(
@@ -235,32 +229,9 @@ private object AnnotationQualifiedNameOrder {
             return 0
         }
 
-        return compareAsciiCodeUnits(
+        return MetamodelProtocolOrdering.compareUtf16CodeUnits(
             left = left.value,
             right = right.value,
         )
-    }
-
-    private fun compareAsciiCodeUnits(
-        left: String,
-        right: String,
-    ): Int {
-        val n1 = left.length
-        val n2 = right.length
-        val minLength = if (n1 < n2) n1 else n2
-
-        var index = 0
-        while (index < minLength) {
-            val c1 = left[index]
-            val c2 = right[index]
-
-            if (c1 != c2) {
-                return c1.code - c2.code
-            }
-
-            index += 1
-        }
-
-        return n1 - n2
     }
 }

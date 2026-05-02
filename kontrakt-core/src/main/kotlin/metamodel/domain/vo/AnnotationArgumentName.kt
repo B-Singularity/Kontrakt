@@ -1,6 +1,7 @@
 package metamodel.domain.vo
 
 import metamodel.domain.exception.MetamodelFactContractViolationException
+import metamodel.domain.protocol.MetamodelProtocolOrdering
 import metamodel.domain.protocol.MetamodelProtocolTextGuards
 
 /**
@@ -22,19 +23,16 @@ import metamodel.domain.protocol.MetamodelProtocolTextGuards
  *
  * Ordering law:
  *
- * Ordering is protocol-defined, not delegated to locale, Collator, or external
- * text law.
- *
  * - "value" sorts first;
- * - all other names sort by ASCII code-unit order;
+ * - all other names sort by UTF-16 code-unit order;
  * - case is significant;
- * - no Unicode collation is performed.
+ * - no locale, Collator, Unicode collation, or planning-domain text law.
  *
  * Hash law:
  *
  * hashCode() may use String.hashCode() for in-memory hash tables only.
- * It must not be treated as canonical fingerprint, persisted key, route key, or
- * cross-runtime protocol hash.
+ * It must not be used as a persisted fingerprint, route key, canonical digest,
+ * or cross-runtime protocol hash.
  */
 class AnnotationArgumentName private constructor(
     val value: String,
@@ -66,6 +64,12 @@ class AnnotationArgumentName private constructor(
     companion object {
         const val MAX_ANNOTATION_ARGUMENT_NAME_CHARS: Int = 128
 
+        /**
+         * Default annotation argument name in Kotlin/JVM annotation syntax.
+         *
+         * "value" is intentionally allowed even though it may appear as a
+         * contextual/soft keyword in other language positions.
+         */
         val DEFAULT_VALUE: AnnotationArgumentName = issue("value")
 
         private val RESERVED_WORDS: Set<String> = setOf(
@@ -212,12 +216,10 @@ class AnnotationArgumentName private constructor(
 /**
  * Protocol-defined ordering for annotation argument names.
  *
- * Ordering law:
+ * This object owns only the annotation-argument-specific policy:
  *
- * - "value" sorts first;
- * - all other names sort by ASCII code-unit order;
- * - case is significant;
- * - locale, Collator, Unicode collation, and planning-domain text law are not used.
+ * - "value" first;
+ * - otherwise shared UTF-16 code-unit ordering.
  */
 private object AnnotationArgumentNameOrder {
     fun compare(
@@ -239,32 +241,9 @@ private object AnnotationArgumentNameOrder {
             return 1
         }
 
-        return compareAsciiCodeUnits(
+        return MetamodelProtocolOrdering.compareUtf16CodeUnits(
             left = left.value,
             right = right.value,
         )
-    }
-
-    private fun compareAsciiCodeUnits(
-        left: String,
-        right: String,
-    ): Int {
-        val n1 = left.length
-        val n2 = right.length
-        val minLength = if (n1 < n2) n1 else n2
-
-        var index = 0
-        while (index < minLength) {
-            val c1 = left[index]
-            val c2 = right[index]
-
-            if (c1 != c2) {
-                return c1.code - c2.code
-            }
-
-            index += 1
-        }
-
-        return n1 - n2
     }
 }
