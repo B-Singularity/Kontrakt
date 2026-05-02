@@ -1,48 +1,156 @@
-package planning.domain.expansion.polymorphic
+package metamodel.domain.vo
 
-import planning.domain.exception.TypeExpansionContractViolationException
+import metamodel.domain.exception.MetamodelFactContractViolationException
 
 /**
- * Ratification fingerprint for runtime binding scope.
+ * Ratified fingerprint for a runtime binding decision.
  *
- * Current canonical representation is BLAKE3-256 lowercase hex produced by the
- * ratification boundary. This class validates shape only; it does not compute
- * the digest.
+ * This is not:
+ *
+ * - a cache key;
+ * - a route key;
+ * - a persisted identity;
+ * - a security bearer token;
+ * - a random nonce;
+ * - or a canonical byte encoder.
+ *
+ * The input boundary accepts a 256-bit lowercase hexadecimal string.
+ * The internal representation is 32 raw bytes to avoid retaining a 64-character
+ * hex String for every runtime binding proof.
+ *
+ * Security law:
+ *
+ * - toString() never exposes fingerprint bytes;
+ * - renderSummary() never exposes fingerprint bytes;
+ * - equals(...) uses fixed-length constant-time byte comparison;
+ * - invalid hex diagnostics do not echo the offending character;
+ * - callers receive defensive byte copies only.
+ *
+ * Memory law:
+ *
+ * Storing 32 bytes is materially cheaper than retaining a 64-character String
+ * across large binding graphs.
+ *
+ * Hash law:
+ *
+ * hashCode() is for in-memory equality collections only.
+ *
+ * Do not use hashCode() as:
+ *
+ * - canonical fingerprint;
+ * - persisted identity;
+ * - cache route key;
+ * - cross-runtime protocol hash;
+ * - serialized protocol digest.
  */
 class RuntimeBindingRatificationFingerprint private constructor(
-    val lowercaseHex256: String,
+    private val bytes: ByteArray,
 ) {
-    override fun equals(other: Any?): Boolean {
-        return other is RuntimeBindingRatificationFingerprint &&
-                lowercaseHex256 == other.lowercaseHex256
+    fun copyBytesForProtocolDerivation(): ByteArray {
+        return bytes.copyOf()
+    }
+
+    /**
+     * Diagnostic-safe summary.
+     *
+     * This intentionally exposes only the bit width, not the fingerprint value.
+     */
+    fun renderSummary(): String {
+        return "RuntimeBindingRatificationFingerprint(<redacted>, bits=${bytes.size * 8})"
+    }
+
+    override fun equals(
+        other: Any?,
+    ): Boolean {
+        if (this === other) return true
+        if (other !is RuntimeBindingRatificationFingerprint) return false
+
+        return constantTimeEquals(
+            left = bytes,
+            right = other.bytes,
+        )
     }
 
     override fun hashCode(): Int {
-        return lowercaseHex256.hashCode()
+        return bytes.contentHashCode()
     }
 
     override fun toString(): String {
-        return lowercaseHex256
+        return renderSummary()
     }
 
     companion object {
         private const val HEX_256_LENGTH: Int = 64
+        private const val BYTE_256_LENGTH: Int = 32
 
         @JvmStatic
-        fun issue(lowercaseHex256: String): RuntimeBindingRatificationFingerprint {
+        fun issueLowercaseHex256(
+            lowercaseHex256: String,
+        ): RuntimeBindingRatificationFingerprint {
             if (lowercaseHex256.length != HEX_256_LENGTH) {
-                throw TypeExpansionContractViolationException(
-                    reason = "RuntimeBindingRatificationFingerprint must be BLAKE3-256 lowercase hex: actualLength=${lowercaseHex256.length}",
+                throw MetamodelFactContractViolationException(
+                    "RuntimeBindingRatificationFingerprint must be 256-bit lowercase hex.",
                 )
             }
 
-            if (!lowercaseHex256.all { it in '0'..'9' || it in 'a'..'f' }) {
-                throw TypeExpansionContractViolationException(
-                    reason = "RuntimeBindingRatificationFingerprint must be lowercase hex.",
+            val bytes = ByteArray(BYTE_256_LENGTH)
+
+            var index = 0
+            while (index < BYTE_256_LENGTH) {
+                val high = decodeLowercaseHexNibble(
+                    ch = lowercaseHex256[index * 2],
+                    index = index * 2,
                 )
+                val low = decodeLowercaseHexNibble(
+                    ch = lowercaseHex256[index * 2 + 1],
+                    index = index * 2 + 1,
+                )
+
+                bytes[index] = ((high shl 4) or low).toByte()
+                index += 1
             }
 
-            return RuntimeBindingRatificationFingerprint(lowercaseHex256)
+            return RuntimeBindingRatificationFingerprint(bytes)
+        }
+
+        private fun decodeLowercaseHexNibble(
+            ch: Char,
+            index: Int,
+        ): Int {
+            return when (ch) {
+                in '0'..'9' -> ch.code - '0'.code
+                in 'a'..'f' -> ch.code - 'a'.code + 10
+                else -> throw MetamodelFactContractViolationException(
+                    "RuntimeBindingRatificationFingerprint contains invalid lowercase hex at index=$index.",
+                )
+            }
+        }
+
+        /**
+         * Constant-time comparison for fixed-size fingerprint bytes.
+         *
+         * All valid instances are 32 bytes. The length fold keeps the method
+         * defensive if construction rules are changed later.
+         */
+        private fun constantTimeEquals(
+            left: ByteArray,
+            right: ByteArray,
+        ): Boolean {
+            var diff = left.size xor right.size
+
+            val minLength = if (left.size < right.size) {
+                left.size
+            } else {
+                right.size
+            }
+
+            var index = 0
+            while (index < minLength) {
+                diff = diff or (left[index].toInt() xor right[index].toInt())
+                index += 1
+            }
+
+            return diff == 0
         }
     }
 }

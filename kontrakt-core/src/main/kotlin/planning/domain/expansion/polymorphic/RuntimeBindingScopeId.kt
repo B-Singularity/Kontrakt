@@ -1,5 +1,7 @@
 package planning.domain.expansion.polymorphic
 
+import metamodel.domain.vo.RuntimeBindingRatificationFingerprint
+import metamodel.domain.vo.RuntimeBindingScopeDepth
 import planning.domain.canonical.text.CanonicalTextLaw
 
 /**
