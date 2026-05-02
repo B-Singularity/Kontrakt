@@ -67,24 +67,22 @@ object MetamodelProtocolOrdering {
     fun compareInt(
         left: Int,
         right: Int,
-    ): Int {
-        return when {
+    ): Int =
+        when {
             left < right -> -1
             left > right -> 1
             else -> 0
         }
-    }
 
     fun compareLong(
         left: Long,
         right: Long,
-    ): Int {
-        return when {
+    ): Int =
+        when {
             left < right -> -1
             left > right -> 1
             else -> 0
         }
-    }
 
     fun compareNullableInt(
         left: Int?,
@@ -99,7 +97,5 @@ object MetamodelProtocolOrdering {
     fun compareNullableProtocolOrder(
         left: Int?,
         right: Int?,
-    ): Int {
-        return compareNullableInt(left, right)
-    }
+    ): Int = compareNullableInt(left, right)
 }

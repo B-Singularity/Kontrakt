@@ -21,7 +21,6 @@ import java.text.Normalizer
  * - Canonical ordering is defined at the Unicode scalar semantic layer.
  */
 internal object CanonicalTextLaw {
-
     private const val RESERVED_RENDER_DELIMITER: Char = '|'
     private const val JVM_BINARY_NESTED_CLASS_SEPARATOR: Char = '$'
 
@@ -168,9 +167,7 @@ internal object CanonicalTextLaw {
     fun compareCanonicalIdentifiers(
         left: String,
         right: String,
-    ): Int {
-        return compareCanonicalStrings(left, right)
-    }
+    ): Int = compareCanonicalStrings(left, right)
 
     private fun requireValidUnicodeScalarSequence(
         field: String,
@@ -220,18 +217,20 @@ internal object CanonicalTextLaw {
         while (index < endExclusive) {
             val codePoint = value.codePointAt(index)
 
-            val valid = if (first) {
-                Character.isJavaIdentifierStart(codePoint)
-            } else {
-                Character.isJavaIdentifierPart(codePoint)
-            }
+            val valid =
+                if (first) {
+                    Character.isJavaIdentifierStart(codePoint)
+                } else {
+                    Character.isJavaIdentifierPart(codePoint)
+                }
 
             if (!valid) {
-                val detail = if (first && Character.isDigit(codePoint)) {
-                    "identifier segment must not start with a digit"
-                } else {
-                    "invalid identifier character"
-                }
+                val detail =
+                    if (first && Character.isDigit(codePoint)) {
+                        "identifier segment must not start with a digit"
+                    } else {
+                        "invalid identifier character"
+                    }
 
                 throw CanonicalContractViolationException(
                     reason = "$field contains $detail: $value",

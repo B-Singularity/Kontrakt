@@ -70,17 +70,19 @@ enum class ImplementationSelectionMode(
     IDENTITY_MATERIALIZATION(
         protocolOrder = 20,
         protocolToken = "identity_materialization",
-    );
+    ),
+    ;
 
     companion object {
         private const val MAX_PROTOCOL_TOKEN_CHARS: Int = 64
         private const val MIN_PROTOCOL_ORDER: Int = 10
         private const val MAX_PROTOCOL_ORDER: Int = 20
 
-        private val PROTOCOL_ORDERED: Array<ImplementationSelectionMode> = arrayOf(
-            STRICT_POLYMORPHIC_LOWERING,
-            IDENTITY_MATERIALIZATION,
-        )
+        private val PROTOCOL_ORDERED: Array<ImplementationSelectionMode> =
+            arrayOf(
+                STRICT_POLYMORPHIC_LOWERING,
+                IDENTITY_MATERIALIZATION,
+            )
 
         /**
          * Deterministic protocol-order iteration.
@@ -88,9 +90,7 @@ enum class ImplementationSelectionMode(
          * Returns a defensive copy so callers cannot mutate the internal table.
          */
         @JvmStatic
-        fun protocolOrderedValues(): Array<ImplementationSelectionMode> {
-            return PROTOCOL_ORDERED.copyOf()
-        }
+        fun protocolOrderedValues(): Array<ImplementationSelectionMode> = PROTOCOL_ORDERED.copyOf()
 
         /**
          * Strict boundary parser from protocol token.
@@ -99,9 +99,7 @@ enum class ImplementationSelectionMode(
          * enter the ratified domain.
          */
         @JvmStatic
-        fun fromProtocolToken(
-            protocolToken: String,
-        ): ImplementationSelectionMode {
+        fun fromProtocolToken(protocolToken: String): ImplementationSelectionMode {
             requireProtocolTokenSurface(protocolToken)
 
             return when (protocolToken) {
@@ -120,9 +118,7 @@ enum class ImplementationSelectionMode(
          * report unknown external data without throwing immediately.
          */
         @JvmStatic
-        fun tryFromProtocolToken(
-            protocolToken: String,
-        ): ImplementationSelectionMode? {
+        fun tryFromProtocolToken(protocolToken: String): ImplementationSelectionMode? {
             requireProtocolTokenSurface(protocolToken)
 
             return when (protocolToken) {
@@ -139,33 +135,25 @@ enum class ImplementationSelectionMode(
          * explicit.
          */
         @JvmStatic
-        fun fromProtocolOrder(
-            protocolOrder: Int,
-        ): ImplementationSelectionMode {
-            return when (protocolOrder) {
+        fun fromProtocolOrder(protocolOrder: Int): ImplementationSelectionMode =
+            when (protocolOrder) {
                 10 -> STRICT_POLYMORPHIC_LOWERING
                 20 -> IDENTITY_MATERIALIZATION
                 else -> throw TypeExpansionContractViolationException(
                     reason = "Unknown ImplementationSelectionMode protocol order.",
                 )
             }
-        }
 
         @JvmStatic
-        fun tryFromProtocolOrder(
-            protocolOrder: Int,
-        ): ImplementationSelectionMode? {
-            return when (protocolOrder) {
+        fun tryFromProtocolOrder(protocolOrder: Int): ImplementationSelectionMode? =
+            when (protocolOrder) {
                 10 -> STRICT_POLYMORPHIC_LOWERING
                 20 -> IDENTITY_MATERIALIZATION
                 else -> null
             }
-        }
 
         @JvmStatic
-        fun requireProtocolOrderInRange(
-            protocolOrder: Int,
-        ) {
+        fun requireProtocolOrderInRange(protocolOrder: Int) {
             if (protocolOrder < MIN_PROTOCOL_ORDER || protocolOrder > MAX_PROTOCOL_ORDER) {
                 throw TypeExpansionContractViolationException(
                     reason = "ImplementationSelectionMode protocol order is outside known protocol range.",
@@ -173,9 +161,7 @@ enum class ImplementationSelectionMode(
             }
         }
 
-        private fun requireProtocolTokenSurface(
-            protocolToken: String,
-        ) {
+        private fun requireProtocolTokenSurface(protocolToken: String) {
             if (protocolToken.isEmpty()) {
                 throw TypeExpansionContractViolationException(
                     reason = "ImplementationSelectionMode protocol token must not be empty.",
@@ -193,8 +179,8 @@ enum class ImplementationSelectionMode(
                 val c = protocolToken[index]
                 val ok =
                     c in 'a'..'z' ||
-                            c in '0'..'9' ||
-                            c == '_'
+                        c in '0'..'9' ||
+                        c == '_'
 
                 if (!ok) {
                     throw TypeExpansionContractViolationException(

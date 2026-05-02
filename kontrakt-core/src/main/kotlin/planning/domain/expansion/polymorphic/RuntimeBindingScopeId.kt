@@ -82,32 +82,28 @@ class RuntimeBindingScopeId private constructor(
     val isRoot: Boolean
         get() = depth.value == 0
 
-    fun snapshotId(): RuntimeBindingSnapshotId {
-        return ownedSnapshotId
-    }
+    fun snapshotId(): RuntimeBindingSnapshotId = ownedSnapshotId
 
-    fun renderSummary(): String {
-        return "RuntimeBindingScopeId(" +
-                "scopeName=$scopeName, " +
-                "depth=${depth.value}, " +
-                "parentScopeName=${parentScopeName ?: "<root>"}, " +
-                "fingerprint=${ratificationFingerprint.renderSummary()}, " +
-                "schemaVersion=$schemaVersion" +
-                ")"
-    }
+    fun renderSummary(): String =
+        "RuntimeBindingScopeId(" +
+            "scopeName=$scopeName, " +
+            "depth=${depth.value}, " +
+            "parentScopeName=${parentScopeName ?: "<root>"}, " +
+            "fingerprint=${ratificationFingerprint.renderSummary()}, " +
+            "schemaVersion=$schemaVersion" +
+            ")"
 
     /**
      * Safe one-line identity view for RuntimeBindingSnapshotId diagnostics.
      *
      * This avoids recursive object rendering through the owned identity cycle.
      */
-    internal fun renderSnapshotIdentitySummary(): String {
-        return "scopeName=$scopeName, " +
-                "depth=${depth.value}, " +
-                "parentScopeName=${parentScopeName ?: "<root>"}, " +
-                "fingerprint=${ratificationFingerprint.renderSummary()}, " +
-                "schemaVersion=$schemaVersion"
-    }
+    internal fun renderSnapshotIdentitySummary(): String =
+        "scopeName=$scopeName, " +
+            "depth=${depth.value}, " +
+            "parentScopeName=${parentScopeName ?: "<root>"}, " +
+            "fingerprint=${ratificationFingerprint.renderSummary()}, " +
+            "schemaVersion=$schemaVersion"
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -122,19 +118,15 @@ class RuntimeBindingScopeId private constructor(
         }
 
         return scopeName == other.scopeName &&
-                depth == other.depth &&
-                parentScopeName == other.parentScopeName &&
-                ratificationFingerprint == other.ratificationFingerprint &&
-                schemaVersion == other.schemaVersion
+            depth == other.depth &&
+            parentScopeName == other.parentScopeName &&
+            ratificationFingerprint == other.ratificationFingerprint &&
+            schemaVersion == other.schemaVersion
     }
 
-    override fun hashCode(): Int {
-        return precomputedHashCode
-    }
+    override fun hashCode(): Int = precomputedHashCode
 
-    override fun toString(): String {
-        return renderSummary()
-    }
+    override fun toString(): String = renderSummary()
 
     companion object {
         const val CURRENT_SCHEMA_VERSION: Int = 1
@@ -172,13 +164,14 @@ class RuntimeBindingScopeId private constructor(
                 parentScopeName = parentScopeName,
                 ratificationFingerprint = ratificationFingerprint,
                 schemaVersion = CURRENT_SCHEMA_VERSION,
-                precomputedHashCode = computeHashCode(
-                    scopeName = scopeName,
-                    depth = depth,
-                    parentScopeName = parentScopeName,
-                    ratificationFingerprint = ratificationFingerprint,
-                    schemaVersion = CURRENT_SCHEMA_VERSION,
-                ),
+                precomputedHashCode =
+                    computeHashCode(
+                        scopeName = scopeName,
+                        depth = depth,
+                        parentScopeName = parentScopeName,
+                        ratificationFingerprint = ratificationFingerprint,
+                        schemaVersion = CURRENT_SCHEMA_VERSION,
+                    ),
             )
         }
 
@@ -186,14 +179,13 @@ class RuntimeBindingScopeId private constructor(
         fun root(
             scopeName: String,
             ratificationFingerprint: RuntimeBindingRatificationFingerprint,
-        ): RuntimeBindingScopeId {
-            return issue(
+        ): RuntimeBindingScopeId =
+            issue(
                 scopeName = scopeName,
                 depth = RuntimeBindingScopeDepth.root(),
                 parentScopeName = null,
                 ratificationFingerprint = ratificationFingerprint,
             )
-        }
 
         @JvmStatic
         fun child(
@@ -201,14 +193,13 @@ class RuntimeBindingScopeId private constructor(
             parentScopeName: String,
             parentDepth: RuntimeBindingScopeDepth,
             ratificationFingerprint: RuntimeBindingRatificationFingerprint,
-        ): RuntimeBindingScopeId {
-            return issue(
+        ): RuntimeBindingScopeId =
+            issue(
                 scopeName = scopeName,
                 depth = parentDepth.next(),
                 parentScopeName = parentScopeName,
                 ratificationFingerprint = ratificationFingerprint,
             )
-        }
 
         private fun requireDepthParentCoherence(
             scopeName: String,
@@ -217,21 +208,24 @@ class RuntimeBindingScopeId private constructor(
         ) {
             if (depth.value == 0 && parentScopeName != null) {
                 throw TypeExpansionContractViolationException(
-                    reason = "RuntimeBindingScopeId root scope must not have parentScopeName: " +
+                    reason =
+                        "RuntimeBindingScopeId root scope must not have parentScopeName: " +
                             "scopeName=$scopeName, parentScopeName=$parentScopeName",
                 )
             }
 
             if (depth.value > 0 && parentScopeName == null) {
                 throw TypeExpansionContractViolationException(
-                    reason = "RuntimeBindingScopeId non-root scope must have parentScopeName: " +
+                    reason =
+                        "RuntimeBindingScopeId non-root scope must have parentScopeName: " +
                             "scopeName=$scopeName, depth=${depth.value}",
                 )
             }
 
             if (parentScopeName != null && scopeName == parentScopeName) {
                 throw TypeExpansionContractViolationException(
-                    reason = "RuntimeBindingScopeId must not reference itself as parent: " +
+                    reason =
+                        "RuntimeBindingScopeId must not reference itself as parent: " +
                             "scopeName=$scopeName",
                 )
             }
@@ -292,11 +286,11 @@ private object RuntimeBindingScopeNameLaw {
             val c = value[index]
             val ok =
                 c in 'A'..'Z' ||
-                        c in 'a'..'z' ||
-                        c in '0'..'9' ||
-                        c == '-' ||
-                        c == '_' ||
-                        c == '.'
+                    c in 'a'..'z' ||
+                    c in '0'..'9' ||
+                    c == '-' ||
+                    c == '_' ||
+                    c == '.'
 
             if (!ok) {
                 throw TypeExpansionContractViolationException(

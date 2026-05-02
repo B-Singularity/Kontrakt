@@ -22,7 +22,6 @@ import java.util.Optional
 import kotlin.reflect.jvm.kotlinFunction
 
 class MockitoEngineAdapterTest {
-
     private val generator = mockk<FixtureGenerator>(relaxed = true)
     private val trace = mockk<ScenarioTrace>(relaxed = true)
     private val context = mockk<MockingContext>()
@@ -36,8 +35,14 @@ class MockitoEngineAdapterTest {
 
     // Static mocking will be handled inside specific tests using try-finally.
 
-    data class TestEntity(val id: String?, val name: String)
-    data class NoIdEntity(val name: String)
+    data class TestEntity(
+        val id: String?,
+        val name: String,
+    )
+
+    data class NoIdEntity(
+        val name: String,
+    )
 
     open class ConcreteRepository {
         open fun doSomething() {}
@@ -45,46 +50,82 @@ class MockitoEngineAdapterTest {
 
     interface TestService {
         fun getData(): String
+
         fun doSomething(arg: Int)
+
         fun saveItem(item: String): String
+
         fun insertItem(item: String): String
+
         fun updateItem(item: String): String
+
         fun deleteItem(item: String): String
+
         fun removeItem(item: String): String
+
         fun storeData(data: String): String
     }
 
     interface TestRepository {
         fun save(entity: TestEntity): TestEntity
+
         fun findById(id: String): TestEntity?
+
         fun findOptionalById(id: String): Optional<TestEntity>
+
         fun findAll(): List<TestEntity>
+
         fun delete(entity: TestEntity)
+
         fun count(): Long
+
         fun customQuery(name: String): String
+
         fun createEntity(entity: TestEntity): TestEntity
+
         fun registerUser(entity: TestEntity): TestEntity
+
         fun getById(id: String): TestEntity?
+
         fun getAccountById(id: String): TestEntity?
+
         fun listItems(): List<TestEntity>
+
         fun getAllUsers(): List<TestEntity>
+
         fun removeUser(entity: TestEntity)
+
         fun deleteAccount(entity: TestEntity)
+
         fun countUsers(): Long
+
         fun findingNemo(name: String): String
+
         fun saviour(name: String): String
+
         fun calculator(): Int
     }
 
     interface EdgeCaseRepository {
         fun findById(): TestEntity?
-        fun findById(id: String, v: Int): TestEntity?
+
+        fun findById(
+            id: String,
+            v: Int,
+        ): TestEntity?
+
         fun save(): TestEntity?
+
         fun delete()
+
         fun nonCrudAction()
+
         fun saveGeneric(obj: Any): Any
+
         fun deleteGeneric(obj: Any)
+
         fun findGeneric(id: String): Any?
+
         fun count(): Long
     }
 
@@ -270,8 +311,10 @@ class MockitoEngineAdapterTest {
         val fake = adapter.createFake(TestRepository::class, context)
         val e1 = TestEntity("d-1", "DeleteMe")
         val e2 = TestEntity("r-1", "RemoveMe")
-        fake.save(e1); fake.save(e2)
-        fake.deleteAccount(e1); fake.removeUser(e2)
+        fake.save(e1)
+        fake.save(e2)
+        fake.deleteAccount(e1)
+        fake.removeUser(e2)
         assertThat(fake.count()).isEqualTo(0)
     }
 
@@ -297,9 +340,10 @@ class MockitoEngineAdapterTest {
         val fake = adapter.createFake(EdgeCaseRepository::class, context)
         val noIdEntity = NoIdEntity("Ghost")
 
-        val ex = assertThrows(KontraktConfigurationException::class.java) {
-            fake.deleteGeneric(noIdEntity)
-        }
+        val ex =
+            assertThrows(KontraktConfigurationException::class.java) {
+                fake.deleteGeneric(noIdEntity)
+            }
 
         assertThat(ex.message).contains("StatefulFake violation").contains("NoIdEntity")
     }
@@ -307,17 +351,19 @@ class MockitoEngineAdapterTest {
     @Test
     fun `FailFast - handles entities throwing exceptions during property access`() {
         val fake = adapter.createFake(EdgeCaseRepository::class, context)
-        val poisonEntity = object {
-            @Suppress("unused")
-            val id: String
-                get() = throw IllegalStateException("Explosive Property")
-        }
+        val poisonEntity =
+            object {
+                @Suppress("unused")
+                val id: String
+                    get() = throw IllegalStateException("Explosive Property")
+            }
 
         // [Fix] Since we unwrapped the InvocationTargetException in production code,
         // we now expect the original IllegalStateException directly.
-        val ex = assertThrows(IllegalStateException::class.java) {
-            fake.saveGeneric(poisonEntity)
-        }
+        val ex =
+            assertThrows(IllegalStateException::class.java) {
+                fake.saveGeneric(poisonEntity)
+            }
         assertThat(ex.message).isEqualTo("Explosive Property")
     }
 
@@ -349,9 +395,11 @@ class MockitoEngineAdapterTest {
         val concreteFake = adapter.createFake(ConcreteRepository::class, context)
         concreteFake.doSomething()
         verify {
-            trace.add(match<ExecutionTrace> {
-                it.methodSignature.contains("Mock") || it.methodSignature.contains("ConcreteRepository")
-            })
+            trace.add(
+                match<ExecutionTrace> {
+                    it.methodSignature.contains("Mock") || it.methodSignature.contains("ConcreteRepository")
+                },
+            )
         }
     }
 
@@ -359,13 +407,15 @@ class MockitoEngineAdapterTest {
 
     @Test
     fun `Direct - GenerativeAnswer handles Unit return type explicitly`() {
-        val answerInstance = createPrivateInnerClassInstance(
-            "GenerativeAnswer",
-            generator,
-            TestService::class,
-            io.github.oshai.kotlinlogging.KotlinLogging.logger {},
-            trace
-        ) as org.mockito.stubbing.Answer<*>
+        val answerInstance =
+            createPrivateInnerClassInstance(
+                "GenerativeAnswer",
+                generator,
+                TestService::class,
+                io.github.oshai.kotlinlogging.KotlinLogging
+                    .logger {},
+                trace,
+            ) as org.mockito.stubbing.Answer<*>
 
         val realMethod = TestService::class.java.methods.find { it.name == "doSomething" }!!
 
@@ -382,11 +432,12 @@ class MockitoEngineAdapterTest {
 
     @Test
     fun `Direct - StatefulAnswer falls back to Mock name when interfaces are empty`() {
-        val answerInstance = createPrivateInnerClassInstance(
-            "StatefulOrGenerativeAnswer",
-            generator,
-            trace
-        ) as org.mockito.stubbing.Answer<*>
+        val answerInstance =
+            createPrivateInnerClassInstance(
+                "StatefulOrGenerativeAnswer",
+                generator,
+                trace,
+            ) as org.mockito.stubbing.Answer<*>
 
         val rawObject = Any()
 
@@ -407,13 +458,15 @@ class MockitoEngineAdapterTest {
 
     @Test
     fun `Direct - GenerativeAnswer handles null arguments array`() {
-        val answerInstance = createPrivateInnerClassInstance(
-            "GenerativeAnswer",
-            generator,
-            TestService::class,
-            io.github.oshai.kotlinlogging.KotlinLogging.logger {},
-            trace
-        ) as org.mockito.stubbing.Answer<*>
+        val answerInstance =
+            createPrivateInnerClassInstance(
+                "GenerativeAnswer",
+                generator,
+                TestService::class,
+                io.github.oshai.kotlinlogging.KotlinLogging
+                    .logger {},
+                trace,
+            ) as org.mockito.stubbing.Answer<*>
 
         val invocation = mockk<InvocationOnMock>()
         every { invocation.arguments } returns null
@@ -427,10 +480,14 @@ class MockitoEngineAdapterTest {
         assertThat(result).isEqualTo("Safe")
     }
 
-    private fun createPrivateInnerClassInstance(className: String, vararg args: Any?): Any {
-        val clazz = MockitoEngineAdapter::class.java.declaredClasses
-            .firstOrNull { it.simpleName == className }
-            ?: throw IllegalArgumentException("Inner class $className not found in MockitoEngineAdapter")
+    private fun createPrivateInnerClassInstance(
+        className: String,
+        vararg args: Any?,
+    ): Any {
+        val clazz =
+            MockitoEngineAdapter::class.java.declaredClasses
+                .firstOrNull { it.simpleName == className }
+                ?: throw IllegalArgumentException("Inner class $className not found in MockitoEngineAdapter")
 
         val ctor = clazz.declaredConstructors.first()
         ctor.isAccessible = true

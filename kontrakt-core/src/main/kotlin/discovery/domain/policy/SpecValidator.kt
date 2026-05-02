@@ -8,7 +8,6 @@ package discovery.domain.policy
  * Returns a [SpecViolationCode] if invalid, or null if valid.
  */
 object SpecValidator {
-
     fun validateContract(isInterface: Boolean): SpecViolationCode? {
         if (!isInterface) {
             return SpecViolationCode.CONTRACT_MUST_BE_INTERFACE

@@ -13,6 +13,7 @@ import metamodel.domain.dto.RawTypeFactsDTO
  *
  * It only maps event -> CostCenter and calls PlannerSession.step(center).
  */
+
 /**
  * Port-return value for raw type-fact retrieval.
  *
@@ -28,24 +29,18 @@ class RawTypeFactsResolution private constructor(
 ) {
     companion object {
         @JvmStatic
-        fun cacheHit(
-            facts: RawTypeFactsDTO,
-        ): RawTypeFactsResolution {
-            return RawTypeFactsResolution(
+        fun cacheHit(facts: RawTypeFactsDTO): RawTypeFactsResolution =
+            RawTypeFactsResolution(
                 facts = facts,
                 kind = RawTypeFactsResolutionKind.CACHE_HIT,
             )
-        }
 
         @JvmStatic
-        fun actualResolution(
-            facts: RawTypeFactsDTO,
-        ): RawTypeFactsResolution {
-            return RawTypeFactsResolution(
+        fun actualResolution(facts: RawTypeFactsDTO): RawTypeFactsResolution =
+            RawTypeFactsResolution(
                 facts = facts,
                 kind = RawTypeFactsResolutionKind.ACTUAL_RESOLUTION,
             )
-        }
 
         @Deprecated(
             message = "Use cacheHit(...) or actualResolution(...). This bridge conservatively charges as actual resolution.",
@@ -53,10 +48,6 @@ class RawTypeFactsResolution private constructor(
             level = DeprecationLevel.WARNING,
         )
         @JvmStatic
-        fun conservativeActualResolution(
-            facts: RawTypeFactsDTO,
-        ): RawTypeFactsResolution {
-            return actualResolution(facts)
-        }
+        fun conservativeActualResolution(facts: RawTypeFactsDTO): RawTypeFactsResolution = actualResolution(facts)
     }
 }

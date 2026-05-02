@@ -26,19 +26,20 @@ import planning.domain.exception.NoEligibleConstructorSelectionException
  * - cache/interner key issuance
  */
 class ActiveMemberProjector private constructor() {
-
     fun project(
         facts: RawTypeFactsDTO,
         capabilityProfile: CapabilityProfile,
     ): ActiveMemberProjectionResult {
-        val selectedConstructor = selectConstructor(
-            facts = facts,
-            capabilityProfile = capabilityProfile,
-        )
+        val selectedConstructor =
+            selectConstructor(
+                facts = facts,
+                capabilityProfile = capabilityProfile,
+            )
 
-        val projectedMembers = ArrayList<ProjectedActiveMember>(
-            selectedConstructor.candidate.parameters.size + facts.properties.size,
-        )
+        val projectedMembers =
+            ArrayList<ProjectedActiveMember>(
+                selectedConstructor.candidate.parameters.size + facts.properties.size,
+            )
 
         projectConstructorParameters(
             selectedConstructor = selectedConstructor,
@@ -140,15 +141,16 @@ class ActiveMemberProjector private constructor() {
                     typeSignatureNormalizationVersion = parameter.typeSignatureNormalizationVersion,
                     declarationOrdinal = DeclarationOrdinal.present(parameter.parameterIndex),
                     nullability = parameter.nullability,
-                    sourceRef = ProjectionSourceRef.SelectedConstructorParameterRef.issue(
-                        constructorSignature = candidate.constructorSignature,
-                        constructorSignatureNormalizationVersion = candidate.constructorSignatureNormalizationVersion,
-                        constructorDeclarationOrdinal = candidate.declarationOrdinal,
-                        parameterIndex = parameter.parameterIndex,
-                        defaultValuePresence = parameter.defaultValuePresence,
-                        origin = candidate.origin,
-                        visibility = candidate.visibility,
-                    ),
+                    sourceRef =
+                        ProjectionSourceRef.SelectedConstructorParameterRef.issue(
+                            constructorSignature = candidate.constructorSignature,
+                            constructorSignatureNormalizationVersion = candidate.constructorSignatureNormalizationVersion,
+                            constructorDeclarationOrdinal = candidate.declarationOrdinal,
+                            parameterIndex = parameter.parameterIndex,
+                            defaultValuePresence = parameter.defaultValuePresence,
+                            origin = candidate.origin,
+                            visibility = candidate.visibility,
+                        ),
                 ),
             )
 
@@ -177,14 +179,15 @@ class ActiveMemberProjector private constructor() {
                         typeSignatureNormalizationVersion = property.typeSignatureNormalizationVersion,
                         declarationOrdinal = property.declarationOrdinal,
                         nullability = property.nullability,
-                        sourceRef = ProjectionSourceRef.EligiblePropertyRef.issue(
-                            propertyDeclarationOrdinal = property.declarationOrdinal,
-                            origin = property.origin,
-                            declaredVisibility = property.declaredVisibility,
-                            setterVisibility = property.setterVisibility,
-                            mutability = property.mutability,
-                            storageKind = property.storageKind,
-                        ),
+                        sourceRef =
+                            ProjectionSourceRef.EligiblePropertyRef.issue(
+                                propertyDeclarationOrdinal = property.declarationOrdinal,
+                                origin = property.origin,
+                                declaredVisibility = property.declaredVisibility,
+                                setterVisibility = property.setterVisibility,
+                                mutability = property.mutability,
+                                storageKind = property.storageKind,
+                            ),
                     ),
                 )
             } else {
@@ -201,9 +204,7 @@ class ActiveMemberProjector private constructor() {
         }
     }
 
-    private fun score(
-        candidate: ConstructorCandidateFact,
-    ): ConstructorScore {
+    private fun score(candidate: ConstructorCandidateFact): ConstructorScore {
         var strong = 0
         var defaultAvailable = 0
         var nullableAvailable = 0
@@ -221,7 +222,8 @@ class ActiveMemberProjector private constructor() {
              */
             when (parameter.nullability) {
                 NullabilityKind.NON_NULL,
-                NullabilityKind.UNKNOWN -> strong++
+                NullabilityKind.UNKNOWN,
+                -> strong++
 
                 NullabilityKind.NULLABLE -> nullableAvailable++
             }
@@ -235,18 +237,17 @@ class ActiveMemberProjector private constructor() {
 
         return ConstructorScore.issue(
             candidate = candidate,
-            metrics = ConstructorSelectionMetrics.issue(
-                strongSatisfiableCount = strong,
-                defaultAvailableCount = defaultAvailable,
-                nullableAvailableCount = nullableAvailable,
-                totalParameterCount = candidate.parameters.size,
-            ),
+            metrics =
+                ConstructorSelectionMetrics.issue(
+                    strongSatisfiableCount = strong,
+                    defaultAvailableCount = defaultAvailable,
+                    nullableAvailableCount = nullableAvailable,
+                    totalParameterCount = candidate.parameters.size,
+                ),
         )
     }
 
-    private fun collectTiedConstructorSignatures(
-        sortedScores: List<ConstructorScore>,
-    ): List<String> {
+    private fun collectTiedConstructorSignatures(sortedScores: List<ConstructorScore>): List<String> {
         val result = ArrayList<String>()
         val first = sortedScores[0]
 
@@ -272,9 +273,7 @@ class ActiveMemberProjector private constructor() {
 
     companion object {
         @JvmStatic
-        fun issue(): ActiveMemberProjector {
-            return ActiveMemberProjector()
-        }
+        fun issue(): ActiveMemberProjector = ActiveMemberProjector()
 
         private val CONSTRUCTOR_SIGNATURE_TEXT_COMPARATOR: Comparator<String> =
             Comparator { left, right -> left.compareTo(right) }
@@ -324,20 +323,14 @@ class ActiveMemberProjector private constructor() {
         private fun compareIntsDescending(
             left: Int,
             right: Int,
-        ): Int {
-            return java.lang.Integer.compare(right, left)
-        }
+        ): Int = java.lang.Integer.compare(right, left)
 
         private fun compareIntsAscending(
             left: Int,
             right: Int,
-        ): Int {
-            return java.lang.Integer.compare(left, right)
-        }
+        ): Int = java.lang.Integer.compare(left, right)
 
-        private fun Int.takeIfNonZero(): Int? {
-            return if (this != 0) this else null
-        }
+        private fun Int.takeIfNonZero(): Int? = if (this != 0) this else null
     }
 }
 
@@ -355,11 +348,10 @@ private class ConstructorScore private constructor(
         fun issue(
             candidate: ConstructorCandidateFact,
             metrics: ConstructorSelectionMetrics,
-        ): ConstructorScore {
-            return ConstructorScore(
+        ): ConstructorScore =
+            ConstructorScore(
                 candidate = candidate,
                 metrics = metrics,
             )
-        }
     }
 }

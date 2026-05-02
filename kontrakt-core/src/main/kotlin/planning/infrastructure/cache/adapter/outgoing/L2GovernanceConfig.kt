@@ -16,13 +16,12 @@ class L2GovernanceConfig private constructor(
 ) {
     companion object {
         @JvmStatic
-        fun from(policy: ResolvedJoinGovernance): L2GovernanceConfig {
-            return L2GovernanceConfig(
+        fun from(policy: ResolvedJoinGovernance): L2GovernanceConfig =
+            L2GovernanceConfig(
                 joinWaitTimeoutNanos = policy.joinWaitTimeoutNanos,
                 maxWaitersPerKey = policy.maxWaitersPerKey,
                 maxSpeculativeBuildersPerKey = policy.maxSpeculativeBuildersPerKey,
                 failFastOnQuotaExhaustion = policy.failFastOnQuotaExhaustion,
             )
-        }
     }
 }

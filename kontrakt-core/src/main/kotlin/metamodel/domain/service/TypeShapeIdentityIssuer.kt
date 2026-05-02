@@ -59,14 +59,15 @@ class TypeShapeIdentityIssuer(
             verifier = verifier,
         )
 
-        val ratification = TypeShapeRatification.issueVerified(
-            text = text,
-            shapeSummary = shapeSummary,
-            classifierId = classifierId,
-            classifierVersion = classifierVersion,
-            ratificationFingerprint = ratificationFingerprint,
-            verifier = verifier,
-        )
+        val ratification =
+            TypeShapeRatification.issueVerified(
+                text = text,
+                shapeSummary = shapeSummary,
+                classifierId = classifierId,
+                classifierVersion = classifierVersion,
+                ratificationFingerprint = ratificationFingerprint,
+                verifier = verifier,
+            )
 
         val receipt = coherenceScope.registerOrVerify(ratification)
 

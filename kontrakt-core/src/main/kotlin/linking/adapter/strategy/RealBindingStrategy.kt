@@ -14,7 +14,6 @@ import java.util.TreeSet
  * * Ensures determinism by using [ResolvedSpec.CANONICAL_ORDER] and [Locale.ROOT].
  */
 class RealBindingStrategy : BindingStrategy {
-
     override fun resolve(requirements: ScenarioRequirements): SortedSet<ResolvedSpec> {
         val resolvedSpecs = TreeSet(ResolvedSpec.CANONICAL_ORDER)
 
@@ -32,7 +31,7 @@ class RealBindingStrategy : BindingStrategy {
 
         return ResolvedSpec(
             featureName = featureName,
-            implementationClass = "com.acme.impl.default.$normalizedFeature.${rawName}Impl"
+            implementationClass = "com.acme.impl.default.$normalizedFeature.${rawName}Impl",
         )
     }
 }

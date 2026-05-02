@@ -23,7 +23,7 @@ class OrderedActiveMembers private constructor(
     fun memberAt(index: Int): MemberFact {
         if (index < 0 || index >= orderedMembers.size) {
             throw PlanningProtocolIntegrityException(
-                "OrderedActiveMembers.memberAt index out of bounds: $index"
+                "OrderedActiveMembers.memberAt index out of bounds: $index",
             )
         }
         return orderedMembers[index]
@@ -34,11 +34,10 @@ class OrderedActiveMembers private constructor(
         fun issue(
             ownerFacts: TypeFactsDTO,
             orderedMembers: Array<MemberFact>,
-        ): OrderedActiveMembers {
-            return OrderedActiveMembers(
+        ): OrderedActiveMembers =
+            OrderedActiveMembers(
                 ownerFacts = ownerFacts,
                 orderedMembers = orderedMembers.copyOf(),
             )
-        }
     }
 }

@@ -31,10 +31,10 @@ class LocalSelectorTuple private constructor(
         if (other !is LocalSelectorTuple) return false
 
         return label == other.label &&
-                semanticMemberIdentity == other.semanticMemberIdentity &&
-                localOrdinal == other.localOrdinal &&
-                slotPhase == other.slotPhase &&
-                TypeReferenceIdentity.sameSemanticType(subjectType, other.subjectType)
+            semanticMemberIdentity == other.semanticMemberIdentity &&
+            localOrdinal == other.localOrdinal &&
+            slotPhase == other.slotPhase &&
+            TypeReferenceIdentity.sameSemanticType(subjectType, other.subjectType)
     }
 
     override fun hashCode(): Int {
@@ -46,8 +46,8 @@ class LocalSelectorTuple private constructor(
         return result
     }
 
-    override fun toString(): String {
-        return buildString {
+    override fun toString(): String =
+        buildString {
             append("LocalSelectorTuple(")
             append("label=")
             append(label.protocolToken)
@@ -61,7 +61,6 @@ class LocalSelectorTuple private constructor(
             append(subjectType.signature)
             append(')')
         }
-    }
 
     companion object {
         @JvmStatic

@@ -92,7 +92,8 @@ sealed interface PolymorphicExpansionPlan {
     fun requireReady() {
         if (status != PolymorphicExpansionStatus.READY) {
             throw TypeExpansionContractViolationException(
-                reason = "PolymorphicExpansionPlan is not READY: " +
+                reason =
+                    "PolymorphicExpansionPlan is not READY: " +
                         "kind=${kind.protocolToken}, status=$status, summary=${renderSummary()}",
             )
         }
@@ -126,18 +127,15 @@ sealed interface PolymorphicExpansionPlan {
         override val kind: PolymorphicExpansionPlanKind
             get() = PolymorphicExpansionPlanKind.CONTRACT_SUBJECT
 
-        override fun renderSummary(): String {
-            return "ContractSubjectPlan(" +
-                    "subject=${cycleIdentity.subject.signature}, " +
-                    "implementations=${implementations.size}, " +
-                    "status=$status, " +
-                    "mode=${context.mode.protocolToken}" +
-                    ")"
-        }
+        override fun renderSummary(): String =
+            "ContractSubjectPlan(" +
+                "subject=${cycleIdentity.subject.signature}, " +
+                "implementations=${implementations.size}, " +
+                "status=$status, " +
+                "mode=${context.mode.protocolToken}" +
+                ")"
 
-        override fun toString(): String {
-            return renderSummary()
-        }
+        override fun toString(): String = renderSummary()
 
         companion object {
             @JvmStatic
@@ -158,10 +156,11 @@ sealed interface PolymorphicExpansionPlan {
                     reason = "ContractSubjectPlan subject must match implementation set contract type",
                 )
 
-                val status = deriveContractSubjectStatus(
-                    context = context,
-                    implementations = implementations,
-                )
+                val status =
+                    deriveContractSubjectStatus(
+                        context = context,
+                        implementations = implementations,
+                    )
 
                 return ContractSubjectPlan(
                     cycleIdentity = cycleIdentity,
@@ -214,20 +213,17 @@ sealed interface PolymorphicExpansionPlan {
         override val status: PolymorphicExpansionStatus
             get() = PolymorphicExpansionStatus.READY
 
-        override fun renderSummary(): String {
-            return "DependencySelectionPlan(" +
-                    "subject=${cycleIdentity.subject.signature}, " +
-                    "selected=${selection.selectedImplementation.canonicalIdentifier}, " +
-                    "bindingKind=${selection.bindingKind.protocolToken}, " +
-                    "selectionMode=${selection.selectionMode.protocolToken}, " +
-                    "status=$status, " +
-                    "mode=${context.mode.protocolToken}" +
-                    ")"
-        }
+        override fun renderSummary(): String =
+            "DependencySelectionPlan(" +
+                "subject=${cycleIdentity.subject.signature}, " +
+                "selected=${selection.selectedImplementation.canonicalIdentifier}, " +
+                "bindingKind=${selection.bindingKind.protocolToken}, " +
+                "selectionMode=${selection.selectionMode.protocolToken}, " +
+                "status=$status, " +
+                "mode=${context.mode.protocolToken}" +
+                ")"
 
-        override fun toString(): String {
-            return renderSummary()
-        }
+        override fun toString(): String = renderSummary()
 
         companion object {
             @JvmStatic
@@ -279,20 +275,17 @@ sealed interface PolymorphicExpansionPlan {
         override val status: PolymorphicExpansionStatus
             get() = PolymorphicExpansionStatus.READY
 
-        override fun renderSummary(): String {
-            return "StructuralMemberSelectionPlan(" +
-                    "subject=${cycleIdentity.subject.signature}, " +
-                    "selected=${selection.selectedImplementation.canonicalIdentifier}, " +
-                    "bindingKind=${selection.bindingKind.protocolToken}, " +
-                    "selectionMode=${selection.selectionMode.protocolToken}, " +
-                    "status=$status, " +
-                    "mode=${context.mode.protocolToken}" +
-                    ")"
-        }
+        override fun renderSummary(): String =
+            "StructuralMemberSelectionPlan(" +
+                "subject=${cycleIdentity.subject.signature}, " +
+                "selected=${selection.selectedImplementation.canonicalIdentifier}, " +
+                "bindingKind=${selection.bindingKind.protocolToken}, " +
+                "selectionMode=${selection.selectionMode.protocolToken}, " +
+                "status=$status, " +
+                "mode=${context.mode.protocolToken}" +
+                ")"
 
-        override fun toString(): String {
-            return renderSummary()
-        }
+        override fun toString(): String = renderSummary()
 
         companion object {
             @JvmStatic
@@ -330,7 +323,8 @@ sealed interface PolymorphicExpansionPlan {
         ) {
             if (actual != expected) {
                 throw TypeExpansionContractViolationException(
-                    reason = "$owner context mode mismatch: " +
+                    reason =
+                        "$owner context mode mismatch: " +
                             "expected=${expected.protocolToken}, actual=${actual.protocolToken}",
                 )
             }

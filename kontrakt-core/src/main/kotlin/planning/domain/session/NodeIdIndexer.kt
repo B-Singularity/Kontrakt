@@ -146,7 +146,10 @@ internal class NodeIdIndexer private constructor(
      * The caller must separately restore `_nextId` and `sigSlabPtr` through
      * [rollbackCount] so that dense allocation state matches the same checkpoint.
      */
-    fun rollback(snapPtr: Int, kernel: SessionKernel) {
+    fun rollback(
+        snapPtr: Int,
+        kernel: SessionKernel,
+    ) {
         requireValidUndoSnapshot(snapPtr)
 
         while (undoLogPtr > snapPtr) {
@@ -166,7 +169,7 @@ internal class NodeIdIndexer private constructor(
 
                     val oldKey =
                         ((oldKeyHigh.toLong() and UINT32_MASK) shl 32) or
-                                (oldKeyLow.toLong() and UINT32_MASK)
+                            (oldKeyLow.toLong() and UINT32_MASK)
 
                     tableHeads[slot] = oldHead
                     tableStamps[slot] = oldStamp
@@ -179,7 +182,7 @@ internal class NodeIdIndexer private constructor(
 
                 else -> {
                     throw PlanningProtocolIntegrityException(
-                        "Unknown NodeIdIndexer undo op: $op"
+                        "Unknown NodeIdIndexer undo op: $op",
                     )
                 }
             }
@@ -194,15 +197,18 @@ internal class NodeIdIndexer private constructor(
      * ids `>= targetCount` and bytes `>= targetSigPtr` must become unreachable
      * after rollback.
      */
-    fun rollbackCount(targetCount: Int, targetSigPtr: Int) {
+    fun rollbackCount(
+        targetCount: Int,
+        targetSigPtr: Int,
+    ) {
         if (targetCount < 0 || targetCount > _nextId) {
             throw PlanningProtocolIntegrityException(
-                "NodeIdIndexer.rollbackCount targetCount out of range: target=$targetCount, nextId=$_nextId"
+                "NodeIdIndexer.rollbackCount targetCount out of range: target=$targetCount, nextId=$_nextId",
             )
         }
         if (targetSigPtr < 0 || targetSigPtr > sigSlabPtr) {
             throw PlanningProtocolIntegrityException(
-                "NodeIdIndexer.rollbackCount targetSigPtr out of range: target=$targetSigPtr, sigSlabPtr=$sigSlabPtr"
+                "NodeIdIndexer.rollbackCount targetSigPtr out of range: target=$targetSigPtr, sigSlabPtr=$sigSlabPtr",
             )
         }
 
@@ -232,7 +238,7 @@ internal class NodeIdIndexer private constructor(
     ): Int {
         if (sigBytes.size > maxSignatureLen) {
             throw PlanningProtocolException(
-                "Signature length ${sigBytes.size} exceeds limit $maxSignatureLen"
+                "Signature length ${sigBytes.size} exceeds limit $maxSignatureLen",
             )
         }
 
@@ -275,7 +281,7 @@ internal class NodeIdIndexer private constructor(
             probes++
             if (probes > caps.indexerTableCap) {
                 throw PlanningProtocolException(
-                    "NodeIdIndexer probe limit exceeded. tableCap=${caps.indexerTableCap}"
+                    "NodeIdIndexer probe limit exceeded. tableCap=${caps.indexerTableCap}",
                 )
             }
         }
@@ -295,7 +301,7 @@ internal class NodeIdIndexer private constructor(
         val newId = _nextId
         if (newId >= caps.maxNodeIdCap) {
             throw PlanningProtocolException(
-                "L1 maxNodeIdCap exceeded: nextId=$newId, cap=${caps.maxNodeIdCap}"
+                "L1 maxNodeIdCap exceeded: nextId=$newId, cap=${caps.maxNodeIdCap}",
             )
         }
 
@@ -342,7 +348,7 @@ internal class NodeIdIndexer private constructor(
         val newId = _nextId
         if (newId >= caps.maxNodeIdCap) {
             throw PlanningProtocolException(
-                "L1 maxNodeIdCap exceeded: nextId=$newId, cap=${caps.maxNodeIdCap}"
+                "L1 maxNodeIdCap exceeded: nextId=$newId, cap=${caps.maxNodeIdCap}",
             )
         }
 
@@ -415,7 +421,7 @@ internal class NodeIdIndexer private constructor(
     ) {
         if (sigSlabPtr + bytes.size > sigSlab.size) {
             throw PlanningProtocolException(
-                "NodeIdIndexer signature slab overflow: ptr=$sigSlabPtr, len=${bytes.size}, slab=${sigSlab.size}"
+                "NodeIdIndexer signature slab overflow: ptr=$sigSlabPtr, len=${bytes.size}, slab=${sigSlab.size}",
             )
         }
 
@@ -452,9 +458,7 @@ internal class NodeIdIndexer private constructor(
      * Narrowing to Int here is intentional and safe because the result is always
      * masked by a power-of-two table mask.
      */
-    private fun startSlot(identityBits: Long): Int {
-        return PrimitiveHash.mix64(identityBits).toInt() and mask
-    }
+    private fun startSlot(identityBits: Long): Int = PrimitiveHash.mix64(identityBits).toInt() and mask
 
     /**
      * Ensures that one additional undo record fits.
@@ -462,7 +466,7 @@ internal class NodeIdIndexer private constructor(
     private fun ensureUndoCapacity() {
         if (undoLogPtr + UNDO_RECORD_WIDTH > undoLog.size) {
             throw PlanningProtocolException(
-                "NodeIdIndexer undo log overflow: ptr=$undoLogPtr, capacity=${undoLog.size}"
+                "NodeIdIndexer undo log overflow: ptr=$undoLogPtr, capacity=${undoLog.size}",
             )
         }
     }
@@ -473,7 +477,7 @@ internal class NodeIdIndexer private constructor(
     private fun requireValidUndoSnapshot(snapPtr: Int) {
         if (snapPtr < 0 || snapPtr > undoLogPtr || snapPtr % UNDO_RECORD_WIDTH != 0) {
             throw PlanningProtocolIntegrityException(
-                "Invalid NodeIdIndexer undo snapshot: snapPtr=$snapPtr, undoLogPtr=$undoLogPtr"
+                "Invalid NodeIdIndexer undo snapshot: snapPtr=$snapPtr, undoLogPtr=$undoLogPtr",
             )
         }
     }
@@ -511,13 +515,13 @@ internal class NodeIdIndexer private constructor(
         ): NodeIdIndexer {
             if (maxSignatureLen <= 0) {
                 throw PlanningProtocolIntegrityException(
-                    "NodeIdIndexer.maxSignatureLen must be > 0: $maxSignatureLen"
+                    "NodeIdIndexer.maxSignatureLen must be > 0: $maxSignatureLen",
                 )
             }
             if (maxSignatureLen > caps.maxSignatureBytes) {
                 throw PlanningProtocolIntegrityException(
                     "NodeIdIndexer.maxSignatureLen must be <= caps.maxSignatureBytes: " +
-                            "maxSignatureLen=$maxSignatureLen, maxSignatureBytes=${caps.maxSignatureBytes}"
+                        "maxSignatureLen=$maxSignatureLen, maxSignatureBytes=${caps.maxSignatureBytes}",
                 )
             }
 

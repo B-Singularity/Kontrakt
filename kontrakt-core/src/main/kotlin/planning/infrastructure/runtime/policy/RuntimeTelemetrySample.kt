@@ -6,7 +6,6 @@ package planning.infrastructure.runtime.policy
  * This payload must not retain planner object graphs or mutable worker-local state.
  */
 sealed interface RuntimeTelemetrySample {
-
     data class JoinTimedOut(
         val waitedNanos: Long,
         val policyEpochId: Long,

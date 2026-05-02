@@ -19,7 +19,6 @@ import planning.domain.exception.EnvironmentIntegrityException
 class Icu4jNormalizationEngineAdapter(
     private val expectedIcuVersionPrefix: String,
 ) : NormalizationEngine {
-
     override val engineId: String = "icu4j"
 
     /**
@@ -34,7 +33,7 @@ class Icu4jNormalizationEngineAdapter(
     init {
         if (!engineVersion.startsWith(expectedIcuVersionPrefix)) {
             throw EnvironmentIntegrityException(
-                "ICU4J version mismatch. Expected prefix=$expectedIcuVersionPrefix, actual=$engineVersion"
+                "ICU4J version mismatch. Expected prefix=$expectedIcuVersionPrefix, actual=$engineVersion",
             )
         }
     }

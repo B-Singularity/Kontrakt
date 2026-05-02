@@ -51,19 +51,20 @@ object CanonicalTextPolicyFingerprintSpec {
      * Do not reorder this list without changing FINGERPRINT_LAW_VERSION and
      * updating golden vectors.
      */
-    val FIELD_ORDER: List<String> = listOf(
-        "policyVersion",
-        "allowNullableMarker",
-        "allowStarProjection",
-        "maxCodePoints",
-        "maxIdentifierTokenCodePoints",
-        "maxDelimiterCodePoints",
-        "maxNonIdentifierCodePointRatioBasisPoints",
-        "maxGrossCombiningMarks",
-        "maxCombiningMarksPerIdentifierToken",
-        "maxGraphemeClustersPerIdentifierToken",
-        "scriptPolicyToken",
-    )
+    val FIELD_ORDER: List<String> =
+        listOf(
+            "policyVersion",
+            "allowNullableMarker",
+            "allowStarProjection",
+            "maxCodePoints",
+            "maxIdentifierTokenCodePoints",
+            "maxDelimiterCodePoints",
+            "maxNonIdentifierCodePointRatioBasisPoints",
+            "maxGrossCombiningMarks",
+            "maxCombiningMarksPerIdentifierToken",
+            "maxGraphemeClustersPerIdentifierToken",
+            "scriptPolicyToken",
+        )
 
     /**
      * Human-readable material law.

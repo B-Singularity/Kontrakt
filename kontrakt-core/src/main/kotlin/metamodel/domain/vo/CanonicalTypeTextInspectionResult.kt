@@ -6,7 +6,6 @@ import metamodel.domain.exception.MetamodelFactContractViolationException
  * Result returned by the pinned NormalizationEngine inspection.
  */
 sealed interface CanonicalTypeTextInspectionResult {
-
     /**
      * Accepted inspection proof.
      *
@@ -29,8 +28,8 @@ sealed interface CanonicalTypeTextInspectionResult {
             if (snapshot.length != lexicalProfile.utf16CodeUnitCount) {
                 throw MetamodelFactContractViolationException(
                     "Accepted snapshot length must match lexicalProfile.utf16CodeUnitCount: " +
-                            "snapshot.length=${snapshot.length}, " +
-                            "profile.utf16CodeUnitCount=${lexicalProfile.utf16CodeUnitCount}",
+                        "snapshot.length=${snapshot.length}, " +
+                        "profile.utf16CodeUnitCount=${lexicalProfile.utf16CodeUnitCount}",
                 )
             }
 

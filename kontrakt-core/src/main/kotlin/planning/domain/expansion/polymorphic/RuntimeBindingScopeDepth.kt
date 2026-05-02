@@ -53,13 +53,9 @@ import metamodel.domain.exception.MetamodelFactContractViolationException
 class RuntimeBindingScopeDepth private constructor(
     val value: Int,
 ) : Comparable<RuntimeBindingScopeDepth> {
-    fun next(): RuntimeBindingScopeDepth {
-        return plus(1)
-    }
+    fun next(): RuntimeBindingScopeDepth = plus(1)
 
-    fun plus(
-        increment: Int,
-    ): RuntimeBindingScopeDepth {
+    fun plus(increment: Int): RuntimeBindingScopeDepth {
         if (increment < 0) {
             throw MetamodelFactContractViolationException(
                 "RuntimeBindingScopeDepth increment must be >= 0: $increment",
@@ -75,8 +71,8 @@ class RuntimeBindingScopeDepth private constructor(
         if (result > RuntimeBindingScopeDepthLaw.MAX_RUNTIME_BINDING_SCOPE_DEPTH) {
             throw MetamodelFactContractViolationException(
                 "RuntimeBindingScopeDepth overflow: " +
-                        "current=$value, increment=$increment, " +
-                        "max=${RuntimeBindingScopeDepthLaw.MAX_RUNTIME_BINDING_SCOPE_DEPTH}",
+                    "current=$value, increment=$increment, " +
+                    "max=${RuntimeBindingScopeDepthLaw.MAX_RUNTIME_BINDING_SCOPE_DEPTH}",
             )
         }
 
@@ -92,9 +88,7 @@ class RuntimeBindingScopeDepth private constructor(
      * The final value should be wrapped with RuntimeBindingScopeDepth.of(...)
      * at the domain boundary.
      */
-    fun plusToInt(
-        increment: Int,
-    ): Int {
+    fun plusToInt(increment: Int): Int {
         if (increment < 0) {
             throw MetamodelFactContractViolationException(
                 "RuntimeBindingScopeDepth increment must be >= 0: $increment",
@@ -110,46 +104,34 @@ class RuntimeBindingScopeDepth private constructor(
         if (result > RuntimeBindingScopeDepthLaw.MAX_RUNTIME_BINDING_SCOPE_DEPTH) {
             throw MetamodelFactContractViolationException(
                 "RuntimeBindingScopeDepth overflow: " +
-                        "current=$value, increment=$increment, " +
-                        "max=${RuntimeBindingScopeDepthLaw.MAX_RUNTIME_BINDING_SCOPE_DEPTH}",
+                    "current=$value, increment=$increment, " +
+                    "max=${RuntimeBindingScopeDepthLaw.MAX_RUNTIME_BINDING_SCOPE_DEPTH}",
             )
         }
 
         return result.toInt()
     }
 
-    override fun compareTo(
-        other: RuntimeBindingScopeDepth,
-    ): Int {
-        return when {
+    override fun compareTo(other: RuntimeBindingScopeDepth): Int =
+        when {
             value < other.value -> -1
             value > other.value -> 1
             else -> 0
         }
-    }
 
-    override fun equals(
-        other: Any?,
-    ): Boolean {
-        return other is RuntimeBindingScopeDepth &&
-                value == other.value
-    }
+    override fun equals(other: Any?): Boolean =
+        other is RuntimeBindingScopeDepth &&
+            value == other.value
 
-    override fun hashCode(): Int {
-        return value
-    }
+    override fun hashCode(): Int = value
 
-    override fun toString(): String {
-        return "runtimeBindingScopeDepth($value)"
-    }
+    override fun toString(): String = "runtimeBindingScopeDepth($value)"
 
     companion object {
         private val ROOT = RuntimeBindingScopeDepth(0)
 
         @JvmStatic
-        fun of(
-            value: Int,
-        ): RuntimeBindingScopeDepth {
+        fun of(value: Int): RuntimeBindingScopeDepth {
             RuntimeBindingScopeDepthLaw.requireWithinLimit(
                 field = "RuntimeBindingScopeDepth.value",
                 depth = value,
@@ -163,14 +145,10 @@ class RuntimeBindingScopeDepth private constructor(
         }
 
         @JvmStatic
-        fun root(): RuntimeBindingScopeDepth {
-            return ROOT
-        }
+        fun root(): RuntimeBindingScopeDepth = ROOT
 
         @JvmStatic
-        fun maxValue(): Int {
-            return RuntimeBindingScopeDepthLaw.MAX_RUNTIME_BINDING_SCOPE_DEPTH
-        }
+        fun maxValue(): Int = RuntimeBindingScopeDepthLaw.MAX_RUNTIME_BINDING_SCOPE_DEPTH
     }
 }
 

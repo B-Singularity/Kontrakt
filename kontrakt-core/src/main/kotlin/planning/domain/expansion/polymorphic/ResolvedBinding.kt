@@ -21,8 +21,8 @@ class ResolvedBinding private constructor(
         if (other !is ResolvedBinding) return false
 
         return TypeReferenceIdentity.sameSemanticType(requestedType, other.requestedType) &&
-                selectedImplementation == other.selectedImplementation &&
-                bindingKind == other.bindingKind
+            selectedImplementation == other.selectedImplementation &&
+            bindingKind == other.bindingKind
     }
 
     override fun hashCode(): Int {
@@ -32,8 +32,8 @@ class ResolvedBinding private constructor(
         return result
     }
 
-    override fun toString(): String {
-        return buildString {
+    override fun toString(): String =
+        buildString {
             append("ResolvedBinding(")
             append("requested=")
             append(requestedType.signature)
@@ -43,7 +43,6 @@ class ResolvedBinding private constructor(
             append(bindingKind.protocolToken)
             append(')')
         }
-    }
 
     companion object {
         @JvmStatic

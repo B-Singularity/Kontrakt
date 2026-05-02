@@ -89,12 +89,12 @@ internal enum class DeliveryEntryState(
                 for (state in ALL) {
                     if (state.code < 0) {
                         throw PlanningProtocolIntegrityException(
-                            "DeliveryEntryState.code must be >= 0: name=${state.name}, code=${state.code}"
+                            "DeliveryEntryState.code must be >= 0: name=${state.name}, code=${state.code}",
                         )
                     }
                     if (table[state.code] != null) {
                         throw PlanningProtocolIntegrityException(
-                            "Duplicate DeliveryEntryState.code detected: code=${state.code}"
+                            "Duplicate DeliveryEntryState.code detected: code=${state.code}",
                         )
                     }
                     table[state.code] = state

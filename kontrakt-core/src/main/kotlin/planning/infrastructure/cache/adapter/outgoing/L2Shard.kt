@@ -93,11 +93,12 @@ internal class L2Shard private constructor(
 
             session.step(CostCenter.L2_INFLIGHT_ACQUIRE)
 
-            val freshSlot = InFlightSlot.issue<CanonicalPlanNode>(
-                maxAttachedWaiters = maxWaitersPerKey,
-                startedAtNanos = timeSource.nowNanos().coerceAtLeast(0L),
-                generation = nextEpisodeGeneration(),
-            )
+            val freshSlot =
+                InFlightSlot.issue<CanonicalPlanNode>(
+                    maxAttachedWaiters = maxWaitersPerKey,
+                    startedAtNanos = timeSource.nowNanos().coerceAtLeast(0L),
+                    generation = nextEpisodeGeneration(),
+                )
 
             val existing = inflight.putIfAbsent(routeKeyBits, freshSlot)
 
@@ -154,12 +155,14 @@ internal class L2Shard private constructor(
         slot: InFlightSlot<CanonicalPlanNode>,
         session: PlannerSession,
     ): PlanInternStep {
-        val builderHandle = BuilderHandleCell.issue(
-            supervisoryDeadlineNanos = computeBuilderSupervisoryDeadlineNanos(
-                nowNanos = timeSource.nowNanos().coerceAtLeast(0L),
-            ),
-            generation = nextEpisodeGeneration(),
-        )
+        val builderHandle =
+            BuilderHandleCell.issue(
+                supervisoryDeadlineNanos =
+                    computeBuilderSupervisoryDeadlineNanos(
+                        nowNanos = timeSource.nowNanos().coerceAtLeast(0L),
+                    ),
+                generation = nextEpisodeGeneration(),
+            )
 
         when (slot.registerBuilderHandle(builderHandle)) {
             is BuilderHandleRegisterDecision.RejectedSlotTerminal -> {
@@ -169,10 +172,11 @@ internal class L2Shard private constructor(
                 return consumeTerminalResolution(
                     targetKey = key,
                     routeKeyBits = routeKeyBits,
-                    resolution = slot.resolveSharedTerminalAcquire()
-                        ?: throw PlanningProtocolIntegrityException(
-                            "Builder registration was rejected without visible shared terminal truth."
-                        ),
+                    resolution =
+                        slot.resolveSharedTerminalAcquire()
+                            ?: throw PlanningProtocolIntegrityException(
+                                "Builder registration was rejected without visible shared terminal truth.",
+                            ),
                     session = session,
                 )
             }
@@ -205,7 +209,7 @@ internal class L2Shard private constructor(
                 routeKeyBits = routeKeyBits,
                 slot = slot,
                 builderHandle = builderHandle,
-            )
+            ),
         )
     }
 
@@ -219,9 +223,10 @@ internal class L2Shard private constructor(
         slot: InFlightSlot<CanonicalPlanNode>,
         session: PlannerSession,
     ): PlanInternStep {
-        val waiter = WaiterCell.issue(
-            generation = nextEpisodeGeneration(),
-        )
+        val waiter =
+            WaiterCell.issue(
+                generation = nextEpisodeGeneration(),
+            )
 
         session.step(CostCenter.L2_INFLIGHT_ATTACH)
 
@@ -233,10 +238,11 @@ internal class L2Shard private constructor(
                         routeKeyBits = routeKeyBits,
                         slot = slot,
                         waiter = waiter,
-                        deadlineNanos = computeJoinDeadlineNanos(
-                            slotStartedAtNanos = slot.readStartedAtNanos(),
-                        ),
-                    )
+                        deadlineNanos =
+                            computeJoinDeadlineNanos(
+                                slotStartedAtNanos = slot.readStartedAtNanos(),
+                            ),
+                    ),
                 )
             }
 
@@ -268,8 +274,8 @@ internal class L2Shard private constructor(
         routeKeyBits: Long,
         resolution: SharedTerminalResolution,
         session: PlannerSession,
-    ): PlanInternStep {
-        return when (resolution) {
+    ): PlanInternStep =
+        when (resolution) {
             SharedTerminalResolution.SuccessRequiresBucketReverification -> {
                 when (val verified = verifyBucketWinnerOrFault(targetKey, routeKeyBits, session)) {
                     is BucketVerificationResult.Hit -> PlanInternStep.hit(verified.node)
@@ -285,7 +291,6 @@ internal class L2Shard private constructor(
                 PlanInternStep.fault(L2FaultKind.CIRCUIT_OPEN)
             }
         }
-    }
 
     /**
      * Single authoritative helper for success-path bucket re-verification.
@@ -317,18 +322,16 @@ internal class L2Shard private constructor(
         val next = episodeGenerationSeq.incrementAndGet()
         if (next <= 0L) {
             throw PlanningProtocolIntegrityException(
-                "L2Shard episode generation overflowed the positive Long domain."
+                "L2Shard episode generation overflowed the positive Long domain.",
             )
         }
         return next
     }
 
-    private fun computeBuilderSupervisoryDeadlineNanos(
-        nowNanos: Long,
-    ): Long {
+    private fun computeBuilderSupervisoryDeadlineNanos(nowNanos: Long): Long {
         if (nowNanos < 0L) {
             throw PlanningProtocolIntegrityException(
-                "Builder supervisory deadline base nanos must be >= 0: $nowNanos"
+                "Builder supervisory deadline base nanos must be >= 0: $nowNanos",
             )
         }
 
@@ -336,17 +339,15 @@ internal class L2Shard private constructor(
             Math.addExact(nowNanos, joinWaitTimeoutNanos)
         } catch (_: ArithmeticException) {
             throw PlanningProtocolIntegrityException(
-                "Builder supervisory deadline overflow: base=$nowNanos delta=$joinWaitTimeoutNanos"
+                "Builder supervisory deadline overflow: base=$nowNanos delta=$joinWaitTimeoutNanos",
             )
         }
     }
 
-    private fun computeJoinDeadlineNanos(
-        slotStartedAtNanos: Long,
-    ): Long {
+    private fun computeJoinDeadlineNanos(slotStartedAtNanos: Long): Long {
         if (slotStartedAtNanos < 0L) {
             throw PlanningProtocolIntegrityException(
-                "Join deadline base nanos must be >= 0: $slotStartedAtNanos"
+                "Join deadline base nanos must be >= 0: $slotStartedAtNanos",
             )
         }
 
@@ -354,7 +355,7 @@ internal class L2Shard private constructor(
             Math.addExact(slotStartedAtNanos, joinWaitTimeoutNanos)
         } catch (_: ArithmeticException) {
             throw PlanningProtocolIntegrityException(
-                "Join deadline overflow: base=$slotStartedAtNanos delta=$joinWaitTimeoutNanos"
+                "Join deadline overflow: base=$slotStartedAtNanos delta=$joinWaitTimeoutNanos",
             )
         }
     }
@@ -369,7 +370,6 @@ internal class L2Shard private constructor(
         private val slot: InFlightSlot<CanonicalPlanNode>,
         private val builderHandle: BuilderHandleCell,
     ) : BuildHandle {
-
         override fun commit(
             localNode: CanonicalPlanNode,
             session: PlannerSession,
@@ -381,7 +381,7 @@ internal class L2Shard private constructor(
                     PublicationEntryDecision.CommitRightNotClaimed -> {
                         builderHandle.tryAbort()
                         throw PlanningProtocolIntegrityException(
-                            "Publication entry requires CLAIMED commit-right."
+                            "Publication entry requires CLAIMED commit-right.",
                         )
                     }
 
@@ -406,29 +406,31 @@ internal class L2Shard private constructor(
 
                 session.step(CostCenter.L2_PUBLISH_PUT_IF_ABSENT)
 
-                val freshBucket = L2Bucket(
-                    initialKey = key,
-                    initialNode = localNode,
-                )
+                val freshBucket =
+                    L2Bucket(
+                        initialKey = key,
+                        initialNode = localNode,
+                    )
 
                 val existingBucket = buckets.putIfAbsent(routeKeyBits, freshBucket)
 
-                val winner = if (existingBucket == null) {
-                    owner.onEntryCommitted(session)
-                    localNode
-                } else {
-                    session.step(CostCenter.L2_BUCKET_SCAN)
-
-                    val put = existingBucket.putIfAbsentOrGet(key, localNode)
-
-                    if (put.inserted) {
+                val winner =
+                    if (existingBucket == null) {
                         owner.onEntryCommitted(session)
+                        localNode
                     } else {
-                        session.step(CostCenter.L2_HIT)
-                    }
+                        session.step(CostCenter.L2_BUCKET_SCAN)
 
-                    put.winner
-                }
+                        val put = existingBucket.putIfAbsentOrGet(key, localNode)
+
+                        if (put.inserted) {
+                            owner.onEntryCommitted(session)
+                        } else {
+                            session.step(CostCenter.L2_HIT)
+                        }
+
+                        put.winner
+                    }
 
                 if (slot.tryPublishSuccess(winner)) {
                     dispatchPlane.enqueueTerminalSweep(
@@ -468,9 +470,7 @@ internal class L2Shard private constructor(
             }
         }
 
-        override fun abort(
-            reason: Throwable,
-        ) {
+        override fun abort(reason: Throwable) {
             try {
                 builderHandle.tryAbort()
                 if (slot.tryFailShared(reason)) {
@@ -496,26 +496,21 @@ internal class L2Shard private constructor(
         private val waiter: WaiterCell,
         private val deadlineNanos: Long,
     ) : JoinHandle {
-
-        override fun registerContinuation(
-            continuation: JoinContinuation,
-        ): JoinRegistrationDecision {
-            return dispatchPlane.registerOrDeliverImmediate(
+        override fun registerContinuation(continuation: JoinContinuation): JoinRegistrationDecision =
+            dispatchPlane.registerOrDeliverImmediate(
                 shardIndex = shardIndex,
                 slot = slot,
                 waiter = waiter,
                 continuation = continuation,
                 deadlineNanos = deadlineNanos,
             )
-        }
 
-        override fun consumeReadyResult(
-            session: PlannerSession,
-        ): JoinResumeStep {
-            val resolution = slot.resolveSharedTerminalAcquire()
-                ?: throw PlanningProtocolIntegrityException(
-                    "consumeReadyResult(session) requires visible shared terminal truth."
-                )
+        override fun consumeReadyResult(session: PlannerSession): JoinResumeStep {
+            val resolution =
+                slot.resolveSharedTerminalAcquire()
+                    ?: throw PlanningProtocolIntegrityException(
+                        "consumeReadyResult(session) requires visible shared terminal truth.",
+                    )
 
             return when (resolution) {
                 SharedTerminalResolution.SuccessRequiresBucketReverification -> {
@@ -535,9 +530,7 @@ internal class L2Shard private constructor(
             }
         }
 
-        override fun cancel(
-            reason: Throwable,
-        ): Boolean {
+        override fun cancel(reason: Throwable): Boolean {
             val accepted = waiter.tryCancel(reason)
             if (accepted) {
                 /*
@@ -566,7 +559,6 @@ internal class L2Shard private constructor(
     }
 
     companion object {
-
         @JvmStatic
         internal fun issue(
             owner: PartitionRegion,
@@ -607,27 +599,27 @@ internal class L2Shard private constructor(
         ) {
             if (shardIndex < 0) {
                 throw PlanningProtocolIntegrityException(
-                    "L2Shard.shardIndex must be >= 0: $shardIndex"
+                    "L2Shard.shardIndex must be >= 0: $shardIndex",
                 )
             }
             if (bucketTableCapacity <= 0) {
                 throw PlanningProtocolIntegrityException(
-                    "L2Shard.bucketTableCapacity must be positive: $bucketTableCapacity"
+                    "L2Shard.bucketTableCapacity must be positive: $bucketTableCapacity",
                 )
             }
             if (inflightTableCapacity <= 0) {
                 throw PlanningProtocolIntegrityException(
-                    "L2Shard.inflightTableCapacity must be positive: $inflightTableCapacity"
+                    "L2Shard.inflightTableCapacity must be positive: $inflightTableCapacity",
                 )
             }
             if (maxWaitersPerKey <= 0) {
                 throw PlanningProtocolIntegrityException(
-                    "L2Shard.maxWaitersPerKey must be positive: $maxWaitersPerKey"
+                    "L2Shard.maxWaitersPerKey must be positive: $maxWaitersPerKey",
                 )
             }
             if (joinWaitTimeoutNanos <= 0L) {
                 throw PlanningProtocolIntegrityException(
-                    "L2Shard.joinWaitTimeoutNanos must be > 0: $joinWaitTimeoutNanos"
+                    "L2Shard.joinWaitTimeoutNanos must be > 0: $joinWaitTimeoutNanos",
                 )
             }
         }

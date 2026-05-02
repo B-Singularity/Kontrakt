@@ -48,8 +48,8 @@ class CanonicalTypeTextInspectionPolicy private constructor(
     val deterministicPolicyToken: String =
         policyFingerprint.renderProtocolToken()
 
-    fun asFingerprintFields(): List<Pair<String, String>> {
-        return listOf(
+    fun asFingerprintFields(): List<Pair<String, String>> =
+        listOf(
             "policyVersion" to policyVersion,
             "allowNullableMarker" to allowNullableMarker.toString(),
             "allowStarProjection" to allowStarProjection.toString(),
@@ -57,32 +57,31 @@ class CanonicalTypeTextInspectionPolicy private constructor(
             "maxIdentifierTokenCodePoints" to maxIdentifierTokenCodePoints.toString(),
             "maxDelimiterCodePoints" to maxDelimiterCodePoints.toString(),
             "maxNonIdentifierCodePointRatioBasisPoints" to
-                    maxNonIdentifierCodePointRatioBasisPoints.toString(),
+                maxNonIdentifierCodePointRatioBasisPoints.toString(),
             "maxGrossCombiningMarks" to maxGrossCombiningMarks.toString(),
             "maxCombiningMarksPerIdentifierToken" to
-                    maxCombiningMarksPerIdentifierToken.toString(),
+                maxCombiningMarksPerIdentifierToken.toString(),
             "maxGraphemeClustersPerIdentifierToken" to
-                    maxGraphemeClustersPerIdentifierToken.toString(),
+                maxGraphemeClustersPerIdentifierToken.toString(),
             "scriptPolicyToken" to scriptPolicyToken,
         )
-    }
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is CanonicalTypeTextInspectionPolicy) return false
 
         return allowNullableMarker == other.allowNullableMarker &&
-                allowStarProjection == other.allowStarProjection &&
-                maxCodePoints == other.maxCodePoints &&
-                maxIdentifierTokenCodePoints == other.maxIdentifierTokenCodePoints &&
-                maxDelimiterCodePoints == other.maxDelimiterCodePoints &&
-                maxNonIdentifierCodePointRatioBasisPoints == other.maxNonIdentifierCodePointRatioBasisPoints &&
-                maxGrossCombiningMarks == other.maxGrossCombiningMarks &&
-                maxCombiningMarksPerIdentifierToken == other.maxCombiningMarksPerIdentifierToken &&
-                maxGraphemeClustersPerIdentifierToken == other.maxGraphemeClustersPerIdentifierToken &&
-                scriptPolicyToken == other.scriptPolicyToken &&
-                policyVersion == other.policyVersion &&
-                policyFingerprint == other.policyFingerprint
+            allowStarProjection == other.allowStarProjection &&
+            maxCodePoints == other.maxCodePoints &&
+            maxIdentifierTokenCodePoints == other.maxIdentifierTokenCodePoints &&
+            maxDelimiterCodePoints == other.maxDelimiterCodePoints &&
+            maxNonIdentifierCodePointRatioBasisPoints == other.maxNonIdentifierCodePointRatioBasisPoints &&
+            maxGrossCombiningMarks == other.maxGrossCombiningMarks &&
+            maxCombiningMarksPerIdentifierToken == other.maxCombiningMarksPerIdentifierToken &&
+            maxGraphemeClustersPerIdentifierToken == other.maxGraphemeClustersPerIdentifierToken &&
+            scriptPolicyToken == other.scriptPolicyToken &&
+            policyVersion == other.policyVersion &&
+            policyFingerprint == other.policyFingerprint
     }
 
     override fun hashCode(): Int {
@@ -101,9 +100,7 @@ class CanonicalTypeTextInspectionPolicy private constructor(
         return result
     }
 
-    override fun toString(): String {
-        return deterministicPolicyToken
-    }
+    override fun toString(): String = deterministicPolicyToken
 
     companion object {
         @JvmStatic
@@ -145,37 +142,37 @@ class CanonicalTypeTextInspectionPolicy private constructor(
             if (maxIdentifierTokenCodePoints > maxCodePoints) {
                 throw MetamodelFactContractViolationException(
                     "maxIdentifierTokenCodePoints must be <= maxCodePoints: " +
-                            "maxIdentifierTokenCodePoints=$maxIdentifierTokenCodePoints, maxCodePoints=$maxCodePoints",
+                        "maxIdentifierTokenCodePoints=$maxIdentifierTokenCodePoints, maxCodePoints=$maxCodePoints",
                 )
             }
 
             if (maxDelimiterCodePoints > maxCodePoints) {
                 throw MetamodelFactContractViolationException(
                     "maxDelimiterCodePoints must be <= maxCodePoints: " +
-                            "maxDelimiterCodePoints=$maxDelimiterCodePoints, maxCodePoints=$maxCodePoints",
+                        "maxDelimiterCodePoints=$maxDelimiterCodePoints, maxCodePoints=$maxCodePoints",
                 )
             }
 
             if (maxGrossCombiningMarks > maxCodePoints) {
                 throw MetamodelFactContractViolationException(
                     "maxGrossCombiningMarks must be <= maxCodePoints: " +
-                            "maxGrossCombiningMarks=$maxGrossCombiningMarks, maxCodePoints=$maxCodePoints",
+                        "maxGrossCombiningMarks=$maxGrossCombiningMarks, maxCodePoints=$maxCodePoints",
                 )
             }
 
             if (maxCombiningMarksPerIdentifierToken > maxGrossCombiningMarks) {
                 throw MetamodelFactContractViolationException(
                     "maxCombiningMarksPerIdentifierToken must be <= maxGrossCombiningMarks: " +
-                            "maxCombiningMarksPerIdentifierToken=$maxCombiningMarksPerIdentifierToken, " +
-                            "maxGrossCombiningMarks=$maxGrossCombiningMarks",
+                        "maxCombiningMarksPerIdentifierToken=$maxCombiningMarksPerIdentifierToken, " +
+                        "maxGrossCombiningMarks=$maxGrossCombiningMarks",
                 )
             }
 
             if (maxGraphemeClustersPerIdentifierToken > maxIdentifierTokenCodePoints) {
                 throw MetamodelFactContractViolationException(
                     "maxGraphemeClustersPerIdentifierToken must be <= maxIdentifierTokenCodePoints: " +
-                            "maxGraphemeClustersPerIdentifierToken=$maxGraphemeClustersPerIdentifierToken, " +
-                            "maxIdentifierTokenCodePoints=$maxIdentifierTokenCodePoints",
+                        "maxGraphemeClustersPerIdentifierToken=$maxGraphemeClustersPerIdentifierToken, " +
+                        "maxIdentifierTokenCodePoints=$maxIdentifierTokenCodePoints",
                 )
             }
 

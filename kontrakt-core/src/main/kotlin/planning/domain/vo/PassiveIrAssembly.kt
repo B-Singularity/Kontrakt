@@ -21,7 +21,7 @@ class PassiveIrAssembly private constructor(
         ): PassiveIrAssembly {
             if (selfSemanticCostUpperBound < 0L) {
                 throw PlanningProtocolIntegrityException(
-                    "PassiveIrAssembly.selfSemanticCostUpperBound must be >= 0: $selfSemanticCostUpperBound"
+                    "PassiveIrAssembly.selfSemanticCostUpperBound must be >= 0: $selfSemanticCostUpperBound",
                 )
             }
             return PassiveIrAssembly(

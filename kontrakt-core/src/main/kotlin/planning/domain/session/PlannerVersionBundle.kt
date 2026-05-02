@@ -29,27 +29,27 @@ class PlannerVersionBundle private constructor(
         ): PlannerVersionBundle {
             if (normalizationSpecVersion < 0) {
                 throw PlanningProtocolIntegrityException(
-                    "PlannerVersionBundle.normalizationSpecVersion must be >= 0: $normalizationSpecVersion"
+                    "PlannerVersionBundle.normalizationSpecVersion must be >= 0: $normalizationSpecVersion",
                 )
             }
             if (edgeOrderingVersion < 0) {
                 throw PlanningProtocolIntegrityException(
-                    "PlannerVersionBundle.edgeOrderingVersion must be >= 0: $edgeOrderingVersion"
+                    "PlannerVersionBundle.edgeOrderingVersion must be >= 0: $edgeOrderingVersion",
                 )
             }
             if (capabilityProfileVersion < 0) {
                 throw PlanningProtocolIntegrityException(
-                    "PlannerVersionBundle.capabilityProfileVersion must be >= 0: $capabilityProfileVersion"
+                    "PlannerVersionBundle.capabilityProfileVersion must be >= 0: $capabilityProfileVersion",
                 )
             }
             if (workAccountingVersion < 0) {
                 throw PlanningProtocolIntegrityException(
-                    "PlannerVersionBundle.workAccountingVersion must be >= 0: $workAccountingVersion"
+                    "PlannerVersionBundle.workAccountingVersion must be >= 0: $workAccountingVersion",
                 )
             }
             if (entropyVersion < 0) {
                 throw PlanningProtocolIntegrityException(
-                    "PlannerVersionBundle.entropyVersion must be >= 0: $entropyVersion"
+                    "PlannerVersionBundle.entropyVersion must be >= 0: $entropyVersion",
                 )
             }
 

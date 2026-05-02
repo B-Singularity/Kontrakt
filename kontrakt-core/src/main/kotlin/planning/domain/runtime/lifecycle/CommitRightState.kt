@@ -52,12 +52,12 @@ enum class CommitRightState(
                 for (state in ALL) {
                     if (state.code < 0) {
                         throw PlanningProtocolIntegrityException(
-                            "CommitRightState.code must be >= 0: name=${state.name}, code=${state.code}"
+                            "CommitRightState.code must be >= 0: name=${state.name}, code=${state.code}",
                         )
                     }
                     if (table[state.code] != null) {
                         throw PlanningProtocolIntegrityException(
-                            "Duplicate CommitRightState.code detected: code=${state.code}"
+                            "Duplicate CommitRightState.code detected: code=${state.code}",
                         )
                     }
                     table[state.code] = state

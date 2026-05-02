@@ -44,8 +44,8 @@ class InvalidMetamodelCanonicalComponentException(
     val value: String,
     val reason: String,
 ) : MetamodelFactContractViolationException(
-    "Invalid metamodel canonical component: field=$field, reason=$reason, value=${safeDiagnosticValue(value)}"
-)
+        "Invalid metamodel canonical component: field=$field, reason=$reason, value=${safeDiagnosticValue(value)}",
+    )
 
 /**
  * Thrown when DeclarationOrdinal violates its semantic contract.
@@ -57,8 +57,8 @@ class InvalidDeclarationOrdinalException(
     val ordinal: Int,
     val reason: String,
 ) : MetamodelFactContractViolationException(
-    "Invalid declaration ordinal: ordinal=$ordinal, reason=$reason"
-)
+        "Invalid declaration ordinal: ordinal=$ordinal, reason=$reason",
+    )
 
 /**
  * Thrown when one raw metamodel DTO has internally malformed shape.
@@ -73,8 +73,8 @@ class InvalidTypeFactShapeException(
     val factKind: String,
     val reason: String,
 ) : MetamodelFactContractViolationException(
-    "Invalid type-fact shape: owner=$owner, factKind=$factKind, reason=$reason"
-)
+        "Invalid type-fact shape: owner=$owner, factKind=$factKind, reason=$reason",
+    )
 
 /**
  * Thrown when one raw fact DTO contains duplicated facts that should have been
@@ -86,8 +86,8 @@ class DuplicateMetamodelFactException(
     val duplicateKey: String,
     val reason: String,
 ) : MetamodelFactContractViolationException(
-    "Duplicate metamodel fact: owner=$owner, factKind=$factKind, duplicateKey=${safeDiagnosticValue(duplicateKey)}, reason=$reason"
-)
+        "Duplicate metamodel fact: owner=$owner, factKind=$factKind, duplicateKey=${safeDiagnosticValue(duplicateKey)}, reason=$reason",
+    )
 
 /**
  * Thrown when a child fact claims a different owner than its enclosing raw DTO
@@ -98,8 +98,8 @@ class MetamodelFactOwnershipMismatchException(
     val actualOwner: String,
     val factKind: String,
 ) : MetamodelFactContractViolationException(
-    "Metamodel fact ownership mismatch: factKind=$factKind, expectedOwner=$expectedOwner, actualOwner=$actualOwner"
-)
+        "Metamodel fact ownership mismatch: factKind=$factKind, expectedOwner=$expectedOwner, actualOwner=$actualOwner",
+    )
 
 /**
  * Thrown when strict mode policies are violated.
@@ -123,7 +123,6 @@ class DeterminismViolationException(
     message: String,
 ) : MetamodelException(message)
 
-
 /**
  * Thrown when a caller passes a TypeReference that this adapter cannot resolve.
  *
@@ -133,7 +132,6 @@ class DeterminismViolationException(
 class UnsupportedMetamodelSourceException(
     message: String,
 ) : MetamodelException(message)
-
 
 /**
  * Thrown when the adapter emits or receives a component that violates the
@@ -150,6 +148,6 @@ class MetamodelNormalizationViolationException(
     val engineVersion: String,
     val reason: String,
 ) : MetamodelFactContractViolationException(
-    "Metamodel normalization violation: field=$field, engine=$engineId@$engineVersion, " +
-            "reason=$reason, valueSample=$valueSample"
-)
+        "Metamodel normalization violation: field=$field, engine=$engineId@$engineVersion, " +
+            "reason=$reason, valueSample=$valueSample",
+    )

@@ -50,7 +50,7 @@ class MemberFact private constructor(
             }
             if (typeSignatureNormalizationVersion < 0L) {
                 throw MetamodelException(
-                    "MemberFact.typeSignatureNormalizationVersion must be >= 0: $typeSignatureNormalizationVersion"
+                    "MemberFact.typeSignatureNormalizationVersion must be >= 0: $typeSignatureNormalizationVersion",
                 )
             }
 
@@ -94,7 +94,7 @@ class TypeFactsDTO private constructor(
             }
             if (normalizationVersion < 0L) {
                 throw MetamodelException(
-                    "TypeFactsDTO.normalizationVersion must be >= 0: $normalizationVersion"
+                    "TypeFactsDTO.normalizationVersion must be >= 0: $normalizationVersion",
                 )
             }
 

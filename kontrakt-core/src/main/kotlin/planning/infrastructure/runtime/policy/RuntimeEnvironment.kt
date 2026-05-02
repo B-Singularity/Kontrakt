@@ -19,12 +19,12 @@ data class RuntimeEnvironment(
     init {
         if (cpuCount <= 0) {
             throw PlanningProtocolIntegrityException(
-                "RuntimeEnvironment.cpuCount must be > 0: $cpuCount"
+                "RuntimeEnvironment.cpuCount must be > 0: $cpuCount",
             )
         }
         if (memoryLimitBytes != null && memoryLimitBytes <= 0L) {
             throw PlanningProtocolIntegrityException(
-                "RuntimeEnvironment.memoryLimitBytes must be null or > 0: $memoryLimitBytes"
+                "RuntimeEnvironment.memoryLimitBytes must be null or > 0: $memoryLimitBytes",
             )
         }
     }

@@ -1,37 +1,110 @@
 package metamodel.domain.vo
 
-import planning.domain.exception.TypeExpansionContractViolationException
+import metamodel.domain.exception.MetamodelFactContractViolationException
 
 /**
  * Cycle-detection structural key.
  *
- * Cycle identity law:
- * - all nullability markers are stripped before this value is issued;
- * - reified generic structure remains;
- * - backend/binary names are forbidden;
- * - source variance syntax must already be lowered;
- * - star projection must already be lowered.
+ * This is not:
  *
- * This class does not parse raw type syntax.
- * It accepts only already-lowered structural cycle material.
+ * - a source type string;
+ * - a JVM descriptor;
+ * - a binary class name;
+ * - a reflection/KSP handle;
+ * - a type-shape classifier;
+ * - a cache key;
+ * - or a canonical byte encoding.
+ *
+ * Cycle identity law:
+ *
+ * - all nullability markers must already be stripped before this value is issued;
+ * - reified generic structure remains;
+ * - backend/binary names are forbidden by CanonicalTypeTextGuards;
+ * - source variance syntax must already be lowered or rejected;
+ * - star projection must already be lowered or rejected;
+ * - value is the equality axis.
+ *
+ * Shape law:
+ *
+ * shapeSummary is coherence metadata.
+ *
+ * It is intentionally not an additional equality axis. If the same cycle value
+ * is issued with different shape metadata, that is upstream metamodel drift and
+ * must be rejected by the factory/ratifier/coherence scope that owns issuance.
+ *
+ * This VO does not infer shape from hardcoded strings such as:
+ *
+ * - "void";
+ * - "kotlin.Unit";
+ * - "java.util.List";
+ * - "[]".
+ *
+ * Reason:
+ *
+ * String-based platform interpretation belongs to adapter/classifier policy.
+ * TypeCycleKey must remain a pure structural key and must not know JVM/Kotlin
+ * platform vocabulary.
+ *
+ * Equality law:
  *
  * Equality is value-primary.
  *
- * shapeSummary is coherence metadata, not an additional equality axis.
- * If the same value is issued with a different shapeSummary, that is upstream
- * metamodel drift and must fail closed at issue time or factory ratification
- * time.
+ * This is intentional for cycle detection. The question is:
+ *
+ *     "Have we reached the same structural cycle key?"
+ *
+ * not:
+ *
+ *     "Did the adapter attach the same metadata object?"
+ *
+ * Hash law:
+ *
+ * hashCode is precomputed at issuance time because TypeCycleKey is expected to
+ * be used in hot visited-set / active-cycle-set paths.
+ *
+ * The precomputed hash is still only for in-memory equality collections.
+ *
+ * It must not be used as:
+ *
+ * - canonical fingerprint;
+ * - persisted identity;
+ * - cache route key;
+ * - cross-runtime protocol hash;
+ * - serialized protocol digest.
  */
 class TypeCycleKey private constructor(
     val value: String,
     val shapeSummary: TypeShapeSummary,
+    private val precomputedHashCode: Int,
 ) {
-    override fun equals(other: Any?): Boolean {
-        return other is TypeCycleKey && value == other.value
+    fun renderSummary(): String {
+        return "TypeCycleKey(" +
+                "value=$value, " +
+                "shape=${shapeSummary.kind.protocolToken}, " +
+                "arrayRank=${shapeSummary.arrayRank}, " +
+                "genericArity=${shapeSummary.genericArity}" +
+                ")"
+    }
+
+    override fun equals(
+        other: Any?,
+    ): Boolean {
+        if (this === other) return true
+        if (other !is TypeCycleKey) return false
+
+        /*
+         * Cheap negative filter.
+         * Structural equality remains value-only.
+         */
+        if (precomputedHashCode != other.precomputedHashCode) {
+            return false
+        }
+
+        return value == other.value
     }
 
     override fun hashCode(): Int {
-        return value.hashCode()
+        return precomputedHashCode
     }
 
     override fun toString(): String {
@@ -44,14 +117,20 @@ class TypeCycleKey private constructor(
             value: String,
             shapeSummary: TypeShapeSummary,
         ): TypeCycleKey {
-            CanonicalTypeTextGuards.validateCanonicalTypeText(
+            /*
+             * Cycle keys must be nullability-erased structural material.
+             *
+             * allowNullableMarker = false is the important cycle-key distinction
+             * from CanonicalTypeId / CanonicalTypeSignature surfaces.
+             */
+            CanonicalTypeTextGuards.validateInspectedSnapshot(
                 field = "TypeCycleKey.value",
-                value = value,
+                snapshot = value,
                 allowNullableMarker = false,
                 allowStarProjection = false,
             )
 
-            requireKnownCycleCoherence(
+            requireShapeSummaryBoundary(
                 value = value,
                 shapeSummary = shapeSummary,
             )
@@ -59,46 +138,42 @@ class TypeCycleKey private constructor(
             return TypeCycleKey(
                 value = value,
                 shapeSummary = shapeSummary,
+                precomputedHashCode = value.hashCode(),
             )
         }
 
-        private fun requireKnownCycleCoherence(
+        /**
+         * Local boundary check only.
+         *
+         * Do not infer semantic shape from the text value here.
+         * Do not check same-value/same-shape global coherence here.
+         *
+         * Same-value/different-shape drift must be rejected by the issuing
+         * coherence scope, because only the scope can observe previously issued
+         * values.
+         */
+        private fun requireShapeSummaryBoundary(
             value: String,
             shapeSummary: TypeShapeSummary,
         ) {
-            if (value == "void") {
-                requireKind(
-                    value = value,
-                    actual = shapeSummary.kind,
-                    expected = CanonicalTypeShapeKind.VOID,
+            if (value.isEmpty()) {
+                throw MetamodelFactContractViolationException(
+                    "TypeCycleKey.value must not be empty.",
                 )
             }
 
-            if (value == "kotlin.Unit") {
-                requireKind(
-                    value = value,
-                    actual = shapeSummary.kind,
-                    expected = CanonicalTypeShapeKind.UNIT,
-                )
-            }
-
-            if (value.endsWith("[]")) {
-                requireKind(
-                    value = value,
-                    actual = shapeSummary.kind,
-                    expected = CanonicalTypeShapeKind.ARRAY,
-                )
-            }
-        }
-
-        private fun requireKind(
-            value: String,
-            actual: CanonicalTypeShapeKind,
-            expected: CanonicalTypeShapeKind,
-        ) {
-            if (actual != expected) {
-                throw TypeExpansionContractViolationException(
-                    reason = "TypeCycleKey shape mismatch: value=$value, expected=${expected.protocolToken}, actual=${actual.protocolToken}",
+            /*
+             * TypeShapeSummary owns its own cardinality law.
+             *
+             * This boundary intentionally does not duplicate checks such as:
+             *
+             * - ARRAY must have arrayRank > 0;
+             * - ATOMIC must not have generic arity;
+             * - MAP must have valid arity.
+             */
+            if (shapeSummary.kind.protocolToken.isEmpty()) {
+                throw MetamodelFactContractViolationException(
+                    "TypeCycleKey.shapeSummary kind must expose protocol token.",
                 )
             }
         }

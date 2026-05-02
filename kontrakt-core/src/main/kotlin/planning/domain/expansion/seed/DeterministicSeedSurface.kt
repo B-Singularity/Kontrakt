@@ -62,29 +62,26 @@ class DeterministicSeedSurface private constructor(
     val rootTimeEpochMillis: RootTimeEpochMillis,
     val ratificationProof: DeterministicSeedSurfaceRatificationProof,
 ) {
-    fun copySeedBytesForDerivation(): ByteArray {
-        return seedMaterial.copyBytesForDerivation()
-    }
+    fun copySeedBytesForDerivation(): ByteArray = seedMaterial.copyBytesForDerivation()
 
-    fun renderSummary(): String {
-        return "DeterministicSeedSurface(" +
-                "id=${id.value}, " +
-                "seed=<redacted>, " +
-                "versionTuple=$versionTuple, " +
-                "rootTime=$rootTimeEpochMillis, " +
-                "proof=${ratificationProof.renderSummary()}" +
-                ")"
-    }
+    fun renderSummary(): String =
+        "DeterministicSeedSurface(" +
+            "id=${id.value}, " +
+            "seed=<redacted>, " +
+            "versionTuple=$versionTuple, " +
+            "rootTime=$rootTimeEpochMillis, " +
+            "proof=${ratificationProof.renderSummary()}" +
+            ")"
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is DeterministicSeedSurface) return false
 
         return id == other.id &&
-                seedMaterial == other.seedMaterial &&
-                versionTuple == other.versionTuple &&
-                rootTimeEpochMillis == other.rootTimeEpochMillis &&
-                ratificationProof == other.ratificationProof
+            seedMaterial == other.seedMaterial &&
+            versionTuple == other.versionTuple &&
+            rootTimeEpochMillis == other.rootTimeEpochMillis &&
+            ratificationProof == other.ratificationProof
     }
 
     override fun hashCode(): Int {
@@ -96,9 +93,7 @@ class DeterministicSeedSurface private constructor(
         return result
     }
 
-    override fun toString(): String {
-        return renderSummary()
-    }
+    override fun toString(): String = renderSummary()
 
     companion object {
         @JvmStatic

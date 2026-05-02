@@ -12,8 +12,9 @@ import planning.domain.exception.PlanningProtocolIntegrityException
  * - shard ownership
  */
 @JvmInline
-value class PartitionId private constructor(val value: String) {
-
+value class PartitionId private constructor(
+    val value: String,
+) {
     override fun toString(): String = value
 
     companion object {

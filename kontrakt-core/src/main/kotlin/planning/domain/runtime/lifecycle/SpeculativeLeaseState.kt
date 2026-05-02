@@ -45,12 +45,12 @@ enum class SpeculativeLeaseState(
                 for (state in ALL) {
                     if (state.code < 0) {
                         throw PlanningProtocolIntegrityException(
-                            "SpeculativeLeaseState.code must be >= 0: name=${state.name}, code=${state.code}"
+                            "SpeculativeLeaseState.code must be >= 0: name=${state.name}, code=${state.code}",
                         )
                     }
                     if (table[state.code] != null) {
                         throw PlanningProtocolIntegrityException(
-                            "Duplicate SpeculativeLeaseState.code detected: code=${state.code}"
+                            "Duplicate SpeculativeLeaseState.code detected: code=${state.code}",
                         )
                     }
                     table[state.code] = state

@@ -64,12 +64,12 @@ internal enum class DispatchLaneState(
                 for (state in ALL) {
                     if (state.code < 0) {
                         throw PlanningProtocolIntegrityException(
-                            "DispatchLaneState.code must be >= 0: name=${state.name}, code=${state.code}"
+                            "DispatchLaneState.code must be >= 0: name=${state.name}, code=${state.code}",
                         )
                     }
                     if (table[state.code] != null) {
                         throw PlanningProtocolIntegrityException(
-                            "Duplicate DispatchLaneState.code detected: code=${state.code}"
+                            "Duplicate DispatchLaneState.code detected: code=${state.code}",
                         )
                     }
                     table[state.code] = state

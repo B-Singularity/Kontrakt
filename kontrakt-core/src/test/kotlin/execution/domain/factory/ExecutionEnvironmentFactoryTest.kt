@@ -7,7 +7,6 @@ import java.time.Instant
 import java.time.ZoneId
 
 class ExecutionEnvironmentFactoryTest {
-
     // Use a fixed clock to ensure deterministic timestamp assertions
     private val fixedInstant = Instant.parse("2024-01-01T12:00:00Z")
     private val fixedZone = ZoneId.of("UTC")
@@ -69,11 +68,12 @@ class ExecutionEnvironmentFactoryTest {
         val expectedLocale = "ko-KR"
         val expectedZone = ZoneId.of("Asia/Seoul")
 
-        val sut = ExecutionEnvironmentFactory(
-            clock = fixedClock,
-            localeProvider = { expectedLocale },
-            zoneIdProvider = { expectedZone }
-        )
+        val sut =
+            ExecutionEnvironmentFactory(
+                clock = fixedClock,
+                localeProvider = { expectedLocale },
+                zoneIdProvider = { expectedZone },
+            )
 
         // When
         val env = sut.create(1L)
@@ -86,10 +86,11 @@ class ExecutionEnvironmentFactoryTest {
     @Test
     fun `create - respects trace sampling configuration`() {
         // Given: Trace sampling disabled
-        val sut = ExecutionEnvironmentFactory(
-            clock = fixedClock,
-            traceSampled = false
-        )
+        val sut =
+            ExecutionEnvironmentFactory(
+                clock = fixedClock,
+                traceSampled = false,
+            )
 
         // When
         val env = sut.create(1L)

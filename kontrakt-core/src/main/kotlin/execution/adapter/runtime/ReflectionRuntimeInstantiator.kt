@@ -17,7 +17,6 @@ import java.util.ArrayDeque
  * - **Queue/Deque Interface:** Defaults to [ArrayDeque].
  */
 class ReflectionRuntimeInstantiator : RuntimeInstantiator {
-
     override fun createEmptyCollection(handle: RuntimeTypeHandle): Any {
         val clazz = (handle as JvmClassHandle).clazz
 
@@ -31,27 +30,40 @@ class ReflectionRuntimeInstantiator : RuntimeInstantiator {
         return when {
             // Set -> LinkedHashSet
             Set::class.java.isAssignableFrom(clazz) -> {
-                if (clazz.isAssignableFrom(LinkedHashSet::class.java)) LinkedHashSet<Any?>()
-                else if (clazz.isAssignableFrom(HashSet::class.java)) HashSet<Any?>()
-                else throw RuntimeInstantiationException("Cannot instantiate compatible Set for ${clazz.name}")
+                if (clazz.isAssignableFrom(LinkedHashSet::class.java)) {
+                    LinkedHashSet<Any?>()
+                } else if (clazz.isAssignableFrom(HashSet::class.java)) {
+                    HashSet<Any?>()
+                } else {
+                    throw RuntimeInstantiationException("Cannot instantiate compatible Set for ${clazz.name}")
+                }
             }
 
             // List -> ArrayList
             List::class.java.isAssignableFrom(clazz) -> {
-                if (clazz.isAssignableFrom(ArrayList::class.java)) ArrayList<Any?>()
-                else throw RuntimeInstantiationException("Cannot instantiate compatible List for ${clazz.name}")
+                if (clazz.isAssignableFrom(ArrayList::class.java)) {
+                    ArrayList<Any?>()
+                } else {
+                    throw RuntimeInstantiationException("Cannot instantiate compatible List for ${clazz.name}")
+                }
             }
 
             // Queue/Deque -> ArrayDeque
             java.util.Deque::class.java.isAssignableFrom(clazz) || java.util.Queue::class.java.isAssignableFrom(clazz) -> {
-                if (clazz.isAssignableFrom(ArrayDeque::class.java)) ArrayDeque<Any?>()
-                else throw RuntimeInstantiationException("Cannot instantiate compatible Queue for ${clazz.name}")
+                if (clazz.isAssignableFrom(ArrayDeque::class.java)) {
+                    ArrayDeque<Any?>()
+                } else {
+                    throw RuntimeInstantiationException("Cannot instantiate compatible Queue for ${clazz.name}")
+                }
             }
 
             // Collection (General) -> ArrayList
             Collection::class.java.isAssignableFrom(clazz) -> {
-                if (clazz.isAssignableFrom(ArrayList::class.java)) ArrayList<Any?>()
-                else throw RuntimeInstantiationException("Cannot instantiate compatible Collection for ${clazz.name}")
+                if (clazz.isAssignableFrom(ArrayList::class.java)) {
+                    ArrayList<Any?>()
+                } else {
+                    throw RuntimeInstantiationException("Cannot instantiate compatible Collection for ${clazz.name}")
+                }
             }
 
             else -> throw RuntimeInstantiationException("Unsupported concrete collection type: ${clazz.name}")
@@ -66,9 +78,13 @@ class ReflectionRuntimeInstantiator : RuntimeInstantiator {
 
         return when {
             Map::class.java.isAssignableFrom(clazz) -> {
-                if (clazz.isAssignableFrom(LinkedHashMap::class.java)) LinkedHashMap<Any?, Any?>()
-                else if (clazz.isAssignableFrom(HashMap::class.java)) HashMap<Any?, Any?>()
-                else throw RuntimeInstantiationException("Cannot instantiate compatible Map for ${clazz.name}")
+                if (clazz.isAssignableFrom(LinkedHashMap::class.java)) {
+                    LinkedHashMap<Any?, Any?>()
+                } else if (clazz.isAssignableFrom(HashMap::class.java)) {
+                    HashMap<Any?, Any?>()
+                } else {
+                    throw RuntimeInstantiationException("Cannot instantiate compatible Map for ${clazz.name}")
+                }
             }
 
             else -> throw RuntimeInstantiationException("Unsupported map type: ${clazz.name}")
@@ -80,10 +96,14 @@ class ReflectionRuntimeInstantiator : RuntimeInstantiator {
         if (!clazz.isArray) {
             throw RuntimeInstantiationException("Requested array instantiation for non-array type: ${clazz.name}")
         }
-        return java.lang.reflect.Array.newInstance(clazz.componentType, 0)
+        return java.lang.reflect.Array
+            .newInstance(clazz.componentType, 0)
     }
 
-    override fun createDiagnosticStub(handle: RuntimeTypeHandle, message: String): Any {
+    override fun createDiagnosticStub(
+        handle: RuntimeTypeHandle,
+        message: String,
+    ): Any {
         val clazz = (handle as JvmClassHandle).clazz
         if (!clazz.isInterface) {
             throw RuntimeInstantiationException("Diagnostic stubs can only be created for interfaces. Found: ${clazz.name}")
@@ -92,13 +112,19 @@ class ReflectionRuntimeInstantiator : RuntimeInstantiator {
         return Proxy.newProxyInstance(
             clazz.classLoader,
             arrayOf(clazz),
-            DiagnosticInvocationHandler(message)
+            DiagnosticInvocationHandler(message),
         )
     }
 
-    private class DiagnosticInvocationHandler(private val message: String) : InvocationHandler {
-        override fun invoke(proxy: Any, method: Method, args: Array<out Any>?): Any? {
-            return when {
+    private class DiagnosticInvocationHandler(
+        private val message: String,
+    ) : InvocationHandler {
+        override fun invoke(
+            proxy: Any,
+            method: Method,
+            args: Array<out Any>?,
+        ): Any? =
+            when {
                 method.name == "toString" && method.parameterCount == 0 -> "DiagnosticStub[$message]"
                 method.name == "hashCode" && method.parameterCount == 0 -> System.identityHashCode(proxy)
                 method.name == "equals" && method.parameterCount == 1 -> {
@@ -108,6 +134,5 @@ class ReflectionRuntimeInstantiator : RuntimeInstantiator {
 
                 else -> throw RuntimeInstantiationException(message)
             }
-        }
     }
 }

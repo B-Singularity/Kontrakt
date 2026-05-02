@@ -19,17 +19,17 @@ import planning.domain.session.policy.ResolvedStorageGovernance
  * the profile definition.
  */
 class DefaultRuntimePolicyResolver : RuntimePolicyResolver {
-
     override fun resolve(
         profile: ResourceProfile,
         environment: RuntimeEnvironment,
         telemetry: RecentTelemetry?,
         previousPolicy: ResolvedRuntimePolicy?,
     ): ResolvedRuntimePolicy {
-        val activeProfile = when (profile) {
-            ResourceProfile.AUTO -> ResourceProfile.STANDARD
-            else -> profile
-        }
+        val activeProfile =
+            when (profile) {
+                ResourceProfile.AUTO -> ResourceProfile.STANDARD
+                else -> profile
+            }
 
         val sessionBudget = resolveSessionBudget(activeProfile)
         val joinGovernance = resolveJoinGovernance()
@@ -43,55 +43,54 @@ class DefaultRuntimePolicyResolver : RuntimePolicyResolver {
         )
     }
 
-    private fun resolveSessionBudget(profile: ResourceProfile): ResolvedSessionBudget {
-        return when (profile) {
-            ResourceProfile.SMALL -> ResolvedSessionBudget.issue(
-                maxPlannerBytesPerWorker = 10L * 1024L * 1024L,
-                maxPhysicalSteps = 2_097_152,
-                maxSemanticWorkUnits = 524_288,
-                maxSignatureLen = 4096,
-                fixedHeadroomBytes = 512L * 1024L,
-                physicalStepMultiplier = 16,
-                semanticWorkMultiplier = 4,
-            )
+    private fun resolveSessionBudget(profile: ResourceProfile): ResolvedSessionBudget =
+        when (profile) {
+            ResourceProfile.SMALL ->
+                ResolvedSessionBudget.issue(
+                    maxPlannerBytesPerWorker = 10L * 1024L * 1024L,
+                    maxPhysicalSteps = 2_097_152,
+                    maxSemanticWorkUnits = 524_288,
+                    maxSignatureLen = 4096,
+                    fixedHeadroomBytes = 512L * 1024L,
+                    physicalStepMultiplier = 16,
+                    semanticWorkMultiplier = 4,
+                )
 
-            ResourceProfile.STANDARD -> ResolvedSessionBudget.issue(
-                maxPlannerBytesPerWorker = 20L * 1024L * 1024L,
-                maxPhysicalSteps = 4_194_304,
-                maxSemanticWorkUnits = 1_048_576,
-                maxSignatureLen = 4096,
-                fixedHeadroomBytes = 512L * 1024L,
-                physicalStepMultiplier = 16,
-                semanticWorkMultiplier = 4,
-            )
+            ResourceProfile.STANDARD ->
+                ResolvedSessionBudget.issue(
+                    maxPlannerBytesPerWorker = 20L * 1024L * 1024L,
+                    maxPhysicalSteps = 4_194_304,
+                    maxSemanticWorkUnits = 1_048_576,
+                    maxSignatureLen = 4096,
+                    fixedHeadroomBytes = 512L * 1024L,
+                    physicalStepMultiplier = 16,
+                    semanticWorkMultiplier = 4,
+                )
 
-            ResourceProfile.LARGE -> ResolvedSessionBudget.issue(
-                maxPlannerBytesPerWorker = 40L * 1024L * 1024L,
-                maxPhysicalSteps = 8_388_608,
-                maxSemanticWorkUnits = 2_097_152,
-                maxSignatureLen = 4096,
-                fixedHeadroomBytes = 512L * 1024L,
-                physicalStepMultiplier = 16,
-                semanticWorkMultiplier = 4,
-            )
+            ResourceProfile.LARGE ->
+                ResolvedSessionBudget.issue(
+                    maxPlannerBytesPerWorker = 40L * 1024L * 1024L,
+                    maxPhysicalSteps = 8_388_608,
+                    maxSemanticWorkUnits = 2_097_152,
+                    maxSignatureLen = 4096,
+                    fixedHeadroomBytes = 512L * 1024L,
+                    physicalStepMultiplier = 16,
+                    semanticWorkMultiplier = 4,
+                )
 
             ResourceProfile.AUTO ->
                 throw IllegalStateException("AUTO must be normalized before resolveSessionBudget")
         }
-    }
 
-    private fun resolveJoinGovernance(): ResolvedJoinGovernance {
-        return ResolvedJoinGovernance.issue(
+    private fun resolveJoinGovernance(): ResolvedJoinGovernance =
+        ResolvedJoinGovernance.issue(
             joinWaitTimeoutNanos = 2_000_000L,
             maxWaitersPerKey = 8,
             maxSpeculativeBuildersPerKey = 0,
             failFastOnQuotaExhaustion = false,
         )
-    }
 
-    private fun resolveStorageGovernance(
-        budget: ResolvedSessionBudget,
-    ): ResolvedStorageGovernance {
+    private fun resolveStorageGovernance(budget: ResolvedSessionBudget): ResolvedStorageGovernance {
         val storageMultiplier = 2.0
         val storageEntryBytesBaseline = 1024L
 

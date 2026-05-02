@@ -53,7 +53,7 @@ class ArrayComponentShapeHint private constructor(
         if (componentShapeKindHint == CanonicalTypeShapeKind.ARRAY) {
             throw MetamodelFactContractViolationException(
                 "Nested array shape must be represented by TypeShapeSummary.arrayRank, " +
-                        "not by ARRAY componentShapeKindHint.",
+                    "not by ARRAY componentShapeKindHint.",
             )
         }
     }
@@ -70,7 +70,7 @@ class ArrayComponentShapeHint private constructor(
         if (componentShapeKindHint != null && componentShapeKindHint != actualComponentKind) {
             throw MetamodelFactContractViolationException(
                 "Array component shape hint mismatch: " +
-                        "hint=${componentShapeKindHint.protocolToken}, actual=${actualComponentKind.protocolToken}",
+                    "hint=${componentShapeKindHint.protocolToken}, actual=${actualComponentKind.protocolToken}",
             )
         }
 
@@ -79,7 +79,7 @@ class ArrayComponentShapeHint private constructor(
         ) {
             throw MetamodelFactContractViolationException(
                 "Array component generic arity hint mismatch: " +
-                        "hint=$componentGenericArityHint, actual=$actualComponentGenericArity",
+                    "hint=$componentGenericArityHint, actual=$actualComponentGenericArity",
             )
         }
 
@@ -87,7 +87,7 @@ class ArrayComponentShapeHint private constructor(
         if (hasGenericComponent != actualHasGenericComponent) {
             throw MetamodelFactContractViolationException(
                 "Array component generic presence hint mismatch: " +
-                        "hint=$hasGenericComponent, actual=$actualHasGenericComponent",
+                    "hint=$hasGenericComponent, actual=$actualHasGenericComponent",
             )
         }
     }
@@ -97,8 +97,8 @@ class ArrayComponentShapeHint private constructor(
         if (other !is ArrayComponentShapeHint) return false
 
         return hasGenericComponent == other.hasGenericComponent &&
-                componentGenericArityHint == other.componentGenericArityHint &&
-                componentShapeKindHint == other.componentShapeKindHint
+            componentGenericArityHint == other.componentGenericArityHint &&
+            componentShapeKindHint == other.componentShapeKindHint
     }
 
     override fun hashCode(): Int {
@@ -108,8 +108,8 @@ class ArrayComponentShapeHint private constructor(
         return result
     }
 
-    override fun toString(): String {
-        return buildString {
+    override fun toString(): String =
+        buildString {
             append("ArrayComponentShapeHint(")
             append("hasGenericComponent=")
             append(hasGenericComponent)
@@ -119,7 +119,6 @@ class ArrayComponentShapeHint private constructor(
             append(componentShapeKindHint?.protocolToken)
             append(')')
         }
-    }
 
     companion object {
         @JvmStatic
@@ -128,11 +127,12 @@ class ArrayComponentShapeHint private constructor(
             componentGenericArityHint: Int?,
             componentShapeKindHint: CanonicalTypeShapeKind?,
         ): ArrayComponentShapeHint {
-            val hint = ArrayComponentShapeHint(
-                hasGenericComponent = hasGenericComponent,
-                componentGenericArityHint = componentGenericArityHint,
-                componentShapeKindHint = componentShapeKindHint,
-            )
+            val hint =
+                ArrayComponentShapeHint(
+                    hasGenericComponent = hasGenericComponent,
+                    componentGenericArityHint = componentGenericArityHint,
+                    componentShapeKindHint = componentShapeKindHint,
+                )
             hint.validateForArray()
             return hint
         }

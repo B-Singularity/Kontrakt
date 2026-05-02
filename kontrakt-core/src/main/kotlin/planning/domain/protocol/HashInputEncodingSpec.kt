@@ -26,13 +26,16 @@ class HashInputEncodingSpec(
     private val normalizationEngine: NormalizationEngine,
     val normalizationSpecVersion: Long,
 ) {
-
     /**
      * Encodes [input] into [sink] at [offset], returning the number of bytes written.
      *
      * Format: [lenLE32][utf8Bytes]
      */
-    fun appendEncoded(sink: ByteArray, offset: Int, input: String): Int {
+    fun appendEncoded(
+        sink: ByteArray,
+        offset: Int,
+        input: String,
+    ): Int {
         validateStrict(input)
 
         val bytes = input.toByteArray(StandardCharsets.UTF_8)
@@ -98,7 +101,7 @@ class HashInputEncodingSpec(
         if (!normalizationEngine.isNfc(input)) {
             throw PortContractViolationException(
                 "Input is not NFC (engine=${normalizationEngine.engineId} ${normalizationEngine.engineVersion}). " +
-                        "Core does not normalize."
+                    "Core does not normalize.",
             )
         }
     }

@@ -14,8 +14,5 @@ import metamodel.domain.vo.TypeReference
  * - this distinction is part of protocol metering, not optional telemetry
  */
 interface RawTypeFactsProvider {
-
-    fun resolveRawFacts(
-        reference: TypeReference,
-    ): RawTypeFactsResolution
+    fun resolveRawFacts(reference: TypeReference): RawTypeFactsResolution
 }

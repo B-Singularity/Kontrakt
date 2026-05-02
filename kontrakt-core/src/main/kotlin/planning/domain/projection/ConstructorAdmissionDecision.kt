@@ -11,7 +11,6 @@ package planning.domain.projection
  * object/data class.
  */
 sealed interface ConstructorAdmissionDecision {
-
     val isAdmitted: Boolean
 
     object Admitted : ConstructorAdmissionDecision {
@@ -21,16 +20,11 @@ sealed interface ConstructorAdmissionDecision {
     class Rejected private constructor(
         val reason: ConstructorRejectionReason,
     ) : ConstructorAdmissionDecision {
-
         override val isAdmitted: Boolean = false
 
         companion object {
             @JvmStatic
-            fun issue(
-                reason: ConstructorRejectionReason,
-            ): Rejected {
-                return Rejected(reason)
-            }
+            fun issue(reason: ConstructorRejectionReason): Rejected = Rejected(reason)
         }
     }
 }

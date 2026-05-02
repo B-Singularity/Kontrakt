@@ -32,18 +32,15 @@ import java.util.AbstractList
  */
 class MetamodelFactSequence<T> private constructor(
     private val snapshot: Array<Any?>,
-) : AbstractList<T>(), RandomAccess {
-
+) : AbstractList<T>(),
+    RandomAccess {
     override val size: Int
         get() = snapshot.size
 
     @Suppress("UNCHECKED_CAST")
-    override fun get(index: Int): T {
-        return snapshot[index] as T
-    }
+    override fun get(index: Int): T = snapshot[index] as T
 
     companion object {
-
         /**
          * Builds a deterministic sequence by sorting with a strict total comparator.
          *
@@ -163,7 +160,8 @@ class MetamodelFactSequence<T> private constructor(
                     throw InvalidTypeFactShapeException(
                         owner = owner,
                         factKind = factKind,
-                        reason = "$indexName must form a compact range with exactly " +
+                        reason =
+                            "$indexName must form a compact range with exactly " +
                                 "${buffer.size} distinct indices for ${buffer.size} elements; " +
                                 "valid range is 0..${buffer.size - 1}, actual=$index",
                     )
@@ -174,7 +172,8 @@ class MetamodelFactSequence<T> private constructor(
                         owner = owner,
                         factKind = factKind,
                         duplicateKey = "$indexName=$index",
-                        reason = "Duplicate compact index in metamodel fact sequence. " +
+                        reason =
+                            "Duplicate compact index in metamodel fact sequence. " +
                                 "Compact range requires exactly one fact per index.",
                     )
                 }
@@ -221,9 +220,7 @@ class MetamodelFactSequence<T> private constructor(
             return fromOrderedBuffer(buffer)
         }
 
-        private fun <T> copyElements(
-            elements: Collection<T>,
-        ): ArrayList<T> {
+        private fun <T> copyElements(elements: Collection<T>): ArrayList<T> {
             val buffer = ArrayList<T>(elements.size)
             val iterator = elements.iterator()
             while (iterator.hasNext()) {
@@ -312,11 +309,12 @@ class MetamodelFactSequence<T> private constructor(
                 val comparison = comparator.compare(left, right)
 
                 if (comparison >= 0) {
-                    val reason = if (comparison == 0) {
-                        "Sequence contains a comparator tie and is not strictly ordered."
-                    } else {
-                        "Sequence is not sorted according to the supplied deterministic comparator."
-                    }
+                    val reason =
+                        if (comparison == 0) {
+                            "Sequence contains a comparator tie and is not strictly ordered."
+                        } else {
+                            "Sequence is not sorted according to the supplied deterministic comparator."
+                        }
 
                     throw InvalidTypeFactShapeException(
                         owner = owner,
@@ -329,9 +327,7 @@ class MetamodelFactSequence<T> private constructor(
             }
         }
 
-        private fun <T> fromOrderedBuffer(
-            buffer: List<T>,
-        ): MetamodelFactSequence<T> {
+        private fun <T> fromOrderedBuffer(buffer: List<T>): MetamodelFactSequence<T> {
             val snapshot = arrayOfNulls<Any?>(buffer.size)
 
             var i = 0

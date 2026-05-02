@@ -20,28 +20,23 @@ class PolymorphicImplementationSet private constructor(
     val size: Int
         get() = candidates.size
 
-    fun isEmpty(): Boolean {
-        return candidates.isEmpty()
-    }
+    fun isEmpty(): Boolean = candidates.isEmpty()
 
-    fun candidateAt(index: Int): PolymorphicImplementationCandidate {
-        return candidates[index]
-    }
+    fun candidateAt(index: Int): PolymorphicImplementationCandidate = candidates[index]
 
-    fun onlyCandidateOrNull(): PolymorphicImplementationCandidate? {
-        return if (candidates.size == 1) {
+    fun onlyCandidateOrNull(): PolymorphicImplementationCandidate? =
+        if (candidates.size == 1) {
             candidates[0]
         } else {
             null
         }
-    }
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is PolymorphicImplementationSet) return false
 
         return TypeReferenceIdentity.sameSemanticType(contractType, other.contractType) &&
-                candidates == other.candidates
+            candidates == other.candidates
     }
 
     override fun hashCode(): Int {
@@ -50,9 +45,7 @@ class PolymorphicImplementationSet private constructor(
         return result
     }
 
-    override fun toString(): String {
-        return "PolymorphicImplementationSet(contract=${contractType.signature}, size=${candidates.size})"
-    }
+    override fun toString(): String = "PolymorphicImplementationSet(contract=${contractType.signature}, size=${candidates.size})"
 
     companion object {
         private val CANDIDATE_ORDER: Comparator<PolymorphicImplementationCandidate> =
@@ -90,14 +83,15 @@ class PolymorphicImplementationSet private constructor(
 
             return PolymorphicImplementationSet(
                 contractType = contractType,
-                candidates = ExpansionSequence.orderedStrict(
-                    elements = candidates,
-                    comparator = CANDIDATE_ORDER,
-                    duplicateMessage = { left, right ->
-                        "Duplicate polymorphic implementation candidate: " +
+                candidates =
+                    ExpansionSequence.orderedStrict(
+                        elements = candidates,
+                        comparator = CANDIDATE_ORDER,
+                        duplicateMessage = { left, right ->
+                            "Duplicate polymorphic implementation candidate: " +
                                 "${left.implementation.canonicalIdentifier} and ${right.implementation.canonicalIdentifier}"
-                    },
-                ),
+                        },
+                    ),
             )
         }
 

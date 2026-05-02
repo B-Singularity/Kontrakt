@@ -20,19 +20,11 @@ class CanonicalVersionTuple private constructor(
     val edgeOrderingVersion: String,
     val hashDerivationVersion: String,
 ) {
-    fun sameProtocolAs(
-        other: CanonicalVersionTuple,
-    ): Boolean {
-        return this == other
-    }
+    fun sameProtocolAs(other: CanonicalVersionTuple): Boolean = this == other
 
-    fun renderForDiagnostics(): String {
-        return toString()
-    }
+    fun renderForDiagnostics(): String = toString()
 
-    override fun equals(
-        other: Any?,
-    ): Boolean {
+    override fun equals(other: Any?): Boolean {
         if (this === other) {
             return true
         }
@@ -42,11 +34,11 @@ class CanonicalVersionTuple private constructor(
         }
 
         return canonicalEncodingVersion == other.canonicalEncodingVersion &&
-                normalizationVersion == other.normalizationVersion &&
-                signatureSchemaVersion == other.signatureSchemaVersion &&
-                typeIdentityAlgorithmVersion == other.typeIdentityAlgorithmVersion &&
-                edgeOrderingVersion == other.edgeOrderingVersion &&
-                hashDerivationVersion == other.hashDerivationVersion
+            normalizationVersion == other.normalizationVersion &&
+            signatureSchemaVersion == other.signatureSchemaVersion &&
+            typeIdentityAlgorithmVersion == other.typeIdentityAlgorithmVersion &&
+            edgeOrderingVersion == other.edgeOrderingVersion &&
+            hashDerivationVersion == other.hashDerivationVersion
     }
 
     override fun hashCode(): Int {
@@ -59,8 +51,8 @@ class CanonicalVersionTuple private constructor(
         return result
     }
 
-    override fun toString(): String {
-        return buildString {
+    override fun toString(): String =
+        buildString {
             append("CanonicalVersionTuple(")
             append("encoding=")
             append(canonicalEncodingVersion)
@@ -76,7 +68,6 @@ class CanonicalVersionTuple private constructor(
             append(hashDerivationVersion)
             append(')')
         }
-    }
 
     companion object {
         @JvmStatic

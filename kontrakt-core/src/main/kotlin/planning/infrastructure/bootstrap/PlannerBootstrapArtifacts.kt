@@ -21,12 +21,11 @@ class PlannerBootstrapArtifacts private constructor(
             sessionConfig: PlannerSessionConfig,
             l2GovernanceConfig: L2GovernanceConfig,
             l2StorageGovernanceConfig: L2StorageGovernanceConfig,
-        ): PlannerBootstrapArtifacts {
-            return PlannerBootstrapArtifacts(
+        ): PlannerBootstrapArtifacts =
+            PlannerBootstrapArtifacts(
                 sessionConfig = sessionConfig,
                 l2GovernanceConfig = l2GovernanceConfig,
                 l2StorageGovernanceConfig = l2StorageGovernanceConfig,
             )
-        }
     }
 }

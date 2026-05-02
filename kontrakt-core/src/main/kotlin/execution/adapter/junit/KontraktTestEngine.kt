@@ -53,9 +53,8 @@ import java.time.Clock
 class KontraktTestEngine(
     private val reportingFactory: ReportingInfrastructureFactory,
     private val tracingFactory: TracingInfrastructureFactory,
-    private val options: UserControlOptions = UserControlOptions.fromSystemProperties()
+    private val options: UserControlOptions = UserControlOptions.fromSystemProperties(),
 ) : TestEngine {
-
     constructor() : this(DefaultInfrastructureFactory, DefaultInfrastructureFactory)
 
     private val logger = KotlinLogging.logger {}
@@ -118,7 +117,6 @@ class KontraktTestEngine(
         val scenarioControl = ThreadLocalScenarioControl()
         val traceSinkPool = tracingFactory.createTraceSinkPool(Path.of("build/kontrakt"))
 
-
         // 2. [Policy] Establish the "Source of Truth" for Determinism
         // ADR: Determine the Master Seed HERE. If the user didn't provide one, generate it.
         // This ensures consistent seeding across Environment, Generators, and Logs.
@@ -127,9 +125,10 @@ class KontraktTestEngine(
         // Bake the master seed into the ExecutionPolicy.
         // Now, policy.determinism.seed is GUARANTEED to be non-null for downstream consumers.
         val basePolicy = options.toExecutionPolicy()
-        val executionPolicy = basePolicy.copy(
-            determinism = basePolicy.determinism.copy(seed = masterSeed),
-        )
+        val executionPolicy =
+            basePolicy.copy(
+                determinism = basePolicy.determinism.copy(seed = masterSeed),
+            )
 
         val reportingDirectives = options.toReportingDirectives()
 
@@ -148,12 +147,13 @@ class KontraktTestEngine(
             publishers.add(HtmlReporter(reportingDirectives))
         }
 
-        val resultPublisher = reportingFactory.createResultPublisher(
-            publishers = publishers,
-            onPublishFailure = { name, error ->
-                System.err.println("[Kontrakt Engine] Reporter '$name' failed: ${error.message}")
-            }
-        )
+        val resultPublisher =
+            reportingFactory.createResultPublisher(
+                publishers = publishers,
+                onPublishFailure = { name, error ->
+                    System.err.println("[Kontrakt Engine] Reporter '$name' failed: ${error.message}")
+                },
+            )
 
         try {
             // 4. [Runtime] Initialize the Runtime Factory

@@ -64,13 +64,12 @@ class TypeShapeRatificationFingerprint private constructor(
     val valueEncoding: FingerprintTokenEncoding,
     val value: String,
 ) {
-    fun redacted(): String {
-        return "TypeShapeRatificationFingerprint(" +
-                "algorithm=$algorithmId@$algorithmVersion, " +
-                "encoding=${valueEncoding.protocolToken}, " +
-                "value=<redacted>" +
-                ")"
-    }
+    fun redacted(): String =
+        "TypeShapeRatificationFingerprint(" +
+            "algorithm=$algorithmId@$algorithmVersion, " +
+            "encoding=${valueEncoding.protocolToken}, " +
+            "value=<redacted>" +
+            ")"
 
     fun requireAlgorithm(
         expectedAlgorithmId: String,
@@ -84,8 +83,8 @@ class TypeShapeRatificationFingerprint private constructor(
         ) {
             throw MetamodelFactContractViolationException(
                 "TypeShapeRatificationFingerprint algorithm mismatch: " +
-                        "expected=$expectedCanonicalAlgorithmId@$expectedAlgorithmVersion, " +
-                        "actual=$algorithmId@$algorithmVersion",
+                    "expected=$expectedCanonicalAlgorithmId@$expectedAlgorithmVersion, " +
+                    "actual=$algorithmId@$algorithmVersion",
             )
         }
     }
@@ -95,9 +94,9 @@ class TypeShapeRatificationFingerprint private constructor(
         if (other !is TypeShapeRatificationFingerprint) return false
 
         return algorithmId == other.algorithmId &&
-                algorithmVersion == other.algorithmVersion &&
-                valueEncoding == other.valueEncoding &&
-                value == other.value
+            algorithmVersion == other.algorithmVersion &&
+            valueEncoding == other.valueEncoding &&
+            value == other.value
     }
 
     override fun hashCode(): Int {
@@ -108,9 +107,7 @@ class TypeShapeRatificationFingerprint private constructor(
         return result
     }
 
-    override fun toString(): String {
-        return redacted()
-    }
+    override fun toString(): String = redacted()
 
     companion object {
         private const val MAX_FINGERPRINT_TOKEN_CHARS: Int = 512
@@ -161,9 +158,7 @@ class TypeShapeRatificationFingerprint private constructor(
             )
         }
 
-        private fun canonicalizeAlgorithmId(
-            value: String,
-        ): String {
+        private fun canonicalizeAlgorithmId(value: String): String {
             if (value.isEmpty()) {
                 throw MetamodelFactContractViolationException(
                     "algorithmId must not be empty.",
@@ -193,7 +188,8 @@ class TypeShapeRatificationFingerprint private constructor(
                     in '0'..'9',
                     '-',
                     '_',
-                    '.' -> {
+                    '.',
+                    -> {
                         // Already canonical-safe ASCII protocol material.
                     }
 
@@ -213,11 +209,12 @@ class TypeShapeRatificationFingerprint private constructor(
 
             for (index in value.indices) {
                 val c = value[index]
-                val lowered = if (c in 'A'..'Z') {
-                    (c.code + 32).toChar()
-                } else {
-                    c
-                }
+                val lowered =
+                    if (c in 'A'..'Z') {
+                        (c.code + 32).toChar()
+                    } else {
+                        c
+                    }
 
                 builder.append(lowered)
             }
@@ -285,9 +282,7 @@ class TypeShapeRatificationFingerprint private constructor(
             }
         }
 
-        private fun requireLowerHex(
-            value: String,
-        ) {
+        private fun requireLowerHex(value: String) {
             if (value.length % 2 != 0) {
                 throw MetamodelFactContractViolationException(
                     "LOWER_HEX fingerprint value must have even length.",
@@ -306,9 +301,7 @@ class TypeShapeRatificationFingerprint private constructor(
             }
         }
 
-        private fun requireBase64UrlNoPadding(
-            value: String,
-        ) {
+        private fun requireBase64UrlNoPadding(value: String) {
             if (value.indexOf('=') >= 0) {
                 throw MetamodelFactContractViolationException(
                     "BASE64_URL_NO_PADDING fingerprint value must not contain padding.",
@@ -319,10 +312,10 @@ class TypeShapeRatificationFingerprint private constructor(
                 val c = value[index]
                 val ok =
                     c in 'A'..'Z' ||
-                            c in 'a'..'z' ||
-                            c in '0'..'9' ||
-                            c == '-' ||
-                            c == '_'
+                        c in 'a'..'z' ||
+                        c in '0'..'9' ||
+                        c == '-' ||
+                        c == '_'
 
                 if (!ok) {
                     throw MetamodelFactContractViolationException(
@@ -354,9 +347,7 @@ class TypeShapeRatificationFingerprint private constructor(
          * - verify digest/HMAC byte length;
          * - verify the fingerprint is bound to the ratification tuple.
          */
-        private fun requireStandardBase64PaddedSurface(
-            value: String,
-        ) {
+        private fun requireStandardBase64PaddedSurface(value: String) {
             if (value.length % 4 != 0) {
                 throw MetamodelFactContractViolationException(
                     "BASE64_STANDARD_PADDED fingerprint value must have length divisible by 4.",
@@ -383,10 +374,10 @@ class TypeShapeRatificationFingerprint private constructor(
 
                 val ok =
                     c in 'A'..'Z' ||
-                            c in 'a'..'z' ||
-                            c in '0'..'9' ||
-                            c == '+' ||
-                            c == '/'
+                        c in 'a'..'z' ||
+                        c in '0'..'9' ||
+                        c == '+' ||
+                        c == '/'
 
                 if (!ok) {
                     throw MetamodelFactContractViolationException(

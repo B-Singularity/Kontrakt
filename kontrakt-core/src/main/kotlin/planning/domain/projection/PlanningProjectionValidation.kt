@@ -22,7 +22,7 @@ internal fun validatePlanningCanonicalComponent(
 
     if (value.contains('|')) {
         throw ActiveMemberProjectionException(
-            "$field must not contain reserved delimiter '|': $value"
+            "$field must not contain reserved delimiter '|': $value",
         )
     }
 
@@ -31,7 +31,7 @@ internal fun validatePlanningCanonicalComponent(
         val ch = value[i]
         if (ch.isISOControl()) {
             throw ActiveMemberProjectionException(
-                "$field must not contain ISO control characters."
+                "$field must not contain ISO control characters.",
             )
         }
         i++

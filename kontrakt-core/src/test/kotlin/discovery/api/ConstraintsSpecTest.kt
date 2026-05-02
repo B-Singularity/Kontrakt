@@ -7,11 +7,10 @@ import java.util.stream.Stream
 import kotlin.reflect.KClass
 
 class ConstraintsSpecTest {
-
     companion object {
         @JvmStatic
-        fun provideConstraintAnnotations(): Stream<KClass<out Annotation>> {
-            return Stream.of(
+        fun provideConstraintAnnotations(): Stream<KClass<out Annotation>> =
+            Stream.of(
                 NotNull::class,
                 Null::class,
                 AssertTrue::class,
@@ -37,9 +36,8 @@ class ConstraintsSpecTest {
                 Future::class,
                 FutureOrPresent::class,
                 Size::class,
-                NotEmpty::class
+                NotEmpty::class,
             )
-        }
     }
 
     @ParameterizedTest

@@ -53,26 +53,28 @@ object PayloadSanitizer {
         }
     }
 
-    fun sanitizeMap(input: Map<String, Any?>): Map<String, Any?> {
-        return try {
+    fun sanitizeMap(input: Map<String, Any?>): Map<String, Any?> =
+        try {
             val context = SanitizationContext()
             sanitizeMapInternal(input, context, 0)
         } catch (exception: Throwable) {
             mapOf("error" to "Sanitization Failed", "cause" to (exception.message ?: "Unknown"))
         }
-    }
 
-    fun sanitize(input: Any?): Any? {
-        return try {
+    fun sanitize(input: Any?): Any? =
+        try {
             val context = SanitizationContext()
             sanitizeRecursive(input, context, 0)
         } catch (exception: Throwable) {
             "<Sanitization Failed: ${exception.message}>"
         }
-    }
 
     @OptIn(ExperimentalUnsignedTypes::class)
-    private fun sanitizeRecursive(obj: Any?, context: SanitizationContext, depth: Int): Any? {
+    private fun sanitizeRecursive(
+        obj: Any?,
+        context: SanitizationContext,
+        depth: Int,
+    ): Any? {
         if (context.budgetExceeded) return "<Budget Exceeded>"
         if (obj == null) return null
 
@@ -181,7 +183,7 @@ object PayloadSanitizer {
         size: Int,
         getter: (Int) -> T,
         context: SanitizationContext,
-        depth: Int
+        depth: Int,
     ): List<Any?> {
         val result = ArrayList<Any?>()
         val limit = min(size, MAX_COLLECTION_SIZE)
@@ -204,7 +206,11 @@ object PayloadSanitizer {
         return Collections.unmodifiableList(result)
     }
 
-    private fun sanitizeMapInternal(map: Map<*, *>, context: SanitizationContext, depth: Int): Map<String, Any?> {
+    private fun sanitizeMapInternal(
+        map: Map<*, *>,
+        context: SanitizationContext,
+        depth: Int,
+    ): Map<String, Any?> {
         val result = LinkedHashMap<String, Any?>()
         var count = 0
 
@@ -219,22 +225,27 @@ object PayloadSanitizer {
                 break
             }
 
-            val keyString = try {
-                // [Fix] Use kotlin's toString() which handles nulls safely
-                val rawKey = key.toString()
-                val truncated = truncateString(rawKey)
-                context.recordChars(truncated.length)
-                truncated
-            } catch (ignored: Throwable) {
-                recordAndReturnString("<KeyError>", context)
-            }
+            val keyString =
+                try {
+                    // [Fix] Use kotlin's toString() which handles nulls safely
+                    val rawKey = key.toString()
+                    val truncated = truncateString(rawKey)
+                    context.recordChars(truncated.length)
+                    truncated
+                } catch (ignored: Throwable) {
+                    recordAndReturnString("<KeyError>", context)
+                }
 
             result[keyString] = sanitizeRecursive(value, context, depth + 1)
         }
         return Collections.unmodifiableMap(result)
     }
 
-    private fun sanitizeCollection(collection: Iterable<*>, context: SanitizationContext, depth: Int): List<Any?> {
+    private fun sanitizeCollection(
+        collection: Iterable<*>,
+        context: SanitizationContext,
+        depth: Int,
+    ): List<Any?> {
         val result = ArrayList<Any?>()
         var count = 0
         for (item in collection) {
@@ -251,13 +262,17 @@ object PayloadSanitizer {
         return Collections.unmodifiableList(result)
     }
 
-    private fun truncateString(string: String): String {
-        return if (string.length > MAX_STRING_LENGTH) {
+    private fun truncateString(string: String): String =
+        if (string.length > MAX_STRING_LENGTH) {
             "${string.substring(0, MAX_STRING_LENGTH)}... (Truncated)"
-        } else string
-    }
+        } else {
+            string
+        }
 
-    private fun recordAndReturnString(string: String, context: SanitizationContext): String {
+    private fun recordAndReturnString(
+        string: String,
+        context: SanitizationContext,
+    ): String {
         context.recordChars(string.length)
         return string
     }

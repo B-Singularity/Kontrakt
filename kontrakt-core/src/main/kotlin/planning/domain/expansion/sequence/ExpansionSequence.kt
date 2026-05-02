@@ -24,7 +24,6 @@ import java.util.AbstractList
 class ExpansionSequence<T : Any> private constructor(
     private val elements: Array<Any?>,
 ) : AbstractList<T>() {
-
     override val size: Int
         get() = elements.size
 
@@ -39,9 +38,7 @@ class ExpansionSequence<T : Any> private constructor(
         return elements[index] as T
     }
 
-    fun copyTo(
-        destination: MutableCollection<T>,
-    ) {
+    fun copyTo(destination: MutableCollection<T>) {
         var i = 0
         while (i < elements.size) {
             @Suppress("UNCHECKED_CAST")
@@ -52,9 +49,7 @@ class ExpansionSequence<T : Any> private constructor(
 
     companion object {
         @JvmStatic
-        fun <T : Any> empty(): ExpansionSequence<T> {
-            return ExpansionSequence(emptyArray())
-        }
+        fun <T : Any> empty(): ExpansionSequence<T> = ExpansionSequence(emptyArray())
 
         /**
          * Freezes caller-supplied already ordered elements.
@@ -65,9 +60,7 @@ class ExpansionSequence<T : Any> private constructor(
          * protocol ordering law.
          */
         @JvmStatic
-        fun <T : Any> alreadyOrdered(
-            elements: Collection<T>,
-        ): ExpansionSequence<T> {
+        fun <T : Any> alreadyOrdered(elements: Collection<T>): ExpansionSequence<T> {
             val snapshot = arrayOfNulls<Any?>(elements.size)
             val iterator = elements.iterator()
 

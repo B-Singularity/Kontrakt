@@ -45,18 +45,14 @@ enum class CostCenterBand(
     TYPE_EXPANSION(300, 399),
     ;
 
-    fun contains(id: Int): Boolean {
-        return id in minInclusive..maxInclusive
-    }
+    fun contains(id: Int): Boolean = id in minInclusive..maxInclusive
 
     companion object {
         private val ALL: Array<CostCenterBand> = values()
         private val MAX_REGISTERED_ID: Int = computeMaxRegisteredId()
 
         @JvmStatic
-        fun maxRegisteredId(): Int {
-            return MAX_REGISTERED_ID
-        }
+        fun maxRegisteredId(): Int = MAX_REGISTERED_ID
 
         private fun computeMaxRegisteredId(): Int {
             var max = 0

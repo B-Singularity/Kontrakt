@@ -66,36 +66,36 @@ class ResolvedDispatchLanePolicy private constructor(
             if (commandBatchBudget > commandRingCapacity) {
                 throw PlanningProtocolIntegrityException(
                     "ResolvedDispatchLanePolicy.commandBatchBudget must be <= commandRingCapacity: " +
-                            "$commandBatchBudget > $commandRingCapacity"
+                        "$commandBatchBudget > $commandRingCapacity",
                 )
             }
 
             if (deliveryBatchBudget > readyQueueCapacity) {
                 throw PlanningProtocolIntegrityException(
                     "ResolvedDispatchLanePolicy.deliveryBatchBudget must be <= readyQueueCapacity: " +
-                            "$deliveryBatchBudget > $readyQueueCapacity"
+                        "$deliveryBatchBudget > $readyQueueCapacity",
                 )
             }
 
             if (replayBatchBudgetPerShard > registrationStoreCapacityPerShard) {
                 throw PlanningProtocolIntegrityException(
                     "ResolvedDispatchLanePolicy.replayBatchBudgetPerShard must be <= " +
-                            "registrationStoreCapacityPerShard: " +
-                            "$replayBatchBudgetPerShard > $registrationStoreCapacityPerShard"
+                        "registrationStoreCapacityPerShard: " +
+                        "$replayBatchBudgetPerShard > $registrationStoreCapacityPerShard",
                 )
             }
 
             if (partitionDropQuiescenceTimeoutNanos <= 0L) {
                 throw PlanningProtocolIntegrityException(
                     "ResolvedDispatchLanePolicy.partitionDropQuiescenceTimeoutNanos must be > 0: " +
-                            partitionDropQuiescenceTimeoutNanos
+                        partitionDropQuiescenceTimeoutNanos,
                 )
             }
 
             if (adapterCloseQuiescenceTimeoutNanos <= 0L) {
                 throw PlanningProtocolIntegrityException(
                     "ResolvedDispatchLanePolicy.adapterCloseQuiescenceTimeoutNanos must be > 0: " +
-                            adapterCloseQuiescenceTimeoutNanos
+                        adapterCloseQuiescenceTimeoutNanos,
                 )
             }
 
@@ -121,7 +121,7 @@ class ResolvedDispatchLanePolicy private constructor(
         ) {
             if (value <= 0) {
                 throw PlanningProtocolIntegrityException(
-                    "ResolvedDispatchLanePolicy.$name must be > 0: $value"
+                    "ResolvedDispatchLanePolicy.$name must be > 0: $value",
                 )
             }
         }
@@ -132,7 +132,7 @@ class ResolvedDispatchLanePolicy private constructor(
         ) {
             if (value <= 0 || value.countOneBits() != 1) {
                 throw PlanningProtocolIntegrityException(
-                    "ResolvedDispatchLanePolicy.$name must be a positive power-of-two: $value"
+                    "ResolvedDispatchLanePolicy.$name must be a positive power-of-two: $value",
                 )
             }
         }

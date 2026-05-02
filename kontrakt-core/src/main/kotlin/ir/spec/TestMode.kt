@@ -15,16 +15,13 @@ import java.util.Objects
  * - Current specification enforces EXACTLY ONE mode at TestSpecification construction time.
  */
 sealed interface TestMode : Comparable<TestMode> {
-
     data object UserScenario : TestMode {
-        override fun compareTo(other: TestMode): Int =
-            if (other is UserScenario) 0 else -1
+        override fun compareTo(other: TestMode): Int = if (other is UserScenario) 0 else -1
     }
 
     class ContractAuto private constructor(
-        val contractTypes: DeterministicList<TypeId>
+        val contractTypes: DeterministicList<TypeId>,
     ) : TestMode {
-
         override fun equals(other: Any?): Boolean {
             if (this === other) return true
             if (javaClass != other?.javaClass) return false
@@ -32,6 +29,7 @@ sealed interface TestMode : Comparable<TestMode> {
         }
 
         override fun hashCode(): Int = Objects.hash(contractTypes)
+
         override fun toString(): String = "ContractAuto($contractTypes)"
 
         override fun compareTo(other: TestMode): Int {
@@ -55,9 +53,8 @@ sealed interface TestMode : Comparable<TestMode> {
     }
 
     class DataCompliance private constructor(
-        val dataContractType: TypeId
+        val dataContractType: TypeId,
     ) : TestMode {
-
         override fun equals(other: Any?): Boolean {
             if (this === other) return true
             if (javaClass != other?.javaClass) return false
@@ -65,6 +62,7 @@ sealed interface TestMode : Comparable<TestMode> {
         }
 
         override fun hashCode(): Int = Objects.hash(dataContractType)
+
         override fun toString(): String = "DataCompliance($dataContractType)"
 
         override fun compareTo(other: TestMode): Int {

@@ -37,12 +37,9 @@ import java.util.concurrent.atomic.AtomicInteger
 class JoinedWaitPlanningRunSuspensionHandle private constructor(
     private val joinHandle: JoinHandle,
 ) : PlanningRunSuspensionHandle {
-
     private val stateCode = AtomicInteger(PlanningRunSuspensionBridgeState.INITIAL.code)
 
-    override fun registerReadyToRestartCallback(
-        onReadyToRestart: () -> Unit,
-    ): PlanningRunSuspensionRegistrationDecision {
+    override fun registerReadyToRestartCallback(onReadyToRestart: () -> Unit): PlanningRunSuspensionRegistrationDecision {
         transitionInitialToCallbackRegistered()
 
         return when (
@@ -83,9 +80,7 @@ class JoinedWaitPlanningRunSuspensionHandle private constructor(
         }
     }
 
-    override fun consumeReadyResult(
-        session: PlannerSession,
-    ): JoinResumeStep {
+    override fun consumeReadyResult(session: PlannerSession): JoinResumeStep {
         while (true) {
             val from = stateAcquire()
 
@@ -138,13 +133,9 @@ class JoinedWaitPlanningRunSuspensionHandle private constructor(
         }
     }
 
-    override fun deadlineNanos(): Long {
-        return joinHandle.deadlineNanos()
-    }
+    override fun deadlineNanos(): Long = joinHandle.deadlineNanos()
 
-    fun stateAcquire(): PlanningRunSuspensionBridgeState {
-        return PlanningRunSuspensionBridgeState.fromCode(stateCode.get())
-    }
+    fun stateAcquire(): PlanningRunSuspensionBridgeState = PlanningRunSuspensionBridgeState.fromCode(stateCode.get())
 
     private fun transitionInitialToCallbackRegistered() {
         while (true) {
@@ -204,12 +195,9 @@ class JoinedWaitPlanningRunSuspensionHandle private constructor(
 
     companion object {
         @JvmStatic
-        fun issue(
-            joinHandle: JoinHandle,
-        ): JoinedWaitPlanningRunSuspensionHandle {
-            return JoinedWaitPlanningRunSuspensionHandle(
+        fun issue(joinHandle: JoinHandle): JoinedWaitPlanningRunSuspensionHandle =
+            JoinedWaitPlanningRunSuspensionHandle(
                 joinHandle = joinHandle,
             )
-        }
     }
 }

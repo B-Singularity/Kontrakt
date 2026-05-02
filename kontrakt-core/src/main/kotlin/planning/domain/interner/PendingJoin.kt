@@ -25,15 +25,10 @@ class PendingJoin private constructor(
     private val handle: JoinHandle,
     private val fallbackPlan: ReplaySafeCanonicalFallbackPlan,
 ) {
-
     /**
      * Registers a continuation for non-blocking completion delivery.
      */
-    fun registerContinuation(
-        continuation: JoinContinuation,
-    ): JoinRegistrationDecision {
-        return handle.registerContinuation(continuation)
-    }
+    fun registerContinuation(continuation: JoinContinuation): JoinRegistrationDecision = handle.registerContinuation(continuation)
 
     /**
      * Exposes the monotonic waiter deadline for orchestration / diagnostics.
@@ -54,41 +49,40 @@ class PendingJoin private constructor(
     fun resume(
         session: PlannerSession,
         sealer: CanonicalPayloadSealer,
-    ): InternerStepResult.Completed {
-        return when (val resumed = handle.consumeReadyResult(session)) {
+    ): InternerStepResult.Completed =
+        when (val resumed = handle.consumeReadyResult(session)) {
             is JoinResumeStep.Hit -> {
                 session.step(CostCenter.L2_HIT)
                 InternerStepResult.Completed(resumed.node)
             }
 
             is JoinResumeStep.Fault -> {
-                val node = when (resumed.kind) {
-                    L2FaultKind.TRANSIENT -> {
-                        session.step(CostCenter.L2_FAULT_TRANSIENT)
-                        fallbackPlan.build(sealer)
-                    }
+                val node =
+                    when (resumed.kind) {
+                        L2FaultKind.TRANSIENT -> {
+                            session.step(CostCenter.L2_FAULT_TRANSIENT)
+                            fallbackPlan.build(sealer)
+                        }
 
-                    L2FaultKind.CIRCUIT_OPEN -> {
-                        session.step(CostCenter.L2_FAULT_CIRCUIT_OPEN)
-                        session.markL2Bypassed()
-                        fallbackPlan.build(sealer)
+                        L2FaultKind.CIRCUIT_OPEN -> {
+                            session.step(CostCenter.L2_FAULT_CIRCUIT_OPEN)
+                            session.markL2Bypassed()
+                            fallbackPlan.build(sealer)
+                        }
                     }
-                }
                 InternerStepResult.Completed(node)
             }
         }
-    }
 
     companion object {
         @JvmStatic
         fun issue(
             handle: JoinHandle,
             fallbackPlan: ReplaySafeCanonicalFallbackPlan,
-        ): PendingJoin {
-            return PendingJoin(
+        ): PendingJoin =
+            PendingJoin(
                 handle = handle,
                 fallbackPlan = fallbackPlan,
             )
-        }
     }
 }

@@ -20,13 +20,12 @@ class PropertyDemotionRecord private constructor(
         fun issue(
             property: PropertyFact,
             reason: PropertyDemotionReason,
-        ): PropertyDemotionRecord {
-            return PropertyDemotionRecord(
+        ): PropertyDemotionRecord =
+            PropertyDemotionRecord(
                 ownerTypeFqcn = property.ownerTypeFqcn,
                 propertyName = property.name,
                 reason = reason,
                 property = property,
             )
-        }
     }
 }

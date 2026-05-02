@@ -6,7 +6,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 class KontraktExceptionTest {
-
     // -- Base Exception (Direct Instantiation for 100% Coverage) --
 
     @Test

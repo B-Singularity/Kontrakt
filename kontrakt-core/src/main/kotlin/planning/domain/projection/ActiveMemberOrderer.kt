@@ -20,10 +20,7 @@ import planning.domain.exception.DuplicateActiveMemberKeyException
  * - interner key issuance
  */
 class ActiveMemberOrderer private constructor() {
-
-    fun order(
-        projection: ActiveMemberProjectionResult,
-    ): OrderedActiveMembers {
+    fun order(projection: ActiveMemberProjectionResult): OrderedActiveMembers {
         val members = ArrayList<ProjectedActiveMember>(projection.members.size)
         projection.members.copyTo(members)
 
@@ -158,8 +155,6 @@ class ActiveMemberOrderer private constructor() {
             }
 
         @JvmStatic
-        fun issue(): ActiveMemberOrderer {
-            return ActiveMemberOrderer()
-        }
+        fun issue(): ActiveMemberOrderer = ActiveMemberOrderer()
     }
 }

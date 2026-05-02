@@ -7,5 +7,5 @@ package discovery.domain.policy
  */
 enum class SpecViolationCode {
     CONTRACT_MUST_BE_INTERFACE,
-    DATA_CONTRACT_MUST_BE_CONCRETE
+    DATA_CONTRACT_MUST_BE_CONCRETE,
 }

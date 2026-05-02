@@ -4,8 +4,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 class UserControlOptionsTest {
-
-
     @Test
     fun `default values should be set correctly when using empty constructor`() {
         val options = UserControlOptions()

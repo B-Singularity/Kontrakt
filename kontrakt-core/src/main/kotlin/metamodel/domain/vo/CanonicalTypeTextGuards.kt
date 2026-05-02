@@ -39,26 +39,27 @@ import metamodel.domain.exception.MetamodelFactContractViolationException
  * rejects ASCII protocol residues that must never appear in canonical type text.
  */
 internal object CanonicalTypeTextGuards {
-
-    private val JVM_PRIMITIVE_DESCRIPTORS: Set<String> = setOf(
-        "B", // byte
-        "C", // char
-        "D", // double
-        "F", // float
-        "I", // int
-        "J", // long
-        "S", // short
-        "Z", // boolean
-        "V", // void
-    )
+    private val JVM_PRIMITIVE_DESCRIPTORS: Set<String> =
+        setOf(
+            "B", // byte
+            "C", // char
+            "D", // double
+            "F", // float
+            "I", // int
+            "J", // long
+            "S", // short
+            "Z", // boolean
+            "V", // void
+        )
 
     /**
      * Source-level variance tokens must be lowered before canonical type text.
      */
-    private val SOURCE_VARIANCE_TOKENS: Set<String> = setOf(
-        "in",
-        "out",
-    )
+    private val SOURCE_VARIANCE_TOKENS: Set<String> =
+        setOf(
+            "in",
+            "out",
+        )
 
     /**
      * Source-level declaration keywords must not be accepted as canonical type
@@ -70,37 +71,38 @@ internal object CanonicalTypeTextGuards {
      * Language-specific escaping/lowering must happen in the adapter before this
      * boundary. The core does not attempt to repair escaped source names.
      */
-    private val SOURCE_RESERVED_TOKENS: Set<String> = setOf(
-        "as",
-        "break",
-        "catch",
-        "class",
-        "continue",
-        "do",
-        "else",
-        "false",
-        "finally",
-        "for",
-        "fun",
-        "if",
-        "interface",
-        "is",
-        "null",
-        "object",
-        "package",
-        "return",
-        "super",
-        "this",
-        "throw",
-        "true",
-        "try",
-        "typealias",
-        "typeof",
-        "val",
-        "var",
-        "when",
-        "while",
-    )
+    private val SOURCE_RESERVED_TOKENS: Set<String> =
+        setOf(
+            "as",
+            "break",
+            "catch",
+            "class",
+            "continue",
+            "do",
+            "else",
+            "false",
+            "finally",
+            "for",
+            "fun",
+            "if",
+            "interface",
+            "is",
+            "null",
+            "object",
+            "package",
+            "return",
+            "super",
+            "this",
+            "throw",
+            "true",
+            "try",
+            "typealias",
+            "typeof",
+            "val",
+            "var",
+            "when",
+            "while",
+        )
 
     /**
      * Validates a snapshot already accepted by NormalizationEngine.
@@ -221,13 +223,10 @@ internal object CanonicalTypeTextGuards {
         }
     }
 
-    private fun isWholeJvmObjectDescriptor(
-        value: String,
-    ): Boolean {
-        return value.length >= 3 &&
-                value[0] == 'L' &&
-                value[value.length - 1] == ';'
-    }
+    private fun isWholeJvmObjectDescriptor(value: String): Boolean =
+        value.length >= 3 &&
+            value[0] == 'L' &&
+            value[value.length - 1] == ';'
 
     /**
      * Detects descriptor-like fragments such as:
@@ -240,9 +239,7 @@ internal object CanonicalTypeTextGuards {
      * This does not attempt to parse JVM signatures. It only catches forbidden
      * residue patterns that should never reach canonical type text.
      */
-    private fun containsEmbeddedJvmObjectDescriptor(
-        value: String,
-    ): Boolean {
+    private fun containsEmbeddedJvmObjectDescriptor(value: String): Boolean {
         var index = 0
 
         while (index < value.length) {
@@ -262,9 +259,7 @@ internal object CanonicalTypeTextGuards {
         return false
     }
 
-    private fun looksLikeDescriptorBody(
-        body: String,
-    ): Boolean {
+    private fun looksLikeDescriptorBody(body: String): Boolean {
         if (body.isEmpty()) return false
 
         var hasNameLikeAscii = false
@@ -305,14 +300,14 @@ internal object CanonicalTypeTextGuards {
                 c == '?' && !allowNullableMarker -> {
                     throw MetamodelFactContractViolationException(
                         "$field must not contain nullable marker '?' at index=$index. " +
-                                "Nullability must be lowered before this boundary: $value",
+                            "Nullability must be lowered before this boundary: $value",
                     )
                 }
 
                 c == '*' && !allowStarProjection -> {
                     throw MetamodelFactContractViolationException(
                         "$field must not contain raw star projection '*' at index=$index. " +
-                                "Star projection must be lowered before this boundary: $value",
+                            "Star projection must be lowered before this boundary: $value",
                     )
                 }
 
@@ -333,11 +328,12 @@ internal object CanonicalTypeTextGuards {
                 }
 
                 isAsciiIdentifierStart(c) -> {
-                    index = scanAsciiIdentifierToken(
-                        field = field,
-                        value = value,
-                        startIndex = index,
-                    )
+                    index =
+                        scanAsciiIdentifierToken(
+                            field = field,
+                            value = value,
+                            startIndex = index,
+                        )
                     continue
                 }
             }
@@ -356,7 +352,7 @@ internal object CanonicalTypeTextGuards {
         if (nextIndex >= value.length || value[nextIndex] != ']') {
             throw MetamodelFactContractViolationException(
                 "$field must use canonical array suffix pairs '[]'. " +
-                        "Invalid '[' at index=$index: $value",
+                    "Invalid '[' at index=$index: $value",
             )
         }
     }
@@ -381,14 +377,14 @@ internal object CanonicalTypeTextGuards {
         if (token in SOURCE_VARIANCE_TOKENS) {
             throw MetamodelFactContractViolationException(
                 "$field must not contain source variance token '$token' at index=$startIndex. " +
-                        "Variance must be lowered before this boundary: $value",
+                    "Variance must be lowered before this boundary: $value",
             )
         }
 
         if (token in SOURCE_RESERVED_TOKENS) {
             throw MetamodelFactContractViolationException(
                 "$field must not contain source reserved token '$token' at index=$startIndex. " +
-                        "Source syntax must be lowered before this boundary: $value",
+                    "Source syntax must be lowered before this boundary: $value",
             )
         }
 
@@ -401,33 +397,19 @@ internal object CanonicalTypeTextGuards {
         return index
     }
 
-    private fun isJvmDescriptorToken(
-        token: String,
-    ): Boolean {
-        return token in JVM_PRIMITIVE_DESCRIPTORS ||
-                isWholeJvmObjectDescriptor(token)
-    }
+    private fun isJvmDescriptorToken(token: String): Boolean =
+        token in JVM_PRIMITIVE_DESCRIPTORS ||
+            isWholeJvmObjectDescriptor(token)
 
-    private fun isAsciiIdentifierStart(
-        c: Char,
-    ): Boolean {
-        return c in 'A'..'Z' || c in 'a'..'z' || c == '_'
-    }
+    private fun isAsciiIdentifierStart(c: Char): Boolean = c in 'A'..'Z' || c in 'a'..'z' || c == '_'
 
-    private fun isAsciiIdentifierPart(
-        c: Char,
-    ): Boolean {
-        return isAsciiIdentifierStart(c) || c in '0'..'9'
-    }
+    private fun isAsciiIdentifierPart(c: Char): Boolean = isAsciiIdentifierStart(c) || c in '0'..'9'
 
-    private fun isAsciiHorizontalOrLineWhitespace(
-        c: Char,
-    ): Boolean {
-        return c == ' ' ||
-                c == '\n' ||
-                c == '\r' ||
-                c == '\t' ||
-                c == '\u000B' ||
-                c == '\u000C'
-    }
+    private fun isAsciiHorizontalOrLineWhitespace(c: Char): Boolean =
+        c == ' ' ||
+            c == '\n' ||
+            c == '\r' ||
+            c == '\t' ||
+            c == '\u000B' ||
+            c == '\u000C'
 }

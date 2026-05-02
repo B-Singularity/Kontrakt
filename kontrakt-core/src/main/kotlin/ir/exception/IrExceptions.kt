@@ -14,7 +14,7 @@ enum class FaultKind {
     USER_MODEL_INVALID,
 
     /** Internal adapters failed to uphold core contracts (e.g., Normalization). */
-    FRAMEWORK_INVARIANT_BROKEN
+    FRAMEWORK_INVARIANT_BROKEN,
 }
 
 /**
@@ -27,7 +27,7 @@ enum class FaultKind {
  */
 abstract class IrException(
     message: String,
-    cause: Throwable? = null
+    cause: Throwable? = null,
 ) : KontraktException(message, cause) {
     override val domain: String = "IR_PROTOCOL"
     abstract val faultKind: FaultKind
@@ -35,14 +35,14 @@ abstract class IrException(
 
 class IrProtocolViolationException(
     message: String,
-    cause: Throwable? = null
+    cause: Throwable? = null,
 ) : IrException(message, cause) {
     override val faultKind: FaultKind = FaultKind.USER_MODEL_INVALID
 }
 
 class IrInvariantBrokenException(
     message: String,
-    cause: Throwable? = null
+    cause: Throwable? = null,
 ) : IrException(message, cause) {
     override val faultKind: FaultKind = FaultKind.FRAMEWORK_INVARIANT_BROKEN
 }

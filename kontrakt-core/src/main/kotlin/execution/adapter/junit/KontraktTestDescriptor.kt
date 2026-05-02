@@ -13,8 +13,7 @@ class KontraktTestDescriptor(
     displayName: String,
     val spec: TestSpecification? = null,
 ) : AbstractTestDescriptor(uniqueId, displayName) {
-    override fun getType(): TestDescriptor.Type =
-        if (spec == null) TestDescriptor.Type.CONTAINER else TestDescriptor.Type.TEST
+    override fun getType(): TestDescriptor.Type = if (spec == null) TestDescriptor.Type.CONTAINER else TestDescriptor.Type.TEST
 
     override fun getSource(): Optional<TestSource> =
         if (spec != null) {

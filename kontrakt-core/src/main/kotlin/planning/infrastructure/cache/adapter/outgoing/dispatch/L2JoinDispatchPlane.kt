@@ -34,7 +34,6 @@ import java.util.concurrent.locks.LockSupport
  * It is intentionally not a Domain Core port.
  */
 internal interface L2JoinDispatchPlane : AutoCloseable {
-
     /**
      * Registers a continuation for one already-attached waiter episode.
      *
@@ -111,7 +110,6 @@ internal class DeterministicL2JoinDispatchPlane private constructor(
     private val shardCount: Int,
     private val timeSource: MonotonicTimeSource,
 ) : L2JoinDispatchPlane {
-
     private val closing = AtomicBoolean(false)
     private val deliverySeq = AtomicLong(0L)
 
@@ -123,16 +121,17 @@ internal class DeterministicL2JoinDispatchPlane private constructor(
 
     private val effectiveLaneCount: Int = minOf(policy.laneCount, shardCount)
 
-    private val lanes: Array<DispatchLane> = Array(effectiveLaneCount) { laneIndex ->
-        DispatchLane(
-            laneIndex = laneIndex,
-            effectiveLaneCount = effectiveLaneCount,
-            shardCount = shardCount,
-            policy = policy,
-            timeSource = timeSource,
-            onPublishedStateChange = ::signalQuiescenceChange,
-        )
-    }
+    private val lanes: Array<DispatchLane> =
+        Array(effectiveLaneCount) { laneIndex ->
+            DispatchLane(
+                laneIndex = laneIndex,
+                effectiveLaneCount = effectiveLaneCount,
+                shardCount = shardCount,
+                policy = policy,
+                timeSource = timeSource,
+                onPublishedStateChange = ::signalQuiescenceChange,
+            )
+        }
 
     init {
         for (lane in lanes) {
@@ -155,19 +154,20 @@ internal class DeterministicL2JoinDispatchPlane private constructor(
         val lane = laneForShard(shardIndex)
         val deliveryKey = issueDeliveryKey(lane.laneIndex)
 
-        val offered = lane.offerCommand(
-            LaneCommand.Register(
-                deliveryKey = deliveryKey,
-                shardIndex = shardIndex,
-                slot = slot,
-                waiter = waiter,
-                continuation = continuation,
-                deadlineNanos = deadlineNanos,
+        val offered =
+            lane.offerCommand(
+                LaneCommand.Register(
+                    deliveryKey = deliveryKey,
+                    shardIndex = shardIndex,
+                    slot = slot,
+                    waiter = waiter,
+                    continuation = continuation,
+                    deadlineNanos = deadlineNanos,
+                ),
             )
-        )
         if (!offered) {
             throw DispatchLaneSaturatedException(
-                "Dispatch registration ring is saturated for lane=${lane.laneIndex}."
+                "Dispatch registration ring is saturated for lane=${lane.laneIndex}.",
             )
         }
 
@@ -180,12 +180,13 @@ internal class DeterministicL2JoinDispatchPlane private constructor(
     ) {
         val lane = laneForShard(shardIndex)
 
-        val offered = lane.offerCommand(
-            LaneCommand.SlotTerminalVisible(
-                shardIndex = shardIndex,
-                slot = slot,
+        val offered =
+            lane.offerCommand(
+                LaneCommand.SlotTerminalVisible(
+                    shardIndex = shardIndex,
+                    slot = slot,
+                ),
             )
-        )
 
         if (!offered) {
             lane.markDirtyShard(shardIndex)
@@ -202,7 +203,7 @@ internal class DeterministicL2JoinDispatchPlane private constructor(
             LaneCommand.Cancel(
                 shardIndex = shardIndex,
                 waiter = waiter,
-            )
+            ),
         )
     }
 
@@ -214,7 +215,7 @@ internal class DeterministicL2JoinDispatchPlane private constructor(
         if (!quiescenceWaiter.compareAndSet(null, current)) {
             if (quiescenceWaiter.get() !== current) {
                 throw PlanningInfrastructureException(
-                    "Concurrent awaitQuiescence callers are forbidden."
+                    "Concurrent awaitQuiescence callers are forbidden.",
                 )
             }
         }
@@ -266,31 +267,27 @@ internal class DeterministicL2JoinDispatchPlane private constructor(
 
         if (lanes.any { !it.isStoppedPublished() }) {
             throw PlanningInfrastructureException(
-                "DeterministicL2JoinDispatchPlane.close() failed to stop all lanes within the bounded close grace."
+                "DeterministicL2JoinDispatchPlane.close() failed to stop all lanes within the bounded close grace.",
             )
         }
     }
 
-    private fun laneForShard(
-        shardIndex: Int,
-    ): DispatchLane {
+    private fun laneForShard(shardIndex: Int): DispatchLane {
         val laneIndex = shardIndex and (effectiveLaneCount - 1)
         return lanes[laneIndex]
     }
 
-    private fun issueDeliveryKey(
-        laneIndex: Int,
-    ): Long {
+    private fun issueDeliveryKey(laneIndex: Int): Long {
         val seq = deliverySeq.incrementAndGet()
         if (seq <= 0L) {
             throw PlanningInfrastructureException(
-                "Dispatch delivery-key sequence overflowed the positive Long domain."
+                "Dispatch delivery-key sequence overflowed the positive Long domain.",
             )
         }
 
         if (seq > 0x00FF_FFFF_FFFF_FFFFL) {
             throw PlanningInfrastructureException(
-                "Dispatch delivery-key sequence exceeded the 56-bit payload domain."
+                "Dispatch delivery-key sequence exceeded the 56-bit payload domain.",
             )
         }
 
@@ -310,14 +307,14 @@ internal class DeterministicL2JoinDispatchPlane private constructor(
         ): DeterministicL2JoinDispatchPlane {
             if (shardCount <= 0 || shardCount.countOneBits() != 1) {
                 throw PlanningInfrastructureException(
-                    "DeterministicL2JoinDispatchPlane.shardCount must be a positive power-of-two: $shardCount"
+                    "DeterministicL2JoinDispatchPlane.shardCount must be a positive power-of-two: $shardCount",
                 )
             }
 
             val effectiveLaneCount = minOf(policy.laneCount, shardCount)
             if (effectiveLaneCount <= 0 || effectiveLaneCount.countOneBits() != 1) {
                 throw PlanningInfrastructureException(
-                    "DeterministicL2JoinDispatchPlane.effectiveLaneCount must be a positive power-of-two: $effectiveLaneCount"
+                    "DeterministicL2JoinDispatchPlane.effectiveLaneCount must be a positive power-of-two: $effectiveLaneCount",
                 )
             }
 
@@ -342,19 +339,21 @@ internal class DeterministicL2JoinDispatchPlane private constructor(
         private val onPublishedStateChange: () -> Unit,
     ) {
         private val closingRequested = AtomicBoolean(false)
-        private val worker = Thread(::runLoop, "planning-l2-lane-$laneIndex").apply {
-            isDaemon = true
-        }
+        private val worker =
+            Thread(::runLoop, "planning-l2-lane-$laneIndex").apply {
+                isDaemon = true
+            }
 
         private val commandRing = LaneCommandRing(policy.commandRingCapacity)
         private val readyQueue = LaneReadyQueue(policy.readyQueueCapacity)
         private val dirtyShards = DirtyShardBitmap(shardCount / effectiveLaneCount)
-        private val registrationStore = LaneRegistrationStore(
-            laneIndex = laneIndex,
-            effectiveLaneCount = effectiveLaneCount,
-            shardCount = shardCount,
-            registrationStoreCapacityPerShard = policy.registrationStoreCapacityPerShard,
-        )
+        private val registrationStore =
+            LaneRegistrationStore(
+                laneIndex = laneIndex,
+                effectiveLaneCount = effectiveLaneCount,
+                shardCount = shardCount,
+                registrationStoreCapacityPerShard = policy.registrationStoreCapacityPerShard,
+            )
         private val deadlineHeap = LaneDeadlineHeap(policy.deadlineHeapCapacity)
 
         /**
@@ -375,37 +374,34 @@ internal class DeterministicL2JoinDispatchPlane private constructor(
          *
          * This is the only source of truth for external quiescence judgment.
          */
-        private val publishedSnapshot = AtomicReference(
-            PublishedLaneSnapshot(
-                laneState = DispatchLaneState.OPEN,
-                commandRingEmpty = true,
-                readyQueueSize = 0,
-                activeCallbackCount = 0,
-                liveOperationalEntryCount = 0,
-                dirtyShardCount = 0,
+        private val publishedSnapshot =
+            AtomicReference(
+                PublishedLaneSnapshot(
+                    laneState = DispatchLaneState.OPEN,
+                    commandRingEmpty = true,
+                    readyQueueSize = 0,
+                    activeCallbackCount = 0,
+                    liveOperationalEntryCount = 0,
+                    dirtyShardCount = 0,
+                ),
             )
-        )
 
         fun start() {
             worker.start()
         }
 
-        fun isStoppedPublished(): Boolean {
-            return publishedSnapshot.get().laneState == DispatchLaneState.STOPPED
-        }
+        fun isStoppedPublished(): Boolean = publishedSnapshot.get().laneState == DispatchLaneState.STOPPED
 
         fun isQuiescentPublished(): Boolean {
             val snapshot = publishedSnapshot.get()
             return snapshot.commandRingEmpty &&
-                    snapshot.readyQueueSize == 0 &&
-                    snapshot.activeCallbackCount == 0 &&
-                    snapshot.liveOperationalEntryCount == 0 &&
-                    snapshot.dirtyShardCount == 0
+                snapshot.readyQueueSize == 0 &&
+                snapshot.activeCallbackCount == 0 &&
+                snapshot.liveOperationalEntryCount == 0 &&
+                snapshot.dirtyShardCount == 0
         }
 
-        fun offerCommand(
-            command: LaneCommand,
-        ): Boolean {
+        fun offerCommand(command: LaneCommand): Boolean {
             if (closingRequested.get()) {
                 return false
             }
@@ -439,9 +435,7 @@ internal class DeterministicL2JoinDispatchPlane private constructor(
             onPublishedStateChange()
         }
 
-        fun joinUntilStopped(
-            timeoutNanos: Long,
-        ) {
+        fun joinUntilStopped(timeoutNanos: Long) {
             if (timeoutNanos <= 0L) {
                 return
             }
@@ -466,10 +460,11 @@ internal class DeterministicL2JoinDispatchPlane private constructor(
                 }
 
                 progress += processDueTimeouts(policy.timeoutBatchBudget)
-                progress += processDirtyShards(
-                    maxDirtyShards = policy.dirtyShardBatchBudget,
-                    replayBatchBudgetPerShard = policy.replayBatchBudgetPerShard,
-                )
+                progress +=
+                    processDirtyShards(
+                        maxDirtyShards = policy.dirtyShardBatchBudget,
+                        replayBatchBudgetPerShard = policy.replayBatchBudgetPerShard,
+                    )
                 progress += drainReadyQueue(policy.deliveryBatchBudget)
 
                 if (closingRequested.get()) {
@@ -524,9 +519,7 @@ internal class DeterministicL2JoinDispatchPlane private constructor(
             }
         }
 
-        private fun handleCommand(
-            command: LaneCommand,
-        ) {
+        private fun handleCommand(command: LaneCommand) {
             when (command) {
                 is LaneCommand.Register -> handleRegister(command)
                 is LaneCommand.SlotTerminalVisible -> handleTerminalVisible(command)
@@ -534,23 +527,22 @@ internal class DeterministicL2JoinDispatchPlane private constructor(
             }
         }
 
-        private fun handleRegister(
-            command: LaneCommand.Register,
-        ) {
+        private fun handleRegister(command: LaneCommand.Register) {
             val resolution = command.slot.resolveSharedTerminalAcquire()
             if (resolution != null) {
                 return
             }
 
-            val entry = RegistrationEntry(
-                deliveryKey = command.deliveryKey,
-                shardIndex = command.shardIndex,
-                slot = command.slot,
-                waiter = command.waiter,
-                continuation = command.continuation,
-                deadlineNanos = command.deadlineNanos,
-                state = DeliveryEntryState.EMPTY,
-            )
+            val entry =
+                RegistrationEntry(
+                    deliveryKey = command.deliveryKey,
+                    shardIndex = command.shardIndex,
+                    slot = command.slot,
+                    waiter = command.waiter,
+                    continuation = command.continuation,
+                    deadlineNanos = command.deadlineNanos,
+                    state = DeliveryEntryState.EMPTY,
+                )
 
             DispatchLifecycleLaw.requireEmptyForFreshDeliveryRegistration(entry.state)
             transitionEntry(entry, DeliveryEntryState.REGISTERED)
@@ -567,9 +559,7 @@ internal class DeterministicL2JoinDispatchPlane private constructor(
             }
         }
 
-        private fun handleTerminalVisible(
-            command: LaneCommand.SlotTerminalVisible,
-        ) {
+        private fun handleTerminalVisible(command: LaneCommand.SlotTerminalVisible) {
             command.slot.forEachVisibleWaiter { waiter ->
                 val entry = registrationStore.findByWaiter(command.shardIndex, waiter) ?: return@forEachVisibleWaiter
 
@@ -589,22 +579,22 @@ internal class DeterministicL2JoinDispatchPlane private constructor(
                     DeliveryEntryState.DELIVERING,
                     DeliveryEntryState.DONE,
                     DeliveryEntryState.ABANDONED,
-                    DeliveryEntryState.EMPTY -> Unit
+                    DeliveryEntryState.EMPTY,
+                    -> Unit
                 }
             }
 
             command.slot.clearDeliveryPending()
         }
 
-        private fun handleCancellation(
-            command: LaneCommand.Cancel,
-        ) {
+        private fun handleCancellation(command: LaneCommand.Cancel) {
             val entry = registrationStore.findByWaiter(command.shardIndex, command.waiter) ?: return
 
             when (entry.state) {
                 DeliveryEntryState.REGISTERED,
                 DeliveryEntryState.SIGNALED,
-                DeliveryEntryState.QUEUED -> {
+                DeliveryEntryState.QUEUED,
+                -> {
                     DispatchLifecycleLaw.requireCloseAbandonable(entry.state)
                     transitionEntry(entry, DeliveryEntryState.ABANDONED)
                     reclaim(entry)
@@ -613,13 +603,12 @@ internal class DeterministicL2JoinDispatchPlane private constructor(
                 DeliveryEntryState.DELIVERING,
                 DeliveryEntryState.DONE,
                 DeliveryEntryState.ABANDONED,
-                DeliveryEntryState.EMPTY -> Unit
+                DeliveryEntryState.EMPTY,
+                -> Unit
             }
         }
 
-        private fun processDueTimeouts(
-            budget: Int,
-        ): Int {
+        private fun processDueTimeouts(budget: Int): Int {
             var processed = 0
 
             while (processed < budget) {
@@ -663,14 +652,15 @@ internal class DeterministicL2JoinDispatchPlane private constructor(
                     break
                 }
 
-                val replayed = registrationStore.replaySegment(
-                    localShardOrdinal = dirtyOrdinal,
-                    replayBatchBudget = replayBatchBudgetPerShard,
-                ) { entry ->
-                    if (entry.state == DeliveryEntryState.SIGNALED) {
-                        tryAcquireReadyQueueOwnership(entry)
+                val replayed =
+                    registrationStore.replaySegment(
+                        localShardOrdinal = dirtyOrdinal,
+                        replayBatchBudget = replayBatchBudgetPerShard,
+                    ) { entry ->
+                        if (entry.state == DeliveryEntryState.SIGNALED) {
+                            tryAcquireReadyQueueOwnership(entry)
+                        }
                     }
-                }
 
                 processed += replayed
                 shardVisits++
@@ -679,20 +669,19 @@ internal class DeterministicL2JoinDispatchPlane private constructor(
             return processed
         }
 
-        private fun drainReadyQueue(
-            budget: Int,
-        ): Int {
+        private fun drainReadyQueue(budget: Int): Int {
             var processed = 0
 
             while (processed < budget) {
                 val token = readyQueue.poll() ?: break
-                val entry = registrationStore.findByDeliveryKey(
-                    shardIndex = token.shardIndex,
-                    deliveryKey = token.deliveryKey,
-                ) ?: run {
-                    processed++
-                    continue
-                }
+                val entry =
+                    registrationStore.findByDeliveryKey(
+                        shardIndex = token.shardIndex,
+                        deliveryKey = token.deliveryKey,
+                    ) ?: run {
+                        processed++
+                        continue
+                    }
 
                 if (entry.state != DeliveryEntryState.QUEUED) {
                     processed++
@@ -717,15 +706,14 @@ internal class DeterministicL2JoinDispatchPlane private constructor(
             return processed
         }
 
-        private fun tryAcquireReadyQueueOwnership(
-            entry: RegistrationEntry,
-        ) {
+        private fun tryAcquireReadyQueueOwnership(entry: RegistrationEntry) {
             DispatchLifecycleLaw.requireSignaledForReadyQueueOwnership(entry.state)
 
-            val offered = readyQueue.offer(
-                shardIndex = entry.shardIndex,
-                deliveryKey = entry.deliveryKey,
-            )
+            val offered =
+                readyQueue.offer(
+                    shardIndex = entry.shardIndex,
+                    deliveryKey = entry.deliveryKey,
+                )
             if (offered) {
                 entry.waiter?.tryMarkDeliveryQueued()
                 transitionEntry(entry, DeliveryEntryState.QUEUED)
@@ -734,9 +722,7 @@ internal class DeterministicL2JoinDispatchPlane private constructor(
             }
         }
 
-        fun markDirtyShard(
-            shardIndex: Int,
-        ) {
+        fun markDirtyShard(shardIndex: Int) {
             dirtyShards.set(registrationStore.localShardOrdinal(shardIndex))
         }
 
@@ -752,7 +738,8 @@ internal class DeterministicL2JoinDispatchPlane private constructor(
                 when (entry.state) {
                     DeliveryEntryState.REGISTERED,
                     DeliveryEntryState.SIGNALED,
-                    DeliveryEntryState.QUEUED -> {
+                    DeliveryEntryState.QUEUED,
+                    -> {
                         DispatchLifecycleLaw.requireCloseAbandonable(entry.state)
                         transitionEntry(entry, DeliveryEntryState.ABANDONED)
                         reclaim(entry)
@@ -761,7 +748,8 @@ internal class DeterministicL2JoinDispatchPlane private constructor(
                     DeliveryEntryState.DELIVERING,
                     DeliveryEntryState.DONE,
                     DeliveryEntryState.ABANDONED,
-                    DeliveryEntryState.EMPTY -> Unit
+                    DeliveryEntryState.EMPTY,
+                    -> Unit
                 }
             }
 
@@ -776,9 +764,7 @@ internal class DeterministicL2JoinDispatchPlane private constructor(
          * This is lane-owned.
          * External threads must never clear or remove lane-owned registrations directly.
          */
-        private fun reclaim(
-            entry: RegistrationEntry,
-        ) {
+        private fun reclaim(entry: RegistrationEntry) {
             DispatchLifecycleLaw.requireTerminalForReclaimToEmpty(entry.state)
 
             entry.continuation = null
@@ -800,8 +786,8 @@ internal class DeterministicL2JoinDispatchPlane private constructor(
             entry.state = to
         }
 
-        private fun canPublishStoppedNow(): Boolean {
-            return DispatchLifecycleLaw.canLanePublishStopped(
+        private fun canPublishStoppedNow(): Boolean =
+            DispatchLifecycleLaw.canLanePublishStopped(
                 laneState = laneState,
                 commandRingIsEmpty = commandRing.isEmpty(),
                 readyQueuePublishedSize = readyQueue.localSize(),
@@ -809,7 +795,6 @@ internal class DeterministicL2JoinDispatchPlane private constructor(
                 liveOperationalEntryCount = registrationStore.localLiveOperationalCount(),
                 dirtyShardCount = dirtyShards.localDirtyCount(),
             )
-        }
 
         private fun publishSnapshot() {
             publishedSnapshot.set(
@@ -820,7 +805,7 @@ internal class DeterministicL2JoinDispatchPlane private constructor(
                     activeCallbackCount = localActiveCallbackCount,
                     liveOperationalEntryCount = registrationStore.localLiveOperationalCount(),
                     dirtyShardCount = dirtyShards.localDirtyCount(),
-                )
+                ),
             )
         }
     }
@@ -908,9 +893,7 @@ internal class DeterministicL2JoinDispatchPlane private constructor(
             }
         }
 
-        fun offer(
-            command: LaneCommand,
-        ): Boolean {
+        fun offer(command: LaneCommand): Boolean {
             while (true) {
                 val p = producerIndex.get()
                 val index = (p and mask.toLong()).toInt()
@@ -960,10 +943,11 @@ internal class DeterministicL2JoinDispatchPlane private constructor(
 
                 when {
                     diff == 0L -> {
-                        val command = commands.get(index)
-                            ?: throw PlanningInfrastructureException(
-                                "LaneCommandRing observed a published sequence without a command payload."
-                            )
+                        val command =
+                            commands.get(index)
+                                ?: throw PlanningInfrastructureException(
+                                    "LaneCommandRing observed a published sequence without a command payload.",
+                                )
 
                         commands.set(index, null)
                         sequences.set(index, c + actualCapacity.toLong())
@@ -1001,9 +985,7 @@ internal class DeterministicL2JoinDispatchPlane private constructor(
             consumerThread.get()?.let(LockSupport::unpark)
         }
 
-        fun isEmpty(): Boolean {
-            return consumerIndex.get() >= producerIndex.get()
-        }
+        fun isEmpty(): Boolean = consumerIndex.get() >= producerIndex.get()
 
         private fun bindConsumerThreadIfNeeded() {
             val current = Thread.currentThread()
@@ -1011,12 +993,10 @@ internal class DeterministicL2JoinDispatchPlane private constructor(
         }
 
         companion object {
-            private fun normalizeCapacity(
-                requested: Int,
-            ): Int {
+            private fun normalizeCapacity(requested: Int): Int {
                 if (requested <= 0) {
                     throw DispatchLaneSaturatedException(
-                        "LaneCommandRing capacity must be positive: $requested"
+                        "LaneCommandRing capacity must be positive: $requested",
                     )
                 }
 
@@ -1071,10 +1051,11 @@ internal class DeterministicL2JoinDispatchPlane private constructor(
                 return null
             }
 
-            val token = ReadyToken(
-                shardIndex = shardIndexes[head],
-                deliveryKey = deliveryKeys[head],
-            )
+            val token =
+                ReadyToken(
+                    shardIndex = shardIndexes[head],
+                    deliveryKey = deliveryKeys[head],
+                )
 
             head = (head + 1) and mask
             size--
@@ -1095,12 +1076,10 @@ internal class DeterministicL2JoinDispatchPlane private constructor(
         )
 
         companion object {
-            private fun normalizeCapacity(
-                requested: Int,
-            ): Int {
+            private fun normalizeCapacity(requested: Int): Int {
                 if (requested <= 0) {
                     throw DispatchLaneSaturatedException(
-                        "LaneReadyQueue capacity must be positive: $requested"
+                        "LaneReadyQueue capacity must be positive: $requested",
                     )
                 }
 
@@ -1129,12 +1108,10 @@ internal class DeterministicL2JoinDispatchPlane private constructor(
         private val deadlines = LongArray(capacity)
         private var size: Int = 0
 
-        fun offer(
-            entry: RegistrationEntry,
-        ) {
+        fun offer(entry: RegistrationEntry) {
             if (size == entries.size) {
                 throw DispatchLaneSaturatedException(
-                    "Lane deadline heap is saturated."
+                    "Lane deadline heap is saturated.",
                 )
             }
 
@@ -1161,10 +1138,11 @@ internal class DeterministicL2JoinDispatchPlane private constructor(
                 return null
             }
 
-            val head = DeadlineHead(
-                entry = entries[0]!!,
-                deadlineNanos = deadlines[0],
-            )
+            val head =
+                DeadlineHead(
+                    entry = entries[0]!!,
+                    deadlineNanos = deadlines[0],
+                )
 
             size--
             entries[0] = entries[size]
@@ -1217,7 +1195,10 @@ internal class DeterministicL2JoinDispatchPlane private constructor(
             }
         }
 
-        private fun swap(a: Int, b: Int) {
+        private fun swap(
+            a: Int,
+            b: Int,
+        ) {
             val e = entries[a]
             entries[a] = entries[b]
             entries[b] = e
@@ -1244,9 +1225,7 @@ internal class DeterministicL2JoinDispatchPlane private constructor(
         private val words = AtomicLongArray((bitCount + 63) / 64)
         private var localDirtyCount: Int = 0
 
-        fun set(
-            bitIndex: Int,
-        ) {
+        fun set(bitIndex: Int) {
             val wordIndex = bitIndex ushr 6
             val bitMask = 1L shl (bitIndex and 63)
 
@@ -1276,7 +1255,10 @@ internal class DeterministicL2JoinDispatchPlane private constructor(
                     val updated = observed xor lsb
                     if (words.compareAndSet(wordIndex, observed, updated)) {
                         localDirtyCount--
-                        val bit = java.lang.Long.numberOfTrailingZeros(lsb).toInt()
+                        val bit =
+                            java.lang.Long
+                                .numberOfTrailingZeros(lsb)
+                                .toInt()
                         return (wordIndex shl 6) + bit
                     }
                 }
@@ -1310,27 +1292,24 @@ internal class DeterministicL2JoinDispatchPlane private constructor(
         registrationStoreCapacityPerShard: Int,
     ) {
         private val segmentCount = shardCount / effectiveLaneCount
-        private val segments: Array<RegistrationSegment> = Array(segmentCount) {
-            RegistrationSegment(registrationStoreCapacityPerShard)
-        }
+        private val segments: Array<RegistrationSegment> =
+            Array(segmentCount) {
+                RegistrationSegment(registrationStoreCapacityPerShard)
+            }
 
         private var localLiveOperationalCount: Int = 0
 
-        fun localShardOrdinal(
-            shardIndex: Int,
-        ): Int {
+        fun localShardOrdinal(shardIndex: Int): Int {
             val ordinal = (shardIndex - laneIndex) / effectiveLaneCount
             if (ordinal < 0 || ordinal >= segments.size) {
                 throw DispatchLaneSaturatedException(
-                    "Shard $shardIndex does not belong to lane $laneIndex."
+                    "Shard $shardIndex does not belong to lane $laneIndex.",
                 )
             }
             return ordinal
         }
 
-        fun insert(
-            entry: RegistrationEntry,
-        ) {
+        fun insert(entry: RegistrationEntry) {
             segments[localShardOrdinal(entry.shardIndex)].insert(entry)
             localLiveOperationalCount++
         }
@@ -1338,46 +1317,33 @@ internal class DeterministicL2JoinDispatchPlane private constructor(
         fun findByWaiter(
             shardIndex: Int,
             waiter: WaiterCell,
-        ): RegistrationEntry? {
-            return segments[localShardOrdinal(shardIndex)].findByWaiter(waiter)
-        }
+        ): RegistrationEntry? = segments[localShardOrdinal(shardIndex)].findByWaiter(waiter)
 
         fun findByDeliveryKey(
             shardIndex: Int,
             deliveryKey: Long,
-        ): RegistrationEntry? {
-            return segments[localShardOrdinal(shardIndex)].findByDeliveryKey(deliveryKey)
-        }
+        ): RegistrationEntry? = segments[localShardOrdinal(shardIndex)].findByDeliveryKey(deliveryKey)
 
-        fun remove(
-            entry: RegistrationEntry,
-        ) {
+        fun remove(entry: RegistrationEntry) {
             segments[localShardOrdinal(entry.shardIndex)].remove(entry)
             localLiveOperationalCount--
         }
 
         fun localLiveOperationalCount(): Int = localLiveOperationalCount
 
-        fun isStillLive(
-            entry: RegistrationEntry,
-        ): Boolean {
-            return DispatchLifecycleLaw.isLiveOperational(entry.state)
-        }
+        fun isStillLive(entry: RegistrationEntry): Boolean = DispatchLifecycleLaw.isLiveOperational(entry.state)
 
         fun replaySegment(
             localShardOrdinal: Int,
             replayBatchBudget: Int,
             consumer: (RegistrationEntry) -> Unit,
-        ): Int {
-            return segments[localShardOrdinal].replayFromCursor(
+        ): Int =
+            segments[localShardOrdinal].replayFromCursor(
                 replayBatchBudget = replayBatchBudget,
                 consumer = consumer,
             )
-        }
 
-        fun forEachLiveEntry(
-            consumer: (RegistrationEntry) -> Unit,
-        ) {
+        fun forEachLiveEntry(consumer: (RegistrationEntry) -> Unit) {
             for (segment in segments) {
                 segment.forEachLiveEntry(consumer)
             }
@@ -1399,9 +1365,7 @@ internal class DeterministicL2JoinDispatchPlane private constructor(
             private val waiterIndex = IdentityHashMap<WaiterCell, RegistrationEntry>()
             private var cursor: Int = 0
 
-            fun insert(
-                entry: RegistrationEntry,
-            ) {
+            fun insert(entry: RegistrationEntry) {
                 val slot = findSlotForInsert(entry.deliveryKey)
                 keys[slot] = entry.deliveryKey
                 states[slot] = 1
@@ -1409,22 +1373,14 @@ internal class DeterministicL2JoinDispatchPlane private constructor(
                 entry.waiter?.let { waiterIndex[it] = entry }
             }
 
-            fun findByWaiter(
-                waiter: WaiterCell,
-            ): RegistrationEntry? {
-                return waiterIndex[waiter]
-            }
+            fun findByWaiter(waiter: WaiterCell): RegistrationEntry? = waiterIndex[waiter]
 
-            fun findByDeliveryKey(
-                deliveryKey: Long,
-            ): RegistrationEntry? {
+            fun findByDeliveryKey(deliveryKey: Long): RegistrationEntry? {
                 val slot = findSlotForLookup(deliveryKey)
                 return if (slot >= 0) values[slot] else null
             }
 
-            fun remove(
-                entry: RegistrationEntry,
-            ) {
+            fun remove(entry: RegistrationEntry) {
                 val slot = findSlotForLookup(entry.deliveryKey)
                 if (slot >= 0) {
                     states[slot] = 2
@@ -1457,9 +1413,7 @@ internal class DeterministicL2JoinDispatchPlane private constructor(
                 return consumed
             }
 
-            fun forEachLiveEntry(
-                consumer: (RegistrationEntry) -> Unit,
-            ) {
+            fun forEachLiveEntry(consumer: (RegistrationEntry) -> Unit) {
                 for (entry in values) {
                     if (entry != null && DispatchLifecycleLaw.isLiveOperational(entry.state)) {
                         consumer(entry)
@@ -1474,9 +1428,7 @@ internal class DeterministicL2JoinDispatchPlane private constructor(
                 cursor = 0
             }
 
-            private fun findSlotForLookup(
-                key: Long,
-            ): Int {
+            private fun findSlotForLookup(key: Long): Int {
                 val start = mix(key) % keys.size
                 for (i in keys.indices) {
                     val idx = (start + i) % keys.size
@@ -1489,9 +1441,7 @@ internal class DeterministicL2JoinDispatchPlane private constructor(
                 return -1
             }
 
-            private fun findSlotForInsert(
-                key: Long,
-            ): Int {
+            private fun findSlotForInsert(key: Long): Int {
                 val start = mix(key) % keys.size
                 var firstTombstone = -1
 
@@ -1509,13 +1459,11 @@ internal class DeterministicL2JoinDispatchPlane private constructor(
                 }
 
                 throw DispatchLaneSaturatedException(
-                    "Lane registration segment is saturated."
+                    "Lane registration segment is saturated.",
                 )
             }
 
-            private fun mix(
-                key: Long,
-            ): Int {
+            private fun mix(key: Long): Int {
                 var h = key
                 h = h xor (h ushr 33)
                 h *= -0xae502812aa7333L

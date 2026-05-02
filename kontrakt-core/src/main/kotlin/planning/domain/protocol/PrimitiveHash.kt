@@ -1,6 +1,5 @@
 package kontrakt.planning.domain.protocol
 
-
 /**
  * [SSOT] Deterministic hashing primitives.
  *
@@ -20,10 +19,9 @@ package kontrakt.planning.domain.protocol
  * - hash128Into() is the verification API: allocation-free if caller supplies buffer.
  */
 object PrimitiveHash {
-
     // MurmurHash3_x64_128 constants
     private const val C1: Long = -0x783c846eeebdac2bL // 0x87c37b91114253d5
-    private const val C2: Long = 0x4cf5ad432745937fL  // 0x4cf5ad432745937f
+    private const val C2: Long = 0x4cf5ad432745937fL // 0x4cf5ad432745937f
 
     /**
      * Returns out[0] (h1) of MurmurHash3_x64_128.
@@ -31,7 +29,10 @@ object PrimitiveHash {
      * Allocation-free hot-path API.
      */
     @JvmStatic
-    fun hash64(data: ByteArray, seed: Long): Long {
+    fun hash64(
+        data: ByteArray,
+        seed: Long,
+    ): Long {
         val seed32 = seed and 0xFFFF_FFFFL // unsigned 32-bit seed
         var h1 = seed32
         var h2 = seed32
@@ -228,7 +229,12 @@ object PrimitiveHash {
      * - out.size >= outOffset + 2
      */
     @JvmStatic
-    internal fun hash128Into(data: ByteArray, seed: Long, out: LongArray, outOffset: Int = 0) {
+    internal fun hash128Into(
+        data: ByteArray,
+        seed: Long,
+        out: LongArray,
+        outOffset: Int = 0,
+    ) {
         require(outOffset >= 0 && outOffset + 1 < out.size) {
             "Output buffer too small: need at least 2 longs at offset=$outOffset"
         }
@@ -444,9 +450,9 @@ object PrimitiveHash {
     private fun fmix64(k: Long): Long {
         var x = k
         x = x xor (x ushr 33)
-        x *= -0xae502812aa7333L     // 0xff51afd7ed558ccd
+        x *= -0xae502812aa7333L // 0xff51afd7ed558ccd
         x = x xor (x ushr 33)
-        x *= -0x3b314601e57a13adL   // 0xc4ceb9fe1a85ec53
+        x *= -0x3b314601e57a13adL // 0xc4ceb9fe1a85ec53
         x = x xor (x ushr 33)
         return x
     }
@@ -456,14 +462,16 @@ object PrimitiveHash {
      *
      * This avoids ByteBuffer (endianness pitfalls, allocations, slower paths).
      */
-    private fun getLongLE(data: ByteArray, offset: Int): Long {
-        return (data[offset].toLong() and 0xFFL) or
-                ((data[offset + 1].toLong() and 0xFFL) shl 8) or
-                ((data[offset + 2].toLong() and 0xFFL) shl 16) or
-                ((data[offset + 3].toLong() and 0xFFL) shl 24) or
-                ((data[offset + 4].toLong() and 0xFFL) shl 32) or
-                ((data[offset + 5].toLong() and 0xFFL) shl 40) or
-                ((data[offset + 6].toLong() and 0xFFL) shl 48) or
-                ((data[offset + 7].toLong() and 0xFFL) shl 56)
-    }
+    private fun getLongLE(
+        data: ByteArray,
+        offset: Int,
+    ): Long =
+        (data[offset].toLong() and 0xFFL) or
+            ((data[offset + 1].toLong() and 0xFFL) shl 8) or
+            ((data[offset + 2].toLong() and 0xFFL) shl 16) or
+            ((data[offset + 3].toLong() and 0xFFL) shl 24) or
+            ((data[offset + 4].toLong() and 0xFFL) shl 32) or
+            ((data[offset + 5].toLong() and 0xFFL) shl 40) or
+            ((data[offset + 6].toLong() and 0xFFL) shl 48) or
+            ((data[offset + 7].toLong() and 0xFFL) shl 56)
 }

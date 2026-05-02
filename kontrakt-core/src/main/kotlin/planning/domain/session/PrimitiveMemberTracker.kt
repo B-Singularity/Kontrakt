@@ -36,14 +36,17 @@ internal class PrimitiveMemberTracker private constructor(
             probes++
             if (probes > cap) {
                 throw PlanningProtocolIntegrityException(
-                    "PrimitiveMemberTracker probe overflow."
+                    "PrimitiveMemberTracker probe overflow.",
                 )
             }
         }
         return null
     }
 
-    fun mark(key: Long, fact: MemberFact) {
+    fun mark(
+        key: Long,
+        fact: MemberFact,
+    ) {
         var idx = startIndex(key)
         var probes = 0
 
@@ -56,7 +59,7 @@ internal class PrimitiveMemberTracker private constructor(
             probes++
             if (probes > cap) {
                 throw PlanningProtocolIntegrityException(
-                    "PrimitiveMemberTracker probe overflow."
+                    "PrimitiveMemberTracker probe overflow.",
                 )
             }
         }
@@ -91,7 +94,7 @@ internal class PrimitiveMemberTracker private constructor(
         fun issue(capacity: Int): PrimitiveMemberTracker {
             if (capacity <= 0) {
                 throw PlanningProtocolIntegrityException(
-                    "PrimitiveMemberTracker.capacity must be positive: $capacity"
+                    "PrimitiveMemberTracker.capacity must be positive: $capacity",
                 )
             }
             return PrimitiveMemberTracker(capacity)

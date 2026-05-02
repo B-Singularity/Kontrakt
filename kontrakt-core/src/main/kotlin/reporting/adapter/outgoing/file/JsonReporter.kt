@@ -32,7 +32,6 @@ import java.util.concurrent.atomic.AtomicBoolean
 class JsonReporter(
     config: ReportingDirectives,
 ) : TestResultPublisher {
-
     private val reportDir = config.baseReportDir
     private val runId = UUID.randomUUID().toString()
 
@@ -60,7 +59,6 @@ class JsonReporter(
 
             // 2. Write (I/O Bound) - Delegated to ShardManager
             shardManager.write(event.workerId.value, json)
-
         } catch (e: Exception) {
             // Last-resort safety net
             System.err.println("[JsonReporter] Failed to publish event '${event.testName}': ${e.message}")
@@ -86,7 +84,6 @@ class JsonReporter(
                 } else {
                     System.err.println("[JsonReporter] Commit failed. Preserving shards in .shards/$runId for forensics.")
                 }
-
             } catch (e: Exception) {
                 System.err.println("[JsonReporter] Critical failure during close: ${e.message}")
             }
@@ -102,8 +99,8 @@ class JsonReporter(
  * [Specialist] Maps Domain Events to JSON-safe Strings.
  */
 private class TestResultMapper {
-    fun map(event: TestResultEvent): String {
-        return runCatching {
+    fun map(event: TestResultEvent): String =
+        runCatching {
             // Happy Path
             eventToMap(event).toJson()
         }.getOrElse { e ->
@@ -111,45 +108,48 @@ private class TestResultMapper {
             runCatching {
                 mapOf(
                     "status" to "REPORTING_ERROR",
-                    "error" to mapOf(
-                        "message" to "Serialization failed",
-                        "testName" to event.testName,
-                        "type" to e::class.java.name
-                    )
+                    "error" to
+                        mapOf(
+                            "message" to "Serialization failed",
+                            "testName" to event.testName,
+                            "type" to e::class.java.name,
+                        ),
                 ).toJson()
             }.getOrElse {
                 // Triple-Fallback: Absolute Constant
                 """{"status":"REPORTING_ERROR_CRITICAL","error":{"message":"Mapper double-fallback failed"}}"""
             }
         }
-    }
 
     private fun eventToMap(event: TestResultEvent): Map<String, Any?> {
-        val base = mutableMapOf<String, Any?>(
-            "runId" to event.runId,
-            "testName" to event.testName,
-            "workerId" to event.workerId.value,
-            "seed" to event.seed,
-            "status" to event.status::class.simpleName,
-            "durationMs" to event.durationMs,
-            "timestamp" to event.timestamp
-        )
+        val base =
+            mutableMapOf<String, Any?>(
+                "runId" to event.runId,
+                "testName" to event.testName,
+                "workerId" to event.workerId.value,
+                "seed" to event.seed,
+                "status" to event.status::class.simpleName,
+                "durationMs" to event.durationMs,
+                "timestamp" to event.timestamp,
+            )
 
         when (val status = event.status) {
             is TestStatus.AssertionFailed -> {
-                base["failure"] = mapOf(
-                    "message" to status.message,
-                    "expected" to status.expected.toString(),
-                    "actual" to status.actual.toString()
-                )
+                base["failure"] =
+                    mapOf(
+                        "message" to status.message,
+                        "expected" to status.expected.toString(),
+                        "actual" to status.actual.toString(),
+                    )
             }
 
             is TestStatus.ExecutionError -> {
                 val cause = status.cause
-                val errorMap = mutableMapOf<String, Any?>(
-                    "type" to cause::class.qualifiedName,
-                    "message" to cause.message
-                )
+                val errorMap =
+                    mutableMapOf<String, Any?>(
+                        "type" to cause::class.qualifiedName,
+                        "message" to cause.message,
+                    )
                 if (cause is KontraktException) {
                     errorMap["details"] = cause.details
                 }
@@ -171,13 +171,16 @@ private class TestResultMapper {
  */
 private class ShardManager(
     private val reportDir: Path,
-    private val runId: String
+    private val runId: String,
 ) {
     private sealed class Shard {
         abstract fun writeLine(json: String)
+
         abstract fun close()
 
-        class FileShard(private val writer: BufferedWriter) : Shard() {
+        class FileShard(
+            private val writer: BufferedWriter,
+        ) : Shard() {
             @Volatile
             private var isBroken: Boolean = false
             private var buffered = 0
@@ -216,10 +219,10 @@ private class ShardManager(
         }
 
         object BrokenShard : Shard() {
-            override fun writeLine(json: String) { /* No-op */
+            override fun writeLine(json: String) { // No-op
             }
 
-            override fun close() { /* No-op */
+            override fun close() { // No-op
             }
         }
     }
@@ -227,31 +230,34 @@ private class ShardManager(
     private val shards = ConcurrentHashMap<Int, Shard>()
     private val shardDir = reportDir.resolve(".shards").resolve(runId)
 
-    fun write(workerId: Int, json: String) {
+    fun write(
+        workerId: Int,
+        json: String,
+    ) {
         val shard = shards.computeIfAbsent(workerId) { id -> createShard(id) }
         shard.writeLine(json)
     }
 
-    private fun createShard(workerId: Int): Shard {
-        return try {
+    private fun createShard(workerId: Int): Shard =
+        try {
             if (!Files.exists(shardDir)) {
                 Files.createDirectories(shardDir)
             }
             val shardPath = shardDir.resolve("worker-$workerId.jsonl")
 
-            val writer = Files.newBufferedWriter(
-                shardPath,
-                Charsets.UTF_8,
-                StandardOpenOption.CREATE,
-                StandardOpenOption.TRUNCATE_EXISTING,
-                StandardOpenOption.WRITE
-            )
+            val writer =
+                Files.newBufferedWriter(
+                    shardPath,
+                    Charsets.UTF_8,
+                    StandardOpenOption.CREATE,
+                    StandardOpenOption.TRUNCATE_EXISTING,
+                    StandardOpenOption.WRITE,
+                )
             Shard.FileShard(writer)
         } catch (e: Exception) {
             System.err.println("[JsonReporter] Failed to create shard for Worker-$workerId: ${e.message}")
             Shard.BrokenShard
         }
-    }
 
     fun closeAll() = shards.values.forEach { it.close() }
 
@@ -276,7 +282,7 @@ private class ShardManager(
  */
 private class ReportAssembler(
     private val reportDir: Path,
-    private val runId: String
+    private val runId: String,
 ) {
     private val shardDir = reportDir.resolve(".shards").resolve(runId)
 
@@ -289,21 +295,24 @@ private class ReportAssembler(
 
             if (Files.exists(shardDir)) {
                 Files.list(shardDir).use { stream ->
-                    val validShards = stream
-                        .filter { Files.isRegularFile(it) }
-                        .filter {
-                            it.fileName.toString().let { name ->
-                                name.startsWith("worker-") && name.endsWith(".jsonl")
+                    val validShards =
+                        stream
+                            .filter { Files.isRegularFile(it) }
+                            .filter {
+                                it.fileName.toString().let { name ->
+                                    name.startsWith("worker-") && name.endsWith(".jsonl")
+                                }
                             }
-                        }
-                        // Numeric Sort: worker-2 before worker-10
-                        .sorted(Comparator.comparingInt { path ->
-                            path.fileName.toString()
-                                .removePrefix("worker-")
-                                .removeSuffix(".jsonl")
-                                .toIntOrNull() ?: Int.MAX_VALUE
-                        })
-                        .toList()
+                            // Numeric Sort: worker-2 before worker-10
+                            .sorted(
+                                Comparator.comparingInt { path ->
+                                    path.fileName
+                                        .toString()
+                                        .removePrefix("worker-")
+                                        .removeSuffix(".jsonl")
+                                        .toIntOrNull() ?: Int.MAX_VALUE
+                                },
+                            ).toList()
 
                     validShards.forEach { shardPath ->
                         processShard(shardPath, writer) { hasContent ->
@@ -318,7 +327,11 @@ private class ReportAssembler(
         return tempFinalFile
     }
 
-    private fun processShard(shardPath: Path, writer: BufferedWriter, onBeforeWrite: (Boolean) -> Unit) {
+    private fun processShard(
+        shardPath: Path,
+        writer: BufferedWriter,
+        onBeforeWrite: (Boolean) -> Unit,
+    ) {
         try {
             Files.newBufferedReader(shardPath, Charsets.UTF_8).use { reader ->
                 reader.forEachLine { line ->
@@ -331,10 +344,11 @@ private class ReportAssembler(
             }
         } catch (e: Exception) {
             onBeforeWrite(true)
-            val errorJson = mapOf(
-                "status" to "REPORTING_ERROR",
-                "error" to mapOf("message" to "Shard corrupted: ${e.message}")
-            ).toJson()
+            val errorJson =
+                mapOf(
+                    "status" to "REPORTING_ERROR",
+                    "error" to mapOf("message" to "Shard corrupted: ${e.message}"),
+                ).toJson()
             writer.write(errorJson)
         }
     }
@@ -352,9 +366,12 @@ private class ReportAssembler(
  * [Specialist] Performs Atomic File System Operations.
  */
 private class AtomicCommitter(
-    private val reportDir: Path
+    private val reportDir: Path,
 ) {
-    fun commit(tempFile: Path, targetName: String): Boolean {
+    fun commit(
+        tempFile: Path,
+        targetName: String,
+    ): Boolean {
         val targetPath = reportDir.resolve(targetName)
         return try {
             try {

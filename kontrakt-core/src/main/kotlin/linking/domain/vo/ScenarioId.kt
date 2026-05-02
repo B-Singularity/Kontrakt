@@ -7,13 +7,15 @@ import linking.domain.exception.LinkingInputException
  * Encapsulates validation logic to ensure no invalid IDs exist in the domain.
  */
 @JvmInline
-value class ScenarioId(val value: String) {
+value class ScenarioId(
+    val value: String,
+) {
     init {
         if (value.isBlank()) {
             // Using a temporary map for the exception to avoid circular dependency issues
             throw LinkingInputException(
                 "ScenarioId cannot be blank.",
-                mapOf("invalid_value" to value)
+                mapOf("invalid_value" to value),
             )
         }
     }

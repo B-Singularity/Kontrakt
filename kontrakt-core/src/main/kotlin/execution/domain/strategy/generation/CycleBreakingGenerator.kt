@@ -17,9 +17,8 @@ class CycleBreakingGenerator(
     private val attributes: Map<String, Attribute>,
     private val diagnosticInfo: UnlinkedCycleNode,
     private val runtimeHandle: RuntimeTypeHandle,
-    private val instantiator: RuntimeInstantiator
+    private val instantiator: RuntimeInstantiator,
 ) : Generator<Any?> {
-
     override fun generate(context: GenerationContext): Any? {
         val rule = decideRule()
 
@@ -32,8 +31,8 @@ class CycleBreakingGenerator(
                 rule = rule,
                 suppressedConstraints = attributes.keys.toList(),
                 timestamp = context.clock.millis(), // Injected
-                phase = TracePhase.DESIGN           // BDD Phase: Given/Design
-            )
+                phase = TracePhase.DESIGN, // BDD Phase: Given/Design
+            ),
         )
 
         return when (rule) {
@@ -47,7 +46,7 @@ class CycleBreakingGenerator(
 
             TruncationRule.FAIL_FAST -> throw RuntimeInstantiationException(
                 "Cycle detected on non-nullable concrete type: ${descriptor.name}. " +
-                        "Kontrakt cannot safely instantiate this cycle. Consider making the field nullable or breaking the cycle in your test setup."
+                    "Kontrakt cannot safely instantiate this cycle. Consider making the field nullable or breaking the cycle in your test setup.",
             )
         }
     }

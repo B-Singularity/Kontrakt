@@ -7,28 +7,98 @@ import metamodel.domain.vo.TypeReference
 /**
  * Resolved type-shape descriptor.
  *
- * This replaces the legacy broad TypeDescriptor for Planning Core dispatch.
+ * This replaces the legacy broad TypeDescriptor for planning-core dispatch.
  *
  * This DTO answers one question only:
  *
- * "Which expansion strategy should the planner use for this TypeReference?"
+ *     "Which expansion strategy should the planner use for this TypeReference?"
  *
- * It must not contain:
- * - constructor facts,
- * - property facts,
- * - projected active members,
- * - ordered traversal members,
- * - generator-specific payload material,
- * - source/adapter handles.
+ * This is not:
+ *
+ * - a constructor-fact container;
+ * - a property-fact container;
+ * - a projected active-member set;
+ * - an ordered traversal-member view;
+ * - a generator-specific payload object;
+ * - a reflection/KSP/source handle;
+ * - a cache key;
+ * - or a canonical encoding.
  *
  * DDD role:
- * - metamodel domain DTO for type-shape facts
+ *
+ * ResolvedTypeShape is a metamodel-domain DTO for shape facts.
  *
  * Hexagonal role:
- * - returned by TypeShapeProvider, implemented by reflection/KSP/bytecode adapters
+ *
+ * It is returned by TypeShapeProvider implementations. Reflection, KSP, bytecode,
+ * or source adapters may classify shape, but Planning Core consumes only this
+ * closed DTO.
  *
  * Compiler-style role:
- * - pre-dispatch shape classification before entering a specific expansion frame
+ *
+ * This is pre-dispatch classification before entering a concrete expansion
+ * frame.
+ *
+ * Trust-boundary law:
+ *
+ * subject and child type references are final domain-issued TypeReference VOs.
+ *
+ * This DTO must not revalidate:
+ *
+ * - subject.id;
+ * - subject.signature;
+ * - subject.cycleKey;
+ * - child TypeReference identities.
+ *
+ * Their integrity is already enforced by:
+ *
+ * - CanonicalTypeId;
+ * - TypeCycleKey;
+ * - CanonicalTypeSignature;
+ * - TypeIdentityCoherenceProof;
+ * - TypeReference.issue(...).
+ *
+ * Revalidating those surfaces here would duplicate work and risk drifting from
+ * TypeReference's own issuance law.
+ *
+ * Shape law:
+ *
+ * The declared DTO kind must agree with subject.shapeSummary.kind.
+ *
+ * This prevents a classifier from emitting:
+ *
+ * - subject whose TypeReference says ATOMIC;
+ * - ResolvedTypeShape whose kind says COLLECTION.
+ *
+ * Cardinality law:
+ *
+ * Each shape kind has exactly one valid child-reference layout:
+ *
+ * - ATOMIC / COMPOSITE / INTERFACE:
+ *     no child type references;
+ *
+ * - COLLECTION:
+ *     exactly elementType;
+ *
+ * - ARRAY:
+ *     exactly componentType;
+ *
+ * - MAP:
+ *     exactly keyType and valueType.
+ *
+ * This fail-closed boundary allows downstream expansion frames to avoid
+ * defensive null/cast guessing.
+ *
+ * Recursion law:
+ *
+ * Child references are TypeReference values. Their nesting-depth limits are
+ * already enforced by TypeReference.issue(...). This DTO does not add another
+ * recursive walk.
+ *
+ * Diagnostic law:
+ *
+ * toString() returns a compact summary and must not recursively dump child
+ * TypeReference internals.
  */
 class ResolvedTypeShape private constructor(
     val subject: TypeReference,
@@ -39,6 +109,22 @@ class ResolvedTypeShape private constructor(
     val valueType: TypeReference?,
     val componentType: TypeReference?,
 ) {
+    fun renderSummary(): String {
+        return "ResolvedTypeShape(" +
+                "subject=${subject.id.value}, " +
+                "kind=$kind, " +
+                "nullability=$nullability, " +
+                "element=${elementType?.id?.value ?: "<none>"}, " +
+                "key=${keyType?.id?.value ?: "<none>"}, " +
+                "value=${valueType?.id?.value ?: "<none>"}, " +
+                "component=${componentType?.id?.value ?: "<none>"}" +
+                ")"
+    }
+
+    override fun toString(): String {
+        return renderSummary()
+    }
+
     companion object {
         @JvmStatic
         fun atomic(
@@ -150,12 +236,13 @@ class ResolvedTypeShape private constructor(
             valueType: TypeReference?,
             componentType: TypeReference?,
         ): ResolvedTypeShape {
-            validateCanonicalComponent("ResolvedTypeShape.subject.id", subject.id)
-            validateCanonicalComponent("ResolvedTypeShape.subject.cycleId", subject.cycleId)
-            validateCanonicalComponent("ResolvedTypeShape.subject.signature", subject.signature)
+            requireSubjectKindCoherence(
+                subject = subject,
+                kind = kind,
+            )
 
             validateShapeCardinality(
-                owner = subject.id,
+                owner = subject.id.value,
                 kind = kind,
                 elementType = elementType,
                 keyType = keyType,
@@ -174,6 +261,36 @@ class ResolvedTypeShape private constructor(
             )
         }
 
+        /**
+         * Defensive classifier coherence check.
+         *
+         * TypeReference already carries a TypeShapeSummary. TypeShapeProvider must
+         * not classify the same subject into a different shape kind.
+         *
+         * This comparison intentionally uses enum names because TypeKind and the
+         * shape-summary kind may be represented by different enum types during the
+         * current refactoring window.
+         *
+         * If the project later unifies those enums, replace this with direct
+         * enum equality.
+         */
+        private fun requireSubjectKindCoherence(
+            subject: TypeReference,
+            kind: TypeKind,
+        ) {
+            val subjectKindName = subject.shapeSummary.kind.name
+            val resolvedKindName = kind.name
+
+            if (subjectKindName != resolvedKindName) {
+                throw InvalidTypeFactShapeException(
+                    owner = subject.id.value,
+                    factKind = "ResolvedTypeShape",
+                    reason = "Resolved shape kind must match TypeReference.shapeSummary.kind: " +
+                            "subjectKind=$subjectKindName, resolvedKind=$resolvedKindName",
+                )
+            }
+        }
+
         private fun validateShapeCardinality(
             owner: String,
             kind: TypeKind,
@@ -185,7 +302,8 @@ class ResolvedTypeShape private constructor(
             when (kind) {
                 TypeKind.ATOMIC,
                 TypeKind.COMPOSITE,
-                TypeKind.INTERFACE -> {
+                TypeKind.INTERFACE,
+                    -> {
                     requireNoContainerTypes(
                         owner = owner,
                         factKind = "ResolvedTypeShape",
@@ -198,7 +316,12 @@ class ResolvedTypeShape private constructor(
                 }
 
                 TypeKind.COLLECTION -> {
-                    if (elementType == null || keyType != null || valueType != null || componentType != null) {
+                    if (
+                        elementType == null ||
+                        keyType != null ||
+                        valueType != null ||
+                        componentType != null
+                    ) {
                         throw InvalidTypeFactShapeException(
                             owner = owner,
                             factKind = "ResolvedTypeShape",
@@ -208,7 +331,12 @@ class ResolvedTypeShape private constructor(
                 }
 
                 TypeKind.ARRAY -> {
-                    if (componentType == null || elementType != null || keyType != null || valueType != null) {
+                    if (
+                        componentType == null ||
+                        elementType != null ||
+                        keyType != null ||
+                        valueType != null
+                    ) {
                         throw InvalidTypeFactShapeException(
                             owner = owner,
                             factKind = "ResolvedTypeShape",
@@ -218,7 +346,12 @@ class ResolvedTypeShape private constructor(
                 }
 
                 TypeKind.MAP -> {
-                    if (keyType == null || valueType == null || elementType != null || componentType != null) {
+                    if (
+                        keyType == null ||
+                        valueType == null ||
+                        elementType != null ||
+                        componentType != null
+                    ) {
                         throw InvalidTypeFactShapeException(
                             owner = owner,
                             factKind = "ResolvedTypeShape",
@@ -238,7 +371,12 @@ class ResolvedTypeShape private constructor(
             valueType: TypeReference?,
             componentType: TypeReference?,
         ) {
-            if (elementType != null || keyType != null || valueType != null || componentType != null) {
+            if (
+                elementType != null ||
+                keyType != null ||
+                valueType != null ||
+                componentType != null
+            ) {
                 throw InvalidTypeFactShapeException(
                     owner = owner,
                     factKind = factKind,

@@ -98,11 +98,12 @@ class TypeExpansionPipeline private constructor(
             subject = reference,
         )
 
-        val preflight = lowerShapeToPreflight(
-            reference = reference,
-            shape = shape,
-            cycleIdentity = cycleIdentity,
-        )
+        val preflight =
+            lowerShapeToPreflight(
+                reference = reference,
+                shape = shape,
+                cycleIdentity = cycleIdentity,
+            )
 
         /*
          * Successful lowering is recorded only after the shape has been converted
@@ -136,9 +137,10 @@ class TypeExpansionPipeline private constructor(
 
         return when (preflight) {
             is TypeExpansionPreflightDecision.AtomicPreflight -> {
-                val decision = TypeExpansionDecision.AtomicExpansion.issue(
-                    subject = preflight.subject,
-                )
+                val decision =
+                    TypeExpansionDecision.AtomicExpansion.issue(
+                        subject = preflight.subject,
+                    )
 
                 workMeter.record(
                     event = TypeExpansionWorkEvent.ATOMIC_EXPANSION_DECISION,
@@ -149,10 +151,11 @@ class TypeExpansionPipeline private constructor(
             }
 
             is TypeExpansionPreflightDecision.CollectionPreflight -> {
-                val decision = TypeExpansionDecision.CollectionExpansion.issue(
-                    subject = preflight.subject,
-                    elementType = preflight.elementType,
-                )
+                val decision =
+                    TypeExpansionDecision.CollectionExpansion.issue(
+                        subject = preflight.subject,
+                        elementType = preflight.elementType,
+                    )
 
                 workMeter.record(
                     event = TypeExpansionWorkEvent.CONTAINER_EXPANSION_DECISION,
@@ -163,10 +166,11 @@ class TypeExpansionPipeline private constructor(
             }
 
             is TypeExpansionPreflightDecision.ArrayPreflight -> {
-                val decision = TypeExpansionDecision.ArrayExpansion.issue(
-                    subject = preflight.subject,
-                    componentType = preflight.componentType,
-                )
+                val decision =
+                    TypeExpansionDecision.ArrayExpansion.issue(
+                        subject = preflight.subject,
+                        componentType = preflight.componentType,
+                    )
 
                 workMeter.record(
                     event = TypeExpansionWorkEvent.CONTAINER_EXPANSION_DECISION,
@@ -177,11 +181,12 @@ class TypeExpansionPipeline private constructor(
             }
 
             is TypeExpansionPreflightDecision.MapPreflight -> {
-                val decision = TypeExpansionDecision.MapExpansion.issue(
-                    subject = preflight.subject,
-                    keyType = preflight.keyType,
-                    valueType = preflight.valueType,
-                )
+                val decision =
+                    TypeExpansionDecision.MapExpansion.issue(
+                        subject = preflight.subject,
+                        keyType = preflight.keyType,
+                        valueType = preflight.valueType,
+                    )
 
                 workMeter.record(
                     event = TypeExpansionWorkEvent.CONTAINER_EXPANSION_DECISION,
@@ -225,10 +230,11 @@ class TypeExpansionPipeline private constructor(
             subject = preflight.subject,
         )
 
-        val projection = activeMemberProjector.project(
-            facts = rawFacts,
-            capabilityProfile = capabilityProfile,
-        )
+        val projection =
+            activeMemberProjector.project(
+                facts = rawFacts,
+                capabilityProfile = capabilityProfile,
+            )
 
         workMeter.record(
             event = TypeExpansionWorkEvent.COMPOSITE_ACTIVE_MEMBER_PROJECTION,
@@ -242,13 +248,14 @@ class TypeExpansionPipeline private constructor(
             subject = preflight.subject,
         )
 
-        val plan = CompositeExpansionPlan.issue(
-            ownerTypeFqcn = rawFacts.ownerTypeFqcn,
-            typeIdentity64 = rawFacts.typeIdentity64,
-            selectedConstructor = projection.selectedConstructor,
-            orderedMembers = orderedMembers,
-            propertyDemotions = projection.propertyDemotions,
-        )
+        val plan =
+            CompositeExpansionPlan.issue(
+                ownerTypeFqcn = rawFacts.ownerTypeFqcn,
+                typeIdentity64 = rawFacts.typeIdentity64,
+                selectedConstructor = projection.selectedConstructor,
+                orderedMembers = orderedMembers,
+                propertyDemotions = projection.propertyDemotions,
+            )
 
         return TypeExpansionDecision.CompositeExpansion.issue(
             subject = preflight.subject,
@@ -260,8 +267,8 @@ class TypeExpansionPipeline private constructor(
         reference: TypeReference,
         shape: ResolvedTypeShape,
         cycleIdentity: TypeCycleIdentity,
-    ): TypeExpansionPreflightDecision {
-        return when (shape.kind) {
+    ): TypeExpansionPreflightDecision =
+        when (shape.kind) {
             TypeKind.ATOMIC -> {
                 TypeExpansionPreflightDecision.AtomicPreflight.issue(
                     subject = reference,
@@ -309,19 +316,15 @@ class TypeExpansionPipeline private constructor(
                 )
             }
         }
-    }
 
-    private fun rawFactsResolutionEvent(
-        kind: RawTypeFactsResolutionKind,
-    ): TypeExpansionWorkEvent {
-        return when (kind) {
+    private fun rawFactsResolutionEvent(kind: RawTypeFactsResolutionKind): TypeExpansionWorkEvent =
+        when (kind) {
             RawTypeFactsResolutionKind.CACHE_HIT ->
                 TypeExpansionWorkEvent.COMPOSITE_RAW_FACT_CACHE_HIT
 
             RawTypeFactsResolutionKind.ACTUAL_RESOLUTION ->
                 TypeExpansionWorkEvent.COMPOSITE_RAW_FACT_RESOLVE
         }
-    }
 
     private fun requireShapeSubjectMatchesReference(
         expected: TypeReference,
@@ -339,11 +342,12 @@ class TypeExpansionPipeline private constructor(
                 actualSignature = shape.subject.signature,
                 expectedCycleId = expected.cycleId,
                 actualCycleId = shape.subject.cycleId,
-                mismatchFields = renderMismatchFields(
-                    "id" to idMismatch,
-                    "signature" to signatureMismatch,
-                    "cycleId" to cycleIdMismatch,
-                ),
+                mismatchFields =
+                    renderMismatchFields(
+                        "id" to idMismatch,
+                        "signature" to signatureMismatch,
+                        "cycleId" to cycleIdMismatch,
+                    ),
             )
         }
     }
@@ -376,13 +380,14 @@ class TypeExpansionPipeline private constructor(
                 actualAlgorithmId = cycleIdentity.identityAlgorithmId,
                 expectedAlgorithmVersion = identityAlgorithmVersionSnapshot,
                 actualAlgorithmVersion = cycleIdentity.identityAlgorithmVersion,
-                mismatchFields = renderMismatchFields(
-                    "id" to idMismatch,
-                    "signature" to signatureMismatch,
-                    "cycleId" to cycleIdMismatch,
-                    "identityAlgorithmId" to algorithmIdMismatch,
-                    "identityAlgorithmVersion" to algorithmVersionMismatch,
-                ),
+                mismatchFields =
+                    renderMismatchFields(
+                        "id" to idMismatch,
+                        "signature" to signatureMismatch,
+                        "cycleId" to cycleIdMismatch,
+                        "identityAlgorithmId" to algorithmIdMismatch,
+                        "identityAlgorithmVersion" to algorithmVersionMismatch,
+                    ),
             )
         }
     }
@@ -408,18 +413,17 @@ class TypeExpansionPipeline private constructor(
                 actualAlgorithmId = rawFacts.typeIdentityAlgorithmId,
                 expectedAlgorithmVersion = identityAlgorithmVersionSnapshot,
                 actualAlgorithmVersion = rawFacts.typeIdentityAlgorithmVersion,
-                mismatchFields = renderMismatchFields(
-                    "typeIdentity64" to identityMismatch,
-                    "typeIdentityAlgorithmId" to algorithmIdMismatch,
-                    "typeIdentityAlgorithmVersion" to algorithmVersionMismatch,
-                ),
+                mismatchFields =
+                    renderMismatchFields(
+                        "typeIdentity64" to identityMismatch,
+                        "typeIdentityAlgorithmId" to algorithmIdMismatch,
+                        "typeIdentityAlgorithmVersion" to algorithmVersionMismatch,
+                    ),
             )
         }
     }
 
-    private fun renderMismatchFields(
-        vararg fields: Pair<String, Boolean>,
-    ): String {
+    private fun renderMismatchFields(vararg fields: Pair<String, Boolean>): String {
         val builder = StringBuilder()
         var count = 0
 
@@ -439,49 +443,37 @@ class TypeExpansionPipeline private constructor(
         return if (count == 0) "unknown" else builder.toString()
     }
 
-    private fun requireElementType(
-        shape: ResolvedTypeShape,
-    ): TypeReference {
-        return shape.elementType
+    private fun requireElementType(shape: ResolvedTypeShape): TypeReference =
+        shape.elementType
             ?: throw CorruptResolvedTypeShapeException(
                 subjectTypeId = shape.subject.id,
                 shapeKind = shape.kind.name,
                 reason = "COLLECTION shape is missing elementType after shape cardinality validation.",
             )
-    }
 
-    private fun requireComponentType(
-        shape: ResolvedTypeShape,
-    ): TypeReference {
-        return shape.componentType
+    private fun requireComponentType(shape: ResolvedTypeShape): TypeReference =
+        shape.componentType
             ?: throw CorruptResolvedTypeShapeException(
                 subjectTypeId = shape.subject.id,
                 shapeKind = shape.kind.name,
                 reason = "ARRAY shape is missing componentType after shape cardinality validation.",
             )
-    }
 
-    private fun requireKeyType(
-        shape: ResolvedTypeShape,
-    ): TypeReference {
-        return shape.keyType
+    private fun requireKeyType(shape: ResolvedTypeShape): TypeReference =
+        shape.keyType
             ?: throw CorruptResolvedTypeShapeException(
                 subjectTypeId = shape.subject.id,
                 shapeKind = shape.kind.name,
                 reason = "MAP shape is missing keyType after shape cardinality validation.",
             )
-    }
 
-    private fun requireValueType(
-        shape: ResolvedTypeShape,
-    ): TypeReference {
-        return shape.valueType
+    private fun requireValueType(shape: ResolvedTypeShape): TypeReference =
+        shape.valueType
             ?: throw CorruptResolvedTypeShapeException(
                 subjectTypeId = shape.subject.id,
                 shapeKind = shape.kind.name,
                 reason = "MAP shape is missing valueType after shape cardinality validation.",
             )
-    }
 
     private fun requireIdentityProviderStable() {
         if (typeCycleIdentityProvider.identityAlgorithmId != identityAlgorithmIdSnapshot ||
@@ -489,8 +481,8 @@ class TypeExpansionPipeline private constructor(
         ) {
             throw PlanningExpansionException(
                 "TypeCycleIdentityProvider drift detected: " +
-                        "expected=${identityAlgorithmIdSnapshot}@${identityAlgorithmVersionSnapshot}, " +
-                        "actual=${typeCycleIdentityProvider.identityAlgorithmId}@${typeCycleIdentityProvider.identityAlgorithmVersion}",
+                    "expected=$identityAlgorithmIdSnapshot@$identityAlgorithmVersionSnapshot, " +
+                    "actual=${typeCycleIdentityProvider.identityAlgorithmId}@${typeCycleIdentityProvider.identityAlgorithmVersion}",
             )
         }
     }

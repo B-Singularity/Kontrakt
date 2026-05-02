@@ -31,12 +31,12 @@ class CycleBreakAssembly private constructor(
         ): CycleBreakAssembly {
             if (structuralPath.isEmpty()) {
                 throw PlanningProtocolIntegrityException(
-                    "CycleBreakAssembly.structuralPath must not be empty."
+                    "CycleBreakAssembly.structuralPath must not be empty.",
                 )
             }
             if (semanticCostUpperBound < 0L) {
                 throw PlanningProtocolIntegrityException(
-                    "CycleBreakAssembly.semanticCostUpperBound must be >= 0."
+                    "CycleBreakAssembly.semanticCostUpperBound must be >= 0.",
                 )
             }
             return CycleBreakAssembly(

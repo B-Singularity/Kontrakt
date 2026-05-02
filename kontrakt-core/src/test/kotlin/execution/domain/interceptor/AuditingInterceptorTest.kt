@@ -31,7 +31,6 @@ import java.lang.reflect.Method
 import java.time.Clock
 
 class AuditingInterceptorTest : ScenarioInterceptorContract {
-
     // Mocks
     private val traceSink = mockk<TraceSink>(relaxed = true)
     private val resultPublisher = mockk<TestResultPublisher>(relaxed = true)
@@ -61,15 +60,16 @@ class AuditingInterceptorTest : ScenarioInterceptorContract {
         every { verdictDecider.decide(any(), any()) } returns TestStatus.Passed
 
         // SUT Initialization
-        sut = AuditingInterceptor(
-            traceSink = traceSink,
-            resultPublisher = resultPublisher,
-            policy = defaultPolicy,
-            seed = seed,
-            clock = clock,
-            workerId = workerId,
-            verdictDecider = verdictDecider
-        )
+        sut =
+            AuditingInterceptor(
+                traceSink = traceSink,
+                resultPublisher = resultPublisher,
+                policy = defaultPolicy,
+                seed = seed,
+                clock = clock,
+                workerId = workerId,
+                verdictDecider = verdictDecider,
+            )
     }
 
     override fun createSut(): ScenarioInterceptor = sut
@@ -143,9 +143,11 @@ class AuditingInterceptorTest : ScenarioInterceptorContract {
 
         // Then 1: Verify VerificationTrace emission
         verify {
-            traceSink.emit(match<VerificationTrace> {
-                it.status == AssertionStatus.PASSED && it.detail == "OK"
-            })
+            traceSink.emit(
+                match<VerificationTrace> {
+                    it.status == AssertionStatus.PASSED && it.detail == "OK"
+                },
+            )
         }
 
         // Then 2: Verify Final Verdict emission
@@ -155,9 +157,11 @@ class AuditingInterceptorTest : ScenarioInterceptorContract {
 
         // Then 3: Verify Publisher notification
         verify {
-            resultPublisher.publish(match<TestResultEvent> {
-                it.status == TestStatus.Passed
-            })
+            resultPublisher.publish(
+                match<TestResultEvent> {
+                    it.status == TestStatus.Passed
+                },
+            )
         }
 
         // Then 4: Verify Sink Reset (Cleanup)
@@ -248,9 +252,11 @@ class AuditingInterceptorTest : ScenarioInterceptorContract {
 
         // Verify: ExceptionTrace emitted BEFORE rethrow
         verify {
-            traceSink.emit(match<ExceptionTrace> {
-                it.message == "Boom"
-            })
+            traceSink.emit(
+                match<ExceptionTrace> {
+                    it.message == "Boom"
+                },
+            )
         }
 
         // Verify: Finally block executed (Result published as Error)
@@ -283,19 +289,22 @@ class AuditingInterceptorTest : ScenarioInterceptorContract {
         val exceptionWithNullMessage = RuntimeException()
         every { chain.proceed(any()) } throws exceptionWithNullMessage
 
-        every { verdictDecider.decide(exceptionWithNullMessage, any()) } returns TestStatus.ExecutionError(
-            exceptionWithNullMessage
-        )
+        every { verdictDecider.decide(exceptionWithNullMessage, any()) } returns
+            TestStatus.ExecutionError(
+                exceptionWithNullMessage,
+            )
 
         assertThatThrownBy {
             sut.intercept(chain)
         }.isSameAs(exceptionWithNullMessage)
 
         verify {
-            traceSink.emit(match<ExceptionTrace> {
-                it.message == "" &&
+            traceSink.emit(
+                match<ExceptionTrace> {
+                    it.message == "" &&
                         it.exceptionType == RuntimeException::class.java.name
-            })
+                },
+            )
         }
     }
 }

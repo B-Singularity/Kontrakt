@@ -68,7 +68,7 @@ fun Throwable.analyzeBlame(): Blame =
         // Business Logic Failure (Assertion / Contract)
         is AssertionError,
         is ContractViolationException,
-            -> Blame.TEST_FAILURE
+        -> Blame.TEST_FAILURE
 
         // User Configuration Error
         is KontraktConfigurationException -> Blame.SETUP_FAILURE

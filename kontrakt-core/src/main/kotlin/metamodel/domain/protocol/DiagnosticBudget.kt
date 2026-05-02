@@ -29,9 +29,7 @@ class DiagnosticBudget(
         }
     }
 
-    fun hasRemaining(): Boolean {
-        return remaining > 0
-    }
+    fun hasRemaining(): Boolean = remaining > 0
 
     fun append(
         builder: StringBuilder,

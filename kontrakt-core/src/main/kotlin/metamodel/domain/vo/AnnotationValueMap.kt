@@ -70,15 +70,10 @@ import metamodel.domain.protocol.DiagnosticBudget
 class AnnotationValueMap private constructor(
     private val entries: Array<AnnotationValueEntry>,
 ) : AbstractList<AnnotationValueEntry>() {
-
     override val size: Int
         get() = entries.size
 
-    override fun get(
-        index: Int,
-    ): AnnotationValueEntry {
-        return entries[index]
-    }
+    override fun get(index: Int): AnnotationValueEntry = entries[index]
 
     /**
      * Bounded diagnostic rendering.
@@ -92,18 +87,20 @@ class AnnotationValueMap private constructor(
             return "AnnotationValueMap()"
         }
 
-        val budget = DiagnosticBudget(
-            remaining = MAX_RENDERED_DIAGNOSTIC_CHARS,
-        )
+        val budget =
+            DiagnosticBudget(
+                remaining = MAX_RENDERED_DIAGNOSTIC_CHARS,
+            )
 
         val builder = StringBuilder()
         budget.append(builder, "AnnotationValueMap(")
 
-        val limit = if (entries.size < MAX_RENDERED_ENTRIES) {
-            entries.size
-        } else {
-            MAX_RENDERED_ENTRIES
-        }
+        val limit =
+            if (entries.size < MAX_RENDERED_ENTRIES) {
+                entries.size
+            } else {
+                MAX_RENDERED_ENTRIES
+            }
 
         var index = 0
         while (index < limit && budget.hasRemaining()) {
@@ -130,26 +127,18 @@ class AnnotationValueMap private constructor(
         return builder.toString()
     }
 
-    fun renderSummary(): String {
-        return "AnnotationValueMap(size=${entries.size})"
-    }
+    fun renderSummary(): String = "AnnotationValueMap(size=${entries.size})"
 
-    override fun equals(
-        other: Any?,
-    ): Boolean {
+    override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is AnnotationValueMap) return false
 
         return entries.contentEquals(other.entries)
     }
 
-    override fun hashCode(): Int {
-        return entries.contentHashCode()
-    }
+    override fun hashCode(): Int = entries.contentHashCode()
 
-    override fun toString(): String {
-        return renderSummary()
-    }
+    override fun toString(): String = renderSummary()
 
     companion object {
         /**
@@ -172,14 +161,10 @@ class AnnotationValueMap private constructor(
             }
 
         @JvmStatic
-        fun empty(): AnnotationValueMap {
-            return EMPTY
-        }
+        fun empty(): AnnotationValueMap = EMPTY
 
         @JvmStatic
-        fun issue(
-            entries: Collection<AnnotationValueEntry>,
-        ): AnnotationValueMap {
+        fun issue(entries: Collection<AnnotationValueEntry>): AnnotationValueMap {
             if (entries.isEmpty()) {
                 return EMPTY
             }
@@ -205,9 +190,7 @@ class AnnotationValueMap private constructor(
             return AnnotationValueMap(buffer)
         }
 
-        private fun requireNoDuplicateNames(
-            entries: Array<AnnotationValueEntry>,
-        ) {
+        private fun requireNoDuplicateNames(entries: Array<AnnotationValueEntry>) {
             var index = 1
 
             while (index < entries.size) {

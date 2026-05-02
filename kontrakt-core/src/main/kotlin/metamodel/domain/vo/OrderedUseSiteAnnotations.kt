@@ -85,15 +85,10 @@ import metamodel.domain.protocol.DiagnosticBudget
 class OrderedUseSiteAnnotations private constructor(
     private val annotations: Array<AnnotationDescriptor>,
 ) : AbstractList<AnnotationDescriptor>() {
-
     override val size: Int
         get() = annotations.size
 
-    override fun get(
-        index: Int,
-    ): AnnotationDescriptor {
-        return annotations[index]
-    }
+    override fun get(index: Int): AnnotationDescriptor = annotations[index]
 
     /**
      * Maximum nested annotation value depth across all descriptors.
@@ -101,13 +96,12 @@ class OrderedUseSiteAnnotations private constructor(
      * This is useful for higher-level defensive assertions without requiring
      * callers to traverse annotation values recursively.
      */
-    val maxAnnotationValueNestingDepth: Int = computeMaxAnnotationValueNestingDepth(
-        annotations = annotations,
-    )
+    val maxAnnotationValueNestingDepth: Int =
+        computeMaxAnnotationValueNestingDepth(
+            annotations = annotations,
+        )
 
-    fun renderSummary(): String {
-        return "OrderedUseSiteAnnotations(size=${annotations.size})"
-    }
+    fun renderSummary(): String = "OrderedUseSiteAnnotations(size=${annotations.size})"
 
     /**
      * Bounded diagnostic rendering.
@@ -121,18 +115,20 @@ class OrderedUseSiteAnnotations private constructor(
             return "OrderedUseSiteAnnotations()"
         }
 
-        val budget = DiagnosticBudget(
-            remaining = MAX_RENDERED_DIAGNOSTIC_CHARS,
-        )
+        val budget =
+            DiagnosticBudget(
+                remaining = MAX_RENDERED_DIAGNOSTIC_CHARS,
+            )
 
         val builder = StringBuilder()
         budget.append(builder, "OrderedUseSiteAnnotations(")
 
-        val limit = if (annotations.size < MAX_RENDERED_ANNOTATIONS) {
-            annotations.size
-        } else {
-            MAX_RENDERED_ANNOTATIONS
-        }
+        val limit =
+            if (annotations.size < MAX_RENDERED_ANNOTATIONS) {
+                annotations.size
+            } else {
+                MAX_RENDERED_ANNOTATIONS
+            }
 
         var index = 0
         while (index < limit && budget.hasRemaining()) {
@@ -160,22 +156,16 @@ class OrderedUseSiteAnnotations private constructor(
         return builder.toString()
     }
 
-    override fun equals(
-        other: Any?,
-    ): Boolean {
+    override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is OrderedUseSiteAnnotations) return false
 
         return annotations.contentEquals(other.annotations)
     }
 
-    override fun hashCode(): Int {
-        return annotations.contentHashCode()
-    }
+    override fun hashCode(): Int = annotations.contentHashCode()
 
-    override fun toString(): String {
-        return renderSummary()
-    }
+    override fun toString(): String = renderSummary()
 
     companion object {
         /**
@@ -198,14 +188,10 @@ class OrderedUseSiteAnnotations private constructor(
             }
 
         @JvmStatic
-        fun empty(): OrderedUseSiteAnnotations {
-            return EMPTY
-        }
+        fun empty(): OrderedUseSiteAnnotations = EMPTY
 
         @JvmStatic
-        fun issue(
-            annotations: Collection<AnnotationDescriptor>,
-        ): OrderedUseSiteAnnotations {
+        fun issue(annotations: Collection<AnnotationDescriptor>): OrderedUseSiteAnnotations {
             if (annotations.isEmpty()) {
                 return EMPTY
             }
@@ -229,9 +215,7 @@ class OrderedUseSiteAnnotations private constructor(
             return OrderedUseSiteAnnotations(buffer)
         }
 
-        private fun computeMaxAnnotationValueNestingDepth(
-            annotations: Array<AnnotationDescriptor>,
-        ): Int {
+        private fun computeMaxAnnotationValueNestingDepth(annotations: Array<AnnotationDescriptor>): Int {
             var maxDepth = 0
             var index = 0
 

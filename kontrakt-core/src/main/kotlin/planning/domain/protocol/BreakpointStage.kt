@@ -22,15 +22,14 @@ enum class BreakpointStage(
 
     companion object {
         @JvmStatic
-        fun fromTag(tag: Byte): BreakpointStage {
-            return when (tag) {
+        fun fromTag(tag: Byte): BreakpointStage =
+            when (tag) {
                 0.toByte() -> NONE
                 1.toByte() -> SUBSTITUTABLE
                 2.toByte() -> DEFERRED
                 else -> throw PlanningProtocolIntegrityException(
-                    "Unknown BreakpointStage tag: $tag"
+                    "Unknown BreakpointStage tag: $tag",
                 )
             }
-        }
     }
 }

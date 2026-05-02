@@ -7,7 +7,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 class TestSpecificationTest {
-
     @Test
     fun `create - successfully builds specification with valid arguments`() {
         val target = mockk<DiscoveredTestTarget>()
@@ -90,6 +89,5 @@ class TestSpecificationTest {
         assertThat(spec1).isNotEqualTo(spec3)
         assertThat(spec1.hashCode()).isEqualTo(spec2.hashCode())
         assertThat(spec1.toString()).isNotBlank()
-
     }
 }

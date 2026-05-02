@@ -62,12 +62,12 @@ enum class SharedSlotState(
                 for (state in ALL) {
                     if (state.code < 0) {
                         throw PlanningProtocolIntegrityException(
-                            "SharedSlotState.code must be >= 0: name=${state.name}, code=${state.code}"
+                            "SharedSlotState.code must be >= 0: name=${state.name}, code=${state.code}",
                         )
                     }
                     if (table[state.code] != null) {
                         throw PlanningProtocolIntegrityException(
-                            "Duplicate SharedSlotState.code detected: code=${state.code}"
+                            "Duplicate SharedSlotState.code detected: code=${state.code}",
                         )
                     }
                     table[state.code] = state

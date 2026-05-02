@@ -28,9 +28,7 @@ class CanonicalTypeLexicalProfile private constructor(
     val hasNullableMarker: Boolean,
     val hasStarProjection: Boolean,
 ) {
-    fun requireWithinPolicy(
-        policy: CanonicalTypeTextInspectionPolicy,
-    ) {
+    fun requireWithinPolicy(policy: CanonicalTypeTextInspectionPolicy) {
         if (!isNfc) {
             throw MetamodelFactContractViolationException(
                 "CanonicalTypeLexicalProfile must be NFC for accepted type text.",
@@ -40,39 +38,39 @@ class CanonicalTypeLexicalProfile private constructor(
         if (utf16CodeUnitCount > policy.maxUtf16CodeUnitsBeforeSnapshot) {
             throw MetamodelFactContractViolationException(
                 "CanonicalTypeLexicalProfile.utf16CodeUnitCount exceeds policy: " +
-                        "utf16CodeUnitCount=$utf16CodeUnitCount, " +
-                        "maxUtf16CodeUnitsBeforeSnapshot=${policy.maxUtf16CodeUnitsBeforeSnapshot}",
+                    "utf16CodeUnitCount=$utf16CodeUnitCount, " +
+                    "maxUtf16CodeUnitsBeforeSnapshot=${policy.maxUtf16CodeUnitsBeforeSnapshot}",
             )
         }
 
         if (codePointCount > policy.maxCodePoints) {
             throw MetamodelFactContractViolationException(
                 "CanonicalTypeLexicalProfile.codePointCount exceeds policy: " +
-                        "codePointCount=$codePointCount, maxCodePoints=${policy.maxCodePoints}",
+                    "codePointCount=$codePointCount, maxCodePoints=${policy.maxCodePoints}",
             )
         }
 
         if (longestIdentifierTokenCodePoints > policy.maxIdentifierTokenCodePoints) {
             throw MetamodelFactContractViolationException(
                 "CanonicalTypeLexicalProfile.longestIdentifierTokenCodePoints exceeds policy: " +
-                        "longestIdentifierTokenCodePoints=$longestIdentifierTokenCodePoints, " +
-                        "maxIdentifierTokenCodePoints=${policy.maxIdentifierTokenCodePoints}",
+                    "longestIdentifierTokenCodePoints=$longestIdentifierTokenCodePoints, " +
+                    "maxIdentifierTokenCodePoints=${policy.maxIdentifierTokenCodePoints}",
             )
         }
 
         if (totalDelimiterCodePoints > policy.maxDelimiterCodePoints) {
             throw MetamodelFactContractViolationException(
                 "CanonicalTypeLexicalProfile.totalDelimiterCodePoints exceeds policy: " +
-                        "totalDelimiterCodePoints=$totalDelimiterCodePoints, " +
-                        "maxDelimiterCodePoints=${policy.maxDelimiterCodePoints}",
+                    "totalDelimiterCodePoints=$totalDelimiterCodePoints, " +
+                    "maxDelimiterCodePoints=${policy.maxDelimiterCodePoints}",
             )
         }
 
         if (grossCombiningMarkCount > policy.maxGrossCombiningMarks) {
             throw MetamodelFactContractViolationException(
                 "CanonicalTypeLexicalProfile.grossCombiningMarkCount exceeds policy: " +
-                        "grossCombiningMarkCount=$grossCombiningMarkCount, " +
-                        "maxGrossCombiningMarks=${policy.maxGrossCombiningMarks}",
+                    "grossCombiningMarkCount=$grossCombiningMarkCount, " +
+                    "maxGrossCombiningMarks=${policy.maxGrossCombiningMarks}",
             )
         }
 
@@ -81,8 +79,8 @@ class CanonicalTypeLexicalProfile private constructor(
         ) {
             throw MetamodelFactContractViolationException(
                 "CanonicalTypeLexicalProfile.maxCombiningMarksPerIdentifierToken exceeds policy: " +
-                        "maxCombiningMarksPerIdentifierToken=$maxCombiningMarksPerIdentifierToken, " +
-                        "maxAllowed=${policy.maxCombiningMarksPerIdentifierToken}",
+                    "maxCombiningMarksPerIdentifierToken=$maxCombiningMarksPerIdentifierToken, " +
+                    "maxAllowed=${policy.maxCombiningMarksPerIdentifierToken}",
             )
         }
 
@@ -91,8 +89,8 @@ class CanonicalTypeLexicalProfile private constructor(
         ) {
             throw MetamodelFactContractViolationException(
                 "CanonicalTypeLexicalProfile.maxGraphemeClustersPerIdentifierToken exceeds policy: " +
-                        "maxGraphemeClustersPerIdentifierToken=$maxGraphemeClustersPerIdentifierToken, " +
-                        "maxAllowed=${policy.maxGraphemeClustersPerIdentifierToken}",
+                    "maxGraphemeClustersPerIdentifierToken=$maxGraphemeClustersPerIdentifierToken, " +
+                    "maxAllowed=${policy.maxGraphemeClustersPerIdentifierToken}",
             )
         }
 
@@ -102,8 +100,8 @@ class CanonicalTypeLexicalProfile private constructor(
         if (ratioBasisPoints > policy.maxNonIdentifierCodePointRatioBasisPoints) {
             throw MetamodelFactContractViolationException(
                 "CanonicalTypeLexicalProfile non-identifier density exceeds policy: " +
-                        "ratioBasisPoints=$ratioBasisPoints, " +
-                        "maxRatioBasisPoints=${policy.maxNonIdentifierCodePointRatioBasisPoints}",
+                    "ratioBasisPoints=$ratioBasisPoints, " +
+                    "maxRatioBasisPoints=${policy.maxNonIdentifierCodePointRatioBasisPoints}",
             )
         }
 
@@ -165,14 +163,14 @@ class CanonicalTypeLexicalProfile private constructor(
             if (longestIdentifierTokenCodePoints <= 0) {
                 throw MetamodelFactContractViolationException(
                     "longestIdentifierTokenCodePoints must be > 0 for accepted type text: " +
-                            longestIdentifierTokenCodePoints,
+                        longestIdentifierTokenCodePoints,
                 )
             }
 
             if (longestIdentifierTokenCodePoints > codePointCount) {
                 throw MetamodelFactContractViolationException(
                     "longestIdentifierTokenCodePoints must be <= codePointCount: " +
-                            "longest=$longestIdentifierTokenCodePoints, codePointCount=$codePointCount",
+                        "longest=$longestIdentifierTokenCodePoints, codePointCount=$codePointCount",
                 )
             }
 
@@ -197,37 +195,37 @@ class CanonicalTypeLexicalProfile private constructor(
             if (maxCombiningMarksPerIdentifierToken < 0) {
                 throw MetamodelFactContractViolationException(
                     "maxCombiningMarksPerIdentifierToken must be >= 0: " +
-                            maxCombiningMarksPerIdentifierToken,
+                        maxCombiningMarksPerIdentifierToken,
                 )
             }
 
             if (maxGraphemeClustersPerIdentifierToken <= 0) {
                 throw MetamodelFactContractViolationException(
                     "maxGraphemeClustersPerIdentifierToken must be > 0: " +
-                            maxGraphemeClustersPerIdentifierToken,
+                        maxGraphemeClustersPerIdentifierToken,
                 )
             }
 
             if (totalDelimiterCodePoints > nonIdentifierCodePointCount) {
                 throw MetamodelFactContractViolationException(
                     "totalDelimiterCodePoints must be <= nonIdentifierCodePointCount: " +
-                            "totalDelimiterCodePoints=$totalDelimiterCodePoints, " +
-                            "nonIdentifierCodePointCount=$nonIdentifierCodePointCount",
+                        "totalDelimiterCodePoints=$totalDelimiterCodePoints, " +
+                        "nonIdentifierCodePointCount=$nonIdentifierCodePointCount",
                 )
             }
 
             if (nonIdentifierCodePointCount > codePointCount) {
                 throw MetamodelFactContractViolationException(
                     "nonIdentifierCodePointCount must be <= codePointCount: " +
-                            "nonIdentifierCodePointCount=$nonIdentifierCodePointCount, codePointCount=$codePointCount",
+                        "nonIdentifierCodePointCount=$nonIdentifierCodePointCount, codePointCount=$codePointCount",
                 )
             }
 
             if (grossCombiningMarkCount > nonIdentifierCodePointCount) {
                 throw MetamodelFactContractViolationException(
                     "grossCombiningMarkCount must be <= nonIdentifierCodePointCount: " +
-                            "grossCombiningMarkCount=$grossCombiningMarkCount, " +
-                            "nonIdentifierCodePointCount=$nonIdentifierCodePointCount",
+                        "grossCombiningMarkCount=$grossCombiningMarkCount, " +
+                        "nonIdentifierCodePointCount=$nonIdentifierCodePointCount",
                 )
             }
 
@@ -237,7 +235,7 @@ class CanonicalTypeLexicalProfile private constructor(
             ) {
                 throw MetamodelFactContractViolationException(
                     "maxCombiningMarksPerIdentifierToken cannot exceed grossCombiningMarkCount " +
-                            "when grossCombiningMarkCount > 0.",
+                        "when grossCombiningMarkCount > 0.",
                 )
             }
 

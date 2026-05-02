@@ -58,8 +58,8 @@ class InMemoryPlanInternRepositoryAdapter private constructor(
     private val inflightTableCapacity: Int,
     private val dispatchPlane: L2JoinDispatchPlane,
     private val timeSource: MonotonicTimeSource,
-) : PlanInternRepository, AutoCloseable {
-
+) : PlanInternRepository,
+    AutoCloseable {
     private val regions = PartitionRegionDirectory()
 
     /**
@@ -83,24 +83,25 @@ class InMemoryPlanInternRepositoryAdapter private constructor(
     ): PlanInternStep {
         if (adminStateAcquire() == AdapterAdminState.CLOSED) {
             throw PlanningProtocolIntegrityException(
-                "resolveOrIntern() is illegal after adapter close completion."
+                "resolveOrIntern() is illegal after adapter close completion.",
             )
         }
 
         session.step(CostCenter.L2_REGION_LOOKUP)
 
-        val region = regions.getOrCreate(partitionId) {
-            PartitionRegion.issue(
-                id = partitionId,
-                joinGovernance = joinGovernance,
-                storageGovernance = storageGovernance,
-                shardCount = shardCount,
-                bucketTableCapacity = bucketTableCapacity,
-                inflightTableCapacity = inflightTableCapacity,
-                dispatchPlane = dispatchPlane,
-                timeSource = timeSource,
-            )
-        }
+        val region =
+            regions.getOrCreate(partitionId) {
+                PartitionRegion.issue(
+                    id = partitionId,
+                    joinGovernance = joinGovernance,
+                    storageGovernance = storageGovernance,
+                    shardCount = shardCount,
+                    bucketTableCapacity = bucketTableCapacity,
+                    inflightTableCapacity = inflightTableCapacity,
+                    dispatchPlane = dispatchPlane,
+                    timeSource = timeSource,
+                )
+            }
 
         return region.resolveOrIntern(
             key = key,
@@ -123,17 +124,16 @@ class InMemoryPlanInternRepositoryAdapter private constructor(
      * If quiescence is not reached in time, the region remains close-published and
      * discoverable in the directory. This is deliberate fail-closed behavior.
      */
-    fun dropPartition(
-        partitionId: PartitionId,
-    ): Boolean {
+    fun dropPartition(partitionId: PartitionId): Boolean {
         if (!beginDrop()) {
             return when (adminStateAcquire()) {
                 AdapterAdminState.CLOSING,
-                AdapterAdminState.CLOSED -> false
+                AdapterAdminState.CLOSED,
+                -> false
 
                 AdapterAdminState.DROP_IN_PROGRESS -> {
                     throw PlanningProtocolIntegrityException(
-                        "Concurrent partition-drop operations are forbidden."
+                        "Concurrent partition-drop operations are forbidden.",
                     )
                 }
 
@@ -147,10 +147,11 @@ class InMemoryPlanInternRepositoryAdapter private constructor(
             region.closePublished()
             region.abortAllInFlight()
 
-            val quiesced = dispatchPlane.awaitQuiescence(
-                timeout = dispatchLanePolicy.partitionDropQuiescenceTimeoutNanos,
-                unit = TimeUnit.NANOSECONDS,
-            )
+            val quiesced =
+                dispatchPlane.awaitQuiescence(
+                    timeout = dispatchLanePolicy.partitionDropQuiescenceTimeoutNanos,
+                    unit = TimeUnit.NANOSECONDS,
+                )
             if (!quiesced) {
                 return false
             }
@@ -182,11 +183,12 @@ class InMemoryPlanInternRepositoryAdapter private constructor(
         if (!beginClose()) {
             when (adminStateAcquire()) {
                 AdapterAdminState.CLOSED,
-                AdapterAdminState.CLOSING -> return
+                AdapterAdminState.CLOSING,
+                -> return
 
                 AdapterAdminState.DROP_IN_PROGRESS -> {
                     throw PlanningProtocolIntegrityException(
-                        "Adapter close cannot start while a partition-drop operation is in progress."
+                        "Adapter close cannot start while a partition-drop operation is in progress.",
                     )
                 }
 
@@ -220,9 +222,7 @@ class InMemoryPlanInternRepositoryAdapter private constructor(
         }
     }
 
-    private fun adminStateAcquire(): AdapterAdminState {
-        return AdapterAdminState.fromCode(adminStateCode.get())
-    }
+    private fun adminStateAcquire(): AdapterAdminState = AdapterAdminState.fromCode(adminStateCode.get())
 
     private fun beginDrop(): Boolean {
         while (true) {
@@ -310,11 +310,12 @@ class InMemoryPlanInternRepositoryAdapter private constructor(
             )
 
             val timeSource = SystemMonotonicTimeSource
-            val dispatchPlane = DeterministicL2JoinDispatchPlane.issue(
-                policy = dispatchLanePolicy,
-                shardCount = shardCount,
-                timeSource = timeSource,
-            )
+            val dispatchPlane =
+                DeterministicL2JoinDispatchPlane.issue(
+                    policy = dispatchLanePolicy,
+                    shardCount = shardCount,
+                    timeSource = timeSource,
+                )
 
             return InMemoryPlanInternRepositoryAdapter(
                 joinGovernance = joinGovernance,
@@ -336,19 +337,19 @@ class InMemoryPlanInternRepositoryAdapter private constructor(
         ) {
             if (shardCount <= 0 || shardCount.countOneBits() != 1) {
                 throw PlanningProtocolIntegrityException(
-                    "InMemoryPlanInternRepositoryAdapter.shardCount must be a positive power-of-two: $shardCount"
+                    "InMemoryPlanInternRepositoryAdapter.shardCount must be a positive power-of-two: $shardCount",
                 )
             }
 
             if (bucketTableCapacity <= 0) {
                 throw PlanningProtocolIntegrityException(
-                    "InMemoryPlanInternRepositoryAdapter.bucketTableCapacity must be positive: $bucketTableCapacity"
+                    "InMemoryPlanInternRepositoryAdapter.bucketTableCapacity must be positive: $bucketTableCapacity",
                 )
             }
 
             if (inflightTableCapacity <= 0) {
                 throw PlanningProtocolIntegrityException(
-                    "InMemoryPlanInternRepositoryAdapter.inflightTableCapacity must be positive: $inflightTableCapacity"
+                    "InMemoryPlanInternRepositoryAdapter.inflightTableCapacity must be positive: $inflightTableCapacity",
                 )
             }
 
@@ -356,7 +357,7 @@ class InMemoryPlanInternRepositoryAdapter private constructor(
             if (effectiveLaneCount <= 0 || effectiveLaneCount.countOneBits() != 1) {
                 throw PlanningProtocolIntegrityException(
                     "InMemoryPlanInternRepositoryAdapter.effectiveLaneCount must be a positive power-of-two: " +
-                            effectiveLaneCount
+                        effectiveLaneCount,
                 )
             }
 
@@ -367,8 +368,8 @@ class InMemoryPlanInternRepositoryAdapter private constructor(
             if (dispatchLanePolicy.deadlineHeapCapacity < minRequiredDeadlineHeapCapacity) {
                 throw PlanningProtocolIntegrityException(
                     "ResolvedDispatchLanePolicy.deadlineHeapCapacity is too small for the maximum lane-owned " +
-                            "registration population: ${dispatchLanePolicy.deadlineHeapCapacity} < " +
-                            minRequiredDeadlineHeapCapacity
+                        "registration population: ${dispatchLanePolicy.deadlineHeapCapacity} < " +
+                        minRequiredDeadlineHeapCapacity,
                 )
             }
         }
@@ -386,13 +387,11 @@ class InMemoryPlanInternRepositoryAdapter private constructor(
      * We therefore prefer explicit immutable replacement over hidden shared mutation.
      */
     private class PartitionRegionDirectory {
-        private val state = java.util.concurrent.atomic.AtomicReference(DirectoryState(emptyMap()))
+        private val state =
+            java.util.concurrent.atomic
+                .AtomicReference(DirectoryState(emptyMap()))
 
-        fun get(
-            partitionId: PartitionId,
-        ): PartitionRegion? {
-            return state.get().regions[partitionId]
-        }
+        fun get(partitionId: PartitionId): PartitionRegion? = state.get().regions[partitionId]
 
         fun getOrCreate(
             partitionId: PartitionId,
@@ -434,9 +433,7 @@ class InMemoryPlanInternRepositoryAdapter private constructor(
             }
         }
 
-        fun snapshot(): List<PartitionRegion> {
-            return ArrayList(state.get().regions.values)
-        }
+        fun snapshot(): List<PartitionRegion> = ArrayList(state.get().regions.values)
 
         fun clear() {
             state.set(DirectoryState(emptyMap()))

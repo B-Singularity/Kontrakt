@@ -30,18 +30,17 @@ class PlanCacheKey private constructor(
     val equalityKey: CanonicalSignature,
     val route64: Long,
 ) {
-
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is PlanCacheKey) return false
 
         return workAccountingVersion == other.workAccountingVersion &&
-                normalizationVersion == other.normalizationVersion &&
-                edgeOrderingVersion == other.edgeOrderingVersion &&
-                capabilityProfileVersion == other.capabilityProfileVersion &&
-                entropyVersion == other.entropyVersion &&
-                partitionKey == other.partitionKey &&
-                equalityKey == other.equalityKey
+            normalizationVersion == other.normalizationVersion &&
+            edgeOrderingVersion == other.edgeOrderingVersion &&
+            capabilityProfileVersion == other.capabilityProfileVersion &&
+            entropyVersion == other.entropyVersion &&
+            partitionKey == other.partitionKey &&
+            equalityKey == other.equalityKey
     }
 
     /**
@@ -50,27 +49,28 @@ class PlanCacheKey private constructor(
      * This intentionally excludes [route64] so that equality and hashCode remain aligned
      * with the full exact-match tuple.
      */
-    override fun hashCode(): Int = Objects.hash(
-        workAccountingVersion,
-        normalizationVersion,
-        edgeOrderingVersion,
-        capabilityProfileVersion,
-        entropyVersion,
-        partitionKey,
-        equalityKey,
-    )
+    override fun hashCode(): Int =
+        Objects.hash(
+            workAccountingVersion,
+            normalizationVersion,
+            edgeOrderingVersion,
+            capabilityProfileVersion,
+            entropyVersion,
+            partitionKey,
+            equalityKey,
+        )
 
     override fun toString(): String =
         "PlanCacheKey(" +
-                "w=$workAccountingVersion," +
-                "n=$normalizationVersion," +
-                "e=$edgeOrderingVersion," +
-                "c=$capabilityProfileVersion," +
-                "r=$entropyVersion," +
-                "partition=$partitionKey," +
-                "eq=$equalityKey," +
-                "route64=$route64" +
-                ")"
+            "w=$workAccountingVersion," +
+            "n=$normalizationVersion," +
+            "e=$edgeOrderingVersion," +
+            "c=$capabilityProfileVersion," +
+            "r=$entropyVersion," +
+            "partition=$partitionKey," +
+            "eq=$equalityKey," +
+            "route64=$route64" +
+            ")"
 
     companion object {
         @JvmStatic
@@ -83,8 +83,8 @@ class PlanCacheKey private constructor(
             partitionKey: CanonicalIdentifier,
             equalityKey: CanonicalSignature,
             route64: Long,
-        ): PlanCacheKey {
-            return PlanCacheKey(
+        ): PlanCacheKey =
+            PlanCacheKey(
                 workAccountingVersion = workAccountingVersion,
                 normalizationVersion = normalizationVersion,
                 edgeOrderingVersion = edgeOrderingVersion,
@@ -94,6 +94,5 @@ class PlanCacheKey private constructor(
                 equalityKey = equalityKey,
                 route64 = route64,
             )
-        }
     }
 }

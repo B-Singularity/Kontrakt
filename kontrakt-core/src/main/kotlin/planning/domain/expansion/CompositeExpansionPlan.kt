@@ -66,7 +66,7 @@ class CompositeExpansionPlan private constructor(
             if (selectedConstructor.ownerTypeFqcn != ownerTypeFqcn) {
                 throw PlanningExpansionException(
                     "CompositeExpansionPlan selectedConstructor owner mismatch: " +
-                            "expected=$ownerTypeFqcn, actual=${selectedConstructor.ownerTypeFqcn}",
+                        "expected=$ownerTypeFqcn, actual=${selectedConstructor.ownerTypeFqcn}",
                 )
             }
 

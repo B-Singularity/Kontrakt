@@ -94,7 +94,8 @@ class TypeShapeSummary private constructor(
      * This value is not permission to skip ArrayExpansionPlan construction.
      */
     val requiresComponentShapeResolution: Boolean
-        get() = kind == CanonicalTypeShapeKind.ARRAY &&
+        get() =
+            kind == CanonicalTypeShapeKind.ARRAY &&
                 (arrayComponentHint == null || arrayComponentHint.hasGenericComponent)
 
     /**
@@ -114,7 +115,7 @@ class TypeShapeSummary private constructor(
         if (kind != CanonicalTypeShapeKind.ARRAY) {
             throw MetamodelFactContractViolationException(
                 "Array component consistency can only be checked for ARRAY summaries: " +
-                        "kind=${kind.protocolToken}",
+                    "kind=${kind.protocolToken}",
             )
         }
 
@@ -132,7 +133,7 @@ class TypeShapeSummary private constructor(
         if (actualComponentKind == CanonicalTypeShapeKind.ARRAY) {
             throw MetamodelFactContractViolationException(
                 "Nested array actual kind must be represented by TypeShapeSummary.arrayRank, " +
-                        "not by ARRAY component kind.",
+                    "not by ARRAY component kind.",
             )
         }
 
@@ -167,12 +168,12 @@ class TypeShapeSummary private constructor(
         if (other !is TypeShapeSummary) return false
 
         return kind == other.kind &&
-                genericArity == other.genericArity &&
-                arrayRank == other.arrayRank &&
-                atomicFamily == other.atomicFamily &&
-                arrayComponentHint == other.arrayComponentHint &&
-                expansionSurface == other.expansionSurface &&
-                schemaVersion == other.schemaVersion
+            genericArity == other.genericArity &&
+            arrayRank == other.arrayRank &&
+            atomicFamily == other.atomicFamily &&
+            arrayComponentHint == other.arrayComponentHint &&
+            expansionSurface == other.expansionSurface &&
+            schemaVersion == other.schemaVersion
     }
 
     override fun hashCode(): Int {
@@ -186,8 +187,8 @@ class TypeShapeSummary private constructor(
         return result
     }
 
-    override fun toString(): String {
-        return buildString {
+    override fun toString(): String =
+        buildString {
             append("TypeShapeSummary(")
             append("schemaVersion=")
             append(schemaVersion)
@@ -205,7 +206,6 @@ class TypeShapeSummary private constructor(
             append(arrayComponentHint)
             append(')')
         }
-    }
 
     companion object {
         const val CURRENT_SCHEMA_VERSION: Int = 3
@@ -272,7 +272,7 @@ class TypeShapeSummary private constructor(
             if (value > MAX_GENERIC_ARITY) {
                 throw MetamodelFactContractViolationException(
                     "$field exceeds protocol cap=$MAX_GENERIC_ARITY: $value. " +
-                            "This type surface is rejected by the current metamodel protocol.",
+                        "This type surface is rejected by the current metamodel protocol.",
                 )
             }
         }
@@ -301,7 +301,8 @@ class TypeShapeSummary private constructor(
             when (kind) {
                 CanonicalTypeShapeKind.VOID,
                 CanonicalTypeShapeKind.UNIT,
-                CanonicalTypeShapeKind.ENUM -> {
+                CanonicalTypeShapeKind.ENUM,
+                -> {
                     requireNoAtomicFamily(kind, atomicFamily)
                     requireExactGenericArity(kind, genericArity, 0)
                     requireExactArrayRank(kind, arrayRank, 0)
@@ -324,7 +325,8 @@ class TypeShapeSummary private constructor(
                 CanonicalTypeShapeKind.INTERFACE,
                 CanonicalTypeShapeKind.SEALED_INTERFACE,
                 CanonicalTypeShapeKind.ABSTRACT_CLASS,
-                CanonicalTypeShapeKind.SEALED_CLASS -> {
+                CanonicalTypeShapeKind.SEALED_CLASS,
+                -> {
                     requireNoAtomicFamily(kind, atomicFamily)
                     requireMinimumGenericArity(
                         kind = kind,
@@ -336,7 +338,8 @@ class TypeShapeSummary private constructor(
                 }
 
                 CanonicalTypeShapeKind.COLLECTION,
-                CanonicalTypeShapeKind.MAP -> {
+                CanonicalTypeShapeKind.MAP,
+                -> {
                     requireNoAtomicFamily(kind, atomicFamily)
                     requireMinimumGenericArity(
                         kind = kind,
@@ -369,7 +372,7 @@ class TypeShapeSummary private constructor(
             if (atomicFamily != null) {
                 throw MetamodelFactContractViolationException(
                     "TypeShapeSummary.atomicFamily is only valid for ATOMIC: " +
-                            "kind=${kind.protocolToken}, atomicFamily=${atomicFamily.protocolToken}",
+                        "kind=${kind.protocolToken}, atomicFamily=${atomicFamily.protocolToken}",
                 )
             }
         }
@@ -381,7 +384,7 @@ class TypeShapeSummary private constructor(
             if (arrayComponentHint != null) {
                 throw MetamodelFactContractViolationException(
                     "TypeShapeSummary.arrayComponentHint is only valid for ARRAY: " +
-                            "kind=${kind.protocolToken}, arrayComponentHint=$arrayComponentHint",
+                        "kind=${kind.protocolToken}, arrayComponentHint=$arrayComponentHint",
                 )
             }
         }

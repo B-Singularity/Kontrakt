@@ -22,7 +22,6 @@ import planning.domain.session.PlannerSession
  * - fresh-session consume authority is not implied by readiness publication alone
  */
 interface PlanningRunSuspensionHandle {
-
     /**
      * Registers the runtime-boundary callback that should fire when the suspended
      * join becomes ready for fresh-session restart.
@@ -30,9 +29,7 @@ interface PlanningRunSuspensionHandle {
      * The callback MUST be treated as one-shot.
      * Calling this method more than once is a protocol violation.
      */
-    fun registerReadyToRestartCallback(
-        onReadyToRestart: () -> Unit,
-    ): PlanningRunSuspensionRegistrationDecision
+    fun registerReadyToRestartCallback(onReadyToRestart: () -> Unit): PlanningRunSuspensionRegistrationDecision
 
     /**
      * Grants the one-shot permission to consume the ready result through the
@@ -56,9 +53,7 @@ interface PlanningRunSuspensionHandle {
      * - previously granted fresh-session consume permit
      * - exactly-once consumption
      */
-    fun consumeReadyResult(
-        session: PlannerSession,
-    ): JoinResumeStep
+    fun consumeReadyResult(session: PlannerSession): JoinResumeStep
 
     /**
      * Best-effort cancellation of the suspended join episode.

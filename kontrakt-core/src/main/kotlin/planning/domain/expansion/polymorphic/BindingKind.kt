@@ -49,7 +49,6 @@ import planning.domain.exception.TypeExpansionContractViolationException
 enum class BindingKind(
     val protocolOrder: Int,
     val protocolToken: String,
-
     /**
      * Whether multiple selected implementations may coexist for the same
      * requested type and same binding kind.
@@ -152,29 +151,29 @@ enum class BindingKind(
         protocolOrder = 90,
         protocolToken = "test_override_stub",
         allowsMultipleSelectedImplementations = false,
-    );
+    ),
+    ;
 
     companion object {
         private const val MAX_PROTOCOL_TOKEN_CHARS: Int = 64
         private const val MIN_PROTOCOL_ORDER: Int = 10
         private const val MAX_PROTOCOL_ORDER: Int = 90
 
-        private val PROTOCOL_ORDERED: Array<BindingKind> = arrayOf(
-            HOST_EXPLICIT_PRIMARY,
-            HOST_EXPLICIT_QUALIFIER,
-            HOST_SINGLE_VISIBLE_BINDING,
-            DISCOVERED_SINGLE_IMPLEMENTATION,
-            IDENTITY_MATERIALIZATION,
-            FALLBACK_DEFAULT,
-            COLLECTION_ELEMENT,
-            DECORATOR_WRAPPER,
-            TEST_OVERRIDE_STUB,
-        )
+        private val PROTOCOL_ORDERED: Array<BindingKind> =
+            arrayOf(
+                HOST_EXPLICIT_PRIMARY,
+                HOST_EXPLICIT_QUALIFIER,
+                HOST_SINGLE_VISIBLE_BINDING,
+                DISCOVERED_SINGLE_IMPLEMENTATION,
+                IDENTITY_MATERIALIZATION,
+                FALLBACK_DEFAULT,
+                COLLECTION_ELEMENT,
+                DECORATOR_WRAPPER,
+                TEST_OVERRIDE_STUB,
+            )
 
         @JvmStatic
-        fun protocolOrderedValues(): Array<BindingKind> {
-            return PROTOCOL_ORDERED.copyOf()
-        }
+        fun protocolOrderedValues(): Array<BindingKind> = PROTOCOL_ORDERED.copyOf()
 
         /**
          * Strict boundary parser from protocol token.
@@ -183,9 +182,7 @@ enum class BindingKind(
          * enter the ratified domain.
          */
         @JvmStatic
-        fun fromProtocolToken(
-            protocolToken: String,
-        ): BindingKind {
+        fun fromProtocolToken(protocolToken: String): BindingKind {
             requireProtocolTokenSurface(protocolToken)
 
             return when (protocolToken) {
@@ -211,9 +208,7 @@ enum class BindingKind(
          * report unknown external data without throwing immediately.
          */
         @JvmStatic
-        fun tryFromProtocolToken(
-            protocolToken: String,
-        ): BindingKind? {
+        fun tryFromProtocolToken(protocolToken: String): BindingKind? {
             requireProtocolTokenSurface(protocolToken)
 
             return when (protocolToken) {
@@ -237,10 +232,8 @@ enum class BindingKind(
          * explicit.
          */
         @JvmStatic
-        fun fromProtocolOrder(
-            protocolOrder: Int,
-        ): BindingKind {
-            return when (protocolOrder) {
+        fun fromProtocolOrder(protocolOrder: Int): BindingKind =
+            when (protocolOrder) {
                 10 -> HOST_EXPLICIT_PRIMARY
                 20 -> HOST_EXPLICIT_QUALIFIER
                 30 -> HOST_SINGLE_VISIBLE_BINDING
@@ -254,13 +247,10 @@ enum class BindingKind(
                     reason = "Unknown BindingKind protocol order.",
                 )
             }
-        }
 
         @JvmStatic
-        fun tryFromProtocolOrder(
-            protocolOrder: Int,
-        ): BindingKind? {
-            return when (protocolOrder) {
+        fun tryFromProtocolOrder(protocolOrder: Int): BindingKind? =
+            when (protocolOrder) {
                 10 -> HOST_EXPLICIT_PRIMARY
                 20 -> HOST_EXPLICIT_QUALIFIER
                 30 -> HOST_SINGLE_VISIBLE_BINDING
@@ -272,11 +262,8 @@ enum class BindingKind(
                 90 -> TEST_OVERRIDE_STUB
                 else -> null
             }
-        }
 
-        private fun requireProtocolTokenSurface(
-            protocolToken: String,
-        ) {
+        private fun requireProtocolTokenSurface(protocolToken: String) {
             if (protocolToken.isEmpty()) {
                 throw TypeExpansionContractViolationException(
                     reason = "BindingKind protocol token must not be empty.",
@@ -294,8 +281,8 @@ enum class BindingKind(
                 val c = protocolToken[index]
                 val ok =
                     c in 'a'..'z' ||
-                            c in '0'..'9' ||
-                            c == '_'
+                        c in '0'..'9' ||
+                        c == '_'
 
                 if (!ok) {
                     throw TypeExpansionContractViolationException(
@@ -308,9 +295,7 @@ enum class BindingKind(
         }
 
         @JvmStatic
-        fun requireProtocolOrderInRange(
-            protocolOrder: Int,
-        ) {
+        fun requireProtocolOrderInRange(protocolOrder: Int) {
             if (protocolOrder < MIN_PROTOCOL_ORDER || protocolOrder > MAX_PROTOCOL_ORDER) {
                 throw TypeExpansionContractViolationException(
                     reason = "BindingKind protocol order is outside known protocol range.",

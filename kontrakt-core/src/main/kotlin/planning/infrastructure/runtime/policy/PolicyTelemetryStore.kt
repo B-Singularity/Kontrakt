@@ -8,5 +8,6 @@ package planning.infrastructure.runtime.policy
  */
 interface PolicyTelemetryStore {
     fun snapshot(): RecentTelemetry?
+
     fun record(sample: RuntimeTelemetrySample)
 }

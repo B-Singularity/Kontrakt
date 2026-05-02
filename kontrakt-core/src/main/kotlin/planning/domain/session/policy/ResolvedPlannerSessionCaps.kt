@@ -21,37 +21,37 @@ data class ResolvedPlannerSessionCaps(
     init {
         if (maxNodeIdCap <= 0) {
             throw PlanningProtocolIntegrityException(
-                "ResolvedPlannerSessionCaps.maxNodeIdCap must be > 0: $maxNodeIdCap"
+                "ResolvedPlannerSessionCaps.maxNodeIdCap must be > 0: $maxNodeIdCap",
             )
         }
         if (maxDepthCap <= 0) {
             throw PlanningProtocolIntegrityException(
-                "ResolvedPlannerSessionCaps.maxDepthCap must be > 0: $maxDepthCap"
+                "ResolvedPlannerSessionCaps.maxDepthCap must be > 0: $maxDepthCap",
             )
         }
         if (maxDepthCap > Int.MAX_VALUE - 2) {
             throw PlanningProtocolIntegrityException(
-                "ResolvedPlannerSessionCaps.maxDepthCap must be <= Int.MAX_VALUE - 2: $maxDepthCap"
+                "ResolvedPlannerSessionCaps.maxDepthCap must be <= Int.MAX_VALUE - 2: $maxDepthCap",
             )
         }
         if (indexerTableCap <= 0 || indexerTableCap.countOneBits() != 1) {
             throw PlanningProtocolIntegrityException(
-                "ResolvedPlannerSessionCaps.indexerTableCap must be a positive power-of-two: $indexerTableCap"
+                "ResolvedPlannerSessionCaps.indexerTableCap must be a positive power-of-two: $indexerTableCap",
             )
         }
         if (undoLogCap <= 0) {
             throw PlanningProtocolIntegrityException(
-                "ResolvedPlannerSessionCaps.undoLogCap must be > 0: $undoLogCap"
+                "ResolvedPlannerSessionCaps.undoLogCap must be > 0: $undoLogCap",
             )
         }
         if (maxSignatureBytes <= 0) {
             throw PlanningProtocolIntegrityException(
-                "ResolvedPlannerSessionCaps.maxSignatureBytes must be > 0: $maxSignatureBytes"
+                "ResolvedPlannerSessionCaps.maxSignatureBytes must be > 0: $maxSignatureBytes",
             )
         }
         if (structBudgetBytes <= 0L) {
             throw PlanningProtocolIntegrityException(
-                "ResolvedPlannerSessionCaps.structBudgetBytes must be > 0: $structBudgetBytes"
+                "ResolvedPlannerSessionCaps.structBudgetBytes must be > 0: $structBudgetBytes",
             )
         }
     }

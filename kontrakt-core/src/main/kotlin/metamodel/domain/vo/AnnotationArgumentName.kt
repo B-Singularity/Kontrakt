@@ -37,29 +37,19 @@ import metamodel.domain.protocol.MetamodelProtocolTextGuards
 class AnnotationArgumentName private constructor(
     val value: String,
 ) : Comparable<AnnotationArgumentName> {
-    override fun compareTo(
-        other: AnnotationArgumentName,
-    ): Int {
-        return AnnotationArgumentNameOrder.compare(
+    override fun compareTo(other: AnnotationArgumentName): Int =
+        AnnotationArgumentNameOrder.compare(
             left = this,
             right = other,
         )
-    }
 
-    override fun equals(
-        other: Any?,
-    ): Boolean {
-        return other is AnnotationArgumentName &&
-                value == other.value
-    }
+    override fun equals(other: Any?): Boolean =
+        other is AnnotationArgumentName &&
+            value == other.value
 
-    override fun hashCode(): Int {
-        return value.hashCode()
-    }
+    override fun hashCode(): Int = value.hashCode()
 
-    override fun toString(): String {
-        return value
-    }
+    override fun toString(): String = value
 
     companion object {
         const val MAX_ANNOTATION_ARGUMENT_NAME_CHARS: Int = 128
@@ -72,112 +62,109 @@ class AnnotationArgumentName private constructor(
          */
         val DEFAULT_VALUE: AnnotationArgumentName = issue("value")
 
-        private val RESERVED_WORDS: Set<String> = setOf(
-            "as",
-            "break",
-            "class",
-            "continue",
-            "do",
-            "else",
-            "false",
-            "for",
-            "fun",
-            "if",
-            "in",
-            "interface",
-            "is",
-            "null",
-            "object",
-            "package",
-            "return",
-            "super",
-            "this",
-            "throw",
-            "true",
-            "try",
-            "typealias",
-            "typeof",
-            "val",
-            "var",
-            "when",
-            "while",
-
-            "actual",
-            "abstract",
-            "annotation",
-            "by",
-            "catch",
-            "companion",
-            "const",
-            "constructor",
-            "crossinline",
-            "data",
-            "dynamic",
-            "enum",
-            "expect",
-            "external",
-            "field",
-            "file",
-            "final",
-            "finally",
-            "get",
-            "import",
-            "init",
-            "inline",
-            "inner",
-            "internal",
-            "lateinit",
-            "noinline",
-            "open",
-            "operator",
-            "out",
-            "override",
-            "param",
-            "private",
-            "property",
-            "protected",
-            "public",
-            "receiver",
-            "reified",
-            "sealed",
-            "set",
-            "setparam",
-            "suspend",
-            "tailrec",
-            "vararg",
-            "where",
-
-            "assert",
-            "boolean",
-            "byte",
-            "case",
-            "char",
-            "default",
-            "double",
-            "extends",
-            "float",
-            "goto",
-            "implements",
-            "instanceof",
-            "int",
-            "long",
-            "native",
-            "new",
-            "short",
-            "static",
-            "strictfp",
-            "switch",
-            "synchronized",
-            "throws",
-            "transient",
-            "void",
-            "volatile",
-        )
+        private val RESERVED_WORDS: Set<String> =
+            setOf(
+                "as",
+                "break",
+                "class",
+                "continue",
+                "do",
+                "else",
+                "false",
+                "for",
+                "fun",
+                "if",
+                "in",
+                "interface",
+                "is",
+                "null",
+                "object",
+                "package",
+                "return",
+                "super",
+                "this",
+                "throw",
+                "true",
+                "try",
+                "typealias",
+                "typeof",
+                "val",
+                "var",
+                "when",
+                "while",
+                "actual",
+                "abstract",
+                "annotation",
+                "by",
+                "catch",
+                "companion",
+                "const",
+                "constructor",
+                "crossinline",
+                "data",
+                "dynamic",
+                "enum",
+                "expect",
+                "external",
+                "field",
+                "file",
+                "final",
+                "finally",
+                "get",
+                "import",
+                "init",
+                "inline",
+                "inner",
+                "internal",
+                "lateinit",
+                "noinline",
+                "open",
+                "operator",
+                "out",
+                "override",
+                "param",
+                "private",
+                "property",
+                "protected",
+                "public",
+                "receiver",
+                "reified",
+                "sealed",
+                "set",
+                "setparam",
+                "suspend",
+                "tailrec",
+                "vararg",
+                "where",
+                "assert",
+                "boolean",
+                "byte",
+                "case",
+                "char",
+                "default",
+                "double",
+                "extends",
+                "float",
+                "goto",
+                "implements",
+                "instanceof",
+                "int",
+                "long",
+                "native",
+                "new",
+                "short",
+                "static",
+                "strictfp",
+                "switch",
+                "synchronized",
+                "throws",
+                "transient",
+                "void",
+                "volatile",
+            )
 
         @JvmStatic
-        fun issue(
-            value: String,
-        ): AnnotationArgumentName {
+        fun issue(value: String): AnnotationArgumentName {
             MetamodelProtocolTextGuards.requireAsciiIdentifierToken(
                 field = "AnnotationArgumentName.value",
                 value = value,
@@ -189,9 +176,7 @@ class AnnotationArgumentName private constructor(
             return AnnotationArgumentName(value)
         }
 
-        private fun requireSourceSafeIdentifier(
-            value: String,
-        ) {
+        private fun requireSourceSafeIdentifier(value: String) {
             if (value == "_") {
                 throw MetamodelFactContractViolationException(
                     "AnnotationArgumentName.value must not be the single underscore '_'.",

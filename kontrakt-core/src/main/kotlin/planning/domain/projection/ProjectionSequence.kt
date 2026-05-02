@@ -32,19 +32,15 @@ import java.util.AbstractList
  */
 class ProjectionSequence<T : Any> private constructor(
     private val snapshot: Array<Any?>,
-) : AbstractList<T>(), RandomAccess {
-
+) : AbstractList<T>(),
+    RandomAccess {
     override val size: Int
         get() = snapshot.size
 
     @Suppress("UNCHECKED_CAST")
-    override fun get(index: Int): T {
-        return snapshot[index] as T
-    }
+    override fun get(index: Int): T = snapshot[index] as T
 
-    fun copyTo(
-        destination: MutableCollection<T>,
-    ) {
+    fun copyTo(destination: MutableCollection<T>) {
         var i = 0
         while (i < snapshot.size) {
             @Suppress("UNCHECKED_CAST")
@@ -54,7 +50,6 @@ class ProjectionSequence<T : Any> private constructor(
     }
 
     companion object {
-
         /**
          * Freezes the order emitted by a deterministic producer.
          *
@@ -90,8 +85,8 @@ class ProjectionSequence<T : Any> private constructor(
                 if (index >= expectedSize) {
                     throw ActiveMemberProjectionException(
                         "ProjectionSequence input collection grew during capture: " +
-                                "ownerType=$ownerTypeFqcn, sequenceKind=$sequenceKind, " +
-                                "expectedSize=$expectedSize, attemptedIndex=$index",
+                            "ownerType=$ownerTypeFqcn, sequenceKind=$sequenceKind, " +
+                            "expectedSize=$expectedSize, attemptedIndex=$index",
                     )
                 }
 
@@ -100,7 +95,7 @@ class ProjectionSequence<T : Any> private constructor(
                 if (element == null) {
                     throw ActiveMemberProjectionException(
                         "ProjectionSequence input collection contained null element: " +
-                                "ownerType=$ownerTypeFqcn, sequenceKind=$sequenceKind, index=$index",
+                            "ownerType=$ownerTypeFqcn, sequenceKind=$sequenceKind, index=$index",
                     )
                 }
 
@@ -111,9 +106,9 @@ class ProjectionSequence<T : Any> private constructor(
             if (index != expectedSize) {
                 throw ActiveMemberProjectionException(
                     "ProjectionSequence input collection shrank during capture: " +
-                            "ownerType=$ownerTypeFqcn, sequenceKind=$sequenceKind, " +
-                            "expectedSize=$expectedSize, actualCaptured=$index, " +
-                            "trailingNullSlots=${expectedSize - index}",
+                        "ownerType=$ownerTypeFqcn, sequenceKind=$sequenceKind, " +
+                        "expectedSize=$expectedSize, actualCaptured=$index, " +
+                        "trailingNullSlots=${expectedSize - index}",
                 )
             }
 
@@ -151,7 +146,7 @@ class ProjectionSequence<T : Any> private constructor(
                 if (element == null) {
                     throw ActiveMemberProjectionException(
                         "ProjectionSequence input collection contained null element: " +
-                                "ownerType=$ownerTypeFqcn, sequenceKind=$sequenceKind",
+                            "ownerType=$ownerTypeFqcn, sequenceKind=$sequenceKind",
                     )
                 }
 
@@ -164,15 +159,16 @@ class ProjectionSequence<T : Any> private constructor(
                 val comparison = comparator.compare(buffer[i - 1], buffer[i])
 
                 if (comparison >= 0) {
-                    val reason = if (comparison == 0) {
-                        "Sequence contains a comparator tie and is not strictly ordered."
-                    } else {
-                        "Sequence is not sorted according to the supplied deterministic comparator."
-                    }
+                    val reason =
+                        if (comparison == 0) {
+                            "Sequence contains a comparator tie and is not strictly ordered."
+                        } else {
+                            "Sequence is not sorted according to the supplied deterministic comparator."
+                        }
 
                     throw ActiveMemberProjectionException(
                         "Invalid ProjectionSequence order: ownerType=$ownerTypeFqcn, " +
-                                "sequenceKind=$sequenceKind, reason=$reason",
+                            "sequenceKind=$sequenceKind, reason=$reason",
                     )
                 }
 
@@ -182,9 +178,7 @@ class ProjectionSequence<T : Any> private constructor(
             return fromOrderedBuffer(buffer)
         }
 
-        private fun <T : Any> fromOrderedBuffer(
-            buffer: List<T>,
-        ): ProjectionSequence<T> {
+        private fun <T : Any> fromOrderedBuffer(buffer: List<T>): ProjectionSequence<T> {
             val snapshot = arrayOfNulls<Any?>(buffer.size)
 
             var i = 0
@@ -196,9 +190,7 @@ class ProjectionSequence<T : Any> private constructor(
             return ProjectionSequence(snapshot)
         }
 
-        private fun validateSequenceKind(
-            sequenceKind: String,
-        ) {
+        private fun validateSequenceKind(sequenceKind: String) {
             if (sequenceKind.isBlank()) {
                 throw ActiveMemberProjectionException(
                     "ProjectionSequence.sequenceKind must not be blank.",

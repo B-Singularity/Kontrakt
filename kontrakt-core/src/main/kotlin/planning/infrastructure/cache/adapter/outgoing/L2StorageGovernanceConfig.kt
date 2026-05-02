@@ -17,12 +17,11 @@ class L2StorageGovernanceConfig private constructor(
 ) {
     companion object {
         @JvmStatic
-        fun from(policy: ResolvedStorageGovernance): L2StorageGovernanceConfig {
-            return L2StorageGovernanceConfig(
+        fun from(policy: ResolvedStorageGovernance): L2StorageGovernanceConfig =
+            L2StorageGovernanceConfig(
                 maxApproxBytes = policy.maxApproxBytesPerPartition,
                 maxEntries = policy.maxEntriesPerPartition,
                 circuitOpenOnExhaustion = policy.circuitOpenOnStorageExhaustion,
             )
-        }
     }
 }

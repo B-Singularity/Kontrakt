@@ -14,7 +14,6 @@ import java.util.SortedSet
  * strictly enforces the framework's "Constitution" (Canonical Order).
  */
 class IntegrityPhase {
-
     fun validate(specs: SortedSet<ResolvedSpec>) {
         if (specs.isEmpty()) {
             throw LinkingInputException("Linking failed: empty specifications.")
@@ -25,11 +24,12 @@ class IntegrityPhase {
             val actual = specs.comparator()
             throw LinkingProtocolException(
                 "Framework Invariant Violation: Specs must be governed by CANONICAL_ORDER.",
-                context = mapOf(
-                    "expected" to "ResolvedSpec.CANONICAL_ORDER",
-                    "actual_class" to (actual?.javaClass?.name ?: "Natural"),
-                    "actual_string" to (actual?.toString() ?: "null")
-                )
+                context =
+                    mapOf(
+                        "expected" to "ResolvedSpec.CANONICAL_ORDER",
+                        "actual_class" to (actual?.javaClass?.name ?: "Natural"),
+                        "actual_string" to (actual?.toString() ?: "null"),
+                    ),
             )
         }
 
@@ -45,12 +45,13 @@ class IntegrityPhase {
             if (previousSpec != null && ResolvedSpec.CANONICAL_ORDER.compare(previousSpec, spec) > 0) {
                 throw LinkingProtocolException(
                     "Internal Protocol Violation: Specs are not monotonically increasing.",
-                    context = mapOf(
-                        "prev_name" to previousSpec.featureName.value,
-                        "prev_impl" to previousSpec.implementationClass,
-                        "curr_name" to spec.featureName.value,
-                        "curr_impl" to spec.implementationClass
-                    )
+                    context =
+                        mapOf(
+                            "prev_name" to previousSpec.featureName.value,
+                            "prev_impl" to previousSpec.implementationClass,
+                            "curr_name" to spec.featureName.value,
+                            "curr_impl" to spec.implementationClass,
+                        ),
                 )
             }
             previousSpec = spec
@@ -74,7 +75,7 @@ class IntegrityPhase {
         if (violations.isNotEmpty()) {
             throw LinkingAmbiguityException(
                 "Integrity check failed. Contradictory annotations detected.",
-                violations = violations
+                violations = violations,
             )
         }
     }

@@ -12,7 +12,6 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
 class EphemeralTestContextTest {
-
     // Mocks for constructor arguments
     private val specification = mockk<TestSpecification>()
     private val mockingEngine = mockk<MockingEngine>()
@@ -23,12 +22,13 @@ class EphemeralTestContextTest {
 
     @BeforeEach
     fun setUp() {
-        sut = EphemeralTestContext(
-            specification = specification,
-            mockingEngine = mockingEngine,
-            scenarioControl = scenarioControl,
-            trace = trace
-        )
+        sut =
+            EphemeralTestContext(
+                specification = specification,
+                mockingEngine = mockingEngine,
+                scenarioControl = scenarioControl,
+                trace = trace,
+            )
     }
 
     // =========================================================================

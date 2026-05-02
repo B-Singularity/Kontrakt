@@ -1,9 +1,9 @@
 package metamodel.adapter.reflection
 
 import metamodel.domain.exception.StrictModeViolationException
-import metamodel.domain.vo.AnnotationDescriptor
+import metamodel.domain.port.outgoing.NormalizationEngine
+import metamodel.domain.vo.OrderedUseSiteAnnotations
 import metamodel.domain.vo.TypeReference
-import metamodel.port.outgoing.NormalizationEngine
 import kotlin.reflect.KClass
 import kotlin.reflect.KType
 import kotlin.reflect.KTypeProjection
@@ -12,200 +12,189 @@ import kotlin.reflect.KVariance
 /**
  * Reflection adapter factory for TypeReference.
  *
- * Adapter role:
- * - Convert Kotlin reflection KType into a pure metamodel TypeReference.
- * - Preserve a reflection-only KType handle behind an internal adapter interface.
- * - Validate normalized output through the injected Kontrakt NormalizationEngine.
+ * This class does not implement TypeReference and does not create a reflection-
+ * backed TypeReference subclass.
  *
- * Non-responsibilities:
- * - raw fact extraction
- * - constructor/property projection
- * - active-member ordering
- * - nodeIdentity64 derivation
- *
- * This class is replaceable by a future KSP TypeReference factory.
+ * TypeReference is a final domain-issued VO. This factory renders reflection
+ * KType material, asks a domain issuer to create the TypeReference, and stores
+ * the adapter-only KType handle in ReflectionTypeHandleRegistry.
  */
 class ReflectionTypeReferenceFactory private constructor(
     private val normalizationGuard: ReflectionNormalizationGuard,
+    private val typeReferenceIssuer: ReflectionTypeReferenceIssuer,
+    private val typeHandleRegistry: ReflectionTypeHandleRegistry,
     val typeSignatureNormalizationVersion: Long,
 ) {
     fun create(
         type: KType,
     ): TypeReference {
-        rejectUnsupportedTypeShape(
-            type = type,
-            depth = 0,
-        )
-
-        val id = renderType(
-            type = type,
-            includeNullability = true,
-            depth = 0,
-        )
-
-        val cycleId = renderType(
-            type = type,
-            includeNullability = false,
-            depth = 0,
-        )
-
-        val signature = id
+        val rendered = renderTypeIdentity(type)
 
         normalizationGuard.requireNormalizedComponent(
             field = "TypeReference.id",
-            value = id,
-        )
-        normalizationGuard.requireNormalizedComponent(
-            field = "TypeReference.cycleId",
-            value = cycleId,
-        )
-        normalizationGuard.requireNormalizedComponent(
-            field = "TypeReference.signature",
-            value = signature,
+            value = rendered.id,
         )
 
-        return ReflectionBackedTypeReferenceImpl(
+        if (rendered.cycleId != rendered.id) {
+            normalizationGuard.requireNormalizedComponent(
+                field = "TypeReference.cycleId",
+                value = rendered.cycleId,
+            )
+        }
+
+        /*
+         * In this reflection adapter, signature is the same rendered surface as
+         * id. Do not re-run normalization for the same String.
+         */
+        val signature = rendered.id
+
+        val reference =
+            typeReferenceIssuer.issue(
+                idText = rendered.id,
+                cycleText = rendered.cycleId,
+                signatureText = signature,
+                useSiteAnnotations = OrderedUseSiteAnnotations.empty(),
+                typeNestingDepth = rendered.typeNestingDepth,
+            )
+
+        typeHandleRegistry.bind(
+            reference = reference,
             kType = type,
-            id = id,
-            cycleId = cycleId,
-            signature = signature,
-            useSiteAnnotations = emptyList(),
+        )
+
+        return reference
+    }
+
+    private fun renderTypeIdentity(
+        type: KType,
+    ): RenderedTypeIdentity {
+        val state = RenderState()
+
+        appendTypeIdentity(
+            type = type,
+            state = state,
+            depth = 0,
+        )
+
+        return RenderedTypeIdentity(
+            id = state.idBuilder.toString(),
+            cycleId = state.cycleIdBuilder.toString(),
+            typeNestingDepth = state.maxObservedDepth + 1,
         )
     }
 
-    /**
-     * Intentionally no create(KClass<*>) overload.
-     *
-     * KClass.starProjectedType can introduce List<*>-style shapes and bypass the
-     * strict no-star-projection rule. Callers must supply an explicit KType.
-     */
-    private fun rejectUnsupportedTypeShape(
+    private fun appendTypeIdentity(
         type: KType,
+        state: RenderState,
         depth: Int,
     ) {
-        requireDepthWithinLimit(
-            type = type,
-            depth = depth,
-            phase = "validation",
-        )
-
-        val classifier = type.classifier
-
-        if (classifier !is KClass<*>) {
-            throw StrictModeViolationException(
-                "Reflection TypeReference factory only supports concrete KClass-backed KType values: $type"
-            )
-        }
-
-        var i = 0
-        while (i < type.arguments.size) {
-            val argument = type.arguments[i]
-            val argumentType = argument.type
-
-            if (argumentType == null) {
-                throw StrictModeViolationException(
-                    "Strict mode rejects star projections in reflected type: type=$type, argumentIndex=$i"
-                )
-            }
-
-            rejectUnsupportedTypeShape(
-                type = argumentType,
-                depth = depth + 1,
-            )
-
-            i++
-        }
-    }
-
-    private fun renderType(
-        type: KType,
-        includeNullability: Boolean,
-        depth: Int,
-    ): String {
         requireDepthWithinLimit(
             type = type,
             depth = depth,
             phase = "rendering",
         )
 
-        val classifier = type.classifier as? KClass<*>
-            ?: throw StrictModeViolationException(
-                "Cannot render non-KClass reflected type: $type"
-            )
+        if (depth > state.maxObservedDepth) {
+            state.maxObservedDepth = depth
+        }
 
-        val builder = StringBuilder()
-        appendClassName(builder, classifier)
+        val classifier =
+            type.classifier as? KClass<*>
+                ?: throw StrictModeViolationException(
+                    "Reflection TypeReference factory only supports concrete KClass-backed KType values: $type",
+                )
+
+        appendClassName(
+            state = state,
+            kClass = classifier,
+        )
 
         if (type.arguments.isNotEmpty()) {
-            builder.append('<')
+            state.idBuilder.append('<')
+            state.cycleIdBuilder.append('<')
 
-            var i = 0
-            while (i < type.arguments.size) {
-                if (i > 0) {
-                    builder.append(',')
+            var index = 0
+            while (index < type.arguments.size) {
+                if (index > 0) {
+                    state.idBuilder.append(',')
+                    state.cycleIdBuilder.append(',')
                 }
 
-                appendTypeArgument(
-                    builder = builder,
-                    argument = type.arguments[i],
-                    includeNullability = includeNullability,
+                appendTypeArgumentIdentity(
+                    state = state,
+                    argument = type.arguments[index],
                     ownerType = type,
-                    argumentIndex = i,
+                    argumentIndex = index,
                     depth = depth + 1,
                 )
 
-                i++
+                index += 1
             }
 
-            builder.append('>')
+            state.idBuilder.append('>')
+            state.cycleIdBuilder.append('>')
         }
 
-        if (includeNullability && type.isMarkedNullable) {
-            builder.append('?')
+        if (type.isMarkedNullable) {
+            state.idBuilder.append('?')
         }
-
-        return builder.toString()
     }
 
     private fun appendClassName(
-        builder: StringBuilder,
+        state: RenderState,
         kClass: KClass<*>,
     ) {
-        /*
-         * This is adapter-specific spelling canonicalization only.
-         * It is not Unicode normalization.
-         * Unicode normalization is enforced later by ReflectionNormalizationGuard.
-         */
         val rawName = kClass.qualifiedName ?: kClass.java.name
-        builder.append(rawName.replace('$', '.'))
+
+        var index = 0
+        while (index < rawName.length) {
+            val rendered =
+                if (rawName[index] == '$') {
+                    '.'
+                } else {
+                    rawName[index]
+                }
+
+            state.idBuilder.append(rendered)
+            state.cycleIdBuilder.append(rendered)
+
+            index += 1
+        }
     }
 
-    private fun appendTypeArgument(
-        builder: StringBuilder,
+    private fun appendTypeArgumentIdentity(
+        state: RenderState,
         argument: KTypeProjection,
-        includeNullability: Boolean,
         ownerType: KType,
         argumentIndex: Int,
         depth: Int,
     ) {
-        val argumentType = argument.type
-            ?: throw StrictModeViolationException(
-                "Strict mode rejects star projection: ownerType=$ownerType, argumentIndex=$argumentIndex"
-            )
+        val argumentType =
+            argument.type
+                ?: throw StrictModeViolationException(
+                    "Strict mode rejects star projection: ownerType=$ownerType, argumentIndex=$argumentIndex",
+                )
 
         when (argument.variance) {
-            KVariance.IN -> builder.append("in ")
-            KVariance.OUT -> builder.append("out ")
+            KVariance.IN,
+            KVariance.OUT -> {
+                throw StrictModeViolationException(
+                    "Strict mode rejects use-site variance in reflected type because variance " +
+                            "is not yet represented as a separate metamodel identity axis: " +
+                            "ownerType=$ownerType, argumentIndex=$argumentIndex, variance=${argument.variance}",
+                )
+            }
+
             KVariance.INVARIANT,
-            null -> Unit
+            null -> {
+                // Accepted.
+            }
         }
 
-        builder.append(
-            renderType(
-                type = argumentType,
-                includeNullability = includeNullability,
-                depth = depth,
-            ),
+        appendTypeIdentity(
+            type = argumentType,
+            state = state,
+            depth = depth,
         )
     }
 
@@ -217,7 +206,7 @@ class ReflectionTypeReferenceFactory private constructor(
         if (depth > MAX_GENERIC_RENDER_DEPTH) {
             throw StrictModeViolationException(
                 "Reflected type nesting exceeds deterministic $phase depth limit: " +
-                        "maxDepth=$MAX_GENERIC_RENDER_DEPTH, type=$type"
+                        "maxDepth=$MAX_GENERIC_RENDER_DEPTH, type=$type",
             )
         }
     }
@@ -228,44 +217,35 @@ class ReflectionTypeReferenceFactory private constructor(
         @JvmStatic
         fun issue(
             normalizationEngine: NormalizationEngine,
+            typeReferenceIssuer: ReflectionTypeReferenceIssuer,
+            typeHandleRegistry: ReflectionTypeHandleRegistry,
             typeSignatureNormalizationVersion: Long,
         ): ReflectionTypeReferenceFactory {
             if (typeSignatureNormalizationVersion < 0L) {
                 throw StrictModeViolationException(
                     "ReflectionTypeReferenceFactory.typeSignatureNormalizationVersion must be >= 0: " +
-                            typeSignatureNormalizationVersion
+                            typeSignatureNormalizationVersion,
                 )
             }
 
             return ReflectionTypeReferenceFactory(
                 normalizationGuard = ReflectionNormalizationGuard.issue(normalizationEngine),
+                typeReferenceIssuer = typeReferenceIssuer,
+                typeHandleRegistry = typeHandleRegistry,
                 typeSignatureNormalizationVersion = typeSignatureNormalizationVersion,
             )
         }
     }
 }
 
-/**
- * Adapter-internal bridge.
- *
- * Domain code must only see TypeReference.
- * ReflectionRawTypeFactsProvider may downcast to this interface because both
- * producer and consumer live in the same reflection adapter.
- */
-internal interface ReflectionBackedTypeReference : TypeReference {
-    val kType: KType
+private class RenderState {
+    val idBuilder: StringBuilder = StringBuilder()
+    val cycleIdBuilder: StringBuilder = StringBuilder()
+    var maxObservedDepth: Int = 0
 }
 
-/**
- * Reflection-backed TypeReference implementation.
- *
- * Not a data class.
- * No copy-style reconstruction.
- */
-private class ReflectionBackedTypeReferenceImpl(
-    override val kType: KType,
-    override val id: String,
-    override val cycleId: String,
-    override val signature: String,
-    override val useSiteAnnotations: List<AnnotationDescriptor>,
-) : ReflectionBackedTypeReference
+private class RenderedTypeIdentity(
+    val id: String,
+    val cycleId: String,
+    val typeNestingDepth: Int,
+)

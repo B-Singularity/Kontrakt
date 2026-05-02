@@ -45,8 +45,8 @@ sealed interface TypeExpansionContext {
             if (other !is ContractSubject) return false
 
             return runtimeBindingSnapshotId == other.runtimeBindingSnapshotId &&
-                    deterministicSeedSurfaceId == other.deterministicSeedSurfaceId &&
-                    contractVacancyPolicy == other.contractVacancyPolicy
+                deterministicSeedSurfaceId == other.deterministicSeedSurfaceId &&
+                contractVacancyPolicy == other.contractVacancyPolicy
         }
 
         override fun hashCode(): Int {
@@ -56,9 +56,8 @@ sealed interface TypeExpansionContext {
             return result
         }
 
-        override fun toString(): String {
-            return "TypeExpansionContext.ContractSubject(binding=$runtimeBindingSnapshotId, seed=$deterministicSeedSurfaceId, vacancy=${contractVacancyPolicy.protocolToken})"
-        }
+        override fun toString(): String =
+            "TypeExpansionContext.ContractSubject(binding=$runtimeBindingSnapshotId, seed=$deterministicSeedSurfaceId, vacancy=${contractVacancyPolicy.protocolToken})"
 
         companion object {
             @JvmStatic
@@ -66,13 +65,12 @@ sealed interface TypeExpansionContext {
                 runtimeBindingSnapshotId: RuntimeBindingSnapshotId,
                 deterministicSeedSurfaceId: DeterministicSeedSurfaceId,
                 contractVacancyPolicy: ContractVacancyPolicy,
-            ): ContractSubject {
-                return ContractSubject(
+            ): ContractSubject =
+                ContractSubject(
                     runtimeBindingSnapshotId = runtimeBindingSnapshotId,
                     deterministicSeedSurfaceId = deterministicSeedSurfaceId,
                     contractVacancyPolicy = contractVacancyPolicy,
                 )
-            }
         }
     }
 
@@ -88,7 +86,7 @@ sealed interface TypeExpansionContext {
             if (other !is DependencySite) return false
 
             return runtimeBindingSnapshotId == other.runtimeBindingSnapshotId &&
-                    deterministicSeedSurfaceId == other.deterministicSeedSurfaceId
+                deterministicSeedSurfaceId == other.deterministicSeedSurfaceId
         }
 
         override fun hashCode(): Int {
@@ -97,21 +95,19 @@ sealed interface TypeExpansionContext {
             return result
         }
 
-        override fun toString(): String {
-            return "TypeExpansionContext.DependencySite(binding=$runtimeBindingSnapshotId, seed=$deterministicSeedSurfaceId)"
-        }
+        override fun toString(): String =
+            "TypeExpansionContext.DependencySite(binding=$runtimeBindingSnapshotId, seed=$deterministicSeedSurfaceId)"
 
         companion object {
             @JvmStatic
             fun issue(
                 runtimeBindingSnapshotId: RuntimeBindingSnapshotId,
                 deterministicSeedSurfaceId: DeterministicSeedSurfaceId,
-            ): DependencySite {
-                return DependencySite(
+            ): DependencySite =
+                DependencySite(
                     runtimeBindingSnapshotId = runtimeBindingSnapshotId,
                     deterministicSeedSurfaceId = deterministicSeedSurfaceId,
                 )
-            }
         }
     }
 
@@ -127,7 +123,7 @@ sealed interface TypeExpansionContext {
             if (other !is StructuralMember) return false
 
             return runtimeBindingSnapshotId == other.runtimeBindingSnapshotId &&
-                    deterministicSeedSurfaceId == other.deterministicSeedSurfaceId
+                deterministicSeedSurfaceId == other.deterministicSeedSurfaceId
         }
 
         override fun hashCode(): Int {
@@ -136,21 +132,19 @@ sealed interface TypeExpansionContext {
             return result
         }
 
-        override fun toString(): String {
-            return "TypeExpansionContext.StructuralMember(binding=$runtimeBindingSnapshotId, seed=$deterministicSeedSurfaceId)"
-        }
+        override fun toString(): String =
+            "TypeExpansionContext.StructuralMember(binding=$runtimeBindingSnapshotId, seed=$deterministicSeedSurfaceId)"
 
         companion object {
             @JvmStatic
             fun issue(
                 runtimeBindingSnapshotId: RuntimeBindingSnapshotId,
                 deterministicSeedSurfaceId: DeterministicSeedSurfaceId,
-            ): StructuralMember {
-                return StructuralMember(
+            ): StructuralMember =
+                StructuralMember(
                     runtimeBindingSnapshotId = runtimeBindingSnapshotId,
                     deterministicSeedSurfaceId = deterministicSeedSurfaceId,
                 )
-            }
         }
     }
 }

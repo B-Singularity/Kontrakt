@@ -27,12 +27,12 @@ class ResolvedStorageGovernance private constructor(
         ): ResolvedStorageGovernance {
             if (maxApproxBytesPerPartition <= 0L) {
                 throw PlanningProtocolIntegrityException(
-                    "ResolvedStorageGovernance.maxApproxBytesPerPartition must be > 0: $maxApproxBytesPerPartition"
+                    "ResolvedStorageGovernance.maxApproxBytesPerPartition must be > 0: $maxApproxBytesPerPartition",
                 )
             }
             if (maxEntriesPerPartition <= 0) {
                 throw PlanningProtocolIntegrityException(
-                    "ResolvedStorageGovernance.maxEntriesPerPartition must be > 0: $maxEntriesPerPartition"
+                    "ResolvedStorageGovernance.maxEntriesPerPartition must be > 0: $maxEntriesPerPartition",
                 )
             }
 

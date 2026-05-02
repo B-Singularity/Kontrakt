@@ -12,8 +12,9 @@ import ir.exception.IrProtocolViolationException
  * - max length
  */
 @JvmInline
-value class RawTypeId private constructor(val value: String) {
-
+value class RawTypeId private constructor(
+    val value: String,
+) {
     override fun toString(): String = value
 
     companion object {

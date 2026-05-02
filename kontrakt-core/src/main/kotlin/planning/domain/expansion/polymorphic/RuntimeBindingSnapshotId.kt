@@ -48,11 +48,10 @@ class RuntimeBindingSnapshotId private constructor(
     val scopeId: RuntimeBindingScopeId,
     private val precomputedHashCode: Int,
 ) {
-    fun renderSummary(): String {
-        return "RuntimeBindingSnapshotId(" +
-                scopeId.renderSnapshotIdentitySummary() +
-                ")"
-    }
+    fun renderSummary(): String =
+        "RuntimeBindingSnapshotId(" +
+            scopeId.renderSnapshotIdentitySummary() +
+            ")"
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -69,13 +68,9 @@ class RuntimeBindingSnapshotId private constructor(
         return scopeId == other.scopeId
     }
 
-    override fun hashCode(): Int {
-        return precomputedHashCode
-    }
+    override fun hashCode(): Int = precomputedHashCode
 
-    override fun toString(): String {
-        return renderSummary()
-    }
+    override fun toString(): String = renderSummary()
 
     companion object {
         /**
@@ -85,18 +80,10 @@ class RuntimeBindingSnapshotId private constructor(
          * does not allocate on repeated calls.
          */
         @JvmStatic
-        fun issue(
-            scopeId: RuntimeBindingScopeId,
-        ): RuntimeBindingSnapshotId {
-            return scopeId.snapshotId()
-        }
+        fun issue(scopeId: RuntimeBindingScopeId): RuntimeBindingSnapshotId = scopeId.snapshotId()
 
         @JvmStatic
-        fun fromScopeId(
-            scopeId: RuntimeBindingScopeId,
-        ): RuntimeBindingSnapshotId {
-            return issue(scopeId)
-        }
+        fun fromScopeId(scopeId: RuntimeBindingScopeId): RuntimeBindingSnapshotId = issue(scopeId)
 
         /**
          * Used only by RuntimeBindingScopeId during its own construction.
@@ -107,11 +94,10 @@ class RuntimeBindingSnapshotId private constructor(
         internal fun issueFromScope(
             scopeId: RuntimeBindingScopeId,
             precomputedHashCode: Int,
-        ): RuntimeBindingSnapshotId {
-            return RuntimeBindingSnapshotId(
+        ): RuntimeBindingSnapshotId =
+            RuntimeBindingSnapshotId(
                 scopeId = scopeId,
                 precomputedHashCode = precomputedHashCode,
             )
-        }
     }
 }

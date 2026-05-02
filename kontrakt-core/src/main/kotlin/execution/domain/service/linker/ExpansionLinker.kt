@@ -18,7 +18,6 @@ import execution.port.outgoing.RuntimeInstantiator
 import execution.port.outgoing.RuntimeTypeResolver
 import ir.Attribute
 import ir.AttributeOrigin
-import metamodel.domain.port.outgoing.TypeResolver
 
 /**
  * [Domain Service] Expansion Linker.
@@ -29,17 +28,16 @@ class ExpansionLinker(
     private val typeResolver: TypeResolver,
     private val runtimeResolver: RuntimeTypeResolver,
     private val instantiator: RuntimeInstantiator,
-    private val generatorRegistry: GeneratorRegistry
+    private val generatorRegistry: GeneratorRegistry,
 ) {
-    fun link(unlinked: UnlinkedNode): ExecutableNode {
-        return when (unlinked) {
+    fun link(unlinked: UnlinkedNode): ExecutableNode =
+        when (unlinked) {
             is UnlinkedCycleNode -> linkCycleNode(unlinked)
             is UnlinkedAtomicNode -> linkAtomicNode(unlinked)
             is UnlinkedCompositeNode -> linkCompositeNode(unlinked)
             is UnlinkedCollectionNode -> linkCollectionNode(unlinked)
             is UnlinkedMapNode -> linkMapNode(unlinked)
         }
-    }
 
     private fun linkCycleNode(unlinked: UnlinkedCycleNode): ExecutableNode {
         val descriptor = typeResolver.resolve(unlinked.type)
@@ -58,25 +56,25 @@ class ExpansionLinker(
         return ExecutableCycleNode(
             type = unlinked.type,
             attributes = fullAttributes,
-            generator = CycleBreakingGenerator(
-                descriptor = descriptor,
-                attributes = fullAttributes,
-                diagnosticInfo = unlinked,
-                runtimeHandle = handle,
-                instantiator = instantiator
-            ),
-            source = DecisionSource.Framework("Cycle Truncation (ADR-027)")
+            generator =
+                CycleBreakingGenerator(
+                    descriptor = descriptor,
+                    attributes = fullAttributes,
+                    diagnosticInfo = unlinked,
+                    runtimeHandle = handle,
+                    instantiator = instantiator,
+                ),
+            source = DecisionSource.Framework("Cycle Truncation (ADR-027)"),
         )
     }
 
-    private fun linkAtomicNode(node: UnlinkedAtomicNode): ExecutableNode {
-        return ExecutableAtomicNode(
+    private fun linkAtomicNode(node: UnlinkedAtomicNode): ExecutableNode =
+        ExecutableAtomicNode(
             type = node.type,
             attributes = node.attributes,
             generator = generatorRegistry.findGenerator(node.type, node.attributes),
-            source = DecisionSource.User.DEFAULT // [Fix] Use instance, not Companion
+            source = DecisionSource.User.DEFAULT, // [Fix] Use instance, not Companion
         )
-    }
 
     private fun linkCompositeNode(node: UnlinkedCompositeNode): ExecutableNode {
         val linkedFields = node.fields.mapValues { (_, child) -> link(child) }
@@ -87,7 +85,7 @@ class ExpansionLinker(
             attributes = node.attributes,
             fields = linkedFields,
             generator = generator,
-            source = DecisionSource.Strategy.DEFAULT
+            source = DecisionSource.Strategy.DEFAULT,
         )
     }
 
@@ -101,7 +99,7 @@ class ExpansionLinker(
             elementNode = linkedElement,
             isFixedSize = node.isFixedSize,
             generator = generator,
-            source = DecisionSource.Strategy.DEFAULT
+            source = DecisionSource.Strategy.DEFAULT,
         )
     }
 
@@ -116,19 +114,21 @@ class ExpansionLinker(
             keyNode = k,
             valueNode = v,
             generator = gen,
-            source = DecisionSource.Strategy.DEFAULT
+            source = DecisionSource.Strategy.DEFAULT,
         )
     }
 
-    private fun <K, V> putLastWins(map: LinkedHashMap<K, V>, key: K, value: V) {
+    private fun <K, V> putLastWins(
+        map: LinkedHashMap<K, V>,
+        key: K,
+        value: V,
+    ) {
         if (map.containsKey(key)) map.remove(key)
         map[key] = value
     }
 
     private fun toAttribute(
         desc: metamodel.domain.vo.AnnotationDescriptor,
-        origin: AttributeOrigin
-    ): Attribute.AnnotationAttribute {
-        return Attribute.AnnotationAttribute(desc.qualifiedName, origin, desc.values)
-    }
+        origin: AttributeOrigin,
+    ): Attribute.AnnotationAttribute = Attribute.AnnotationAttribute(desc.qualifiedName, origin, desc.values)
 }

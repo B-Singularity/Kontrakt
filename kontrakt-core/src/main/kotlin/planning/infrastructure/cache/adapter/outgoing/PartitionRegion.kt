@@ -71,18 +71,19 @@ internal class PartitionRegion private constructor(
 
     private val shardMask = shardCount - 1
 
-    private val shards: Array<L2Shard> = Array(shardCount) { shardIndex ->
-        L2Shard.issue(
-            owner = this,
-            shardIndex = shardIndex,
-            bucketTableCapacity = bucketTableCapacity,
-            inflightTableCapacity = inflightTableCapacity,
-            maxWaitersPerKey = joinGovernance.maxWaitersPerKey,
-            joinWaitTimeoutNanos = joinGovernance.joinWaitTimeoutNanos,
-            dispatchPlane = dispatchPlane,
-            timeSource = timeSource,
-        )
-    }
+    private val shards: Array<L2Shard> =
+        Array(shardCount) { shardIndex ->
+            L2Shard.issue(
+                owner = this,
+                shardIndex = shardIndex,
+                bucketTableCapacity = bucketTableCapacity,
+                inflightTableCapacity = inflightTableCapacity,
+                maxWaitersPerKey = joinGovernance.maxWaitersPerKey,
+                joinWaitTimeoutNanos = joinGovernance.joinWaitTimeoutNanos,
+                dispatchPlane = dispatchPlane,
+                timeSource = timeSource,
+            )
+        }
 
     fun resolveOrIntern(
         key: PlanCacheKey,
@@ -122,9 +123,7 @@ internal class PartitionRegion private constructor(
      * - close publication is partition-wide
      * - storage circuit-open is partition-wide governance
      */
-    fun allowBuilderAfterAcquire(
-        session: PlannerSession,
-    ): Boolean {
+    fun allowBuilderAfterAcquire(session: PlannerSession): Boolean {
         session.step(CostCenter.L2_CAPACITY_CHECK)
 
         if (readLifecycle() != PartitionRegionState.OPEN) {
@@ -151,7 +150,7 @@ internal class PartitionRegion private constructor(
     ) {
         if (approxBytesDelta < 0L) {
             throw PlanningProtocolIntegrityException(
-                "PartitionRegion.onEntryCommitted.approxBytesDelta must be >= 0: $approxBytesDelta"
+                "PartitionRegion.onEntryCommitted.approxBytesDelta must be >= 0: $approxBytesDelta",
             )
         }
 
@@ -167,21 +166,15 @@ internal class PartitionRegion private constructor(
     /**
      * One-way storage-governance degradation transition.
      */
-    fun forceCircuitOpen(
-        session: PlannerSession,
-    ) {
+    fun forceCircuitOpen(session: PlannerSession) {
         if (circuitOpen.compareAndSet(0, 1)) {
             session.step(CostCenter.L2_CIRCUIT_OPEN_TRANSITION)
         }
     }
 
-    fun isPublishAllowed(): Boolean {
-        return readLifecycle() == PartitionRegionState.OPEN && !isCircuitOpen()
-    }
+    fun isPublishAllowed(): Boolean = readLifecycle() == PartitionRegionState.OPEN && !isCircuitOpen()
 
-    fun isBypassRequired(): Boolean {
-        return readLifecycle() != PartitionRegionState.OPEN || isCircuitOpen()
-    }
+    fun isBypassRequired(): Boolean = readLifecycle() != PartitionRegionState.OPEN || isCircuitOpen()
 
     /**
      * Publish close.
@@ -200,7 +193,8 @@ internal class PartitionRegion private constructor(
                 }
 
                 PartitionRegionState.CLOSE_PUBLISHED,
-                PartitionRegionState.RECLAIMED -> return
+                PartitionRegionState.RECLAIMED,
+                -> return
             }
         }
     }
@@ -233,7 +227,7 @@ internal class PartitionRegion private constructor(
             when (val current = readLifecycle()) {
                 PartitionRegionState.OPEN -> {
                     throw PlanningProtocolIntegrityException(
-                        "PartitionRegion.markReclaimed requires CLOSE_PUBLISHED first."
+                        "PartitionRegion.markReclaimed requires CLOSE_PUBLISHED first.",
                     )
                 }
 
@@ -250,9 +244,7 @@ internal class PartitionRegion private constructor(
         }
     }
 
-    private fun readLifecycle(): PartitionRegionState {
-        return PartitionRegionState.fromCode(stateCode.get())
-    }
+    private fun readLifecycle(): PartitionRegionState = PartitionRegionState.fromCode(stateCode.get())
 
     private fun isCircuitOpen(): Boolean = circuitOpen.get() != 0
 
@@ -303,19 +295,19 @@ internal class PartitionRegion private constructor(
         ) {
             if (shardCount <= 0 || shardCount.countOneBits() != 1) {
                 throw PlanningProtocolIntegrityException(
-                    "PartitionRegion.shardCount must be a positive power-of-two: $shardCount"
+                    "PartitionRegion.shardCount must be a positive power-of-two: $shardCount",
                 )
             }
 
             if (bucketTableCapacity <= 0) {
                 throw PlanningProtocolIntegrityException(
-                    "PartitionRegion.bucketTableCapacity must be positive: $bucketTableCapacity"
+                    "PartitionRegion.bucketTableCapacity must be positive: $bucketTableCapacity",
                 )
             }
 
             if (inflightTableCapacity <= 0) {
                 throw PlanningProtocolIntegrityException(
-                    "PartitionRegion.inflightTableCapacity must be positive: $inflightTableCapacity"
+                    "PartitionRegion.inflightTableCapacity must be positive: $inflightTableCapacity",
                 )
             }
         }

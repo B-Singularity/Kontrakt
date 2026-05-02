@@ -2,6 +2,8 @@ package metamodel.domain.dto
 
 import metamodel.domain.exception.InvalidTypeFactShapeException
 import metamodel.domain.exception.MetamodelFactOwnershipMismatchException
+import metamodel.domain.protocol.MetamodelProtocolOrdering
+import metamodel.domain.protocol.MetamodelProtocolTextGuards
 import metamodel.domain.structure.MetamodelFactSequence
 
 /**
@@ -9,22 +11,78 @@ import metamodel.domain.structure.MetamodelFactSequence
  *
  * This is the raw-fact boundary DTO used by RawTypeFactsProvider.
  *
- * It intentionally separates:
- * - raw constructor candidates
- * - raw property facts
- * - lowered type identity
- * - identity algorithm surface
- * - normalization version
+ * This is not:
  *
- * It must not carry:
- * - selected constructor
- * - projected active member set
- * - ordered traversal view
- * - capability demotion result
- * - interner/cache key material
+ * - a selected constructor result;
+ * - a projected active-member set;
+ * - an ordered traversal view;
+ * - a capability-demotion result;
+ * - an interner key;
+ * - a cache key;
+ * - or a planning-domain decision object.
+ *
+ * Boundary law:
+ *
+ * RawTypeFactsDTO is the deterministic freezing boundary for raw constructor and
+ * property facts emitted by a metamodel adapter.
+ *
+ * It separates:
+ *
+ * - raw constructor candidates;
+ * - raw property facts;
+ * - lowered type identity;
+ * - identity algorithm surface;
+ * - normalization version.
+ *
+ * Sequence law:
  *
  * All raw fact collections are MetamodelFactSequence values.
- * They are deterministically ordered and never silently deduplicated.
+ *
+ * They are deterministically ordered and duplicate-checked. They are not stored
+ * as arbitrary List values.
+ *
+ * Ownership law:
+ *
+ * Every constructor and property fact must belong to ownerTypeFqcn before
+ * deterministic sequencing is attempted.
+ *
+ * Resource law:
+ *
+ * Constructor and property collection sizes are capped before ownership checks,
+ * sorting, key projection, and sequence freezing. This prevents malformed
+ * adapters from forcing unbounded O(N log N) sort work or sequence allocation.
+ *
+ * Duplicate law:
+ *
+ * Constructor duplicate identity is constructorSignature@normalizationVersion.
+ *
+ * Property duplicate identity is property name within the owner type.
+ *
+ * Rationale:
+ *
+ * A property name is the semantic member identity at this raw-fact layer. If an
+ * adapter emits two facts for the same property name but with different
+ * visibility, origin, mutability, storage kind, nullability, or type, that is not
+ * two valid properties. It is conflicting raw metadata and must be rejected
+ * before active-member projection.
+ *
+ * This intentionally rejects more than exact duplicates.
+ *
+ * Ordering law:
+ *
+ * Ordering is deterministic and protocol-defined. It must not depend on
+ * reflection enumeration order, enum ordinal, JVM identity hash, locale, or
+ * String.compareTo as an implicit domain law.
+ *
+ * Hash/sentinel law:
+ *
+ * typeIdentity64 is a lowered 64-bit bit pattern stored in signed Long. Negative
+ * values can be valid. Reserved sentinel handling belongs to the planning
+ * expansion boundary that owns sentinel policy.
+ *
+ * Diagnostic law:
+ *
+ * toString() returns a compact summary and must not dump all facts.
  */
 class RawTypeFactsDTO private constructor(
     val typeIdentity64: Long,
@@ -35,7 +93,39 @@ class RawTypeFactsDTO private constructor(
     val constructors: MetamodelFactSequence<ConstructorCandidateFact>,
     val properties: MetamodelFactSequence<PropertyFact>,
 ) {
+    fun renderSummary(): String {
+        return "RawTypeFactsDTO(" +
+                "owner=$ownerTypeFqcn, " +
+                "typeIdentity64=<bits>, " +
+                "identityAlgorithm=$typeIdentityAlgorithmId@$typeIdentityAlgorithmVersion, " +
+                "normalizationVersion=$normalizationVersion, " +
+                "constructors=${constructors.size}, " +
+                "properties=${properties.size}" +
+                ")"
+    }
+
+    override fun toString(): String {
+        return renderSummary()
+    }
+
     companion object {
+        const val MAX_OWNER_TYPE_FQCN_CHARS: Int = 512
+        const val MAX_TYPE_IDENTITY_ALGORITHM_ID_CHARS: Int = 128
+
+        /**
+         * Most JVM/Kotlin classes have very few constructors.
+         *
+         * 128 is deliberately generous while preventing pathological adapter
+         * output from causing unbounded sort/key-allocation work.
+         */
+        const val MAX_TOTAL_CONSTRUCTORS: Int = 128
+
+        /**
+         * 1,024 properties is far beyond normal application/library classes but
+         * still bounded enough to protect DTO freezing from resource abuse.
+         */
+        const val MAX_TOTAL_PROPERTIES: Int = 1_024
+
         @JvmStatic
         fun issue(
             typeIdentity64: Long,
@@ -46,8 +136,19 @@ class RawTypeFactsDTO private constructor(
             constructors: Collection<ConstructorCandidateFact>,
             properties: Collection<PropertyFact>,
         ): RawTypeFactsDTO {
-            validateCanonicalComponent("RawTypeFactsDTO.ownerTypeFqcn", ownerTypeFqcn)
-            validateCanonicalComponent("RawTypeFactsDTO.typeIdentityAlgorithmId", typeIdentityAlgorithmId)
+            requireProtocolTextSurface(
+                owner = ownerTypeFqcn,
+                field = "RawTypeFactsDTO.ownerTypeFqcn",
+                value = ownerTypeFqcn,
+                maxChars = MAX_OWNER_TYPE_FQCN_CHARS,
+            )
+
+            requireProtocolTextSurface(
+                owner = ownerTypeFqcn,
+                field = "RawTypeFactsDTO.typeIdentityAlgorithmId",
+                value = typeIdentityAlgorithmId,
+                maxChars = MAX_TYPE_IDENTITY_ALGORITHM_ID_CHARS,
+            )
 
             if (typeIdentityAlgorithmVersion < 0L) {
                 throw InvalidTypeFactShapeException(
@@ -65,46 +166,64 @@ class RawTypeFactsDTO private constructor(
                 )
             }
 
+            requireFactCountsWithinLimit(
+                ownerTypeFqcn = ownerTypeFqcn,
+                constructors = constructors,
+                properties = properties,
+            )
+
             /*
              * Do not reject all negative typeIdentity64 values.
              *
              * The identity is a 64-bit lowered bit pattern stored in signed Long.
-             * Negative values can be valid. Reserved sentinels are rejected later at
-             * the planning expansion boundary where sentinel policy is owned.
+             * Negative values can be valid. Reserved sentinels are rejected later
+             * at the planning expansion boundary where sentinel policy is owned.
              */
-            validateConstructorOwnership(ownerTypeFqcn, constructors)
-            validatePropertyOwnership(ownerTypeFqcn, properties)
-
-            val orderedConstructors = MetamodelFactSequence.orderedUniqueBy(
-                owner = ownerTypeFqcn,
-                factKind = "ConstructorCandidateFact",
-                duplicateKeyName = "constructorSignature@version",
-                elements = constructors,
-                orderingComparator = CONSTRUCTOR_COMPARATOR,
-                keyOf = { fact ->
-                    ConstructorDuplicateKey.issue(
-                        signature = fact.constructorSignature,
-                        version = fact.constructorSignatureNormalizationVersion,
-                    )
-                },
-                keyComparator = CONSTRUCTOR_DUPLICATE_KEY_COMPARATOR,
-                keyToString = { key -> key.render() },
+            validateConstructorOwnership(
+                ownerTypeFqcn = ownerTypeFqcn,
+                constructors = constructors,
             )
+
+            validatePropertyOwnership(
+                ownerTypeFqcn = ownerTypeFqcn,
+                properties = properties,
+            )
+
+            val orderedConstructors =
+                MetamodelFactSequence.orderedUniqueBy(
+                    owner = ownerTypeFqcn,
+                    factKind = "ConstructorCandidateFact",
+                    duplicateKeyName = "constructorSignature@version",
+                    elements = constructors,
+                    orderingComparator = CONSTRUCTOR_COMPARATOR,
+                    keyOf = { fact ->
+                        ConstructorDuplicateKey.issue(
+                            signature = fact.constructorSignature,
+                            version = fact.constructorSignatureNormalizationVersion,
+                        )
+                    },
+                    keyComparator = CONSTRUCTOR_DUPLICATE_KEY_COMPARATOR,
+                    keyToString = { key -> key.render() },
+                )
 
             /*
-             * Exact duplicate properties are detected by RawPropertyDuplicateKey
-             * before PROPERTY_COMPARATOR tie validation.
+             * Property duplicate identity is intentionally name-only.
+             *
+             * If the adapter emits the same property name twice with different
+             * metadata, that is conflicting raw fact material, not two unique raw
+             * properties.
              */
-            val orderedProperties = MetamodelFactSequence.orderedUniqueBy(
-                owner = ownerTypeFqcn,
-                factKind = "PropertyFact",
-                duplicateKeyName = "rawPropertyIdentity",
-                elements = properties,
-                orderingComparator = PROPERTY_COMPARATOR,
-                keyOf = { fact -> RawPropertyDuplicateKey.issue(fact) },
-                keyComparator = RAW_PROPERTY_DUPLICATE_KEY_COMPARATOR,
-                keyToString = { key -> key.render() },
-            )
+            val orderedProperties =
+                MetamodelFactSequence.orderedUniqueBy(
+                    owner = ownerTypeFqcn,
+                    factKind = "PropertyFact",
+                    duplicateKeyName = "propertyName",
+                    elements = properties,
+                    orderingComparator = PROPERTY_COMPARATOR,
+                    keyOf = { fact -> RawPropertyDuplicateKey.issue(fact) },
+                    keyComparator = RAW_PROPERTY_DUPLICATE_KEY_COMPARATOR,
+                    keyToString = { key -> key.render() },
+                )
 
             return RawTypeFactsDTO(
                 typeIdentity64 = typeIdentity64,
@@ -117,13 +236,6 @@ class RawTypeFactsDTO private constructor(
             )
         }
 
-        /*
-         * Constructor duplicate identity intentionally remains constructorSignature@version.
-         *
-         * The constructor signature is expected to be the full normalized constructor
-         * signature. If two constructor candidates share this identity, the adapter
-         * emitted duplicate raw facts even if other metadata differs.
-         */
         private val CONSTRUCTOR_COMPARATOR: Comparator<ConstructorCandidateFact> =
             Comparator { left, right ->
                 compareStrings(left.constructorSignature, right.constructorSignature)
@@ -151,10 +263,14 @@ class RawTypeFactsDTO private constructor(
             Comparator { left, right ->
                 compareStrings(left.name, right.name)
                     .takeIfNonZero()
-                    ?: compareStrings(left.typeReference.signature, right.typeReference.signature)
-                        .takeIfNonZero()
-                    ?: compareStrings(left.typeReference.id, right.typeReference.id)
-                        .takeIfNonZero()
+                    ?: compareStrings(
+                        left.typeReference.signature.value,
+                        right.typeReference.signature.value,
+                    ).takeIfNonZero()
+                    ?: compareStrings(
+                        left.typeReference.id.value,
+                        right.typeReference.id.value,
+                    ).takeIfNonZero()
                     ?: compareLongs(
                         left.typeSignatureNormalizationVersion,
                         right.typeSignatureNormalizationVersion,
@@ -199,33 +315,82 @@ class RawTypeFactsDTO private constructor(
         private val RAW_PROPERTY_DUPLICATE_KEY_COMPARATOR: Comparator<RawPropertyDuplicateKey> =
             Comparator { left, right ->
                 compareStrings(left.name, right.name)
-                    .takeIfNonZero()
-                    ?: compareStrings(left.typeSignature, right.typeSignature)
-                        .takeIfNonZero()
-                    ?: compareStrings(left.typeId, right.typeId)
-                        .takeIfNonZero()
-                    ?: compareLongs(left.typeSignatureNormalizationVersion, right.typeSignatureNormalizationVersion)
-                        .takeIfNonZero()
-                    ?: compareInts(left.declarationOrdinalLowered, right.declarationOrdinalLowered)
-                        .takeIfNonZero()
-                    ?: compareInts(left.nullabilityRank, right.nullabilityRank)
-                        .takeIfNonZero()
-                    ?: compareInts(left.declaredVisibilityRank, right.declaredVisibilityRank)
-                        .takeIfNonZero()
-                    ?: compareInts(left.setterVisibilityRank, right.setterVisibilityRank)
-                        .takeIfNonZero()
-                    ?: compareInts(left.originRank, right.originRank)
-                        .takeIfNonZero()
-                    ?: compareInts(left.mutabilityRank, right.mutabilityRank)
-                        .takeIfNonZero()
-                    ?: compareInts(left.storageKindRank, right.storageKindRank)
             }
+
+        private fun requireProtocolTextSurface(
+            owner: String,
+            field: String,
+            value: String,
+            maxChars: Int,
+        ) {
+            if (value.isEmpty()) {
+                throw InvalidTypeFactShapeException(
+                    owner = owner,
+                    factKind = "RawTypeFactsDTO",
+                    reason = "$field must not be empty.",
+                )
+            }
+
+            if (value.length > maxChars) {
+                throw InvalidTypeFactShapeException(
+                    owner = owner,
+                    factKind = "RawTypeFactsDTO",
+                    reason = "$field exceeds protocol cap=$maxChars.",
+                )
+            }
+
+            var index = 0
+            while (index < value.length) {
+                val c = value[index]
+
+                if (MetamodelProtocolTextGuards.isReservedProtocolOrControl(c)) {
+                    throw InvalidTypeFactShapeException(
+                        owner = owner,
+                        factKind = "RawTypeFactsDTO",
+                        reason = "$field contains reserved protocol/control material at index=$index.",
+                    )
+                }
+
+                if (MetamodelProtocolTextGuards.isAsciiWhitespace(c)) {
+                    throw InvalidTypeFactShapeException(
+                        owner = owner,
+                        factKind = "RawTypeFactsDTO",
+                        reason = "$field must not contain ASCII whitespace: index=$index.",
+                    )
+                }
+
+                index += 1
+            }
+        }
+
+        private fun requireFactCountsWithinLimit(
+            ownerTypeFqcn: String,
+            constructors: Collection<ConstructorCandidateFact>,
+            properties: Collection<PropertyFact>,
+        ) {
+            if (constructors.size > MAX_TOTAL_CONSTRUCTORS) {
+                throw InvalidTypeFactShapeException(
+                    owner = ownerTypeFqcn,
+                    factKind = "RawTypeFactsDTO",
+                    reason = "Constructor count exceeds protocol cap=$MAX_TOTAL_CONSTRUCTORS: ${constructors.size}",
+                )
+            }
+
+            if (properties.size > MAX_TOTAL_PROPERTIES) {
+                throw InvalidTypeFactShapeException(
+                    owner = ownerTypeFqcn,
+                    factKind = "RawTypeFactsDTO",
+                    reason = "Property count exceeds protocol cap=$MAX_TOTAL_PROPERTIES: ${properties.size}",
+                )
+            }
+        }
 
         private fun validateConstructorOwnership(
             ownerTypeFqcn: String,
             constructors: Collection<ConstructorCandidateFact>,
         ) {
             val iterator = constructors.iterator()
+
             while (iterator.hasNext()) {
                 val constructor = iterator.next()
 
@@ -244,6 +409,7 @@ class RawTypeFactsDTO private constructor(
             properties: Collection<PropertyFact>,
         ) {
             val iterator = properties.iterator()
+
             while (iterator.hasNext()) {
                 val property = iterator.next()
 
@@ -257,16 +423,34 @@ class RawTypeFactsDTO private constructor(
             }
         }
 
-        private fun compareStrings(left: String, right: String): Int {
-            return left.compareTo(right)
+        private fun compareStrings(
+            left: String,
+            right: String,
+        ): Int {
+            return MetamodelProtocolOrdering.compareUtf16CodeUnits(
+                left = left,
+                right = right,
+            )
         }
 
-        private fun compareLongs(left: Long, right: Long): Int {
-            return java.lang.Long.compare(left, right)
+        private fun compareLongs(
+            left: Long,
+            right: Long,
+        ): Int {
+            return MetamodelProtocolOrdering.compareLong(
+                left = left,
+                right = right,
+            )
         }
 
-        private fun compareInts(left: Int, right: Int): Int {
-            return java.lang.Integer.compare(left, right)
+        private fun compareInts(
+            left: Int,
+            right: Int,
+        ): Int {
+            return MetamodelProtocolOrdering.compareInt(
+                left = left,
+                right = right,
+            )
         }
 
         private fun Int.takeIfNonZero(): Int? {
@@ -275,6 +459,13 @@ class RawTypeFactsDTO private constructor(
     }
 }
 
+/**
+ * Constructor duplicate identity.
+ *
+ * The constructor signature is expected to be the full normalized constructor
+ * signature. If two constructor candidates share constructorSignature@version,
+ * the adapter emitted duplicate raw facts even if other metadata differs.
+ */
 private class ConstructorDuplicateKey private constructor(
     val signature: String,
     val version: Long,
@@ -297,31 +488,19 @@ private class ConstructorDuplicateKey private constructor(
     }
 }
 
+/**
+ * Property duplicate identity.
+ *
+ * This is intentionally name-only within one owner type.
+ *
+ * A raw property fact with the same name but different metadata is conflicting
+ * adapter output, not a second unique property.
+ */
 private class RawPropertyDuplicateKey private constructor(
     val name: String,
-    val typeSignature: String,
-    val typeId: String,
-    val typeSignatureNormalizationVersion: Long,
-    val declarationOrdinalLowered: Int,
-    val nullabilityRank: Int,
-    val declaredVisibilityRank: Int,
-    val setterVisibilityRank: Int,
-    val originRank: Int,
-    val mutabilityRank: Int,
-    val storageKindRank: Int,
 ) {
     fun render(): String {
-        return "name=${renderField(name)};" +
-                "typeSignature=${renderField(typeSignature)};" +
-                "typeId=${renderField(typeId)};" +
-                "typeSignatureNormalizationVersion=$typeSignatureNormalizationVersion;" +
-                "declarationOrdinalLowered=$declarationOrdinalLowered;" +
-                "nullabilityRank=$nullabilityRank;" +
-                "declaredVisibilityRank=$declaredVisibilityRank;" +
-                "setterVisibilityRank=$setterVisibilityRank;" +
-                "originRank=$originRank;" +
-                "mutabilityRank=$mutabilityRank;" +
-                "storageKindRank=$storageKindRank"
+        return "name=${renderField(name)}"
     }
 
     companion object {
@@ -331,16 +510,6 @@ private class RawPropertyDuplicateKey private constructor(
         ): RawPropertyDuplicateKey {
             return RawPropertyDuplicateKey(
                 name = fact.name,
-                typeSignature = fact.typeReference.signature,
-                typeId = fact.typeReference.id,
-                typeSignatureNormalizationVersion = fact.typeSignatureNormalizationVersion,
-                declarationOrdinalLowered = fact.declarationOrdinal.lowerForPrimitiveOrdering(),
-                nullabilityRank = MetamodelFactRanks.nullabilityRank(fact.nullability),
-                declaredVisibilityRank = MetamodelFactRanks.visibilityRank(fact.declaredVisibility),
-                setterVisibilityRank = MetamodelFactRanks.nullableVisibilityRank(fact.setterVisibility),
-                originRank = MetamodelFactRanks.originRank(fact.origin),
-                mutabilityRank = MetamodelFactRanks.mutabilityRank(fact.mutability),
-                storageKindRank = MetamodelFactRanks.storageKindRank(fact.storageKind),
             )
         }
     }

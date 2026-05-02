@@ -20,11 +20,12 @@ import java.util.TreeMap
  * @param K must be Comparable for stable ordering.
  */
 class DeterministicMap<K : Comparable<K>, V> private constructor(
-    private val delegate: Map<K, V>
+    private val delegate: Map<K, V>,
 ) : Map<K, V> by delegate {
-
     override fun equals(other: Any?): Boolean = delegate == other
+
     override fun hashCode(): Int = delegate.hashCode()
+
     override fun toString(): String = delegate.toString()
 
     companion object {
@@ -39,9 +40,8 @@ class DeterministicMap<K : Comparable<K>, V> private constructor(
         fun <K : Comparable<K>, V> of(
             input: Map<K, V>,
             limit: Int,
-            valueValidator: (V) -> Unit = {}
+            valueValidator: (V) -> Unit = {},
         ): DeterministicMap<K, V> {
-
             if (input.size > limit) {
                 throw IrProtocolViolationException("DeterministicMap entry limit exceeded ($limit).")
             }

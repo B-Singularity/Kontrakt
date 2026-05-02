@@ -14,7 +14,6 @@ import org.junit.jupiter.api.Test
  * Defines the behavioral contract for [ScenarioInterceptor] implementations.
  */
 interface ScenarioInterceptorContract {
-
     fun createSut(): ScenarioInterceptor
 
     // Helper to create a mock chain

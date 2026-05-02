@@ -109,7 +109,8 @@ enum class AtomicShapeFamily(
         protocolOrder = 120,
         protocolToken = "opaque_leaf",
         atomicSurface = AtomicLeafSurface.OPAQUE_VALUE,
-    );
+    ),
+    ;
 
     /**
      * True when the later atomic expansion stage must derive value material from

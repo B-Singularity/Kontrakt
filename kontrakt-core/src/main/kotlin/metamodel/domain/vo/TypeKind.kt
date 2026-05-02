@@ -39,5 +39,5 @@ enum class TypeKind {
      * Polymorphic types (e.g. Interface, Abstract Class).
      * Requires resolution to a concrete implementation type before linking.
      */
-    INTERFACE
+    INTERFACE,
 }

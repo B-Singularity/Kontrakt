@@ -23,26 +23,29 @@ fun UserControlOptions.toExecutionPolicy(): ExecutionPolicy {
     // --archive or --verbose implies keeping ALL logs for post-mortem analysis.
     // --quiet implies keeping NO logs to reduce CI log volume.
     // Default is keeping logs only ON_FAILURE.
-    val retention = when {
-        this.archiveMode || this.isVerbose -> LogRetention.ALWAYS
-        this.verbosity == UserControlOptions.Verbosity.QUIET -> LogRetention.NONE
-        else -> LogRetention.ON_FAILURE
-    }
+    val retention =
+        when {
+            this.archiveMode || this.isVerbose -> LogRetention.ALWAYS
+            this.verbosity == UserControlOptions.Verbosity.QUIET -> LogRetention.NONE
+            else -> LogRetention.ON_FAILURE
+        }
 
     // 2. Resolve Audit Depth (Quality)
     // --trace enables "Explainable" mode (full BDD history + Design Decisions).
     // Default is "Simple" mode (Result only).
-    val depth = if (this.traceMode) {
-        AuditDepth.EXPLAINABLE
-    } else {
-        AuditDepth.SIMPLE
-    }
+    val depth =
+        if (this.traceMode) {
+            AuditDepth.EXPLAINABLE
+        } else {
+            AuditDepth.SIMPLE
+        }
 
     // Resource limits are internal constraints (User cannot customize low-level details).
     // Defaults to 5 seconds.
-    val resourcePolicy = ResourcePolicy(
-        timeoutMs = 5000L
-    )
+    val resourcePolicy =
+        ResourcePolicy(
+            timeoutMs = 5000L,
+        )
 
     return ExecutionPolicy(
         determinism = DeterminismPolicy(seed = this.seed),
@@ -56,11 +59,12 @@ fun UserControlOptions.toExecutionPolicy(): ExecutionPolicy {
  * Resolves the [ScanScope] based on provided test patterns or package constraints.
  */
 fun UserControlOptions.toDiscoveryPolicy(): DiscoveryPolicy {
-    val scope = when {
-        this.testPatterns.isNotEmpty() -> ScanScope.Classes(classNames = this.testPatterns)
-        !this.packageScope.isNullOrBlank() -> ScanScope.Packages(packageNames = setOf(this.packageScope))
-        else -> ScanScope.All
-    }
+    val scope =
+        when {
+            this.testPatterns.isNotEmpty() -> ScanScope.Classes(classNames = this.testPatterns)
+            !this.packageScope.isNullOrBlank() -> ScanScope.Packages(packageNames = setOf(this.packageScope))
+            else -> ScanScope.All
+        }
     return DiscoveryPolicy(scope)
 }
 
@@ -77,5 +81,5 @@ fun UserControlOptions.toReportingDirectives(): ReportingDirectives =
         verbose = this.isVerbose,
         archiveMode = this.archiveMode,
         stackTraceLimit = this.stackTraceLimit,
-        formats = this.reportFormats // Directly mapped from the Source of Truth
+        formats = this.reportFormats, // Directly mapped from the Source of Truth
     )

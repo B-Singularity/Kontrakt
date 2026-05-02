@@ -14,12 +14,9 @@ import metamodel.domain.vo.TypeReference
  * version must change so cache identity drift can be diagnosed and invalidated.
  */
 interface TypeIdentity64Deriver {
-
     val identityAlgorithmId: String
 
     val identityAlgorithmVersion: Long
 
-    fun deriveIdentity64(
-        reference: TypeReference,
-    ): Long
+    fun deriveIdentity64(reference: TypeReference): Long
 }

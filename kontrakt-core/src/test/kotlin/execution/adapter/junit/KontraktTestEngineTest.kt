@@ -55,7 +55,6 @@ import java.time.Duration
  */
 @Execution(ExecutionMode.SAME_THREAD)
 class KontraktTestEngineTest {
-
     private val mockReportingFactory = mockk<ReportingInfrastructureFactory>(relaxed = true)
     private val mockTracingFactory = mockk<TracingInfrastructureFactory>(relaxed = true)
 
@@ -166,7 +165,6 @@ class KontraktTestEngineTest {
             // 3. Explicitly ensure File Reporters are NOT present
             assertThat(publishers.map { it::class.simpleName })
                 .doesNotContain("JsonReporter", "HtmlReporter")
-
         } finally {
             System.clearProperty("kontrakt.reports.json")
             System.clearProperty("kontrakt.reports.html")
@@ -209,9 +207,10 @@ class KontraktTestEngineTest {
         val request = mockk<EngineDiscoveryRequest>(relaxed = true)
 
         mockkConstructor(TestDiscovererImpl::class)
-        coEvery { anyConstructed<TestDiscovererImpl>().discover(any(), any()) } returns Result.failure(
-            RuntimeException("Discovery Failed")
-        )
+        coEvery { anyConstructed<TestDiscovererImpl>().discover(any(), any()) } returns
+            Result.failure(
+                RuntimeException("Discovery Failed"),
+            )
 
         val descriptor = engine.discover(request, uniqueId)
         assertThat(descriptor.children).isEmpty()
@@ -223,9 +222,10 @@ class KontraktTestEngineTest {
         val request = mockk<EngineDiscoveryRequest>(relaxed = true)
 
         mockkConstructor(TestDiscovererImpl::class)
-        val mockSpec = mockk<TestSpecification>(relaxed = true) {
-            every { target } returns DiscoveredTestTarget.create(String::class, "DisplayName", "pkg.Class").getOrThrow()
-        }
+        val mockSpec =
+            mockk<TestSpecification>(relaxed = true) {
+                every { target } returns DiscoveredTestTarget.create(String::class, "DisplayName", "pkg.Class").getOrThrow()
+            }
         coEvery { anyConstructed<TestDiscovererImpl>().discover(any(), any()) } returns Result.success(listOf(mockSpec))
 
         val descriptor = engine.discover(request, uniqueId)
@@ -317,9 +317,10 @@ class KontraktTestEngineTest {
         val request = mockk<ExecutionRequest>(relaxed = true)
         val rootDescriptor = mockk<TestDescriptor>()
         every { request.rootTestDescriptor } returns rootDescriptor
-        every { rootDescriptor.children } returns mutableSetOf(
-            KontraktTestDescriptor(UniqueId.forEngine("t"), "c", mockk(relaxed = true))
-        )
+        every { rootDescriptor.children } returns
+            mutableSetOf(
+                KontraktTestDescriptor(UniqueId.forEngine("t"), "c", mockk(relaxed = true)),
+            )
 
         mockkConstructor(ExecutionEnvironmentFactory::class)
         mockkConstructor(DefaultRuntimeFactory::class)
@@ -382,9 +383,12 @@ class KontraktTestEngineTest {
         engine.execute(request)
 
         verify {
-            listener.executionFinished(childDescriptor, match {
-                it.status == TestExecutionResult.Status.FAILED && it.throwable.get() == crashException
-            })
+            listener.executionFinished(
+                childDescriptor,
+                match {
+                    it.status == TestExecutionResult.Status.FAILED && it.throwable.get() == crashException
+                },
+            )
             ThreadLocalScenarioControl.clear()
         }
     }
@@ -449,11 +453,14 @@ class KontraktTestEngineTest {
 
         invokeReportResult(descriptor, result, listener)
         verify {
-            listener.executionFinished(descriptor, match {
-                it.status == TestExecutionResult.Status.FAILED &&
+            listener.executionFinished(
+                descriptor,
+                match {
+                    it.status == TestExecutionResult.Status.FAILED &&
                         it.throwable.get() is AssertionError &&
                         it.throwable.get().message == failureMessage
-            })
+                },
+            )
         }
     }
 
@@ -467,19 +474,27 @@ class KontraktTestEngineTest {
 
         invokeReportResult(descriptor, result, listener)
         verify {
-            listener.executionFinished(descriptor, match {
-                it.status == TestExecutionResult.Status.FAILED && it.throwable.get() == exception
-            })
+            listener.executionFinished(
+                descriptor,
+                match {
+                    it.status == TestExecutionResult.Status.FAILED && it.throwable.get() == exception
+                },
+            )
         }
     }
 
-    private fun invokeReportResult(descriptor: TestDescriptor, result: TestResult, listener: EngineExecutionListener) {
-        val method = engine.javaClass.getDeclaredMethod(
-            "reportResult",
-            TestDescriptor::class.java,
-            TestResult::class.java,
-            EngineExecutionListener::class.java
-        )
+    private fun invokeReportResult(
+        descriptor: TestDescriptor,
+        result: TestResult,
+        listener: EngineExecutionListener,
+    ) {
+        val method =
+            engine.javaClass.getDeclaredMethod(
+                "reportResult",
+                TestDescriptor::class.java,
+                TestResult::class.java,
+                EngineExecutionListener::class.java,
+            )
         method.isAccessible = true
         method.invoke(engine, descriptor, result, listener)
     }
@@ -496,30 +511,33 @@ class KontraktTestEngineTest {
 
         // 1. Valid Descriptor (Real Object)
         val validSpec = mockk<TestSpecification>(relaxed = true)
-        val validDescriptor = KontraktTestDescriptor(
-            UniqueId.forEngine("valid"),
-            "Valid",
-            validSpec
-        )
+        val validDescriptor =
+            KontraktTestDescriptor(
+                UniqueId.forEngine("valid"),
+                "Valid",
+                validSpec,
+            )
 
         // 2. Invalid Type Descriptor (Mock Object)
         val invalidTypeDescriptor = mockk<TestDescriptor>()
 
         // 3. Empty Spec Descriptor (Real Object with null spec)
-        val emptySpecDescriptor = KontraktTestDescriptor(
-            UniqueId.forEngine("empty"),
-            "Empty",
-            null
-        )
+        val emptySpecDescriptor =
+            KontraktTestDescriptor(
+                UniqueId.forEngine("empty"),
+                "Empty",
+                null,
+            )
 
         // Setup hierarchy
         every { request.rootTestDescriptor } returns rootDescriptor
         every { request.engineExecutionListener } returns listener
-        every { rootDescriptor.children } returns mutableSetOf(
-            validDescriptor,
-            invalidTypeDescriptor,
-            emptySpecDescriptor
-        )
+        every { rootDescriptor.children } returns
+            mutableSetOf(
+                validDescriptor,
+                invalidTypeDescriptor,
+                emptySpecDescriptor,
+            )
 
         // Mocks for runtime
         mockkConstructor(DefaultRuntimeFactory::class)
@@ -539,11 +557,12 @@ class KontraktTestEngineTest {
         // 1. Verify Valid Descriptor was executed
         // [Best Practice] Use 'match' to avoid direct object comparison issues (stdObjectAnswer error)
         verify(exactly = 1) {
-            listener.executionStarted(match {
-                it is KontraktTestDescriptor && it.spec != null
-            })
+            listener.executionStarted(
+                match {
+                    it is KontraktTestDescriptor && it.spec != null
+                },
+            )
         }
-
 
         unmockkConstructor(DefaultRuntimeFactory::class)
         unmockkConstructor(ExecutionEnvironmentFactory::class)

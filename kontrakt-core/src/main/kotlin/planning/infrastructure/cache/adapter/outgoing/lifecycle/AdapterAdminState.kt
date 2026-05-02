@@ -49,12 +49,12 @@ internal enum class AdapterAdminState(
                 for (state in ALL) {
                     if (state.code < 0) {
                         throw PlanningProtocolIntegrityException(
-                            "AdapterAdminState.code must be >= 0: name=${state.name}, code=${state.code}"
+                            "AdapterAdminState.code must be >= 0: name=${state.name}, code=${state.code}",
                         )
                     }
                     if (table[state.code] != null) {
                         throw PlanningProtocolIntegrityException(
-                            "Duplicate AdapterAdminState.code detected: code=${state.code}"
+                            "Duplicate AdapterAdminState.code detected: code=${state.code}",
                         )
                     }
                     table[state.code] = state
@@ -65,13 +65,13 @@ internal enum class AdapterAdminState(
         fun fromCode(code: Int): AdapterAdminState {
             if (code < 0 || code >= BY_CODE.size) {
                 throw PlanningProtocolIntegrityException(
-                    "Unknown AdapterAdminState code: $code"
+                    "Unknown AdapterAdminState code: $code",
                 )
             }
 
             return BY_CODE[code]
                 ?: throw PlanningProtocolIntegrityException(
-                    "Unknown AdapterAdminState code: $code"
+                    "Unknown AdapterAdminState code: $code",
                 )
         }
     }

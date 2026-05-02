@@ -43,8 +43,6 @@ dependencies {
 
     testImplementation(libs.assertj.core)
     testImplementation(libs.mockk)
-
-
 }
 
 tasks.test {
@@ -70,16 +68,14 @@ tasks.named<JacocoCoverageVerification>("jacocoTestCoverageVerification") {
         rule {
             element = "CLASS"
 
-            excludes = listOf(
-                "execution.adapter.mockito.MockitoEngineAdapter",
-                "execution.adapter.mockito.MockitoEngineAdapter\$*",
-
-                "discovery.domain.service.TestDiscovererImpl",
-                "discovery.domain.service.TestDiscovererImpl\$*",
-
-                "execution.domain.service.generation.FixtureGenerator*",
-                "execution.domain.service.generation.FixtureGenerator\$*",
-
+            excludes =
+                listOf(
+                    "execution.adapter.mockito.MockitoEngineAdapter",
+                    "execution.adapter.mockito.MockitoEngineAdapter\$*",
+                    "discovery.domain.service.TestDiscovererImpl",
+                    "discovery.domain.service.TestDiscovererImpl\$*",
+                    "execution.domain.service.generation.FixtureGenerator*",
+                    "execution.domain.service.generation.FixtureGenerator\$*",
                 )
 
             limit {

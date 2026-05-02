@@ -10,14 +10,18 @@ interface DecisionSource {
     /**
      * Decision made by the System/Framework (e.g., Cycle Breaking, Default Policies).
      */
-    data class Framework(val reason: String) : DecisionSource {
+    data class Framework(
+        val reason: String,
+    ) : DecisionSource {
         override val description: String = "Framework: $reason"
     }
 
     /**
      * Decision explicitly defined by the User (e.g., @Generator annotation).
      */
-    data class User(val source: String = "Explicit Configuration") : DecisionSource {
+    data class User(
+        val source: String = "Explicit Configuration",
+    ) : DecisionSource {
         override val description: String = "User Defined: $source"
 
         companion object {
@@ -29,7 +33,9 @@ interface DecisionSource {
     /**
      * Decision made by a selected Strategy (e.g., Random Selection).
      */
-    data class Strategy(val strategyName: String = "Default Strategy") : DecisionSource {
+    data class Strategy(
+        val strategyName: String = "Default Strategy",
+    ) : DecisionSource {
         override val description: String = "Strategy: $strategyName"
 
         companion object {

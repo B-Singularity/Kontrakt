@@ -25,13 +25,12 @@ class ResolvedRuntimePolicy private constructor(
             joinGovernance: ResolvedJoinGovernance,
             storageGovernance: ResolvedStorageGovernance,
             wallClockPolicy: ResolvedWallClockPolicy? = null,
-        ): ResolvedRuntimePolicy {
-            return ResolvedRuntimePolicy(
+        ): ResolvedRuntimePolicy =
+            ResolvedRuntimePolicy(
                 sessionBudget = sessionBudget,
                 joinGovernance = joinGovernance,
                 storageGovernance = storageGovernance,
                 wallClockPolicy = wallClockPolicy,
             )
-        }
     }
 }

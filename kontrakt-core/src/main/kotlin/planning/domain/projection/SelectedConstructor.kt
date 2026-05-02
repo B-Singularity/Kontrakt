@@ -30,8 +30,8 @@ class SelectedConstructor private constructor(
             if (candidate.parameters.size != metrics.totalParameterCount) {
                 throw ActiveMemberProjectionException(
                     "SelectedConstructor.metrics.totalParameterCount must match candidate.parameters.size: " +
-                            "totalParameterCount=${metrics.totalParameterCount}, " +
-                            "candidateParameterCount=${candidate.parameters.size}",
+                        "totalParameterCount=${metrics.totalParameterCount}, " +
+                        "candidateParameterCount=${candidate.parameters.size}",
                 )
             }
 

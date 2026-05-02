@@ -57,7 +57,10 @@ interface CompositeGenerator : Generator<Any> {
      * @param fields A map of field names to their generated values.
      * @return The assembled object instance.
      */
-    fun generateWithFields(context: GenerationContext, fields: Map<String, Any?>): Any
+    fun generateWithFields(
+        context: GenerationContext,
+        fields: Map<String, Any?>,
+    ): Any
 
     // Composite generators are driven by the VM's structure traversal,
     // so a standalone generate() call without fields is not supported.
@@ -80,7 +83,10 @@ interface ArrayProducer : Generator<Any> {
      * @param elements The elements to populate the array with.
      * @return The created array instance.
      */
-    fun generateArray(context: GenerationContext, elements: List<Any?>): Any
+    fun generateArray(
+        context: GenerationContext,
+        elements: List<Any?>,
+    ): Any
 
     override fun generate(context: GenerationContext): Any =
         throw UnsupportedOperationException("ArrayGenerator requires elements. Use generateArray().")

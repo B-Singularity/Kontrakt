@@ -18,7 +18,6 @@ import planning.domain.runtime.orchestration.PlanningResumePoint
  * - ordinary PlannerSession finally-cleanup remains the caller's responsibility
  */
 object PlanningRunJoinBridge {
-
     @JvmStatic
     fun suspendOnJoin(
         context: PlanningRunContext,
@@ -27,10 +26,11 @@ object PlanningRunJoinBridge {
         joinHandle: JoinHandle,
     ): PlanningRunSuspensionRegistrationDecision {
         val suspensionHandle = JoinedWaitPlanningRunSuspensionHandle.issue(joinHandle)
-        val suspension = PlanningRunSuspension.issue(
-            resumePoint = resumePoint,
-            suspensionHandle = suspensionHandle,
-        )
+        val suspension =
+            PlanningRunSuspension.issue(
+                resumePoint = resumePoint,
+                suspensionHandle = suspensionHandle,
+            )
 
         /*
          * Suspend the run first.

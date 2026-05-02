@@ -30,7 +30,6 @@ class L1Structures private constructor(
     maxSemanticDepth: Int,
     private val rmqBase: Int,
 ) {
-
     companion object {
         /**
          * Sentinel values for hot-path arrays.
@@ -62,12 +61,12 @@ class L1Structures private constructor(
         ): L1Structures {
             if (maxNodeIdCap <= 0) {
                 throw PlanningProtocolIntegrityException(
-                    "maxNodeIdCap must be > 0: $maxNodeIdCap"
+                    "maxNodeIdCap must be > 0: $maxNodeIdCap",
                 )
             }
             if (maxSemanticDepth <= 0) {
                 throw PlanningProtocolIntegrityException(
-                    "maxSemanticDepth must be > 0: $maxSemanticDepth"
+                    "maxSemanticDepth must be > 0: $maxSemanticDepth",
                 )
             }
 
@@ -97,7 +96,7 @@ class L1Structures private constructor(
             val requestedLeaves = maxSemanticDepth.toLong() + 2L
             if (requestedLeaves <= 0L) {
                 throw PlanningProtocolIntegrityException(
-                    "RMQ leaf count overflow for maxSemanticDepth=$maxSemanticDepth"
+                    "RMQ leaf count overflow for maxSemanticDepth=$maxSemanticDepth",
                 )
             }
 
@@ -106,7 +105,7 @@ class L1Structures private constructor(
                 candidate = candidate shl 1
                 if (candidate <= 0L) {
                     throw PlanningProtocolIntegrityException(
-                        "nextPowerOfTwo overflow while computing RMQ base for maxSemanticDepth=$maxSemanticDepth"
+                        "nextPowerOfTwo overflow while computing RMQ base for maxSemanticDepth=$maxSemanticDepth",
                     )
                 }
             }
@@ -114,7 +113,7 @@ class L1Structures private constructor(
             val maxSafeBase = Int.MAX_VALUE.toLong() / 2L
             if (candidate > maxSafeBase) {
                 throw PlanningProtocolIntegrityException(
-                    "RMQ base would overflow backing tree size: base=$candidate, maxSafeBase=$maxSafeBase, maxSemanticDepth=$maxSemanticDepth"
+                    "RMQ base would overflow backing tree size: base=$candidate, maxSafeBase=$maxSafeBase, maxSemanticDepth=$maxSemanticDepth",
                 )
             }
 
@@ -251,7 +250,7 @@ class L1Structures private constructor(
 
             else -> {
                 throw PlanningProtocolIntegrityException(
-                    "Unknown stageTag=$stageTag at depth=$depth"
+                    "Unknown stageTag=$stageTag at depth=$depth",
                 )
             }
         }
@@ -282,15 +281,14 @@ class L1Structures private constructor(
     fun queryBestDeferred(
         leftDepthInclusive: Int,
         rightDepthInclusive: Int,
-    ): DepthWinner? {
-        return queryRange(
+    ): DepthWinner? =
+        queryRange(
             leftDepthInclusive = leftDepthInclusive,
             rightDepthInclusive = rightDepthInclusive,
             rankTree = deferredRankTree,
             argTree = deferredArgTree,
             epochTree = deferredEpochTree,
         )
-    }
 
     /**
      * Returns the best SUBSTITUTABLE breakpoint candidate in the inclusive depth range.
@@ -298,15 +296,14 @@ class L1Structures private constructor(
     fun queryBestSubstitutable(
         leftDepthInclusive: Int,
         rightDepthInclusive: Int,
-    ): DepthWinner? {
-        return queryRange(
+    ): DepthWinner? =
+        queryRange(
             leftDepthInclusive = leftDepthInclusive,
             rightDepthInclusive = rightDepthInclusive,
             rankTree = substitutableRankTree,
             argTree = substitutableArgTree,
             epochTree = substitutableEpochTree,
         )
-    }
 
     /**
      * Reset all session-local primitive state to a semantically clean baseline.
@@ -346,7 +343,10 @@ class L1Structures private constructor(
         advanceRmqEpoch()
     }
 
-    private fun updateDeferred(depth: Int, rank: Long) {
+    private fun updateDeferred(
+        depth: Int,
+        rank: Long,
+    ) {
         updateTree(
             depth = depth,
             rank = rank,
@@ -356,7 +356,10 @@ class L1Structures private constructor(
         )
     }
 
-    private fun updateSubstitutable(depth: Int, rank: Long) {
+    private fun updateSubstitutable(
+        depth: Int,
+        rank: Long,
+    ) {
         updateTree(
             depth = depth,
             rank = rank,
@@ -487,25 +490,23 @@ class L1Structures private constructor(
         idx: Int,
         rankTree: LongArray,
         epochTree: IntArray,
-    ): Long {
-        return if (epochTree[idx] == currentRmqEpoch) {
+    ): Long =
+        if (epochTree[idx] == currentRmqEpoch) {
             rankTree[idx]
         } else {
             INF_RANK
         }
-    }
 
     private fun nodeArg(
         idx: Int,
         argTree: IntArray,
         epochTree: IntArray,
-    ): Int {
-        return if (epochTree[idx] == currentRmqEpoch) {
+    ): Int =
+        if (epochTree[idx] == currentRmqEpoch) {
             argTree[idx]
         } else {
             NO_INDEX
         }
-    }
 
     private fun setTreeNode(
         idx: Int,
@@ -559,7 +560,7 @@ class L1Structures private constructor(
     private fun validateDepth(depth: Int) {
         if (depth <= 0 || depth >= incomingEdgeRankAtDepth.size) {
             throw PlanningProtocolIntegrityException(
-                "Depth out of bounds for L1Structures: depth=$depth, max=${incomingEdgeRankAtDepth.size - 1}"
+                "Depth out of bounds for L1Structures: depth=$depth, max=${incomingEdgeRankAtDepth.size - 1}",
             )
         }
     }
@@ -574,11 +575,10 @@ class DepthWinner private constructor(
         fun issue(
             edgeRank: Long,
             depth: Int,
-        ): DepthWinner {
-            return DepthWinner(
+        ): DepthWinner =
+            DepthWinner(
                 edgeRank = edgeRank,
                 depth = depth,
             )
-        }
     }
 }

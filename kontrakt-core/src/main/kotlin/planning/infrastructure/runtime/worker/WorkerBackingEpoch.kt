@@ -22,10 +22,7 @@ import planning.domain.exception.PlanningProtocolIntegrityException
 class WorkerBackingEpoch private constructor(
     val id: Long,
 ) {
-
-    override fun toString(): String {
-        return "WorkerBackingEpoch(id=$id)"
-    }
+    override fun toString(): String = "WorkerBackingEpoch(id=$id)"
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -37,12 +34,10 @@ class WorkerBackingEpoch private constructor(
 
     companion object {
         @JvmStatic
-        fun issue(
-            id: Long,
-        ): WorkerBackingEpoch {
+        fun issue(id: Long): WorkerBackingEpoch {
             if (id <= 0L) {
                 throw PlanningProtocolIntegrityException(
-                    "WorkerBackingEpoch.id must be > 0: $id"
+                    "WorkerBackingEpoch.id must be > 0: $id",
                 )
             }
 

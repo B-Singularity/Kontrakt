@@ -10,7 +10,6 @@ package planning.domain.projection
  * object/data class.
  */
 sealed interface PropertyAdmissionDecision {
-
     val isAdmitted: Boolean
 
     object Admitted : PropertyAdmissionDecision {
@@ -20,16 +19,11 @@ sealed interface PropertyAdmissionDecision {
     class Demoted private constructor(
         val reason: PropertyDemotionReason,
     ) : PropertyAdmissionDecision {
-
         override val isAdmitted: Boolean = false
 
         companion object {
             @JvmStatic
-            fun issue(
-                reason: PropertyDemotionReason,
-            ): Demoted {
-                return Demoted(reason)
-            }
+            fun issue(reason: PropertyDemotionReason): Demoted = Demoted(reason)
         }
     }
 }

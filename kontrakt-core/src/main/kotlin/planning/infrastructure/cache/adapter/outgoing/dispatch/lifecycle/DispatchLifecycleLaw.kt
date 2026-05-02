@@ -38,7 +38,6 @@ import planning.domain.exception.PlanningProtocolIntegrityException
  * That is a feature.
  */
 internal object DispatchLifecycleLaw {
-
     // ─────────────────────────────────────────────────────────────
     // Delivery-entry lifecycle
     // ─────────────────────────────────────────────────────────────
@@ -47,22 +46,22 @@ internal object DispatchLifecycleLaw {
     fun canTransition(
         from: DeliveryEntryState,
         to: DeliveryEntryState,
-    ): Boolean {
-        return when (from) {
+    ): Boolean =
+        when (from) {
             DeliveryEntryState.EMPTY ->
                 to == DeliveryEntryState.REGISTERED
 
             DeliveryEntryState.REGISTERED ->
                 to == DeliveryEntryState.SIGNALED ||
-                        to == DeliveryEntryState.ABANDONED
+                    to == DeliveryEntryState.ABANDONED
 
             DeliveryEntryState.SIGNALED ->
                 to == DeliveryEntryState.QUEUED ||
-                        to == DeliveryEntryState.ABANDONED
+                    to == DeliveryEntryState.ABANDONED
 
             DeliveryEntryState.QUEUED ->
                 to == DeliveryEntryState.DELIVERING ||
-                        to == DeliveryEntryState.ABANDONED
+                    to == DeliveryEntryState.ABANDONED
 
             DeliveryEntryState.DELIVERING ->
                 to == DeliveryEntryState.DONE
@@ -73,7 +72,6 @@ internal object DispatchLifecycleLaw {
             DeliveryEntryState.ABANDONED ->
                 to == DeliveryEntryState.EMPTY
         }
-    }
 
     @JvmStatic
     fun requireTransition(
@@ -82,7 +80,7 @@ internal object DispatchLifecycleLaw {
     ) {
         if (!canTransition(from, to)) {
             throw PlanningProtocolIntegrityException(
-                "Illegal DeliveryEntryState transition: $from -> $to"
+                "Illegal DeliveryEntryState transition: $from -> $to",
             )
         }
     }
@@ -95,8 +93,8 @@ internal object DispatchLifecycleLaw {
     fun canTransition(
         from: DispatchLaneState,
         to: DispatchLaneState,
-    ): Boolean {
-        return when (from) {
+    ): Boolean =
+        when (from) {
             DispatchLaneState.OPEN ->
                 to == DispatchLaneState.CLOSE_REQUESTED
 
@@ -109,7 +107,6 @@ internal object DispatchLifecycleLaw {
             DispatchLaneState.STOPPED ->
                 false
         }
-    }
 
     @JvmStatic
     fun requireTransition(
@@ -118,7 +115,7 @@ internal object DispatchLifecycleLaw {
     ) {
         if (!canTransition(from, to)) {
             throw PlanningProtocolIntegrityException(
-                "Illegal DispatchLaneState transition: $from -> $to"
+                "Illegal DispatchLaneState transition: $from -> $to",
             )
         }
     }
@@ -131,19 +128,13 @@ internal object DispatchLifecycleLaw {
      * Fresh continuation registration is lawful only from EMPTY.
      */
     @JvmStatic
-    fun canAdmitFreshDeliveryRegistration(
-        entryState: DeliveryEntryState,
-    ): Boolean {
-        return entryState == DeliveryEntryState.EMPTY
-    }
+    fun canAdmitFreshDeliveryRegistration(entryState: DeliveryEntryState): Boolean = entryState == DeliveryEntryState.EMPTY
 
     @JvmStatic
-    fun requireEmptyForFreshDeliveryRegistration(
-        entryState: DeliveryEntryState,
-    ) {
+    fun requireEmptyForFreshDeliveryRegistration(entryState: DeliveryEntryState) {
         if (!canAdmitFreshDeliveryRegistration(entryState)) {
             throw PlanningProtocolIntegrityException(
-                "Delivery entry is not empty for fresh registration: entryState=$entryState"
+                "Delivery entry is not empty for fresh registration: entryState=$entryState",
             )
         }
     }
@@ -152,19 +143,13 @@ internal object DispatchLifecycleLaw {
      * Ready-queue ownership is lawful only after a delivery signal has become visible.
      */
     @JvmStatic
-    fun canAcquireReadyQueueOwnership(
-        entryState: DeliveryEntryState,
-    ): Boolean {
-        return entryState == DeliveryEntryState.SIGNALED
-    }
+    fun canAcquireReadyQueueOwnership(entryState: DeliveryEntryState): Boolean = entryState == DeliveryEntryState.SIGNALED
 
     @JvmStatic
-    fun requireSignaledForReadyQueueOwnership(
-        entryState: DeliveryEntryState,
-    ) {
+    fun requireSignaledForReadyQueueOwnership(entryState: DeliveryEntryState) {
         if (!canAcquireReadyQueueOwnership(entryState)) {
             throw PlanningProtocolIntegrityException(
-                "Delivery entry is not signaled for ready-queue ownership: entryState=$entryState"
+                "Delivery entry is not signaled for ready-queue ownership: entryState=$entryState",
             )
         }
     }
@@ -178,21 +163,16 @@ internal object DispatchLifecycleLaw {
      *   normally and then reclaim through DONE -> EMPTY.
      */
     @JvmStatic
-    fun canBeCloseAbandoned(
-        entryState: DeliveryEntryState,
-    ): Boolean {
-        return entryState == DeliveryEntryState.REGISTERED ||
-                entryState == DeliveryEntryState.SIGNALED ||
-                entryState == DeliveryEntryState.QUEUED
-    }
+    fun canBeCloseAbandoned(entryState: DeliveryEntryState): Boolean =
+        entryState == DeliveryEntryState.REGISTERED ||
+            entryState == DeliveryEntryState.SIGNALED ||
+            entryState == DeliveryEntryState.QUEUED
 
     @JvmStatic
-    fun requireCloseAbandonable(
-        entryState: DeliveryEntryState,
-    ) {
+    fun requireCloseAbandonable(entryState: DeliveryEntryState) {
         if (!canBeCloseAbandoned(entryState)) {
             throw PlanningProtocolIntegrityException(
-                "Delivery entry is not lawful for close-time abandonment: entryState=$entryState"
+                "Delivery entry is not lawful for close-time abandonment: entryState=$entryState",
             )
         }
     }
@@ -201,33 +181,25 @@ internal object DispatchLifecycleLaw {
      * Live operational entries are those that still contribute to quiescence debt.
      */
     @JvmStatic
-    fun isLiveOperational(
-        entryState: DeliveryEntryState,
-    ): Boolean {
-        return entryState == DeliveryEntryState.REGISTERED ||
-                entryState == DeliveryEntryState.SIGNALED ||
-                entryState == DeliveryEntryState.QUEUED ||
-                entryState == DeliveryEntryState.DELIVERING
-    }
+    fun isLiveOperational(entryState: DeliveryEntryState): Boolean =
+        entryState == DeliveryEntryState.REGISTERED ||
+            entryState == DeliveryEntryState.SIGNALED ||
+            entryState == DeliveryEntryState.QUEUED ||
+            entryState == DeliveryEntryState.DELIVERING
 
     /**
      * Reclamation to EMPTY is lawful only after the current episode has terminalized.
      */
     @JvmStatic
-    fun canReclaimToEmpty(
-        entryState: DeliveryEntryState,
-    ): Boolean {
-        return entryState == DeliveryEntryState.DONE ||
-                entryState == DeliveryEntryState.ABANDONED
-    }
+    fun canReclaimToEmpty(entryState: DeliveryEntryState): Boolean =
+        entryState == DeliveryEntryState.DONE ||
+            entryState == DeliveryEntryState.ABANDONED
 
     @JvmStatic
-    fun requireTerminalForReclaimToEmpty(
-        entryState: DeliveryEntryState,
-    ) {
+    fun requireTerminalForReclaimToEmpty(entryState: DeliveryEntryState) {
         if (!canReclaimToEmpty(entryState)) {
             throw PlanningProtocolIntegrityException(
-                "Delivery entry is not terminal for reclaim-to-empty: entryState=$entryState"
+                "Delivery entry is not terminal for reclaim-to-empty: entryState=$entryState",
             )
         }
     }
@@ -240,19 +212,13 @@ internal object DispatchLifecycleLaw {
      * Fresh registration admission is lawful only while the lane remains OPEN.
      */
     @JvmStatic
-    fun canLaneAdmitFreshWork(
-        laneState: DispatchLaneState,
-    ): Boolean {
-        return laneState == DispatchLaneState.OPEN
-    }
+    fun canLaneAdmitFreshWork(laneState: DispatchLaneState): Boolean = laneState == DispatchLaneState.OPEN
 
     @JvmStatic
-    fun requireLaneOpenForFreshWork(
-        laneState: DispatchLaneState,
-    ) {
+    fun requireLaneOpenForFreshWork(laneState: DispatchLaneState) {
         if (!canLaneAdmitFreshWork(laneState)) {
             throw PlanningProtocolIntegrityException(
-                "Dispatch lane is not open for fresh work: laneState=$laneState"
+                "Dispatch lane is not open for fresh work: laneState=$laneState",
             )
         }
     }
@@ -261,19 +227,13 @@ internal object DispatchLifecycleLaw {
      * DRAINING may be entered only after CLOSE_REQUESTED has already been published.
      */
     @JvmStatic
-    fun canLaneEnterDraining(
-        laneState: DispatchLaneState,
-    ): Boolean {
-        return laneState == DispatchLaneState.CLOSE_REQUESTED
-    }
+    fun canLaneEnterDraining(laneState: DispatchLaneState): Boolean = laneState == DispatchLaneState.CLOSE_REQUESTED
 
     @JvmStatic
-    fun requireLaneCloseRequestedForDraining(
-        laneState: DispatchLaneState,
-    ) {
+    fun requireLaneCloseRequestedForDraining(laneState: DispatchLaneState) {
         if (!canLaneEnterDraining(laneState)) {
             throw PlanningProtocolIntegrityException(
-                "Dispatch lane is not in CLOSE_REQUESTED for DRAINING entry: laneState=$laneState"
+                "Dispatch lane is not in CLOSE_REQUESTED for DRAINING entry: laneState=$laneState",
             )
         }
     }
@@ -292,14 +252,13 @@ internal object DispatchLifecycleLaw {
         activeCallbackCount: Int,
         liveOperationalEntryCount: Int,
         dirtyShardCount: Int,
-    ): Boolean {
-        return laneState == DispatchLaneState.DRAINING &&
-                commandRingIsEmpty &&
-                readyQueuePublishedSize == 0 &&
-                activeCallbackCount == 0 &&
-                liveOperationalEntryCount == 0 &&
-                dirtyShardCount == 0
-    }
+    ): Boolean =
+        laneState == DispatchLaneState.DRAINING &&
+            commandRingIsEmpty &&
+            readyQueuePublishedSize == 0 &&
+            activeCallbackCount == 0 &&
+            liveOperationalEntryCount == 0 &&
+            dirtyShardCount == 0
 
     @JvmStatic
     fun requireLaneMayPublishStopped(
@@ -322,12 +281,12 @@ internal object DispatchLifecycleLaw {
         ) {
             throw PlanningProtocolIntegrityException(
                 "Dispatch lane may not publish STOPPED: " +
-                        "laneState=$laneState, " +
-                        "commandRingIsEmpty=$commandRingIsEmpty, " +
-                        "readyQueuePublishedSize=$readyQueuePublishedSize, " +
-                        "activeCallbackCount=$activeCallbackCount, " +
-                        "liveOperationalEntryCount=$liveOperationalEntryCount, " +
-                        "dirtyShardCount=$dirtyShardCount"
+                    "laneState=$laneState, " +
+                    "commandRingIsEmpty=$commandRingIsEmpty, " +
+                    "readyQueuePublishedSize=$readyQueuePublishedSize, " +
+                    "activeCallbackCount=$activeCallbackCount, " +
+                    "liveOperationalEntryCount=$liveOperationalEntryCount, " +
+                    "dirtyShardCount=$dirtyShardCount",
             )
         }
     }

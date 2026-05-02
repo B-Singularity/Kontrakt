@@ -15,7 +15,7 @@ import java.util.TreeSet
  */
 class ScenarioRequirements(
     val scenarioId: ScenarioId,
-    rawFeatures: Collection<String?>
+    rawFeatures: Collection<String?>,
 ) {
     // VO based SortedSet
     val requiredFeatures: SortedSet<FeatureName>
@@ -27,7 +27,7 @@ class ScenarioRequirements(
             if (feature == null) {
                 throw LinkingInputException(
                     "Null feature detected.",
-                    mapOf("scenarioId" to scenarioId.value)
+                    mapOf("scenarioId" to scenarioId.value),
                 )
             }
             // VO creation implicitly validates 'isNotBlank'
@@ -37,7 +37,7 @@ class ScenarioRequirements(
             } catch (e: LinkingInputException) {
                 throw LinkingInputException(
                     "Invalid feature name detected.",
-                    mapOf("scenarioId" to scenarioId.value, "cause" to e.message)
+                    mapOf("scenarioId" to scenarioId.value, "cause" to e.message),
                 )
             }
         }

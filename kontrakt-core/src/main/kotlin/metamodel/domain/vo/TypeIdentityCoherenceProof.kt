@@ -108,30 +108,25 @@ class TypeIdentityCoherenceProof private constructor(
         )
     }
 
-    fun renderSummary(): String {
-        return "TypeIdentityCoherenceProof(" +
-                "schemaVersion=$schemaVersion, " +
-                "factory=$factoryId@$factoryVersion, " +
-                "proofId=<redacted>, " +
-                "binding=${coveredBinding.renderSummary()}" +
-                ")"
-    }
+    fun renderSummary(): String =
+        "TypeIdentityCoherenceProof(" +
+            "schemaVersion=$schemaVersion, " +
+            "factory=$factoryId@$factoryVersion, " +
+            "proofId=<redacted>, " +
+            "binding=${coveredBinding.renderSummary()}" +
+            ")"
 
-    override fun toString(): String {
-        return renderSummary()
-    }
+    override fun toString(): String = renderSummary()
 
-    override fun equals(
-        other: Any?,
-    ): Boolean {
+    override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is TypeIdentityCoherenceProof) return false
 
         return proofId == other.proofId &&
-                factoryId == other.factoryId &&
-                factoryVersion == other.factoryVersion &&
-                coveredBinding == other.coveredBinding &&
-                schemaVersion == other.schemaVersion
+            factoryId == other.factoryId &&
+            factoryVersion == other.factoryVersion &&
+            coveredBinding == other.coveredBinding &&
+            schemaVersion == other.schemaVersion
     }
 
     override fun hashCode(): Int {
@@ -175,10 +170,11 @@ class TypeIdentityCoherenceProof private constructor(
         ): TypeIdentityCoherenceProof {
             requireProofId(proofId)
 
-            val canonicalFactoryId = canonicalizeProtocolId(
-                field = "TypeIdentityCoherenceProof.factoryId",
-                value = factoryId,
-            )
+            val canonicalFactoryId =
+                canonicalizeProtocolId(
+                    field = "TypeIdentityCoherenceProof.factoryId",
+                    value = factoryId,
+                )
 
             requireProtocolToken(
                 field = "TypeIdentityCoherenceProof.factoryVersion",
@@ -201,13 +197,14 @@ class TypeIdentityCoherenceProof private constructor(
                 proofId = proofId,
                 factoryId = canonicalFactoryId,
                 factoryVersion = factoryVersion,
-                coveredBinding = TypeIdentityCoherenceBinding.fromTuple(
-                    id = id,
-                    cycleKey = cycleKey,
-                    signature = signature,
-                    useSiteAnnotations = useSiteAnnotations,
-                    typeNestingDepth = typeNestingDepth,
-                ),
+                coveredBinding =
+                    TypeIdentityCoherenceBinding.fromTuple(
+                        id = id,
+                        cycleKey = cycleKey,
+                        signature = signature,
+                        useSiteAnnotations = useSiteAnnotations,
+                        typeNestingDepth = typeNestingDepth,
+                    ),
                 schemaVersion = CURRENT_SCHEMA_VERSION,
             )
         }
@@ -220,21 +217,19 @@ class TypeIdentityCoherenceProof private constructor(
             if (id.shapeSummary != signature.shapeSummary) {
                 throw MetamodelFactContractViolationException(
                     "TypeIdentityCoherenceProof cannot be issued for incoherent id/signature shape: " +
-                            "idShape=${id.shapeSummary}, signatureShape=${signature.shapeSummary}",
+                        "idShape=${id.shapeSummary}, signatureShape=${signature.shapeSummary}",
                 )
             }
 
             if (cycleKey.shapeSummary.kind != signature.shapeSummary.kind) {
                 throw MetamodelFactContractViolationException(
                     "TypeIdentityCoherenceProof cannot be issued for incoherent cycle/signature kind: " +
-                            "cycleShape=${cycleKey.shapeSummary}, signatureShape=${signature.shapeSummary}",
+                        "cycleShape=${cycleKey.shapeSummary}, signatureShape=${signature.shapeSummary}",
                 )
             }
         }
 
-        private fun requireProofId(
-            value: String,
-        ) {
+        private fun requireProofId(value: String) {
             requireProtocolToken(
                 field = "TypeIdentityCoherenceProof.proofId",
                 value = value,
@@ -277,7 +272,8 @@ class TypeIdentityCoherenceProof private constructor(
                     in '0'..'9',
                     '-',
                     '_',
-                    '.' -> {
+                    '.',
+                    -> {
                         // Already canonical-safe ASCII protocol material.
                     }
 
@@ -297,11 +293,12 @@ class TypeIdentityCoherenceProof private constructor(
 
             for (index in value.indices) {
                 val c = value[index]
-                val lowered = if (c in 'A'..'Z') {
-                    (c.code + 32).toChar()
-                } else {
-                    c
-                }
+                val lowered =
+                    if (c in 'A'..'Z') {
+                        (c.code + 32).toChar()
+                    } else {
+                        c
+                    }
 
                 builder.append(lowered)
             }
@@ -407,10 +404,10 @@ private class TypeIdentityCoherenceBinding private constructor(
         if (ratificationFingerprint != id.ratificationFingerprint) {
             throw MetamodelFactContractViolationException(
                 "TypeIdentityCoherenceProof does not cover supplied TypeReference tuple: " +
-                        "field=ratificationFingerprint, " +
-                        "expected=${ratificationFingerprint.redacted()}, " +
-                        "actual=${id.ratificationFingerprint.redacted()}, " +
-                        "binding=${renderSummary()}",
+                    "field=ratificationFingerprint, " +
+                    "expected=${ratificationFingerprint.redacted()}, " +
+                    "actual=${id.ratificationFingerprint.redacted()}, " +
+                    "binding=${renderSummary()}",
             )
         }
 
@@ -471,10 +468,10 @@ private class TypeIdentityCoherenceBinding private constructor(
         if (annotationTable != useSiteAnnotations) {
             throw MetamodelFactContractViolationException(
                 "TypeIdentityCoherenceProof does not cover supplied TypeReference tuple: " +
-                        "field=annotationTable, " +
-                        "expected=${annotationTable.renderSummary()}, " +
-                        "actual=${useSiteAnnotations.renderSummary()}, " +
-                        "binding=${renderSummary()}",
+                    "field=annotationTable, " +
+                    "expected=${annotationTable.renderSummary()}, " +
+                    "actual=${useSiteAnnotations.renderSummary()}, " +
+                    "binding=${renderSummary()}",
             )
         }
 
@@ -491,43 +488,39 @@ private class TypeIdentityCoherenceBinding private constructor(
         field: String,
         expected: String,
         actual: String,
-    ): Nothing {
+    ): Nothing =
         throw MetamodelFactContractViolationException(
             "TypeIdentityCoherenceProof does not cover supplied TypeReference tuple: " +
-                    "field=$field, expected=$expected, actual=$actual, binding=${renderSummary()}",
+                "field=$field, expected=$expected, actual=$actual, binding=${renderSummary()}",
         )
-    }
 
-    fun renderSummary(): String {
-        return "TypeIdentityCoherenceBinding(" +
-                "type=$typeText, " +
-                "shape=${shapeSummary.kind.protocolToken}, " +
-                "signatureSchema=$signatureSchemaVersion, " +
-                "annotations=$annotationCount, " +
-                "annotationDepth=$annotationMaxNestingDepth, " +
-                "typeDepth=$typeNestingDepth" +
-                ")"
-    }
+    fun renderSummary(): String =
+        "TypeIdentityCoherenceBinding(" +
+            "type=$typeText, " +
+            "shape=${shapeSummary.kind.protocolToken}, " +
+            "signatureSchema=$signatureSchemaVersion, " +
+            "annotations=$annotationCount, " +
+            "annotationDepth=$annotationMaxNestingDepth, " +
+            "typeDepth=$typeNestingDepth" +
+            ")"
 
-    override fun equals(
-        other: Any?,
-    ): Boolean {
+    override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is TypeIdentityCoherenceBinding) return false
 
         return typeText == other.typeText &&
-                shapeSummary == other.shapeSummary &&
-                classifierId == other.classifierId &&
-                classifierVersion == other.classifierVersion &&
-                ratificationFingerprint == other.ratificationFingerprint &&
-                cycleShapeKind == other.cycleShapeKind &&
-                signatureValue == other.signatureValue &&
-                signatureShapeSummary == other.signatureShapeSummary &&
-                signatureSchemaVersion == other.signatureSchemaVersion &&
-                annotationCount == other.annotationCount &&
-                annotationMaxNestingDepth == other.annotationMaxNestingDepth &&
-                annotationTable == other.annotationTable &&
-                typeNestingDepth == other.typeNestingDepth
+            shapeSummary == other.shapeSummary &&
+            classifierId == other.classifierId &&
+            classifierVersion == other.classifierVersion &&
+            ratificationFingerprint == other.ratificationFingerprint &&
+            cycleShapeKind == other.cycleShapeKind &&
+            signatureValue == other.signatureValue &&
+            signatureShapeSummary == other.signatureShapeSummary &&
+            signatureSchemaVersion == other.signatureSchemaVersion &&
+            annotationCount == other.annotationCount &&
+            annotationMaxNestingDepth == other.annotationMaxNestingDepth &&
+            annotationTable == other.annotationTable &&
+            typeNestingDepth == other.typeNestingDepth
     }
 
     override fun hashCode(): Int {
@@ -554,8 +547,8 @@ private class TypeIdentityCoherenceBinding private constructor(
             signature: CanonicalTypeSignature,
             useSiteAnnotations: OrderedUseSiteAnnotations,
             typeNestingDepth: Int,
-        ): TypeIdentityCoherenceBinding {
-            return TypeIdentityCoherenceBinding(
+        ): TypeIdentityCoherenceBinding =
+            TypeIdentityCoherenceBinding(
                 typeText = id.value,
                 shapeSummary = id.shapeSummary,
                 classifierId = id.classifierId,
@@ -570,6 +563,5 @@ private class TypeIdentityCoherenceBinding private constructor(
                 annotationTable = useSiteAnnotations,
                 typeNestingDepth = typeNestingDepth,
             )
-        }
     }
 }

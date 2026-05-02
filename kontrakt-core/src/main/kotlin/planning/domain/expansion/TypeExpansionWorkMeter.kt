@@ -16,7 +16,6 @@ import metamodel.domain.vo.TypeReference
  * without changing the pipeline contract.
  */
 fun interface TypeExpansionWorkMeter {
-
     fun record(
         event: TypeExpansionWorkEvent,
         subject: TypeReference,

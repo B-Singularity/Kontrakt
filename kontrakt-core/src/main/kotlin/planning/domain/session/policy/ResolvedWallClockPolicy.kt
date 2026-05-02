@@ -21,7 +21,7 @@ class ResolvedWallClockPolicy private constructor(
         fun issue(maxSessionElapsedNanos: Long): ResolvedWallClockPolicy {
             if (maxSessionElapsedNanos <= 0L) {
                 throw PlanningProtocolIntegrityException(
-                    "ResolvedWallClockPolicy.maxSessionElapsedNanos must be > 0: $maxSessionElapsedNanos"
+                    "ResolvedWallClockPolicy.maxSessionElapsedNanos must be > 0: $maxSessionElapsedNanos",
                 )
             }
 

@@ -41,24 +41,19 @@ class AnnotationDescriptor private constructor(
     val values: AnnotationValueMap,
     val annotationValueNestingDepth: Int,
 ) : Comparable<AnnotationDescriptor> {
-
-    override fun compareTo(
-        other: AnnotationDescriptor,
-    ): Int {
-        return AnnotationDescriptorOrder.compare(
+    override fun compareTo(other: AnnotationDescriptor): Int =
+        AnnotationDescriptorOrder.compare(
             left = this,
             right = other,
         )
-    }
 
-    fun renderSummary(): String {
-        return "AnnotationDescriptor(name=$qualifiedName, arguments=${values.size})"
-    }
+    fun renderSummary(): String = "AnnotationDescriptor(name=$qualifiedName, arguments=${values.size})"
 
     fun renderDiagnostic(): String {
-        val budget = DiagnosticBudget(
-            remaining = MAX_RENDERED_DIAGNOSTIC_CHARS,
-        )
+        val budget =
+            DiagnosticBudget(
+                remaining = MAX_RENDERED_DIAGNOSTIC_CHARS,
+            )
         val builder = StringBuilder()
 
         budget.append(builder, "AnnotationDescriptor(")
@@ -71,14 +66,12 @@ class AnnotationDescriptor private constructor(
         return builder.toString()
     }
 
-    override fun equals(
-        other: Any?,
-    ): Boolean {
+    override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is AnnotationDescriptor) return false
 
         return qualifiedName == other.qualifiedName &&
-                values == other.values
+            values == other.values
     }
 
     override fun hashCode(): Int {
@@ -87,9 +80,7 @@ class AnnotationDescriptor private constructor(
         return result
     }
 
-    override fun toString(): String {
-        return renderSummary()
-    }
+    override fun toString(): String = renderSummary()
 
     companion object {
         private const val MAX_RENDERED_DIAGNOSTIC_CHARS: Int = 2_048
@@ -112,9 +103,7 @@ class AnnotationDescriptor private constructor(
             )
         }
 
-        private fun computeAnnotationValueNestingDepth(
-            values: AnnotationValueMap,
-        ): Int {
+        private fun computeAnnotationValueNestingDepth(values: AnnotationValueMap): Int {
             var maxDepth = 0
             var index = 0
 
@@ -131,9 +120,7 @@ class AnnotationDescriptor private constructor(
             return maxDepth
         }
 
-        private fun requireAnnotationValueNestingDepthWithinLimit(
-            depth: Int,
-        ) {
+        private fun requireAnnotationValueNestingDepthWithinLimit(depth: Int) {
             if (depth < 0) {
                 throw MetamodelFactContractViolationException(
                     "AnnotationDescriptor.annotationValueNestingDepth must be >= 0: $depth",
@@ -143,7 +130,7 @@ class AnnotationDescriptor private constructor(
             if (depth > AnnotationValue.MAX_NESTING_DEPTH) {
                 throw MetamodelFactContractViolationException(
                     "AnnotationDescriptor.annotationValueNestingDepth exceeds protocol cap=" +
-                            "${AnnotationValue.MAX_NESTING_DEPTH}: $depth",
+                        "${AnnotationValue.MAX_NESTING_DEPTH}: $depth",
                 )
             }
         }
@@ -189,10 +176,11 @@ private object AnnotationDescriptorOrder {
 
         var index = 0
         while (index < minSize) {
-            val entryCompare = compareEntries(
-                left = left[index],
-                right = right[index],
-            )
+            val entryCompare =
+                compareEntries(
+                    left = left[index],
+                    right = right[index],
+                )
 
             if (entryCompare != 0) {
                 return entryCompare
@@ -231,10 +219,11 @@ private object AnnotationValueOrder {
         left: AnnotationValue,
         right: AnnotationValue,
     ): Int {
-        val kindCompare = MetamodelProtocolOrdering.compareInt(
-            left = left.kind.protocolOrder,
-            right = right.kind.protocolOrder,
-        )
+        val kindCompare =
+            MetamodelProtocolOrdering.compareInt(
+                left = left.kind.protocolOrder,
+                right = right.kind.protocolOrder,
+            )
         if (kindCompare != 0) {
             return kindCompare
         }
@@ -336,10 +325,11 @@ private object AnnotationValueOrder {
         left: AnnotationValue.EnumConstantValue,
         right: AnnotationValue.EnumConstantValue,
     ): Int {
-        val typeCompare = compareCanonicalTypeIds(
-            left = left.enumType,
-            right = right.enumType,
-        )
+        val typeCompare =
+            compareCanonicalTypeIds(
+                left = left.enumType,
+                right = right.enumType,
+            )
         if (typeCompare != 0) {
             return typeCompare
         }
@@ -360,10 +350,11 @@ private object AnnotationValueOrder {
 
         var index = 0
         while (index < minSize) {
-            val elementCompare = compare(
-                left = left[index],
-                right = right[index],
-            )
+            val elementCompare =
+                compare(
+                    left = left[index],
+                    right = right[index],
+                )
 
             if (elementCompare != 0) {
                 return elementCompare
@@ -379,34 +370,38 @@ private object AnnotationValueOrder {
         left: CanonicalTypeId,
         right: CanonicalTypeId,
     ): Int {
-        val textCompare = MetamodelProtocolOrdering.compareUtf16CodeUnits(
-            left = left.value,
-            right = right.value,
-        )
+        val textCompare =
+            MetamodelProtocolOrdering.compareUtf16CodeUnits(
+                left = left.value,
+                right = right.value,
+            )
         if (textCompare != 0) {
             return textCompare
         }
 
-        val shapeCompare = compareTypeShapeSummaries(
-            left = left.shapeSummary,
-            right = right.shapeSummary,
-        )
+        val shapeCompare =
+            compareTypeShapeSummaries(
+                left = left.shapeSummary,
+                right = right.shapeSummary,
+            )
         if (shapeCompare != 0) {
             return shapeCompare
         }
 
-        val classifierIdCompare = MetamodelProtocolOrdering.compareUtf16CodeUnits(
-            left = left.classifierId,
-            right = right.classifierId,
-        )
+        val classifierIdCompare =
+            MetamodelProtocolOrdering.compareUtf16CodeUnits(
+                left = left.classifierId,
+                right = right.classifierId,
+            )
         if (classifierIdCompare != 0) {
             return classifierIdCompare
         }
 
-        val classifierVersionCompare = MetamodelProtocolOrdering.compareUtf16CodeUnits(
-            left = left.classifierVersion,
-            right = right.classifierVersion,
-        )
+        val classifierVersionCompare =
+            MetamodelProtocolOrdering.compareUtf16CodeUnits(
+                left = left.classifierVersion,
+                right = right.classifierVersion,
+            )
         if (classifierVersionCompare != 0) {
             return classifierVersionCompare
         }
@@ -421,40 +416,46 @@ private object AnnotationValueOrder {
         left: TypeShapeSummary,
         right: TypeShapeSummary,
     ): Int {
-        val kindCompare = MetamodelProtocolOrdering.compareInt(
-            left = left.kind.protocolOrder,
-            right = right.kind.protocolOrder,
-        )
+        val kindCompare =
+            MetamodelProtocolOrdering.compareInt(
+                left = left.kind.protocolOrder,
+                right = right.kind.protocolOrder,
+            )
         if (kindCompare != 0) return kindCompare
 
-        val genericArityCompare = MetamodelProtocolOrdering.compareInt(
-            left = left.genericArity,
-            right = right.genericArity,
-        )
+        val genericArityCompare =
+            MetamodelProtocolOrdering.compareInt(
+                left = left.genericArity,
+                right = right.genericArity,
+            )
         if (genericArityCompare != 0) return genericArityCompare
 
-        val arrayRankCompare = MetamodelProtocolOrdering.compareInt(
-            left = left.arrayRank,
-            right = right.arrayRank,
-        )
+        val arrayRankCompare =
+            MetamodelProtocolOrdering.compareInt(
+                left = left.arrayRank,
+                right = right.arrayRank,
+            )
         if (arrayRankCompare != 0) return arrayRankCompare
 
-        val atomicFamilyCompare = MetamodelProtocolOrdering.compareNullableProtocolOrder(
-            left = left.atomicFamily?.protocolOrder,
-            right = right.atomicFamily?.protocolOrder,
-        )
+        val atomicFamilyCompare =
+            MetamodelProtocolOrdering.compareNullableProtocolOrder(
+                left = left.atomicFamily?.protocolOrder,
+                right = right.atomicFamily?.protocolOrder,
+            )
         if (atomicFamilyCompare != 0) return atomicFamilyCompare
 
-        val componentHintCompare = compareArrayComponentHints(
-            left = left.arrayComponentHint,
-            right = right.arrayComponentHint,
-        )
+        val componentHintCompare =
+            compareArrayComponentHints(
+                left = left.arrayComponentHint,
+                right = right.arrayComponentHint,
+            )
         if (componentHintCompare != 0) return componentHintCompare
 
-        val expansionSurfaceCompare = MetamodelProtocolOrdering.compareInt(
-            left = left.expansionSurface.protocolOrder,
-            right = right.expansionSurface.protocolOrder,
-        )
+        val expansionSurfaceCompare =
+            MetamodelProtocolOrdering.compareInt(
+                left = left.expansionSurface.protocolOrder,
+                right = right.expansionSurface.protocolOrder,
+            )
         if (expansionSurfaceCompare != 0) return expansionSurfaceCompare
 
         return MetamodelProtocolOrdering.compareInt(
@@ -471,16 +472,18 @@ private object AnnotationValueOrder {
         if (left == null) return -1
         if (right == null) return 1
 
-        val genericPresenceCompare = MetamodelProtocolOrdering.compareBoolean(
-            left = left.hasGenericComponent,
-            right = right.hasGenericComponent,
-        )
+        val genericPresenceCompare =
+            MetamodelProtocolOrdering.compareBoolean(
+                left = left.hasGenericComponent,
+                right = right.hasGenericComponent,
+            )
         if (genericPresenceCompare != 0) return genericPresenceCompare
 
-        val genericArityCompare = MetamodelProtocolOrdering.compareNullableInt(
-            left = left.componentGenericArityHint,
-            right = right.componentGenericArityHint,
-        )
+        val genericArityCompare =
+            MetamodelProtocolOrdering.compareNullableInt(
+                left = left.componentGenericArityHint,
+                right = right.componentGenericArityHint,
+            )
         if (genericArityCompare != 0) return genericArityCompare
 
         return MetamodelProtocolOrdering.compareNullableProtocolOrder(
@@ -493,22 +496,25 @@ private object AnnotationValueOrder {
         left: TypeShapeRatificationFingerprint,
         right: TypeShapeRatificationFingerprint,
     ): Int {
-        val algorithmCompare = MetamodelProtocolOrdering.compareUtf16CodeUnits(
-            left = left.algorithmId,
-            right = right.algorithmId,
-        )
+        val algorithmCompare =
+            MetamodelProtocolOrdering.compareUtf16CodeUnits(
+                left = left.algorithmId,
+                right = right.algorithmId,
+            )
         if (algorithmCompare != 0) return algorithmCompare
 
-        val algorithmVersionCompare = MetamodelProtocolOrdering.compareUtf16CodeUnits(
-            left = left.algorithmVersion,
-            right = right.algorithmVersion,
-        )
+        val algorithmVersionCompare =
+            MetamodelProtocolOrdering.compareUtf16CodeUnits(
+                left = left.algorithmVersion,
+                right = right.algorithmVersion,
+            )
         if (algorithmVersionCompare != 0) return algorithmVersionCompare
 
-        val encodingCompare = MetamodelProtocolOrdering.compareInt(
-            left = left.valueEncoding.protocolOrder,
-            right = right.valueEncoding.protocolOrder,
-        )
+        val encodingCompare =
+            MetamodelProtocolOrdering.compareInt(
+                left = left.valueEncoding.protocolOrder,
+                right = right.valueEncoding.protocolOrder,
+            )
         if (encodingCompare != 0) return encodingCompare
 
         return MetamodelProtocolOrdering.compareUtf16CodeUnits(

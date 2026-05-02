@@ -211,17 +211,11 @@ internal class InFlightSlot<N : Any> private constructor(
         return decodeAttachedWaiterCount(word)
     }
 
-    fun readStartedAtNanos(): Long {
-        return startedAtNanos
-    }
+    fun readStartedAtNanos(): Long = startedAtNanos
 
-    fun readGeneration(): Long {
-        return generation
-    }
+    fun readGeneration(): Long = generation
 
-    fun isTerminalAcquire(): Boolean {
-        return readSharedStateAcquire().isTerminal
-    }
+    fun isTerminalAcquire(): Boolean = readSharedStateAcquire().isTerminal
 
     /**
      * Returns true if the slot's auxiliary sealing flag is already visible.
@@ -258,15 +252,16 @@ internal class InFlightSlot<N : Any> private constructor(
         return SUCCESS_NODE_HANDLE.getAcquire(this) as N?
     }
 
-    fun readTerminalFailureAcquire(): Throwable? {
-        return when (readSharedStateAcquire()) {
+    fun readTerminalFailureAcquire(): Throwable? =
+        when (readSharedStateAcquire()) {
             SharedSlotState.FAILED,
-            SharedSlotState.DROPPED -> TERMINAL_FAILURE_HANDLE.getAcquire(this) as Throwable?
+            SharedSlotState.DROPPED,
+            -> TERMINAL_FAILURE_HANDLE.getAcquire(this) as Throwable?
 
             SharedSlotState.PENDING,
-            SharedSlotState.SUCCESS -> null
+            SharedSlotState.SUCCESS,
+            -> null
         }
-    }
 
     fun readCommitRightAcquire(): CommitRightState {
         val word = COMMIT_RIGHT_WORD_HANDLE.getAcquire(this) as Int
@@ -288,14 +283,13 @@ internal class InFlightSlot<N : Any> private constructor(
      * This surface is intentionally policy-neutral.
      * Shard/governance code must map this resolution to domain/public reactions.
      */
-    fun resolveSharedTerminalAcquire(): SharedTerminalResolution? {
-        return when (readSharedStateAcquire()) {
+    fun resolveSharedTerminalAcquire(): SharedTerminalResolution? =
+        when (readSharedStateAcquire()) {
             SharedSlotState.PENDING -> null
             SharedSlotState.SUCCESS -> SharedTerminalResolution.SuccessRequiresBucketReverification
             SharedSlotState.FAILED -> SharedTerminalResolution.SharedFailureTerminal
             SharedSlotState.DROPPED -> SharedTerminalResolution.SharedDropTerminal
         }
-    }
 
     /**
      * Decides whether authoritative publication entry is currently lawful from the
@@ -342,16 +336,14 @@ internal class InFlightSlot<N : Any> private constructor(
      * - by construction, FLAG_FROZEN is only set together with terminalization CAS,
      *   so a lawful PENDING slot is not expected to appear as PENDING + FROZEN
      */
-    fun tryAttachWaiter(
-        waiter: WaiterCell,
-    ): JoinAdmissionDecision {
+    fun tryAttachWaiter(waiter: WaiterCell): JoinAdmissionDecision {
         while (true) {
             val observed = SLOT_WORD_HANDLE.getAcquire(this) as Long
             val observedState = decodeSharedState(observed)
 
             if (observedState != SharedSlotState.PENDING) {
                 return JoinAdmissionDecision.AlreadyTerminal(
-                    resolution = resolveTerminalFromState(observedState)
+                    resolution = resolveTerminalFromState(observedState),
                 )
             }
 
@@ -360,11 +352,12 @@ internal class InFlightSlot<N : Any> private constructor(
                 return JoinAdmissionDecision.WaiterCapExceeded
             }
 
-            val updated = encodeSlotWordUnchecked(
-                state = SharedSlotState.PENDING,
-                attachedWaiterCount = currentCount + 1,
-                flags = extractFlags(observed),
-            )
+            val updated =
+                encodeSlotWordUnchecked(
+                    state = SharedSlotState.PENDING,
+                    attachedWaiterCount = currentCount + 1,
+                    flags = extractFlags(observed),
+                )
 
             if (SLOT_WORD_HANDLE.compareAndSet(this, observed, updated)) {
                 installWaiter(waiter)
@@ -376,7 +369,7 @@ internal class InFlightSlot<N : Any> private constructor(
                     JoinAdmissionDecision.AttachedPending
                 } else {
                     JoinAdmissionDecision.AlreadyTerminal(
-                        resolution = resolveTerminalFromState(afterState)
+                        resolution = resolveTerminalFromState(afterState),
                     )
                 }
             }
@@ -397,9 +390,7 @@ internal class InFlightSlot<N : Any> private constructor(
      * If terminal state becomes visible after registration but before reconciliation,
      * the caller must immediately converge the handle lawfully.
      */
-    fun registerBuilderHandle(
-        handle: BuilderHandleCell,
-    ): BuilderHandleRegisterDecision {
+    fun registerBuilderHandle(handle: BuilderHandleCell): BuilderHandleRegisterDecision {
         val currentResolution = resolveSharedTerminalAcquire()
         if (currentResolution != null) {
             return BuilderHandleRegisterDecision.RejectedSlotTerminal(currentResolution)
@@ -468,13 +459,12 @@ internal class InFlightSlot<N : Any> private constructor(
     /**
      * Attempts to begin a new speculative lease episode on this slot-local lease surface.
      */
-    fun tryIssueSpeculativeLease(): Boolean {
-        return LEASE_WORD_HANDLE.compareAndSet(
+    fun tryIssueSpeculativeLease(): Boolean =
+        LEASE_WORD_HANDLE.compareAndSet(
             this,
             SpeculativeLeaseState.RELEASED.code,
             SpeculativeLeaseState.ISSUED.code,
         )
-    }
 
     /**
      * Attempts to release a currently live speculative lease episode.
@@ -516,7 +506,7 @@ internal class InFlightSlot<N : Any> private constructor(
     ): Boolean {
         if (readCommitRightAcquire() != CommitRightState.CLAIMED) {
             throw PlanningProtocolIntegrityException(
-                "InFlightSlot.tryPublishSuccess requires commit-right to be CLAIMED before publication entry."
+                "InFlightSlot.tryPublishSuccess requires commit-right to be CLAIMED before publication entry.",
             )
         }
 
@@ -539,11 +529,12 @@ internal class InFlightSlot<N : Any> private constructor(
                 flags = flags or FLAG_DELIVERY_PENDING
             }
 
-            val updated = encodeSlotWordUnchecked(
-                state = SharedSlotState.SUCCESS,
-                attachedWaiterCount = decodeAttachedWaiterCount(observed),
-                flags = flags,
-            )
+            val updated =
+                encodeSlotWordUnchecked(
+                    state = SharedSlotState.SUCCESS,
+                    attachedWaiterCount = decodeAttachedWaiterCount(observed),
+                    flags = flags,
+                )
 
             if (SLOT_WORD_HANDLE.compareAndSet(this, observed, updated)) {
                 forceReleaseSpeculativeLeaseBestEffort()
@@ -580,11 +571,12 @@ internal class InFlightSlot<N : Any> private constructor(
                 flags = flags or FLAG_DELIVERY_PENDING
             }
 
-            val updated = encodeSlotWordUnchecked(
-                state = SharedSlotState.FAILED,
-                attachedWaiterCount = decodeAttachedWaiterCount(observed),
-                flags = flags,
-            )
+            val updated =
+                encodeSlotWordUnchecked(
+                    state = SharedSlotState.FAILED,
+                    attachedWaiterCount = decodeAttachedWaiterCount(observed),
+                    flags = flags,
+                )
 
             if (SLOT_WORD_HANDLE.compareAndSet(this, observed, updated)) {
                 forceReleaseSpeculativeLeaseBestEffort()
@@ -621,11 +613,12 @@ internal class InFlightSlot<N : Any> private constructor(
                 flags = flags or FLAG_DELIVERY_PENDING
             }
 
-            val updated = encodeSlotWordUnchecked(
-                state = SharedSlotState.DROPPED,
-                attachedWaiterCount = decodeAttachedWaiterCount(observed),
-                flags = flags,
-            )
+            val updated =
+                encodeSlotWordUnchecked(
+                    state = SharedSlotState.DROPPED,
+                    attachedWaiterCount = decodeAttachedWaiterCount(observed),
+                    flags = flags,
+                )
 
             if (SLOT_WORD_HANDLE.compareAndSet(this, observed, updated)) {
                 forceReleaseSpeculativeLeaseBestEffort()
@@ -702,9 +695,7 @@ internal class InFlightSlot<N : Any> private constructor(
     // Best-effort operational traversal
     // -------------------------------------------------------------------------
 
-    fun forEachVisibleWaiter(
-        action: (WaiterCell) -> Unit,
-    ) {
+    fun forEachVisibleWaiter(action: (WaiterCell) -> Unit) {
         var cursor = WAITER_HEAD_HANDLE.getAcquire(this) as WaiterCell?
         while (cursor != null) {
             action(cursor)
@@ -712,9 +703,7 @@ internal class InFlightSlot<N : Any> private constructor(
         }
     }
 
-    fun forEachVisibleBuilderHandle(
-        action: (BuilderHandleCell) -> Unit,
-    ) {
+    fun forEachVisibleBuilderHandle(action: (BuilderHandleCell) -> Unit) {
         var cursor = BUILDER_HEAD_HANDLE.getAcquire(this) as BuilderHandleCell?
         while (cursor != null) {
             action(cursor)
@@ -726,9 +715,7 @@ internal class InFlightSlot<N : Any> private constructor(
     // Internal mechanics
     // -------------------------------------------------------------------------
 
-    private fun installWaiter(
-        waiter: WaiterCell,
-    ) {
+    private fun installWaiter(waiter: WaiterCell) {
         while (true) {
             val observed = WAITER_HEAD_HANDLE.getAcquire(this) as WaiterCell?
             waiter.next = observed
@@ -764,18 +751,15 @@ internal class InFlightSlot<N : Any> private constructor(
         }
     }
 
-    private fun resolveTerminalFromState(
-        state: SharedSlotState,
-    ): SharedTerminalResolution {
-        return when (state) {
+    private fun resolveTerminalFromState(state: SharedSlotState): SharedTerminalResolution =
+        when (state) {
             SharedSlotState.SUCCESS -> SharedTerminalResolution.SuccessRequiresBucketReverification
             SharedSlotState.FAILED -> SharedTerminalResolution.SharedFailureTerminal
             SharedSlotState.DROPPED -> SharedTerminalResolution.SharedDropTerminal
             SharedSlotState.PENDING -> throw PlanningProtocolIntegrityException(
-                "Cannot resolve terminal taxonomy from PENDING shared-slot state."
+                "Cannot resolve terminal taxonomy from PENDING shared-slot state.",
             )
         }
-    }
 
     companion object {
         private const val STATE_BITS: Int = 3
@@ -853,22 +837,22 @@ internal class InFlightSlot<N : Any> private constructor(
         ): InFlightSlot<N> {
             if (maxAttachedWaiters <= 0) {
                 throw PlanningProtocolIntegrityException(
-                    "InFlightSlot.maxAttachedWaiters must be > 0: $maxAttachedWaiters"
+                    "InFlightSlot.maxAttachedWaiters must be > 0: $maxAttachedWaiters",
                 )
             }
             if (maxAttachedWaiters > MAX_PACKED_ATTACHED_WAITERS) {
                 throw PlanningProtocolIntegrityException(
-                    "InFlightSlot.maxAttachedWaiters exceeds packed capacity: requested=$maxAttachedWaiters, max=$MAX_PACKED_ATTACHED_WAITERS"
+                    "InFlightSlot.maxAttachedWaiters exceeds packed capacity: requested=$maxAttachedWaiters, max=$MAX_PACKED_ATTACHED_WAITERS",
                 )
             }
             if (startedAtNanos < 0L) {
                 throw PlanningProtocolIntegrityException(
-                    "InFlightSlot.startedAtNanos must be >= 0: $startedAtNanos"
+                    "InFlightSlot.startedAtNanos must be >= 0: $startedAtNanos",
                 )
             }
             if (generation <= 0L) {
                 throw PlanningProtocolIntegrityException(
-                    "InFlightSlot.generation must be > 0: $generation"
+                    "InFlightSlot.generation must be > 0: $generation",
                 )
             }
 
@@ -879,21 +863,16 @@ internal class InFlightSlot<N : Any> private constructor(
             )
         }
 
-        private fun encodeInitialSlotWord(): Long {
-            return encodeSlotWordUnchecked(
+        private fun encodeInitialSlotWord(): Long =
+            encodeSlotWordUnchecked(
                 state = SharedSlotState.PENDING,
                 attachedWaiterCount = 0,
                 flags = 0L,
             )
-        }
 
-        private fun encodeInitialCommitRightWord(): Int {
-            return CommitRightState.UNCLAIMED.code
-        }
+        private fun encodeInitialCommitRightWord(): Int = CommitRightState.UNCLAIMED.code
 
-        private fun encodeInitialLeaseWord(): Int {
-            return SpeculativeLeaseState.RELEASED.code
-        }
+        private fun encodeInitialLeaseWord(): Int = SpeculativeLeaseState.RELEASED.code
 
         private fun encodeSlotWordUnchecked(
             state: SharedSlotState,
@@ -906,32 +885,20 @@ internal class InFlightSlot<N : Any> private constructor(
             return stateBits or countBits or flagBits
         }
 
-        private fun decodeSharedState(word: Long): SharedSlotState {
-            return SharedSlotState.fromCode((word and STATE_MASK).toInt())
-        }
+        private fun decodeSharedState(word: Long): SharedSlotState = SharedSlotState.fromCode((word and STATE_MASK).toInt())
 
-        private fun decodeAttachedWaiterCount(word: Long): Int {
-            return ((word and COUNT_MASK) ushr COUNT_SHIFT).toInt()
-        }
+        private fun decodeAttachedWaiterCount(word: Long): Int = ((word and COUNT_MASK) ushr COUNT_SHIFT).toInt()
 
-        private fun extractFlags(word: Long): Long {
-            return word and FLAGS_MASK
-        }
+        private fun extractFlags(word: Long): Long = word and FLAGS_MASK
 
         private fun hasFlag(
             word: Long,
             flag: Long,
-        ): Boolean {
-            return (word and flag) != 0L
-        }
+        ): Boolean = (word and flag) != 0L
 
-        private fun decodeCommitRightState(word: Int): CommitRightState {
-            return CommitRightState.fromCode(word)
-        }
+        private fun decodeCommitRightState(word: Int): CommitRightState = CommitRightState.fromCode(word)
 
-        private fun decodeLeaseState(word: Int): SpeculativeLeaseState {
-            return SpeculativeLeaseState.fromCode(word)
-        }
+        private fun decodeLeaseState(word: Int): SpeculativeLeaseState = SpeculativeLeaseState.fromCode(word)
     }
 }
 
@@ -943,6 +910,7 @@ internal class InFlightSlot<N : Any> private constructor(
  */
 sealed interface JoinAdmissionDecision {
     data object AttachedPending : JoinAdmissionDecision
+
     data object WaiterCapExceeded : JoinAdmissionDecision
 
     class AlreadyTerminal(
@@ -958,7 +926,9 @@ sealed interface JoinAdmissionDecision {
  */
 sealed interface SharedTerminalResolution {
     data object SuccessRequiresBucketReverification : SharedTerminalResolution
+
     data object SharedFailureTerminal : SharedTerminalResolution
+
     data object SharedDropTerminal : SharedTerminalResolution
 }
 
@@ -970,7 +940,9 @@ sealed interface SharedTerminalResolution {
  */
 sealed interface PublicationEntryDecision {
     data object Allowed : PublicationEntryDecision
+
     data object CommitRightNotClaimed : PublicationEntryDecision
+
     data object SlotNotPending : PublicationEntryDecision
 }
 

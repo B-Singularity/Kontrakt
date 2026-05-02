@@ -24,7 +24,6 @@ class FinalCommittedPlanNode private constructor(
     override val cacheKey: PlanCacheKey,
     override val treeSemanticCostUpperBound: Long,
 ) : CommittedPlanNode {
-
     companion object {
         @JvmStatic
         fun issue(
@@ -34,7 +33,7 @@ class FinalCommittedPlanNode private constructor(
         ): FinalCommittedPlanNode {
             if (treeSemanticCostUpperBound < 0L) {
                 throw planning.domain.exception.PlanningProtocolIntegrityException(
-                    "FinalCommittedPlanNode.treeSemanticCostUpperBound must be >= 0: $treeSemanticCostUpperBound"
+                    "FinalCommittedPlanNode.treeSemanticCostUpperBound must be >= 0: $treeSemanticCostUpperBound",
                 )
             }
             return FinalCommittedPlanNode(
@@ -67,7 +66,7 @@ class DeferredCommittedPlanNode private constructor(
         ): DeferredCommittedPlanNode {
             if (structuralPath.isEmpty()) {
                 throw planning.domain.exception.PlanningProtocolIntegrityException(
-                    "DeferredCommittedPlanNode.structuralPath must not be empty."
+                    "DeferredCommittedPlanNode.structuralPath must not be empty.",
                 )
             }
             return DeferredCommittedPlanNode(
@@ -101,7 +100,7 @@ class SubstitutionCommittedPlanNode private constructor(
         ): SubstitutionCommittedPlanNode {
             if (reason.isEmpty()) {
                 throw planning.domain.exception.PlanningProtocolIntegrityException(
-                    "SubstitutionCommittedPlanNode.reason must not be empty."
+                    "SubstitutionCommittedPlanNode.reason must not be empty.",
                 )
             }
             return SubstitutionCommittedPlanNode(

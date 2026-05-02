@@ -7,9 +7,8 @@ import exception.safety.PayloadSanitizer
  */
 open class KontraktException(
     message: String,
-    cause: Throwable? = null
+    cause: Throwable? = null,
 ) : RuntimeException(message, cause) {
-
     open val domain: String = "SHARED"
 
     /**
@@ -32,14 +31,16 @@ open class KontraktException(
     protected open val payload: Map<String, Any?> = emptyMap()
 }
 
-class KontraktConfigurationException(message: String, cause: Throwable? = null) :
-    KontraktException(message, cause) {
+class KontraktConfigurationException(
+    message: String,
+    cause: Throwable? = null,
+) : KontraktException(message, cause) {
     override val domain = "CONFIGURATION"
 }
 
 class ContractViolationException(
     message: String,
-    val violations: List<String> = emptyList()
+    val violations: List<String> = emptyList(),
 ) : KontraktException(message, null) {
     override val domain = "CONTRACT"
     override val payload = mapOf("violations" to violations)

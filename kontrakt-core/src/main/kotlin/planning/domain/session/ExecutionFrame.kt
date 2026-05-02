@@ -24,7 +24,6 @@ internal class PlanNodeFrame private constructor(
     val incomingMemberIndex: Int,
     override val tx: TransactionalFrame,
 ) : ExecutionFrame {
-
     fun hasIncomingEdge(): Boolean = incomingExpandExecutionIndex >= 0
 
     companion object {
@@ -40,8 +39,8 @@ internal class PlanNodeFrame private constructor(
             incomingExpandExecutionIndex: Int = NO_EXECUTION_INDEX,
             incomingMemberIndex: Int = NO_MEMBER_INDEX,
             tx: TransactionalFrame = TransactionalFrame.issue(),
-        ): PlanNodeFrame {
-            return PlanNodeFrame(
+        ): PlanNodeFrame =
+            PlanNodeFrame(
                 typeReference = typeReference,
                 incomingEdgeRank = incomingEdgeRank,
                 incomingEdgeStageTag = incomingEdgeStageTag,
@@ -49,7 +48,6 @@ internal class PlanNodeFrame private constructor(
                 incomingMemberIndex = incomingMemberIndex,
                 tx = tx,
             )
-        }
     }
 }
 
@@ -64,13 +62,12 @@ internal class IterateMembersFrame private constructor(
             typeReference: TypeReference,
             orderedMembers: OrderedActiveMembers,
             tx: TransactionalFrame = TransactionalFrame.issue(),
-        ): IterateMembersFrame {
-            return IterateMembersFrame(
+        ): IterateMembersFrame =
+            IterateMembersFrame(
                 typeReference = typeReference,
                 orderedMembers = orderedMembers,
                 tx = tx,
             )
-        }
     }
 }
 
@@ -92,12 +89,12 @@ internal class ExpandEdgeFrame private constructor(
         ): ExpandEdgeFrame {
             if (memberCursorSlot < 0) {
                 throw PlanningProtocolIntegrityException(
-                    "ExpandEdgeFrame.memberCursorSlot must be >= 0: $memberCursorSlot"
+                    "ExpandEdgeFrame.memberCursorSlot must be >= 0: $memberCursorSlot",
                 )
             }
             if (memberCount < 0) {
                 throw PlanningProtocolIntegrityException(
-                    "ExpandEdgeFrame.memberCount must be >= 0: $memberCount"
+                    "ExpandEdgeFrame.memberCount must be >= 0: $memberCount",
                 )
             }
             return ExpandEdgeFrame(
@@ -129,7 +126,7 @@ internal class AllocateFrame private constructor(
         ): AllocateFrame {
             if (childResultStart < 0) {
                 throw PlanningProtocolIntegrityException(
-                    "AllocateFrame.childResultStart must be >= 0: $childResultStart"
+                    "AllocateFrame.childResultStart must be >= 0: $childResultStart",
                 )
             }
             return AllocateFrame(

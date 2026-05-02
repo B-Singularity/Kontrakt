@@ -17,13 +17,9 @@ class DeterministicSeedSurfaceId private constructor(
         return value == other.value
     }
 
-    override fun hashCode(): Int {
-        return value.hashCode()
-    }
+    override fun hashCode(): Int = value.hashCode()
 
-    override fun toString(): String {
-        return "DeterministicSeedSurfaceId(value=$value)"
-    }
+    override fun toString(): String = "DeterministicSeedSurfaceId(value=$value)"
 
     companion object {
         @JvmStatic

@@ -33,8 +33,8 @@ import planning.domain.vo.OrderedActiveMembers
  */
 class PlannerSession private constructor(
     val config: PlannerSessionConfig,
-) : SessionKernel, AutoCloseable {
-
+) : SessionKernel,
+    AutoCloseable {
     /**
      * Worker-local primitive planning substrate.
      *
@@ -44,20 +44,22 @@ class PlannerSession private constructor(
      * - member cursor stack
      * - RMQ state for breakpoint selection
      */
-    internal val structures = L1Structures.issue(
-        maxNodeIdCap = config.caps.maxNodeIdCap,
-        maxSemanticDepth = config.caps.maxDepthCap,
-    )
+    internal val structures =
+        L1Structures.issue(
+            maxNodeIdCap = config.caps.maxNodeIdCap,
+            maxSemanticDepth = config.caps.maxDepthCap,
+        )
 
     /**
      * Dense node identity indexer used by the planner hot path.
      *
      * This is worker-local and reset between sessions.
      */
-    internal val indexer = NodeIdIndexer.issue(
-        caps = config.caps,
-        maxSignatureLen = config.budget.maxSignatureLen,
-    )
+    internal val indexer =
+        NodeIdIndexer.issue(
+            caps = config.caps,
+            maxSignatureLen = config.budget.maxSignatureLen,
+        )
 
     /**
      * SessionKernel self-reference used by components that require kernel callbacks.
@@ -199,9 +201,13 @@ class PlannerSession private constructor(
      * Snapshot accessors used by TransactionalFrame.
      */
     fun currentSoftCheckpoint(): Long = softCheckpoint
+
     fun currentPlaceholderCounter(): Int = placeholderCounter
+
     fun currentBuilderLogPos(): Int = builderLogPos
+
     fun currentCacheLogPos(): Int = cacheLogPos
+
     fun currentMemberCursorStackPointer(): Int = structures.memberCursorStackPointer
 
     /**
@@ -285,7 +291,7 @@ class PlannerSession private constructor(
             IterateMembersFrame.issue(
                 typeReference = frame.typeReference,
                 orderedMembers = orderedMembers,
-            )
+            ),
         )
     }
 
@@ -296,9 +302,7 @@ class PlannerSession private constructor(
      * If the frame transition fails before ownership transfer completes, the allocation
      * is rolled back in LIFO order.
      */
-    internal fun transitionToExpand(
-        frame: IterateMembersFrame,
-    ) {
+    internal fun transitionToExpand(frame: IterateMembersFrame) {
         val cursorSlot = allocateMemberCursorSlot()
         try {
             replaceTopExecutionFrame(
@@ -307,7 +311,7 @@ class PlannerSession private constructor(
                     orderedMembers = frame.orderedMembers,
                     memberCursorSlot = cursorSlot,
                     memberCount = frame.orderedMembers.size(),
-                )
+                ),
             )
         } catch (t: Throwable) {
             rollbackMemberCursorAllocation(cursorSlot)
@@ -336,7 +340,7 @@ class PlannerSession private constructor(
                 orderedMembers = frame.orderedMembers,
                 signature = signature,
                 childResultStart = builderLogPos,
-            )
+            ),
         )
     }
 
@@ -356,7 +360,7 @@ class PlannerSession private constructor(
     ) {
         if (peekExecutionFrame() !== frame) {
             throw PlanningRuntimeInvariantException(
-                "completeFrame() observed an execution-frame order violation."
+                "completeFrame() observed an execution-frame order violation.",
             )
         }
         popExecutionFrame()
@@ -364,7 +368,7 @@ class PlannerSession private constructor(
         if (frame is AllocateFrame) {
             if (structures.stackPointer <= 0) {
                 throw PlanningProtocolIntegrityException(
-                    "Missing active-stack membership for ALLOCATE completion."
+                    "Missing active-stack membership for ALLOCATE completion.",
                 )
             }
 
@@ -432,6 +436,7 @@ class PlannerSession private constructor(
      * Reusable trackers for edge-key and entropy-key uniqueness checks.
      */
     internal fun acquireEdgeTracker(): PrimitiveMemberTracker = edgeTracker.apply { reset() }
+
     internal fun acquireEntropyTracker(): PrimitiveMemberTracker = entropyTracker.apply { reset() }
 
     /**
@@ -467,7 +472,7 @@ class PlannerSession private constructor(
         val depth = structures.stackPointer
         if (depth <= 0) {
             throw PlanningProtocolIntegrityException(
-                "bindIncomingEdgeAtCurrentDepth() requires an active depth."
+                "bindIncomingEdgeAtCurrentDepth() requires an active depth.",
             )
         }
 
@@ -488,9 +493,7 @@ class PlannerSession private constructor(
     /**
      * Returns whether EXPAND_EDGE still has members left to consume.
      */
-    internal fun hasMoreMembers(frame: ExpandEdgeFrame): Boolean {
-        return structures.memberCursorStack[frame.memberCursorSlot] < frame.memberCount
-    }
+    internal fun hasMoreMembers(frame: ExpandEdgeFrame): Boolean = structures.memberCursorStack[frame.memberCursorSlot] < frame.memberCount
 
     /**
      * Consumes one protocol-ordered member index from the session-owned cursor slot.
@@ -502,7 +505,7 @@ class PlannerSession private constructor(
         val current = structures.memberCursorStack[slot]
         if (current >= frame.memberCount) {
             throw PlanningProtocolIntegrityException(
-                "Member cursor overflow for slot=${frame.memberCursorSlot}, count=${frame.memberCount}"
+                "Member cursor overflow for slot=${frame.memberCursorSlot}, count=${frame.memberCount}",
             )
         }
         structures.memberCursorStack[slot] = current + 1
@@ -559,26 +562,24 @@ class PlannerSession private constructor(
     /**
      * Resolves the ordered-member owner view for the winning breakpoint edge.
      */
-    internal fun resolveBreakpointOwnerFacts(
-        decision: CycleBreakpointDecision,
-    ): OrderedActiveMembers {
-        val frame = executionStack.get(decision.ownerExecutionIndex) as? ExpandEdgeFrame
-            ?: throw PlanningProtocolIntegrityException(
-                "Breakpoint owner must resolve to ExpandEdgeFrame at index=${decision.ownerExecutionIndex}"
-            )
+    internal fun resolveBreakpointOwnerFacts(decision: CycleBreakpointDecision): OrderedActiveMembers {
+        val frame =
+            executionStack.get(decision.ownerExecutionIndex) as? ExpandEdgeFrame
+                ?: throw PlanningProtocolIntegrityException(
+                    "Breakpoint owner must resolve to ExpandEdgeFrame at index=${decision.ownerExecutionIndex}",
+                )
         return frame.orderedMembers
     }
 
     /**
      * Resolves the concrete member selected by the winning breakpoint decision.
      */
-    internal fun resolveBreakpointMember(
-        decision: CycleBreakpointDecision,
-    ): MemberFact {
-        val frame = executionStack.get(decision.ownerExecutionIndex) as? ExpandEdgeFrame
-            ?: throw PlanningProtocolIntegrityException(
-                "Breakpoint owner must resolve to ExpandEdgeFrame at index=${decision.ownerExecutionIndex}"
-            )
+    internal fun resolveBreakpointMember(decision: CycleBreakpointDecision): MemberFact {
+        val frame =
+            executionStack.get(decision.ownerExecutionIndex) as? ExpandEdgeFrame
+                ?: throw PlanningProtocolIntegrityException(
+                    "Breakpoint owner must resolve to ExpandEdgeFrame at index=${decision.ownerExecutionIndex}",
+                )
         return frame.orderedMembers.memberAt(decision.memberIndex)
     }
 
@@ -610,8 +611,7 @@ class PlannerSession private constructor(
     /**
      * Returns the normalization version pinned for the current session.
      */
-    fun currentNormalizationVersion(): Long =
-        config.versions.normalizationSpecVersion.toLong()
+    fun currentNormalizationVersion(): Long = config.versions.normalizationSpecVersion.toLong()
 
     /**
      * Returns whether the session is in remainder-bypass mode for L2.
@@ -664,7 +664,7 @@ class PlannerSession private constructor(
         val slot = structures.memberCursorStackPointer
         if (slot >= structures.memberCursorStack.size) {
             throw PlanningProtocolIntegrityException(
-                "Member cursor stack exhausted at slot=$slot"
+                "Member cursor stack exhausted at slot=$slot",
             )
         }
         structures.memberCursorStack[slot] = 0
@@ -681,7 +681,7 @@ class PlannerSession private constructor(
     private fun rollbackMemberCursorAllocation(slot: Int) {
         if (structures.memberCursorStackPointer != slot + 1) {
             throw PlanningProtocolIntegrityException(
-                "Cursor allocation rollback must be LIFO. slot=$slot, pointer=${structures.memberCursorStackPointer}"
+                "Cursor allocation rollback must be LIFO. slot=$slot, pointer=${structures.memberCursorStackPointer}",
             )
         }
         structures.memberCursorStack[slot] = 0
@@ -697,7 +697,7 @@ class PlannerSession private constructor(
         val expectedTop = frame.memberCursorSlot + 1
         if (structures.memberCursorStackPointer != expectedTop) {
             throw PlanningProtocolIntegrityException(
-                "Member cursor release must be LIFO. slot=${frame.memberCursorSlot}, pointer=${structures.memberCursorStackPointer}"
+                "Member cursor release must be LIFO. slot=${frame.memberCursorSlot}, pointer=${structures.memberCursorStackPointer}",
             )
         }
         structures.memberCursorStack[frame.memberCursorSlot] = 0
@@ -733,8 +733,9 @@ class PlannerSession private constructor(
             )
         }
 
-        val segment = segmentWinner
-            ?: throw PlanningProtocolIntegrityException("Expected segment winner for stage=$stage")
+        val segment =
+            segmentWinner
+                ?: throw PlanningProtocolIntegrityException("Expected segment winner for stage=$stage")
 
         val virtualIndex = currentDepth + 1
         val backRank = backEdge.incomingEdgeRank
@@ -760,21 +761,18 @@ class PlannerSession private constructor(
     private fun buildDecisionFromDepth(
         stage: BreakpointStage,
         depth: Int,
-    ): CycleBreakpointDecision {
-        return CycleBreakpointDecision.issue(
+    ): CycleBreakpointDecision =
+        CycleBreakpointDecision.issue(
             stage = stage,
             ownerExecutionIndex = structures.incomingExpandExecutionIndexAtDepth[depth],
             memberIndex = structures.incomingMemberIndexAtDepth[depth],
             selectedStackIndex = depth,
             isBackEdge = false,
         )
-    }
 
     companion object {
         @JvmStatic
-        fun issue(config: PlannerSessionConfig): PlannerSession {
-            return PlannerSession(config)
-        }
+        fun issue(config: PlannerSessionConfig): PlannerSession = PlannerSession(config)
     }
 }
 
@@ -800,15 +798,14 @@ internal class CycleBreakpointDecision private constructor(
             memberIndex: Int,
             selectedStackIndex: Int,
             isBackEdge: Boolean,
-        ): CycleBreakpointDecision {
-            return CycleBreakpointDecision(
+        ): CycleBreakpointDecision =
+            CycleBreakpointDecision(
                 stage = stage,
                 ownerExecutionIndex = ownerExecutionIndex,
                 memberIndex = memberIndex,
                 selectedStackIndex = selectedStackIndex,
                 isBackEdge = isBackEdge,
             )
-        }
     }
 }
 
@@ -839,15 +836,10 @@ internal class SessionChildDescriptorCursor private constructor(
 
     override fun canonicalIrNodeAt(index: Int) = backing[start + index].irNode
 
-    override fun semanticCostUpperBoundAt(index: Int): Long =
-        backing[start + index].treeSemanticCostUpperBound
+    override fun semanticCostUpperBoundAt(index: Int): Long = backing[start + index].treeSemanticCostUpperBound
 
     companion object {
         @JvmStatic
-        fun issue(
-            backing: ArrayList<CommittedPlanNode>,
-        ): SessionChildDescriptorCursor {
-            return SessionChildDescriptorCursor(backing)
-        }
+        fun issue(backing: ArrayList<CommittedPlanNode>): SessionChildDescriptorCursor = SessionChildDescriptorCursor(backing)
     }
 }

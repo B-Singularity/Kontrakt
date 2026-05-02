@@ -15,8 +15,8 @@ import java.util.AbstractList
  */
 class OrderedActiveMembers private constructor(
     private val snapshot: Array<Any?>,
-) : AbstractList<ProjectedActiveMember>(), RandomAccess {
-
+) : AbstractList<ProjectedActiveMember>(),
+    RandomAccess {
     override val size: Int
         get() = snapshot.size
 
@@ -26,9 +26,7 @@ class OrderedActiveMembers private constructor(
     }
 
     companion object {
-        internal fun issueFromOrderedMembers(
-            members: List<ProjectedActiveMember>,
-        ): OrderedActiveMembers {
+        internal fun issueFromOrderedMembers(members: List<ProjectedActiveMember>): OrderedActiveMembers {
             val snapshot = arrayOfNulls<Any?>(members.size)
 
             var i = 0

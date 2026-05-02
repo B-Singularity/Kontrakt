@@ -28,34 +28,34 @@ class PlannerSessionConfig private constructor(
         ): PlannerSessionConfig {
             if (caps.maxNodeIdCap <= 0) {
                 throw PlanningProtocolIntegrityException(
-                    "PlannerSessionConfig.caps.maxNodeIdCap must be > 0: ${caps.maxNodeIdCap}"
+                    "PlannerSessionConfig.caps.maxNodeIdCap must be > 0: ${caps.maxNodeIdCap}",
                 )
             }
             if (caps.maxDepthCap <= 0) {
                 throw PlanningProtocolIntegrityException(
-                    "PlannerSessionConfig.caps.maxDepthCap must be > 0: ${caps.maxDepthCap}"
+                    "PlannerSessionConfig.caps.maxDepthCap must be > 0: ${caps.maxDepthCap}",
                 )
             }
             if (caps.indexerTableCap <= 0) {
                 throw PlanningProtocolIntegrityException(
-                    "PlannerSessionConfig.caps.indexerTableCap must be > 0: ${caps.indexerTableCap}"
+                    "PlannerSessionConfig.caps.indexerTableCap must be > 0: ${caps.indexerTableCap}",
                 )
             }
             if (caps.undoLogCap <= 0) {
                 throw PlanningProtocolIntegrityException(
-                    "PlannerSessionConfig.caps.undoLogCap must be > 0: ${caps.undoLogCap}"
+                    "PlannerSessionConfig.caps.undoLogCap must be > 0: ${caps.undoLogCap}",
                 )
             }
             if (caps.maxSignatureBytes < budget.maxSignatureLen) {
                 throw PlanningProtocolIntegrityException(
                     "PlannerSessionConfig slab contract violated: " +
-                            "caps.maxSignatureBytes (${caps.maxSignatureBytes}) < " +
-                            "budget.maxSignatureLen (${budget.maxSignatureLen})"
+                        "caps.maxSignatureBytes (${caps.maxSignatureBytes}) < " +
+                        "budget.maxSignatureLen (${budget.maxSignatureLen})",
                 )
             }
             if (caps.structBudgetBytes <= 0L) {
                 throw PlanningProtocolIntegrityException(
-                    "PlannerSessionConfig.caps.structBudgetBytes must be > 0: ${caps.structBudgetBytes}"
+                    "PlannerSessionConfig.caps.structBudgetBytes must be > 0: ${caps.structBudgetBytes}",
                 )
             }
 

@@ -29,7 +29,6 @@ import java.time.Instant
 import java.time.ZoneId
 
 class TestExecutionTest {
-
     // Mocks
     private val spec = mockk<TestSpecification>(relaxed = true)
     private val instanceFactory = mockk<TestInstanceFactory>()
@@ -44,10 +43,11 @@ class TestExecutionTest {
     private val clock = Clock.fixed(startTime, ZoneId.of("UTC"))
 
     // Configuration
-    private val executionPolicy = ExecutionPolicy(
-        determinism = DeterminismPolicy(seed = 1234L),
-        auditing = AuditPolicy(depth = AuditDepth.SIMPLE)
-    )
+    private val executionPolicy =
+        ExecutionPolicy(
+            determinism = DeterminismPolicy(seed = 1234L),
+            auditing = AuditPolicy(depth = AuditDepth.SIMPLE),
+        )
 
     // System Under Test
     private lateinit var sut: TestExecution
@@ -58,15 +58,16 @@ class TestExecutionTest {
         // private constructor를 통해(검증 없이) 생성되므로 예외가 발생하지 않음.
         every { traceSinkPool.getSink(any()) } returns traceSink
 
-        sut = TestExecution(
-            spec = spec,
-            instanceFactory = instanceFactory,
-            scenarioExecutor = scenarioExecutor,
-            traceSinkPool = traceSinkPool,
-            resultPublisher = resultPublisher,
-            clock = clock,
-            executionPolicy = executionPolicy,
-        )
+        sut =
+            TestExecution(
+                spec = spec,
+                instanceFactory = instanceFactory,
+                scenarioExecutor = scenarioExecutor,
+                traceSinkPool = traceSinkPool,
+                resultPublisher = resultPublisher,
+                clock = clock,
+                executionPolicy = executionPolicy,
+            )
     }
 
     // =========================================================================
@@ -79,18 +80,20 @@ class TestExecutionTest {
         val context = mockk<EphemeralTestContext>(relaxed = true)
         every { instanceFactory.create(any(), any()) } returns context
 
-        val successRecord = AssertionRecord(
-            status = AssertionStatus.PASSED,
-            rule = assertionRule,
-            message = "Match",
-            expected = "A",
-            actual = "A"
-        )
+        val successRecord =
+            AssertionRecord(
+                status = AssertionStatus.PASSED,
+                rule = assertionRule,
+                message = "Match",
+                expected = "A",
+                actual = "A",
+            )
 
-        val executionResult = ExecutionResult(
-            records = listOf(successRecord),
-            seed = 1234L
-        )
+        val executionResult =
+            ExecutionResult(
+                records = listOf(successRecord),
+                seed = 1234L,
+            )
         every { scenarioExecutor.executeScenarios(context) } returns executionResult
 
         // When
@@ -115,26 +118,29 @@ class TestExecutionTest {
         val context = mockk<EphemeralTestContext>(relaxed = true)
         every { instanceFactory.create(any(), any()) } returns context
 
-        val passRecord = AssertionRecord(
-            status = AssertionStatus.PASSED,
-            rule = assertionRule,
-            message = "Ok",
-            expected = "A",
-            actual = "A"
-        )
+        val passRecord =
+            AssertionRecord(
+                status = AssertionStatus.PASSED,
+                rule = assertionRule,
+                message = "Ok",
+                expected = "A",
+                actual = "A",
+            )
 
-        val failRecord = AssertionRecord(
-            status = AssertionStatus.FAILED,
-            rule = assertionRule,
-            message = "Mismatch",
-            expected = "B",
-            actual = "C"
-        )
+        val failRecord =
+            AssertionRecord(
+                status = AssertionStatus.FAILED,
+                rule = assertionRule,
+                message = "Mismatch",
+                expected = "B",
+                actual = "C",
+            )
 
-        val executionResult = ExecutionResult(
-            records = listOf(passRecord, failRecord),
-            seed = 1234L
-        )
+        val executionResult =
+            ExecutionResult(
+                records = listOf(passRecord, failRecord),
+                seed = 1234L,
+            )
         every { scenarioExecutor.executeScenarios(context) } returns executionResult
 
         // When
@@ -200,32 +206,35 @@ class TestExecutionTest {
     @Test
     fun `execute - generates random seed when deterministic seed is missing`() {
         // Given: Policy with null seed (triggers Random.nextLong())
-        val randomPolicy = ExecutionPolicy(
-            determinism = DeterminismPolicy(seed = null),
-            auditing = AuditPolicy(depth = AuditDepth.SIMPLE)
-        )
+        val randomPolicy =
+            ExecutionPolicy(
+                determinism = DeterminismPolicy(seed = null),
+                auditing = AuditPolicy(depth = AuditDepth.SIMPLE),
+            )
 
         // Re-initialize SUT with the new policy
-        sut = TestExecution(
-            spec = spec,
-            instanceFactory = instanceFactory,
-            scenarioExecutor = scenarioExecutor,
-            traceSinkPool = traceSinkPool,
-            resultPublisher = resultPublisher,
-            clock = clock,
-            executionPolicy = randomPolicy
-        )
+        sut =
+            TestExecution(
+                spec = spec,
+                instanceFactory = instanceFactory,
+                scenarioExecutor = scenarioExecutor,
+                traceSinkPool = traceSinkPool,
+                resultPublisher = resultPublisher,
+                clock = clock,
+                executionPolicy = randomPolicy,
+            )
 
         val context = mockk<EphemeralTestContext>(relaxed = true)
         every { instanceFactory.create(any(), any()) } returns context
 
-        val successRecord = AssertionRecord(
-            status = AssertionStatus.PASSED,
-            rule = assertionRule,
-            message = "Match",
-            expected = "A",
-            actual = "A"
-        )
+        val successRecord =
+            AssertionRecord(
+                status = AssertionStatus.PASSED,
+                rule = assertionRule,
+                message = "Match",
+                expected = "A",
+                actual = "A",
+            )
         val executionResult = ExecutionResult(records = listOf(successRecord), seed = 9999L)
         every { scenarioExecutor.executeScenarios(context) } returns executionResult
 
@@ -239,33 +248,36 @@ class TestExecutionTest {
     @Test
     fun `execute - enables trace mode when audit depth is EXPLAINABLE`() {
         // Given: Policy with EXPLAINABLE depth (triggers traceMode = true)
-        val tracePolicy = ExecutionPolicy(
-            determinism = DeterminismPolicy(seed = 1234L),
-            auditing = AuditPolicy(depth = AuditDepth.EXPLAINABLE)
-        )
+        val tracePolicy =
+            ExecutionPolicy(
+                determinism = DeterminismPolicy(seed = 1234L),
+                auditing = AuditPolicy(depth = AuditDepth.EXPLAINABLE),
+            )
 
-        sut = TestExecution(
-            spec = spec,
-            instanceFactory = instanceFactory,
-            scenarioExecutor = scenarioExecutor,
-            traceSinkPool = traceSinkPool,
-            resultPublisher = resultPublisher,
-            clock = clock,
-            executionPolicy = tracePolicy
-        )
+        sut =
+            TestExecution(
+                spec = spec,
+                instanceFactory = instanceFactory,
+                scenarioExecutor = scenarioExecutor,
+                traceSinkPool = traceSinkPool,
+                resultPublisher = resultPublisher,
+                clock = clock,
+                executionPolicy = tracePolicy,
+            )
 
         val context = mockk<EphemeralTestContext>(relaxed = true)
         every { instanceFactory.create(any(), any()) } returns context
 
-        val successRecord = AssertionRecord(
-            status = AssertionStatus.PASSED,
-            rule = assertionRule,
-            message = "Match",
-            expected = "A",
-            actual = "A"
-            // Note: In EXPLAINABLE mode, the system might capture 'SourceLocation',
-            // causing a mismatch with this default 'NotCaptured' record.
-        )
+        val successRecord =
+            AssertionRecord(
+                status = AssertionStatus.PASSED,
+                rule = assertionRule,
+                message = "Match",
+                expected = "A",
+                actual = "A",
+                // Note: In EXPLAINABLE mode, the system might capture 'SourceLocation',
+                // causing a mismatch with this default 'NotCaptured' record.
+            )
         val executionResult = ExecutionResult(records = listOf(successRecord), seed = 1234L)
         every { scenarioExecutor.executeScenarios(context) } returns executionResult
 

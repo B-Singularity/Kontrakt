@@ -94,15 +94,16 @@ class MockitoEngineAdapter :
             if (isSuspiciousStatefulMethod(methodName)) {
                 logger.warn {
                     "⚠️ Suspicious call '$methodName' on Stateless Mock '${mockType.simpleName}'. " +
-                            "Use 'createFake()' (or @Stateful) if you need In-Memory DB behavior."
+                        "Use 'createFake()' (or @Stateful) if you need In-Memory DB behavior."
                 }
             }
 
             // Determine the return type for generation
-            val returnType = invocation.method.kotlinFunction?.returnType ?: run {
-                trace.recordCapture(invocation, args, startTime)
-                return null
-            }
+            val returnType =
+                invocation.method.kotlinFunction?.returnType ?: run {
+                    trace.recordCapture(invocation, args, startTime)
+                    return null
+                }
 
             // Handle Void methods: Just record trace and return null
             if (returnType.classifier == Unit::class) {
@@ -128,11 +129,11 @@ class MockitoEngineAdapter :
 
         private fun isSuspiciousStatefulMethod(name: String): Boolean =
             name.startsWith("save") ||
-                    name.startsWith("insert") ||
-                    name.startsWith("update") ||
-                    name.startsWith("delete") ||
-                    name.startsWith("remove") ||
-                    name.startsWith("store")
+                name.startsWith("insert") ||
+                name.startsWith("update") ||
+                name.startsWith("delete") ||
+                name.startsWith("remove") ||
+                name.startsWith("store")
     }
 
     /**
@@ -171,14 +172,15 @@ class MockitoEngineAdapter :
             // 2. Try to handle as Stateful CRUD operation
             // Uses strict matching logic to avoid false positives.
             // [Fail-Fast] Direct execution without 'runCatching'.
-            val (result, handled) = when {
-                isSave(name) -> handleSave(args)
-                isFindById(name, args) -> handleFindById(args, method.returnType)
-                isFindAll(name) -> store.values.toList() to true
-                isDelete(name) -> handleDelete(args)
-                isCount(name) -> store.size.toLong() to true
-                else -> null to false
-            }
+            val (result, handled) =
+                when {
+                    isSave(name) -> handleSave(args)
+                    isFindById(name, args) -> handleFindById(args, method.returnType)
+                    isFindAll(name) -> store.values.toList() to true
+                    isDelete(name) -> handleDelete(args)
+                    isCount(name) -> store.size.toLong() to true
+                    else -> null to false
+                }
 
             if (handled) {
                 recordTrace(invocation, args, startTime)
@@ -187,10 +189,11 @@ class MockitoEngineAdapter :
 
             // 3. Fallback: Generative Strategy
             // If the method is not a CRUD operation (e.g., custom query), generate a random response.
-            val returnType = method.kotlinFunction?.returnType ?: run {
-                recordTrace(invocation, args, startTime)
-                return null
-            }
+            val returnType =
+                method.kotlinFunction?.returnType ?: run {
+                    recordTrace(invocation, args, startTime)
+                    return null
+                }
 
             if (returnType.classifier == Unit::class) {
                 recordTrace(invocation, args, startTime)
@@ -245,17 +248,18 @@ class MockitoEngineAdapter :
 
             val extractedId = extractId(arg)
 
-            val idToDelete = extractedId?.toString() ?: run {
-                if (isPrimitiveOrString(arg)) {
-                    arg.toString()
-                } else {
-                    throw KontraktConfigurationException(
-                        "StatefulFake violation: Cannot delete object '${arg::class.simpleName}'. " +
+            val idToDelete =
+                extractedId?.toString() ?: run {
+                    if (isPrimitiveOrString(arg)) {
+                        arg.toString()
+                    } else {
+                        throw KontraktConfigurationException(
+                            "StatefulFake violation: Cannot delete object '${arg::class.simpleName}'. " +
                                 "Stateful behavior requires an accessible 'id' property or a primitive key. " +
-                                "Please verify the entity structure or use a stateless mock."
-                    )
+                                "Please verify the entity structure or use a stateless mock.",
+                        )
+                    }
                 }
-            }
 
             store.remove(idToDelete)
             return null to true
@@ -300,11 +304,11 @@ class MockitoEngineAdapter :
             n: String,
             args: Array<Any>,
         ) = args.size == 1 &&
-                (
-                        n == "findById" ||
-                                n == "getById" ||
-                                ((n.startsWith("find") || n.startsWith("get")) && n.endsWith("ById"))
-                        )
+            (
+                n == "findById" ||
+                    n == "getById" ||
+                    ((n.startsWith("find") || n.startsWith("get")) && n.endsWith("ById"))
+            )
 
         // Matches: findAll*, getAll*, list*
         // [Safety] Strict prefix matching to avoid false positives like 'playlistSongs'.
@@ -321,9 +325,11 @@ class MockitoEngineAdapter :
          * [Fail-Fast] No 'runCatching'.
          */
         private fun extractId(entity: Any): Any? {
-            val property = entity::class.memberProperties
-                .firstOrNull { it.name.equals("id", ignoreCase = true) }
-                ?: return null // Property missing
+            val property =
+                entity::class
+                    .memberProperties
+                    .firstOrNull { it.name.equals("id", ignoreCase = true) }
+                    ?: return null // Property missing
 
             property.isAccessible = true
             return try {
@@ -333,8 +339,7 @@ class MockitoEngineAdapter :
             }
         }
 
-        private fun isPrimitiveOrString(value: Any): Boolean =
-            value is String || value is Number || value is Boolean
+        private fun isPrimitiveOrString(value: Any): Boolean = value is String || value is Number || value is Boolean
     }
 }
 

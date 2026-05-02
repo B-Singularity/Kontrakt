@@ -23,7 +23,6 @@ import metamodel.domain.exception.InvalidDeclarationOrdinalException
  * and prefer factory-issued immutable objects.
  */
 sealed interface DeclarationOrdinal {
-
     val isPresent: Boolean
 
     /**
@@ -42,28 +41,23 @@ sealed interface DeclarationOrdinal {
     class Present private constructor(
         val ordinal: Int,
     ) : DeclarationOrdinal {
-
         override val isPresent: Boolean = true
 
         override fun lowerForPrimitiveOrdering(): Int = ordinal
 
         override fun toString(): String = "Present($ordinal)"
 
-        override fun equals(other: Any?): Boolean {
-            return other is Present && other.ordinal == ordinal
-        }
+        override fun equals(other: Any?): Boolean = other is Present && other.ordinal == ordinal
 
         override fun hashCode(): Int = ordinal
 
         companion object {
             @JvmStatic
-            fun issue(
-                ordinal: Int,
-            ): Present {
+            fun issue(ordinal: Int): Present {
                 if (ordinal < 0) {
                     throw InvalidDeclarationOrdinalException(
                         ordinal = ordinal,
-                        reason = "DeclarationOrdinal.Present.ordinal must be >= 0."
+                        reason = "DeclarationOrdinal.Present.ordinal must be >= 0.",
                     )
                 }
 
@@ -87,7 +81,6 @@ sealed interface DeclarationOrdinal {
      * This is a regular singleton object, not `data object`.
      */
     object Unavailable : DeclarationOrdinal {
-
         override val isPresent: Boolean = false
 
         override fun lowerForPrimitiveOrdering(): Int = UNAVAILABLE_PRIMITIVE_SENTINEL
@@ -99,9 +92,7 @@ sealed interface DeclarationOrdinal {
         const val UNAVAILABLE_PRIMITIVE_SENTINEL: Int = -1
 
         @JvmStatic
-        fun present(
-            ordinal: Int,
-        ): DeclarationOrdinal = Present.issue(ordinal)
+        fun present(ordinal: Int): DeclarationOrdinal = Present.issue(ordinal)
 
         @JvmStatic
         fun unavailable(): DeclarationOrdinal = Unavailable
@@ -113,14 +104,11 @@ sealed interface DeclarationOrdinal {
          * New semantic DTO construction should prefer present(...) or unavailable().
          */
         @JvmStatic
-        fun fromPrimitiveLowering(
-            value: Int,
-        ): DeclarationOrdinal {
-            return if (value == UNAVAILABLE_PRIMITIVE_SENTINEL) {
+        fun fromPrimitiveLowering(value: Int): DeclarationOrdinal =
+            if (value == UNAVAILABLE_PRIMITIVE_SENTINEL) {
                 Unavailable
             } else {
                 Present.issue(value)
             }
-        }
     }
 }

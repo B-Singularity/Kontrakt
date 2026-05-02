@@ -23,8 +23,8 @@ class ConcreteImplementationReference private constructor(
         if (other !is ConcreteImplementationReference) return false
 
         return TypeReferenceIdentity.sameSemanticType(type, other.type) &&
-                canonicalIdentifier == other.canonicalIdentifier &&
-                materializationKind == other.materializationKind
+            canonicalIdentifier == other.canonicalIdentifier &&
+            materializationKind == other.materializationKind
     }
 
     override fun hashCode(): Int {
@@ -34,8 +34,8 @@ class ConcreteImplementationReference private constructor(
         return result
     }
 
-    override fun toString(): String {
-        return buildString {
+    override fun toString(): String =
+        buildString {
             append("ConcreteImplementationReference(")
             append("type=")
             append(type.signature)
@@ -45,7 +45,6 @@ class ConcreteImplementationReference private constructor(
             append(materializationKind.protocolToken)
             append(')')
         }
-    }
 
     companion object {
         @JvmStatic

@@ -44,9 +44,7 @@ interface TypeShapeCoherenceScope {
     val scopeId: TypeShapeCoherenceScopeId
     val scopeEpoch: TypeShapeCoherenceScopeEpoch
 
-    fun registerOrVerify(
-        ratification: TypeShapeRatification,
-    ): TypeShapeCoherenceReceipt
+    fun registerOrVerify(ratification: TypeShapeRatification): TypeShapeCoherenceReceipt
 }
 
 /**
@@ -63,25 +61,17 @@ interface TypeShapeCoherenceScope {
 class TypeShapeCoherenceScopeId private constructor(
     val value: String,
 ) {
-    override fun equals(other: Any?): Boolean {
-        return other is TypeShapeCoherenceScopeId && value == other.value
-    }
+    override fun equals(other: Any?): Boolean = other is TypeShapeCoherenceScopeId && value == other.value
 
-    override fun hashCode(): Int {
-        return value.hashCode()
-    }
+    override fun hashCode(): Int = value.hashCode()
 
-    override fun toString(): String {
-        return value
-    }
+    override fun toString(): String = value
 
     companion object {
         private const val MAX_SCOPE_ID_CHARS: Int = 192
 
         @JvmStatic
-        fun issue(
-            value: String,
-        ): TypeShapeCoherenceScopeId {
+        fun issue(value: String): TypeShapeCoherenceScopeId {
             requireToken(
                 field = "TypeShapeCoherenceScopeId.value",
                 value = value,
@@ -117,25 +107,15 @@ class TypeShapeCoherenceScopeEpoch private constructor(
         }
     }
 
-    override fun equals(other: Any?): Boolean {
-        return other is TypeShapeCoherenceScopeEpoch && value == other.value
-    }
+    override fun equals(other: Any?): Boolean = other is TypeShapeCoherenceScopeEpoch && value == other.value
 
-    override fun hashCode(): Int {
-        return value.hashCode()
-    }
+    override fun hashCode(): Int = value.hashCode()
 
-    override fun toString(): String {
-        return value.toString()
-    }
+    override fun toString(): String = value.toString()
 
     companion object {
         @JvmStatic
-        fun issue(
-            value: Long,
-        ): TypeShapeCoherenceScopeEpoch {
-            return TypeShapeCoherenceScopeEpoch(value)
-        }
+        fun issue(value: Long): TypeShapeCoherenceScopeEpoch = TypeShapeCoherenceScopeEpoch(value)
     }
 }
 
@@ -170,25 +150,17 @@ class TypeShapeCoherenceScopeEpoch private constructor(
 class TypeShapeCoherenceAdmissionToken private constructor(
     val value: String,
 ) {
-    override fun equals(other: Any?): Boolean {
-        return other is TypeShapeCoherenceAdmissionToken && value == other.value
-    }
+    override fun equals(other: Any?): Boolean = other is TypeShapeCoherenceAdmissionToken && value == other.value
 
-    override fun hashCode(): Int {
-        return value.hashCode()
-    }
+    override fun hashCode(): Int = value.hashCode()
 
-    override fun toString(): String {
-        return "<type-shape-coherence-admission-token:redacted>"
-    }
+    override fun toString(): String = "<type-shape-coherence-admission-token:redacted>"
 
     companion object {
         private const val MAX_ADMISSION_TOKEN_CHARS: Int = 512
 
         @JvmStatic
-        fun issue(
-            value: String,
-        ): TypeShapeCoherenceAdmissionToken {
+        fun issue(value: String): TypeShapeCoherenceAdmissionToken {
             requireToken(
                 field = "TypeShapeCoherenceAdmissionToken.value",
                 value = value,
@@ -241,15 +213,13 @@ class TypeShapeCoherenceReceipt private constructor(
      * This method only verifies that the coherence scope admitted this exact
      * ratification fingerprint.
      */
-    fun requireAccepts(
-        ratification: TypeShapeRatification,
-    ) {
+    fun requireAccepts(ratification: TypeShapeRatification) {
         if (acceptedRatificationFingerprint != ratification.ratificationFingerprint) {
             throw MetamodelFactContractViolationException(
                 "TypeShapeCoherenceReceipt does not accept ratification fingerprint: " +
-                        "scope=$scopeId@$scopeEpoch, " +
-                        "expected=${acceptedRatificationFingerprint.redacted()}, " +
-                        "actual=${ratification.ratificationFingerprint.redacted()}",
+                    "scope=$scopeId@$scopeEpoch, " +
+                    "expected=${acceptedRatificationFingerprint.redacted()}, " +
+                    "actual=${ratification.ratificationFingerprint.redacted()}",
             )
         }
     }
@@ -260,14 +230,12 @@ class TypeShapeCoherenceReceipt private constructor(
      * This is useful in the identity issuer path where the caller still has the
      * TypeShapeCoherenceScope that returned the receipt.
      */
-    fun requireIssuedBy(
-        scope: TypeShapeCoherenceScope,
-    ) {
+    fun requireIssuedBy(scope: TypeShapeCoherenceScope) {
         if (scopeId != scope.scopeId || scopeEpoch != scope.scopeEpoch) {
             throw MetamodelFactContractViolationException(
                 "TypeShapeCoherenceReceipt scope mismatch: " +
-                        "receipt=$scopeId@$scopeEpoch, " +
-                        "scope=${scope.scopeId}@${scope.scopeEpoch}",
+                    "receipt=$scopeId@$scopeEpoch, " +
+                    "scope=${scope.scopeId}@${scope.scopeEpoch}",
             )
         }
     }
@@ -277,9 +245,9 @@ class TypeShapeCoherenceReceipt private constructor(
         if (other !is TypeShapeCoherenceReceipt) return false
 
         return scopeId == other.scopeId &&
-                scopeEpoch == other.scopeEpoch &&
-                acceptedRatificationFingerprint == other.acceptedRatificationFingerprint &&
-                admissionToken == other.admissionToken
+            scopeEpoch == other.scopeEpoch &&
+            acceptedRatificationFingerprint == other.acceptedRatificationFingerprint &&
+            admissionToken == other.admissionToken
     }
 
     override fun hashCode(): Int {
@@ -290,13 +258,12 @@ class TypeShapeCoherenceReceipt private constructor(
         return result
     }
 
-    override fun toString(): String {
-        return "TypeShapeCoherenceReceipt(" +
-                "scope=$scopeId@$scopeEpoch, " +
-                "fingerprint=${acceptedRatificationFingerprint.redacted()}, " +
-                "admissionToken=$admissionToken" +
-                ")"
-    }
+    override fun toString(): String =
+        "TypeShapeCoherenceReceipt(" +
+            "scope=$scopeId@$scopeEpoch, " +
+            "fingerprint=${acceptedRatificationFingerprint.redacted()}, " +
+            "admissionToken=$admissionToken" +
+            ")"
 
     companion object {
         /**
@@ -315,14 +282,13 @@ class TypeShapeCoherenceReceipt private constructor(
             scopeEpoch: TypeShapeCoherenceScopeEpoch,
             acceptedRatificationFingerprint: TypeShapeRatificationFingerprint,
             admissionToken: TypeShapeCoherenceAdmissionToken,
-        ): TypeShapeCoherenceReceipt {
-            return TypeShapeCoherenceReceipt(
+        ): TypeShapeCoherenceReceipt =
+            TypeShapeCoherenceReceipt(
                 scopeId = scopeId,
                 scopeEpoch = scopeEpoch,
                 acceptedRatificationFingerprint = acceptedRatificationFingerprint,
                 admissionToken = admissionToken,
             )
-        }
     }
 }
 

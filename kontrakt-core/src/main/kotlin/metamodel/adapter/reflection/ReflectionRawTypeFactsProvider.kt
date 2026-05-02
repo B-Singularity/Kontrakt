@@ -11,10 +11,10 @@ import metamodel.domain.dto.PropertyStorageKind
 import metamodel.domain.dto.RawTypeFactsDTO
 import metamodel.domain.dto.VisibilityKind
 import metamodel.domain.exception.StrictModeViolationException
+import metamodel.domain.port.outgoing.NormalizationEngine
 import metamodel.domain.service.TypeIdentity64Deriver
 import metamodel.domain.vo.DeclarationOrdinal
 import metamodel.domain.vo.TypeReference
-import metamodel.port.outgoing.NormalizationEngine
 import planning.domain.port.outgoing.RawTypeFactsProvider
 import planning.domain.port.outgoing.RawTypeFactsResolution
 import kotlin.reflect.KClass
@@ -33,73 +33,113 @@ import kotlin.reflect.jvm.jvmErasure
  * Reflection implementation of RawTypeFactsProvider.
  *
  * Hexagonal role:
+ *
  * - Implements the outbound raw-fact port.
  * - Contains all Kotlin/JVM reflection knowledge.
  * - Can be replaced by a future KSP adapter without changing Planning Core.
  *
  * Compiler-style role:
+ *
  * - Lowers reflected KType/KClass information into normalized raw facts.
  * - Does not perform constructor selection.
  * - Does not perform property demotion.
  * - Does not perform canonical active-member ordering.
  *
  * Determinism policy:
+ *
  * - Reflection enumeration order is never trusted as declaration order.
  * - Declaration ordinals are emitted as DeclarationOrdinal.Unavailable unless a
  *   stable source-order reconstruction layer is introduced.
- * - Local ArrayList instances are only producer buffers.
+ * - Local ArrayList/HashSet instances are producer-side work buffers only.
  * - RawTypeFactsDTO.issue(...) is the deterministic boundary that performs
  *   duplicate validation, deterministic sequencing, and immutable freezing
  *   through MetamodelFactSequence.
  *
+ * Reflection performance law:
+ *
+ * Kotlin reflection APIs such as KClass.memberProperties,
+ * KClass.declaredMemberProperties, and KClass.constructors are treated as
+ * expensive metadata surfaces.
+ *
+ * This provider therefore:
+ *
+ * - snapshots constructors once per resolveRawFacts call;
+ * - snapshots member properties once per resolveRawFacts call;
+ * - snapshots declared property names once per resolveRawFacts call;
+ * - uses the declared-name set for O(1)-style origin checks;
+ * - creates constructor parameter TypeReference values once and shares them
+ *   between constructor-signature rendering and parameter-fact emission.
+ *
+ * This class deliberately does not introduce a cross-call reflection cache.
+ * A higher adapter-level cache can be added later around RawTypeFactsProvider if
+ * profiling proves repeated resolution of the same KClass is a bottleneck.
+ *
  * Reflection limitations:
+ *
  * - Unnamed constructor parameters are rejected because parameter names
  *   participate in canonical active-member identity.
  * - Java/platform nullability is emitted as UNKNOWN.
  * - Delegated properties are not inferred from JVM "$delegate" naming.
+ * - JVM nested-class spelling is canonicalized by replacing '$' with '.' before
+ *   the normalization guard is applied.
  */
 class ReflectionRawTypeFactsProvider private constructor(
     private val referenceFactory: ReflectionTypeReferenceFactory,
     private val normalizationGuard: ReflectionNormalizationGuard,
     private val typeIdentity64Deriver: TypeIdentity64Deriver,
+    private val typeHandleRegistry: ReflectionTypeHandleRegistry,
 ) : RawTypeFactsProvider {
-
     override fun resolveRawFacts(
         reference: TypeReference,
     ): RawTypeFactsResolution {
-        val kType = ReflectionTypeReferenceAccess.requireKType(reference)
+        val kType = typeHandleRegistry.requireKType(reference)
         val kClass = kType.jvmErasure
         val ownerTypeFqcn = renderOwnerTypeFqcn(kClass)
         val ownerHasKotlinMetadata = hasKotlinMetadata(kClass)
 
-        val constructors = resolveConstructors(
-            ownerTypeFqcn = ownerTypeFqcn,
-            kClass = kClass,
-            ownerHasKotlinMetadata = ownerHasKotlinMetadata,
-        )
+        /*
+         * Reflection surface snapshot.
+         *
+         * These calls are intentionally centralized here so lower functions do
+         * not accidentally re-query expensive kotlin-reflect metadata surfaces.
+         */
+        val constructorSurface = kClass.constructors
+        val propertySurface = kClass.memberProperties
+        val declaredPropertyNames = declaredPropertyNameSet(kClass)
 
-        val properties = resolveProperties(
-            ownerTypeFqcn = ownerTypeFqcn,
-            kClass = kClass,
-            ownerHasKotlinMetadata = ownerHasKotlinMetadata,
-        )
+        val constructors =
+            resolveConstructors(
+                ownerTypeFqcn = ownerTypeFqcn,
+                constructors = constructorSurface,
+                ownerHasKotlinMetadata = ownerHasKotlinMetadata,
+            )
+
+        val properties =
+            resolveProperties(
+                ownerTypeFqcn = ownerTypeFqcn,
+                ownerClass = kClass,
+                properties = propertySurface,
+                declaredPropertyNames = declaredPropertyNames,
+                ownerHasKotlinMetadata = ownerHasKotlinMetadata,
+            )
 
         return RawTypeFactsResolution.actualResolution(
-            facts = RawTypeFactsDTO.issue(
-                typeIdentity64 = typeIdentity64Deriver.deriveIdentity64(reference),
-                typeIdentityAlgorithmId = typeIdentity64Deriver.identityAlgorithmId,
-                typeIdentityAlgorithmVersion = typeIdentity64Deriver.identityAlgorithmVersion,
-                ownerTypeFqcn = ownerTypeFqcn,
-                normalizationVersion = referenceFactory.typeSignatureNormalizationVersion,
-                constructors = constructors,
-                properties = properties,
-            ),
+            facts =
+                RawTypeFactsDTO.issue(
+                    typeIdentity64 = typeIdentity64Deriver.deriveIdentity64(reference),
+                    typeIdentityAlgorithmId = typeIdentity64Deriver.identityAlgorithmId,
+                    typeIdentityAlgorithmVersion = typeIdentity64Deriver.identityAlgorithmVersion,
+                    ownerTypeFqcn = ownerTypeFqcn,
+                    normalizationVersion = referenceFactory.typeSignatureNormalizationVersion,
+                    constructors = constructors,
+                    properties = properties,
+                ),
         )
     }
 
     private fun resolveConstructors(
         ownerTypeFqcn: String,
-        kClass: KClass<*>,
+        constructors: Collection<KFunction<Any>>,
         ownerHasKotlinMetadata: Boolean,
     ): Collection<ConstructorCandidateFact> {
         /*
@@ -107,29 +147,35 @@ class ReflectionRawTypeFactsProvider private constructor(
          * RawTypeFactsDTO.issue(...) owns final deterministic ordering and duplicate
          * validation for constructor candidates.
          */
-        val result = ArrayList<ConstructorCandidateFact>()
+        val result = ArrayList<ConstructorCandidateFact>(constructors.size)
 
-        val iterator = kClass.constructors.iterator()
+        val iterator = constructors.iterator()
         while (iterator.hasNext()) {
             val constructor = iterator.next()
-            val valueParameters = valueParametersInDeterministicIndexOrder(constructor)
+            val parameters =
+                projectValueParametersInDeterministicIndexOrder(
+                    ownerTypeFqcn = ownerTypeFqcn,
+                    constructor = constructor,
+                    ownerHasKotlinMetadata = ownerHasKotlinMetadata,
+                )
 
             result.add(
                 ConstructorCandidateFact.issue(
                     ownerTypeFqcn = ownerTypeFqcn,
-                    constructorSignature = renderConstructorSignature(
-                        ownerTypeFqcn = ownerTypeFqcn,
-                        valueParameters = valueParameters,
-                    ),
+                    constructorSignature =
+                        renderConstructorSignature(
+                            ownerTypeFqcn = ownerTypeFqcn,
+                            valueParameters = parameters,
+                        ),
                     constructorSignatureNormalizationVersion = referenceFactory.typeSignatureNormalizationVersion,
                     declarationOrdinal = DeclarationOrdinal.unavailable(),
                     visibility = mapVisibility(constructor.visibility),
                     origin = MemberOrigin.DECLARED,
-                    parameters = resolveConstructorParameters(
-                        ownerTypeFqcn = ownerTypeFqcn,
-                        valueParameters = valueParameters,
-                        ownerHasKotlinMetadata = ownerHasKotlinMetadata,
-                    ),
+                    parameters =
+                        resolveConstructorParameters(
+                            ownerTypeFqcn = ownerTypeFqcn,
+                            valueParameters = parameters,
+                        ),
                 ),
             )
         }
@@ -137,16 +183,19 @@ class ReflectionRawTypeFactsProvider private constructor(
         return result
     }
 
-    private fun valueParametersInDeterministicIndexOrder(
-        constructor: KFunction<*>,
-    ): List<KParameter> {
+    private fun projectValueParametersInDeterministicIndexOrder(
+        ownerTypeFqcn: String,
+        constructor: KFunction<Any>,
+        ownerHasKotlinMetadata: Boolean,
+    ): List<ConstructorParameterProjection> {
         /*
-         * Constructor signature rendering and ConstructorParameterFact emission must
-         * use the exact same VALUE-parameter ordering rule.
+         * Constructor signature rendering and ConstructorParameterFact emission
+         * must use the exact same VALUE-parameter ordering rule and the exact
+         * same TypeReference instances.
          *
-         * We intentionally sort by KParameter.index here because constructor
-         * signatures require parameter order before RawTypeFactsDTO can freeze the
-         * outer constructor collection.
+         * This projection prevents renderConstructorSignature(...) and
+         * resolveConstructorParameters(...) from calling referenceFactory.create(...)
+         * independently for the same KParameter.type.
          */
         val valueParameters = ArrayList<KParameter>()
 
@@ -165,44 +214,63 @@ class ReflectionRawTypeFactsProvider private constructor(
             },
         )
 
-        return valueParameters
+        val projections = ArrayList<ConstructorParameterProjection>(valueParameters.size)
+
+        var localIndex = 0
+        while (localIndex < valueParameters.size) {
+            val parameter = valueParameters[localIndex]
+            val parameterName =
+                parameter.name
+                    ?: throw StrictModeViolationException(
+                        "Reflection adapter refuses unnamed constructor parameter because parameter name " +
+                                "participates in canonical active-member identity: " +
+                                "ownerType=$ownerTypeFqcn, parameterIndex=$localIndex",
+                    )
+
+            projections.add(
+                ConstructorParameterProjection(
+                    parameter = parameter,
+                    localIndex = localIndex,
+                    name = parameterName,
+                    typeReference = referenceFactory.create(parameter.type),
+                    nullability =
+                        mapNullability(
+                            isMarkedNullable = parameter.type.isMarkedNullable,
+                            declarationHasKotlinMetadata = ownerHasKotlinMetadata,
+                        ),
+                    defaultValuePresence = mapDefaultPresence(parameter),
+                ),
+            )
+
+            localIndex += 1
+        }
+
+        return projections
     }
 
     private fun resolveConstructorParameters(
         ownerTypeFqcn: String,
-        valueParameters: List<KParameter>,
-        ownerHasKotlinMetadata: Boolean,
+        valueParameters: List<ConstructorParameterProjection>,
     ): Collection<ConstructorParameterFact> {
         val result = ArrayList<ConstructorParameterFact>(valueParameters.size)
 
         var localIndex = 0
         while (localIndex < valueParameters.size) {
             val parameter = valueParameters[localIndex]
-            val parameterName = parameter.name
-                ?: throw StrictModeViolationException(
-                    "Reflection adapter refuses unnamed constructor parameter because parameter name " +
-                            "participates in canonical active-member identity: " +
-                            "ownerType=$ownerTypeFqcn, parameterIndex=$localIndex"
-                )
-
-            val parameterTypeReference = referenceFactory.create(parameter.type)
 
             result.add(
                 ConstructorParameterFact.issue(
                     ownerTypeFqcn = ownerTypeFqcn,
-                    name = parameterName,
-                    typeReference = parameterTypeReference,
-                    parameterIndex = localIndex,
-                    nullability = mapNullability(
-                        isMarkedNullable = parameter.type.isMarkedNullable,
-                        declarationHasKotlinMetadata = ownerHasKotlinMetadata,
-                    ),
-                    defaultValuePresence = mapDefaultPresence(parameter),
+                    name = parameter.name,
+                    typeReference = parameter.typeReference,
+                    parameterIndex = parameter.localIndex,
+                    nullability = parameter.nullability,
+                    defaultValuePresence = parameter.defaultValuePresence,
                     typeSignatureNormalizationVersion = referenceFactory.typeSignatureNormalizationVersion,
                 ),
             )
 
-            localIndex++
+            localIndex += 1
         }
 
         return result
@@ -210,7 +278,9 @@ class ReflectionRawTypeFactsProvider private constructor(
 
     private fun resolveProperties(
         ownerTypeFqcn: String,
-        kClass: KClass<*>,
+        ownerClass: KClass<*>,
+        properties: Collection<KProperty1<out Any, *>>,
+        declaredPropertyNames: Set<String>,
         ownerHasKotlinMetadata: Boolean,
     ): Collection<PropertyFact> {
         /*
@@ -218,20 +288,23 @@ class ReflectionRawTypeFactsProvider private constructor(
          * RawTypeFactsDTO.issue(...) owns final deterministic ordering and duplicate
          * validation for property facts.
          */
-        val result = ArrayList<PropertyFact>()
+        val result = ArrayList<PropertyFact>(properties.size)
 
-        val iterator = kClass.memberProperties.iterator()
+        val iterator = properties.iterator()
         while (iterator.hasNext()) {
             val property = iterator.next()
             val propertyTypeReference = referenceFactory.create(property.returnType)
-            val propertyOrigin = mapPropertyOrigin(
-                property = property,
-                ownerClass = kClass,
-            )
-            val propertyDeclarationHasKotlinMetadata = propertyDeclarationHasKotlinMetadata(
-                property = property,
-                fallbackOwnerHasKotlinMetadata = ownerHasKotlinMetadata,
-            )
+            val propertyOrigin =
+                mapPropertyOrigin(
+                    property = property,
+                    ownerClass = ownerClass,
+                    declaredPropertyNames = declaredPropertyNames,
+                )
+            val propertyDeclarationHasKotlinMetadata =
+                propertyDeclarationHasKotlinMetadata(
+                    property = property,
+                    fallbackOwnerHasKotlinMetadata = ownerHasKotlinMetadata,
+                )
 
             result.add(
                 PropertyFact.issue(
@@ -239,10 +312,11 @@ class ReflectionRawTypeFactsProvider private constructor(
                     name = property.name,
                     typeReference = propertyTypeReference,
                     declarationOrdinal = DeclarationOrdinal.unavailable(),
-                    nullability = mapNullability(
-                        isMarkedNullable = property.returnType.isMarkedNullable,
-                        declarationHasKotlinMetadata = propertyDeclarationHasKotlinMetadata,
-                    ),
+                    nullability =
+                        mapNullability(
+                            isMarkedNullable = property.returnType.isMarkedNullable,
+                            declarationHasKotlinMetadata = propertyDeclarationHasKotlinMetadata,
+                        ),
                     declaredVisibility = mapVisibility(property.visibility),
                     setterVisibility = mapSetterVisibility(property),
                     origin = propertyOrigin,
@@ -258,21 +332,20 @@ class ReflectionRawTypeFactsProvider private constructor(
 
     private fun renderConstructorSignature(
         ownerTypeFqcn: String,
-        valueParameters: List<KParameter>,
+        valueParameters: List<ConstructorParameterProjection>,
     ): String {
         val builder = StringBuilder()
         builder.append(ownerTypeFqcn)
         builder.append('(')
 
-        var i = 0
-        while (i < valueParameters.size) {
-            if (i > 0) {
+        var index = 0
+        while (index < valueParameters.size) {
+            if (index > 0) {
                 builder.append(',')
             }
 
-            val reference = referenceFactory.create(valueParameters[i].type)
-            builder.append(reference.signature)
-            i++
+            builder.append(valueParameters[index].typeReference.signature)
+            index += 1
         }
 
         builder.append(')')
@@ -293,7 +366,11 @@ class ReflectionRawTypeFactsProvider private constructor(
         /*
          * This is JVM spelling canonicalization only.
          * Unicode normalization is not performed here. The NormalizationGuard
-         * enforces the NFC-REJECT boundary.
+         * enforces the NFC-REJECT boundary after spelling canonicalization.
+         *
+         * The '$' replacement is intentionally performed before validation.
+         * If an obfuscated or generated JVM name collapses into an invalid
+         * Kontrakt canonical component, normalizationGuard rejects it.
          */
         val rawName = kClass.qualifiedName ?: kClass.java.name
         val ownerTypeFqcn = rawName.replace('$', '.')
@@ -319,18 +396,19 @@ class ReflectionRawTypeFactsProvider private constructor(
     }
 
     private fun mapSetterVisibility(
-        property: KProperty1<*, *>,
+        property: KProperty1<out Any, *>,
     ): VisibilityKind? {
-        val mutable = property as? KMutableProperty1<*, *>
-            ?: return null
+        val mutable =
+            property as? KMutableProperty1<out Any, *>
+                ?: return null
 
         return mapVisibility(mutable.setter.visibility)
     }
 
     private fun mapMutability(
-        property: KProperty1<*, *>,
+        property: KProperty1<out Any, *>,
     ): PropertyMutability {
-        return if (property is KMutableProperty1<*, *>) {
+        return if (property is KMutableProperty1<out Any, *>) {
             PropertyMutability.MUTABLE
         } else {
             PropertyMutability.READ_ONLY
@@ -338,7 +416,7 @@ class ReflectionRawTypeFactsProvider private constructor(
     }
 
     private fun inferStorageKind(
-        property: KProperty1<*, *>,
+        property: KProperty1<out Any, *>,
     ): PropertyStorageKind {
         if (property.isLateinit) {
             return PropertyStorageKind.LATEINIT
@@ -395,19 +473,17 @@ class ReflectionRawTypeFactsProvider private constructor(
     }
 
     private fun mapPropertyOrigin(
-        property: KProperty1<*, *>,
+        property: KProperty1<out Any, *>,
         ownerClass: KClass<*>,
+        declaredPropertyNames: Set<String>,
     ): MemberOrigin {
-        if (isDeclaredProperty(
-                ownerClass = ownerClass,
-                property = property,
-            )
-        ) {
+        if (property.name in declaredPropertyNames) {
             return MemberOrigin.DECLARED
         }
 
-        val declaringClass = property.javaField?.declaringClass
-            ?: property.javaGetter?.declaringClass
+        val declaringClass =
+            property.javaField?.declaringClass
+                ?: property.javaGetter?.declaringClass
 
         if (declaringClass != null && declaringClass != ownerClass.java) {
             return MemberOrigin.INHERITED
@@ -420,32 +496,38 @@ class ReflectionRawTypeFactsProvider private constructor(
         return MemberOrigin.UNKNOWN
     }
 
-    private fun isDeclaredProperty(
+    private fun declaredPropertyNameSet(
         ownerClass: KClass<*>,
-        property: KProperty1<*, *>,
-    ): Boolean {
+    ): Set<String> {
         /*
-         * Do not create a HashSet/LinkedHashSet just for membership.
-         * We only ask a deterministic yes/no question.
-         * The iteration order of declaredMemberProperties is not used as semantic order.
+         * This set is a local membership index only.
+         *
+         * It is not canonical state.
+         * It is not persisted.
+         * It is not iterated for deterministic output.
+         *
+         * The iteration order of declaredMemberProperties is therefore not part
+         * of the metamodel protocol.
          */
-        val iterator = ownerClass.declaredMemberProperties.iterator()
+        val declared = ownerClass.declaredMemberProperties
+        val names = HashSet<String>(declared.size.coerceAtLeast(16))
+
+        val iterator = declared.iterator()
         while (iterator.hasNext()) {
-            if (iterator.next().name == property.name) {
-                return true
-            }
+            names.add(iterator.next().name)
         }
 
-        return false
+        return names
     }
 
     private fun propertyDeclarationHasKotlinMetadata(
-        property: KProperty1<*, *>,
+        property: KProperty1<out Any, *>,
         fallbackOwnerHasKotlinMetadata: Boolean,
     ): Boolean {
-        val declaringClass = property.javaField?.declaringClass
-            ?: property.javaGetter?.declaringClass
-            ?: return fallbackOwnerHasKotlinMetadata
+        val declaringClass =
+            property.javaField?.declaringClass
+                ?: property.javaGetter?.declaringClass
+                ?: return fallbackOwnerHasKotlinMetadata
 
         return declaringClass.getAnnotation(Metadata::class.java) != null
     }
@@ -462,12 +544,34 @@ class ReflectionRawTypeFactsProvider private constructor(
             referenceFactory: ReflectionTypeReferenceFactory,
             normalizationEngine: NormalizationEngine,
             typeIdentity64Deriver: TypeIdentity64Deriver,
+            typeHandleRegistry: ReflectionTypeHandleRegistry,
         ): ReflectionRawTypeFactsProvider {
             return ReflectionRawTypeFactsProvider(
                 referenceFactory = referenceFactory,
                 normalizationGuard = ReflectionNormalizationGuard.issue(normalizationEngine),
                 typeIdentity64Deriver = typeIdentity64Deriver,
+                typeHandleRegistry = typeHandleRegistry,
             )
         }
     }
 }
+
+/**
+ * Adapter-local projection of one constructor VALUE parameter.
+ *
+ * This object exists only inside ReflectionRawTypeFactsProvider. It prevents the
+ * constructor signature and constructor parameter facts from independently
+ * creating TypeReference instances for the same KParameter.type.
+ *
+ * It is not a domain VO.
+ * It is not stored in RawTypeFactsDTO.
+ * It is not canonical state.
+ */
+private class ConstructorParameterProjection(
+    val parameter: KParameter,
+    val localIndex: Int,
+    val name: String,
+    val typeReference: TypeReference,
+    val nullability: NullabilityKind,
+    val defaultValuePresence: DefaultValuePresence,
+)

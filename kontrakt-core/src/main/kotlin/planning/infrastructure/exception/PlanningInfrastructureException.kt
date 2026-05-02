@@ -15,4 +15,3 @@ open class PlanningInfrastructureException(
 ) : KontraktException(message, cause) {
     override val domain: String = "PLANNING_INFRA"
 }
-

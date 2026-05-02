@@ -19,8 +19,10 @@ import java.util.concurrent.ConcurrentHashMap
  * - **Isolation**: Do NOT share across different test engines or daemons.
  */
 class RuntimeHandleRegistry : AutoCloseable {
-
-    private data class Entry(val payload: Any, val fingerprint: String)
+    private data class Entry(
+        val payload: Any,
+        val fingerprint: String,
+    )
 
     private val entries = ConcurrentHashMap<String, Entry>()
 
@@ -35,7 +37,10 @@ class RuntimeHandleRegistry : AutoCloseable {
      * @throws RegistryException.Closed If called after [seal].
      * @throws RegistryException.Collision If a conflicting payload is detected for the same cycleId.
      */
-    fun register(type: TypeReference, payload: Any) {
+    fun register(
+        type: TypeReference,
+        payload: Any,
+    ) {
         if (sealed) throw RegistryException.Closed()
 
         val key = type.cycleId
@@ -65,9 +70,7 @@ class RuntimeHandleRegistry : AutoCloseable {
      * Retrieves a payload associated with the type.
      * Safe for concurrent access during the Execution phase.
      */
-    fun get(type: TypeReference): Any? {
-        return entries[type.cycleId]?.payload
-    }
+    fun get(type: TypeReference): Any? = entries[type.cycleId]?.payload
 
     /**
      * Clears the registry resources.
@@ -81,11 +84,10 @@ class RuntimeHandleRegistry : AutoCloseable {
     /**
      * Generates a fingerprint including ClassLoader identity to detect conflicts.
      */
-    private fun computeFingerprint(payload: Any): String {
-        return when (payload) {
+    private fun computeFingerprint(payload: Any): String =
+        when (payload) {
             is Class<*> -> "Class[${payload.name}]@Loader${System.identityHashCode(payload.classLoader)}"
             is java.lang.reflect.Type -> "Type[${payload.typeName}]"
             else -> "${payload::class.java.name}@${System.identityHashCode(payload)}"
         }
-    }
 }

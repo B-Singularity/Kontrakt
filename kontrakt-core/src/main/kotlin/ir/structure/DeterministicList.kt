@@ -20,11 +20,12 @@ import java.util.TreeSet
  * @param T must be Comparable to define a stable global order.
  */
 class DeterministicList<T : Comparable<T>> private constructor(
-    private val delegate: List<T>
+    private val delegate: List<T>,
 ) : List<T> by delegate {
-
     override fun equals(other: Any?): Boolean = delegate == other
+
     override fun hashCode(): Int = delegate.hashCode()
+
     override fun toString(): String = delegate.toString()
 
     companion object {
@@ -40,9 +41,8 @@ class DeterministicList<T : Comparable<T>> private constructor(
         fun <T : Comparable<T>> of(
             elements: Collection<T>,
             limit: Int,
-            inputMultiplier: Int = IrLimits.DETERMINISTIC_INPUT_MULTIPLIER
+            inputMultiplier: Int = IrLimits.DETERMINISTIC_INPUT_MULTIPLIER,
         ): DeterministicList<T> {
-
             val inputLimit = limit * inputMultiplier
             if (elements.size > inputLimit) {
                 throw IrProtocolViolationException("DeterministicList ingestion limit exceeded ($inputLimit).")

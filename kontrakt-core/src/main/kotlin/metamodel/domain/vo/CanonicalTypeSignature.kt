@@ -68,8 +68,8 @@ class CanonicalTypeSignature private constructor(
         if (other !is CanonicalTypeSignature) return false
 
         return value == other.value &&
-                shapeSummary == other.shapeSummary &&
-                schemaVersion == other.schemaVersion
+            shapeSummary == other.shapeSummary &&
+            schemaVersion == other.schemaVersion
     }
 
     override fun hashCode(): Int {
@@ -79,9 +79,7 @@ class CanonicalTypeSignature private constructor(
         return result
     }
 
-    override fun toString(): String {
-        return value
-    }
+    override fun toString(): String = value
 
     companion object {
         const val CURRENT_SCHEMA_VERSION: Int = 1
@@ -122,9 +120,7 @@ class CanonicalTypeSignature private constructor(
             )
         }
 
-        private fun requireSignatureSurface(
-            value: String,
-        ) {
+        private fun requireSignatureSurface(value: String) {
             if (value.isEmpty()) {
                 throw MetamodelFactContractViolationException(
                     "CanonicalTypeSignature.value must not be empty.",
@@ -145,9 +141,7 @@ class CanonicalTypeSignature private constructor(
             requireArraySuffixPairs(value)
         }
 
-        private fun rejectReservedProtocolMaterial(
-            value: String,
-        ) {
+        private fun rejectReservedProtocolMaterial(value: String) {
             if (value.indexOf('|') >= 0) {
                 throw MetamodelFactContractViolationException(
                     "CanonicalTypeSignature.value contains reserved protocol delimiter '|'.",
@@ -161,9 +155,7 @@ class CanonicalTypeSignature private constructor(
          * This keeps the domain core independent from host JRE Unicode category
          * tables while still blocking non-printing control material.
          */
-        private fun rejectControlCharacters(
-            value: String,
-        ) {
+        private fun rejectControlCharacters(value: String) {
             for (index in value.indices) {
                 val code = value[index].code
                 val isC0Control = code in 0x0000..0x001F
@@ -177,9 +169,7 @@ class CanonicalTypeSignature private constructor(
             }
         }
 
-        private fun rejectAsciiSpace(
-            value: String,
-        ) {
+        private fun rejectAsciiSpace(value: String) {
             val index = value.indexOf(' ')
             if (index >= 0) {
                 throw MetamodelFactContractViolationException(
@@ -188,9 +178,7 @@ class CanonicalTypeSignature private constructor(
             }
         }
 
-        private fun rejectJvmDescriptorResidue(
-            value: String,
-        ) {
+        private fun rejectJvmDescriptorResidue(value: String) {
             if (value.length == 1 && isJvmPrimitiveDescriptor(value[0])) {
                 throw MetamodelFactContractViolationException(
                     "CanonicalTypeSignature.value must not be a JVM primitive descriptor.",
@@ -220,23 +208,18 @@ class CanonicalTypeSignature private constructor(
             }
         }
 
-        private fun isJvmPrimitiveDescriptor(
-            c: Char,
-        ): Boolean {
-            return c == 'B' ||
-                    c == 'C' ||
-                    c == 'D' ||
-                    c == 'F' ||
-                    c == 'I' ||
-                    c == 'J' ||
-                    c == 'S' ||
-                    c == 'Z' ||
-                    c == 'V'
-        }
+        private fun isJvmPrimitiveDescriptor(c: Char): Boolean =
+            c == 'B' ||
+                c == 'C' ||
+                c == 'D' ||
+                c == 'F' ||
+                c == 'I' ||
+                c == 'J' ||
+                c == 'S' ||
+                c == 'Z' ||
+                c == 'V'
 
-        private fun requireBalancedGenericDelimiters(
-            value: String,
-        ) {
+        private fun requireBalancedGenericDelimiters(value: String) {
             var depth = 0
 
             for (index in value.indices) {
@@ -270,9 +253,7 @@ class CanonicalTypeSignature private constructor(
             }
         }
 
-        private fun requireArraySuffixPairs(
-            value: String,
-        ) {
+        private fun requireArraySuffixPairs(value: String) {
             var index = 0
 
             while (index < value.length) {
@@ -321,8 +302,8 @@ class CanonicalTypeSignature private constructor(
             if (lexicalFacts.trailingArrayRank != shapeSummary.arrayRank) {
                 throw MetamodelFactContractViolationException(
                     "CanonicalTypeSignature array rank mismatch: " +
-                            "signatureRank=${lexicalFacts.trailingArrayRank}, " +
-                            "summaryRank=${shapeSummary.arrayRank}.",
+                        "signatureRank=${lexicalFacts.trailingArrayRank}, " +
+                        "summaryRank=${shapeSummary.arrayRank}.",
                 )
             }
 
@@ -330,18 +311,19 @@ class CanonicalTypeSignature private constructor(
                 CanonicalTypeShapeKind.VOID,
                 CanonicalTypeShapeKind.UNIT,
                 CanonicalTypeShapeKind.ATOMIC,
-                CanonicalTypeShapeKind.ENUM -> {
+                CanonicalTypeShapeKind.ENUM,
+                -> {
                     if (lexicalFacts.hasGenericDelimiters) {
                         throw MetamodelFactContractViolationException(
                             "CanonicalTypeSignature terminal shape must not contain generic delimiters: " +
-                                    "kind=${shapeSummary.kind.protocolToken}.",
+                                "kind=${shapeSummary.kind.protocolToken}.",
                         )
                     }
 
                     if (lexicalFacts.trailingArrayRank != 0) {
                         throw MetamodelFactContractViolationException(
                             "CanonicalTypeSignature terminal shape must not contain array suffixes: " +
-                                    "kind=${shapeSummary.kind.protocolToken}.",
+                                "kind=${shapeSummary.kind.protocolToken}.",
                         )
                     }
                 }
@@ -359,7 +341,7 @@ class CanonicalTypeSignature private constructor(
                     ) {
                         throw MetamodelFactContractViolationException(
                             "CanonicalTypeSignature ARRAY summary reports generic component, " +
-                                    "but signature component has no generic delimiters.",
+                                "but signature component has no generic delimiters.",
                         )
                     }
 
@@ -375,7 +357,8 @@ class CanonicalTypeSignature private constructor(
                 }
 
                 CanonicalTypeShapeKind.COLLECTION,
-                CanonicalTypeShapeKind.MAP -> {
+                CanonicalTypeShapeKind.MAP,
+                -> {
                     requireTopLevelGenericArityAtLeast(
                         value = value,
                         lexicalFacts = lexicalFacts,
@@ -388,11 +371,12 @@ class CanonicalTypeSignature private constructor(
                 CanonicalTypeShapeKind.INTERFACE,
                 CanonicalTypeShapeKind.SEALED_INTERFACE,
                 CanonicalTypeShapeKind.ABSTRACT_CLASS,
-                CanonicalTypeShapeKind.SEALED_CLASS -> {
+                CanonicalTypeShapeKind.SEALED_CLASS,
+                -> {
                     if (lexicalFacts.trailingArrayRank != 0) {
                         throw MetamodelFactContractViolationException(
                             "CanonicalTypeSignature non-array structural/polymorphic shape must not contain array suffixes: " +
-                                    "kind=${shapeSummary.kind.protocolToken}.",
+                                "kind=${shapeSummary.kind.protocolToken}.",
                         )
                     }
 
@@ -402,8 +386,8 @@ class CanonicalTypeSignature private constructor(
                     ) {
                         throw MetamodelFactContractViolationException(
                             "CanonicalTypeSignature summary reports generic arity but signature has no generic delimiters: " +
-                                    "kind=${shapeSummary.kind.protocolToken}, " +
-                                    "genericArity=${shapeSummary.genericArity}.",
+                                "kind=${shapeSummary.kind.protocolToken}, " +
+                                "genericArity=${shapeSummary.genericArity}.",
                         )
                     }
                 }
@@ -427,14 +411,12 @@ class CanonicalTypeSignature private constructor(
             if (actual < minimum) {
                 throw MetamodelFactContractViolationException(
                     "CanonicalTypeSignature ${kind.protocolToken} summary requires at least $minimum " +
-                            "top-level generic arguments, actual=$actual.",
+                        "top-level generic arguments, actual=$actual.",
                 )
             }
         }
 
-        private fun countTopLevelGenericArguments(
-            value: String,
-        ): Int {
+        private fun countTopLevelGenericArguments(value: String): Int {
             val openIndex = value.indexOf('<')
             if (openIndex < 0) return 0
 
@@ -499,17 +481,15 @@ private class SignatureLexicalFacts private constructor(
     val componentPartBeforeArraySuffixContainsGenericDelimiters: Boolean,
 ) {
     companion object {
-        fun scan(
-            value: String,
-        ): SignatureLexicalFacts {
+        fun scan(value: String): SignatureLexicalFacts {
             val rank = countTrailingArrayRank(value)
             val componentEndExclusive = value.length - (rank * 2)
             val componentHasGenericDelimiters =
                 componentEndExclusive > 0 &&
-                        containsGenericDelimiterBefore(
-                            value = value,
-                            endExclusive = componentEndExclusive,
-                        )
+                    containsGenericDelimiterBefore(
+                        value = value,
+                        endExclusive = componentEndExclusive,
+                    )
 
             return SignatureLexicalFacts(
                 hasGenericDelimiters = value.indexOf('<') >= 0 || value.indexOf('>') >= 0,
@@ -518,9 +498,7 @@ private class SignatureLexicalFacts private constructor(
             )
         }
 
-        private fun countTrailingArrayRank(
-            value: String,
-        ): Int {
+        private fun countTrailingArrayRank(value: String): Int {
             var rank = 0
             var index = value.length - 2
 

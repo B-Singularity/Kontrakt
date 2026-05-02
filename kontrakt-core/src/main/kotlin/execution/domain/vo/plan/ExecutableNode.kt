@@ -29,7 +29,7 @@ data class ExecutableAtomicNode(
     override val type: TypeReference,
     override val attributes: Map<String, Attribute>,
     override val generator: Generator<*>,
-    override val source: DecisionSource
+    override val source: DecisionSource,
 ) : ExecutableNode()
 
 data class ExecutableCompositeNode(
@@ -37,7 +37,7 @@ data class ExecutableCompositeNode(
     override val attributes: Map<String, Attribute>,
     val fields: Map<String, ExecutableNode>,
     override val generator: Generator<*>,
-    override val source: DecisionSource
+    override val source: DecisionSource,
 ) : ExecutableNode()
 
 /**
@@ -50,7 +50,7 @@ data class ExecutableCollectionNode(
     val elementNode: ExecutableNode, // The recipe for elements
     val isFixedSize: Boolean,
     override val generator: Generator<*>,
-    override val source: DecisionSource
+    override val source: DecisionSource,
 ) : ExecutableNode()
 
 /**
@@ -60,10 +60,10 @@ data class ExecutableCollectionNode(
 data class ExecutableMapNode(
     override val type: TypeReference,
     override val attributes: Map<String, Attribute>,
-    val keyNode: ExecutableNode,   // Recipe for keys
+    val keyNode: ExecutableNode, // Recipe for keys
     val valueNode: ExecutableNode, // Recipe for values
     override val generator: Generator<*>,
-    override val source: DecisionSource
+    override val source: DecisionSource,
 ) : ExecutableNode()
 
 /**
@@ -75,7 +75,7 @@ data class ExecutablePolymorphicNode(
     override val attributes: Map<String, Attribute>,
     val implementations: List<ExecutableNode>, // Candidates
     override val generator: Generator<*>,
-    override val source: DecisionSource
+    override val source: DecisionSource,
 ) : ExecutableNode()
 
 /**
@@ -86,5 +86,5 @@ data class ExecutableCycleNode(
     override val type: TypeReference,
     override val attributes: Map<String, Attribute>,
     override val generator: Generator<*>, // Usually CycleBreakingGenerator
-    override val source: DecisionSource
+    override val source: DecisionSource,
 ) : ExecutableNode()

@@ -23,7 +23,6 @@ import planning.domain.exception.EnvironmentIntegrityException
  * - If we cannot generate a non-reserved value within MAX_RETRIES, we throw.
  */
 object SentinelRemapper {
-
     private const val RESERVED_EMPTY: Long = 0L
     private const val RESERVED_INF: Long = -1L
 
@@ -36,7 +35,10 @@ object SentinelRemapper {
      * Ensures the returned value is not 0L and not -1L.
      */
     @JvmStatic
-    fun remapNonZero(value: Long, versionSeed: Long): Long {
+    fun remapNonZero(
+        value: Long,
+        versionSeed: Long,
+    ): Long {
         if (value != RESERVED_EMPTY) return value
 
         var attempt = 0
@@ -54,7 +56,10 @@ object SentinelRemapper {
      * Ensures the returned value is not 0L and not -1L.
      */
     @JvmStatic
-    fun remapNonMax(value: Long, versionSeed: Long): Long {
+    fun remapNonMax(
+        value: Long,
+        versionSeed: Long,
+    ): Long {
         if (value != RESERVED_INF) return value
 
         var attempt = 0

@@ -15,7 +15,6 @@ import metamodel.domain.vo.TypeReference
  * It must not carry RawTypeFactsDTO.
  */
 sealed interface TypeExpansionPreflightDecision {
-
     val subject: TypeReference
 
     val cycleIdentity: TypeCycleIdentity
@@ -29,12 +28,11 @@ sealed interface TypeExpansionPreflightDecision {
             fun issue(
                 subject: TypeReference,
                 cycleIdentity: TypeCycleIdentity,
-            ): AtomicPreflight {
-                return AtomicPreflight(
+            ): AtomicPreflight =
+                AtomicPreflight(
                     subject = subject,
                     cycleIdentity = cycleIdentity,
                 )
-            }
         }
     }
 
@@ -47,12 +45,11 @@ sealed interface TypeExpansionPreflightDecision {
             fun issue(
                 subject: TypeReference,
                 cycleIdentity: TypeCycleIdentity,
-            ): CompositePreflight {
-                return CompositePreflight(
+            ): CompositePreflight =
+                CompositePreflight(
                     subject = subject,
                     cycleIdentity = cycleIdentity,
                 )
-            }
         }
     }
 
@@ -67,13 +64,12 @@ sealed interface TypeExpansionPreflightDecision {
                 subject: TypeReference,
                 cycleIdentity: TypeCycleIdentity,
                 elementType: TypeReference,
-            ): CollectionPreflight {
-                return CollectionPreflight(
+            ): CollectionPreflight =
+                CollectionPreflight(
                     subject = subject,
                     cycleIdentity = cycleIdentity,
                     elementType = elementType,
                 )
-            }
         }
     }
 
@@ -88,13 +84,12 @@ sealed interface TypeExpansionPreflightDecision {
                 subject: TypeReference,
                 cycleIdentity: TypeCycleIdentity,
                 componentType: TypeReference,
-            ): ArrayPreflight {
-                return ArrayPreflight(
+            ): ArrayPreflight =
+                ArrayPreflight(
                     subject = subject,
                     cycleIdentity = cycleIdentity,
                     componentType = componentType,
                 )
-            }
         }
     }
 
@@ -111,14 +106,13 @@ sealed interface TypeExpansionPreflightDecision {
                 cycleIdentity: TypeCycleIdentity,
                 keyType: TypeReference,
                 valueType: TypeReference,
-            ): MapPreflight {
-                return MapPreflight(
+            ): MapPreflight =
+                MapPreflight(
                     subject = subject,
                     cycleIdentity = cycleIdentity,
                     keyType = keyType,
                     valueType = valueType,
                 )
-            }
         }
     }
 }

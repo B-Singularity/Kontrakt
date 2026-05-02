@@ -17,7 +17,6 @@ import planning.infrastructure.runtime.policy.RuntimePolicyRegistry
  * This is the physical implementation of the session-fixed snapshot rule.
  */
 object PlannerBootstrapAssembler {
-
     @JvmStatic
     fun assemble(
         registry: RuntimePolicyRegistry,
@@ -29,11 +28,12 @@ object PlannerBootstrapAssembler {
 
         val resolvedCaps = capacityResolver.resolve(pinnedBudget)
 
-        val sessionConfig = PlannerSessionConfig.issue(
-            versions = versions,
-            budget = pinnedBudget,
-            caps = resolvedCaps,
-        )
+        val sessionConfig =
+            PlannerSessionConfig.issue(
+                versions = versions,
+                budget = pinnedBudget,
+                caps = resolvedCaps,
+            )
 
         val l2GovernanceConfig = L2GovernanceConfig.from(pinnedPolicy.joinGovernance)
         val l2StorageGovernanceConfig = L2StorageGovernanceConfig.from(pinnedPolicy.storageGovernance)

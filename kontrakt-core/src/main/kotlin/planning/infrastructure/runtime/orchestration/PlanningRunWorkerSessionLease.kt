@@ -16,10 +16,7 @@ class PlanningRunWorkerSessionLease private constructor(
     val runEpoch: PlanningRunEpoch,
     val ordinal: Long,
 ) {
-
-    override fun toString(): String {
-        return "PlanningRunWorkerSessionLease(runEpoch=$runEpoch, ordinal=$ordinal)"
-    }
+    override fun toString(): String = "PlanningRunWorkerSessionLease(runEpoch=$runEpoch, ordinal=$ordinal)"
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -42,7 +39,7 @@ class PlanningRunWorkerSessionLease private constructor(
         ): PlanningRunWorkerSessionLease {
             if (ordinal <= 0L) {
                 throw PlanningProtocolIntegrityException(
-                    "PlanningRunWorkerSessionLease.ordinal must be > 0: $ordinal"
+                    "PlanningRunWorkerSessionLease.ordinal must be > 0: $ordinal",
                 )
             }
 

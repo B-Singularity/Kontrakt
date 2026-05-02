@@ -75,32 +75,29 @@ class DeterministicSeedSurfaceRatificationProof private constructor(
         }
     }
 
-    fun renderSummary(): String {
-        return "DeterministicSeedSurfaceRatificationProof(" +
-                "schemaVersion=$schemaVersion, " +
-                "ratifier=$ratifierId@$ratifierVersion, " +
-                "proofId=<redacted>, " +
-                "surfaceId=${coveredId.value}, " +
-                "versionTuple=$coveredVersionTuple, " +
-                "rootTime=$coveredRootTimeEpochMillis" +
-                ")"
-    }
+    fun renderSummary(): String =
+        "DeterministicSeedSurfaceRatificationProof(" +
+            "schemaVersion=$schemaVersion, " +
+            "ratifier=$ratifierId@$ratifierVersion, " +
+            "proofId=<redacted>, " +
+            "surfaceId=${coveredId.value}, " +
+            "versionTuple=$coveredVersionTuple, " +
+            "rootTime=$coveredRootTimeEpochMillis" +
+            ")"
 
-    override fun toString(): String {
-        return renderSummary()
-    }
+    override fun toString(): String = renderSummary()
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is DeterministicSeedSurfaceRatificationProof) return false
 
         return proofId == other.proofId &&
-                ratifierId == other.ratifierId &&
-                ratifierVersion == other.ratifierVersion &&
-                coveredId == other.coveredId &&
-                coveredVersionTuple == other.coveredVersionTuple &&
-                coveredRootTimeEpochMillis == other.coveredRootTimeEpochMillis &&
-                schemaVersion == other.schemaVersion
+            ratifierId == other.ratifierId &&
+            ratifierVersion == other.ratifierVersion &&
+            coveredId == other.coveredId &&
+            coveredVersionTuple == other.coveredVersionTuple &&
+            coveredRootTimeEpochMillis == other.coveredRootTimeEpochMillis &&
+            schemaVersion == other.schemaVersion
     }
 
     override fun hashCode(): Int {
@@ -118,12 +115,12 @@ class DeterministicSeedSurfaceRatificationProof private constructor(
         field: String,
         expected: String,
         actual: String,
-    ): Nothing {
+    ): Nothing =
         throw TypeExpansionContractViolationException(
-            reason = "DeterministicSeedSurfaceRatificationProof does not cover tuple: " +
+            reason =
+                "DeterministicSeedSurfaceRatificationProof does not cover tuple: " +
                     "field=$field, expected=$expected, actual=$actual, proof=${renderSummary()}",
         )
-    }
 
     companion object {
         const val CURRENT_SCHEMA_VERSION: Int = 1
@@ -146,10 +143,11 @@ class DeterministicSeedSurfaceRatificationProof private constructor(
                 maxChars = MAX_PROOF_ID_CHARS,
             )
 
-            val canonicalRatifierId = canonicalizeProtocolId(
-                field = "DeterministicSeedSurfaceRatificationProof.ratifierId",
-                value = ratifierId,
-            )
+            val canonicalRatifierId =
+                canonicalizeProtocolId(
+                    field = "DeterministicSeedSurfaceRatificationProof.ratifierId",
+                    value = ratifierId,
+                )
 
             requireProtocolToken(
                 field = "DeterministicSeedSurfaceRatificationProof.ratifierVersion",
@@ -190,7 +188,8 @@ class DeterministicSeedSurfaceRatificationProof private constructor(
                     in '0'..'9',
                     '-',
                     '_',
-                    '.' -> {
+                    '.',
+                    -> {
                         // Already canonical-safe protocol id material.
                     }
 

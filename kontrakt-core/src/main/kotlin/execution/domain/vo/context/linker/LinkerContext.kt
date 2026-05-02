@@ -20,5 +20,8 @@ interface LinkerContext {
     /**
      * Generates a deterministic integer for structural decisions (e.g., collection size).
      */
-    fun generateStructuralSize(min: Int, max: Int): Int
+    fun generateStructuralSize(
+        min: Int,
+        max: Int,
+    ): Int
 }

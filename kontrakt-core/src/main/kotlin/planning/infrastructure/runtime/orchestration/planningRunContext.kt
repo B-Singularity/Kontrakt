@@ -88,7 +88,7 @@ class PlanningRunContext private constructor(
 
         if (activeWorkerSessionLease != null) {
             throw PlanningProtocolIntegrityException(
-                "INITIALIZED -> RUNNING requires no pre-existing worker-session lease."
+                "INITIALIZED -> RUNNING requires no pre-existing worker-session lease.",
             )
         }
 
@@ -106,14 +106,12 @@ class PlanningRunContext private constructor(
      * This is separate from pinned policy snapshot ownership.
      */
     @Synchronized
-    fun debitPhysicalSteps(
-        units: Int,
-    ): PlanningRunRemainingBudget {
+    fun debitPhysicalSteps(units: Int): PlanningRunRemainingBudget {
         assertStructuralInvariant()
 
         if (state != PlanningRunState.RUNNING) {
             throw PlanningProtocolIntegrityException(
-                "Physical-step debit requires RUNNING state: $state"
+                "Physical-step debit requires RUNNING state: $state",
             )
         }
 
@@ -128,14 +126,12 @@ class PlanningRunContext private constructor(
      * PlannerSession model tracks both physical and semantic counters.
      */
     @Synchronized
-    fun debitSemanticWorkUnits(
-        units: Int,
-    ): PlanningRunRemainingBudget {
+    fun debitSemanticWorkUnits(units: Int): PlanningRunRemainingBudget {
         assertStructuralInvariant()
 
         if (state != PlanningRunState.RUNNING) {
             throw PlanningProtocolIntegrityException(
-                "Semantic-work debit requires RUNNING state: $state"
+                "Semantic-work debit requires RUNNING state: $state",
             )
         }
 
@@ -210,7 +206,6 @@ class PlanningRunContext private constructor(
         }
     }
 
-
     /**
      * READY_TO_RESTART -> RUNNING
      *
@@ -226,9 +221,10 @@ class PlanningRunContext private constructor(
             to = PlanningRunState.RUNNING,
         )
 
-        val suspension = requireCurrentSuspension(
-            expectedState = PlanningRunState.READY_TO_RESTART,
-        )
+        val suspension =
+            requireCurrentSuspension(
+                expectedState = PlanningRunState.READY_TO_RESTART,
+            )
 
         if (!remainingBudget.hasRemainingPhysicalSteps()) {
             throw CapacityExceededException(
@@ -238,7 +234,7 @@ class PlanningRunContext private constructor(
         }
         if (activeWorkerSessionLease != null) {
             throw PlanningProtocolIntegrityException(
-                "Restart admission requires no active worker-session lease."
+                "Restart admission requires no active worker-session lease.",
             )
         }
 
@@ -263,9 +259,7 @@ class PlanningRunContext private constructor(
      * RUNNING -> COMPLETED
      */
     @Synchronized
-    fun complete(
-        activeLease: PlanningRunWorkerSessionLease,
-    ) {
+    fun complete(activeLease: PlanningRunWorkerSessionLease) {
         assertStructuralInvariant()
         requireMatchingActiveLease(activeLease)
 
@@ -322,7 +316,7 @@ class PlanningRunContext private constructor(
 
         if (targetState != PlanningRunState.ABORTED && targetState != PlanningRunState.PANIC_ISOLATED) {
             throw PlanningProtocolIntegrityException(
-                "PlanningRunContext.terminate supports only ABORTED or PANIC_ISOLATED target states: $targetState"
+                "PlanningRunContext.terminate supports only ABORTED or PANIC_ISOLATED target states: $targetState",
             )
         }
 
@@ -330,7 +324,7 @@ class PlanningRunContext private constructor(
             PlanningRunState.INITIALIZED -> {
                 if (activeLease != null) {
                     throw PlanningProtocolIntegrityException(
-                        "INITIALIZED -> $targetState must not receive an active worker-session lease."
+                        "INITIALIZED -> $targetState must not receive an active worker-session lease.",
                     )
                 }
 
@@ -341,10 +335,11 @@ class PlanningRunContext private constructor(
             }
 
             PlanningRunState.RUNNING -> {
-                val lease = activeLease
-                    ?: throw PlanningProtocolIntegrityException(
-                        "RUNNING -> $targetState requires the active worker-session lease."
-                    )
+                val lease =
+                    activeLease
+                        ?: throw PlanningProtocolIntegrityException(
+                            "RUNNING -> $targetState requires the active worker-session lease.",
+                        )
 
                 requireMatchingActiveLease(lease)
 
@@ -355,16 +350,18 @@ class PlanningRunContext private constructor(
             }
 
             PlanningRunState.SUSPENDED_ON_JOIN,
-            PlanningRunState.READY_TO_RESTART -> {
+            PlanningRunState.READY_TO_RESTART,
+            -> {
                 if (activeLease != null) {
                     throw PlanningProtocolIntegrityException(
-                        "$state -> $targetState must not receive an active worker-session lease."
+                        "$state -> $targetState must not receive an active worker-session lease.",
                     )
                 }
 
-                val suspension = requireCurrentSuspension(
-                    expectedState = state,
-                )
+                val suspension =
+                    requireCurrentSuspension(
+                        expectedState = state,
+                    )
 
                 PlanningRunLifecycleLaw.requireTransition(
                     from = state,
@@ -376,9 +373,10 @@ class PlanningRunContext private constructor(
 
             PlanningRunState.COMPLETED,
             PlanningRunState.ABORTED,
-            PlanningRunState.PANIC_ISOLATED -> {
+            PlanningRunState.PANIC_ISOLATED,
+            -> {
                 throw PlanningProtocolIntegrityException(
-                    "Cannot terminate terminal planning-run state: $state"
+                    "Cannot terminate terminal planning-run state: $state",
                 )
             }
         }
@@ -391,36 +389,31 @@ class PlanningRunContext private constructor(
         assertStructuralInvariant()
     }
 
-    private fun requireMatchingActiveLease(
-        lease: PlanningRunWorkerSessionLease,
-    ) {
-        val active = activeWorkerSessionLease
-            ?: throw PlanningProtocolIntegrityException(
-                "No active worker-session lease is currently bound to PlanningRunContext."
-            )
+    private fun requireMatchingActiveLease(lease: PlanningRunWorkerSessionLease) {
+        val active =
+            activeWorkerSessionLease
+                ?: throw PlanningProtocolIntegrityException(
+                    "No active worker-session lease is currently bound to PlanningRunContext.",
+                )
 
         if (active != lease) {
             throw PlanningProtocolIntegrityException(
-                "PlanningRunContext worker-session lease mismatch: expected=$active, actual=$lease"
+                "PlanningRunContext worker-session lease mismatch: expected=$active, actual=$lease",
             )
         }
     }
 
-    private fun requireCurrentSuspension(
-        expectedState: PlanningRunState,
-    ): PlanningRunSuspension {
-        return currentSuspension
+    private fun requireCurrentSuspension(expectedState: PlanningRunState): PlanningRunSuspension =
+        currentSuspension
             ?: throw PlanningProtocolIntegrityException(
-                "PlanningRunContext requires a current suspension in state $expectedState."
+                "PlanningRunContext requires a current suspension in state $expectedState.",
             )
-    }
 
-    private fun issueNextLease(): PlanningRunWorkerSessionLease {
-        return PlanningRunWorkerSessionLease.issue(
+    private fun issueNextLease(): PlanningRunWorkerSessionLease =
+        PlanningRunWorkerSessionLease.issue(
             runEpoch = runEpoch,
             ordinal = nextLeaseOrdinal++,
         )
-    }
 
     /**
      * Structural invariant of the runtime-boundary state machine.
@@ -456,17 +449,17 @@ class PlanningRunContext private constructor(
             PlanningRunState.INITIALIZED -> {
                 if (activeWorkerSessionLease != null) {
                     throw PlanningProtocolIntegrityException(
-                        "INITIALIZED PlanningRunContext must not retain an active worker-session lease."
+                        "INITIALIZED PlanningRunContext must not retain an active worker-session lease.",
                     )
                 }
                 if (currentSuspension != null) {
                     throw PlanningProtocolIntegrityException(
-                        "INITIALIZED PlanningRunContext must not retain a current suspension."
+                        "INITIALIZED PlanningRunContext must not retain a current suspension.",
                     )
                 }
                 if (terminalCause != null) {
                     throw PlanningProtocolIntegrityException(
-                        "INITIALIZED PlanningRunContext must not retain a terminal cause."
+                        "INITIALIZED PlanningRunContext must not retain a terminal cause.",
                     )
                 }
             }
@@ -474,36 +467,37 @@ class PlanningRunContext private constructor(
             PlanningRunState.RUNNING -> {
                 if (activeWorkerSessionLease == null) {
                     throw PlanningProtocolIntegrityException(
-                        "RUNNING PlanningRunContext requires an active worker-session lease."
+                        "RUNNING PlanningRunContext requires an active worker-session lease.",
                     )
                 }
                 if (currentSuspension != null) {
                     throw PlanningProtocolIntegrityException(
-                        "RUNNING PlanningRunContext must not retain a current suspension."
+                        "RUNNING PlanningRunContext must not retain a current suspension.",
                     )
                 }
                 if (terminalCause != null) {
                     throw PlanningProtocolIntegrityException(
-                        "RUNNING PlanningRunContext must not retain a terminal cause."
+                        "RUNNING PlanningRunContext must not retain a terminal cause.",
                     )
                 }
             }
 
             PlanningRunState.SUSPENDED_ON_JOIN,
-            PlanningRunState.READY_TO_RESTART -> {
+            PlanningRunState.READY_TO_RESTART,
+            -> {
                 if (activeWorkerSessionLease != null) {
                     throw PlanningProtocolIntegrityException(
-                        "$state PlanningRunContext must not retain an active worker-session lease."
+                        "$state PlanningRunContext must not retain an active worker-session lease.",
                     )
                 }
                 if (currentSuspension == null) {
                     throw PlanningProtocolIntegrityException(
-                        "$state PlanningRunContext requires a current suspension."
+                        "$state PlanningRunContext requires a current suspension.",
                     )
                 }
                 if (terminalCause != null) {
                     throw PlanningProtocolIntegrityException(
-                        "$state PlanningRunContext must not retain a terminal cause."
+                        "$state PlanningRunContext must not retain a terminal cause.",
                     )
                 }
             }
@@ -511,36 +505,37 @@ class PlanningRunContext private constructor(
             PlanningRunState.COMPLETED -> {
                 if (activeWorkerSessionLease != null) {
                     throw PlanningProtocolIntegrityException(
-                        "COMPLETED PlanningRunContext must not retain an active worker-session lease."
+                        "COMPLETED PlanningRunContext must not retain an active worker-session lease.",
                     )
                 }
                 if (currentSuspension != null) {
                     throw PlanningProtocolIntegrityException(
-                        "COMPLETED PlanningRunContext must not retain a current suspension."
+                        "COMPLETED PlanningRunContext must not retain a current suspension.",
                     )
                 }
                 if (terminalCause != null) {
                     throw PlanningProtocolIntegrityException(
-                        "COMPLETED PlanningRunContext must not retain a terminal cause."
+                        "COMPLETED PlanningRunContext must not retain a terminal cause.",
                     )
                 }
             }
 
             PlanningRunState.ABORTED,
-            PlanningRunState.PANIC_ISOLATED -> {
+            PlanningRunState.PANIC_ISOLATED,
+            -> {
                 if (activeWorkerSessionLease != null) {
                     throw PlanningProtocolIntegrityException(
-                        "$state PlanningRunContext must not retain an active worker-session lease."
+                        "$state PlanningRunContext must not retain an active worker-session lease.",
                     )
                 }
                 if (currentSuspension != null) {
                     throw PlanningProtocolIntegrityException(
-                        "$state PlanningRunContext must not retain a current suspension."
+                        "$state PlanningRunContext must not retain a current suspension.",
                     )
                 }
                 if (terminalCause == null) {
                     throw PlanningProtocolIntegrityException(
-                        "$state PlanningRunContext requires a terminal cause."
+                        "$state PlanningRunContext requires a terminal cause.",
                     )
                 }
             }
@@ -577,15 +572,15 @@ class PlanningRunContext private constructor(
         fun issue(
             runEpoch: PlanningRunEpoch,
             pinnedRuntimePolicyEpoch: RuntimePolicyEpoch,
-        ): PlanningRunContext {
-            return PlanningRunContext(
+        ): PlanningRunContext =
+            PlanningRunContext(
                 runEpoch = runEpoch,
                 pinnedRuntimePolicyEpoch = pinnedRuntimePolicyEpoch,
-                initialRemainingBudget = PlanningRunRemainingBudget.issueFrom(
-                    pinnedRuntimePolicyEpoch.policy.sessionBudget
-                ),
+                initialRemainingBudget =
+                    PlanningRunRemainingBudget.issueFrom(
+                        pinnedRuntimePolicyEpoch.policy.sessionBudget,
+                    ),
             )
-        }
 
         /**
          * Explicit testing / recovery-oriented constructor for cases that must restore
@@ -596,12 +591,11 @@ class PlanningRunContext private constructor(
             runEpoch: PlanningRunEpoch,
             pinnedRuntimePolicyEpoch: RuntimePolicyEpoch,
             initialRemainingBudget: PlanningRunRemainingBudget,
-        ): PlanningRunContext {
-            return PlanningRunContext(
+        ): PlanningRunContext =
+            PlanningRunContext(
                 runEpoch = runEpoch,
                 pinnedRuntimePolicyEpoch = pinnedRuntimePolicyEpoch,
                 initialRemainingBudget = initialRemainingBudget,
             )
-        }
     }
 }

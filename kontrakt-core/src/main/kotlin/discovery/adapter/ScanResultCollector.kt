@@ -17,7 +17,7 @@ import java.util.TreeSet
  */
 internal class ScanResultCollector(
     private val scanResult: ScanResult,
-    private val taxonomy: DiscoveryTaxonomy
+    private val taxonomy: DiscoveryTaxonomy,
 ) {
     // Context for Error Reporting
     var currentPhase = "INIT"
@@ -26,10 +26,11 @@ internal class ScanResultCollector(
     fun collectScenarios(): List<TypeId> {
         currentPhase = "SCENARIO_SCAN"
 
-        val candidates = safeSort(
-            scanResult.getClassesWithAnnotation(SpecPolicy.SCENARIO_ANNOTATION),
-            "SCENARIO_CANDIDATES"
-        )
+        val candidates =
+            safeSort(
+                scanResult.getClassesWithAnnotation(SpecPolicy.SCENARIO_ANNOTATION),
+                "SCENARIO_CANDIDATES",
+            )
 
         val scenarioSet = TreeSet<TypeId>()
 
@@ -48,10 +49,11 @@ internal class ScanResultCollector(
         val contractMap = HashMap<TypeId, List<TypeId>>()
 
         // Fetch all annotated types (ClassGraph mixes classes/interfaces here)
-        val candidates = safeSort(
-            scanResult.getClassesWithAnnotation(SpecPolicy.CONTRACT_ANNOTATION),
-            "CONTRACT_CANDIDATES"
-        )
+        val candidates =
+            safeSort(
+                scanResult.getClassesWithAnnotation(SpecPolicy.CONTRACT_ANNOTATION),
+                "CONTRACT_CANDIDATES",
+            )
 
         for (info in candidates) {
             currentTarget = info.name
@@ -88,10 +90,11 @@ internal class ScanResultCollector(
 
     fun collectDataContracts() {
         currentPhase = "DATA_CONTRACT_SCAN"
-        val candidates = safeSort(
-            scanResult.getClassesWithAnnotation(SpecPolicy.DATA_CONTRACT_ANNOTATION),
-            "DATA_CONTRACT_CANDIDATES"
-        )
+        val candidates =
+            safeSort(
+                scanResult.getClassesWithAnnotation(SpecPolicy.DATA_CONTRACT_ANNOTATION),
+                "DATA_CONTRACT_CANDIDATES",
+            )
 
         for (info in candidates) {
             currentTarget = info.name
@@ -108,10 +111,11 @@ internal class ScanResultCollector(
     }
 
     private fun collectImplementations(contractName: String): List<TypeId> {
-        val candidates = safeSort(
-            scanResult.getClassesImplementing(contractName),
-            "IMPL_CANDIDATES_FOR_$contractName"
-        )
+        val candidates =
+            safeSort(
+                scanResult.getClassesImplementing(contractName),
+                "IMPL_CANDIDATES_FOR_$contractName",
+            )
 
         val implSet = TreeSet<TypeId>()
 
@@ -136,7 +140,10 @@ internal class ScanResultCollector(
         }
     }
 
-    private fun safeSort(collection: Collection<ClassInfo>, phaseContext: String): List<ClassInfo> {
+    private fun safeSort(
+        collection: Collection<ClassInfo>,
+        phaseContext: String,
+    ): List<ClassInfo> {
         val prevPhase = currentPhase
         currentPhase = "SORTING_$phaseContext"
         try {

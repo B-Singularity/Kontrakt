@@ -64,17 +64,11 @@ class CanonicalTypeText private constructor(
     val inspectionPolicy: CanonicalTypeTextInspectionPolicy,
     val lexicalProfile: CanonicalTypeLexicalProfile,
 ) {
-    override fun equals(other: Any?): Boolean {
-        return other is CanonicalTypeText && value == other.value
-    }
+    override fun equals(other: Any?): Boolean = other is CanonicalTypeText && value == other.value
 
-    override fun hashCode(): Int {
-        return value.hashCode()
-    }
+    override fun hashCode(): Int = value.hashCode()
 
-    override fun toString(): String {
-        return value
-    }
+    override fun toString(): String = value
 
     /**
      * Requires the other value to have the same ratification context.
@@ -85,9 +79,7 @@ class CanonicalTypeText private constructor(
      * accepted under the same engine, Unicode profile, golden-vector set, and
      * inspection policy.
      */
-    fun requireSameInspectionContextAs(
-        other: CanonicalTypeText,
-    ) {
+    fun requireSameInspectionContextAs(other: CanonicalTypeText) {
         if (normalizationEngineId != other.normalizationEngineId ||
             normalizationEngineVersion != other.normalizationEngineVersion ||
             unicodeProfileVersion != other.unicodeProfileVersion ||
@@ -97,9 +89,9 @@ class CanonicalTypeText private constructor(
         ) {
             throw MetamodelFactContractViolationException(
                 "CanonicalTypeText inspection context mismatch: " +
-                        "value=${diagnosticSample(value)}, " +
-                        "this=${renderRatificationProvenance()}, " +
-                        "other=${other.renderRatificationProvenance()}",
+                    "value=${diagnosticSample(value)}, " +
+                    "this=${renderRatificationProvenance()}, " +
+                    "other=${other.renderRatificationProvenance()}",
             )
         }
     }
@@ -113,8 +105,8 @@ class CanonicalTypeText private constructor(
      * It is not a cache key.
      * It is not equality material.
      */
-    fun renderRatificationProvenance(): String {
-        return buildRatificationProvenance(
+    fun renderRatificationProvenance(): String =
+        buildRatificationProvenance(
             normalizationEngineId = normalizationEngineId,
             normalizationEngineVersion = normalizationEngineVersion,
             unicodeProfileVersion = unicodeProfileVersion,
@@ -123,7 +115,6 @@ class CanonicalTypeText private constructor(
             inspectionPolicy = inspectionPolicy,
             lexicalProfile = lexicalProfile,
         )
-    }
 
     companion object {
         private const val MAX_PROVENANCE_TOKEN_CHARS: Int = 192
@@ -174,24 +165,26 @@ class CanonicalTypeText private constructor(
                 inspectionPolicy = inspectionPolicy,
             )
 
-            val inspection = normalizationEngine.inspectCanonicalTypeText(
-                input = rawValue,
-                policy = inspectionPolicy,
-            )
+            val inspection =
+                normalizationEngine.inspectCanonicalTypeText(
+                    input = rawValue,
+                    policy = inspectionPolicy,
+                )
 
-            val accepted = when (inspection) {
-                is CanonicalTypeTextInspectionResult.Accepted -> inspection
+            val accepted =
+                when (inspection) {
+                    is CanonicalTypeTextInspectionResult.Accepted -> inspection
 
-                is CanonicalTypeTextInspectionResult.Rejected -> {
-                    throw MetamodelNormalizationViolationException(
-                        field = "CanonicalTypeText.value",
-                        valueSample = diagnosticSample(rawValue),
-                        engineId = normalizationEngine.engineId,
-                        engineVersion = normalizationEngine.engineVersion,
-                        reason = "${inspection.violationCode.protocolToken}: ${inspection.reason}",
-                    )
+                    is CanonicalTypeTextInspectionResult.Rejected -> {
+                        throw MetamodelNormalizationViolationException(
+                            field = "CanonicalTypeText.value",
+                            valueSample = diagnosticSample(rawValue),
+                            engineId = normalizationEngine.engineId,
+                            engineVersion = normalizationEngine.engineVersion,
+                            reason = "${inspection.violationCode.protocolToken}: ${inspection.reason}",
+                        )
+                    }
                 }
-            }
 
             val snapshot = accepted.snapshot
             val lexicalProfile = accepted.lexicalProfile
@@ -229,8 +222,8 @@ class CanonicalTypeText private constructor(
             if (rawValue.length > inspectionPolicy.maxUtf16CodeUnitsBeforeSnapshot) {
                 throw MetamodelFactContractViolationException(
                     "CanonicalTypeText exceeds pre-inspection UTF-16 length guard: " +
-                            "utf16Units=${rawValue.length}, " +
-                            "maxUtf16CodeUnitsBeforeSnapshot=${inspectionPolicy.maxUtf16CodeUnitsBeforeSnapshot}",
+                        "utf16Units=${rawValue.length}, " +
+                        "maxUtf16CodeUnitsBeforeSnapshot=${inspectionPolicy.maxUtf16CodeUnitsBeforeSnapshot}",
                 )
             }
         }
@@ -250,10 +243,10 @@ class CanonicalTypeText private constructor(
             if (snapshot.length != lexicalProfile.utf16CodeUnitCount) {
                 throw MetamodelFactContractViolationException(
                     "NormalizationEngine contract violation: snapshot length does not match lexical profile. " +
-                            "engine=${normalizationEngine.engineId}@${normalizationEngine.engineVersion}, " +
-                            "snapshotUtf16Units=${snapshot.length}, " +
-                            "profileUtf16Units=${lexicalProfile.utf16CodeUnitCount}, " +
-                            "value=${diagnosticSample(snapshot)}",
+                        "engine=${normalizationEngine.engineId}@${normalizationEngine.engineVersion}, " +
+                        "snapshotUtf16Units=${snapshot.length}, " +
+                        "profileUtf16Units=${lexicalProfile.utf16CodeUnitCount}, " +
+                        "value=${diagnosticSample(snapshot)}",
                 )
             }
 
@@ -262,19 +255,17 @@ class CanonicalTypeText private constructor(
             } catch (exception: MetamodelFactContractViolationException) {
                 throw MetamodelFactContractViolationException(
                     "NormalizationEngine contract violation: accepted lexical profile violates inspection policy. " +
-                            "engine=${normalizationEngine.engineId}@${normalizationEngine.engineVersion}, " +
-                            "unicode=${normalizationEngine.unicodeProfileVersion}, " +
-                            "goldenVectors=${normalizationEngine.goldenVectorSetId}, " +
-                            "policy=${inspectionPolicy.deterministicPolicyToken}, " +
-                            "value=${diagnosticSample(snapshot)}, " +
-                            "reason=${exception.message}",
+                        "engine=${normalizationEngine.engineId}@${normalizationEngine.engineVersion}, " +
+                        "unicode=${normalizationEngine.unicodeProfileVersion}, " +
+                        "goldenVectors=${normalizationEngine.goldenVectorSetId}, " +
+                        "policy=${inspectionPolicy.deterministicPolicyToken}, " +
+                        "value=${diagnosticSample(snapshot)}, " +
+                        "reason=${exception.message}",
                 )
             }
         }
 
-        private fun requireEngineProvenance(
-            normalizationEngine: NormalizationEngine,
-        ) {
+        private fun requireEngineProvenance(normalizationEngine: NormalizationEngine) {
             requireProtocolComponent(
                 field = "NormalizationEngine.engineId",
                 value = normalizationEngine.engineId,
@@ -335,7 +326,8 @@ class CanonicalTypeText private constructor(
             inspectionPolicy: CanonicalTypeTextInspectionPolicy,
             lexicalProfile: CanonicalTypeLexicalProfile,
         ): String {
-            val provenance = "CanonicalTypeText" +
+            val provenance =
+                "CanonicalTypeText" +
                     "|engine=$normalizationEngineId" +
                     "|engineVersion=$normalizationEngineVersion" +
                     "|unicode=$unicodeProfileVersion" +
@@ -361,9 +353,7 @@ class CanonicalTypeText private constructor(
             return provenance
         }
 
-        private fun diagnosticSample(
-            value: CharSequence,
-        ): String {
+        private fun diagnosticSample(value: CharSequence): String {
             if (value.length <= MAX_DIAGNOSTIC_TEXT_SAMPLE_CHARS) {
                 return value.toString()
             }

@@ -48,12 +48,12 @@ enum class PartitionRegionState(
                 for (state in ALL) {
                     if (state.code < 0) {
                         throw PlanningProtocolIntegrityException(
-                            "PartitionRegionState.code must be >= 0: name=${state.name}, code=${state.code}"
+                            "PartitionRegionState.code must be >= 0: name=${state.name}, code=${state.code}",
                         )
                     }
                     if (table[state.code] != null) {
                         throw PlanningProtocolIntegrityException(
-                            "Duplicate PartitionRegionState.code detected: code=${state.code}"
+                            "Duplicate PartitionRegionState.code detected: code=${state.code}",
                         )
                     }
                     table[state.code] = state

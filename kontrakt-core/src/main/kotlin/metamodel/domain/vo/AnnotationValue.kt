@@ -97,29 +97,17 @@ sealed interface AnnotationValue {
         override val kind: AnnotationValueKind = AnnotationValueKind.BYTE
         override val nestingDepth: Int = 1
 
-        override fun renderDiagnostic(): String {
-            return AnnotationValueDiagnostics.render(this)
-        }
+        override fun renderDiagnostic(): String = AnnotationValueDiagnostics.render(this)
 
-        override fun toString(): String {
-            return renderDiagnostic()
-        }
+        override fun toString(): String = renderDiagnostic()
 
-        override fun equals(other: Any?): Boolean {
-            return other is ByteValue && value == other.value
-        }
+        override fun equals(other: Any?): Boolean = other is ByteValue && value == other.value
 
-        override fun hashCode(): Int {
-            return value.toInt()
-        }
+        override fun hashCode(): Int = value.toInt()
 
         companion object {
             @JvmStatic
-            fun issue(
-                value: Byte,
-            ): ByteValue {
-                return ByteValue(value)
-            }
+            fun issue(value: Byte): ByteValue = ByteValue(value)
         }
     }
 
@@ -129,29 +117,17 @@ sealed interface AnnotationValue {
         override val kind: AnnotationValueKind = AnnotationValueKind.SHORT
         override val nestingDepth: Int = 1
 
-        override fun renderDiagnostic(): String {
-            return AnnotationValueDiagnostics.render(this)
-        }
+        override fun renderDiagnostic(): String = AnnotationValueDiagnostics.render(this)
 
-        override fun toString(): String {
-            return renderDiagnostic()
-        }
+        override fun toString(): String = renderDiagnostic()
 
-        override fun equals(other: Any?): Boolean {
-            return other is ShortValue && value == other.value
-        }
+        override fun equals(other: Any?): Boolean = other is ShortValue && value == other.value
 
-        override fun hashCode(): Int {
-            return value.toInt()
-        }
+        override fun hashCode(): Int = value.toInt()
 
         companion object {
             @JvmStatic
-            fun issue(
-                value: Short,
-            ): ShortValue {
-                return ShortValue(value)
-            }
+            fun issue(value: Short): ShortValue = ShortValue(value)
         }
     }
 
@@ -161,29 +137,17 @@ sealed interface AnnotationValue {
         override val kind: AnnotationValueKind = AnnotationValueKind.INT
         override val nestingDepth: Int = 1
 
-        override fun renderDiagnostic(): String {
-            return AnnotationValueDiagnostics.render(this)
-        }
+        override fun renderDiagnostic(): String = AnnotationValueDiagnostics.render(this)
 
-        override fun toString(): String {
-            return renderDiagnostic()
-        }
+        override fun toString(): String = renderDiagnostic()
 
-        override fun equals(other: Any?): Boolean {
-            return other is IntValue && value == other.value
-        }
+        override fun equals(other: Any?): Boolean = other is IntValue && value == other.value
 
-        override fun hashCode(): Int {
-            return value
-        }
+        override fun hashCode(): Int = value
 
         companion object {
             @JvmStatic
-            fun issue(
-                value: Int,
-            ): IntValue {
-                return IntValue(value)
-            }
+            fun issue(value: Int): IntValue = IntValue(value)
         }
     }
 
@@ -193,29 +157,17 @@ sealed interface AnnotationValue {
         override val kind: AnnotationValueKind = AnnotationValueKind.LONG
         override val nestingDepth: Int = 1
 
-        override fun renderDiagnostic(): String {
-            return AnnotationValueDiagnostics.render(this)
-        }
+        override fun renderDiagnostic(): String = AnnotationValueDiagnostics.render(this)
 
-        override fun toString(): String {
-            return renderDiagnostic()
-        }
+        override fun toString(): String = renderDiagnostic()
 
-        override fun equals(other: Any?): Boolean {
-            return other is LongValue && value == other.value
-        }
+        override fun equals(other: Any?): Boolean = other is LongValue && value == other.value
 
-        override fun hashCode(): Int {
-            return value.hashCode()
-        }
+        override fun hashCode(): Int = value.hashCode()
 
         companion object {
             @JvmStatic
-            fun issue(
-                value: Long,
-            ): LongValue {
-                return LongValue(value)
-            }
+            fun issue(value: Long): LongValue = LongValue(value)
         }
     }
 
@@ -233,36 +185,20 @@ sealed interface AnnotationValue {
         val value: Float
             get() = Float.fromBits(valueBits)
 
-        override fun renderDiagnostic(): String {
-            return AnnotationValueDiagnostics.render(this)
-        }
+        override fun renderDiagnostic(): String = AnnotationValueDiagnostics.render(this)
 
-        override fun toString(): String {
-            return renderDiagnostic()
-        }
+        override fun toString(): String = renderDiagnostic()
 
-        override fun equals(other: Any?): Boolean {
-            return other is FloatValue && valueBits == other.valueBits
-        }
+        override fun equals(other: Any?): Boolean = other is FloatValue && valueBits == other.valueBits
 
-        override fun hashCode(): Int {
-            return valueBits
-        }
+        override fun hashCode(): Int = valueBits
 
         companion object {
             @JvmStatic
-            fun issue(
-                value: Float,
-            ): FloatValue {
-                return FloatValue(value.toRawBits())
-            }
+            fun issue(value: Float): FloatValue = FloatValue(value.toRawBits())
 
             @JvmStatic
-            fun issueBits(
-                valueBits: Int,
-            ): FloatValue {
-                return FloatValue(valueBits)
-            }
+            fun issueBits(valueBits: Int): FloatValue = FloatValue(valueBits)
         }
     }
 
@@ -280,36 +216,20 @@ sealed interface AnnotationValue {
         val value: Double
             get() = Double.fromBits(valueBits)
 
-        override fun renderDiagnostic(): String {
-            return AnnotationValueDiagnostics.render(this)
-        }
+        override fun renderDiagnostic(): String = AnnotationValueDiagnostics.render(this)
 
-        override fun toString(): String {
-            return renderDiagnostic()
-        }
+        override fun toString(): String = renderDiagnostic()
 
-        override fun equals(other: Any?): Boolean {
-            return other is DoubleValue && valueBits == other.valueBits
-        }
+        override fun equals(other: Any?): Boolean = other is DoubleValue && valueBits == other.valueBits
 
-        override fun hashCode(): Int {
-            return valueBits.hashCode()
-        }
+        override fun hashCode(): Int = valueBits.hashCode()
 
         companion object {
             @JvmStatic
-            fun issue(
-                value: Double,
-            ): DoubleValue {
-                return DoubleValue(value.toRawBits())
-            }
+            fun issue(value: Double): DoubleValue = DoubleValue(value.toRawBits())
 
             @JvmStatic
-            fun issueBits(
-                valueBits: Long,
-            ): DoubleValue {
-                return DoubleValue(valueBits)
-            }
+            fun issueBits(valueBits: Long): DoubleValue = DoubleValue(valueBits)
         }
     }
 
@@ -319,29 +239,17 @@ sealed interface AnnotationValue {
         override val kind: AnnotationValueKind = AnnotationValueKind.BOOLEAN
         override val nestingDepth: Int = 1
 
-        override fun renderDiagnostic(): String {
-            return AnnotationValueDiagnostics.render(this)
-        }
+        override fun renderDiagnostic(): String = AnnotationValueDiagnostics.render(this)
 
-        override fun toString(): String {
-            return renderDiagnostic()
-        }
+        override fun toString(): String = renderDiagnostic()
 
-        override fun equals(other: Any?): Boolean {
-            return other is BooleanValue && value == other.value
-        }
+        override fun equals(other: Any?): Boolean = other is BooleanValue && value == other.value
 
-        override fun hashCode(): Int {
-            return value.hashCode()
-        }
+        override fun hashCode(): Int = value.hashCode()
 
         companion object {
             @JvmStatic
-            fun issue(
-                value: Boolean,
-            ): BooleanValue {
-                return BooleanValue(value)
-            }
+            fun issue(value: Boolean): BooleanValue = BooleanValue(value)
         }
     }
 
@@ -351,27 +259,17 @@ sealed interface AnnotationValue {
         override val kind: AnnotationValueKind = AnnotationValueKind.CHAR
         override val nestingDepth: Int = 1
 
-        override fun renderDiagnostic(): String {
-            return AnnotationValueDiagnostics.render(this)
-        }
+        override fun renderDiagnostic(): String = AnnotationValueDiagnostics.render(this)
 
-        override fun toString(): String {
-            return renderDiagnostic()
-        }
+        override fun toString(): String = renderDiagnostic()
 
-        override fun equals(other: Any?): Boolean {
-            return other is CharValue && value == other.value
-        }
+        override fun equals(other: Any?): Boolean = other is CharValue && value == other.value
 
-        override fun hashCode(): Int {
-            return value.code
-        }
+        override fun hashCode(): Int = value.code
 
         companion object {
             @JvmStatic
-            fun issue(
-                value: Char,
-            ): CharValue {
+            fun issue(value: Char): CharValue {
                 MetamodelProtocolTextGuards.requireProtocolChar(
                     field = "AnnotationValue.CharValue.value",
                     value = value,
@@ -388,21 +286,13 @@ sealed interface AnnotationValue {
         override val kind: AnnotationValueKind = AnnotationValueKind.STRING
         override val nestingDepth: Int = 1
 
-        override fun renderDiagnostic(): String {
-            return AnnotationValueDiagnostics.render(this)
-        }
+        override fun renderDiagnostic(): String = AnnotationValueDiagnostics.render(this)
 
-        override fun toString(): String {
-            return renderDiagnostic()
-        }
+        override fun toString(): String = renderDiagnostic()
 
-        override fun equals(other: Any?): Boolean {
-            return other is StringValue && value == other.value
-        }
+        override fun equals(other: Any?): Boolean = other is StringValue && value == other.value
 
-        override fun hashCode(): Int {
-            return value.hashCode()
-        }
+        override fun hashCode(): Int = value.hashCode()
 
         companion object {
             @JvmStatic
@@ -435,35 +325,24 @@ sealed interface AnnotationValue {
         override val kind: AnnotationValueKind = AnnotationValueKind.CLASS_LITERAL
         override val nestingDepth: Int = 1
 
-        override fun renderDiagnostic(): String {
-            return AnnotationValueDiagnostics.render(this)
-        }
+        override fun renderDiagnostic(): String = AnnotationValueDiagnostics.render(this)
 
-        override fun toString(): String {
-            return renderDiagnostic()
-        }
+        override fun toString(): String = renderDiagnostic()
 
-        override fun equals(other: Any?): Boolean {
-            return other is ClassLiteralValue &&
-                    referencedType == other.referencedType
-        }
+        override fun equals(other: Any?): Boolean =
+            other is ClassLiteralValue &&
+                referencedType == other.referencedType
 
-        override fun hashCode(): Int {
-            return referencedType.hashCode()
-        }
+        override fun hashCode(): Int = referencedType.hashCode()
 
         companion object {
             @JvmStatic
-            fun issue(
-                referencedType: CanonicalTypeId,
-            ): ClassLiteralValue {
+            fun issue(referencedType: CanonicalTypeId): ClassLiteralValue {
                 requireClassLiteralTarget(referencedType)
                 return ClassLiteralValue(referencedType)
             }
 
-            private fun requireClassLiteralTarget(
-                referencedType: CanonicalTypeId,
-            ) {
+            private fun requireClassLiteralTarget(referencedType: CanonicalTypeId) {
                 if (referencedType.shapeSummary.kind == CanonicalTypeShapeKind.VOID) {
                     throw MetamodelFactContractViolationException(
                         "AnnotationValue.ClassLiteralValue must not reference VOID.",
@@ -486,19 +365,14 @@ sealed interface AnnotationValue {
         override val kind: AnnotationValueKind = AnnotationValueKind.ENUM_CONSTANT
         override val nestingDepth: Int = 1
 
-        override fun renderDiagnostic(): String {
-            return AnnotationValueDiagnostics.render(this)
-        }
+        override fun renderDiagnostic(): String = AnnotationValueDiagnostics.render(this)
 
-        override fun toString(): String {
-            return renderDiagnostic()
-        }
+        override fun toString(): String = renderDiagnostic()
 
-        override fun equals(other: Any?): Boolean {
-            return other is EnumConstantValue &&
-                    enumType == other.enumType &&
-                    constantName == other.constantName
-        }
+        override fun equals(other: Any?): Boolean =
+            other is EnumConstantValue &&
+                enumType == other.enumType &&
+                constantName == other.constantName
 
         override fun hashCode(): Int {
             var result = enumType.hashCode()
@@ -515,7 +389,7 @@ sealed interface AnnotationValue {
                 if (enumType.shapeSummary.kind != CanonicalTypeShapeKind.ENUM) {
                     throw MetamodelFactContractViolationException(
                         "AnnotationValue.EnumConstantValue requires enum CanonicalTypeId: " +
-                                "actualKind=${enumType.shapeSummary.kind.protocolToken}",
+                            "actualKind=${enumType.shapeSummary.kind.protocolToken}",
                     )
                 }
 
@@ -546,28 +420,19 @@ sealed interface AnnotationValue {
     ) : AnnotationValue {
         override val kind: AnnotationValueKind = AnnotationValueKind.ANNOTATION_LITERAL
 
-        override fun renderDiagnostic(): String {
-            return AnnotationValueDiagnostics.render(this)
-        }
+        override fun renderDiagnostic(): String = AnnotationValueDiagnostics.render(this)
 
-        override fun toString(): String {
-            return renderDiagnostic()
-        }
+        override fun toString(): String = renderDiagnostic()
 
-        override fun equals(other: Any?): Boolean {
-            return other is AnnotationLiteralValue &&
-                    descriptor == other.descriptor
-        }
+        override fun equals(other: Any?): Boolean =
+            other is AnnotationLiteralValue &&
+                descriptor == other.descriptor
 
-        override fun hashCode(): Int {
-            return descriptor.hashCode()
-        }
+        override fun hashCode(): Int = descriptor.hashCode()
 
         companion object {
             @JvmStatic
-            fun issue(
-                descriptor: AnnotationDescriptor,
-            ): AnnotationLiteralValue {
+            fun issue(descriptor: AnnotationDescriptor): AnnotationLiteralValue {
                 val depth = 1 + descriptor.annotationValueNestingDepth
 
                 requireAnnotationValueNestingDepthWithinLimit(
@@ -605,28 +470,17 @@ sealed interface AnnotationValue {
         val elements: List<AnnotationValue>
             get() = elementsStorage
 
-        operator fun get(
-            index: Int,
-        ): AnnotationValue {
-            return elementsStorage[index]
-        }
+        operator fun get(index: Int): AnnotationValue = elementsStorage[index]
 
-        override fun renderDiagnostic(): String {
-            return AnnotationValueDiagnostics.render(this)
-        }
+        override fun renderDiagnostic(): String = AnnotationValueDiagnostics.render(this)
 
-        override fun toString(): String {
-            return renderDiagnostic()
-        }
+        override fun toString(): String = renderDiagnostic()
 
-        override fun equals(other: Any?): Boolean {
-            return other is ArrayValue &&
-                    elementsStorage == other.elementsStorage
-        }
+        override fun equals(other: Any?): Boolean =
+            other is ArrayValue &&
+                elementsStorage == other.elementsStorage
 
-        override fun hashCode(): Int {
-            return elementsStorage.hashCode()
-        }
+        override fun hashCode(): Int = elementsStorage.hashCode()
 
         companion object {
             @JvmStatic
@@ -697,99 +551,78 @@ sealed interface AnnotationValue {
         internal const val MAX_DIAGNOSTIC_STRING_SAMPLE_CHARS: Int = 96
 
         @JvmStatic
-        fun byte(
-            value: Byte,
-        ): ByteValue = ByteValue.issue(value)
+        fun byte(value: Byte): ByteValue = ByteValue.issue(value)
 
         @JvmStatic
-        fun short(
-            value: Short,
-        ): ShortValue = ShortValue.issue(value)
+        fun short(value: Short): ShortValue = ShortValue.issue(value)
 
         @JvmStatic
-        fun int(
-            value: Int,
-        ): IntValue = IntValue.issue(value)
+        fun int(value: Int): IntValue = IntValue.issue(value)
 
         @JvmStatic
-        fun long(
-            value: Long,
-        ): LongValue = LongValue.issue(value)
+        fun long(value: Long): LongValue = LongValue.issue(value)
 
         @JvmStatic
-        fun float(
-            value: Float,
-        ): FloatValue = FloatValue.issue(value)
+        fun float(value: Float): FloatValue = FloatValue.issue(value)
 
         @JvmStatic
-        fun floatBits(
-            valueBits: Int,
-        ): FloatValue = FloatValue.issueBits(valueBits)
+        fun floatBits(valueBits: Int): FloatValue = FloatValue.issueBits(valueBits)
 
         @JvmStatic
-        fun double(
-            value: Double,
-        ): DoubleValue = DoubleValue.issue(value)
+        fun double(value: Double): DoubleValue = DoubleValue.issue(value)
 
         @JvmStatic
-        fun doubleBits(
-            valueBits: Long,
-        ): DoubleValue = DoubleValue.issueBits(valueBits)
+        fun doubleBits(valueBits: Long): DoubleValue = DoubleValue.issueBits(valueBits)
 
         @JvmStatic
-        fun boolean(
-            value: Boolean,
-        ): BooleanValue = BooleanValue.issue(value)
+        fun boolean(value: Boolean): BooleanValue = BooleanValue.issue(value)
 
         @JvmStatic
-        fun char(
-            value: Char,
-        ): CharValue = CharValue.issue(value)
+        fun char(value: Char): CharValue = CharValue.issue(value)
 
         @JvmStatic
         fun string(
             value: String,
             allowEmpty: Boolean = true,
-        ): StringValue = StringValue.issue(
-            value = value,
-            allowEmpty = allowEmpty,
-        )
+        ): StringValue =
+            StringValue.issue(
+                value = value,
+                allowEmpty = allowEmpty,
+            )
 
         @JvmStatic
-        fun classLiteral(
-            referencedType: CanonicalTypeId,
-        ): ClassLiteralValue = ClassLiteralValue.issue(
-            referencedType = referencedType,
-        )
+        fun classLiteral(referencedType: CanonicalTypeId): ClassLiteralValue =
+            ClassLiteralValue.issue(
+                referencedType = referencedType,
+            )
 
         @JvmStatic
         fun enumConstant(
             enumType: CanonicalTypeId,
             constantName: String,
-        ): EnumConstantValue = EnumConstantValue.issue(
-            enumType = enumType,
-            constantName = constantName,
-        )
+        ): EnumConstantValue =
+            EnumConstantValue.issue(
+                enumType = enumType,
+                constantName = constantName,
+            )
 
         @JvmStatic
-        fun annotation(
-            descriptor: AnnotationDescriptor,
-        ): AnnotationLiteralValue = AnnotationLiteralValue.issue(
-            descriptor = descriptor,
-        )
+        fun annotation(descriptor: AnnotationDescriptor): AnnotationLiteralValue =
+            AnnotationLiteralValue.issue(
+                descriptor = descriptor,
+            )
 
         @JvmStatic
         fun array(
             elements: List<AnnotationValue>,
             allowEmpty: Boolean = true,
-        ): ArrayValue = ArrayValue.issue(
-            elements = elements,
-            allowEmpty = allowEmpty,
-        )
+        ): ArrayValue =
+            ArrayValue.issue(
+                elements = elements,
+                allowEmpty = allowEmpty,
+            )
 
-        internal fun diagnosticStringSample(
-            value: String,
-        ): String {
+        internal fun diagnosticStringSample(value: String): String {
             if (value.length <= MAX_DIAGNOSTIC_STRING_SAMPLE_CHARS) {
                 return value
             }
@@ -847,12 +680,11 @@ private fun requireAnnotationValueNestingDepthWithinLimit(
  * exception messages.
  */
 private object AnnotationValueDiagnostics {
-    fun render(
-        value: AnnotationValue,
-    ): String {
-        val budget = DiagnosticBudget(
-            remaining = AnnotationValue.MAX_RENDERED_DIAGNOSTIC_CHARS,
-        )
+    fun render(value: AnnotationValue): String {
+        val budget =
+            DiagnosticBudget(
+                remaining = AnnotationValue.MAX_RENDERED_DIAGNOSTIC_CHARS,
+            )
         val builder = StringBuilder()
 
         appendValue(
@@ -959,10 +791,11 @@ private object AnnotationValueDiagnostics {
     ) {
         budget.append(builder, "[")
 
-        val limit = minOf(
-            value.size,
-            AnnotationValue.MAX_ARRAY_DIAGNOSTIC_ELEMENTS,
-        )
+        val limit =
+            minOf(
+                value.size,
+                AnnotationValue.MAX_ARRAY_DIAGNOSTIC_ELEMENTS,
+            )
         var index = 0
 
         while (index < limit && budget.hasRemaining()) {

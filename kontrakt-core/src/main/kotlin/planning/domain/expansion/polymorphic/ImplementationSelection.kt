@@ -28,9 +28,9 @@ class ImplementationSelection private constructor(
         if (other !is ImplementationSelection) return false
 
         return TypeReferenceIdentity.sameSemanticType(requestedType, other.requestedType) &&
-                selectedImplementation == other.selectedImplementation &&
-                bindingKind == other.bindingKind &&
-                selectionMode == other.selectionMode
+            selectedImplementation == other.selectedImplementation &&
+            bindingKind == other.bindingKind &&
+            selectionMode == other.selectionMode
     }
 
     override fun hashCode(): Int {
@@ -41,9 +41,8 @@ class ImplementationSelection private constructor(
         return result
     }
 
-    override fun toString(): String {
-        return "ImplementationSelection(requested=${requestedType.signature}, selected=${selectedImplementation.canonicalIdentifier}, kind=${bindingKind.protocolToken}, mode=${selectionMode.protocolToken}, materialization=${materializationKind.protocolToken})"
-    }
+    override fun toString(): String =
+        "ImplementationSelection(requested=${requestedType.signature}, selected=${selectedImplementation.canonicalIdentifier}, kind=${bindingKind.protocolToken}, mode=${selectionMode.protocolToken}, materialization=${materializationKind.protocolToken})"
 
     companion object {
         @JvmStatic
@@ -89,13 +88,12 @@ class ImplementationSelection private constructor(
         fun discoveredSingleImplementation(
             requestedType: TypeReference,
             selectedImplementation: ConcreteImplementationReference,
-        ): ImplementationSelection {
-            return strictPolymorphicLowering(
+        ): ImplementationSelection =
+            strictPolymorphicLowering(
                 requestedType = requestedType,
                 selectedImplementation = selectedImplementation,
                 bindingKind = BindingKind.DISCOVERED_SINGLE_IMPLEMENTATION,
             )
-        }
 
         private fun issueUnchecked(
             requestedType: TypeReference,

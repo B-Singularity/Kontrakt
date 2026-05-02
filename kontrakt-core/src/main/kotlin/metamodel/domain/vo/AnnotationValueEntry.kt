@@ -17,20 +17,17 @@ class AnnotationValueEntry private constructor(
         return result
     }
 
-    override fun toString(): String {
-        return "$name=$value"
-    }
+    override fun toString(): String = "$name=$value"
 
     companion object {
         @JvmStatic
         fun issue(
             name: AnnotationArgumentName,
             value: AnnotationValue,
-        ): AnnotationValueEntry {
-            return AnnotationValueEntry(
+        ): AnnotationValueEntry =
+            AnnotationValueEntry(
                 name = name,
                 value = value,
             )
-        }
     }
 }

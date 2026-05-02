@@ -17,9 +17,8 @@ import java.time.Instant
 class TimeGenerator<T : Any>(
     private val min: Instant,
     private val max: Instant,
-    private val converter: (Instant) -> T
+    private val converter: (Instant) -> T,
 ) : Generator<T> {
-
     init {
         require(!min.isAfter(max)) { "Invalid range: $min > $max" }
     }
@@ -29,20 +28,21 @@ class TimeGenerator<T : Any>(
         return converter(instant)
     }
 
-    override fun generateEdgeCases(context: GenerationContext): List<T> = buildList {
-        add(converter(min))
-        if (min != max) add(converter(max))
+    override fun generateEdgeCases(context: GenerationContext): List<T> =
+        buildList {
+            add(converter(min))
+            if (min != max) add(converter(max))
 
-        // Near-Boundaries (Off-by-one second)
-        if (min.isBefore(Instant.MAX.minusSeconds(1))) {
-            val near = min.plusSeconds(1)
-            if (!near.isAfter(max)) add(converter(near))
+            // Near-Boundaries (Off-by-one second)
+            if (min.isBefore(Instant.MAX.minusSeconds(1))) {
+                val near = min.plusSeconds(1)
+                if (!near.isAfter(max)) add(converter(near))
+            }
+            if (max.isAfter(Instant.MIN.plusSeconds(1))) {
+                val near = max.minusSeconds(1)
+                if (!near.isBefore(min)) add(converter(near))
+            }
         }
-        if (max.isAfter(Instant.MIN.plusSeconds(1))) {
-            val near = max.minusSeconds(1)
-            if (!near.isBefore(min)) add(converter(near))
-        }
-    }
 
     /**
      * Generates "Logical Invalid" values (Range Violations).
@@ -53,10 +53,11 @@ class TimeGenerator<T : Any>(
      * The [converter] may successfully transform these into valid objects (e.g. LocalDate),
      * but they will be semantically invalid according to the contract.
      */
-    override fun generateInvalid(context: GenerationContext): List<Any?> = buildList {
-        runCatching { add(converter(min.minusSeconds(1))) }
-        runCatching { add(converter(max.plusSeconds(1))) }
-    }
+    override fun generateInvalid(context: GenerationContext): List<Any?> =
+        buildList {
+            runCatching { add(converter(min.minusSeconds(1))) }
+            runCatching { add(converter(max.plusSeconds(1))) }
+        }
 
     private fun generateRandomInstant(context: GenerationContext): Instant {
         if (min == max) return min

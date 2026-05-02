@@ -18,8 +18,9 @@ import java.text.Normalizer
  * - Map keys (DeterministicMap)
  * - Stable cache partition keys
  */
-class CanonicalIdentifier private constructor(val value: String) : Comparable<CanonicalIdentifier> {
-
+class CanonicalIdentifier private constructor(
+    val value: String,
+) : Comparable<CanonicalIdentifier> {
     init {
         if (value.length > IrLimits.MAX_IDENTIFIER_LENGTH) {
             throw IrProtocolViolationException("CanonicalIdentifier limit exceeded.")
@@ -40,6 +41,7 @@ class CanonicalIdentifier private constructor(val value: String) : Comparable<Ca
     }
 
     override fun hashCode(): Int = value.hashCode()
+
     override fun toString(): String = value
 
     companion object {

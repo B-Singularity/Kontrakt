@@ -206,4 +206,35 @@ object MetamodelProtocolTextGuards {
             )
         }
     }
+
+    fun isAsciiWhitespace(
+        value: Char,
+    ): Boolean {
+        return value == ' ' ||
+                value == '\t' ||
+                value == '\n' ||
+                value == '\r' ||
+                value == '\u000C'
+    }
+
+    fun isC0OrC1Control(
+        value: Char,
+    ): Boolean {
+        val code = value.code
+        return code in 0x0000..0x001F ||
+                code in 0x007F..0x009F
+    }
+
+    fun isReservedProtocolDelimiter(
+        value: Char,
+    ): Boolean {
+        return value == '|'
+    }
+
+    fun isReservedProtocolOrControl(
+        value: Char,
+    ): Boolean {
+        return isReservedProtocolDelimiter(value) ||
+                isC0OrC1Control(value)
+    }
 }

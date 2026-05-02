@@ -9,16 +9,15 @@ import planning.domain.exception.PlanningProtocolIntegrityException
  * scattered branch logic hidden inside the adapter implementation.
  */
 internal object AdapterAdminLifecycleLaw {
-
     @JvmStatic
     fun canTransition(
         from: AdapterAdminState,
         to: AdapterAdminState,
-    ): Boolean {
-        return when (from) {
+    ): Boolean =
+        when (from) {
             AdapterAdminState.OPEN ->
                 to == AdapterAdminState.DROP_IN_PROGRESS ||
-                        to == AdapterAdminState.CLOSING
+                    to == AdapterAdminState.CLOSING
 
             AdapterAdminState.DROP_IN_PROGRESS ->
                 to == AdapterAdminState.OPEN
@@ -29,7 +28,6 @@ internal object AdapterAdminLifecycleLaw {
             AdapterAdminState.CLOSED ->
                 false
         }
-    }
 
     @JvmStatic
     fun requireTransition(
@@ -38,29 +36,17 @@ internal object AdapterAdminLifecycleLaw {
     ) {
         if (!canTransition(from, to)) {
             throw PlanningProtocolIntegrityException(
-                "Illegal AdapterAdminState transition: $from -> $to"
+                "Illegal AdapterAdminState transition: $from -> $to",
             )
         }
     }
 
     @JvmStatic
-    fun canStartDrop(
-        state: AdapterAdminState,
-    ): Boolean {
-        return state == AdapterAdminState.OPEN
-    }
+    fun canStartDrop(state: AdapterAdminState): Boolean = state == AdapterAdminState.OPEN
 
     @JvmStatic
-    fun canStartClose(
-        state: AdapterAdminState,
-    ): Boolean {
-        return state == AdapterAdminState.OPEN
-    }
+    fun canStartClose(state: AdapterAdminState): Boolean = state == AdapterAdminState.OPEN
 
     @JvmStatic
-    fun isTerminal(
-        state: AdapterAdminState,
-    ): Boolean {
-        return state.isTerminal
-    }
+    fun isTerminal(state: AdapterAdminState): Boolean = state.isTerminal
 }

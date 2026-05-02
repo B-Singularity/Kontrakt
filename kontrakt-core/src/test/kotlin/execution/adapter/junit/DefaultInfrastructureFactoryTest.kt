@@ -15,7 +15,6 @@ import reporting.adapter.outgoing.console.StandardConsoleLayout
 import java.nio.file.Paths
 
 class DefaultInfrastructureFactoryTest {
-    
     @Test
     fun `resolveTheme - returns AnsiTheme when env is null or empty`() {
         // null input -> AnsiTheme
@@ -31,7 +30,6 @@ class DefaultInfrastructureFactoryTest {
         assertThat(DefaultInfrastructureFactory.resolveTheme("true")).isEqualTo(NoColorTheme)
         assertThat(DefaultInfrastructureFactory.resolveTheme("1")).isEqualTo(NoColorTheme)
     }
-
 
     @Test
     fun `createConsoleReporter - wires components correctly`() {
@@ -49,7 +47,6 @@ class DefaultInfrastructureFactoryTest {
             .isInstanceOf(StandardConsoleLayout::class.java)
             .extracting("policy")
             .isEqualTo(auditPolicy)
-
     }
 
     @Test

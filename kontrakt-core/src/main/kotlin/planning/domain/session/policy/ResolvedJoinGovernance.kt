@@ -34,17 +34,17 @@ class ResolvedJoinGovernance private constructor(
         ): ResolvedJoinGovernance {
             if (joinWaitTimeoutNanos <= 0L) {
                 throw PlanningProtocolIntegrityException(
-                    "ResolvedJoinGovernance.joinWaitTimeoutNanos must be > 0: $joinWaitTimeoutNanos"
+                    "ResolvedJoinGovernance.joinWaitTimeoutNanos must be > 0: $joinWaitTimeoutNanos",
                 )
             }
             if (maxWaitersPerKey <= 0) {
                 throw PlanningProtocolIntegrityException(
-                    "ResolvedJoinGovernance.maxWaitersPerKey must be > 0: $maxWaitersPerKey"
+                    "ResolvedJoinGovernance.maxWaitersPerKey must be > 0: $maxWaitersPerKey",
                 )
             }
             if (maxSpeculativeBuildersPerKey < 0) {
                 throw PlanningProtocolIntegrityException(
-                    "ResolvedJoinGovernance.maxSpeculativeBuildersPerKey must be >= 0: $maxSpeculativeBuildersPerKey"
+                    "ResolvedJoinGovernance.maxSpeculativeBuildersPerKey must be >= 0: $maxSpeculativeBuildersPerKey",
                 )
             }
 

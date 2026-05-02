@@ -66,18 +66,18 @@ class FixtureGenerator(
         logger.info { "FixtureGenerator initialized. Seed: $seed" }
     }
 
-    private val generators: List<TypeGenerator> = listOf(
-        BooleanTypeGenerator(),
-        TimeTypeGenerator(clock),
-        NumericTypeGenerator(),
-        StringTypeGenerator(),
-        CollectionTypeGenerator(),
-        ArrayTypeGenerator(),
-        EnumTypeGenerator(),
-        SealedTypeGenerator(),
-        ObjectGenerator(), // The Catch-All Fallback
-    )
-
+    private val generators: List<TypeGenerator> =
+        listOf(
+            BooleanTypeGenerator(),
+            TimeTypeGenerator(clock),
+            NumericTypeGenerator(),
+            StringTypeGenerator(),
+            CollectionTypeGenerator(),
+            ArrayTypeGenerator(),
+            EnumTypeGenerator(),
+            SealedTypeGenerator(),
+            ObjectGenerator(), // The Catch-All Fallback
+        )
 
     // =================================================================
     // Public Entry Points (API)
@@ -330,8 +330,7 @@ class FixtureGenerator(
         }
     }
 
-    private fun findGenerator(request: GenerationRequest): TypeGenerator? =
-        generators.firstOrNull { it.supports(request) }
+    private fun findGenerator(request: GenerationRequest): TypeGenerator? = generators.firstOrNull { it.supports(request) }
 
     /**
      * Performs final integrity checks on the generated result.
@@ -356,7 +355,6 @@ class FixtureGenerator(
      * It ensures the engine logic remains robust even in reflection-heavy or mocked contexts
      * where compile-time type inference might be unavailable or misleading.
      */
-    private fun GenerationRequest.hasAnnotation(annotationClass: KClass<out Annotation>): Boolean {
-        return this.annotations.any { it.annotationClass == annotationClass }
-    }
+    private fun GenerationRequest.hasAnnotation(annotationClass: KClass<out Annotation>): Boolean =
+        this.annotations.any { it.annotationClass == annotationClass }
 }

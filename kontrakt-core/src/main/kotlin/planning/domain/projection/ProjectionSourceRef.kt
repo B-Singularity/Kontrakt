@@ -27,7 +27,6 @@ import planning.domain.exception.ActiveMemberProjectionException
  * That cross-domain diagnostic-provenance system will be introduced later.
  */
 sealed interface ProjectionSourceRef {
-
     class SelectedConstructorParameterRef private constructor(
         val constructorSignature: String,
         val constructorSignatureNormalizationVersion: Long,
@@ -37,7 +36,6 @@ sealed interface ProjectionSourceRef {
         val origin: MemberOrigin,
         val visibility: VisibilityKind,
     ) : ProjectionSourceRef {
-
         companion object {
             @JvmStatic
             fun issue(
@@ -57,13 +55,13 @@ sealed interface ProjectionSourceRef {
                 if (constructorSignatureNormalizationVersion < 0L) {
                     throw ActiveMemberProjectionException(
                         "SelectedConstructorParameterRef.constructorSignatureNormalizationVersion must be >= 0: " +
-                                constructorSignatureNormalizationVersion
+                            constructorSignatureNormalizationVersion,
                     )
                 }
 
                 if (parameterIndex < 0) {
                     throw ActiveMemberProjectionException(
-                        "SelectedConstructorParameterRef.parameterIndex must be >= 0: $parameterIndex"
+                        "SelectedConstructorParameterRef.parameterIndex must be >= 0: $parameterIndex",
                     )
                 }
 
@@ -88,7 +86,6 @@ sealed interface ProjectionSourceRef {
         val mutability: PropertyMutability,
         val storageKind: PropertyStorageKind,
     ) : ProjectionSourceRef {
-
         companion object {
             @JvmStatic
             fun issue(
@@ -98,8 +95,8 @@ sealed interface ProjectionSourceRef {
                 setterVisibility: VisibilityKind?,
                 mutability: PropertyMutability,
                 storageKind: PropertyStorageKind,
-            ): EligiblePropertyRef {
-                return EligiblePropertyRef(
+            ): EligiblePropertyRef =
+                EligiblePropertyRef(
                     propertyDeclarationOrdinal = propertyDeclarationOrdinal,
                     origin = origin,
                     declaredVisibility = declaredVisibility,
@@ -107,7 +104,6 @@ sealed interface ProjectionSourceRef {
                     mutability = mutability,
                     storageKind = storageKind,
                 )
-            }
         }
     }
 }

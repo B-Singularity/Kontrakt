@@ -24,7 +24,5 @@ import metamodel.domain.vo.TypeReference
  * Planning Core uses this shape to choose the next expansion strategy.
  */
 interface TypeShapeProvider {
-    fun resolveTypeShape(
-        reference: TypeReference,
-    ): ResolvedTypeShape
+    fun resolveTypeShape(reference: TypeReference): ResolvedTypeShape
 }

@@ -49,17 +49,19 @@ class ActiveMemberProjectionResult private constructor(
                 propertyDemotions = propertyDemotions,
             )
 
-            val frozenMembers = ProjectionSequence.captureDeterministicProducerOrder(
-                ownerTypeFqcn = ownerTypeFqcn,
-                sequenceKind = "projected-active-members",
-                elements = members,
-            )
+            val frozenMembers =
+                ProjectionSequence.captureDeterministicProducerOrder(
+                    ownerTypeFqcn = ownerTypeFqcn,
+                    sequenceKind = "projected-active-members",
+                    elements = members,
+                )
 
-            val frozenDemotions = ProjectionSequence.captureDeterministicProducerOrder(
-                ownerTypeFqcn = ownerTypeFqcn,
-                sequenceKind = "property-demotions",
-                elements = propertyDemotions,
-            )
+            val frozenDemotions =
+                ProjectionSequence.captureDeterministicProducerOrder(
+                    ownerTypeFqcn = ownerTypeFqcn,
+                    sequenceKind = "property-demotions",
+                    elements = propertyDemotions,
+                )
 
             return ActiveMemberProjectionResult(
                 ownerTypeFqcn = ownerTypeFqcn,
@@ -76,7 +78,7 @@ class ActiveMemberProjectionResult private constructor(
             if (selectedConstructor.ownerTypeFqcn != ownerTypeFqcn) {
                 throw ActiveMemberProjectionException(
                     "ActiveMemberProjectionResult selectedConstructor owner mismatch: " +
-                            "expected=$ownerTypeFqcn, actual=${selectedConstructor.ownerTypeFqcn}",
+                        "expected=$ownerTypeFqcn, actual=${selectedConstructor.ownerTypeFqcn}",
                 )
             }
         }
@@ -93,8 +95,8 @@ class ActiveMemberProjectionResult private constructor(
                 if (member.ownerTypeFqcn != ownerTypeFqcn) {
                     throw ActiveMemberProjectionException(
                         "ActiveMemberProjectionResult projected member owner mismatch: " +
-                                "expected=$ownerTypeFqcn, actual=${member.ownerTypeFqcn}, " +
-                                "memberName=${member.name}",
+                            "expected=$ownerTypeFqcn, actual=${member.ownerTypeFqcn}, " +
+                            "memberName=${member.name}",
                     )
                 }
             }
@@ -112,8 +114,8 @@ class ActiveMemberProjectionResult private constructor(
                 if (demotion.ownerTypeFqcn != ownerTypeFqcn) {
                     throw ActiveMemberProjectionException(
                         "ActiveMemberProjectionResult property demotion owner mismatch: " +
-                                "expected=$ownerTypeFqcn, actual=${demotion.ownerTypeFqcn}, " +
-                                "propertyName=${demotion.propertyName}",
+                            "expected=$ownerTypeFqcn, actual=${demotion.ownerTypeFqcn}, " +
+                            "propertyName=${demotion.propertyName}",
                     )
                 }
             }

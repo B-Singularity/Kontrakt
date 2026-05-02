@@ -25,7 +25,6 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
 class ResultResolverInterceptorTest {
-
     private val spec = mockk<TestSpecification>()
     private val chain = mockk<ScenarioInterceptor.Chain>()
     private val targetClass = SampleTarget::class
@@ -34,11 +33,12 @@ class ResultResolverInterceptorTest {
     @BeforeEach
     fun setUp() {
         // Mocking the Test Target Information
-        val testTarget = mockk<DiscoveredTestTarget> {
-            every { kClass } returns targetClass
-            every { fullyQualifiedName } returns targetName
-            every { displayName } returns "Sample Target"
-        }
+        val testTarget =
+            mockk<DiscoveredTestTarget> {
+                every { kClass } returns targetClass
+                every { fullyQualifiedName } returns targetName
+                every { displayName } returns "Sample Target"
+            }
         every { spec.target } returns testTarget
 
         // Default context mock
@@ -287,10 +287,11 @@ class ResultResolverInterceptorTest {
     // Helper Class
     class SampleTarget
 
-    private fun createPassedRecord(location: SourceLocation) = AssertionRecord(
-        status = AssertionStatus.PASSED,
-        rule = StandardAssertion,
-        message = "OK",
-        location = location
-    )
+    private fun createPassedRecord(location: SourceLocation) =
+        AssertionRecord(
+            status = AssertionStatus.PASSED,
+            rule = StandardAssertion,
+            message = "OK",
+            location = location,
+        )
 }

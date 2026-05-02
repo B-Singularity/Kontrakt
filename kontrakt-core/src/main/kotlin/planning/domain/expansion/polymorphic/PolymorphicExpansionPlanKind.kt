@@ -40,26 +40,24 @@ enum class PolymorphicExpansionPlanKind(
     STRUCTURAL_MEMBER_SELECTION(
         protocolOrder = 30,
         protocolToken = "structural_member_selection",
-    );
+    ),
+    ;
 
     companion object {
         private const val MAX_PROTOCOL_TOKEN_CHARS: Int = 64
 
-        private val PROTOCOL_ORDERED: Array<PolymorphicExpansionPlanKind> = arrayOf(
-            CONTRACT_SUBJECT,
-            DEPENDENCY_SELECTION,
-            STRUCTURAL_MEMBER_SELECTION,
-        )
+        private val PROTOCOL_ORDERED: Array<PolymorphicExpansionPlanKind> =
+            arrayOf(
+                CONTRACT_SUBJECT,
+                DEPENDENCY_SELECTION,
+                STRUCTURAL_MEMBER_SELECTION,
+            )
 
         @JvmStatic
-        fun protocolOrderedValues(): Array<PolymorphicExpansionPlanKind> {
-            return PROTOCOL_ORDERED.copyOf()
-        }
+        fun protocolOrderedValues(): Array<PolymorphicExpansionPlanKind> = PROTOCOL_ORDERED.copyOf()
 
         @JvmStatic
-        fun fromProtocolToken(
-            protocolToken: String,
-        ): PolymorphicExpansionPlanKind {
+        fun fromProtocolToken(protocolToken: String): PolymorphicExpansionPlanKind {
             requireProtocolTokenSurface(protocolToken)
 
             return when (protocolToken) {
@@ -73,9 +71,7 @@ enum class PolymorphicExpansionPlanKind(
         }
 
         @JvmStatic
-        fun tryFromProtocolToken(
-            protocolToken: String,
-        ): PolymorphicExpansionPlanKind? {
+        fun tryFromProtocolToken(protocolToken: String): PolymorphicExpansionPlanKind? {
             requireProtocolTokenSurface(protocolToken)
 
             return when (protocolToken) {
@@ -87,10 +83,8 @@ enum class PolymorphicExpansionPlanKind(
         }
 
         @JvmStatic
-        fun fromProtocolOrder(
-            protocolOrder: Int,
-        ): PolymorphicExpansionPlanKind {
-            return when (protocolOrder) {
+        fun fromProtocolOrder(protocolOrder: Int): PolymorphicExpansionPlanKind =
+            when (protocolOrder) {
                 10 -> CONTRACT_SUBJECT
                 20 -> DEPENDENCY_SELECTION
                 30 -> STRUCTURAL_MEMBER_SELECTION
@@ -98,23 +92,17 @@ enum class PolymorphicExpansionPlanKind(
                     reason = "Unknown PolymorphicExpansionPlanKind protocol order.",
                 )
             }
-        }
 
         @JvmStatic
-        fun tryFromProtocolOrder(
-            protocolOrder: Int,
-        ): PolymorphicExpansionPlanKind? {
-            return when (protocolOrder) {
+        fun tryFromProtocolOrder(protocolOrder: Int): PolymorphicExpansionPlanKind? =
+            when (protocolOrder) {
                 10 -> CONTRACT_SUBJECT
                 20 -> DEPENDENCY_SELECTION
                 30 -> STRUCTURAL_MEMBER_SELECTION
                 else -> null
             }
-        }
 
-        private fun requireProtocolTokenSurface(
-            protocolToken: String,
-        ) {
+        private fun requireProtocolTokenSurface(protocolToken: String) {
             if (protocolToken.isEmpty()) {
                 throw TypeExpansionContractViolationException(
                     reason = "PolymorphicExpansionPlanKind protocol token must not be empty.",
@@ -132,8 +120,8 @@ enum class PolymorphicExpansionPlanKind(
                 val c = protocolToken[index]
                 val ok =
                     c in 'a'..'z' ||
-                            c in '0'..'9' ||
-                            c == '_'
+                        c in '0'..'9' ||
+                        c == '_'
 
                 if (!ok) {
                     throw TypeExpansionContractViolationException(

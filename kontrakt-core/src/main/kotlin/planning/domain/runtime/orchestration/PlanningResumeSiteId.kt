@@ -10,12 +10,10 @@ value class PlanningResumeSiteId private constructor(
 
     companion object {
         @JvmStatic
-        fun issue(
-            value: String,
-        ): PlanningResumeSiteId {
+        fun issue(value: String): PlanningResumeSiteId {
             if (value.isBlank()) {
                 throw PlanningProtocolIntegrityException(
-                    "PlanningResumeSiteId.value must not be blank."
+                    "PlanningResumeSiteId.value must not be blank.",
                 )
             }
 

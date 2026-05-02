@@ -14,7 +14,6 @@ import ir.plan.node.CanonicalPlanNode
  * - or must the request suspend and later restart?
  */
 sealed interface InternerStepResult {
-
     /**
      * The interning operation completed immediately and produced the final
      * canonical winner node.

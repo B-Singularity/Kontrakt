@@ -25,7 +25,6 @@ import java.nio.file.Path
 import kotlin.io.path.readText
 
 class RecyclingFileTraceSinkTest : TraceSinkTest {
-
     @TempDir
     lateinit var tempDir: Path
 
@@ -223,13 +222,14 @@ class RecyclingFileTraceSinkTest : TraceSinkTest {
         val method = RecyclingFileTraceSink::class.java.getDeclaredMethod("isCriticalEvent", TraceEvent::class.java)
         method.isAccessible = true
 
-        val assertions = mapOf(
-            TestVerdict(TestStatus.Passed, 100L, 0L) to true,
-            ExceptionTrace("RuntimeException", "error", emptyList(), 0L) to true,
-            VerificationTrace("Rule", AssertionStatus.PASSED, "detail", 0L) to true,
-            ExecutionTrace("methodSignature", emptyList(), 10L, 0L) to true,
-            DesignDecision("subject", "strategy", "value", 0L) to false
-        )
+        val assertions =
+            mapOf(
+                TestVerdict(TestStatus.Passed, 100L, 0L) to true,
+                ExceptionTrace("RuntimeException", "error", emptyList(), 0L) to true,
+                VerificationTrace("Rule", AssertionStatus.PASSED, "detail", 0L) to true,
+                ExecutionTrace("methodSignature", emptyList(), 10L, 0L) to true,
+                DesignDecision("subject", "strategy", "value", 0L) to false,
+            )
 
         assertions.forEach { (event, expected) ->
             val result = method.invoke(sut, event) as Boolean
@@ -292,7 +292,6 @@ class RecyclingFileTraceSinkTest : TraceSinkTest {
 
         sut.close()
     }
-
 
     @Test
     fun `emit - handles oversized payload safely when fileHandle is null`() {
@@ -358,7 +357,6 @@ class RecyclingFileTraceSinkTest : TraceSinkTest {
         // Cleanup: Unmock static to avoid side effects
         io.mockk.unmockkStatic(Runtime::class)
     }
-
 
     @Test
     fun `emit - flushes existing buffer before writing oversized payload`() {

@@ -11,7 +11,6 @@ import reporting.adapter.outgoing.console.ConsoleReporter
  * where needed, adhering to the Interface Segregation Principle (ISP).
  */
 interface ReportingInfrastructureFactory {
-
     fun createConsoleReporter(auditPolicy: AuditPolicy): ConsoleReporter
 
     /**
@@ -22,6 +21,6 @@ interface ReportingInfrastructureFactory {
      */
     fun createResultPublisher(
         publishers: List<TestResultPublisher>,
-        onPublishFailure: (String, Throwable) -> Unit
+        onPublishFailure: (String, Throwable) -> Unit,
     ): TestResultPublisher
 }

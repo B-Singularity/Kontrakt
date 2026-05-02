@@ -12,23 +12,25 @@ class CanonicalActiveMemberKey private constructor(
     val typeSignature: String,
     val declarationOrdinalLowered: Int,
 ) {
-    fun render(): String {
-        return "kind=$memberKindRank;" +
-                "name=${ProjectionOrderingPrimitives.renderField(name)};" +
-                "typeSignature=${ProjectionOrderingPrimitives.renderField(typeSignature)};" +
-                "declarationOrdinal=$declarationOrdinalLowered"
-    }
+    fun render(): String =
+        "kind=$memberKindRank;" +
+            "name=${ProjectionOrderingPrimitives.renderField(name)};" +
+            "typeSignature=${ProjectionOrderingPrimitives.renderField(typeSignature)};" +
+            "declarationOrdinal=$declarationOrdinalLowered"
 
     companion object {
         private val COMPARATOR: Comparator<CanonicalActiveMemberKey> =
             Comparator { left, right ->
-                ProjectionOrderingPrimitives.compareInts(
-                    left.memberKindRank,
-                    right.memberKindRank,
-                ).takeIfNonZero()
-                    ?: ProjectionOrderingPrimitives.compareStrings(left.name, right.name)
+                ProjectionOrderingPrimitives
+                    .compareInts(
+                        left.memberKindRank,
+                        right.memberKindRank,
+                    ).takeIfNonZero()
+                    ?: ProjectionOrderingPrimitives
+                        .compareStrings(left.name, right.name)
                         .takeIfNonZero()
-                    ?: ProjectionOrderingPrimitives.compareStrings(left.typeSignature, right.typeSignature)
+                    ?: ProjectionOrderingPrimitives
+                        .compareStrings(left.typeSignature, right.typeSignature)
                         .takeIfNonZero()
                     ?: ProjectionOrderingPrimitives.compareInts(
                         left.declarationOrdinalLowered,
@@ -37,24 +39,17 @@ class CanonicalActiveMemberKey private constructor(
             }
 
         @JvmStatic
-        fun issue(
-            member: ProjectedActiveMember,
-        ): CanonicalActiveMemberKey {
-            return CanonicalActiveMemberKey(
+        fun issue(member: ProjectedActiveMember): CanonicalActiveMemberKey =
+            CanonicalActiveMemberKey(
                 memberKindRank = ProjectionOrderingPrimitives.memberKindRank(member.memberKind),
                 name = member.name,
                 typeSignature = member.typeReference.signature,
                 declarationOrdinalLowered = member.declarationOrdinal.lowerForPrimitiveOrdering(),
             )
-        }
 
         @JvmStatic
-        fun comparator(): Comparator<CanonicalActiveMemberKey> {
-            return COMPARATOR
-        }
+        fun comparator(): Comparator<CanonicalActiveMemberKey> = COMPARATOR
 
-        private fun Int.takeIfNonZero(): Int? {
-            return ProjectionOrderingPrimitives.takeIfNonZero(this)
-        }
+        private fun Int.takeIfNonZero(): Int? = ProjectionOrderingPrimitives.takeIfNonZero(this)
     }
 }

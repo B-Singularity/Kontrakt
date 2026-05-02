@@ -32,12 +32,9 @@ import planning.domain.expansion.TypeCycleIdentity
  * - if the algorithm changes, a new provider/pipeline instance must be created through a new resolved policy boundary.
  */
 interface TypeCycleIdentityProvider {
-
     val identityAlgorithmId: String
 
     val identityAlgorithmVersion: Long
 
-    fun resolveCycleIdentity(
-        reference: TypeReference,
-    ): TypeCycleIdentity
+    fun resolveCycleIdentity(reference: TypeReference): TypeCycleIdentity
 }

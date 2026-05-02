@@ -25,7 +25,7 @@ class TestSpecification private constructor(
     val subject: SubjectDescriptor,
     val key: SpecKey,
     val modes: DeterministicList<TestMode>,
-    val metadata: DeterministicMap<CanonicalIdentifier, String>
+    val metadata: DeterministicMap<CanonicalIdentifier, String>,
 ) {
     init {
         val expectedKey = SpecKey(target, subject.concrete)
@@ -42,6 +42,7 @@ class TestSpecification private constructor(
     }
 
     override fun hashCode(): Int = Objects.hash(target, subject, key, modes, metadata)
+
     override fun toString(): String = "TestSpecification(key=$key, mode=$mode)"
 
     /**
@@ -50,11 +51,14 @@ class TestSpecification private constructor(
      * declared: the type as declared by the user
      * concrete: the resolved concrete type used for execution
      */
-    class SubjectDescriptor(val declared: TypeId, val concrete: TypeId) {
-        override fun equals(other: Any?): Boolean =
-            other is SubjectDescriptor && declared == other.declared && concrete == other.concrete
+    class SubjectDescriptor(
+        val declared: TypeId,
+        val concrete: TypeId,
+    ) {
+        override fun equals(other: Any?): Boolean = other is SubjectDescriptor && declared == other.declared && concrete == other.concrete
 
         override fun hashCode(): Int = Objects.hash(declared, concrete)
+
         override fun toString(): String = "SubjectDescriptor(declared=$declared, concrete=$concrete)"
     }
 
@@ -71,9 +75,8 @@ class TestSpecification private constructor(
             declared: TypeId,
             concrete: TypeId,
             modes: Collection<TestMode>,
-            metadata: Map<CanonicalIdentifier, String> = emptyMap()
+            metadata: Map<CanonicalIdentifier, String> = emptyMap(),
         ): TestSpecification {
-
             // Surface contributor mistakes: duplicates still count as >1 here.
             if (modes.size != 1) {
                 throw IrProtocolViolationException("Exactly one TestMode required (got ${modes.size}).")
@@ -81,18 +84,19 @@ class TestSpecification private constructor(
 
             val safeModes = DeterministicList.of(modes, IrLimits.MAX_MODES)
 
-            val safeMetadata = DeterministicMap.of(metadata, IrLimits.MAX_METADATA_ENTRIES) { value ->
-                if (value.length > IrLimits.MAX_METADATA_VALUE_LENGTH) {
-                    throw IrProtocolViolationException("Metadata value exceeds max length.")
+            val safeMetadata =
+                DeterministicMap.of(metadata, IrLimits.MAX_METADATA_ENTRIES) { value ->
+                    if (value.length > IrLimits.MAX_METADATA_VALUE_LENGTH) {
+                        throw IrProtocolViolationException("Metadata value exceeds max length.")
+                    }
                 }
-            }
 
             return TestSpecification(
                 target = target,
                 subject = SubjectDescriptor(declared, concrete),
                 key = SpecKey(target, concrete),
                 modes = safeModes,
-                metadata = safeMetadata
+                metadata = safeMetadata,
             )
         }
     }

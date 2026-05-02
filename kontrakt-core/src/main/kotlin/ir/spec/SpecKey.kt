@@ -11,17 +11,19 @@ import java.util.Objects
  */
 class SpecKey private constructor(
     val target: TypeId,
-    val subjectConcrete: TypeId
+    val subjectConcrete: TypeId,
 ) {
-    override fun equals(other: Any?): Boolean =
-        other is SpecKey && target == other.target && subjectConcrete == other.subjectConcrete
+    override fun equals(other: Any?): Boolean = other is SpecKey && target == other.target && subjectConcrete == other.subjectConcrete
 
     override fun hashCode(): Int = Objects.hash(target, subjectConcrete)
+
     override fun toString(): String = "SpecKey($target::$subjectConcrete)"
 
     companion object {
         @JvmStatic
-        fun of(target: TypeId, subjectConcrete: TypeId): SpecKey =
-            SpecKey(target, subjectConcrete)
+        fun of(
+            target: TypeId,
+            subjectConcrete: TypeId,
+        ): SpecKey = SpecKey(target, subjectConcrete)
     }
 }

@@ -71,10 +71,11 @@ class TypeShapeIdentityIssuancePolicy private constructor(
         classifierId: String,
         classifierVersion: String,
     ) {
-        val canonicalClassifierId = canonicalizeProtocolId(
-            field = "classifierId",
-            value = classifierId,
-        )
+        val canonicalClassifierId =
+            canonicalizeProtocolId(
+                field = "classifierId",
+                value = classifierId,
+            )
 
         requireProtocolToken(
             field = "classifierVersion",
@@ -87,15 +88,13 @@ class TypeShapeIdentityIssuancePolicy private constructor(
         ) {
             throw MetamodelFactContractViolationException(
                 "TypeShapeIdentityIssuancePolicy rejected classifier law: " +
-                        "expected=$activeClassifierId@$activeClassifierVersion, " +
-                        "actual=$canonicalClassifierId@$classifierVersion",
+                    "expected=$activeClassifierId@$activeClassifierVersion, " +
+                    "actual=$canonicalClassifierId@$classifierVersion",
             )
         }
     }
 
-    fun requireAllowsFingerprint(
-        ratificationFingerprint: TypeShapeRatificationFingerprint,
-    ) {
+    fun requireAllowsFingerprint(ratificationFingerprint: TypeShapeRatificationFingerprint) {
         ratificationFingerprint.requireAlgorithm(
             expectedAlgorithmId = expectedRatificationAlgorithmId,
             expectedAlgorithmVersion = expectedRatificationAlgorithmVersion,
@@ -104,8 +103,8 @@ class TypeShapeIdentityIssuancePolicy private constructor(
         if (ratificationFingerprint.valueEncoding != expectedFingerprintEncoding) {
             throw MetamodelFactContractViolationException(
                 "TypeShapeIdentityIssuancePolicy rejected fingerprint encoding: " +
-                        "expected=${expectedFingerprintEncoding.protocolToken}, " +
-                        "actual=${ratificationFingerprint.valueEncoding.protocolToken}",
+                    "expected=${expectedFingerprintEncoding.protocolToken}, " +
+                    "actual=${ratificationFingerprint.valueEncoding.protocolToken}",
             )
         }
     }
@@ -117,13 +116,12 @@ class TypeShapeIdentityIssuancePolicy private constructor(
      * binding of the fingerprint. The issuer policy is the domain-side authority
      * that declares which law is currently active. Both must agree.
      */
-    fun requireCompatibleVerifier(
-        verifier: TypeShapeRatificationVerifier,
-    ) {
-        val verifierAlgorithmId = canonicalizeAlgorithmId(
-            field = "verifier.expectedFingerprintAlgorithmId",
-            value = verifier.expectedFingerprintAlgorithmId,
-        )
+    fun requireCompatibleVerifier(verifier: TypeShapeRatificationVerifier) {
+        val verifierAlgorithmId =
+            canonicalizeAlgorithmId(
+                field = "verifier.expectedFingerprintAlgorithmId",
+                value = verifier.expectedFingerprintAlgorithmId,
+            )
 
         requireProtocolToken(
             field = "verifier.expectedFingerprintAlgorithmVersion",
@@ -136,44 +134,41 @@ class TypeShapeIdentityIssuancePolicy private constructor(
         ) {
             throw MetamodelFactContractViolationException(
                 "TypeShapeRatificationVerifier algorithm law does not match active issuance policy: " +
-                        "policy=$expectedRatificationAlgorithmId@$expectedRatificationAlgorithmVersion, " +
-                        "verifier=$verifierAlgorithmId@${verifier.expectedFingerprintAlgorithmVersion}",
+                    "policy=$expectedRatificationAlgorithmId@$expectedRatificationAlgorithmVersion, " +
+                    "verifier=$verifierAlgorithmId@${verifier.expectedFingerprintAlgorithmVersion}",
             )
         }
 
         if (verifier.expectedFingerprintValueEncoding != expectedFingerprintEncoding) {
             throw MetamodelFactContractViolationException(
                 "TypeShapeRatificationVerifier fingerprint encoding does not match active issuance policy: " +
-                        "policy=${expectedFingerprintEncoding.protocolToken}, " +
-                        "verifier=${verifier.expectedFingerprintValueEncoding.protocolToken}",
+                    "policy=${expectedFingerprintEncoding.protocolToken}, " +
+                    "verifier=${verifier.expectedFingerprintValueEncoding.protocolToken}",
             )
         }
     }
 
-    fun renderSummary(): String {
-        return "TypeShapeIdentityIssuancePolicy(" +
-                "policy=$policyId@$policyVersion, " +
-                "classifier=$activeClassifierId@$activeClassifierVersion, " +
-                "fingerprintLaw=$expectedRatificationAlgorithmId@$expectedRatificationAlgorithmVersion, " +
-                "encoding=${expectedFingerprintEncoding.protocolToken}" +
-                ")"
-    }
+    fun renderSummary(): String =
+        "TypeShapeIdentityIssuancePolicy(" +
+            "policy=$policyId@$policyVersion, " +
+            "classifier=$activeClassifierId@$activeClassifierVersion, " +
+            "fingerprintLaw=$expectedRatificationAlgorithmId@$expectedRatificationAlgorithmVersion, " +
+            "encoding=${expectedFingerprintEncoding.protocolToken}" +
+            ")"
 
-    override fun toString(): String {
-        return renderSummary()
-    }
+    override fun toString(): String = renderSummary()
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is TypeShapeIdentityIssuancePolicy) return false
 
         return policyId == other.policyId &&
-                policyVersion == other.policyVersion &&
-                activeClassifierId == other.activeClassifierId &&
-                activeClassifierVersion == other.activeClassifierVersion &&
-                expectedRatificationAlgorithmId == other.expectedRatificationAlgorithmId &&
-                expectedRatificationAlgorithmVersion == other.expectedRatificationAlgorithmVersion &&
-                expectedFingerprintEncoding == other.expectedFingerprintEncoding
+            policyVersion == other.policyVersion &&
+            activeClassifierId == other.activeClassifierId &&
+            activeClassifierVersion == other.activeClassifierVersion &&
+            expectedRatificationAlgorithmId == other.expectedRatificationAlgorithmId &&
+            expectedRatificationAlgorithmVersion == other.expectedRatificationAlgorithmVersion &&
+            expectedFingerprintEncoding == other.expectedFingerprintEncoding
     }
 
     override fun hashCode(): Int {
@@ -208,15 +203,17 @@ class TypeShapeIdentityIssuancePolicy private constructor(
                 value = expectedRatificationAlgorithmVersion,
             )
 
-            val canonicalClassifierId = canonicalizeProtocolId(
-                field = "activeClassifierId",
-                value = activeClassifierId,
-            )
+            val canonicalClassifierId =
+                canonicalizeProtocolId(
+                    field = "activeClassifierId",
+                    value = activeClassifierId,
+                )
 
-            val canonicalAlgorithmId = canonicalizeAlgorithmId(
-                field = "expectedRatificationAlgorithmId",
-                value = expectedRatificationAlgorithmId,
-            )
+            val canonicalAlgorithmId =
+                canonicalizeAlgorithmId(
+                    field = "expectedRatificationAlgorithmId",
+                    value = expectedRatificationAlgorithmId,
+                )
 
             return TypeShapeIdentityIssuancePolicy(
                 policyId = policyId,
@@ -258,7 +255,8 @@ class TypeShapeIdentityIssuancePolicy private constructor(
                     in '0'..'9',
                     '-',
                     '_',
-                    '.' -> {
+                    '.',
+                    -> {
                         // Already canonical-safe ASCII protocol material.
                     }
 
@@ -278,11 +276,12 @@ class TypeShapeIdentityIssuancePolicy private constructor(
 
             for (index in value.indices) {
                 val c = value[index]
-                val lowered = if (c in 'A'..'Z') {
-                    (c.code + 32).toChar()
-                } else {
-                    c
-                }
+                val lowered =
+                    if (c in 'A'..'Z') {
+                        (c.code + 32).toChar()
+                    } else {
+                        c
+                    }
 
                 builder.append(lowered)
             }
@@ -319,7 +318,8 @@ class TypeShapeIdentityIssuancePolicy private constructor(
                     in '0'..'9',
                     '-',
                     '_',
-                    '.' -> {
+                    '.',
+                    -> {
                         // Already canonical-safe ASCII algorithm material.
                     }
 
@@ -339,11 +339,12 @@ class TypeShapeIdentityIssuancePolicy private constructor(
 
             for (index in value.indices) {
                 val c = value[index]
-                val lowered = if (c in 'A'..'Z') {
-                    (c.code + 32).toChar()
-                } else {
-                    c
-                }
+                val lowered =
+                    if (c in 'A'..'Z') {
+                        (c.code + 32).toChar()
+                    } else {
+                        c
+                    }
 
                 builder.append(lowered)
             }

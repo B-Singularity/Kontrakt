@@ -37,9 +37,7 @@ class CapabilityProfile private constructor(
     private val allowComputedProperties: Boolean,
     private val allowAdapterInferredMembers: Boolean,
 ) {
-    fun admitConstructor(
-        candidate: ConstructorCandidateFact,
-    ): ConstructorAdmissionDecision {
+    fun admitConstructor(candidate: ConstructorCandidateFact): ConstructorAdmissionDecision {
         if (candidate.origin == MemberOrigin.SYNTHETIC) {
             return ConstructorAdmissionDecision.Rejected.issue(
                 ConstructorRejectionReason.SYNTHETIC_CONSTRUCTOR,
@@ -73,9 +71,7 @@ class CapabilityProfile private constructor(
         return ConstructorAdmissionDecision.Admitted
     }
 
-    fun admitProperty(
-        property: PropertyFact,
-    ): PropertyAdmissionDecision {
+    fun admitProperty(property: PropertyFact): PropertyAdmissionDecision {
         if (property.origin == MemberOrigin.SYNTHETIC) {
             return PropertyAdmissionDecision.Demoted.issue(
                 PropertyDemotionReason.SYNTHETIC_PROPERTY,
@@ -161,17 +157,14 @@ class CapabilityProfile private constructor(
         return PropertyAdmissionDecision.Admitted
     }
 
-    private fun isVisibilityAllowed(
-        visibility: VisibilityKind,
-    ): Boolean {
-        return when (visibility) {
+    private fun isVisibilityAllowed(visibility: VisibilityKind): Boolean =
+        when (visibility) {
             VisibilityKind.PUBLIC -> allowPublic
             VisibilityKind.PROTECTED -> allowProtected
             VisibilityKind.INTERNAL -> allowInternal
             VisibilityKind.PRIVATE -> allowPrivate
             VisibilityKind.UNKNOWN -> false
         }
-    }
 
     companion object {
         /**
@@ -181,10 +174,8 @@ class CapabilityProfile private constructor(
          * only read-only backing-field properties.
          */
         @JvmStatic
-        fun conservativeDefault(
-            capabilityProfileVersion: Long,
-        ): CapabilityProfile {
-            return issue(
+        fun conservativeDefault(capabilityProfileVersion: Long): CapabilityProfile =
+            issue(
                 capabilityProfileVersion = capabilityProfileVersion,
                 allowPublic = true,
                 allowProtected = false,
@@ -196,7 +187,6 @@ class CapabilityProfile private constructor(
                 allowComputedProperties = false,
                 allowAdapterInferredMembers = false,
             )
-        }
 
         @JvmStatic
         fun issue(

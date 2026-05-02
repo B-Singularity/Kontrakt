@@ -15,7 +15,6 @@ import java.util.ServiceLoader
  * it is considered a **Shadowing Conflict** and will cause a failure.
  */
 internal object RuntimeProducerGuard {
-
     fun ensureSingleProvider() {
         try {
             val apiLoader = ClasspathScanner::class.java.classLoader
@@ -23,11 +22,12 @@ internal object RuntimeProducerGuard {
 
             // 1. Load Provider Classes (Identity Check)
             val apiClasses = loadProviderClasses(apiLoader)
-            val threadClasses = if (threadLoader != null && threadLoader !== apiLoader) {
-                loadProviderClasses(threadLoader)
-            } else {
-                emptyList()
-            }
+            val threadClasses =
+                if (threadLoader != null && threadLoader !== apiLoader) {
+                    loadProviderClasses(threadLoader)
+                } else {
+                    emptyList()
+                }
 
             // 2. Unify & Validate
             val allClasses = (apiClasses + threadClasses).distinct() // Distinct by Object Identity
@@ -43,8 +43,8 @@ internal object RuntimeProducerGuard {
 
                 throw RuntimeIntegrityException(
                     "Environment Integrity Violation: Provider Shadowing detected. " +
-                            "Multiple distinct classes found for the same provider name(s): [$conflictDetails]. " +
-                            "Check your classpath for duplicate artifacts."
+                        "Multiple distinct classes found for the same provider name(s): [$conflictDetails]. " +
+                        "Check your classpath for duplicate artifacts.",
                 )
             }
 
@@ -56,9 +56,10 @@ internal object RuntimeProducerGuard {
                 val status = if (distinctCount == 0) "Missing Provider" else "Multiple Providers"
                 val foundList = if (distinctCount > 0) " (Found: $names)" else ""
 
-                throw RuntimeIntegrityException("Environment Integrity Violation: $status$foundList (Must have exactly one 'kontrakt-discovery-*' artifact)")
+                throw RuntimeIntegrityException(
+                    "Environment Integrity Violation: $status$foundList (Must have exactly one 'kontrakt-discovery-*' artifact)",
+                )
             }
-
         } catch (e: ServiceConfigurationError) {
             throw RuntimeIntegrityException("ServiceLoader failure during provider inspection.", e)
         } catch (e: LinkageError) {
@@ -66,10 +67,10 @@ internal object RuntimeProducerGuard {
         }
     }
 
-    private fun loadProviderClasses(loader: ClassLoader): List<Class<out ClasspathScanner>> {
-        return ServiceLoader.load(ClasspathScanner::class.java, loader)
+    private fun loadProviderClasses(loader: ClassLoader): List<Class<out ClasspathScanner>> =
+        ServiceLoader
+            .load(ClasspathScanner::class.java, loader)
             .stream()
             .map { it.type() }
             .toList()
-    }
 }

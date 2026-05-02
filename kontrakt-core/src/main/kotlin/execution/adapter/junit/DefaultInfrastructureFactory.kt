@@ -19,7 +19,6 @@ import java.nio.file.Path
  * providing concrete instances of [BroadcastingResultPublisher] and [WorkerTraceSinkPool].
  */
 object DefaultInfrastructureFactory : ReportingInfrastructureFactory, TracingInfrastructureFactory {
-
     override fun createConsoleReporter(auditPolicy: AuditPolicy): ConsoleReporter {
         val noColorEnv = System.getenv("NO_COLOR")
 
@@ -31,7 +30,7 @@ object DefaultInfrastructureFactory : ReportingInfrastructureFactory, TracingInf
 
     override fun createResultPublisher(
         publishers: List<TestResultPublisher>,
-        onPublishFailure: (String, Throwable) -> Unit
+        onPublishFailure: (String, Throwable) -> Unit,
     ): TestResultPublisher = BroadcastingResultPublisher(publishers, onPublishFailure)
 
     override fun createTraceSinkPool(path: Path): WorkerTraceSinkPool = WorkerTraceSinkPool(path)
@@ -44,7 +43,5 @@ object DefaultInfrastructureFactory : ReportingInfrastructureFactory, TracingInf
      *
      * @return [ConsoleTheme] (Abstraction) instead of concrete implementation.
      */
-    internal fun resolveTheme(noColorEnv: String?): ConsoleTheme {
-        return if (noColorEnv.isNullOrEmpty()) AnsiTheme else NoColorTheme
-    }
+    internal fun resolveTheme(noColorEnv: String?): ConsoleTheme = if (noColorEnv.isNullOrEmpty()) AnsiTheme else NoColorTheme
 }

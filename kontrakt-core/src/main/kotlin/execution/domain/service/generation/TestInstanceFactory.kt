@@ -76,7 +76,7 @@ class TestInstanceFactory(
             context.targetMethod = targetMethod.javaMethod
                 ?: throw KontraktInternalException(
                     "Reflection failure: Could not resolve Java method for Kotlin function '${targetMethod.name}' " +
-                            "in class '${spec.target.displayName}'.",
+                        "in class '${spec.target.displayName}'.",
                 )
         } catch (e: KontraktConfigurationException) {
             throw e
@@ -109,7 +109,7 @@ class TestInstanceFactory(
                     .firstOrNull()
                     ?: throw KontraktConfigurationException(
                         "No executable business methods found in implementation '${type.simpleName}'. " +
-                                "Standard methods (toString, equals, hashCode) are excluded from ContractAuto discovery."
+                            "Standard methods (toString, equals, hashCode) are excluded from ContractAuto discovery.",
                     )
             }
 
@@ -117,14 +117,14 @@ class TestInstanceFactory(
                 functions.firstOrNull { it.findAnnotation<Test>() != null }
                     ?: functions.firstOrNull { !it.isStandardMethod }
                     ?: throw KontraktInternalException(
-                        "Invariant violation: Class '${type.simpleName}' passed discovery but has no executable methods."
+                        "Invariant violation: Class '${type.simpleName}' passed discovery but has no executable methods.",
                     )
             }
 
             is TestSpecification.TestMode.DataCompliance -> {
                 type.primaryConstructor
                     ?: throw KontraktConfigurationException(
-                        "Data Compliance check requires a primary constructor in class '${type.simpleName}'."
+                        "Data Compliance check requires a primary constructor in class '${type.simpleName}'.",
                     )
             }
         }
@@ -176,7 +176,7 @@ class TestInstanceFactory(
                         val request =
                             GenerationRequest.from(
                                 type.starProjectedType,
-                                name = type.simpleName!!
+                                name = type.simpleName!!,
                             )
                         mockingContext.generator.generate(request, generationContext)!!
                     }.getOrNull()?.let { return it }
@@ -263,14 +263,14 @@ class TestInstanceFactory(
 
     private fun isBasicValueType(type: KClass<*>): Boolean =
         type == String::class ||
-                type == Int::class ||
-                type == Long::class ||
-                type == Double::class ||
-                type == Boolean::class ||
-                type == List::class ||
-                type == Map::class ||
-                type == Set::class ||
-                type.isData
+            type == Int::class ||
+            type == Long::class ||
+            type == Double::class ||
+            type == Boolean::class ||
+            type == List::class ||
+            type == Map::class ||
+            type == Set::class ||
+            type.isData
 
     // --- Extensions & Constants ---
 
@@ -278,12 +278,13 @@ class TestInstanceFactory(
         get() = this.name in STANDARD_JVM_METHODS
 
     companion object {
-        private val STANDARD_JVM_METHODS = setOf(
-            "equals",
-            "hashCode",
-            "toString"
-            // "notify", "notifyAll", "wait" are final in Java/Kotlin, usually not exposed via KFunction unless strictly reflective,
-            // but safe to exclude if they ever appear.
-        )
+        private val STANDARD_JVM_METHODS =
+            setOf(
+                "equals",
+                "hashCode",
+                "toString",
+                // "notify", "notifyAll", "wait" are final in Java/Kotlin, usually not exposed via KFunction unless strictly reflective,
+                // but safe to exclude if they ever appear.
+            )
     }
 }

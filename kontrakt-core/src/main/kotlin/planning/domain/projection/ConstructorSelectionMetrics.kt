@@ -59,21 +59,21 @@ class ConstructorSelectionMetrics private constructor(
             if (strongSatisfiableCount > totalParameterCount) {
                 throw ActiveMemberProjectionException(
                     "ConstructorSelectionMetrics.strongSatisfiableCount must be <= totalParameterCount: " +
-                            "strongSatisfiableCount=$strongSatisfiableCount, totalParameterCount=$totalParameterCount",
+                        "strongSatisfiableCount=$strongSatisfiableCount, totalParameterCount=$totalParameterCount",
                 )
             }
 
             if (nullableAvailableCount > totalParameterCount) {
                 throw ActiveMemberProjectionException(
                     "ConstructorSelectionMetrics.nullableAvailableCount must be <= totalParameterCount: " +
-                            "nullableAvailableCount=$nullableAvailableCount, totalParameterCount=$totalParameterCount",
+                        "nullableAvailableCount=$nullableAvailableCount, totalParameterCount=$totalParameterCount",
                 )
             }
 
             if (defaultAvailableCount > totalParameterCount) {
                 throw ActiveMemberProjectionException(
                     "ConstructorSelectionMetrics.defaultAvailableCount must be <= totalParameterCount: " +
-                            "defaultAvailableCount=$defaultAvailableCount, totalParameterCount=$totalParameterCount",
+                        "defaultAvailableCount=$defaultAvailableCount, totalParameterCount=$totalParameterCount",
                 )
             }
 
@@ -93,9 +93,9 @@ class ConstructorSelectionMetrics private constructor(
             if (strongSatisfiableCount + nullableAvailableCount != totalParameterCount) {
                 throw ActiveMemberProjectionException(
                     "ConstructorSelectionMetrics nullability metrics must partition total parameters: " +
-                            "strongSatisfiableCount=$strongSatisfiableCount, " +
-                            "nullableAvailableCount=$nullableAvailableCount, " +
-                            "totalParameterCount=$totalParameterCount",
+                        "strongSatisfiableCount=$strongSatisfiableCount, " +
+                        "nullableAvailableCount=$nullableAvailableCount, " +
+                        "totalParameterCount=$totalParameterCount",
                 )
             }
 

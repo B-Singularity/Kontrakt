@@ -10,7 +10,6 @@ import org.junit.platform.engine.UniqueId
 import org.junit.platform.engine.support.descriptor.ClassSource
 
 class KontraktTestDescriptorTest {
-
     // =================================================================================================================
     // Type Resolution Tests (getType)
     // =================================================================================================================
@@ -58,12 +57,14 @@ class KontraktTestDescriptorTest {
         val targetClass = String::class // Example class
 
         // Mock chain: TestSpecification -> DiscoveredTestTarget -> KClass
-        val mockTarget = mockk<DiscoveredTestTarget> {
-            every { kClass } returns targetClass
-        }
-        val mockSpec = mockk<TestSpecification> {
-            every { target } returns mockTarget
-        }
+        val mockTarget =
+            mockk<DiscoveredTestTarget> {
+                every { kClass } returns targetClass
+            }
+        val mockSpec =
+            mockk<TestSpecification> {
+                every { target } returns mockTarget
+            }
 
         val descriptor = KontraktTestDescriptor(uniqueId, "MyTest", mockSpec)
 

@@ -20,7 +20,6 @@ import kotlin.reflect.KType
 import kotlin.reflect.full.createType
 
 class FixtureGeneratorTest {
-
     private val mockingEngine = mockk<MockingEngine>()
     private val clock = Clock.fixed(Instant.parse("2024-01-01T00:00:00Z"), ZoneId.of("UTC"))
     private val trace = mockk<ScenarioTrace>(relaxed = true)
@@ -122,8 +121,13 @@ class FixtureGeneratorTest {
     }
 
     // [Fix] Defined at class level to resolve forward reference error
-    data class CyclicA(val b: CyclicB)
-    data class CyclicB(val a: CyclicA)
+    data class CyclicA(
+        val b: CyclicB,
+    )
+
+    data class CyclicB(
+        val a: CyclicA,
+    )
 
     @Test
     fun `generate - fails explicitly if mocking fallback also fails`() {
@@ -131,7 +135,7 @@ class FixtureGeneratorTest {
         every {
             mockingEngine.createMock(
                 any<kotlin.reflect.KClass<*>>(),
-                any<execution.port.outgoing.MockingContext>()
+                any<execution.port.outgoing.MockingContext>(),
             )
         } throws RuntimeException("Mocking failed")
 
@@ -147,18 +151,17 @@ class FixtureGeneratorTest {
     // Helpers
     // =========================================================================
 
-    private fun createRequest(type: KType): GenerationRequest {
-        return GenerationRequest(
+    private fun createRequest(type: KType): GenerationRequest =
+        GenerationRequest(
             name = "testParam",
             type = type,
-            annotations = emptyList()
+            annotations = emptyList(),
         )
-    }
 
     private fun mockParam(
         type: KType,
         name: String = "testParam",
-        annotations: List<Annotation> = emptyList()
+        annotations: List<Annotation> = emptyList(),
     ): KParameter {
         val param = mockk<KParameter>()
         every { param.type } returns type

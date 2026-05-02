@@ -1,6 +1,8 @@
 package planning.domain.expansion.polymorphic
 
 import metamodel.domain.protocol.MetamodelProtocolOrdering
+import metamodel.domain.vo.CanonicalTypeId
+import metamodel.domain.vo.CanonicalTypeSignature
 import planning.domain.exception.TypeExpansionContractViolationException
 import planning.domain.expansion.sequence.ExpansionSequence
 
@@ -27,13 +29,9 @@ class RuntimeBindingSnapshot private constructor(
     val id: RuntimeBindingSnapshotId,
     val bindings: ExpansionSequence<ResolvedBinding>,
 ) {
-    fun isEmpty(): Boolean {
-        return bindings.isEmpty()
-    }
+    fun isEmpty(): Boolean = bindings.isEmpty()
 
-    fun renderSummary(): String {
-        return "RuntimeBindingSnapshot(id=${id.renderSummary()}, bindings=${bindings.size})"
-    }
+    fun renderSummary(): String = "RuntimeBindingSnapshot(id=${id.renderSummary()}, bindings=${bindings.size})"
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -49,33 +47,34 @@ class RuntimeBindingSnapshot private constructor(
         return result
     }
 
-    override fun toString(): String {
-        return renderSummary()
-    }
+    override fun toString(): String = renderSummary()
 
     companion object {
         private val BINDING_TOTAL_ORDER: Comparator<ResolvedBinding> =
             Comparator { left, right ->
-                val requested = TypeReferenceIdentity.compareBySignature(
-                    left.requestedType,
-                    right.requestedType,
-                )
+                val requested =
+                    TypeReferenceIdentity.compareBySignature(
+                        left.requestedType,
+                        right.requestedType,
+                    )
                 if (requested != 0) {
                     return@Comparator requested
                 }
 
-                val kind = MetamodelProtocolOrdering.compareInt(
-                    left = left.bindingKind.protocolOrder,
-                    right = right.bindingKind.protocolOrder,
-                )
+                val kind =
+                    MetamodelProtocolOrdering.compareInt(
+                        left = left.bindingKind.protocolOrder,
+                        right = right.bindingKind.protocolOrder,
+                    )
                 if (kind != 0) {
                     return@Comparator kind
                 }
 
-                val selected = TypeReferenceIdentity.compareBySignature(
-                    left.selectedImplementation.type,
-                    right.selectedImplementation.type,
-                )
+                val selected =
+                    TypeReferenceIdentity.compareBySignature(
+                        left.selectedImplementation.type,
+                        right.selectedImplementation.type,
+                    )
                 if (selected != 0) {
                     return@Comparator selected
                 }
@@ -98,16 +97,17 @@ class RuntimeBindingSnapshot private constructor(
 
             return RuntimeBindingSnapshot(
                 id = id,
-                bindings = ExpansionSequence.orderedStrict(
-                    elements = bindings,
-                    comparator = BINDING_TOTAL_ORDER,
-                    duplicateMessage = { left, right ->
-                        "Duplicate runtime binding: requested=${left.requestedType.signature}, " +
-                                "kind=${left.bindingKind.protocolToken}, " +
-                                "selected=${left.selectedImplementation.canonicalIdentifier}; " +
-                                "other selected=${right.selectedImplementation.canonicalIdentifier}"
-                    },
-                ),
+                bindings =
+                    ExpansionSequence.orderedStrict(
+                        elements = bindings,
+                        comparator = BINDING_TOTAL_ORDER,
+                        duplicateMessage = { left, right ->
+                            "Duplicate runtime binding: requested=${left.requestedType.signature}, " +
+                                    "kind=${left.bindingKind.protocolToken}, " +
+                                    "selected=${left.selectedImplementation.canonicalIdentifier}; " +
+                                    "other selected=${right.selectedImplementation.canonicalIdentifier}"
+                        },
+                    ),
             )
         }
 
@@ -115,9 +115,10 @@ class RuntimeBindingSnapshot private constructor(
             snapshotId: RuntimeBindingSnapshotId,
             bindings: Collection<ResolvedBinding>,
         ) {
-            val seen = HashMap<BindingAmbiguityKey, ConcreteImplementationReference>(
-                bindings.size.coerceAtLeast(16),
-            )
+            val seen =
+                HashMap<BindingAmbiguityKey, ConcreteImplementationReference>(
+                    bindings.size.coerceAtLeast(16),
+                )
 
             val iterator = bindings.iterator()
             while (iterator.hasNext()) {
@@ -127,22 +128,25 @@ class RuntimeBindingSnapshot private constructor(
                     continue
                 }
 
-                val key = BindingAmbiguityKey.issue(
-                    snapshotId = snapshotId,
-                    binding = binding,
-                )
+                val key =
+                    BindingAmbiguityKey.issue(
+                        snapshotId = snapshotId,
+                        binding = binding,
+                    )
 
-                val previous = seen.putIfAbsent(
-                    key,
-                    binding.selectedImplementation,
-                )
+                val previous =
+                    seen.putIfAbsent(
+                        key,
+                        binding.selectedImplementation,
+                    )
 
                 if (previous != null && previous != binding.selectedImplementation) {
                     throw TypeExpansionContractViolationException(
-                        reason = "Ambiguous runtime binding: requested=${binding.requestedType.signature}, " +
-                                "kind=${binding.bindingKind.protocolToken}, " +
-                                "selectedA=${previous.canonicalIdentifier}, " +
-                                "selectedB=${binding.selectedImplementation.canonicalIdentifier}",
+                        reason =
+                            "Ambiguous runtime binding: requested=${binding.requestedType.signature}, " +
+                                    "kind=${binding.bindingKind.protocolToken}, " +
+                                    "selectedA=${previous.canonicalIdentifier}, " +
+                                    "selectedB=${binding.selectedImplementation.canonicalIdentifier}",
                     )
                 }
             }
@@ -159,8 +163,8 @@ class RuntimeBindingSnapshot private constructor(
  */
 private class BindingAmbiguityKey private constructor(
     private val scopeId: RuntimeBindingScopeId,
-    private val requestedId: metamodel.domain.vo.CanonicalTypeId,
-    private val requestedSignature: metamodel.domain.vo.CanonicalTypeSignature,
+    private val requestedId: CanonicalTypeId,
+    private val requestedSignature: CanonicalTypeSignature,
     private val bindingKind: BindingKind,
 ) {
     override fun equals(other: Any?): Boolean {
@@ -186,8 +190,6 @@ private class BindingAmbiguityKey private constructor(
             snapshotId: RuntimeBindingSnapshotId,
             binding: ResolvedBinding,
         ): BindingAmbiguityKey {
-            TypeReferenceIdentity.requireValid(binding.requestedType)
-
             return BindingAmbiguityKey(
                 scopeId = snapshotId.scopeId,
                 requestedId = binding.requestedType.id,

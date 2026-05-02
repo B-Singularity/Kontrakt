@@ -9,7 +9,6 @@ import planning.domain.exception.PlanningProtocolIntegrityException
  * ad hoc across multiple runtime-boundary branches.
  */
 object PlanningRunLifecycleLaw {
-
     @JvmStatic
     fun requireTransition(
         from: PlanningRunState,
@@ -17,7 +16,7 @@ object PlanningRunLifecycleLaw {
     ) {
         if (!canTransition(from, to)) {
             throw PlanningProtocolIntegrityException(
-                "Illegal PlanningRunState transition: $from -> $to"
+                "Illegal PlanningRunState transition: $from -> $to",
             )
         }
     }
@@ -26,32 +25,32 @@ object PlanningRunLifecycleLaw {
     fun canTransition(
         from: PlanningRunState,
         to: PlanningRunState,
-    ): Boolean {
-        return when (from) {
+    ): Boolean =
+        when (from) {
             PlanningRunState.INITIALIZED ->
                 to == PlanningRunState.RUNNING ||
-                        to == PlanningRunState.ABORTED ||
-                        to == PlanningRunState.PANIC_ISOLATED
+                    to == PlanningRunState.ABORTED ||
+                    to == PlanningRunState.PANIC_ISOLATED
 
             PlanningRunState.RUNNING ->
                 to == PlanningRunState.SUSPENDED_ON_JOIN ||
-                        to == PlanningRunState.COMPLETED ||
-                        to == PlanningRunState.ABORTED ||
-                        to == PlanningRunState.PANIC_ISOLATED
+                    to == PlanningRunState.COMPLETED ||
+                    to == PlanningRunState.ABORTED ||
+                    to == PlanningRunState.PANIC_ISOLATED
 
             PlanningRunState.SUSPENDED_ON_JOIN ->
                 to == PlanningRunState.READY_TO_RESTART ||
-                        to == PlanningRunState.ABORTED ||
-                        to == PlanningRunState.PANIC_ISOLATED
+                    to == PlanningRunState.ABORTED ||
+                    to == PlanningRunState.PANIC_ISOLATED
 
             PlanningRunState.READY_TO_RESTART ->
                 to == PlanningRunState.RUNNING ||
-                        to == PlanningRunState.ABORTED ||
-                        to == PlanningRunState.PANIC_ISOLATED
+                    to == PlanningRunState.ABORTED ||
+                    to == PlanningRunState.PANIC_ISOLATED
 
             PlanningRunState.COMPLETED,
             PlanningRunState.ABORTED,
-            PlanningRunState.PANIC_ISOLATED -> false
+            PlanningRunState.PANIC_ISOLATED,
+            -> false
         }
-    }
 }

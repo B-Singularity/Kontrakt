@@ -26,9 +26,8 @@ sealed interface CanonicalPlanNode {
  */
 class CanonicalAtomicNode(
     override val typeSignature: CanonicalSignature,
-    attributes: Map<CanonicalIdentifier, Attribute>
+    attributes: Map<CanonicalIdentifier, Attribute>,
 ) : CanonicalPlanNode {
-
     override val attributes: DeterministicMap<CanonicalIdentifier, Attribute> =
         DeterministicMap.of(attributes, IrLimits.MAX_NODE_ATTRIBUTES)
 
@@ -39,6 +38,7 @@ class CanonicalAtomicNode(
     }
 
     override fun hashCode(): Int = 31 * typeSignature.hashCode() + attributes.hashCode()
+
     override fun toString(): String = "CanonicalAtomicNode(sig=$typeSignature, attrs=$attributes)"
 }
 
@@ -48,9 +48,8 @@ class CanonicalAtomicNode(
 class CanonicalCompositeNode(
     override val typeSignature: CanonicalSignature,
     attributes: Map<CanonicalIdentifier, Attribute>,
-    fields: Map<CanonicalIdentifier, CanonicalPlanNode>
+    fields: Map<CanonicalIdentifier, CanonicalPlanNode>,
 ) : CanonicalPlanNode {
-
     override val attributes: DeterministicMap<CanonicalIdentifier, Attribute> =
         DeterministicMap.of(attributes, IrLimits.MAX_NODE_ATTRIBUTES)
 
@@ -61,8 +60,8 @@ class CanonicalCompositeNode(
         if (this === other) return true
         if (other !is CanonicalCompositeNode) return false
         return typeSignature == other.typeSignature &&
-                attributes == other.attributes &&
-                fields == other.fields
+            attributes == other.attributes &&
+            fields == other.fields
     }
 
     override fun hashCode(): Int {

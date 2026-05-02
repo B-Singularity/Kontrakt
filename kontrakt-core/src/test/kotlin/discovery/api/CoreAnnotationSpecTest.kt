@@ -10,32 +10,29 @@ import kotlin.annotation.AnnotationTarget.FUNCTION
 import kotlin.reflect.KClass
 
 class CoreAnnotationSpecTest {
-
     companion object {
         /**
          * [Group 1] Class-level Annotations (Interfaces/Classes)
          * These define the type of contract or test container.
          */
         @JvmStatic
-        fun provideClassLevelAnnotations(): Stream<KClass<out Annotation>> {
-            return Stream.of(
+        fun provideClassLevelAnnotations(): Stream<KClass<out Annotation>> =
+            Stream.of(
                 Contract::class,
                 DataContract::class,
                 KontraktTest::class,
-                Stateful::class
+                Stateful::class,
             )
-        }
 
         /**
          * [Group 2] Function-level Annotations
          * These mark specific methods as executable tests.
          */
         @JvmStatic
-        fun provideFunctionLevelAnnotations(): Stream<KClass<out Annotation>> {
-            return Stream.of(
-                Test::class
+        fun provideFunctionLevelAnnotations(): Stream<KClass<out Annotation>> =
+            Stream.of(
+                Test::class,
             )
-        }
     }
 
     // 1. Common Rule: All framework annotations must be available at RUNTIME.

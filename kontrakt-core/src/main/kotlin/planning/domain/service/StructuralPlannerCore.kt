@@ -65,27 +65,30 @@ class StructuralPlannerCore private constructor(
     private val interner: PlanInterner,
     private val keyFactory: PlanKeyFactory,
 ) {
-
     fun plan(
         partitionId: PartitionId,
         rootTypeReference: TypeReference,
         capabilityProfile: CapabilityProfile,
         session: PlannerSession,
-    ): CommittedPlanNode {
-        return try {
+    ): CommittedPlanNode =
+        try {
             session.startSession()
             session.pushExecutionFrame(PlanNodeFrame.issue(rootTypeReference))
 
             val workMeter = SessionTypeExpansionWorkMeter.issue(session)
 
-            val root = executeDfs(
-                partitionId = partitionId,
-                capabilityProfile = capabilityProfile,
-                session = session,
-                workMeter = workMeter,
-            )
+            val root =
+                executeDfs(
+                    partitionId = partitionId,
+                    capabilityProfile = capabilityProfile,
+                    session = session,
+                    workMeter = workMeter,
+                )
 
-            if (root.treeSemanticCostUpperBound > session.config.budget.maxSemanticWorkUnits.toLong()) {
+            if (root.treeSemanticCostUpperBound >
+                session.config.budget.maxSemanticWorkUnits
+                    .toLong()
+            ) {
                 throw CapacityExceededException(
                     limitType = "SEMANTIC_BUDGET",
                     value = root.treeSemanticCostUpperBound,
@@ -96,7 +99,6 @@ class StructuralPlannerCore private constructor(
         } finally {
             session.resetToCleanState()
         }
-    }
 
     private fun executeDfs(
         partitionId: PartitionId,
@@ -152,15 +154,17 @@ class StructuralPlannerCore private constructor(
         session: PlannerSession,
         workMeter: SessionTypeExpansionWorkMeter,
     ) {
-        val preflight = typeExpansionPipeline.preparePreflight(
-            reference = frame.typeReference,
-            workMeter = workMeter,
-        )
+        val preflight =
+            typeExpansionPipeline.preparePreflight(
+                reference = frame.typeReference,
+                workMeter = workMeter,
+            )
 
-        val cycleDepth = session.enterOrDetectCycle(
-            identityBits = preflight.cycleIdentity.identityBits64,
-            signature = preflight.cycleIdentity.canonicalSignature,
-        )
+        val cycleDepth =
+            session.enterOrDetectCycle(
+                identityBits = preflight.cycleIdentity.identityBits64,
+                signature = preflight.cycleIdentity.canonicalSignature,
+            )
 
         if (cycleDepth != -1) {
             completeCycleHit(
@@ -177,11 +181,12 @@ class StructuralPlannerCore private constructor(
 
         when (preflight) {
             is TypeExpansionPreflightDecision.CompositePreflight -> {
-                val decision = typeExpansionPipeline.prepareCompositeExpansion(
-                    preflight = preflight,
-                    capabilityProfile = capabilityProfile,
-                    workMeter = workMeter,
-                )
+                val decision =
+                    typeExpansionPipeline.prepareCompositeExpansion(
+                        preflight = preflight,
+                        capabilityProfile = capabilityProfile,
+                        workMeter = workMeter,
+                    )
 
                 session.transitionToIterate(
                     frame = frame,
@@ -230,10 +235,11 @@ class StructuralPlannerCore private constructor(
         cycleDepth: Int,
         session: PlannerSession,
     ) {
-        val decision = session.attemptDeterministicBreak(
-            cycleDepth = cycleDepth,
-            backEdge = frame,
-        )
+        val decision =
+            session.attemptDeterministicBreak(
+                cycleDepth = cycleDepth,
+                backEdge = frame,
+            )
 
         if (decision == null) {
             /*
@@ -251,33 +257,38 @@ class StructuralPlannerCore private constructor(
         val owner = session.resolveBreakpointOwnerFacts(decision)
         val member = session.resolveBreakpointMember(decision)
 
-        val assembly = cycleBreakPayloadAssembler.assemble(
-            ownerFacts = owner.ownerFacts(),
-            member = member,
-            stage = decision.stage,
-        )
+        val assembly =
+            cycleBreakPayloadAssembler.assemble(
+                ownerFacts = owner.ownerFacts(),
+                member = member,
+                stage = decision.stage,
+            )
 
-        val cacheKey = keyFactory.issue(
-            partitionId = partitionId,
-            equalityKey = assembly.equalityKey,
-            session = session,
-        )
-
-        val canonical = requireImmediateInternerCompletion(
-            result = interner.resolveCycleBreak(
+        val cacheKey =
+            keyFactory.issue(
                 partitionId = partitionId,
-                key = cacheKey,
+                equalityKey = assembly.equalityKey,
                 session = session,
-                rawPayload = assembly.payload,
-            ),
-            site = InternerInvocationSite.CYCLE_BREAK,
-        )
+            )
 
-        val committed = committedPlanNodeFactory.createCycleBreak(
-            irNode = canonical,
-            cacheKey = cacheKey,
-            assembly = assembly,
-        )
+        val canonical =
+            requireImmediateInternerCompletion(
+                result =
+                    interner.resolveCycleBreak(
+                        partitionId = partitionId,
+                        key = cacheKey,
+                        session = session,
+                        rawPayload = assembly.payload,
+                    ),
+                site = InternerInvocationSite.CYCLE_BREAK,
+            )
+
+        val committed =
+            committedPlanNodeFactory.createCycleBreak(
+                irNode = canonical,
+                cacheKey = cacheKey,
+                assembly = assembly,
+            )
 
         session.recordSubstitution(cacheKey, committed)
         session.completeFrame(frame, committed)
@@ -319,23 +330,26 @@ class StructuralPlannerCore private constructor(
 
                 throw AmbiguousEdgeKeyException(
                     key = edgeKey,
-                    faultKind = resolveCollisionFaultKind(
-                        facts = facts,
-                        offendingMembers = offending,
-                        session = session,
-                    ),
-                    evidence = listOf(
-                        "${previousEdge.origin}:${previousEdge.name}",
-                        "${member.origin}:${member.name}",
-                    ),
+                    faultKind =
+                        resolveCollisionFaultKind(
+                            facts = facts,
+                            offendingMembers = offending,
+                            session = session,
+                        ),
+                    evidence =
+                        listOf(
+                            "${previousEdge.origin}:${previousEdge.name}",
+                            "${member.origin}:${member.name}",
+                        ),
                 )
             }
             edgeTracker.mark(edgeKey, member)
 
-            val entropyKey = entropyTargetKeyProvider.deriveEntropyKey(
-                member.name,
-                member.typeReference,
-            )
+            val entropyKey =
+                entropyTargetKeyProvider.deriveEntropyKey(
+                    member.name,
+                    member.typeReference,
+                )
 
             val previousEntropy: MemberFact? = entropyTracker.findCollision(entropyKey)
             if (previousEntropy != null) {
@@ -345,15 +359,17 @@ class StructuralPlannerCore private constructor(
 
                 throw AmbiguousEntropyTargetKeyException(
                     key = entropyKey,
-                    faultKind = resolveCollisionFaultKind(
-                        facts = facts,
-                        offendingMembers = offending,
-                        session = session,
-                    ),
-                    evidence = listOf(
-                        "${previousEntropy.origin}:${previousEntropy.name}",
-                        "${member.origin}:${member.name}",
-                    ),
+                    faultKind =
+                        resolveCollisionFaultKind(
+                            facts = facts,
+                            offendingMembers = offending,
+                            session = session,
+                        ),
+                    evidence =
+                        listOf(
+                            "${previousEntropy.origin}:${previousEntropy.name}",
+                            "${member.origin}:${member.name}",
+                        ),
                 )
             }
             entropyTracker.mark(entropyKey, member)
@@ -399,35 +415,40 @@ class StructuralPlannerCore private constructor(
         frame: AllocateFrame,
         session: PlannerSession,
     ) {
-        val assembly = passiveIrAssembler.assemble(
-            facts = frame.orderedMembers.ownerFacts(),
-            children = session.bindChildDescriptorCursor(frame),
-        )
+        val assembly =
+            passiveIrAssembler.assemble(
+                facts = frame.orderedMembers.ownerFacts(),
+                children = session.bindChildDescriptorCursor(frame),
+            )
 
-        val cacheKey = keyFactory.issue(
-            partitionId = partitionId,
-            equalityKey = assembly.equalityKey,
-            session = session,
-        )
-
-        val canonicalIrNode = requireImmediateInternerCompletion(
-            result = interner.resolve(
+        val cacheKey =
+            keyFactory.issue(
                 partitionId = partitionId,
-                key = cacheKey,
+                equalityKey = assembly.equalityKey,
                 session = session,
-                rawPayload = assembly.payload,
-            ),
-            site = InternerInvocationSite.ORDINARY_PAYLOAD,
-        )
+            )
+
+        val canonicalIrNode =
+            requireImmediateInternerCompletion(
+                result =
+                    interner.resolve(
+                        partitionId = partitionId,
+                        key = cacheKey,
+                        session = session,
+                        rawPayload = assembly.payload,
+                    ),
+                site = InternerInvocationSite.ORDINARY_PAYLOAD,
+            )
 
         val totalSemanticCost =
             assembly.selfSemanticCostUpperBound + session.collectChildSemanticCost(frame)
 
-        val committed = committedPlanNodeFactory.createFinal(
-            irNode = canonicalIrNode,
-            cacheKey = cacheKey,
-            treeSemanticCostUpperBound = totalSemanticCost,
-        )
+        val committed =
+            committedPlanNodeFactory.createFinal(
+                irNode = canonicalIrNode,
+                cacheKey = cacheKey,
+                treeSemanticCostUpperBound = totalSemanticCost,
+            )
 
         val finalResult = session.findSubstitution(cacheKey) ?: committed
         session.recordSubstitution(cacheKey, finalResult)
@@ -470,19 +491,18 @@ class StructuralPlannerCore private constructor(
     private fun requireImmediateInternerCompletion(
         result: InternerStepResult,
         site: InternerInvocationSite,
-    ): ir.plan.node.CanonicalPlanNode {
-        return when (result) {
+    ): ir.plan.node.CanonicalPlanNode =
+        when (result) {
             is InternerStepResult.Completed -> result.node
 
             is InternerStepResult.SuspendedOnJoin -> {
                 throw PlanningProtocolIntegrityException(
                     "StructuralPlannerCore encountered InternerStepResult.SuspendedOnJoin during ${site.diagnosticLabel} " +
-                            "before runtime-boundary orchestration uplift. Phase 7 must route this through " +
-                            "PlanningRunContext / PlanningRunJoinBridge instead of forcing immediate completion.",
+                        "before runtime-boundary orchestration uplift. Phase 7 must route this through " +
+                        "PlanningRunContext / PlanningRunJoinBridge instead of forcing immediate completion.",
                 )
             }
         }
-    }
 
     companion object {
         @JvmStatic
@@ -498,8 +518,8 @@ class StructuralPlannerCore private constructor(
             committedPlanNodeFactory: CommittedPlanNodeFactory,
             interner: PlanInterner,
             keyFactory: PlanKeyFactory,
-        ): StructuralPlannerCore {
-            return StructuralPlannerCore(
+        ): StructuralPlannerCore =
+            StructuralPlannerCore(
                 typeExpansionPipeline = typeExpansionPipeline,
                 signatureProvider = signatureProvider,
                 edgeKeyProvider = edgeKeyProvider,
@@ -512,6 +532,5 @@ class StructuralPlannerCore private constructor(
                 interner = interner,
                 keyFactory = keyFactory,
             )
-        }
     }
 }

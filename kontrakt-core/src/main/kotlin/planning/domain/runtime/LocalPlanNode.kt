@@ -41,7 +41,7 @@ internal class LocalPlanNode private constructor(
         ): LocalPlanNode {
             if (selfSemanticCost < 0L) {
                 throw PlanningProtocolIntegrityException(
-                    "LocalPlanNode.selfSemanticCost must be >= 0: $selfSemanticCost"
+                    "LocalPlanNode.selfSemanticCost must be >= 0: $selfSemanticCost",
                 )
             }
             return LocalPlanNode(

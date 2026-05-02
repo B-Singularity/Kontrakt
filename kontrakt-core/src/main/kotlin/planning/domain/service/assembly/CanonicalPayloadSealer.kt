@@ -14,5 +14,6 @@ import ir.plan.node.RawPayloadNode
  */
 interface CanonicalPayloadSealer {
     fun seal(payload: RawPayloadNode): CanonicalPlanNode
+
     fun sealCycleBreak(payload: RawCycleBreakPayload): CanonicalPlanNode
 }

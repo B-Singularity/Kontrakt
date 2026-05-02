@@ -17,7 +17,6 @@ class PlanningRunSuspension private constructor(
     val resumePoint: PlanningResumePoint,
     val suspensionHandle: PlanningRunSuspensionHandle,
 ) {
-
     companion object {
         @JvmStatic
         fun issue(
@@ -26,7 +25,7 @@ class PlanningRunSuspension private constructor(
         ): PlanningRunSuspension {
             if (resumePoint.schemaVersion < 1) {
                 throw PlanningProtocolIntegrityException(
-                    "PlanningResumePoint.schemaVersion must be >= 1: ${resumePoint.schemaVersion}"
+                    "PlanningResumePoint.schemaVersion must be >= 1: ${resumePoint.schemaVersion}",
                 )
             }
 

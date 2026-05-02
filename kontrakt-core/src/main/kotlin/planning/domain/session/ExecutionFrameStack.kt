@@ -33,7 +33,7 @@ internal class ExecutionFrameStack private constructor(
     fun push(frame: ExecutionFrame) {
         if (size >= elements.size) {
             throw PlanningProtocolIntegrityException(
-                "ExecutionFrameStack capacity exceeded: size=$size, capacity=${elements.size}"
+                "ExecutionFrameStack capacity exceeded: size=$size, capacity=${elements.size}",
             )
         }
         elements[size++] = frame
@@ -44,8 +44,9 @@ internal class ExecutionFrameStack private constructor(
             throw PlanningProtocolIntegrityException("ExecutionFrameStack.pop() on empty stack.")
         }
         val idx = size - 1
-        val frame = elements[idx]
-            ?: throw PlanningProtocolIntegrityException("ExecutionFrameStack top is unexpectedly null.")
+        val frame =
+            elements[idx]
+                ?: throw PlanningProtocolIntegrityException("ExecutionFrameStack top is unexpectedly null.")
         elements[idx] = null
         size = idx
         return frame
@@ -77,7 +78,7 @@ internal class ExecutionFrameStack private constructor(
         fun issue(capacity: Int): ExecutionFrameStack {
             if (capacity <= 0) {
                 throw PlanningProtocolIntegrityException(
-                    "ExecutionFrameStack capacity must be > 0: $capacity"
+                    "ExecutionFrameStack capacity must be > 0: $capacity",
                 )
             }
             return ExecutionFrameStack(capacity)

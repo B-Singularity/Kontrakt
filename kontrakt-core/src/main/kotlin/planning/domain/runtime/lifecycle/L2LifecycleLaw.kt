@@ -38,7 +38,6 @@ import planning.domain.exception.PlanningProtocolIntegrityException
  * That is a feature.
  */
 object L2LifecycleLaw {
-
     // ─────────────────────────────────────────────────────────────
     // Shared-slot lifecycle
     // ─────────────────────────────────────────────────────────────
@@ -47,18 +46,18 @@ object L2LifecycleLaw {
     fun canTransition(
         from: SharedSlotState,
         to: SharedSlotState,
-    ): Boolean {
-        return when (from) {
+    ): Boolean =
+        when (from) {
             SharedSlotState.PENDING ->
                 to == SharedSlotState.SUCCESS ||
-                        to == SharedSlotState.FAILED ||
-                        to == SharedSlotState.DROPPED
+                    to == SharedSlotState.FAILED ||
+                    to == SharedSlotState.DROPPED
 
             SharedSlotState.SUCCESS,
             SharedSlotState.FAILED,
-            SharedSlotState.DROPPED -> false
+            SharedSlotState.DROPPED,
+            -> false
         }
-    }
 
     @JvmStatic
     fun requireTransition(
@@ -67,7 +66,7 @@ object L2LifecycleLaw {
     ) {
         if (!canTransition(from, to)) {
             throw PlanningProtocolIntegrityException(
-                "Illegal SharedSlotState transition: $from -> $to"
+                "Illegal SharedSlotState transition: $from -> $to",
             )
         }
     }
@@ -80,18 +79,18 @@ object L2LifecycleLaw {
     fun canTransition(
         from: WaiterState,
         to: WaiterState,
-    ): Boolean {
-        return when (from) {
+    ): Boolean =
+        when (from) {
             WaiterState.ATTACHED ->
                 to == WaiterState.RESUMED ||
-                        to == WaiterState.TIMED_OUT ||
-                        to == WaiterState.CANCELLED
+                    to == WaiterState.TIMED_OUT ||
+                    to == WaiterState.CANCELLED
 
             WaiterState.RESUMED,
             WaiterState.TIMED_OUT,
-            WaiterState.CANCELLED -> false
+            WaiterState.CANCELLED,
+            -> false
         }
-    }
 
     @JvmStatic
     fun requireTransition(
@@ -100,7 +99,7 @@ object L2LifecycleLaw {
     ) {
         if (!canTransition(from, to)) {
             throw PlanningProtocolIntegrityException(
-                "Illegal WaiterState transition: $from -> $to"
+                "Illegal WaiterState transition: $from -> $to",
             )
         }
     }
@@ -113,16 +112,16 @@ object L2LifecycleLaw {
     fun canTransition(
         from: BuilderHandleState,
         to: BuilderHandleState,
-    ): Boolean {
-        return when (from) {
+    ): Boolean =
+        when (from) {
             BuilderHandleState.OPEN ->
                 to == BuilderHandleState.COMMITTED ||
-                        to == BuilderHandleState.ABORTED
+                    to == BuilderHandleState.ABORTED
 
             BuilderHandleState.COMMITTED,
-            BuilderHandleState.ABORTED -> false
+            BuilderHandleState.ABORTED,
+            -> false
         }
-    }
 
     @JvmStatic
     fun requireTransition(
@@ -131,7 +130,7 @@ object L2LifecycleLaw {
     ) {
         if (!canTransition(from, to)) {
             throw PlanningProtocolIntegrityException(
-                "Illegal BuilderHandleState transition: $from -> $to"
+                "Illegal BuilderHandleState transition: $from -> $to",
             )
         }
     }
@@ -144,13 +143,12 @@ object L2LifecycleLaw {
     fun canTransition(
         from: CommitRightState,
         to: CommitRightState,
-    ): Boolean {
-        return when (from) {
+    ): Boolean =
+        when (from) {
             CommitRightState.UNCLAIMED -> to == CommitRightState.CLAIMED
             CommitRightState.CLAIMED -> to == CommitRightState.RELEASED
             CommitRightState.RELEASED -> false
         }
-    }
 
     @JvmStatic
     fun requireTransition(
@@ -159,7 +157,7 @@ object L2LifecycleLaw {
     ) {
         if (!canTransition(from, to)) {
             throw PlanningProtocolIntegrityException(
-                "Illegal CommitRightState transition: $from -> $to"
+                "Illegal CommitRightState transition: $from -> $to",
             )
         }
     }
@@ -172,13 +170,12 @@ object L2LifecycleLaw {
     fun canTransition(
         from: PartitionRegionState,
         to: PartitionRegionState,
-    ): Boolean {
-        return when (from) {
+    ): Boolean =
+        when (from) {
             PartitionRegionState.OPEN -> to == PartitionRegionState.CLOSE_PUBLISHED
             PartitionRegionState.CLOSE_PUBLISHED -> to == PartitionRegionState.RECLAIMED
             PartitionRegionState.RECLAIMED -> false
         }
-    }
 
     @JvmStatic
     fun requireTransition(
@@ -187,7 +184,7 @@ object L2LifecycleLaw {
     ) {
         if (!canTransition(from, to)) {
             throw PlanningProtocolIntegrityException(
-                "Illegal PartitionRegionState transition: $from -> $to"
+                "Illegal PartitionRegionState transition: $from -> $to",
             )
         }
     }
@@ -200,12 +197,11 @@ object L2LifecycleLaw {
     fun canTransition(
         from: SpeculativeLeaseState,
         to: SpeculativeLeaseState,
-    ): Boolean {
-        return when (from) {
+    ): Boolean =
+        when (from) {
             SpeculativeLeaseState.ISSUED -> to == SpeculativeLeaseState.RELEASED
             SpeculativeLeaseState.RELEASED -> false
         }
-    }
 
     @JvmStatic
     fun requireTransition(
@@ -214,7 +210,7 @@ object L2LifecycleLaw {
     ) {
         if (!canTransition(from, to)) {
             throw PlanningProtocolIntegrityException(
-                "Illegal SpeculativeLeaseState transition: $from -> $to"
+                "Illegal SpeculativeLeaseState transition: $from -> $to",
             )
         }
     }
@@ -239,36 +235,26 @@ object L2LifecycleLaw {
      * - PENDING
      */
     @JvmStatic
-    fun isSharedTerminalSignalSource(
-        sharedState: SharedSlotState,
-    ): Boolean {
-        return sharedState == SharedSlotState.SUCCESS ||
-                sharedState == SharedSlotState.FAILED ||
-                sharedState == SharedSlotState.DROPPED
-    }
+    fun isSharedTerminalSignalSource(sharedState: SharedSlotState): Boolean =
+        sharedState == SharedSlotState.SUCCESS ||
+            sharedState == SharedSlotState.FAILED ||
+            sharedState == SharedSlotState.DROPPED
 
     /**
      * Returns true if the waiter terminalization is purely waiter-local and must not
      * mutate or imply mutation of the shared-slot terminal state.
      */
     @JvmStatic
-    fun isWaiterLocalOnly(
-        waiterTarget: WaiterState,
-    ): Boolean {
-        return waiterTarget == WaiterState.TIMED_OUT ||
-                waiterTarget == WaiterState.CANCELLED
-    }
+    fun isWaiterLocalOnly(waiterTarget: WaiterState): Boolean =
+        waiterTarget == WaiterState.TIMED_OUT ||
+            waiterTarget == WaiterState.CANCELLED
 
     /**
      * Returns true if the waiter terminalization is caused by observation of an
      * authoritative shared terminal signal.
      */
     @JvmStatic
-    fun isWaiterSharedSignalConvergence(
-        waiterTarget: WaiterState,
-    ): Boolean {
-        return waiterTarget == WaiterState.RESUMED
-    }
+    fun isWaiterSharedSignalConvergence(waiterTarget: WaiterState): Boolean = waiterTarget == WaiterState.RESUMED
 
     /**
      * Cross-axis legality:
@@ -281,8 +267,8 @@ object L2LifecycleLaw {
     fun canSharedStateBackWaiterTransition(
         sharedState: SharedSlotState,
         waiterTarget: WaiterState,
-    ): Boolean {
-        return when (waiterTarget) {
+    ): Boolean =
+        when (waiterTarget) {
             WaiterState.ATTACHED ->
                 sharedState == SharedSlotState.PENDING
 
@@ -290,10 +276,10 @@ object L2LifecycleLaw {
                 isSharedTerminalSignalSource(sharedState)
 
             WaiterState.TIMED_OUT,
-            WaiterState.CANCELLED ->
+            WaiterState.CANCELLED,
+            ->
                 true
         }
-    }
 
     @JvmStatic
     fun requireSharedStateBacksWaiterTransition(
@@ -302,7 +288,7 @@ object L2LifecycleLaw {
     ) {
         if (!canSharedStateBackWaiterTransition(sharedState, waiterTarget)) {
             throw PlanningProtocolIntegrityException(
-                "Illegal cross-axis transition: sharedState=$sharedState cannot back waiterTarget=$waiterTarget"
+                "Illegal cross-axis transition: sharedState=$sharedState cannot back waiterTarget=$waiterTarget",
             )
         }
     }
@@ -315,19 +301,13 @@ object L2LifecycleLaw {
      * but naming it explicitly makes call sites and tests far less ambiguous.
      */
     @JvmStatic
-    fun canWaiterTerminalizationMutateSharedSlot(
-        waiterTarget: WaiterState,
-    ): Boolean {
-        return false
-    }
+    fun canWaiterTerminalizationMutateSharedSlot(waiterTarget: WaiterState): Boolean = false
 
     @JvmStatic
-    fun requireWaiterTerminalizationNotMutateSharedSlot(
-        waiterTarget: WaiterState,
-    ) {
+    fun requireWaiterTerminalizationNotMutateSharedSlot(waiterTarget: WaiterState) {
         if (canWaiterTerminalizationMutateSharedSlot(waiterTarget)) {
             throw PlanningProtocolIntegrityException(
-                "Illegal waiter/shared coupling: waiterTarget=$waiterTarget must not mutate shared-slot state"
+                "Illegal waiter/shared coupling: waiterTarget=$waiterTarget must not mutate shared-slot state",
             )
         }
     }
@@ -339,19 +319,13 @@ object L2LifecycleLaw {
      * of fresh attach admission.
      */
     @JvmStatic
-    fun canRegionAdmitFreshLifecycleWork(
-        regionState: PartitionRegionState,
-    ): Boolean {
-        return regionState == PartitionRegionState.OPEN
-    }
+    fun canRegionAdmitFreshLifecycleWork(regionState: PartitionRegionState): Boolean = regionState == PartitionRegionState.OPEN
 
     @JvmStatic
-    fun requireRegionOpenForFreshLifecycleWork(
-        regionState: PartitionRegionState,
-    ) {
+    fun requireRegionOpenForFreshLifecycleWork(regionState: PartitionRegionState) {
         if (!canRegionAdmitFreshLifecycleWork(regionState)) {
             throw PlanningProtocolIntegrityException(
-                "Region is not open for fresh lifecycle work: regionState=$regionState"
+                "Region is not open for fresh lifecycle work: regionState=$regionState",
             )
         }
     }
@@ -360,19 +334,13 @@ object L2LifecycleLaw {
      * Shared-slot admission rule for fresh waiter attach.
      */
     @JvmStatic
-    fun canSharedSlotAdmitFreshAttach(
-        sharedState: SharedSlotState,
-    ): Boolean {
-        return sharedState == SharedSlotState.PENDING
-    }
+    fun canSharedSlotAdmitFreshAttach(sharedState: SharedSlotState): Boolean = sharedState == SharedSlotState.PENDING
 
     @JvmStatic
-    fun requireSharedSlotPendingForFreshAttach(
-        sharedState: SharedSlotState,
-    ) {
+    fun requireSharedSlotPendingForFreshAttach(sharedState: SharedSlotState) {
         if (!canSharedSlotAdmitFreshAttach(sharedState)) {
             throw PlanningProtocolIntegrityException(
-                "Shared slot is not pending for fresh attach: sharedState=$sharedState"
+                "Shared slot is not pending for fresh attach: sharedState=$sharedState",
             )
         }
     }
@@ -391,11 +359,10 @@ object L2LifecycleLaw {
         builderState: BuilderHandleState,
         commitRightState: CommitRightState,
         sharedState: SharedSlotState,
-    ): Boolean {
-        return builderState == BuilderHandleState.OPEN &&
-                commitRightState == CommitRightState.CLAIMED &&
-                sharedState == SharedSlotState.PENDING
-    }
+    ): Boolean =
+        builderState == BuilderHandleState.OPEN &&
+            commitRightState == CommitRightState.CLAIMED &&
+            sharedState == SharedSlotState.PENDING
 
     @JvmStatic
     fun requireAuthoritativePublicationEntry(
@@ -405,7 +372,7 @@ object L2LifecycleLaw {
     ) {
         if (!canEnterAuthoritativePublication(builderState, commitRightState, sharedState)) {
             throw PlanningProtocolIntegrityException(
-                "Illegal publication entry: builderState=$builderState, commitRightState=$commitRightState, sharedState=$sharedState"
+                "Illegal publication entry: builderState=$builderState, commitRightState=$commitRightState, sharedState=$sharedState",
             )
         }
     }
@@ -419,11 +386,7 @@ object L2LifecycleLaw {
      * and express the invariant at the call site.
      */
     @JvmStatic
-    fun canWaiterEventAffectSharedSlot(
-        waiterEvent: WaiterState,
-    ): Boolean {
-        return false
-    }
+    fun canWaiterEventAffectSharedSlot(waiterEvent: WaiterState): Boolean = false
 
     /**
      * Preferred runtime enforcement surface.
@@ -436,12 +399,10 @@ object L2LifecycleLaw {
      * are event-driven in infrastructure code.
      */
     @JvmStatic
-    fun requireWaiterEventDoesNotAffectSharedSlot(
-        waiterEvent: WaiterState,
-    ) {
+    fun requireWaiterEventDoesNotAffectSharedSlot(waiterEvent: WaiterState) {
         if (canWaiterEventAffectSharedSlot(waiterEvent)) {
             throw PlanningProtocolIntegrityException(
-                "Illegal cross-axis coupling: waiterEvent=$waiterEvent must not mutate shared-slot state"
+                "Illegal cross-axis coupling: waiterEvent=$waiterEvent must not mutate shared-slot state",
             )
         }
     }

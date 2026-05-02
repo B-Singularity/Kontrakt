@@ -16,7 +16,6 @@ import metamodel.domain.vo.TypeReference
  *   than the documented expansion model.
  */
 sealed interface TypeExpansionDecision {
-
     val subject: TypeReference
 
     /**
@@ -30,11 +29,7 @@ sealed interface TypeExpansionDecision {
     ) : TypeExpansionDecision {
         companion object {
             @JvmStatic
-            fun issue(
-                subject: TypeReference,
-            ): AtomicExpansion {
-                return AtomicExpansion(subject)
-            }
+            fun issue(subject: TypeReference): AtomicExpansion = AtomicExpansion(subject)
         }
     }
 
@@ -50,12 +45,11 @@ sealed interface TypeExpansionDecision {
             fun issue(
                 subject: TypeReference,
                 plan: CompositeExpansionPlan,
-            ): CompositeExpansion {
-                return CompositeExpansion(
+            ): CompositeExpansion =
+                CompositeExpansion(
                     subject = subject,
                     plan = plan,
                 )
-            }
         }
     }
 
@@ -71,12 +65,11 @@ sealed interface TypeExpansionDecision {
             fun issue(
                 subject: TypeReference,
                 elementType: TypeReference,
-            ): CollectionExpansion {
-                return CollectionExpansion(
+            ): CollectionExpansion =
+                CollectionExpansion(
                     subject = subject,
                     elementType = elementType,
                 )
-            }
         }
     }
 
@@ -92,12 +85,11 @@ sealed interface TypeExpansionDecision {
             fun issue(
                 subject: TypeReference,
                 componentType: TypeReference,
-            ): ArrayExpansion {
-                return ArrayExpansion(
+            ): ArrayExpansion =
+                ArrayExpansion(
                     subject = subject,
                     componentType = componentType,
                 )
-            }
         }
     }
 
@@ -115,13 +107,12 @@ sealed interface TypeExpansionDecision {
                 subject: TypeReference,
                 keyType: TypeReference,
                 valueType: TypeReference,
-            ): MapExpansion {
-                return MapExpansion(
+            ): MapExpansion =
+                MapExpansion(
                     subject = subject,
                     keyType = keyType,
                     valueType = valueType,
                 )
-            }
         }
     }
 }

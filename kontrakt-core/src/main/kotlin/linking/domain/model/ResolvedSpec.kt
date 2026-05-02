@@ -13,14 +13,14 @@ import linking.domain.vo.FeatureName
  */
 data class ResolvedSpec(
     val featureName: FeatureName,
-    val implementationClass: String
+    val implementationClass: String,
 ) {
     init {
         // Enforce invariants using Domain Exceptions (Fail-Fast)
         if (implementationClass.isBlank()) {
             throw LinkingProtocolException(
                 "ResolvedSpec invariant violated: implementationClass is blank",
-                context = mapOf("featureName" to featureName.value)
+                context = mapOf("featureName" to featureName.value),
             )
         }
     }
@@ -30,9 +30,10 @@ data class ResolvedSpec(
          * [The Law] The single source of truth for sorting and equality in the Linking domain.
          * Used by BindingStrategy and IntegrityPhase to guarantee determinism.
          */
-        val CANONICAL_ORDER: Comparator<ResolvedSpec> = compareBy(
-            { it.featureName },
-            { it.implementationClass }
-        )
+        val CANONICAL_ORDER: Comparator<ResolvedSpec> =
+            compareBy(
+                { it.featureName },
+                { it.implementationClass },
+            )
     }
 }

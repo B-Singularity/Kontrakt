@@ -13,11 +13,8 @@ import planning.domain.protocol.CostCenter
  * explicit and exhaustive.
  */
 object TypeExpansionCostCenterMapper {
-
-    fun map(
-        event: TypeExpansionWorkEvent,
-    ): CostCenter {
-        return when (event) {
+    fun map(event: TypeExpansionWorkEvent): CostCenter =
+        when (event) {
             TypeExpansionWorkEvent.TYPE_SHAPE_RESOLUTION ->
                 CostCenter.TYPE_SHAPE_RESOLUTION
 
@@ -51,5 +48,4 @@ object TypeExpansionCostCenterMapper {
             TypeExpansionWorkEvent.ATOMIC_EXPANSION_DECISION ->
                 CostCenter.ATOMIC_EXPANSION_DECISION
         }
-    }
 }

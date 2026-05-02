@@ -3,7 +3,6 @@ package ir.spec
 import ir.IrLimits
 import ir.exception.IrProtocolViolationException
 
-
 /**
  * Protocol-safe type identifier.
  *
@@ -18,9 +17,11 @@ import ir.exception.IrProtocolViolationException
  * - No primitives (to enforce explicit modeling decisions upstream)
  */
 @JvmInline
-value class TypeId private constructor(val value: String) : Comparable<TypeId> {
-
+value class TypeId private constructor(
+    val value: String,
+) : Comparable<TypeId> {
     override fun compareTo(other: TypeId): Int = value.compareTo(other.value)
+
     override fun toString(): String = value
 
     companion object {
@@ -29,13 +30,32 @@ value class TypeId private constructor(val value: String) : Comparable<TypeId> {
          * - '/' blocks JVM internal names leaking into the protocol
          * - '|' blocks delimiter/injectivity attacks across composite keys/logging
          */
-        private val FORBIDDEN = charArrayOf(
-            '<', '>', '[', ']', ';', '(', ')', ':', '/', '|'
-        )
+        private val FORBIDDEN =
+            charArrayOf(
+                '<',
+                '>',
+                '[',
+                ']',
+                ';',
+                '(',
+                ')',
+                ':',
+                '/',
+                '|',
+            )
 
-        private val PRIMITIVES = setOf(
-            "byte", "char", "double", "float", "int", "long", "short", "boolean", "void"
-        )
+        private val PRIMITIVES =
+            setOf(
+                "byte",
+                "char",
+                "double",
+                "float",
+                "int",
+                "long",
+                "short",
+                "boolean",
+                "void",
+            )
 
         @JvmStatic
         fun of(value: String?): TypeId {

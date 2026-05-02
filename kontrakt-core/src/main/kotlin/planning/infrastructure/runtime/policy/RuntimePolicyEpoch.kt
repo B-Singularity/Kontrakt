@@ -22,10 +22,7 @@ class RuntimePolicyEpoch private constructor(
     val id: Long,
     val policy: ResolvedRuntimePolicy,
 ) {
-
-    override fun toString(): String {
-        return "RuntimePolicyEpoch(id=$id, policy=$policy)"
-    }
+    override fun toString(): String = "RuntimePolicyEpoch(id=$id, policy=$policy)"
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -48,7 +45,7 @@ class RuntimePolicyEpoch private constructor(
         ): RuntimePolicyEpoch {
             if (id < 0L) {
                 throw PlanningProtocolIntegrityException(
-                    "RuntimePolicyEpoch.id must be >= 0: $id"
+                    "RuntimePolicyEpoch.id must be >= 0: $id",
                 )
             }
 

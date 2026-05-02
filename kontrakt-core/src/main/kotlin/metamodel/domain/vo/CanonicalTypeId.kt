@@ -57,11 +57,7 @@ class CanonicalTypeId private constructor(
      *
      * Do not use this as object equality.
      */
-    fun hasSameCanonicalTextAs(
-        other: CanonicalTypeId,
-    ): Boolean {
-        return text.value == other.text.value
-    }
+    fun hasSameCanonicalTextAs(other: CanonicalTypeId): Boolean = text.value == other.text.value
 
     /**
      * Guard for persisted/cached/replayed identity material.
@@ -73,8 +69,8 @@ class CanonicalTypeId private constructor(
         if (classifierId != expectedClassifierId || classifierVersion != expectedClassifierVersion) {
             throw MetamodelFactContractViolationException(
                 "CanonicalTypeId classifier mismatch: " +
-                        "expected=$expectedClassifierId@$expectedClassifierVersion, " +
-                        "actual=$classifierId@$classifierVersion, value=$value",
+                    "expected=$expectedClassifierId@$expectedClassifierVersion, " +
+                    "actual=$classifierId@$classifierVersion, value=$value",
             )
         }
     }
@@ -96,9 +92,9 @@ class CanonicalTypeId private constructor(
         ) {
             throw MetamodelFactContractViolationException(
                 "CanonicalTypeId ratification algorithm mismatch: " +
-                        "expected=$expectedAlgorithmId@$expectedAlgorithmVersion, " +
-                        "actual=${ratificationFingerprint.algorithmId}@${ratificationFingerprint.algorithmVersion}, " +
-                        "value=$value",
+                    "expected=$expectedAlgorithmId@$expectedAlgorithmVersion, " +
+                    "actual=${ratificationFingerprint.algorithmId}@${ratificationFingerprint.algorithmVersion}, " +
+                    "value=$value",
             )
         }
     }
@@ -108,10 +104,10 @@ class CanonicalTypeId private constructor(
         if (other !is CanonicalTypeId) return false
 
         return text == other.text &&
-                shapeSummary == other.shapeSummary &&
-                classifierId == other.classifierId &&
-                classifierVersion == other.classifierVersion &&
-                ratificationFingerprint == other.ratificationFingerprint
+            shapeSummary == other.shapeSummary &&
+            classifierId == other.classifierId &&
+            classifierVersion == other.classifierVersion &&
+            ratificationFingerprint == other.ratificationFingerprint
     }
 
     override fun hashCode(): Int {
@@ -123,9 +119,7 @@ class CanonicalTypeId private constructor(
         return result
     }
 
-    override fun toString(): String {
-        return value
-    }
+    override fun toString(): String = value
 
     companion object {
         /**

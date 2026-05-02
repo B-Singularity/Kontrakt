@@ -19,32 +19,34 @@ internal class DiscoveryTaxonomy {
         sourceFile: String?,
         context: String,
         kind: ViolationKind,
-        message: String
+        message: String,
     ) {
         val loc = sourceFile?.let { "$it:1" }
-        val dto = DiscoveryViolation(
-            className = className,
-            sourceLocation = loc,
-            context = context,
-            kind = kind,
-            message = message
-        )
+        val dto =
+            DiscoveryViolation(
+                className = className,
+                sourceLocation = loc,
+                context = context,
+                kind = kind,
+                message = message,
+            )
         violations.add(dto)
     }
 
     fun reportSpecViolation(
         className: String,
         sourceFile: String?,
-        code: SpecViolationCode
+        code: SpecViolationCode,
     ) {
         // [Message Mapping] Adapter controls the UX/wording, Domain controls the Rules.
-        val message = when (code) {
-            SpecViolationCode.CONTRACT_MUST_BE_INTERFACE ->
-                "@Contract must be placed on an Interface."
+        val message =
+            when (code) {
+                SpecViolationCode.CONTRACT_MUST_BE_INTERFACE ->
+                    "@Contract must be placed on an Interface."
 
-            SpecViolationCode.DATA_CONTRACT_MUST_BE_CONCRETE ->
-                "@DataContract must be placed on a concrete class (not interface/abstract/enum)."
-        }
+                SpecViolationCode.DATA_CONTRACT_MUST_BE_CONCRETE ->
+                    "@DataContract must be placed on a concrete class (not interface/abstract/enum)."
+            }
         reportUserError(className, sourceFile, "Annotation Misuse", ViolationKind.PROTOCOL_VIOLATION, message)
     }
 
@@ -55,18 +57,24 @@ internal class DiscoveryTaxonomy {
         }
     }
 
-    fun wrapInfrastructureError(phase: String, target: String?, cause: Throwable): Nothing {
+    fun wrapInfrastructureError(
+        phase: String,
+        target: String?,
+        cause: Throwable,
+    ): Nothing {
         val targetInfo = target?.let { " (target=$it)" } ?: ""
         throw RuntimeIntegrityException(
             "Classpath linkage failure or scanner error during $phase$targetInfo.",
-            cause
+            cause,
         )
     }
 
-    fun wrapInternalBug(name: String, cause: Throwable): Nothing {
+    fun wrapInternalBug(
+        name: String,
+        cause: Throwable,
+    ): Nothing =
         throw RuntimeIntegrityException(
             "Internal protocol violation during discovery (bug). Invalid Class Name: '$name'",
-            cause
+            cause,
         )
-    }
 }

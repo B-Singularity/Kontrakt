@@ -23,13 +23,10 @@ class PlanningRunRemainingBudget private constructor(
     val remainingPhysicalSteps: Int,
     val remainingSemanticWorkUnits: Int,
 ) {
-
-    fun debitPhysicalSteps(
-        units: Int,
-    ): PlanningRunRemainingBudget {
+    fun debitPhysicalSteps(units: Int): PlanningRunRemainingBudget {
         if (units <= 0) {
             throw PlanningProtocolIntegrityException(
-                "PlanningRunRemainingBudget.debitPhysicalSteps requires units > 0: $units"
+                "PlanningRunRemainingBudget.debitPhysicalSteps requires units > 0: $units",
             )
         }
         if (units > remainingPhysicalSteps) {
@@ -45,12 +42,10 @@ class PlanningRunRemainingBudget private constructor(
         )
     }
 
-    fun debitSemanticWorkUnits(
-        units: Int,
-    ): PlanningRunRemainingBudget {
+    fun debitSemanticWorkUnits(units: Int): PlanningRunRemainingBudget {
         if (units <= 0) {
             throw PlanningProtocolIntegrityException(
-                "PlanningRunRemainingBudget.debitSemanticWorkUnits requires units > 0: $units"
+                "PlanningRunRemainingBudget.debitSemanticWorkUnits requires units > 0: $units",
             )
         }
         if (units > remainingSemanticWorkUnits) {
@@ -68,16 +63,15 @@ class PlanningRunRemainingBudget private constructor(
 
     fun hasRemainingPhysicalSteps(): Boolean = remainingPhysicalSteps > 0
 
-    override fun toString(): String {
-        return "PlanningRunRemainingBudget(remainingPhysicalSteps=$remainingPhysicalSteps, remainingSemanticWorkUnits=$remainingSemanticWorkUnits)"
-    }
+    override fun toString(): String =
+        "PlanningRunRemainingBudget(remainingPhysicalSteps=$remainingPhysicalSteps, remainingSemanticWorkUnits=$remainingSemanticWorkUnits)"
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is PlanningRunRemainingBudget) return false
 
         return remainingPhysicalSteps == other.remainingPhysicalSteps &&
-                remainingSemanticWorkUnits == other.remainingSemanticWorkUnits
+            remainingSemanticWorkUnits == other.remainingSemanticWorkUnits
     }
 
     override fun hashCode(): Int {
@@ -94,12 +88,12 @@ class PlanningRunRemainingBudget private constructor(
         ): PlanningRunRemainingBudget {
             if (remainingPhysicalSteps < 0) {
                 throw PlanningProtocolIntegrityException(
-                    "PlanningRunRemainingBudget.remainingPhysicalSteps must be >= 0: $remainingPhysicalSteps"
+                    "PlanningRunRemainingBudget.remainingPhysicalSteps must be >= 0: $remainingPhysicalSteps",
                 )
             }
             if (remainingSemanticWorkUnits < 0) {
                 throw PlanningProtocolIntegrityException(
-                    "PlanningRunRemainingBudget.remainingSemanticWorkUnits must be >= 0: $remainingSemanticWorkUnits"
+                    "PlanningRunRemainingBudget.remainingSemanticWorkUnits must be >= 0: $remainingSemanticWorkUnits",
                 )
             }
 
@@ -110,13 +104,10 @@ class PlanningRunRemainingBudget private constructor(
         }
 
         @JvmStatic
-        fun issueFrom(
-            sessionBudget: ResolvedSessionBudget,
-        ): PlanningRunRemainingBudget {
-            return issue(
+        fun issueFrom(sessionBudget: ResolvedSessionBudget): PlanningRunRemainingBudget =
+            issue(
                 remainingPhysicalSteps = sessionBudget.maxPhysicalSteps,
                 remainingSemanticWorkUnits = sessionBudget.maxSemanticWorkUnits,
             )
-        }
     }
 }

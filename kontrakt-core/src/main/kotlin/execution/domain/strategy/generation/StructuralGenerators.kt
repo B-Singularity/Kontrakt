@@ -34,10 +34,12 @@ class MapGenerator : Generator<MutableMap<Any?, Any?>> {
  */
 class ArrayGenerator(
     private val instantiator: (Int) -> Any,
-    private val setter: (Any, Int, Any?) -> Unit
+    private val setter: (Any, Int, Any?) -> Unit,
 ) : ArrayProducer {
-
-    override fun generateArray(context: GenerationContext, elements: List<Any?>): Any {
+    override fun generateArray(
+        context: GenerationContext,
+        elements: List<Any?>,
+    ): Any {
         // 1. Instantiate (Delegated)
         val array = instantiator(elements.size)
 
@@ -50,7 +52,7 @@ class ArrayGenerator(
                 // Contextualize error
                 throw RuntimeException(
                     "Array element assignment failed at index $i. Value: '$v' (${v?.javaClass?.simpleName})",
-                    e
+                    e,
                 )
             }
         }
@@ -68,10 +70,12 @@ class ArrayGenerator(
  * `(Fields) -> Object`. The factory encapsulates validation, reflection, and accessibility logic.
  */
 class ObjectAssembler(
-    private val factory: (Map<String, Any?>) -> Any
+    private val factory: (Map<String, Any?>) -> Any,
 ) : CompositeGenerator {
-
-    override fun generateWithFields(context: GenerationContext, fields: Map<String, Any?>): Any {
+    override fun generateWithFields(
+        context: GenerationContext,
+        fields: Map<String, Any?>,
+    ): Any {
         try {
             // Delegate complexity to the factory lambda
             return factory(fields)
@@ -79,7 +83,7 @@ class ObjectAssembler(
             val cause = e.cause ?: e
             throw RuntimeException(
                 "Object assembly failed. Provided Fields: ${fields.keys}. Error: ${cause.message}",
-                cause
+                cause,
             )
         }
     }
@@ -98,9 +102,8 @@ class ObjectAssembler(
  * The Linker guarantees that this list represents the exhaustive closed set of subtypes.
  */
 class SealedClassGenerator(
-    private val candidates: List<Generator<Any>>
+    private val candidates: List<Generator<Any>>,
 ) : Generator<Any> {
-
     init {
         // "Linker Contract" Defense: Empty candidates imply a broken schema graph.
         require(candidates.isNotEmpty()) {
@@ -120,9 +123,7 @@ class SealedClassGenerator(
      * - Returns one valid instance from **EVERY** candidate.
      * - Guarantees that the consumer handles every concrete subtype at least once.
      */
-    override fun generateEdgeCases(context: GenerationContext): List<Any> {
-        return candidates.map { it.generate(context) }.distinct()
-    }
+    override fun generateEdgeCases(context: GenerationContext): List<Any> = candidates.map { it.generate(context) }.distinct()
 
     /**
      * Aggregates invalid cases from all candidates.
@@ -130,9 +131,7 @@ class SealedClassGenerator(
      * (depending on the constraint), but strictly speaking, we want to test
      * if the system handles garbage input for any possible implementation.
      */
-    override fun generateInvalid(context: GenerationContext): List<Any?> {
-        return candidates.flatMap { it.generateInvalid(context) }.distinct()
-    }
+    override fun generateInvalid(context: GenerationContext): List<Any?> = candidates.flatMap { it.generateInvalid(context) }.distinct()
 
     override fun toString(): String = "SealedClassGenerator(candidates=${candidates.size})"
 }

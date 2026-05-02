@@ -13,7 +13,6 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
 
 class BroadcastingResultPublisherTest {
-
     private val publisher1 = mockk<TestResultPublisher>(name = "Publisher1", relaxed = true)
     private val publisher2 = mockk<TestResultPublisher>(name = "Publisher2", relaxed = true)
     private val event = mockk<TestResultEvent>()
@@ -63,7 +62,7 @@ class BroadcastingResultPublisherTest {
         verify(exactly = 1) {
             errorHandler.invoke(
                 any(),
-                match { it is KontraktInternalException && it.cause == expectedException }
+                match { it is KontraktInternalException && it.cause == expectedException },
             )
         }
     }
@@ -103,8 +102,8 @@ class BroadcastingResultPublisherTest {
                 any(),
                 match {
                     it is KontraktInternalException &&
-                            it.message!!.contains("failed during 'close'")
-                }
+                        it.message!!.contains("failed during 'close'")
+                },
             )
         }
     }
@@ -124,13 +123,12 @@ class BroadcastingResultPublisherTest {
 
     @Test
     fun `handleFailure - should fallback to UnknownPublisher name when class is anonymous`() {
-        val anonymousPublisher = object : TestResultPublisher {
-            override fun publish(event: TestResultEvent) {
-                throw RuntimeException("Anonymous Fail")
-            }
+        val anonymousPublisher =
+            object : TestResultPublisher {
+                override fun publish(event: TestResultEvent): Unit = throw RuntimeException("Anonymous Fail")
 
-            override fun close() {}
-        }
+                override fun close() {}
+            }
 
         val sut = BroadcastingResultPublisher(listOf(anonymousPublisher), errorHandler)
 
@@ -139,7 +137,7 @@ class BroadcastingResultPublisherTest {
         verify(exactly = 1) {
             errorHandler.invoke(
                 eq("UnknownPublisher"),
-                any()
+                any(),
             )
         }
     }

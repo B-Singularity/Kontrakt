@@ -6,7 +6,6 @@ import ir.Attribute
 import ir.AttributeOrigin
 import ir.EdgeModel
 import metamodel.domain.model.PropertySource
-import metamodel.domain.port.outgoing.TypeResolver
 import metamodel.domain.vo.AnnotationDescriptor
 import metamodel.domain.vo.TypeKind
 import metamodel.domain.vo.TypeReference
@@ -21,9 +20,8 @@ import java.util.ArrayDeque
  * 3. **Attribute Merging**: Merges attributes from Use-site, Inheritance, and Declaration-site deterministically.
  */
 class StructuralPlanner(
-    private val typeResolver: TypeResolver
+    private val typeResolver: TypeResolver,
 ) {
-
     fun plan(rootType: TypeReference): UnlinkedNode {
         val context = PlanningContext()
         return traverse(
@@ -32,7 +30,7 @@ class StructuralPlanner(
             inheritedAttributes = emptyMap(),
             currentOrigin = AttributeOrigin.TYPE_DECLARATION,
             edgeKind = EdgeModel.TYPE_ARGUMENT,
-            edgeName = null
+            edgeName = null,
         )
     }
 
@@ -42,7 +40,7 @@ class StructuralPlanner(
         inheritedAttributes: Map<String, Attribute>,
         currentOrigin: AttributeOrigin,
         edgeKind: EdgeModel,
-        edgeName: String?
+        edgeName: String?,
     ): UnlinkedNode {
         // Push CycleId (Nullability Stripped)
         context.push(type.cycleId)
@@ -66,16 +64,17 @@ class StructuralPlanner(
                     edgeKind = edgeKind,
                     edgeName = edgeName,
                     targetTypeId = type.cycleId,
-                    pathSnapshot = context.getPathSnapshot()
+                    pathSnapshot = context.getPathSnapshot(),
                 )
             }
 
             // [Contract] 3. Shallow Resolve (Must not trigger recursion)
-            val descriptor = try {
-                typeResolver.resolve(type)
-            } catch (e: Exception) {
-                throw StructuralPlanningException(type.id, "Resolution failed", e)
-            }
+            val descriptor =
+                try {
+                    typeResolver.resolve(type)
+                } catch (e: Exception) {
+                    throw StructuralPlanningException(type.id, "Resolution failed", e)
+                }
 
             // [Determinism] 4. Decl-Site Attributes
             val declAttrs = LinkedHashMap<String, Attribute>()
@@ -100,58 +99,64 @@ class StructuralPlanner(
                             putLastWins(propDeclAttrs, attr.name, attr)
                         }
 
-                        val childEdgeKind = when (prop.source) {
-                            PropertySource.CONSTRUCTOR_PARAMETER -> EdgeModel.CTOR_PARAM
-                            else -> EdgeModel.FIELD
-                        }
+                        val childEdgeKind =
+                            when (prop.source) {
+                                PropertySource.CONSTRUCTOR_PARAMETER -> EdgeModel.CTOR_PARAM
+                                else -> EdgeModel.FIELD
+                            }
 
-                        fields[prop.name] = traverse(
-                            type = prop.type,
-                            context = context,
-                            inheritedAttributes = propDeclAttrs,
-                            currentOrigin = AttributeOrigin.FIELD_TYPE_USE,
-                            edgeKind = childEdgeKind,
-                            edgeName = prop.name
-                        )
+                        fields[prop.name] =
+                            traverse(
+                                type = prop.type,
+                                context = context,
+                                inheritedAttributes = propDeclAttrs,
+                                currentOrigin = AttributeOrigin.FIELD_TYPE_USE,
+                                edgeKind = childEdgeKind,
+                                edgeName = prop.name,
+                            )
                     }
                     UnlinkedCompositeNode(type, fields, fullEffectiveAttributes)
                 }
 
                 TypeKind.COLLECTION -> {
-                    val elementType = descriptor.elementType
-                        ?: throw StructuralPlanningException(type.id, "Collection missing element type")
+                    val elementType =
+                        descriptor.elementType
+                            ?: throw StructuralPlanningException(type.id, "Collection missing element type")
 
                     UnlinkedCollectionNode(
                         type = type,
-                        elementNode = traverse(
-                            type = elementType,
-                            context = context,
-                            inheritedAttributes = emptyMap(),
-                            currentOrigin = AttributeOrigin.ELEMENT_TYPE_USE,
-                            edgeKind = EdgeModel.ELEMENT,
-                            edgeName = null
-                        ),
+                        elementNode =
+                            traverse(
+                                type = elementType,
+                                context = context,
+                                inheritedAttributes = emptyMap(),
+                                currentOrigin = AttributeOrigin.ELEMENT_TYPE_USE,
+                                edgeKind = EdgeModel.ELEMENT,
+                                edgeName = null,
+                            ),
                         isFixedSize = false,
-                        attributes = fullEffectiveAttributes
+                        attributes = fullEffectiveAttributes,
                     )
                 }
 
                 TypeKind.ARRAY -> {
-                    val componentType = descriptor.componentType
-                        ?: throw StructuralPlanningException(type.id, "Array missing component type")
+                    val componentType =
+                        descriptor.componentType
+                            ?: throw StructuralPlanningException(type.id, "Array missing component type")
 
                     UnlinkedCollectionNode(
                         type = type,
-                        elementNode = traverse(
-                            type = componentType,
-                            context = context,
-                            inheritedAttributes = emptyMap(),
-                            currentOrigin = AttributeOrigin.ELEMENT_TYPE_USE,
-                            edgeKind = EdgeModel.ELEMENT,
-                            edgeName = null
-                        ),
+                        elementNode =
+                            traverse(
+                                type = componentType,
+                                context = context,
+                                inheritedAttributes = emptyMap(),
+                                currentOrigin = AttributeOrigin.ELEMENT_TYPE_USE,
+                                edgeKind = EdgeModel.ELEMENT,
+                                edgeName = null,
+                            ),
                         isFixedSize = true,
-                        attributes = fullEffectiveAttributes
+                        attributes = fullEffectiveAttributes,
                     )
                 }
 
@@ -160,23 +165,25 @@ class StructuralPlanner(
                     val valueType = descriptor.valueType!!
                     UnlinkedMapNode(
                         type = type,
-                        keyNode = traverse(
-                            keyType,
-                            context,
-                            emptyMap(),
-                            AttributeOrigin.MAP_KEY_TYPE_USE,
-                            EdgeModel.MAP_KEY,
-                            "key"
-                        ),
-                        valueNode = traverse(
-                            valueType,
-                            context,
-                            emptyMap(),
-                            AttributeOrigin.MAP_VALUE_TYPE_USE,
-                            EdgeModel.MAP_VALUE,
-                            "value"
-                        ),
-                        attributes = fullEffectiveAttributes
+                        keyNode =
+                            traverse(
+                                keyType,
+                                context,
+                                emptyMap(),
+                                AttributeOrigin.MAP_KEY_TYPE_USE,
+                                EdgeModel.MAP_KEY,
+                                "key",
+                            ),
+                        valueNode =
+                            traverse(
+                                valueType,
+                                context,
+                                emptyMap(),
+                                AttributeOrigin.MAP_VALUE_TYPE_USE,
+                                EdgeModel.MAP_VALUE,
+                                "value",
+                            ),
+                        attributes = fullEffectiveAttributes,
                     )
                 }
 
@@ -190,7 +197,11 @@ class StructuralPlanner(
     /**
      * Helper to enforce "Last Wins" policy while preserving iteration order of the winner.
      */
-    private fun <K, V> putLastWins(map: LinkedHashMap<K, V>, key: K, value: V) {
+    private fun <K, V> putLastWins(
+        map: LinkedHashMap<K, V>,
+        key: K,
+        value: V,
+    ) {
         if (map.containsKey(key)) map.remove(key)
         map[key] = value
     }
@@ -198,7 +209,7 @@ class StructuralPlanner(
     private fun mergeFullAttributes(
         decl: Map<String, Attribute>,
         inherited: Map<String, Attribute>,
-        useSite: Map<String, Attribute>
+        useSite: Map<String, Attribute>,
     ): Map<String, Attribute> {
         val result = LinkedHashMap<String, Attribute>()
         decl.forEach { (k, v) -> putLastWins(result, k, v) }
@@ -209,16 +220,17 @@ class StructuralPlanner(
 
     private fun mergeAttributes(
         base: Map<String, Attribute>,
-        overrides: Map<String, Attribute>
+        overrides: Map<String, Attribute>,
     ): Map<String, Attribute> {
         val result = LinkedHashMap<String, Attribute>(base)
         overrides.forEach { (k, v) -> putLastWins(result, k, v) }
         return result
     }
 
-    private fun toAttribute(desc: AnnotationDescriptor, origin: AttributeOrigin): Attribute.AnnotationAttribute {
-        return Attribute.AnnotationAttribute(desc.qualifiedName, origin, desc.values)
-    }
+    private fun toAttribute(
+        desc: AnnotationDescriptor,
+        origin: AttributeOrigin,
+    ): Attribute.AnnotationAttribute = Attribute.AnnotationAttribute(desc.qualifiedName, origin, desc.values)
 
     private class PlanningContext {
         private val counts = HashMap<String, Int>()

@@ -58,7 +58,6 @@ import planning.domain.vo.PartitionId
  * - completion delivery belongs to adapter-owned dispatch infrastructure
  */
 interface PlanInternRepository {
-
     /**
      * Resolves the next Tier-2 interning step for the given semantic plan-cache key.
      *
@@ -75,7 +74,6 @@ interface PlanInternRepository {
 }
 
 sealed interface PlanInternStep {
-
     class Hit internal constructor(
         val node: CanonicalPlanNode,
     ) : PlanInternStep {
@@ -102,8 +100,11 @@ sealed interface PlanInternStep {
 
     companion object {
         internal fun hit(node: CanonicalPlanNode): PlanInternStep = Hit(node)
+
         internal fun build(handle: BuildHandle): PlanInternStep = Build(handle)
+
         internal fun join(handle: JoinHandle): PlanInternStep = Join(handle)
+
         internal fun fault(kind: L2FaultKind): PlanInternStep = Fault(kind)
     }
 }
@@ -123,7 +124,6 @@ sealed interface PlanInternStep {
  * Instead, the live request-scope session is supplied explicitly at commit time.
  */
 interface BuildHandle {
-
     fun commit(
         localNode: CanonicalPlanNode,
         session: PlannerSession,
@@ -138,10 +138,7 @@ interface BuildHandle {
  * This interface intentionally does NOT expose blocking wait primitives.
  */
 interface JoinHandle {
-
-    fun registerContinuation(
-        continuation: JoinContinuation,
-    ): JoinRegistrationDecision
+    fun registerContinuation(continuation: JoinContinuation): JoinRegistrationDecision
 
     /**
      * Consumes the ready join result through a fresh planner session.
@@ -158,9 +155,7 @@ interface JoinHandle {
      * - the previously active worker-local session must already have exited through
      *   ordinary cleanup
      */
-    fun consumeReadyResult(
-        session: PlannerSession,
-    ): JoinResumeStep
+    fun consumeReadyResult(session: PlannerSession): JoinResumeStep
 
     fun cancel(reason: Throwable): Boolean
 
@@ -169,6 +164,7 @@ interface JoinHandle {
 
 sealed interface JoinRegistrationDecision {
     data object Registered : JoinRegistrationDecision
+
     data object AlreadyReady : JoinRegistrationDecision
 }
 
@@ -181,7 +177,6 @@ sealed interface JoinResumeSignal {
 }
 
 sealed interface JoinResumeStep {
-
     class Hit internal constructor(
         val node: CanonicalPlanNode,
     ) : JoinResumeStep {
@@ -196,6 +191,7 @@ sealed interface JoinResumeStep {
 
     companion object {
         internal fun hit(node: CanonicalPlanNode): JoinResumeStep = Hit(node)
+
         internal fun fault(kind: L2FaultKind): JoinResumeStep = Fault(kind)
     }
 }

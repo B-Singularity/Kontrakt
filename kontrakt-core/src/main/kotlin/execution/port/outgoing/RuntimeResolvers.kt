@@ -14,9 +14,15 @@ interface RuntimeTypeResolver {
  */
 interface RuntimeInstantiator {
     fun createEmptyCollection(handle: RuntimeTypeHandle): Any
+
     fun createEmptyMap(handle: RuntimeTypeHandle): Any
+
     fun createEmptyArray(handle: RuntimeTypeHandle): Any
-    fun createDiagnosticStub(handle: RuntimeTypeHandle, failureMessage: String): Any
+
+    fun createDiagnosticStub(
+        handle: RuntimeTypeHandle,
+        failureMessage: String,
+    ): Any
 }
 
 interface RuntimeTypeHandle

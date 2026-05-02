@@ -41,9 +41,7 @@ import planning.domain.exception.TypeExpansionContractViolationException
 class CanonicalLocalOrdinal private constructor(
     val value: Int,
 ) {
-    fun plus(
-        increment: Int,
-    ): CanonicalLocalOrdinal {
+    fun plus(increment: Int): CanonicalLocalOrdinal {
         if (increment < 0) {
             throw TypeExpansionContractViolationException(
                 reason = "CanonicalLocalOrdinal increment must be >= 0: $increment",
@@ -58,7 +56,8 @@ class CanonicalLocalOrdinal private constructor(
 
         if (result > MAX_LOCAL_ORDINAL) {
             throw TypeExpansionContractViolationException(
-                reason = "CanonicalLocalOrdinal overflow: " +
+                reason =
+                    "CanonicalLocalOrdinal overflow: " +
                         "current=$value, increment=$increment, max=$MAX_LOCAL_ORDINAL",
             )
         }
@@ -75,9 +74,7 @@ class CanonicalLocalOrdinal private constructor(
      * The caller should wrap the final result with CanonicalLocalOrdinal.of(...)
      * at the domain boundary.
      */
-    fun plusToInt(
-        increment: Int,
-    ): Int {
+    fun plusToInt(increment: Int): Int {
         if (increment < 0) {
             throw TypeExpansionContractViolationException(
                 reason = "CanonicalLocalOrdinal increment must be >= 0: $increment",
@@ -92,7 +89,8 @@ class CanonicalLocalOrdinal private constructor(
 
         if (result > MAX_LOCAL_ORDINAL) {
             throw TypeExpansionContractViolationException(
-                reason = "CanonicalLocalOrdinal overflow: " +
+                reason =
+                    "CanonicalLocalOrdinal overflow: " +
                         "current=$value, increment=$increment, max=$MAX_LOCAL_ORDINAL",
             )
         }
@@ -112,7 +110,8 @@ class CanonicalLocalOrdinal private constructor(
          */
         if (offset < 0 || offset > destination.size - FIXED_INT32_BYTES) {
             throw TypeExpansionContractViolationException(
-                reason = "Cannot write CanonicalLocalOrdinal at offset=$offset " +
+                reason =
+                    "Cannot write CanonicalLocalOrdinal at offset=$offset " +
                         "into destination size=${destination.size}",
             )
         }
@@ -123,20 +122,13 @@ class CanonicalLocalOrdinal private constructor(
         destination[offset + 3] = (value and 0xff).toByte()
     }
 
-    override fun equals(
-        other: Any?,
-    ): Boolean {
-        return other is CanonicalLocalOrdinal &&
-                value == other.value
-    }
+    override fun equals(other: Any?): Boolean =
+        other is CanonicalLocalOrdinal &&
+            value == other.value
 
-    override fun hashCode(): Int {
-        return value
-    }
+    override fun hashCode(): Int = value
 
-    override fun toString(): String {
-        return "ord($value)"
-    }
+    override fun toString(): String = "ord($value)"
 
     companion object {
         private const val MAX_LOCAL_ORDINAL: Int = 1_000_000
@@ -145,12 +137,11 @@ class CanonicalLocalOrdinal private constructor(
         private val ZERO = CanonicalLocalOrdinal(0)
 
         @JvmStatic
-        fun of(
-            value: Int,
-        ): CanonicalLocalOrdinal {
+        fun of(value: Int): CanonicalLocalOrdinal {
             if (value < 0 || value > MAX_LOCAL_ORDINAL) {
                 throw TypeExpansionContractViolationException(
-                    reason = "CanonicalLocalOrdinal out of range: " +
+                    reason =
+                        "CanonicalLocalOrdinal out of range: " +
                             "value=$value, max=$MAX_LOCAL_ORDINAL",
                 )
             }
@@ -163,13 +154,9 @@ class CanonicalLocalOrdinal private constructor(
         }
 
         @JvmStatic
-        fun zero(): CanonicalLocalOrdinal {
-            return ZERO
-        }
+        fun zero(): CanonicalLocalOrdinal = ZERO
 
         @JvmStatic
-        fun maxValue(): Int {
-            return MAX_LOCAL_ORDINAL
-        }
+        fun maxValue(): Int = MAX_LOCAL_ORDINAL
     }
 }

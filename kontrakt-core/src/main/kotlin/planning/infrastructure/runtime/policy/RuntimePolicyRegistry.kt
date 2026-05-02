@@ -19,7 +19,9 @@ import java.util.concurrent.atomic.AtomicReference
  * - already-running sessions must not observe mid-session policy drift
  * - resolved policy snapshots are immutable
  */
-class RuntimePolicyRegistry(initial: RuntimePolicyEpoch) {
+class RuntimePolicyRegistry(
+    initial: RuntimePolicyEpoch,
+) {
     private val ref = AtomicReference(initial)
 
     fun currentEpoch(): RuntimePolicyEpoch = ref.get()
@@ -31,7 +33,7 @@ class RuntimePolicyRegistry(initial: RuntimePolicyEpoch) {
         if (next.id < previous.id) {
             throw PlanningProtocolIntegrityException(
                 "RuntimePolicyEpoch integrity violation: attempted to install stale epoch. " +
-                        "current=${previous.id}, rejected=${next.id}"
+                    "current=${previous.id}, rejected=${next.id}",
             )
         }
 
@@ -42,7 +44,7 @@ class RuntimePolicyRegistry(initial: RuntimePolicyEpoch) {
 
             throw PlanningProtocolIntegrityException(
                 "RuntimePolicyEpoch integrity violation: same epoch id carries a different payload. " +
-                        "id=${next.id}"
+                    "id=${next.id}",
             )
         }
 
@@ -63,11 +65,9 @@ sealed interface PolicyInstallResult {
     val installed: Boolean
 
     companion object {
-        internal fun installed(epoch: RuntimePolicyEpoch): PolicyInstallResult =
-            InstalledImpl(epoch)
+        internal fun installed(epoch: RuntimePolicyEpoch): PolicyInstallResult = InstalledImpl(epoch)
 
-        internal fun alreadyCurrent(epoch: RuntimePolicyEpoch): PolicyInstallResult =
-            AlreadyCurrentImpl(epoch)
+        internal fun alreadyCurrent(epoch: RuntimePolicyEpoch): PolicyInstallResult = AlreadyCurrentImpl(epoch)
     }
 }
 
@@ -76,8 +76,7 @@ private class InstalledImpl(
 ) : PolicyInstallResult {
     override val installed: Boolean = true
 
-    override fun toString(): String =
-        "PolicyInstallResult.Installed(epoch=${epoch.id})"
+    override fun toString(): String = "PolicyInstallResult.Installed(epoch=${epoch.id})"
 }
 
 private class AlreadyCurrentImpl(
@@ -85,6 +84,5 @@ private class AlreadyCurrentImpl(
 ) : PolicyInstallResult {
     override val installed: Boolean = false
 
-    override fun toString(): String =
-        "PolicyInstallResult.AlreadyCurrent(epoch=${epoch.id})"
+    override fun toString(): String = "PolicyInstallResult.AlreadyCurrent(epoch=${epoch.id})"
 }

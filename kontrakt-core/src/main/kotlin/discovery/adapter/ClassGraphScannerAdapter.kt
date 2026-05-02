@@ -8,7 +8,6 @@ import io.github.classgraph.ClassGraph
 import io.github.classgraph.ScanResult
 
 class ClassGraphScannerAdapter : ClasspathScanner {
-
     override fun scan(scope: ScanScope): ScanIndex {
         RuntimeProducerGuard.ensureSingleProvider()
 
@@ -31,7 +30,6 @@ class ClassGraphScannerAdapter : ClasspathScanner {
 
                 // 5. Build Index (Enforces Determinism & Freeze internally)
                 ScanIndex.of(scenarios, contracts)
-
             } catch (e: LinkageError) {
                 // [Context-aware Failure]
                 taxonomy.wrapInfrastructureError(collector.currentPhase, collector.currentTarget, e)
@@ -39,11 +37,15 @@ class ClassGraphScannerAdapter : ClasspathScanner {
         }
     }
 
-    private fun <T> scanClassPath(scope: ScanScope, processor: (ScanResult) -> T): T {
-        val graph = ClassGraph()
-            .enableClassInfo()
-            .enableAnnotationInfo()
-            .ignoreClassVisibility()
+    private fun <T> scanClassPath(
+        scope: ScanScope,
+        processor: (ScanResult) -> T,
+    ): T {
+        val graph =
+            ClassGraph()
+                .enableClassInfo()
+                .enableAnnotationInfo()
+                .ignoreClassVisibility()
 
         if (scope is ScanScope.Packages) {
             graph.acceptPackages(*scope.packageNames.toTypedArray())
@@ -51,11 +53,12 @@ class ClassGraphScannerAdapter : ClasspathScanner {
             graph.acceptClasses(*scope.classNames.toTypedArray())
         }
 
-        val scanResult = try {
-            graph.scan()
-        } catch (t: Throwable) {
-            throw RuntimeIntegrityException("Classpath scan failed unexpectedly (Infrastructure).", t)
-        }
+        val scanResult =
+            try {
+                graph.scan()
+            } catch (t: Throwable) {
+                throw RuntimeIntegrityException("Classpath scan failed unexpectedly (Infrastructure).", t)
+            }
 
         return scanResult.use(processor)
     }

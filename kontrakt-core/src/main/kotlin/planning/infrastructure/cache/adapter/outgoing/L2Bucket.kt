@@ -19,15 +19,16 @@ internal class L2Bucket(
 ) {
     private val lock = Any()
 
-    private val entries = ArrayList<Entry>(2).apply {
-        add(
-            Entry(
-                key = initialKey,
-                node = initialNode,
-                approxBytes = 0,
-            ),
-        )
-    }
+    private val entries =
+        ArrayList<Entry>(2).apply {
+            add(
+                Entry(
+                    key = initialKey,
+                    node = initialNode,
+                    approxBytes = 0,
+                ),
+            )
+        }
 
     /**
      * Result of an insertion attempt.

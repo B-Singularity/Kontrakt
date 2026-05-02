@@ -22,7 +22,6 @@ import planning.domain.vo.PartitionId
 class PlanKeyFactory private constructor(
     private val encodingSpec: HashInputEncodingSpec,
 ) {
-
     fun issue(
         partitionId: PartitionId,
         equalityKey: CanonicalSignature,
@@ -35,11 +34,12 @@ class PlanKeyFactory private constructor(
 
         val versions = session.config.versions
 
-        val route64 = deriveRoute64(
-            partitionId = partitionId,
-            equalityKey = equalityKey,
-            session = session,
-        )
+        val route64 =
+            deriveRoute64(
+                partitionId = partitionId,
+                equalityKey = equalityKey,
+                session = session,
+            )
 
         return PlanCacheKey.issue(
             workAccountingVersion = versions.workAccountingVersion,
@@ -80,16 +80,14 @@ class PlanKeyFactory private constructor(
 
         if (nonMax == 0L || nonMax == -1L) {
             throw SentinelIntegrityException(
-                "PlanKeyFactory failed to produce a non-reserved route64."
+                "PlanKeyFactory failed to produce a non-reserved route64.",
             )
         }
 
         return nonMax
     }
 
-    private fun lowerPartitionId(partitionId: PartitionId): CanonicalIdentifier {
-        return CanonicalIdentifier.Companion.issue(partitionId.value)
-    }
+    private fun lowerPartitionId(partitionId: PartitionId): CanonicalIdentifier = CanonicalIdentifier.Companion.issue(partitionId.value)
 
     private fun wrapLengthPrefix(bytes: ByteArray): ByteArray {
         val result = ByteArray(Int.SIZE_BYTES + bytes.size)
@@ -109,17 +107,13 @@ class PlanKeyFactory private constructor(
         if (sessionVersion != encodingSpec.normalizationSpecVersion) {
             throw EnvironmentIntegrityException(
                 "Normalization version mismatch: session=$sessionVersion, " +
-                        "encodingSpec=${encodingSpec.normalizationSpecVersion}"
+                    "encodingSpec=${encodingSpec.normalizationSpecVersion}",
             )
         }
     }
 
     companion object {
         @JvmStatic
-        fun issue(
-            encodingSpec: HashInputEncodingSpec,
-        ): PlanKeyFactory {
-            return PlanKeyFactory(encodingSpec = encodingSpec)
-        }
+        fun issue(encodingSpec: HashInputEncodingSpec): PlanKeyFactory = PlanKeyFactory(encodingSpec = encodingSpec)
     }
 }

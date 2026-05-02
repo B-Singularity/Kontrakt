@@ -20,7 +20,7 @@ import java.util.TreeSet
  */
 class ScanIndex private constructor(
     val scenarios: List<TypeId>,
-    val contracts: SortedMap<TypeId, List<TypeId>>
+    val contracts: SortedMap<TypeId, List<TypeId>>,
 ) {
     companion object {
         /**
@@ -30,13 +30,14 @@ class ScanIndex private constructor(
          */
         fun of(
             rawScenarios: Collection<TypeId>,
-            rawContracts: Map<TypeId, Collection<TypeId>>
+            rawContracts: Map<TypeId, Collection<TypeId>>,
         ): ScanIndex {
             // 1. Scenarios: Dedupe + Sort + Freeze
             // TreeSet ensures Sort & Dedupe logic is consistent
-            val safeScenarios = Collections.unmodifiableList(
-                ArrayList(TreeSet(rawScenarios))
-            )
+            val safeScenarios =
+                Collections.unmodifiableList(
+                    ArrayList(TreeSet(rawScenarios)),
+                )
 
             // 2. Contracts: Dedupe Keys/Values + Sort + Freeze
             // TreeMap ensures Key Sort
@@ -44,15 +45,16 @@ class ScanIndex private constructor(
 
             for ((key, values) in rawContracts) {
                 // TreeSet ensures Value Sort & Dedupe
-                val sortedValues = Collections.unmodifiableList(
-                    ArrayList(TreeSet(values))
-                )
+                val sortedValues =
+                    Collections.unmodifiableList(
+                        ArrayList(TreeSet(values)),
+                    )
                 safeContracts[key] = sortedValues
             }
 
             return ScanIndex(
                 safeScenarios,
-                Collections.unmodifiableSortedMap(safeContracts)
+                Collections.unmodifiableSortedMap(safeContracts),
             )
         }
     }
@@ -77,7 +79,5 @@ class ScanIndex private constructor(
         return result
     }
 
-    override fun toString(): String {
-        return "ScanIndex(scenarios=$scenarios, contracts=$contracts)"
-    }
+    override fun toString(): String = "ScanIndex(scenarios=$scenarios, contracts=$contracts)"
 }

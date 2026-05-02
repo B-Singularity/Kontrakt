@@ -19,10 +19,7 @@ import planning.domain.exception.PlanningProtocolIntegrityException
 class PlanningRunEpoch private constructor(
     val id: Long,
 ) {
-
-    override fun toString(): String {
-        return "PlanningRunEpoch(id=$id)"
-    }
+    override fun toString(): String = "PlanningRunEpoch(id=$id)"
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -34,12 +31,10 @@ class PlanningRunEpoch private constructor(
 
     companion object {
         @JvmStatic
-        fun issue(
-            id: Long,
-        ): PlanningRunEpoch {
+        fun issue(id: Long): PlanningRunEpoch {
             if (id <= 0L) {
                 throw PlanningProtocolIntegrityException(
-                    "PlanningRunEpoch.id must be > 0: $id"
+                    "PlanningRunEpoch.id must be > 0: $id",
                 )
             }
             return PlanningRunEpoch(id = id)

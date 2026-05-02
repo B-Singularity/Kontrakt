@@ -19,13 +19,14 @@ internal class L2TableSegmentSaturatedException(
     private val approxOccupiedCount: Long,
     cause: Throwable? = null,
 ) : PlanningInfrastructureException(
-    message = "L2 table segment saturated: segmentIndex=$segmentIndex",
-    cause = cause,
-) {
-    override val payload: Map<String, Any?> = mapOf(
-        "segmentIndex" to segmentIndex,
-        "tableCapacity" to tableCapacity,
-        "stripeCount" to stripeCount,
-        "approxOccupiedCount" to approxOccupiedCount,
-    )
+        message = "L2 table segment saturated: segmentIndex=$segmentIndex",
+        cause = cause,
+    ) {
+    override val payload: Map<String, Any?> =
+        mapOf(
+            "segmentIndex" to segmentIndex,
+            "tableCapacity" to tableCapacity,
+            "stripeCount" to stripeCount,
+            "approxOccupiedCount" to approxOccupiedCount,
+        )
 }

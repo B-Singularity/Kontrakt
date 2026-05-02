@@ -58,9 +58,10 @@ class EnvironmentIntegrityException(
     override val domain: String = "ENVIRONMENT_LAW"
 }
 
-
-class PlanningProtocolDecodingException(message: String, cause: Throwable? = null) :
-    PlanningProtocolException(message, cause)
+class PlanningProtocolDecodingException(
+    message: String,
+    cause: Throwable? = null,
+) : PlanningProtocolException(message, cause)
 
 /**
  * Runtime abort due to budget exhaustion.
@@ -69,10 +70,11 @@ class PlanningProtocolDecodingException(message: String, cause: Throwable? = nul
  * - It is an expected fail-closed guardrail during execution.
  * - The protocol remains valid; the current run is aborted by design.
  */
-class FuelExhaustedException(msg: String) : KontraktException(msg) {
+class FuelExhaustedException(
+    msg: String,
+) : KontraktException(msg) {
     override val domain: String = "PLANNING_RUNTIME"
 }
-
 
 /**
  * Machine-readable domain fault attribution used by planning diagnostics.
@@ -116,8 +118,8 @@ class InvalidCanonicalKeyComponentException(
     val reason: String,
     val faultKind: FaultKind = FaultKind.USER_MODEL_INVALID,
 ) : PlanningDomainException(
-    message = "Invalid canonical key component '$component': $reason"
-)
+        message = "Invalid canonical key component '$component': $reason",
+    )
 
 /**
  * Raised when CanonicalEdgeKey collision is detected inside the Active Member Set.
@@ -127,8 +129,8 @@ class AmbiguousEdgeKeyException(
     val faultKind: FaultKind,
     val evidence: List<String>,
 ) : PlanningDomainException(
-    message = "Ambiguous CanonicalEdgeKey: key=$key evidence=$evidence"
-)
+        message = "Ambiguous CanonicalEdgeKey: key=$key evidence=$evidence",
+    )
 
 /**
  * Raised when EntropyTargetKey collision is detected inside the Active Member Set.
@@ -138,8 +140,8 @@ class AmbiguousEntropyTargetKeyException(
     val faultKind: FaultKind,
     val evidence: List<String>,
 ) : PlanningDomainException(
-    message = "Ambiguous EntropyTargetKey: key=$key evidence=$evidence"
-)
+        message = "Ambiguous EntropyTargetKey: key=$key evidence=$evidence",
+    )
 
 /**
  * Raised when deterministic cycle breaking fails after Stage-1 / Stage-2 attempts.
@@ -149,8 +151,8 @@ class CycleDetectedException(
     val capabilityDemotions: List<String>,
     val truncated: Boolean,
 ) : PlanningDomainException(
-    message = "Deterministic cycle break failed. truncated=$truncated demotions=$capabilityDemotions"
-)
+        message = "Deterministic cycle break failed. truncated=$truncated demotions=$capabilityDemotions",
+    )
 
 /**
  * Raised when a hard semantic/resource cap is exceeded.
@@ -160,9 +162,8 @@ class CapacityExceededException(
     val value: Long,
     val faultKind: FaultKind = FaultKind.RESOURCE_EXHAUSTED,
 ) : PlanningDomainException(
-    message = "Capacity exceeded: limitType=$limitType value=$value"
-)
-
+        message = "Capacity exceeded: limitType=$limitType value=$value",
+    )
 
 /**
  * Base exception for Active Member projection / ordering semantic-choice failures.
@@ -179,7 +180,6 @@ open class ActiveMemberProjectionException(
     override val domain: String = "PLANNING"
 }
 
-
 /**
  * Raised when the Core cannot select any constructor for an expansion episode.
  *
@@ -194,10 +194,9 @@ class NoEligibleConstructorSelectionException(
     val candidateCount: Int,
     val rejectionEvidence: List<ConstructorRejectionRecord>,
 ) : ActiveMemberProjectionException(
-    "No eligible constructor can be selected for ownerType=$ownerTypeFqcn, " +
-            "candidateCount=$candidateCount, rejectionEvidenceCount=${rejectionEvidence.size}"
-)
-
+        "No eligible constructor can be selected for ownerType=$ownerTypeFqcn, " +
+            "candidateCount=$candidateCount, rejectionEvidenceCount=${rejectionEvidence.size}",
+    )
 
 /**
  * Raised when constructor selection survives every deterministic selection dimension
@@ -209,9 +208,9 @@ class AmbiguousConstructorSelectionException(
     val ownerTypeFqcn: String,
     val tiedConstructorSignatures: List<String>,
 ) : ActiveMemberProjectionException(
-    "Ambiguous constructor selection for ownerType=$ownerTypeFqcn, " +
-            "tiedConstructorSignatures=$tiedConstructorSignatures"
-)
+        "Ambiguous constructor selection for ownerType=$ownerTypeFqcn, " +
+            "tiedConstructorSignatures=$tiedConstructorSignatures",
+    )
 
 /**
  * Raised when projected active members collide on a uniqueness key.
@@ -223,8 +222,8 @@ class DuplicateActiveMemberKeyException(
     val keyKind: String,
     val duplicateKey: String,
 ) : ActiveMemberProjectionException(
-    "Duplicate active member key: ownerType=$ownerTypeFqcn, keyKind=$keyKind, duplicateKey=$duplicateKey",
-)
+        "Duplicate active member key: ownerType=$ownerTypeFqcn, keyKind=$keyKind, duplicateKey=$duplicateKey",
+    )
 
 /**
  * Raised when canonical ordering comparator cannot produce a strict deterministic
@@ -234,9 +233,8 @@ class AmbiguousActiveMemberOrderingException(
     val ownerTypeFqcn: String,
     val reason: String,
 ) : ActiveMemberProjectionException(
-    "Ambiguous active member ordering: ownerType=$ownerTypeFqcn, reason=$reason",
-)
-
+        "Ambiguous active member ordering: ownerType=$ownerTypeFqcn, reason=$reason",
+    )
 
 /**
  * Raised when a shape says a child type exists, but the corresponding child
@@ -251,8 +249,8 @@ class InvalidResolvedTypeShapeException(
     val shapeKind: String,
     val reason: String,
 ) : PlanningExpansionException(
-    "Invalid resolved type shape: subjectTypeId=$subjectTypeId, shapeKind=$shapeKind, reason=$reason"
-)
+        "Invalid resolved type shape: subjectTypeId=$subjectTypeId, shapeKind=$shapeKind, reason=$reason",
+    )
 
 /**
  * Base exception for planning type-expansion pipeline failures.
@@ -282,12 +280,12 @@ class TypeShapeSubjectMismatchException(
     val actualCycleId: String,
     val mismatchFields: String,
 ) : PlanningExpansionException(
-    "Type shape subject mismatch: " +
+        "Type shape subject mismatch: " +
             "mismatchFields=$mismatchFields, " +
             "expectedTypeId=$expectedTypeId, actualTypeId=$actualTypeId, " +
             "expectedSignature=$expectedSignature, actualSignature=$actualSignature, " +
             "expectedCycleId=$expectedCycleId, actualCycleId=$actualCycleId",
-)
+    )
 
 /**
  * Defensive guard for a ResolvedTypeShape whose cardinality law is violated.
@@ -301,8 +299,8 @@ class CorruptResolvedTypeShapeException(
     val shapeKind: String,
     val reason: String,
 ) : PlanningExpansionException(
-    "Corrupt resolved type shape: subjectTypeId=$subjectTypeId, shapeKind=$shapeKind, reason=$reason",
-)
+        "Corrupt resolved type shape: subjectTypeId=$subjectTypeId, shapeKind=$shapeKind, reason=$reason",
+    )
 
 /**
  * Raised when the planner reaches a type expansion kind that is intentionally
@@ -315,8 +313,8 @@ class UnsupportedTypeExpansionException(
     val shapeKind: String,
     val reason: String,
 ) : PlanningExpansionException(
-    "Unsupported type expansion: subjectTypeId=$subjectTypeId, shapeKind=$shapeKind, reason=$reason",
-)
+        "Unsupported type expansion: subjectTypeId=$subjectTypeId, shapeKind=$shapeKind, reason=$reason",
+    )
 
 /**
  * Raised when a lowered primitive identity uses a reserved sentinel value.
@@ -328,9 +326,8 @@ class InvalidLoweredTypeIdentityException(
     val ownerTypeFqcn: String,
     val typeIdentity64: Long,
 ) : PlanningExpansionException(
-    "Invalid lowered type identity: ownerType=$ownerTypeFqcn, typeIdentity64=$typeIdentity64",
-)
-
+        "Invalid lowered type identity: ownerType=$ownerTypeFqcn, typeIdentity64=$typeIdentity64",
+    )
 
 /**
  * Raised when RawTypeFactsProvider returns raw facts that do not belong to the
@@ -352,7 +349,7 @@ class RawTypeFactsSubjectMismatchException(
     val actualAlgorithmVersion: Long,
     val mismatchFields: String,
 ) : PlanningExpansionException(
-    "Raw type facts subject mismatch: " +
+        "Raw type facts subject mismatch: " +
             "mismatchFields=$mismatchFields, " +
             "expectedTypeId=$expectedTypeId, " +
             "expectedSignature=$expectedSignature, " +
@@ -362,15 +359,13 @@ class RawTypeFactsSubjectMismatchException(
             "actualTypeIdentity64=$actualTypeIdentity64, " +
             "expectedAlgorithm=$expectedAlgorithmId@$expectedAlgorithmVersion, " +
             "actualAlgorithm=$actualAlgorithmId@$actualAlgorithmVersion",
-)
-
+    )
 
 class TypeCycleIdentityContractViolationException(
     val reason: String,
 ) : PlanningExpansionException(
-    "TypeCycleIdentity contract violation: reason=$reason",
-)
-
+        "TypeCycleIdentity contract violation: reason=$reason",
+    )
 
 class TypeCycleIdentitySubjectMismatchException(
     val expectedTypeId: String,
@@ -385,14 +380,14 @@ class TypeCycleIdentitySubjectMismatchException(
     val actualAlgorithmVersion: Long,
     val mismatchFields: String,
 ) : PlanningExpansionException(
-    "Type cycle identity subject mismatch: " +
+        "Type cycle identity subject mismatch: " +
             "mismatchFields=$mismatchFields, " +
             "expectedTypeId=$expectedTypeId, actualTypeId=$actualTypeId, " +
             "expectedSignature=$expectedSignature, actualSignature=$actualSignature, " +
             "expectedCycleId=$expectedCycleId, actualCycleId=$actualCycleId, " +
             "expectedAlgorithm=$expectedAlgorithmId@$expectedAlgorithmVersion, " +
             "actualAlgorithm=$actualAlgorithmId@$actualAlgorithmVersion",
-)
+    )
 
 class ActiveCycleWithoutBreakpointException(
     val subjectTypeId: String,
@@ -400,25 +395,24 @@ class ActiveCycleWithoutBreakpointException(
     val identityAlgorithmId: String,
     val identityAlgorithmVersion: Long,
 ) : PlanningExpansionException(
-    "Active cycle detected without deterministic breakpoint: " +
+        "Active cycle detected without deterministic breakpoint: " +
             "subjectTypeId=$subjectTypeId, cycleDepth=$cycleDepth, " +
             "identityAlgorithm=$identityAlgorithmId@$identityAlgorithmVersion",
-)
+    )
 
 class CompositeExpansionPlanContractViolationException(
     val reason: String,
 ) : PlanningExpansionException(
-    "CompositeExpansionPlan contract violation: reason=$reason",
-)
+        "CompositeExpansionPlan contract violation: reason=$reason",
+    )
 
 class UnsupportedPreflightShapeException(
     val subjectTypeId: String,
     val shapeKind: String,
     val reason: String,
 ) : PlanningExpansionException(
-    "Unsupported preflight shape: subjectTypeId=$subjectTypeId, shapeKind=$shapeKind, reason=$reason",
-)
-
+        "Unsupported preflight shape: subjectTypeId=$subjectTypeId, shapeKind=$shapeKind, reason=$reason",
+    )
 
 /**
  * Raised when canonical material produced under one canonical version tuple is
@@ -436,8 +430,8 @@ class CanonicalVersionMismatchException(
     val storedVersion: String,
     val currentVersion: String,
 ) : PlanningProtocolException(
-    "Canonical version mismatch: stored=$storedVersion, current=$currentVersion",
-)
+        "Canonical version mismatch: stored=$storedVersion, current=$currentVersion",
+    )
 
 /**
  * Raised when type-expansion domain material violates a ratified expansion
@@ -454,8 +448,8 @@ class CanonicalVersionMismatchException(
 class TypeExpansionContractViolationException(
     val reason: String,
 ) : PlanningExpansionException(
-    "Type expansion contract violation: reason=$reason",
-)
+        "Type expansion contract violation: reason=$reason",
+    )
 
 /**
  * Raised when canonical-domain material violates a ratified canonical protocol.
@@ -472,5 +466,5 @@ class TypeExpansionContractViolationException(
 class CanonicalContractViolationException(
     val reason: String,
 ) : PlanningProtocolException(
-    "Canonical contract violation: reason=$reason",
-)
+        "Canonical contract violation: reason=$reason",
+    )

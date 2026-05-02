@@ -5,7 +5,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 interface ScenarioControlContract {
-
     fun createSut(): ScenarioControl
 
     @Test

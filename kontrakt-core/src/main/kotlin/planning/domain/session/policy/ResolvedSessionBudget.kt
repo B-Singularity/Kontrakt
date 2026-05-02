@@ -40,37 +40,37 @@ class ResolvedSessionBudget private constructor(
         ): ResolvedSessionBudget {
             if (maxPlannerBytesPerWorker <= 0L) {
                 throw PlanningProtocolIntegrityException(
-                    "ResolvedSessionBudget.maxPlannerBytesPerWorker must be > 0: $maxPlannerBytesPerWorker"
+                    "ResolvedSessionBudget.maxPlannerBytesPerWorker must be > 0: $maxPlannerBytesPerWorker",
                 )
             }
             if (maxPhysicalSteps <= 0) {
                 throw PlanningProtocolIntegrityException(
-                    "ResolvedSessionBudget.maxPhysicalSteps must be > 0: $maxPhysicalSteps"
+                    "ResolvedSessionBudget.maxPhysicalSteps must be > 0: $maxPhysicalSteps",
                 )
             }
             if (maxSemanticWorkUnits <= 0) {
                 throw PlanningProtocolIntegrityException(
-                    "ResolvedSessionBudget.maxSemanticWorkUnits must be > 0: $maxSemanticWorkUnits"
+                    "ResolvedSessionBudget.maxSemanticWorkUnits must be > 0: $maxSemanticWorkUnits",
                 )
             }
             if (maxSignatureLen <= 0) {
                 throw PlanningProtocolIntegrityException(
-                    "ResolvedSessionBudget.maxSignatureLen must be > 0: $maxSignatureLen"
+                    "ResolvedSessionBudget.maxSignatureLen must be > 0: $maxSignatureLen",
                 )
             }
             if (fixedHeadroomBytes < 0L) {
                 throw PlanningProtocolIntegrityException(
-                    "ResolvedSessionBudget.fixedHeadroomBytes must be >= 0: $fixedHeadroomBytes"
+                    "ResolvedSessionBudget.fixedHeadroomBytes must be >= 0: $fixedHeadroomBytes",
                 )
             }
             if (physicalStepMultiplier <= 0) {
                 throw PlanningProtocolIntegrityException(
-                    "ResolvedSessionBudget.physicalStepMultiplier must be > 0: $physicalStepMultiplier"
+                    "ResolvedSessionBudget.physicalStepMultiplier must be > 0: $physicalStepMultiplier",
                 )
             }
             if (semanticWorkMultiplier <= 0) {
                 throw PlanningProtocolIntegrityException(
-                    "ResolvedSessionBudget.semanticWorkMultiplier must be > 0: $semanticWorkMultiplier"
+                    "ResolvedSessionBudget.semanticWorkMultiplier must be > 0: $semanticWorkMultiplier",
                 )
             }
 

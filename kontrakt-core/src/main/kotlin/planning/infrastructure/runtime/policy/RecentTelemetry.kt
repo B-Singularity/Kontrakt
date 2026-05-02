@@ -21,42 +21,42 @@ data class RecentTelemetry(
     init {
         if (avgJoinWaitNanos < 0L) {
             throw PlanningProtocolIntegrityException(
-                "RecentTelemetry.avgJoinWaitNanos must be >= 0: $avgJoinWaitNanos"
+                "RecentTelemetry.avgJoinWaitNanos must be >= 0: $avgJoinWaitNanos",
             )
         }
         if (maxJoinWaitNanos < 0L) {
             throw PlanningProtocolIntegrityException(
-                "RecentTelemetry.maxJoinWaitNanos must be >= 0: $maxJoinWaitNanos"
+                "RecentTelemetry.maxJoinWaitNanos must be >= 0: $maxJoinWaitNanos",
             )
         }
         if (joinTimeoutCount < 0L) {
             throw PlanningProtocolIntegrityException(
-                "RecentTelemetry.joinTimeoutCount must be >= 0: $joinTimeoutCount"
+                "RecentTelemetry.joinTimeoutCount must be >= 0: $joinTimeoutCount",
             )
         }
         if (waiterAttachRejectedCount < 0L) {
             throw PlanningProtocolIntegrityException(
-                "RecentTelemetry.waiterAttachRejectedCount must be >= 0: $waiterAttachRejectedCount"
+                "RecentTelemetry.waiterAttachRejectedCount must be >= 0: $waiterAttachRejectedCount",
             )
         }
         if (speculativeQuotaExhaustCount < 0L) {
             throw PlanningProtocolIntegrityException(
-                "RecentTelemetry.speculativeQuotaExhaustCount must be >= 0: $speculativeQuotaExhaustCount"
+                "RecentTelemetry.speculativeQuotaExhaustCount must be >= 0: $speculativeQuotaExhaustCount",
             )
         }
         if (circuitOpenCount < 0L) {
             throw PlanningProtocolIntegrityException(
-                "RecentTelemetry.circuitOpenCount must be >= 0: $circuitOpenCount"
+                "RecentTelemetry.circuitOpenCount must be >= 0: $circuitOpenCount",
             )
         }
         if (hotKeyRate < 0.0 || hotKeyRate > 1.0) {
             throw PlanningProtocolIntegrityException(
-                "RecentTelemetry.hotKeyRate must be in [0, 1]: $hotKeyRate"
+                "RecentTelemetry.hotKeyRate must be in [0, 1]: $hotKeyRate",
             )
         }
         if (duplicateBuildRatio < 0.0) {
             throw PlanningProtocolIntegrityException(
-                "RecentTelemetry.duplicateBuildRatio must be >= 0: $duplicateBuildRatio"
+                "RecentTelemetry.duplicateBuildRatio must be >= 0: $duplicateBuildRatio",
             )
         }
     }

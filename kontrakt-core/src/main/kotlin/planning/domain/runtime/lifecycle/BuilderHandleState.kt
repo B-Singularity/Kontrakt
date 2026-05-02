@@ -50,12 +50,12 @@ enum class BuilderHandleState(
                 for (state in ALL) {
                     if (state.code < 0) {
                         throw PlanningProtocolIntegrityException(
-                            "BuilderHandleState.code must be >= 0: name=${state.name}, code=${state.code}"
+                            "BuilderHandleState.code must be >= 0: name=${state.name}, code=${state.code}",
                         )
                     }
                     if (table[state.code] != null) {
                         throw PlanningProtocolIntegrityException(
-                            "Duplicate BuilderHandleState.code detected: code=${state.code}"
+                            "Duplicate BuilderHandleState.code detected: code=${state.code}",
                         )
                     }
                     table[state.code] = state

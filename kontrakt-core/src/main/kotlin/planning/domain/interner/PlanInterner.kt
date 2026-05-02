@@ -92,7 +92,6 @@ class PlanInterner private constructor(
     private val repository: PlanInternRepository,
     private val sealer: CanonicalPayloadSealer,
 ) {
-
     /**
      * Resolves an ordinary raw payload through Tier-2 interning.
      *
@@ -104,14 +103,13 @@ class PlanInterner private constructor(
         key: PlanCacheKey,
         session: PlannerSession,
         rawPayload: RawPayloadNode,
-    ): InternerStepResult {
-        return resolveInternal(
+    ): InternerStepResult =
+        resolveInternal(
             partitionId = partitionId,
             key = key,
             session = session,
             fallbackPlan = ReplaySafeCanonicalFallbackPlan.RawPayload.issue(rawPayload),
         )
-    }
 
     /**
      * Resolves a deterministic cycle-break raw payload through Tier-2 interning.
@@ -124,14 +122,13 @@ class PlanInterner private constructor(
         key: PlanCacheKey,
         session: PlannerSession,
         rawPayload: RawCycleBreakPayload,
-    ): InternerStepResult {
-        return resolveInternal(
+    ): InternerStepResult =
+        resolveInternal(
             partitionId = partitionId,
             key = key,
             session = session,
             fallbackPlan = ReplaySafeCanonicalFallbackPlan.CycleBreak.issue(rawPayload),
         )
-    }
 
     /**
      * Resumes a previously suspended join through a fresh planner session.
@@ -142,12 +139,11 @@ class PlanInterner private constructor(
     fun resume(
         pendingJoin: PendingJoin,
         session: PlannerSession,
-    ): InternerStepResult.Completed {
-        return pendingJoin.resume(
+    ): InternerStepResult.Completed =
+        pendingJoin.resume(
             session = session,
             sealer = sealer,
         )
-    }
 
     /**
      * Internal unified interning core.
@@ -178,7 +174,7 @@ class PlanInterner private constructor(
                         handle = step.handle,
                         session = session,
                         fallbackPlan = fallbackPlan,
-                    )
+                    ),
                 )
             }
 
@@ -187,7 +183,7 @@ class PlanInterner private constructor(
                     PendingJoin.issue(
                         handle = step.handle,
                         fallbackPlan = fallbackPlan,
-                    )
+                    ),
                 )
             }
 
@@ -197,7 +193,7 @@ class PlanInterner private constructor(
                         kind = step.kind,
                         session = session,
                         fallbackPlan = fallbackPlan,
-                    )
+                    ),
                 )
             }
         }
@@ -240,8 +236,8 @@ class PlanInterner private constructor(
         kind: L2FaultKind,
         session: PlannerSession,
         fallbackPlan: ReplaySafeCanonicalFallbackPlan,
-    ): CanonicalPlanNode {
-        return when (kind) {
+    ): CanonicalPlanNode =
+        when (kind) {
             L2FaultKind.TRANSIENT -> {
                 session.step(CostCenter.L2_FAULT_TRANSIENT)
                 fallbackPlan.build(sealer)
@@ -253,22 +249,19 @@ class PlanInterner private constructor(
                 fallbackPlan.build(sealer)
             }
         }
-    }
 
     companion object {
         @JvmStatic
         fun issue(
             repository: PlanInternRepository,
             sealer: CanonicalPayloadSealer,
-        ): PlanInterner {
-            return PlanInterner(
+        ): PlanInterner =
+            PlanInterner(
                 repository = repository,
                 sealer = sealer,
             )
-        }
     }
 }
-
 
 /**
  * Immutable replay-safe fallback plan.
@@ -287,7 +280,6 @@ class PlanInterner private constructor(
  * This object stores only immutable raw protocol payload.
  */
 sealed interface ReplaySafeCanonicalFallbackPlan {
-
     /**
      * Builds the canonical node from immutable replay-safe raw payload.
      */
@@ -299,17 +291,11 @@ sealed interface ReplaySafeCanonicalFallbackPlan {
     class RawPayload private constructor(
         private val payload: RawPayloadNode,
     ) : ReplaySafeCanonicalFallbackPlan {
-        override fun build(sealer: CanonicalPayloadSealer): CanonicalPlanNode {
-            return sealer.seal(payload)
-        }
+        override fun build(sealer: CanonicalPayloadSealer): CanonicalPlanNode = sealer.seal(payload)
 
         companion object {
             @JvmStatic
-            fun issue(
-                payload: RawPayloadNode,
-            ): RawPayload {
-                return RawPayload(payload)
-            }
+            fun issue(payload: RawPayloadNode): RawPayload = RawPayload(payload)
         }
     }
 
@@ -319,17 +305,11 @@ sealed interface ReplaySafeCanonicalFallbackPlan {
     class CycleBreak private constructor(
         private val payload: RawCycleBreakPayload,
     ) : ReplaySafeCanonicalFallbackPlan {
-        override fun build(sealer: CanonicalPayloadSealer): CanonicalPlanNode {
-            return sealer.sealCycleBreak(payload)
-        }
+        override fun build(sealer: CanonicalPayloadSealer): CanonicalPlanNode = sealer.sealCycleBreak(payload)
 
         companion object {
             @JvmStatic
-            fun issue(
-                payload: RawCycleBreakPayload,
-            ): CycleBreak {
-                return CycleBreak(payload)
-            }
+            fun issue(payload: RawCycleBreakPayload): CycleBreak = CycleBreak(payload)
         }
     }
 }

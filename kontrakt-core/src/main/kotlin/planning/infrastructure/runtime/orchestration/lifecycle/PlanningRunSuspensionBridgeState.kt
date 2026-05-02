@@ -56,12 +56,12 @@ enum class PlanningRunSuspensionBridgeState(
                 for (state in ALL) {
                     if (state.code < 0) {
                         throw PlanningProtocolIntegrityException(
-                            "PlanningRunSuspensionBridgeState.code must be >= 0: name=${state.name}, code=${state.code}"
+                            "PlanningRunSuspensionBridgeState.code must be >= 0: name=${state.name}, code=${state.code}",
                         )
                     }
                     if (table[state.code] != null) {
                         throw PlanningProtocolIntegrityException(
-                            "Duplicate PlanningRunSuspensionBridgeState.code detected: code=${state.code}"
+                            "Duplicate PlanningRunSuspensionBridgeState.code detected: code=${state.code}",
                         )
                     }
                     table[state.code] = state
@@ -72,13 +72,13 @@ enum class PlanningRunSuspensionBridgeState(
         fun fromCode(code: Int): PlanningRunSuspensionBridgeState {
             if (code < 0 || code >= BY_CODE.size) {
                 throw PlanningProtocolIntegrityException(
-                    "Unknown PlanningRunSuspensionBridgeState code: $code"
+                    "Unknown PlanningRunSuspensionBridgeState code: $code",
                 )
             }
 
             return BY_CODE[code]
                 ?: throw PlanningProtocolIntegrityException(
-                    "Unknown PlanningRunSuspensionBridgeState code: $code"
+                    "Unknown PlanningRunSuspensionBridgeState code: $code",
                 )
         }
     }

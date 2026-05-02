@@ -72,29 +72,19 @@ import metamodel.domain.protocol.MetamodelProtocolTextGuards
 class AnnotationQualifiedName private constructor(
     val value: String,
 ) : Comparable<AnnotationQualifiedName> {
-    override fun compareTo(
-        other: AnnotationQualifiedName,
-    ): Int {
-        return AnnotationQualifiedNameOrder.compare(
+    override fun compareTo(other: AnnotationQualifiedName): Int =
+        AnnotationQualifiedNameOrder.compare(
             left = this,
             right = other,
         )
-    }
 
-    override fun equals(
-        other: Any?,
-    ): Boolean {
-        return other is AnnotationQualifiedName &&
-                value == other.value
-    }
+    override fun equals(other: Any?): Boolean =
+        other is AnnotationQualifiedName &&
+            value == other.value
 
-    override fun hashCode(): Int {
-        return value.hashCode()
-    }
+    override fun hashCode(): Int = value.hashCode()
 
-    override fun toString(): String {
-        return value
-    }
+    override fun toString(): String = value
 
     companion object {
         const val MAX_ANNOTATION_QUALIFIED_NAME_CHARS: Int = 512
@@ -102,17 +92,13 @@ class AnnotationQualifiedName private constructor(
         private const val MAX_DIAGNOSTIC_VALUE_CHARS: Int = 128
 
         @JvmStatic
-        fun issue(
-            value: String,
-        ): AnnotationQualifiedName {
+        fun issue(value: String): AnnotationQualifiedName {
             requireQualifiedNameSurface(value)
 
             return AnnotationQualifiedName(value)
         }
 
-        private fun requireQualifiedNameSurface(
-            value: String,
-        ) {
+        private fun requireQualifiedNameSurface(value: String) {
             MetamodelProtocolTextGuards.requireLength(
                 field = "AnnotationQualifiedName.value",
                 value = value,
@@ -156,14 +142,14 @@ class AnnotationQualifiedName private constructor(
                     if (!isAsciiIdentifierStart(c)) {
                         throw MetamodelFactContractViolationException(
                             "AnnotationQualifiedName segment must start with an ASCII identifier-start character: " +
-                                    "index=$index, value=${diagnosticValue(value)}",
+                                "index=$index, value=${diagnosticValue(value)}",
                         )
                     }
                 } else {
                     if (!isAsciiIdentifierPart(c)) {
                         throw MetamodelFactContractViolationException(
                             "AnnotationQualifiedName segment contains a non-canonical ASCII identifier-part character: " +
-                                    "index=$index, value=${diagnosticValue(value)}",
+                                "index=$index, value=${diagnosticValue(value)}",
                         )
                     }
                 }
@@ -190,24 +176,16 @@ class AnnotationQualifiedName private constructor(
             }
         }
 
-        private fun isAsciiIdentifierStart(
-            c: Char,
-        ): Boolean {
-            return c in 'A'..'Z' ||
-                    c in 'a'..'z' ||
-                    c == '_'
-        }
+        private fun isAsciiIdentifierStart(c: Char): Boolean =
+            c in 'A'..'Z' ||
+                c in 'a'..'z' ||
+                c == '_'
 
-        private fun isAsciiIdentifierPart(
-            c: Char,
-        ): Boolean {
-            return isAsciiIdentifierStart(c) ||
-                    c in '0'..'9'
-        }
+        private fun isAsciiIdentifierPart(c: Char): Boolean =
+            isAsciiIdentifierStart(c) ||
+                c in '0'..'9'
 
-        private fun diagnosticValue(
-            value: String,
-        ): String {
+        private fun diagnosticValue(value: String): String {
             if (value.length <= MAX_DIAGNOSTIC_VALUE_CHARS) {
                 return value
             }

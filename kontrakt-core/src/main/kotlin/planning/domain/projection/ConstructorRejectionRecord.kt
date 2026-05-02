@@ -37,7 +37,7 @@ class ConstructorRejectionRecord private constructor(
             if (constructorSignatureNormalizationVersion < 0L) {
                 throw ActiveMemberProjectionException(
                     "ConstructorRejectionRecord.constructorSignatureNormalizationVersion must be >= 0: " +
-                            constructorSignatureNormalizationVersion
+                        constructorSignatureNormalizationVersion,
                 )
             }
 

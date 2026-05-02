@@ -6,7 +6,6 @@ import kontrakt.planning.domain.protocol.SentinelRemapper
 import planning.domain.exception.EnvironmentIntegrityException
 import planning.domain.exception.PortContractViolationException
 
-
 /**
  * Boot-time runtime pinning gate for protocol-critical primitives.
  *
@@ -30,7 +29,6 @@ import planning.domain.exception.PortContractViolationException
  * - Verification is host-triggered, not hidden in global initialization.
  */
 object RuntimeProtocolPinningGate {
-
     /**
      * Verifies all protocol-critical runtime pinning laws.
      *
@@ -60,21 +58,21 @@ object RuntimeProtocolPinningGate {
                 if (vector.expectedHex == null) {
                     throw EnvironmentIntegrityException(
                         "Runtime protocol drift: accepted input that MUST be rejected. " +
-                                "description='${vector.description}'"
+                            "description='${vector.description}'",
                     )
                 }
 
                 if (!actualHex.equals(vector.expectedHex, ignoreCase = true)) {
                     throw EnvironmentIntegrityException(
                         "Runtime protocol drift: encoding mismatch. " +
-                                "description='${vector.description}', expected='${vector.expectedHex}', actual='$actualHex'"
+                            "description='${vector.description}', expected='${vector.expectedHex}', actual='$actualHex'",
                     )
                 }
             } catch (e: PortContractViolationException) {
                 if (vector.expectedHex != null) {
                     throw EnvironmentIntegrityException(
                         "Runtime protocol drift: rejected input that MUST be accepted. " +
-                                "description='${vector.description}'",
+                            "description='${vector.description}'",
                         e,
                     )
                 }
@@ -105,9 +103,9 @@ object RuntimeProtocolPinningGate {
             if (actualH1 != expectedH1 || actualH2 != expectedH2) {
                 throw EnvironmentIntegrityException(
                     "Runtime protocol drift: hash mismatch. " +
-                            "description='${vector.description}', " +
-                            "expected(h1,h2)=(${vector.expectedH1Hex},${vector.expectedH2Hex}), " +
-                            "actual(h1,h2)=(${actualH1.toUnsignedHex()},${actualH2.toUnsignedHex()})"
+                        "description='${vector.description}', " +
+                        "expected(h1,h2)=(${vector.expectedH1Hex},${vector.expectedH2Hex}), " +
+                        "actual(h1,h2)=(${actualH1.toUnsignedHex()},${actualH2.toUnsignedHex()})",
                 )
             }
 
@@ -115,8 +113,8 @@ object RuntimeProtocolPinningGate {
             if (hotPath != actualH1) {
                 throw EnvironmentIntegrityException(
                     "Runtime protocol drift: hash64 != hash128Into()[0]. " +
-                            "description='${vector.description}', " +
-                            "hash64=${hotPath.toUnsignedHex()}, h1=${actualH1.toUnsignedHex()}"
+                        "description='${vector.description}', " +
+                        "hash64=${hotPath.toUnsignedHex()}, h1=${actualH1.toUnsignedHex()}",
                 )
             }
         }
@@ -133,28 +131,29 @@ object RuntimeProtocolPinningGate {
     @JvmStatic
     fun verifySentinelVectors() {
         for (vector in ProtocolGoldenVectors.SENTINEL_VECTORS) {
-            val actual = when (vector.kind) {
-                ProtocolGoldenVectors.SentinelKind.NON_ZERO ->
-                    SentinelRemapper.remapNonZero(vector.input, vector.seed)
+            val actual =
+                when (vector.kind) {
+                    ProtocolGoldenVectors.SentinelKind.NON_ZERO ->
+                        SentinelRemapper.remapNonZero(vector.input, vector.seed)
 
-                ProtocolGoldenVectors.SentinelKind.NON_MAX ->
-                    SentinelRemapper.remapNonMax(vector.input, vector.seed)
-            }
+                    ProtocolGoldenVectors.SentinelKind.NON_MAX ->
+                        SentinelRemapper.remapNonMax(vector.input, vector.seed)
+                }
 
             val expected = vector.expectedRemappedHex.parseHexU64ToLong()
 
             if (actual != expected) {
                 throw EnvironmentIntegrityException(
                     "Runtime protocol drift: sentinel remap mismatch. " +
-                            "description='${vector.description}', " +
-                            "expected='${vector.expectedRemappedHex}', actual='${actual.toUnsignedHex()}'"
+                        "description='${vector.description}', " +
+                        "expected='${vector.expectedRemappedHex}', actual='${actual.toUnsignedHex()}'",
                 )
             }
 
             if (actual == 0L || actual == -1L) {
                 throw EnvironmentIntegrityException(
                     "Runtime protocol drift: sentinel remap produced a reserved value. " +
-                            "description='${vector.description}', actual='${actual.toUnsignedHex()}'"
+                        "description='${vector.description}', actual='${actual.toUnsignedHex()}'",
                 )
             }
         }
@@ -165,14 +164,13 @@ object RuntimeProtocolPinningGate {
             (byte.toInt() and 0xFF).toString(16).padStart(2, '0')
         }
 
-    private fun Long.toUnsignedHex(): String =
-        this.toULong().toString(16).padStart(16, '0')
+    private fun Long.toUnsignedHex(): String = this.toULong().toString(16).padStart(16, '0')
 
     private fun String.hexToBytes(): ByteArray {
         if (isEmpty()) return ByteArray(0)
         if (length % 2 != 0) {
             throw EnvironmentIntegrityException(
-                "Invalid protocol asset: hex length must be even. length=$length"
+                "Invalid protocol asset: hex length must be even. length=$length",
             )
         }
 
@@ -187,6 +185,5 @@ object RuntimeProtocolPinningGate {
         return out
     }
 
-    private fun String.parseHexU64ToLong(): Long =
-        toULong(16).toLong()
+    private fun String.parseHexU64ToLong(): Long = toULong(16).toLong()
 }

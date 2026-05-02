@@ -18,7 +18,6 @@ import org.mockito.Mockito
  * It ensures 100% branch coverage, including exception translation logic.
  */
 interface ScenarioContextContract {
-
     /**
      * Factory method to create the System Under Test (SUT).
      */
@@ -34,6 +33,7 @@ interface ScenarioContextContract {
      */
     interface TestDependency {
         fun getString(): String
+
         fun doAction()
     }
 
@@ -107,7 +107,6 @@ interface ScenarioContextContract {
     }
 }
 
-
 /**
  * Validates the [MockitoScenarioContext] by implementing the [ScenarioContextContract].
  *
@@ -116,12 +115,8 @@ interface ScenarioContextContract {
  * interface-based test logic.
  */
 class MockitoScenarioContextTest : ScenarioContextContract {
+    override fun createSut(): ScenarioContext = MockitoScenarioContext()
 
-    override fun createSut(): ScenarioContext {
-        return MockitoScenarioContext()
-    }
-
-    override fun createMockDependency(): ScenarioContextContract.TestDependency {
-        return Mockito.mock(ScenarioContextContract.TestDependency::class.java)
-    }
+    override fun createMockDependency(): ScenarioContextContract.TestDependency =
+        Mockito.mock(ScenarioContextContract.TestDependency::class.java)
 }

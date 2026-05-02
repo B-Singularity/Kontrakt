@@ -228,7 +228,8 @@ enum class CanonicalTypeShapeKind(
         minimumGenericArity = 2,
         directInstantiationAllowed = false,
         finiteSubtypeUniverse = false,
-    );
+    ),
+    ;
 
     val isPolymorphicSurface: Boolean
         get() = expansionSurface == CanonicalExpansionSurface.POLYMORPHIC

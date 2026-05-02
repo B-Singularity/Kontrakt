@@ -12,9 +12,7 @@ import java.util.SortedSet
  * via the provided strategy.
  */
 class ResolutionPhase(
-    private val bindingStrategy: BindingStrategy
+    private val bindingStrategy: BindingStrategy,
 ) {
-    fun execute(requirements: ScenarioRequirements): SortedSet<ResolvedSpec> {
-        return bindingStrategy.resolve(requirements)
-    }
+    fun execute(requirements: ScenarioRequirements): SortedSet<ResolvedSpec> = bindingStrategy.resolve(requirements)
 }

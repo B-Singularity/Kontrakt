@@ -48,7 +48,7 @@ class ProjectedActiveMember private constructor(
             if (typeSignatureNormalizationVersion < 0L) {
                 throw ActiveMemberProjectionException(
                     "ProjectedActiveMember.typeSignatureNormalizationVersion must be >= 0: " +
-                            typeSignatureNormalizationVersion
+                        typeSignatureNormalizationVersion,
                 )
             }
 

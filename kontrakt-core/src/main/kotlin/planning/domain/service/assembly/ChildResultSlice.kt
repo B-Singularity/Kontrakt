@@ -10,6 +10,8 @@ import ir.plan.node.CanonicalPlanNode
  */
 interface ChildResultSlice {
     fun size(): Int
+
     fun canonicalIrNodeAt(index: Int): CanonicalPlanNode
+
     fun semanticCostUpperBoundAt(index: Int): Long
 }

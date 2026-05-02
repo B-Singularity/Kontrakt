@@ -4,7 +4,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 class DiscoveryPolicyTest {
-
     @Test
     fun `create - uses default scope when not provided`() {
         val policy = DiscoveryPolicy()

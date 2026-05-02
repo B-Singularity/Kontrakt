@@ -10,7 +10,7 @@ import exception.KontraktException
  */
 class RuntimeIntegrityException(
     message: String,
-    cause: Throwable? = null
+    cause: Throwable? = null,
 ) : KontraktException(message, cause) {
     override val domain: String = "RUNTIME_INTEGRITY"
 }
@@ -29,12 +29,11 @@ data class DiscoveryViolation(
     val sourceLocation: String?,
     val context: String,
     val kind: ViolationKind,
-    val message: String
+    val message: String,
 ) : Comparable<DiscoveryViolation> {
-
     enum class ViolationKind {
         /** User error: Naming convention, Annotation misuse, Logical conflict. */
-        PROTOCOL_VIOLATION
+        PROTOCOL_VIOLATION,
     }
 
     override fun toString(): String {
@@ -45,20 +44,21 @@ data class DiscoveryViolation(
     /**
      * [Determinism] Total Order based on structural fields.
      */
-    override fun compareTo(other: DiscoveryViolation): Int {
-        return compareValuesBy(
-            this, other,
+    override fun compareTo(other: DiscoveryViolation): Int =
+        compareValuesBy(
+            this,
+            other,
             { kindRank(it.kind) },
             { it.className },
             { it.context },
             { it.sourceLocation ?: "" },
-            { it.message } // Safe as per Determinism Contract
+            { it.message }, // Safe as per Determinism Contract
         )
-    }
 
-    private fun kindRank(k: ViolationKind): Int = when (k) {
-        ViolationKind.PROTOCOL_VIOLATION -> 0
-    }
+    private fun kindRank(k: ViolationKind): Int =
+        when (k) {
+            ViolationKind.PROTOCOL_VIOLATION -> 0
+        }
 }
 
 /**
@@ -66,9 +66,8 @@ data class DiscoveryViolation(
  * Aggregates user protocol violations.
  */
 class DiscoveryFailedException(
-    val violations: List<DiscoveryViolation>
+    val violations: List<DiscoveryViolation>,
 ) : KontraktException(buildSummary(violations)) {
-
     override val domain: String = "DISCOVERY"
 
     companion object {

@@ -120,23 +120,17 @@ internal class BuilderHandleCell private constructor(
     /**
      * Returns true if this builder-handle episode already converged to a terminal state.
      */
-    fun isTerminalAcquire(): Boolean {
-        return readStateAcquire().isTerminal
-    }
+    fun isTerminalAcquire(): Boolean = readStateAcquire().isTerminal
 
     /**
      * Returns the immutable supervisory deadline.
      */
-    fun readSupervisoryDeadline(): Long {
-        return supervisoryDeadlineNanos
-    }
+    fun readSupervisoryDeadline(): Long = supervisoryDeadlineNanos
 
     /**
      * Returns the immutable generation tag.
      */
-    fun readGeneration(): Long {
-        return generation
-    }
+    fun readGeneration(): Long = generation
 
     /**
      * Returns true if the handle is still OPEN and the given monotonic time has reached
@@ -145,12 +139,10 @@ internal class BuilderHandleCell private constructor(
      * This method does not itself perform terminalization.
      * It only answers whether supervisory force-convergence is now permitted.
      */
-    fun isOverdueAcquire(
-        nowNanos: Long,
-    ): Boolean {
+    fun isOverdueAcquire(nowNanos: Long): Boolean {
         if (nowNanos < 0L) {
             throw PlanningProtocolIntegrityException(
-                "BuilderHandleCell.isOverdueAcquire requires monotonic nanos >= 0: $nowNanos"
+                "BuilderHandleCell.isOverdueAcquire requires monotonic nanos >= 0: $nowNanos",
             )
         }
 
@@ -187,10 +179,11 @@ internal class BuilderHandleCell private constructor(
                 return false
             }
 
-            val updated = encodeStatePreservingFlags(
-                currentWord = observed,
-                newState = BuilderHandleState.COMMITTED,
-            )
+            val updated =
+                encodeStatePreservingFlags(
+                    currentWord = observed,
+                    newState = BuilderHandleState.COMMITTED,
+                )
 
             if (HANDLE_WORD_HANDLE.compareAndSet(this, observed, updated)) {
                 return true
@@ -216,10 +209,11 @@ internal class BuilderHandleCell private constructor(
                 return false
             }
 
-            val updated = encodeStatePreservingFlags(
-                currentWord = observed,
-                newState = BuilderHandleState.ABORTED,
-            )
+            val updated =
+                encodeStatePreservingFlags(
+                    currentWord = observed,
+                    newState = BuilderHandleState.ABORTED,
+                )
 
             if (HANDLE_WORD_HANDLE.compareAndSet(this, observed, updated)) {
                 return true
@@ -247,9 +241,7 @@ internal class BuilderHandleCell private constructor(
      * A failed CAS after overdue detection is legal and simply means another contender
      * converged the handle first.
      */
-    fun tryForceAbortIfOverdue(
-        nowNanos: Long,
-    ): Boolean {
+    fun tryForceAbortIfOverdue(nowNanos: Long): Boolean {
         if (!isOverdueAcquire(nowNanos)) {
             return false
         }
@@ -266,10 +258,11 @@ internal class BuilderHandleCell private constructor(
                 return false
             }
 
-            val updated = encodeStatePreservingFlags(
-                currentWord = observed,
-                newState = BuilderHandleState.ABORTED,
-            )
+            val updated =
+                encodeStatePreservingFlags(
+                    currentWord = observed,
+                    newState = BuilderHandleState.ABORTED,
+                )
 
             if (HANDLE_WORD_HANDLE.compareAndSet(this, observed, updated)) {
                 return true
@@ -302,12 +295,12 @@ internal class BuilderHandleCell private constructor(
         ): BuilderHandleCell {
             if (supervisoryDeadlineNanos <= 0L) {
                 throw PlanningProtocolIntegrityException(
-                    "BuilderHandleCell.supervisoryDeadlineNanos must be > 0: $supervisoryDeadlineNanos"
+                    "BuilderHandleCell.supervisoryDeadlineNanos must be > 0: $supervisoryDeadlineNanos",
                 )
             }
             if (generation < 0L) {
                 throw PlanningProtocolIntegrityException(
-                    "BuilderHandleCell.generation must be >= 0: $generation"
+                    "BuilderHandleCell.generation must be >= 0: $generation",
                 )
             }
 
@@ -317,13 +310,9 @@ internal class BuilderHandleCell private constructor(
             )
         }
 
-        private fun encodeInitialWord(): Int {
-            return BuilderHandleState.OPEN.code
-        }
+        private fun encodeInitialWord(): Int = BuilderHandleState.OPEN.code
 
-        private fun decodeState(word: Int): BuilderHandleState {
-            return BuilderHandleState.fromCode(word and STATE_MASK)
-        }
+        private fun decodeState(word: Int): BuilderHandleState = BuilderHandleState.fromCode(word and STATE_MASK)
 
         private fun encodeStatePreservingFlags(
             currentWord: Int,

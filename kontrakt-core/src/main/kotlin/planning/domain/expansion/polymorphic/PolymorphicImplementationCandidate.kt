@@ -17,7 +17,7 @@ class PolymorphicImplementationCandidate private constructor(
         if (other !is PolymorphicImplementationCandidate) return false
 
         return TypeReferenceIdentity.sameSemanticType(contractType, other.contractType) &&
-                implementation == other.implementation
+            implementation == other.implementation
     }
 
     override fun hashCode(): Int {
@@ -26,9 +26,8 @@ class PolymorphicImplementationCandidate private constructor(
         return result
     }
 
-    override fun toString(): String {
-        return "PolymorphicImplementationCandidate(contract=${contractType.signature}, implementation=${implementation.canonicalIdentifier})"
-    }
+    override fun toString(): String =
+        "PolymorphicImplementationCandidate(contract=${contractType.signature}, implementation=${implementation.canonicalIdentifier})"
 
     companion object {
         @JvmStatic

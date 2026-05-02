@@ -36,14 +36,13 @@ class RawCycleBreakPayload private constructor(
             stage: BreakpointStage,
             structuralPath: String,
             reason: String?,
-        ): RawCycleBreakPayload {
-            return RawCycleBreakPayload(
+        ): RawCycleBreakPayload =
+            RawCycleBreakPayload(
                 ownerTypeId = ownerTypeId,
                 edgeName = edgeName,
                 stage = stage,
                 structuralPath = structuralPath,
                 reason = reason,
             )
-        }
     }
 }

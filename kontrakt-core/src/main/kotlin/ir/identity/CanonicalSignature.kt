@@ -15,8 +15,9 @@ import java.util.Arrays
  * Note:
  * - This is intentionally not a data class to avoid accidental copying semantics.
  */
-class CanonicalSignature(bytes: ByteArray) {
-
+class CanonicalSignature(
+    bytes: ByteArray,
+) {
     private val payload: ByteArray
 
     init {

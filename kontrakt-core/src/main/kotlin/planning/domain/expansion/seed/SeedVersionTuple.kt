@@ -21,7 +21,7 @@ class SeedVersionTuple private constructor(
         if (other !is SeedVersionTuple) return false
 
         return entropyVersion == other.entropyVersion &&
-                seedSnapshotVersion == other.seedSnapshotVersion
+            seedSnapshotVersion == other.seedSnapshotVersion
     }
 
     override fun hashCode(): Int {
@@ -30,9 +30,7 @@ class SeedVersionTuple private constructor(
         return result
     }
 
-    override fun toString(): String {
-        return "SeedVersionTuple(entropyVersion=$entropyVersion, seedSnapshotVersion=$seedSnapshotVersion)"
-    }
+    override fun toString(): String = "SeedVersionTuple(entropyVersion=$entropyVersion, seedSnapshotVersion=$seedSnapshotVersion)"
 
     companion object {
         @JvmStatic

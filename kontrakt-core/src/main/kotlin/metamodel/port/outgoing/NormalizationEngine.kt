@@ -29,7 +29,6 @@ import metamodel.domain.vo.CanonicalTypeTextInspectionResult
  * KSP migration must not require changing this domain port.
  */
 interface NormalizationEngine {
-
     /**
      * Stable engine identifier for diagnostics and protocol pinning.
      */

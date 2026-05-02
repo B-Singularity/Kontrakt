@@ -63,12 +63,12 @@ enum class WaiterState(
                 for (state in ALL) {
                     if (state.code < 0) {
                         throw PlanningProtocolIntegrityException(
-                            "WaiterState.code must be >= 0: name=${state.name}, code=${state.code}"
+                            "WaiterState.code must be >= 0: name=${state.name}, code=${state.code}",
                         )
                     }
                     if (table[state.code] != null) {
                         throw PlanningProtocolIntegrityException(
-                            "Duplicate WaiterState.code detected: code=${state.code}"
+                            "Duplicate WaiterState.code detected: code=${state.code}",
                         )
                     }
                     table[state.code] = state

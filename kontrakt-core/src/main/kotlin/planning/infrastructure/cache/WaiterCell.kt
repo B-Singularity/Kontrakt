@@ -196,18 +196,14 @@ internal class WaiterCell private constructor(
      * This is derived from [readStateAcquire] and therefore respects the same
      * acquire-read discipline.
      */
-    fun isTerminalAcquire(): Boolean {
-        return readStateAcquire().isTerminal
-    }
+    fun isTerminalAcquire(): Boolean = readStateAcquire().isTerminal
 
     /**
      * Returns the immutable generation tag.
      *
      * No acquire read is required because the value is immutable after construction.
      */
-    fun readGeneration(): Long {
-        return generation
-    }
+    fun readGeneration(): Long = generation
 
     /**
      * Returns true if the delivery plane has already marked this waiter
@@ -258,15 +254,14 @@ internal class WaiterCell private constructor(
      * - only the winner publishes the terminal envelope
      * - losers return `false` and must not rewrite waiter truth
      */
-    fun tryResumeFromSharedSignal(
-        payload: Any?,
-    ): Boolean {
+    fun tryResumeFromSharedSignal(payload: Any?): Boolean {
         L2LifecycleLaw.requireTransition(WaiterState.ATTACHED, WaiterState.RESUMED)
 
-        val envelope = TerminalEnvelope.issue(
-            terminalState = WaiterState.RESUMED,
-            payload = payload,
-        )
+        val envelope =
+            TerminalEnvelope.issue(
+                terminalState = WaiterState.RESUMED,
+                payload = payload,
+            )
 
         while (true) {
             val observed = WAITER_WORD_HANDLE.getAcquire(this) as Int
@@ -275,10 +270,11 @@ internal class WaiterCell private constructor(
                 return false
             }
 
-            val updated = encodeStatePreservingFlags(
-                currentWord = observed,
-                newState = WaiterState.RESUMED,
-            )
+            val updated =
+                encodeStatePreservingFlags(
+                    currentWord = observed,
+                    newState = WaiterState.RESUMED,
+                )
 
             if (WAITER_WORD_HANDLE.compareAndSet(this, observed, updated)) {
                 TERMINAL_ENVELOPE_HANDLE.setRelease(this, envelope)
@@ -303,16 +299,15 @@ internal class WaiterCell private constructor(
      * The second invariant is intentionally explicit because it is one of the core
      * constitutional boundaries in the L2 lifecycle law.
      */
-    fun tryTimeout(
-        timeoutPayload: Any? = null,
-    ): Boolean {
+    fun tryTimeout(timeoutPayload: Any? = null): Boolean {
         L2LifecycleLaw.requireTransition(WaiterState.ATTACHED, WaiterState.TIMED_OUT)
         L2LifecycleLaw.requireWaiterEventDoesNotAffectSharedSlot(WaiterState.TIMED_OUT)
 
-        val envelope = TerminalEnvelope.issue(
-            terminalState = WaiterState.TIMED_OUT,
-            payload = timeoutPayload,
-        )
+        val envelope =
+            TerminalEnvelope.issue(
+                terminalState = WaiterState.TIMED_OUT,
+                payload = timeoutPayload,
+            )
 
         while (true) {
             val observed = WAITER_WORD_HANDLE.getAcquire(this) as Int
@@ -321,10 +316,11 @@ internal class WaiterCell private constructor(
                 return false
             }
 
-            val updated = encodeStatePreservingFlags(
-                currentWord = observed,
-                newState = WaiterState.TIMED_OUT,
-            )
+            val updated =
+                encodeStatePreservingFlags(
+                    currentWord = observed,
+                    newState = WaiterState.TIMED_OUT,
+                )
 
             if (WAITER_WORD_HANDLE.compareAndSet(this, observed, updated)) {
                 TERMINAL_ENVELOPE_HANDLE.setRelease(this, envelope)
@@ -346,16 +342,15 @@ internal class WaiterCell private constructor(
      * 1. legal waiter-axis transition
      * 2. explicit non-interference with shared-slot truth
      */
-    fun tryCancel(
-        cancellationPayload: Any? = null,
-    ): Boolean {
+    fun tryCancel(cancellationPayload: Any? = null): Boolean {
         L2LifecycleLaw.requireTransition(WaiterState.ATTACHED, WaiterState.CANCELLED)
         L2LifecycleLaw.requireWaiterEventDoesNotAffectSharedSlot(WaiterState.CANCELLED)
 
-        val envelope = TerminalEnvelope.issue(
-            terminalState = WaiterState.CANCELLED,
-            payload = cancellationPayload,
-        )
+        val envelope =
+            TerminalEnvelope.issue(
+                terminalState = WaiterState.CANCELLED,
+                payload = cancellationPayload,
+            )
 
         while (true) {
             val observed = WAITER_WORD_HANDLE.getAcquire(this) as Int
@@ -364,10 +359,11 @@ internal class WaiterCell private constructor(
                 return false
             }
 
-            val updated = encodeStatePreservingFlags(
-                currentWord = observed,
-                newState = WaiterState.CANCELLED,
-            )
+            val updated =
+                encodeStatePreservingFlags(
+                    currentWord = observed,
+                    newState = WaiterState.CANCELLED,
+                )
 
             if (WAITER_WORD_HANDLE.compareAndSet(this, observed, updated)) {
                 TERMINAL_ENVELOPE_HANDLE.setRelease(this, envelope)
@@ -479,24 +475,18 @@ internal class WaiterCell private constructor(
          * of identity shells without generation material.
          */
         @JvmStatic
-        fun issue(
-            generation: Long,
-        ): WaiterCell {
+        fun issue(generation: Long): WaiterCell {
             if (generation < 0L) {
                 throw PlanningProtocolIntegrityException(
-                    "WaiterCell.generation must be >= 0: $generation"
+                    "WaiterCell.generation must be >= 0: $generation",
                 )
             }
             return WaiterCell(generation = generation)
         }
 
-        private fun encodeInitialWord(): Int {
-            return WaiterState.ATTACHED.code
-        }
+        private fun encodeInitialWord(): Int = WaiterState.ATTACHED.code
 
-        private fun decodeState(word: Int): WaiterState {
-            return WaiterState.fromCode(word and STATE_MASK)
-        }
+        private fun decodeState(word: Int): WaiterState = WaiterState.fromCode(word and STATE_MASK)
 
         private fun encodeStatePreservingFlags(
             currentWord: Int,
@@ -529,12 +519,11 @@ internal class WaiterCell private constructor(
             fun issue(
                 terminalState: WaiterState,
                 payload: Any?,
-            ): TerminalEnvelope {
-                return TerminalEnvelope(
+            ): TerminalEnvelope =
+                TerminalEnvelope(
                     terminalState = terminalState,
                     payload = payload,
                 )
-            }
         }
     }
 }

@@ -6,9 +6,7 @@ package infrastructure.json
  * - Maps, Lists, Strings, Numbers, Booleans, Null.
  */
 object JsonUtils {
-    fun toJson(obj: Any?): String {
-        return buildString { appendValue(obj) }
-    }
+    fun toJson(obj: Any?): String = buildString { appendValue(obj) }
 
     private fun StringBuilder.appendValue(obj: Any?) {
         when (obj) {
@@ -33,11 +31,12 @@ object JsonUtils {
                 '\n' -> append("\\n")
                 '\r' -> append("\\r")
                 '\t' -> append("\\t")
-                else -> if (char.code in 0..31) {
-                    append(String.format("\\u%04x", char.code))
-                } else {
-                    append(char)
-                }
+                else ->
+                    if (char.code in 0..31) {
+                        append(String.format("\\u%04x", char.code))
+                    } else {
+                        append(char)
+                    }
             }
         }
         append('"')

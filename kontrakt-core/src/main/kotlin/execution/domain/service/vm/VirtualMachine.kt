@@ -12,17 +12,21 @@ import execution.domain.vo.plan.*
  * It strictly follows the plan and delegates value creation to [Generator].
  */
 class VirtualMachine {
-
-    fun execute(plan: ExecutableNode, context: GenerationContext): Any? {
-        return try {
+    fun execute(
+        plan: ExecutableNode,
+        context: GenerationContext,
+    ): Any? =
+        try {
             traverse(plan, context)
         } catch (e: Exception) {
             if (e is ExecutionException) throw e
             throw VMExecutionException(plan.type, "Runtime execution failed", e)
         }
-    }
 
-    private fun traverse(node: ExecutableNode, context: GenerationContext): Any? {
+    private fun traverse(
+        node: ExecutableNode,
+        context: GenerationContext,
+    ): Any? {
         return when (node) {
             is ExecutableAtomicNode -> {
                 node.generator.generate(context)
@@ -30,9 +34,10 @@ class VirtualMachine {
 
             is ExecutableCompositeNode -> {
                 // 1. Generate all fields (Recursive Step)
-                val fieldValues = node.fields.mapValues { (_, childNode) ->
-                    traverse(childNode, context)
-                }
+                val fieldValues =
+                    node.fields.mapValues { (_, childNode) ->
+                        traverse(childNode, context)
+                    }
 
                 // 2. Assemble Object
                 // Generator is cast to CompositeGenerator to accept field values
@@ -49,9 +54,10 @@ class VirtualMachine {
 
             is ExecutableCollectionNode -> {
                 // 1. Execute all expanded children
-                val elements = node.children.map { child ->
-                    traverse(child, context)
-                }
+                val elements =
+                    node.children.map { child ->
+                        traverse(child, context)
+                    }
 
                 if (node.isFixedSize) {
                     // [Array Handling]
@@ -64,7 +70,7 @@ class VirtualMachine {
                     } else {
                         throw VMExecutionException(
                             node.type,
-                            "Generator for FixedSize collection must implement ArrayGenerator"
+                            "Generator for FixedSize collection must implement ArrayGenerator",
                         )
                     }
                 } else {
@@ -79,7 +85,7 @@ class VirtualMachine {
                     } else {
                         throw VMExecutionException(
                             node.type,
-                            "Generated container is not a MutableCollection: ${container?.javaClass?.name}"
+                            "Generated container is not a MutableCollection: ${container?.javaClass?.name}",
                         )
                     }
                     return container
@@ -122,7 +128,10 @@ class VirtualMachine {
  * Helper interface for Composite Generators (Objects).
  */
 interface CompositeGenerator : Generator<Any> {
-    fun generateWithFields(context: GenerationContext, fields: Map<String, Any?>): Any
+    fun generateWithFields(
+        context: GenerationContext,
+        fields: Map<String, Any?>,
+    ): Any
 }
 
 /**
@@ -130,5 +139,8 @@ interface CompositeGenerator : Generator<Any> {
  * Arrays require special handling because they are not 'MutableCollection'.
  */
 interface ArrayGenerator : Generator<Any> {
-    fun generateArray(context: GenerationContext, elements: List<Any?>): Any
+    fun generateArray(
+        context: GenerationContext,
+        elements: List<Any?>,
+    ): Any
 }

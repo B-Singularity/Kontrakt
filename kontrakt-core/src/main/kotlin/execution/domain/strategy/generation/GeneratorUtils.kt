@@ -8,7 +8,11 @@ object GeneratorUtils {
      * Generates an Int within [min, max] INCLUSIVE.
      * Prevents Integer Overflow when max is Int.MAX_VALUE.
      */
-    fun nextIntInclusive(random: Random, min: Int, max: Int): Int {
+    fun nextIntInclusive(
+        random: Random,
+        min: Int,
+        max: Int,
+    ): Int {
         if (min == max) return min
         return random.nextLong(min.toLong(), max.toLong() + 1L).toInt()
     }
@@ -17,7 +21,11 @@ object GeneratorUtils {
      * Generates a Long within [min, max] INCLUSIVE with 100% Uniform Distribution.
      * Handles strict boundaries and overflow risks without bias.
      */
-    fun nextLongInclusive(random: Random, min: Long, max: Long): Long {
+    fun nextLongInclusive(
+        random: Random,
+        min: Long,
+        max: Long,
+    ): Long {
         if (min == max) return min
 
         // Case 1: Standard Safe Range (max < Long.MAX_VALUE)
@@ -56,7 +64,8 @@ object GeneratorUtils {
         return r
     }
 
-    fun clampLength(length: Int, physicalLimit: Int): Int {
-        return min(length, physicalLimit)
-    }
+    fun clampLength(
+        length: Int,
+        physicalLimit: Int,
+    ): Int = min(length, physicalLimit)
 }

@@ -39,30 +39,32 @@ class CanonicalTypeTextInspectionPolicyIssuer(
         scriptPolicyToken: String,
         policyVersion: String,
     ): CanonicalTypeTextInspectionPolicy {
-        val fields = listOf(
-            "policyVersion" to policyVersion,
-            "allowNullableMarker" to allowNullableMarker.toString(),
-            "allowStarProjection" to allowStarProjection.toString(),
-            "maxCodePoints" to maxCodePoints.toString(),
-            "maxIdentifierTokenCodePoints" to maxIdentifierTokenCodePoints.toString(),
-            "maxDelimiterCodePoints" to maxDelimiterCodePoints.toString(),
-            "maxNonIdentifierCodePointRatioBasisPoints" to
+        val fields =
+            listOf(
+                "policyVersion" to policyVersion,
+                "allowNullableMarker" to allowNullableMarker.toString(),
+                "allowStarProjection" to allowStarProjection.toString(),
+                "maxCodePoints" to maxCodePoints.toString(),
+                "maxIdentifierTokenCodePoints" to maxIdentifierTokenCodePoints.toString(),
+                "maxDelimiterCodePoints" to maxDelimiterCodePoints.toString(),
+                "maxNonIdentifierCodePointRatioBasisPoints" to
                     maxNonIdentifierCodePointRatioBasisPoints.toString(),
-            "maxGrossCombiningMarks" to maxGrossCombiningMarks.toString(),
-            "maxCombiningMarksPerIdentifierToken" to
+                "maxGrossCombiningMarks" to maxGrossCombiningMarks.toString(),
+                "maxCombiningMarksPerIdentifierToken" to
                     maxCombiningMarksPerIdentifierToken.toString(),
-            "maxGraphemeClustersPerIdentifierToken" to
+                "maxGraphemeClustersPerIdentifierToken" to
                     maxGraphemeClustersPerIdentifierToken.toString(),
-            "scriptPolicyToken" to scriptPolicyToken,
-        )
+                "scriptPolicyToken" to scriptPolicyToken,
+            )
 
-        val fingerprint = fingerprintDeriver.derive(
-            purpose = CanonicalTextPolicyFingerprintSpec.PURPOSE,
-            algorithmId = CanonicalTextPolicyFingerprintSpec.ALGORITHM_ID,
-            algorithmVersion = CanonicalTextPolicyFingerprintSpec.FINGERPRINT_LAW_VERSION,
-            encodingId = CanonicalTextPolicyFingerprintSpec.ENCODING_ID,
-            fields = fields,
-        )
+        val fingerprint =
+            fingerprintDeriver.derive(
+                purpose = CanonicalTextPolicyFingerprintSpec.PURPOSE,
+                algorithmId = CanonicalTextPolicyFingerprintSpec.ALGORITHM_ID,
+                algorithmVersion = CanonicalTextPolicyFingerprintSpec.FINGERPRINT_LAW_VERSION,
+                encodingId = CanonicalTextPolicyFingerprintSpec.ENCODING_ID,
+                fields = fields,
+            )
 
         return CanonicalTypeTextInspectionPolicy.issueVerified(
             allowNullableMarker = allowNullableMarker,

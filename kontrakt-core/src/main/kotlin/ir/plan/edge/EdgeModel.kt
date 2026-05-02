@@ -19,7 +19,7 @@ enum class AttributeOrigin {
     FIELD_TYPE_USE,
     MAP_KEY_TYPE_USE,
     MAP_VALUE_TYPE_USE,
-    ELEMENT_TYPE_USE
+    ELEMENT_TYPE_USE,
 }
 
 /**
@@ -43,17 +43,17 @@ sealed class Attribute {
 class AnnotationAttribute(
     override val name: CanonicalIdentifier,
     override val origin: AttributeOrigin,
-    values: Map<CanonicalIdentifier, String>
+    values: Map<CanonicalIdentifier, String>,
 ) : Attribute() {
-
     val values: DeterministicMap<CanonicalIdentifier, String>
 
     init {
-        this.values = DeterministicMap.of(values, IrLimits.MAX_ATTRIBUTE_VALUES) {
-            if (it.length > IrLimits.MAX_METADATA_VALUE_LENGTH) {
-                throw IrProtocolViolationException("Attribute value too long.")
+        this.values =
+            DeterministicMap.of(values, IrLimits.MAX_ATTRIBUTE_VALUES) {
+                if (it.length > IrLimits.MAX_METADATA_VALUE_LENGTH) {
+                    throw IrProtocolViolationException("Attribute value too long.")
+                }
             }
-        }
     }
 
     override fun equals(other: Any?): Boolean {

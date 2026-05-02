@@ -10,7 +10,6 @@ import linking.domain.service.LinkerService
  * Isolates the Composition Root from the core domain logic.
  */
 object LinkerFactory {
-
     fun createDefault(): LinkerService {
         val strategy = RealBindingStrategy()
         val resolution = ResolutionPhase(strategy)

@@ -62,7 +62,8 @@ class RootTimeEpochMillis private constructor(
          */
         if (offset < 0 || offset > destination.size - FIXED_INT64_BYTES) {
             throw TypeExpansionContractViolationException(
-                reason = "Cannot write RootTimeEpochMillis at offset=$offset " +
+                reason =
+                    "Cannot write RootTimeEpochMillis at offset=$offset " +
                         "into destination size=${destination.size}",
             )
         }
@@ -77,28 +78,19 @@ class RootTimeEpochMillis private constructor(
         destination[offset + 7] = (value and 0xffL).toByte()
     }
 
-    override fun equals(
-        other: Any?,
-    ): Boolean {
-        return other is RootTimeEpochMillis &&
-                value == other.value
-    }
+    override fun equals(other: Any?): Boolean =
+        other is RootTimeEpochMillis &&
+            value == other.value
 
-    override fun hashCode(): Int {
-        return (value xor (value ushr 32)).toInt()
-    }
+    override fun hashCode(): Int = (value xor (value ushr 32)).toInt()
 
-    override fun toString(): String {
-        return "epochMillis($value)"
-    }
+    override fun toString(): String = "epochMillis($value)"
 
     companion object {
         private const val FIXED_INT64_BYTES: Int = 8
 
         @JvmStatic
-        fun of(
-            value: Long,
-        ): RootTimeEpochMillis {
+        fun of(value: Long): RootTimeEpochMillis {
             if (value < 0L) {
                 throw TypeExpansionContractViolationException(
                     reason = "RootTimeEpochMillis must be >= 0: $value",
@@ -109,8 +101,6 @@ class RootTimeEpochMillis private constructor(
         }
 
         @JvmStatic
-        fun fixedWidthBytes(): Int {
-            return FIXED_INT64_BYTES
-        }
+        fun fixedWidthBytes(): Int = FIXED_INT64_BYTES
     }
 }

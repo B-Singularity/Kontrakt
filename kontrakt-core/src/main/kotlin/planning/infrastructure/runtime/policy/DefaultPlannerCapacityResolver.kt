@@ -19,14 +19,13 @@ import kotlin.math.max
 class DefaultPlannerCapacityResolver private constructor(
     private val calibration: ResolvedSizingCalibration,
 ) : PlannerCapacityResolver {
-
     override fun resolve(budget: ResolvedSessionBudget): ResolvedPlannerSessionCaps {
         validateCalibration(calibration)
 
         val reservedSignatureBytes = reserveSignatureBytes(budget, calibration)
         if (reservedSignatureBytes < budget.maxSignatureLen) {
             throw PlanningProtocolIntegrityException(
-                "Reserved signature bytes must be >= maxSignatureLen: reserved=$reservedSignatureBytes, maxSignatureLen=${budget.maxSignatureLen}"
+                "Reserved signature bytes must be >= maxSignatureLen: reserved=$reservedSignatureBytes, maxSignatureLen=${budget.maxSignatureLen}",
             )
         }
 
@@ -35,15 +34,15 @@ class DefaultPlannerCapacityResolver private constructor(
                 safeSubtract(
                     budget.maxPlannerBytesPerWorker,
                     reservedSignatureBytes.toLong(),
-                    "plannerBytes - signatureBytes"
+                    "plannerBytes - signatureBytes",
                 ),
                 budget.fixedHeadroomBytes,
-                "remainingStructBudget"
+                "remainingStructBudget",
             )
 
         if (structBudget <= 0L) {
             throw PlanningProtocolIntegrityException(
-                "Resolved structural budget must be > 0 after signature/headroom reservation: $structBudget"
+                "Resolved structural budget must be > 0 after signature/headroom reservation: $structBudget",
             )
         }
 
@@ -58,12 +57,13 @@ class DefaultPlannerCapacityResolver private constructor(
             val tableCap = nextPowerOfTwoChecked(max(8, safeMultiply(nodeCap, 2, "nodeCap * 2")))
             val desiredDepth = desiredDepth(nodeCap, calibration)
 
-            val feasibleDepth = capDepthByBudget(
-                nodeCap = nodeCap,
-                tableCap = tableCap,
-                desiredDepth = desiredDepth,
-                structBudget = structBudget,
-            )
+            val feasibleDepth =
+                capDepthByBudget(
+                    nodeCap = nodeCap,
+                    tableCap = tableCap,
+                    desiredDepth = desiredDepth,
+                    structBudget = structBudget,
+                )
 
             if (feasibleDepth <= 0) {
                 high = nodeCap - 1
@@ -71,22 +71,24 @@ class DefaultPlannerCapacityResolver private constructor(
             }
 
             val undoCap = safeMultiply(depthCap = feasibleDepth, perDepth = calibration.undoRecordsPerDepth)
-            val totalStruct = totalStructBytes(
-                nodeCap = nodeCap,
-                depthCap = feasibleDepth,
-                tableCap = tableCap,
-                undoCap = undoCap
-            )
+            val totalStruct =
+                totalStructBytes(
+                    nodeCap = nodeCap,
+                    depthCap = feasibleDepth,
+                    tableCap = tableCap,
+                    undoCap = undoCap,
+                )
 
             if (totalStruct <= structBudget) {
-                best = ResolvedPlannerSessionCaps(
-                    maxNodeIdCap = nodeCap,
-                    maxDepthCap = feasibleDepth,
-                    indexerTableCap = tableCap,
-                    undoLogCap = undoCap,
-                    maxSignatureBytes = reservedSignatureBytes,
-                    structBudgetBytes = structBudget,
-                )
+                best =
+                    ResolvedPlannerSessionCaps(
+                        maxNodeIdCap = nodeCap,
+                        maxDepthCap = feasibleDepth,
+                        indexerTableCap = tableCap,
+                        undoLogCap = undoCap,
+                        maxSignatureBytes = reservedSignatureBytes,
+                        structBudgetBytes = structBudget,
+                    )
                 low = nodeCap + 1
             } else {
                 high = nodeCap - 1
@@ -94,42 +96,38 @@ class DefaultPlannerCapacityResolver private constructor(
         }
 
         return best ?: throw PlanningProtocolIntegrityException(
-            "Minimal valid planner layout does not fit within resolved structural budget."
+            "Minimal valid planner layout does not fit within resolved structural budget.",
         )
     }
 
     companion object {
         @JvmStatic
-        fun issue(): DefaultPlannerCapacityResolver {
-            return DefaultPlannerCapacityResolver(
-                calibration = ResolvedSizingCalibration()
+        fun issue(): DefaultPlannerCapacityResolver =
+            DefaultPlannerCapacityResolver(
+                calibration = ResolvedSizingCalibration(),
             )
-        }
 
         /**
          * Internal-only issuance path for tests or controlled runtime bootstrap.
          */
-        internal fun issue(
-            calibration: ResolvedSizingCalibration,
-        ): DefaultPlannerCapacityResolver {
-            return DefaultPlannerCapacityResolver(calibration)
-        }
+        internal fun issue(calibration: ResolvedSizingCalibration): DefaultPlannerCapacityResolver =
+            DefaultPlannerCapacityResolver(calibration)
     }
 
     private fun validateCalibration(calibration: ResolvedSizingCalibration) {
         if (calibration.signatureReserveRatio <= 0.0 || calibration.signatureReserveRatio >= 1.0) {
             throw PlanningProtocolIntegrityException(
-                "ResolvedSizingCalibration.signatureReserveRatio must be in (0, 1): ${calibration.signatureReserveRatio}"
+                "ResolvedSizingCalibration.signatureReserveRatio must be in (0, 1): ${calibration.signatureReserveRatio}",
             )
         }
         if (calibration.preferredDepthDivisor <= 0) {
             throw PlanningProtocolIntegrityException(
-                "ResolvedSizingCalibration.preferredDepthDivisor must be > 0: ${calibration.preferredDepthDivisor}"
+                "ResolvedSizingCalibration.preferredDepthDivisor must be > 0: ${calibration.preferredDepthDivisor}",
             )
         }
         if (calibration.undoRecordsPerDepth <= 0) {
             throw PlanningProtocolIntegrityException(
-                "ResolvedSizingCalibration.undoRecordsPerDepth must be > 0: ${calibration.undoRecordsPerDepth}"
+                "ResolvedSizingCalibration.undoRecordsPerDepth must be > 0: ${calibration.undoRecordsPerDepth}",
             )
         }
     }
@@ -142,7 +140,7 @@ class DefaultPlannerCapacityResolver private constructor(
         val reserved = max(candidate, budget.maxSignatureLen.toLong())
         if (reserved > Int.MAX_VALUE.toLong()) {
             throw PlanningProtocolIntegrityException(
-                "Reserved signature bytes exceed Int.MAX_VALUE: $reserved"
+                "Reserved signature bytes exceed Int.MAX_VALUE: $reserved",
             )
         }
         return reserved.toInt()
@@ -169,12 +167,13 @@ class DefaultPlannerCapacityResolver private constructor(
         while (low <= high) {
             val depth = low + ((high - low) ushr 1)
             val undoCap = safeMultiply(depthCap = depth, perDepth = calibration.undoRecordsPerDepth)
-            val total = totalStructBytes(
-                nodeCap = nodeCap,
-                depthCap = depth,
-                tableCap = tableCap,
-                undoCap = undoCap
-            )
+            val total =
+                totalStructBytes(
+                    nodeCap = nodeCap,
+                    depthCap = depth,
+                    tableCap = tableCap,
+                    undoCap = undoCap,
+                )
 
             if (total <= structBudget) {
                 best = depth
@@ -206,16 +205,18 @@ class DefaultPlannerCapacityResolver private constructor(
         val floorLog2Bytes = safeMultiplyLong(depthCap.toLong(), 4L, "depthCap * 4")
 
         val logDepth = floorLog2(depthCap) + 1
-        val flatMinEdgeRankUpBytes = safeMultiplyLong(
-            safeMultiplyLong(depthCap.toLong(), logDepth.toLong(), "depthCap * logDepth"),
-            8L,
-            "flatMinEdgeRankUp"
-        )
-        val flatArgminUpBytes = safeMultiplyLong(
-            safeMultiplyLong(depthCap.toLong(), logDepth.toLong(), "depthCap * logDepth"),
-            4L,
-            "flatArgminUp"
-        )
+        val flatMinEdgeRankUpBytes =
+            safeMultiplyLong(
+                safeMultiplyLong(depthCap.toLong(), logDepth.toLong(), "depthCap * logDepth"),
+                8L,
+                "flatMinEdgeRankUp",
+            )
+        val flatArgminUpBytes =
+            safeMultiplyLong(
+                safeMultiplyLong(depthCap.toLong(), logDepth.toLong(), "depthCap * logDepth"),
+                4L,
+                "flatArgminUp",
+            )
 
         val undoLogBytes = safeMultiplyLong(undoCap.toLong(), 24L, "undoCap * 24")
 
@@ -238,16 +239,17 @@ class DefaultPlannerCapacityResolver private constructor(
         val minimalTableCap = 8
         val minimalUndoCap = calibration.undoRecordsPerDepth
 
-        val minimal = totalStructBytes(
-            nodeCap = minimalNodeCap,
-            depthCap = minimalDepthCap,
-            tableCap = minimalTableCap,
-            undoCap = minimalUndoCap
-        )
+        val minimal =
+            totalStructBytes(
+                nodeCap = minimalNodeCap,
+                depthCap = minimalDepthCap,
+                tableCap = minimalTableCap,
+                undoCap = minimalUndoCap,
+            )
 
         if (minimal > structBudget) {
             throw PlanningProtocolIntegrityException(
-                "Minimal valid planner layout does not fit: required=$minimal, available=$structBudget"
+                "Minimal valid planner layout does not fit: required=$minimal, available=$structBudget",
             )
         }
     }
@@ -265,7 +267,7 @@ class DefaultPlannerCapacityResolver private constructor(
         }
         if (v > (1 shl 30)) {
             throw PlanningProtocolIntegrityException(
-                "nextPowerOfTwo would overflow or produce invalid capacity: $v"
+                "nextPowerOfTwo would overflow or produce invalid capacity: $v",
             )
         }
         var n = v - 1
@@ -277,7 +279,11 @@ class DefaultPlannerCapacityResolver private constructor(
         return n + 1
     }
 
-    private fun safeMultiply(a: Int, b: Int, label: String): Int {
+    private fun safeMultiply(
+        a: Int,
+        b: Int,
+        label: String,
+    ): Int {
         val result = a.toLong() * b.toLong()
         if (result > Int.MAX_VALUE.toLong() || result < Int.MIN_VALUE.toLong()) {
             throw PlanningProtocolIntegrityException("Int overflow while computing $label: $a * $b")
@@ -285,11 +291,16 @@ class DefaultPlannerCapacityResolver private constructor(
         return result.toInt()
     }
 
-    private fun safeMultiply(depthCap: Int, perDepth: Int): Int {
-        return safeMultiply(depthCap, perDepth, "depthCap * perDepth")
-    }
+    private fun safeMultiply(
+        depthCap: Int,
+        perDepth: Int,
+    ): Int = safeMultiply(depthCap, perDepth, "depthCap * perDepth")
 
-    private fun safeMultiplyLong(a: Long, b: Long, label: String): Long {
+    private fun safeMultiplyLong(
+        a: Long,
+        b: Long,
+        label: String,
+    ): Long {
         if (a == 0L || b == 0L) return 0L
         val result = a * b
         if (result / b != a) {
@@ -298,7 +309,11 @@ class DefaultPlannerCapacityResolver private constructor(
         return result
     }
 
-    private fun safeSubtract(a: Long, b: Long, label: String): Long {
+    private fun safeSubtract(
+        a: Long,
+        b: Long,
+        label: String,
+    ): Long {
         val result = a - b
         if ((b > 0 && result > a) || (b < 0 && result < a)) {
             throw PlanningProtocolIntegrityException("Long overflow while computing $label: $a - $b")

@@ -18,24 +18,22 @@ class RawPayloadNode private constructor(
         val bytes = serializedPayload.toByteArray(Charsets.UTF_8).size
         if (bytes > IrLimits.MAX_PAYLOAD_BYTES) {
             throw IrProtocolViolationException(
-                "RawPayloadNode payload exceeds max bytes (${IrLimits.MAX_PAYLOAD_BYTES})."
+                "RawPayloadNode payload exceeds max bytes (${IrLimits.MAX_PAYLOAD_BYTES}).",
             )
         }
     }
 
-    override fun toString(): String =
-        "RawPayloadNode(typeId=$typeId, payloadBytes=${serializedPayload.toByteArray(Charsets.UTF_8).size})"
+    override fun toString(): String = "RawPayloadNode(typeId=$typeId, payloadBytes=${serializedPayload.toByteArray(Charsets.UTF_8).size})"
 
     companion object {
         @JvmStatic
         fun issue(
             typeId: RawTypeId,
             serializedPayload: String,
-        ): RawPayloadNode {
-            return RawPayloadNode(
+        ): RawPayloadNode =
+            RawPayloadNode(
                 typeId = typeId,
                 serializedPayload = serializedPayload,
             )
-        }
     }
 }

@@ -22,7 +22,6 @@ import java.time.ZoneId
 import kotlin.reflect.KClass
 
 class TestInstanceFactoryTest {
-
     private lateinit var mockingEngine: MockingEngine
     private lateinit var scenarioControl: ScenarioControl
     private lateinit var factory: TestInstanceFactory
@@ -69,24 +68,35 @@ class TestInstanceFactoryTest {
 
     @org.junit.jupiter.api.Test
     fun `should apply StatelessMock, Environment, and Real strategies correctly`() {
-        val fakeMeta = DependencyMetadata.create(
-            "fake", DependencyInterface::class, DependencyMetadata.MockingStrategy.StatefulFake
-        ).getOrThrow()
+        val fakeMeta =
+            DependencyMetadata
+                .create(
+                    "fake",
+                    DependencyInterface::class,
+                    DependencyMetadata.MockingStrategy.StatefulFake,
+                ).getOrThrow()
 
-        val envMeta = DependencyMetadata.create(
-            "env", AnotherInterface::class,
-            DependencyMetadata.MockingStrategy.Environment(DependencyMetadata.EnvType.TIME)
-        ).getOrThrow()
+        val envMeta =
+            DependencyMetadata
+                .create(
+                    "env",
+                    AnotherInterface::class,
+                    DependencyMetadata.MockingStrategy.Environment(DependencyMetadata.EnvType.TIME),
+                ).getOrThrow()
 
-        val realMeta = DependencyMetadata.create(
-            "real", RealDependency::class,
-            DependencyMetadata.MockingStrategy.Real(RealImplementation::class)
-        ).getOrThrow()
+        val realMeta =
+            DependencyMetadata
+                .create(
+                    "real",
+                    RealDependency::class,
+                    DependencyMetadata.MockingStrategy.Real(RealImplementation::class),
+                ).getOrThrow()
 
-        val spec = createSpec(
-            TargetWithDiverseStrategies::class,
-            listOf(fakeMeta, envMeta, realMeta)
-        )
+        val spec =
+            createSpec(
+                TargetWithDiverseStrategies::class,
+                listOf(fakeMeta, envMeta, realMeta),
+            )
 
         val fakeInstance = mockk<DependencyInterface>()
         val envInstance = mockk<AnotherInterface>()
@@ -108,9 +118,10 @@ class TestInstanceFactoryTest {
     fun `should handle constructor exceptions by wrapping in KontraktConfigurationException`() {
         val spec = createSpec(ExplodingTarget::class)
 
-        val ex = assertThrows(KontraktConfigurationException::class.java) {
-            factory.create(spec, clock)
-        }
+        val ex =
+            assertThrows(KontraktConfigurationException::class.java) {
+                factory.create(spec, clock)
+            }
 
         assertTrue(ex.message!!.contains("Failed to instantiate class"), "Actual: ${ex.message}")
         assertEquals("Boom!", ex.cause?.message)
@@ -119,24 +130,31 @@ class TestInstanceFactoryTest {
     @org.junit.jupiter.api.Test
     fun `should wrap unexpected runtime exceptions from mocking engine (Outer Catch)`() {
         val targetClass = TargetWithInterface::class
-        val selfMetadata = DependencyMetadata.create(
-            "self", targetClass, DependencyMetadata.MockingStrategy.StatelessMock
-        ).getOrThrow()
+        val selfMetadata =
+            DependencyMetadata
+                .create(
+                    "self",
+                    targetClass,
+                    DependencyMetadata.MockingStrategy.StatelessMock,
+                ).getOrThrow()
 
-        val spec = TestSpecification.create(
-            target = createMockTarget(targetClass),
-            modes = setOf(TestSpecification.TestMode.ContractAuto(Any::class)),
-            requiredDependencies = listOf(selfMetadata),
-            seed = 1234L
-        ).getOrThrow()
+        val spec =
+            TestSpecification
+                .create(
+                    target = createMockTarget(targetClass),
+                    modes = setOf(TestSpecification.TestMode.ContractAuto(Any::class)),
+                    requiredDependencies = listOf(selfMetadata),
+                    seed = 1234L,
+                ).getOrThrow()
 
         every {
             mockingEngine.createMock(targetClass, any<MockingContext>())
         } throws RuntimeException("Critical Failure")
 
-        val ex = assertThrows(KontraktConfigurationException::class.java) {
-            factory.create(spec, clock)
-        }
+        val ex =
+            assertThrows(KontraktConfigurationException::class.java) {
+                factory.create(spec, clock)
+            }
 
         val msg = ex.message ?: ""
         assertTrue(msg.contains("Failed to create test target"), "Actual: $msg")
@@ -145,12 +163,14 @@ class TestInstanceFactoryTest {
 
     @org.junit.jupiter.api.Test
     fun `should throw KontraktInternalException when javaMethod resolution fails`() {
-        val spec = TestSpecification.create(
-            target = createMockTarget(ClassWithConstructor::class),
-            modes = setOf(TestSpecification.TestMode.DataCompliance(ClassWithConstructor::class)),
-            requiredDependencies = emptyList(),
-            seed = 1234L
-        ).getOrThrow()
+        val spec =
+            TestSpecification
+                .create(
+                    target = createMockTarget(ClassWithConstructor::class),
+                    modes = setOf(TestSpecification.TestMode.DataCompliance(ClassWithConstructor::class)),
+                    requiredDependencies = emptyList(),
+                    seed = 1234L,
+                ).getOrThrow()
 
         assertThrows(KontraktInternalException::class.java) {
             factory.create(spec, clock)
@@ -160,32 +180,37 @@ class TestInstanceFactoryTest {
     @org.junit.jupiter.api.Test
     fun `should throw exception if ContractAuto finds no executable methods`() {
         val spec = createSpec(EmptyClass::class)
-        val ex = assertThrows(KontraktConfigurationException::class.java) {
-            factory.create(spec, clock)
-        }
+        val ex =
+            assertThrows(KontraktConfigurationException::class.java) {
+                factory.create(spec, clock)
+            }
         assertTrue(ex.message!!.contains("No executable business methods found"))
     }
 
     @org.junit.jupiter.api.Test
     fun `should throw InternalException if UserScenario finds no methods (Invariant Violation)`() {
-        val spec = TestSpecification.create(
-            target = createMockTarget(EmptyClass::class),
-            modes = setOf(TestSpecification.TestMode.UserScenario),
-            requiredDependencies = emptyList()
-        ).getOrThrow()
+        val spec =
+            TestSpecification
+                .create(
+                    target = createMockTarget(EmptyClass::class),
+                    modes = setOf(TestSpecification.TestMode.UserScenario),
+                    requiredDependencies = emptyList(),
+                ).getOrThrow()
 
-        val ex = assertThrows(KontraktInternalException::class.java) {
-            factory.create(spec, clock)
-        }
+        val ex =
+            assertThrows(KontraktInternalException::class.java) {
+                factory.create(spec, clock)
+            }
         assertTrue(ex.message!!.contains("Invariant violation"), "Actual: ${ex.message}")
     }
 
     @org.junit.jupiter.api.Test
     fun `should detect circular dependencies`() {
         val spec = createSpec(CircularA::class)
-        val ex = assertThrows(KontraktConfigurationException::class.java) {
-            factory.create(spec, clock)
-        }
+        val ex =
+            assertThrows(KontraktConfigurationException::class.java) {
+                factory.create(spec, clock)
+            }
         assertTrue(ex.message!!.contains("Circular dependency detected"))
     }
 
@@ -194,12 +219,14 @@ class TestInstanceFactoryTest {
     @org.junit.jupiter.api.Test
     fun `UserScenario should prioritize @Test annotation over other methods`() {
         val targetMock = createMockTarget(TargetWithAnnotation::class)
-        val spec = TestSpecification.create(
-            target = targetMock,
-            modes = setOf(TestSpecification.TestMode.UserScenario),
-            requiredDependencies = emptyList(),
-            seed = 1234L
-        ).getOrThrow()
+        val spec =
+            TestSpecification
+                .create(
+                    target = targetMock,
+                    modes = setOf(TestSpecification.TestMode.UserScenario),
+                    requiredDependencies = emptyList(),
+                    seed = 1234L,
+                ).getOrThrow()
 
         val context = factory.create(spec, clock)
         assertEquals("annotatedMethod", context.targetMethod.name)
@@ -208,19 +235,22 @@ class TestInstanceFactoryTest {
     @org.junit.jupiter.api.Test
     fun `should fail if DataCompliance target has no primary constructor`() {
         val targetMock = createMockTarget(NoPrimaryConstructorTarget::class)
-        val spec = TestSpecification.create(
-            target = targetMock,
-            modes = setOf(TestSpecification.TestMode.DataCompliance(NoPrimaryConstructorTarget::class)),
-            requiredDependencies = emptyList(),
-            seed = 1234L
-        ).getOrThrow()
+        val spec =
+            TestSpecification
+                .create(
+                    target = targetMock,
+                    modes = setOf(TestSpecification.TestMode.DataCompliance(NoPrimaryConstructorTarget::class)),
+                    requiredDependencies = emptyList(),
+                    seed = 1234L,
+                ).getOrThrow()
 
-        val ex = assertThrows(KontraktConfigurationException::class.java) {
-            factory.create(spec, clock)
-        }
+        val ex =
+            assertThrows(KontraktConfigurationException::class.java) {
+                factory.create(spec, clock)
+            }
         assertTrue(
             ex.message!!.contains("requires a primary constructor"),
-            "Actual: ${ex.message}"
+            "Actual: ${ex.message}",
         )
     }
 
@@ -250,9 +280,10 @@ class TestInstanceFactoryTest {
 
     @org.junit.jupiter.api.Test
     fun `should use fallback name 'dependency' when type simpleName is null`() {
-        val anonymousInstance = object : DependencyInterface {
-            override fun action() {}
-        }
+        val anonymousInstance =
+            object : DependencyInterface {
+                override fun action() {}
+            }
         val anonymousClass = anonymousInstance::class
 
         every {
@@ -309,24 +340,28 @@ class TestInstanceFactoryTest {
     @org.junit.jupiter.api.Test
     fun `DataCompliance should fail when resolved member has no java method`() {
         // [FIX] Correct expectation for this test case
-        val spec = TestSpecification.create(
-            target = createMockTarget(NoCtorNoToStringTarget::class),
-            modes = setOf(
-                TestSpecification.TestMode.DataCompliance(NoCtorNoToStringTarget::class)
-            ),
-            requiredDependencies = emptyList(),
-            seed = 1234L
-        ).getOrThrow()
+        val spec =
+            TestSpecification
+                .create(
+                    target = createMockTarget(NoCtorNoToStringTarget::class),
+                    modes =
+                        setOf(
+                            TestSpecification.TestMode.DataCompliance(NoCtorNoToStringTarget::class),
+                        ),
+                    requiredDependencies = emptyList(),
+                    seed = 1234L,
+                ).getOrThrow()
 
         // Although it passes the constructor check, it fails reflection (javaMethod == null)
         // leading to KontraktInternalException.
-        val ex = assertThrows(KontraktInternalException::class.java) {
-            factory.create(spec, clock)
-        }
+        val ex =
+            assertThrows(KontraktInternalException::class.java) {
+                factory.create(spec, clock)
+            }
 
         assertTrue(
             ex.message!!.contains("Reflection failure") || ex.message!!.contains("Could not resolve Java method"),
-            "Actual message: ${ex.message}"
+            "Actual message: ${ex.message}",
         )
     }
 
@@ -336,12 +371,14 @@ class TestInstanceFactoryTest {
         // Case: Class has methods, but none are annotated with @Test.
         // Factory should pick the first available "business" method.
         val targetMock = createMockTarget(TargetWithoutAnnotation::class)
-        val spec = TestSpecification.create(
-            target = targetMock,
-            modes = setOf(TestSpecification.TestMode.UserScenario),
-            requiredDependencies = emptyList(),
-            seed = 1234L
-        ).getOrThrow()
+        val spec =
+            TestSpecification
+                .create(
+                    target = targetMock,
+                    modes = setOf(TestSpecification.TestMode.UserScenario),
+                    requiredDependencies = emptyList(),
+                    seed = 1234L,
+                ).getOrThrow()
 
         val context = factory.create(spec, clock)
 
@@ -354,12 +391,14 @@ class TestInstanceFactoryTest {
         val strategy = DependencyMetadata.MockingStrategy.StatelessMock
         val metadata = DependencyMetadata.create("dep", DependencyInterface::class, strategy).getOrThrow()
 
-        val spec = TestSpecification.create(
-            target = createMockTarget(TargetWithInterface::class),
-            modes = setOf(TestSpecification.TestMode.ContractAuto(Any::class)),
-            requiredDependencies = listOf(metadata),
-            seed = 1234L
-        ).getOrThrow()
+        val spec =
+            TestSpecification
+                .create(
+                    target = createMockTarget(TargetWithInterface::class),
+                    modes = setOf(TestSpecification.TestMode.ContractAuto(Any::class)),
+                    requiredDependencies = listOf(metadata),
+                    seed = 1234L,
+                ).getOrThrow()
 
         val mockInstance = mockk<DependencyInterface>()
         every { mockingEngine.createMock(eq(DependencyInterface::class), any()) } returns mockInstance
@@ -404,13 +443,13 @@ class TestInstanceFactoryTest {
     fun `should fallback to constructor if generator fails for basic type (Generator Failure)`() {
         val spec = createSpec(ThrowingData::class)
 
-        val ex = assertThrows(KontraktConfigurationException::class.java) {
-            factory.create(spec, clock)
-        }
+        val ex =
+            assertThrows(KontraktConfigurationException::class.java) {
+                factory.create(spec, clock)
+            }
 
         assertTrue(ex.message!!.contains("Failed to instantiate class"), "Actual: ${ex.message}")
     }
-
 
     // --- Helpers ---
 
@@ -422,47 +461,57 @@ class TestInstanceFactoryTest {
 
     private fun createSpec(
         targetClass: KClass<*>,
-        dependencies: List<DependencyMetadata> = emptyList()
-    ): TestSpecification {
-        return TestSpecification.create(
-            target = createMockTarget(targetClass),
-            modes = setOf(TestSpecification.TestMode.ContractAuto(Any::class)),
-            requiredDependencies = dependencies,
-            seed = 1234L
-        ).getOrThrow()
-    }
+        dependencies: List<DependencyMetadata> = emptyList(),
+    ): TestSpecification =
+        TestSpecification
+            .create(
+                target = createMockTarget(targetClass),
+                modes = setOf(TestSpecification.TestMode.ContractAuto(Any::class)),
+                requiredDependencies = dependencies,
+                seed = 1234L,
+            ).getOrThrow()
 
-    private fun createMockTarget(kClass: KClass<*>): DiscoveredTestTarget {
-        return mockk<DiscoveredTestTarget> {
+    private fun createMockTarget(kClass: KClass<*>): DiscoveredTestTarget =
+        mockk<DiscoveredTestTarget> {
             every { this@mockk.kClass } returns kClass
             every { displayName } returns (kClass.simpleName ?: "Unknown")
             every { fullyQualifiedName } returns (kClass.qualifiedName ?: "Unknown")
         }
-    }
-
 
     // --- Dummy Classes ---
 
-    data class NestedData(val value: Int)
-    data class TargetWithNestedData(val child: NestedData)
-    class TargetWithPrimitives(val name: String, val age: Int) {
+    data class NestedData(
+        val value: Int,
+    )
+
+    data class TargetWithNestedData(
+        val child: NestedData,
+    )
+
+    class TargetWithPrimitives(
+        val name: String,
+        val age: Int,
+    ) {
         fun run() {}
     }
 
-    class ExplodingTarget { init {
-        throw RuntimeException("Boom!")
-    }
+    class ExplodingTarget {
+        init {
+            throw RuntimeException("Boom!")
+        }
     }
 
     class TargetWithAnnotation {
-        fun normalMethod() {};
+        fun normalMethod() {}
+
         @Test
         fun annotatedMethod() {
         }
     }
 
     class NoPrimaryConstructorTarget {
-        constructor();
+        constructor()
+
         override fun toString(): String = "Fallback"
     }
 
@@ -471,9 +520,14 @@ class TestInstanceFactoryTest {
     }
 
     interface AnotherInterface
+
     interface RealDependency
+
     class RealImplementation : RealDependency
-    class TargetWithInterface(val dependency: DependencyInterface) {
+
+    class TargetWithInterface(
+        val dependency: DependencyInterface,
+    ) {
         fun run() {}
     }
 
@@ -481,46 +535,73 @@ class TestInstanceFactoryTest {
         fun implicitTestMethod() {}
     }
 
-    class CircularA(val b: CircularB) {
+    class CircularA(
+        val b: CircularB,
+    ) {
         fun action() {}
     }
 
-    class CircularB(val a: CircularA) {
+    class CircularB(
+        val a: CircularA,
+    ) {
         fun action() {}
     }
 
     class EmptyClass
-    class ClassWithConstructor(val id: Int)
+
+    class ClassWithConstructor(
+        val id: Int,
+    )
+
     class SharedDependency
-    class Left(val shared: SharedDependency)
-    class Right(val shared: SharedDependency)
-    class DiamondRoot(val left: Left, val right: Right) {
+
+    class Left(
+        val shared: SharedDependency,
+    )
+
+    class Right(
+        val shared: SharedDependency,
+    )
+
+    class DiamondRoot(
+        val left: Left,
+        val right: Right,
+    ) {
         fun execute() {}
     }
 
     class TargetWithDiverseStrategies(
         val fake: DependencyInterface,
         val env: AnotherInterface,
-        val real: RealDependency
+        val real: RealDependency,
     ) {
         fun run() {}
     }
 
-    class RealImplWithDep(val dep: SharedDependency) : RealDependency
+    class RealImplWithDep(
+        val dep: SharedDependency,
+    ) : RealDependency
+
     interface InterfaceNoConstructor {
         fun action()
     }
 
     class AllBasicTypesTarget(
-        val l: Long, val d: Double, val b: Boolean,
-        val list: List<String>, val map: Map<String, Int>, val set: Set<String>
+        val l: Long,
+        val d: Double,
+        val b: Boolean,
+        val list: List<String>,
+        val map: Map<String, Int>,
+        val set: Set<String>,
     ) {
         fun run() {}
     }
 
     class NoCtorNoToStringTarget
 
-    data class ThrowingData(val id: Int) {
+    data class ThrowingData(
+        val id: Int,
+    ) {
         init {
             throw RuntimeException("Generator Boom!")
         }

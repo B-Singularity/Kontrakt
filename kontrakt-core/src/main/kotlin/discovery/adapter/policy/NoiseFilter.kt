@@ -12,7 +12,6 @@ import io.github.classgraph.ClassInfo
  * - Blocks local classes via JVM naming patterns (`$1`, `$2`...).
  */
 internal object NoiseFilter {
-
     // JVM Compiler Artifact Pattern:
     // Captures anonymous inner classes ($1) and local classes ($1Local).
     // User defined classes cannot usually match this pattern in source code.

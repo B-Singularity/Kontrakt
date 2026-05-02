@@ -13,7 +13,6 @@ import org.junit.jupiter.api.Test
 import kotlin.coroutines.EmptyCoroutineContext
 
 internal class ThreadLocalScenarioControlTest : ScenarioControlContract {
-
     override fun createSut(): ScenarioControl = ThreadLocalScenarioControl()
 
     @AfterEach

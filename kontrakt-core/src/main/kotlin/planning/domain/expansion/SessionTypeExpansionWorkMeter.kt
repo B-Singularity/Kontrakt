@@ -17,7 +17,6 @@ import planning.domain.session.PlannerSession
 class SessionTypeExpansionWorkMeter private constructor(
     private val session: PlannerSession,
 ) : TypeExpansionWorkMeter {
-
     override fun record(
         event: TypeExpansionWorkEvent,
         subject: TypeReference,
@@ -33,10 +32,6 @@ class SessionTypeExpansionWorkMeter private constructor(
 
     companion object {
         @JvmStatic
-        fun issue(
-            session: PlannerSession,
-        ): SessionTypeExpansionWorkMeter {
-            return SessionTypeExpansionWorkMeter(session)
-        }
+        fun issue(session: PlannerSession): SessionTypeExpansionWorkMeter = SessionTypeExpansionWorkMeter(session)
     }
 }

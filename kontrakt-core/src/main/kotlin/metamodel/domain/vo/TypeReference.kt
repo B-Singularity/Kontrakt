@@ -79,20 +79,17 @@ class TypeReference private constructor(
     val shapeSummary: TypeShapeSummary
         get() = signature.shapeSummary
 
-    fun renderSummary(): String {
-        return "TypeReference(" +
-                "id=${id.value}, " +
-                "shape=${shapeSummary.kind.protocolToken}, " +
-                "arrayRank=${shapeSummary.arrayRank}, " +
-                "genericArity=${shapeSummary.genericArity}, " +
-                "typeDepth=$typeNestingDepth, " +
-                "annotations=${useSiteAnnotations.size}" +
-                ")"
-    }
+    fun renderSummary(): String =
+        "TypeReference(" +
+            "id=${id.value}, " +
+            "shape=${shapeSummary.kind.protocolToken}, " +
+            "arrayRank=${shapeSummary.arrayRank}, " +
+            "genericArity=${shapeSummary.genericArity}, " +
+            "typeDepth=$typeNestingDepth, " +
+            "annotations=${useSiteAnnotations.size}" +
+            ")"
 
-    override fun equals(
-        other: Any?,
-    ): Boolean {
+    override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is TypeReference) return false
 
@@ -103,11 +100,11 @@ class TypeReference private constructor(
          * law, and ratification fingerprint.
          */
         return id == other.id &&
-                cycleKey == other.cycleKey &&
-                signature == other.signature &&
-                useSiteAnnotations == other.useSiteAnnotations &&
-                coherenceProof == other.coherenceProof &&
-                typeNestingDepth == other.typeNestingDepth
+            cycleKey == other.cycleKey &&
+            signature == other.signature &&
+            useSiteAnnotations == other.useSiteAnnotations &&
+            coherenceProof == other.coherenceProof &&
+            typeNestingDepth == other.typeNestingDepth
     }
 
     override fun hashCode(): Int {
@@ -120,9 +117,7 @@ class TypeReference private constructor(
         return result
     }
 
-    override fun toString(): String {
-        return renderSummary()
-    }
+    override fun toString(): String = renderSummary()
 
     companion object {
         /**
@@ -177,7 +172,6 @@ class TypeReference private constructor(
             )
         }
 
-
         private fun requireShapeCoherence(
             id: CanonicalTypeId,
             cycleKey: TypeCycleKey,
@@ -186,18 +180,18 @@ class TypeReference private constructor(
             if (id.shapeSummary != signature.shapeSummary) {
                 throw MetamodelFactContractViolationException(
                     "TypeReference incoherent shape: " +
-                            "idShape=${id.shapeSummary}, " +
-                            "signatureShape=${signature.shapeSummary}, " +
-                            "id=${id.value}",
+                        "idShape=${id.shapeSummary}, " +
+                        "signatureShape=${signature.shapeSummary}, " +
+                        "id=${id.value}",
                 )
             }
 
             if (cycleKey.shapeSummary.kind != signature.shapeSummary.kind) {
                 throw MetamodelFactContractViolationException(
                     "TypeReference incoherent cycle/signature kind: " +
-                            "cycleShape=${cycleKey.shapeSummary}, " +
-                            "signatureShape=${signature.shapeSummary}, " +
-                            "id=${id.value}",
+                        "cycleShape=${cycleKey.shapeSummary}, " +
+                        "signatureShape=${signature.shapeSummary}, " +
+                        "id=${id.value}",
                 )
             }
         }

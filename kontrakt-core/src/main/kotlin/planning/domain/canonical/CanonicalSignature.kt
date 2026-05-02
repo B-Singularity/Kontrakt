@@ -25,25 +25,19 @@ class CanonicalSignature private constructor(
     val sizeBytes: Int
         get() = bytes.size
 
-    fun copyBytes(): ByteArray {
-        return bytes.copyOf()
-    }
+    fun copyBytes(): ByteArray = bytes.copyOf()
 
     /**
      * Exact byte comparison after mandatory version compatibility check.
      *
      * Version mismatch is a protocol failure, not a simple false result.
      */
-    fun exactBytesEqual(
-        other: CanonicalSignature,
-    ): Boolean {
+    fun exactBytesEqual(other: CanonicalSignature): Boolean {
         requireSameVersionAs(other)
         return bytes.contentEquals(other.bytes)
     }
 
-    fun requireSameVersionAs(
-        other: CanonicalSignature,
-    ) {
+    fun requireSameVersionAs(other: CanonicalSignature) {
         if (!versionTuple.sameProtocolAs(other.versionTuple)) {
             throw CanonicalVersionMismatchException(
                 storedVersion = other.versionTuple.renderForDiagnostics(),
@@ -65,9 +59,7 @@ class CanonicalSignature private constructor(
      * - cache/interner exact-match paths should call exactBytesEqual(...), not
      *   rely only on generic equals(...).
      */
-    override fun equals(
-        other: Any?,
-    ): Boolean {
+    override fun equals(other: Any?): Boolean {
         if (this === other) {
             return true
         }
@@ -77,7 +69,7 @@ class CanonicalSignature private constructor(
         }
 
         return versionTuple == other.versionTuple &&
-                bytes.contentEquals(other.bytes)
+            bytes.contentEquals(other.bytes)
     }
 
     override fun hashCode(): Int {
@@ -86,9 +78,7 @@ class CanonicalSignature private constructor(
         return result
     }
 
-    override fun toString(): String {
-        return "CanonicalSignature(version=$versionTuple, sizeBytes=${bytes.size})"
-    }
+    override fun toString(): String = "CanonicalSignature(version=$versionTuple, sizeBytes=${bytes.size})"
 
     companion object {
         @JvmStatic

@@ -2,15 +2,14 @@ package metamodel.domain.exception
 
 private const val MAX_DIAGNOSTIC_VALUE_CHARS: Int = 160
 
-internal fun safeDiagnosticValue(
-    value: String,
-): String {
+internal fun safeDiagnosticValue(value: String): String {
     val builder = StringBuilder()
-    val limit = if (value.length < MAX_DIAGNOSTIC_VALUE_CHARS) {
-        value.length
-    } else {
-        MAX_DIAGNOSTIC_VALUE_CHARS
-    }
+    val limit =
+        if (value.length < MAX_DIAGNOSTIC_VALUE_CHARS) {
+            value.length
+        } else {
+            MAX_DIAGNOSTIC_VALUE_CHARS
+        }
 
     var i = 0
     while (i < limit) {

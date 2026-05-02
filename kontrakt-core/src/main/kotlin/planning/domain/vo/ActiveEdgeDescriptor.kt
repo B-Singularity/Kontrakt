@@ -14,12 +14,11 @@ class ActiveEdgeDescriptor private constructor(
             edgeRank: Long,
             traversalDisposition: TraversalDisposition,
             breakpointStage: BreakpointStage,
-        ): ActiveEdgeDescriptor {
-            return ActiveEdgeDescriptor(
+        ): ActiveEdgeDescriptor =
+            ActiveEdgeDescriptor(
                 edgeRank = edgeRank,
                 traversalDisposition = traversalDisposition,
                 breakpointStage = breakpointStage,
             )
-        }
     }
 }

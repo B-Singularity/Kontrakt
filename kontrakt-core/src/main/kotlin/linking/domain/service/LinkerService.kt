@@ -14,7 +14,7 @@ import java.util.SortedSet
  */
 class LinkerService(
     private val resolutionPhase: ResolutionPhase,
-    private val integrityPhase: IntegrityPhase
+    private val integrityPhase: IntegrityPhase,
 ) {
     fun link(requirements: ScenarioRequirements): SortedSet<ResolvedSpec> {
         // Step 3A: Resolve Requirements to Specs

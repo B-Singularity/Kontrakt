@@ -12,48 +12,30 @@ import planning.domain.exception.ActiveMemberProjectionException
  * fail-fast ambiguity checks.
  */
 internal object ProjectionOrderingPrimitives {
-
-    fun renderField(
-        value: String,
-    ): String {
-        return value.length.toString() + ":" + value
-    }
+    fun renderField(value: String): String = value.length.toString() + ":" + value
 
     fun compareStrings(
         left: String,
         right: String,
-    ): Int {
-        return left.compareTo(right)
-    }
+    ): Int = left.compareTo(right)
 
     fun compareLongs(
         left: Long,
         right: Long,
-    ): Int {
-        return java.lang.Long.compare(left, right)
-    }
+    ): Int = java.lang.Long.compare(left, right)
 
     fun compareInts(
         left: Int,
         right: Int,
-    ): Int {
-        return java.lang.Integer.compare(left, right)
-    }
+    ): Int = java.lang.Integer.compare(left, right)
 
-    fun memberKindRank(
-        value: MemberKind,
-    ): Int {
-        return when (value) {
+    fun memberKindRank(value: MemberKind): Int =
+        when (value) {
             MemberKind.CTOR_PARAM -> 0
             MemberKind.PROPERTY -> 1
         }
-    }
 
-    fun takeIfNonZero(
-        value: Int,
-    ): Int? {
-        return if (value != 0) value else null
-    }
+    fun takeIfNonZero(value: Int): Int? = if (value != 0) value else null
 
     fun requireCanonicalComponentShape(
         field: String,

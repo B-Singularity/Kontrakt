@@ -10,20 +10,19 @@ import planning.infrastructure.runtime.orchestration.lifecycle.PlanningRunSuspen
  * across ad hoc boolean/CAS checks.
  */
 object PlanningRunSuspensionBridgeLifecycleLaw {
-
     @JvmStatic
     fun canTransition(
         from: PlanningRunSuspensionBridgeState,
         to: PlanningRunSuspensionBridgeState,
-    ): Boolean {
-        return when (from) {
+    ): Boolean =
+        when (from) {
             PlanningRunSuspensionBridgeState.INITIAL ->
                 to == PlanningRunSuspensionBridgeState.CALLBACK_REGISTERED ||
-                        to == PlanningRunSuspensionBridgeState.CANCELLED
+                    to == PlanningRunSuspensionBridgeState.CANCELLED
 
             PlanningRunSuspensionBridgeState.CALLBACK_REGISTERED ->
                 to == PlanningRunSuspensionBridgeState.READY_PUBLISHED ||
-                        to == PlanningRunSuspensionBridgeState.CANCELLED
+                    to == PlanningRunSuspensionBridgeState.CANCELLED
 
             PlanningRunSuspensionBridgeState.READY_PUBLISHED ->
                 to == PlanningRunSuspensionBridgeState.CONSUME_PERMITTED
@@ -35,10 +34,10 @@ object PlanningRunSuspensionBridgeLifecycleLaw {
                 to == PlanningRunSuspensionBridgeState.CONSUMED
 
             PlanningRunSuspensionBridgeState.CONSUMED,
-            PlanningRunSuspensionBridgeState.CANCELLED ->
+            PlanningRunSuspensionBridgeState.CANCELLED,
+            ->
                 false
         }
-    }
 
     @JvmStatic
     fun requireTransition(
@@ -47,47 +46,38 @@ object PlanningRunSuspensionBridgeLifecycleLaw {
     ) {
         if (!canTransition(from, to)) {
             throw PlanningProtocolIntegrityException(
-                "Illegal PlanningRunSuspensionBridgeState transition: $from -> $to"
+                "Illegal PlanningRunSuspensionBridgeState transition: $from -> $to",
             )
         }
     }
 
     @JvmStatic
-    fun requireInitialForCallbackRegistration(
-        state: PlanningRunSuspensionBridgeState,
-    ) {
+    fun requireInitialForCallbackRegistration(state: PlanningRunSuspensionBridgeState) {
         if (state != PlanningRunSuspensionBridgeState.INITIAL) {
             throw PlanningProtocolIntegrityException(
-                "Callback registration requires INITIAL bridge state: $state"
+                "Callback registration requires INITIAL bridge state: $state",
             )
         }
     }
 
     @JvmStatic
-    fun canPublishReadiness(
-        state: PlanningRunSuspensionBridgeState,
-    ): Boolean {
-        return state == PlanningRunSuspensionBridgeState.CALLBACK_REGISTERED
-    }
+    fun canPublishReadiness(state: PlanningRunSuspensionBridgeState): Boolean =
+        state == PlanningRunSuspensionBridgeState.CALLBACK_REGISTERED
 
     @JvmStatic
-    fun requireReadyPublishedForConsumePermit(
-        state: PlanningRunSuspensionBridgeState,
-    ) {
+    fun requireReadyPublishedForConsumePermit(state: PlanningRunSuspensionBridgeState) {
         if (state != PlanningRunSuspensionBridgeState.READY_PUBLISHED) {
             throw PlanningProtocolIntegrityException(
-                "Fresh-session consume permit requires READY_PUBLISHED bridge state: $state"
+                "Fresh-session consume permit requires READY_PUBLISHED bridge state: $state",
             )
         }
     }
 
     @JvmStatic
-    fun requireConsumePermittedForConsumeStart(
-        state: PlanningRunSuspensionBridgeState,
-    ) {
+    fun requireConsumePermittedForConsumeStart(state: PlanningRunSuspensionBridgeState) {
         if (state != PlanningRunSuspensionBridgeState.CONSUME_PERMITTED) {
             throw PlanningProtocolIntegrityException(
-                "Ready-result consume requires CONSUME_PERMITTED bridge state: $state"
+                "Ready-result consume requires CONSUME_PERMITTED bridge state: $state",
             )
         }
     }
@@ -99,10 +89,7 @@ object PlanningRunSuspensionBridgeLifecycleLaw {
      * already-published readiness retroactively.
      */
     @JvmStatic
-    fun canTransitionToCancelled(
-        state: PlanningRunSuspensionBridgeState,
-    ): Boolean {
-        return state == PlanningRunSuspensionBridgeState.INITIAL ||
-                state == PlanningRunSuspensionBridgeState.CALLBACK_REGISTERED
-    }
+    fun canTransitionToCancelled(state: PlanningRunSuspensionBridgeState): Boolean =
+        state == PlanningRunSuspensionBridgeState.INITIAL ||
+            state == PlanningRunSuspensionBridgeState.CALLBACK_REGISTERED
 }

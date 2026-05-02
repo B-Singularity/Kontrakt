@@ -13,7 +13,6 @@ import ir.TestSpecification
 import java.time.Clock
 
 class DefaultRuntimeFactoryTest : KontraktRuntimeFactoryContract {
-
     private val mockingEngine = mockk<MockingEngine>(relaxed = true)
     private val scenarioControl = mockk<ScenarioControl>(relaxed = true)
     private val traceSinkPool = mockk<WorkerTraceSinkPool>(relaxed = true)
@@ -21,22 +20,17 @@ class DefaultRuntimeFactoryTest : KontraktRuntimeFactoryContract {
     private val clock = Clock.systemUTC()
     private val executionPolicy = mockk<ExecutionPolicy>(relaxed = true)
 
-    override fun createSut(): KontraktRuntimeFactory {
-        return DefaultRuntimeFactory(
+    override fun createSut(): KontraktRuntimeFactory =
+        DefaultRuntimeFactory(
             mockingEngine = mockingEngine,
             scenarioControl = scenarioControl,
             traceSinkPool = traceSinkPool,
             resultPublisher = resultPublisher,
             clock = clock,
-            executionPolicy = executionPolicy
+            executionPolicy = executionPolicy,
         )
-    }
 
-    override fun createTestSpecification(): TestSpecification {
-        return mockk(relaxed = true)
-    }
+    override fun createTestSpecification(): TestSpecification = mockk(relaxed = true)
 
-    override fun createTestScenarioExecutor(): TestScenarioExecutor {
-        return mockk(relaxed = true)
-    }
+    override fun createTestScenarioExecutor(): TestScenarioExecutor = mockk(relaxed = true)
 }

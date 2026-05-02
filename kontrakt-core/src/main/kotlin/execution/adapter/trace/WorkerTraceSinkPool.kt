@@ -15,9 +15,8 @@ import java.util.concurrent.atomic.AtomicBoolean
  * This prevents "Team Kill" scenarios where a late borrow races with the pool shutdown.
  */
 class WorkerTraceSinkPool(
-    private val logDirectory: Path
+    private val logDirectory: Path,
 ) : AutoCloseable {
-
     private val pool = ConcurrentHashMap<WorkerId, TraceSink>()
     private val isClosed = AtomicBoolean(false)
 
@@ -26,12 +25,13 @@ class WorkerTraceSinkPool(
             throw IllegalStateException("WorkerTraceSinkPool is closed. Cannot borrow sink for $workerId")
         }
 
-        val sink = pool.computeIfAbsent(workerId) { id ->
-            RecyclingFileTraceSink(
-                workerId = id.value,
-                rootDir = logDirectory
-            )
-        }
+        val sink =
+            pool.computeIfAbsent(workerId) { id ->
+                RecyclingFileTraceSink(
+                    workerId = id.value,
+                    rootDir = logDirectory,
+                )
+            }
 
         // Race Condition Check
         if (isClosed.get()) {
@@ -49,7 +49,7 @@ class WorkerTraceSinkPool(
             throw KontraktLifecycleException(
                 component = "WorkerTraceSinkPool",
                 action = "borrowSink",
-                reason = "Thread Confinement Violation! Sink for $workerId is owned by thread ${sink.ownerThreadId} but borrowed by ${Thread.currentThread().id}."
+                reason = "Thread Confinement Violation! Sink for $workerId is owned by thread ${sink.ownerThreadId} but borrowed by ${Thread.currentThread().id}.",
             )
         }
 

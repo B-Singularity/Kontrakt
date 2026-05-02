@@ -34,7 +34,6 @@ class RecyclingFileTraceSink(
     private val workerId: Int,
     private val rootDir: Path,
 ) : TraceSink {
-
     /**
      * The ID of the thread that created this sink.
      * Used to enforce strict thread confinement in [emit].
@@ -73,7 +72,6 @@ class RecyclingFileTraceSink(
             Runtime.getRuntime().addShutdownHook(shutdownHook)
 
             fileHandle = tempFileHandle
-
         } catch (exception: Throwable) {
             logger.error(exception) { "Failed to initialize worker log: $workerLogPath" }
             isClosed.set(true)
@@ -96,16 +94,17 @@ class RecyclingFileTraceSink(
             throw KontraktLifecycleException(
                 component = "TraceSink",
                 action = "emit",
-                reason = "Thread Confinement Violation! Sink owned by $ownerThreadId but called by ${Thread.currentThread().id}"
+                reason = "Thread Confinement Violation! Sink owned by $ownerThreadId but called by ${Thread.currentThread().id}",
             )
         }
 
         // 1. Serialization Block
-        val jsonBytes = try {
-            serializeSafe(event)
-        } catch (serializationException: Exception) {
-            createSerializationFailureMarker(event, serializationException)
-        }
+        val jsonBytes =
+            try {
+                serializeSafe(event)
+            } catch (serializationException: Exception) {
+                createSerializationFailureMarker(event, serializationException)
+            }
 
         // 2. IO Block
         try {
@@ -131,32 +130,39 @@ class RecyclingFileTraceSink(
 
     private fun serializeSafe(event: TraceEvent): ByteArray {
         val safeDetails = PayloadSanitizer.sanitizeMap(event.details)
-        val safeEnvelope = mapOf(
-            "timestamp" to event.timestamp,
-            "phase" to event.phase.name,
-            "type" to event.eventType,
-            "details" to safeDetails
-        )
+        val safeEnvelope =
+            mapOf(
+                "timestamp" to event.timestamp,
+                "phase" to event.phase.name,
+                "type" to event.eventType,
+                "details" to safeDetails,
+            )
         val jsonString = JsonUtils.toJson(safeEnvelope)
         return (jsonString + "\n").toByteArray(StandardCharsets.UTF_8)
     }
 
-    private fun createSerializationFailureMarker(event: TraceEvent, error: Throwable): ByteArray {
-        val markerDetails = PayloadSanitizer.sanitizeMap(
-            mapOf(
-                "originalType" to event.eventType,
-                "errorType" to error.javaClass.name,
-                "error" to (error.message ?: "<no-message>")
+    private fun createSerializationFailureMarker(
+        event: TraceEvent,
+        error: Throwable,
+    ): ByteArray {
+        val markerDetails =
+            PayloadSanitizer.sanitizeMap(
+                mapOf(
+                    "originalType" to event.eventType,
+                    "errorType" to error.javaClass.name,
+                    "error" to (error.message ?: "<no-message>"),
+                ),
             )
-        )
-        val envelope = mapOf(
-            "timestamp" to event.timestamp,
-            "phase" to event.phase.name,
-            "type" to "SERIALIZATION_FAILURE",
-            "details" to markerDetails
-        )
-        val jsonString = runCatching { JsonUtils.toJson(envelope) }
-            .getOrElse { """{"timestamp":${event.timestamp},"type":"SERIALIZATION_FAILURE_CRITICAL","phase":"${event.phase.name}"}""" }
+        val envelope =
+            mapOf(
+                "timestamp" to event.timestamp,
+                "phase" to event.phase.name,
+                "type" to "SERIALIZATION_FAILURE",
+                "details" to markerDetails,
+            )
+        val jsonString =
+            runCatching { JsonUtils.toJson(envelope) }
+                .getOrElse { """{"timestamp":${event.timestamp},"type":"SERIALIZATION_FAILURE_CRITICAL","phase":"${event.phase.name}"}""" }
 
         return (jsonString + "\n").toByteArray(StandardCharsets.UTF_8)
     }
@@ -191,6 +197,7 @@ class RecyclingFileTraceSink(
     }
 
     override fun getJournalPath(): String = workerLogPath.toAbsolutePath().toString()
+
     override fun snapshotTo(targetFileName: String): String = "" // Implementation specific
 
     override fun reset() {

@@ -13,7 +13,6 @@ import execution.domain.vo.trace.TraceEvent
  * * **Scope**: Following [ADR-017], one Sink is assigned per Worker Thread and is reused.
  */
 interface TraceSink : AutoCloseable {
-
     /**
      * The ID of the thread that exclusively owns this sink.
      */

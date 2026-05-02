@@ -16,7 +16,6 @@ import java.lang.reflect.InvocationTargetException
  * Now includes edge cases for 100% Branch Coverage.
  */
 interface ExceptionUtilsContract {
-
     // region Property: unwrapped
 
     @Test
@@ -58,10 +57,11 @@ interface ExceptionUtilsContract {
         val ex = KontraktInternalException("Error")
         val targetKClass = String::class // Use standard class to avoid null qualifiedName
 
-        ex.stackTrace = arrayOf(
-            StackTraceElement(targetKClass.qualifiedName, "targetMethod", "TargetFile.kt", 20),
-            StackTraceElement("com.user.Caller", "call", "Caller.kt", 30)
-        )
+        ex.stackTrace =
+            arrayOf(
+                StackTraceElement(targetKClass.qualifiedName, "targetMethod", "TargetFile.kt", 20),
+                StackTraceElement("com.user.Caller", "call", "Caller.kt", 30),
+            )
 
         val location = ex.extractSourceLocation(targetKClass)
 
@@ -76,9 +76,10 @@ interface ExceptionUtilsContract {
         val ex = KontraktInternalException("Error")
         val targetKClass = String::class
 
-        ex.stackTrace = arrayOf(
-            StackTraceElement("com.user.Caller", "call", "Caller.kt", 30)
-        )
+        ex.stackTrace =
+            arrayOf(
+                StackTraceElement("com.user.Caller", "call", "Caller.kt", 30),
+            )
 
         val location = ex.extractSourceLocation(targetKClass)
 
@@ -89,11 +90,12 @@ interface ExceptionUtilsContract {
     @Test
     fun `extractSourceLocation - returns first user code frame skipping ignored framework prefixes`() {
         val ex = RuntimeException("User Error")
-        ex.stackTrace = arrayOf(
-            StackTraceElement("execution.Engine", "run", "Engine.kt", 10),
-            StackTraceElement("com.myservice.UserService", "createUser", "UserService.kt", 55),
-            StackTraceElement("org.junit.runner.Runner", "run", "Runner.java", 100)
-        )
+        ex.stackTrace =
+            arrayOf(
+                StackTraceElement("execution.Engine", "run", "Engine.kt", 10),
+                StackTraceElement("com.myservice.UserService", "createUser", "UserService.kt", 55),
+                StackTraceElement("org.junit.runner.Runner", "run", "Runner.java", 100),
+            )
 
         val location = ex.extractSourceLocation()
 
@@ -106,9 +108,10 @@ interface ExceptionUtilsContract {
     @Test
     fun `extractSourceLocation - returns Unknown if all frames are ignored`() {
         val ex = KontraktInternalException("Internal")
-        ex.stackTrace = arrayOf(
-            StackTraceElement("execution.Internal", "run", "Internal.kt", 1)
-        )
+        ex.stackTrace =
+            arrayOf(
+                StackTraceElement("execution.Internal", "run", "Internal.kt", 1),
+            )
 
         val location = ex.extractSourceLocation()
         assertThat(location).isEqualTo(SourceLocation.Unknown)
@@ -135,9 +138,10 @@ interface ExceptionUtilsContract {
     @Test
     fun `sanitizeStackTrace - does nothing if verbose mode is true`() {
         val ex = KontraktInternalException("Error")
-        val originalTrace = arrayOf(
-            StackTraceElement("execution.Internal", "run", "Internal.kt", 1)
-        )
+        val originalTrace =
+            arrayOf(
+                StackTraceElement("execution.Internal", "run", "Internal.kt", 1),
+            )
         ex.stackTrace = originalTrace
 
         val result = ex.sanitizeStackTrace(verbose = true)
@@ -147,10 +151,11 @@ interface ExceptionUtilsContract {
     @Test
     fun `sanitizeStackTrace - filters out ignored prefixes if verbose is false`() {
         val ex = Exception()
-        ex.stackTrace = arrayOf(
-            StackTraceElement("execution.Internal", "run", "Internal.kt", 1), // Remove
-            StackTraceElement("com.user.BizLogic", "doIt", "Biz.kt", 10) // Keep
-        )
+        ex.stackTrace =
+            arrayOf(
+                StackTraceElement("execution.Internal", "run", "Internal.kt", 1), // Remove
+                StackTraceElement("com.user.BizLogic", "doIt", "Biz.kt", 10), // Keep
+            )
 
         ex.sanitizeStackTrace(verbose = false)
         assertThat(ex.stackTrace).hasSize(1)
@@ -171,10 +176,11 @@ interface ExceptionUtilsContract {
     @Test
     fun `sanitizeStackTrace - sanitizes the cause recursively`() {
         val cause = KontraktInternalException("Root Cause")
-        cause.stackTrace = arrayOf(
-            StackTraceElement("execution.Internal", "run", "Internal.kt", 1),
-            StackTraceElement("com.user.Logic", "fail", "Logic.kt", 10)
-        )
+        cause.stackTrace =
+            arrayOf(
+                StackTraceElement("execution.Internal", "run", "Internal.kt", 1),
+                StackTraceElement("com.user.Logic", "fail", "Logic.kt", 10),
+            )
         val wrapper = RuntimeException("Wrapper", cause)
         wrapper.stackTrace = arrayOf(StackTraceElement("com.user.Main", "main", "Main.kt", 1))
 

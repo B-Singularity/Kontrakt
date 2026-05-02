@@ -93,7 +93,7 @@ class LongKeyTable<V : Any> private constructor(
 
             if (state != STATE_EMPTY && state != STATE_OCCUPIED && state != STATE_TOMBSTONE) {
                 throw PlanningProtocolIntegrityException(
-                    "LongKeyTable state corruption: unknown state=$state at index=$idx."
+                    "LongKeyTable state corruption: unknown state=$state at index=$idx.",
                 )
             }
         }
@@ -110,7 +110,10 @@ class LongKeyTable<V : Any> private constructor(
      * - linearized per segment under stripe lock
      * - publication MUST be State-Last
      */
-    fun putIfAbsent(keyBits: Long, value: V): V? {
+    fun putIfAbsent(
+        keyBits: Long,
+        value: V,
+    ): V? {
         requireNonZeroKey(keyBits)
 
         val startIdx = startIndex(keyBits)
@@ -149,7 +152,7 @@ class LongKeyTable<V : Any> private constructor(
 
                     else -> {
                         throw PlanningProtocolIntegrityException(
-                            "LongKeyTable state corruption: unknown state=${states.get(idx)} at index=$idx."
+                            "LongKeyTable state corruption: unknown state=${states.get(idx)} at index=$idx.",
                         )
                     }
                 }
@@ -178,7 +181,10 @@ class LongKeyTable<V : Any> private constructor(
      * Removal is linearized under the segment stripe lock.
      * State transitions to TOMBSTONE; the key slot is left intact intentionally.
      */
-    fun removeIfSame(keyBits: Long, expectedValue: V): Boolean {
+    fun removeIfSame(
+        keyBits: Long,
+        expectedValue: V,
+    ): Boolean {
         requireNonZeroKey(keyBits)
 
         val startIdx = startIndex(keyBits)
@@ -218,7 +224,7 @@ class LongKeyTable<V : Any> private constructor(
 
                 if (state != STATE_EMPTY && state != STATE_OCCUPIED && state != STATE_TOMBSTONE) {
                     throw PlanningProtocolIntegrityException(
-                        "LongKeyTable state corruption: unknown state=$state at index=$idx."
+                        "LongKeyTable state corruption: unknown state=$state at index=$idx.",
                     )
                 }
             }
@@ -235,9 +241,7 @@ class LongKeyTable<V : Any> private constructor(
      * Must be called only after the owning region is already closed.
      * This path is intentionally linear and not a hot-path operation.
      */
-    internal fun forEachOccupiedValueForClosedPartitionDrop(
-        action: (V) -> Unit,
-    ) {
+    internal fun forEachOccupiedValueForClosedPartitionDrop(action: (V) -> Unit) {
         for (i in 0 until tableCapacity) {
             val state = states.get(i)
             if (state == STATE_OCCUPIED) {
@@ -248,7 +252,7 @@ class LongKeyTable<V : Any> private constructor(
                 }
             } else if (state != STATE_EMPTY && state != STATE_TOMBSTONE) {
                 throw PlanningProtocolIntegrityException(
-                    "LongKeyTable state corruption: unknown state=$state at index=$i."
+                    "LongKeyTable state corruption: unknown state=$state at index=$i.",
                 )
             }
         }
@@ -280,28 +284,28 @@ class LongKeyTable<V : Any> private constructor(
      *
      * Readers MUST consult state first.
      */
-    private fun publishOccupied(idx: Int, keyBits: Long, value: V) {
+    private fun publishOccupied(
+        idx: Int,
+        keyBits: Long,
+        value: V,
+    ) {
         values.set(idx, value)
         keysBits.set(idx, keyBits)
         states.set(idx, STATE_OCCUPIED)
     }
 
-    private fun startIndex(keyBits: Long): Int =
-        mixForIndex(keyBits) and tableMask
+    private fun startIndex(keyBits: Long): Int = mixForIndex(keyBits) and tableMask
 
-    private fun segmentIndexOf(startIdx: Int): Int =
-        startIdx ushr segmentShift
+    private fun segmentIndexOf(startIdx: Int): Int = startIdx ushr segmentShift
 
-    private fun segmentBaseOf(segmentIdx: Int): Int =
-        segmentIdx shl segmentShift
+    private fun segmentBaseOf(segmentIdx: Int): Int = segmentIdx shl segmentShift
 
-    private fun segmentOffsetOf(startIdx: Int): Int =
-        startIdx and segmentMask
+    private fun segmentOffsetOf(startIdx: Int): Int = startIdx and segmentMask
 
     private fun requireNonZeroKey(keyBits: Long) {
         if (keyBits == 0L) {
             throw PlanningProtocolIntegrityException(
-                "0L is reserved as EMPTY sentinel; upstream must remap deterministically."
+                "0L is reserved as EMPTY sentinel; upstream must remap deterministically.",
             )
         }
     }
@@ -332,26 +336,26 @@ class LongKeyTable<V : Any> private constructor(
         ) {
             if (capacity <= 0 || (capacity and (capacity - 1)) != 0) {
                 throw PlanningProtocolIntegrityException(
-                    "LongKeyTable capacity must be a positive power-of-two: capacity=$capacity"
+                    "LongKeyTable capacity must be a positive power-of-two: capacity=$capacity",
                 )
             }
 
             if (stripeCount <= 0 || (stripeCount and (stripeCount - 1)) != 0) {
                 throw PlanningProtocolIntegrityException(
-                    "LongKeyTable stripeCount must be a positive power-of-two: stripeCount=$stripeCount"
+                    "LongKeyTable stripeCount must be a positive power-of-two: stripeCount=$stripeCount",
                 )
             }
 
             if (capacity % stripeCount != 0) {
                 throw PlanningProtocolIntegrityException(
-                    "LongKeyTable capacity must be divisible by stripeCount: capacity=$capacity, stripeCount=$stripeCount"
+                    "LongKeyTable capacity must be divisible by stripeCount: capacity=$capacity, stripeCount=$stripeCount",
                 )
             }
 
             val segmentSize = capacity / stripeCount
             if (segmentSize < 8) {
                 throw PlanningProtocolIntegrityException(
-                    "LongKeyTable segmentSize must be >= 8: segmentSize=$segmentSize"
+                    "LongKeyTable segmentSize must be >= 8: segmentSize=$segmentSize",
                 )
             }
         }
