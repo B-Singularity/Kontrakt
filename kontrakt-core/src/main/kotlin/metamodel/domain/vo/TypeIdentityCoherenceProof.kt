@@ -25,17 +25,22 @@ import metamodel.domain.exception.MetamodelFactContractViolationException
  * - CanonicalTypeId;
  * - TypeCycleKey;
  * - CanonicalTypeSignature;
- * - OrderedUseSiteAnnotations.
+ * - OrderedUseSiteAnnotations;
+ * - type nesting depth.
  *
  * If those values are manually assembled from unrelated sources, the planner can
- * receive a TypeReference whose id, cycle identity, signature, and annotation
- * ordering do not describe the same semantic type.
+ * receive a TypeReference whose id, cycle identity, signature, annotation
+ * ordering, and depth do not describe the same semantic type.
  *
  * Binding law:
  *
- * The proof is bound to a lightweight tuple-binding summary derived from the
+ * The proof is bound to a deterministic tuple-binding material derived from the
  * exact tuple it certifies. A proof issued for type X must not be reusable for
  * type Y.
+ *
+ * The binding does not use hashCode() as authority. hashCode() is for in-memory
+ * hash buckets only and may collide. This proof stores exact bounded scalar
+ * material extracted from the tuple.
  *
  * Issuance law:
  *
@@ -56,7 +61,8 @@ import metamodel.domain.exception.MetamodelFactContractViolationException
  * Memory law:
  *
  * The proof does not retain the full identity axis objects. It stores a compact
- * binding summary and verifies future tuples by recomputing the same summary.
+ * exact binding material and verifies future tuples by recomputing the same
+ * material.
  *
  * Serialization law:
  *
@@ -76,28 +82,30 @@ class TypeIdentityCoherenceProof private constructor(
      * issued.
      *
      * This is the substitution-attack guard.
+     *
+     * It includes typeNestingDepth, so a caller cannot reuse a proof produced for
+     * the same apparent id/signature/annotations but a different lowered type
+     * depth.
      */
     fun requireCovers(
         id: CanonicalTypeId,
         cycleKey: TypeCycleKey,
         signature: CanonicalTypeSignature,
         useSiteAnnotations: OrderedUseSiteAnnotations,
+        typeNestingDepth: Int,
     ) {
-        val actualBinding = TypeIdentityCoherenceBinding.fromTuple(
+        TypeNestingDepthLaw.requireWithinLimit(
+            field = "TypeIdentityCoherenceProof.typeNestingDepth",
+            depth = typeNestingDepth,
+        )
+
+        coveredBinding.requireMatches(
             id = id,
             cycleKey = cycleKey,
             signature = signature,
             useSiteAnnotations = useSiteAnnotations,
+            typeNestingDepth = typeNestingDepth,
         )
-
-        if (coveredBinding != actualBinding) {
-            throw MetamodelFactContractViolationException(
-                "TypeIdentityCoherenceProof does not cover supplied TypeReference tuple: " +
-                        "proof=${renderSummary()}, " +
-                        "expected=${coveredBinding.renderSummary()}, " +
-                        "actual=${actualBinding.renderSummary()}",
-            )
-        }
     }
 
     fun renderSummary(): String {
@@ -113,7 +121,9 @@ class TypeIdentityCoherenceProof private constructor(
         return renderSummary()
     }
 
-    override fun equals(other: Any?): Boolean {
+    override fun equals(
+        other: Any?,
+    ): Boolean {
         if (this === other) return true
         if (other !is TypeIdentityCoherenceProof) return false
 
@@ -134,7 +144,7 @@ class TypeIdentityCoherenceProof private constructor(
     }
 
     companion object {
-        const val CURRENT_SCHEMA_VERSION: Int = 3
+        const val CURRENT_SCHEMA_VERSION: Int = 4
 
         private const val MAX_PROOF_ID_CHARS: Int = 128
         private const val MAX_FACTORY_TOKEN_CHARS: Int = 128
@@ -143,6 +153,14 @@ class TypeIdentityCoherenceProof private constructor(
          * Issues a coherence proof from the domain factory boundary.
          *
          * This method is internal on purpose.
+         *
+         * The proof is bound to:
+         *
+         * - CanonicalTypeId material;
+         * - TypeCycleKey material available to this layer;
+         * - CanonicalTypeSignature material;
+         * - OrderedUseSiteAnnotations material available to this layer;
+         * - typeNestingDepth.
          */
         @JvmStatic
         internal fun issueFromFactory(
@@ -153,6 +171,7 @@ class TypeIdentityCoherenceProof private constructor(
             cycleKey: TypeCycleKey,
             signature: CanonicalTypeSignature,
             useSiteAnnotations: OrderedUseSiteAnnotations,
+            typeNestingDepth: Int,
         ): TypeIdentityCoherenceProof {
             requireProofId(proofId)
 
@@ -165,6 +184,11 @@ class TypeIdentityCoherenceProof private constructor(
                 field = "TypeIdentityCoherenceProof.factoryVersion",
                 value = factoryVersion,
                 maxChars = MAX_FACTORY_TOKEN_CHARS,
+            )
+
+            TypeNestingDepthLaw.requireWithinLimit(
+                field = "TypeIdentityCoherenceProof.typeNestingDepth",
+                depth = typeNestingDepth,
             )
 
             requireAxisCoherence(
@@ -182,6 +206,7 @@ class TypeIdentityCoherenceProof private constructor(
                     cycleKey = cycleKey,
                     signature = signature,
                     useSiteAnnotations = useSiteAnnotations,
+                    typeNestingDepth = typeNestingDepth,
                 ),
                 schemaVersion = CURRENT_SCHEMA_VERSION,
             )
@@ -223,7 +248,7 @@ class TypeIdentityCoherenceProof private constructor(
              *
              * - internal factory issuance;
              * - axis coherence checks;
-             * - tuple binding summary;
+             * - exact tuple binding;
              * - TypeReference.issue(...) calling requireCovers(...).
              */
         }
@@ -317,53 +342,208 @@ class TypeIdentityCoherenceProof private constructor(
 }
 
 /**
- * Lightweight binding summary for the TypeReference identity tuple.
+ * Exact bounded binding material for the TypeReference identity tuple.
  *
- * This class intentionally stores compact structural fingerprints instead of
- * strong references to the full axis objects.
+ * This class intentionally avoids storing strong references to full axis objects,
+ * but it also does not use hashCode() as proof authority.
  *
- * It is not cryptographic. It is a deterministic in-domain substitution guard.
- * A stronger digest-backed binding can be introduced later by the canonical
- * encoding / fingerprint-deriver phase without changing TypeReference semantics.
+ * It stores scalar bounded material that is already part of the ratified
+ * metamodel identity surface.
  */
 private class TypeIdentityCoherenceBinding private constructor(
-    private val idHash: Int,
-    private val cycleKeyHash: Int,
-    private val signatureHash: Int,
-    private val useSiteAnnotationsHash: Int,
-    private val typeTextHash: Int,
-    private val shapeSummaryHash: Int,
+    private val typeText: String,
+    private val shapeSummary: TypeShapeSummary,
+    private val classifierId: String,
+    private val classifierVersion: String,
+    private val ratificationFingerprint: TypeShapeRatificationFingerprint,
+    private val cycleShapeKind: CanonicalTypeShapeKind,
+    private val signatureValue: String,
+    private val signatureShapeSummary: TypeShapeSummary,
+    private val signatureSchemaVersion: Int,
     private val annotationCount: Int,
+    private val annotationMaxNestingDepth: Int,
+    private val annotationTable: OrderedUseSiteAnnotations,
+    private val typeNestingDepth: Int,
 ) {
+    fun requireMatches(
+        id: CanonicalTypeId,
+        cycleKey: TypeCycleKey,
+        signature: CanonicalTypeSignature,
+        useSiteAnnotations: OrderedUseSiteAnnotations,
+        typeNestingDepth: Int,
+    ) {
+        if (typeText != id.value) {
+            mismatch(
+                field = "typeText",
+                expected = typeText,
+                actual = id.value,
+            )
+        }
+
+        if (shapeSummary != id.shapeSummary) {
+            mismatch(
+                field = "id.shapeSummary",
+                expected = shapeSummary.toString(),
+                actual = id.shapeSummary.toString(),
+            )
+        }
+
+        if (classifierId != id.classifierId) {
+            mismatch(
+                field = "classifierId",
+                expected = classifierId,
+                actual = id.classifierId,
+            )
+        }
+
+        if (classifierVersion != id.classifierVersion) {
+            mismatch(
+                field = "classifierVersion",
+                expected = classifierVersion,
+                actual = id.classifierVersion,
+            )
+        }
+
+        if (ratificationFingerprint != id.ratificationFingerprint) {
+            throw MetamodelFactContractViolationException(
+                "TypeIdentityCoherenceProof does not cover supplied TypeReference tuple: " +
+                        "field=ratificationFingerprint, " +
+                        "expected=${ratificationFingerprint.redacted()}, " +
+                        "actual=${id.ratificationFingerprint.redacted()}, " +
+                        "binding=${renderSummary()}",
+            )
+        }
+
+        if (cycleShapeKind != cycleKey.shapeSummary.kind) {
+            mismatch(
+                field = "cycleShapeKind",
+                expected = cycleShapeKind.protocolToken,
+                actual = cycleKey.shapeSummary.kind.protocolToken,
+            )
+        }
+
+        if (signatureValue != signature.value) {
+            mismatch(
+                field = "signatureValue",
+                expected = signatureValue,
+                actual = signature.value,
+            )
+        }
+
+        if (signatureShapeSummary != signature.shapeSummary) {
+            mismatch(
+                field = "signature.shapeSummary",
+                expected = signatureShapeSummary.toString(),
+                actual = signature.shapeSummary.toString(),
+            )
+        }
+
+        if (signatureSchemaVersion != signature.schemaVersion) {
+            mismatch(
+                field = "signatureSchemaVersion",
+                expected = signatureSchemaVersion.toString(),
+                actual = signature.schemaVersion.toString(),
+            )
+        }
+
+        if (annotationCount != useSiteAnnotations.size) {
+            mismatch(
+                field = "annotationCount",
+                expected = annotationCount.toString(),
+                actual = useSiteAnnotations.size.toString(),
+            )
+        }
+
+        if (annotationMaxNestingDepth != useSiteAnnotations.maxAnnotationValueNestingDepth) {
+            mismatch(
+                field = "annotationMaxNestingDepth",
+                expected = annotationMaxNestingDepth.toString(),
+                actual = useSiteAnnotations.maxAnnotationValueNestingDepth.toString(),
+            )
+        }
+
+        /*
+         * This is intentionally exact structural equality.
+         *
+         * The table is already bounded by OrderedUseSiteAnnotations.
+         * Do not replace this with hashCode().
+         */
+        if (annotationTable != useSiteAnnotations) {
+            throw MetamodelFactContractViolationException(
+                "TypeIdentityCoherenceProof does not cover supplied TypeReference tuple: " +
+                        "field=annotationTable, " +
+                        "expected=${annotationTable.renderSummary()}, " +
+                        "actual=${useSiteAnnotations.renderSummary()}, " +
+                        "binding=${renderSummary()}",
+            )
+        }
+
+        if (this.typeNestingDepth != typeNestingDepth) {
+            mismatch(
+                field = "typeNestingDepth",
+                expected = this.typeNestingDepth.toString(),
+                actual = typeNestingDepth.toString(),
+            )
+        }
+    }
+
+    private fun mismatch(
+        field: String,
+        expected: String,
+        actual: String,
+    ): Nothing {
+        throw MetamodelFactContractViolationException(
+            "TypeIdentityCoherenceProof does not cover supplied TypeReference tuple: " +
+                    "field=$field, expected=$expected, actual=$actual, binding=${renderSummary()}",
+        )
+    }
+
     fun renderSummary(): String {
         return "TypeIdentityCoherenceBinding(" +
-                "typeHash=$typeTextHash, " +
-                "shapeHash=$shapeSummaryHash, " +
-                "annotationCount=$annotationCount" +
+                "type=$typeText, " +
+                "shape=${shapeSummary.kind.protocolToken}, " +
+                "signatureSchema=$signatureSchemaVersion, " +
+                "annotations=$annotationCount, " +
+                "annotationDepth=$annotationMaxNestingDepth, " +
+                "typeDepth=$typeNestingDepth" +
                 ")"
     }
 
-    override fun equals(other: Any?): Boolean {
+    override fun equals(
+        other: Any?,
+    ): Boolean {
         if (this === other) return true
         if (other !is TypeIdentityCoherenceBinding) return false
 
-        return idHash == other.idHash &&
-                cycleKeyHash == other.cycleKeyHash &&
-                signatureHash == other.signatureHash &&
-                useSiteAnnotationsHash == other.useSiteAnnotationsHash &&
-                typeTextHash == other.typeTextHash &&
-                shapeSummaryHash == other.shapeSummaryHash &&
-                annotationCount == other.annotationCount
+        return typeText == other.typeText &&
+                shapeSummary == other.shapeSummary &&
+                classifierId == other.classifierId &&
+                classifierVersion == other.classifierVersion &&
+                ratificationFingerprint == other.ratificationFingerprint &&
+                cycleShapeKind == other.cycleShapeKind &&
+                signatureValue == other.signatureValue &&
+                signatureShapeSummary == other.signatureShapeSummary &&
+                signatureSchemaVersion == other.signatureSchemaVersion &&
+                annotationCount == other.annotationCount &&
+                annotationMaxNestingDepth == other.annotationMaxNestingDepth &&
+                annotationTable == other.annotationTable &&
+                typeNestingDepth == other.typeNestingDepth
     }
 
     override fun hashCode(): Int {
-        var result = idHash
-        result = 31 * result + cycleKeyHash
-        result = 31 * result + signatureHash
-        result = 31 * result + useSiteAnnotationsHash
-        result = 31 * result + typeTextHash
-        result = 31 * result + shapeSummaryHash
+        var result = typeText.hashCode()
+        result = 31 * result + shapeSummary.hashCode()
+        result = 31 * result + classifierId.hashCode()
+        result = 31 * result + classifierVersion.hashCode()
+        result = 31 * result + ratificationFingerprint.hashCode()
+        result = 31 * result + cycleShapeKind.hashCode()
+        result = 31 * result + signatureValue.hashCode()
+        result = 31 * result + signatureShapeSummary.hashCode()
+        result = 31 * result + signatureSchemaVersion
         result = 31 * result + annotationCount
+        result = 31 * result + annotationMaxNestingDepth
+        result = 31 * result + annotationTable.hashCode()
+        result = 31 * result + typeNestingDepth
         return result
     }
 
@@ -373,15 +553,22 @@ private class TypeIdentityCoherenceBinding private constructor(
             cycleKey: TypeCycleKey,
             signature: CanonicalTypeSignature,
             useSiteAnnotations: OrderedUseSiteAnnotations,
+            typeNestingDepth: Int,
         ): TypeIdentityCoherenceBinding {
             return TypeIdentityCoherenceBinding(
-                idHash = id.hashCode(),
-                cycleKeyHash = cycleKey.hashCode(),
-                signatureHash = signature.hashCode(),
-                useSiteAnnotationsHash = useSiteAnnotations.hashCode(),
-                typeTextHash = id.value.hashCode(),
-                shapeSummaryHash = id.shapeSummary.hashCode(),
+                typeText = id.value,
+                shapeSummary = id.shapeSummary,
+                classifierId = id.classifierId,
+                classifierVersion = id.classifierVersion,
+                ratificationFingerprint = id.ratificationFingerprint,
+                cycleShapeKind = cycleKey.shapeSummary.kind,
+                signatureValue = signature.value,
+                signatureShapeSummary = signature.shapeSummary,
+                signatureSchemaVersion = signature.schemaVersion,
                 annotationCount = useSiteAnnotations.size,
+                annotationMaxNestingDepth = useSiteAnnotations.maxAnnotationValueNestingDepth,
+                annotationTable = useSiteAnnotations,
+                typeNestingDepth = typeNestingDepth,
             )
         }
     }

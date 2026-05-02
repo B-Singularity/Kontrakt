@@ -1,6 +1,5 @@
 package execution.adapter.runtime
 
-import execution.domain.exception.RuntimeResolutionException
 import execution.port.outgoing.RuntimeTypeHandle
 import execution.port.outgoing.RuntimeTypeResolver
 import infrastructure.exception.RegistryException
