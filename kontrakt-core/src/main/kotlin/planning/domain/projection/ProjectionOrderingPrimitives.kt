@@ -12,7 +12,11 @@ import planning.domain.exception.ActiveMemberProjectionException
  * fail-fast ambiguity checks.
  */
 internal object ProjectionOrderingPrimitives {
-    fun renderField(value: String): String = value.length.toString() + ":" + value
+    fun renderField(
+        value: String,
+    ): String {
+        return value.length.toString() + ":" + value
+    }
 
     fun compareStrings(
         left: String,

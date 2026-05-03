@@ -94,7 +94,7 @@ sealed interface PolymorphicExpansionPlan {
             throw TypeExpansionContractViolationException(
                 reason =
                     "PolymorphicExpansionPlan is not READY: " +
-                        "kind=${kind.protocolToken}, status=$status, summary=${renderSummary()}",
+                            "kind=${kind.protocolToken}, status=$status, summary=${renderSummary()}",
             )
         }
     }
@@ -121,7 +121,7 @@ sealed interface PolymorphicExpansionPlan {
     class ContractSubjectPlan private constructor(
         override val cycleIdentity: TypeCycleIdentity,
         override val context: TypeExpansionContext.ContractSubject,
-        val implementations: PolymorphicImplementationSet,
+        val implementations: PolymorphicImplementationCandidates,
         override val status: PolymorphicExpansionStatus,
     ) : PolymorphicExpansionPlan {
         override val kind: PolymorphicExpansionPlanKind
@@ -129,11 +129,11 @@ sealed interface PolymorphicExpansionPlan {
 
         override fun renderSummary(): String =
             "ContractSubjectPlan(" +
-                "subject=${cycleIdentity.subject.signature}, " +
-                "implementations=${implementations.size}, " +
-                "status=$status, " +
-                "mode=${context.mode.protocolToken}" +
-                ")"
+                    "subject=${cycleIdentity.subject.signature}, " +
+                    "implementations=${implementations.size}, " +
+                    "status=$status, " +
+                    "mode=${context.mode.protocolToken}" +
+                    ")"
 
         override fun toString(): String = renderSummary()
 
@@ -142,7 +142,7 @@ sealed interface PolymorphicExpansionPlan {
             fun issue(
                 cycleIdentity: TypeCycleIdentity,
                 context: TypeExpansionContext.ContractSubject,
-                implementations: PolymorphicImplementationSet,
+                implementations: PolymorphicImplementationCandidates,
             ): ContractSubjectPlan {
                 requireContextMode(
                     actual = context.mode,
@@ -172,7 +172,7 @@ sealed interface PolymorphicExpansionPlan {
 
             private fun deriveContractSubjectStatus(
                 context: TypeExpansionContext.ContractSubject,
-                implementations: PolymorphicImplementationSet,
+                implementations: PolymorphicImplementationCandidates,
             ): PolymorphicExpansionStatus {
                 if (!implementations.isEmpty()) {
                     return PolymorphicExpansionStatus.READY
@@ -215,13 +215,13 @@ sealed interface PolymorphicExpansionPlan {
 
         override fun renderSummary(): String =
             "DependencySelectionPlan(" +
-                "subject=${cycleIdentity.subject.signature}, " +
-                "selected=${selection.selectedImplementation.canonicalIdentifier}, " +
-                "bindingKind=${selection.bindingKind.protocolToken}, " +
-                "selectionMode=${selection.selectionMode.protocolToken}, " +
-                "status=$status, " +
-                "mode=${context.mode.protocolToken}" +
-                ")"
+                    "subject=${cycleIdentity.subject.signature}, " +
+                    "selected=${selection.selectedImplementation.canonicalIdentifier}, " +
+                    "bindingKind=${selection.bindingKind.protocolToken}, " +
+                    "selectionMode=${selection.selectionMode.protocolToken}, " +
+                    "status=$status, " +
+                    "mode=${context.mode.protocolToken}" +
+                    ")"
 
         override fun toString(): String = renderSummary()
 
@@ -277,13 +277,13 @@ sealed interface PolymorphicExpansionPlan {
 
         override fun renderSummary(): String =
             "StructuralMemberSelectionPlan(" +
-                "subject=${cycleIdentity.subject.signature}, " +
-                "selected=${selection.selectedImplementation.canonicalIdentifier}, " +
-                "bindingKind=${selection.bindingKind.protocolToken}, " +
-                "selectionMode=${selection.selectionMode.protocolToken}, " +
-                "status=$status, " +
-                "mode=${context.mode.protocolToken}" +
-                ")"
+                    "subject=${cycleIdentity.subject.signature}, " +
+                    "selected=${selection.selectedImplementation.canonicalIdentifier}, " +
+                    "bindingKind=${selection.bindingKind.protocolToken}, " +
+                    "selectionMode=${selection.selectionMode.protocolToken}, " +
+                    "status=$status, " +
+                    "mode=${context.mode.protocolToken}" +
+                    ")"
 
         override fun toString(): String = renderSummary()
 
@@ -325,7 +325,7 @@ sealed interface PolymorphicExpansionPlan {
                 throw TypeExpansionContractViolationException(
                     reason =
                         "$owner context mode mismatch: " +
-                            "expected=${expected.protocolToken}, actual=${actual.protocolToken}",
+                                "expected=${expected.protocolToken}, actual=${actual.protocolToken}",
                 )
             }
         }
