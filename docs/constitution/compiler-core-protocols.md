@@ -190,6 +190,43 @@ class DeterministicList<T : Comparable<T>> private constructor(
 * **[A] Compile-Time:** The DI or binding mechanism MUST inject these ports exactly once at initialization. Reassignment
   or mutable delegate bindings are forbidden to guarantee JIT Devirtualization (Monomorphic callsites).
 
+#### AMENDED — Normalization and Type-Text Ratification Boundary
+
+The Domain Core MUST NOT directly depend on host Unicode normalization or classification APIs.
+
+Forbidden in metamodel/planning domain code:
+
+``````kotlin
+java.text.Normalizer
+java.lang.Character.getType
+java.lang.Character.isWhitespace
+java.lang.Character.isUnicodeIdentifierStart
+java.lang.Character.isUnicodeIdentifierPart
+com.ibm.icu.*
+``````
+
+Raw adapter/source/reflection/KSP type text MUST enter canonical type identity only through the metamodel-owned
+ratification boundary:
+
+``````text
+metamodel.domain.port.outgoing.NormalizationEngine
+-> CanonicalTypeText.ratify(...)
+-> CanonicalTypeId / TypeCycleKey / CanonicalTypeSignature
+-> TypeReference
+``````
+
+Kontrakt uses **NFC-REJECT**, not NFC-repair.
+
+Required rule:
+
+* the core MUST NOT normalize raw text to repair it;
+* non-NFC type text MUST fail closed before canonical type identity is issued;
+* ICU/JDK normalization and Unicode classification belong behind the `NormalizationEngine` adapter boundary;
+* domain code may consume only the accepted immutable snapshot and lexical facts returned by the ratification boundary.
+
+Architecture tests SHOULD enforce that metamodel/planning domain packages do not import ICU4J, JDK normalization APIs,
+reflection APIs, KSP symbols, or bytecode-library handles directly.
+
 ### 6. Sentinel Reservation & Deterministic Remapping
 
 * **[A] Compile-Time:** `ULong.MAX_VALUE` (`-1L`) is strictly reserved as the `+INF` sentinel for RMQ.

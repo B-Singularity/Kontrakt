@@ -231,6 +231,47 @@ Rules:
 - normalized facts may still be rejected during projection;
 - normalized facts must not own backend runtime objects.
 
+### 7.2.1 TypeReference as Normalized Fact — AMENDED
+
+`TypeReference` is a normalized fact.
+
+It is not:
+
+* Raw Adapter Material;
+* Projected Semantic Model;
+* Local IR;
+* Canonical IR;
+* Payload;
+* a reflection/KSP/backend handle.
+
+Required lowering path:
+
+``````text
+Raw Adapter Material
+-> NormalizationEngine.inspectCanonicalTypeText(...)
+-> CanonicalTypeText.ratify(...)
+-> CanonicalTypeId / TypeCycleKey / CanonicalTypeSignature
+-> TypeReference
+-> Normalized Fact
+``````
+
+Consequences:
+
+* `CanonicalTypeText` is not Canonical IR.
+* `CanonicalTypeId` is not Canonical IR.
+* `TypeCycleKey` is not Canonical IR.
+* `CanonicalTypeSignature` is not Canonical IR.
+* `TypeReference` is not Canonical IR.
+* These values are normalized identity facts consumed by projection, expansion, cycle identity preflight, and signature
+  generation.
+
+`TypeReference` may participate in later canonical signature generation, but it is not itself a canonical plan node.
+
+Canonical IR may contain or reference ratified type identity material only through approved canonical encoding/signature
+law.
+
+No Canonical IR object may retain raw adapter/source/reflection/KSP type text.
+
 ### 7.3 Runtime Object Ban After Normalization
 
 After the normalized fact boundary, domain/planning values must not own:
@@ -866,6 +907,56 @@ that
 specific non-semantic surface.
 
 For semantic identity, exact canonical signature comparison remains authoritative.
+
+### 14.6 Hash Input Encoding Is Byte Lowering, Not Unicode Inspection — AMENDED
+
+Hash input encoding is byte lowering.
+
+It must only receive already-ratified immutable `String` snapshots.
+
+It MUST NOT perform:
+
+* Unicode normalization;
+* Unicode repair;
+* Unicode script/category classification;
+* identifier-token inspection;
+* nullable-marker policy;
+* star-projection policy;
+* source-variance-token policy.
+
+Those belong to the metamodel type-text ratification boundary.
+
+Hash input encoding law:
+
+* UTF-8 bytes;
+* 4-byte little-endian byte-length prefix for each string component;
+* no platform default charset;
+* no delimiter-joined canonical signature material;
+* no normalization during encoding;
+* no `CharsetEncoder` / NIO state as protocol authority;
+* unpaired UTF-16 surrogates fail closed;
+* offset/range arithmetic must be overflow-safe before narrowing.
+
+The exact byte-emission function must be covered by golden vectors.
+
+Required golden vectors:
+
+``````text
+ASCII
+2-byte UTF-8 scalar
+3-byte UTF-8 scalar
+4-byte UTF-8 scalar
+unpaired high surrogate rejection
+unpaired low surrogate rejection
+non-NFC rejection before encoding
+offset/range overflow rejection
+maxInputChars rejection
+maxUtf8Bytes rejection
+``````
+
+Canonical ordering remains semantic ordering.
+Canonical encoding remains byte lowering.
+The two must not be collapsed.
 
 ## 15. Version-Aware Canonical Signature Header
 

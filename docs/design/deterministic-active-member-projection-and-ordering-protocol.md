@@ -205,28 +205,297 @@ It must not own:
 
 ---
 
-## 5. Existing Type Contract: `TypeReference`
+## 5. Existing Type Contract: `TypeReference` — AMENDED
 
-This document uses `TypeReference` as an **existing immutable metamodel-domain value object**, not as a raw adapter
-string.
+This document uses `TypeReference` as an existing immutable metamodel-domain value object, not as raw adapter text and
+not as a backend handle.
 
-Normative rule:
+`TypeReference` is a **normalized fact**.
 
-- `TypeReference` MUST already be normalized and version-bound when it crosses the raw-fact boundary;
-- the Core MUST NOT normalize raw type strings itself;
-- adapters MUST construct `TypeReference` using the currently ratified normalization law before emitting DTOs;
-- any signature material exposed through or alongside `TypeReference` MUST be deterministic and bound to the active
-  signature-normalization version surface.
+It is allowed to cross into Planning Core only after metamodel type-text ratification has completed.
 
-Implication:
+Required ratification path:
 
-- if a backend discovers raw type text,
-  normalization belongs to the adapter before DTO emission;
-- the Core consumes `TypeReference` as already-normalized semantic fact material.
+``````text
+Raw adapter/source/reflection/KSP type text
+-> NormalizationEngine.inspectCanonicalTypeText(...)
+-> CanonicalTypeText.ratify(...)
+-> CanonicalTypeId
+-> TypeCycleKey
+-> CanonicalTypeSignature
+-> TypeIdentityCoherenceProof
+-> TypeReference
+``````
+
+## 5.1 NormalizationEngine Ownership
+
+The canonical Unicode/type-text inspection port is owned by the metamodel domain:
+
+``````kotlin
+package metamodel.domain.port.outgoing
+
+interface NormalizationEngine {
+    val engineId: String
+    val engineVersion: String
+    val unicodeProfileVersion: String
+    val goldenVectorSetId: String
+    val goldenVectorDigest: String
+
+    fun isNfc(input: CharSequence): Boolean
+
+    fun inspectCanonicalTypeText(
+        input: CharSequence,
+        policy: CanonicalTypeTextInspectionPolicy,
+    ): CanonicalTypeTextInspectionResult
+}
+``````
+
+This port is not a generic string normalizer.
+
+It is the pinned inspection boundary that converts high-entropy external text into:
+
+* an immutable `String` snapshot;
+* machine-readable lexical facts;
+* a stable accept/reject decision under a pinned Unicode/profile version.
+
+Planning Core MUST NOT call ICU4J, JDK normalization APIs, reflection APIs, KSP APIs, or bytecode APIs to inspect type
+text.
+
+## 5.2 NFC-REJECT Law
+
+Kontrakt uses **NFC-REJECT**, not NFC-repair.
+
+Forbidden:
+
+``````kotlin
+val repaired = normalizer.normalizeToNfc(raw)
+``````
+
+Required:
+
+``````kotlin
+if (!normalizationEngine.isNfc(raw)) {
+    reject()
+}
+``````
+
+The core must never silently repair raw text.
 
 Reason:
 
-Without this rule, DTO schema and normalization responsibility would conflict.
+If the core repairs text, identity becomes dependent on hidden normalization behavior rather than on a ratified adapter
+boundary.
+
+## 5.3 CharSequence Snapshot Law
+
+`NormalizationEngine.inspectCanonicalTypeText(...)` may accept `CharSequence` because it is an adapter-facing inspection
+boundary.
+
+However, it MUST capture and inspect an immutable snapshot.
+
+Mandatory implementation order:
+
+1. read `input.length`;
+2. if `input.length > policy.maxUtf16CodeUnitsBeforeSnapshot`, return `Rejected(LENGTH_LIMIT_EXCEEDED)`;
+3. capture an immutable `String` snapshot with bounded copy;
+4. re-check `snapshot.length`;
+5. inspect only the captured snapshot from this point onward;
+6. return `Accepted(snapshot, lexicalProfile)` only for facts derived from that exact snapshot.
+
+Domain VO/DTO issue methods MUST still accept immutable `String` values, not mutable `CharSequence` buffers.
+
+The split is intentional:
+
+* `NormalizationEngine` may receive adapter-facing `CharSequence`;
+* metamodel/planning value objects operate only on immutable snapshots.
+
+## 5.4 Inspection Result Contract
+
+Required result shape:
+
+``````kotlin
+sealed interface CanonicalTypeTextInspectionResult {
+    class Accepted(
+        val snapshot: String,
+        val lexicalProfile: CanonicalTypeLexicalProfile,
+    ) : CanonicalTypeTextInspectionResult
+
+    class Rejected(
+        val violationCode: CanonicalTypeTextInspectionViolationCode,
+        val reason: String,
+    ) : CanonicalTypeTextInspectionResult
+}
+``````
+
+Rules:
+
+* `Accepted.snapshot` is the exact immutable string inspected by the engine.
+* `Accepted.lexicalProfile` is derived from that exact snapshot.
+* `Rejected.violationCode` is protocol-relevant diagnostic classification.
+* `Rejected.reason` is diagnostic text only and MUST NOT be used as identity material.
+
+## 5.5 Inspection Policy Contract
+
+`CanonicalTypeTextInspectionPolicy` controls inspection, not normalization.
+
+Minimum required shape:
+
+``````kotlin
+class CanonicalTypeTextInspectionPolicy private constructor(
+    val policyId: String,
+    val policyVersion: Long,
+    val maxUtf16CodeUnitsBeforeSnapshot: Int,
+    val maxCodePoints: Int,
+    val maxIdentifierTokenCodePoints: Int,
+    val maxIdentifierTokenCount: Int,
+    val maxGenericDepth: Int,
+    val allowNullableMarker: Boolean,
+    val allowStarProjection: Boolean,
+    val scriptPolicyToken: String,
+    val allowAsciiWhitespace: Boolean,
+    val allowSourceVarianceTokens: Boolean,
+)
+``````
+
+The policy MUST fail closed for:
+
+* negative caps;
+* negative versions;
+* contradictory settings;
+* unbounded inspection surfaces.
+
+## 5.6 Lexical Profile Contract
+
+`CanonicalTypeLexicalProfile` describes facts derived from the accepted immutable snapshot.
+
+Minimum required shape:
+
+``````kotlin
+class CanonicalTypeLexicalProfile private constructor(
+    val isNfc: Boolean,
+    val codePointCount: Int,
+    val identifierTokenCount: Int,
+    val longestIdentifierTokenCodePoints: Int,
+    val genericDepth: Int,
+    val hasGenericDelimiters: Boolean,
+    val hasArraySuffix: Boolean,
+    val hasNullableMarker: Boolean,
+    val hasStarProjection: Boolean,
+    val hasSourceVarianceToken: Boolean,
+)
+``````
+
+The lexical profile is not advisory.
+
+`CanonicalTypeText.ratify(...)` MUST defensively cross-check the accepted profile against the policy.
+
+If the engine returns `Accepted` with a profile that violates policy, this is a `NormalizationEngine` contract violation
+and MUST fail closed.
+
+## 5.7 CanonicalTypeText Ratification Law
+
+`CanonicalTypeText.ratify(...)` is the only supported entry point for raw type text.
+
+It MUST:
+
+1. require engine provenance;
+2. reject empty raw text before inspection;
+3. perform only cheap impossible-length prechecks before engine inspection;
+4. call `NormalizationEngine.inspectCanonicalTypeText(...)`;
+5. accept only `Accepted(snapshot, lexicalProfile)`;
+6. reject `Rejected(violationCode, reason)` with metamodel normalization diagnostics;
+7. cross-check accepted lexical profile against policy;
+8. store ratification provenance;
+9. keep equality value-primary.
+
+Forbidden:
+
+* public `issueRatified(...)` bypass for raw text;
+* direct construction from raw adapter text;
+* direct use of `KType.toString()`;
+* direct use of KSP symbol spelling;
+* direct Unicode classification through JDK/ICU APIs inside the domain core;
+* lossy normalization, trimming, lowercasing, or repair.
+
+Persisted canonical text restoration requires a future artifact verifier / ratification-proof verifier.
+
+It MUST NOT silently skip the pinned normalization inspection boundary.
+
+## 5.8 Canonical Type Identity Issuance
+
+The following value objects MUST NOT accept raw unratified strings:
+
+``````text
+CanonicalTypeId
+TypeCycleKey
+CanonicalTypeSignature
+TypeReference
+``````
+
+They consume `CanonicalTypeText` or already-ratified components.
+
+`TypeReference` issuance MUST verify coherence among:
+
+* `id`;
+* `cycleKey`;
+* `signature`;
+* type shape summary;
+* use-site annotations;
+* coherence proof.
+
+Planning Core may trust a `TypeReference` as ratified normalized fact material.
+
+Therefore Planning Core MUST NOT repeatedly revalidate:
+
+* `typeReference.id.value`;
+* `typeReference.signature.value`;
+* `typeReference.cycleKey.value`;
+* use-site annotation canonical text;
+* coherence proof internals.
+
+Planning Core may still perform continuity checks between independently supplied ratified objects, for example:
+
+* requested `TypeReference` vs returned `ResolvedTypeShape.subject`;
+* requested `TypeReference` vs returned `TypeCycleIdentity.subject`;
+* cycle identity algorithm id/version vs pinned snapshot;
+* raw fact identity material vs preflight cycle identity.
+
+## 5.9 Raw Fact Boundary Consequence
+
+Raw structural facts emitted by adapters MUST carry `TypeReference` values that have already passed the metamodel
+ratification boundary.
+
+Adapters MUST NOT emit:
+
+* raw type strings;
+* reflection `KType`;
+* `KClass`;
+* KSP symbols;
+* bytecode handles;
+* backend-native type descriptors;
+
+as planning-consumed type identity material.
+
+If an adapter discovers raw type text, it must ratify it before DTO emission.
+
+## 5.10 Implementation Scope Boundary
+
+This section defines the TypeReference ratification boundary only.
+
+It does not define:
+
+* Local IR;
+* Canonical IR;
+* HID derivation;
+* BLAKE3 keyed derivation;
+* L2 interning;
+* route64;
+* PlanCacheKey;
+* cache eviction;
+* primitive slab/index tables;
+* polymorphic expansion state machine.
+
+Those belong to their respective planning, IR, HID, and cache documents.
 
 ---
 

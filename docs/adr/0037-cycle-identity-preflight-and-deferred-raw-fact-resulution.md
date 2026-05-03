@@ -222,6 +222,62 @@ Required semantics:
     - monotonic protocol version for identity derivation;
     - must change when the derivation law changes.
 
+### TypeReference Ratification Dependency — AMENDED
+
+`TypeCycleIdentity` is derived from an already-ratified `TypeReference`.
+
+`TypeCycleIdentityProvider` is not a raw type-text normalization authority.
+
+It MUST NOT:
+
+* normalize raw type text;
+* repair non-NFC text;
+* inspect Unicode categories directly;
+* call ICU4J / JDK normalization APIs from Planning Core;
+* enumerate constructors;
+* enumerate properties;
+* perform active-member projection;
+* perform active-member ordering.
+
+Required dependency chain:
+
+``````text
+Raw adapter/source/reflection/KSP type text
+-> NormalizationEngine.inspectCanonicalTypeText(...)
+-> CanonicalTypeText.ratify(...)
+-> TypeReference
+-> TypeCycleIdentityProvider.resolveCycleIdentity(reference)
+-> TypeCycleIdentity
+``````
+
+The provider may use adapter-local handles only behind the adapter boundary.
+
+The value returned to Planning Core MUST be pure domain material:
+
+``````text
+TypeCycleIdentity(
+    subject = TypeReference,
+    identityBits64 = primitive routing identity,
+    canonicalSignature = exact verification material,
+    identityAlgorithmId = pinned algorithm id,
+    identityAlgorithmVersion = pinned algorithm version
+)
+``````
+
+Cycle identity continuity checks compare returned identity material against the requested ratified `TypeReference`.
+
+A cycle identity provider that returns identity material for a different `TypeReference` must fail closed.
+
+Reason:
+
+Cycle detection asks:
+
+> Is this already-ratified type identity active on the current planning stack?
+
+It does not ask:
+
+> How should raw source/backend type text be normalized?
+
 ### Required Provider
 
 Introduce a new outbound port:

@@ -429,7 +429,7 @@ The resulting `RuntimeBindingSnapshot` MUST then be frozen and pinned for the li
 Planning, linking, and execution MUST consume the pinned snapshot.
 They MUST NOT re-query the provider mid-run.
 
-## Polymorphic Implementation Resolution
+## Polymorphic Implementation Resolution — AMENDED
 
 Introduce a driven port:
 
@@ -439,7 +439,7 @@ interface PolymorphicImplementationProvider {
         contractType: TypeReference,
         mode: PolymorphicResolutionMode,
         runtimeBindingSnapshot: RuntimeBindingSnapshot,
-    ): PolymorphicImplementationSet
+    ): PolymorphicImplementationCandidates
 }
 ``````
 
@@ -458,31 +458,57 @@ Candidate value object:
 ``````kotlin
 class PolymorphicImplementationCandidate private constructor(
     val contractType: TypeReference,
-    val implementationType: TypeReference,
-    val implementationFqcn: String,
+    val implementation: ConcreteImplementationReference,
 )
 ``````
 
-Candidate set:
+Implementation identity is centralized in `ConcreteImplementationReference`.
+
+Illustrative shape:
 
 ``````kotlin
-class PolymorphicImplementationSet private constructor(
-    val candidates: DeterministicTypeExpansionList<PolymorphicImplementationCandidate>,
+class ConcreteImplementationReference private constructor(
+    val type: TypeReference,
+    val canonicalIdentifier: String,
+    val materializationKind: ImplementationMaterializationKind,
 )
 ``````
+
+Candidate collection:
+
+``````kotlin
+class PolymorphicImplementationCandidates private constructor(
+    val contractType: TypeReference,
+    val candidates: ExpansionSequence<PolymorphicImplementationCandidate>,
+)
+``````
+
+`PolymorphicImplementationCandidates` is not a `Set` data structure.
+
+It is an ordered, duplicate-rejecting candidate sequence for one contract type.
 
 Hexagonal rule:
 
-- Reflection, KSP, bytecode, and static-source adapters may implement this port.
-- Planning Core must not use reflection / KSP APIs directly.
-- The result must be deterministic and adapter-independent under the same discovery scope and pinned runtime binding
+* Reflection, KSP, bytecode, and static-source adapters may implement this port.
+* Planning Core must not use reflection / KSP APIs directly.
+* The result must be deterministic and adapter-independent under the same discovery scope and pinned runtime binding
   snapshot.
+* The provider must issue `ConcreteImplementationReference` only after type-shape checks prove that the implementation
+  is concrete/materializable.
 
-Candidate set ordering rules:
+Candidate ordering rules:
 
-- ordering is ascending by `implementationFqcn` under **Kontrakt canonical identifier order**;
-- locale-dependent collation is forbidden;
-- adapter enumeration order is non-authoritative.
+* ordering is ascending by `implementation.canonicalIdentifier` under Kontrakt canonical identifier order;
+* locale-dependent collation is forbidden;
+* adapter enumeration order is non-authoritative;
+* duplicate `implementation.canonicalIdentifier` within one contract candidate collection fails closed.
+
+The candidate itself must not duplicate FQCN-vs-TypeReference identity surfaces.
+
+Reason:
+
+Keeping `implementationFqcn` and `implementationType` as separate fields inside the candidate allows identity drift.
+`ConcreteImplementationReference` is the single concreteness and implementation-identity boundary.
 
 ### Kontrakt Canonical String Order
 
@@ -526,7 +552,7 @@ However:
 
 Sealed-hierarchy optimization is therefore an implementation choice, not a semantic exception.
 
-## Interface / Abstract Type Expansion
+### Interface / Abstract Type Expansion Shape — AMENDED
 
 `TypeKind.INTERFACE` and equivalent abstract contract types lower to:
 
@@ -546,9 +572,17 @@ Illustrative shape:
 class PolymorphicExpansion private constructor(
     override val subject: TypeReference,
     val mode: PolymorphicResolutionMode,
-    val implementations: PolymorphicImplementationSet,
+    val candidates: PolymorphicImplementationCandidates,
 ) : TypeExpansionDecision
 ``````
+
+`candidates` may be empty only through an explicit vacancy path for contract-subject expansion.
+
+Accidental empty collections are non-compliant.
+
+Vacancy handling belongs to `ContractVacancyPolicy`.
+
+The candidate sequence must be deterministic before any downstream execution/specification explosion occurs.
 
 ### Contract Subject Execution
 
@@ -1059,6 +1093,56 @@ be
 treated as migration debt rather than as a competing architecture.
 
 ## Canonical Ordering vs Canonical Encoding
+
+### LocalSelectorTuple Shape — AMENDED
+
+Illustrative shape:
+
+``````kotlin
+class LocalSelectorTuple private constructor(
+    val label: LocalSelectorLabel,
+    val semanticMemberIdentity: String,
+    val localOrdinal: CanonicalLocalOrdinal,
+    val slotPhase: LocalSelectorSlotPhase,
+    val subjectType: TypeReference,
+)
+``````
+
+`LocalSelectorTuple` is typed local selector material.
+
+It is created at the Local IR assembly boundary when projected semantic material becomes a concrete expansion
+obligation.
+
+Examples:
+
+``````text
+Projected active member
+-> Local expansion edge
+-> LocalSelectorTuple
+-> HID-governed materialization
+``````
+
+``````text
+Polymorphic selected implementation
+-> Local implementation edge
+-> LocalSelectorTuple
+-> HID-governed materialization
+``````
+
+Rules:
+
+* `LocalSelectorTuple` must not expose delimiter-joined string rendering as canonical HID input.
+* `LocalSelectorTuple` must not be stored inside Canonical IR as path/session-local material.
+* HID encoding must be performed later by the canonical/HID encoder using tagged, length-prefixed, version-bound
+  encoding.
+* `subjectType` is a domain-issued `TypeReference`.
+* The tuple must not revalidate raw type text.
+* The tuple must not import reflection/KSP/backend handles.
+
+Reason:
+
+The tuple is local selector input for HID.
+It is not canonical byte encoding and not Canonical IR.
 
 This ADR separates:
 

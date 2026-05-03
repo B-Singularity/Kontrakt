@@ -2,7 +2,7 @@ package planning.infrastructure.normalization
 
 import com.ibm.icu.text.Normalizer2
 import com.ibm.icu.util.VersionInfo
-import metamodel.port.outgoing.NormalizationEngine
+import metamodel.domain.port.outgoing.NormalizationEngine
 import planning.domain.exception.EnvironmentIntegrityException
 
 /**
