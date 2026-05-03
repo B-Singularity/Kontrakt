@@ -237,4 +237,47 @@ object MetamodelProtocolTextGuards {
         return isReservedProtocolDelimiter(value) ||
                 isC0OrC1Control(value)
     }
+
+    fun requireBoundedDiagnosticText(
+        field: String,
+        value: String,
+        maxChars: Int,
+    ) {
+        if (field.isEmpty()) {
+            throw MetamodelFactContractViolationException(
+                "Metamodel diagnostic guard field name must not be empty.",
+            )
+        }
+
+        if (value.isEmpty()) {
+            throw MetamodelFactContractViolationException(
+                "$field must not be empty.",
+            )
+        }
+
+        if (maxChars <= 0) {
+            throw MetamodelFactContractViolationException(
+                "$field maxChars must be > 0: $maxChars",
+            )
+        }
+
+        if (value.length > maxChars) {
+            throw MetamodelFactContractViolationException(
+                "$field exceeds diagnostic cap=$maxChars.",
+            )
+        }
+
+        var index = 0
+        while (index < value.length) {
+            val c = value[index]
+
+            if (isC0OrC1Control(c)) {
+                throw MetamodelFactContractViolationException(
+                    "$field must not contain C0/C1 control material: index=$index.",
+                )
+            }
+
+            index += 1
+        }
+    }
 }
