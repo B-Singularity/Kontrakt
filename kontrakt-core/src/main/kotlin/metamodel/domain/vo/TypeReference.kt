@@ -15,58 +15,29 @@ import metamodel.domain.exception.MetamodelFactContractViolationException
  * - a cache key;
  * - or a canonical byte encoding.
  *
- * TypeReference is the safe carrier that crosses from metamodel identity into
- * planning/type-expansion workflows.
+ * TypeReference is a ratified normalized fact that crosses from the metamodel
+ * bounded context into planning/type-expansion workflows.
  *
  * Issuance law:
  *
- * Adapters must not implement or manually assemble TypeReference. Reflection,
- * KSP, bytecode, and static-source adapters provide normalized materials; the
- * domain factory issues TypeReference after enforcing identity coherence.
+ * Adapters must not implement, subclass, or manually assemble TypeReference.
+ * They provide candidate material. The metamodel domain issuer creates the
+ * final TypeReference after enforcing identity coherence.
  *
- * Coherence law:
+ * Proof law:
  *
- * The following axes must describe the same semantic type:
- *
- * - CanonicalTypeId;
- * - TypeCycleKey;
- * - CanonicalTypeSignature;
- * - OrderedUseSiteAnnotations;
- * - TypeIdentityCoherenceProof.
- *
- * The proof is not ornamental. issue(...) must verify that the supplied
- * TypeIdentityCoherenceProof covers this exact tuple. This prevents chimera
+ * [TypeIdentityCoherenceProof] is required during issuance to prevent chimera
  * references such as:
  *
- *     id from A + signature from B + proof from C
+ * ```text
+ * id from A + cycle key from B + signature from C
+ * ```
  *
- * Shape law:
+ * However, the proof is not a semantic equality axis. Equality is defined by
+ * the ratified type identity material itself.
  *
- * id.shapeSummary and signature.shapeSummary must be equal.
- * cycleKey.shapeSummary.kind must agree with signature.shapeSummary.kind.
- *
- * Depth law:
- *
- * TypeReference carries a bounded structural type nesting depth. The value is
- * supplied by the issuing factory, which is the only component that knows the
- * fully lowered source graph. This VO validates the cap and stores the depth so
- * downstream code can avoid recursive explosion.
- *
- * Hash law:
- *
- * hashCode() is intentionally not precomputed in this version. It may use
- * field hashCode values for in-memory HashMap/HashSet behavior only.
- *
- * Do not use hashCode() as:
- *
- * - canonical fingerprint;
- * - persisted identity;
- * - cache route key;
- * - cross-runtime stable key;
- * - serialized protocol hash.
- *
- * Hash caching/interner work is deferred to the canonical encoding / interning /
- * L2 integration phase.
+ * This prevents a future proof implementation change from changing semantic
+ * TypeReference equality for the same type.
  */
 class TypeReference private constructor(
     val id: CanonicalTypeId,
@@ -81,13 +52,13 @@ class TypeReference private constructor(
 
     fun renderSummary(): String =
         "TypeReference(" +
-            "id=${id.value}, " +
-            "shape=${shapeSummary.kind.protocolToken}, " +
-            "arrayRank=${shapeSummary.arrayRank}, " +
-            "genericArity=${shapeSummary.genericArity}, " +
-            "typeDepth=$typeNestingDepth, " +
-            "annotations=${useSiteAnnotations.size}" +
-            ")"
+                "id=${id.value}, " +
+                "shape=${shapeSummary.kind.protocolToken}, " +
+                "arrayRank=${shapeSummary.arrayRank}, " +
+                "genericArity=${shapeSummary.genericArity}, " +
+                "typeDepth=$typeNestingDepth, " +
+                "annotations=${useSiteAnnotations.size}" +
+                ")"
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -96,15 +67,21 @@ class TypeReference private constructor(
         /*
          * Keep id first.
          *
-         * It is the most selective axis and includes text, shape, classifier
-         * law, and ratification fingerprint.
+         * It is the most selective semantic axis and already includes:
+         *
+         * - canonical text;
+         * - shape summary;
+         * - classifier law;
+         * - ratification fingerprint.
+         *
+         * TypeIdentityCoherenceProof is intentionally excluded. It is an
+         * issuance-time validation artifact, not part of semantic equality.
          */
         return id == other.id &&
-            cycleKey == other.cycleKey &&
-            signature == other.signature &&
-            useSiteAnnotations == other.useSiteAnnotations &&
-            coherenceProof == other.coherenceProof &&
-            typeNestingDepth == other.typeNestingDepth
+                cycleKey == other.cycleKey &&
+                signature == other.signature &&
+                useSiteAnnotations == other.useSiteAnnotations &&
+                typeNestingDepth == other.typeNestingDepth
     }
 
     override fun hashCode(): Int {
@@ -112,7 +89,6 @@ class TypeReference private constructor(
         result = 31 * result + cycleKey.hashCode()
         result = 31 * result + signature.hashCode()
         result = 31 * result + useSiteAnnotations.hashCode()
-        result = 31 * result + coherenceProof.hashCode()
         result = 31 * result + typeNestingDepth
         return result
     }
@@ -120,20 +96,6 @@ class TypeReference private constructor(
     override fun toString(): String = renderSummary()
 
     companion object {
-        /**
-         * Structural type-depth cap for a single TypeReference.
-         *
-         * This protects downstream recursive comparison, expansion, diagnostics,
-         * and adapter lowering paths from deeply nested malicious types such as:
-         *
-         *     List<List<List<...>>>
-         *
-         * The concrete factory is responsible for computing this depth while it
-         * lowers the source type graph. This VO only validates the published
-         * value.
-         */
-        const val MAX_TYPE_NESTING_DEPTH: Int = 64
-
         @JvmStatic
         fun issue(
             id: CanonicalTypeId,
@@ -180,18 +142,18 @@ class TypeReference private constructor(
             if (id.shapeSummary != signature.shapeSummary) {
                 throw MetamodelFactContractViolationException(
                     "TypeReference incoherent shape: " +
-                        "idShape=${id.shapeSummary}, " +
-                        "signatureShape=${signature.shapeSummary}, " +
-                        "id=${id.value}",
+                            "idShape=${id.shapeSummary}, " +
+                            "signatureShape=${signature.shapeSummary}, " +
+                            "id=${id.value}",
                 )
             }
 
             if (cycleKey.shapeSummary.kind != signature.shapeSummary.kind) {
                 throw MetamodelFactContractViolationException(
                     "TypeReference incoherent cycle/signature kind: " +
-                        "cycleShape=${cycleKey.shapeSummary}, " +
-                        "signatureShape=${signature.shapeSummary}, " +
-                        "id=${id.value}",
+                            "cycleShape=${cycleKey.shapeSummary}, " +
+                            "signatureShape=${signature.shapeSummary}, " +
+                            "id=${id.value}",
                 )
             }
         }

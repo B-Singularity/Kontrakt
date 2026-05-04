@@ -11,7 +11,6 @@ import metamodel.domain.dto.PropertyStorageKind
 import metamodel.domain.dto.RawTypeFactsDTO
 import metamodel.domain.dto.VisibilityKind
 import metamodel.domain.exception.StrictModeViolationException
-import metamodel.domain.port.outgoing.NormalizationEngine
 import metamodel.domain.service.TypeIdentity64Deriver
 import metamodel.domain.vo.DeclarationOrdinal
 import metamodel.domain.vo.TypeReference
@@ -40,16 +39,17 @@ import kotlin.reflect.jvm.jvmErasure
  *
  * Compiler-style role:
  *
- * - Lowers reflected KType/KClass information into normalized raw facts.
+ * - Lowers reflected KType/KClass information into raw metamodel facts.
  * - Does not perform constructor selection.
  * - Does not perform property demotion.
  * - Does not perform canonical active-member ordering.
+ * - Does not participate in active-cycle detection.
  *
  * Determinism policy:
  *
  * - Reflection enumeration order is never trusted as declaration order.
- * - Declaration ordinals are emitted as DeclarationOrdinal.Unavailable unless a
- *   stable source-order reconstruction layer is introduced.
+ * - Declaration ordinals are emitted as DeclarationOrdinal.unavailable() unless
+ *   a stable source-order reconstruction layer is introduced.
  * - Local ArrayList/HashSet instances are producer-side work buffers only.
  * - RawTypeFactsDTO.issue(...) is the deterministic boundary that performs
  *   duplicate validation, deterministic sequencing, and immutable freezing
@@ -74,6 +74,27 @@ import kotlin.reflect.jvm.jvmErasure
  * A higher adapter-level cache can be added later around RawTypeFactsProvider if
  * profiling proves repeated resolution of the same KClass is a bottleneck.
  *
+ * Normalization boundary law:
+ *
+ * This provider does not call NormalizationEngine.
+ * This provider does not call CanonicalTypeText.ratify(...).
+ * This provider does not perform NFC checks.
+ *
+ * Reflection-specific type text ratification is owned by the TypeReference
+ * issuance pipeline:
+ *
+ *     ReflectionTypeReferenceBridge
+ *     -> CanonicalTypeReferenceIssuer
+ *     -> TypeReference
+ *
+ * This provider uses [ReflectionNormalizationGuard] only as a cheap
+ * adapter-local surface preflight for strings it renders directly:
+ *
+ * - owner type FQCN;
+ * - constructor signature.
+ *
+ * The guard is intentionally not a Unicode normalization authority.
+ *
  * Reflection limitations:
  *
  * - Unnamed constructor parameters are rejected because parameter names
@@ -81,10 +102,10 @@ import kotlin.reflect.jvm.jvmErasure
  * - Java/platform nullability is emitted as UNKNOWN.
  * - Delegated properties are not inferred from JVM "$delegate" naming.
  * - JVM nested-class spelling is canonicalized by replacing '$' with '.' before
- *   the normalization guard is applied.
+ *   adapter-local surface preflight.
  */
 class ReflectionRawTypeFactsProvider private constructor(
-    private val referenceFactory: ReflectionTypeReferenceFactory,
+    private val typeReferenceBridge: ReflectionTypeReferenceBridge,
     private val normalizationGuard: ReflectionNormalizationGuard,
     private val typeIdentity64Deriver: TypeIdentity64Deriver,
     private val typeHandleRegistry: ReflectionTypeHandleRegistry,
@@ -130,7 +151,7 @@ class ReflectionRawTypeFactsProvider private constructor(
                     typeIdentityAlgorithmId = typeIdentity64Deriver.identityAlgorithmId,
                     typeIdentityAlgorithmVersion = typeIdentity64Deriver.identityAlgorithmVersion,
                     ownerTypeFqcn = ownerTypeFqcn,
-                    normalizationVersion = referenceFactory.typeSignatureNormalizationVersion,
+                    normalizationVersion = typeReferenceBridge.typeSignatureNormalizationVersion,
                     constructors = constructors,
                     properties = properties,
                 ),
@@ -144,8 +165,9 @@ class ReflectionRawTypeFactsProvider private constructor(
     ): Collection<ConstructorCandidateFact> {
         /*
          * Local producer buffer only.
-         * RawTypeFactsDTO.issue(...) owns final deterministic ordering and duplicate
-         * validation for constructor candidates.
+         *
+         * RawTypeFactsDTO.issue(...) owns final deterministic ordering and
+         * duplicate validation for constructor candidates.
          */
         val result = ArrayList<ConstructorCandidateFact>(constructors.size)
 
@@ -167,7 +189,8 @@ class ReflectionRawTypeFactsProvider private constructor(
                             ownerTypeFqcn = ownerTypeFqcn,
                             valueParameters = parameters,
                         ),
-                    constructorSignatureNormalizationVersion = referenceFactory.typeSignatureNormalizationVersion,
+                    constructorSignatureNormalizationVersion =
+                        typeReferenceBridge.typeSignatureNormalizationVersion,
                     declarationOrdinal = DeclarationOrdinal.unavailable(),
                     visibility = mapVisibility(constructor.visibility),
                     origin = MemberOrigin.DECLARED,
@@ -194,8 +217,9 @@ class ReflectionRawTypeFactsProvider private constructor(
          * same TypeReference instances.
          *
          * This projection prevents renderConstructorSignature(...) and
-         * resolveConstructorParameters(...) from calling referenceFactory.create(...)
-         * independently for the same KParameter.type.
+         * resolveConstructorParameters(...) from calling
+         * typeReferenceBridge.issueReference(...) independently for the same
+         * KParameter.type.
          */
         val valueParameters = ArrayList<KParameter>()
 
@@ -214,7 +238,8 @@ class ReflectionRawTypeFactsProvider private constructor(
             },
         )
 
-        val projections = ArrayList<ConstructorParameterProjection>(valueParameters.size)
+        val projections =
+            ArrayList<ConstructorParameterProjection>(valueParameters.size)
 
         var localIndex = 0
         while (localIndex < valueParameters.size) {
@@ -232,7 +257,7 @@ class ReflectionRawTypeFactsProvider private constructor(
                     parameter = parameter,
                     localIndex = localIndex,
                     name = parameterName,
-                    typeReference = referenceFactory.create(parameter.type),
+                    typeReference = typeReferenceBridge.issueReference(parameter.type),
                     nullability =
                         mapNullability(
                             isMarkedNullable = parameter.type.isMarkedNullable,
@@ -252,7 +277,8 @@ class ReflectionRawTypeFactsProvider private constructor(
         ownerTypeFqcn: String,
         valueParameters: List<ConstructorParameterProjection>,
     ): Collection<ConstructorParameterFact> {
-        val result = ArrayList<ConstructorParameterFact>(valueParameters.size)
+        val result =
+            ArrayList<ConstructorParameterFact>(valueParameters.size)
 
         var localIndex = 0
         while (localIndex < valueParameters.size) {
@@ -266,7 +292,8 @@ class ReflectionRawTypeFactsProvider private constructor(
                     parameterIndex = parameter.localIndex,
                     nullability = parameter.nullability,
                     defaultValuePresence = parameter.defaultValuePresence,
-                    typeSignatureNormalizationVersion = referenceFactory.typeSignatureNormalizationVersion,
+                    typeSignatureNormalizationVersion =
+                        typeReferenceBridge.typeSignatureNormalizationVersion,
                 ),
             )
 
@@ -285,21 +312,25 @@ class ReflectionRawTypeFactsProvider private constructor(
     ): Collection<PropertyFact> {
         /*
          * Local producer buffer only.
-         * RawTypeFactsDTO.issue(...) owns final deterministic ordering and duplicate
-         * validation for property facts.
+         *
+         * RawTypeFactsDTO.issue(...) owns final deterministic ordering and
+         * duplicate validation for property facts.
          */
         val result = ArrayList<PropertyFact>(properties.size)
 
         val iterator = properties.iterator()
         while (iterator.hasNext()) {
             val property = iterator.next()
-            val propertyTypeReference = referenceFactory.create(property.returnType)
+            val propertyTypeReference =
+                typeReferenceBridge.issueReference(property.returnType)
+
             val propertyOrigin =
                 mapPropertyOrigin(
                     property = property,
                     ownerClass = ownerClass,
                     declaredPropertyNames = declaredPropertyNames,
                 )
+
             val propertyDeclarationHasKotlinMetadata =
                 propertyDeclarationHasKotlinMetadata(
                     property = property,
@@ -315,14 +346,16 @@ class ReflectionRawTypeFactsProvider private constructor(
                     nullability =
                         mapNullability(
                             isMarkedNullable = property.returnType.isMarkedNullable,
-                            declarationHasKotlinMetadata = propertyDeclarationHasKotlinMetadata,
+                            declarationHasKotlinMetadata =
+                                propertyDeclarationHasKotlinMetadata,
                         ),
                     declaredVisibility = mapVisibility(property.visibility),
                     setterVisibility = mapSetterVisibility(property),
                     origin = propertyOrigin,
                     mutability = mapMutability(property),
                     storageKind = inferStorageKind(property),
-                    typeSignatureNormalizationVersion = referenceFactory.typeSignatureNormalizationVersion,
+                    typeSignatureNormalizationVersion =
+                        typeReferenceBridge.typeSignatureNormalizationVersion,
                 ),
             )
         }
@@ -352,7 +385,7 @@ class ReflectionRawTypeFactsProvider private constructor(
 
         val signature = builder.toString()
 
-        normalizationGuard.requireNormalizedComponent(
+        normalizationGuard.requireReflectionComponentSurface(
             field = "ConstructorCandidateFact.constructorSignature",
             value = signature,
         )
@@ -365,17 +398,19 @@ class ReflectionRawTypeFactsProvider private constructor(
     ): String {
         /*
          * This is JVM spelling canonicalization only.
-         * Unicode normalization is not performed here. The NormalizationGuard
-         * enforces the NFC-REJECT boundary after spelling canonicalization.
          *
-         * The '$' replacement is intentionally performed before validation.
-         * If an obfuscated or generated JVM name collapses into an invalid
-         * Kontrakt canonical component, normalizationGuard rejects it.
+         * Unicode normalization is not performed here. Full canonical type-text
+         * inspection is owned by CanonicalTypeText.ratify(...) in the type
+         * reference issuance pipeline.
+         *
+         * The '$' replacement is intentionally performed before surface
+         * preflight. If an obfuscated or generated JVM name collapses into an
+         * invalid Kontrakt component, the guard rejects it.
          */
         val rawName = kClass.qualifiedName ?: kClass.java.name
         val ownerTypeFqcn = rawName.replace('$', '.')
 
-        normalizationGuard.requireNormalizedComponent(
+        normalizationGuard.requireReflectionComponentSurface(
             field = "RawTypeFactsDTO.ownerTypeFqcn",
             value = ownerTypeFqcn,
         )
@@ -541,14 +576,13 @@ class ReflectionRawTypeFactsProvider private constructor(
     companion object {
         @JvmStatic
         fun issue(
-            referenceFactory: ReflectionTypeReferenceFactory,
-            normalizationEngine: NormalizationEngine,
+            typeReferenceBridge: ReflectionTypeReferenceBridge,
             typeIdentity64Deriver: TypeIdentity64Deriver,
             typeHandleRegistry: ReflectionTypeHandleRegistry,
         ): ReflectionRawTypeFactsProvider {
             return ReflectionRawTypeFactsProvider(
-                referenceFactory = referenceFactory,
-                normalizationGuard = ReflectionNormalizationGuard.issue(normalizationEngine),
+                typeReferenceBridge = typeReferenceBridge,
+                normalizationGuard = ReflectionNormalizationGuard.issue(),
                 typeIdentity64Deriver = typeIdentity64Deriver,
                 typeHandleRegistry = typeHandleRegistry,
             )
@@ -559,9 +593,10 @@ class ReflectionRawTypeFactsProvider private constructor(
 /**
  * Adapter-local projection of one constructor VALUE parameter.
  *
- * This object exists only inside ReflectionRawTypeFactsProvider. It prevents the
- * constructor signature and constructor parameter facts from independently
- * creating TypeReference instances for the same KParameter.type.
+ * This object exists only inside ReflectionRawTypeFactsProvider.
+ *
+ * It prevents the constructor signature and constructor parameter facts from
+ * independently creating TypeReference instances for the same KParameter.type.
  *
  * It is not a domain VO.
  * It is not stored in RawTypeFactsDTO.

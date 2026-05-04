@@ -21,33 +21,46 @@ import kotlin.reflect.KClass
 import kotlin.reflect.KType
 import kotlin.reflect.KTypeProjection
 import kotlin.reflect.KVariance
-import kotlin.reflect.full.createType
 import kotlin.reflect.jvm.jvmErasure
+import kotlin.reflect.typeOf
 
 /**
- * Reflection implementation of TypeShapeProvider.
+ * Reflection implementation of [TypeShapeProvider].
  *
  * Hexagonal role:
  *
  * - contains Kotlin/JVM reflection classification logic;
- * - can be replaced by KSP without Planning Core changes;
- * - does not leak reflection handles into TypeReference.
+ * - can be replaced by KSP / bytecode / source-backed adapters without
+ *   Planning Core changes;
+ * - does not leak reflection handles into TypeReference or planning DTOs.
  *
  * Compiler-style role:
  *
- * - lowers a domain-issued TypeReference into a coarse expansion shape;
+ * - lowers a domain-issued [TypeReference] into one immediate coarse expansion
+ *   shape;
  * - does not inspect constructors/properties;
  * - does not perform active-member projection;
+ * - does not perform active-member ordering;
  * - does not create plan nodes;
- * - does not decide implementation selection.
+ * - does not decide implementation selection;
+ * - does not recursively resolve child shapes.
  *
  * TypeReference law:
  *
- * TypeReference is a final domain-issued VO. Reflection adapters must not
- * subclass it or smuggle KType handles into it.
+ * [TypeReference] is a final domain-issued VO. Reflection adapters must not
+ * subclass it, synthesize it directly, or smuggle KType handles into it.
  *
- * Reflection KType recovery is performed through ReflectionTypeHandleRegistry,
+ * Reflection KType recovery is performed through [ReflectionTypeHandleRegistry],
  * which is adapter-local sidecar state.
+ *
+ * Issuance boundary:
+ *
+ * This provider may need child TypeReference values for collection, map, and
+ * array shapes. It obtains them through [ReflectionTypeReferenceBridge].
+ *
+ * The bridge delegates to the metamodel-domain [metamodel.domain.service.CanonicalTypeReferenceIssuer].
+ * Therefore this provider remains a shape-classification adapter, not a
+ * TypeReference issuance authority.
  *
  * Determinism policy:
  *
@@ -56,39 +69,44 @@ import kotlin.reflect.jvm.jvmErasure
  * - use-site variance is rejected until variance is modeled as a separate
  *   metamodel identity axis;
  * - unsupported erased container shapes fail closed;
+ * - non-primitive erased JVM array components are not reconstructed through
+ *   Kotlin reflection;
  * - root/platform nullability is conservative:
- *     nullable -> NULLABLE;
- *     non-null with Kotlin metadata -> NON_NULL;
- *     non-null without Kotlin metadata -> UNKNOWN.
+ *
+ * ```text
+ * nullable                   -> NULLABLE
+ * non-null + Kotlin metadata -> NON_NULL
+ * non-null + no metadata     -> UNKNOWN
+ * ```
  *
  * Classification policy:
  *
  * Atomic classification is intentionally a closed reflection-adapter table.
+ * This table is not a cache and not an interner. It is the adapter's fixed
+ * built-in vocabulary for leaf-like scalar shapes.
  *
- * This provider does not currently support user-defined atomic leaf policies.
- * If that becomes necessary, introduce an explicit
+ * If user-defined atomic leaf policies become necessary, introduce an explicit
  * ReflectionTypeShapeClassificationPolicy rather than letting arbitrary
  * reflection heuristics leak into the core.
  *
  * Abstract-class policy:
  *
- * Only true JVM interfaces are INTERFACE shapes.
+ * Only true JVM interfaces are INTERFACE shapes in this provider.
  *
- * Abstract classes remain COMPOSITE here because they can still have constructor
- * and property structure. Downstream materialization/implementation-selection
- * phases must prevent direct instantiation of abstract classes.
+ * Abstract classes remain COMPOSITE here because they can still carry
+ * constructor/property structure. Downstream materialization and polymorphic
+ * implementation-selection phases must prevent direct instantiation when the
+ * type is not materializable.
  *
- * Performance policy:
+ * Current-cut performance policy:
  *
- * The built-in atomic whitelist is stored as a closed Set for direct membership
- * checks instead of a long chain of equality comparisons.
- *
- * Primitive-array component KType synthesis is still performed through
- * createType(...) in this version. Static KType caching is intentionally deferred
- * to the later caching/flyweight allocation phase.
+ * - Keep the original closed classification tables.
+ * - Do not introduce caching/interner/pooling here.
+ * - Avoid repeated jvmErasure / Metadata lookup inside one provider call.
+ * - Remove createType(...) from primitive-array component recovery.
  */
 class ReflectionTypeShapeProvider private constructor(
-    private val referenceFactory: ReflectionTypeReferenceFactory,
+    private val typeReferenceBridge: ReflectionTypeReferenceBridge,
     private val typeHandleRegistry: ReflectionTypeHandleRegistry,
 ) : TypeShapeProvider {
     override fun resolveTypeShape(
@@ -96,7 +114,22 @@ class ReflectionTypeShapeProvider private constructor(
     ): ResolvedTypeShape {
         val kType = typeHandleRegistry.requireKType(reference)
         val kClass = kType.jvmErasure
-        val nullability = mapShapeNullability(kType)
+
+        /*
+         * Observe class metadata once for this provider call.
+         *
+         * This is not a cache. It only avoids repeating the same reflection
+         * lookup inside a single resolveTypeShape invocation.
+         */
+        val javaClass = kClass.java
+        val hasKotlinMetadata =
+            javaClass.getAnnotation(Metadata::class.java) != null
+
+        val nullability =
+            mapShapeNullability(
+                type = kType,
+                hasKotlinMetadata = hasKotlinMetadata,
+            )
 
         if (isAtomic(kClass)) {
             return ResolvedTypeShape.atomic(
@@ -172,7 +205,7 @@ class ReflectionTypeShapeProvider private constructor(
         return ResolvedTypeShape.collection(
             subject = subject,
             nullability = nullability,
-            elementType = referenceFactory.create(elementArgument),
+            elementType = typeReferenceBridge.issueReference(elementArgument),
         )
     }
 
@@ -200,8 +233,8 @@ class ReflectionTypeShapeProvider private constructor(
         return ResolvedTypeShape.map(
             subject = subject,
             nullability = nullability,
-            keyType = referenceFactory.create(keyArgument),
-            valueType = referenceFactory.create(valueArgument),
+            keyType = typeReferenceBridge.issueReference(keyArgument),
+            valueType = typeReferenceBridge.issueReference(valueArgument),
         )
     }
 
@@ -229,10 +262,25 @@ class ReflectionTypeShapeProvider private constructor(
         return ResolvedTypeShape.array(
             subject = subject,
             nullability = nullability,
-            componentType = referenceFactory.create(componentType),
+            componentType = typeReferenceBridge.issueReference(componentType),
         )
     }
 
+    /**
+     * Recover component KType only for deterministic primitive-array cases.
+     *
+     * Kotlin Array<T> should normally expose T as a KType argument and therefore
+     * not reach this branch.
+     *
+     * Primitive arrays such as IntArray do not expose Array<T>-style component
+     * arguments. Those are handled through typeOf<T>(), which is stable and does
+     * not synthesize a new arbitrary KType through reflection.
+     *
+     * Non-primitive erased JVM arrays are rejected. Reconstructing their
+     * component as KType via createType(...) would recover type information from
+     * erased Class material and can become environment/classloader dependent.
+     */
+    @OptIn(ExperimentalStdlibApi::class)
     private fun primitiveOrJvmArrayComponentType(
         ownerType: KType,
         arrayClass: KClass<*>,
@@ -240,24 +288,39 @@ class ReflectionTypeShapeProvider private constructor(
         val componentJavaClass =
             arrayClass.java.componentType
                 ?: throw StrictModeViolationException(
-                    "ARRAY shape has no generic argument and no JVM component type: type=$ownerType",
+                    "ARRAY shape has no generic argument and no JVM component type: " +
+                            "type=$ownerType",
                 )
 
-        /*
-         * This createType(...) call is known to be relatively expensive.
-         *
-         * Do not add a local static KType cache in this pass. Primitive/component
-         * KType caching belongs to the later allocation-policy phase together
-         * with canonical type interning.
-         */
-        return try {
-            componentJavaClass.kotlin.createType(nullable = false)
-        } catch (t: Throwable) {
+        if (!componentJavaClass.isPrimitive) {
             throw StrictModeViolationException(
-                "Failed to construct array component KType: " +
-                        "arrayType=$ownerType, componentClass=${componentJavaClass.name}, " +
-                        "cause=${t::class.qualifiedName}",
+                "Non-primitive JVM array component type is erased and cannot be " +
+                        "deterministically reconstructed as KType without explicit " +
+                        "Kotlin type argument material: " +
+                        "ownerType=$ownerType, " +
+                        "arrayClass=${arrayClass.qualifiedName ?: arrayClass.java.name}, " +
+                        "componentClass=${componentJavaClass.name}",
             )
+        }
+
+        return when (componentJavaClass) {
+            java.lang.Boolean.TYPE -> typeOf<Boolean>()
+            java.lang.Byte.TYPE -> typeOf<Byte>()
+            java.lang.Character.TYPE -> typeOf<Char>()
+            java.lang.Short.TYPE -> typeOf<Short>()
+            java.lang.Integer.TYPE -> typeOf<Int>()
+            java.lang.Long.TYPE -> typeOf<Long>()
+            java.lang.Float.TYPE -> typeOf<Float>()
+            java.lang.Double.TYPE -> typeOf<Double>()
+
+            else -> {
+                throw StrictModeViolationException(
+                    "Unsupported primitive array component class: " +
+                            "ownerType=$ownerType, " +
+                            "arrayClass=${arrayClass.qualifiedName ?: arrayClass.java.name}, " +
+                            "componentClass=${componentJavaClass.name}",
+                )
+            }
         }
     }
 
@@ -285,18 +348,23 @@ class ReflectionTypeShapeProvider private constructor(
 
         when (projection.variance) {
             KVariance.IN,
-            KVariance.OUT -> {
+            KVariance.OUT,
+                -> {
                 throw StrictModeViolationException(
                     "$shapeKind shape rejects use-site variance because variance " +
                             "is not yet represented as a separate metamodel identity axis: " +
-                            "ownerType=$ownerType, argumentIndex=$argumentIndex, variance=${projection.variance}",
+                            "ownerType=$ownerType, argumentIndex=$argumentIndex, " +
+                            "variance=${projection.variance}",
                 )
             }
 
             KVariance.INVARIANT,
-            null -> {
-                // Accepted. Null variance with a non-null type is treated as
-                // invariant for defensive reflection compatibility.
+            null,
+                -> {
+                /*
+                 * Accepted. Null variance with a non-null type is treated as
+                 * invariant for defensive reflection compatibility.
+                 */
             }
         }
 
@@ -347,20 +415,18 @@ class ReflectionTypeShapeProvider private constructor(
 
     private fun mapShapeNullability(
         type: KType,
+        hasKotlinMetadata: Boolean,
     ): NullabilityKind {
         if (type.isMarkedNullable) {
             return NullabilityKind.NULLABLE
         }
 
-        val rootClass = type.jvmErasure.java
-        val hasKotlinMetadata = rootClass.getAnnotation(Metadata::class.java) != null
-
         return if (hasKotlinMetadata) {
             NullabilityKind.NON_NULL
         } else {
             /*
-             * For Java/platform root types, not-marked-null is not strong enough
-             * to claim NON_NULL. Use UNKNOWN so shape consumers remain
+             * For Java/platform root types, not-marked-null is not strong
+             * enough to claim NON_NULL. Use UNKNOWN so shape consumers remain
              * conservative.
              */
             NullabilityKind.UNKNOWN
@@ -374,8 +440,15 @@ class ReflectionTypeShapeProvider private constructor(
         /**
          * Closed built-in atomic type table.
          *
-         * This is not a runtime cache. It is the adapter's fixed built-in
-         * classification vocabulary.
+         * This is not a runtime cache.
+         * This is not a TypeReference interner.
+         * This is not a policy memoization surface.
+         *
+         * It is the reflection adapter's fixed built-in classification
+         * vocabulary for known scalar/leaf-like Kotlin/JVM types.
+         *
+         * Keep this table explicit until a separate
+         * ReflectionTypeShapeClassificationPolicy is introduced.
          */
         private val ATOMIC_KOTLIN_CLASSES: Set<KClass<*>> =
             setOf(
@@ -406,9 +479,12 @@ class ReflectionTypeShapeProvider private constructor(
          * Defensive companion table for Kotlin primitive-array KClass values.
          *
          * javaClass.isArray should already catch these on the JVM. This table
-         * keeps the intent explicit and protects against reflection edge cases.
+         * keeps the reflection-adapter intent explicit and protects against
+         * Kotlin/JVM reflection edge cases.
          *
          * This is not an interning table.
+         * This is not a cache.
+         * This is not a primitive slab.
          */
         private val PRIMITIVE_ARRAY_KOTLIN_CLASSES: Set<KClass<*>> =
             setOf(
@@ -424,11 +500,11 @@ class ReflectionTypeShapeProvider private constructor(
 
         @JvmStatic
         fun issue(
-            referenceFactory: ReflectionTypeReferenceFactory,
+            typeReferenceBridge: ReflectionTypeReferenceBridge,
             typeHandleRegistry: ReflectionTypeHandleRegistry,
         ): ReflectionTypeShapeProvider {
             return ReflectionTypeShapeProvider(
-                referenceFactory = referenceFactory,
+                typeReferenceBridge = typeReferenceBridge,
                 typeHandleRegistry = typeHandleRegistry,
             )
         }
