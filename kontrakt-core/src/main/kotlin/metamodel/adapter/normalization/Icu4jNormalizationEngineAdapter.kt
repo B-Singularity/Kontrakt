@@ -116,6 +116,17 @@ import metamodel.domain.vo.CanonicalTypeTextViolationCode
  * reuses arrays up to [MAX_RETAINED_SCRATCH_CODE_POINTS]. Larger inputs allocate
  * a temporary bounded array for that call.
  *
+ * Scratch cleanup law:
+ *
+ * ThreadLocal cleanup is current-thread scoped.
+ *
+ * [clearCurrentThreadScratch] removes only the scratch buffer associated with
+ * the calling thread. It is therefore useful at worker/session teardown points,
+ * but it must not be treated as global adapter shutdown.
+ *
+ * The domain [NormalizationEngine] port intentionally does not expose cleanup.
+ * Scratch cleanup is adapter-local infrastructure hygiene.
+ *
  * Script policy law:
  *
  * This implementation supports only [SCRIPT_POLICY_KONTRAKT_TYPE_TEXT_V1].
@@ -289,6 +300,30 @@ class Icu4jNormalizationEngineAdapter private constructor(
             snapshot = snapshot,
             lexicalProfile = lexicalProfile,
         )
+    }
+
+    /**
+     * Clears this adapter's scratch buffer for the current thread only.
+     *
+     * This method exists because the adapter uses ThreadLocal scratch storage to
+     * avoid repeated IntArray allocation during canonical type-text inspection.
+     *
+     * Important:
+     *
+     * - This does not clear scratch buffers owned by other worker threads.
+     * - This must be called from the same thread that used the adapter.
+     * - Calling this from a coordinator/main thread does not clean worker-thread
+     *   ThreadLocal values.
+     * - This is adapter lifecycle hygiene, not a domain-port contract.
+     *
+     * Intended call sites:
+     *
+     * - worker task finally block;
+     * - planner/metamodel session teardown running on the worker thread;
+     * - test fixture teardown when the same test thread used the adapter.
+     */
+    fun clearCurrentThreadScratch() {
+        THREAD_LOCAL_SCRATCH.remove()
     }
 
     private fun inspectScalarsAndBufferCodePoints(
