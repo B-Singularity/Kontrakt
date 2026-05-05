@@ -12,44 +12,79 @@ import metamodel.domain.vo.TypeShapeRatificationFingerprint
 import metamodel.domain.vo.TypeShapeSummary
 
 /**
- * Domain service that issues [TypeReference] from adapter-rendered identity
+ * Domain service that issues TypeReference from adapter-rendered identity
  * material.
  *
- * This is the only canonical TypeReference issuance authority in the metamodel
- * domain.
+ * This is the canonical TypeReference issuance authority.
  *
- * Hexagonal boundary:
+ * Adapters must not:
  *
- * - adapters may observe backend-native type material;
- * - adapters may render deterministic candidate material;
- * - adapters must not issue TypeReference directly;
- * - adapters must not own CanonicalTypeText.ratify(...) orchestration;
- * - adapters must not create adapter-local `*TypeReferenceIssuer` authorities.
+ * - implement TypeReference;
+ * - call TypeReference.issue(...) directly;
+ * - call CanonicalTypeText.ratify(...) directly as issuance orchestration;
+ * - call CanonicalTypeId issuance directly;
+ * - call TypeCycleKey.issue(...) directly;
+ * - call CanonicalTypeSignature.issue(...) directly;
+ * - assemble id/cycle/signature from unrelated sources.
  *
- * Authority split:
+ * Adapter responsibility stops at providing already-lowered candidate material:
+ *
+ * - id text;
+ * - cycle-key text;
+ * - signature text;
+ * - shape summary observed from backend metadata;
+ * - classifier law identity;
+ * - ratification fingerprint;
+ * - ordered annotation material;
+ * - type nesting depth.
+ *
+ * This service owns the domain issuance bridge:
  *
  * ```text
- * Adapter:
- *   backend type handle -> rendered candidate material
- *
- * Metamodel domain:
- *   rendered candidate material
- *   -> CanonicalTypeText.ratify(...)
- *   -> CanonicalTypeId
- *   -> TypeCycleKey
- *   -> CanonicalTypeSignature
- *   -> TypeIdentityCoherenceProof
- *   -> TypeReference
+ * adapter-rendered text
+ * -> CanonicalTypeText.ratify(...)
+ * -> CanonicalTypeId via TypeShapeIdentityIssuer
+ * -> TypeCycleKey via TypeCycleKeyCoherenceScope
+ * -> CanonicalTypeSignature
+ * -> TypeIdentityCoherenceProof
+ * -> TypeReference
  * ```
+ *
+ * Boundary law:
+ *
+ * The incoming text values are not trusted domain identity values. They are raw
+ * candidate text emitted by a backend adapter after backend-specific spelling
+ * lowering.
+ *
+ * All text must pass through CanonicalTypeText.ratify(...), except when this
+ * service can prove that an already-ratified text is being reused under the same
+ * inspection context.
+ *
+ * Coherence law:
+ *
+ * idText, cycleText, and signatureText are treated as one identity tuple.
+ *
+ * This service fails closed if:
+ *
+ * - id and signature are ratified under different inspection contexts;
+ * - id and signature receive different shape summaries;
+ * - cycle key shape kind drifts away from signature shape kind;
+ * - the caller supplies an impossible type nesting depth;
+ * - annotation material is unordered or invalid. The annotation object itself
+ *   owns that invariant.
  *
  * This service is not:
  *
- * - a reflection utility;
- * - a KSP utility;
  * - a cache;
  * - an interner;
- * - a fingerprint deriver;
- * - a shape classifier.
+ * - an adapter;
+ * - a reflection utility;
+ * - a KSP utility;
+ * - a shape classifier;
+ * - a fingerprint deriver.
+ *
+ * Shape classification and fingerprint derivation are supplied by the caller
+ * through already pinned governance / classifier boundaries.
  */
 class CanonicalTypeReferenceIssuer private constructor(
     private val normalizationEngine: NormalizationEngine,
@@ -81,6 +116,12 @@ class CanonicalTypeReferenceIssuer private constructor(
                 material = material,
                 alreadyRatifiedIdText = idText,
             )
+
+        /*
+         * id/signature context coherence remains explicit even when
+         * ratifySignatureText(...) reuses idText.
+         */
+        idText.requireSameInspectionContextAs(signatureText)
 
         val id =
             typeShapeIdentityIssuer.issue(
@@ -141,10 +182,15 @@ class CanonicalTypeReferenceIssuer private constructor(
         alreadyRatifiedIdText: CanonicalTypeText,
     ): CanonicalTypeText {
         /*
-         * Same rendered text may be reused only if the complete inspection
-         * context is equal. String equality alone is not enough because
-         * admission depends on policy, Unicode profile, engine provenance, and
-         * lexical inspection law.
+         * Same rendered string is not enough to reuse a ratified text.
+         *
+         * Reuse is allowed only when this service can prove that the signature
+         * text is the same candidate material and the signature inspection law is
+         * the same as the id inspection law.
+         *
+         * If policies differ, signature text must pass through its own
+         * ratification boundary. The later requireSameInspectionContextAs(...)
+         * call will fail closed if id/signature contexts are incompatible.
          */
         if (
             material.signatureText == material.idText &&
@@ -212,12 +258,17 @@ class CanonicalTypeReferenceIssuer private constructor(
         /*
          * Deliberately compact.
          *
-         * TypeIdentityCoherenceProof authority comes from exact tuple binding
-         * inside issueFromFactory(...), not from a giant delimiter-joined string.
+         * proofId is diagnostic/admission material only. It is not the authority
+         * over the tuple. Authority comes from:
+         *
+         * - internal domain factory issuance;
+         * - TypeIdentityCoherenceProof.issueFromFactory(...) axis checks;
+         * - exact TypeIdentityCoherenceBinding material;
+         * - TypeReference.issue(...) calling requireCovers(...).
          *
          * Do not append id/cycle/signature material here. That reintroduces the
          * giant proof-id anti-pattern and turns diagnostic material into a fake
-         * equality surface.
+         * equality/canonical surface.
          */
         private const val TYPE_REFERENCE_PROOF_ID: String =
             "type-reference-coherence"
@@ -244,14 +295,18 @@ class CanonicalTypeReferenceIssuer private constructor(
 }
 
 /**
- * Domain-side input material for [CanonicalTypeReferenceIssuer].
+ * Domain-side issuance material for TypeReference.
  *
- * This is not canonical identity by itself.
- * This is not an adapter DTO.
- * This is not a cache key.
+ * This is not an adapter DTO, even though adapters usually provide the values.
  *
- * It is the domain service input contract for already-lowered candidate
- * material supplied by a backend adapter.
+ * It is the domain service input contract that says:
+ *
+ * ```text
+ * Here is the already-lowered candidate material from a backend adapter;
+ * now the domain must ratify and issue the TypeReference.
+ * ```
+ *
+ * The strings are intentionally raw candidate text, not canonical VOs.
  */
 class CanonicalTypeReferenceMaterial private constructor(
     val idText: String,

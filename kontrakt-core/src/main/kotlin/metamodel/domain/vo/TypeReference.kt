@@ -15,29 +15,67 @@ import metamodel.domain.exception.MetamodelFactContractViolationException
  * - a cache key;
  * - or a canonical byte encoding.
  *
- * TypeReference is a ratified normalized fact that crosses from the metamodel
- * bounded context into planning/type-expansion workflows.
+ * TypeReference is the safe carrier that crosses from metamodel identity into
+ * planning/type-expansion workflows.
  *
  * Issuance law:
  *
- * Adapters must not implement, subclass, or manually assemble TypeReference.
- * They provide candidate material. The metamodel domain issuer creates the
- * final TypeReference after enforcing identity coherence.
+ * Adapters must not implement or manually assemble TypeReference. Reflection,
+ * KSP, bytecode, and static-source adapters provide already-lowered candidate
+ * material; the metamodel domain factory issues TypeReference after enforcing
+ * identity coherence.
  *
- * Proof law:
+ * Coherence law:
  *
- * [TypeIdentityCoherenceProof] is required during issuance to prevent chimera
- * references such as:
+ * The following axes must describe the same semantic type:
+ *
+ * - CanonicalTypeId;
+ * - TypeCycleKey;
+ * - CanonicalTypeSignature;
+ * - OrderedUseSiteAnnotations;
+ * - type nesting depth.
+ *
+ * TypeIdentityCoherenceProof is required at issuance time, but it is not a
+ * semantic equality axis.
+ *
+ * Why proof is not an equality axis:
+ *
+ * The proof protects the construction boundary from chimera references such as:
  *
  * ```text
- * id from A + cycle key from B + signature from C
+ * id from A + cycle key from B + signature from C + proof from D
  * ```
  *
- * However, the proof is not a semantic equality axis. Equality is defined by
- * the ratified type identity material itself.
+ * Once issue(...) has verified proof coverage, semantic equality must be defined
+ * by the actual ratified identity axes. A future proof schema/version change
+ * must not change equality for the same semantic TypeReference.
  *
- * This prevents a future proof implementation change from changing semantic
- * TypeReference equality for the same type.
+ * Shape law:
+ *
+ * id.shapeSummary and signature.shapeSummary must be equal.
+ * cycleKey.shapeSummary.kind must agree with signature.shapeSummary.kind.
+ *
+ * Depth law:
+ *
+ * TypeReference carries a bounded structural type nesting depth. The value is
+ * supplied by the issuing factory, which is the only component that knows the
+ * fully lowered source graph.
+ *
+ * Hash law:
+ *
+ * hashCode() is precomputed for in-memory collections only.
+ *
+ * Do not use hashCode() as:
+ *
+ * - canonical fingerprint;
+ * - persisted identity;
+ * - cache route key;
+ * - cross-runtime stable key;
+ * - serialized protocol hash;
+ * - L2 route64.
+ *
+ * Stable canonical hash / digest / route-key derivation belongs to the later
+ * canonical encoding and interning phase.
  */
 class TypeReference private constructor(
     val id: CanonicalTypeId,
@@ -46,6 +84,7 @@ class TypeReference private constructor(
     val useSiteAnnotations: OrderedUseSiteAnnotations,
     val coherenceProof: TypeIdentityCoherenceProof,
     val typeNestingDepth: Int,
+    private val precomputedHashCode: Int,
 ) {
     val shapeSummary: TypeShapeSummary
         get() = signature.shapeSummary
@@ -69,7 +108,7 @@ class TypeReference private constructor(
          *
          * It is the most selective semantic axis and already includes:
          *
-         * - canonical text;
+         * - canonical type text;
          * - shape summary;
          * - classifier law;
          * - ratification fingerprint.
@@ -84,14 +123,7 @@ class TypeReference private constructor(
                 typeNestingDepth == other.typeNestingDepth
     }
 
-    override fun hashCode(): Int {
-        var result = id.hashCode()
-        result = 31 * result + cycleKey.hashCode()
-        result = 31 * result + signature.hashCode()
-        result = 31 * result + useSiteAnnotations.hashCode()
-        result = 31 * result + typeNestingDepth
-        return result
-    }
+    override fun hashCode(): Int = precomputedHashCode
 
     override fun toString(): String = renderSummary()
 
@@ -116,6 +148,10 @@ class TypeReference private constructor(
                 signature = signature,
             )
 
+            /*
+             * Proof coverage is mandatory, but the proof does not become part of
+             * equality/hash semantics after this point.
+             */
             coherenceProof.requireCovers(
                 id = id,
                 cycleKey = cycleKey,
@@ -131,7 +167,30 @@ class TypeReference private constructor(
                 useSiteAnnotations = useSiteAnnotations,
                 coherenceProof = coherenceProof,
                 typeNestingDepth = typeNestingDepth,
+                precomputedHashCode =
+                    computeSemanticHashCode(
+                        id = id,
+                        cycleKey = cycleKey,
+                        signature = signature,
+                        useSiteAnnotations = useSiteAnnotations,
+                        typeNestingDepth = typeNestingDepth,
+                    ),
             )
+        }
+
+        private fun computeSemanticHashCode(
+            id: CanonicalTypeId,
+            cycleKey: TypeCycleKey,
+            signature: CanonicalTypeSignature,
+            useSiteAnnotations: OrderedUseSiteAnnotations,
+            typeNestingDepth: Int,
+        ): Int {
+            var result = id.hashCode()
+            result = 31 * result + cycleKey.hashCode()
+            result = 31 * result + signature.hashCode()
+            result = 31 * result + useSiteAnnotations.hashCode()
+            result = 31 * result + typeNestingDepth
+            return result
         }
 
         private fun requireShapeCoherence(

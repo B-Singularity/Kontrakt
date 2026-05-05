@@ -11,6 +11,7 @@ import metamodel.domain.dto.PropertyStorageKind
 import metamodel.domain.dto.RawTypeFactsDTO
 import metamodel.domain.dto.VisibilityKind
 import metamodel.domain.exception.StrictModeViolationException
+import metamodel.domain.protocol.MetamodelProtocolOrdering
 import metamodel.domain.service.TypeIdentity64Deriver
 import metamodel.domain.vo.DeclarationOrdinal
 import metamodel.domain.vo.TypeReference
@@ -213,43 +214,80 @@ class ReflectionRawTypeFactsProvider private constructor(
     ): List<ConstructorParameterProjection> {
         /*
          * Constructor signature rendering and ConstructorParameterFact emission
-         * must use the exact same VALUE-parameter ordering rule and the exact
-         * same TypeReference instances.
+         * must use the exact same VALUE-parameter ordering rule and the exact same
+         * TypeReference instances.
          *
          * This projection prevents renderConstructorSignature(...) and
          * resolveConstructorParameters(...) from calling
          * typeReferenceBridge.issueReference(...) independently for the same
          * KParameter.type.
+         *
+         * Ordering law:
+         *
+         * - Kotlin reflection enumeration order is not trusted.
+         * - JVM / platform library sort stability is not a semantic authority.
+         * - VALUE parameters are ordered by the protocol-defined integer ordering
+         *   of KParameter.index.
+         * - Duplicate VALUE parameter indexes fail closed.
+         * - Non-compact VALUE parameter index ranges fail closed.
+         *
+         * Why this remains adapter-local for now:
+         *
+         * This method is not publishing canonical ordering by itself. It builds an
+         * adapter-local projection so constructor signature rendering and parameter
+         * fact emission share the same TypeReference instances. Final immutable
+         * sequencing and duplicate validation still belong to RawTypeFactsDTO.issue(...).
+         *
+         * A later metamodel hardening pass may promote this projection into a
+         * domain-side deterministic sequence VO. Do not introduce that abstraction
+         * in this bridge refactor cut.
          */
-        val valueParameters = ArrayList<KParameter>()
+        val rawParameters = constructor.parameters
 
-        val parameterIterator = constructor.parameters.iterator()
+        /*
+         * Capacity uses the upper bound from the reflection surface.
+         *
+         * Some entries may be INSTANCE / EXTENSION_RECEIVER in non-constructor
+         * KFunction surfaces, but this provider handles constructors and filters to
+         * VALUE parameters. The upper bound still prevents avoidable ArrayList
+         * resizing without a separate pre-count pass.
+         */
+        val orderedValueParameters = ArrayList<KParameter>(rawParameters.size)
+
+        val parameterIterator = rawParameters.iterator()
         while (parameterIterator.hasNext()) {
             val parameter = parameterIterator.next()
 
             if (parameter.kind == KParameter.Kind.VALUE) {
-                valueParameters.add(parameter)
+                insertValueParameterByProtocolIndex(
+                    ownerTypeFqcn = ownerTypeFqcn,
+                    constructor = constructor,
+                    orderedValueParameters = orderedValueParameters,
+                    candidate = parameter,
+                )
             }
         }
 
-        valueParameters.sortWith(
-            Comparator { left, right ->
-                java.lang.Integer.compare(left.index, right.index)
-            },
+        requireCompactValueParameterIndexes(
+            ownerTypeFqcn = ownerTypeFqcn,
+            constructor = constructor,
+            orderedValueParameters = orderedValueParameters,
         )
 
         val projections =
-            ArrayList<ConstructorParameterProjection>(valueParameters.size)
+            ArrayList<ConstructorParameterProjection>(orderedValueParameters.size)
 
         var localIndex = 0
-        while (localIndex < valueParameters.size) {
-            val parameter = valueParameters[localIndex]
+        while (localIndex < orderedValueParameters.size) {
+            val parameter = orderedValueParameters[localIndex]
             val parameterName =
                 parameter.name
                     ?: throw StrictModeViolationException(
                         "Reflection adapter refuses unnamed constructor parameter because parameter name " +
                                 "participates in canonical active-member identity: " +
-                                "ownerType=$ownerTypeFqcn, parameterIndex=$localIndex",
+                                "ownerType=$ownerTypeFqcn, " +
+                                "parameterIndex=$localIndex, " +
+                                "kParameterIndex=${parameter.index}",
                     )
 
             projections.add(
@@ -301,6 +339,109 @@ class ReflectionRawTypeFactsProvider private constructor(
         }
 
         return result
+    }
+
+
+    private fun insertValueParameterByProtocolIndex(
+        ownerTypeFqcn: String,
+        constructor: KFunction<Any>,
+        orderedValueParameters: MutableList<KParameter>,
+        candidate: KParameter,
+    ) {
+        /*
+         * Explicit protocol insertion order.
+         *
+         * Do not use:
+         *
+         * - java.lang.Integer.compare(...);
+         * - compareBy(...);
+         * - List.sortWith(...);
+         * - platform sort stability as semantic authority.
+         *
+         * KParameter.index is accepted only as raw reflection material that is
+         * re-validated under our own protocol law.
+         */
+        var insertAt = 0
+
+        while (insertAt < orderedValueParameters.size) {
+            val current = orderedValueParameters[insertAt]
+
+            val comparison =
+                MetamodelProtocolOrdering.compareInt(
+                    left = candidate.index,
+                    right = current.index,
+                )
+
+            if (comparison == 0) {
+                throw StrictModeViolationException(
+                    "Reflection adapter observed duplicate VALUE constructor parameter index. " +
+                            "Constructor parameter ordering is not a strict total order: " +
+                            "ownerType=$ownerTypeFqcn, " +
+                            "constructor=$constructor, " +
+                            "duplicateIndex=${candidate.index}, " +
+                            "leftName=${current.name}, " +
+                            "rightName=${candidate.name}",
+                )
+            }
+
+            if (comparison < 0) {
+                break
+            }
+
+            insertAt += 1
+        }
+
+        orderedValueParameters.add(
+            insertAt,
+            candidate,
+        )
+    }
+
+    private fun requireCompactValueParameterIndexes(
+        ownerTypeFqcn: String,
+        constructor: KFunction<Any>,
+        orderedValueParameters: List<KParameter>,
+    ) {
+        /*
+         * Compactness law:
+         *
+         * After filtering to VALUE parameters and ordering by KParameter.index, the
+         * reflected index surface must be exactly:
+         *
+         *     0, 1, 2, ..., N - 1
+         *
+         * We do not use KParameter.index as a domain ordinal directly. We accept it
+         * only if it can be validated as a compact adapter-local ordering witness.
+         *
+         * If Kotlin/JVM reflection ever exposes gaps or shifted indexes for
+         * constructor VALUE parameters, the adapter fails closed rather than
+         * leaking a platform-specific ordinal law into metamodel facts.
+         */
+        var expectedIndex = 0
+
+        while (expectedIndex < orderedValueParameters.size) {
+            val parameter = orderedValueParameters[expectedIndex]
+
+            val comparison =
+                MetamodelProtocolOrdering.compareInt(
+                    left = parameter.index,
+                    right = expectedIndex,
+                )
+
+            if (comparison != 0) {
+                throw StrictModeViolationException(
+                    "Reflection adapter observed non-compact VALUE constructor parameter indexes. " +
+                            "Constructor parameter ordering cannot be lowered into compact metamodel parameter indexes: " +
+                            "ownerType=$ownerTypeFqcn, " +
+                            "constructor=$constructor, " +
+                            "expectedIndex=$expectedIndex, " +
+                            "actualKParameterIndex=${parameter.index}, " +
+                            "parameterName=${parameter.name}",
+                )
+            }
+
+            expectedIndex += 1
+        }
     }
 
     private fun resolveProperties(
