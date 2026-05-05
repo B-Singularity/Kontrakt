@@ -1,6 +1,5 @@
 package metamodel.adapter.reflection
 
-import ir.identity.CanonicalSignature
 import metamodel.domain.service.TypeIdentity64Deriver
 import metamodel.domain.vo.TypeReference
 import planning.domain.expansion.TypeCycleIdentity
@@ -77,31 +76,4 @@ class ReflectionTypeCycleIdentityProvider private constructor(
             )
         }
     }
-}
-
-/**
- * Adapter-side bridge for the exact cycle-signature material required by
- * TypeCycleIdentity.
- *
- * Why this exists:
- *
- * The current codebase has two signature concepts:
- *
- * - metamodel.domain.vo.CanonicalTypeSignature
- * - ir.identity.CanonicalSignature
- *
- * TypeReference carries the former.
- * TypeCycleIdentity currently requires the latter.
- *
- * This bridge makes that conversion explicit instead of hiding it inside
- * ReflectionTypeCycleIdentityProvider.
- *
- * This provider must be deterministic and adapter-independent for the same
- * ratified TypeReference. It must not use reflection handles, object identity,
- * wall clock, random salt, or cache iteration order.
- */
-interface ReflectionCycleSignatureProvider {
-    fun deriveCycleSignature(
-        reference: TypeReference,
-    ): CanonicalSignature
 }

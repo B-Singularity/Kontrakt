@@ -103,6 +103,66 @@ internal class ReflectionNormalizationGuard private constructor() {
         )
     }
 
+
+    /**
+     * Performs cheap adapter-local preflight for reflection-rendered classifier
+     * names.
+     *
+     * This is stricter than generic component surface validation.
+     *
+     * The reflection adapter must not lower JVM binary-name material such as '$'
+     * into domain candidate text. Blindly replacing '$' with '.' can collapse
+     * distinct bytecode-level names into the same canonical candidate text.
+     *
+     * This method is still not a Unicode normalization authority.
+     * Full canonical text ratification remains owned by CanonicalTypeText.ratify(...).
+     */
+    fun requireReflectionClassifierNameSurface(
+        field: String,
+        value: String,
+    ) {
+        requireFieldName(field)
+
+        requireComponentSurface(
+            field = field,
+            value = value,
+        )
+
+        requireNoJvmInternalNameMaterial(
+            field = field,
+            value = value,
+        )
+    }
+
+    private fun requireNoJvmInternalNameMaterial(
+        field: String,
+        value: String,
+    ) {
+        var index = 0
+
+        while (index < value.length) {
+            when (val ch = value[index]) {
+                '$',
+                '/',
+                ';',
+                '[',
+                ']',
+                    -> {
+                    throw violation(
+                        field = field,
+                        value = value,
+                        reason =
+                            "Classifier name must not contain JVM-internal name material: " +
+                                    "char=${ch.code}, index=$index.",
+                    )
+                }
+            }
+
+            index += 1
+        }
+    }
+
+
     private fun requireFieldName(
         field: String,
     ) {

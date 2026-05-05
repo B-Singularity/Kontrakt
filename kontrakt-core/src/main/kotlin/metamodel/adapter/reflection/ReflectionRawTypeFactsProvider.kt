@@ -538,20 +538,25 @@ class ReflectionRawTypeFactsProvider private constructor(
         kClass: KClass<*>,
     ): String {
         /*
-         * This is JVM spelling canonicalization only.
+         * Use Kotlin qualified name only.
          *
-         * Unicode normalization is not performed here. Full canonical type-text
-         * inspection is owned by CanonicalTypeText.ratify(...) in the type
-         * reference issuance pipeline.
+         * Do not fall back to java.name and do not replace '$' with '.'.
          *
-         * The '$' replacement is intentionally performed before surface
-         * preflight. If an obfuscated or generated JVM name collapses into an
-         * invalid Kontrakt component, the guard rejects it.
+         * java.name is JVM binary-name material and may contain '$' for nested,
+         * generated, obfuscated, or otherwise backend-specific classes.
+         *
+         * Blindly lowering '$' to '.' can create identity collisions between
+         * distinct bytecode-level classes. Raw facts must use the same safe
+         * reflection classifier-name surface as TypeReference rendering.
          */
-        val rawName = kClass.qualifiedName ?: kClass.java.name
-        val ownerTypeFqcn = rawName.replace('$', '.')
+        val ownerTypeFqcn =
+            kClass.qualifiedName
+                ?: throw StrictModeViolationException(
+                    "Reflection raw-facts provider rejects anonymous/local/non-qualified owner class: " +
+                            "javaName=${kClass.java.name}",
+                )
 
-        normalizationGuard.requireReflectionComponentSurface(
+        normalizationGuard.requireReflectionClassifierNameSurface(
             field = "RawTypeFactsDTO.ownerTypeFqcn",
             value = ownerTypeFqcn,
         )

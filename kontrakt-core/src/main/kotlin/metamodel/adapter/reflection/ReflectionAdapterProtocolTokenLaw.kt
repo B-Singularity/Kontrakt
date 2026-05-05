@@ -6,19 +6,25 @@ import metamodel.domain.exception.MetamodelFactContractViolationException
 import metamodel.domain.protocol.MetamodelProtocolTextGuards
 
 /**
- * Reflection-adapter protocol token guard.
- *
- * This is a thin adapter-layer wrapper around the shared metamodel protocol
- * text guards.
- *
- * Why this exists:
- *
- * - MetamodelProtocolTextGuards is the shared protocol law.
- * - Reflection adapter assembly wants assembly-blame diagnostics.
- * - Reflection bridge wants adapter-state / wiring diagnostics.
+ * Reflection-adapter wrapper for metamodel protocol-token validation.
  *
  * This object does not define a new token grammar.
- * It delegates grammar to MetamodelProtocolTextGuards.
+ *
+ * The grammar authority is:
+ *
+ *     MetamodelProtocolTextGuards.requireAsciiProtocolIdToken(...)
+ *
+ * This wrapper exists only to preserve adapter-specific blame:
+ *
+ * - assembly-time invalid token
+ *     -> MetamodelAdapterAssemblyException
+ *
+ * - bridge/runtime wiring invalid token
+ *     -> MetamodelAdapterStateViolationException
+ *
+ * Do not copy/paste ASCII token loops into adapter classes.
+ * Do not allow ':' here unless MetamodelProtocolTextGuards changes first.
+ * Do not use ReflectionNormalizationGuard for protocol/governance tokens.
  */
 internal object ReflectionAdapterProtocolTokenLaw {
     private const val MAX_PROTOCOL_TOKEN_CHARS: Int = 128
@@ -28,10 +34,9 @@ internal object ReflectionAdapterProtocolTokenLaw {
         value: String,
     ) {
         try {
-            MetamodelProtocolTextGuards.requireAsciiProtocolIdToken(
+            requireProtocolIdToken(
                 field = field,
                 value = value,
-                maxChars = MAX_PROTOCOL_TOKEN_CHARS,
             )
         } catch (e: MetamodelFactContractViolationException) {
             throw MetamodelAdapterAssemblyException(
@@ -46,10 +51,9 @@ internal object ReflectionAdapterProtocolTokenLaw {
         value: String,
     ) {
         try {
-            MetamodelProtocolTextGuards.requireAsciiProtocolIdToken(
+            requireProtocolIdToken(
                 field = field,
                 value = value,
-                maxChars = MAX_PROTOCOL_TOKEN_CHARS,
             )
         } catch (e: MetamodelFactContractViolationException) {
             throw MetamodelAdapterStateViolationException(
@@ -57,5 +61,16 @@ internal object ReflectionAdapterProtocolTokenLaw {
                         "blame=$field, cause=${e.message}",
             )
         }
+    }
+
+    private fun requireProtocolIdToken(
+        field: String,
+        value: String,
+    ) {
+        MetamodelProtocolTextGuards.requireAsciiProtocolIdToken(
+            field = field,
+            value = value,
+            maxChars = MAX_PROTOCOL_TOKEN_CHARS,
+        )
     }
 }

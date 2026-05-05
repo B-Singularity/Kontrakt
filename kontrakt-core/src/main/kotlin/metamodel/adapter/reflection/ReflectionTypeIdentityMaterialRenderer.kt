@@ -143,33 +143,26 @@ class ReflectionTypeIdentityMaterialRenderer private constructor(
                 )
 
         /*
-         * Validate before appending so polluted backend names fail closed before
-         * the renderer pays the full recursive construction cost.
+         * Do not lower JVM binary names here.
          *
-         * The adapter allows Kotlin qualified names and later normalizes the JVM
-         * nested-class separator only if present. It rejects descriptor/control
-         * material immediately.
+         * KClass.qualifiedName is already the Kotlin-level qualified name when it is
+         * available. If the value still contains JVM-internal spelling such as '$',
+         * '/', ';', '[' or ']', the reflection surface is not safe identity material
+         * for this adapter and must fail closed.
+         *
+         * In particular, do not replace '$' with '.'. That can collapse:
+         *
+         * - a generated or obfuscated class whose binary/simple name contains '$';
+         * - a true nested class whose JVM binary name contains '$';
+         *
+         * into the same candidate canonical type text.
          */
-        requireSafeReflectionClassName(
+        normalizationGuard.requireReflectionClassifierNameSurface(
             field = "ReflectionTypeIdentityMaterial.classifierName",
             value = qualifiedName,
-            sourceType = sourceType,
         )
 
-        var index = 0
-        while (index < qualifiedName.length) {
-            val ch = qualifiedName[index]
-
-            state.idBuilder.append(
-                if (ch == JVM_NESTED_CLASS_SEPARATOR) {
-                    CANONICAL_NESTED_CLASS_SEPARATOR
-                } else {
-                    ch
-                },
-            )
-
-            index += 1
-        }
+        state.idBuilder.append(qualifiedName)
     }
 
     private fun appendTypeArguments(
@@ -242,6 +235,7 @@ class ReflectionTypeIdentityMaterialRenderer private constructor(
             zeroBasedDepth = zeroBasedDepth,
         )
     }
+
 
     /**
      * Shape observation keeps KType as the source value and only lowers to JVM
@@ -548,8 +542,6 @@ class ReflectionTypeIdentityMaterialRenderer private constructor(
     }
 
     companion object {
-        private const val JVM_NESTED_CLASS_SEPARATOR: Char = '$'
-        private const val CANONICAL_NESTED_CLASS_SEPARATOR: Char = '.'
         private const val NULLABILITY_MARKER: Char = '?'
 
         @JvmStatic
