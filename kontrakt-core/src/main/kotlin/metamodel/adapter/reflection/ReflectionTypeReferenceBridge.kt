@@ -1,6 +1,5 @@
 package metamodel.adapter.reflection
 
-import metamodel.domain.exception.MetamodelFactContractViolationException
 import metamodel.domain.service.CanonicalTypeReferenceIssuer
 import metamodel.domain.service.CanonicalTypeReferenceMaterial
 import metamodel.domain.vo.TypeReference
@@ -106,20 +105,10 @@ class ReflectionTypeReferenceBridge private constructor(
         reference: TypeReference,
         type: KType,
     ) {
-        try {
-            typeHandleRegistry.bind(
-                reference = reference,
-                kType = type,
-            )
-        } catch (e: RuntimeException) {
-            throw MetamodelFactContractViolationException(
-                "Reflection TypeReference handle binding failed after domain issuance. " +
-                        "The reference is not returned to the caller. " +
-                        "reference=${reference.renderSummary()}, " +
-                        "type=$type, " +
-                        "cause=${e::class.qualifiedName}: ${e.message}",
-            )
-        }
+        typeHandleRegistry.bindOrVerify(
+            reference = reference,
+            kType = type,
+        )
     }
 
     companion object {
@@ -132,11 +121,12 @@ class ReflectionTypeReferenceBridge private constructor(
             classifierId: String,
             classifierVersion: String,
         ): ReflectionTypeReferenceBridge {
-            requireProtocolToken(
+            ReflectionAdapterProtocolTokenLaw.requireBridgeProtocolIdToken(
                 field = "classifierId",
                 value = classifierId,
             )
-            requireProtocolToken(
+
+            ReflectionAdapterProtocolTokenLaw.requireBridgeProtocolIdToken(
                 field = "classifierVersion",
                 value = classifierVersion,
             )
@@ -150,61 +140,6 @@ class ReflectionTypeReferenceBridge private constructor(
                 classifierVersion = classifierVersion,
             )
         }
-
-        /**
-         * Classifier id/version are not raw type text.
-         *
-         * They are protocol/governance tokens. For this reason, the bridge
-         * intentionally applies a narrow ASCII token law rather than Unicode
-         * identifier semantics.
-         *
-         * This avoids invisible Unicode, bidi controls, descriptor fragments,
-         * delimiter injection, and platform-dependent classification behavior.
-         */
-        private fun requireProtocolToken(
-            field: String,
-            value: String,
-        ) {
-            if (value.isEmpty()) {
-                throw MetamodelFactContractViolationException(
-                    "ReflectionTypeReferenceBridge.$field must not be empty.",
-                )
-            }
-
-            if (value.length > MAX_PROTOCOL_TOKEN_LENGTH) {
-                throw MetamodelFactContractViolationException(
-                    "ReflectionTypeReferenceBridge.$field exceeds max length: " +
-                            "max=$MAX_PROTOCOL_TOKEN_LENGTH, actual=${value.length}",
-                )
-            }
-
-            var index = 0
-            while (index < value.length) {
-                val ch = value[index]
-
-                if (!isAllowedProtocolTokenChar(ch)) {
-                    throw MetamodelFactContractViolationException(
-                        "ReflectionTypeReferenceBridge.$field contains forbidden protocol token character: " +
-                                "charCode=${ch.code}, index=$index, value=$value",
-                    )
-                }
-
-                index += 1
-            }
-        }
-
-        private fun isAllowedProtocolTokenChar(
-            ch: Char,
-        ): Boolean {
-            return ch in 'a'..'z' ||
-                    ch in 'A'..'Z' ||
-                    ch in '0'..'9' ||
-                    ch == '.' ||
-                    ch == '_' ||
-                    ch == '-' ||
-                    ch == ':'
-        }
-
-        private const val MAX_PROTOCOL_TOKEN_LENGTH: Int = 128
     }
+
 }

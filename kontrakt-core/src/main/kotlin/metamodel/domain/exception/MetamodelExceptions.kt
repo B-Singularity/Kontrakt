@@ -153,6 +153,29 @@ class MetamodelAdapterStateViolationException(
 ) : MetamodelException(message)
 
 /**
+ * Thrown when an adapter composition root is miswired.
+ *
+ * Examples:
+ *
+ * - an injected derivation algorithm advertises an empty id;
+ * - an algorithm version is outside the ratified protocol range;
+ * - classifier governance tokens are invalid;
+ * - an adapter assembler fails while constructing a bundle.
+ *
+ * This exception identifies bootstrap/composition blame.
+ *
+ * It is not:
+ *
+ * - a user model strict-mode violation;
+ * - a raw fact DTO contract violation;
+ * - a runtime planning failure;
+ * - an L2 cache/governance failure.
+ */
+class MetamodelAdapterAssemblyException(
+    message: String,
+) : MetamodelException(message)
+
+/**
  * Thrown when the adapter emits or receives a component that violates the
  * ratified Kontrakt normalization boundary.
  *
