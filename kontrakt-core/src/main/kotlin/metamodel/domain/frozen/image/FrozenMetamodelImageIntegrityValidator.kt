@@ -11,11 +11,11 @@ import metamodel.domain.frozen.table.FrozenTypeShapeTable
 /**
  * Freeze-final integrity validator.
  *
- * This validator guarantees that a frozen image is not published with a type
- * index/table coverage mismatch or subject-continuity mismatch.
+ * Publication must fail before the image becomes planning-visible if any table
+ * is incomplete or internally inconsistent.
  *
- * Provider reads must not be the first place where incomplete shape coverage is
- * discovered. Publication must fail before the image becomes planning-visible.
+ * This is the boundary that prevents planning providers from discovering
+ * freeze bugs on the hot path.
  */
 internal object FrozenMetamodelImageIntegrityValidator {
     fun requireCompleteCoverage(
@@ -61,7 +61,7 @@ internal object FrozenMetamodelImageIntegrityValidator {
                     imageId = imageId,
                     referenceSummary = reference.renderSummary(),
                     missingTable = FrozenMetamodelImageTableId.SHAPE_TABLE.name,
-                    reason = "TypeReference exists in type index but has no shape table coverage at frozenTypeOrdinal=$frozenTypeOrdinal.",
+                    reason = "Missing shape coverage at frozenTypeOrdinal=$frozenTypeOrdinal.",
                 )
 
             if (shape.subject != reference) {
@@ -72,12 +72,37 @@ internal object FrozenMetamodelImageIntegrityValidator {
                 )
             }
 
-            if (!cycleIdentityTable.containsAt(frozenTypeOrdinal)) {
-                throw FrozenMetamodelIncompleteTableException(
+            val cycleIdentity =
+                cycleIdentityTable.findCycleIdentityAt(
+                    frozenTypeOrdinal = frozenTypeOrdinal,
+                ) ?: throw FrozenMetamodelIncompleteTableException(
                     imageId = imageId,
                     referenceSummary = reference.renderSummary(),
                     missingTable = FrozenMetamodelImageTableId.CYCLE_IDENTITY_TABLE.name,
-                    reason = "TypeReference exists in type index but has no cycle identity table coverage at frozenTypeOrdinal=$frozenTypeOrdinal.",
+                    reason = "Missing cycle identity coverage at frozenTypeOrdinal=$frozenTypeOrdinal.",
+                )
+
+            if (cycleIdentity.subject != reference) {
+                throw FrozenMetamodelIntegrityViolationException(
+                    imageId = imageId,
+                    reason = "Cycle identity subject mismatch at frozenTypeOrdinal=$frozenTypeOrdinal: " +
+                            "expected=${reference.renderSummary()}, actual=${cycleIdentity.subject.renderSummary()}",
+                )
+            }
+
+            if (cycleIdentity.identityAlgorithmId != cycleIdentityTable.identityAlgorithmId) {
+                throw FrozenMetamodelIntegrityViolationException(
+                    imageId = imageId,
+                    reason = "Cycle identity algorithm id mismatch at frozenTypeOrdinal=$frozenTypeOrdinal: " +
+                            "expected=${cycleIdentityTable.identityAlgorithmId}, actual=${cycleIdentity.identityAlgorithmId}",
+                )
+            }
+
+            if (cycleIdentity.identityAlgorithmVersion != cycleIdentityTable.identityAlgorithmVersion) {
+                throw FrozenMetamodelIntegrityViolationException(
+                    imageId = imageId,
+                    reason = "Cycle identity algorithm version mismatch at frozenTypeOrdinal=$frozenTypeOrdinal: " +
+                            "expected=${cycleIdentityTable.identityAlgorithmVersion}, actual=${cycleIdentity.identityAlgorithmVersion}",
                 )
             }
 
@@ -86,7 +111,7 @@ internal object FrozenMetamodelImageIntegrityValidator {
                     imageId = imageId,
                     referenceSummary = reference.renderSummary(),
                     missingTable = FrozenMetamodelImageTableId.RAW_FACT_TABLE.name,
-                    reason = "TypeReference exists in type index but has no raw fact table coverage at frozenTypeOrdinal=$frozenTypeOrdinal.",
+                    reason = "Missing raw fact coverage at frozenTypeOrdinal=$frozenTypeOrdinal.",
                 )
             }
 

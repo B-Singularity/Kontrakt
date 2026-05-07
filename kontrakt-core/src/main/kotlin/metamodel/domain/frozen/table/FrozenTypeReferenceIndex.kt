@@ -6,58 +6,45 @@ import metamodel.domain.vo.TypeReference
 /**
  * Frozen TypeReference index.
  *
- * The type index is the coverage authority for a FrozenMetamodelImage.
+ * The type index is the coverage authority for one FrozenMetamodelImage.
  *
- * Unknown reference and incomplete table are intentionally different failures:
+ * Ordinal law:
  *
- * - absent from type index:
- *   the caller likely mixed image/scope material;
+ * - frozen type ordinal is local to exactly one FrozenMetamodelImage;
+ * - frozen type ordinal is assigned only after deterministic reference ordering;
+ * - frozen type ordinal must not be stored in TypeReference;
+ * - frozen type ordinal must not be persisted as semantic identity;
+ * - frozen type ordinal must not encode adapter acquisition order;
+ * - frozen type ordinal must not be mixed with declaration ordinals,
+ *   parameter indexes, constructor indexes, member local ordinals, or table
+ *   implementation offsets;
+ * - frozen type ordinal is a mechanical table-addressing value only.
  *
- * - present in type index but missing from a table:
- *   freeze produced an incomplete image.
+ * Determinism law:
  *
- * Image-local ordinal law:
+ * For the same semantic TypeReference set and the same schema/lowering law,
+ * referenceAt(i) and ordinalOf(reference) must be independent from:
  *
- * - frozen ordinal is local to exactly one FrozenMetamodelImage;
- * - frozen ordinal is assigned only after deterministic reference ordering;
- * - frozen ordinal must not be stored in TypeReference;
- * - frozen ordinal must not be persisted as semantic identity;
- * - frozen ordinal must not encode adapter acquisition order;
- * - frozen ordinal must not be mixed with member ordinals, parameter ordinals,
- *   constructor ordinals, source declaration ordinals, or table-internal offsets;
- * - frozen ordinal is a mechanical table-addressing value only.
+ * - adapter acquisition order;
+ * - reflection/KSP/backend enumeration order;
+ * - HashMap iteration order;
+ * - JVM object identity;
+ * - classloader object identity;
+ * - thread scheduling.
  *
  * Primitive safety rule:
  *
- * This interface deliberately uses Int rather than a value class.
+ * This interface deliberately uses Int rather than a wrapper/value class.
  *
- * Because Int cannot encode its semantic role at compile time, implementations
- * and callers must follow a stricter discipline:
- *
- * - name variables `frozenTypeOrdinal`, not `ordinal`, `index`, or `id`;
- * - resolve the ordinal immediately before table access;
- * - do not store it in long-lived objects;
- * - do not pass it across image boundaries;
- * - do not perform arithmetic on it except deterministic validation loops;
- * - validate bounds inside concrete table implementations.
- *
- * Hot-path law:
- *
- * Planning-facing providers should resolve a TypeReference to one primitive Int
- * ordinal once, then read all frozen tables by ordinal.
- *
- * This avoids repeated hash/equality lookups against multiple tables.
+ * Callers must keep the value short-lived and name it frozenTypeOrdinal.
  */
 interface FrozenTypeReferenceIndex {
     val size: Int
 
     /**
-     * Resolves the image-local frozen type ordinal for reference.
+     * Resolves image-local frozen type ordinal.
      *
-     * Returns [MISSING_ORDINAL] when the reference is not part of this image.
-     *
-     * Implementations MUST NOT return any negative value other than
-     * [MISSING_ORDINAL].
+     * Returns [MISSING_ORDINAL] if the reference is not part of this image.
      */
     fun ordinalOf(
         reference: TypeReference,
@@ -69,10 +56,9 @@ interface FrozenTypeReferenceIndex {
         ordinalOf(reference) != MISSING_ORDINAL
 
     /**
-     * Deterministic canonical-order access for freeze-time validation and
-     * diagnostics.
+     * Deterministic order access.
      *
-     * This does not expose backend enumeration order.
+     * This must not expose acquisition order.
      */
     fun referenceAt(
         frozenTypeOrdinal: Int,

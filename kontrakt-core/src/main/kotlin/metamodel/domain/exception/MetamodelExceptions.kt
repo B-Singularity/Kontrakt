@@ -372,6 +372,6 @@ class FrozenMetamodelRecordMaterializationException(
 open class FrozenMetamodelIntegrityViolationException(
     val imageId: FrozenMetamodelImageId,
     val reason: String,
-) : MetamodelException(
+) : FrozenMetamodelImageException(
     "Frozen metamodel image integrity violation: imageId=$imageId, reason=$reason",
 )
