@@ -1,7 +1,6 @@
 package metamodel.domain.frozen.table
 
 import metamodel.domain.dto.RawTypeFactsDTO
-import metamodel.domain.vo.TypeReference
 
 /**
  * Frozen raw fact table.
@@ -11,10 +10,17 @@ import metamodel.domain.vo.TypeReference
  *
  * It must not return to backend-native handles.
  *
+ * Size law:
+ *
+ * - size must equal FrozenTypeReferenceIndex.size for the owning image;
+ * - FrozenMetamodelImage.issue(...) must validate this before publication;
+ * - concrete implementations must reject or safely return null/false for
+ *   out-of-range ordinals.
+ *
  * Coverage law:
  *
- * contains(reference) means this table has explicit frozen coverage for the
- * reference.
+ * containsAt(frozenTypeOrdinal) means this table has explicit frozen coverage
+ * for the TypeReference assigned to that image-local ordinal.
  *
  * Coverage may be:
  *
@@ -27,9 +33,18 @@ import metamodel.domain.vo.TypeReference
  *
  * Missing coverage is an incomplete frozen image.
  *
+ * Ordinal access law:
+ *
+ * This table is addressed by FrozenTypeReferenceIndex's image-local primitive
+ * frozen type ordinal.
+ *
+ * This table must not perform its own TypeReference hash lookup on the planning
+ * hot path.
+ *
  * Implementation law:
  *
- * Table implementations must be plain-data or index/slab-backed.
+ * Table implementations must be plain-data, object-array-backed,
+ * ordinal-indexed, slab-backed, or primitive-array-backed.
  *
  * They must not store:
  *
@@ -42,11 +57,13 @@ import metamodel.domain.vo.TypeReference
  * - registry keys that can recover backend handles.
  */
 interface FrozenRawFactTable {
-    fun contains(
-        reference: TypeReference,
+    val size: Int
+
+    fun containsAt(
+        frozenTypeOrdinal: Int,
     ): Boolean
 
-    fun findFacts(
-        reference: TypeReference,
+    fun findFactsAt(
+        frozenTypeOrdinal: Int,
     ): RawTypeFactsDTO?
 }

@@ -1,6 +1,7 @@
 package metamodel.domain.exception
 
 import exception.KontraktException
+import metamodel.domain.frozen.image.FrozenMetamodelImageId
 
 /**
  * Base exception for Metamodel domain errors.
@@ -366,4 +367,11 @@ class FrozenMetamodelRecordMaterializationException(
 ) : FrozenMetamodelImageException(
     "Frozen metamodel record materialization failed: " +
             "image=$imageId, table=$recordTable, reference=$referenceSummary, reason=$reason",
+)
+
+open class FrozenMetamodelIntegrityViolationException(
+    val imageId: FrozenMetamodelImageId,
+    val reason: String,
+) : MetamodelException(
+    "Frozen metamodel image integrity violation: imageId=$imageId, reason=$reason",
 )

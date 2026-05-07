@@ -5,29 +5,35 @@ import metamodel.domain.exception.FrozenMetamodelIncompleteTableException
 import metamodel.domain.exception.FrozenMetamodelUnknownTypeReferenceException
 import metamodel.domain.frozen.image.FrozenMetamodelImage
 import metamodel.domain.frozen.table.FrozenMetamodelImageTableId
+import metamodel.domain.frozen.table.FrozenTypeReferenceIndex
 import metamodel.domain.vo.TypeReference
 import planning.domain.port.outgoing.TypeShapeProvider
 
 /**
  * Planning-facing TypeShapeProvider backed by FrozenMetamodelImage.
  *
- * Hexagonal role:
- * - implements the Planning outbound port;
- * - reads only adapter-neutral frozen metamodel material;
- * - does not depend on Reflection, KSP, bytecode, source-analysis, or generated backend handles.
+ * Hot-path lookup law:
  *
- * Compiler-stage role:
- * - returns coarse type-shape material;
- * - does not enumerate constructors;
- * - does not enumerate properties;
- * - does not perform active-member projection;
- * - does not perform active-member ordering.
+ * ```text
+ * TypeReference -> frozenTypeOrdinal -> shapeTable[frozenTypeOrdinal]
+ * ```
  *
- * ADR-0039 boundary:
- * - this provider receives FrozenMetamodelImage only;
- * - it must not receive FrozenMetamodelImageEnvelope;
- * - it must not receive FrozenMetamodelImageDiagnosticHeader;
- * - it must not branch on source adapter provenance.
+ * This provider performs one TypeReference lookup against the image-local type
+ * index, then reads shape material by primitive frozen type ordinal.
+ *
+ * Primitive ordinal safety:
+ *
+ * The primitive ordinal is intentionally kept as a short-lived local variable.
+ * It is not stored, returned, persisted, or mixed with any other ordinal kind.
+ *
+ * Integrity boundary:
+ *
+ * FrozenMetamodelImage.issue(...) must already have validated table-size
+ * equality, table coverage, and shape.subject continuity before this provider
+ * is constructed.
+ *
+ * Therefore, null from shapeTable.findShapeAt(frozenTypeOrdinal) is treated as
+ * a frozen-image integrity failure, not as an ordinary miss.
  */
 class FrozenMetamodelTypeShapeProvider private constructor(
     private val image: FrozenMetamodelImage,
@@ -35,7 +41,9 @@ class FrozenMetamodelTypeShapeProvider private constructor(
     override fun resolveTypeShape(
         reference: TypeReference,
     ): ResolvedTypeShape {
-        if (!image.typeIndex.contains(reference)) {
+        val frozenTypeOrdinal = image.typeIndex.ordinalOf(reference)
+
+        if (frozenTypeOrdinal == FrozenTypeReferenceIndex.MISSING_ORDINAL) {
             throw FrozenMetamodelUnknownTypeReferenceException(
                 imageId = image.imageId,
                 referenceSummary = reference.renderSummary(),
@@ -43,12 +51,12 @@ class FrozenMetamodelTypeShapeProvider private constructor(
             )
         }
 
-        return image.shapeTable.findShape(reference)
+        return image.shapeTable.findShapeAt(frozenTypeOrdinal)
             ?: throw FrozenMetamodelIncompleteTableException(
                 imageId = image.imageId,
                 referenceSummary = reference.renderSummary(),
                 missingTable = FrozenMetamodelImageTableId.SHAPE_TABLE.name,
-                reason = "TypeReference exists in the frozen type index but has no shape record.",
+                reason = "TypeReference exists in the frozen type index but has no shape record at frozenTypeOrdinal=$frozenTypeOrdinal.",
             )
     }
 

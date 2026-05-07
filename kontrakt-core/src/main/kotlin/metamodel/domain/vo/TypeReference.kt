@@ -89,6 +89,23 @@ class TypeReference private constructor(
     val shapeSummary: TypeShapeSummary
         get() = signature.shapeSummary
 
+    /**
+     * Returns a bounded diagnostic summary for error messages.
+     *
+     * Diagnostic law:
+     *
+     * - must be side-effect-free;
+     * - must not perform lazy backend loading;
+     * - must not access KType/KClass/KSType/KSDeclaration;
+     * - must not consult adapter registries;
+     * - must not consult source adapter provenance;
+     * - must be derived only from already-ratified TypeReference value fields;
+     * - must be safe after backend-handle erasure and frozen-image publication.
+     *
+     * This method is diagnostic material only.
+     * It must not participate in semantic identity, ordering, route64,
+     * PlanCacheKey, or canonical IR lowering.
+     */
     fun renderSummary(): String =
         "TypeReference(" +
                 "id=${id.value}, " +
