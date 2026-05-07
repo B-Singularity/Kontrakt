@@ -193,3 +193,177 @@ class MetamodelNormalizationViolationException(
     "Metamodel normalization violation: field=$field, engine=$engineId@$engineVersion, " +
             "reason=$reason, valueSample=$valueSample",
 )
+
+/**
+ * Base exception family for frozen metamodel image integrity failures.
+ *
+ * This family is intentionally a concrete open class, not an abstract class,
+ * to stay aligned with the existing metamodel exception hierarchy.
+ *
+ * DTO / VO factories and providers should normally prefer one of the specific
+ * subtypes below so callers can distinguish:
+ *
+ * - unknown references;
+ * - incomplete frozen tables;
+ * - schema / compatibility violations;
+ * - lifecycle violations;
+ * - backend-handle reachability leakage;
+ * - deterministic sequence violations;
+ * - frozen-record materialization failures.
+ *
+ * This family is not:
+ *
+ * - an adapter assembly exception;
+ * - an adapter state exception;
+ * - a strict-mode modeling exception;
+ * - an ordinary cache miss;
+ * - an L2 cache/governance failure.
+ */
+open class FrozenMetamodelImageException(
+    message: String,
+    cause: Throwable? = null,
+) : MetamodelException(message, cause)
+
+/**
+ * Thrown when a planning-facing frozen provider receives a TypeReference that
+ * is not part of the frozen image type index.
+ *
+ * This is not a cache miss.
+ *
+ * It usually means one of:
+ *
+ * - the caller mixed TypeReference values from another frozen image;
+ * - the acquisition scope did not include the required transitive type;
+ * - planning provider wiring mixed images/scopes.
+ */
+class FrozenMetamodelUnknownTypeReferenceException(
+    val imageId: Any,
+    val referenceSummary: String,
+    val requestedTable: String,
+) : FrozenMetamodelImageException(
+    "Frozen metamodel image does not contain requested TypeReference: " +
+            "image=$imageId, requestedTable=$requestedTable, reference=$referenceSummary",
+)
+
+/**
+ * Thrown when a TypeReference exists in the frozen image type index but the
+ * requested table has no corresponding record.
+ *
+ * This means freeze produced an incomplete image.
+ */
+class FrozenMetamodelIncompleteTableException(
+    val imageId: Any,
+    val referenceSummary: String,
+    val missingTable: String,
+    val reason: String,
+) : FrozenMetamodelImageException(
+    "Frozen metamodel image table is incomplete: " +
+            "image=$imageId, missingTable=$missingTable, reference=$referenceSummary, reason=$reason",
+)
+
+/**
+ * Thrown when a frozen image cannot be consumed because schema, source,
+ * algorithm, or compatibility law does not match the provider's expected law.
+ */
+class FrozenMetamodelImageCompatibilityException(
+    val imageId: Any,
+    val expectedSchemaVersion: String,
+    val actualSchemaVersion: String,
+    val reason: String,
+) : FrozenMetamodelImageException(
+    "Frozen metamodel image compatibility violation: " +
+            "image=$imageId, expectedSchema=$expectedSchemaVersion, " +
+            "actualSchema=$actualSchemaVersion, reason=$reason",
+)
+
+/**
+ * Thrown when an acquisition lane, arena, or frozen image is used in an illegal
+ * lifecycle state.
+ *
+ * Examples:
+ * - write after freeze;
+ * - second freeze call under non-idempotent freeze policy;
+ * - acquire after close;
+ * - freeze after close;
+ * - provider read from acquisition-only state.
+ */
+class FrozenMetamodelImageLifecycleException(
+    val imageId: Any?,
+    val operation: String,
+    val state: String,
+    val reason: String,
+) : FrozenMetamodelImageException(
+    "Frozen metamodel image lifecycle violation: " +
+            "image=$imageId, operation=$operation, state=$state, reason=$reason",
+)
+
+/**
+ * Thrown when frozen material directly or indirectly retains backend-native
+ * handle reachability.
+ *
+ * This exists because “not storing KType directly” is insufficient.
+ *
+ * Examples:
+ * - KType field in a frozen record;
+ * - KSDeclaration field in a frozen record;
+ * - lambda/supplier capturing KType;
+ * - registry ordinal that can recover KType;
+ * - classloader-local lookup key;
+ * - KSP resolver-local id.
+ */
+class FrozenMetamodelBackendReachabilityException(
+    val imageId: Any,
+    val recordKind: String,
+    val forbiddenMaterialKind: String,
+    val reason: String,
+) : FrozenMetamodelImageException(
+    "Frozen metamodel image retains forbidden backend-handle reachability: " +
+            "image=$imageId, recordKind=$recordKind, " +
+            "forbiddenMaterial=$forbiddenMaterialKind, reason=$reason",
+)
+
+/**
+ * Thrown when a frozen deterministic sequence violates ordering, duplicate,
+ * strict-total-order, compact-index, or local-ordinal law.
+ *
+ * Examples:
+ * - duplicate constructor key;
+ * - duplicate property key;
+ * - duplicate non-repeatable annotation key;
+ * - comparator equality between distinct records;
+ * - non-compact parameter index;
+ * - local ordinal assigned before deterministic ordering;
+ * - backend enumeration order used as semantic order.
+ */
+class FrozenMetamodelSequenceViolationException(
+    val imageId: Any,
+    val sequenceTable: String,
+    val referenceSummary: String?,
+    val reason: String,
+) : FrozenMetamodelImageException(
+    "Frozen metamodel deterministic sequence violation: " +
+            "image=$imageId, sequence=$sequenceTable, " +
+            "reference=$referenceSummary, reason=$reason",
+)
+
+/**
+ * Thrown when a frozen adapter-neutral record exists but cannot materialize its
+ * planning-facing DTO.
+ *
+ * This differs from FrozenMetamodelIncompleteTableException:
+ *
+ * - IncompleteTable:
+ *   the table entry is missing.
+ *
+ * - RecordMaterialization:
+ *   the table entry exists but cannot produce a valid DTO.
+ */
+class FrozenMetamodelRecordMaterializationException(
+    val imageId: Any,
+    val referenceSummary: String,
+    val recordTable: String,
+    val reason: String,
+) : FrozenMetamodelImageException(
+    "Frozen metamodel record materialization failed: " +
+            "image=$imageId, table=$recordTable, reference=$referenceSummary, reason=$reason",
+)

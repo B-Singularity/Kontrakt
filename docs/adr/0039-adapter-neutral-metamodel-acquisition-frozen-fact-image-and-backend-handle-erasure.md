@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed
+Accepted
 
 ## Date
 
@@ -615,15 +615,12 @@ Ordering cannot remain implicit in scattered branch logic.
 
 ### 9.4. `FrozenMetamodelImage`
 
-An immutable adapter-neutral metamodel image.
-
 Illustrative shape:
 
 ``````kotlin
 class FrozenMetamodelImage private constructor(
     val imageId: FrozenMetamodelImageId,
     val schemaVersion: FrozenMetamodelImageSchemaVersion,
-    val sourceAdapterProvenance: MetamodelSourceAdapterProvenance,
     val typeIndex: FrozenTypeReferenceIndex,
     val shapeTable: FrozenTypeShapeTable,
     val cycleIdentityTable: FrozenTypeCycleIdentityTable,
@@ -631,36 +628,110 @@ class FrozenMetamodelImage private constructor(
 )
 ``````
 
-`FrozenMetamodelImage` may record source adapter provenance for diagnostics and compatibility.
+`FrozenMetamodelImage` is planning-visible semantic material.
 
-That provenance must not influence semantic equality or planning traversal decisions.
+It deliberately does not expose source-adapter provenance as an ordinary field.
 
-Allowed content:
+Reason:
 
-- `TypeReference`;
-- `ResolvedTypeShape` or frozen shape records;
-- `TypeCycleIdentity` or frozen cycle records;
-- `RawTypeFactsDTO` or frozen raw fact records;
-- normalization version;
-- schema version;
-- type identity algorithm id/version;
-- deterministic indexes;
-- diagnostic source adapter id/version.
+``````text
+sourceAdapterProvenance
+-> diagnostic / compatibility material
+-> not semantic planning input
+``````
 
-Forbidden content:
+Planning-facing providers must not be able to branch on whether the image came from reflection, KSP, bytecode, source
+analysis, or generated metadata.
 
-- `KType`;
-- `KClass`;
-- `KSType`;
-- `KSDeclaration`;
-- bytecode parser handles;
-- source AST/PSI handles;
-- classloader references;
-- backend object identity;
-- mutable acquisition builders;
-- indirect keys that can recover backend handles.
+Forbidden:
 
-### 9.5. `FrozenMetamodelImageId`
+``````kotlin
+if (image.sourceAdapterProvenance.sourceAdapterKind == MetamodelSourceAdapterKind.KSP) {
+    // semantic behavior branch
+}
+``````
+
+Allowed:
+
+``````text
+FrozenMetamodelImageEnvelope
+-> image
+-> diagnosticHeader
+``````
+
+Planning-facing providers receive only `FrozenMetamodelImage`.
+
+Diagnostic tooling, bootstrap code, or compatibility-reporting code may receive `FrozenMetamodelImageEnvelope`.
+
+`FrozenMetamodelImage.issue(...)` must perform freeze-final integrity validation before publishing the image.
+
+The type index is the coverage authority.
+
+For every `TypeReference` in the frozen type index:
+
+- the shape table must contain explicit coverage;
+- the cycle identity table must contain explicit coverage;
+- the raw fact table must contain explicit coverage.
+
+Raw fact coverage does not necessarily mean eager `RawTypeFactsDTO` materialization.
+
+Allowed raw fact coverage:
+
+``````text
+materialized RawTypeFactsDTO
+frozen raw fact record
+TRUNCATED sentinel record
+FILTERED_BY_POLICY sentinel record
+UNAVAILABLE_FROM_BACKEND sentinel record
+ACQUISITION_FAILED diagnostic record
+``````
+
+Missing coverage is a frozen image integrity failure.
+
+It must fail before the image is published.
+
+### 9.5. `FrozenMetamodelImageEnvelope`
+
+`FrozenMetamodelImageEnvelope` is an adapter/bootstrap return object.
+
+It separates planning-visible semantic material from diagnostic provenance.
+
+Illustrative shape:
+
+``````kotlin
+class FrozenMetamodelImageEnvelope private constructor(
+    val image: FrozenMetamodelImage,
+    val diagnosticHeader: FrozenMetamodelImageDiagnosticHeader,
+)
+``````
+
+`FrozenMetamodelImageDiagnosticHeader` may contain source adapter provenance.
+
+Illustrative shape:
+
+``````kotlin
+class FrozenMetamodelImageDiagnosticHeader private constructor(
+    val sourceAdapterProvenance: MetamodelSourceAdapterProvenance,
+)
+``````
+
+Rules:
+
+- planning-facing providers must receive only `FrozenMetamodelImage`;
+- diagnostic tooling may receive `FrozenMetamodelImageEnvelope`;
+- source adapter provenance must not participate in semantic equality;
+- source adapter provenance must not influence planning traversal;
+- source adapter provenance must not influence type expansion decisions;
+- source adapter provenance must not influence L2 key material;
+- source adapter provenance must not become route64 or PlanCacheKey material.
+
+Reason:
+
+Diagnostic provenance is useful for debugging and compatibility reports.
+
+It is dangerous as ordinary planning input because it can create backend-dependent semantic branches.
+
+### 9.6. `FrozenMetamodelImageId`
 
 `FrozenMetamodelImageId` is a diagnostic and compatibility identity for one frozen image.
 
@@ -691,12 +762,34 @@ Rules:
 - it must not encode classloader identity;
 - it must not encode object identity;
 - it must not duplicate FrozenMetamodelImage.schemaVersion.
+- it must not contain source adapter provenance.
 
 The future persistent frozen-image identity requires a separate canonical encoding / digest ADR.
 
-### 9.6. `FrozenMetamodel*Provider`
+### 9.7. `FrozenMetamodel*Provider`
 
-Planning-facing port implementations backed by `FrozenMetamodelImage`.
+Planning-facing frozen providers must be constructed from `FrozenMetamodelImage`, not from
+`FrozenMetamodelImageEnvelope`.
+
+They must not receive `FrozenMetamodelImageDiagnosticHeader`.
+
+They must not branch on source adapter provenance.
+
+Forbidden:
+
+``````kotlin
+class FrozenMetamodelTypeShapeProvider private constructor(
+    private val envelope: FrozenMetamodelImageEnvelope,
+)
+``````
+
+Allowed:
+
+``````kotlin
+class FrozenMetamodelTypeShapeProvider private constructor(
+    private val image: FrozenMetamodelImage,
+)
+``````
 
 Illustrative shape:
 
@@ -763,7 +856,229 @@ TypeReference
 -> RawTypeFactsDTO
 ``````
 
-### 10.1. Freeze Lifecycle State Machine
+### 10.1. Freeze Memory Discipline
+
+`freeze()` is not a planning hot path.
+
+It is a heavy transition path.
+
+It is the boundary where backend-native mutable acquisition state is lowered into adapter-neutral frozen material.
+
+A compliant implementation must treat `freeze()` as both:
+
+1. a semantic erasure boundary; and
+2. a memory ownership transition boundary.
+
+#### Two-World Overlap Risk
+
+During freeze, two worlds may temporarily coexist:
+
+``````text
+old world:
+    backend handles
+    mutable acquisition arena
+    reflection/KSP/source object graphs
+
+new world:
+    frozen adapter-neutral metamodel image
+    frozen indexes
+    frozen tables
+    frozen records or slabs
+``````
+
+This overlap can create:
+
+- memory peaks;
+- object promotion;
+- premature old-generation pressure;
+- stop-the-world GC pressure;
+- extended lifetime of backend-native object graphs.
+
+Freeze implementation must minimize the overlap window.
+
+#### Required Freeze Memory Rules
+
+A compliant freeze implementation must follow these rules.
+
+##### 1. Pre-count before allocation
+
+The acquisition arena must expose enough counts to pre-size frozen structures.
+
+Forbidden default:
+
+``````text
+repeatedly grow ArrayList/HashMap during freeze
+``````
+
+Preferred:
+
+``````text
+count records
+-> allocate exact or bounded-capacity frozen storage
+-> fill once
+``````
+
+##### 2. Direct-to-slab lowering
+
+Freeze should lower acquisition slots directly into frozen table storage.
+
+Forbidden default:
+
+``````text
+slot
+-> temporary record object
+-> list
+-> copied table
+``````
+
+Preferred:
+
+``````text
+slot
+-> frozen table offset
+``````
+
+##### 3. Early source-slot nullification
+
+Once a backend handle slot has been fully lowered, the slot must be cleared as soon as legal.
+
+Required intent:
+
+``````text
+lower slot i
+-> write frozen material
+-> clear backend handle slot i
+-> continue
+``````
+
+This reduces backend-handle reachability before the whole image is published.
+
+##### 4. No closure-backed frozen material
+
+Frozen tables and records must not store:
+
+- lambdas;
+- suppliers;
+- lazy delegates;
+- service locators;
+- callbacks;
+- closures capturing backend handles;
+- registry keys that can recover backend handles.
+
+Reason:
+
+An immutable table can still retain backend-native handles through closure capture.
+
+That violates backend-handle erasure and can extend the lifetime of heavy backend object graphs.
+
+##### 5. Vertical partitioning
+
+Frozen image tables must remain vertically partitioned:
+
+``````text
+type index
+shape table
+cycle identity table
+raw fact table
+``````
+
+Planning should be able to read shape and cycle material without touching raw fact material.
+
+##### 6. Ordinal-friendly table layout
+
+The type index must support deterministic local frozen ordinals.
+
+The ordinal is local to the image and must not enter `TypeReference`.
+
+Target shape:
+
+``````text
+TypeReference -> FrozenTypeOrdinal
+FrozenTypeOrdinal -> shape/cycle/raw tables
+``````
+
+##### 7. Chunked freeze is allowed
+
+If acquisition scope is large, freeze may process records in deterministic chunks.
+
+Chunking must not change semantic order.
+
+Required:
+
+``````text
+deterministic chunk boundaries
+deterministic final ordering
+same output independent of chunk size
+``````
+
+##### 8. Freeze-final validation before publication
+
+The image must not be visible until table coverage and sequence laws pass.
+
+Publication happens after validation.
+
+#### Allowed Implementation Levels
+
+Level 0: Transitional object image
+
+``````text
+immutable object tables
+minimal migration
+not final SOTA
+``````
+
+Level 1: Object-array frozen tables
+
+``````text
+Array<TypeReference?>
+Array<ResolvedTypeShape?>
+Array<TypeCycleIdentity?>
+Array<FrozenRawFactRecord?>
+``````
+
+Level 2: Ordinal-indexed slab tables
+
+``````text
+FrozenTypeOrdinal
+-> parallel arrays
+-> compact local indexes
+``````
+
+Level 3: Primitive slab tables
+
+``````text
+IntArray / LongArray / ByteArray metadata
+Object arrays only for unavoidable domain references
+``````
+
+Level 4: Canonical encoded slabs
+
+``````text
+versioned canonical byte layout
+BLAKE3/HID-ready material
+``````
+
+ADR-0039 accepts the direction up to Level 2 as immediate design pressure.
+
+Level 3 and Level 4 require separate canonical encoding, primitive table, and golden-vector work.
+
+#### Final Freeze Memory Rule
+
+`freeze()` may allocate, but it must not allocate casually.
+
+The accepted target is:
+
+``````text
+pre-count
+-> pre-size
+-> deterministic order
+-> direct-to-slab lowering
+-> early backend-handle nullification
+-> validation
+-> publish frozen image
+``````
+
+### 10.2. Freeze Lifecycle State Machine
 
 Acquisition lane lifecycle:
 
@@ -797,7 +1112,7 @@ CLOSED -> FREEZING
 CLOSED -> FROZEN
 ``````
 
-### 10.2. Freeze Semantics
+### 10.3. Freeze Semantics
 
 `freeze()` is one-shot.
 
@@ -809,11 +1124,18 @@ After successful `freeze()`:
 - the frozen image remains readable;
 - any further arena write fails closed;
 - any second `freeze()` fails closed unless an implementation explicitly documents idempotent return of the same image.
+- backend handle slots are cleared as soon as their lowered frozen material has been written;
+- freeze-final table coverage validation has passed;
+- deterministic sequence validation has passed;
+- frozen image publication happens only after validation;
+- frozen material does not retain closure-backed backend-handle reachability.
 
 Default policy:
 
 ``````text
 second freeze call fails closed
+Freeze must not be implemented as a casual copy from mutable objects into immutable wrappers.
+A compliant implementation must minimize the time during which backend-native handles and frozen adapter-neutral material are both strongly reachable.
 ``````
 
 Reason:
@@ -821,7 +1143,7 @@ Reason:
 A second freeze can hide lifecycle bugs and create ambiguity about whether the same immutable image or a newly built
 image is being observed.
 
-### 10.3. Close Semantics
+### 10.4. Close Semantics
 
 `close()` before freeze:
 
@@ -865,6 +1187,12 @@ Forbidden indirect fields:
 - lambda callbacks that capture backend handles;
 - lazy suppliers that close over backend handles;
 - service locators that can recover backend handles.
+- lazy delegates that can recover backend handles;
+- suppliers that can recover backend handles;
+- callbacks that capture acquisition arena slots;
+- service locators that can reopen adapter registries;
+- closure-backed table cells;
+- memoized functions that close over backend-native objects.
 
 Forbidden illustrative shape:
 
@@ -897,6 +1225,11 @@ Minimum audit requirement:
 - frozen records must not store function objects that capture backend handles;
 - frozen records must not store registry ordinals that can recover backend handles;
 - tests must assert backend handle absence at public frozen-image boundaries.
+- frozen tables must not store lambdas, suppliers, lazy delegates, service locators, or callbacks;
+- frozen table implementations must be plain-data, object-array-backed, ordinal-indexed, slab-backed, or
+  primitive-array-backed;
+- frozen records must not retain acquisition arena slots after freeze;
+- freeze tests must assert that source acquisition slots are nulled or otherwise unreachable after successful lowering.
 
 ## 12. Frozen Metamodel Image Exception Taxonomy
 
@@ -1820,8 +2153,44 @@ enum class FrozenMetadataAvailability {
     UNAVAILABLE_FROM_BACKEND,
     UNKNOWN,
     REJECTED_UNSAFE,
+    TRUNCATED,
+    FILTERED_BY_POLICY,
+    ACQUISITION_FAILED,
 }
 ``````
+
+Meaning:
+
+- `PRESENT`: metadata was observed, lowered, and frozen successfully.
+- `UNAVAILABLE_FROM_BACKEND`: the backend does not expose this metadata surface.
+- `UNKNOWN`: the framework cannot determine whether the metadata is present.
+- `REJECTED_UNSAFE`: metadata was rejected because it violates safety, protocol, or canonicalization law.
+- `TRUNCATED`: metadata was intentionally cut by deterministic truncation policy such as cycle, depth, or budget cutoff.
+- `FILTERED_BY_POLICY`: metadata was intentionally excluded by user/framework policy, such as visibility or member-scope
+  policy.
+- `ACQUISITION_FAILED`: metadata acquisition was attempted but failed due to a technical backend or acquisition error.
+
+Availability drift is not identity drift.
+
+If two records have the same semantic key but conflicting availability payloads, the sequence builder must fail closed
+unless a ratified availability merge law exists.
+
+`TRUNCATED` is not a planning command.
+
+It means:
+
+``````text
+this metadata surface was intentionally cut by deterministic framework policy
+``````
+
+It does not mean:
+
+``````text
+the planner must directly stop expansion here
+``````
+
+Planning behavior must still be expressed through the normal expansion decision layer, such as traversal disposition,
+type expansion decision, or cycle policy.
 
 ### 16.10. Final Sequence Rule
 
@@ -2208,6 +2577,12 @@ Forbidden L2 content:
 - classloader references;
 - adapter registry cells;
 - frozen records with indirect backend-handle reachability.
+- diagnostic source adapter provenance;
+- `FrozenMetamodelImageEnvelope`;
+- `FrozenMetamodelImageDiagnosticHeader`;
+- closure-backed frozen tables;
+- frozen tables whose coverage has not been validated;
+- frozen material produced before freeze-final validation.
 
 Allowed L2 candidates after later ratification:
 
@@ -2217,6 +2592,14 @@ Allowed L2 candidates after later ratification:
 - frozen projection records;
 - canonical IR;
 - canonical plan keys.
+
+Even adapter-neutral frozen material may be promoted to L2 only after:
+
+- backend-handle reachability erasure;
+- table coverage validation;
+- deterministic sequence validation;
+- canonical encoding law ratification;
+- golden-vector coverage.
 
 L2 promotion requires separate cache/interner/governance ADRs and golden vectors.
 
@@ -2290,6 +2673,23 @@ FrozenRawFactTable
 ``````
 
 Do not optimize into primitive `LongArray` tables until the lowered key law is ratified.
+
+This phase must also add the freeze memory discipline surface:
+
+``````text
+FrozenTypeOrdinal
+ordinal-friendly FrozenTypeReferenceIndex
+coverage-aware FrozenTypeShapeTable
+coverage-aware FrozenTypeCycleIdentityTable
+coverage-aware FrozenRawFactTable
+FrozenMetamodelImageIntegrityValidator
+FrozenMetamodelImageEnvelope
+FrozenMetamodelImageDiagnosticHeader
+``````
+
+This phase does not implement primitive `LongArray` tables yet.
+
+It only makes the frozen image contract ordinal-friendly, closure-free, and validation-ready.
 
 ### 27.5. Phase 5: Reflection Vertical Slice
 
@@ -2381,6 +2781,11 @@ This ADR does not define:
 - full query engine;
 - red/green incremental invalidation;
 - source-level incremental watch protocol.
+- off-heap frozen table storage;
+- DirectBuffer-backed metamodel slabs;
+- final primitive LongArray/IntArray frozen table implementation;
+- bump-allocator emulation on the JVM;
+- persistent frozen image binary format;
 
 ## 29. Compliance Rules
 
@@ -2399,40 +2804,90 @@ A compliant implementation must satisfy:
 11. Frozen raw fact provider returns `RawTypeFactsResolution.cacheHit(...)`, not `actualResolution(...)`.
 12. `KType`, `KClass`, `KSType`, and `KSDeclaration` must not enter L2.
 13. Frozen image ordering must not depend on adapter enumeration order.
-14. Frozen image indexes may use primitive storage, but TypeReference must not expose those indexes.
+14. Frozen image indexes may use primitive storage, but `TypeReference` must not expose those indexes.
 15. Mutable acquisition state must have an explicit owner and bounded lifetime.
 16. Global `ConcurrentHashMap` must not become semantic storage.
 17. Any transitional reflection registry must be documented as V1 compatibility debt.
 18. KSP must lower into the same frozen metamodel contract as reflection.
-19. Equivalent reflection and KSP inputs must produce equivalent TypeReference/frozen facts under the same semantic
+19. Equivalent reflection and KSP inputs must produce equivalent `TypeReference` / frozen facts under the same semantic
     model.
 20. Adapter provenance may be diagnostic but must not affect semantic equality.
-21. L2 promotion is allowed only for adapter-neutral frozen material.
-22. Canonical byte encoding remains a separate ADR/design concern.
-23. Freeze is one-shot by default.
-24. Writes after freeze fail closed.
-25. Frozen providers must distinguish unknown TypeReference, incomplete table entry, materialization failure, lifecycle
-    violation, compatibility violation, backend reachability violation, and deterministic sequence violation through the
-    dedicated `FrozenMetamodelImageException` taxonomy.
-26. `MetamodelAcquisitionLane<THandle>` owns transitive acquisition for its request scope.
-27. Arena slot state transitions must be explicit and enforced.
-28. Reflection/KSP equivalence requires golden-vector coverage.
-29. Frozen image id is diagnostic/compatibility material, not L2 key authority.
-30. Close before freeze aborts acquisition; close after freeze releases acquisition-only state without invalidating the
-    frozen image.
-31. All nested frozen record sequences must be deterministic, duplicate-rejecting, and strictly ordered.
-32. Frozen sequence local ordinals must be assigned only after deterministic ordering.
-33. Frozen sequences must not rely on backend enumeration order.
-34. Comparator equality between distinct frozen sequence records fails closed.
-35. Reflection and KSP acquisition must produce equivalent frozen sequence keys for the same semantic model, or must
+21. `FrozenMetamodelImage` must not expose source adapter provenance directly.
+22. Source adapter provenance must be carried through diagnostic envelope/header or diagnostic-only ports.
+23. Planning-facing providers must receive `FrozenMetamodelImage`, not `FrozenMetamodelImageEnvelope`.
+24. Planning-facing providers must not receive `FrozenMetamodelImageDiagnosticHeader`.
+25. Planning-facing providers must not branch on reflection/KSP/bytecode/source/generated provenance.
+26. Diagnostic provenance must not influence planning traversal, type expansion decisions, active-cycle identity, L2 key
+    material, route64, or `PlanCacheKey`.
+27. L2 promotion is allowed only for adapter-neutral frozen material.
+28. L2 promotion must reject backend-native handles, adapter provenance, `FrozenMetamodelImageEnvelope`, and
+    `FrozenMetamodelImageDiagnosticHeader`.
+29. L2 promotion must reject closure-backed frozen tables.
+30. L2 promotion must reject frozen material produced before freeze-final validation.
+31. Canonical byte encoding remains a separate ADR/design concern.
+32. Freeze is one-shot by default.
+33. Writes after freeze fail closed.
+34. Close before freeze aborts acquisition and produces no image.
+35. Close after freeze releases acquisition-only state without invalidating the frozen image.
+36. Freeze is both a semantic erasure boundary and a memory ownership transition boundary.
+37. Freeze must minimize the two-world overlap between backend-native acquisition state and frozen adapter-neutral
+    material.
+38. Freeze should pre-count before allocation.
+39. Freeze should pre-size frozen structures instead of repeatedly growing `ArrayList`, `HashMap`, or equivalent dynamic
+    structures during freeze.
+40. Freeze should lower acquisition slots directly into frozen table storage whenever possible.
+41. Freeze should clear backend handle slots as soon as their lowered frozen material has been written and no longer
+    needs the backend handle.
+42. Freeze publication must happen only after table coverage validation.
+43. Freeze publication must happen only after deterministic sequence validation.
+44. Freeze publication must happen only after backend-handle reachability erasure.
+45. Chunked freeze is allowed only if chunk boundaries are deterministic and output is independent of chunk size.
+46. The type index is the frozen image coverage authority.
+47. Every indexed `TypeReference` must have explicit shape table coverage.
+48. Every indexed `TypeReference` must have explicit cycle identity table coverage.
+49. Every indexed `TypeReference` must have explicit raw fact table coverage.
+50. Raw fact coverage may be a materialized DTO, frozen raw fact record, deterministic sentinel record, or
+    acquisition-failure diagnostic record.
+51. Missing table coverage is a frozen image integrity failure and must fail before image publication.
+52. Frozen providers must distinguish unknown `TypeReference`, incomplete table entry, materialization failure,
+    lifecycle violation, compatibility violation, backend reachability violation, and deterministic sequence violation
+    through the dedicated `FrozenMetamodelImageException` taxonomy.
+53. Frozen tables must be closure-free.
+54. Frozen tables must not store lambdas, suppliers, lazy delegates, service locators, callbacks, closure-backed cells,
+    or memoized functions that capture backend-native objects.
+55. Frozen tables must not store registry keys, resolver-local ids, classloader-local indexes, or service locators that
+    can recover backend handles.
+56. Frozen table implementations must be plain-data, object-array-backed, ordinal-indexed, slab-backed, or
+    primitive-array-backed.
+57. Frozen type indexes must be ordinal-friendly.
+58. Frozen ordinals must be image-local.
+59. Frozen ordinals must be assigned only after deterministic ordering.
+60. Frozen ordinals must not enter `TypeReference`.
+61. Frozen ordinals must not encode adapter acquisition order.
+62. Primitive slab implementation is deferred, but the frozen image contract must not block it.
+63. `MetamodelAcquisitionLane<THandle>` owns transitive acquisition for its request scope.
+64. Arena slot state transitions must be explicit and enforced.
+65. Reflection/KSP equivalence requires golden-vector coverage.
+66. Frozen image id is diagnostic/compatibility material, not L2 key authority.
+67. All nested frozen record sequences must be deterministic, duplicate-rejecting, and strictly ordered.
+68. Frozen sequence local ordinals must be assigned only after deterministic ordering.
+69. Frozen sequences must not rely on backend enumeration order.
+70. Comparator equality between distinct frozen sequence records fails closed.
+71. Reflection and KSP acquisition must produce equivalent frozen sequence keys for the same semantic model, or must
     represent unavailable axes explicitly.
-36. Frozen sequence keys must contain semantic identity material only.
-37. Metadata availability must be record state, not primary identity key material.
-38. Same semantic key with conflicting availability payload fails closed unless a ratified availability merge law
+72. Frozen sequence keys must contain semantic identity material only.
+73. Metadata availability must be record state, not primary identity key material.
+74. Same semantic key with conflicting availability payload fails closed unless a ratified availability merge law
     exists.
-39. Records without enough backend-neutral material to form a semantic key must not be inserted into ordinary frozen
+75. Records without enough backend-neutral material to form a semantic key must not be inserted into ordinary frozen
     deterministic sequences.
-40. Frozen constructor record keys and frozen property record keys must exclude declaration availability.
+76. Frozen constructor record keys and frozen property record keys must exclude declaration availability.
+77. Frozen metadata availability must distinguish backend unavailability, unknown state, unsafe rejection, deterministic
+    truncation, policy filtering, and acquisition failure.
+78. `TRUNCATED` must represent deterministic framework truncation, not backend absence.
+79. `FILTERED_BY_POLICY` must represent policy/scope exclusion, not unsafe material.
+80. `ACQUISITION_FAILED` must represent attempted acquisition failure, not normal backend capability absence.
+81. Availability values must remain record state and must not participate in primary identity keys.
 
 ## 30. Required Tests
 
@@ -2445,7 +2900,28 @@ Add tests for:
 - KSP frozen image contains no `KSDeclaration`.
 - Frozen records contain no indirect backend recovery keys.
 - Frozen records contain no lambda/supplier capturing backend handles.
+- Frozen tables reject closure-backed cells in implementation tests.
+- Frozen table implementation tests reject lambda-backed records.
+- Frozen table implementation tests reject supplier-backed records.
+- Frozen table implementation tests reject lazy-delegate-backed records.
+- Frozen table implementation tests reject service-locator-backed records.
+- Frozen table implementation tests reject callback-backed records.
+- Frozen table implementation tests reject registry-key-backed handle recovery.
 - Frozen providers do not access backend handles.
+- Frozen providers do not receive `FrozenMetamodelImageEnvelope`.
+- Frozen providers do not receive `FrozenMetamodelImageDiagnosticHeader`.
+- Frozen providers cannot access source adapter provenance.
+- FrozenMetamodelImage does not expose source adapter provenance.
+- Adapter provenance is diagnostic-only and not semantic equality material.
+- Adapter provenance does not influence planning traversal.
+- Adapter provenance does not influence type expansion decisions.
+- Adapter provenance does not influence L2 key material.
+- L2 promotion rejects diagnostic source adapter provenance.
+- L2 promotion rejects `FrozenMetamodelImageEnvelope`.
+- L2 promotion rejects `FrozenMetamodelImageDiagnosticHeader`.
+- L2 promotion rejects closure-backed frozen tables.
+- L2 promotion rejects backend handle payloads.
+- L2 promotion rejects frozen material produced before freeze-final validation.
 - Cycle-hit path does not materialize raw facts.
 - Frozen raw fact provider returns `RawTypeFactsResolution.cacheHit(...)`.
 - Frozen raw fact record materializes deterministically.
@@ -2461,20 +2937,38 @@ Add tests for:
 - Writes after freeze fail closed.
 - Close before freeze aborts acquisition and produces no image.
 - Close after freeze does not invalidate returned image.
-- Reflection and KSP same semantic model produce same TypeReference.
+- Freeze clears backend handle slots after successful lowering.
+- Freeze clears each backend handle slot as soon as the slot is safely lowered.
+- Freeze publication occurs only after table coverage validation.
+- Freeze publication occurs only after deterministic sequence validation.
+- Freeze publication occurs only after backend-handle reachability erasure.
+- Freeze pre-counts record counts before frozen table allocation.
+- Freeze pre-sizes frozen structures instead of repeatedly growing dynamic collections.
+- Freeze lowers acquisition slots directly into frozen table storage in the direct-to-slab path.
+- Chunked freeze produces the same frozen image as unchunked freeze for the same semantic input.
+- Chunked freeze output is independent of chunk size.
+- FrozenMetamodelImage.issue rejects missing shape table coverage.
+- FrozenMetamodelImage.issue rejects missing cycle identity table coverage.
+- FrozenMetamodelImage.issue rejects missing raw fact table coverage.
+- Raw fact sentinel coverage satisfies image coverage validation.
+- Shape/cycle table reads do not touch raw fact table material.
+- FrozenTypeReferenceIndex exposes deterministic `referenceAt` order.
+- FrozenTypeOrdinal is image-local.
+- FrozenTypeOrdinal is assigned only after deterministic ordering.
+- FrozenTypeOrdinal is not stored in `TypeReference`.
+- FrozenTypeOrdinal does not encode adapter acquisition order.
+- Reflection and KSP same semantic model produce same `TypeReference`.
 - Reflection and KSP same semantic model produce equivalent shape facts.
 - Reflection and KSP same semantic model produce equivalent raw facts.
 - Reflection and KSP same semantic model produce equivalent metadata availability categories.
 - Nested class spelling differences do not silently create divergent identity.
 - Generic wildcard/star-projection differences are normalized, represented as unavailable/unknown, or fail closed.
-- Frozen image ordering rejects duplicate TypeReference entries.
+- Frozen image ordering rejects duplicate `TypeReference` entries.
 - Frozen image ordering is independent from reflection enumeration order.
 - Frozen image ordering is independent from KSP enumeration order.
 - Backend handle registry is not used after freeze.
-- L2 promotion rejects backend handle payloads.
 - Transitional reflection registry is not visible to planning domain APIs.
 - Frozen image schema version participates in compatibility checks.
-- Adapter provenance is diagnostic-only and not semantic equality material.
 - Acquisition slot state machine rejects illegal transitions.
 - `MetamodelAcquisitionLane.acquire(...)` owns transitive acquisition for the request.
 - Frozen constructor record sequence rejects duplicate constructor keys.
@@ -2497,6 +2991,13 @@ Add tests for:
   availability surface.
 - Property record without enough material to form a semantic key is rejected or emitted through an explicit availability
   surface.
+- FrozenMetadataAvailability distinguishes `UNAVAILABLE_FROM_BACKEND` from `ACQUISITION_FAILED`.
+- FrozenMetadataAvailability distinguishes `REJECTED_UNSAFE` from `FILTERED_BY_POLICY`.
+- FrozenMetadataAvailability distinguishes `TRUNCATED` from `UNAVAILABLE_FROM_BACKEND`.
+- Same semantic record key with different availability payload fails closed unless an availability merge law is
+  ratified.
+- `TRUNCATED` availability does not become `TypeReference` identity material.
+- `FILTERED_BY_POLICY` availability does not become frozen sequence ordering key material.
 
 ## 31. Adoption Rule
 
