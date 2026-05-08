@@ -1,6 +1,7 @@
 package metamodel.domain.frozen.table
 
 import metamodel.domain.dto.RawTypeFactsDTO
+import metamodel.domain.frozen.image.FrozenMetamodelImageSchemaVersion
 
 /**
  * Frozen raw fact table.
@@ -28,6 +29,8 @@ import metamodel.domain.dto.RawTypeFactsDTO
  * baseline table returns a pre-frozen RawTypeFactsDTO reference.
  */
 interface FrozenRawFactTable {
+    val schemaVersion: FrozenMetamodelImageSchemaVersion
+
     val size: Int
 
     fun containsAt(

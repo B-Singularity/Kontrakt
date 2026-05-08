@@ -34,6 +34,7 @@ class FrozenMetamodelImage private constructor(
         ): FrozenMetamodelImage {
             FrozenMetamodelImageIntegrityValidator.requireCompleteCoverage(
                 imageId = imageId,
+                schemaVersion = schemaVersion,
                 typeIndex = typeIndex,
                 shapeTable = shapeTable,
                 cycleIdentityTable = cycleIdentityTable,

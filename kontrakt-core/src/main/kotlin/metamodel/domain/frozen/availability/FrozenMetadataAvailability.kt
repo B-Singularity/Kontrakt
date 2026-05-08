@@ -5,21 +5,78 @@ package metamodel.domain.frozen.availability
  *
  * Availability is record state, not primary identity-key material.
  *
- * Do not place availability values in frozen record keys unless a future ADR
- * explicitly ratifies availability-sensitive identity.
+ * This enum is intentionally not allowed to contain a generic UNKNOWN state.
  *
- * This enum describes why a piece of frozen metamodel material is present,
- * unavailable, incomplete, excluded, or failed.
+ * Determinism law:
  *
- * It must not encode backend-native handles.
- * It must not encode adapter-local registry ids.
- * It must not participate in TypeReference equality.
+ * A published FrozenMetamodelImage must not contain generic inconclusive
+ * availability. If acquisition cannot classify a metadata surface deterministically,
+ * freeze must either:
+ *
+ * - map it to a more precise state such as ABSENT, UNAVAILABLE_FROM_BACKEND,
+ *   REJECTED_UNSAFE, FILTERED_BY_POLICY, TRUNCATED, or ACQUISITION_FAILED;
+ * - lower it into a field-specific closed vocabulary whose consuming protocol
+ *   defines deterministic conservative handling;
+ * - or fail closed before image publication.
+ *
+ * Field-specific unknown states may still exist in narrow domain vocabularies
+ * such as NullabilityKind.UNKNOWN or DefaultValuePresence.UNKNOWN, but only when
+ * their consuming protocol defines deterministic conservative or fail-closed
+ * behavior.
+ *
+ * State-code law:
+ *
+ * This enum is only a closed state code.
+ *
+ * It must not carry:
+ *
+ * - Throwable;
+ * - Exception;
+ * - stack trace;
+ * - KType;
+ * - KClass;
+ * - KSType;
+ * - KSDeclaration;
+ * - bytecode handles;
+ * - source AST/PSI handles;
+ * - adapter-local registry ids;
+ * - classloader-local ids;
+ * - closures;
+ * - suppliers;
+ * - lazy delegates.
+ *
+ * If a containing record needs diagnostic detail, that detail must be carried
+ * as backend-neutral, bounded, sanitized diagnostic material such as:
+ *
+ * - a closed error code;
+ * - a primitive numeric code;
+ * - a bounded sanitized String.
+ *
+ * Diagnostic detail must not participate in TypeReference equality, frozen
+ * record key equality, route64, PlanCacheKey, canonical IR lowering, or L2
+ * identity material unless a future ADR explicitly ratifies it.
  */
 enum class FrozenMetadataAvailability {
     /**
      * The metadata was observed, lowered, and frozen successfully.
      */
     PRESENT,
+
+    /**
+     * The backend inspected the metadata surface and determined that the target
+     * does not have this metadata.
+     *
+     * Example:
+     * - a specific annotation is not present;
+     * - a default value is not present;
+     * - a setter is not present;
+     * - a backing field is not present.
+     *
+     * This is not a backend capability boundary.
+     * This is not a failed acquisition.
+     * This is not missing table coverage.
+     */
+    ABSENT,
 
     /**
      * The backend does not expose this metadata surface.
@@ -32,17 +89,6 @@ enum class FrozenMetadataAvailability {
      * This is a backend capability boundary.
      */
     UNAVAILABLE_FROM_BACKEND,
-
-    /**
-     * The framework cannot determine whether the metadata is present.
-     *
-     * This differs from UNAVAILABLE_FROM_BACKEND:
-     *
-     * - UNAVAILABLE_FROM_BACKEND means the backend capability is known not to
-     *   provide the metadata.
-     * - UNKNOWN means the acquisition result is inconclusive.
-     */
-    UNKNOWN,
 
     /**
      * The metadata was rejected because using it would be unsafe or would
@@ -102,4 +148,5 @@ enum class FrozenMetadataAvailability {
      * - ACQUISITION_FAILED means acquisition was attempted but failed.
      */
     ACQUISITION_FAILED,
+    
 }

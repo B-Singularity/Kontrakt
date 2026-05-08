@@ -1,6 +1,7 @@
 package metamodel.domain.frozen.table
 
 import metamodel.domain.dto.ResolvedTypeShape
+import metamodel.domain.frozen.image.FrozenMetamodelImageSchemaVersion
 
 /**
  * Frozen type shape table.
@@ -27,6 +28,8 @@ import metamodel.domain.dto.ResolvedTypeShape
  * keys.
  */
 interface FrozenTypeShapeTable {
+    val schemaVersion: FrozenMetamodelImageSchemaVersion
+
     val size: Int
 
     fun containsAt(

@@ -1,5 +1,6 @@
 package metamodel.domain.frozen.table
 
+import metamodel.domain.frozen.image.FrozenMetamodelImageSchemaVersion
 import planning.domain.expansion.TypeCycleIdentity
 
 /**
@@ -29,6 +30,8 @@ import planning.domain.expansion.TypeCycleIdentity
  * references.
  */
 interface FrozenTypeCycleIdentityTable {
+    val schemaVersion: FrozenMetamodelImageSchemaVersion
+
     val size: Int
 
     val identityAlgorithmId: String

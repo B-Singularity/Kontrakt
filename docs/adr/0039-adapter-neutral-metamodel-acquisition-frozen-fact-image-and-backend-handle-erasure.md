@@ -731,6 +731,18 @@ Diagnostic provenance is useful for debugging and compatibility reports.
 
 It is dangerous as ordinary planning input because it can create backend-dependent semantic branches.
 
+`MetamodelSourceAdapterProvenance` is diagnostic material.
+
+It may implement structural equality for diagnostic aggregation and test assertions, but that equality is not
+frozen-image semantic equality.
+
+`sourceAdapterVersion` is an exact diagnostic token. It does not define semantic-version compatibility, stale-image
+rejection, or migration behavior.
+
+Any adapter-version compatibility policy must live at a bootstrap, loader, diagnostic, or compatibility-reporting
+boundary. Planning-facing providers must not consume source adapter provenance and must not branch on adapter kind or
+adapter version.
+
 ### 9.6. `FrozenMetamodelImageId`
 
 `FrozenMetamodelImageId` is a diagnostic and compatibility identity for one frozen image.
@@ -2998,6 +3010,12 @@ Add tests for:
   ratified.
 - `TRUNCATED` availability does not become `TypeReference` identity material.
 - `FILTERED_BY_POLICY` availability does not become frozen sequence ordering key material.
+- `MetamodelSourceAdapterProvenance` uses structural equality over adapter kind and adapter version.
+- `MetamodelSourceAdapterProvenance` equality is used only for diagnostics, compatibility reports, or tests.
+- Planning-facing providers do not depend on `MetamodelSourceAdapterProvenance`.
+- Planning-facing providers do not branch on `MetamodelSourceAdapterKind`.
+- Planning-facing providers do not branch on `sourceAdapterVersion`.
+- Adapter-version compatibility is not interpreted by `MetamodelSourceAdapterProvenance` itself.
 
 ## 31. Adoption Rule
 

@@ -1,5 +1,6 @@
 package metamodel.domain.frozen.table
 
+import metamodel.domain.frozen.image.FrozenMetamodelImageSchemaVersion
 import metamodel.domain.frozen.table.FrozenTypeReferenceIndex.Companion.MISSING_ORDINAL
 import metamodel.domain.vo.TypeReference
 
@@ -39,6 +40,8 @@ import metamodel.domain.vo.TypeReference
  * Callers must keep the value short-lived and name it frozenTypeOrdinal.
  */
 interface FrozenTypeReferenceIndex {
+    val schemaVersion: FrozenMetamodelImageSchemaVersion
+
     val size: Int
 
     /**

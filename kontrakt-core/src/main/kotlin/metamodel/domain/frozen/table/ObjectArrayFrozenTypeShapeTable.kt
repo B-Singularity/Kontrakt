@@ -1,6 +1,7 @@
 package metamodel.domain.frozen.table
 
 import metamodel.domain.dto.ResolvedTypeShape
+import metamodel.domain.frozen.image.FrozenMetamodelImageSchemaVersion
 
 /**
  * Object-array-backed FrozenTypeShapeTable.
@@ -18,6 +19,7 @@ import metamodel.domain.dto.ResolvedTypeShape
  * image has both the type index and all tables.
  */
 class ObjectArrayFrozenTypeShapeTable private constructor(
+    override val schemaVersion: FrozenMetamodelImageSchemaVersion,
     private val shapes: Array<ResolvedTypeShape?>,
 ) : FrozenTypeShapeTable {
     override val size: Int
@@ -26,29 +28,28 @@ class ObjectArrayFrozenTypeShapeTable private constructor(
     override fun containsAt(
         frozenTypeOrdinal: Int,
     ): Boolean =
-        isInBounds(frozenTypeOrdinal) && shapes[frozenTypeOrdinal] != null
+        frozenTypeOrdinal >= 0 &&
+                frozenTypeOrdinal < shapes.size &&
+                shapes[frozenTypeOrdinal] != null
 
     override fun findShapeAt(
         frozenTypeOrdinal: Int,
     ): ResolvedTypeShape? {
-        if (!isInBounds(frozenTypeOrdinal)) {
+        if (frozenTypeOrdinal < 0 || frozenTypeOrdinal >= shapes.size) {
             return null
         }
 
         return shapes[frozenTypeOrdinal]
     }
 
-    private fun isInBounds(
-        frozenTypeOrdinal: Int,
-    ): Boolean =
-        frozenTypeOrdinal >= 0 && frozenTypeOrdinal < shapes.size
-
     companion object {
         @JvmStatic
         fun issue(
+            schemaVersion: FrozenMetamodelImageSchemaVersion,
             shapes: Array<ResolvedTypeShape?>,
         ): ObjectArrayFrozenTypeShapeTable =
             ObjectArrayFrozenTypeShapeTable(
+                schemaVersion = schemaVersion,
                 shapes = shapes.copyOf(),
             )
     }
