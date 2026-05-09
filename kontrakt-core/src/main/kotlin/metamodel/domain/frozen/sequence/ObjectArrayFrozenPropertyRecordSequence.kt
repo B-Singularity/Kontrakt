@@ -33,6 +33,7 @@ import metamodel.domain.frozen.table.FrozenMetamodelImageTableId
  * Sequence equality is ordered structural equality.
  */
 class ObjectArrayFrozenPropertyRecordSequence private constructor(
+    private val imageId: FrozenMetamodelImageId,
     private val records: Array<FrozenPropertyRecord>,
     private val precomputedHashCode: Int,
 ) : FrozenPropertyRecordSequence {
@@ -98,6 +99,7 @@ class ObjectArrayFrozenPropertyRecordSequence private constructor(
                 )
 
             return ObjectArrayFrozenPropertyRecordSequence(
+                imageId = imageId,
                 records = ordered,
                 precomputedHashCode = computeOrderedHashCode(ordered),
             )

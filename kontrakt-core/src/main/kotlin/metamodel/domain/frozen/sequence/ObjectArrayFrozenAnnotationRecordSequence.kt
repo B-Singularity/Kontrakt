@@ -1,5 +1,6 @@
 package metamodel.domain.frozen.sequence
 
+import metamodel.domain.exception.FrozenMetamodelSequenceIndexOutOfBoundsException
 import metamodel.domain.frozen.image.FrozenMetamodelImageId
 import metamodel.domain.frozen.order.FrozenAnnotationRecordOrder
 import metamodel.domain.frozen.record.FrozenAnnotationRecord
@@ -59,8 +60,45 @@ import metamodel.domain.frozen.table.FrozenMetamodelImageTableId
  *
  * This keeps frozen sequence publication independent from JDK TimSort,
  * platform collection semantics, and set-like duplicate coalescing.
+ *
+ *
+ *
+ * Object-array cost law:
+ *
+ * This Level 1 sequence intentionally stores an Array<FrozenAnnotationRecord>.
+ *
+ * This means the current representation pays:
+ *
+ * - one sequence object;
+ * - one object reference array;
+ * - one JVM object header per FrozenAnnotationRecord;
+ * - pointer chasing through Record -> Key -> TypeReference / descriptor
+ *   material.
+ *
+ * That cost is accepted in the frozen foundation stage because the current
+ * priority is deterministic publication, duplicate rejection, backend-handle
+ * erasure, and document/code alignment.
+ *
+ * It is not the final physical layout.
+ *
+ * Future interning/lowering direction:
+ *
+ * A later interning and physical-layout cut may replace this representation
+ * with:
+ *
+ * ```text
+ * canonical text/type/payload interning
+ * -> stable image-local intern ids
+ * -> integer comparators
+ * -> annotation slab
+ * -> parent stores annotationOffset + annotationLength
+ * ```
+ *
+ * That future design must preserve the same fail-closed duplicate law and must
+ * not reintroduce backend enumeration order as semantic order.
  */
 class ObjectArrayFrozenAnnotationRecordSequence private constructor(
+    private val imageId: FrozenMetamodelImageId,
     private val records: Array<FrozenAnnotationRecord>,
     private val precomputedHashCode: Int,
 ) : FrozenAnnotationRecordSequence {
@@ -71,8 +109,11 @@ class ObjectArrayFrozenAnnotationRecordSequence private constructor(
         index: Int,
     ): FrozenAnnotationRecord {
         if (index < 0 || index >= records.size) {
-            throw IndexOutOfBoundsException(
-                "Frozen annotation record sequence index out of bounds: index=$index, size=${records.size}",
+            throw FrozenMetamodelSequenceIndexOutOfBoundsException(
+                imageId = imageId,
+                sequenceTable = FrozenMetamodelImageTableId.CONSTRUCTOR_RECORD_SEQUENCE.name,
+                index = index,
+                size = records.size,
             )
         }
 
@@ -126,6 +167,7 @@ class ObjectArrayFrozenAnnotationRecordSequence private constructor(
                 )
 
             return ObjectArrayFrozenAnnotationRecordSequence(
+                imageId = imageId,
                 records = ordered,
                 precomputedHashCode = computeOrderedHashCode(ordered),
             )

@@ -375,3 +375,37 @@ open class FrozenMetamodelIntegrityViolationException(
 ) : FrozenMetamodelImageException(
     "Frozen metamodel image integrity violation: imageId=$imageId, reason=$reason",
 )
+
+/**
+ * Raised when a frozen deterministic sequence is read outside its valid
+ * ordinal range.
+ *
+ * This exception represents an indexed-access contract violation on an already
+ * published frozen sequence.
+ *
+ * It is intentionally separate from FrozenMetamodelSequenceViolationException.
+ *
+ * Difference:
+ *
+ * - FrozenMetamodelSequenceViolationException:
+ *   sequence publication failed because input material violated deterministic
+ *   frozen sequence law.
+ *
+ * - FrozenMetamodelSequenceIndexOutOfBoundsException:
+ *   an already-published frozen sequence was accessed with an invalid index.
+ *
+ * This exception is still a metamodel-domain exception because frozen sequences
+ * are domain-owned deterministic structures, not ordinary Kotlin collections.
+ */
+class FrozenMetamodelSequenceIndexOutOfBoundsException(
+    val imageId: FrozenMetamodelImageId,
+    val sequenceTable: String,
+    val index: Int,
+    val size: Int,
+) : MetamodelException(
+    "Frozen metamodel sequence index out of bounds: " +
+            "imageId=${imageId.renderSummary()}, " +
+            "sequenceTable=$sequenceTable, " +
+            "index=$index, " +
+            "size=$size",
+)
