@@ -31,6 +31,20 @@ import planning.domain.expansion.TypeCycleIdentity
  *
  * It does not validate diagnostic provenance because provenance is not
  * planning-visible semantic material.
+ *
+ * Authority split:
+ *
+ * - FrozenTypeReferenceIndex owns TypeReference -> frozen ordinal resolution.
+ * - FrozenTypeShapeTable owns shape payload coverage by frozen ordinal.
+ * - FrozenTypeCycleIdentityTable owns cycle identity payload coverage and
+ *   table-wide identity algorithm metadata.
+ * - FrozenRawFactTable owns raw fact payload coverage by frozen ordinal.
+ *
+ * This validator does not perform backend discovery.
+ * It does not reopen backend handles.
+ * It does not normalize polluted TypeReference or signature material.
+ *
+ * If any mismatch is found, publication fails closed.
  */
 internal object FrozenMetamodelImageIntegrityValidator {
     fun requireCompleteCoverage(
@@ -43,28 +57,28 @@ internal object FrozenMetamodelImageIntegrityValidator {
     ) {
         requireSchemaVersionMatchesImage(
             imageId = imageId,
-            tableName = FrozenMetamodelImageTableId.TYPE_INDEX.name,
+            tableId = FrozenMetamodelImageTableId.TYPE_INDEX,
             imageSchemaVersion = schemaVersion,
             tableSchemaVersion = typeIndex.schemaVersion,
         )
 
         requireSchemaVersionMatchesImage(
             imageId = imageId,
-            tableName = FrozenMetamodelImageTableId.SHAPE_TABLE.name,
+            tableId = FrozenMetamodelImageTableId.SHAPE_TABLE,
             imageSchemaVersion = schemaVersion,
             tableSchemaVersion = shapeTable.schemaVersion,
         )
 
         requireSchemaVersionMatchesImage(
             imageId = imageId,
-            tableName = FrozenMetamodelImageTableId.CYCLE_IDENTITY_TABLE.name,
+            tableId = FrozenMetamodelImageTableId.CYCLE_IDENTITY_TABLE,
             imageSchemaVersion = schemaVersion,
             tableSchemaVersion = cycleIdentityTable.schemaVersion,
         )
 
         requireSchemaVersionMatchesImage(
             imageId = imageId,
-            tableName = FrozenMetamodelImageTableId.RAW_FACT_TABLE.name,
+            tableId = FrozenMetamodelImageTableId.RAW_FACT_TABLE,
             imageSchemaVersion = schemaVersion,
             tableSchemaVersion = rawFactTable.schemaVersion,
         )
@@ -100,7 +114,7 @@ internal object FrozenMetamodelImageIntegrityValidator {
 
             val shape =
                 shapeTable.findShapeAt(
-                    frozenTypeOrdinal = frozenTypeOrdinal,
+                    frozenOrdinal = frozenTypeOrdinal,
                 ) ?: throw FrozenMetamodelIncompleteTableException(
                     imageId = imageId,
                     referenceSummary = reference.renderSummary(),
@@ -129,33 +143,17 @@ internal object FrozenMetamodelImageIntegrityValidator {
                     reason = "Missing cycle identity coverage at frozenTypeOrdinal=$frozenTypeOrdinal.",
                 )
 
-            if (cycleIdentity.subject != reference) {
-                throw FrozenMetamodelIntegrityViolationException(
-                    imageId = imageId,
-                    reason = "Cycle identity subject mismatch at frozenTypeOrdinal=$frozenTypeOrdinal: " +
-                            "expected=${reference.renderSummary()}, actual=${cycleIdentity.subject.renderSummary()}",
-                )
-            }
-
-            if (cycleIdentity.identityAlgorithmId != cycleIdentityTable.identityAlgorithmId) {
-                throw FrozenMetamodelIntegrityViolationException(
-                    imageId = imageId,
-                    reason = "Cycle identity algorithm id mismatch at frozenTypeOrdinal=$frozenTypeOrdinal: " +
-                            "expected=${cycleIdentityTable.identityAlgorithmId}, actual=${cycleIdentity.identityAlgorithmId}",
-                )
-            }
-
-            if (cycleIdentity.identityAlgorithmVersion != cycleIdentityTable.identityAlgorithmVersion) {
-                throw FrozenMetamodelIntegrityViolationException(
-                    imageId = imageId,
-                    reason = "Cycle identity algorithm version mismatch at frozenTypeOrdinal=$frozenTypeOrdinal: " +
-                            "expected=${cycleIdentityTable.identityAlgorithmVersion}, actual=${cycleIdentity.identityAlgorithmVersion}",
-                )
-            }
+            requireCycleIdentityContinuity(
+                imageId = imageId,
+                cycleIdentityTable = cycleIdentityTable,
+                frozenTypeOrdinal = frozenTypeOrdinal,
+                expectedReference = reference,
+                cycleIdentity = cycleIdentity,
+            )
 
             val rawFacts =
                 rawFactTable.findFactsAt(
-                    frozenTypeOrdinal = frozenTypeOrdinal,
+                    frozenOrdinal = frozenTypeOrdinal,
                 ) ?: throw FrozenMetamodelIncompleteTableException(
                     imageId = imageId,
                     referenceSummary = reference.renderSummary(),
@@ -243,6 +241,50 @@ internal object FrozenMetamodelImageIntegrityValidator {
     }
 
     /**
+     * Validates that the cycle identity stored at an ordinal belongs to the same
+     * TypeReference exposed by the type index and that it uses the table-owned
+     * identity algorithm metadata.
+     *
+     * Algorithm metadata authority belongs to FrozenTypeCycleIdentityTable.
+     * Providers must derive their exposed algorithm metadata from the table, not
+     * from separate caller-supplied fields.
+     */
+    private fun requireCycleIdentityContinuity(
+        imageId: FrozenMetamodelImageId,
+        cycleIdentityTable: FrozenTypeCycleIdentityTable,
+        frozenTypeOrdinal: Int,
+        expectedReference: TypeReference,
+        cycleIdentity: TypeCycleIdentity,
+    ) {
+        if (cycleIdentity.subject != expectedReference) {
+            throw FrozenMetamodelIntegrityViolationException(
+                imageId = imageId,
+                reason = "Cycle identity subject mismatch at frozenTypeOrdinal=$frozenTypeOrdinal: " +
+                        "expected=${expectedReference.renderSummary()}, actual=${cycleIdentity.subject.renderSummary()}",
+            )
+        }
+
+        if (cycleIdentity.identityAlgorithmId != cycleIdentityTable.identityAlgorithmId) {
+            throw FrozenMetamodelIntegrityViolationException(
+                imageId = imageId,
+                reason = "Cycle identity algorithm id mismatch at frozenTypeOrdinal=$frozenTypeOrdinal: " +
+                        "expected=${cycleIdentityTable.identityAlgorithmId}, actual=${cycleIdentity.identityAlgorithmId}, " +
+                        "subject=${expectedReference.renderSummary()}",
+            )
+        }
+
+        if (cycleIdentity.identityAlgorithmVersion != cycleIdentityTable.identityAlgorithmVersion) {
+            throw FrozenMetamodelIntegrityViolationException(
+                imageId = imageId,
+                reason = "Cycle identity algorithm version mismatch at frozenTypeOrdinal=$frozenTypeOrdinal: " +
+                        "expected=${cycleIdentityTable.identityAlgorithmVersion}, " +
+                        "actual=${cycleIdentity.identityAlgorithmVersion}, " +
+                        "subject=${expectedReference.renderSummary()}",
+            )
+        }
+    }
+
+    /**
      * Validates that frozen raw facts belong to the same cycle-identity subject
      * already validated for the same frozen type ordinal.
      *
@@ -250,23 +292,15 @@ internal object FrozenMetamodelImageIntegrityValidator {
      *
      * - TypeReference / TypeCycleKey is canonical type identity material.
      * - TypeCycleIdentity owns the primitive active-cycle routing identity.
+     * - FrozenTypeCycleIdentityTable owns the table-wide cycle identity
+     *   algorithm metadata.
      * - RawTypeFactsDTO carries the lowered raw-fact identity emitted by the
      *   metamodel acquisition/freeze path.
      *
-     * This validator must therefore compare RawTypeFactsDTO identity material
-     * against TypeCycleIdentity, not against TypeCycleKey.
+     * This validator must compare RawTypeFactsDTO identity material against
+     * TypeCycleIdentity bits and table-owned algorithm metadata.
      *
-     * Rationale:
-     *
-     * TypeCycleKey intentionally does not expose identityBits64. It is a
-     * structural key value object, not the primitive cycle-routing authority.
-     * The same law is used by TypeExpansionPipeline after active-cycle miss:
-     *
-     * ```text
-     * rawFacts.typeIdentity64 == preflight.cycleIdentity.identityBits64
-     * rawFacts.typeIdentityAlgorithmId == preflight.cycleIdentity.identityAlgorithmId
-     * rawFacts.typeIdentityAlgorithmVersion == preflight.cycleIdentity.identityAlgorithmVersion
-     * ```
+     * It must not compare against TypeCycleKey.hashCode().
      */
     private fun requireRawFactContinuity(
         imageId: FrozenMetamodelImageId,
@@ -289,21 +323,21 @@ internal object FrozenMetamodelImageIntegrityValidator {
             )
         }
 
-        if (rawFacts.typeIdentityAlgorithmId != cycleIdentity.identityAlgorithmId) {
+        if (rawFacts.typeIdentityAlgorithmId != cycleIdentityTable.identityAlgorithmId) {
             throw FrozenMetamodelIntegrityViolationException(
                 imageId = imageId,
                 reason = "RawTypeFactsDTO identity algorithm id mismatch at frozenTypeOrdinal=$frozenTypeOrdinal: " +
-                        "expected=${cycleIdentity.identityAlgorithmId}, " +
+                        "expected=${cycleIdentityTable.identityAlgorithmId}, " +
                         "actual=${rawFacts.typeIdentityAlgorithmId}, " +
                         "subject=${expectedReference.renderSummary()}",
             )
         }
 
-        if (rawFacts.typeIdentityAlgorithmVersion != cycleIdentity.identityAlgorithmVersion) {
+        if (rawFacts.typeIdentityAlgorithmVersion != cycleIdentityTable.identityAlgorithmVersion) {
             throw FrozenMetamodelIntegrityViolationException(
                 imageId = imageId,
                 reason = "RawTypeFactsDTO identity algorithm version mismatch at frozenTypeOrdinal=$frozenTypeOrdinal: " +
-                        "expected=${cycleIdentity.identityAlgorithmVersion}, " +
+                        "expected=${cycleIdentityTable.identityAlgorithmVersion}, " +
                         "actual=${rawFacts.typeIdentityAlgorithmVersion}, " +
                         "subject=${expectedReference.renderSummary()}",
             )
@@ -360,7 +394,6 @@ internal object FrozenMetamodelImageIntegrityValidator {
      *
      * This check intentionally stops at one edge.
      *
-     * It does not recursively validate the referenced type's own children.
      * Recursive graph validation is unnecessary because requireCompleteCoverage
      * already performs a deterministic full-image ordinal sweep:
      *
@@ -368,18 +401,6 @@ internal object FrozenMetamodelImageIntegrityValidator {
      * for frozenTypeOrdinal in 0 until typeIndex.size:
      *     validate slot(frozenTypeOrdinal)
      * ```
-     *
-     * Therefore, this helper provides immediate, local diagnostic precision for
-     * outbound references while the outer sweep provides full graph coverage.
-     *
-     * Performance note:
-     *
-     * This helper performs one TypeReference -> frozenTypeOrdinal lookup for
-     * each referenced type. That is acceptable at the freeze publication boundary
-     * because this validator is a heavy bridge, not a planning hot path.
-     *
-     * Table checks after ordinal resolution are primitive ordinal reads and
-     * should be cheap for object-array/slab-backed frozen tables.
      */
     private fun requireReferencedTypeHasCompleteFrozenSlot(
         imageId: FrozenMetamodelImageId,
@@ -395,7 +416,10 @@ internal object FrozenMetamodelImageIntegrityValidator {
             return
         }
 
-        val referencedFrozenTypeOrdinal = typeIndex.ordinalOf(referenced)
+        val referencedFrozenTypeOrdinal =
+            typeIndex.ordinalOf(
+                reference = referenced,
+            )
 
         if (referencedFrozenTypeOrdinal == FrozenTypeReferenceIndex.MISSING_ORDINAL) {
             throw FrozenMetamodelIntegrityViolationException(
@@ -441,7 +465,7 @@ internal object FrozenMetamodelImageIntegrityValidator {
 
     private fun requireSchemaVersionMatchesImage(
         imageId: FrozenMetamodelImageId,
-        tableName: String,
+        tableId: FrozenMetamodelImageTableId,
         imageSchemaVersion: FrozenMetamodelImageSchemaVersion,
         tableSchemaVersion: FrozenMetamodelImageSchemaVersion,
     ) {
@@ -451,7 +475,7 @@ internal object FrozenMetamodelImageIntegrityValidator {
 
         throw FrozenMetamodelIntegrityViolationException(
             imageId = imageId,
-            reason = "Frozen table schema version mismatch: table=$tableName, " +
+            reason = "Frozen table schema version mismatch: table=${tableId.name}, " +
                     "imageSchemaVersion=${imageSchemaVersion.renderSummary()}, " +
                     "tableSchemaVersion=${tableSchemaVersion.renderSummary()}",
         )
@@ -471,7 +495,8 @@ internal object FrozenMetamodelImageIntegrityValidator {
             imageId = imageId,
             referenceSummary = "<image-wide>",
             missingTable = tableId.name,
-            reason = "Frozen table size does not match type index size: expectedSize=$expectedSize, actualSize=$actualSize.",
+            reason = "Frozen table size does not match type index size: " +
+                    "expectedSize=$expectedSize, actualSize=$actualSize.",
         )
     }
 }

@@ -1,36 +1,149 @@
 package metamodel.domain.frozen.table
 
+import metamodel.domain.exception.FrozenMetamodelSequenceIndexOutOfBoundsException
 import metamodel.domain.exception.FrozenMetamodelSequenceViolationException
+import metamodel.domain.frozen.image.FrozenMetamodelImageId
+import metamodel.domain.frozen.image.FrozenMetamodelImageSchemaVersion
 import metamodel.domain.frozen.order.FrozenTypeReferenceOrder
-import metamodel.domain.protocol.MetamodelProtocolOrdering
-import metamodel.domain.vo.ArrayComponentShapeHint
+import metamodel.domain.frozen.sequence.FrozenSequenceSorter
 import metamodel.domain.vo.TypeReference
-import metamodel.domain.vo.TypeShapeSummary
-import java.util.Arrays
 
 /**
- * Object-array-backed FrozenTypeReferenceIndex.
+ * Object-array-backed frozen TypeReference index.
  *
- * This is the Level 1/2 frozen index implementation:
+ * This is the Level 1 frozen image-local TypeReference ordinal authority.
  *
- * - Level 1: private immutable object array;
- * - Level 2: deterministic image-local ordinal addressing.
+ * It is intentionally still object-array based:
  *
- * It is intentionally not a HashMap-backed index.
+ * ```text
+ * Array<TypeReference>
+ * ```
  *
- * Reason:
+ * It is not:
  *
- * - HashMap iteration order must not influence frozen ordinal assignment;
- * - object-array binary search keeps ordering law explicit;
- * - later primitive routing/index tables can replace ordinalOf(...) without
- *   changing provider contracts.
+ * - a LongArray slab;
+ * - an off-heap table;
+ * - a persistent index;
+ * - a global interner;
+ * - a process-global registry;
+ * - a PlanCacheKey table;
+ * - a route64 table.
  *
- * Construction law:
+ * Identity split:
  *
- * Input order is non-authoritative. The factory defensively copies, sorts by
- * Kontrakt metamodel order order, and rejects comparator-equal duplicates.
+ * TypeReference owns semantic equality.
+ *
+ * This index owns image-local frozen ordinals.
+ *
+ * The ordinal assigned by this index is:
+ *
+ * - deterministic for the same TypeReference set;
+ * - local to one FrozenMetamodelImage;
+ * - assigned after deterministic ordering;
+ * - never stored in TypeReference;
+ * - never adapter acquisition order;
+ * - never persistent identity.
+ *
+ * Publication law:
+ *
+ * Input order is non-authoritative.
+ *
+ * The issue(...) factory:
+ *
+ * - defensively isolates the caller-owned array;
+ * - orders TypeReference values through FrozenTypeReferenceOrder;
+ * - rejects duplicate TypeReference entries;
+ * - rejects comparator-equal but structurally different TypeReference values;
+ * - publishes an immutable object-array index.
+ *
+ * Comparator equality law:
+ *
+ * If FrozenTypeReferenceOrder returns 0 and TypeReference.equals(...) is false,
+ * this index fails closed.
+ *
+ * That case means the ordering law is missing an equality axis or a TypeReference
+ * was polluted with inconsistent material. Silently keeping either side would
+ * corrupt image coverage.
+ *
+ * Lookup law:
+ *
+ * ordinalOf(reference) performs deterministic binary search over the frozen
+ * ordered array.
+ *
+ * It returns FrozenTypeReferenceIndex.MISSING_ORDINAL for absent references.
+ *
+ * It does not throw for lookup miss because providers own the user-facing
+ * missing-reference exception taxonomy.
+ *
+ * Access law:
+ *
+ * referenceAt(ordinal) throws FrozenMetamodelSequenceIndexOutOfBoundsException
+ * for invalid ordinals.
+ *
+ * This index is a domain-owned frozen structure. It must not leak raw
+ * ArrayIndexOutOfBoundsException or IndexOutOfBoundsException through its public
+ * access boundary.
+ *
+ * Hash law:
+ *
+ * This index does not use TypeReference.hashCode() for ordering.
+ *
+ * TypeReference.hashCode() is transitional in-memory collection material only.
+ * Frozen ordinal assignment must not depend on transitional JVM hash policy.
+ *
+ * Future lowering:
+ *
+ * A later interning/slab phase may replace this representation with:
+ *
+ * ```text
+ * TypeReference -> StableTypeReferenceInternId
+ * StableTypeReferenceInternId -> FrozenTypeOrdinal
+ * LongArray / IntArray-backed index
+ * ```
+ *
+ * That future design must preserve the same deterministic ordering, duplicate
+ * rejection, and image-local ordinal law.
+ *
+ * Lookup cost law:
+ *
+ * ordinalOf(reference) uses deterministic binary search over the ordered
+ * TypeReference array.
+ *
+ * The asymptotic lookup cost is:
+ *
+ * ```text
+ * O(log N * TypeReference comparison cost)
+ * ```
+ *
+ * This is acceptable for the Level 1 object-array foundation because it keeps
+ * the index simple, deterministic, backend-neutral, and independent from
+ * transitional hash policy.
+ *
+ * It is not the final hot-path shape.
+ *
+ * Future interning/lowering may replace this with stable integer-id lookup or
+ * primitive ordinal tables so provider hot paths can avoid repeated structural
+ * TypeReference comparison.
+ *
+ *
+ * Immutability law:
+ *
+ * The index defensively owns the reference array, but it does not deep-copy
+ * TypeReference instances.
+ *
+ * This is intentional.
+ *
+ * TypeReference must already be immutable canonical metamodel material before
+ * entering this index. If a TypeReference can mutate after index publication,
+ * the binary-search invariant is invalidated and the broken boundary is the
+ * TypeReference issuer or acquisition assembler, not this index.
+ *
+ * Architecture tests must reject mutable backend/acquisition-state reachability
+ * from TypeReference material.
  */
 class ObjectArrayFrozenTypeReferenceIndex private constructor(
+    private val imageId: FrozenMetamodelImageId,
+    override val schemaVersion: FrozenMetamodelImageSchemaVersion,
     private val references: Array<TypeReference>,
 ) : FrozenTypeReferenceIndex {
     override val size: Int
@@ -43,19 +156,37 @@ class ObjectArrayFrozenTypeReferenceIndex private constructor(
         var high = references.size - 1
 
         while (low <= high) {
-            val mid = (low + high) ushr 1
-            val candidate = references[mid]
+            val middle =
+                low + ((high - low) ushr 1)
+
+            val candidate = references[middle]
+
             val comparison =
                 FrozenTypeReferenceOrder.compare(
                     left = candidate,
                     right = reference,
                 )
 
-            when {
-                comparison < 0 -> low = mid + 1
-                comparison > 0 -> high = mid - 1
-                candidate == reference -> return mid
-                else -> return FrozenTypeReferenceIndex.MISSING_ORDINAL
+            if (comparison == 0) {
+                /*
+                 * Comparator equality should imply equality for indexed
+                 * TypeReference material because issue(...) rejects
+                 * comparator-equal but structurally different values.
+                 *
+                 * Still verify here defensively. If this ever fails, the index
+                 * has been corrupted or a comparator/equality law drifted.
+                 */
+                return if (candidate == reference) {
+                    middle
+                } else {
+                    FrozenTypeReferenceIndex.MISSING_ORDINAL
+                }
+            }
+
+            if (comparison < 0) {
+                low = middle + 1
+            } else {
+                high = middle - 1
             }
         }
 
@@ -63,204 +194,115 @@ class ObjectArrayFrozenTypeReferenceIndex private constructor(
     }
 
     override fun referenceAt(
-        frozenTypeOrdinal: Int,
+        frozenOrdinal: Int,
     ): TypeReference {
-        if (frozenTypeOrdinal < 0 || frozenTypeOrdinal >= references.size) {
-            throw IndexOutOfBoundsException(
-                "Frozen type ordinal out of bounds: frozenTypeOrdinal=$frozenTypeOrdinal, size=${references.size}",
+        if (frozenOrdinal < 0 || frozenOrdinal >= references.size) {
+            throw FrozenMetamodelSequenceIndexOutOfBoundsException(
+                imageId = imageId,
+                sequenceTable = FrozenMetamodelImageTableId.TYPE_INDEX.name,
+                index = frozenOrdinal,
+                size = references.size,
             )
         }
 
-        return references[frozenTypeOrdinal]
+        return references[frozenOrdinal]
+    }
+
+    override fun toString(): String {
+        return "ObjectArrayFrozenTypeReferenceIndex(size=$size, schemaVersion=$schemaVersion)"
     }
 
     companion object {
         @JvmStatic
         fun issue(
-            imageId: Any,
+            imageId: FrozenMetamodelImageId,
+            schemaVersion: FrozenMetamodelImageSchemaVersion,
             references: Array<TypeReference>,
         ): ObjectArrayFrozenTypeReferenceIndex {
-            val copied = references.copyOf()
+            val ordered =
+                FrozenSequenceSorter.sortStrict(
+                    imageId = imageId,
+                    sequenceTable = FrozenMetamodelImageTableId.TYPE_INDEX.name,
+                    input = references,
+                    comparator = FrozenTypeReferenceOrder,
+                    referenceSummaryOf = { reference ->
+                        reference.renderSummary()
+                    },
+                    duplicateReason = { previous, current, leftIndex, rightIndex ->
+                        duplicateTypeReferenceReason(
+                            previous = previous,
+                            current = current,
+                            leftIndex = leftIndex,
+                            rightIndex = rightIndex,
+                        )
+                    },
+                )
 
-            Arrays.sort(
-                copied,
-                FrozenTypeReferenceOrder,
+            requireComparatorEqualityImpliesStructuralEquality(
+                imageId = imageId,
+                ordered = ordered,
             )
 
-            var index = 1
-            while (index < copied.size) {
-                val previous = copied[index - 1]
-                val current = copied[index]
+            return ObjectArrayFrozenTypeReferenceIndex(
+                imageId = imageId,
+                schemaVersion = schemaVersion,
+                references = ordered,
+            )
+        }
 
-                if (TypeReferenceOrder.compare(previous, current) == 0) {
+        /**
+         * Defensive final scan for TypeReference equality/order coherence.
+         *
+         * FrozenSequenceSorter already rejects comparator-equal adjacent values.
+         *
+         * This scan is intentionally retained as a TypeReference-index-specific
+         * guard. It protects the coverage authority from future sorter changes,
+         * comparator changes, or TypeReference equality law changes.
+         */
+        private fun requireComparatorEqualityImpliesStructuralEquality(
+            imageId: FrozenMetamodelImageId,
+            ordered: Array<TypeReference>,
+        ) {
+            var index = 1
+
+            while (index < ordered.size) {
+                val previous = ordered[index - 1]
+                val current = ordered[index]
+
+                val comparison =
+                    FrozenTypeReferenceOrder.compare(
+                        left = previous,
+                        right = current,
+                    )
+
+                if (comparison == 0 && previous != current) {
                     throw FrozenMetamodelSequenceViolationException(
                         imageId = imageId,
                         sequenceTable = FrozenMetamodelImageTableId.TYPE_INDEX.name,
                         referenceSummary = current.renderSummary(),
-                        reason = "Duplicate or comparator-equal TypeReference in frozen type index.",
+                        reason = duplicateTypeReferenceReason(
+                            previous = previous,
+                            current = current,
+                            leftIndex = index - 1,
+                            rightIndex = index,
+                        ),
                     )
                 }
 
                 index += 1
             }
-
-            return ObjectArrayFrozenTypeReferenceIndex(
-                references = copied,
-            )
-        }
-    }
-}
-
-/**
- * Deterministic in-memory order for TypeReference values inside one frozen image.
- *
- * This is not canonical byte encoding.
- * This is not persistent ordering material.
- * This is not L2 cache key material.
- *
- * It exists only to assign deterministic image-local frozen type ordinals.
- */
-private object TypeReferenceOrder : Comparator<TypeReference> {
-    override fun compare(
-        left: TypeReference,
-        right: TypeReference,
-    ): Int {
-        compareString(left.id.value, right.id.value).ifNonZero { return it }
-        compareShapeSummary(left.id.shapeSummary, right.id.shapeSummary).ifNonZero { return it }
-        compareString(left.id.classifierId, right.id.classifierId).ifNonZero { return it }
-        compareString(left.id.classifierVersion, right.id.classifierVersion).ifNonZero { return it }
-
-        compareString(
-            left.id.ratificationFingerprint.algorithmId,
-            right.id.ratificationFingerprint.algorithmId,
-        ).ifNonZero { return it }
-
-        compareString(
-            left.id.ratificationFingerprint.algorithmVersion,
-            right.id.ratificationFingerprint.algorithmVersion,
-        ).ifNonZero { return it }
-
-        compareInt(
-            left.id.ratificationFingerprint.valueEncoding.protocolOrder,
-            right.id.ratificationFingerprint.valueEncoding.protocolOrder,
-        ).ifNonZero { return it }
-
-        compareString(
-            left.id.ratificationFingerprint.value,
-            right.id.ratificationFingerprint.value,
-        ).ifNonZero { return it }
-
-        compareString(left.cycleKey.value, right.cycleKey.value).ifNonZero { return it }
-        compareString(left.signature.value, right.signature.value).ifNonZero { return it }
-        compareInt(left.signature.schemaVersion, right.signature.schemaVersion).ifNonZero { return it }
-
-        compareAnnotations(left, right).ifNonZero { return it }
-
-        return compareInt(
-            left.typeNestingDepth,
-            right.typeNestingDepth,
-        )
-    }
-
-    private fun compareAnnotations(
-        left: TypeReference,
-        right: TypeReference,
-    ): Int {
-        compareInt(
-            left.useSiteAnnotations.size,
-            right.useSiteAnnotations.size,
-        ).ifNonZero { return it }
-
-        var index = 0
-        while (index < left.useSiteAnnotations.size) {
-            left.useSiteAnnotations[index]
-                .compareTo(right.useSiteAnnotations[index])
-                .ifNonZero { return it }
-
-            index += 1
         }
 
-        return 0
-    }
-
-    private fun compareShapeSummary(
-        left: TypeShapeSummary,
-        right: TypeShapeSummary,
-    ): Int {
-        compareInt(left.schemaVersion, right.schemaVersion).ifNonZero { return it }
-        compareInt(left.kind.protocolOrder, right.kind.protocolOrder).ifNonZero { return it }
-        compareInt(left.genericArity, right.genericArity).ifNonZero { return it }
-        compareInt(left.arrayRank, right.arrayRank).ifNonZero { return it }
-
-        compareInt(
-            left.atomicFamily?.protocolOrder ?: -1,
-            right.atomicFamily?.protocolOrder ?: -1,
-        ).ifNonZero { return it }
-
-        compareArrayComponentHint(
-            left.arrayComponentHint,
-            right.arrayComponentHint,
-        ).ifNonZero { return it }
-
-        return compareInt(
-            left.expansionSurface.protocolOrder,
-            right.expansionSurface.protocolOrder,
-        )
-    }
-
-    private fun compareArrayComponentHint(
-        left: ArrayComponentShapeHint?,
-        right: ArrayComponentShapeHint?,
-    ): Int {
-        if (left == null && right == null) return 0
-        if (left == null) return -1
-        if (right == null) return 1
-
-        compareBoolean(left.hasGenericComponent, right.hasGenericComponent).ifNonZero { return it }
-
-        compareInt(
-            left.componentGenericArityHint ?: -1,
-            right.componentGenericArityHint ?: -1,
-        ).ifNonZero { return it }
-
-        return compareInt(
-            left.componentShapeKindHint?.protocolOrder ?: -1,
-            right.componentShapeKindHint?.protocolOrder ?: -1,
-        )
-    }
-
-    private fun compareString(
-        left: String,
-        right: String,
-    ): Int =
-        MetamodelProtocolOrdering.compareUtf16CodeUnits(
-            left = left,
-            right = right,
-        )
-
-    private fun compareInt(
-        left: Int,
-        right: Int,
-    ): Int =
-        MetamodelProtocolOrdering.compareInt(
-            left = left,
-            right = right,
-        )
-
-    private fun compareBoolean(
-        left: Boolean,
-        right: Boolean,
-    ): Int =
-        MetamodelProtocolOrdering.compareBoolean(
-            left = left,
-            right = right,
-        )
-
-    private inline fun Int.ifNonZero(
-        block: (Int) -> Unit,
-    ) {
-        if (this != 0) {
-            block(this)
+        private fun duplicateTypeReferenceReason(
+            previous: TypeReference,
+            current: TypeReference,
+            leftIndex: Int,
+            rightIndex: Int,
+        ): String {
+            return "Duplicate or comparator-equal TypeReference during frozen type index publication: " +
+                    "leftIndex=$leftIndex, rightIndex=$rightIndex, " +
+                    "previous=${previous.renderSummary()}, " +
+                    "current=${current.renderSummary()}"
         }
     }
 }
