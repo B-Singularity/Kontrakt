@@ -27,7 +27,7 @@ import planning.domain.projection.SelectedConstructor
  * - no constructor parameters.
  *
  * In that case the core should complete the member-iteration frame immediately
- * or lower it to an empty composite plan according to the frame protocol.
+ * or lower it to an empty composite plan according to the frame order.
  */
 class CompositeExpansionPlan private constructor(
     val ownerTypeFqcn: String,
@@ -66,7 +66,7 @@ class CompositeExpansionPlan private constructor(
             if (selectedConstructor.ownerTypeFqcn != ownerTypeFqcn) {
                 throw PlanningExpansionException(
                     "CompositeExpansionPlan selectedConstructor owner mismatch: " +
-                        "expected=$ownerTypeFqcn, actual=${selectedConstructor.ownerTypeFqcn}",
+                            "expected=$ownerTypeFqcn, actual=${selectedConstructor.ownerTypeFqcn}",
                 )
             }
 

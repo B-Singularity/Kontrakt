@@ -50,7 +50,7 @@ import planning.domain.exception.TypeExpansionContractViolationException
  *
  * Ordering law:
  *
- * compareBySignature(...) compares signature.value using the metamodel protocol
+ * compareBySignature(...) compares signature.value using the metamodel order
  * UTF-16 code-unit ordering primitive.
  *
  * It does not use id as a tie-breaker. Same signature with incoherent identity
@@ -65,7 +65,7 @@ import planning.domain.exception.TypeExpansionContractViolationException
  * - canonical fingerprint;
  * - persisted identity;
  * - cache route key;
- * - cross-runtime protocol hash.
+ * - cross-runtime order hash.
  *
  * This object does not maintain a global hash cache. If semantic keys become a
  * measured hotspot, add a dedicated scope-local TypeReferenceSemanticKey or
@@ -134,7 +134,7 @@ internal object TypeReferenceIdentity {
      *
      *     signature.value
      *
-     * Do not persist this value and do not use it as a canonical protocol hash.
+     * Do not persist this value and do not use it as a canonical order hash.
      */
     fun semanticHash(
         reference: TypeReference,

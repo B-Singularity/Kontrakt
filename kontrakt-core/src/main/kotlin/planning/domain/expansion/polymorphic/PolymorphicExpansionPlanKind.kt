@@ -19,9 +19,9 @@ import planning.domain.exception.TypeExpansionContractViolationException
  * Protocol law:
  *
  * - protocolOrder is stable deterministic ordering material.
- * - protocolToken is stable textual protocol material.
+ * - protocolToken is stable textual order material.
  * - enum ordinal must never be used.
- * - unknown protocol material must not enter the domain.
+ * - unknown order material must not enter the domain.
  */
 enum class PolymorphicExpansionPlanKind(
     val protocolOrder: Int,
@@ -65,7 +65,7 @@ enum class PolymorphicExpansionPlanKind(
                 "dependency_selection" -> DEPENDENCY_SELECTION
                 "structural_member_selection" -> STRUCTURAL_MEMBER_SELECTION
                 else -> throw TypeExpansionContractViolationException(
-                    reason = "Unknown PolymorphicExpansionPlanKind protocol token.",
+                    reason = "Unknown PolymorphicExpansionPlanKind order token.",
                 )
             }
         }
@@ -89,7 +89,7 @@ enum class PolymorphicExpansionPlanKind(
                 20 -> DEPENDENCY_SELECTION
                 30 -> STRUCTURAL_MEMBER_SELECTION
                 else -> throw TypeExpansionContractViolationException(
-                    reason = "Unknown PolymorphicExpansionPlanKind protocol order.",
+                    reason = "Unknown PolymorphicExpansionPlanKind order order.",
                 )
             }
 
@@ -105,13 +105,13 @@ enum class PolymorphicExpansionPlanKind(
         private fun requireProtocolTokenSurface(protocolToken: String) {
             if (protocolToken.isEmpty()) {
                 throw TypeExpansionContractViolationException(
-                    reason = "PolymorphicExpansionPlanKind protocol token must not be empty.",
+                    reason = "PolymorphicExpansionPlanKind order token must not be empty.",
                 )
             }
 
             if (protocolToken.length > MAX_PROTOCOL_TOKEN_CHARS) {
                 throw TypeExpansionContractViolationException(
-                    reason = "PolymorphicExpansionPlanKind protocol token exceeds maximum allowed length.",
+                    reason = "PolymorphicExpansionPlanKind order token exceeds maximum allowed length.",
                 )
             }
 
@@ -120,12 +120,12 @@ enum class PolymorphicExpansionPlanKind(
                 val c = protocolToken[index]
                 val ok =
                     c in 'a'..'z' ||
-                        c in '0'..'9' ||
-                        c == '_'
+                            c in '0'..'9' ||
+                            c == '_'
 
                 if (!ok) {
                     throw TypeExpansionContractViolationException(
-                        reason = "PolymorphicExpansionPlanKind protocol token contains a non-canonical character at index=$index.",
+                        reason = "PolymorphicExpansionPlanKind order token contains a non-canonical character at index=$index.",
                     )
                 }
 

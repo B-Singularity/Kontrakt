@@ -11,7 +11,7 @@ import metamodel.domain.vo.TypeReference
  *
  * Accounting role:
  * - must report whether the facts came from a cache hit or actual resolution
- * - this distinction is part of protocol metering, not optional telemetry
+ * - this distinction is part of order metering, not optional telemetry
  */
 interface RawTypeFactsProvider {
     fun resolveRawFacts(reference: TypeReference): RawTypeFactsResolution

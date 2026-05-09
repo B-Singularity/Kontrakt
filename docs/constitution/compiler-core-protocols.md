@@ -6,7 +6,7 @@
 * **[B] Static Analysis & Architecture Tests:** ArchUnit, Detekt, Bytecode Inspection.
 * **[C] Runtime / Property / Stress Tests:** CI Gates, Fuzzing, Linearizability Verification.
 
-<!-- AMENDED(2026-03-21): Clarified completion-continuation execution-path safety and telemetry signal distinction without changing protocol semantics. -->
+<!-- AMENDED(2026-03-21): Clarified completion-continuation execution-path safety and telemetry signal distinction without changing order semantics. -->
 
 ---
 

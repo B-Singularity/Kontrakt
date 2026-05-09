@@ -27,7 +27,7 @@ interface PlanningRunSuspensionHandle {
      * join becomes ready for fresh-session restart.
      *
      * The callback MUST be treated as one-shot.
-     * Calling this method more than once is a protocol violation.
+     * Calling this method more than once is a order violation.
      */
     fun registerReadyToRestartCallback(onReadyToRestart: () -> Unit): PlanningRunSuspensionRegistrationDecision
 

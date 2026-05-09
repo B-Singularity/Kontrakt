@@ -10,7 +10,7 @@ import planning.domain.canonical.text.CanonicalTextLaw
  *
  * It must compare by value, not by reference, because cache, replay, and
  * interning boundaries use this tuple to decide whether canonical material is
- * comparable under the same protocol.
+ * comparable under the same order.
  */
 class CanonicalVersionTuple private constructor(
     val canonicalEncodingVersion: String,
@@ -34,11 +34,11 @@ class CanonicalVersionTuple private constructor(
         }
 
         return canonicalEncodingVersion == other.canonicalEncodingVersion &&
-            normalizationVersion == other.normalizationVersion &&
-            signatureSchemaVersion == other.signatureSchemaVersion &&
-            typeIdentityAlgorithmVersion == other.typeIdentityAlgorithmVersion &&
-            edgeOrderingVersion == other.edgeOrderingVersion &&
-            hashDerivationVersion == other.hashDerivationVersion
+                normalizationVersion == other.normalizationVersion &&
+                signatureSchemaVersion == other.signatureSchemaVersion &&
+                typeIdentityAlgorithmVersion == other.typeIdentityAlgorithmVersion &&
+                edgeOrderingVersion == other.edgeOrderingVersion &&
+                hashDerivationVersion == other.hashDerivationVersion
     }
 
     override fun hashCode(): Int {

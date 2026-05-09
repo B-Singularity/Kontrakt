@@ -110,11 +110,11 @@ class TypeIdentityCoherenceProof private constructor(
 
     fun renderSummary(): String =
         "TypeIdentityCoherenceProof(" +
-            "schemaVersion=$schemaVersion, " +
-            "factory=$factoryId@$factoryVersion, " +
-            "proofId=<redacted>, " +
-            "binding=${coveredBinding.renderSummary()}" +
-            ")"
+                "schemaVersion=$schemaVersion, " +
+                "factory=$factoryId@$factoryVersion, " +
+                "proofId=<redacted>, " +
+                "binding=${coveredBinding.renderSummary()}" +
+                ")"
 
     override fun toString(): String = renderSummary()
 
@@ -123,10 +123,10 @@ class TypeIdentityCoherenceProof private constructor(
         if (other !is TypeIdentityCoherenceProof) return false
 
         return proofId == other.proofId &&
-            factoryId == other.factoryId &&
-            factoryVersion == other.factoryVersion &&
-            coveredBinding == other.coveredBinding &&
-            schemaVersion == other.schemaVersion
+                factoryId == other.factoryId &&
+                factoryVersion == other.factoryVersion &&
+                coveredBinding == other.coveredBinding &&
+                schemaVersion == other.schemaVersion
     }
 
     override fun hashCode(): Int {
@@ -217,14 +217,14 @@ class TypeIdentityCoherenceProof private constructor(
             if (id.shapeSummary != signature.shapeSummary) {
                 throw MetamodelFactContractViolationException(
                     "TypeIdentityCoherenceProof cannot be issued for incoherent id/signature shape: " +
-                        "idShape=${id.shapeSummary}, signatureShape=${signature.shapeSummary}",
+                            "idShape=${id.shapeSummary}, signatureShape=${signature.shapeSummary}",
                 )
             }
 
             if (cycleKey.shapeSummary.kind != signature.shapeSummary.kind) {
                 throw MetamodelFactContractViolationException(
                     "TypeIdentityCoherenceProof cannot be issued for incoherent cycle/signature kind: " +
-                        "cycleShape=${cycleKey.shapeSummary}, signatureShape=${signature.shapeSummary}",
+                            "cycleShape=${cycleKey.shapeSummary}, signatureShape=${signature.shapeSummary}",
                 )
             }
         }
@@ -273,13 +273,13 @@ class TypeIdentityCoherenceProof private constructor(
                     '-',
                     '_',
                     '.',
-                    -> {
-                        // Already canonical-safe ASCII protocol material.
+                        -> {
+                        // Already canonical-safe ASCII order material.
                     }
 
                     else -> {
                         throw MetamodelFactContractViolationException(
-                            "$field contains a non-canonical protocol-id character.",
+                            "$field contains a non-canonical order-id character.",
                         )
                     }
                 }
@@ -331,7 +331,7 @@ class TypeIdentityCoherenceProof private constructor(
                 value.indexOf('\t') >= 0
             ) {
                 throw MetamodelFactContractViolationException(
-                    "$field contains a reserved protocol/control character.",
+                    "$field contains a reserved order/control character.",
                 )
             }
         }
@@ -404,10 +404,10 @@ private class TypeIdentityCoherenceBinding private constructor(
         if (ratificationFingerprint != id.ratificationFingerprint) {
             throw MetamodelFactContractViolationException(
                 "TypeIdentityCoherenceProof does not cover supplied TypeReference tuple: " +
-                    "field=ratificationFingerprint, " +
-                    "expected=${ratificationFingerprint.redacted()}, " +
-                    "actual=${id.ratificationFingerprint.redacted()}, " +
-                    "binding=${renderSummary()}",
+                        "field=ratificationFingerprint, " +
+                        "expected=${ratificationFingerprint.redacted()}, " +
+                        "actual=${id.ratificationFingerprint.redacted()}, " +
+                        "binding=${renderSummary()}",
             )
         }
 
@@ -468,10 +468,10 @@ private class TypeIdentityCoherenceBinding private constructor(
         if (annotationTable != useSiteAnnotations) {
             throw MetamodelFactContractViolationException(
                 "TypeIdentityCoherenceProof does not cover supplied TypeReference tuple: " +
-                    "field=annotationTable, " +
-                    "expected=${annotationTable.renderSummary()}, " +
-                    "actual=${useSiteAnnotations.renderSummary()}, " +
-                    "binding=${renderSummary()}",
+                        "field=annotationTable, " +
+                        "expected=${annotationTable.renderSummary()}, " +
+                        "actual=${useSiteAnnotations.renderSummary()}, " +
+                        "binding=${renderSummary()}",
             )
         }
 
@@ -491,36 +491,36 @@ private class TypeIdentityCoherenceBinding private constructor(
     ): Nothing =
         throw MetamodelFactContractViolationException(
             "TypeIdentityCoherenceProof does not cover supplied TypeReference tuple: " +
-                "field=$field, expected=$expected, actual=$actual, binding=${renderSummary()}",
+                    "field=$field, expected=$expected, actual=$actual, binding=${renderSummary()}",
         )
 
     fun renderSummary(): String =
         "TypeIdentityCoherenceBinding(" +
-            "type=$typeText, " +
-            "shape=${shapeSummary.kind.protocolToken}, " +
-            "signatureSchema=$signatureSchemaVersion, " +
-            "annotations=$annotationCount, " +
-            "annotationDepth=$annotationMaxNestingDepth, " +
-            "typeDepth=$typeNestingDepth" +
-            ")"
+                "type=$typeText, " +
+                "shape=${shapeSummary.kind.protocolToken}, " +
+                "signatureSchema=$signatureSchemaVersion, " +
+                "annotations=$annotationCount, " +
+                "annotationDepth=$annotationMaxNestingDepth, " +
+                "typeDepth=$typeNestingDepth" +
+                ")"
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is TypeIdentityCoherenceBinding) return false
 
         return typeText == other.typeText &&
-            shapeSummary == other.shapeSummary &&
-            classifierId == other.classifierId &&
-            classifierVersion == other.classifierVersion &&
-            ratificationFingerprint == other.ratificationFingerprint &&
-            cycleShapeKind == other.cycleShapeKind &&
-            signatureValue == other.signatureValue &&
-            signatureShapeSummary == other.signatureShapeSummary &&
-            signatureSchemaVersion == other.signatureSchemaVersion &&
-            annotationCount == other.annotationCount &&
-            annotationMaxNestingDepth == other.annotationMaxNestingDepth &&
-            annotationTable == other.annotationTable &&
-            typeNestingDepth == other.typeNestingDepth
+                shapeSummary == other.shapeSummary &&
+                classifierId == other.classifierId &&
+                classifierVersion == other.classifierVersion &&
+                ratificationFingerprint == other.ratificationFingerprint &&
+                cycleShapeKind == other.cycleShapeKind &&
+                signatureValue == other.signatureValue &&
+                signatureShapeSummary == other.signatureShapeSummary &&
+                signatureSchemaVersion == other.signatureSchemaVersion &&
+                annotationCount == other.annotationCount &&
+                annotationMaxNestingDepth == other.annotationMaxNestingDepth &&
+                annotationTable == other.annotationTable &&
+                typeNestingDepth == other.typeNestingDepth
     }
 
     override fun hashCode(): Int {

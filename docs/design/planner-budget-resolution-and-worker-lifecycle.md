@@ -11,7 +11,7 @@ without changing previously accepted runtime-policy semantics. -->
 <!-- AMENDED(2026-03-21): Corrected policy snapshot reference shapes to remove data-class / copy()-backdoor examples
 for the policy snapshot family, and removed require()-style validation from illustrative runtime-policy registry code. -->
 <!-- AMENDED(2026-03-21): Clarified request-bounded restart semantics for joined waiters, explicit boundary-orchestrated
-fresh-session restart, slot-owned speculative leases, and wall-clock separation from protocol fuel / waiter-local join
+fresh-session restart, slot-owned speculative leases, and wall-clock separation from order fuel / waiter-local join
 governance. -->
 
 <!-- AMENDED(2026-03-30): Added explicit planning-run continuity terminology (`PlanningRunEpoch`),

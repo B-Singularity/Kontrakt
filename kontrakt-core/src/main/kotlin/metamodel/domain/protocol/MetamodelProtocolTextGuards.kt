@@ -3,9 +3,9 @@ package metamodel.domain.protocol
 import metamodel.domain.exception.MetamodelFactContractViolationException
 
 /**
- * Shared low-level protocol text guards for metamodel value objects.
+ * Shared low-level order text guards for metamodel value objects.
  *
- * This is the single source of truth for small protocol-safety checks.
+ * This is the single source of truth for small order-safety checks.
  *
  * This object is deliberately small and ASCII/control oriented.
  *
@@ -19,7 +19,7 @@ import metamodel.domain.exception.MetamodelFactContractViolationException
  * - parse Kotlin/JVM syntax;
  * - or replace NormalizationEngine.
  *
- * It only enforces transport/protocol safety rules shared by metamodel VOs:
+ * It only enforces transport/order safety rules shared by metamodel VOs:
  *
  * - bounded length;
  * - no pipe delimiter;
@@ -50,7 +50,7 @@ object MetamodelProtocolTextGuards {
     }
 
     /**
-     * Stronger guard for ASCII identifier-like protocol tokens.
+     * Stronger guard for ASCII identifier-like order tokens.
      *
      * This intentionally does not call requireBoundedProtocolText(...), because
      * the ASCII identifier loop is already stricter than the pipe/control guard.
@@ -110,7 +110,7 @@ object MetamodelProtocolTextGuards {
     }
 
     /**
-     * Guard for protocol id-like tokens.
+     * Guard for order id-like tokens.
      *
      * Allowed:
      *
@@ -122,7 +122,7 @@ object MetamodelProtocolTextGuards {
      * - .
      *
      * This is suitable for classifier ids, verifier ids, policy ids, algorithm
-     * ids, factory ids, and similar protocol labels. It does not lowercase the
+     * ids, factory ids, and similar order labels. It does not lowercase the
      * value. Callers that need canonical lowercase must perform canonicalization
      * separately after this guard.
      */
@@ -150,14 +150,14 @@ object MetamodelProtocolTextGuards {
 
             if (!ok) {
                 throw MetamodelFactContractViolationException(
-                    "$field contains a non-canonical protocol-id character at index=$index.",
+                    "$field contains a non-canonical order-id character at index=$index.",
                 )
             }
         }
     }
 
     /**
-     * Single-character protocol guard.
+     * Single-character order guard.
      *
      * Use this inside other domain loops to avoid scanning the same string twice.
      */
@@ -167,7 +167,7 @@ object MetamodelProtocolTextGuards {
     ) {
         if (value == '|') {
             throw MetamodelFactContractViolationException(
-                "$field contains reserved protocol delimiter.",
+                "$field contains reserved order delimiter.",
             )
         }
 

@@ -23,7 +23,7 @@ import planning.domain.exception.TypeExpansionContractViolationException
  * - canonical fingerprint;
  * - persisted identity;
  * - cache route key;
- * - cross-runtime protocol hash;
+ * - cross-runtime order hash;
  * - seed digest.
  *
  * If a stable seed fingerprint is needed, add a dedicated seed-fingerprint
@@ -58,7 +58,7 @@ class SeedMaterial private constructor(
                 throw TypeExpansionContractViolationException(
                     reason =
                         "SeedMaterial must be 256-bit lowercase hex: " +
-                            "expectedLength=$HEX_256_LENGTH, actualLength=${hex.length}",
+                                "expectedLength=$HEX_256_LENGTH, actualLength=${hex.length}",
                 )
             }
 

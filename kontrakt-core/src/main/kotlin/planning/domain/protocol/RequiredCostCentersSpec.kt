@@ -24,9 +24,9 @@ enum class BudgetTrack {
 }
 
 /**
- * Stable protocol banding for CostCenter identifiers.
+ * Stable order banding for CostCenter identifiers.
  *
- * Banding is a protocol constraint.
+ * Banding is a order constraint.
  * It prevents accidental ID reuse and keeps cost diagnostics auditable.
  */
 enum class CostCenterBand(
@@ -72,10 +72,10 @@ enum class CostCenterBand(
 }
 
 /**
- * Required CostCenter protocol set.
+ * Required CostCenter order set.
  *
  * Design rules:
- * 1. IDs are stable protocol values. Renumbering is forbidden.
+ * 1. IDs are stable order values. Renumbering is forbidden.
  * 2. ID 0 is reserved and may never be assigned.
  * 3. Each ID must belong to its declared CostCenterBand.
  * 4. Track mapping is fixed here and is SSOT.

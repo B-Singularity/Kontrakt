@@ -74,7 +74,7 @@ internal class DiscoveryTaxonomy {
         cause: Throwable,
     ): Nothing =
         throw RuntimeIntegrityException(
-            "Internal protocol violation during discovery (bug). Invalid Class Name: '$name'",
+            "Internal order violation during discovery (bug). Invalid Class Name: '$name'",
             cause,
         )
 }

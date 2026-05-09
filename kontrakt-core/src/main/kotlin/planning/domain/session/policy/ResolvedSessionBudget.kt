@@ -15,7 +15,7 @@ import planning.domain.exception.PlanningProtocolIntegrityException
  * - Does NOT perform structural feasibility checks; those belong to the capacity solver.
  *
  * ADR alignment:
- * - ADR-0032: policy/protocol separation, resolved budget outside core.
+ * - ADR-0032: policy/order separation, resolved budget outside core.
  * - ADR-0033: snapshot family integrity, explicit bootstrap constants.
  */
 class ResolvedSessionBudget private constructor(

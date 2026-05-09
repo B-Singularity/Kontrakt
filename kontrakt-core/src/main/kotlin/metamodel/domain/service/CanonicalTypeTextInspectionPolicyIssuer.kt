@@ -20,7 +20,7 @@ import metamodel.domain.vo.CanonicalTypeTextInspectionPolicy
  * - runtime profile selection.
  *
  * The caller chooses policy numbers at a stable governance boundary.
- * This service derives the protocol fingerprint through an outbound port and
+ * This service derives the order fingerprint through an outbound port and
  * returns an immutable policy value object.
  */
 class CanonicalTypeTextInspectionPolicyIssuer(
@@ -48,12 +48,12 @@ class CanonicalTypeTextInspectionPolicyIssuer(
                 "maxIdentifierTokenCodePoints" to maxIdentifierTokenCodePoints.toString(),
                 "maxDelimiterCodePoints" to maxDelimiterCodePoints.toString(),
                 "maxNonIdentifierCodePointRatioBasisPoints" to
-                    maxNonIdentifierCodePointRatioBasisPoints.toString(),
+                        maxNonIdentifierCodePointRatioBasisPoints.toString(),
                 "maxGrossCombiningMarks" to maxGrossCombiningMarks.toString(),
                 "maxCombiningMarksPerIdentifierToken" to
-                    maxCombiningMarksPerIdentifierToken.toString(),
+                        maxCombiningMarksPerIdentifierToken.toString(),
                 "maxGraphemeClustersPerIdentifierToken" to
-                    maxGraphemeClustersPerIdentifierToken.toString(),
+                        maxGraphemeClustersPerIdentifierToken.toString(),
                 "scriptPolicyToken" to scriptPolicyToken,
             )
 

@@ -35,7 +35,7 @@ class L1Structures private constructor(
          * Sentinel values for hot-path arrays.
          *
          * `INF_RANK = -1L` is used as unsigned +INF.
-         * This relies on the protocol rule that a valid canonical edge rank must never use
+         * This relies on the order rule that a valid canonical edge rank must never use
          * the all-ones bit pattern reserved for the sentinel.
          */
         private const val NO_STAGE_TAG: Byte = 0
@@ -88,7 +88,7 @@ class L1Structures private constructor(
          *
          * Rationale:
          * - ADR-level capacity rules treat impossible `nextPowerOfTwo(...)` derivation as a
-         *   protocol/sizing failure, not as best-effort behavior.
+         *   order/sizing failure, not as best-effort behavior.
          * - RMQ backing arrays must stay in valid positive Int ranges.
          */
         @JvmStatic

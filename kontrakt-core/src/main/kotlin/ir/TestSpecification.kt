@@ -10,7 +10,7 @@ import ir.structure.DeterministicList
 import ir.structure.DeterministicMap
 
 /**
- * Immutable protocol representation of a test specification.
+ * Immutable order representation of a test specification.
  *
  * This is not:
  *
@@ -24,15 +24,15 @@ import ir.structure.DeterministicMap
  *
  * - deterministic containers only;
  * - strict key coherence;
- * - current protocol allows exactly one TestMode;
+ * - current order allows exactly one TestMode;
  * - metadata size/value limits are enforced at the factory boundary.
  *
  * Mode layout law:
  *
  * TestSpecification intentionally stores modes as DeterministicList<TestMode>,
- * even though the current protocol requires exactly one mode.
+ * even though the current order requires exactly one mode.
  *
- * The list-shaped layout preserves forward compatibility for a later protocol
+ * The list-shaped layout preserves forward compatibility for a later order
  * amendment where a specification may carry a deterministic combination of
  * modes.
  *
@@ -86,7 +86,7 @@ class TestSpecification private constructor(
 
         if (modes.size != CURRENT_MODE_COUNT) {
             throw IrProtocolViolationException(
-                "Exactly one TestMode required by the current TestSpecification protocol.",
+                "Exactly one TestMode required by the current TestSpecification order.",
             )
         }
     }
@@ -95,7 +95,7 @@ class TestSpecification private constructor(
      * Current single-mode view.
      *
      * Downstream execution, planning, and reporting code should consume this
-     * property rather than manually indexing modes while the protocol remains
+     * property rather than manually indexing modes while the order remains
      * single-mode.
      */
     val mode: TestMode
@@ -136,13 +136,13 @@ class TestSpecification private constructor(
         private const val CURRENT_MODE_COUNT: Int = 1
 
         /**
-         * Issues a TestSpecification after enforcing protocol invariants and
+         * Issues a TestSpecification after enforcing order invariants and
          * deterministic container normalization.
          *
          * Notes:
          *
-         * - The modes container is retained for future-compatible protocol layout.
-         * - The current protocol still requires exactly one TestMode.
+         * - The modes container is retained for future-compatible order layout.
+         * - The current order still requires exactly one TestMode.
          * - Duplicate modes still count as multiple modes at this boundary.
          * - Containers are normalized into DeterministicList/DeterministicMap.
          */
@@ -155,7 +155,7 @@ class TestSpecification private constructor(
         ): TestSpecification {
             if (modes.size != CURRENT_MODE_COUNT) {
                 throw IrProtocolViolationException(
-                    "Exactly one TestMode required by the current TestSpecification protocol " +
+                    "Exactly one TestMode required by the current TestSpecification order " +
                             "(got ${modes.size}).",
                 )
             }

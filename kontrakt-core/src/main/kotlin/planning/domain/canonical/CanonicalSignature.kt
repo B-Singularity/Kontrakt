@@ -30,7 +30,7 @@ class CanonicalSignature private constructor(
     /**
      * Exact byte comparison after mandatory version compatibility check.
      *
-     * Version mismatch is a protocol failure, not a simple false result.
+     * Version mismatch is a order failure, not a simple false result.
      */
     fun exactBytesEqual(other: CanonicalSignature): Boolean {
         requireSameVersionAs(other)
@@ -52,10 +52,10 @@ class CanonicalSignature private constructor(
      * This intentionally does not throw on version mismatch.
      *
      * Kotlin/JVM collection equality and hashing APIs are not exception-safe
-     * protocol comparison APIs. Therefore:
+     * order comparison APIs. Therefore:
      *
      * - equals/hashCode provide value-object behavior;
-     * - exactBytesEqual(...) provides protocol-gated semantic comparison;
+     * - exactBytesEqual(...) provides order-gated semantic comparison;
      * - cache/interner exact-match paths should call exactBytesEqual(...), not
      *   rely only on generic equals(...).
      */
@@ -69,7 +69,7 @@ class CanonicalSignature private constructor(
         }
 
         return versionTuple == other.versionTuple &&
-            bytes.contentEquals(other.bytes)
+                bytes.contentEquals(other.bytes)
     }
 
     override fun hashCode(): Int {

@@ -69,8 +69,8 @@ class CanonicalTypeId private constructor(
         if (classifierId != expectedClassifierId || classifierVersion != expectedClassifierVersion) {
             throw MetamodelFactContractViolationException(
                 "CanonicalTypeId classifier mismatch: " +
-                    "expected=$expectedClassifierId@$expectedClassifierVersion, " +
-                    "actual=$classifierId@$classifierVersion, value=$value",
+                        "expected=$expectedClassifierId@$expectedClassifierVersion, " +
+                        "actual=$classifierId@$classifierVersion, value=$value",
             )
         }
     }
@@ -80,7 +80,7 @@ class CanonicalTypeId private constructor(
      *
      * classifierVersion should normally include the classifier's semantic law,
      * but fingerprint algorithm law is still checked independently because
-     * digest/HMAC protocol changes may evolve separately from classifier logic.
+     * digest/HMAC order changes may evolve separately from classifier logic.
      */
     fun requireRatificationAlgorithm(
         expectedAlgorithmId: String,
@@ -92,9 +92,9 @@ class CanonicalTypeId private constructor(
         ) {
             throw MetamodelFactContractViolationException(
                 "CanonicalTypeId ratification algorithm mismatch: " +
-                    "expected=$expectedAlgorithmId@$expectedAlgorithmVersion, " +
-                    "actual=${ratificationFingerprint.algorithmId}@${ratificationFingerprint.algorithmVersion}, " +
-                    "value=$value",
+                        "expected=$expectedAlgorithmId@$expectedAlgorithmVersion, " +
+                        "actual=${ratificationFingerprint.algorithmId}@${ratificationFingerprint.algorithmVersion}, " +
+                        "value=$value",
             )
         }
     }
@@ -104,10 +104,10 @@ class CanonicalTypeId private constructor(
         if (other !is CanonicalTypeId) return false
 
         return text == other.text &&
-            shapeSummary == other.shapeSummary &&
-            classifierId == other.classifierId &&
-            classifierVersion == other.classifierVersion &&
-            ratificationFingerprint == other.ratificationFingerprint
+                shapeSummary == other.shapeSummary &&
+                classifierId == other.classifierId &&
+                classifierVersion == other.classifierVersion &&
+                ratificationFingerprint == other.ratificationFingerprint
     }
 
     override fun hashCode(): Int {

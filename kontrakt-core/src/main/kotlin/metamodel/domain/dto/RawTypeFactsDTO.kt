@@ -70,7 +70,7 @@ import metamodel.domain.structure.MetamodelFactSequence
  *
  * Ordering law:
  *
- * Ordering is deterministic and protocol-defined. It must not depend on
+ * Ordering is deterministic and order-defined. It must not depend on
  * reflection enumeration order, enum ordinal, JVM identity hash, locale, or
  * String.compareTo as an implicit domain law.
  *
@@ -335,7 +335,7 @@ class RawTypeFactsDTO private constructor(
                 throw InvalidTypeFactShapeException(
                     owner = owner,
                     factKind = "RawTypeFactsDTO",
-                    reason = "$field exceeds protocol cap=$maxChars.",
+                    reason = "$field exceeds order cap=$maxChars.",
                 )
             }
 
@@ -347,7 +347,7 @@ class RawTypeFactsDTO private constructor(
                     throw InvalidTypeFactShapeException(
                         owner = owner,
                         factKind = "RawTypeFactsDTO",
-                        reason = "$field contains reserved protocol/control material at index=$index.",
+                        reason = "$field contains reserved order/control material at index=$index.",
                     )
                 }
 
@@ -372,7 +372,7 @@ class RawTypeFactsDTO private constructor(
                 throw InvalidTypeFactShapeException(
                     owner = ownerTypeFqcn,
                     factKind = "RawTypeFactsDTO",
-                    reason = "Constructor count exceeds protocol cap=$MAX_TOTAL_CONSTRUCTORS: ${constructors.size}",
+                    reason = "Constructor count exceeds order cap=$MAX_TOTAL_CONSTRUCTORS: ${constructors.size}",
                 )
             }
 
@@ -380,7 +380,7 @@ class RawTypeFactsDTO private constructor(
                 throw InvalidTypeFactShapeException(
                     owner = ownerTypeFqcn,
                     factKind = "RawTypeFactsDTO",
-                    reason = "Property count exceeds protocol cap=$MAX_TOTAL_PROPERTIES: ${properties.size}",
+                    reason = "Property count exceeds order cap=$MAX_TOTAL_PROPERTIES: ${properties.size}",
                 )
             }
         }

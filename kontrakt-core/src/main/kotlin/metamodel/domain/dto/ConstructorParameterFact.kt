@@ -198,7 +198,7 @@ class ConstructorParameterFact private constructor(
                 throw InvalidTypeFactShapeException(
                     owner = owner,
                     factKind = "ConstructorParameterFact",
-                    reason = "$field exceeds protocol cap=$maxChars.",
+                    reason = "$field exceeds order cap=$maxChars.",
                 )
             }
 
@@ -210,7 +210,7 @@ class ConstructorParameterFact private constructor(
                     throw InvalidTypeFactShapeException(
                         owner = owner,
                         factKind = "ConstructorParameterFact",
-                        reason = "$field contains reserved protocol/control material at index=$index.",
+                        reason = "$field contains reserved order/control material at index=$index.",
                     )
                 }
 
@@ -242,7 +242,7 @@ class ConstructorParameterFact private constructor(
                 throw InvalidTypeFactShapeException(
                     owner = ownerTypeFqcn,
                     factKind = "ConstructorParameterFact",
-                    reason = "parameterIndex exceeds protocol cap=$MAX_PARAMETER_INDEX: $parameterIndex",
+                    reason = "parameterIndex exceeds order cap=$MAX_PARAMETER_INDEX: $parameterIndex",
                 )
             }
         }

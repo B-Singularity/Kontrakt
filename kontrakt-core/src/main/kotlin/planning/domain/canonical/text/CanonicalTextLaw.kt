@@ -9,7 +9,7 @@ import java.text.Normalizer
  * This object is a law/helper, not canonical material.
  *
  * Responsibilities:
- * - verify that text entering canonical/protocol values is already normalized;
+ * - verify that text entering canonical/order values is already normalized;
  * - provide Kontrakt-owned string / identifier comparison semantics;
  * - avoid direct dependence on locale collation;
  * - keep byte encoding separate from semantic ordering.

@@ -11,7 +11,7 @@ import java.nio.charset.StandardCharsets
  * This is a temporary V1 bridge, not the final canonical byte-encoding law.
  *
  * Do not add custom UTF-8 validation or byte-layout code here. The canonical
- * byte-encoding phase must introduce a dedicated law/protocol with golden
+ * byte-encoding phase must introduce a dedicated law/order with golden
  * vectors.
  */
 class DefaultReflectionCycleSignatureProvider private constructor() :

@@ -1,7 +1,7 @@
 package ir
 
 /**
- * Global hard limits for the IR protocol.
+ * Global hard limits for the IR order.
  *
  * Design intent:
  * - Single Source of Truth (SSOT) for all inbound validation and DoS defense.

@@ -70,7 +70,7 @@ import planning.domain.exception.TypeExpansionContractViolationException
  *
  * - non-empty;
  * - length-bounded;
- * - free of reserved protocol delimiter '|';
+ * - free of reserved order delimiter '|';
  * - free of C0/C1 control characters;
  * - free of ASCII whitespace.
  *
@@ -112,8 +112,8 @@ import planning.domain.exception.TypeExpansionContractViolationException
  * - HID digest;
  * - persisted identity;
  * - cache route key;
- * - cross-runtime protocol hash;
- * - serialized protocol digest.
+ * - cross-runtime order hash;
+ * - serialized order digest.
  */
 class LocalSelectorTuple private constructor(
     val label: LocalSelectorLabel,
@@ -248,7 +248,7 @@ class LocalSelectorTuple private constructor(
 
             if (semanticMemberIdentity.length > MAX_SEMANTIC_MEMBER_IDENTITY_CHARS) {
                 throw TypeExpansionContractViolationException(
-                    reason = "LocalSelectorTuple.semanticMemberIdentity exceeds protocol cap=" +
+                    reason = "LocalSelectorTuple.semanticMemberIdentity exceeds order cap=" +
                             "$MAX_SEMANTIC_MEMBER_IDENTITY_CHARS.",
                 )
             }
@@ -260,7 +260,7 @@ class LocalSelectorTuple private constructor(
                 if (MetamodelProtocolTextGuards.isReservedProtocolOrControl(c)) {
                     throw TypeExpansionContractViolationException(
                         reason = "LocalSelectorTuple.semanticMemberIdentity contains " +
-                                "reserved protocol/control material at index=$index.",
+                                "reserved order/control material at index=$index.",
                     )
                 }
 

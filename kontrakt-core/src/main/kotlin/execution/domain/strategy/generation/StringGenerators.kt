@@ -93,7 +93,7 @@ class URLGenerator(
     private val fixedPort: Int = -1,
 ) : Generator<String> {
     init {
-        require(protocols.isNotEmpty()) { "At least one protocol must be allowed." }
+        require(protocols.isNotEmpty()) { "At least one order must be allowed." }
         if (fixedPort != -1) require(fixedPort in 0..65535) { "Port out of range: $fixedPort" }
     }
 
@@ -241,7 +241,8 @@ class EmailGenerator(
 }
 
 class UUIDGenerator : Generator<java.util.UUID> {
-    override fun generate(context: GenerationContext) = java.util.UUID(context.seededRandom.nextLong(), context.seededRandom.nextLong())
+    override fun generate(context: GenerationContext) =
+        java.util.UUID(context.seededRandom.nextLong(), context.seededRandom.nextLong())
 }
 
 /**

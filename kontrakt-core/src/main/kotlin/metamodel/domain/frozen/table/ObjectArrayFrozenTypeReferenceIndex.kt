@@ -1,6 +1,7 @@
 package metamodel.domain.frozen.table
 
 import metamodel.domain.exception.FrozenMetamodelSequenceViolationException
+import metamodel.domain.frozen.order.FrozenTypeReferenceOrder
 import metamodel.domain.protocol.MetamodelProtocolOrdering
 import metamodel.domain.vo.ArrayComponentShapeHint
 import metamodel.domain.vo.TypeReference
@@ -27,7 +28,7 @@ import java.util.Arrays
  * Construction law:
  *
  * Input order is non-authoritative. The factory defensively copies, sorts by
- * Kontrakt metamodel protocol order, and rejects comparator-equal duplicates.
+ * Kontrakt metamodel order order, and rejects comparator-equal duplicates.
  */
 class ObjectArrayFrozenTypeReferenceIndex private constructor(
     private val references: Array<TypeReference>,
@@ -45,7 +46,7 @@ class ObjectArrayFrozenTypeReferenceIndex private constructor(
             val mid = (low + high) ushr 1
             val candidate = references[mid]
             val comparison =
-                TypeReferenceOrder.compare(
+                FrozenTypeReferenceOrder.compare(
                     left = candidate,
                     right = reference,
                 )
@@ -83,7 +84,7 @@ class ObjectArrayFrozenTypeReferenceIndex private constructor(
 
             Arrays.sort(
                 copied,
-                TypeReferenceOrder,
+                FrozenTypeReferenceOrder,
             )
 
             var index = 1

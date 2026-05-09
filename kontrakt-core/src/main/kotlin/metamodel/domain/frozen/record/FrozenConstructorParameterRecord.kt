@@ -40,7 +40,7 @@ import metamodel.domain.vo.TypeReference
  * Name lowering law:
  *
  * [parameterName] is still required to be deterministic, sanitized,
- * backend-neutral protocol material.
+ * backend-neutral order material.
  *
  * It must not be arbitrary backend text.
  *
@@ -145,7 +145,7 @@ import metamodel.domain.vo.TypeReference
  * - route key;
  * - L1/L2 partition key;
  * - PlanCacheKey material;
- * - cross-runtime protocol digest.
+ * - cross-runtime order digest.
  *
  * The later BLAKE3 / metadata-hash refactoring may replace this hashCode
  * strategy globally. Do not introduce a local hash family in this record.
@@ -224,7 +224,7 @@ class FrozenConstructorParameterRecord private constructor(
         /**
          * Validates the transitional constructor parameter name.
          *
-         * This intentionally delegates to the shared metamodel protocol-token
+         * This intentionally delegates to the shared metamodel order-token
          * guard instead of using a local isNotEmpty() check.
          *
          * Do not replace this with IllegalArgumentException.
@@ -246,7 +246,7 @@ class FrozenConstructorParameterRecord private constructor(
          * later BLAKE3 / metadata-hash refactoring replaces hash policy
          * globally.
          *
-         * Do not treat this value as protocol material.
+         * Do not treat this value as order material.
          */
         private fun computeHashCode(
             key: FrozenConstructorParameterRecordKey,

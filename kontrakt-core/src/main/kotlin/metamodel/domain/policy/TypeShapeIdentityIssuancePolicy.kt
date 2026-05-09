@@ -29,7 +29,7 @@ import metamodel.domain.vo.TypeShapeRatificationFingerprint
  *
  * Identifier canonicalization law:
  *
- * activeClassifierId is canonicalized to lowercase ASCII protocol form at issue
+ * activeClassifierId is canonicalized to lowercase ASCII order form at issue
  * time. requireAllowsClassifier(...) also canonicalizes incoming classifierId
  * before comparison.
  *
@@ -37,7 +37,7 @@ import metamodel.domain.vo.TypeShapeRatificationFingerprint
  *
  * Algorithm-id law:
  *
- * expectedRatificationAlgorithmId is canonicalized to lowercase ASCII protocol
+ * expectedRatificationAlgorithmId is canonicalized to lowercase ASCII order
  * form at issue time. This must match TypeShapeRatificationFingerprint's
  * algorithm-id canonicalization law.
  *
@@ -45,7 +45,7 @@ import metamodel.domain.vo.TypeShapeRatificationFingerprint
  *
  * activeClassifierVersion, policyVersion, and
  * expectedRatificationAlgorithmVersion are not silently normalized. They are
- * protocol law versions and must be supplied exactly.
+ * order law versions and must be supplied exactly.
  *
  * Resource law:
  *
@@ -88,8 +88,8 @@ class TypeShapeIdentityIssuancePolicy private constructor(
         ) {
             throw MetamodelFactContractViolationException(
                 "TypeShapeIdentityIssuancePolicy rejected classifier law: " +
-                    "expected=$activeClassifierId@$activeClassifierVersion, " +
-                    "actual=$canonicalClassifierId@$classifierVersion",
+                        "expected=$activeClassifierId@$activeClassifierVersion, " +
+                        "actual=$canonicalClassifierId@$classifierVersion",
             )
         }
     }
@@ -103,8 +103,8 @@ class TypeShapeIdentityIssuancePolicy private constructor(
         if (ratificationFingerprint.valueEncoding != expectedFingerprintEncoding) {
             throw MetamodelFactContractViolationException(
                 "TypeShapeIdentityIssuancePolicy rejected fingerprint encoding: " +
-                    "expected=${expectedFingerprintEncoding.protocolToken}, " +
-                    "actual=${ratificationFingerprint.valueEncoding.protocolToken}",
+                        "expected=${expectedFingerprintEncoding.protocolToken}, " +
+                        "actual=${ratificationFingerprint.valueEncoding.protocolToken}",
             )
         }
     }
@@ -134,27 +134,27 @@ class TypeShapeIdentityIssuancePolicy private constructor(
         ) {
             throw MetamodelFactContractViolationException(
                 "TypeShapeRatificationVerifier algorithm law does not match active issuance policy: " +
-                    "policy=$expectedRatificationAlgorithmId@$expectedRatificationAlgorithmVersion, " +
-                    "verifier=$verifierAlgorithmId@${verifier.expectedFingerprintAlgorithmVersion}",
+                        "policy=$expectedRatificationAlgorithmId@$expectedRatificationAlgorithmVersion, " +
+                        "verifier=$verifierAlgorithmId@${verifier.expectedFingerprintAlgorithmVersion}",
             )
         }
 
         if (verifier.expectedFingerprintValueEncoding != expectedFingerprintEncoding) {
             throw MetamodelFactContractViolationException(
                 "TypeShapeRatificationVerifier fingerprint encoding does not match active issuance policy: " +
-                    "policy=${expectedFingerprintEncoding.protocolToken}, " +
-                    "verifier=${verifier.expectedFingerprintValueEncoding.protocolToken}",
+                        "policy=${expectedFingerprintEncoding.protocolToken}, " +
+                        "verifier=${verifier.expectedFingerprintValueEncoding.protocolToken}",
             )
         }
     }
 
     fun renderSummary(): String =
         "TypeShapeIdentityIssuancePolicy(" +
-            "policy=$policyId@$policyVersion, " +
-            "classifier=$activeClassifierId@$activeClassifierVersion, " +
-            "fingerprintLaw=$expectedRatificationAlgorithmId@$expectedRatificationAlgorithmVersion, " +
-            "encoding=${expectedFingerprintEncoding.protocolToken}" +
-            ")"
+                "policy=$policyId@$policyVersion, " +
+                "classifier=$activeClassifierId@$activeClassifierVersion, " +
+                "fingerprintLaw=$expectedRatificationAlgorithmId@$expectedRatificationAlgorithmVersion, " +
+                "encoding=${expectedFingerprintEncoding.protocolToken}" +
+                ")"
 
     override fun toString(): String = renderSummary()
 
@@ -163,12 +163,12 @@ class TypeShapeIdentityIssuancePolicy private constructor(
         if (other !is TypeShapeIdentityIssuancePolicy) return false
 
         return policyId == other.policyId &&
-            policyVersion == other.policyVersion &&
-            activeClassifierId == other.activeClassifierId &&
-            activeClassifierVersion == other.activeClassifierVersion &&
-            expectedRatificationAlgorithmId == other.expectedRatificationAlgorithmId &&
-            expectedRatificationAlgorithmVersion == other.expectedRatificationAlgorithmVersion &&
-            expectedFingerprintEncoding == other.expectedFingerprintEncoding
+                policyVersion == other.policyVersion &&
+                activeClassifierId == other.activeClassifierId &&
+                activeClassifierVersion == other.activeClassifierVersion &&
+                expectedRatificationAlgorithmId == other.expectedRatificationAlgorithmId &&
+                expectedRatificationAlgorithmVersion == other.expectedRatificationAlgorithmVersion &&
+                expectedFingerprintEncoding == other.expectedFingerprintEncoding
     }
 
     override fun hashCode(): Int {
@@ -227,7 +227,7 @@ class TypeShapeIdentityIssuancePolicy private constructor(
         }
 
         /**
-         * Canonicalizes classifier-like protocol ids.
+         * Canonicalizes classifier-like order ids.
          *
          * This must stay aligned with TypeShapeRatification's classifierId and
          * verifierId canonicalization law.
@@ -256,13 +256,13 @@ class TypeShapeIdentityIssuancePolicy private constructor(
                     '-',
                     '_',
                     '.',
-                    -> {
-                        // Already canonical-safe ASCII protocol material.
+                        -> {
+                        // Already canonical-safe ASCII order material.
                     }
 
                     else -> {
                         throw MetamodelFactContractViolationException(
-                            "$field contains a non-canonical protocol-id character.",
+                            "$field contains a non-canonical order-id character.",
                         )
                     }
                 }
@@ -319,7 +319,7 @@ class TypeShapeIdentityIssuancePolicy private constructor(
                     '-',
                     '_',
                     '.',
-                    -> {
+                        -> {
                         // Already canonical-safe ASCII algorithm material.
                     }
 
@@ -376,7 +376,7 @@ class TypeShapeIdentityIssuancePolicy private constructor(
                 value.indexOf('\t') >= 0
             ) {
                 throw MetamodelFactContractViolationException(
-                    "$field contains a reserved protocol/control character.",
+                    "$field contains a reserved order/control character.",
                 )
             }
         }

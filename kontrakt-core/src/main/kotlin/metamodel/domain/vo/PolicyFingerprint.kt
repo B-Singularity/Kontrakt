@@ -15,7 +15,7 @@ import metamodel.domain.protocol.CanonicalTextPolicyFingerprintSpec
  * - a reflection/KSP artifact;
  * - or an adapter implementation detail.
  *
- * It is a protocol-governed proof token that says:
+ * It is a order-governed proof token that says:
  *
  *   "These policy fields were fingerprinted under this algorithm law."
  *
@@ -34,22 +34,22 @@ class PolicyFingerprint private constructor(
         if (algorithmId != CanonicalTextPolicyFingerprintSpec.ALGORITHM_ID) {
             throw MetamodelFactContractViolationException(
                 "PolicyFingerprint algorithm mismatch: " +
-                    "expected=${CanonicalTextPolicyFingerprintSpec.ALGORITHM_ID}, actual=$algorithmId",
+                        "expected=${CanonicalTextPolicyFingerprintSpec.ALGORITHM_ID}, actual=$algorithmId",
             )
         }
 
         if (algorithmVersion != CanonicalTextPolicyFingerprintSpec.FINGERPRINT_LAW_VERSION) {
             throw MetamodelFactContractViolationException(
                 "PolicyFingerprint law version mismatch: " +
-                    "expected=${CanonicalTextPolicyFingerprintSpec.FINGERPRINT_LAW_VERSION}, " +
-                    "actual=$algorithmVersion",
+                        "expected=${CanonicalTextPolicyFingerprintSpec.FINGERPRINT_LAW_VERSION}, " +
+                        "actual=$algorithmVersion",
             )
         }
 
         if (encodingId != CanonicalTextPolicyFingerprintSpec.ENCODING_ID) {
             throw MetamodelFactContractViolationException(
                 "PolicyFingerprint encoding mismatch: " +
-                    "expected=${CanonicalTextPolicyFingerprintSpec.ENCODING_ID}, actual=$encodingId",
+                        "expected=${CanonicalTextPolicyFingerprintSpec.ENCODING_ID}, actual=$encodingId",
             )
         }
     }
@@ -59,9 +59,9 @@ class PolicyFingerprint private constructor(
         if (other !is PolicyFingerprint) return false
 
         return algorithmId == other.algorithmId &&
-            algorithmVersion == other.algorithmVersion &&
-            encodingId == other.encodingId &&
-            hex == other.hex
+                algorithmVersion == other.algorithmVersion &&
+                encodingId == other.encodingId &&
+                hex == other.hex
     }
 
     override fun hashCode(): Int {

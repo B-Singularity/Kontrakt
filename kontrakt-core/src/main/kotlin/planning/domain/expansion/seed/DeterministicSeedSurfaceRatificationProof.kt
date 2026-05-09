@@ -77,13 +77,13 @@ class DeterministicSeedSurfaceRatificationProof private constructor(
 
     fun renderSummary(): String =
         "DeterministicSeedSurfaceRatificationProof(" +
-            "schemaVersion=$schemaVersion, " +
-            "ratifier=$ratifierId@$ratifierVersion, " +
-            "proofId=<redacted>, " +
-            "surfaceId=${coveredId.value}, " +
-            "versionTuple=$coveredVersionTuple, " +
-            "rootTime=$coveredRootTimeEpochMillis" +
-            ")"
+                "schemaVersion=$schemaVersion, " +
+                "ratifier=$ratifierId@$ratifierVersion, " +
+                "proofId=<redacted>, " +
+                "surfaceId=${coveredId.value}, " +
+                "versionTuple=$coveredVersionTuple, " +
+                "rootTime=$coveredRootTimeEpochMillis" +
+                ")"
 
     override fun toString(): String = renderSummary()
 
@@ -92,12 +92,12 @@ class DeterministicSeedSurfaceRatificationProof private constructor(
         if (other !is DeterministicSeedSurfaceRatificationProof) return false
 
         return proofId == other.proofId &&
-            ratifierId == other.ratifierId &&
-            ratifierVersion == other.ratifierVersion &&
-            coveredId == other.coveredId &&
-            coveredVersionTuple == other.coveredVersionTuple &&
-            coveredRootTimeEpochMillis == other.coveredRootTimeEpochMillis &&
-            schemaVersion == other.schemaVersion
+                ratifierId == other.ratifierId &&
+                ratifierVersion == other.ratifierVersion &&
+                coveredId == other.coveredId &&
+                coveredVersionTuple == other.coveredVersionTuple &&
+                coveredRootTimeEpochMillis == other.coveredRootTimeEpochMillis &&
+                schemaVersion == other.schemaVersion
     }
 
     override fun hashCode(): Int {
@@ -119,7 +119,7 @@ class DeterministicSeedSurfaceRatificationProof private constructor(
         throw TypeExpansionContractViolationException(
             reason =
                 "DeterministicSeedSurfaceRatificationProof does not cover tuple: " +
-                    "field=$field, expected=$expected, actual=$actual, proof=${renderSummary()}",
+                        "field=$field, expected=$expected, actual=$actual, proof=${renderSummary()}",
         )
 
     companion object {
@@ -189,13 +189,13 @@ class DeterministicSeedSurfaceRatificationProof private constructor(
                     '-',
                     '_',
                     '.',
-                    -> {
-                        // Already canonical-safe protocol id material.
+                        -> {
+                        // Already canonical-safe order id material.
                     }
 
                     else -> {
                         throw TypeExpansionContractViolationException(
-                            reason = "$field contains a non-canonical protocol-id character.",
+                            reason = "$field contains a non-canonical order-id character.",
                         )
                     }
                 }
@@ -246,7 +246,7 @@ class DeterministicSeedSurfaceRatificationProof private constructor(
                 value.indexOf('\t') >= 0
             ) {
                 throw TypeExpansionContractViolationException(
-                    reason = "$field contains a reserved protocol/control character.",
+                    reason = "$field contains a reserved order/control character.",
                 )
             }
         }

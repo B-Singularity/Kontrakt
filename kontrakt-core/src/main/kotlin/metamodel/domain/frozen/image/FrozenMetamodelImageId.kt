@@ -48,7 +48,7 @@ import metamodel.domain.protocol.MetamodelProtocolTextGuards
  *
  * A compliant scope id should be issued by the acquisition/bootstrap boundary
  * that owns the image-build sequence. It must be stable for the acquisition
- * scope and sanitized as a protocol id token.
+ * scope and sanitized as a order id token.
  *
  * [imageBuildOrdinal] is a scope-local monotonic build ordinal.
  *
@@ -77,8 +77,8 @@ import metamodel.domain.protocol.MetamodelProtocolTextGuards
  * - canonical fingerprint;
  * - persisted identity;
  * - route key;
- * - cross-runtime protocol hash;
- * - serialized protocol digest.
+ * - cross-runtime order hash;
+ * - serialized order digest.
  *
  * Persistent frozen-image identity requires a separate canonical encoding /
  * digest ADR.
@@ -105,7 +105,7 @@ class FrozenMetamodelImageId private constructor(
          * Cheap negative filter for diagnostic maps/sets.
          *
          * Structural equality remains explicit below. The precomputed hash is
-         * never authoritative protocol identity.
+         * never authoritative order identity.
          */
         if (precomputedHashCode != other.precomputedHashCode) {
             return false

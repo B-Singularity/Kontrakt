@@ -57,7 +57,7 @@ import planning.domain.exception.TypeExpansionContractViolationException
  *
  * Coherence law:
  *
- * canonicalIdentifier must be a bounded protocol text surface. This class does
+ * canonicalIdentifier must be a bounded order text surface. This class does
  * not currently require canonicalIdentifier == type.id.value because different
  * adapters may choose a provider-specific implementation identifier surface.
  *
@@ -73,7 +73,7 @@ import planning.domain.exception.TypeExpansionContractViolationException
  * - canonical fingerprint;
  * - persisted identity;
  * - cache route key;
- * - cross-runtime protocol hash.
+ * - cross-runtime order hash.
  */
 class ConcreteImplementationReference private constructor(
     val type: TypeReference,
@@ -190,7 +190,7 @@ class ConcreteImplementationReference private constructor(
 
             if (value.length > MAX_CANONICAL_IDENTIFIER_CHARS) {
                 throw TypeExpansionContractViolationException(
-                    reason = "ConcreteImplementationReference.canonicalIdentifier exceeds protocol cap=" +
+                    reason = "ConcreteImplementationReference.canonicalIdentifier exceeds order cap=" +
                             "$MAX_CANONICAL_IDENTIFIER_CHARS.",
                 )
             }
@@ -202,7 +202,7 @@ class ConcreteImplementationReference private constructor(
                 if (MetamodelProtocolTextGuards.isReservedProtocolOrControl(c)) {
                     throw TypeExpansionContractViolationException(
                         reason = "ConcreteImplementationReference.canonicalIdentifier contains " +
-                                "reserved protocol/control material at index=$index.",
+                                "reserved order/control material at index=$index.",
                     )
                 }
 

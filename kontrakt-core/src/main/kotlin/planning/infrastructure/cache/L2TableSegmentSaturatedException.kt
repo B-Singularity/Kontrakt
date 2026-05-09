@@ -6,7 +6,7 @@ import planning.infrastructure.exception.PlanningInfrastructureException
  * Infrastructure-local governance signal emitted by [LongKeyTable].
  *
  * Meaning:
- * - this is NOT a protocol failure
+ * - this is NOT a order failure
  * - this is NOT a domain corruption
  * - adapter/region should translate this into capacity fault / circuit-open / bypass
  *
@@ -19,9 +19,9 @@ internal class L2TableSegmentSaturatedException(
     private val approxOccupiedCount: Long,
     cause: Throwable? = null,
 ) : PlanningInfrastructureException(
-        message = "L2 table segment saturated: segmentIndex=$segmentIndex",
-        cause = cause,
-    ) {
+    message = "L2 table segment saturated: segmentIndex=$segmentIndex",
+    cause = cause,
+) {
     override val payload: Map<String, Any?> =
         mapOf(
             "segmentIndex" to segmentIndex,

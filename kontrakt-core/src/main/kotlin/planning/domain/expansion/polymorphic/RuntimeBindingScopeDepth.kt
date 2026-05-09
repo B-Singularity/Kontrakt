@@ -48,7 +48,7 @@ import metamodel.domain.exception.MetamodelFactContractViolationException
  *
  * hashCode() returns the integer value for in-memory equality collections only.
  * It must not be used as a canonical fingerprint, persisted key, route key, or
- * cross-runtime protocol hash.
+ * cross-runtime order hash.
  */
 class RuntimeBindingScopeDepth private constructor(
     val value: Int,
@@ -71,8 +71,8 @@ class RuntimeBindingScopeDepth private constructor(
         if (result > RuntimeBindingScopeDepthLaw.MAX_RUNTIME_BINDING_SCOPE_DEPTH) {
             throw MetamodelFactContractViolationException(
                 "RuntimeBindingScopeDepth overflow: " +
-                    "current=$value, increment=$increment, " +
-                    "max=${RuntimeBindingScopeDepthLaw.MAX_RUNTIME_BINDING_SCOPE_DEPTH}",
+                        "current=$value, increment=$increment, " +
+                        "max=${RuntimeBindingScopeDepthLaw.MAX_RUNTIME_BINDING_SCOPE_DEPTH}",
             )
         }
 
@@ -104,8 +104,8 @@ class RuntimeBindingScopeDepth private constructor(
         if (result > RuntimeBindingScopeDepthLaw.MAX_RUNTIME_BINDING_SCOPE_DEPTH) {
             throw MetamodelFactContractViolationException(
                 "RuntimeBindingScopeDepth overflow: " +
-                    "current=$value, increment=$increment, " +
-                    "max=${RuntimeBindingScopeDepthLaw.MAX_RUNTIME_BINDING_SCOPE_DEPTH}",
+                        "current=$value, increment=$increment, " +
+                        "max=${RuntimeBindingScopeDepthLaw.MAX_RUNTIME_BINDING_SCOPE_DEPTH}",
             )
         }
 
@@ -121,7 +121,7 @@ class RuntimeBindingScopeDepth private constructor(
 
     override fun equals(other: Any?): Boolean =
         other is RuntimeBindingScopeDepth &&
-            value == other.value
+                value == other.value
 
     override fun hashCode(): Int = value
 
@@ -160,13 +160,13 @@ class RuntimeBindingScopeDepth private constructor(
  */
 internal object RuntimeBindingScopeDepthLaw {
     /**
-     * Conservative protocol cap for runtime binding scope depth.
+     * Conservative order cap for runtime binding scope depth.
      *
      * Runtime binding scopes should be shallow in normal use. A depth of 256 is
      * intentionally generous while still preventing pathological recursive
      * expansion from entering the domain.
      *
-     * Raising this value should be treated as a metamodel protocol amendment.
+     * Raising this value should be treated as a metamodel order amendment.
      */
     const val MAX_RUNTIME_BINDING_SCOPE_DEPTH: Int = 256
 
@@ -182,7 +182,7 @@ internal object RuntimeBindingScopeDepthLaw {
 
         if (depth > MAX_RUNTIME_BINDING_SCOPE_DEPTH) {
             throw MetamodelFactContractViolationException(
-                "$field exceeds protocol cap=$MAX_RUNTIME_BINDING_SCOPE_DEPTH: $depth",
+                "$field exceeds order cap=$MAX_RUNTIME_BINDING_SCOPE_DEPTH: $depth",
             )
         }
     }

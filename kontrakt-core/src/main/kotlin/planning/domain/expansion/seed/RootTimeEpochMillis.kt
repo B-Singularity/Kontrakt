@@ -41,7 +41,7 @@ import planning.domain.exception.TypeExpansionContractViolationException
  * - canonical fingerprint;
  * - persisted identity;
  * - cache route key;
- * - cross-runtime protocol hash;
+ * - cross-runtime order hash;
  * - serialized seed digest.
  */
 class RootTimeEpochMillis private constructor(
@@ -64,7 +64,7 @@ class RootTimeEpochMillis private constructor(
             throw TypeExpansionContractViolationException(
                 reason =
                     "Cannot write RootTimeEpochMillis at offset=$offset " +
-                        "into destination size=${destination.size}",
+                            "into destination size=${destination.size}",
             )
         }
 
@@ -80,7 +80,7 @@ class RootTimeEpochMillis private constructor(
 
     override fun equals(other: Any?): Boolean =
         other is RootTimeEpochMillis &&
-            value == other.value
+                value == other.value
 
     override fun hashCode(): Int = (value xor (value ushr 32)).toInt()
 

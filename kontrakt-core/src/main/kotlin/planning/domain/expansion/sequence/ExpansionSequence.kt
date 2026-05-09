@@ -4,7 +4,7 @@ import planning.domain.exception.TypeExpansionContractViolationException
 import java.util.AbstractList
 
 /**
- * Sorts by the supplied protocol comparator and rejects comparator ties.
+ * Sorts by the supplied order comparator and rejects comparator ties.
  *
  * The comparator must be a Kontrakt-owned deterministic comparator.
  *
@@ -57,7 +57,7 @@ class ExpansionSequence<T : Any> private constructor(
          * This method does not sort.
          *
          * Use this only after the caller has already applied the relevant
-         * protocol ordering law.
+         * order ordering law.
          */
         @JvmStatic
         fun <T : Any> alreadyOrdered(elements: Collection<T>): ExpansionSequence<T> {

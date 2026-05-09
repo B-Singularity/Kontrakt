@@ -18,7 +18,7 @@ enum class FaultKind {
 }
 
 /**
- * Root exception for the IR protocol module.
+ * Root exception for the IR order module.
  *
  * Guarantees:
  * - No dependency on outer modules (except the shared base exception type)

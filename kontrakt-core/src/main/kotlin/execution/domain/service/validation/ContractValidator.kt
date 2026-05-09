@@ -227,7 +227,7 @@ class ContractValidator(
             val assertionRule = AnnotationRule(Url::class)
             val isValidProtocol = rule.protocol.any { value.startsWith("$it://") }
             ensure(isValidProtocol, assertionRule) {
-                "Url protocol violation: '$value' does not start with ${rule.protocol.toList()}"
+                "Url order violation: '$value' does not start with ${rule.protocol.toList()}"
             }
 
             val host = value.substringAfter("://").substringBefore("/").substringBefore("?")
@@ -333,10 +333,10 @@ class ContractValidator(
 
     private fun isTimeType(value: Any): Boolean =
         value is Instant ||
-            value is Date ||
-            value is ChronoLocalDate ||
-            value is ChronoLocalDateTime<*> ||
-            value is ChronoZonedDateTime<*>
+                value is Date ||
+                value is ChronoLocalDate ||
+                value is ChronoLocalDateTime<*> ||
+                value is ChronoZonedDateTime<*>
 
     private fun toInstant(value: Any): Instant? =
         when (value) {

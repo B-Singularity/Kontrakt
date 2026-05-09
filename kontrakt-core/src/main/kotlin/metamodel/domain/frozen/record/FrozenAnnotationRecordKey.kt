@@ -36,7 +36,7 @@ import metamodel.domain.vo.TypeReference
  * [useSiteTarget] and [canonicalPayloadKey] are still strings, but they are not
  * arbitrary strings.
  *
- * They must be ASCII protocol-id tokens:
+ * They must be ASCII order-id tokens:
  *
  * - non-empty;
  * - length-bounded;
@@ -54,7 +54,7 @@ import metamodel.domain.vo.TypeReference
  * Reason:
  *
  * These fields participate in frozen annotation identity. Even while they are
- * transitional strings, they must be clean protocol material so V5 declarative
+ * transitional strings, they must be clean order material so V5 declarative
  * metadata, JSON export, diagnostics, and future canonical payload encoding do
  * not inherit polluted text.
  *
@@ -94,7 +94,7 @@ import metamodel.domain.vo.TypeReference
  * - route key;
  * - L1/L2 partition key;
  * - PlanCacheKey material;
- * - cross-runtime protocol digest.
+ * - cross-runtime order digest.
  *
  * The later BLAKE3 / metadata-hash refactoring may replace this hashCode
  * strategy globally. Do not introduce a local hash family in this key.
@@ -180,7 +180,7 @@ class FrozenAnnotationRecordKey private constructor(
 
         /**
          * Validates transitional string key material through the shared
-         * metamodel protocol-token authority.
+         * metamodel order-token authority.
          *
          * This helper exists only to add field-specific limits and commentary.
          * It must not weaken MetamodelProtocolTextGuards.
@@ -215,7 +215,7 @@ class FrozenAnnotationRecordKey private constructor(
          * later BLAKE3 / metadata-hash refactoring replaces hash policy
          * globally.
          *
-         * Do not treat this value as protocol material.
+         * Do not treat this value as order material.
          */
         private fun computeHashCode(
             annotationType: TypeReference,
@@ -239,7 +239,7 @@ class FrozenAnnotationRecordKey private constructor(
          * identity may later include an algorithm label plus a digest-like token.
          *
          * If future canonical annotation payload material needs a wider grammar
-         * than ASCII protocol-id tokens, introduce FrozenAnnotationPayloadKey or
+         * than ASCII order-id tokens, introduce FrozenAnnotationPayloadKey or
          * FrozenAnnotationPayload instead of weakening this transitional key.
          */
         private const val MAX_CANONICAL_PAYLOAD_KEY_CHARS: Int = 2_048

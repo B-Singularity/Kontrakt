@@ -162,8 +162,8 @@ class MetamodelFactSequence<T> private constructor(
                         factKind = factKind,
                         reason =
                             "$indexName must form a compact range with exactly " +
-                                "${buffer.size} distinct indices for ${buffer.size} elements; " +
-                                "valid range is 0..${buffer.size - 1}, actual=$index",
+                                    "${buffer.size} distinct indices for ${buffer.size} elements; " +
+                                    "valid range is 0..${buffer.size - 1}, actual=$index",
                     )
                 }
 
@@ -174,7 +174,7 @@ class MetamodelFactSequence<T> private constructor(
                         duplicateKey = "$indexName=$index",
                         reason =
                             "Duplicate compact index in metamodel fact sequence. " +
-                                "Compact range requires exactly one fact per index.",
+                                    "Compact range requires exactly one fact per index.",
                     )
                 }
 
@@ -192,12 +192,12 @@ class MetamodelFactSequence<T> private constructor(
         }
 
         /**
-         * Freezes a sequence that the caller claims is already protocol-ordered.
+         * Freezes a sequence that the caller claims is already order-ordered.
          *
          * Unlike a blind "alreadyOrdered" constructor, this method verifies that the
          * provided collection is strictly ascending according to the supplied comparator.
          *
-         * This method exists for boundaries where sorting would hide a protocol bug.
+         * This method exists for boundaries where sorting would hide a order bug.
          * Most DTO factories should prefer orderedByStrict / orderedUniqueBy /
          * compactIndexedBy.
          */

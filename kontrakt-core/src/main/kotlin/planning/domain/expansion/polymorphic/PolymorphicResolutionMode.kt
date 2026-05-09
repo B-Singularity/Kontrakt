@@ -8,7 +8,7 @@ package planning.domain.expansion.polymorphic
  *
  * Never use enum ordinal.
  *
- * protocolOrder is a ratified internal order for deterministic protocol surfaces
+ * protocolOrder is a ratified internal order for deterministic order surfaces
  * that need to compare modes.
  *
  * protocolToken is the stable canonical token used by canonical encoding.

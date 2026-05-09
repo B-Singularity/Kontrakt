@@ -22,7 +22,7 @@ value class PartitionId private constructor(
          * Canonical factory for PartitionId.
          *
          * We intentionally avoid require()/check() to preserve consistent
-         * protocol-specific exception semantics.
+         * order-specific exception semantics.
          */
         @JvmStatic
         fun issue(value: String): PartitionId {

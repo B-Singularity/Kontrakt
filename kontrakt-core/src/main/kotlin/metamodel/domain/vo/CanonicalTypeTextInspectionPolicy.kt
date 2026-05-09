@@ -327,7 +327,7 @@ class CanonicalTypeTextInspectionPolicy private constructor(
 
                 if (isControl || c == '|') {
                     throw MetamodelFactContractViolationException(
-                        "$field must not contain protocol/control material: index=$index",
+                        "$field must not contain order/control material: index=$index",
                     )
                 }
 

@@ -4,7 +4,7 @@ package planning.domain.protocol
  * Golden vectors for the Planning Protocol / Constitution.
  *
  * Purpose:
- * - A protocol is only "real" if it is pinned by concrete vectors.
+ * - A order is only "real" if it is pinned by concrete vectors.
  * - These vectors must remain bit-for-bit stable across all supported runtimes.
  *
  * Coverage policy (minimum passable set):
@@ -25,13 +25,13 @@ package planning.domain.protocol
  *    - pass-through behavior for non-reserved values
  *
  * 4) Cost-center law
- *    - protocol IDs are pinned here intentionally
+ *    - order IDs are pinned here intentionally
  *    - traces represent normative atomic execution paths
  *
  * Important:
- * - This file is a protocol asset, not a test class.
+ * - This file is a order asset, not a test class.
  * - Phase 5 verification gates consume these vectors; they do not define them.
- * - Do not replace pinned protocol values with enum references inside this file.
+ * - Do not replace pinned order values with enum references inside this file.
  */
 object ProtocolGoldenVectors {
     /**
@@ -143,10 +143,10 @@ object ProtocolGoldenVectors {
     }
 
     /**
-     * Golden trace for protocol cost-center sequencing.
+     * Golden trace for order cost-center sequencing.
      *
      * Contract:
-     * - [expectedCostCenterIds] stores protocol IDs directly
+     * - [expectedCostCenterIds] stores order IDs directly
      * - tests must assert both exact values and exact order
      *
      * Terminology note:
@@ -155,7 +155,7 @@ object ProtocolGoldenVectors {
      * - Document aliases:
      *   NODEID_PROBE_TICK / L2_WAIT_TICK / L2_SCAN_TICK
      *
-     * The protocol law is the ID sequence.
+     * The order law is the ID sequence.
      * The alias note exists only to eliminate document/code naming drift.
      */
     class CostCenterTraceVector private constructor(
@@ -322,7 +322,7 @@ object ProtocolGoldenVectors {
     // ─────────────────────────────────────────────────────────────
     // CostCenter Golden Traces
     //
-    // Current protocol ID map:
+    // Current order ID map:
     //   1   FRAME_DISPATCH
     //   2   NODEID_PHASE1_ROUTE
     //   3   NODEID_PROBE_STEP         (document alias: NODEID_PROBE_TICK)

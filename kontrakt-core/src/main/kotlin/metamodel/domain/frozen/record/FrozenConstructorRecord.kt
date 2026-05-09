@@ -132,7 +132,7 @@ import metamodel.domain.frozen.sequence.FrozenConstructorParameterRecordSequence
  * - route key;
  * - L1/L2 partition key;
  * - PlanCacheKey material;
- * - cross-runtime protocol digest.
+ * - cross-runtime order digest.
  *
  * The later BLAKE3 / metadata-hash refactoring may replace this hashCode
  * strategy globally. Do not introduce a local hash family in this record.
@@ -260,7 +260,7 @@ class FrozenConstructorRecord private constructor(
          * later BLAKE3 / metadata-hash refactoring replaces hash policy
          * globally.
          *
-         * Do not treat this value as protocol material.
+         * Do not treat this value as order material.
          */
         private fun computeHashCode(
             key: FrozenConstructorRecordKey,

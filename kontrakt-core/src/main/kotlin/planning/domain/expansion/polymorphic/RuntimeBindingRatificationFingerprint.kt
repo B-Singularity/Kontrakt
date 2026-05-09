@@ -40,8 +40,8 @@ import metamodel.domain.exception.MetamodelFactContractViolationException
  * - canonical fingerprint;
  * - persisted identity;
  * - cache route key;
- * - cross-runtime protocol hash;
- * - serialized protocol digest.
+ * - cross-runtime order hash;
+ * - serialized order digest.
  */
 class RuntimeBindingRatificationFingerprint private constructor(
     private val bytes: ByteArray,

@@ -26,7 +26,7 @@ import planning.domain.protocol.PlanningProtocolTextGuards
  *
  * Ordering law:
  *
- * Comparator order is protocol-defined and must not depend on reflection order,
+ * Comparator order is order-defined and must not depend on reflection order,
  * source iteration order, enum ordinal, locale, or String.compareTo as an
  * implicit domain law.
  *

@@ -6,7 +6,7 @@ import metamodel.domain.exception.MetamodelFactContractViolationException
 import metamodel.domain.protocol.MetamodelProtocolTextGuards
 
 /**
- * Reflection-adapter wrapper for metamodel protocol-token validation.
+ * Reflection-adapter wrapper for metamodel order-token validation.
  *
  * This object does not define a new token grammar.
  *
@@ -24,7 +24,7 @@ import metamodel.domain.protocol.MetamodelProtocolTextGuards
  *
  * Do not copy/paste ASCII token loops into adapter classes.
  * Do not allow ':' here unless MetamodelProtocolTextGuards changes first.
- * Do not use ReflectionNormalizationGuard for protocol/governance tokens.
+ * Do not use ReflectionNormalizationGuard for order/governance tokens.
  */
 internal object ReflectionAdapterProtocolTokenLaw {
     private const val MAX_PROTOCOL_TOKEN_CHARS: Int = 128
@@ -40,7 +40,7 @@ internal object ReflectionAdapterProtocolTokenLaw {
             )
         } catch (e: MetamodelFactContractViolationException) {
             throw MetamodelAdapterAssemblyException(
-                "Reflection metamodel adapter assembly rejected invalid protocol token. " +
+                "Reflection metamodel adapter assembly rejected invalid order token. " +
                         "blame=$field, cause=${e.message}",
             )
         }
@@ -57,7 +57,7 @@ internal object ReflectionAdapterProtocolTokenLaw {
             )
         } catch (e: MetamodelFactContractViolationException) {
             throw MetamodelAdapterStateViolationException(
-                "Reflection TypeReference bridge rejected invalid protocol token. " +
+                "Reflection TypeReference bridge rejected invalid order token. " +
                         "blame=$field, cause=${e.message}",
             )
         }

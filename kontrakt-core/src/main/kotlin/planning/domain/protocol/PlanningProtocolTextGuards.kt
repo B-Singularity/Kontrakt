@@ -3,9 +3,9 @@ package planning.domain.protocol
 import planning.domain.exception.TypeExpansionContractViolationException
 
 /**
- * Planning-domain protocol text guards.
+ * Planning-domain order text guards.
  *
- * This object is the planning layer's single entry point for cheap protocol text
+ * This object is the planning layer's single entry point for cheap order text
  * surface checks.
  *
  * This is not:
@@ -29,7 +29,7 @@ import planning.domain.exception.TypeExpansionContractViolationException
  * - entropy target keys;
  * - HID selector local semantic identities;
  * - implementation canonical identifiers;
- * - diagnostic/protocol rendering fields.
+ * - diagnostic/order rendering fields.
  *
  * These surfaces must share one planning-side guard so each VO does not
  * duplicate C0/C1 control checks, delimiter checks, length caps, and whitespace
@@ -49,7 +49,7 @@ import planning.domain.exception.TypeExpansionContractViolationException
  * Unicode law:
  *
  * requireBoundedProtocolText(...) allows non-ASCII characters unless they are
- * explicit protocol/control material.
+ * explicit order/control material.
  *
  * This is intentional. Unicode normalization, bidi/format checks, homoglyph
  * policy, and script policy are not planning-layer responsibilities.
@@ -83,13 +83,13 @@ import planning.domain.exception.TypeExpansionContractViolationException
  */
 object PlanningProtocolTextGuards {
     /**
-     * Validates a bounded planning protocol text surface.
+     * Validates a bounded planning order text surface.
      *
      * This allows non-ASCII material. It only rejects:
      *
      * - empty input when allowEmpty=false;
      * - length overflow;
-     * - reserved protocol delimiter '|';
+     * - reserved order delimiter '|';
      * - C0/C1 control characters;
      * - ASCII whitespace when rejectAsciiWhitespace=true.
      */
@@ -111,7 +111,7 @@ object PlanningProtocolTextGuards {
 
         if (value.length > maxChars) {
             throw TypeExpansionContractViolationException(
-                reason = "$field exceeds planning protocol cap=$maxChars.",
+                reason = "$field exceeds planning order cap=$maxChars.",
             )
         }
 
@@ -121,7 +121,7 @@ object PlanningProtocolTextGuards {
 
             if (isReservedProtocolOrControl(c)) {
                 throw TypeExpansionContractViolationException(
-                    reason = "$field must not contain reserved protocol/control material: index=$index.",
+                    reason = "$field must not contain reserved order/control material: index=$index.",
                 )
             }
 
@@ -136,7 +136,7 @@ object PlanningProtocolTextGuards {
     }
 
     /**
-     * Validates a bounded ASCII protocol identifier in a single pass.
+     * Validates a bounded ASCII order identifier in a single pass.
      *
      * Allowed characters:
      *
@@ -150,7 +150,7 @@ object PlanningProtocolTextGuards {
      *
      * This is intentionally not a source-language identifier rule.
      *
-     * It is for compact planning protocol identifiers such as stable tokens,
+     * It is for compact planning order identifiers such as stable tokens,
      * canonical provider identifiers, implementation identifiers, and local
      * planning keys.
      */
@@ -171,7 +171,7 @@ object PlanningProtocolTextGuards {
 
         if (value.length > maxChars) {
             throw TypeExpansionContractViolationException(
-                reason = "$field exceeds planning protocol cap=$maxChars.",
+                reason = "$field exceeds planning order cap=$maxChars.",
             )
         }
 
@@ -181,7 +181,7 @@ object PlanningProtocolTextGuards {
 
             if (isReservedProtocolOrControl(c)) {
                 throw TypeExpansionContractViolationException(
-                    reason = "$field must not contain reserved protocol/control material: index=$index.",
+                    reason = "$field must not contain reserved order/control material: index=$index.",
                 )
             }
 
@@ -193,7 +193,7 @@ object PlanningProtocolTextGuards {
 
             if (!isProtocolIdentifierChar(c)) {
                 throw TypeExpansionContractViolationException(
-                    reason = "$field contains non-canonical protocol identifier character: index=$index.",
+                    reason = "$field contains non-canonical order identifier character: index=$index.",
                 )
             }
 
@@ -251,7 +251,7 @@ object PlanningProtocolTextGuards {
     ) {
         if (field.isEmpty()) {
             throw TypeExpansionContractViolationException(
-                reason = "Planning protocol guard field name must not be empty.",
+                reason = "Planning order guard field name must not be empty.",
             )
         }
     }

@@ -80,7 +80,7 @@ import metamodel.domain.protocol.DiagnosticBudget
  *
  * hashCode() is for in-memory equality collections only.
  * It must not be used as a canonical fingerprint, persisted key, route key, or
- * cross-runtime protocol hash.
+ * cross-runtime order hash.
  */
 class OrderedUseSiteAnnotations private constructor(
     private val annotations: Array<AnnotationDescriptor>,
@@ -198,7 +198,7 @@ class OrderedUseSiteAnnotations private constructor(
 
             if (annotations.size > MAX_USE_SITE_ANNOTATIONS) {
                 throw MetamodelFactContractViolationException(
-                    "OrderedUseSiteAnnotations.annotations exceeds protocol cap=$MAX_USE_SITE_ANNOTATIONS.",
+                    "OrderedUseSiteAnnotations.annotations exceeds order cap=$MAX_USE_SITE_ANNOTATIONS.",
                 )
             }
 

@@ -32,7 +32,7 @@ package metamodel.domain.vo
  * Field law:
  *
  * - expansionSurface is the coarse execution family.
- * - minimumGenericArity is a protocol lower bound, not a full generic schema.
+ * - minimumGenericArity is a order lower bound, not a full generic schema.
  * - directInstantiationAllowed prevents abstract/sealed/interface surfaces from
  *   accidentally entering constructor-selection paths.
  * - finiteSubtypeUniverse marks surfaces whose subtype/value universe is closed

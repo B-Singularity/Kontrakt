@@ -504,7 +504,7 @@ class ReflectionTypeIdentityMaterialRenderer private constructor(
                 '\t',
                     -> {
                     throw StrictModeViolationException(
-                        "$field contains forbidden JVM/protocol/control material: " +
+                        "$field contains forbidden JVM/order/control material: " +
                                 "char=${ch.code}, index=$index, value=$value, sourceType=$sourceType",
                     )
                 }

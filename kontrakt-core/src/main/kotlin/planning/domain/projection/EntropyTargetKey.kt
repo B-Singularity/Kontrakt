@@ -33,7 +33,7 @@ import planning.domain.protocol.PlanningProtocolTextGuards
  *
  * Ordering law:
  *
- * Ordering is deterministic and protocol-defined:
+ * Ordering is deterministic and order-defined:
  *
  * - memberKindRank;
  * - name;
@@ -68,7 +68,7 @@ import planning.domain.protocol.PlanningProtocolTextGuards
  * - canonical fingerprint;
  * - persisted identity;
  * - route key;
- * - cross-runtime protocol hash.
+ * - cross-runtime order hash.
  */
 class EntropyTargetKey private constructor(
     val memberKindRank: Int,

@@ -13,7 +13,7 @@ import ir.exception.IrProtocolViolationException
  * - No whitespace / control chars
  * - No descriptor-ish tokens: < > [ ] ; ( ) :
  * - No internal-name separator: /
- * - No protocol delimiter: |
+ * - No order delimiter: |
  * - No primitives (to enforce explicit modeling decisions upstream)
  */
 @JvmInline
@@ -26,8 +26,8 @@ value class TypeId private constructor(
 
     companion object {
         /**
-         * We forbid descriptor-ish chars and protocol delimiters.
-         * - '/' blocks JVM internal names leaking into the protocol
+         * We forbid descriptor-ish chars and order delimiters.
+         * - '/' blocks JVM internal names leaking into the order
          * - '|' blocks delimiter/injectivity attacks across composite keys/logging
          */
         private val FORBIDDEN =

@@ -67,7 +67,7 @@ import metamodel.domain.vo.TypeReference
  * [constructorSignature] and [parameterShapeSignature] are still strings, but
  * they are not arbitrary strings.
  *
- * They must be ASCII protocol-id tokens:
+ * They must be ASCII order-id tokens:
  *
  * - non-empty;
  * - length-bounded;
@@ -83,7 +83,7 @@ import metamodel.domain.vo.TypeReference
  * - free of discovery append ordinals.
  *
  * If constructor signature material later needs a richer canonical grammar than
- * ASCII protocol-id tokens, do not weaken this key. Introduce
+ * ASCII order-id tokens, do not weaken this key. Introduce
  * CanonicalConstructorSignature and CanonicalParameterShapeSignature with their
  * own canonical text law.
  *
@@ -123,7 +123,7 @@ import metamodel.domain.vo.TypeReference
  * - route key;
  * - L1/L2 partition key;
  * - PlanCacheKey material;
- * - cross-runtime protocol digest.
+ * - cross-runtime order digest.
  *
  * Do not locally introduce a separate hash family in this key.
  */
@@ -220,7 +220,7 @@ class FrozenConstructorRecordKey private constructor(
          * Validates the transitional parameter-shape signature token.
          *
          * This value is not a backend descriptor. It is frozen key material and
-         * must already be lowered into backend-neutral protocol text.
+         * must already be lowered into backend-neutral order text.
          */
         private fun requireParameterShapeSignature(
             parameterShapeSignature: String,
@@ -239,7 +239,7 @@ class FrozenConstructorRecordKey private constructor(
          * later BLAKE3 / metadata-hash refactoring replaces hash policy
          * globally.
          *
-         * Do not treat this value as protocol material.
+         * Do not treat this value as order material.
          */
         private fun computeHashCode(
             ownerType: TypeReference,

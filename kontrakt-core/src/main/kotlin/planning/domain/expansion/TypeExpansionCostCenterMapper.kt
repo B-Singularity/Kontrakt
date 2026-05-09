@@ -6,7 +6,7 @@ import planning.domain.protocol.CostCenter
  * Single mapping authority from TypeExpansionWorkEvent to CostCenter.
  *
  * TypeExpansionWorkEvent is the stage vocabulary.
- * CostCenter is the budget protocol vocabulary.
+ * CostCenter is the budget order vocabulary.
  *
  * Keeping the mapping here prevents TypeExpansionPipeline from directly owning
  * PlannerSession metering mutation while still making the event-to-cost mapping

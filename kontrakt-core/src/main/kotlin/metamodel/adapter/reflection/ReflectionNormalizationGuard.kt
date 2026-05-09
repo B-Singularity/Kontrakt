@@ -286,7 +286,7 @@ internal class ReflectionNormalizationGuard private constructor() {
          * material while still preventing allocation/CPU DoS before canonical
          * type-text inspection.
          *
-         * If a later protocol introduces a global metamodel component cap, this
+         * If a later order introduces a global metamodel component cap, this
          * value should delegate to that shared law.
          */
         private const val MAX_REFLECTION_COMPONENT_CHARS: Int = 512

@@ -3,7 +3,7 @@ package metamodel.domain.vo
 import metamodel.domain.exception.MetamodelFactContractViolationException
 
 /**
- * Low-cost protocol guards for already-inspected canonical type text snapshots.
+ * Low-cost order guards for already-inspected canonical type text snapshots.
  *
  * This object is deliberately NOT a Unicode validator.
  * This object is deliberately NOT an identifier classifier.
@@ -17,7 +17,7 @@ import metamodel.domain.exception.MetamodelFactContractViolationException
  *
  * NormalizationEngine is an adapter-owned inspection boundary. It returns an
  * immutable snapshot plus lexical profile. This guard provides a final cheap
- * domain-side protocol assertion over ASCII-only syntax markers that are safe
+ * domain-side order assertion over ASCII-only syntax markers that are safe
  * to inspect without depending on host JRE Unicode tables.
  *
  * Dependency rule:
@@ -36,7 +36,7 @@ import metamodel.domain.exception.MetamodelFactContractViolationException
  * - do not call reflection or KSP APIs.
  *
  * Reflection/KSP/JVM specific recognition belongs to adapters. This guard only
- * rejects ASCII protocol residues that must never appear in canonical type text.
+ * rejects ASCII order residues that must never appear in canonical type text.
  */
 internal object CanonicalTypeTextGuards {
     private val JVM_PRIMITIVE_DESCRIPTORS: Set<String> =
@@ -153,7 +153,7 @@ internal object CanonicalTypeTextGuards {
     ) {
         if (value.indexOf('|') >= 0) {
             throw MetamodelFactContractViolationException(
-                "$field must not contain reserved protocol delimiter '|': $value",
+                "$field must not contain reserved order delimiter '|': $value",
             )
         }
 
@@ -225,8 +225,8 @@ internal object CanonicalTypeTextGuards {
 
     private fun isWholeJvmObjectDescriptor(value: String): Boolean =
         value.length >= 3 &&
-            value[0] == 'L' &&
-            value[value.length - 1] == ';'
+                value[0] == 'L' &&
+                value[value.length - 1] == ';'
 
     /**
      * Detects descriptor-like fragments such as:
@@ -300,14 +300,14 @@ internal object CanonicalTypeTextGuards {
                 c == '?' && !allowNullableMarker -> {
                     throw MetamodelFactContractViolationException(
                         "$field must not contain nullable marker '?' at index=$index. " +
-                            "Nullability must be lowered before this boundary: $value",
+                                "Nullability must be lowered before this boundary: $value",
                     )
                 }
 
                 c == '*' && !allowStarProjection -> {
                     throw MetamodelFactContractViolationException(
                         "$field must not contain raw star projection '*' at index=$index. " +
-                            "Star projection must be lowered before this boundary: $value",
+                                "Star projection must be lowered before this boundary: $value",
                     )
                 }
 
@@ -352,7 +352,7 @@ internal object CanonicalTypeTextGuards {
         if (nextIndex >= value.length || value[nextIndex] != ']') {
             throw MetamodelFactContractViolationException(
                 "$field must use canonical array suffix pairs '[]'. " +
-                    "Invalid '[' at index=$index: $value",
+                        "Invalid '[' at index=$index: $value",
             )
         }
     }
@@ -377,14 +377,14 @@ internal object CanonicalTypeTextGuards {
         if (token in SOURCE_VARIANCE_TOKENS) {
             throw MetamodelFactContractViolationException(
                 "$field must not contain source variance token '$token' at index=$startIndex. " +
-                    "Variance must be lowered before this boundary: $value",
+                        "Variance must be lowered before this boundary: $value",
             )
         }
 
         if (token in SOURCE_RESERVED_TOKENS) {
             throw MetamodelFactContractViolationException(
                 "$field must not contain source reserved token '$token' at index=$startIndex. " +
-                    "Source syntax must be lowered before this boundary: $value",
+                        "Source syntax must be lowered before this boundary: $value",
             )
         }
 
@@ -399,7 +399,7 @@ internal object CanonicalTypeTextGuards {
 
     private fun isJvmDescriptorToken(token: String): Boolean =
         token in JVM_PRIMITIVE_DESCRIPTORS ||
-            isWholeJvmObjectDescriptor(token)
+                isWholeJvmObjectDescriptor(token)
 
     private fun isAsciiIdentifierStart(c: Char): Boolean = c in 'A'..'Z' || c in 'a'..'z' || c == '_'
 
@@ -407,9 +407,9 @@ internal object CanonicalTypeTextGuards {
 
     private fun isAsciiHorizontalOrLineWhitespace(c: Char): Boolean =
         c == ' ' ||
-            c == '\n' ||
-            c == '\r' ||
-            c == '\t' ||
-            c == '\u000B' ||
-            c == '\u000C'
+                c == '\n' ||
+                c == '\r' ||
+                c == '\t' ||
+                c == '\u000B' ||
+                c == '\u000C'
 }

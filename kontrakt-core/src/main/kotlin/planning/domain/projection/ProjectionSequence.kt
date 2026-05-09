@@ -85,8 +85,8 @@ class ProjectionSequence<T : Any> private constructor(
                 if (index >= expectedSize) {
                     throw ActiveMemberProjectionException(
                         "ProjectionSequence input collection grew during capture: " +
-                            "ownerType=$ownerTypeFqcn, sequenceKind=$sequenceKind, " +
-                            "expectedSize=$expectedSize, attemptedIndex=$index",
+                                "ownerType=$ownerTypeFqcn, sequenceKind=$sequenceKind, " +
+                                "expectedSize=$expectedSize, attemptedIndex=$index",
                     )
                 }
 
@@ -95,7 +95,7 @@ class ProjectionSequence<T : Any> private constructor(
                 if (element == null) {
                     throw ActiveMemberProjectionException(
                         "ProjectionSequence input collection contained null element: " +
-                            "ownerType=$ownerTypeFqcn, sequenceKind=$sequenceKind, index=$index",
+                                "ownerType=$ownerTypeFqcn, sequenceKind=$sequenceKind, index=$index",
                     )
                 }
 
@@ -106,9 +106,9 @@ class ProjectionSequence<T : Any> private constructor(
             if (index != expectedSize) {
                 throw ActiveMemberProjectionException(
                     "ProjectionSequence input collection shrank during capture: " +
-                        "ownerType=$ownerTypeFqcn, sequenceKind=$sequenceKind, " +
-                        "expectedSize=$expectedSize, actualCaptured=$index, " +
-                        "trailingNullSlots=${expectedSize - index}",
+                            "ownerType=$ownerTypeFqcn, sequenceKind=$sequenceKind, " +
+                            "expectedSize=$expectedSize, actualCaptured=$index, " +
+                            "trailingNullSlots=${expectedSize - index}",
                 )
             }
 
@@ -126,7 +126,7 @@ class ProjectionSequence<T : Any> private constructor(
          * owns sorting.
          *
          * This method exists for boundaries where silently sorting would hide a
-         * protocol bug.
+         * order bug.
          */
         @JvmStatic
         fun <T : Any> verifiedStrictOrder(
@@ -146,7 +146,7 @@ class ProjectionSequence<T : Any> private constructor(
                 if (element == null) {
                     throw ActiveMemberProjectionException(
                         "ProjectionSequence input collection contained null element: " +
-                            "ownerType=$ownerTypeFqcn, sequenceKind=$sequenceKind",
+                                "ownerType=$ownerTypeFqcn, sequenceKind=$sequenceKind",
                     )
                 }
 
@@ -168,7 +168,7 @@ class ProjectionSequence<T : Any> private constructor(
 
                     throw ActiveMemberProjectionException(
                         "Invalid ProjectionSequence order: ownerType=$ownerTypeFqcn, " +
-                            "sequenceKind=$sequenceKind, reason=$reason",
+                                "sequenceKind=$sequenceKind, reason=$reason",
                     )
                 }
 

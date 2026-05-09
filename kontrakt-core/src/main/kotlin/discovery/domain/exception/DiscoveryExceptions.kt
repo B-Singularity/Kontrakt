@@ -63,7 +63,7 @@ data class DiscoveryViolation(
 
 /**
  * [Discovery Failure]
- * Aggregates user protocol violations.
+ * Aggregates user order violations.
  */
 class DiscoveryFailedException(
     val violations: List<DiscoveryViolation>,

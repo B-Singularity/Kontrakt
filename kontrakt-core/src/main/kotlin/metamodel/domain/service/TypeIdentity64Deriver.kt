@@ -10,7 +10,7 @@ import metamodel.domain.vo.TypeReference
  * Reflection, KSP, bytecode, or static-source adapters must not invent their own
  * identity hash algorithms. They must delegate to the same ratified identity law.
  *
- * The version is part of the protocol surface. If the algorithm changes, the
+ * The version is part of the order surface. If the algorithm changes, the
  * version must change so cache identity drift can be diagnosed and invalidated.
  */
 interface TypeIdentity64Deriver {

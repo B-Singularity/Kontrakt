@@ -5,7 +5,7 @@ import metamodel.domain.dto.PropertyFact
 /**
  * Structured deterministic property demotion evidence.
  *
- * This evidence is diagnostic/protocol material.
+ * This evidence is diagnostic/order material.
  * It must be deterministically ordered before rendering/truncation by any later
  * diagnostic pipeline.
  */

@@ -21,15 +21,15 @@ import planning.domain.exception.TypeExpansionContractViolationException
  * Protocol law:
  *
  * - protocolOrder is stable deterministic ordering material.
- * - protocolToken is stable textual protocol material.
+ * - protocolToken is stable textual order material.
  * - enum ordinal must never be used.
- * - values().find { ... } must not be used for protocol lookup.
+ * - values().find { ... } must not be used for order lookup.
  *
  * Unknown-value law:
  *
  * The core domain does not contain UNRECOGNIZED.
  *
- * Unknown protocol tokens/orders are rejected at the boundary by
+ * Unknown order tokens/orders are rejected at the boundary by
  * fromProtocolToken(...) or fromProtocolOrder(...). A tolerant external parser
  * may call tryFromProtocolToken(...) / tryFromProtocolOrder(...) before entering
  * the ratified domain.
@@ -85,7 +85,7 @@ enum class ImplementationSelectionMode(
             )
 
         /**
-         * Deterministic protocol-order iteration.
+         * Deterministic order-order iteration.
          *
          * Returns a defensive copy so callers cannot mutate the internal table.
          */
@@ -93,9 +93,9 @@ enum class ImplementationSelectionMode(
         fun protocolOrderedValues(): Array<ImplementationSelectionMode> = PROTOCOL_ORDERED.copyOf()
 
         /**
-         * Strict boundary parser from protocol token.
+         * Strict boundary parser from order token.
          *
-         * This does not return UNRECOGNIZED. Unknown protocol material must not
+         * This does not return UNRECOGNIZED. Unknown order material must not
          * enter the ratified domain.
          */
         @JvmStatic
@@ -106,7 +106,7 @@ enum class ImplementationSelectionMode(
                 "strict_polymorphic_lowering" -> STRICT_POLYMORPHIC_LOWERING
                 "identity_materialization" -> IDENTITY_MATERIALIZATION
                 else -> throw TypeExpansionContractViolationException(
-                    reason = "Unknown ImplementationSelectionMode protocol token.",
+                    reason = "Unknown ImplementationSelectionMode order token.",
                 )
             }
         }
@@ -129,9 +129,9 @@ enum class ImplementationSelectionMode(
         }
 
         /**
-         * Strict boundary parser from protocol order.
+         * Strict boundary parser from order order.
          *
-         * This avoids values().find { ... } and keeps the protocol table
+         * This avoids values().find { ... } and keeps the order table
          * explicit.
          */
         @JvmStatic
@@ -140,7 +140,7 @@ enum class ImplementationSelectionMode(
                 10 -> STRICT_POLYMORPHIC_LOWERING
                 20 -> IDENTITY_MATERIALIZATION
                 else -> throw TypeExpansionContractViolationException(
-                    reason = "Unknown ImplementationSelectionMode protocol order.",
+                    reason = "Unknown ImplementationSelectionMode order order.",
                 )
             }
 
@@ -156,7 +156,7 @@ enum class ImplementationSelectionMode(
         fun requireProtocolOrderInRange(protocolOrder: Int) {
             if (protocolOrder < MIN_PROTOCOL_ORDER || protocolOrder > MAX_PROTOCOL_ORDER) {
                 throw TypeExpansionContractViolationException(
-                    reason = "ImplementationSelectionMode protocol order is outside known protocol range.",
+                    reason = "ImplementationSelectionMode order order is outside known order range.",
                 )
             }
         }
@@ -164,13 +164,13 @@ enum class ImplementationSelectionMode(
         private fun requireProtocolTokenSurface(protocolToken: String) {
             if (protocolToken.isEmpty()) {
                 throw TypeExpansionContractViolationException(
-                    reason = "ImplementationSelectionMode protocol token must not be empty.",
+                    reason = "ImplementationSelectionMode order token must not be empty.",
                 )
             }
 
             if (protocolToken.length > MAX_PROTOCOL_TOKEN_CHARS) {
                 throw TypeExpansionContractViolationException(
-                    reason = "ImplementationSelectionMode protocol token exceeds maximum allowed length.",
+                    reason = "ImplementationSelectionMode order token exceeds maximum allowed length.",
                 )
             }
 
@@ -179,12 +179,12 @@ enum class ImplementationSelectionMode(
                 val c = protocolToken[index]
                 val ok =
                     c in 'a'..'z' ||
-                        c in '0'..'9' ||
-                        c == '_'
+                            c in '0'..'9' ||
+                            c == '_'
 
                 if (!ok) {
                     throw TypeExpansionContractViolationException(
-                        reason = "ImplementationSelectionMode protocol token contains a non-canonical character at index=$index.",
+                        reason = "ImplementationSelectionMode order token contains a non-canonical character at index=$index.",
                     )
                 }
 

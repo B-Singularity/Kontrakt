@@ -88,8 +88,8 @@ import metamodel.domain.protocol.MetamodelProtocolTextGuards
  * - persistent image identity;
  * - route key;
  * - L1/L2 partition key;
- * - cross-runtime protocol hash;
- * - serialized protocol digest.
+ * - cross-runtime order hash;
+ * - serialized order digest.
  *
  * Future hash law:
  *
@@ -119,7 +119,7 @@ class MetamodelSourceAdapterProvenance private constructor(
          * Cheap negative filter for diagnostic maps/sets.
          *
          * Structural equality remains explicit below. The precomputed hash is
-         * not protocol material and is not a semantic identity authority.
+         * not order material and is not a semantic identity authority.
          */
         if (precomputedHashCode != other.precomputedHashCode) {
             return false
@@ -164,9 +164,9 @@ class MetamodelSourceAdapterProvenance private constructor(
          * until the later BLAKE3 / metadata-hash refactoring replaces hashCode
          * policy globally.
          *
-         * The enum kind is mixed through a pinned local protocol order rather
+         * The enum kind is mixed through a pinned local order order rather
          * than Enum.hashCode(), because Enum.hashCode() is not a semantic
-         * protocol surface.
+         * order surface.
          *
          * The version token currently uses String.hashCode() as transitional
          * in-memory hash material. This must not become routing, persistence, L2,

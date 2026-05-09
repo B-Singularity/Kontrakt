@@ -68,8 +68,8 @@ class CanonicalTypeSignature private constructor(
         if (other !is CanonicalTypeSignature) return false
 
         return value == other.value &&
-            shapeSummary == other.shapeSummary &&
-            schemaVersion == other.schemaVersion
+                shapeSummary == other.shapeSummary &&
+                schemaVersion == other.schemaVersion
     }
 
     override fun hashCode(): Int {
@@ -89,7 +89,7 @@ class CanonicalTypeSignature private constructor(
          *
          * This is deliberately larger than CanonicalTypeText because signatures
          * may include generic arguments and array suffixes. Raising this cap
-         * should be treated as a protocol amendment and covered by golden
+         * should be treated as a order amendment and covered by golden
          * vectors.
          */
         const val MAX_SIGNATURE_CHARS: Int = 2_048
@@ -129,7 +129,7 @@ class CanonicalTypeSignature private constructor(
 
             if (value.length > MAX_SIGNATURE_CHARS) {
                 throw MetamodelFactContractViolationException(
-                    "CanonicalTypeSignature.value exceeds protocol cap=$MAX_SIGNATURE_CHARS.",
+                    "CanonicalTypeSignature.value exceeds order cap=$MAX_SIGNATURE_CHARS.",
                 )
             }
 
@@ -144,7 +144,7 @@ class CanonicalTypeSignature private constructor(
         private fun rejectReservedProtocolMaterial(value: String) {
             if (value.indexOf('|') >= 0) {
                 throw MetamodelFactContractViolationException(
-                    "CanonicalTypeSignature.value contains reserved protocol delimiter '|'.",
+                    "CanonicalTypeSignature.value contains reserved order delimiter '|'.",
                 )
             }
         }
@@ -210,14 +210,14 @@ class CanonicalTypeSignature private constructor(
 
         private fun isJvmPrimitiveDescriptor(c: Char): Boolean =
             c == 'B' ||
-                c == 'C' ||
-                c == 'D' ||
-                c == 'F' ||
-                c == 'I' ||
-                c == 'J' ||
-                c == 'S' ||
-                c == 'Z' ||
-                c == 'V'
+                    c == 'C' ||
+                    c == 'D' ||
+                    c == 'F' ||
+                    c == 'I' ||
+                    c == 'J' ||
+                    c == 'S' ||
+                    c == 'Z' ||
+                    c == 'V'
 
         private fun requireBalancedGenericDelimiters(value: String) {
             var depth = 0
@@ -302,8 +302,8 @@ class CanonicalTypeSignature private constructor(
             if (lexicalFacts.trailingArrayRank != shapeSummary.arrayRank) {
                 throw MetamodelFactContractViolationException(
                     "CanonicalTypeSignature array rank mismatch: " +
-                        "signatureRank=${lexicalFacts.trailingArrayRank}, " +
-                        "summaryRank=${shapeSummary.arrayRank}.",
+                            "signatureRank=${lexicalFacts.trailingArrayRank}, " +
+                            "summaryRank=${shapeSummary.arrayRank}.",
                 )
             }
 
@@ -312,18 +312,18 @@ class CanonicalTypeSignature private constructor(
                 CanonicalTypeShapeKind.UNIT,
                 CanonicalTypeShapeKind.ATOMIC,
                 CanonicalTypeShapeKind.ENUM,
-                -> {
+                    -> {
                     if (lexicalFacts.hasGenericDelimiters) {
                         throw MetamodelFactContractViolationException(
                             "CanonicalTypeSignature terminal shape must not contain generic delimiters: " +
-                                "kind=${shapeSummary.kind.protocolToken}.",
+                                    "kind=${shapeSummary.kind.protocolToken}.",
                         )
                     }
 
                     if (lexicalFacts.trailingArrayRank != 0) {
                         throw MetamodelFactContractViolationException(
                             "CanonicalTypeSignature terminal shape must not contain array suffixes: " +
-                                "kind=${shapeSummary.kind.protocolToken}.",
+                                    "kind=${shapeSummary.kind.protocolToken}.",
                         )
                     }
                 }
@@ -341,7 +341,7 @@ class CanonicalTypeSignature private constructor(
                     ) {
                         throw MetamodelFactContractViolationException(
                             "CanonicalTypeSignature ARRAY summary reports generic component, " +
-                                "but signature component has no generic delimiters.",
+                                    "but signature component has no generic delimiters.",
                         )
                     }
 
@@ -358,7 +358,7 @@ class CanonicalTypeSignature private constructor(
 
                 CanonicalTypeShapeKind.COLLECTION,
                 CanonicalTypeShapeKind.MAP,
-                -> {
+                    -> {
                     requireTopLevelGenericArityAtLeast(
                         value = value,
                         lexicalFacts = lexicalFacts,
@@ -372,11 +372,11 @@ class CanonicalTypeSignature private constructor(
                 CanonicalTypeShapeKind.SEALED_INTERFACE,
                 CanonicalTypeShapeKind.ABSTRACT_CLASS,
                 CanonicalTypeShapeKind.SEALED_CLASS,
-                -> {
+                    -> {
                     if (lexicalFacts.trailingArrayRank != 0) {
                         throw MetamodelFactContractViolationException(
                             "CanonicalTypeSignature non-array structural/polymorphic shape must not contain array suffixes: " +
-                                "kind=${shapeSummary.kind.protocolToken}.",
+                                    "kind=${shapeSummary.kind.protocolToken}.",
                         )
                     }
 
@@ -386,8 +386,8 @@ class CanonicalTypeSignature private constructor(
                     ) {
                         throw MetamodelFactContractViolationException(
                             "CanonicalTypeSignature summary reports generic arity but signature has no generic delimiters: " +
-                                "kind=${shapeSummary.kind.protocolToken}, " +
-                                "genericArity=${shapeSummary.genericArity}.",
+                                    "kind=${shapeSummary.kind.protocolToken}, " +
+                                    "genericArity=${shapeSummary.genericArity}.",
                         )
                     }
                 }
@@ -411,7 +411,7 @@ class CanonicalTypeSignature private constructor(
             if (actual < minimum) {
                 throw MetamodelFactContractViolationException(
                     "CanonicalTypeSignature ${kind.protocolToken} summary requires at least $minimum " +
-                        "top-level generic arguments, actual=$actual.",
+                            "top-level generic arguments, actual=$actual.",
                 )
             }
         }
@@ -486,10 +486,10 @@ private class SignatureLexicalFacts private constructor(
             val componentEndExclusive = value.length - (rank * 2)
             val componentHasGenericDelimiters =
                 componentEndExclusive > 0 &&
-                    containsGenericDelimiterBefore(
-                        value = value,
-                        endExclusive = componentEndExclusive,
-                    )
+                        containsGenericDelimiterBefore(
+                            value = value,
+                            endExclusive = componentEndExclusive,
+                        )
 
             return SignatureLexicalFacts(
                 hasGenericDelimiters = value.indexOf('<') >= 0 || value.indexOf('>') >= 0,

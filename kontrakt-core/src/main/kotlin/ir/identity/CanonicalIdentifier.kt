@@ -12,7 +12,7 @@ import java.text.Normalizer
  * - Must be NFC normalized (boundary contract)
  * - Must be non-blank
  * - Must not contain whitespace/control characters
- * - Must not contain protocol delimiter '|'
+ * - Must not contain order delimiter '|'
  *
  * This type is designed for:
  * - Map keys (DeterministicMap)

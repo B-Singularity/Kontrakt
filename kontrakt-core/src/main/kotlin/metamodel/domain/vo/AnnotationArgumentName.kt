@@ -32,7 +32,7 @@ import metamodel.domain.protocol.MetamodelProtocolTextGuards
  *
  * hashCode() may use String.hashCode() for in-memory hash tables only.
  * It must not be used as a persisted fingerprint, route key, canonical digest,
- * or cross-runtime protocol hash.
+ * or cross-runtime order hash.
  */
 class AnnotationArgumentName private constructor(
     val value: String,
@@ -45,7 +45,7 @@ class AnnotationArgumentName private constructor(
 
     override fun equals(other: Any?): Boolean =
         other is AnnotationArgumentName &&
-            value == other.value
+                value == other.value
 
     override fun hashCode(): Int = value.hashCode()
 

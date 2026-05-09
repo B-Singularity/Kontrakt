@@ -34,7 +34,7 @@ import planning.domain.expansion.sequence.ExpansionSequence
  * Candidate ordering law:
  *
  * Candidates are ordered by implementation.canonicalIdentifier using the
- * metamodel protocol ordering primitive. Reflection/provider enumeration order
+ * metamodel order ordering primitive. Reflection/provider enumeration order
  * is never trusted.
  *
  * Duplicate law:
@@ -128,7 +128,7 @@ class PolymorphicImplementationCandidates private constructor(
 
     companion object {
         /**
-         * Hard protocol cap for one contract's implementation candidates.
+         * Hard order cap for one contract's implementation candidates.
          *
          * This is intentionally generous for ordinary polymorphic hierarchies.
          * If a future plugin ecosystem needs more, the limit must be raised by

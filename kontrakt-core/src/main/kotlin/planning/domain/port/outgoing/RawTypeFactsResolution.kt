@@ -18,7 +18,7 @@ import metamodel.domain.dto.RawTypeFactsDTO
  * Port-return value for raw type-fact retrieval.
  *
  * This is not telemetry.
- * It is protocol-level accounting metadata required to distinguish:
+ * It is order-level accounting metadata required to distinguish:
  *
  * - cached already-ratified facts,
  * - actual backend fact discovery/reconciliation.

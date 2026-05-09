@@ -7,7 +7,7 @@ import metamodel.domain.exception.InvalidDeclarationOrdinalException
  *
  * This is a metamodel value object, not a primitive sentinel.
  *
- * ADR-0030 / Active Member Projection protocol require declaration ordinal
+ * ADR-0030 / Active Member Projection order require declaration ordinal
  * availability to be explicit:
  *
  * - Present(n)

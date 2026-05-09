@@ -11,7 +11,7 @@ import ir.structure.DeterministicMap
 enum class EdgeKind { TYPE_ARGUMENT, FIELD, CTOR_PARAM, ELEMENT, MAP_KEY, MAP_VALUE }
 
 /**
- * Where an attribute originates from, for traceability and protocol stability.
+ * Where an attribute originates from, for traceability and order stability.
  */
 enum class AttributeOrigin {
     TYPE_DECLARATION,
@@ -23,9 +23,9 @@ enum class AttributeOrigin {
 }
 
 /**
- * Base attribute type in the plan protocol.
+ * Base attribute type in the plan order.
  *
- * Attributes are modeled as protocol objects (not annotations) to avoid reflection leakage
+ * Attributes are modeled as order objects (not annotations) to avoid reflection leakage
  * and to enable deterministic serialization and caching.
  */
 sealed class Attribute {

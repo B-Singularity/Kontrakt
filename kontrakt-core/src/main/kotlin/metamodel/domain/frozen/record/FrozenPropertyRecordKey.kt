@@ -73,7 +73,7 @@ import metamodel.domain.vo.TypeReference
  *
  * [propertyName] is still a String, but it is not arbitrary text.
  *
- * It must be an ASCII protocol-id token:
+ * It must be an ASCII order-id token:
  *
  * - non-empty;
  * - length-bounded;
@@ -89,14 +89,14 @@ import metamodel.domain.vo.TypeReference
  * - free of discovery append ordinals.
  *
  * If Kotlin/Java source property names later require a wider grammar than
- * ASCII protocol-id tokens, do not weaken this key. Introduce
+ * ASCII order-id tokens, do not weaken this key. Introduce
  * CanonicalPropertyName with an explicit canonical text law.
  *
  * Visibility-rank law:
  *
  * [visibilityRank] is not a raw adapter ordinal.
  *
- * It must already be lowered into a backend-neutral protocol rank before this
+ * It must already be lowered into a backend-neutral order rank before this
  * key is issued.
  *
  * Forbidden visibility-rank sources:
@@ -110,7 +110,7 @@ import metamodel.domain.vo.TypeReference
  * Allowed visibility-rank source:
  *
  * - an explicitly ratified visibility normalization policy that maps backend
- *   visibility observations into Kontrakt-owned protocol ranks.
+ *   visibility observations into Kontrakt-owned order ranks.
  *
  * This key currently validates only the local numeric boundary:
  *
@@ -158,7 +158,7 @@ import metamodel.domain.vo.TypeReference
  * - route key;
  * - L1/L2 partition key;
  * - PlanCacheKey material;
- * - cross-runtime protocol digest.
+ * - cross-runtime order digest.
  *
  * Do not locally introduce a separate hash family in this key.
  */
@@ -289,7 +289,7 @@ class FrozenPropertyRecordKey private constructor(
          * later BLAKE3 / metadata-hash refactoring replaces hash policy
          * globally.
          *
-         * Do not treat this value as protocol material.
+         * Do not treat this value as order material.
          */
         private fun computeHashCode(
             ownerType: TypeReference,

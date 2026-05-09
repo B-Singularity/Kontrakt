@@ -25,19 +25,19 @@ import planning.domain.exception.PortContractViolationException
  *
  * Hexagonal rule:
  *
- * This protocol depends only on the NormalizationEngine port.
+ * This order depends only on the NormalizationEngine port.
  * ICU/JDK/etc normalization engines are adapters outside the domain.
  *
  * Determinism rule:
  *
  * This class does not use java.nio CharsetEncoder. UTF-8 length calculation and
- * byte emission are explicitly implemented here so the hash input protocol is
+ * byte emission are explicitly implemented here so the hash input order is
  * pinned at the byte level.
  *
  * Note on normalizationSpecVersion:
  *
- * This value is a protocol seed component. If the normalization engine/version
- * changes, the protocol version must be bumped by policy.
+ * This value is a order seed component. If the normalization engine/version
+ * changes, the order version must be bumped by policy.
  */
 class HashInputEncodingSpec(
     private val normalizationEngine: NormalizationEngine,
@@ -145,7 +145,7 @@ class HashInputEncodingSpec(
      *
      * NFC validation is performed after surrogate validation because the
      * normalization engine must never receive malformed UTF-16 material from
-     * this protocol boundary.
+     * this order boundary.
      */
     private fun validateStrictAndMeasureUtf8Length(
         input: String,
@@ -360,10 +360,10 @@ class HashInputEncodingSpec(
         private const val LOW_SURROGATE_END: Int = 0xDFFF
 
         /**
-         * Conservative protocol cap for one hash input component.
+         * Conservative order cap for one hash input component.
          *
          * This should be aligned with the largest canonical type/signature or
-         * planning protocol field cap. Raise by protocol amendment, not by
+         * planning order field cap. Raise by order amendment, not by
          * adapter workaround.
          */
         const val DEFAULT_MAX_INPUT_CHARS: Int = 8_192

@@ -25,7 +25,7 @@ class ScanIndex private constructor(
     companion object {
         /**
          * Safe Factory.
-         * Accepts raw collections and enforces protocol invariants (Sort, Dedupe, Freeze).
+         * Accepts raw collections and enforces order invariants (Sort, Dedupe, Freeze).
          * This is the ONLY way to create a ScanIndex instance.
          */
         fun of(

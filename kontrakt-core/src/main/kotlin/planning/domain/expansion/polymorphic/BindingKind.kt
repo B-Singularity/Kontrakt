@@ -20,7 +20,7 @@ import planning.domain.exception.TypeExpansionContractViolationException
  * Protocol law:
  *
  * - protocolOrder is stable deterministic ordering material.
- * - protocolToken is stable textual protocol material.
+ * - protocolToken is stable textual order material.
  * - enum ordinal must never be used.
  * - protocolOrder is not selection precedence.
  *
@@ -28,7 +28,7 @@ import planning.domain.exception.TypeExpansionContractViolationException
  *
  * The core domain does not contain UNRECOGNIZED.
  *
- * Unknown protocol tokens/orders are rejected at the boundary by
+ * Unknown order tokens/orders are rejected at the boundary by
  * fromProtocolToken(...) or fromProtocolOrder(...). A tolerant external parser
  * may return null before entering the domain, but ratified BindingKind values
  * must always be known.
@@ -176,9 +176,9 @@ enum class BindingKind(
         fun protocolOrderedValues(): Array<BindingKind> = PROTOCOL_ORDERED.copyOf()
 
         /**
-         * Strict boundary parser from protocol token.
+         * Strict boundary parser from order token.
          *
-         * This does not return UNRECOGNIZED. Unknown protocol material must not
+         * This does not return UNRECOGNIZED. Unknown order material must not
          * enter the ratified domain.
          */
         @JvmStatic
@@ -196,7 +196,7 @@ enum class BindingKind(
                 "decorator_wrapper" -> DECORATOR_WRAPPER
                 "test_override_stub" -> TEST_OVERRIDE_STUB
                 else -> throw TypeExpansionContractViolationException(
-                    reason = "Unknown BindingKind protocol token.",
+                    reason = "Unknown BindingKind order token.",
                 )
             }
         }
@@ -226,9 +226,9 @@ enum class BindingKind(
         }
 
         /**
-         * Strict boundary parser from protocol order.
+         * Strict boundary parser from order order.
          *
-         * This avoids values().find { ... } and makes the protocol table
+         * This avoids values().find { ... } and makes the order table
          * explicit.
          */
         @JvmStatic
@@ -244,7 +244,7 @@ enum class BindingKind(
                 80 -> DECORATOR_WRAPPER
                 90 -> TEST_OVERRIDE_STUB
                 else -> throw TypeExpansionContractViolationException(
-                    reason = "Unknown BindingKind protocol order.",
+                    reason = "Unknown BindingKind order order.",
                 )
             }
 
@@ -266,13 +266,13 @@ enum class BindingKind(
         private fun requireProtocolTokenSurface(protocolToken: String) {
             if (protocolToken.isEmpty()) {
                 throw TypeExpansionContractViolationException(
-                    reason = "BindingKind protocol token must not be empty.",
+                    reason = "BindingKind order token must not be empty.",
                 )
             }
 
             if (protocolToken.length > MAX_PROTOCOL_TOKEN_CHARS) {
                 throw TypeExpansionContractViolationException(
-                    reason = "BindingKind protocol token exceeds maximum allowed length.",
+                    reason = "BindingKind order token exceeds maximum allowed length.",
                 )
             }
 
@@ -281,12 +281,12 @@ enum class BindingKind(
                 val c = protocolToken[index]
                 val ok =
                     c in 'a'..'z' ||
-                        c in '0'..'9' ||
-                        c == '_'
+                            c in '0'..'9' ||
+                            c == '_'
 
                 if (!ok) {
                     throw TypeExpansionContractViolationException(
-                        reason = "BindingKind protocol token contains a non-canonical character at index=$index.",
+                        reason = "BindingKind order token contains a non-canonical character at index=$index.",
                     )
                 }
 
@@ -298,7 +298,7 @@ enum class BindingKind(
         fun requireProtocolOrderInRange(protocolOrder: Int) {
             if (protocolOrder < MIN_PROTOCOL_ORDER || protocolOrder > MAX_PROTOCOL_ORDER) {
                 throw TypeExpansionContractViolationException(
-                    reason = "BindingKind protocol order is outside known protocol range.",
+                    reason = "BindingKind order order is outside known order range.",
                 )
             }
         }

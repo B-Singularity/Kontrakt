@@ -69,8 +69,8 @@ import metamodel.domain.protocol.MetamodelProtocolTextGuards
  * - canonical fingerprint;
  * - persisted identity;
  * - route key;
- * - cross-runtime protocol hash;
- * - serialized protocol digest.
+ * - cross-runtime order hash;
+ * - serialized order digest.
  */
 class FrozenMetamodelImageSchemaVersion private constructor(
     val value: String,
@@ -137,7 +137,7 @@ class FrozenMetamodelImageSchemaVersion private constructor(
          * aligned with the existing VO family until the later BLAKE3 /
          * metadata-hash refactoring replaces the hash policy globally.
          *
-         * Do not treat this value as protocol material.
+         * Do not treat this value as order material.
          */
         private fun computeHashCode(
             value: String,

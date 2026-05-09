@@ -4,7 +4,7 @@ import planning.domain.exception.PlanningProtocolIntegrityException
 
 /**
  * Immutable version tuple for deterministic planning, cache stability,
- * protocol traceability, and explicit semantic/version boundaries.
+ * order traceability, and explicit semantic/version boundaries.
  *
  * This bundle intentionally preserves the multi-axis version tuple instead
  * of collapsing it into a single opaque string.

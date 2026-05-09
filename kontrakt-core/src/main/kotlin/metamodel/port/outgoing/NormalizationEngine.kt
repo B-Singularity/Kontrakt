@@ -30,7 +30,7 @@ import metamodel.domain.vo.CanonicalTypeTextInspectionResult
  */
 interface NormalizationEngine {
     /**
-     * Stable engine identifier for diagnostics and protocol pinning.
+     * Stable engine identifier for diagnostics and order pinning.
      */
     val engineId: String
 

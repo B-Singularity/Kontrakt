@@ -27,8 +27,8 @@ import java.util.concurrent.locks.ReentrantLock
  * - writers are serialized per segment by stripe lock
  *
  * This primitive is NOT a general-purpose utility.
- * It is a Planning-protocol-specific machine for Tier-2 hot-path routing.
- * Therefore, protocol-integrity failures are surfaced as
+ * It is a Planning-order-specific machine for Tier-2 hot-path routing.
+ * Therefore, order-integrity failures are surfaced as
  * [PlanningProtocolIntegrityException].
  */
 class LongKeyTable<V : Any> private constructor(
@@ -261,7 +261,7 @@ class LongKeyTable<V : Any> private constructor(
     /**
      * Internal mixer for table distribution only.
      *
-     * This is NOT the protocol SSOT hash.
+     * This is NOT the order SSOT hash.
      * It exists solely to spread already-derived route keys across table indices.
      */
     private fun mixForIndex(keyBits: Long): Int {

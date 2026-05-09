@@ -36,7 +36,7 @@ import planning.domain.exception.TypeExpansionContractViolationException
  *
  * hashCode() returns the integer value for in-memory equality collections only.
  * It must not be used as a persisted fingerprint, route key, canonical digest,
- * or cross-runtime protocol hash.
+ * or cross-runtime order hash.
  */
 class CanonicalLocalOrdinal private constructor(
     val value: Int,
@@ -58,7 +58,7 @@ class CanonicalLocalOrdinal private constructor(
             throw TypeExpansionContractViolationException(
                 reason =
                     "CanonicalLocalOrdinal overflow: " +
-                        "current=$value, increment=$increment, max=$MAX_LOCAL_ORDINAL",
+                            "current=$value, increment=$increment, max=$MAX_LOCAL_ORDINAL",
             )
         }
 
@@ -91,7 +91,7 @@ class CanonicalLocalOrdinal private constructor(
             throw TypeExpansionContractViolationException(
                 reason =
                     "CanonicalLocalOrdinal overflow: " +
-                        "current=$value, increment=$increment, max=$MAX_LOCAL_ORDINAL",
+                            "current=$value, increment=$increment, max=$MAX_LOCAL_ORDINAL",
             )
         }
 
@@ -112,7 +112,7 @@ class CanonicalLocalOrdinal private constructor(
             throw TypeExpansionContractViolationException(
                 reason =
                     "Cannot write CanonicalLocalOrdinal at offset=$offset " +
-                        "into destination size=${destination.size}",
+                            "into destination size=${destination.size}",
             )
         }
 
@@ -124,7 +124,7 @@ class CanonicalLocalOrdinal private constructor(
 
     override fun equals(other: Any?): Boolean =
         other is CanonicalLocalOrdinal &&
-            value == other.value
+                value == other.value
 
     override fun hashCode(): Int = value
 
@@ -142,7 +142,7 @@ class CanonicalLocalOrdinal private constructor(
                 throw TypeExpansionContractViolationException(
                     reason =
                         "CanonicalLocalOrdinal out of range: " +
-                            "value=$value, max=$MAX_LOCAL_ORDINAL",
+                                "value=$value, max=$MAX_LOCAL_ORDINAL",
                 )
             }
 

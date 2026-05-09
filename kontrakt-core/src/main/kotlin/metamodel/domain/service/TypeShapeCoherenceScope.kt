@@ -217,9 +217,9 @@ class TypeShapeCoherenceReceipt private constructor(
         if (acceptedRatificationFingerprint != ratification.ratificationFingerprint) {
             throw MetamodelFactContractViolationException(
                 "TypeShapeCoherenceReceipt does not accept ratification fingerprint: " +
-                    "scope=$scopeId@$scopeEpoch, " +
-                    "expected=${acceptedRatificationFingerprint.redacted()}, " +
-                    "actual=${ratification.ratificationFingerprint.redacted()}",
+                        "scope=$scopeId@$scopeEpoch, " +
+                        "expected=${acceptedRatificationFingerprint.redacted()}, " +
+                        "actual=${ratification.ratificationFingerprint.redacted()}",
             )
         }
     }
@@ -234,8 +234,8 @@ class TypeShapeCoherenceReceipt private constructor(
         if (scopeId != scope.scopeId || scopeEpoch != scope.scopeEpoch) {
             throw MetamodelFactContractViolationException(
                 "TypeShapeCoherenceReceipt scope mismatch: " +
-                    "receipt=$scopeId@$scopeEpoch, " +
-                    "scope=${scope.scopeId}@${scope.scopeEpoch}",
+                        "receipt=$scopeId@$scopeEpoch, " +
+                        "scope=${scope.scopeId}@${scope.scopeEpoch}",
             )
         }
     }
@@ -245,9 +245,9 @@ class TypeShapeCoherenceReceipt private constructor(
         if (other !is TypeShapeCoherenceReceipt) return false
 
         return scopeId == other.scopeId &&
-            scopeEpoch == other.scopeEpoch &&
-            acceptedRatificationFingerprint == other.acceptedRatificationFingerprint &&
-            admissionToken == other.admissionToken
+                scopeEpoch == other.scopeEpoch &&
+                acceptedRatificationFingerprint == other.acceptedRatificationFingerprint &&
+                admissionToken == other.admissionToken
     }
 
     override fun hashCode(): Int {
@@ -260,10 +260,10 @@ class TypeShapeCoherenceReceipt private constructor(
 
     override fun toString(): String =
         "TypeShapeCoherenceReceipt(" +
-            "scope=$scopeId@$scopeEpoch, " +
-            "fingerprint=${acceptedRatificationFingerprint.redacted()}, " +
-            "admissionToken=$admissionToken" +
-            ")"
+                "scope=$scopeId@$scopeEpoch, " +
+                "fingerprint=${acceptedRatificationFingerprint.redacted()}, " +
+                "admissionToken=$admissionToken" +
+                ")"
 
     companion object {
         /**
@@ -317,7 +317,7 @@ private fun requireToken(
         value.indexOf('\t') >= 0
     ) {
         throw MetamodelFactContractViolationException(
-            "$field contains a reserved protocol/control character.",
+            "$field contains a reserved order/control character.",
         )
     }
 }

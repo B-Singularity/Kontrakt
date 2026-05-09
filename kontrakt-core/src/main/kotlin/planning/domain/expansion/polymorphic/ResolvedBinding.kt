@@ -73,8 +73,8 @@ import planning.domain.exception.TypeExpansionContractViolationException
  * - canonical fingerprint;
  * - persisted identity;
  * - route key;
- * - cross-runtime protocol hash;
- * - serialized protocol digest.
+ * - cross-runtime order hash;
+ * - serialized order digest.
  */
 class ResolvedBinding private constructor(
     val requestedType: TypeReference,
@@ -200,7 +200,7 @@ class ResolvedBinding private constructor(
             /*
              * Do not use enum ordinal.
              *
-             * protocolOrder is the stable protocol ordering surface and avoids
+             * protocolOrder is the stable order ordering surface and avoids
              * repeated protocolToken.hashCode() work.
              */
             result = 31 * result + bindingKind.protocolOrder

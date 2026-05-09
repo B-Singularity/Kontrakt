@@ -15,13 +15,13 @@ package metamodel.domain.frozen.availability
  *
  * - map it to a more precise state such as ABSENT, UNAVAILABLE_FROM_BACKEND,
  *   REJECTED_UNSAFE, FILTERED_BY_POLICY, TRUNCATED, or ACQUISITION_FAILED;
- * - lower it into a field-specific closed vocabulary whose consuming protocol
+ * - lower it into a field-specific closed vocabulary whose consuming order
  *   defines deterministic conservative handling;
  * - or fail closed before image publication.
  *
  * Field-specific unknown states may still exist in narrow domain vocabularies
  * such as NullabilityKind.UNKNOWN or DefaultValuePresence.UNKNOWN, but only when
- * their consuming protocol defines deterministic conservative or fail-closed
+ * their consuming order defines deterministic conservative or fail-closed
  * behavior.
  *
  * State-code law:
@@ -92,7 +92,7 @@ enum class FrozenMetadataAvailability {
 
     /**
      * The metadata was rejected because using it would be unsafe or would
-     * violate a protocol/security/sanity law.
+     * violate a order/security/sanity law.
      *
      * Example:
      * - polluted JVM-internal classifier material;
@@ -148,5 +148,5 @@ enum class FrozenMetadataAvailability {
      * - ACQUISITION_FAILED means acquisition was attempted but failed.
      */
     ACQUISITION_FAILED,
-    
+
 }

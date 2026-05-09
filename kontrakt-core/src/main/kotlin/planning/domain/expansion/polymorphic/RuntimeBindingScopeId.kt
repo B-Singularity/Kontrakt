@@ -19,7 +19,7 @@ import planning.domain.exception.TypeExpansionContractViolationException
  * Identity law:
  *
  * RuntimeBindingScopeId is the composite ratification identity for the current
- * runtime binding protocol.
+ * runtime binding order.
  *
  * It includes:
  *
@@ -31,7 +31,7 @@ import planning.domain.exception.TypeExpansionContractViolationException
  *
  * Snapshot ownership law:
  *
- * In the current protocol, RuntimeBindingSnapshotId is a type-safe identity view
+ * In the current order, RuntimeBindingSnapshotId is a type-safe identity view
  * over RuntimeBindingScopeId. The relationship is exactly 1:1.
  *
  * Therefore RuntimeBindingScopeId owns exactly one RuntimeBindingSnapshotId.
@@ -63,7 +63,7 @@ import planning.domain.exception.TypeExpansionContractViolationException
  * an in-memory map key.
  *
  * This cached hash is not a canonical fingerprint, persisted key, route key, or
- * cross-runtime protocol hash.
+ * cross-runtime order hash.
  */
 class RuntimeBindingScopeId private constructor(
     val scopeName: String,
@@ -86,12 +86,12 @@ class RuntimeBindingScopeId private constructor(
 
     fun renderSummary(): String =
         "RuntimeBindingScopeId(" +
-            "scopeName=$scopeName, " +
-            "depth=${depth.value}, " +
-            "parentScopeName=${parentScopeName ?: "<root>"}, " +
-            "fingerprint=${ratificationFingerprint.renderSummary()}, " +
-            "schemaVersion=$schemaVersion" +
-            ")"
+                "scopeName=$scopeName, " +
+                "depth=${depth.value}, " +
+                "parentScopeName=${parentScopeName ?: "<root>"}, " +
+                "fingerprint=${ratificationFingerprint.renderSummary()}, " +
+                "schemaVersion=$schemaVersion" +
+                ")"
 
     /**
      * Safe one-line identity view for RuntimeBindingSnapshotId diagnostics.
@@ -100,10 +100,10 @@ class RuntimeBindingScopeId private constructor(
      */
     internal fun renderSnapshotIdentitySummary(): String =
         "scopeName=$scopeName, " +
-            "depth=${depth.value}, " +
-            "parentScopeName=${parentScopeName ?: "<root>"}, " +
-            "fingerprint=${ratificationFingerprint.renderSummary()}, " +
-            "schemaVersion=$schemaVersion"
+                "depth=${depth.value}, " +
+                "parentScopeName=${parentScopeName ?: "<root>"}, " +
+                "fingerprint=${ratificationFingerprint.renderSummary()}, " +
+                "schemaVersion=$schemaVersion"
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -118,10 +118,10 @@ class RuntimeBindingScopeId private constructor(
         }
 
         return scopeName == other.scopeName &&
-            depth == other.depth &&
-            parentScopeName == other.parentScopeName &&
-            ratificationFingerprint == other.ratificationFingerprint &&
-            schemaVersion == other.schemaVersion
+                depth == other.depth &&
+                parentScopeName == other.parentScopeName &&
+                ratificationFingerprint == other.ratificationFingerprint &&
+                schemaVersion == other.schemaVersion
     }
 
     override fun hashCode(): Int = precomputedHashCode
@@ -210,7 +210,7 @@ class RuntimeBindingScopeId private constructor(
                 throw TypeExpansionContractViolationException(
                     reason =
                         "RuntimeBindingScopeId root scope must not have parentScopeName: " +
-                            "scopeName=$scopeName, parentScopeName=$parentScopeName",
+                                "scopeName=$scopeName, parentScopeName=$parentScopeName",
                 )
             }
 
@@ -218,7 +218,7 @@ class RuntimeBindingScopeId private constructor(
                 throw TypeExpansionContractViolationException(
                     reason =
                         "RuntimeBindingScopeId non-root scope must have parentScopeName: " +
-                            "scopeName=$scopeName, depth=${depth.value}",
+                                "scopeName=$scopeName, depth=${depth.value}",
                 )
             }
 
@@ -226,7 +226,7 @@ class RuntimeBindingScopeId private constructor(
                 throw TypeExpansionContractViolationException(
                     reason =
                         "RuntimeBindingScopeId must not reference itself as parent: " +
-                            "scopeName=$scopeName",
+                                "scopeName=$scopeName",
                 )
             }
         }
@@ -249,7 +249,7 @@ class RuntimeBindingScopeId private constructor(
 }
 
 /**
- * Local protocol guard for runtime binding scope names.
+ * Local order guard for runtime binding scope names.
  *
  * This deliberately avoids planning.domain.canonical.text.CanonicalTextLaw.
  *
@@ -262,7 +262,7 @@ class RuntimeBindingScopeId private constructor(
  * - _
  * - .
  *
- * This is an internal protocol id surface, not a user-facing source identifier.
+ * This is an internal order id surface, not a user-facing source identifier.
  */
 private object RuntimeBindingScopeNameLaw {
     fun requireScopeName(
@@ -286,15 +286,15 @@ private object RuntimeBindingScopeNameLaw {
             val c = value[index]
             val ok =
                 c in 'A'..'Z' ||
-                    c in 'a'..'z' ||
-                    c in '0'..'9' ||
-                    c == '-' ||
-                    c == '_' ||
-                    c == '.'
+                        c in 'a'..'z' ||
+                        c in '0'..'9' ||
+                        c == '-' ||
+                        c == '_' ||
+                        c == '.'
 
             if (!ok) {
                 throw TypeExpansionContractViolationException(
-                    reason = "$field contains a non-canonical protocol-id character at index=$index.",
+                    reason = "$field contains a non-canonical order-id character at index=$index.",
                 )
             }
 

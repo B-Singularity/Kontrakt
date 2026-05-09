@@ -52,7 +52,7 @@ package planning.domain.expansion.seed
  * - canonical fingerprint;
  * - persisted identity;
  * - cache route key;
- * - cross-runtime protocol hash;
+ * - cross-runtime order hash;
  * - seed digest.
  */
 class DeterministicSeedSurface private constructor(
@@ -66,22 +66,22 @@ class DeterministicSeedSurface private constructor(
 
     fun renderSummary(): String =
         "DeterministicSeedSurface(" +
-            "id=${id.value}, " +
-            "seed=<redacted>, " +
-            "versionTuple=$versionTuple, " +
-            "rootTime=$rootTimeEpochMillis, " +
-            "proof=${ratificationProof.renderSummary()}" +
-            ")"
+                "id=${id.value}, " +
+                "seed=<redacted>, " +
+                "versionTuple=$versionTuple, " +
+                "rootTime=$rootTimeEpochMillis, " +
+                "proof=${ratificationProof.renderSummary()}" +
+                ")"
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is DeterministicSeedSurface) return false
 
         return id == other.id &&
-            seedMaterial == other.seedMaterial &&
-            versionTuple == other.versionTuple &&
-            rootTimeEpochMillis == other.rootTimeEpochMillis &&
-            ratificationProof == other.ratificationProof
+                seedMaterial == other.seedMaterial &&
+                versionTuple == other.versionTuple &&
+                rootTimeEpochMillis == other.rootTimeEpochMillis &&
+                ratificationProof == other.ratificationProof
     }
 
     override fun hashCode(): Int {

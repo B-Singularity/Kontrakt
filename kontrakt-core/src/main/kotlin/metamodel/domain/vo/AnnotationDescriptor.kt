@@ -15,7 +15,7 @@ import metamodel.domain.protocol.MetamodelProtocolOrdering
  *
  * Ordering law:
  *
- * AnnotationDescriptor has deterministic structural protocol order:
+ * AnnotationDescriptor has deterministic structural order order:
  *
  * 1. qualifiedName order;
  * 2. argument map structural order;
@@ -71,7 +71,7 @@ class AnnotationDescriptor private constructor(
         if (other !is AnnotationDescriptor) return false
 
         return qualifiedName == other.qualifiedName &&
-            values == other.values
+                values == other.values
     }
 
     override fun hashCode(): Int {
@@ -129,8 +129,8 @@ class AnnotationDescriptor private constructor(
 
             if (depth > AnnotationValue.MAX_NESTING_DEPTH) {
                 throw MetamodelFactContractViolationException(
-                    "AnnotationDescriptor.annotationValueNestingDepth exceeds protocol cap=" +
-                        "${AnnotationValue.MAX_NESTING_DEPTH}: $depth",
+                    "AnnotationDescriptor.annotationValueNestingDepth exceeds order cap=" +
+                            "${AnnotationValue.MAX_NESTING_DEPTH}: $depth",
                 )
             }
         }
@@ -212,7 +212,7 @@ private object AnnotationDescriptorOrder {
  * Structural deterministic ordering for annotation values.
  *
  * This is not canonical encoding.
- * This is only a stable in-memory protocol order for descriptors.
+ * This is only a stable in-memory order order for descriptors.
  */
 private object AnnotationValueOrder {
     fun compare(

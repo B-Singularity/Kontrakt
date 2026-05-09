@@ -4,7 +4,7 @@ import ir.IrLimits
 import ir.exception.IrProtocolViolationException
 
 /**
- * Raw payload node in the plan protocol.
+ * Raw payload node in the plan order.
  *
  * Constraints:
  * - payload size is enforced in BYTES (UTF-8) to match IrLimits.MAX_PAYLOAD_BYTES
@@ -23,7 +23,8 @@ class RawPayloadNode private constructor(
         }
     }
 
-    override fun toString(): String = "RawPayloadNode(typeId=$typeId, payloadBytes=${serializedPayload.toByteArray(Charsets.UTF_8).size})"
+    override fun toString(): String =
+        "RawPayloadNode(typeId=$typeId, payloadBytes=${serializedPayload.toByteArray(Charsets.UTF_8).size})"
 
     companion object {
         @JvmStatic

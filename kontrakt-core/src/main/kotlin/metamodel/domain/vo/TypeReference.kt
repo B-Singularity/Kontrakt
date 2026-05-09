@@ -71,7 +71,7 @@ import metamodel.domain.exception.MetamodelFactContractViolationException
  * - persisted identity;
  * - cache route key;
  * - cross-runtime stable key;
- * - serialized protocol hash;
+ * - serialized order hash;
  * - L2 route64.
  *
  * Stable canonical hash / digest / route-key derivation belongs to the later

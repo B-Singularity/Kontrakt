@@ -25,7 +25,7 @@ import metamodel.domain.vo.TypeShapeSummary
  * bound to the exact tuple:
  *
  * - text.value;
- * - shapeSummary protocol material;
+ * - shapeSummary order material;
  * - classifierId;
  * - classifierVersion;
  * - ratification law version.

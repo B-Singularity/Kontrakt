@@ -29,14 +29,14 @@ import metamodel.domain.vo.DeclarationOrdinal
  *
  * Surface law:
  *
- * ownerTypeFqcn and constructorSignature are protocol text surfaces, not source
+ * ownerTypeFqcn and constructorSignature are order text surfaces, not source
  * text and not arbitrary diagnostic strings.
  *
  * They must:
  *
  * - be non-empty;
  * - be length-bounded;
- * - contain no reserved protocol delimiter '|';
+ * - contain no reserved order delimiter '|';
  * - contain no C0/C1 control characters;
  * - contain no ASCII whitespace.
  *
@@ -54,7 +54,7 @@ import metamodel.domain.vo.DeclarationOrdinal
  *
  * The adapter must perform NFC rejection before entering this DTO. This DTO does
  * not normalize. It only protects the already-normalized fact surface from
- * malformed protocol material.
+ * malformed order material.
  *
  * Parameter law:
  *
@@ -211,12 +211,12 @@ class ConstructorCandidateFact private constructor(
             maxChars: Int,
         ) {
             /*
-             * Use the shared metamodel protocol guard for length and reserved
-             * protocol/control material, but throw fact-shape exceptions for the
+             * Use the shared metamodel order guard for length and reserved
+             * order/control material, but throw fact-shape exceptions for the
              * DTO boundary.
              *
              * If MetamodelProtocolTextGuards itself throws, that still indicates
-             * metamodel protocol corruption. The local checks below add
+             * metamodel order corruption. The local checks below add
              * fact-specific diagnostics and ASCII-whitespace rejection.
              */
             try {
@@ -230,7 +230,7 @@ class ConstructorCandidateFact private constructor(
                 throw InvalidTypeFactShapeException(
                     owner = owner,
                     factKind = "ConstructorCandidateFact",
-                    reason = "$field violates protocol length law: ${t.message}",
+                    reason = "$field violates order length law: ${t.message}",
                 )
             }
 
@@ -247,7 +247,7 @@ class ConstructorCandidateFact private constructor(
                     throw InvalidTypeFactShapeException(
                         owner = owner,
                         factKind = "ConstructorCandidateFact",
-                        reason = "$field contains reserved protocol/control material at index=$index.",
+                        reason = "$field contains reserved order/control material at index=$index.",
                     )
                 }
 
@@ -309,7 +309,7 @@ class ConstructorCandidateFact private constructor(
                 throw InvalidTypeFactShapeException(
                     owner = ownerTypeFqcn,
                     factKind = "ConstructorCandidateFact",
-                    reason = "Constructor parameter count exceeds protocol cap=" +
+                    reason = "Constructor parameter count exceeds order cap=" +
                             "$MAX_CONSTRUCTOR_PARAMETER_COUNT: ${parameters.size}",
                 )
             }

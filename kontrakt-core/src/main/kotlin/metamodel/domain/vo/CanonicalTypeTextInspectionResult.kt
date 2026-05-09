@@ -139,7 +139,7 @@ sealed interface CanonicalTypeTextInspectionResult {
      * This object represents a controlled, fail-closed refusal by the pinned
      * normalization/type-text inspection boundary.
      *
-     * [violationCode] is the stable protocol-facing classification.
+     * [violationCode] is the stable order-facing classification.
      *
      * [reason] is bounded diagnostic prose. It exists to improve failure reports,
      * not to define semantics.
@@ -207,15 +207,15 @@ sealed interface CanonicalTypeTextInspectionResult {
 /**
  * Machine-readable canonical type-text rejection code.
  *
- * This vocabulary is part of the metamodel inspection protocol.
+ * This vocabulary is part of the metamodel inspection order.
  *
  * Do not branch on diagnostic reason strings.
  * Branch on this enum.
  *
  * Evolution law:
  *
- * - Existing protocol tokens must not be renamed.
- * - Existing protocol orders must not be reused for different meanings.
+ * - Existing order tokens must not be renamed.
+ * - Existing order orders must not be reused for different meanings.
  * - New known violations should receive explicit codes.
  * - [UNKNOWN] is reserved for truly unclassified adapter/engine failures and
  *   must not be used as a shortcut for known policy failures.

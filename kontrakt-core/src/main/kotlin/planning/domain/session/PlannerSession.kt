@@ -493,10 +493,11 @@ class PlannerSession private constructor(
     /**
      * Returns whether EXPAND_EDGE still has members left to consume.
      */
-    internal fun hasMoreMembers(frame: ExpandEdgeFrame): Boolean = structures.memberCursorStack[frame.memberCursorSlot] < frame.memberCount
+    internal fun hasMoreMembers(frame: ExpandEdgeFrame): Boolean =
+        structures.memberCursorStack[frame.memberCursorSlot] < frame.memberCount
 
     /**
-     * Consumes one protocol-ordered member index from the session-owned cursor slot.
+     * Consumes one order-ordered member index from the session-owned cursor slot.
      *
      * The cursor lives in the session substrate, never in the frame object.
      */
@@ -840,6 +841,7 @@ internal class SessionChildDescriptorCursor private constructor(
 
     companion object {
         @JvmStatic
-        fun issue(backing: ArrayList<CommittedPlanNode>): SessionChildDescriptorCursor = SessionChildDescriptorCursor(backing)
+        fun issue(backing: ArrayList<CommittedPlanNode>): SessionChildDescriptorCursor =
+            SessionChildDescriptorCursor(backing)
     }
 }

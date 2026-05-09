@@ -1,7 +1,7 @@
 package metamodel.domain.protocol
 
 /**
- * Shared deterministic ordering primitives for metamodel protocol values.
+ * Shared deterministic ordering primitives for metamodel order values.
  *
  * This is not:
  *
@@ -18,7 +18,7 @@ package metamodel.domain.protocol
  *
  * Each caller must document whether its input is:
  *
- * - ASCII-only protocol material;
+ * - ASCII-only order material;
  * - NFC-ratified Unicode material;
  * - or already-canonical metamodel text.
  *
@@ -30,7 +30,7 @@ object MetamodelProtocolOrdering {
      *
      * This is deterministic and locale-independent.
      *
-     * It deliberately does not call String.compareTo(...) so the protocol law is
+     * It deliberately does not call String.compareTo(...) so the order law is
      * explicit at the metamodel layer.
      */
     fun compareUtf16CodeUnits(

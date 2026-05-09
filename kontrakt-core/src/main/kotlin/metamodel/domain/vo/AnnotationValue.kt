@@ -44,7 +44,7 @@ import java.util.Collections
  *
  * String law:
  *
- * Annotation string values are bounded and protocol-guarded. This object does
+ * Annotation string values are bounded and order-guarded. This object does
  * not normalize strings and does not call Character.*. If richer Unicode policy
  * is needed for annotation strings later, introduce a dedicated
  * AnnotationStringText ratification boundary.
@@ -331,7 +331,7 @@ sealed interface AnnotationValue {
 
         override fun equals(other: Any?): Boolean =
             other is ClassLiteralValue &&
-                referencedType == other.referencedType
+                    referencedType == other.referencedType
 
         override fun hashCode(): Int = referencedType.hashCode()
 
@@ -371,8 +371,8 @@ sealed interface AnnotationValue {
 
         override fun equals(other: Any?): Boolean =
             other is EnumConstantValue &&
-                enumType == other.enumType &&
-                constantName == other.constantName
+                    enumType == other.enumType &&
+                    constantName == other.constantName
 
         override fun hashCode(): Int {
             var result = enumType.hashCode()
@@ -389,7 +389,7 @@ sealed interface AnnotationValue {
                 if (enumType.shapeSummary.kind != CanonicalTypeShapeKind.ENUM) {
                     throw MetamodelFactContractViolationException(
                         "AnnotationValue.EnumConstantValue requires enum CanonicalTypeId: " +
-                            "actualKind=${enumType.shapeSummary.kind.protocolToken}",
+                                "actualKind=${enumType.shapeSummary.kind.protocolToken}",
                     )
                 }
 
@@ -426,7 +426,7 @@ sealed interface AnnotationValue {
 
         override fun equals(other: Any?): Boolean =
             other is AnnotationLiteralValue &&
-                descriptor == other.descriptor
+                    descriptor == other.descriptor
 
         override fun hashCode(): Int = descriptor.hashCode()
 
@@ -478,7 +478,7 @@ sealed interface AnnotationValue {
 
         override fun equals(other: Any?): Boolean =
             other is ArrayValue &&
-                elementsStorage == other.elementsStorage
+                    elementsStorage == other.elementsStorage
 
         override fun hashCode(): Int = elementsStorage.hashCode()
 
@@ -496,7 +496,7 @@ sealed interface AnnotationValue {
 
                 if (elements.size > AnnotationValue.MAX_ARRAY_ELEMENTS) {
                     throw MetamodelFactContractViolationException(
-                        "AnnotationValue.ArrayValue.elements exceeds protocol cap=${AnnotationValue.MAX_ARRAY_ELEMENTS}.",
+                        "AnnotationValue.ArrayValue.elements exceeds order cap=${AnnotationValue.MAX_ARRAY_ELEMENTS}.",
                     )
                 }
 
@@ -668,7 +668,7 @@ private fun requireAnnotationValueNestingDepthWithinLimit(
 
     if (depth > AnnotationValue.MAX_NESTING_DEPTH) {
         throw MetamodelFactContractViolationException(
-            "$field exceeds protocol cap=${AnnotationValue.MAX_NESTING_DEPTH}: $depth",
+            "$field exceeds order cap=${AnnotationValue.MAX_NESTING_DEPTH}: $depth",
         )
     }
 }

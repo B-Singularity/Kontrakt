@@ -88,7 +88,7 @@ import metamodel.domain.vo.AnnotationDescriptor
  * - route key;
  * - L1/L2 partition key;
  * - PlanCacheKey material;
- * - cross-runtime protocol digest.
+ * - cross-runtime order digest.
  *
  * The later BLAKE3 / metadata-hash refactoring may replace this transitional
  * hashCode strategy across the metamodel VO family. Do not introduce a local
@@ -176,7 +176,7 @@ class FrozenAnnotationRecord private constructor(
          * later BLAKE3 / metadata-hash refactoring replaces hash policy
          * globally.
          *
-         * Do not treat this value as protocol material.
+         * Do not treat this value as order material.
          */
         private fun computeHashCode(
             key: FrozenAnnotationRecordKey,

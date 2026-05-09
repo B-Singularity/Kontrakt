@@ -83,7 +83,7 @@ import planning.domain.vo.PartitionId
  *
  * The reason is consistency and suspension safety:
  * - lambdas/closures may capture worker-local or request-local mutable state
- * - immutable raw protocol payload values do not
+ * - immutable raw order payload values do not
  *
  * RawPayloadNode itself is not the problem.
  * Closure retention is the problem.
@@ -277,7 +277,7 @@ class PlanInterner private constructor(
  * We must therefore retain enough immutable information to rebuild the canonical
  * local fallback deterministically, without retaining arbitrary executable closures.
  *
- * This object stores only immutable raw protocol payload.
+ * This object stores only immutable raw order payload.
  */
 sealed interface ReplaySafeCanonicalFallbackPlan {
     /**

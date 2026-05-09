@@ -12,7 +12,7 @@ interface ClasspathScanner {
     /**
      * Scans the specified scope and returns an immutable index of discovered components.
      * @throws discovery.domain.exception.RuntimeIntegrityException If the environment is corrupted.
-     * @throws discovery.domain.exception.DiscoveryFailedException If user protocol violations are found.
+     * @throws discovery.domain.exception.DiscoveryFailedException If user order violations are found.
      */
     fun scan(scope: ScanScope): ScanIndex
 }

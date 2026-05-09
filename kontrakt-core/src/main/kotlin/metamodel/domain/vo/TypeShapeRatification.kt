@@ -48,37 +48,37 @@ class TypeShapeRatification private constructor(
         if (text != other.text) {
             throw MetamodelFactContractViolationException(
                 "TypeShapeRatification text mismatch: " +
-                    "expected=${text.value}, actual=${other.text.value}",
+                        "expected=${text.value}, actual=${other.text.value}",
             )
         }
 
         if (shapeSummary != other.shapeSummary) {
             throw MetamodelFactContractViolationException(
                 "TypeShapeRatification shape mismatch: " +
-                    "expected=$shapeSummary, actual=${other.shapeSummary}",
+                        "expected=$shapeSummary, actual=${other.shapeSummary}",
             )
         }
 
         if (classifierId != other.classifierId || classifierVersion != other.classifierVersion) {
             throw MetamodelFactContractViolationException(
                 "TypeShapeRatification classifier mismatch: " +
-                    "expected=$classifierId@$classifierVersion, " +
-                    "actual=${other.classifierId}@${other.classifierVersion}",
+                        "expected=$classifierId@$classifierVersion, " +
+                        "actual=${other.classifierId}@${other.classifierVersion}",
             )
         }
 
         if (ratificationFingerprint != other.ratificationFingerprint) {
             throw MetamodelFactContractViolationException(
                 "TypeShapeRatification fingerprint mismatch for text=${text.value}. " +
-                    "Same content under the same classifier law must produce the same fingerprint.",
+                        "Same content under the same classifier law must produce the same fingerprint.",
             )
         }
 
         if (verifierId != other.verifierId || verifierVersion != other.verifierVersion) {
             throw MetamodelFactContractViolationException(
                 "TypeShapeRatification verifier provenance mismatch: " +
-                    "expected=$verifierId@$verifierVersion, " +
-                    "actual=${other.verifierId}@${other.verifierVersion}",
+                        "expected=$verifierId@$verifierVersion, " +
+                        "actual=${other.verifierId}@${other.verifierVersion}",
             )
         }
     }
@@ -88,12 +88,12 @@ class TypeShapeRatification private constructor(
         if (other !is TypeShapeRatification) return false
 
         return text == other.text &&
-            shapeSummary == other.shapeSummary &&
-            classifierId == other.classifierId &&
-            classifierVersion == other.classifierVersion &&
-            ratificationFingerprint == other.ratificationFingerprint &&
-            verifierId == other.verifierId &&
-            verifierVersion == other.verifierVersion
+                shapeSummary == other.shapeSummary &&
+                classifierId == other.classifierId &&
+                classifierVersion == other.classifierVersion &&
+                ratificationFingerprint == other.ratificationFingerprint &&
+                verifierId == other.verifierId &&
+                verifierVersion == other.verifierVersion
     }
 
     override fun hashCode(): Int {
@@ -109,12 +109,12 @@ class TypeShapeRatification private constructor(
 
     override fun toString(): String =
         "TypeShapeRatification(" +
-            "text=${text.value}, " +
-            "shapeSummary=$shapeSummary, " +
-            "classifier=$classifierId@$classifierVersion, " +
-            "fingerprint=${ratificationFingerprint.redacted()}, " +
-            "verifier=$verifierId@$verifierVersion" +
-            ")"
+                "text=${text.value}, " +
+                "shapeSummary=$shapeSummary, " +
+                "classifier=$classifierId@$classifierVersion, " +
+                "fingerprint=${ratificationFingerprint.redacted()}, " +
+                "verifier=$verifierId@$verifierVersion" +
+                ")"
 
     companion object {
         @JvmStatic
@@ -146,11 +146,11 @@ class TypeShapeRatification private constructor(
                 is TypeShapeRatificationVerification.Rejected -> {
                     throw MetamodelFactContractViolationException(
                         "TypeShapeRatification verification failed: " +
-                            "text=${text.value}, " +
-                            "shapeSummary=$shapeSummary, " +
-                            "classifier=$classifierId@$classifierVersion, " +
-                            "fingerprint=${ratificationFingerprint.redacted()}, " +
-                            "reason=${verification.reason}",
+                                "text=${text.value}, " +
+                                "shapeSummary=$shapeSummary, " +
+                                "classifier=$classifierId@$classifierVersion, " +
+                                "fingerprint=${ratificationFingerprint.redacted()}, " +
+                                "reason=${verification.reason}",
                     )
                 }
             }
@@ -184,7 +184,7 @@ class TypeShapeRatification private constructor(
                 value.indexOf('\t') >= 0
             ) {
                 throw MetamodelFactContractViolationException(
-                    "$field contains a reserved protocol/control character.",
+                    "$field contains a reserved order/control character.",
                 )
             }
         }

@@ -17,7 +17,7 @@ package planning.domain.expansion.polymorphic
  * RuntimeBindingSnapshotId is currently a type-safe identity view over
  * RuntimeBindingScopeId.
  *
- * The current protocol is 1:1:
+ * The current order is 1:1:
  *
  *     one RuntimeBindingScopeId -> one RuntimeBindingSnapshotId
  *
@@ -36,7 +36,7 @@ package planning.domain.expansion.polymorphic
  *
  * Evolution law:
  *
- * If the protocol later allows multiple snapshots inside one scope without
+ * If the order later allows multiple snapshots inside one scope without
  * changing RuntimeBindingScopeId.ratificationFingerprint, this class must gain a
  * new identity axis:
  *
@@ -50,8 +50,8 @@ class RuntimeBindingSnapshotId private constructor(
 ) {
     fun renderSummary(): String =
         "RuntimeBindingSnapshotId(" +
-            scopeId.renderSnapshotIdentitySummary() +
-            ")"
+                scopeId.renderSnapshotIdentitySummary() +
+                ")"
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

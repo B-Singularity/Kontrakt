@@ -11,9 +11,9 @@ package metamodel.domain.protocol
  * Why this exists:
  *
  * - Policy identity must not be hidden inside ad hoc companion constants.
- * - Field order is protocol law.
- * - Encoding law is protocol law.
- * - Digest algorithm identity is protocol law.
+ * - Field order is order law.
+ * - Encoding law is order law.
+ * - Digest algorithm identity is order law.
  * - The actual digest primitive belongs to an adapter-side implementation of
  *   PolicyFingerprintDeriver.
  *
@@ -46,7 +46,7 @@ object CanonicalTextPolicyFingerprintSpec {
         "utf-8"
 
     /**
-     * Field order is protocol law.
+     * Field order is order law.
      *
      * Do not reorder this list without changing FINGERPRINT_LAW_VERSION and
      * updating golden vectors.

@@ -69,8 +69,8 @@ import metamodel.domain.exception.MetamodelFactContractViolationException
  * - canonical fingerprint;
  * - persisted identity;
  * - cache route key;
- * - cross-runtime protocol hash;
- * - serialized protocol digest.
+ * - cross-runtime order hash;
+ * - serialized order digest.
  */
 class TypeCycleKey private constructor(
     val value: String,
@@ -173,7 +173,7 @@ class TypeCycleKey private constructor(
              */
             if (shapeSummary.kind.protocolToken.isEmpty()) {
                 throw MetamodelFactContractViolationException(
-                    "TypeCycleKey.shapeSummary kind must expose protocol token.",
+                    "TypeCycleKey.shapeSummary kind must expose order token.",
                 )
             }
         }

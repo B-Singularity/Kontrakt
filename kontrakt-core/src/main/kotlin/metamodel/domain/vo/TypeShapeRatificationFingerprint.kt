@@ -21,7 +21,7 @@ import metamodel.domain.exception.MetamodelFactContractViolationException
  * The fingerprint must be derived from at least:
  *
  * - CanonicalTypeText.value;
- * - TypeShapeSummary protocol material;
+ * - TypeShapeSummary order material;
  * - classifierId;
  * - classifierVersion;
  * - ratification law version.
@@ -44,19 +44,19 @@ import metamodel.domain.exception.MetamodelFactContractViolationException
  * Preferred encodings:
  *
  * - LOWER_HEX for simple digest interoperability;
- * - BASE64_URL_NO_PADDING for compact protocol-safe tokens.
+ * - BASE64_URL_NO_PADDING for compact order-safe tokens.
  *
  * Standard Base64 is supported only when explicitly declared, because '+', '/',
- * and '=' are less convenient for logs, URLs, and filesystem-safe protocol
+ * and '=' are less convenient for logs, URLs, and filesystem-safe order
  * material. The value is still redacted from diagnostics.
  *
  * Algorithm id law:
  *
- * algorithmId is canonicalized to lowercase ASCII protocol form at issue time.
+ * algorithmId is canonicalized to lowercase ASCII order form at issue time.
  * For example, "SHA-256" and "sha-256" become the same algorithm id.
  *
- * algorithmVersion is not silently normalized because it represents a protocol
- * law version. It must already be supplied as a clean protocol token.
+ * algorithmVersion is not silently normalized because it represents a order
+ * law version. It must already be supplied as a clean order token.
  */
 class TypeShapeRatificationFingerprint private constructor(
     val algorithmId: String,
@@ -66,10 +66,10 @@ class TypeShapeRatificationFingerprint private constructor(
 ) {
     fun redacted(): String =
         "TypeShapeRatificationFingerprint(" +
-            "algorithm=$algorithmId@$algorithmVersion, " +
-            "encoding=${valueEncoding.protocolToken}, " +
-            "value=<redacted>" +
-            ")"
+                "algorithm=$algorithmId@$algorithmVersion, " +
+                "encoding=${valueEncoding.protocolToken}, " +
+                "value=<redacted>" +
+                ")"
 
     fun requireAlgorithm(
         expectedAlgorithmId: String,
@@ -83,8 +83,8 @@ class TypeShapeRatificationFingerprint private constructor(
         ) {
             throw MetamodelFactContractViolationException(
                 "TypeShapeRatificationFingerprint algorithm mismatch: " +
-                    "expected=$expectedCanonicalAlgorithmId@$expectedAlgorithmVersion, " +
-                    "actual=$algorithmId@$algorithmVersion",
+                        "expected=$expectedCanonicalAlgorithmId@$expectedAlgorithmVersion, " +
+                        "actual=$algorithmId@$algorithmVersion",
             )
         }
     }
@@ -94,9 +94,9 @@ class TypeShapeRatificationFingerprint private constructor(
         if (other !is TypeShapeRatificationFingerprint) return false
 
         return algorithmId == other.algorithmId &&
-            algorithmVersion == other.algorithmVersion &&
-            valueEncoding == other.valueEncoding &&
-            value == other.value
+                algorithmVersion == other.algorithmVersion &&
+                valueEncoding == other.valueEncoding &&
+                value == other.value
     }
 
     override fun hashCode(): Int {
@@ -124,7 +124,7 @@ class TypeShapeRatificationFingerprint private constructor(
              *
              * This keeps the construction order explicit:
              *
-             * 1. reject protocol/control contamination;
+             * 1. reject order/control contamination;
              * 2. canonicalize ASCII algorithm spelling;
              * 3. validate the canonical token surface;
              * 4. validate algorithmVersion;
@@ -170,7 +170,7 @@ class TypeShapeRatificationFingerprint private constructor(
             /*
              * First pass:
              *
-             * - validate the allowed ASCII protocol surface;
+             * - validate the allowed ASCII order surface;
              * - detect whether a lowercase copy is actually required.
              *
              * This avoids allocating StringBuilder for the common already-canonical
@@ -189,13 +189,13 @@ class TypeShapeRatificationFingerprint private constructor(
                     '-',
                     '_',
                     '.',
-                    -> {
-                        // Already canonical-safe ASCII protocol material.
+                        -> {
+                        // Already canonical-safe ASCII order material.
                     }
 
                     else -> {
                         throw MetamodelFactContractViolationException(
-                            "algorithmId contains a non-canonical protocol character.",
+                            "algorithmId contains a non-canonical order character.",
                         )
                     }
                 }
@@ -240,7 +240,7 @@ class TypeShapeRatificationFingerprint private constructor(
                 value.indexOf('\t') >= 0
             ) {
                 throw MetamodelFactContractViolationException(
-                    "$field contains a reserved protocol/control character.",
+                    "$field contains a reserved order/control character.",
                 )
             }
         }
@@ -257,7 +257,7 @@ class TypeShapeRatificationFingerprint private constructor(
 
             if (value.indexOf('|') >= 0) {
                 throw MetamodelFactContractViolationException(
-                    "TypeShapeRatificationFingerprint.value contains reserved protocol delimiter.",
+                    "TypeShapeRatificationFingerprint.value contains reserved order delimiter.",
                 )
             }
 
@@ -312,10 +312,10 @@ class TypeShapeRatificationFingerprint private constructor(
                 val c = value[index]
                 val ok =
                     c in 'A'..'Z' ||
-                        c in 'a'..'z' ||
-                        c in '0'..'9' ||
-                        c == '-' ||
-                        c == '_'
+                            c in 'a'..'z' ||
+                            c in '0'..'9' ||
+                            c == '-' ||
+                            c == '_'
 
                 if (!ok) {
                     throw MetamodelFactContractViolationException(
@@ -374,10 +374,10 @@ class TypeShapeRatificationFingerprint private constructor(
 
                 val ok =
                     c in 'A'..'Z' ||
-                        c in 'a'..'z' ||
-                        c in '0'..'9' ||
-                        c == '+' ||
-                        c == '/'
+                            c in 'a'..'z' ||
+                            c in '0'..'9' ||
+                            c == '+' ||
+                            c == '/'
 
                 if (!ok) {
                     throw MetamodelFactContractViolationException(
@@ -418,7 +418,7 @@ enum class FingerprintTokenEncoding(
     /**
      * URL-safe Base64 without padding.
      *
-     * Preferred compact encoding for protocol-safe token transport.
+     * Preferred compact encoding for order-safe token transport.
      */
     BASE64_URL_NO_PADDING(
         protocolOrder = 20,

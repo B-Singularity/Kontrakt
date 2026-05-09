@@ -19,7 +19,7 @@ import metamodel.domain.protocol.MetamodelProtocolTextGuards
  * Dependency law:
  *
  * The metamodel domain must not depend on planning.domain.*.
- * This VO uses only metamodel-owned protocol guards.
+ * This VO uses only metamodel-owned order guards.
  *
  * Shape law:
  *
@@ -51,7 +51,7 @@ import metamodel.domain.protocol.MetamodelProtocolTextGuards
  *
  * Ordering law:
  *
- * Ordering is protocol-defined:
+ * Ordering is order-defined:
  *
  * - ASCII code-unit order over the full qualified name;
  * - case-sensitive;
@@ -67,7 +67,7 @@ import metamodel.domain.protocol.MetamodelProtocolTextGuards
  *
  * hashCode() may use String.hashCode() for in-memory hash tables only.
  * It must not be used as a persisted fingerprint, route key, canonical digest,
- * or cross-runtime protocol hash.
+ * or cross-runtime order hash.
  */
 class AnnotationQualifiedName private constructor(
     val value: String,
@@ -80,7 +80,7 @@ class AnnotationQualifiedName private constructor(
 
     override fun equals(other: Any?): Boolean =
         other is AnnotationQualifiedName &&
-            value == other.value
+                value == other.value
 
     override fun hashCode(): Int = value.hashCode()
 
@@ -115,7 +115,7 @@ class AnnotationQualifiedName private constructor(
                 /*
                  * Dot is the only delimiter allowed by this VO.
                  *
-                 * Handle it explicitly before calling generic protocol-char
+                 * Handle it explicitly before calling generic order-char
                  * guards so future changes to MetamodelProtocolTextGuards cannot
                  * accidentally invalidate qualified-name delimiter semantics.
                  */
@@ -142,14 +142,14 @@ class AnnotationQualifiedName private constructor(
                     if (!isAsciiIdentifierStart(c)) {
                         throw MetamodelFactContractViolationException(
                             "AnnotationQualifiedName segment must start with an ASCII identifier-start character: " +
-                                "index=$index, value=${diagnosticValue(value)}",
+                                    "index=$index, value=${diagnosticValue(value)}",
                         )
                     }
                 } else {
                     if (!isAsciiIdentifierPart(c)) {
                         throw MetamodelFactContractViolationException(
                             "AnnotationQualifiedName segment contains a non-canonical ASCII identifier-part character: " +
-                                "index=$index, value=${diagnosticValue(value)}",
+                                    "index=$index, value=${diagnosticValue(value)}",
                         )
                     }
                 }
@@ -178,12 +178,12 @@ class AnnotationQualifiedName private constructor(
 
         private fun isAsciiIdentifierStart(c: Char): Boolean =
             c in 'A'..'Z' ||
-                c in 'a'..'z' ||
-                c == '_'
+                    c in 'a'..'z' ||
+                    c == '_'
 
         private fun isAsciiIdentifierPart(c: Char): Boolean =
             isAsciiIdentifierStart(c) ||
-                c in '0'..'9'
+                    c in '0'..'9'
 
         private fun diagnosticValue(value: String): String {
             if (value.length <= MAX_DIAGNOSTIC_VALUE_CHARS) {

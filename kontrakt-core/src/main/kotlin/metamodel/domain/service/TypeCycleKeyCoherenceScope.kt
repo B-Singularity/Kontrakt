@@ -43,7 +43,7 @@ import metamodel.domain.vo.TypeShapeSummary
  * output.
  *
  * If profiling later shows this path to be a hot bottleneck, replace the map
- * with a primitive/protocol-specific table during the interning/allocation phase.
+ * with a primitive/order-specific table during the interning/allocation phase.
  */
 class TypeCycleKeyCoherenceScope private constructor() {
     private val shapeByCycleValue: MutableMap<String, TypeShapeSummary> =

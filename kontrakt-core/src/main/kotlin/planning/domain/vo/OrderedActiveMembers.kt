@@ -5,11 +5,11 @@ import metamodel.domain.dto.TypeFactsDTO
 import planning.domain.exception.PlanningProtocolIntegrityException
 
 /**
- * Boundary object representing the protocol-ratified active member set.
+ * Boundary object representing the order-ratified active member set.
  *
  * Invariants:
  * - members belong to exactly one deterministically selected constructor + eligible properties
- * - order is already ratified by the protocol comparator
+ * - order is already ratified by the order comparator
  * - planner traversal MUST consume this view, not the raw facts.members list
  */
 class OrderedActiveMembers private constructor(

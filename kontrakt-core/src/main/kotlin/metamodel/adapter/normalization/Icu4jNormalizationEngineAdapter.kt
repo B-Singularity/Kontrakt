@@ -104,7 +104,7 @@ import metamodel.domain.vo.CanonicalTypeTextViolationCode
  * - a domain state machine;
  * - a planning state machine;
  * - a parser API;
- * - or a public protocol object.
+ * - or a public order object.
  *
  * Scratch allocation law:
  *

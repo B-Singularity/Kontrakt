@@ -29,13 +29,13 @@ import metamodel.domain.vo.TypeReference
  *
  * Surface law:
  *
- * ownerTypeFqcn and name are normalized protocol text surfaces.
+ * ownerTypeFqcn and name are normalized order text surfaces.
  *
  * They must:
  *
  * - be non-empty;
  * - be length-bounded;
- * - contain no reserved protocol delimiter '|';
+ * - contain no reserved order delimiter '|';
  * - contain no C0/C1 control characters;
  * - contain no ASCII whitespace.
  *
@@ -205,7 +205,7 @@ class PropertyFact private constructor(
                 throw InvalidTypeFactShapeException(
                     owner = owner,
                     factKind = "PropertyFact",
-                    reason = "$field exceeds protocol cap=$maxChars.",
+                    reason = "$field exceeds order cap=$maxChars.",
                 )
             }
 
@@ -217,7 +217,7 @@ class PropertyFact private constructor(
                     throw InvalidTypeFactShapeException(
                         owner = owner,
                         factKind = "PropertyFact",
-                        reason = "$field contains reserved protocol/control material at index=$index.",
+                        reason = "$field contains reserved order/control material at index=$index.",
                     )
                 }
 

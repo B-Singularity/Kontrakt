@@ -147,7 +147,7 @@ class UnsupportedMetamodelSourceException(
  *
  * This is not a strict-mode modeling error.
  * This is not a malformed raw DTO shape.
- * This is adapter-local protocol/infrastructure integrity failure.
+ * This is adapter-local order/infrastructure integrity failure.
  */
 class MetamodelAdapterStateViolationException(
     message: String,
@@ -159,7 +159,7 @@ class MetamodelAdapterStateViolationException(
  * Examples:
  *
  * - an injected derivation algorithm advertises an empty id;
- * - an algorithm version is outside the ratified protocol range;
+ * - an algorithm version is outside the ratified order range;
  * - classifier governance tokens are invalid;
  * - an adapter assembler fails while constructing a bundle.
  *
@@ -182,7 +182,7 @@ class MetamodelAdapterAssemblyException(
  *
  * Kontrakt uses NFC-REJECT at this boundary.
  * The adapter may canonicalize JVM-specific spelling such as '$' to '.', but it
- * must not silently Unicode-normalize strings behind the protocol's back.
+ * must not silently Unicode-normalize strings behind the order's back.
  */
 class MetamodelNormalizationViolationException(
     val field: String,

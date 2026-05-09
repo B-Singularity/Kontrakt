@@ -226,7 +226,7 @@ class ReflectionRawTypeFactsProvider private constructor(
          *
          * - Kotlin reflection enumeration order is not trusted.
          * - JVM / platform library sort stability is not a semantic authority.
-         * - VALUE parameters are ordered by the protocol-defined integer ordering
+         * - VALUE parameters are ordered by the order-defined integer ordering
          *   of KParameter.index.
          * - Duplicate VALUE parameter indexes fail closed.
          * - Non-compact VALUE parameter index ranges fail closed.
@@ -349,7 +349,7 @@ class ReflectionRawTypeFactsProvider private constructor(
         candidate: KParameter,
     ) {
         /*
-         * Explicit protocol insertion order.
+         * Explicit order insertion order.
          *
          * Do not use:
          *
@@ -359,7 +359,7 @@ class ReflectionRawTypeFactsProvider private constructor(
          * - platform sort stability as semantic authority.
          *
          * KParameter.index is accepted only as raw reflection material that is
-         * re-validated under our own protocol law.
+         * re-validated under our own order law.
          */
         var insertAt = 0
 
@@ -612,7 +612,7 @@ class ReflectionRawTypeFactsProvider private constructor(
         /*
          * Do not infer DELEGATED from "$delegate".
          * That is Kotlin/JVM compiler implementation detail, not a stable
-         * metamodel fact protocol.
+         * metamodel fact order.
          *
          * Positive backing-field recognition is limited to the stable case where
          * the Java field name equals the property name.
@@ -688,7 +688,7 @@ class ReflectionRawTypeFactsProvider private constructor(
          * It is not iterated for deterministic output.
          *
          * The iteration order of declaredMemberProperties is therefore not part
-         * of the metamodel protocol.
+         * of the metamodel order.
          */
         val declared = ownerClass.declaredMemberProperties
         val names = HashSet<String>(declared.size.coerceAtLeast(16))

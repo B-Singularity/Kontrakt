@@ -29,7 +29,7 @@ package metamodel.domain.vo
  * stable classification for temporal, UUID, number, boolean, string, enum,
  * and domain-leaf surfaces.
  *
- * Misclassifying TEMPORAL_INSTANT as INTEGRAL_NUMBER is a protocol violation
+ * Misclassifying TEMPORAL_INSTANT as INTEGRAL_NUMBER is a order violation
  * because it can bypass seed-governed deterministic materialization later.
  *
  * Never use enum ordinal. protocolOrder is the only stable ordering surface.
@@ -116,7 +116,7 @@ enum class AtomicShapeFamily(
      * True when the later atomic expansion stage must derive value material from
      * deterministic seed state rather than host time/random/runtime state.
      *
-     * This is only a summary-level signal. The actual seed consumption protocol
+     * This is only a summary-level signal. The actual seed consumption order
      * belongs to AtomicExpansionPlan.
      */
     val requiresSeedGovernedMaterialization: Boolean

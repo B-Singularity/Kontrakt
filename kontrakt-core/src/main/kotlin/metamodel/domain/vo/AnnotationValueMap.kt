@@ -22,7 +22,7 @@ import metamodel.domain.protocol.DiagnosticBudget
  * Ordering law:
  *
  * Entries are ordered by AnnotationArgumentName.compareTo(...). Therefore this
- * map follows the argument-name protocol order:
+ * map follows the argument-name order order:
  *
  * - "value" sorts first;
  * - all other names sort by ASCII code-unit order;
@@ -171,7 +171,7 @@ class AnnotationValueMap private constructor(
 
             if (entries.size > MAX_ANNOTATION_ARGUMENTS) {
                 throw MetamodelFactContractViolationException(
-                    "AnnotationValueMap.entries exceeds protocol cap=$MAX_ANNOTATION_ARGUMENTS.",
+                    "AnnotationValueMap.entries exceeds order cap=$MAX_ANNOTATION_ARGUMENTS.",
                 )
             }
 

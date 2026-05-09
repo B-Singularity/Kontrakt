@@ -89,9 +89,9 @@ class CanonicalTypeText private constructor(
         ) {
             throw MetamodelFactContractViolationException(
                 "CanonicalTypeText inspection context mismatch: " +
-                    "value=${diagnosticSample(value)}, " +
-                    "this=${renderRatificationProvenance()}, " +
-                    "other=${other.renderRatificationProvenance()}",
+                        "value=${diagnosticSample(value)}, " +
+                        "this=${renderRatificationProvenance()}, " +
+                        "other=${other.renderRatificationProvenance()}",
             )
         }
     }
@@ -135,7 +135,7 @@ class CanonicalTypeText private constructor(
          *    NormalizationEngine.
          * 4. Consume only Accepted.snapshot.
          * 5. Assert accepted lexical profile against policy.
-         * 6. Run low-cost ASCII protocol guards over the inspected snapshot.
+         * 6. Run low-cost ASCII order guards over the inspected snapshot.
          * 7. Issue CanonicalTypeText.
          */
         @JvmStatic
@@ -222,8 +222,8 @@ class CanonicalTypeText private constructor(
             if (rawValue.length > inspectionPolicy.maxUtf16CodeUnitsBeforeSnapshot) {
                 throw MetamodelFactContractViolationException(
                     "CanonicalTypeText exceeds pre-inspection UTF-16 length guard: " +
-                        "utf16Units=${rawValue.length}, " +
-                        "maxUtf16CodeUnitsBeforeSnapshot=${inspectionPolicy.maxUtf16CodeUnitsBeforeSnapshot}",
+                            "utf16Units=${rawValue.length}, " +
+                            "maxUtf16CodeUnitsBeforeSnapshot=${inspectionPolicy.maxUtf16CodeUnitsBeforeSnapshot}",
                 )
             }
         }
@@ -243,10 +243,10 @@ class CanonicalTypeText private constructor(
             if (snapshot.length != lexicalProfile.utf16CodeUnitCount) {
                 throw MetamodelFactContractViolationException(
                     "NormalizationEngine contract violation: snapshot length does not match lexical profile. " +
-                        "engine=${normalizationEngine.engineId}@${normalizationEngine.engineVersion}, " +
-                        "snapshotUtf16Units=${snapshot.length}, " +
-                        "profileUtf16Units=${lexicalProfile.utf16CodeUnitCount}, " +
-                        "value=${diagnosticSample(snapshot)}",
+                            "engine=${normalizationEngine.engineId}@${normalizationEngine.engineVersion}, " +
+                            "snapshotUtf16Units=${snapshot.length}, " +
+                            "profileUtf16Units=${lexicalProfile.utf16CodeUnitCount}, " +
+                            "value=${diagnosticSample(snapshot)}",
                 )
             }
 
@@ -255,12 +255,12 @@ class CanonicalTypeText private constructor(
             } catch (exception: MetamodelFactContractViolationException) {
                 throw MetamodelFactContractViolationException(
                     "NormalizationEngine contract violation: accepted lexical profile violates inspection policy. " +
-                        "engine=${normalizationEngine.engineId}@${normalizationEngine.engineVersion}, " +
-                        "unicode=${normalizationEngine.unicodeProfileVersion}, " +
-                        "goldenVectors=${normalizationEngine.goldenVectorSetId}, " +
-                        "policy=${inspectionPolicy.deterministicPolicyToken}, " +
-                        "value=${diagnosticSample(snapshot)}, " +
-                        "reason=${exception.message}",
+                            "engine=${normalizationEngine.engineId}@${normalizationEngine.engineVersion}, " +
+                            "unicode=${normalizationEngine.unicodeProfileVersion}, " +
+                            "goldenVectors=${normalizationEngine.goldenVectorSetId}, " +
+                            "policy=${inspectionPolicy.deterministicPolicyToken}, " +
+                            "value=${diagnosticSample(snapshot)}, " +
+                            "reason=${exception.message}",
                 )
             }
         }
@@ -312,7 +312,7 @@ class CanonicalTypeText private constructor(
                 value.indexOf('\t') >= 0
             ) {
                 throw MetamodelFactContractViolationException(
-                    "$field contains a reserved protocol/control character.",
+                    "$field contains a reserved order/control character.",
                 )
             }
         }
@@ -328,21 +328,21 @@ class CanonicalTypeText private constructor(
         ): String {
             val provenance =
                 "CanonicalTypeText" +
-                    "|engine=$normalizationEngineId" +
-                    "|engineVersion=$normalizationEngineVersion" +
-                    "|unicode=$unicodeProfileVersion" +
-                    "|goldenVectorSet=$goldenVectorSetId" +
-                    "|goldenVectorDigest=$goldenVectorDigest" +
-                    "|policy=${inspectionPolicy.deterministicPolicyToken}" +
-                    "|utf16Units=${lexicalProfile.utf16CodeUnitCount}" +
-                    "|codePoints=${lexicalProfile.codePointCount}" +
-                    "|identifierTokens=${lexicalProfile.identifierTokenCount}" +
-                    "|longestIdentifier=${lexicalProfile.longestIdentifierTokenCodePoints}" +
-                    "|delimiters=${lexicalProfile.totalDelimiterCodePoints}" +
-                    "|nonIdentifierCodePoints=${lexicalProfile.nonIdentifierCodePointCount}" +
-                    "|grossCombiningMarks=${lexicalProfile.grossCombiningMarkCount}" +
-                    "|maxCombiningMarksPerIdentifier=${lexicalProfile.maxCombiningMarksPerIdentifierToken}" +
-                    "|maxGraphemeClustersPerIdentifier=${lexicalProfile.maxGraphemeClustersPerIdentifierToken}"
+                        "|engine=$normalizationEngineId" +
+                        "|engineVersion=$normalizationEngineVersion" +
+                        "|unicode=$unicodeProfileVersion" +
+                        "|goldenVectorSet=$goldenVectorSetId" +
+                        "|goldenVectorDigest=$goldenVectorDigest" +
+                        "|policy=${inspectionPolicy.deterministicPolicyToken}" +
+                        "|utf16Units=${lexicalProfile.utf16CodeUnitCount}" +
+                        "|codePoints=${lexicalProfile.codePointCount}" +
+                        "|identifierTokens=${lexicalProfile.identifierTokenCount}" +
+                        "|longestIdentifier=${lexicalProfile.longestIdentifierTokenCodePoints}" +
+                        "|delimiters=${lexicalProfile.totalDelimiterCodePoints}" +
+                        "|nonIdentifierCodePoints=${lexicalProfile.nonIdentifierCodePointCount}" +
+                        "|grossCombiningMarks=${lexicalProfile.grossCombiningMarkCount}" +
+                        "|maxCombiningMarksPerIdentifier=${lexicalProfile.maxCombiningMarksPerIdentifierToken}" +
+                        "|maxGraphemeClustersPerIdentifier=${lexicalProfile.maxGraphemeClustersPerIdentifierToken}"
 
             if (provenance.length > MAX_TOTAL_PROVENANCE_CHARS) {
                 throw MetamodelFactContractViolationException(

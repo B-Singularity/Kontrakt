@@ -34,7 +34,7 @@ internal object TypeNestingDepthLaw {
 
         if (depth > MAX_TYPE_NESTING_DEPTH) {
             throw MetamodelFactContractViolationException(
-                "$field exceeds protocol cap=$MAX_TYPE_NESTING_DEPTH: $depth",
+                "$field exceeds order cap=$MAX_TYPE_NESTING_DEPTH: $depth",
             )
         }
     }

@@ -3,7 +3,7 @@ package metamodel.domain.port.outgoing
 import metamodel.domain.vo.PolicyFingerprint
 
 /**
- * Outbound port for deriving protocol-governed policy fingerprints.
+ * Outbound port for deriving order-governed policy fingerprints.
  *
  * This is an adapter boundary.
  *
@@ -26,7 +26,7 @@ import metamodel.domain.vo.PolicyFingerprint
  *
  * Implementations may use java.security.MessageDigest, BLAKE3, native code, or
  * another primitive later, but they must produce the same PolicyFingerprint for
- * the same protocol material and must pass golden vectors.
+ * the same order material and must pass golden vectors.
  *
  * Reflection and KSP implementations must call this through the port. The
  * domain core must not import MessageDigest or any concrete digest library.
