@@ -226,7 +226,7 @@ internal object FrozenSequenceSorter {
         return source
     }
 
-    inline fun <reified T : Any> sortStrictByPlacement(
+    inline fun <T : Any> sortStrictByPlacement(
         imageId: FrozenMetamodelImageId,
         sequenceTable: String,
         input: Array<T>,
@@ -242,7 +242,21 @@ internal object FrozenSequenceSorter {
             return input.copyOf()
         }
 
-        val placed = arrayOfNulls<T>(input.size)
+        /*
+         * Keep the destination as Array<T> by copying the input array.
+         *
+         * The copied contents are not semantically trusted. Every occupied slot
+         * is overwritten by compact-index placement below. Slot validity is
+         * tracked separately by occupied[].
+         *
+         * This avoids:
+         *
+         * - Array<Any?> -> Array<T> casts;
+         * - Array<T?> -> Array<T> casts;
+         * - an additional nullable reference array for placed records.
+         */
+        val result = input.copyOf()
+        val occupied = BooleanArray(input.size)
 
         var inputIndex = 0
 
@@ -277,44 +291,36 @@ internal object FrozenSequenceSorter {
                 )
             }
 
-            val previous = placed[index]
-
-            if (previous != null) {
+            if (occupied[index]) {
                 throw FrozenMetamodelSequenceViolationException(
                     imageId = imageId,
                     sequenceTable = sequenceTable,
                     referenceSummary = ownerSummary,
                     reason = duplicateReason(
-                        previous,
+                        result[index],
                         record,
                         index,
                     ),
                 )
             }
 
-            placed[index] = record
+            result[index] = record
+            occupied[index] = true
             inputIndex += 1
         }
 
-        /*
-         * Keep result as Array<T> by reusing input.copyOf() as a correctly typed
-         * destination array. Do not cast Array<Any?> or Array<T?> to Array<T>.
-         */
-        val result = input.copyOf()
-
         var index = 0
 
-        while (index < placed.size) {
-            val record =
-                placed[index]
-                    ?: throw FrozenMetamodelSequenceViolationException(
-                        imageId = imageId,
-                        sequenceTable = sequenceTable,
-                        referenceSummary = ownerSummary,
-                        reason = missingReason(index),
-                    )
+        while (index < occupied.size) {
+            if (!occupied[index]) {
+                throw FrozenMetamodelSequenceViolationException(
+                    imageId = imageId,
+                    sequenceTable = sequenceTable,
+                    referenceSummary = ownerSummary,
+                    reason = missingReason(index),
+                )
+            }
 
-            result[index] = record
             index += 1
         }
 
