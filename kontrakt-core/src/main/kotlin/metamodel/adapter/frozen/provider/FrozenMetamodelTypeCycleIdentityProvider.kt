@@ -12,24 +12,56 @@ import planning.domain.port.outgoing.TypeCycleIdentityProvider
 /**
  * Planning-facing TypeCycleIdentityProvider backed by FrozenMetamodelImage.
  *
- * Hot-path lookup law:
+ * Hexagonal role:
+ *
+ * - outbound port implementation for Planning;
+ * - does not depend on Reflection/KSP/bytecode/source APIs;
+ * - receives FrozenMetamodelImage only, never FrozenMetamodelImageEnvelope or
+ *   diagnostic provenance.
+ *
+ * Algorithm authority law:
+ *
+ * This provider does not accept caller-supplied identity algorithm metadata.
+ *
+ * The cycle identity algorithm authority belongs to
+ * FrozenTypeCycleIdentityTable.
+ *
+ * Therefore:
  *
  * ```text
- * TypeReference -> frozenTypeOrdinal -> cycleIdentityTable[frozenTypeOrdinal]
+ * provider.identityAlgorithmId
+ *     == image.cycleIdentityTable.identityAlgorithmId
+ *
+ * provider.identityAlgorithmVersion
+ *     == image.cycleIdentityTable.identityAlgorithmVersion
  * ```
  *
- * The provider's identityAlgorithmId and identityAlgorithmVersion are derived
- * from the frozen cycle identity table itself.
+ * This prevents provider/table metadata drift.
  *
- * This prevents a caller from accidentally constructing a provider whose
- * declared algorithm metadata differs from the image it reads.
+ * Lookup law:
  *
- * Algorithm validation is not performed on the hot path.
- * FrozenMetamodelImage.issue(...) must validate:
+ * This provider uses the frozen image's ordinal path:
  *
- * - table algorithm id/version;
- * - every entry's algorithm id/version;
- * - every entry's subject continuity with the type index.
+ * ```text
+ * TypeReference
+ * -> FrozenTypeReferenceIndex.ordinalOf(reference)
+ * -> FrozenTypeCycleIdentityTable.findCycleIdentityAt(frozenOrdinal)
+ * ```
+ *
+ * It must not use the old double lookup pattern:
+ *
+ * ```text
+ * typeIndex.contains(reference)
+ * cycleIdentityTable.findCycleIdentity(reference)
+ * ```
+ *
+ * Exception law:
+ *
+ * - absent from type index:
+ *   FrozenMetamodelUnknownTypeReferenceException
+ *
+ * - present in type index but missing cycle identity slot:
+ *   FrozenMetamodelIncompleteTableException
  */
 class FrozenMetamodelTypeCycleIdentityProvider private constructor(
     private val image: FrozenMetamodelImage,
@@ -43,9 +75,12 @@ class FrozenMetamodelTypeCycleIdentityProvider private constructor(
     override fun resolveCycleIdentity(
         reference: TypeReference,
     ): TypeCycleIdentity {
-        val frozenTypeOrdinal = image.typeIndex.ordinalOf(reference)
+        val frozenOrdinal =
+            image.typeIndex.ordinalOf(
+                reference = reference,
+            )
 
-        if (frozenTypeOrdinal == FrozenTypeReferenceIndex.MISSING_ORDINAL) {
+        if (frozenOrdinal == FrozenTypeReferenceIndex.MISSING_ORDINAL) {
             throw FrozenMetamodelUnknownTypeReferenceException(
                 imageId = image.imageId,
                 referenceSummary = reference.renderSummary(),
@@ -53,22 +88,25 @@ class FrozenMetamodelTypeCycleIdentityProvider private constructor(
             )
         }
 
-        return image.cycleIdentityTable.findCycleIdentityAt(frozenTypeOrdinal)
-            ?: throw FrozenMetamodelIncompleteTableException(
-                imageId = image.imageId,
-                referenceSummary = reference.renderSummary(),
-                missingTable = FrozenMetamodelImageTableId.CYCLE_IDENTITY_TABLE.name,
-                reason = "TypeReference exists in the frozen type index but has no cycle identity record at frozenTypeOrdinal=$frozenTypeOrdinal.",
-            )
+        return image.cycleIdentityTable.findCycleIdentityAt(
+            frozenTypeOrdinal = frozenOrdinal,
+        ) ?: throw FrozenMetamodelIncompleteTableException(
+            imageId = image.imageId,
+            referenceSummary = reference.renderSummary(),
+            missingTable = FrozenMetamodelImageTableId.CYCLE_IDENTITY_TABLE.name,
+            reason = "TypeReference exists in type index but has no cycle identity record: " +
+                    "frozenOrdinal=$frozenOrdinal.",
+        )
     }
 
     companion object {
         @JvmStatic
         fun issue(
             image: FrozenMetamodelImage,
-        ): FrozenMetamodelTypeCycleIdentityProvider =
-            FrozenMetamodelTypeCycleIdentityProvider(
+        ): FrozenMetamodelTypeCycleIdentityProvider {
+            return FrozenMetamodelTypeCycleIdentityProvider(
                 image = image,
             )
+        }
     }
 }

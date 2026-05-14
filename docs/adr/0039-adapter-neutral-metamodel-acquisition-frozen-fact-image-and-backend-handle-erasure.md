@@ -789,45 +789,143 @@ They must not branch on source adapter provenance.
 
 Forbidden:
 
-``````kotlin
+```kotlin
 class FrozenMetamodelTypeShapeProvider private constructor(
     private val envelope: FrozenMetamodelImageEnvelope,
 )
-``````
+```
 
 Allowed:
 
-``````kotlin
+```kotlin
 class FrozenMetamodelTypeShapeProvider private constructor(
     private val image: FrozenMetamodelImage,
 )
-``````
+```
 
-Illustrative shape:
+#### Provider lookup law
 
-``````kotlin
-class FrozenMetamodelTypeShapeProvider private constructor(
-    private val image: FrozenMetamodelImage,
-) : TypeShapeProvider {
-    override fun resolveTypeShape(
-        reference: TypeReference,
-    ): ResolvedTypeShape {
-        return image.shapeTable.requireShape(reference)
-    }
+Frozen providers must use the image-local ordinal lookup path:
+
+```text
+TypeReference
+-> FrozenTypeReferenceIndex.ordinalOf(reference)
+-> frozen table read by frozen ordinal
+```
+
+Allowed provider lookup shape:
+
+```kotlin
+val frozenOrdinal =
+    image.typeIndex.ordinalOf(reference)
+
+if (frozenOrdinal == FrozenTypeReferenceIndex.MISSING_ORDINAL) {
+    throw FrozenMetamodelUnknownTypeReferenceException()
 }
-``````
 
-``````kotlin
-class FrozenMetamodelRawTypeFactsProvider private constructor(
-    private val image: FrozenMetamodelImage,
-) : RawTypeFactsProvider {
-    override fun resolveRawFacts(
-        reference: TypeReference,
-    ): RawTypeFactsResolution {
-        return image.rawFactTable.requireFacts(reference)
-    }
+val shape =
+    image.shapeTable.findShapeAt(frozenOrdinal)
+        ?: throw FrozenMetamodelIncompleteTableException()
+```
+
+Forbidden provider lookup shape:
+
+```kotlin
+if (!image.typeIndex.contains(reference)) {
+    throw FrozenMetamodelUnknownTypeReferenceException()
 }
-``````
+
+val shape =
+    image.shapeTable.findShape(reference)
+```
+
+Reason:
+
+The frozen type index is the only authority for:
+
+```text
+TypeReference -> image-local frozen type ordinal
+```
+
+Frozen tables are ordinal-addressed payload tables.
+
+They must not independently repeat TypeReference lookup. Repeating lookup work in each table reintroduces double lookup
+pressure and weakens the table/index authority split.
+
+#### Missing-reference vs incomplete-table law
+
+Providers must distinguish these cases:
+
+```text
+reference absent from FrozenTypeReferenceIndex
+-> unknown reference for this image
+
+reference present in FrozenTypeReferenceIndex
+but payload table has no slot coverage
+-> incomplete frozen image
+```
+
+Therefore:
+
+- absent from type index must fail as `FrozenMetamodelUnknownTypeReferenceException`;
+- present in type index but missing table payload must fail as `FrozenMetamodelIncompleteTableException`.
+
+#### Cycle identity algorithm authority law
+
+`FrozenMetamodelTypeCycleIdentityProvider` must not accept caller-supplied algorithm metadata.
+
+The cycle identity algorithm metadata authority belongs to `FrozenTypeCycleIdentityTable`.
+
+Provider metadata must be derived from the table:
+
+```text
+provider.identityAlgorithmId == image.cycleIdentityTable.identityAlgorithmId
+provider.identityAlgorithmVersion == image.cycleIdentityTable.identityAlgorithmVersion
+```
+
+Forbidden:
+
+```kotlin
+class FrozenMetamodelTypeCycleIdentityProvider private constructor(
+    private val image: FrozenMetamodelImage,
+    override val identityAlgorithmId: String,
+    override val identityAlgorithmVersion: Long,
+)
+```
+
+Allowed:
+
+```kotlin
+class FrozenMetamodelTypeCycleIdentityProvider private constructor(
+    private val image: FrozenMetamodelImage,
+) : TypeCycleIdentityProvider {
+    override val identityAlgorithmId: String
+        get() = image.cycleIdentityTable.identityAlgorithmId
+
+    override val identityAlgorithmVersion: Long
+        get() = image.cycleIdentityTable.identityAlgorithmVersion
+}
+```
+
+Reason:
+
+If provider metadata and table payload metadata have separate authorities, the provider can claim one cycle identity
+algorithm while the table contains identities produced by another. That drift is a frozen image integrity violation.
+
+#### Raw fact resolution accounting law
+
+A frozen raw fact provider must return:
+
+```kotlin
+RawTypeFactsResolution.cacheHit()
+```
+
+It must not return backend actual resolution.
+
+Reason:
+
+All backend-native acquisition already happened before freeze publication. A frozen provider may materialize DTOs from
+adapter-neutral frozen records, but it must not perform backend discovery or reopen backend handles.
 
 These providers must not access backend-native handles.
 

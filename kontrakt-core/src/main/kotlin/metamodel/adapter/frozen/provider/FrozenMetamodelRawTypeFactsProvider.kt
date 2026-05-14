@@ -12,33 +12,54 @@ import planning.domain.port.outgoing.RawTypeFactsResolution
 /**
  * Planning-facing RawTypeFactsProvider backed by FrozenMetamodelImage.
  *
- * Hot-path lookup law:
+ * This provider must not perform backend discovery.
+ *
+ * Even if RawTypeFactsDTO is materialized lazily from a frozen raw fact record,
+ * the correct accounting category is cacheHit/frozen-hit, not actual backend
+ * resolution.
+ *
+ * Hexagonal role:
+ *
+ * - outbound port implementation for Planning;
+ * - does not depend on Reflection/KSP/bytecode/source APIs;
+ * - receives FrozenMetamodelImage only, never FrozenMetamodelImageEnvelope or
+ *   diagnostic provenance.
+ *
+ * Lookup law:
+ *
+ * This provider uses the frozen image's ordinal path:
  *
  * ```text
- * TypeReference -> frozenTypeOrdinal -> rawFactTable[frozenTypeOrdinal]
+ * TypeReference
+ * -> FrozenTypeReferenceIndex.ordinalOf(reference)
+ * -> FrozenRawFactTable.findFactsAt(frozenOrdinal)
  * ```
  *
- * This provider performs one TypeReference lookup against the image-local type
- * index, then reads raw facts by primitive frozen type ordinal.
+ * It must not use the old double lookup pattern:
  *
- * Primitive ordinal safety:
+ * ```text
+ * typeIndex.contains(reference)
+ * rawFactTable.findFacts(reference)
+ * ```
  *
- * The primitive ordinal is intentionally kept as a short-lived local variable.
- * It is not stored, returned, persisted, or mixed with any other ordinal kind.
+ * Resolution accounting law:
  *
- * Integrity boundary:
+ * A successful frozen read returns:
  *
- * FrozenMetamodelImage.issue(...) must already have validated table-size
- * equality and table coverage before this provider is constructed.
+ * ```text
+ * RawTypeFactsResolution.cacheHit(...)
+ * ```
  *
- * Therefore, null from rawFactTable.findFactsAt(frozenTypeOrdinal) is treated as
- * a frozen-image integrity failure, not as an ordinary miss.
+ * It must not report backend actual resolution because all backend discovery
+ * has already happened before freeze publication.
  *
- * Accounting rule:
+ * Exception law:
  *
- * Reading from a FrozenMetamodelImage is a frozen/cache hit.
- * It is not actual backend fact discovery.
- * Therefore the returned resolution is RawTypeFactsResolution.cacheHit(...).
+ * - absent from type index:
+ *   FrozenMetamodelUnknownTypeReferenceException
+ *
+ * - present in type index but missing raw fact slot:
+ *   FrozenMetamodelIncompleteTableException
  */
 class FrozenMetamodelRawTypeFactsProvider private constructor(
     private val image: FrozenMetamodelImage,
@@ -46,9 +67,12 @@ class FrozenMetamodelRawTypeFactsProvider private constructor(
     override fun resolveRawFacts(
         reference: TypeReference,
     ): RawTypeFactsResolution {
-        val frozenTypeOrdinal = image.typeIndex.ordinalOf(reference)
+        val frozenOrdinal =
+            image.typeIndex.ordinalOf(
+                reference = reference,
+            )
 
-        if (frozenTypeOrdinal == FrozenTypeReferenceIndex.MISSING_ORDINAL) {
+        if (frozenOrdinal == FrozenTypeReferenceIndex.MISSING_ORDINAL) {
             throw FrozenMetamodelUnknownTypeReferenceException(
                 imageId = image.imageId,
                 referenceSummary = reference.renderSummary(),
@@ -57,24 +81,29 @@ class FrozenMetamodelRawTypeFactsProvider private constructor(
         }
 
         val facts =
-            image.rawFactTable.findFactsAt(frozenTypeOrdinal)
-                ?: throw FrozenMetamodelIncompleteTableException(
-                    imageId = image.imageId,
-                    referenceSummary = reference.renderSummary(),
-                    missingTable = FrozenMetamodelImageTableId.RAW_FACT_TABLE.name,
-                    reason = "TypeReference exists in the frozen type index but has no raw fact record at frozenTypeOrdinal=$frozenTypeOrdinal.",
-                )
+            image.rawFactTable.findFactsAt(
+                frozenOrdinal = frozenOrdinal,
+            ) ?: throw FrozenMetamodelIncompleteTableException(
+                imageId = image.imageId,
+                referenceSummary = reference.renderSummary(),
+                missingTable = FrozenMetamodelImageTableId.RAW_FACT_TABLE.name,
+                reason = "TypeReference exists in type index but has no raw fact record: " +
+                        "frozenOrdinal=$frozenOrdinal.",
+            )
 
-        return RawTypeFactsResolution.cacheHit(facts)
+        return RawTypeFactsResolution.cacheHit(
+            facts = facts,
+        )
     }
 
     companion object {
         @JvmStatic
         fun issue(
             image: FrozenMetamodelImage,
-        ): FrozenMetamodelRawTypeFactsProvider =
-            FrozenMetamodelRawTypeFactsProvider(
+        ): FrozenMetamodelRawTypeFactsProvider {
+            return FrozenMetamodelRawTypeFactsProvider(
                 image = image,
             )
+        }
     }
 }

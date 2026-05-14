@@ -12,28 +12,45 @@ import planning.domain.port.outgoing.TypeShapeProvider
 /**
  * Planning-facing TypeShapeProvider backed by FrozenMetamodelImage.
  *
- * Hot-path lookup law:
+ * Hexagonal role:
+ *
+ * - outbound port implementation for Planning;
+ * - does not depend on Reflection/KSP/bytecode/source APIs;
+ * - receives FrozenMetamodelImage only, never FrozenMetamodelImageEnvelope or
+ *   diagnostic provenance.
+ *
+ * Compiler role:
+ *
+ * - reads pre-frozen shape material;
+ * - does not enumerate constructors;
+ * - does not enumerate properties;
+ * - does not perform backend discovery;
+ * - does not reopen backend handles.
+ *
+ * Lookup law:
+ *
+ * This provider uses the frozen image's ordinal path:
  *
  * ```text
- * TypeReference -> frozenTypeOrdinal -> shapeTable[frozenTypeOrdinal]
+ * TypeReference
+ * -> FrozenTypeReferenceIndex.ordinalOf(reference)
+ * -> FrozenTypeShapeTable.findShapeAt(frozenOrdinal)
  * ```
  *
- * This provider performs one TypeReference lookup against the image-local type
- * index, then reads shape material by primitive frozen type ordinal.
+ * It must not use the old double lookup pattern:
  *
- * Primitive ordinal safety:
+ * ```text
+ * typeIndex.contains(reference)
+ * shapeTable.findShape(reference)
+ * ```
  *
- * The primitive ordinal is intentionally kept as a short-lived local variable.
- * It is not stored, returned, persisted, or mixed with any other ordinal kind.
+ * Exception law:
  *
- * Integrity boundary:
+ * - absent from type index:
+ *   FrozenMetamodelUnknownTypeReferenceException
  *
- * FrozenMetamodelImage.issue(...) must already have validated table-size
- * equality, table coverage, and shape.subject continuity before this provider
- * is constructed.
- *
- * Therefore, null from shapeTable.findShapeAt(frozenTypeOrdinal) is treated as
- * a frozen-image integrity failure, not as an ordinary miss.
+ * - present in type index but missing shape slot:
+ *   FrozenMetamodelIncompleteTableException
  */
 class FrozenMetamodelTypeShapeProvider private constructor(
     private val image: FrozenMetamodelImage,
@@ -41,9 +58,12 @@ class FrozenMetamodelTypeShapeProvider private constructor(
     override fun resolveTypeShape(
         reference: TypeReference,
     ): ResolvedTypeShape {
-        val frozenTypeOrdinal = image.typeIndex.ordinalOf(reference)
+        val frozenOrdinal =
+            image.typeIndex.ordinalOf(
+                reference = reference,
+            )
 
-        if (frozenTypeOrdinal == FrozenTypeReferenceIndex.MISSING_ORDINAL) {
+        if (frozenOrdinal == FrozenTypeReferenceIndex.MISSING_ORDINAL) {
             throw FrozenMetamodelUnknownTypeReferenceException(
                 imageId = image.imageId,
                 referenceSummary = reference.renderSummary(),
@@ -51,22 +71,25 @@ class FrozenMetamodelTypeShapeProvider private constructor(
             )
         }
 
-        return image.shapeTable.findShapeAt(frozenTypeOrdinal)
-            ?: throw FrozenMetamodelIncompleteTableException(
-                imageId = image.imageId,
-                referenceSummary = reference.renderSummary(),
-                missingTable = FrozenMetamodelImageTableId.SHAPE_TABLE.name,
-                reason = "TypeReference exists in the frozen type index but has no shape record at frozenTypeOrdinal=$frozenTypeOrdinal.",
-            )
+        return image.shapeTable.findShapeAt(
+            frozenOrdinal = frozenOrdinal,
+        ) ?: throw FrozenMetamodelIncompleteTableException(
+            imageId = image.imageId,
+            referenceSummary = reference.renderSummary(),
+            missingTable = FrozenMetamodelImageTableId.SHAPE_TABLE.name,
+            reason = "TypeReference exists in type index but has no shape record: " +
+                    "frozenOrdinal=$frozenOrdinal.",
+        )
     }
 
     companion object {
         @JvmStatic
         fun issue(
             image: FrozenMetamodelImage,
-        ): FrozenMetamodelTypeShapeProvider =
-            FrozenMetamodelTypeShapeProvider(
+        ): FrozenMetamodelTypeShapeProvider {
+            return FrozenMetamodelTypeShapeProvider(
                 image = image,
             )
+        }
     }
 }
