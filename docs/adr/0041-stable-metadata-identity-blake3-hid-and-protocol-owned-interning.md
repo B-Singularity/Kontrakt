@@ -376,7 +376,7 @@ The following surfaces are ratified by ADR-0041:
 
 | Surface                                   | Status                                                                                         |
 |-------------------------------------------|------------------------------------------------------------------------------------------------|
-| `CanonicalEnvelopeHeaderV1`               | ratified as the mandatory common v1 canonical identity envelope header                         |
+| `CanonicalEnvelopeHeader`                 | ratified as the mandatory common canonical identity envelope header                            |
 | common field-table structure              | ratified at the protocol level                                                                 |
 | common wire type id space                 | ratified at the protocol level                                                                 |
 | endian rule                               | ratified as little-endian unsigned bit patterns unless a field explicitly states otherwise     |
@@ -1465,6 +1465,21 @@ class ResolvedMetadataIdentityPolicy private constructor(
     val inlineVerifierPrefixBits: Int,
     val defaultInternHidWidthBits: Int,
     val routeHidWidthBits: Int,
+
+    /*
+     * Decoder and sorting DoS guards.
+     */
+    val maxCanonicalMessageNestingDepth: Int,
+    val maxCanonicalDecoderFrameCount: Int,
+    val maxCanonicalSortKeyBytes: Int,
+    val maxCanonicalSortTieBreakComparisons: Int,
+    val maxCanonicalSortTieBreakBytes: Long,
+    val maxCanonicalSortScratchBytesPerScope: Long,
+    val maxCanonicalSortScratchBytesPerLane: Long,
+    val maxCanonicalSortElementCountPerCollection: Int,
+    val maxCanonicalColdSortGroupSize: Int,
+    val maxCanonicalColdSortComparisons: Int,
+    val maxCanonicalColdSortBytes: Long,
 )
 ``````
 
@@ -1516,6 +1531,17 @@ maxSccSealIterations                           = 2
 inlineVerifierPrefixBits                       = 128
 defaultInternHidWidthBits                      = 128
 routeHidWidthBits                              = 64
+maxCanonicalMessageNestingDepth                = 64
+maxCanonicalDecoderFrameCount                  = 1024
+maxCanonicalSortKeyBytes                       = 256
+maxCanonicalSortTieBreakComparisons            = 4096
+maxCanonicalSortTieBreakBytes                  = 1 MiB
+maxCanonicalSortScratchBytesPerScope           = 16 MiB
+maxCanonicalSortScratchBytesPerLane            = 2 MiB
+maxCanonicalSortElementCountPerCollection      = 65_535
+maxCanonicalColdSortGroupSize                  = 4096
+maxCanonicalColdSortComparisons                = 65_536
+maxCanonicalColdSortBytes                      = 16 MiB
 ``````
 
 Reserved lowered-contract caps are intentionally not active v1 constants in this ADR.
@@ -2289,17 +2315,19 @@ Once ratified, any such caps MUST obey ADR-0041's fail-closed, diagnostic-budget
 
 Kontrakt adopts a binary tagged, length-prefixed canonical encoding.
 
-ADR-0041 ratifies `CanonicalEnvelopeHeaderV1` as the mandatory common envelope header for v1 canonical identity bytes.
+ADR-0041 ratifies `CanonicalEnvelopeHeader` as the mandatory common envelope header for canonical identity bytes.
 
-The v1 encoding format is:
+The current fixed 64-byte layout is selected by `canonicalEncodingVersion32 = 1`.
+
+The encoding format for `canonicalEncodingVersion32 = 1` is:
 
 ``````text
-CanonicalEnvelopeHeaderV1
+CanonicalEnvelopeHeader
 FieldTable
 PayloadBytes
 ``````
 
-`CanonicalEnvelopeHeaderV1` is always present.
+`CanonicalEnvelopeHeader` is always present.
 
 `payloadLength32` is mandatory.
 
@@ -2313,7 +2341,7 @@ Domain-specific variation MUST be represented through:
 - payload fields;
 - and the owning domain compatibility matrix.
 
-Domain-specific variation MUST NOT be represented by changing the common v1 envelope header layout.
+Domain-specific variation MUST NOT be represented by changing the common envelope header layout.
 
 Each field table entry describes:
 
@@ -2468,6 +2496,8 @@ Collection encoding rules:
 - unordered semantic sets must be sorted under canonical ordering before encoding;
 - maps encode entries ordered by canonical key material;
 - duplicate canonical map keys fail closed;
+- duplicate map key detection through pre-sort deterministic scan fixture;
+- duplicate map key detection through post-sort adjacent exact-key scan fixture;
 - collection count is encoded before elements;
 - element count must be bounded by the owning capacity policy;
 - null element policy must be explicit per domain.
@@ -2524,6 +2554,226 @@ It must be metered and cap-bounded.
 A released implementation MUST provide golden vectors or tests proving that shuffled unordered inputs produce the same
 encoded bytes without relying on backend iteration order or recursive graph traversal timing.
 
+### 8.5.1. Bounded Canonical Sort Key Law
+
+Unordered collection canonicalization MUST precompute bounded canonical sort keys before sorting.
+
+The ordinary sorting comparator MUST NOT recursively traverse full child metadata, raw facts, nested messages, payload
+trees, staging slabs, or canonical byte trees during pairwise comparison.
+
+A canonical sort key MUST be bounded by resolved metadata identity policy.
+
+A canonical sort key SHOULD contain fixed-width or otherwise bounded material such as:
+
+- identity domain id;
+- domain schema version;
+- version-bundle fingerprint;
+- canonical byte length;
+- HID / digest prefix;
+- inline verifier prefix;
+- field-count summary;
+- bounded canonical key prelude.
+
+Full canonical byte comparison MAY be used only as a final tie-breaker after bounded sort-key comparison.
+
+The tie-breaker path MUST be metered.
+
+If the tie-breaker budget is exceeded, canonicalization MUST fail closed rather than falling back to unbounded recursive
+comparison.
+
+The resolved metadata identity policy MUST define, or map to semantically equivalent fields:
+
+``````text
+maxCanonicalSortKeyBytes
+maxCanonicalSortTieBreakComparisons
+maxCanonicalSortTieBreakBytes
+``````
+
+The following are forbidden in ordinary unordered-collection sorting:
+
+- comparator-driven recursive metadata traversal;
+- comparator-driven decoding of nested messages;
+- comparator-driven raw-fact expansion;
+- comparator-driven backend handle traversal;
+- comparator-driven staging-slab traversal;
+- fallback to platform collection iteration order;
+- fallback to object identity or JVM `hashCode()`.
+
+### 8.5.2. Sort Tie-Breaker Exhaustion Law
+
+Tie-breaker exhaustion MUST NOT publish partially ordered material.
+
+If bounded canonical sort keys do not produce a total order within the ordinary tie-break budget, the encoder has only
+two lawful outcomes:
+
+1. enter a ratified bounded cold sort path before publication; or
+2. fail the current identity scope closed.
+
+A bounded cold sort path, if ratified, MUST:
+
+- remain inside canonicalization;
+- complete exact deterministic ordering before publication;
+- obey its own comparison-count and byte-read budgets;
+- never expose quarantined or partially ordered material to planning;
+- never expose quarantined or partially ordered material to planning-facing providers;
+- never expose quarantined or partially ordered material to `PlanCacheKey`;
+- never expose quarantined or partially ordered material to `CanonicalPlanNode`;
+- never expose quarantined or partially ordered material to report manifests;
+- never change canonical equality semantics;
+- never accept digest-only ordering when exact canonical bytes are required;
+- emit structured diagnostics if the cold bound is exceeded.
+
+If no ratified bounded cold sort path exists, ordinary tie-breaker exhaustion MUST fail the current identity scope
+closed.
+
+Planning, providers, `PlanCacheKey`, `CanonicalPlanNode`, interner publication, frozen image publication, persistent
+artifacts, and report manifests MUST NOT observe unordered, quarantined, or partially sorted material.
+
+The resolved metadata identity policy MUST define, or map to semantically equivalent fields:
+
+``````text
+maxCanonicalColdSortGroupSize
+maxCanonicalColdSortComparisons
+maxCanonicalColdSortBytes
+``````
+
+Cold sort budgets are not semantic meaning.
+
+They are deterministic safety fuses.
+
+Changing them may change whether a pathological scope is accepted or rejected, but it MUST NOT change canonical order,
+canonical bytes, HID derivation, collision verification, stable intern id assignment, or equality for material that
+remains within the accepted bounds.
+
+### 8.5.3. Canonical Sort Scratchpad Budget Law
+
+Canonical sort key precomputation MUST consume an explicit transient scratchpad budget.
+
+The encoder MUST NOT allocate unbounded per-element sort-key objects.
+
+For an unordered collection with `elementCount`, the encoder MUST prove before sorting that:
+
+``````text
+elementCount <= maxCanonicalSortElementCountPerCollection
+``````
+
+and:
+
+``````text
+elementCount * actualSortKeyWidthBytes <= remainingCanonicalSortScratchBytes
+``````
+
+and:
+
+``````text
+actualSortKeyWidthBytes <= maxCanonicalSortKeyBytes
+``````
+
+If the scratchpad budget is insufficient, canonicalization MUST fail closed before allocating, filling, publishing, or
+partially exposing the sort-key arena.
+
+Sort scratch memory is transient.
+
+It MUST NOT cross into:
+
+- canonical identity publication;
+- frozen image tables;
+- planning-facing providers;
+- protocol-owned interner published tables;
+- report manifests;
+- public DTOs;
+- persistent artifacts.
+
+Concurrent lanes MUST consume from resolved aggregate and per-lane scratch budgets.
+
+They MUST NOT use live heap availability, GC timing, worker timing, or observed memory pressure as dynamic admission
+inputs after the scope has been admitted.
+
+The resolved metadata identity policy MUST define, or map to semantically equivalent fields:
+
+``````text
+maxCanonicalSortScratchBytesPerScope
+maxCanonicalSortScratchBytesPerLane
+maxCanonicalSortElementCountPerCollection
+``````
+
+The lawful shape is:
+
+``````text
+resolved scratch budget
+-> bounded transient sort-key arena
+-> deterministic sort
+-> ordered canonical payload
+-> scratch arena becomes unreachable
+``````
+
+The forbidden shape is:
+
+``````text
+live heap availability
+-> opportunistic sort-key allocation
+-> partial sort-key arena escapes
+-> frozen / planning / report / interner surface retains scratch memory
+``````
+
+### 8.5.4. Map Duplicate Key Deterministic Phase Law
+
+Duplicate canonical map keys MUST be detected in a dedicated deterministic phase.
+
+Duplicate detection MUST NOT be performed as an incidental side effect of:
+
+- a sorting comparator;
+- a pivot comparison;
+- a platform sort callback;
+- a platform hash-table collision path;
+- a worker completion race;
+- a lane merge race;
+- or a diagnostic formatting path.
+
+A compliant encoder MUST use one of the following phase shapes.
+
+Shape A:
+
+``````text
+key canonicalization
+-> exact key id / exact key bytes available
+-> deterministic duplicate scan
+-> bounded canonical sort
+-> encode
+``````
+
+Shape B:
+
+``````text
+key canonicalization
+-> bounded sort-key precomputation
+-> deterministic sort
+-> adjacent exact-key duplicate scan
+-> encode
+``````
+
+If duplicate keys are found, encoding MUST fail closed before publishing:
+
+- canonical bytes;
+- HID material;
+- interner candidates;
+- stable intern ids;
+- frozen image tables;
+- planning-visible providers;
+- `PlanCacheKey`;
+- `CanonicalPlanNode`;
+- persistent artifacts;
+- or report manifests.
+
+The duplicate diagnostic SHOULD report canonical key evidence under `maxDiagnosticEvidenceBytes`.
+
+The amount of work consumed before duplicate detection MUST be bounded and deterministic under the resolved policy.
+
+A duplicate-key failure may have different physical work cost depending on the selected lawful phase shape, but that
+phase shape MUST be selected by domain/schema/version/resolved policy before canonicalization begins.
+
+It MUST NOT be selected by platform sort behavior, worker timing, input iteration order, or live runtime profiling.
+
 ### 8.6. Object Encoding
 
 Object encoding rules:
@@ -2565,7 +2815,7 @@ A compliant encoding MUST be designed for:
 
 The encoder MUST place hot fixed-width metadata before cold variable-length material.
 
-Every v1 identity envelope MUST begin with `CanonicalEnvelopeHeaderV1`.
+Every v1 identity envelope MUST begin with `CanonicalEnvelopeHeader`.
 
 The header contains:
 
@@ -2602,12 +2852,21 @@ Canonical bytes must be deterministic enough for equality and physical enough fo
 
 Identity-bearing canonical encodings MUST separate hot metadata from cold payload bytes.
 
-ADR-0041 ratifies `CanonicalEnvelopeHeaderV1` as a fixed 64-byte little-endian common header.
+ADR-0041 ratifies `CanonicalEnvelopeHeader` as the mandatory common envelope header for canonical identity bytes.
 
-The exact v1 layout is:
+The current common layout is selected by:
 
 ``````text
-CanonicalEnvelopeHeaderV1 = 64 bytes, little-endian
+canonicalEncodingVersion32 = 1
+``````
+
+For `canonicalEncodingVersion32 = 1`, `CanonicalEnvelopeHeader` is a fixed 64-byte little-endian header.
+
+The exact layout is:
+
+``````text
+CanonicalEnvelopeHeader, canonicalEncodingVersion32 = 1
+64 bytes, little-endian
 
 offset  size  field
 0       4     magic32
@@ -2629,17 +2888,25 @@ offset  size  field
 60      4     reserved32
 ``````
 
-Mandatory v1 header constants and validation rules:
+Mandatory header constants and validation rules for `canonicalEncodingVersion32 = 1`:
 
 - `magic32` MUST be `0x4B4E5443`;
 - `magic32` represents ASCII `KNTC`;
 - `headerSize16` MUST be `64`;
-- `headerFlags16` MUST be `0x0000` in v1 unless the active compatibility matrix ratifies a specific flag;
+- `canonicalEncodingVersion32` MUST be `1`;
+- `canonicalEncodingVersion32` is the common envelope, field-table, wire-type, offset/length, unknown-tag, and canonical
+  framing protocol version;
+- a future common envelope layout change MUST bump `canonicalEncodingVersion32`;
+- a decoder MUST use `magic32`, `headerSize16`, and `canonicalEncodingVersion32` together to select the canonical
+  envelope decoder;
+- `headerFlags16` MUST be `0x0000` for `canonicalEncodingVersion32 = 1` unless the active compatibility matrix
+  ratifies a specific flag;
 - `reserved16` MUST be zero;
 - `reserved32` MUST be zero;
 - `payloadLength32` is mandatory;
 - all integer fields are little-endian unsigned bit patterns unless the field explicitly states otherwise;
-- a decoder MUST fail closed if `magic32`, `headerSize16`, `reserved16`, or `reserved32` is invalid;
+- a decoder MUST fail closed if `magic32`, `headerSize16`, `canonicalEncodingVersion32`, `reserved16`, or `reserved32`
+  is invalid;
 - unknown non-zero `headerFlags16` bits MUST fail closed unless ratified by the active compatibility matrix;
 - `fieldCount16` MUST be less than or equal to the resolved field-count cap for the identity domain.
 
@@ -2665,7 +2932,7 @@ Domain-specific payload needs MUST be handled by field tables, field tags, domai
 matrices,
 or payload fields.
 
-They MUST NOT change the common v1 envelope header layout.
+They MUST NOT change the common header layout selected by `canonicalEncodingVersion32 = 1`.
 
 ### 8.9.1. Canonical Envelope Header vs Intern Probe Projection
 
@@ -2692,9 +2959,10 @@ This resolves the physical tension between self-describing canonical bytes and c
 
 ### 8.9.2. Header Reserved Bits and Padding Law
 
-`CanonicalEnvelopeHeaderV1` is fixed by ADR-0041.
+`CanonicalEnvelopeHeader` is fixed by ADR-0041 for each `canonicalEncodingVersion32` layout. The current layout is
+`canonicalEncodingVersion32 = 1`.
 
-The following header fields are reserved in v1:
+The following header fields are reserved for `canonicalEncodingVersion32 = 1`:
 
 - `reserved16`;
 - `reserved32`;
@@ -2869,6 +3137,58 @@ Cold diagnostic paths MAY copy bounded payload slices when the diagnostic policy
 
 Such copies are not canonical identity material and remain subject to diagnostic evidence budgets.
 
+### 8.10.3. Zero-Copy Slice Lifetime and Slab Pinning Law
+
+Zero-copy slice views are decode-stage artifacts.
+
+A zero-copy slice derived from a staging slab MUST NOT cross into:
+
+- `FrozenMetamodelImage`;
+- planning-facing providers;
+- `PlanCacheKey`;
+- `CanonicalPlanNode`;
+- protocol-owned interner published tables;
+- persistent artifacts;
+- public DTOs;
+- report manifests.
+
+Zero-copy is a hot decode optimization.
+
+It is not a lifetime ownership model.
+
+If decoded payload material must survive the seal boundary, it MUST be copied, compacted, or migrated into one of:
+
+- a sealed canonical byte slab;
+- a frozen-image-owned slab;
+- a verified canonical byte handle;
+- or another published artifact-owned immutable byte surface.
+
+The lawful shape is:
+
+``````text
+staging slab
+-> bounded zero-copy decode slice
+-> verification / seal
+-> compact published slab or verified handle
+-> staging slab becomes unreachable
+``````
+
+The forbidden shape is:
+
+``````text
+staging slab
+-> tiny slice view
+-> stored in frozen image / planning / report / interner
+-> entire staging slab pinned
+``````
+
+Architecture tests MUST reject long-lived identity, planning, frozen, report, public DTO, or persistent artifact
+surfaces
+that store staging-slab slices.
+
+If a slice crosses a publication boundary, it MUST carry proof that its base slab is owned by the published artifact and
+not by a transient staging phase.
+
 ### 8.11. Decoder Dispatch and Branch Discipline
 
 Canonical tag decoding MUST be table-driven or switch-table-friendly.
@@ -2950,6 +3270,36 @@ known-skippable future field
 -> deterministic bounded skip
 -> continue decoding under declared compatibility class
 ``````
+
+### 8.11.1. Message Nesting Depth Law
+
+`WIRE_TYPE_MESSAGE` decoding MUST be bounded by a deterministic structural depth counter.
+
+A decoder MUST NOT rely on JVM call-stack depth as the message nesting bound.
+
+A compliant decoder MUST either:
+
+- use an explicit bounded decode-frame stack; or
+- prove that recursive decoding is bounded by `maxCanonicalMessageNestingDepth`.
+
+The resolved metadata identity policy MUST define, or map to semantically equivalent fields:
+
+``````text
+maxCanonicalMessageNestingDepth
+maxCanonicalDecoderFrameCount
+``````
+
+If nested message depth exceeds the resolved bound, decoding MUST fail closed before entering the nested payload.
+
+The bound is independent from byte-size caps.
+
+A payload may be within `maxCanonicalBytesPerInternCandidate` and still be rejected for excessive structural nesting.
+
+A decoder MUST also fail closed if the explicit decode-frame stack would exceed `maxCanonicalDecoderFrameCount`.
+
+Malformed nested messages MUST NOT surface as ordinary JVM `StackOverflowError`.
+
+The ordinary policy outcome is structured fail-closed rejection.
 
 ### 8.12. Tag Bit Partitioning Law
 
@@ -5398,7 +5748,7 @@ Exact package placement may change.
 ### 20.1. Encoding
 
 ``````text
-metamodel.domain.identity.CanonicalEnvelopeHeaderV1
+metamodel.domain.identity.CanonicalEnvelopeHeader
 metamodel.domain.identity.CanonicalEnvelopeHeaderValidator
 metamodel.domain.identity.CanonicalByteEncoder
 metamodel.domain.identity.CanonicalByteSink
@@ -5409,6 +5759,17 @@ metamodel.domain.identity.CanonicalWireType
 metamodel.domain.identity.CanonicalFieldTableEntry
 metamodel.domain.identity.CanonicalEncodedBytes
 metamodel.domain.identity.VersionBundleFingerprintDeriver
+metamodel.domain.identity.CanonicalDecodeFrame
+metamodel.domain.identity.CanonicalDecoderFrameStack
+metamodel.domain.identity.CanonicalSortKey
+metamodel.domain.identity.CanonicalSortKeyBudget
+metamodel.domain.identity.CanonicalSortScratchpad
+metamodel.domain.identity.CanonicalSortScratchpadBudget
+metamodel.domain.identity.BoundedColdSortPath
+metamodel.domain.identity.BoundedColdSortBudget
+metamodel.domain.identity.MapDuplicateKeyDetector
+metamodel.domain.identity.CanonicalByteSliceView
+metamodel.domain.identity.SealedCanonicalByteSlab
 metamodel.domain.identity.CanonicalByteSlice
 metamodel.domain.identity.CanonicalPayloadSlice
 metamodel.domain.identity.CanonicalOffsetTableValidator
@@ -5690,6 +6051,7 @@ Deliverables:
 - branch-minimal successful decode path;
 - fail-closed decoder validation paths;
 - no map/string/reflection dispatch on the hot path;
+- explicit decode-frame stack or bounded recursion proof for `WIRE_TYPE_MESSAGE`;
 - decoder microbenchmarks and allocation tests.
 
 ### Phase 4C — Cache-Line-Aware Intern Table Layout
@@ -5812,8 +6174,7 @@ A compliant implementation MUST satisfy:
 29. Golden vectors exist for every released identity domain.
 30. Architecture tests block backend handle leakage into identity material.
 
-31. Canonical identity envelopes use `CanonicalEnvelopeHeaderV1` as the mandatory 64-byte little-endian v1 common
-    header.
+31. Canonical identity envelopes use `CanonicalEnvelopeHeader` as the mandatory 64-byte little-endian common header.
 32. `magic32` is `0x4B4E5443`, `headerSize16` is `64`, and `payloadLength32` is mandatory.
 33. `headerFlags16` is zero in v1 unless ratified by compatibility matrix, and `reserved16` / `reserved32` are zero.
 34. `VersionBundleFingerprint128` is derived from canonical version-bundle bytes by domain-separated BLAKE3 derivation.
@@ -5975,6 +6336,39 @@ A compliant implementation MUST satisfy:
 
 ---
 
+142. `CanonicalEnvelopeHeader` is the protocol-facing header name; the active layout is selected by
+     `canonicalEncodingVersion32`.
+143. For the current layout, `canonicalEncodingVersion32` is `1`.
+144. Message decoding is bounded by explicit structural depth and decoder-frame caps.
+145. `WIRE_TYPE_MESSAGE` decoding does not rely on JVM call-stack depth as the nesting bound.
+146. Excessive message nesting fails closed even if the total canonical byte payload remains within the per-unit byte
+     fuse.
+147. Unordered collection canonicalization precomputes bounded canonical sort keys before sorting.
+148. Ordinary sorting comparators do not recursively traverse full child metadata, raw facts, nested messages, staging
+     slabs, or canonical byte trees.
+149. Full canonical byte comparison during sorting is a metered final tie-breaker only.
+150. Zero-copy slice views derived from staging slabs do not cross frozen, planning, interner, report, public DTO, or
+     persistent publication boundaries.
+151. Payload material that survives the seal boundary is copied, compacted, or migrated into a sealed artifact-owned
+     slab
+     or verified canonical byte handle.
+
+152. Tie-breaker exhaustion does not publish partially ordered material.
+153. If ordinary sort tie-break budgets are exhausted, the encoder either enters a ratified bounded cold sort path
+     before
+     publication or fails the current identity scope closed.
+154. Bounded cold sort paths remain inside canonicalization and complete exact deterministic ordering before
+     publication.
+155. Quarantined or partially sorted material is never visible to planning, providers, `PlanCacheKey`,
+     `CanonicalPlanNode`, report manifests, frozen image publication, interner publication, or persistent artifacts.
+156. Canonical sort key precomputation consumes explicit transient scratchpad budgets.
+157. Canonical sort scratch arenas do not cross publication boundaries.
+158. Concurrent canonical sorts consume resolved aggregate and per-lane scratch budgets, not live heap availability.
+159. Duplicate canonical map keys are detected in a dedicated deterministic phase.
+160. Duplicate key detection is not an incidental side effect of sorting comparators, platform hash tables, worker
+     races,
+     lane merge races, or diagnostic formatting.
+
 ## 23. Required Golden Vectors
 
 Golden vectors MUST exist for:
@@ -5993,7 +6387,7 @@ Golden vectors MUST exist for:
 - explicit `UNAVAILABLE`;
 - rejected malformed surrogate case;
 - early malformed-text preflight case;
-- `CanonicalEnvelopeHeaderV1` 64-byte layout fixture;
+- `CanonicalEnvelopeHeader` 64-byte layout fixture;
 - `magic32 = 0x4B4E5443` fixture;
 - `headerSize16 = 64` fixture;
 - `headerFlags16 = 0x0000` fixture;
@@ -6257,7 +6651,8 @@ Architecture tests MUST verify:
 - canonical decoder hot paths do not use reflection dispatch;
 - canonical decoder hot paths do not use string tag lookup;
 - canonical decoder hot paths do not use `Map` lookup for field dispatch;
-- identity envelope decoding uses `CanonicalEnvelopeHeaderV1` and rejects non-v1 common header layouts;
+- canonical decoder message nesting is bounded by explicit depth/frame counters and not by JVM stack depth;
+- identity envelope decoding uses `CanonicalEnvelopeHeader` and rejects non-common header layouts;
 - header validation rejects invalid `magic32`, non-64 `headerSize16`, non-zero v1 `headerFlags16`, non-zero
   `reserved16`, and non-zero `reserved32`;
 - version-bundle fingerprint derivation is covered by golden vectors and does not depend on map/set iteration order;
@@ -6290,6 +6685,12 @@ Architecture tests MUST verify:
 
 - canonical identity encoding does not emit semantic field-name strings as identity payload;
 - stateless encoder tests reject previous-item, recently-seen, or acquisition-order dependent encoding;
+- unordered collection encoders precompute bounded canonical sort keys before sorting;
+- canonical sort key precomputation consumes bounded scratchpad budgets before allocating or filling sort-key arenas;
+- sort tie-break exhaustion cannot publish partially ordered material;
+- bounded cold sort paths, where ratified, complete exact deterministic ordering before publication;
+- sorting comparators do not recursively decode nested messages or traverse staging slabs;
+- sorting comparators do not perform duplicate map key detection as an incidental side effect;
 - bit-packed fields have generated or hand-verified mask/shift tests;
 - reserved bits fail closed on decode when non-zero;
 - canonical-base delta cannot select a base from run-local frequency or previous item state;
@@ -6313,6 +6714,10 @@ Architecture tests MUST verify:
 - `HID256` hot membership domains declare an explicit probe layout;
 - `FROZEN_IMAGE_CONTENT_SUMMARY` is not used as an ordinary hot membership key unless a domain-specific proof exists;
 - value-type / inline-object hot-path implementation remains behind a release adoption proof gate;
+- zero-copy slice views from staging slabs cannot be stored in frozen image, planning, interner, report, public DTO, or
+  persistent artifact surfaces;
+- canonical sort scratch arenas cannot be stored in frozen image, planning, interner, report, public DTO, or persistent
+  artifact surfaces;
 - v1 `AUTO` resolves to the deterministic `STANDARD` bootstrap cap set;
 - any future `AUTO` solver runs before scope admission and publishes an immutable resolved policy snapshot;
 - no identity scope reads live hardware, GC, load, throughput, cache, or scheduling feedback to mutate caps after
@@ -6805,7 +7210,7 @@ ADR-0041 owns the common canonical byte protocol.
 
 Therefore the v1 canonical identity envelope header cannot remain illustrative, optional, or domain-selected.
 
-`CanonicalEnvelopeHeaderV1` is ratified as the mandatory 64-byte little-endian common envelope header for v1 canonical
+`CanonicalEnvelopeHeader` is ratified as the mandatory 64-byte little-endian common envelope header for v1 canonical
 identity bytes.
 
 Domain-specific variation belongs in:
@@ -6818,7 +7223,7 @@ Domain-specific variation belongs in:
 - payload bytes;
 - and compatibility matrices.
 
-It does not belong in changing the common v1 envelope header layout.
+It does not belong in changing the common envelope header layout.
 
 Canonical envelope headers and intern probe projections remain distinct physical surfaces.
 
@@ -6873,11 +7278,15 @@ Concrete caps are deterministic resolved policy outputs, and their count/byte/ta
 before
 scope admission.
 
-Canonical identity bytes use `CanonicalEnvelopeHeaderV1` as the mandatory common v1 envelope header.
+Canonical identity bytes use `CanonicalEnvelopeHeader` as the mandatory common envelope header.
 
 Domain payloads may vary by identity domain and schema.
 
-The common v1 header may not.
+The common header layout selected by `canonicalEncodingVersion32 = 1` may not.
+
+Message nesting, canonical sorting, and zero-copy slice lifetimes are also protocol safety surfaces.
+
+Canonical sorting must either finish exact deterministic ordering before publication or fail closed.
 
 Canonical identity bytes may be compact.
 
