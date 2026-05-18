@@ -368,6 +368,44 @@ This ADR does not require every physical optimization to land in the first imple
 
 It does require that all newly introduced identity material follows this law from the first implementation.
 
+### 3.0.1. Ratified by ADR-0041 vs Deferred Elsewhere
+
+ADR-0041 owns the common stable metadata identity substrate.
+
+The following surfaces are ratified by ADR-0041:
+
+| Surface                                   | Status                                                                                         |
+|-------------------------------------------|------------------------------------------------------------------------------------------------|
+| `CanonicalEnvelopeHeaderV1`               | ratified as the mandatory common v1 canonical identity envelope header                         |
+| common field-table structure              | ratified at the protocol level                                                                 |
+| common wire type id space                 | ratified at the protocol level                                                                 |
+| endian rule                               | ratified as little-endian unsigned bit patterns unless a field explicitly states otherwise     |
+| offset / length arithmetic law            | ratified as checked arithmetic with fail-closed bounds validation                              |
+| unknown tag behavior                      | ratified as default fail-closed, with compatibility-matrix skip only when explicitly allowed   |
+| padding / reserved-bit law                | ratified as zero-on-encode and fail-closed-on-non-zero unless compatibility ratifies otherwise |
+| BLAKE3 / HID derivation law               | ratified                                                                                       |
+| version-bundle fingerprint derivation law | ratified                                                                                       |
+| collision verification law                | ratified                                                                                       |
+| protocol-owned interning law              | ratified                                                                                       |
+
+The following surfaces are deferred to the owning contract or domain document:
+
+| Surface                                                 | Owner                                         |
+|---------------------------------------------------------|-----------------------------------------------|
+| `LOWERED_CONTRACT_FACT` vocabulary                      | future top-level contract definition document |
+| annotation / DSL / compiler metadata lowering semantics | future top-level contract definition document |
+| domain-specific contract fact field tags                | owning contract fact domain                   |
+| domain-specific verification payloads                   | owning identity domain                        |
+| future contract frontend parity law                     | future top-level contract definition document |
+| domain-specific payload schema evolution                | owning identity domain compatibility matrix   |
+
+The boundary is:
+
+``````text
+ADR-0041 fixes the common binary envelope and identity substrate.
+Domain documents define their payload fields inside that envelope.
+``````
+
 ### 3.1. Determinism Supremacy Law
 
 Determinism is the supreme constraint of the stable metadata identity protocol.
@@ -800,7 +838,8 @@ or otherwise governed by a ratified expansion family.
 It represents future contract material only after the top-level contract document ratifies the contract fact vocabulary,
 frontend syntax boundary, lowering law, version bundle, canonical fields, and verification payload.
 
-Until that ratification exists, ADR-0041 does not define which contract facts exist, how annotations lower into them, how
+Until that ratification exists, ADR-0041 does not define which contract facts exist, how annotations lower into them,
+how
 DSL clauses lower into them, how compiler metadata lowers into them, or how default/effective value semantics work.
 
 `AnnotationDescriptor` is not canonical material by itself.
@@ -828,6 +867,7 @@ polymorphic or implementation selection. It excludes runtime object identity and
 
 `FrozenTableSchema` canonical material represents the standard meaning of the frozen table layout and schema contract.
 It excludes object-array storage details, allocation addresses, and physical slab placement.
+
 ### 5.1.3. Annotation Surface Boundary
 
 Annotation syntax is not the contract.
@@ -849,9 +889,11 @@ annotation / DSL / compiler metadata / generated index / future contract surface
 -> canonical identity material governed by ADR-0041
 ``````
 
-The top-level contract document must define when a frontend surface carries contract meaning and how that meaning lowers.
+The top-level contract document must define when a frontend surface carries contract meaning and how that meaning
+lowers.
 
 Until that document is ratified, annotation material remains adapter/front-end syntax and diagnostic evidence only.
+
 ### 5.1.4. Explicit Effective Value Law
 
 Reserved.
@@ -874,6 +916,7 @@ or future contract surface may define canonical identity by relying on implicit 
 Backend-provided defaults are input evidence only.
 
 They are not canonical truth in ADR-0041.
+
 ### 5.1.5. Contract Syntax Backend Parity Law
 
 Reserved.
@@ -889,6 +932,7 @@ material under the active version bundle.
 Until then, this section is a reserved integration point.
 
 Silent backend divergence remains forbidden for identity material that is already ratified by an active identity domain.
+
 ### 5.1.6. Lowered Contract Fact Reference Boundary
 
 Reserved.
@@ -907,8 +951,10 @@ Once ratified, any such references MUST obey ADR-0041's identity substrate rules
 - no unbounded frontend syntax traversal;
 - references must use ratified identity material, sealed stable intern ids, or SCC-governed temporary references.
 
-Until the contract model is ratified, this section is a reserved boundary and does not define a concrete lowered-contract
+Until the contract model is ratified, this section is a reserved boundary and does not define a concrete
+lowered-contract
 reference schema.
+
 ### 5.1.7. Contract Syntax Dependency SCC Law
 
 Reserved.
@@ -922,11 +968,13 @@ Once ratified, any cyclic lowered-contract identity graph MUST use ADR-0041's de
 
 Planning cycle truncation MUST NOT be used as a contract-fact identity cycle breaker.
 
-Unrecognized annotations, incidental meta-annotations, diagnostic source metadata, and backend-only annotation graphs MUST
+Unrecognized annotations, incidental meta-annotations, diagnostic source metadata, and backend-only annotation graphs
+MUST
 NOT be recursively followed merely because they exist.
 
 Until the contract model is ratified, this section is a reserved integration point and does not define contract syntax
 SCC semantics.
+
 ### 5.1.8. Lowered Contract Fact Hot Layout Reservation
 
 Reserved.
@@ -961,6 +1009,7 @@ Not:
 bit layout
 -> force contract semantics to fit it
 ``````
+
 ### 5.2. Canonical Bytes
 
 Canonical bytes are the tagged, length-prefixed, version-bound byte encoding of canonical material.
@@ -1357,18 +1406,25 @@ class ResolvedMetadataIdentityPolicy private constructor(
     /*
      * Per-unit identity fuses.
      *
-     * These caps bound one canonical unit so that a single TypeReference, raw fact record,
-     * intern candidate, or future lowered contract fact cannot accidentally absorb an
-     * entire graph closure. Ordinary resource profiles should not primarily scale these
-     * values.
+     * These caps bound one canonical unit so that a single TypeReference, TypeCycleKey,
+     * TypeCycleIdentityPrecheck, TypeShapeSummary, raw fact record, active member key,
+     * local selector tuple, runtime binding snapshot, intern candidate, or future
+     * lowered contract fact cannot accidentally absorb an entire graph closure.
+     * Ordinary resource profiles should not primarily scale these values.
      */
     val maxCanonicalBytesPerTypeReference: Int,
-    val reservedMaxCanonicalBytesPerLoweredContractFact: Int?,
+    val maxCanonicalBytesPerTypeCycleKey: Int,
+    val maxCanonicalBytesPerTypeCycleIdentityPrecheck: Int,
+    val maxCanonicalBytesPerTypeShapeSummary: Int,
     val maxCanonicalBytesPerRawFactRecord: Int,
+    val maxCanonicalBytesPerActiveMemberKey: Int,
+    val maxCanonicalBytesPerLocalSelectorTuple: Int,
+    val maxCanonicalBytesPerRuntimeBindingSnapshot: Int,
+    val reservedMaxCanonicalBytesPerLoweredContractFact: Int?,
     val maxCanonicalBytesPerInternCandidate: Int,
 
     /*
-     * Aggregate identity budgets.
+     * Aggregate identity budgets for active ADR-0041 v1 metadata domains.
      *
      * Profiles should primarily scale how many canonical units may be admitted and how
      * many total bytes the image/scope may contain, not how large one canonical unit may
@@ -1376,8 +1432,22 @@ class ResolvedMetadataIdentityPolicy private constructor(
      */
     val maxTypeReferenceCount: Int,
     val maxTotalTypeReferenceCanonicalBytes: Long,
+    val maxTypeCycleKeyCount: Int,
+    val maxTotalTypeCycleKeyCanonicalBytes: Long,
+    val maxTypeCycleIdentityPrecheckCount: Int,
+    val maxTotalTypeCycleIdentityPrecheckCanonicalBytes: Long,
+    val maxTypeShapeSummaryCount: Int,
+    val maxTotalTypeShapeSummaryCanonicalBytes: Long,
     val maxRawFactRecordCount: Int,
     val maxTotalRawFactRecordCanonicalBytes: Long,
+    val maxActiveMemberKeyCount: Int,
+    val maxTotalActiveMemberKeyCanonicalBytes: Long,
+    val maxLocalSelectorTupleCount: Int,
+    val maxTotalLocalSelectorTupleCanonicalBytes: Long,
+    val maxRuntimeBindingSnapshotCount: Int,
+    val maxTotalRuntimeBindingSnapshotCanonicalBytes: Long,
+    val reservedMaxLoweredContractFactCount: Int?,
+    val reservedMaxTotalLoweredContractFactCanonicalBytes: Long?,
     val maxInternCandidateCount: Int,
     val maxTotalInternCandidateCanonicalBytes: Long,
     val maxTotalFrozenImageIdentityBytes: Long,
@@ -1399,6 +1469,28 @@ class ResolvedMetadataIdentityPolicy private constructor(
 ``````
 
 The exact API may change, but the existence of an explicit resolved policy is normative.
+
+For ADR-0041 v1, the shared metadata identity interner admits exactly the following active intern-candidate domains:
+
+``````text
+TypeReference
+TypeCycleKey
+TypeCycleIdentityPrecheck
+TypeShapeSummary
+RawFactRecord
+ActiveMemberKey
+LocalSelectorTuple
+RuntimeBindingSnapshot
+``````
+
+`LOWERED_CONTRACT_FACT` is not part of the active v1 shared-interner formula.
+
+It may be added only after the top-level contract model ratifies the lowered contract fact vocabulary, lowering law,
+canonical fields, version bundle, and verification payload.
+
+Identity domains used for route keys, planning cache keys, canonical plan-node summaries, frozen image content
+summaries, replay manifests, or local frozen table membership are not part of the ADR-0041 v1 shared metadata interner
+candidate count.
 
 The lowered-contract-fact fields are reserved capacity slots.
 
@@ -1445,6 +1537,7 @@ However, ordinary resource profiles SHOULD NOT primarily scale per-unit identity
 Numeric caps are required because an unbounded canonical-byte equality check is not a real bound.
 
 ---
+
 ### 7.5.1. Unit-Cap and Aggregate-Budget Law
 
 Metadata identity caps are resolved policy values.
@@ -1462,7 +1555,13 @@ A per-unit identity fuse bounds one canonical unit.
 Examples:
 
 - `maxCanonicalBytesPerTypeReference` bounds one TypeReference-local canonical identity payload;
+- `maxCanonicalBytesPerTypeCycleKey` bounds one TypeCycleKey canonical identity payload;
+- `maxCanonicalBytesPerTypeCycleIdentityPrecheck` bounds one TypeCycleIdentityPrecheck canonical identity payload;
+- `maxCanonicalBytesPerTypeShapeSummary` bounds one TypeShapeSummary canonical identity payload;
 - `maxCanonicalBytesPerRawFactRecord` bounds one raw-fact-record canonical identity payload;
+- `maxCanonicalBytesPerActiveMemberKey` bounds one active-member-key canonical identity payload;
+- `maxCanonicalBytesPerLocalSelectorTuple` bounds one local-selector-tuple canonical identity payload;
+- `maxCanonicalBytesPerRuntimeBindingSnapshot` bounds one runtime-binding-snapshot canonical identity payload;
 - `maxCanonicalBytesPerInternCandidate` bounds one intern candidate canonical identity payload;
 - future `maxCanonicalBytesPerLoweredContractFact`, once ratified, would bound one lowered-contract-fact canonical
   identity payload.
@@ -1474,8 +1573,20 @@ Examples:
 
 - `maxTypeReferenceCount`;
 - `maxTotalTypeReferenceCanonicalBytes`;
+- `maxTypeCycleKeyCount`;
+- `maxTotalTypeCycleKeyCanonicalBytes`;
+- `maxTypeCycleIdentityPrecheckCount`;
+- `maxTotalTypeCycleIdentityPrecheckCanonicalBytes`;
+- `maxTypeShapeSummaryCount`;
+- `maxTotalTypeShapeSummaryCanonicalBytes`;
 - `maxRawFactRecordCount`;
 - `maxTotalRawFactRecordCanonicalBytes`;
+- `maxActiveMemberKeyCount`;
+- `maxTotalActiveMemberKeyCanonicalBytes`;
+- `maxLocalSelectorTupleCount`;
+- `maxTotalLocalSelectorTupleCanonicalBytes`;
+- `maxRuntimeBindingSnapshotCount`;
+- `maxTotalRuntimeBindingSnapshotCanonicalBytes`;
 - `maxInternCandidateCount`;
 - `maxTotalInternCandidateCanonicalBytes`;
 - future `maxLoweredContractFactCount`, once ratified;
@@ -1540,11 +1651,17 @@ For v1, the ordinary resource-profile-invariant value is:
 maxCanonicalBytesPerTypeReference = 16 KiB
 ``````
 
-A per-unit fuse MAY be raised only by an explicit domain-specific override.
+Per-unit identity fuses are protocol safety limits.
 
-Such an override MUST NOT be hidden behind a general resource profile name.
+They are not user-authored configuration values.
 
-It MUST document:
+Ordinary users, project configuration files, deployment profiles, and `AUTO` resolution MUST NOT raise per-unit identity
+fuses.
+
+A per-unit fuse may differ from the default only as a versioned, protocol-ratified domain exception owned by Kontrakt's
+identity policy schema.
+
+Such an exception MUST document:
 
 - why the unit legitimately needs a larger identity payload;
 - why the material cannot be split into more canonical units;
@@ -1763,6 +1880,93 @@ If raw fact records routinely hit the per-record fuse, the owning domain MUST in
 be split into more canonical records, referenced through sealed TypeReference identity, or moved into a bounded table
 summary surface.
 
+#### Additional active metadata-domain capacity relationships
+
+The following active ADR-0041 v1 metadata domains MUST have the same count / bytes / per-unit fuse relationship shape as
+TypeReference and RawFactRecord:
+
+- TypeCycleKey;
+- TypeCycleIdentityPrecheck;
+- TypeShapeSummary;
+- ActiveMemberKey;
+- LocalSelectorTuple;
+- RuntimeBindingSnapshot.
+
+For every admitted TypeCycleKey canonical identity payload:
+
+``````text
+actualCanonicalBytesPerTypeCycleKey <= maxCanonicalBytesPerTypeCycleKey
+actualTypeCycleKeyCount <= maxTypeCycleKeyCount
+actualTotalTypeCycleKeyCanonicalBytes <= maxTotalTypeCycleKeyCanonicalBytes
+maxTypeCycleKeyCount * minimumEncodedBytesPerTypeCycleKey
+<= maxTotalTypeCycleKeyCanonicalBytes
+maxTotalTypeCycleKeyCanonicalBytes
+<= maxTypeCycleKeyCount * maxCanonicalBytesPerTypeCycleKey
+``````
+
+For every admitted TypeCycleIdentityPrecheck canonical identity payload:
+
+``````text
+actualCanonicalBytesPerTypeCycleIdentityPrecheck <= maxCanonicalBytesPerTypeCycleIdentityPrecheck
+actualTypeCycleIdentityPrecheckCount <= maxTypeCycleIdentityPrecheckCount
+actualTotalTypeCycleIdentityPrecheckCanonicalBytes <= maxTotalTypeCycleIdentityPrecheckCanonicalBytes
+maxTypeCycleIdentityPrecheckCount * minimumEncodedBytesPerTypeCycleIdentityPrecheck
+<= maxTotalTypeCycleIdentityPrecheckCanonicalBytes
+maxTotalTypeCycleIdentityPrecheckCanonicalBytes
+<= maxTypeCycleIdentityPrecheckCount * maxCanonicalBytesPerTypeCycleIdentityPrecheck
+``````
+
+For every admitted TypeShapeSummary canonical identity payload:
+
+``````text
+actualCanonicalBytesPerTypeShapeSummary <= maxCanonicalBytesPerTypeShapeSummary
+actualTypeShapeSummaryCount <= maxTypeShapeSummaryCount
+actualTotalTypeShapeSummaryCanonicalBytes <= maxTotalTypeShapeSummaryCanonicalBytes
+maxTypeShapeSummaryCount * minimumEncodedBytesPerTypeShapeSummary
+<= maxTotalTypeShapeSummaryCanonicalBytes
+maxTotalTypeShapeSummaryCanonicalBytes
+<= maxTypeShapeSummaryCount * maxCanonicalBytesPerTypeShapeSummary
+``````
+
+For every admitted ActiveMemberKey canonical identity payload:
+
+``````text
+actualCanonicalBytesPerActiveMemberKey <= maxCanonicalBytesPerActiveMemberKey
+actualActiveMemberKeyCount <= maxActiveMemberKeyCount
+actualTotalActiveMemberKeyCanonicalBytes <= maxTotalActiveMemberKeyCanonicalBytes
+maxActiveMemberKeyCount * minimumEncodedBytesPerActiveMemberKey
+<= maxTotalActiveMemberKeyCanonicalBytes
+maxTotalActiveMemberKeyCanonicalBytes
+<= maxActiveMemberKeyCount * maxCanonicalBytesPerActiveMemberKey
+``````
+
+For every admitted LocalSelectorTuple canonical identity payload:
+
+``````text
+actualCanonicalBytesPerLocalSelectorTuple <= maxCanonicalBytesPerLocalSelectorTuple
+actualLocalSelectorTupleCount <= maxLocalSelectorTupleCount
+actualTotalLocalSelectorTupleCanonicalBytes <= maxTotalLocalSelectorTupleCanonicalBytes
+maxLocalSelectorTupleCount * minimumEncodedBytesPerLocalSelectorTuple
+<= maxTotalLocalSelectorTupleCanonicalBytes
+maxTotalLocalSelectorTupleCanonicalBytes
+<= maxLocalSelectorTupleCount * maxCanonicalBytesPerLocalSelectorTuple
+``````
+
+For every admitted RuntimeBindingSnapshot canonical identity payload:
+
+``````text
+actualCanonicalBytesPerRuntimeBindingSnapshot <= maxCanonicalBytesPerRuntimeBindingSnapshot
+actualRuntimeBindingSnapshotCount <= maxRuntimeBindingSnapshotCount
+actualTotalRuntimeBindingSnapshotCanonicalBytes <= maxTotalRuntimeBindingSnapshotCanonicalBytes
+maxRuntimeBindingSnapshotCount * minimumEncodedBytesPerRuntimeBindingSnapshot
+<= maxTotalRuntimeBindingSnapshotCanonicalBytes
+maxTotalRuntimeBindingSnapshotCanonicalBytes
+<= maxRuntimeBindingSnapshotCount * maxCanonicalBytesPerRuntimeBindingSnapshot
+``````
+
+A released solver MAY use target-average sizing relationships for these domains, but those relationships MUST remain
+inside the explicit feasibility envelope above.
+
 #### Intern-candidate identity capacity relationship
 
 For every admitted intern candidate canonical identity payload:
@@ -1792,20 +1996,57 @@ maxTotalInternCandidateCanonicalBytes
 <= maxInternCandidateCount * maxCanonicalBytesPerInternCandidate
 ``````
 
-If one shared interner scope admits TypeReference identities, raw fact record identities, active member keys, local
-selector tuples, and future lowered contract facts, then the shared interner candidate count MUST be large enough for the
-sum of the domain-local candidate counts it is allowed to receive.
+For ADR-0041 v1, the shared metadata identity interner admits exactly these active intern-candidate domains:
 
-Explicitly:
+- TypeReference;
+- TypeCycleKey;
+- TypeCycleIdentityPrecheck;
+- TypeShapeSummary;
+- RawFactRecord;
+- ActiveMemberKey;
+- LocalSelectorTuple;
+- RuntimeBindingSnapshot.
+
+Therefore, the resolved policy MUST satisfy:
 
 ``````text
 maxInternCandidateCount
 >= maxTypeReferenceCount
+ + maxTypeCycleKeyCount
+ + maxTypeCycleIdentityPrecheckCount
+ + maxTypeShapeSummaryCount
  + maxRawFactRecordCount
  + maxActiveMemberKeyCount
  + maxLocalSelectorTupleCount
- + future maxLoweredContractFactCount, once ratified
+ + maxRuntimeBindingSnapshotCount
 ``````
+
+`LOWERED_CONTRACT_FACT` is not part of the active v1 formula.
+
+It may be added only after the top-level contract model ratifies the lowered contract fact vocabulary, lowering law,
+canonical fields, version bundle, and verification payload.
+
+The resolved policy MUST also satisfy the equivalent byte-budget relationship:
+
+``````text
+maxTotalInternCandidateCanonicalBytes
+>= maxTotalTypeReferenceCanonicalBytes
+ + maxTotalTypeCycleKeyCanonicalBytes
+ + maxTotalTypeCycleIdentityPrecheckCanonicalBytes
+ + maxTotalTypeShapeSummaryCanonicalBytes
+ + maxTotalRawFactRecordCanonicalBytes
+ + maxTotalActiveMemberKeyCanonicalBytes
+ + maxTotalLocalSelectorTupleCanonicalBytes
+ + maxTotalRuntimeBindingSnapshotCanonicalBytes
+``````
+
+Identity domains used for route keys, planning cache keys, canonical plan-node summaries, frozen image content
+summaries,
+replay manifests, or local frozen table membership MUST NOT be included in the shared metadata interner formula merely
+because they have HID domains elsewhere in ADR-0041.
+
+If a future ADR moves any of those domains into the shared metadata interner scope, that ADR MUST amend this formula,
+add count and byte budget fields, and add cap-boundary golden vectors.
 
 If interners are domain-local instead of shared, then each domain-local interner must define the corresponding
 relationship explicitly.
@@ -1857,7 +2098,13 @@ A resolved metadata identity scope MUST satisfy:
 
 ``````text
 maxTotalTypeReferenceCanonicalBytes
++ maxTotalTypeCycleKeyCanonicalBytes
++ maxTotalTypeCycleIdentityPrecheckCanonicalBytes
++ maxTotalTypeShapeSummaryCanonicalBytes
 + maxTotalRawFactRecordCanonicalBytes
++ maxTotalActiveMemberKeyCanonicalBytes
++ maxTotalLocalSelectorTupleCanonicalBytes
++ maxTotalRuntimeBindingSnapshotCanonicalBytes
 + maxTotalInternCandidateCanonicalBytes
 + future maxTotalLoweredContractFactCanonicalBytes, once ratified
 + maxFrozenTableBytes
@@ -2015,7 +2262,8 @@ Reserved.
 
 ADR-0041 does not ratify concrete contract syntax lowering caps.
 
-This section is kept as an integration point because future lowered contract material will need bounded identity behavior.
+This section is kept as an integration point because future lowered contract material will need bounded identity
+behavior.
 
 The future top-level contract document must define, before activation:
 
@@ -2034,36 +2282,54 @@ Until then:
 - no contract syntax SCC cap is active in ADR-0041.
 
 Once ratified, any such caps MUST obey ADR-0041's fail-closed, diagnostic-budget, and deterministic identity rules.
+
 ## 8. Canonical Byte Encoding Law
 
 ### 8.1. Encoding Form
 
-Kontrakt adopts a binary tagged length-prefixed canonical encoding.
+Kontrakt adopts a binary tagged, length-prefixed canonical encoding.
 
-The encoding format is:
+ADR-0041 ratifies `CanonicalEnvelopeHeaderV1` as the mandatory common envelope header for v1 canonical identity bytes.
+
+The v1 encoding format is:
 
 ``````text
-EnvelopeHeader
-Field*
-Terminator
+CanonicalEnvelopeHeaderV1
+FieldTable
+PayloadBytes
 ``````
 
-At minimum, `EnvelopeHeader` contains:
+`CanonicalEnvelopeHeaderV1` is always present.
 
-- magic protocol marker;
-- canonical encoding version;
+`payloadLength32` is mandatory.
+
+Domain-specific variation MUST be represented through:
+
 - identity domain id;
 - domain schema version;
-- hash / HID algorithm suite id;
-- active relevant version tuple fingerprint;
-- payload length where appropriate.
+- version-bundle fingerprint;
+- field tags;
+- field table entries;
+- payload fields;
+- and the owning domain compatibility matrix.
 
-Each field contains:
+Domain-specific variation MUST NOT be represented by changing the common v1 envelope header layout.
+
+Each field table entry describes:
 
 - field tag;
-- field wire type;
-- byte length where variable-length;
-- payload bytes.
+- wire type;
+- criticality / compatibility behavior where encoded by the domain;
+- byte offset into `PayloadBytes`;
+- byte length;
+- and repeated-field or SCC-local reference metadata where applicable.
+
+Field payload bytes are interpreted only after:
+
+- header validation;
+- field-table bounds validation;
+- domain / schema / version compatibility classification;
+- and unknown-tag policy validation.
 
 ### 8.2. Field Tags
 
@@ -2092,6 +2358,63 @@ Primitive encoding rules:
 - byte arrays: length-prefixed raw bytes;
 - strings: length-prefixed UTF-8 bytes from already-ratified immutable `String`.
 
+### 8.3.1. Wire Type Registry and SCC-Local Reference Boundary
+
+Every canonical wire type is protocol material.
+
+The v1 common wire type id space is:
+
+``````text
+WIRE_TYPE_FIXED_U64        = 0
+WIRE_TYPE_FIXED_I64        = 1
+WIRE_TYPE_BYTES            = 2
+WIRE_TYPE_STRING_UTF8      = 3
+WIRE_TYPE_MESSAGE          = 4
+WIRE_TYPE_REPEATED         = 5
+WIRE_TYPE_SCC_LOCAL_REF    = 6
+WIRE_TYPE_RESERVED         = 7
+``````
+
+A wire type MUST define:
+
+- numeric protocol id;
+- payload length rule;
+- alignment rule where applicable;
+- whether the payload may appear in hot headers, cold payloads, repeated fields, or SCC seal payloads;
+- unknown-field behavior;
+- decoder bounds checks;
+- and golden vectors.
+
+`WIRE_TYPE_RESERVED` MUST NOT appear in a released identity payload.
+
+A decoder MUST fail closed if it observes `WIRE_TYPE_RESERVED` unless a later compatibility matrix ratifies a concrete
+meaning for the active domain/schema/version.
+
+ADR-0041 permits `WIRE_TYPE_SCC_LOCAL_REF` only for metadata identity SCC sealing.
+
+It means:
+
+``````text
+deterministic temporary ordinal valid only inside the canonical SCC seal payload
+``````
+
+Rules:
+
+- it is valid only inside an ADR-0041 metadata identity SCC seal encoding;
+- it encodes a deterministic SCC-local temporary ordinal as a bounded unsigned integer payload;
+- it is not a stable intern id;
+- it is not a provisional handle;
+- it is not a frozen ordinal;
+- it is not a planning node id;
+- it cannot appear in published canonical material outside the SCC seal procedure;
+- it cannot cross into `FrozenMetamodelImage`, planning-facing providers, `PlanCacheKey`, `CanonicalPlanNode`,
+  persistent artifacts, public DTOs, or query-key surfaces;
+- it MUST be resolved to sealed stable identity material before publication outside the SCC seal boundary.
+
+A decoder MUST know whether it is currently decoding an SCC seal payload.
+
+If `WIRE_TYPE_SCC_LOCAL_REF` appears outside an SCC seal boundary, decoding MUST fail closed.
+
 ### 8.4. String Encoding
 
 String encoding law:
@@ -2107,6 +2430,36 @@ String encoding law:
 - no Unicode normalization is performed by the encoder;
 - no locale transformation is performed by the encoder.
 
+### 8.4.1. Early Text Ratification and Surrogate Preflight Law
+
+Unpaired surrogate rejection SHOULD occur at the earliest backend-erased text ratification boundary.
+
+The canonical encoder MUST keep its defensive fail-closed check, but the ordinary path MUST NOT rely on late encoder
+rejection after expensive canonicalization, sorting, interning, or graph construction work.
+
+Required direction:
+
+``````text
+backend text evidence
+-> backend-erased text ratification
+-> surrogate / malformed-text preflight
+-> canonical material
+-> canonical bytes
+``````
+
+Forbidden ordinary path:
+
+``````text
+backend text evidence
+-> expensive graph canonicalization
+-> late string encoder discovers malformed text
+-> repeated expensive fail-closed rejection
+``````
+
+A late encoder rejection remains lawful as a defense-in-depth guard.
+
+It is not the expected first line of defense.
+
 ### 8.5. Collection Encoding
 
 Collection encoding rules:
@@ -2118,6 +2471,58 @@ Collection encoding rules:
 - collection count is encoded before elements;
 - element count must be bounded by the owning capacity policy;
 - null element policy must be explicit per domain.
+
+### 8.5.1. Canonical Collection Sorting Cost Law
+
+Canonical sorting is a DoS boundary.
+
+Unordered collection canonicalization MUST be deterministic, but it MUST NOT become an unbounded recursive-comparator
+path.
+
+A compliant encoder MUST bound:
+
+- collection element count;
+- canonical sort-key byte length;
+- comparator fallback depth;
+- total canonical bytes read during tie-breaking;
+- and total sort work admitted for one canonical unit or SCC seal payload.
+
+The ordinary sorting path SHOULD precompute bounded canonical sort keys before sorting.
+
+Accepted sort-key material includes:
+
+- identity domain id;
+- domain schema / version bundle fingerprint;
+- canonical byte length;
+- HID or digest projection where already available at that boundary;
+- inline verifier prefix;
+- fixed-width canonical key prelude;
+- and a bounded canonical byte slice only as a final tie-breaker.
+
+Forbidden ordinary sorting path:
+
+``````text
+sort comparator
+-> recursively walk full metadata graph
+-> compare deep child structures repeatedly
+-> repeat for O(n log n) or worse comparator calls
+``````
+
+Required ordinary direction:
+
+``````text
+element canonical material
+-> bounded canonical sort key
+-> deterministic sort by sort key
+-> metered full canonical byte tie-break only when needed
+``````
+
+Full canonical byte comparison remains the final deterministic tie-break authority.
+
+It must be metered and cap-bounded.
+
+A released implementation MUST provide golden vectors or tests proving that shuffled unordered inputs produce the same
+encoded bytes without relying on backend iteration order or recursive graph traversal timing.
 
 ### 8.6. Object Encoding
 
@@ -2160,16 +2565,24 @@ A compliant encoding MUST be designed for:
 
 The encoder MUST place hot fixed-width metadata before cold variable-length material.
 
-At minimum, every identity envelope MUST begin with a fixed-width hot header containing:
+Every v1 identity envelope MUST begin with `CanonicalEnvelopeHeaderV1`.
+
+The header contains:
 
 - protocol magic;
+- header size;
+- header flags;
 - canonical encoding version;
 - identity domain id;
 - domain schema version;
 - hash / HID suite id;
-- relevant version tuple fingerprint;
-- field count or field-table length;
-- payload byte length where applicable.
+- HID derivation version;
+- version-bundle fingerprint;
+- field table offset and length;
+- field count;
+- payload offset;
+- payload byte length;
+- reserved zero fields.
 
 Variable-length fields MUST be reached through explicit offset / length material.
 
@@ -2189,38 +2602,70 @@ Canonical bytes must be deterministic enough for equality and physical enough fo
 
 Identity-bearing canonical encodings MUST separate hot metadata from cold payload bytes.
 
-Required hot header properties:
+ADR-0041 ratifies `CanonicalEnvelopeHeaderV1` as a fixed 64-byte little-endian common header.
 
-- fixed-width where feasible;
-- naturally aligned within the encoded byte stream where feasible;
-- independent from variable-length payload scanning;
-- sufficient to reject incompatible domain / schema / version material before reading cold fields;
-- sufficient to select a decoder without consulting maps, strings, reflection, or backend descriptors.
+The exact v1 layout is:
 
-The hot header is allowed to contain compact fingerprints and length fields.
+``````text
+CanonicalEnvelopeHeaderV1 = 64 bytes, little-endian
+
+offset  size  field
+0       4     magic32
+4       2     headerSize16
+6       2     headerFlags16
+8       4     canonicalEncodingVersion32
+12      4     identityDomain32
+16      4     domainSchemaVersion32
+20      2     hashSuite16
+22      2     hidDerivationVersion16
+24      8     versionBundleFingerprintHigh64
+32      8     versionBundleFingerprintLow64
+40      4     fieldTableOffset32
+44      4     fieldTableLength32
+48      2     fieldCount16
+50      2     reserved16
+52      4     payloadOffset32
+56      4     payloadLength32
+60      4     reserved32
+``````
+
+Mandatory v1 header constants and validation rules:
+
+- `magic32` MUST be `0x4B4E5443`;
+- `magic32` represents ASCII `KNTC`;
+- `headerSize16` MUST be `64`;
+- `headerFlags16` MUST be `0x0000` in v1 unless the active compatibility matrix ratifies a specific flag;
+- `reserved16` MUST be zero;
+- `reserved32` MUST be zero;
+- `payloadLength32` is mandatory;
+- all integer fields are little-endian unsigned bit patterns unless the field explicitly states otherwise;
+- a decoder MUST fail closed if `magic32`, `headerSize16`, `reserved16`, or `reserved32` is invalid;
+- unknown non-zero `headerFlags16` bits MUST fail closed unless ratified by the active compatibility matrix;
+- `fieldCount16` MUST be less than or equal to the resolved field-count cap for the identity domain.
+
+Offset constraints:
+
+- `fieldTableOffset32` MUST be greater than or equal to `64`;
+- `fieldTableLength32` MUST be large enough to contain exactly `fieldCount16` field table entries under the active
+  field table layout;
+- `payloadOffset32` MUST be greater than or equal to `fieldTableOffset32 + fieldTableLength32`;
+- `payloadOffset32 + payloadLength32` MUST NOT overflow;
+- `payloadOffset32 + payloadLength32` MUST be less than or equal to the envelope byte length;
+- no field payload slice may point into the header, field table, reserved padding, or outside the envelope.
+
+The hot header is protocol material.
+
+It is not an implementation object layout.
+
+It is not an intern-table probe group.
 
 It is not allowed to contain backend provenance as semantic identity material.
 
-Illustrative canonical envelope hot-header layout:
+Domain-specific payload needs MUST be handled by field tables, field tags, domain schema versions, compatibility
+matrices,
+or payload fields.
 
-``````text
-magic32
-encodingVersion16
-identityDomain16
-schemaVersion32
-hashSuite16
-hidDerivationVersion16
-versionBundleFingerprint64 or 128
-fieldTableOffset32
-fieldCount16
-payloadLength32
-flags16
-``````
-
-The exact bit layout is not frozen by this ADR.
-
-The law is that a compliant identity envelope must expose enough fixed-width front-loaded material for bounded and
-branch-predictable decode.
+They MUST NOT change the common v1 envelope header layout.
 
 ### 8.9.1. Canonical Envelope Header vs Intern Probe Projection
 
@@ -2244,6 +2689,93 @@ Therefore, the cache-line grouping law in the interner applies to the projected 
 envelope header.
 
 This resolves the physical tension between self-describing canonical bytes and cache-local intern lookup.
+
+### 8.9.2. Header Reserved Bits and Padding Law
+
+`CanonicalEnvelopeHeaderV1` is fixed by ADR-0041.
+
+The following header fields are reserved in v1:
+
+- `reserved16`;
+- `reserved32`;
+- every `headerFlags16` bit not ratified by the active compatibility matrix.
+
+Reserved bits and bytes are protocol bytes.
+
+They MUST encode as zero.
+
+A decoder MUST fail closed if reserved fields are non-zero unless the active compatibility matrix explicitly ratifies
+those bits for the active domain/schema/version.
+
+This rule is part of canonical identity.
+
+Reserved data is not a runtime hint.
+
+It is not an implementation scratch field.
+
+It is not diagnostic storage.
+
+### 8.9.3. Version Bundle Fingerprint Derivation Law
+
+`versionBundleFingerprintHigh64` and `versionBundleFingerprintLow64` are the two 64-bit words of
+`VersionBundleFingerprint128`.
+
+`VersionBundleFingerprint128` MUST be derived deterministically from the active `CanonicalIdentityVersionBundle`.
+
+Required derivation shape:
+
+``````text
+CanonicalIdentityVersionBundle
+-> canonical version-bundle byte payload
+-> domain-separated BLAKE3 keyed derivation / XOF
+-> first 128 bits
+-> high64 / low64 encoded as little-endian unsigned bit patterns
+``````
+
+The canonical version-bundle byte payload MUST include:
+
+- identity domain id;
+- identity domain version;
+- canonical encoding version;
+- domain schema version;
+- normalization version where applicable;
+- hash algorithm suite id/version;
+- HID derivation version;
+- interning protocol version where applicable;
+- compatibility class id;
+- and every domain-specific version axis in ascending protocol field-tag order.
+
+The version-bundle byte payload MUST NOT include:
+
+- display strings;
+- backend names;
+- source locations;
+- runtime object identity;
+- map iteration order;
+- set iteration order;
+- process-global registry order;
+- or diagnostic labels.
+
+The BLAKE3 derivation context MUST be domain-separated from ordinary HID derivation.
+
+Illustrative derivation context:
+
+``````text
+KONTRAKT_BLAKE3_VERSION_BUNDLE_FINGERPRINT_V1
+``````
+
+A released implementation MUST publish golden vectors for:
+
+- identical bundle -> identical fingerprint;
+- canonical encoding version bump;
+- domain schema version bump;
+- HID derivation version bump;
+- compatibility class change;
+- domain-specific version-axis change;
+- field-order shuffle preserving identical canonical version-bundle bytes.
+
+Two implementations that receive the same active version bundle MUST compute the same
+`VersionBundleFingerprint128`.
 
 ### 8.10. Variable Payload Offset Table Law
 
@@ -2269,6 +2801,73 @@ For repeated fields:
 - each variable-length element MUST be addressable by length-prefix or by table-derived offset;
 - unordered semantic collections MUST be canonicalized before encoding;
 - duplicate canonical keys MUST fail closed.
+
+### 8.10.1. Checked Offset and Length Arithmetic Law
+
+Offset tables are a security boundary.
+
+All offset and length arithmetic MUST use checked `Long` arithmetic before narrowing to any encoded field width.
+
+A canonical encoder MUST fail closed before emission if any offset, length, table size, or total payload size cannot be
+represented by the ratified encoded width.
+
+A canonical decoder MUST validate, before exposing any slice:
+
+- offset is non-negative;
+- length is non-negative;
+- `offset + length` does not overflow;
+- `offset + length <= payloadLength`;
+- `fieldTableOffset + fieldTableByteLength` does not overflow;
+- `fieldTableOffset + fieldTableByteLength <= envelopeLength`;
+- every offset points into the declared payload region, not into the hot header, field table, or reserved padding;
+- repeated-field element offsets are monotonic where the domain requires monotonic layout;
+- and no slice may overlap another slice unless the domain explicitly ratifies overlapping immutable views.
+
+Forbidden:
+
+``````text
+Int offset = previousOffset + fieldLength
+// silent wraparound
+``````
+
+Required:
+
+``````text
+checked Long arithmetic
+-> range validation
+-> safe narrowing only after validation
+-> bounded slice exposure
+``````
+
+Integer overflow, negative offset, negative length, out-of-payload range, header overlap, or malformed field-table
+length
+MUST fail closed.
+
+### 8.10.2. Zero-Copy Canonical Byte Slice Law
+
+Variable payload extraction on hot identity decode paths MUST return a bounded view over the immutable canonical byte
+slab.
+
+Hot decoders MUST NOT allocate new byte arrays for ordinary field extraction.
+
+Allowed hot-path representation:
+
+- immutable base slab reference plus offset and length;
+- primitive offset / length pair carried with an already-known base;
+- verified canonical byte slice handle;
+- small-inline word payload when the full field fits inside the hot metadata plane.
+
+Forbidden on hot identity paths:
+
+- `Arrays.copyOfRange`;
+- `ByteArrayOutputStream` materialization;
+- per-field `ByteArray` allocation;
+- per-field heap wrapper allocation merely to carry offset/length;
+- `String` reconstruction unless the field is explicitly decoded as a string value at a ratified boundary.
+
+Cold diagnostic paths MAY copy bounded payload slices when the diagnostic policy permits it.
+
+Such copies are not canonical identity material and remain subject to diagnostic evidence budgets.
 
 ### 8.11. Decoder Dispatch and Branch Discipline
 
@@ -2309,6 +2908,49 @@ A validation branch is lawful when it protects:
 - integer overflow rejection;
 - or malformed UTF-8 / surrogate defense.
 
+### 8.11.1. Unknown Tag Default-Reject and Ratified Skip Law
+
+Unknown tags are rejected by default.
+
+Canonical identity decoding MUST NOT silently skip unknown fields merely because their wire type appears mechanically
+skippable.
+
+Reason:
+
+``````text
+unknown identity field
+-> may carry contract meaning under a newer schema
+-> silent skip could make different contract meanings compare as equal
+``````
+
+A compatibility matrix MAY ratify deterministic skip behavior only for a specific domain/schema/version combination.
+
+Such a ratified skippable field MUST satisfy all of the following:
+
+- the field is explicitly non-critical;
+- the field is declared non-identity-affecting for the decoding compatibility class;
+- the wire type has a bounded length rule;
+- offset and length validation passes under Section 8.10.1;
+- skipping is golden-vector covered;
+- skipping cannot change canonical bytes for the active identity version;
+- and skipping cannot change HID derivation, collision verification, canonical ordering, or stable intern id assignment.
+
+Required default:
+
+``````text
+unknown tag
+-> fail closed
+``````
+
+Allowed only after compatibility ratification:
+
+``````text
+known-skippable future field
+-> validate wire type and length
+-> deterministic bounded skip
+-> continue decoding under declared compatibility class
+``````
+
 ### 8.12. Tag Bit Partitioning Law
 
 Canonical field tags SHOULD reserve bit ranges for fast mechanical dispatch.
@@ -2335,6 +2977,27 @@ bit      15  : hot field flag
 The exact layout is not constitutional.
 The constitutional rule is that tag decoding must be mechanically predictable and must not require semantic string
 dispatch on the hot path.
+
+### 8.12.1. Tag Decode Benchmark Evidence Law
+
+Tag bit partitioning is an optimization surface, not semantic authority.
+
+A released hot decoder SHOULD publish benchmark evidence for its tag decode strategy.
+
+The evidence SHOULD cover:
+
+- mask / shift extraction cost;
+- table dispatch cost;
+- successful hot-path branch rate;
+- validation branch rate;
+- unknown tag rejection path;
+- wire-type mismatch rejection path;
+- and malformed length rejection path.
+
+The benchmark does not define correctness.
+
+Correctness remains defined by canonical bytes, schema/version compatibility, bounds validation, and fail-closed
+decoding.
 
 ### 8.13. Varint Restriction for Identity Hot Headers
 
@@ -3325,7 +3988,8 @@ Therefore this ADR defines a logical cache-line grouping law rather than a stric
 
 Heap primitive arrays are the portable v1 baseline.
 
-Off-heap, direct-memory, generated, or otherwise explicitly aligned probe groups are optional advanced physical backends,
+Off-heap, direct-memory, generated, or otherwise explicitly aligned probe groups are optional advanced physical
+backends,
 not mandatory v1 compliance requirements.
 
 A release claiming exact 64-byte physical alignment MUST prove that claim with layout documentation and benchmark
@@ -3691,6 +4355,31 @@ The ordinary policy outcome is semantic non-publication, bounded quarantine, or 
 
 A collision group escalation path MUST NOT change stable intern id assignment for already verified material in the same
 sealed scope.
+
+### 13.21.1. Bounded Cold Collision Structure Law
+
+A bounded cold collision structure is optional.
+
+If no ratified cold collision structure exists for the active domain/policy, collision group overflow MUST fail the
+current identity scope, frozen image publication, or artifact publication closed.
+
+If a bounded cold collision structure is ratified, it MUST satisfy:
+
+- it remains non-semantic until exact verification succeeds;
+- it stores only canonical byte offsets / lengths, verified canonical byte handles, or equivalent bounded verification
+  payload references;
+- it has a maximum cold group member count;
+- it has a maximum cold canonical-byte total;
+- it has a maximum probe / comparison budget;
+- it preserves deterministic stable intern id assignment;
+- it never accepts digest-only or HID-only equality;
+- it emits structured diagnostics when its cold bound is exceeded;
+- it cannot retroactively repair already-published semantic identity;
+- it cannot change already assigned stable ids inside a sealed scope.
+
+A stronger-width rekeying path, if ratified, MUST be selected before the scope becomes planning-visible and MUST
+preserve
+the same deterministic publication law.
 
 ### 13.22. Physical Acceleration Equivalence Law
 
@@ -4576,7 +5265,8 @@ of the following remain true:
 - reserved sentinel values are remapped deterministically;
 - `route64` remains routing-only;
 - exact PlanCacheKey verification follows every route candidate;
-- and the route derivation is not reused as metadata identity, query fingerprint, persistent identity, or stable intern id
+- and the route derivation is not reused as metadata identity, query fingerprint, persistent identity, or stable intern
+  id
   assignment authority.
 
 A future BLAKE3-derived PlanCacheKey route projection requires a separate PlanCacheKey canonical-material amendment,
@@ -4656,11 +5346,19 @@ Attack surfaces include:
 - malicious backend producing repeated material;
 - backend bug generating inconsistent canonical material;
 - persisted artifact with malformed lengths;
-- collision group amplification.
+- collision group amplification;
+- comparator-amplification attacks during unordered collection canonicalization;
+- offset-table integer overflow / wraparound;
+- malformed payload slices that point into hot headers or field tables;
+- and repeated expensive late text rejection after avoidable malformed-text evidence.
 
 Required defenses:
 
 - byte-length caps before allocation;
+- checked offset and length arithmetic before slice exposure;
+- zero-copy bounded slice views on hot identity paths;
+- canonical collection sort-key budgeting;
+- early backend-erased text ratification and surrogate preflight;
 - per-unit identity fuses;
 - aggregate canonical byte budgets per acquisition/image scope;
 - field count caps;
@@ -4685,7 +5383,8 @@ It must not silently accept digest equality.
 A canonical-byte payload exceeding its resolved per-unit domain cap must fail closed before allocation or before
 publication into a hot identity table.
 
-An acquisition/image scope exceeding its aggregate canonical-byte budget must fail closed before publication, but it MUST
+An acquisition/image scope exceeding its aggregate canonical-byte budget must fail closed before publication, but it
+MUST
 NOT justify inflating per-unit identity fuses unless a separate policy ratifies that override.
 
 ---
@@ -4699,13 +5398,23 @@ Exact package placement may change.
 ### 20.1. Encoding
 
 ``````text
+metamodel.domain.identity.CanonicalEnvelopeHeaderV1
+metamodel.domain.identity.CanonicalEnvelopeHeaderValidator
 metamodel.domain.identity.CanonicalByteEncoder
 metamodel.domain.identity.CanonicalByteSink
 metamodel.domain.identity.CanonicalEncodingVersion
 metamodel.domain.identity.CanonicalEncodingDomain
 metamodel.domain.identity.CanonicalFieldTag
 metamodel.domain.identity.CanonicalWireType
+metamodel.domain.identity.CanonicalFieldTableEntry
 metamodel.domain.identity.CanonicalEncodedBytes
+metamodel.domain.identity.VersionBundleFingerprintDeriver
+metamodel.domain.identity.CanonicalByteSlice
+metamodel.domain.identity.CanonicalPayloadSlice
+metamodel.domain.identity.CanonicalOffsetTableValidator
+metamodel.domain.identity.CanonicalSortKey
+metamodel.domain.identity.CanonicalCollectionCanonicalizer
+metamodel.domain.identity.SccLocalReferenceWireType
 ``````
 
 ### 20.1A. Compact Encoding and Dependency Graph Surfaces
@@ -4721,7 +5430,6 @@ metamodel.domain.identity.MetadataIdentitySccSealer
 metamodel.domain.identity.LayeredInternReference
 ``````
 
-
 ### 20.1B. Contract Syntax Lowering Surfaces
 
 Reserved integration point.
@@ -4729,7 +5437,8 @@ Reserved integration point.
 ADR-0041 does not ratify concrete contract syntax lowering APIs.
 
 Future surfaces may include contract syntax lowerers, lowered contract material, backend parity vectors, effective-value
-models, dependency graphs, and diagnostics, but their concrete names and fields belong to the top-level contract document
+models, dependency graphs, and diagnostics, but their concrete names and fields belong to the top-level contract
+document
 first.
 
 This ADR only reserves the identity-substrate integration point for future ratified contract material.
@@ -4744,8 +5453,10 @@ contract.semantic collision verification payload
 contract.semantic identity domain activation gate
 ``````
 
-Once ratified elsewhere, those surfaces must obey ADR-0041's canonical byte encoding, BLAKE3/HID, collision verification,
+Once ratified elsewhere, those surfaces must obey ADR-0041's canonical byte encoding, BLAKE3/HID, collision
+verification,
 protocol-owned interning, deterministic publication, and physical optimization laws.
+
 ### 20.2. BLAKE3 / HID
 
 ``````text
@@ -4814,10 +5525,14 @@ metamodel.domain.identity.CanonicalFieldOffsetTable
 metamodel.domain.identity.CanonicalDecoderTable
 metamodel.domain.identity.CanonicalTagDispatchTable
 metamodel.domain.identity.IdentityEnvelopeLayout
+metamodel.domain.identity.IdentityHeaderLayoutSpec
+metamodel.domain.identity.ReservedPaddingSpec
 metamodel.domain.identity.InlineVerifierPrefix
 metamodel.domain.identity.InternProbeGroup
 metamodel.domain.identity.InternTableLayout
 metamodel.domain.identity.InternProbeBudget
+metamodel.domain.identity.BoundedColdCollisionStructure
+metamodel.domain.identity.ColdCollisionBudget
 ``````
 
 These names are illustrative.
@@ -4903,7 +5618,6 @@ Deliverables:
 - TypeReference collision verification payload;
 - TypeReference identity golden vectors.
 
-
 ### Phase 3A — Contract Syntax Lowering Foundation
 
 Reserved integration phase.
@@ -4931,6 +5645,7 @@ frontend syntax is not canonical identity material
 ``````
 
 A future implementation may fill this phase after the contract model is closed.
+
 ### Phase 4 — Protocol-Owned Interner
 
 Introduce deterministic intern id assignment.
@@ -5097,132 +5812,166 @@ A compliant implementation MUST satisfy:
 29. Golden vectors exist for every released identity domain.
 30. Architecture tests block backend handle leakage into identity material.
 
-31. Canonical identity envelopes expose a fixed-width hot header.
-32. Hot decoder dispatch is table-driven or switch-table-friendly.
-33. Hot decoder dispatch does not use reflection, string lookup, or map lookup.
-34. Variable payloads are reached through offset / length material.
-35. Identity hot headers avoid varint decoding unless separately ratified.
-36. Intern-table first-probe metadata is physically grouped and primitive-friendly.
-37. Intern-table lookup performs domain/version/length/prefix rejection before full byte comparison.
-38. Full canonical byte comparison is a rare-path verification step, not the first response to every HID match.
-39. Inline verifier prefixes are not equality authority.
-40. TypeReference identity does not recursively inline the full reachable metadata closure.
-41. Stable intern id assignment is invariant under physical table rebuild, resize, and probe-strategy change.
-42. Every identity domain has a resolved version bundle.
-43. Every identity domain has a compatibility matrix.
-44. Canonical-byte payloads are capped by resolved metadata identity policy.
-45. Protocol-owned intern membership uses `HID128` or wider by default.
-46. `HID64` remains routing-only unless a domain-specific cardinality proof exists.
-47. Hot-path `HID256` is represented as primitive words, not `ByteArray`.
-48. Stable dense intern ids are not published before the interning scope is sealed.
-49. Streaming implementations may publish provisional handles only, not final stable intern ids.
-50. `GLOBAL_PROTOCOL_TABLE` is immutable protocol material only, not dynamic user metadata interning.
-51. Frozen image publication waits for the ADR-0041 identity seal.
-52. TypeReference identity is computed before planning traversal and before ADR-0030 cycle truncation.
-53. Future JVM value-type usage must beat or match the primitive-array baseline before replacing it.
-54. Determinism has priority over every physical optimization.
-55. SIMD width does not affect stable identity output.
-56. NUMA topology does not affect stable identity output.
-57. Provisional handles never cross into planning-visible, cache-visible, or persistent identity state.
-58. Speculative physical work does not publish semantic identity before verification.
-59. Background verification does not retroactively repair already-published semantic identity.
-60. Physical table probe order does not affect stable intern id assignment.
-61. Local arena insertion order does not affect canonical ordering or stable intern id assignment.
-62. Query-key derivation canonicalizes dependency sets before encoding.
-63. Query keys do not depend on backend order, acquisition order, worker assignment, NUMA arena id, frozen ordinal
+31. Canonical identity envelopes use `CanonicalEnvelopeHeaderV1` as the mandatory 64-byte little-endian v1 common
+    header.
+32. `magic32` is `0x4B4E5443`, `headerSize16` is `64`, and `payloadLength32` is mandatory.
+33. `headerFlags16` is zero in v1 unless ratified by compatibility matrix, and `reserved16` / `reserved32` are zero.
+34. `VersionBundleFingerprint128` is derived from canonical version-bundle bytes by domain-separated BLAKE3 derivation.
+35. Hot decoder dispatch is table-driven or switch-table-friendly.
+36. Hot decoder dispatch does not use reflection, string lookup, or map lookup.
+37. Variable payloads are reached through offset / length material.
+38. Identity hot headers avoid varint decoding unless separately ratified.
+39. Intern-table first-probe metadata is physically grouped and primitive-friendly.
+40. Intern-table lookup performs domain/version/length/prefix rejection before full byte comparison.
+41. Full canonical byte comparison is a rare-path verification step, not the first response to every HID match.
+42. Inline verifier prefixes are not equality authority.
+43. TypeReference identity does not recursively inline the full reachable metadata closure.
+44. Stable intern id assignment is invariant under physical table rebuild, resize, and probe-strategy change.
+45. Every identity domain has a resolved version bundle.
+46. Every identity domain has a compatibility matrix.
+47. Canonical-byte payloads are capped by resolved metadata identity policy.
+48. Protocol-owned intern membership uses `HID128` or wider by default.
+49. `HID64` remains routing-only unless a domain-specific cardinality proof exists.
+50. Hot-path `HID256` is represented as primitive words, not `ByteArray`.
+51. Stable dense intern ids are not published before the interning scope is sealed.
+52. Streaming implementations may publish provisional handles only, not final stable intern ids.
+53. `GLOBAL_PROTOCOL_TABLE` is immutable protocol material only, not dynamic user metadata interning.
+54. Frozen image publication waits for the ADR-0041 identity seal.
+55. TypeReference identity is computed before planning traversal and before ADR-0030 cycle truncation.
+56. Future JVM value-type usage must beat or match the primitive-array baseline before replacing it.
+57. Determinism has priority over every physical optimization.
+58. SIMD width does not affect stable identity output.
+59. NUMA topology does not affect stable identity output.
+60. Provisional handles never cross into planning-visible, cache-visible, or persistent identity state.
+61. Speculative physical work does not publish semantic identity before verification.
+62. Background verification does not retroactively repair already-published semantic identity.
+63. Physical table probe order does not affect stable intern id assignment.
+64. Local arena insertion order does not affect canonical ordering or stable intern id assignment.
+65. Query-key derivation canonicalizes dependency sets before encoding.
+66. Query keys do not depend on backend order, acquisition order, worker assignment, NUMA arena id, frozen ordinal
     alone, wall-clock, or object identity.
-64. Physical acceleration policies are resolved before scope admission and remain fixed for the scope.
-65. Prefetch-aware physical layout follows deterministic order; it does not create deterministic order.
-66. Optimistic probing never becomes probabilistic equality.
-67. Canonical identity encoding does not encode semantic field names as string payload.
-68. Fixed positional physical layouts are used only after schema/version/domain validation.
-69. Canonical identity encoding is stateless with respect to previous item, recently seen item, and acquisition order.
-70. Run-local adaptive compression dictionaries are not used for hot identity bytes.
-71. Bit-packed identity fields define offset, width, signedness, endian rule, reserved values, invalid values, and
+67. Physical acceleration policies are resolved before scope admission and remain fixed for the scope.
+68. Prefetch-aware physical layout follows deterministic order; it does not create deterministic order.
+69. Optimistic probing never becomes probabilistic equality.
+70. Canonical identity encoding does not encode semantic field names as string payload.
+71. Fixed positional physical layouts are used only after schema/version/domain validation.
+72. Canonical identity encoding is stateless with respect to previous item, recently seen item, and acquisition order.
+73. Run-local adaptive compression dictionaries are not used for hot identity bytes.
+74. Bit-packed identity fields define offset, width, signedness, endian rule, reserved values, invalid values, and
     golden vectors.
-72. Reserved bits are zero on encode and fail closed on decode unless compatibility explicitly ratifies them.
-73. Canonical-base delta uses only immutable protocol-owned bases.
-74. Previous-item delta is forbidden for hot identity bytes.
-75. General-purpose compression is not part of hot semantic identity equality.
-76. Recursive interning is layered reference interning, not unbounded recursive closure inlining.
-77. Parent canonical bytes reference only sealed child intern ids or SCC-governed temporary references.
-78. Metadata identity cycles are handled by deterministic SCC sealing, not ADR-0030 planning truncation.
-79. SCC-local temporary ordinals do not escape as stable intern ids.
-80. Acyclic metadata dependency graphs use canonical topological order with deterministic tie-breaking.
-81. Child intern id references carry scope/version protection or table-level proof.
-82. TypeReference identity does not encode planning traversal topology, active stack state, or cycle-truncated planning
+75. Reserved bits are zero on encode and fail closed on decode unless compatibility explicitly ratifies them.
+76. Canonical-base delta uses only immutable protocol-owned bases.
+77. Previous-item delta is forbidden for hot identity bytes.
+78. General-purpose compression is not part of hot semantic identity equality.
+79. Recursive interning is layered reference interning, not unbounded recursive closure inlining.
+80. Parent canonical bytes reference only sealed child intern ids or SCC-governed temporary references.
+81. Metadata identity cycles are handled by deterministic SCC sealing, not ADR-0030 planning truncation.
+82. SCC-local temporary ordinals do not escape as stable intern ids.
+83. Acyclic metadata dependency graphs use canonical topological order with deterministic tie-breaking.
+84. Child intern id references carry scope/version protection or table-level proof.
+85. TypeReference identity does not encode planning traversal topology, active stack state, or cycle-truncated planning
     results.
-83. SCC sealing is atomic: no stable intern id from a failed SCC may be published.
-84. SCC member-count, byte-total, intra-reference, and seal-iteration caps are resolved before SCC sealing.
-85. SCC cap violations fail closed before stable id publication.
-86. Failed SCC sentinel material does not masquerade as the original semantic identity.
-87. `HID256` hot lookup requires a domain-specific probe layout or a `HID128` hot projection.
-88. `FROZEN_IMAGE_CONTENT_SUMMARY` is cold / publication-time identity by default, not ordinary hot membership identity.
-89. Provisional handle types are distinct from verified handles and stable intern ids.
-90. Provisional handle implementations are not exposed through frozen image, planning, L2, persistent, public DTO, or
+86. SCC sealing is atomic: no stable intern id from a failed SCC may be published.
+87. SCC member-count, byte-total, intra-reference, and seal-iteration caps are resolved before SCC sealing.
+88. SCC cap violations fail closed before stable id publication.
+89. Failed SCC sentinel material does not masquerade as the original semantic identity.
+90. `HID256` hot lookup requires a domain-specific probe layout or a `HID128` hot projection.
+91. `FROZEN_IMAGE_CONTENT_SUMMARY` is cold / publication-time identity by default, not ordinary hot membership identity.
+92. Provisional handle types are distinct from verified handles and stable intern ids.
+93. Provisional handle implementations are not exposed through frozen image, planning, L2, persistent, public DTO, or
     query-key surfaces.
-91. Future JVM value-type / inline-object layouts must pass release-specific adoption proof against the primitive-array
+94. Future JVM value-type / inline-object layouts must pass release-specific adoption proof against the primitive-array
     baseline.
-92. Metadata identity cap violations emit structured, budgeted diagnostics.
-93. `AUTO` resolves to the deterministic `STANDARD` bootstrap cap set in v1.
-94. Future `AUTO` solvers may scale aggregate budgets only through deterministic pre-admission policy resolution.
-95. `AUTO` does not live-adapt caps inside an admitted identity scope.
-96. `AUTO` does not change canonical meaning, canonical bytes, HID derivation, collision verification, stable intern id
+95. Metadata identity cap violations emit structured, budgeted diagnostics.
+96. `AUTO` resolves to the deterministic `STANDARD` bootstrap cap set in v1.
+97. Future `AUTO` solvers may scale aggregate budgets only through deterministic pre-admission policy resolution.
+98. `AUTO` does not live-adapt caps inside an admitted identity scope.
+99. `AUTO` does not change canonical meaning, canonical bytes, HID derivation, collision verification, stable intern id
     assignment, query-key equality, or PlanCacheKey equality.
-97. Ordinary resource profiles scale aggregate budgets and counts before they scale per-unit identity fuses.
-98. `maxCanonicalBytesPerTypeReference` remains a TypeReference-local identity fuse and must not be used to admit raw-fact,
-    lowered-contract, diagnostic, or graph-closure payloads.
-99. Per-unit cap expansion requires explicit policy ratification, golden vectors, diagnostics, and benchmark evidence.
-100. Annotation descriptors, annotation backend handles, annotation DTO shapes, and annotation source spellings are not
+100. Ordinary resource profiles scale aggregate budgets and counts before they scale per-unit identity fuses.
+101. `maxCanonicalBytesPerTypeReference` remains a TypeReference-local identity fuse and must not be used to admit
+     raw-fact,
+     lowered-contract, diagnostic, or graph-closure payloads.
+102. Per-unit fuse changes are not user configuration knobs and require a versioned protocol-ratified domain exception,
+     golden vectors, diagnostics, and benchmark evidence.
+103. Annotation descriptors, annotation backend handles, annotation DTO shapes, and annotation source spellings are not
      canonical identity material.
-101. `LOWERED_CONTRACT_FACT_IDENTITY` is a reserved identity domain until the top-level contract document ratifies the
+104. `LOWERED_CONTRACT_FACT_IDENTITY` is a reserved identity domain until the top-level contract document ratifies the
      contract fact vocabulary and lowering law.
-102. ADR-0041 does not define annotation semantics, DSL semantics, compiler-metadata semantics, generated-index semantics,
+105. ADR-0041 does not define annotation semantics, DSL semantics, compiler-metadata semantics, generated-index
+     semantics,
      default/effective value semantics, or lowered-contract-fact bit layout.
-103. Future ratified lowered contract material must obey ADR-0041 canonical byte encoding, HID derivation, collision
+106. Future ratified lowered contract material must obey ADR-0041 canonical byte encoding, HID derivation, collision
      verification, protocol-owned interning, deterministic publication, and physical optimization laws.
-104. No frontend syntax object may become canonical identity material merely because a future section title is reserved for it.
-105. Contract syntax SCC sealing remains reserved until the top-level contract document ratifies the contract fact dependency
+107. No frontend syntax object may become canonical identity material merely because a future section title is reserved
+     for it.
+108. Contract syntax SCC sealing remains reserved until the top-level contract document ratifies the contract fact
+     dependency
      model; once ratified, it must be deterministic, bounded, and atomic.
-106. Contract syntax cap violations fail closed before stable lowered-contract-fact identity publication once the lowered
+109. Contract syntax cap violations fail closed before stable lowered-contract-fact identity publication once the
+     lowered
      contract-fact identity domain becomes active.
-107. Bit-packed lowered-contract-fact hot layouts are reserved until the contract fact taxonomy, value model, target model,
+110. Bit-packed lowered-contract-fact hot layouts are reserved until the contract fact taxonomy, value model, target
+     model,
      defaulting law, and compatibility matrix are ratified.
-108. ADR-0041 does not expose arbitrary user-authored numeric cap editing as an ordinary configuration surface.
-109. Concrete numeric metadata identity caps are resolved policy outputs produced by a deterministic capacity solver or an
+111. ADR-0041 does not expose arbitrary user-authored numeric cap editing as an ordinary configuration surface.
+112. Concrete numeric metadata identity caps are resolved policy outputs produced by a deterministic capacity solver or
+     an
      equivalent released bootstrap table.
-110. Count caps, aggregate byte budgets, table budgets, and per-unit identity fuses must satisfy explicit feasibility
+113. Count caps, aggregate byte budgets, table budgets, and per-unit identity fuses must satisfy explicit feasibility
      relationships before scope admission.
-111. `maxTotalTypeReferenceCanonicalBytes` must be feasible with `maxTypeReferenceCount`,
+114. `maxTotalTypeReferenceCanonicalBytes` must be feasible with `maxTypeReferenceCount`,
      `minimumEncodedBytesPerTypeReference`, and `maxCanonicalBytesPerTypeReference`.
-112. `maxTotalRawFactRecordCanonicalBytes` must be feasible with `maxRawFactRecordCount`,
+115. `maxTotalRawFactRecordCanonicalBytes` must be feasible with `maxRawFactRecordCount`,
      `minimumEncodedBytesPerRawFactRecord`, and `maxCanonicalBytesPerRawFactRecord`.
-113. `maxTotalInternCandidateCanonicalBytes` must be feasible with `maxInternCandidateCount`,
+116. `maxTotalInternCandidateCanonicalBytes` must be feasible with `maxInternCandidateCount`,
      `minimumEncodedBytesPerInternCandidate`, and `maxCanonicalBytesPerInternCandidate`.
-114. Shared intern candidate count caps must be large enough for the sum of the domain-local candidate counts admitted
-     into that shared interner.
-115. `maxTraversalEdges` must be derived from admitted graph dimensions or explicit domain-split edge budgets.
-116. `maxFrozenTableBytes` must be derived from row counts, table layouts, load factors, coverage bitsets, slab offset
+117. The ADR-0041 v1 shared metadata interner candidate count must cover exactly the active v1 metadata domains:
+     TypeReference, TypeCycleKey, TypeCycleIdentityPrecheck, TypeShapeSummary, RawFactRecord, ActiveMemberKey,
+     LocalSelectorTuple, and RuntimeBindingSnapshot.
+118. `maxTraversalEdges` must be derived from admitted graph dimensions or explicit domain-split edge budgets.
+119. `maxFrozenTableBytes` must be derived from row counts, table layouts, load factors, coverage bitsets, slab offset
      tables, and headroom.
-117. A resolved metadata identity scope budget must account for domain canonical-byte budgets, table budgets, frontier
+120. A resolved metadata identity scope budget must account for domain canonical-byte budgets, table budgets, frontier
      budget, dependency-graph budget, intern-table budget, diagnostic evidence budget, and fixed overhead.
-118. A resolved policy that violates its own feasibility relationships is invalid and must fail before scope admission.
-119. HID width selection must satisfy `n(n - 1) / 2^(b + 1) <= p_target` or choose a wider ratified width.
-120. BLAKE3 remains the protocol identity derivation root for metadata identity surfaces.
-121. Hot route/probe paths must use seal-time deterministic projections rather than repeatedly rehashing full canonical
+121. A resolved policy that violates its own feasibility relationships is invalid and must fail before scope admission.
+122. HID width selection must satisfy `n(n - 1) / 2^(b + 1) <= p_target` or choose a wider ratified width.
+123. BLAKE3 remains the protocol identity derivation root for metadata identity surfaces.
+124. Hot route/probe paths must use seal-time deterministic projections rather than repeatedly rehashing full canonical
      material.
-122. Non-cryptographic hashes are permitted only as non-semantic physical hints over already-ratified or already-verified
+125. Non-cryptographic hashes are permitted only as non-semantic physical hints over already-ratified or
+     already-verified
      material.
-123. Existing Planning L2 `route64` derivation is not silently replaced by ADR-0041; any migration to BLAKE3-derived
+126. Existing Planning L2 `route64` derivation is not silently replaced by ADR-0041; any migration to BLAKE3-derived
      route projection requires versioning, golden vectors, and exact PlanCacheKey verification.
-124. Fail-closed collision handling means semantic non-publication, scope rejection, quarantine, or a ratified bounded
+127. Fail-closed collision handling means semantic non-publication, scope rejection, quarantine, or a ratified bounded
      cold path; it does not require ordinary process-wide hard termination.
-125. SCC seal implementations must meter member count, intra-reference count, byte totals, and schema/version compatibility
+128. SCC seal implementations must meter member count, intra-reference count, byte totals, and schema/version
+     compatibility
      early enough to abort deterministically before stable id publication.
-126. JVM heap primitive arrays are the portable v1 layout baseline; exact 64-byte physical alignment claims require
+129. JVM heap primitive arrays are the portable v1 layout baseline; exact 64-byte physical alignment claims require
      separate evidence and are not assumed for ordinary heap objects.
-127. Aggregate byte budgets should be tightened by deterministic target-average sizing relationships, not merely by the
+130. Aggregate byte budgets should be tightened by deterministic target-average sizing relationships, not merely by the
      worst-case product of count and per-unit fuse.
+131. Unordered collection canonicalization uses bounded canonical sort keys and metered full-byte tie-breaks rather than
+     unbounded recursive comparator traversal.
+132. Offset and length arithmetic for canonical envelope field tables uses checked `Long` arithmetic before narrowing.
+133. Decoders reject negative offsets, negative lengths, overflowed `offset + length`, out-of-payload slices, and slices
+     that point into hot headers, field tables, or reserved padding.
+134. Hot identity decoders expose variable payloads as bounded canonical byte slices and do not allocate per-field
+     `ByteArray` copies.
+135. Every released identity envelope layout declares header size, alignment, reserved padding, field-table start, and
+     payload start rules.
+136. Reserved padding bytes encode as zero and fail closed when non-zero unless compatibility explicitly ratifies them.
+137. Malformed text and unpaired surrogates are rejected at the earliest backend-erased text ratification boundary where
+     practical; encoder rejection remains a defensive guard.
+138. `WIRE_TYPE_SCC_LOCAL_REF` is valid only inside SCC seal payloads and cannot escape as a stable intern id, frozen
+     ordinal, planning id, provisional handle, or public identity surface.
+139. Unknown canonical identity tags fail closed by default.
+140. Unknown-tag skip is allowed only when a domain compatibility matrix ratifies a bounded, non-critical,
+     non-identity-affecting field and golden vectors cover the skip behavior.
+141. Tag bit partitioning remains allowed, but released hot decoders should publish benchmark evidence for mask/shift,
+     dispatch, and validation-branch behavior.
 
 ---
 
@@ -5243,7 +5992,27 @@ Golden vectors MUST exist for:
 - explicit `UNKNOWN`;
 - explicit `UNAVAILABLE`;
 - rejected malformed surrogate case;
-- version header.
+- early malformed-text preflight case;
+- `CanonicalEnvelopeHeaderV1` 64-byte layout fixture;
+- `magic32 = 0x4B4E5443` fixture;
+- `headerSize16 = 64` fixture;
+- `headerFlags16 = 0x0000` fixture;
+- mandatory `payloadLength32` fixture;
+- version header;
+- `fieldCount16` cap boundary fixture;
+- declared header size / alignment / reserved padding case;
+- reserved padding zero case;
+- reserved padding non-zero fail-closed case;
+- checked offset / length valid slice case;
+- offset overflow fail-closed case;
+- negative offset / negative length fail-closed case;
+- payload slice pointing into hot header fail-closed case;
+- zero-copy canonical byte slice fixture;
+- unordered collection sorted by bounded canonical sort keys;
+- full-byte tie-break metering fixture;
+- unknown tag default rejection;
+- ratified skippable unknown field fixture where a compatibility matrix allows it;
+- `WIRE_TYPE_SCC_LOCAL_REF` valid only inside SCC seal payload.
 
 ### 23.2. BLAKE3 / HID
 
@@ -5254,6 +6023,7 @@ Golden vectors MUST exist for:
 - HID128 output;
 - HID256 output;
 - version tuple change changes output;
+- version-bundle fingerprint derivation fixture;
 - encoding version change changes output;
 - HID width bound fixture satisfying `n(n - 1) / 2^(b + 1) <= p_target`;
 - seal-time BLAKE3 derivation with deterministic route64 projection;
@@ -5302,9 +6072,11 @@ Golden vectors MUST exist for:
 - incompatible fail-closed case;
 - canonical-byte per-unit cap exceeded;
 - aggregate canonical-byte budget exceeded;
-- profile scaling preserves per-TypeReference unit cap unless explicitly overridden;
-- per-unit cap override rejection when justification / golden-vector coverage is missing;
+- profile scaling preserves per-TypeReference unit cap unless a versioned protocol-ratified domain exception exists;
+- per-unit fuse change rejection when protocol-ratified exception evidence / golden-vector coverage is missing;
 - collision group cap exceeded;
+- bounded cold collision structure accepted fixture where ratified;
+- bounded cold collision structure overflow fail-closed fixture;
 - HID64 cardinality proof rejection;
 - HID128 default intern-membership acceptance;
 - v1 `AUTO` resolving to the deterministic `STANDARD` bootstrap cap set;
@@ -5315,7 +6087,8 @@ Golden vectors MUST exist for:
 - `maxTotalTypeReferenceCanonicalBytes <= maxTypeReferenceCount * maxCanonicalBytesPerTypeReference` feasibility check;
 - raw-fact-record count/byte/fuse feasibility boundary;
 - intern-candidate count/byte/fuse feasibility boundary;
-- shared interner candidate-count sum feasibility;
+- active v1 shared metadata interner candidate-count sum feasibility;
+- active v1 shared metadata interner byte-budget sum feasibility;
 - traversal-edge derivation feasibility;
 - frozen-table-byte derivation feasibility;
 - scope-level budget equation boundary;
@@ -5349,7 +6122,15 @@ Golden vectors and benchmark gates MUST exist for:
 - NUMA-local staging order preserving stable ids after deterministic merge;
 - prefetch-aware slab layout preserving canonical identity;
 - query dependency set shuffled order preserving query key;
-- physical acceleration equivalence against the reference deterministic pipeline.
+- physical acceleration equivalence against the reference deterministic pipeline;
+- canonical collection sorting with bounded sort-key precomputation;
+- recursive-comparator amplification rejection or metering;
+- checked offset arithmetic overflow rejection;
+- zero-copy slice exposure without per-field `ByteArray` allocation;
+- declared header padding validation;
+- unknown tag default rejection;
+- ratified unknown-tag skip where compatibility permits it;
+- SCC-local reference wire type rejection outside SCC seal payload.
 
 Microbenchmarks SHOULD measure:
 
@@ -5387,7 +6168,12 @@ The threshold table SHOULD cover at least:
 - SIMD group probe scalar-equivalence overhead;
 - NUMA staging merge overhead;
 - query-key derivation throughput;
-- prefetch slab hot/cold access ratio.
+- prefetch slab hot/cold access ratio;
+- canonical collection sort-key generation cost;
+- comparator fallback rate;
+- zero-copy slice extraction allocation rate;
+- offset table validation throughput;
+- tag mask/shift and dispatch cost.
 
 Hardware-specific absolute nanosecond numbers belong to the release threshold table, not to this ADR.
 
@@ -5409,12 +6195,15 @@ Golden vectors MUST exist for:
 - topological tie-break independence from backend order;
 - cyclic dependency graph SCC detection;
 - cyclic SCC-local temporary ordinal encoding;
+- SCC-local reference wire type encoding inside SCC seal payload;
+- SCC-local reference wire type rejection outside SCC seal payload;
 - cyclic SCC final stable id assignment;
 - SCC-local temporary ordinal escape rejection;
 - TypeReference cycle identity independent from ADR-0030 planning truncation;
 - general compression exclusion from hot identity equality;
 - SCC seal atomic failure when one member exceeds canonical byte cap;
-- SCC preflight early abort when member count, intra-reference count, or byte total exceeds cap before final publication;
+- SCC preflight early abort when member count, intra-reference count, or byte total exceeds cap before final
+  publication;
 - SCC seal atomic failure when one member lacks required verification material;
 - SCC member-count cap exceeded;
 - SCC intra-reference cap exceeded;
@@ -5424,7 +6213,6 @@ Golden vectors MUST exist for:
 - metadata identity cap diagnostic payload shape;
 - provisional handle type-state rejection at frozen/planning/L2/public DTO boundaries;
 - primitive-array baseline vs value-type candidate adoption benchmark fixture.
-
 
 ### 23.9. Contract Syntax Lowering Vectors
 
@@ -5449,6 +6237,7 @@ including whichever of the following categories become applicable:
 - rejected / unavailable / diagnostic behavior.
 
 Until ratification, no concrete annotation, DSL, or compiler-metadata lowering vector is required by ADR-0041.
+
 ## 24. Required Architecture Tests
 
 Architecture tests MUST verify:
@@ -5468,13 +6257,28 @@ Architecture tests MUST verify:
 - canonical decoder hot paths do not use reflection dispatch;
 - canonical decoder hot paths do not use string tag lookup;
 - canonical decoder hot paths do not use `Map` lookup for field dispatch;
+- identity envelope decoding uses `CanonicalEnvelopeHeaderV1` and rejects non-v1 common header layouts;
+- header validation rejects invalid `magic32`, non-64 `headerSize16`, non-zero v1 `headerFlags16`, non-zero
+  `reserved16`, and non-zero `reserved32`;
+- version-bundle fingerprint derivation is covered by golden vectors and does not depend on map/set iteration order;
 - identity envelope decoding uses fixed-width hot header material;
 - variable payload access uses offset / length material rather than delimiter scanning;
+- offset / length validation uses checked arithmetic and rejects overflow before slice exposure;
+- hot identity decoding does not allocate per-field `ByteArray` copies for ordinary field extraction;
+- canonical byte slices are represented as base slab plus primitive offset / length or equivalent verified slice
+  handles;
+- unknown canonical identity tags fail closed unless a compatibility matrix ratifies deterministic skip behavior;
+- ratified unknown-tag skip validates wire type, length, and bounds before continuing;
 - intern-table probe path performs inline domain/version/length/prefix rejection before full byte comparison;
 - full canonical byte comparison is not the first action after HID match;
 - intern-table hot metadata is stored in primitive-friendly contiguous structures;
 - stable intern id assignment remains unchanged after table resize or rebuild;
 - TypeReference identity does not recursively inline full raw-fact closure.
+- unordered collection canonicalization uses bounded sort keys and does not repeatedly recurse through full metadata
+  graphs in comparator loops.
+- released identity envelope layouts declare hot header size, alignment, field-table start, payload start, and reserved
+  padding rules;
+- reserved padding is encoded as zero and non-zero reserved padding fails closed unless ratified by compatibility;
 - physical acceleration implementation produces the same canonical bytes, HID values, stable intern ids, and query keys
   as the reference path;
 - SIMD probing produces the same candidate set as scalar probing;
@@ -5493,6 +6297,7 @@ Architecture tests MUST verify:
 - parent identity payload cannot reference provisional child handles;
 - metadata dependency graph cycles use SCC sealing rather than planning cycle truncation;
 - SCC-local temporary ordinals cannot escape sealed SCC encoding;
+- `WIRE_TYPE_SCC_LOCAL_REF` cannot appear outside SCC seal encoding;
 - TypeReference identity tests prove independence from ADR-0030 planning traversal state.
 
 - no type outside the identity seal package may reference `ProvisionalInternHandle` unless explicitly allowed by the
@@ -5510,29 +6315,34 @@ Architecture tests MUST verify:
 - value-type / inline-object hot-path implementation remains behind a release adoption proof gate;
 - v1 `AUTO` resolves to the deterministic `STANDARD` bootstrap cap set;
 - any future `AUTO` solver runs before scope admission and publishes an immutable resolved policy snapshot;
-- no identity scope reads live hardware, GC, load, throughput, cache, or scheduling feedback to mutate caps after admission;
+- no identity scope reads live hardware, GC, load, throughput, cache, or scheduling feedback to mutate caps after
+  admission;
 - ordinary user/operator configuration surfaces do not expose arbitrary metadata identity cap numbers;
 - metadata identity policy resolution goes through a deterministic capacity solver or released bootstrap table;
 - resolved metadata identity policies run feasibility validation before scope admission;
 - count caps are not accepted when their minimum encoded bytes cannot fit into their aggregate byte budget;
 - aggregate byte budgets are not accepted when they exceed their count multiplied by the per-unit fuse unless the domain
   explicitly documents why the extra budget is semantically reachable;
-- shared interner candidate budgets cover all domain-local candidates that may enter the shared interner;
+- ADR-0041 v1 shared metadata interner candidate budgets cover TypeReference, TypeCycleKey,
+  TypeCycleIdentityPrecheck, TypeShapeSummary, RawFactRecord, ActiveMemberKey, LocalSelectorTuple, and
+  RuntimeBindingSnapshot candidates;
 - traversal-edge budgets are derived from admitted graph dimensions or explicit domain-split edge budgets;
-- frozen table byte budgets are derived from table layout, row counts, load factor, bitsets, offset tables, and headroom.
+- frozen table byte budgets are derived from table layout, row counts, load factor, bitsets, offset tables, and
+  headroom.
 
 - canonical identity material types do not store `AnnotationDescriptor` as identity material;
 - canonical identity material types do not store reflection annotation objects or KSP annotation handles;
 - contract syntax lowering architecture tests are reserved until the top-level contract model is ratified;
-- future lowered contract material must not expose backend annotation handles, source AST objects, compiler symbols, or frontend DTOs as identity material.
-
+- future lowered contract material must not expose backend annotation handles, source AST objects, compiler symbols, or
+  frontend DTOs as identity material.
 
 ---
 
 - BLAKE3 canonical identity derivation is not replaced by Murmur3, xxHash, JVM hashCode, or any other
   non-cryptographic route hint.
 - hot lookup code does not repeatedly re-run full BLAKE3 over full canonical material after seal-time projection exists.
-- non-cryptographic physical route hints cannot cross into HID, persistent identity, query fingerprint, stable intern id, or
+- non-cryptographic physical route hints cannot cross into HID, persistent identity, query fingerprint, stable intern
+  id, or
   equality-authority surfaces.
 - collision cap overflow does not publish HID-only equality and does not retroactively repair stable ids.
 - SCC implementations expose metered preflight or equivalent deterministic early-abort evidence.
@@ -5777,8 +6587,8 @@ It should not normally make one `TypeReference` identity payload absorb more mat
 `maxCanonicalBytesPerTypeReference` is a per-unit fuse that protects TypeReference-local identity from accidentally
 including raw facts, lowered contract facts, diagnostics, annotation graphs, or the whole contract graph.
 
-If a domain needs a larger per-unit cap, that is an explicit domain-specific policy ratification, not ordinary
-`AUTO` / `SMALL` / `STANDARD` / `LARGE` scaling.
+If a domain needs a different per-unit fuse, that is a versioned protocol-ratified domain exception, not ordinary
+`AUTO` / `SMALL` / `STANDARD` / `LARGE` scaling and not a user configuration knob.
 
 `AUTO` follows the same rule.
 
@@ -5801,7 +6611,6 @@ not:
 resource profile scaling
 -> larger single TypeReference identity payload
 ``````
-
 
 ### 26.20. Add `DIAGNOSTIC` / `RESEARCH` as Resource Profiles
 
@@ -5891,7 +6700,6 @@ compatibility matrix, canonical fields, and golden vectors are stable.
 
 ADR-0041 reserves the section title and integration point, but does not freeze a lowered-contract-fact bit layout.
 
-
 ### 26.26. Expose Arbitrary Numeric Cap Editing to Ordinary Users
 
 Rejected.
@@ -5952,7 +6760,8 @@ Rejected.
 Collision cap overflow is a semantic non-publication event unless the process is corrupted or the implementation reached
 an unrepresentable state.
 
-Ordinary compliant responses include scope rejection, artifact publication failure, bounded quarantine, or a ratified cold
+Ordinary compliant responses include scope rejection, artifact publication failure, bounded quarantine, or a ratified
+cold
 collision path.
 
 ### 26.31. Use Only Worst-Case Count-Times-Fuse Products for Aggregate Budgets
@@ -5964,6 +6773,56 @@ Worst-case products are hard feasibility ceilings, not ordinary sizing formulas.
 A deterministic capacity solver should publish target-average sizing relationships or an equivalent benchmark-ratified
 tightening rule to avoid over-allocating aggregate budgets for every canonical unit as if each unit were near its
 per-unit fuse.
+
+### 26.32. Silently Skip Unknown Canonical Identity Tags
+
+Rejected as the default.
+
+Unknown canonical identity fields may carry contract meaning under a newer schema.
+
+Silently skipping them could make different contract meanings compare as equal.
+
+Unknown tags fail closed unless a domain compatibility matrix explicitly ratifies bounded skip behavior for a
+non-critical and non-identity-affecting field.
+
+### 26.33. Encode Provisional Handles as Canonical Wire Material
+
+Rejected.
+
+Provisional handles are physical seal-stage artifacts.
+
+They are not canonical identity material.
+
+ADR-0041 permits only `WIRE_TYPE_SCC_LOCAL_REF`, a deterministic temporary ordinal valid inside SCC seal payloads.
+
+It cannot escape publication and cannot become a planning-visible identity.
+
+### 26.34. Leave the Canonical Envelope Header Illustrative
+
+Rejected.
+
+ADR-0041 owns the common canonical byte protocol.
+
+Therefore the v1 canonical identity envelope header cannot remain illustrative, optional, or domain-selected.
+
+`CanonicalEnvelopeHeaderV1` is ratified as the mandatory 64-byte little-endian common envelope header for v1 canonical
+identity bytes.
+
+Domain-specific variation belongs in:
+
+- identity domain id;
+- domain schema version;
+- version-bundle fingerprint;
+- field tags;
+- field table entries;
+- payload bytes;
+- and compatibility matrices.
+
+It does not belong in changing the common v1 envelope header layout.
+
+Canonical envelope headers and intern probe projections remain distinct physical surfaces.
+
+The fixed common header does not require the intern-table probe group to share the same layout.
 
 ## 27. Final Rule
 
@@ -6004,13 +6863,21 @@ local address identity
 diagnostic identity
 ``````
 
-Version compatibility, canonical-byte size bounds, HID width, interner scope, and metadata identity capacity are resolved
+Version compatibility, canonical-byte size bounds, HID width, interner scope, and metadata identity capacity are
+resolved
 protocol surfaces.
 
 Resource intent is not an arbitrary cap file.
 
-Concrete caps are deterministic resolved policy outputs, and their count/byte/table relationships must be feasible before
+Concrete caps are deterministic resolved policy outputs, and their count/byte/table relationships must be feasible
+before
 scope admission.
+
+Canonical identity bytes use `CanonicalEnvelopeHeaderV1` as the mandatory common v1 envelope header.
+
+Domain payloads may vary by identity domain and schema.
+
+The common v1 header may not.
 
 Canonical identity bytes may be compact.
 
@@ -6037,7 +6904,6 @@ frequency-learned dictionary
 planning-truncation identity shortcut
 ``````
 
-
 Annotation syntax follows the same law:
 
 ``````text
@@ -6052,6 +6918,14 @@ Annotation descriptors are syntax.
 Lowered contract facts are identity material.
 
 No optimization may collapse those layers.
+
+Canonical decoding follows the same hierarchy.
+
+Unknown tags fail closed unless compatibility explicitly ratifies a bounded skip.
+
+Variable payloads are exposed through checked zero-copy slices on hot identity paths.
+
+SCC-local references are local to SCC seal payloads and never become published identity.
 
 All physical acceleration is subordinate to deterministic identity.
 
