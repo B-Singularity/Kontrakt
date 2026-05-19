@@ -1477,6 +1477,10 @@ class ResolvedMetadataIdentityPolicy private constructor(
     val maxCanonicalSortScratchBytesPerScope: Long,
     val maxCanonicalSortScratchBytesPerLane: Long,
     val maxCanonicalSortElementCountPerCollection: Int,
+    val maxCanonicalTieGroupCountPerCollection: Int,
+    val maxCanonicalTieGroupDescriptorBytes: Long,
+    val maxCanonicalSortProjectionLevelCount: Int,
+    val maxCanonicalExactCloneScanBytes: Long,
     val maxCanonicalColdSortGroupSize: Int,
     val maxCanonicalColdSortComparisons: Int,
     val maxCanonicalColdSortBytes: Long,
@@ -1539,6 +1543,10 @@ maxCanonicalSortTieBreakBytes                  = 1 MiB
 maxCanonicalSortScratchBytesPerScope           = 16 MiB
 maxCanonicalSortScratchBytesPerLane            = 2 MiB
 maxCanonicalSortElementCountPerCollection      = 65_535
+maxCanonicalTieGroupCountPerCollection         = 65_535
+maxCanonicalTieGroupDescriptorBytes            = 1 MiB
+maxCanonicalSortProjectionLevelCount           = 3
+maxCanonicalExactCloneScanBytes                = 16 MiB
 maxCanonicalColdSortGroupSize                  = 4096
 maxCanonicalColdSortComparisons                = 65_536
 maxCanonicalColdSortBytes                      = 16 MiB
@@ -2496,13 +2504,22 @@ Collection encoding rules:
 - unordered semantic sets must be sorted under canonical ordering before encoding;
 - maps encode entries ordered by canonical key material;
 - duplicate canonical map keys fail closed;
-- duplicate map key detection through pre-sort deterministic scan fixture;
-- duplicate map key detection through post-sort adjacent exact-key scan fixture;
+- unordered semantic sets MUST define an explicit duplicate canonical element policy;
 - collection count is encoded before elements;
 - element count must be bounded by the owning capacity policy;
 - null element policy must be explicit per domain.
 
-### 8.5.1. Canonical Collection Sorting Cost Law
+An unordered collection encoder MUST NOT rely on:
+
+- backend iteration order;
+- platform collection order;
+- platform hash-table order;
+- worker completion order;
+- object identity;
+- JVM `hashCode()`;
+- or live profiling feedback.
+
+### 8.5.1. Canonical Collection Sorting Cost and Sort-Key Law
 
 Canonical sorting is a DoS boundary.
 
@@ -2515,46 +2532,8 @@ A compliant encoder MUST bound:
 - canonical sort-key byte length;
 - comparator fallback depth;
 - total canonical bytes read during tie-breaking;
+- total sort scratch memory;
 - and total sort work admitted for one canonical unit or SCC seal payload.
-
-The ordinary sorting path SHOULD precompute bounded canonical sort keys before sorting.
-
-Accepted sort-key material includes:
-
-- identity domain id;
-- domain schema / version bundle fingerprint;
-- canonical byte length;
-- HID or digest projection where already available at that boundary;
-- inline verifier prefix;
-- fixed-width canonical key prelude;
-- and a bounded canonical byte slice only as a final tie-breaker.
-
-Forbidden ordinary sorting path:
-
-``````text
-sort comparator
--> recursively walk full metadata graph
--> compare deep child structures repeatedly
--> repeat for O(n log n) or worse comparator calls
-``````
-
-Required ordinary direction:
-
-``````text
-element canonical material
--> bounded canonical sort key
--> deterministic sort by sort key
--> metered full canonical byte tie-break only when needed
-``````
-
-Full canonical byte comparison remains the final deterministic tie-break authority.
-
-It must be metered and cap-bounded.
-
-A released implementation MUST provide golden vectors or tests proving that shuffled unordered inputs produce the same
-encoded bytes without relying on backend iteration order or recursive graph traversal timing.
-
-### 8.5.1. Bounded Canonical Sort Key Law
 
 Unordered collection canonicalization MUST precompute bounded canonical sort keys before sorting.
 
@@ -2563,23 +2542,44 @@ trees, staging slabs, or canonical byte trees during pairwise comparison.
 
 A canonical sort key MUST be bounded by resolved metadata identity policy.
 
-A canonical sort key SHOULD contain fixed-width or otherwise bounded material such as:
+Accepted sort-key material includes fixed-width or otherwise bounded material such as:
 
 - identity domain id;
-- domain schema version;
+- identity domain schema version;
 - version-bundle fingerprint;
 - canonical byte length;
-- HID / digest prefix;
+- HID or digest projection where already available at that boundary;
 - inline verifier prefix;
 - field-count summary;
-- bounded canonical key prelude.
+- fixed-width canonical key prelude.
 
-Full canonical byte comparison MAY be used only as a final tie-breaker after bounded sort-key comparison.
+A bounded canonical byte slice MAY be used only as a metered final tie-breaker.
 
-The tie-breaker path MUST be metered.
+Full canonical byte comparison remains the final deterministic tie-break authority.
 
-If the tie-breaker budget is exceeded, canonicalization MUST fail closed rather than falling back to unbounded recursive
-comparison.
+It MUST be metered and cap-bounded.
+
+If the tie-breaker budget is exceeded, canonicalization MUST NOT fall back to unbounded recursive comparison.
+
+The ordinary forbidden path is:
+
+``````text
+sort comparator
+-> recursively walk full metadata graph
+-> compare deep child structures repeatedly
+-> repeat for O(n log n) or worse comparator calls
+``````
+
+The required ordinary path is:
+
+``````text
+element canonical material
+-> bounded canonical sort key
+-> deterministic sort by sort key
+-> adjacent tie-group extraction
+-> projection escalation for tie groups when available
+-> metered full canonical byte tie-break only when needed
+``````
 
 The resolved metadata identity policy MUST define, or map to semantically equivalent fields:
 
@@ -2599,31 +2599,116 @@ The following are forbidden in ordinary unordered-collection sorting:
 - fallback to platform collection iteration order;
 - fallback to object identity or JVM `hashCode()`.
 
-### 8.5.2. Sort Tie-Breaker Exhaustion Law
+A released implementation MUST provide golden vectors or tests proving that shuffled unordered inputs produce the same
+encoded bytes without relying on backend iteration order, platform collection order, object identity, hash table order,
+or
+recursive graph traversal timing.
+
+### 8.5.2. Tie-Group Primitive Clustering and Projection Escalation Law
+
+Only equal bounded-sort-key ranges may enter tie-break or bounded cold exact sorting.
+
+A compliant implementation MUST extract tie groups as adjacent primitive ranges after bounded sort-key ordering.
+
+Tie-group extraction MUST NOT allocate object graphs such as:
+
+- `List<List<Node>>`;
+- per-group heap lists;
+- per-element wrapper objects;
+- object bucket maps;
+- platform hash sets;
+- or backend handle collections.
+
+Tie groups MUST be represented by primitive scratchpad descriptors such as:
+
+``````text
+startIndex
+endExclusiveIndex
+sortKeyOffset
+sortKeyLength
+``````
+
+or an equivalent primitive range representation.
+
+A compliant implementation SHOULD use in-place clustering, two-pointer range scanning, or index-array partitioning
+inside
+the already admitted primitive scratchpad.
+
+It MUST NOT create unbounded heap allocation churn while extracting tie groups.
+
+Projection escalation is permitted only inside tie groups.
+
+A lawful escalation sequence is:
+
+``````text
+SortKeyLevel0:
+  domain + schema + length + bounded digest projection
+
+SortKeyLevel1:
+  full HID / verifier prefix where already available
+
+SortKeyLevel2:
+  bounded canonical byte prelude
+
+Final:
+  exact canonical byte lexicographic comparison
+``````
+
+The number of projection levels MUST be bounded by resolved policy.
+
+Projection escalation MUST be selected by domain/schema/version/resolved policy before canonicalization begins.
+
+It MUST NOT be selected by runtime profiling, GC behavior, worker timing, input iteration order, or platform sort
+behavior.
+
+The resolved metadata identity policy MUST define, or map to semantically equivalent fields:
+
+``````text
+maxCanonicalTieGroupCountPerCollection
+maxCanonicalTieGroupDescriptorBytes
+maxCanonicalSortProjectionLevelCount
+``````
+
+If tie-group descriptor budget is insufficient, canonicalization MUST fail closed before publishing canonical bytes, HID
+material, interner candidates, frozen image tables, planning-visible providers, report manifests, or persistent
+artifacts.
+
+### 8.5.3. Bounded Cold Exact Sort Path Law
 
 Tie-breaker exhaustion MUST NOT publish partially ordered material.
 
-If bounded canonical sort keys do not produce a total order within the ordinary tie-break budget, the encoder has only
-two lawful outcomes:
+If bounded canonical sort keys and ratified projection escalation do not produce a total order within the ordinary
+tie-break budget, the encoder has only two lawful outcomes:
 
-1. enter a ratified bounded cold sort path before publication; or
+1. enter a ratified bounded cold exact sort path before publication; or
 2. fail the current identity scope closed.
 
-A bounded cold sort path, if ratified, MUST:
+A bounded cold exact sort path is not a semantic relaxation path.
+
+It is a deterministic pre-publication fallback.
+
+A bounded cold exact sort path, if ratified, MUST:
 
 - remain inside canonicalization;
+- operate only on tie groups, not the whole collection, unless the entire collection is one tie group;
 - complete exact deterministic ordering before publication;
 - obey its own comparison-count and byte-read budgets;
+- use non-recursive canonical byte-slice comparison;
+- never decode backend handles;
+- never traverse metadata graphs through object pointers;
 - never expose quarantined or partially ordered material to planning;
 - never expose quarantined or partially ordered material to planning-facing providers;
 - never expose quarantined or partially ordered material to `PlanCacheKey`;
 - never expose quarantined or partially ordered material to `CanonicalPlanNode`;
+- never expose quarantined or partially ordered material to interner publication;
+- never expose quarantined or partially ordered material to frozen image publication;
 - never expose quarantined or partially ordered material to report manifests;
+- never expose quarantined or partially ordered material to persistent artifacts;
 - never change canonical equality semantics;
 - never accept digest-only ordering when exact canonical bytes are required;
 - emit structured diagnostics if the cold bound is exceeded.
 
-If no ratified bounded cold sort path exists, ordinary tie-breaker exhaustion MUST fail the current identity scope
+If no ratified bounded cold exact sort path exists, ordinary tie-breaker exhaustion MUST fail the current identity scope
 closed.
 
 Planning, providers, `PlanCacheKey`, `CanonicalPlanNode`, interner publication, frozen image publication, persistent
@@ -2637,7 +2722,7 @@ maxCanonicalColdSortComparisons
 maxCanonicalColdSortBytes
 ``````
 
-Cold sort budgets are not semantic meaning.
+Cold exact sort budgets are not semantic meaning.
 
 They are deterministic safety fuses.
 
@@ -2645,7 +2730,55 @@ Changing them may change whether a pathological scope is accepted or rejected, b
 canonical bytes, HID derivation, collision verification, stable intern id assignment, or equality for material that
 remains within the accepted bounds.
 
-### 8.5.3. Canonical Sort Scratchpad Budget Law
+### 8.5.4. Exact Clone Group Law
+
+An exact clone group is a tie group whose members have byte-identical canonical element material.
+
+An exact clone group MUST NOT trigger all-to-all pairwise canonical byte comparison.
+
+A compliant implementation MUST classify exact clone groups by a bounded adjacent exact scan after deterministic
+ordering
+or within a bounded cold exact sort path.
+
+For exact byte-identical elements:
+
+- no additional ordering distinction exists;
+- object identity MUST NOT be used to break the tie;
+- backend order MUST NOT be used to break the tie;
+- worker completion order MUST NOT be used to break the tie;
+- JVM `hashCode()` MUST NOT be used to break the tie.
+
+Collection semantics decide how exact clone groups are handled:
+
+- ordered collections preserve multiplicity under the ratified order;
+- repeated unordered collections preserve multiplicity after canonical ordering;
+- maps reject duplicate canonical keys;
+- unordered semantic sets follow the owning domain's explicit duplicate canonical element policy.
+
+If the owning domain chooses deterministic de-duplication for unordered semantic sets, the de-duplication MUST happen
+before publication and MUST be golden-vector covered.
+
+If the owning domain chooses fail-closed duplicate rejection, duplicate canonical elements MUST fail closed before
+publication.
+
+A clone bomb is therefore bounded by:
+
+- collection element count caps;
+- canonical sort scratchpad caps;
+- exact clone scan byte caps;
+- duplicate-key / duplicate-element policy;
+- and bounded cold exact sort caps where ratified.
+
+The resolved metadata identity policy MUST define, or map to a semantically equivalent field:
+
+``````text
+maxCanonicalExactCloneScanBytes
+``````
+
+If exact clone scan budget is exceeded, canonicalization MUST fail closed unless a stronger ratified domain duplicate
+policy decides the outcome before the scan requires more work.
+
+### 8.5.5. Canonical Sort Scratchpad Budget Law
 
 Canonical sort key precomputation MUST consume an explicit transient scratchpad budget.
 
@@ -2702,6 +2835,7 @@ The lawful shape is:
 ``````text
 resolved scratch budget
 -> bounded transient sort-key arena
+-> primitive tie-group range descriptors
 -> deterministic sort
 -> ordered canonical payload
 -> scratch arena becomes unreachable
@@ -2712,11 +2846,12 @@ The forbidden shape is:
 ``````text
 live heap availability
 -> opportunistic sort-key allocation
+-> heap object tie-group buckets
 -> partial sort-key arena escapes
 -> frozen / planning / report / interner surface retains scratch memory
 ``````
 
-### 8.5.4. Map Duplicate Key Deterministic Phase Law
+### 8.5.6. Map Duplicate Key Deterministic Phase Law
 
 Duplicate canonical map keys MUST be detected in a dedicated deterministic phase.
 
@@ -5765,8 +5900,12 @@ metamodel.domain.identity.CanonicalSortKey
 metamodel.domain.identity.CanonicalSortKeyBudget
 metamodel.domain.identity.CanonicalSortScratchpad
 metamodel.domain.identity.CanonicalSortScratchpadBudget
-metamodel.domain.identity.BoundedColdSortPath
-metamodel.domain.identity.BoundedColdSortBudget
+metamodel.domain.identity.CanonicalTieGroupRange
+metamodel.domain.identity.CanonicalTieGroupScratchpad
+metamodel.domain.identity.CanonicalSortProjectionLevel
+metamodel.domain.identity.ExactCloneGroupDetector
+metamodel.domain.identity.BoundedColdExactSortPath
+metamodel.domain.identity.BoundedColdExactSortBudget
 metamodel.domain.identity.MapDuplicateKeyDetector
 metamodel.domain.identity.CanonicalByteSliceView
 metamodel.domain.identity.SealedCanonicalByteSlab
@@ -6354,10 +6493,10 @@ A compliant implementation MUST satisfy:
      or verified canonical byte handle.
 
 152. Tie-breaker exhaustion does not publish partially ordered material.
-153. If ordinary sort tie-break budgets are exhausted, the encoder either enters a ratified bounded cold sort path
+153. If ordinary sort tie-break budgets are exhausted, the encoder either enters a ratified bounded cold exact sort path
      before
      publication or fails the current identity scope closed.
-154. Bounded cold sort paths remain inside canonicalization and complete exact deterministic ordering before
+154. Bounded cold exact sort paths remain inside canonicalization and complete exact deterministic ordering before
      publication.
 155. Quarantined or partially sorted material is never visible to planning, providers, `PlanCacheKey`,
      `CanonicalPlanNode`, report manifests, frozen image publication, interner publication, or persistent artifacts.
@@ -6368,6 +6507,18 @@ A compliant implementation MUST satisfy:
 160. Duplicate key detection is not an incidental side effect of sorting comparators, platform hash tables, worker
      races,
      lane merge races, or diagnostic formatting.
+
+161. Tie groups are represented by primitive scratchpad ranges, not heap object bucket graphs.
+162. Tie-group extraction uses in-place clustering, two-pointer range scanning, or index-array partitioning inside
+     admitted
+     primitive scratchpads.
+163. Projection escalation is permitted only inside tie groups and is selected by domain/schema/version/resolved policy
+     before canonicalization begins.
+164. Bounded cold exact sort paths operate only on tie groups unless the entire collection is one tie group.
+165. Bounded cold exact sort paths use non-recursive canonical byte-slice comparison.
+166. Exact clone groups do not trigger all-to-all pairwise canonical byte comparison.
+167. Exact clone groups are handled by the owning collection duplicate policy before publication.
+168. Unordered semantic sets define an explicit duplicate canonical element policy.
 
 ## 23. Required Golden Vectors
 
@@ -6688,9 +6839,14 @@ Architecture tests MUST verify:
 - unordered collection encoders precompute bounded canonical sort keys before sorting;
 - canonical sort key precomputation consumes bounded scratchpad budgets before allocating or filling sort-key arenas;
 - sort tie-break exhaustion cannot publish partially ordered material;
-- bounded cold sort paths, where ratified, complete exact deterministic ordering before publication;
+- bounded cold exact sort paths, where ratified, complete exact deterministic ordering before publication;
+- bounded cold exact sort paths operate only on tie groups unless the entire collection is one tie group;
+- tie groups are primitive range descriptors and not heap object bucket graphs;
+- projection escalation is selected before canonicalization and not by runtime profiling;
 - sorting comparators do not recursively decode nested messages or traverse staging slabs;
 - sorting comparators do not perform duplicate map key detection as an incidental side effect;
+- exact clone groups do not cause all-to-all pairwise canonical byte comparison;
+- unordered semantic sets define duplicate canonical element policy;
 - bit-packed fields have generated or hand-verified mask/shift tests;
 - reserved bits fail closed on decode when non-zero;
 - canonical-base delta cannot select a base from run-local frequency or previous item state;
@@ -7287,6 +7443,9 @@ The common header layout selected by `canonicalEncodingVersion32 = 1` may not.
 Message nesting, canonical sorting, and zero-copy slice lifetimes are also protocol safety surfaces.
 
 Canonical sorting must either finish exact deterministic ordering before publication or fail closed.
+
+Tie groups are handled inside primitive scratch budgets, and bounded cold exact sorting is a pre-publication exact-order
+fallback, not a planning-visible quarantine path.
 
 Canonical identity bytes may be compact.
 
