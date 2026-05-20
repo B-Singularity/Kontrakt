@@ -1471,6 +1471,11 @@ class ResolvedMetadataIdentityPolicy private constructor(
      */
     val maxCanonicalMessageNestingDepth: Int,
     val maxCanonicalDecoderFrameCount: Int,
+    val maxCanonicalObjectNestingDepth: Int,
+    val maxCanonicalObjectFieldCount: Int,
+    val maxCanonicalObjectReferenceCount: Int,
+    val maxCanonicalObjectEncodedBytes: Int,
+    val maxCanonicalEncoderFrameCount: Int,
     val maxCanonicalSortKeyBytes: Int,
     val maxCanonicalSortTieBreakComparisons: Int,
     val maxCanonicalSortTieBreakBytes: Long,
@@ -1537,6 +1542,11 @@ defaultInternHidWidthBits                      = 128
 routeHidWidthBits                              = 64
 maxCanonicalMessageNestingDepth                = 64
 maxCanonicalDecoderFrameCount                  = 1024
+maxCanonicalObjectNestingDepth                 = 64
+maxCanonicalObjectFieldCount                   = 1024
+maxCanonicalObjectReferenceCount               = 4096
+maxCanonicalObjectEncodedBytes                 = 64 KiB
+maxCanonicalEncoderFrameCount                  = 1024
 maxCanonicalSortKeyBytes                       = 256
 maxCanonicalSortTieBreakComparisons            = 4096
 maxCanonicalSortTieBreakBytes                  = 1 MiB
@@ -1880,6 +1890,75 @@ maxTypeReferenceCount * minimumEncodedBytesPerTypeReference
 
 This prevents both impossible count caps and excessive over-allocation caused by treating every admitted unit as if it
 were near the per-unit fuse.
+
+#### Deterministic Fixed-Point Capacity Arithmetic Law
+
+Capacity solver arithmetic is policy material.
+
+It MUST be deterministic across supported platforms.
+
+A released solver MUST NOT use floating-point arithmetic for identity capacity budgets, target-average sizing, safety
+multipliers, scratch budgets, or admitted/rejected boundary decisions.
+
+Forbidden in capacity calculation:
+
+- `Float`;
+- `Double`;
+- platform floating-point rounding mode;
+- FMA-dependent results;
+- extended-precision register behavior;
+- locale-dependent decimal parsing;
+- or host math-library behavior.
+
+Allowed forms:
+
+- checked integer arithmetic;
+- fixed-point rational arithmetic;
+- power-of-two shift arithmetic;
+- saturating checked arithmetic only where the saturation law is explicit;
+- deterministic ceiling division.
+
+A target-average relationship written mathematically as:
+
+``````text
+maxTotalTypeReferenceCanonicalBytes
+<= maxTypeReferenceCount
+ * targetAverageCanonicalBytesPerTypeReference
+ * typeReferenceCanonicalBytesSafetyMultiplier
+``````
+
+MUST be implemented with explicit integer fields such as:
+
+``````text
+targetAverageCanonicalBytesPerTypeReference
+typeReferenceCanonicalBytesSafetyMultiplierNumerator
+typeReferenceCanonicalBytesSafetyMultiplierDenominator
+``````
+
+The required deterministic calculation shape is:
+
+``````text
+ceilDivChecked(
+    checkedMultiply(
+        checkedMultiply(maxTypeReferenceCount, targetAverageCanonicalBytesPerTypeReference),
+        typeReferenceCanonicalBytesSafetyMultiplierNumerator
+    ),
+    typeReferenceCanonicalBytesSafetyMultiplierDenominator
+)
+``````
+
+Rules:
+
+- numerator and denominator are unsigned integer policy values;
+- denominator MUST be non-zero;
+- every multiplication MUST be checked before division;
+- overflow MUST fail closed during policy resolution;
+- rounding MUST use the ratified ceiling/floor law for that relationship;
+- the same resolved policy snapshot MUST produce the same concrete byte budget on every supported platform.
+
+The same fixed-point law applies to every equivalent target-average relationship for raw facts, intern candidates,
+active metadata domains, canonical sort scratchpads, cold exact sort budgets, diagnostic evidence budgets, and future
+lowered contract fact budgets.
 
 #### Raw-fact-record identity capacity relationship
 
@@ -2447,9 +2526,28 @@ Rules:
   persistent artifacts, public DTOs, or query-key surfaces;
 - it MUST be resolved to sealed stable identity material before publication outside the SCC seal boundary.
 
-A decoder MUST know whether it is currently decoding an SCC seal payload.
+`WIRE_TYPE_SCC_LOCAL_REF` is lawful only when the enclosing canonical envelope sets:
 
-If `WIRE_TYPE_SCC_LOCAL_REF` appears outside an SCC seal boundary, decoding MUST fail closed.
+``````text
+HEADER_FLAG_SCC_SEAL_PAYLOAD = 0x0001
+``````
+
+The SCC seal boundary is self-describing canonical byte material.
+
+It MUST NOT be supplied by:
+
+- `ThreadLocal`;
+- decoder-global mutable state;
+- caller-local ad hoc parameters;
+- backend object context;
+- recursion stack identity;
+- or process-global parser mode.
+
+If `WIRE_TYPE_SCC_LOCAL_REF` appears when `HEADER_FLAG_SCC_SEAL_PAYLOAD` is not set, decoding MUST fail closed.
+
+If `HEADER_FLAG_SCC_SEAL_PAYLOAD` is set for an identity domain or schema that does not ratify SCC sealing, decoding
+MUST
+fail closed.
 
 ### 8.4. String Encoding
 
@@ -2909,15 +3007,366 @@ phase shape MUST be selected by domain/schema/version/resolved policy before can
 
 It MUST NOT be selected by platform sort behavior, worker timing, input iteration order, or live runtime profiling.
 
-### 8.6. Object Encoding
+### 8.5.7. Deterministic Sort Projection and Randomized Seed Rejection Law
+
+Canonical sort keys are semantic-ordering material.
+
+They MUST NOT include:
+
+- per-process random seeds;
+- per-scope random seeds;
+- SipHash keys generated from runtime entropy;
+- system time;
+- thread id;
+- worker id;
+- GC state;
+- heap address;
+- ASLR-dependent values;
+- non-ratified entropy;
+- or any value that is not part of canonical identity material.
+
+Randomized sort-key perturbation is forbidden for canonical ordering.
+
+Reason:
+
+``````text
+same admitted semantic material
++ different runtime seed
+-> different sort order
+-> different canonical bytes
+-> different HID / interner behavior
+``````
+
+A released implementation MAY use keyed, randomized, or salted hashing only for non-authoritative route/probe structures
+when all of the following hold:
+
+- the randomized value is not encoded into canonical bytes;
+- it does not affect canonical ordering;
+- it does not affect stable intern id assignment;
+- exact canonical verification remains the equality authority;
+- and changing the seed cannot change accepted semantic meaning.
+
+HashDoS defense for canonical sorting MUST instead use deterministic mechanisms:
+
+- stronger bounded sort projections;
+- tie-group-local projection escalation;
+- exact canonical byte tie-break inside bounded budgets;
+- bounded cold exact sort path before publication where ratified;
+- exact clone group handling;
+- duplicate-key / duplicate-element policy;
+- and scope fail-closed when resolved deterministic budgets are exceeded.
+
+If a domain wants a keyed deterministic projection, the key MUST be protocol-ratified, versioned, included in the
+relevant
+version-axis material, and stable for the same admitted semantic material.
+
+It MUST NOT be live randomness.
+
+### 8.5.8. Nested Collection Bottom-Up Canonicalization Law
+
+Nested unordered collections create a dependency order.
+
+For example:
+
+``````text
+Set<Set<TypeReference>>
+``````
+
+The outer set cannot be canonically sorted until each inner set has produced stable canonical sort material.
+
+A compliant encoder MUST NOT sort an outer unordered collection by recursively comparing unresolved child collections.
+
+Instead, nested collection canonicalization MUST use one of the following lawful shapes.
+
+Shape A:
+
+``````text
+inner collection canonicalization
+-> sealed child canonical bytes / verified child identity handle
+-> outer collection bounded sort key
+-> outer deterministic sort
+``````
+
+Shape B:
+
+``````text
+bottom-up dependency plan
+-> child collection sort-key material
+-> child collection seal
+-> parent collection sort-key material
+-> parent collection seal
+``````
+
+Shape C:
+
+``````text
+demand-driven child seal
+-> memoized sealed child material
+-> parent sort consumes sealed child handle
+``````
+
+Shape C is lawful only if the demand-driven seal is deterministic, memoized inside the admitted scope, and consumes
+resolved scratch / frame / byte budgets.
+
+Forbidden shape:
+
+``````text
+outer sort comparator
+-> recursively enter inner set comparator
+-> recursively traverse TypeReference graph
+-> repeat during pairwise comparison
+``````
+
+Nested collection canonicalization MUST be bounded by:
+
+- object / message nesting depth caps;
+- canonical sort scratchpad caps;
+- canonical encoder frame caps;
+- child seal byte caps;
+- tie-group caps;
+- and SCC seal caps where cycles exist.
+
+If child canonical material cannot be sealed within the resolved policy, the parent collection MUST fail closed before
+publication.
+
+This law does not require eager whole-world encoding.
+
+It requires that material used as an outer sort key is already sealed, verified, or memoized under deterministic budget
+control.
+
+### 8.6. Object / Record Encoding
+
+Object encoding in ADR-0041 means encoding a domain-ratified canonical record or message payload.
+
+It does not mean serializing a JVM object graph.
 
 Object encoding rules:
 
-- object type is encoded by domain tag / schema id, not by JVM class name;
+- object type is encoded by identity domain id and domain schema version, not by JVM class name;
 - implementation class names are forbidden unless they are semantic material in that domain;
 - field absence is meaningful only when the domain declares it meaningful;
 - default values must be encoded explicitly or prohibited;
-- unknown fields in persisted payloads require a future compatibility policy and are not accepted silently by this ADR.
+- unknown fields in persisted payloads follow the unknown-tag law and are not accepted silently by this ADR;
+- object fields are encoded only from the domain-ratified schema field set;
+- object encoding MUST NOT discover fields through reflection, Kotlin data-class component order, Java serialization,
+  Jackson, kotlinx serialization, JVM declaration order, or backend descriptor traversal.
+
+### 8.6.1. Object Is Not JVM Object Law
+
+A canonical object is a protocol record.
+
+It is not:
+
+- a JVM heap object;
+- a Kotlin data class instance;
+- a Java bean;
+- a reflection object;
+- a KSP symbol object;
+- a compiler AST / PSI node;
+- a Spring bean;
+- a framework DTO;
+- or a general serialization target.
+
+A compliant encoder MUST receive already-ratified canonical material or domain-owned field material.
+
+It MUST NOT recursively inspect arbitrary JVM object fields to discover identity material.
+
+It MUST NOT use:
+
+- JVM object identity;
+- implementation class name;
+- reflection field order;
+- Kotlin declaration order;
+- backend descriptor order;
+- framework serializer order;
+- map iteration order;
+- or object `hashCode()`
+
+as object identity material unless the owning domain explicitly ratifies that material as semantic.
+
+### 8.6.2. Schema-Owned Field Set Law
+
+Every object field that enters canonical bytes MUST be owned by the active identity domain schema.
+
+A field MUST have:
+
+- stable numeric field tag;
+- wire type;
+- presence law;
+- default law;
+- repetition law;
+- ordering law;
+- compatibility behavior;
+- and byte-budget relationship.
+
+Fields not declared by the active domain schema are unknown fields.
+
+Unknown fields are rejected by default unless the active compatibility matrix explicitly ratifies them as skippable and
+non-critical.
+
+A decoder MUST NOT infer unknown field meaning from:
+
+- field name text;
+- JVM property name;
+- reflection metadata;
+- framework annotations;
+- serializer descriptors;
+- source order;
+- or backend handle identity.
+
+### 8.6.3. Non-Recursive Object Encoding Law
+
+Object encoding MUST be bounded by deterministic structural limits.
+
+A compliant encoder MUST NOT rely on JVM call-stack depth as the object nesting bound.
+
+The encoder MUST use one of:
+
+- explicit bounded encode frames;
+- explicit bounded decode frames;
+- SCC seal processing;
+- stable intern id references;
+- or ratified non-recursive traversal.
+
+The resolved metadata identity policy MUST define, or map to semantically equivalent fields:
+
+``````text
+maxCanonicalObjectNestingDepth
+maxCanonicalObjectFieldCount
+maxCanonicalObjectReferenceCount
+maxCanonicalObjectEncodedBytes
+maxCanonicalEncoderFrameCount
+``````
+
+`maxCanonicalDecoderFrameCount` may be shared with the message decoder frame budget when the implementation uses one
+unified canonical decode-frame stack.
+
+A payload may remain within byte caps and still be rejected for excessive object/message nesting, field count, reference
+count, encoder-frame count, or decoder-frame count.
+
+Object nesting depth and `WIRE_TYPE_MESSAGE` nesting depth may share the same resolved policy fields if the
+implementation uses one unified canonical frame budget.
+
+### 8.6.4. Object Reference and Cycle Boundary Law
+
+Canonical object encoding MUST NOT recursively inline arbitrary reachable object graphs.
+
+If an object field references another identity-bearing object, the field MUST encode one of the following ratified
+forms:
+
+- sealed stable intern id;
+- verified canonical identity handle;
+- domain-ratified local selector material;
+- SCC-local reference valid only inside an SCC seal payload;
+- or an explicitly embedded nested message whose depth and byte budget are bounded.
+
+A parent object MUST NOT reference:
+
+- provisional handles outside SCC seal;
+- backend object handles;
+- reflection objects;
+- KSP symbols;
+- JVM object identity;
+- frozen ordinals as persistent identity;
+- planning node ids;
+- runtime object addresses;
+- Spring `ApplicationContext`;
+- framework bean handles;
+- or serializer descriptor objects.
+
+Cycles MUST be handled by SCC sealing or by stable reference material.
+
+They MUST NOT be handled by recursive object graph traversal.
+
+### 8.6.5. Field Presence, Default, and Duplicate Field Law
+
+Field presence is protocol material only when the owning domain declares it meaningful.
+
+If a field has a default value, the domain MUST choose exactly one policy:
+
+- encode the effective default explicitly;
+- prohibit omission;
+- treat omission as a distinct canonical state;
+- or reject the field configuration.
+
+A decoder MUST fail closed on duplicate non-repeated field tags.
+
+Repeated fields MUST declare whether they are:
+
+- ordered and order-bearing;
+- unordered and canonically sorted;
+- duplicate-preserving;
+- duplicate-rejecting;
+- or duplicate-collapsing under a domain-ratified law.
+
+A decoder MUST fail closed if a repeated field appears in a form that violates the active repetition law.
+
+Default handling MUST NOT depend on:
+
+- JVM default constructor behavior;
+- Kotlin default parameter masks;
+- reflection default values;
+- annotation proxy default material;
+- framework binder defaults;
+- or serializer library defaults
+
+unless those values have already been lowered into Kontrakt-owned canonical material by a ratified frontend/lowering
+law.
+
+### 8.6.6. Object Decoding Publication Law
+
+Decoded object material is not semantic identity merely because it was parsed successfully.
+
+Before publication, a decoded object MUST pass:
+
+- envelope validation;
+- field table validation;
+- schema/version compatibility validation;
+- unknown-tag policy validation;
+- field presence/default validation;
+- duplicate field validation;
+- repeated field ordering / duplicate policy validation;
+- object depth/frame budget validation;
+- reference boundary validation;
+- cycle/SCC validation where applicable;
+- and exact canonical identity verification where compact identity is used.
+
+A decoder MUST NOT publish partially decoded object material to:
+
+- frozen image tables;
+- protocol-owned interner tables;
+- planning-facing providers;
+- `PlanCacheKey`;
+- `CanonicalPlanNode`;
+- report manifests;
+- public DTOs;
+- or persistent artifacts.
+
+Publication requires a single validated ownership transition into:
+
+- sealed canonical bytes;
+- a verified canonical byte handle;
+- a sealed interned identity entry;
+- a frozen-image-owned slab;
+- or another artifact-owned immutable surface approved by the owning protocol.
+
+### 8.6.7. Object Encoding Failure Law
+
+Object encoding failures are scope-local fail-closed events.
+
+They MUST NOT become:
+
+- best-effort partial records;
+- warning-only canonical material;
+- planning-visible placeholder objects;
+- backend object fallbacks;
+- framework serializer fallbacks;
+- or diagnostic-only substitutes for canonical identity.
+
+A failed object encoding MUST leave no published canonical bytes, HID material, interner candidate, stable intern id,
+frozen table row, planning provider entry, report manifest entry, or persistent artifact entry for the failed object.
+
+Diagnostic evidence for object encoding failure MUST be bounded by `maxDiagnosticEvidenceBytes`.
 
 ### 8.7. No General Serialization Dependency
 
@@ -3034,15 +3483,18 @@ Mandatory header constants and validation rules for `canonicalEncodingVersion32 
 - a future common envelope layout change MUST bump `canonicalEncodingVersion32`;
 - a decoder MUST use `magic32`, `headerSize16`, and `canonicalEncodingVersion32` together to select the canonical
   envelope decoder;
-- `headerFlags16` MUST be `0x0000` for `canonicalEncodingVersion32 = 1` unless the active compatibility matrix
-  ratifies a specific flag;
+- `headerFlags16` MUST use only flags ratified by ADR-0041 or by the active compatibility matrix;
+- for `canonicalEncodingVersion32 = 1`, ADR-0041 ratifies `HEADER_FLAG_SCC_SEAL_PAYLOAD = 0x0001`;
+- `HEADER_FLAG_SCC_SEAL_PAYLOAD` may be set only for ADR-0041 metadata identity SCC seal payloads;
+- every other `headerFlags16` bit MUST be zero unless the active compatibility matrix ratifies a specific flag;
 - `reserved16` MUST be zero;
 - `reserved32` MUST be zero;
 - `payloadLength32` is mandatory;
 - all integer fields are little-endian unsigned bit patterns unless the field explicitly states otherwise;
 - a decoder MUST fail closed if `magic32`, `headerSize16`, `canonicalEncodingVersion32`, `reserved16`, or `reserved32`
   is invalid;
-- unknown non-zero `headerFlags16` bits MUST fail closed unless ratified by the active compatibility matrix;
+- unknown non-zero `headerFlags16` bits MUST fail closed unless ratified by ADR-0041 or by the active compatibility
+  matrix;
 - `fieldCount16` MUST be less than or equal to the resolved field-count cap for the identity domain.
 
 Offset constraints:
@@ -3101,7 +3553,8 @@ The following header fields are reserved for `canonicalEncodingVersion32 = 1`:
 
 - `reserved16`;
 - `reserved32`;
-- every `headerFlags16` bit not ratified by the active compatibility matrix.
+- every `headerFlags16` bit except `HEADER_FLAG_SCC_SEAL_PAYLOAD = 0x0001` unless a later compatibility matrix ratifies
+  that bit.
 
 Reserved bits and bytes are protocol bytes.
 
@@ -3125,60 +3578,306 @@ It is not diagnostic storage.
 
 `VersionBundleFingerprint128` MUST be derived deterministically from the active `CanonicalIdentityVersionBundle`.
 
-Required derivation shape:
+The derivation shape is:
 
 ``````text
 CanonicalIdentityVersionBundle
--> canonical version-bundle byte payload
+-> CanonicalVersionBundlePayload
 -> domain-separated BLAKE3 keyed derivation / XOF
 -> first 128 bits
 -> high64 / low64 encoded as little-endian unsigned bit patterns
 ``````
 
-The canonical version-bundle byte payload MUST include:
+`VersionBundleFingerprint128` is a compact compatibility precheck and envelope identity component.
 
-- identity domain id;
-- identity domain version;
-- canonical encoding version;
-- domain schema version;
-- normalization version where applicable;
-- hash algorithm suite id/version;
-- HID derivation version;
-- interning protocol version where applicable;
-- compatibility class id;
-- and every domain-specific version axis in ascending protocol field-tag order.
+It compresses the active version-bundle tuple into two fixed-width words for branch-bounded hot validation.
 
-The version-bundle byte payload MUST NOT include:
+It does not authorize ignoring domain/schema compatibility laws.
+
+#### 8.9.3.1. Canonical Version-Bundle Payload Law
+
+`VersionBundleFingerprint128` is derived from canonical version-bundle bytes.
+
+Those bytes MUST have one deterministic encoding.
+
+The canonical version-bundle payload for `canonicalEncodingVersion32 = 1` is:
+
+``````text
+CanonicalVersionBundlePayload
+
+versionBundleEncodingVersion32 : u32 little-endian
+axisCount16                    : u16 little-endian
+reserved16                     : u16, MUST be zero
+AxisEntry[axisCount16]
+``````
+
+Each `AxisEntry` is:
+
+``````text
+axisId32           : u32 little-endian
+axisValueWidth16   : u16 little-endian
+reserved16         : u16, MUST be zero
+axisValueBytes     : byte[axisValueWidth16]
+``````
+
+This variable-width tagged-axis structure is selected deliberately.
+
+It allows global and domain-specific version axes to use different ratified widths without introducing delimiter
+ambiguity.
+
+It still keeps every axis explicitly tagged, length-bounded, ordered, and byte-exact.
+
+Rules:
+
+- `versionBundleEncodingVersion32` MUST be `1`;
+- both `reserved16` fields MUST be zero;
+- every `axisId32` MUST be a ratified protocol axis id;
+- `axisValueWidth16` MUST be non-zero;
+- `axisValueWidth16` MUST match the ratified width for that `axisId32`;
+- `axisValueBytes` MUST use the ratified canonical encoding for that `axisId32`;
+- integer axis payloads MUST be fixed-width little-endian unsigned bit patterns unless the axis explicitly states
+  otherwise;
+- varint axis encoding is forbidden unless a future ADR explicitly ratifies it for a specific axis id;
+- delimiter-free concatenation is forbidden;
+- text axis values are forbidden unless a future ADR ratifies a canonical text axis encoding;
+- axis entries MUST be sorted by `axisId32` ascending;
+- duplicate `axisId32` values MUST fail closed;
+- unknown required axis ids MUST fail closed;
+- unknown optional axis ids may be skipped only if the active compatibility matrix explicitly classifies the axis as
+  skippable and non-critical;
+- skipped axes MUST still pass `axisValueWidth16` and bounds validation;
+- skipped axes MUST NOT change canonical identity meaning.
+
+The payload MUST NOT be constructed by:
+
+``````text
+axisValue1 || axisValue2 || axisValue3
+``````
+
+without tags and widths.
+
+The lawful shape is:
+
+``````text
+axisId32
+axisValueWidth16
+reserved16
+axisValueBytes
+``````
+
+for every axis.
+
+All offset, count, and width arithmetic used while reading the version-bundle payload MUST use checked arithmetic before
+narrowing or indexing.
+
+#### 8.9.3.2. Required Version-Bundle Axes
+
+The canonical version-bundle payload MUST include every global axis that can affect canonical identity behavior.
+
+`identityDomainId32` is mandatory.
+
+It MUST be present even though the same value also appears in `CanonicalEnvelopeHeader`.
+
+Reason:
+
+- the envelope header identifies the payload domain for decoding;
+- the version-bundle payload identifies the domain inside the fingerprint input;
+- omitting `identityDomainId32` from the fingerprint input would allow two domains with identical version tuples to
+  produce the same `VersionBundleFingerprint128`.
+
+For ADR-0041 v1, `identityDomainId32` is assigned the lowest global version-axis id and therefore appears first after
+ascending `axisId32` ordering.
+
+All global version axes MUST use physical-width suffixes in their protocol names.
+
+A released global axis name MUST NOT omit its bit width.
+
+Examples of forbidden ambiguous names:
+
+- `compatibilityMatrixVersion`;
+- `capabilityProfileVersion`;
+- `entropyVersion`;
+- `resourcePolicySchemaVersion`;
+- `canonicalOrderingAlgorithmVersion`;
+- `typeIdentityAlgorithmVersion`.
+
+Examples of valid physical names:
+
+- `compatibilityMatrixVersion32`;
+- `capabilityProfileVersion32`;
+- `entropyVersion32`;
+- `resourcePolicySchemaVersion32`;
+- `canonicalOrderingAlgorithmVersion32`;
+- `typeIdentityAlgorithmVersion32`.
+
+Required global axes include:
+
+| Axis                                       |   Width | Required when                                                                  |
+|--------------------------------------------|--------:|--------------------------------------------------------------------------------|
+| `identityDomainId32`                       | 4 bytes | always                                                                         |
+| `canonicalEncodingVersion32`               | 4 bytes | always                                                                         |
+| `identityDomainVersion32`                  | 4 bytes | always                                                                         |
+| `domainSchemaVersion32`                    | 4 bytes | always                                                                         |
+| `hashSuite16`                              | 2 bytes | always                                                                         |
+| `hidDerivationVersion16`                   | 2 bytes | always                                                                         |
+| `compatibilityMatrixVersion32`             | 4 bytes | always                                                                         |
+| `capabilityProfileVersion32`               | 4 bytes | always                                                                         |
+| `entropyVersion32`                         | 4 bytes | always                                                                         |
+| `resourcePolicySchemaVersion32`            | 4 bytes | always                                                                         |
+| `metadataIdentityPolicySchemaVersion32`    | 4 bytes | always                                                                         |
+| `canonicalEncodingPolicyVersion32`         | 4 bytes | always                                                                         |
+| `canonicalOrderingAlgorithmVersion32`      | 4 bytes | always when unordered collection encoding can affect the domain                |
+| `typeIdentityAlgorithmVersion32`           | 4 bytes | always when TypeReference identity or type normalization can affect the domain |
+| `normalizationVersion32`                   | 4 bytes | when text/type normalization can affect the domain                             |
+| `interningProtocolVersion32`               | 4 bytes | when protocol-owned interning can affect the domain                            |
+| `sccSealAlgorithmVersion32`                | 4 bytes | when SCC sealing can affect the domain                                         |
+| `collisionVerificationPolicyVersion32`     | 4 bytes | when collision verification policy can affect publication                      |
+| `stableInternIdAssignmentVersion32`        | 4 bytes | when stable intern id assignment can affect published identity material        |
+| `runtimeBindingIdentityAlgorithmVersion32` | 4 bytes | when runtime binding snapshots can affect the domain                           |
+
+The payload MUST also include every domain-specific version axis that can affect:
+
+- canonical bytes;
+- field interpretation;
+- compatibility classification;
+- HID derivation;
+- collision verification;
+- stable intern id assignment;
+- SCC seal behavior;
+- sort-key / ordering behavior;
+- decoder behavior;
+- type identity;
+- runtime binding identity;
+- or semantic equality.
+
+The payload MUST NOT include axes that affect only:
 
 - display strings;
-- backend names;
+- diagnostic wording;
 - source locations;
-- runtime object identity;
+- backend names;
+- local logging format;
+- report styling;
+- progress reporting;
+- or non-semantic debug labels.
+
+If a diagnostic or reporting version changes semantic diagnostic evidence bytes that are part of identity material, it
+is
+no longer diagnostic-only and MUST be represented by a ratified version axis with an explicit physical-width suffix.
+
+#### 8.9.3.3. Axis Encoding and Registry Law
+
+Every released version axis MUST define:
+
+- `axisId32`;
+- axis name with explicit physical-width suffix where the axis carries an integer value;
+- owner;
+- semantic meaning;
+- fixed or variable width rule;
+- exact `axisValueWidth16`;
+- canonical byte encoding rule;
+- required / optional classification;
+- compatibility behavior when missing;
+- compatibility behavior when unknown;
+- and golden vectors.
+
+Physical-width suffixes are part of the protocol name.
+
+An integer version axis name without an explicit width suffix is not releaseable.
+
+For an integer axis, `axisValueWidth16` MUST match the suffix and registry definition.
+
+Examples:
+
+- a `...Version16` axis MUST use `axisValueWidth16 = 2`;
+- a `...Version32` axis MUST use `axisValueWidth16 = 4`;
+- a `...Version64` axis MUST use `axisValueWidth16 = 8`.
+
+A mismatch between axis name suffix, registry width, `axisValueWidth16`, or actual `axisValueBytes` length MUST fail
+closed.
+
+The axis registry is protocol material.
+
+It MUST NOT be assembled from:
+
+- enum ordinal;
+- declaration order;
 - map iteration order;
-- set iteration order;
-- process-global registry order;
-- or diagnostic labels.
+- source order;
+- service-loader order;
+- annotation order;
+- classpath order;
+- or process-global registration order.
 
-The BLAKE3 derivation context MUST be domain-separated from ordinary HID derivation.
+The global axis registry for ADR-0041 v1 MUST include the required global axes listed in Section 8.9.3.2.
 
-Illustrative derivation context:
+The registry MUST assign stable `axisId32` values to those axes.
+
+`identityDomainId32` MUST be assigned the lowest global axis id.
+
+The registry MAY reserve gaps for future axes, but reserved axis ids MUST NOT be emitted.
+
+`axisId32` values are stable protocol ids.
+
+They MUST NOT be reused for different meanings.
+
+They MUST NOT be reassigned after release.
+
+#### 8.9.3.4. BLAKE3 Derivation and Output Split Law
+
+`VersionBundleFingerprint128` MUST be the first 128 bits of the domain-separated BLAKE3 XOF output over the canonical
+version-bundle payload.
+
+The derivation context MUST be domain-separated from ordinary HID derivation and from all other ADR-0041 fingerprints.
+
+The derivation context for `versionBundleEncodingVersion32 = 1` is:
 
 ``````text
 KONTRAKT_BLAKE3_VERSION_BUNDLE_FINGERPRINT_V1
 ``````
+
+The first 16 output bytes are split as:
+
+``````text
+versionBundleFingerprintHigh64 = bytes[0..8]  interpreted as u64 little-endian
+versionBundleFingerprintLow64  = bytes[8..16] interpreted as u64 little-endian
+``````
+
+The 128-bit fingerprint is sufficient for compact compatibility precheck under the expected version-bundle cardinality.
+
+It is not a substitute for exact compatibility-matrix law where exact version-bundle material is required.
+
+Two implementations that receive the same active version bundle and the same axis registry MUST compute the same
+`VersionBundleFingerprint128`.
 
 A released implementation MUST publish golden vectors for:
 
 - identical bundle -> identical fingerprint;
 - canonical encoding version bump;
 - domain schema version bump;
+- identity domain id change;
 - HID derivation version bump;
-- compatibility class change;
+- compatibility matrix version bump;
+- capability profile version bump;
+- entropy version bump;
+- resource policy schema version bump;
+- metadata identity policy schema version bump;
+- canonical ordering algorithm version bump;
+- type identity algorithm version bump;
+- SCC seal algorithm version bump;
+- collision verification policy version bump;
+- stable intern id assignment version bump;
+- runtime binding identity algorithm version bump;
+- canonical encoding policy version bump;
 - domain-specific version-axis change;
-- field-order shuffle preserving identical canonical version-bundle bytes.
-
-Two implementations that receive the same active version bundle MUST compute the same
-`VersionBundleFingerprint128`.
+- axis entry order shuffle preserving the same sorted canonical payload;
+- duplicate axis id fail-closed;
+- unknown required axis id fail-closed;
+- unknown optional skippable axis id where ratified;
+- axis width mismatch fail-closed;
+- axis name physical-width suffix mismatch fail-closed;
+- non-zero reserved field fail-closed;
+- delimiter-free concatenation rejection.
 
 ### 8.10. Variable Payload Offset Table Law
 
@@ -3245,6 +3944,51 @@ checked Long arithmetic
 Integer overflow, negative offset, negative length, out-of-payload range, header overlap, or malformed field-table
 length
 MUST fail closed.
+
+### 8.10.1.1. Decoder Cursor Progress and Zero-Displacement Law
+
+Checked offset arithmetic is not sufficient by itself.
+
+Every decoder loop that advances through a table, repeated field, TLV-like sequence, nested message, or variable payload
+MUST prove strict cursor progress.
+
+A decoder loop MUST maintain a monotonic cursor or entry index such that every successful iteration consumes one of:
+
+- a fixed-width field-table entry;
+- a declared repeated-element entry;
+- a non-zero encoded prefix;
+- a nested envelope with validated total encoded width;
+- or a domain-ratified zero-payload value whose containing record still advances by a non-zero encoded record width.
+
+Zero-length semantic values are allowed only when the enclosing encoding still advances.
+
+Allowed examples:
+
+- empty string with a length prefix and a consumed field-table entry;
+- empty byte array with a length prefix and a consumed field-table entry;
+- empty collection with a consumed collection-count record;
+- empty payload in an envelope whose header/table width has already advanced.
+
+Forbidden examples:
+
+``````text
+cursor = cursor + elementLength
+elementLength = 0
+// cursor does not advance
+``````
+
+``````text
+while (cursor < end) {
+    read length = 0
+    cursor += length
+}
+``````
+
+A decoder MUST fail closed if an iteration would leave the cursor, entry index, or remaining-byte accounting unchanged.
+
+This law applies even if all offset and length arithmetic is non-overflowing.
+
+Zero displacement is a parser progress failure, not a valid compact encoding.
 
 ### 8.10.2. Zero-Copy Canonical Byte Slice Law
 
@@ -3323,6 +4067,78 @@ that store staging-slab slices.
 
 If a slice crosses a publication boundary, it MUST carry proof that its base slab is owned by the published artifact and
 not by a transient staging phase.
+
+### 8.10.4. Sealed Slab Fragmentation and Epoch Reclamation Law
+
+Published canonical byte slabs are immutable.
+
+A sealed slab MUST NOT be compacted in place.
+
+A sealed slab MUST NOT be modified by a background defragmentation thread.
+
+A sealed slab MUST NOT have live offsets rewritten after publication.
+
+Reason:
+
+``````text
+background defrag
+-> moving bytes
+-> rewriting offsets / handles
+-> reader-visible race or identity drift
+``````
+
+Fragmentation control is handled by ownership and epoch boundaries, not by in-place moving compaction.
+
+Lawful shapes:
+
+``````text
+run-local staging slab
+-> seal / compaction
+-> image-owned sealed slab
+-> image epoch retired as a whole
+``````
+
+``````text
+old sealed image
+-> build new sealed image with compacted layout
+-> exact verification
+-> atomic publication of new image epoch
+-> old image epoch reclaimed only after no reader can observe it
+``````
+
+Forbidden shapes:
+
+``````text
+published sealed slab
+-> background defrag moves bytes
+-> offsets patched in place
+``````
+
+``````text
+stable intern id
+-> raw mutable pointer into moving slab
+``````
+
+A published reference to canonical bytes MUST be one of:
+
+- image id + stable offset + length;
+- sealed slab id + stable offset + length;
+- verified canonical byte handle;
+- stable intern id that resolves through immutable published tables.
+
+It MUST NOT be a raw mutable pointer that can be rewritten by defragmentation.
+
+If long-running processes need memory reclamation, Kontrakt MUST use:
+
+- scope-local slab teardown;
+- image-epoch retirement;
+- whole-slab reclamation;
+- bounded rebuild / republish;
+- or adapter-owned lifecycle cleanup.
+
+It MUST NOT use unsynchronized in-place defragmentation of identity-bearing slabs.
+
+Fragmentation evidence belongs in release-readiness benchmarking and daemon-hygiene tests.
 
 ### 8.11. Decoder Dispatch and Branch Discipline
 
@@ -4496,6 +5312,33 @@ Preferred layouts:
 - generated primitive table layouts for persistent image indexes;
 - padded heap objects only when validated by allocation and cache-miss benchmarks.
 
+JVM heap primitive arrays do not by themselves prove physical cache-line alignment.
+
+A `LongArray`, `IntArray`, or `ByteArray` may have an object header, runtime-specific base offset, compressed-oops
+layout,
+alignment padding, and GC relocation behavior.
+
+Therefore, a JVM heap-array implementation MUST treat 64-byte grouping as a logical probe grouping objective, not as a
+guaranteed physical cache-line alignment claim.
+
+A release claiming exact physical cache-line grouping MUST provide one of:
+
+- an off-heap / direct-memory layout with explicit alignment proof;
+- a Java `MemorySegment` / native memory layout with explicit base-address alignment proof;
+- generated persistent image layout with documented alignment;
+- or runtime-specific layout evidence and benchmarks.
+
+Physical alignment evidence MUST include:
+
+- base-address alignment;
+- entry stride;
+- padding rule;
+- cache-line split measurement or equivalent benchmark evidence;
+- false-sharing analysis for concurrent lanes;
+- and target JVM / OS / architecture assumptions.
+
+If such evidence is absent, documentation MUST say "logical grouping" rather than "cache-line aligned".
+
 Forbidden hot-path shape:
 
 ``````text
@@ -4739,7 +5582,7 @@ Required ordinary verification order:
 5. canonical byte length check
 6. inline verifier prefix check
 7. inline verifier suffix or secondary verifier check
-8. small inline canonical byte comparison where applicable
+8. small-inline verification only when the active physical layout selects a branch-bounded inline mode
 9. full canonical byte comparison
 ``````
 
@@ -4750,15 +5593,78 @@ A failure at any verification stage rejects the candidate only for the current e
 
 It MUST NOT mutate semantic identity material.
 
+The verification ladder is a physical acceleration path.
+
+It MUST NOT become semantic equality authority.
+
+Exact canonical verification remains the final equality authority whenever compact metadata is not sufficient.
+
 ### 13.18. Small Canonical Bytes Inline Law
 
-A compliant high-performance implementation SHOULD inline small canonical byte payloads, or their word-equivalent
-representation, inside the intern metadata plane.
+Small-inline canonical bytes are an optional physical optimization.
+
+They are not a mandatory ADR-0041 compliance requirement.
+
+A compliant implementation MAY inline small canonical byte payloads, or their word-equivalent representation, inside the
+intern metadata plane only when the active resolved physical policy selects a lawful small-inline mode.
+
+Allowed small-inline modes:
+
+- `DISABLED`: every candidate uses sealed slab / canonical byte handle verification;
+- `SEGREGATED_INLINE_TABLE`: inline candidates and external-slab candidates are stored or scanned through separate
+  primitive tables / lanes;
+- `PRECLASSIFIED_TWO_PASS`: candidates are preclassified into inline and external-slab ranges before the hot
+  verification
+  loop;
+- `MEASURED_MIXED`: a mixed inline/external layout is allowed only with benchmark evidence proving that the branch is
+  not
+  a throughput regression for the target workload and runtime.
+
+A hot verification loop SHOULD NOT contain an unpredictable per-candidate branch of the form:
+
+``````text
+if (isSmallInline) {
+    compare inline bytes
+} else {
+    chase slab pointer
+}
+``````
+
+unless `MEASURED_MIXED` is selected by resolved physical policy and justified by benchmark evidence.
+
+The preferred shapes are:
+
+``````text
+inline table
+-> inline verifier loop
+``````
+
+and:
+
+``````text
+external table
+-> sealed slab / canonical byte handle verifier loop
+``````
+
+or:
+
+``````text
+preclassification
+-> inline range verifier
+-> external range verifier
+``````
 
 If the complete canonical byte payload fits within the implementation's small-inline threshold, equality MAY be verified
-without chasing the canonical byte slab.
+without chasing the canonical byte slab only inside a lawful small-inline mode.
 
-The small-inline threshold is a physical implementation policy and MUST be benchmarked.
+The small-inline threshold is a physical implementation policy.
+
+It MUST be fixed before scope admission.
+
+It MUST be benchmarked.
+
+It MUST NOT be selected by live profiling, GC behavior, branch-misprediction feedback, worker timing, or runtime data
+frequency inside an admitted scope.
 
 The small-inline representation MUST be byte-exact and MUST NOT use:
 
@@ -4767,6 +5673,18 @@ The small-inline representation MUST be byte-exact and MUST NOT use:
 - backend-native handles;
 - source text that bypassed canonical ratification;
 - delimiter-joined material.
+
+Changing the small-inline mode, threshold, or table shape MUST NOT change canonical bytes, HID derivation, collision
+verification, stable intern id assignment, or semantic equality.
+
+A release claiming small-inline acceleration MUST publish:
+
+- selected small-inline mode;
+- threshold;
+- expected payload size distribution;
+- branch-miss / throughput benchmark evidence;
+- cache-miss benchmark evidence;
+- and fallback behavior when the benchmark gate is not met.
 
 ### 13.19. Verified Canonical Bytes Handle Law
 
@@ -4865,6 +5783,47 @@ If a bounded cold collision structure is ratified, it MUST satisfy:
 A stronger-width rekeying path, if ratified, MUST be selected before the scope becomes planning-visible and MUST
 preserve
 the same deterministic publication law.
+
+### 13.21.2. Collision Escalation Availability Containment Law
+
+Collision escalation is an availability boundary.
+
+An attacker or pathological input may force a scope to spend its collision budget.
+
+ADR-0041 therefore requires bounded containment.
+
+A collision overflow MUST NOT ordinarily terminate the process.
+
+A collision overflow MUST NOT poison unrelated identity domains, unrelated admitted scopes, unrelated worker lanes, or
+already published immutable images.
+
+A compliant implementation MUST contain collision overflow to the smallest lawful boundary selected by resolved policy:
+
+- current identity unit;
+- current identity scope;
+- current frozen image publication;
+- current artifact publication;
+- current worker lane inside the admitted scope;
+- or current acquisition scope.
+
+The selected containment boundary MUST be deterministic under the resolved policy.
+
+It MUST NOT depend on:
+
+- current heap pressure;
+- thread scheduling;
+- worker completion order;
+- live profiling;
+- or random fallback.
+
+Repeated collision overflow from the same external input source is outside ADR-0041 semantic identity, but adapters MAY
+apply admission throttling, source quarantine, or request-level rejection before entering ADR-0041 identity sealing.
+
+Such adapter-level throttling MUST NOT change canonical identity material for admitted scopes.
+
+BLAKE3/HID collision resistance reduces ordinary collision probability, but ADR-0041 still treats collision overflow as
+a
+bounded diagnosable condition rather than as an impossible event.
 
 ### 13.22. Physical Acceleration Equivalence Law
 
@@ -5892,6 +6851,12 @@ metamodel.domain.identity.CanonicalEncodingDomain
 metamodel.domain.identity.CanonicalFieldTag
 metamodel.domain.identity.CanonicalWireType
 metamodel.domain.identity.CanonicalFieldTableEntry
+metamodel.domain.identity.CanonicalObjectRecordEncoder
+metamodel.domain.identity.CanonicalObjectRecordDecoder
+metamodel.domain.identity.CanonicalObjectSchema
+metamodel.domain.identity.CanonicalObjectFieldSpec
+metamodel.domain.identity.CanonicalObjectReference
+metamodel.domain.identity.CanonicalObjectFrameStack
 metamodel.domain.identity.CanonicalEncodedBytes
 metamodel.domain.identity.VersionBundleFingerprintDeriver
 metamodel.domain.identity.CanonicalDecodeFrame
@@ -5908,6 +6873,15 @@ metamodel.domain.identity.BoundedColdExactSortPath
 metamodel.domain.identity.BoundedColdExactSortBudget
 metamodel.domain.identity.MapDuplicateKeyDetector
 metamodel.domain.identity.CanonicalByteSliceView
+metamodel.domain.identity.DecoderCursorProgressValidator
+metamodel.domain.identity.CanonicalHeaderFlags
+metamodel.domain.identity.FixedPointCapacityArithmetic
+metamodel.domain.identity.SmallInlineVerificationMode
+metamodel.domain.identity.SmallInlineBenchmarkGate
+metamodel.domain.identity.CacheLineAlignmentEvidence
+metamodel.domain.identity.SealedSlabEpoch
+metamodel.domain.identity.SealedSlabHandle
+metamodel.domain.identity.CollisionContainmentBoundary
 metamodel.domain.identity.SealedCanonicalByteSlab
 metamodel.domain.identity.CanonicalByteSlice
 metamodel.domain.identity.CanonicalPayloadSlice
@@ -6520,6 +7494,89 @@ A compliant implementation MUST satisfy:
 167. Exact clone groups are handled by the owning collection duplicate policy before publication.
 168. Unordered semantic sets define an explicit duplicate canonical element policy.
 
+169. Canonical object encoding means protocol-record encoding, not JVM object graph serialization.
+170. Object fields that enter canonical bytes are owned by the active identity domain schema.
+171. Object encoding does not discover fields through reflection, JVM declaration order, Kotlin data-class component
+     order,
+     Java serialization, Jackson, kotlinx serialization, backend descriptor traversal, or framework serializer order.
+172. Object encoding is bounded by deterministic object nesting, field-count, reference-count, encoded-byte,
+     encoder-frame,
+     and decoder-frame limits.
+173. Canonical object references use sealed stable intern ids, verified canonical identity handles, domain-ratified
+     local
+     selector material, SCC-local references inside SCC seal payloads, or bounded embedded messages.
+174. Canonical object encoding never recursively inlines arbitrary reachable JVM object graphs.
+175. Duplicate non-repeated field tags fail closed.
+176. Repeated fields declare ordered/unordered and duplicate-preserving/duplicate-rejecting/duplicate-collapsing policy.
+177. Default values are encoded explicitly, prohibited, treated as distinct canonical state, or rejected by the owning
+     domain.
+178. Partially decoded object material is not published to frozen tables, interners, planning providers, `PlanCacheKey`,
+     `CanonicalPlanNode`, report manifests, public DTOs, or persistent artifacts.
+
+179. Canonical version-bundle payloads are tagged fixed-width/variable-width axis sequences.
+180. Version-bundle axes are encoded as `axisId32`, `axisValueWidth16`, `reserved16`, and `axisValueBytes`.
+181. Version-bundle integer axis payloads use fixed-width little-endian unsigned bit patterns unless explicitly ratified
+     otherwise.
+182. Delimiter-free concatenation of version-axis values is forbidden.
+183. Varint axis encoding is forbidden unless a future ADR ratifies it for a specific axis id.
+184. Version-bundle axis entries are sorted by `axisId32` ascending.
+185. Duplicate version-bundle axis ids fail closed.
+186. Unknown required version-bundle axis ids fail closed.
+187. Unknown optional version-bundle axis ids are skippable only when the active compatibility matrix ratifies the axis
+     as
+     skippable and non-critical.
+188. `capabilityProfileVersion`, `entropyVersion`, `resourcePolicySchemaVersion`, `compatibilityMatrixVersion`, and
+     `canonicalEncodingPolicyVersion` are explicit global version axes when they affect canonical identity behavior.
+189. Version-bundle fingerprint derivation uses a domain-separated BLAKE3 context distinct from HID derivation.
+190. Version-bundle fingerprint output split is `bytes[0..8]` -> high64 and `bytes[8..16]` -> low64, both little-endian.
+
+191. `identityDomainId32` is part of every canonical version-bundle payload.
+192. `identityDomainId32` appears in the fingerprint input even though it also appears in `CanonicalEnvelopeHeader`.
+193. All integer global version-axis names include explicit physical-width suffixes.
+194. Ambiguous global version-axis names without width suffixes are not releaseable.
+195. `axisValueWidth16` matches the physical-width suffix, registry width, and actual `axisValueBytes` length.
+196. `canonicalOrderingAlgorithmVersion32` is present when unordered collection ordering can affect the domain.
+197. `typeIdentityAlgorithmVersion32` is present when TypeReference identity or type normalization can affect the
+     domain.
+198. `sccSealAlgorithmVersion32`, `collisionVerificationPolicyVersion32`, and `stableInternIdAssignmentVersion32` are
+     present when those algorithms can affect publication or identity material.
+199. Version-bundle axes that affect only non-semantic display, logging, progress, or report styling are excluded.
+
+200. Decoder loops prove strict cursor progress.
+201. Zero-length semantic values are allowed only when their enclosing encoded record still advances by non-zero encoded
+     width.
+202. Zero-displacement parser loops fail closed.
+203. `HEADER_FLAG_SCC_SEAL_PAYLOAD = 0x0001` is the self-describing header flag for SCC seal payloads.
+204. `WIRE_TYPE_SCC_LOCAL_REF` is legal only when `HEADER_FLAG_SCC_SEAL_PAYLOAD` is set and the domain/schema ratifies
+     SCC sealing.
+205. SCC seal payload status is not supplied by `ThreadLocal`, mutable decoder-global state, caller-local ad hoc
+     parameters, backend context, or process-global parser mode.
+206. Canonical sort keys do not include per-process random seeds, per-scope random seeds, runtime entropy, time, thread
+     ids, worker ids, heap addresses, or ASLR-dependent values.
+207. Randomized hashing may be used only for non-authoritative route/probe structures and never for canonical ordering.
+208. HashDoS defense for canonical sorting uses deterministic projection escalation, bounded exact tie-break,
+     duplicate policies, bounded cold exact sort, and fail-closed budgets.
+209. Capacity solver arithmetic for identity budgets is fixed-point or checked integer arithmetic, not floating-point.
+210. Capacity solver safety multipliers are explicit numerator/denominator policy values when fractional scaling is
+     used.
+
+211. Small-inline canonical bytes are optional physical optimization, not semantic identity authority.
+212. Small-inline verification uses a resolved branch-bounded mode such as disabled, segregated inline table,
+     preclassified two-pass, or measured mixed.
+213. Unpredictable per-candidate inline/external branches in hot verification loops require benchmark evidence.
+214. JVM heap primitive arrays are logical grouping baselines and do not prove physical 64-byte alignment.
+215. Exact cache-line alignment claims require off-heap, MemorySegment, generated layout, or runtime-specific evidence.
+216. Nested unordered collection sorting consumes sealed child canonical material or verified child handles, not
+     recursive
+     comparator traversal.
+217. Published sealed slabs are immutable and are not compacted in place.
+218. Background defragmentation does not rewrite published canonical byte offsets or stable handles.
+219. Long-running memory reclamation uses scope teardown, image-epoch retirement, whole-slab reclamation, or rebuild /
+     republish.
+220. Collision escalation is contained to the smallest deterministic lawful boundary selected by resolved policy.
+221. Collision overflow does not ordinarily terminate the process or poison unrelated scopes, lanes, domains, or already
+     published images.
+
 ## 23. Required Golden Vectors
 
 Golden vectors MUST exist for:
@@ -6569,6 +7626,24 @@ Golden vectors MUST exist for:
 - HID256 output;
 - version tuple change changes output;
 - version-bundle fingerprint derivation fixture;
+- version-bundle axis id ordering fixture;
+- version-bundle duplicate axis id fail-closed fixture;
+- version-bundle axis width mismatch fail-closed fixture;
+- version-bundle non-zero reserved field fail-closed fixture;
+- version-bundle delimiter-free concatenation rejection fixture;
+- version-bundle unknown required axis fail-closed fixture;
+- version-bundle unknown optional skippable axis fixture where ratified;
+- version-bundle capability profile version bump fixture;
+- version-bundle entropy version bump fixture;
+- version-bundle resource policy schema version bump fixture;
+- version-bundle identity domain id change fixture;
+- version-bundle metadata identity policy schema version bump fixture;
+- version-bundle canonical ordering algorithm version bump fixture;
+- version-bundle type identity algorithm version bump fixture;
+- version-bundle SCC seal algorithm version bump fixture;
+- version-bundle collision verification policy version bump fixture;
+- version-bundle stable intern id assignment version bump fixture;
+- version-bundle physical-width suffix mismatch fail-closed fixture;
 - encoding version change changes output;
 - HID width bound fixture satisfying `n(n - 1) / 2^(b + 1) <= p_target`;
 - seal-time BLAKE3 derivation with deterministic route64 projection;
@@ -6620,6 +7695,9 @@ Golden vectors MUST exist for:
 - profile scaling preserves per-TypeReference unit cap unless a versioned protocol-ratified domain exception exists;
 - per-unit fuse change rejection when protocol-ratified exception evidence / golden-vector coverage is missing;
 - collision group cap exceeded;
+- collision overflow contained to current identity scope fixture;
+- collision overflow does not poison unrelated scope fixture;
+- collision overflow does not terminate process as ordinary path fixture;
 - bounded cold collision structure accepted fixture where ratified;
 - bounded cold collision structure overflow fail-closed fixture;
 - HID64 cardinality proof rejection;
@@ -6638,6 +7716,9 @@ Golden vectors MUST exist for:
 - frozen-table-byte derivation feasibility;
 - scope-level budget equation boundary;
 - target-average TypeReference canonical-byte budget tightening fixture;
+- fixed-point TypeReference target-average budget fixture;
+- floating-point capacity calculation rejection fixture;
+- fixed-point safety multiplier overflow fail-closed fixture;
 - target-average raw-fact-record canonical-byte budget tightening fixture;
 - target-average intern-candidate canonical-byte budget tightening fixture;
 - rejection of a solver that uses only the worst-case count-times-fuse product without published sizing evidence.
@@ -6803,10 +7884,27 @@ Architecture tests MUST verify:
 - canonical decoder hot paths do not use string tag lookup;
 - canonical decoder hot paths do not use `Map` lookup for field dispatch;
 - canonical decoder message nesting is bounded by explicit depth/frame counters and not by JVM stack depth;
+- decoder cursor progress validators reject zero-displacement loops;
+- zero-length semantic payload tests prove that enclosing encoded records still advance;
 - identity envelope decoding uses `CanonicalEnvelopeHeader` and rejects non-common header layouts;
-- header validation rejects invalid `magic32`, non-64 `headerSize16`, non-zero v1 `headerFlags16`, non-zero
+- header validation rejects invalid `magic32`, non-64 `headerSize16`, unratified `headerFlags16`, non-zero
   `reserved16`, and non-zero `reserved32`;
+- SCC-local reference decoding is controlled by `HEADER_FLAG_SCC_SEAL_PAYLOAD`, not by thread-local or mutable parser
+  state;
 - version-bundle fingerprint derivation is covered by golden vectors and does not depend on map/set iteration order;
+- version-bundle payload construction uses tagged axis entries, not delimiter-free concatenation;
+- version-bundle axis registry is not derived from enum ordinals, declaration order, source order, classpath order,
+  service
+  loader order, or process-global registration order;
+- version-bundle integer axis payloads are fixed-width little-endian unless explicitly ratified otherwise;
+- version-bundle axis ids are sorted before hashing;
+- version-bundle payload tests verify that `identityDomainId32` is present even when the envelope also contains
+  `identityDomain32`;
+- version-bundle axis-name tests reject integer axes without physical-width suffixes;
+- version-bundle width tests reject mismatches between axis name suffix, registry width, `axisValueWidth16`, and actual
+  `axisValueBytes` length;
+- version-bundle tests cover canonical ordering, type identity, SCC seal, collision verification, stable intern id
+  assignment, and runtime binding identity algorithm-version bumps;
 - identity envelope decoding uses fixed-width hot header material;
 - variable payload access uses offset / length material rather than delimiter scanning;
 - offset / length validation uses checked arithmetic and rejects overflow before slice exposure;
@@ -6837,6 +7935,11 @@ Architecture tests MUST verify:
 - canonical identity encoding does not emit semantic field-name strings as identity payload;
 - stateless encoder tests reject previous-item, recently-seen, or acquisition-order dependent encoding;
 - unordered collection encoders precompute bounded canonical sort keys before sorting;
+- canonical sort key generation rejects runtime random seeds, per-scope entropy, thread ids, worker ids, time, heap
+  addresses, and ASLR-dependent values;
+- nested unordered collection sorting consumes sealed child material or verified child handles and rejects recursive
+  comparator traversal;
+- randomized route/probe hashes, where used, are non-authoritative and cannot change canonical ordering or equality;
 - canonical sort key precomputation consumes bounded scratchpad budgets before allocating or filling sort-key arenas;
 - sort tie-break exhaustion cannot publish partially ordered material;
 - bounded cold exact sort paths, where ratified, complete exact deterministic ordering before publication;
@@ -6872,6 +7975,8 @@ Architecture tests MUST verify:
 - value-type / inline-object hot-path implementation remains behind a release adoption proof gate;
 - zero-copy slice views from staging slabs cannot be stored in frozen image, planning, interner, report, public DTO, or
   persistent artifact surfaces;
+- published sealed slabs are immutable and not compacted in place;
+- sealed slab reclamation uses image-epoch retirement or rebuild/republish rather than background offset rewriting;
 - canonical sort scratch arenas cannot be stored in frozen image, planning, interner, report, public DTO, or persistent
   artifact surfaces;
 - v1 `AUTO` resolves to the deterministic `STANDARD` bootstrap cap set;
@@ -6909,6 +8014,8 @@ Architecture tests MUST verify:
 - SCC implementations expose metered preflight or equivalent deterministic early-abort evidence.
 - direct/off-heap aligned probe implementations are optional physical backends and cannot be required for v1 heap-array
   compliance.
+- capacity solver arithmetic tests reject `Float` / `Double` usage for identity budget decisions;
+- capacity solver fixed-point arithmetic tests cover numerator/denominator safety multipliers and overflow fail-closed;
 - capacity solver outputs include target-average sizing evidence or an explicitly documented equivalent tightening
   relationship.
 
@@ -7440,7 +8547,21 @@ Domain payloads may vary by identity domain and schema.
 
 The common header layout selected by `canonicalEncodingVersion32 = 1` may not.
 
-Message nesting, canonical sorting, and zero-copy slice lifetimes are also protocol safety surfaces.
+Message nesting, object/record encoding, canonical sorting, and zero-copy slice lifetimes are also protocol safety
+surfaces.
+
+Object encoding is protocol-record encoding, not JVM object graph serialization.
+
+Version-bundle fingerprints are derived from tagged canonical axis bytes, not delimiter-free concatenation.
+
+Version-bundle fingerprints include identityDomainId32 and width-suffixed version axes.
+
+Decoder progress, SCC seal payload status, canonical sort defense, and capacity arithmetic are deterministic protocol
+surfaces.
+
+Published identity slabs are immutable; fragmentation is handled by epoch ownership, not background pointer rewriting.
+
+Small-inline and exact cache-line grouping are benchmark-gated physical optimizations, not semantic obligations.
 
 Canonical sorting must either finish exact deterministic ordering before publication or fail closed.
 
