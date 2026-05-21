@@ -1462,6 +1462,9 @@ class ResolvedMetadataIdentityPolicy private constructor(
     val maxSccCanonicalBytes: Int,
     val maxSccIntraReferenceCount: Int,
     val maxSccSealIterations: Int,
+    val maxSccPreflightBytes: Int,
+    val maxSccSizeOnlyPassBytes: Int,
+    val maxSccBudgetReservationBytes: Int,
     val inlineVerifierPrefixBits: Int,
     val defaultInternHidWidthBits: Int,
     val routeHidWidthBits: Int,
@@ -1476,6 +1479,9 @@ class ResolvedMetadataIdentityPolicy private constructor(
     val maxCanonicalObjectReferenceCount: Int,
     val maxCanonicalObjectEncodedBytes: Int,
     val maxCanonicalEncoderFrameCount: Int,
+    val maxInlineFieldPayloadBytes: Int,
+    val maxInlineFieldPayloadCountPerRecord: Int,
+    val maxTotalInlineFieldPayloadBytesPerRecord: Int,
     val maxCanonicalSortKeyBytes: Int,
     val maxCanonicalSortTieBreakComparisons: Int,
     val maxCanonicalSortTieBreakBytes: Long,
@@ -1537,6 +1543,9 @@ maxSccMemberCount                              = 256
 maxSccCanonicalBytes                           = 1 MiB
 maxSccIntraReferenceCount                      = 4096
 maxSccSealIterations                           = 2
+maxSccPreflightBytes                           = 256 KiB
+maxSccSizeOnlyPassBytes                        = 1 MiB
+maxSccBudgetReservationBytes                   = 1 MiB
 inlineVerifierPrefixBits                       = 128
 defaultInternHidWidthBits                      = 128
 routeHidWidthBits                              = 64
@@ -1547,6 +1556,9 @@ maxCanonicalObjectFieldCount                   = 1024
 maxCanonicalObjectReferenceCount               = 4096
 maxCanonicalObjectEncodedBytes                 = 64 KiB
 maxCanonicalEncoderFrameCount                  = 1024
+maxInlineFieldPayloadBytes                     = 16
+maxInlineFieldPayloadCountPerRecord            = 64
+maxTotalInlineFieldPayloadBytesPerRecord       = 512
 maxCanonicalSortKeyBytes                       = 256
 maxCanonicalSortTieBreakComparisons            = 4096
 maxCanonicalSortTieBreakBytes                  = 1 MiB
@@ -3056,6 +3068,36 @@ HashDoS defense for canonical sorting MUST instead use deterministic mechanisms:
 - duplicate-key / duplicate-element policy;
 - and scope fail-closed when resolved deterministic budgets are exceeded.
 
+Deterministic projection strength is the canonical HashDoS defense for ordering.
+
+A released domain sort policy SHOULD use the strongest deterministic projection already available at that boundary.
+
+Recommended projection priority:
+
+``````text
+identityDomainId32
+domainSchemaVersion32
+versionBundleFingerprint128
+canonicalByteLength
+full HID128 where already available
+inlineVerifierPrefix128
+fieldCount / shape summary where ratified
+bounded canonical byte prelude
+``````
+
+If full `HID128` is already available for an element before collection ordering, the ordinary bounded sort key SHOULD
+include
+it unless the owning domain documents a stronger deterministic alternative.
+
+If full `HID128` is not yet available, the domain MUST define which deterministic projection levels are available and
+which budgeted escalation path is used.
+
+A sort policy MUST NOT intentionally use a weak projection merely to avoid computing available deterministic identity
+material.
+
+Adapter-level abuse throttling may reject or defer external requests before ADR-0041 admission, but admitted canonical
+material MUST be ordered by deterministic protocol material only.
+
 If a domain wants a keyed deterministic projection, the key MUST be protocol-ratified, versioned, included in the
 relevant
 version-axis material, and stable for the same admitted semantic material.
@@ -3904,7 +3946,7 @@ For repeated fields:
 - unordered semantic collections MUST be canonicalized before encoding;
 - duplicate canonical keys MUST fail closed.
 
-### 8.10.1. Checked Offset and Length Arithmetic Law
+### 8.10.1. Checked Offset, Length, Base, and Linear Slice Validation Law
 
 Offset tables are a security boundary.
 
@@ -3913,17 +3955,80 @@ All offset and length arithmetic MUST use checked `Long` arithmetic before narro
 A canonical encoder MUST fail closed before emission if any offset, length, table size, or total payload size cannot be
 represented by the ratified encoded width.
 
+ADR-0041 distinguishes two offset bases.
+
+Envelope-absolute offsets:
+
+- `fieldTableOffset32` is relative to the first byte of `CanonicalEnvelopeHeader`;
+- `payloadOffset32` is relative to the first byte of `CanonicalEnvelopeHeader`;
+- `fieldTableOffset32 = 0` is invalid because the field table cannot overlap the header;
+- `payloadOffset32 = 0` is invalid because payload bytes cannot overlap the header.
+
+Payload-relative offsets:
+
+- every external field payload slice offset inside the field table is relative to the first byte of the declared payload
+  region;
+- payload-relative offset `0` means `envelope[payloadOffset32]`;
+- payload-relative offset `N` means `envelope[payloadOffset32 + N]` after checked arithmetic;
+- field-table slice offsets MUST NOT be interpreted as envelope-absolute offsets.
+
 A canonical decoder MUST validate, before exposing any slice:
 
-- offset is non-negative;
+- payload-relative offset is non-negative;
 - length is non-negative;
-- `offset + length` does not overflow;
-- `offset + length <= payloadLength`;
-- `fieldTableOffset + fieldTableByteLength` does not overflow;
-- `fieldTableOffset + fieldTableByteLength <= envelopeLength`;
-- every offset points into the declared payload region, not into the hot header, field table, or reserved padding;
-- repeated-field element offsets are monotonic where the domain requires monotonic layout;
-- and no slice may overlap another slice unless the domain explicitly ratifies overlapping immutable views.
+- `payloadRelativeOffset + length` does not overflow;
+- `payloadRelativeOffset + length <= payloadLength32`;
+- `fieldTableOffset32 + fieldTableByteLength` does not overflow;
+- `fieldTableOffset32 + fieldTableByteLength <= envelopeLength`;
+- `payloadOffset32 + payloadLength32` does not overflow;
+- `payloadOffset32 + payloadLength32 <= envelopeLength`;
+- every external slice points into the declared payload region after adding `payloadOffset32`;
+- no external slice points into the hot header, field table, reserved padding, or outside the envelope.
+
+External payload slice overlap MUST be validated in linear time.
+
+A canonical encoding MUST NOT require the decoder to sort arbitrary slice intervals to prove non-overlap.
+
+For fields whose external payload slices must not overlap, field table entries or their external-payload slice
+descriptors
+MUST be encoded in physical payload order.
+
+The required linear validation is:
+
+``````text
+previousEnd = 0
+for each external slice descriptor in physical payload order:
+    start = payloadRelativeOffset
+    end = checkedAdd(start, length)
+    require start >= previousEnd
+    require end <= payloadLength32
+    previousEnd = end
+``````
+
+If the owning domain requires strict physical separation between consecutive external slices, it MUST require:
+
+``````text
+start > previousEnd
+``````
+
+except when the previous slice is a domain-ratified zero-length semantic value whose descriptor still advances the table
+or element index.
+
+If a descriptor sequence is not encoded in physical payload order, the decoder MUST fail closed unless the owning domain
+has ratified an alternative linear-time non-overlap proof.
+
+The ordinary decoder MUST NOT perform `O(N log N)` interval sorting as the required overlap defense for adversarial
+input.
+
+Overlapping immutable views are forbidden by default.
+
+A domain MAY ratify overlapping immutable views only when all of the following hold:
+
+- the overlap is semantic, not accidental;
+- the overlap is representable by a linear proof;
+- the overlap cannot expose header, field table, padding, or out-of-envelope bytes;
+- exact golden vectors cover the overlap;
+- and the overlap cannot change canonical identity meaning.
 
 Forbidden:
 
@@ -3932,18 +4037,29 @@ Int offset = previousOffset + fieldLength
 // silent wraparound
 ``````
 
+Forbidden:
+
+``````text
+collect all slices
+-> sort intervals by offset
+-> prove non-overlap with unbounded adversarial interval count
+``````
+
 Required:
 
 ``````text
 checked Long arithmetic
+-> base classification
 -> range validation
+-> physical-order linear slice validation
 -> safe narrowing only after validation
 -> bounded slice exposure
 ``````
 
-Integer overflow, negative offset, negative length, out-of-payload range, header overlap, or malformed field-table
-length
-MUST fail closed.
+Integer overflow, negative payload-relative offset, negative length, out-of-payload range, header overlap, field-table
+overlap, malformed field-table length, ambiguous offset base, non-linear overlap requirement, or malformed physical
+slice
+order MUST fail closed.
 
 ### 8.10.1.1. Decoder Cursor Progress and Zero-Displacement Law
 
@@ -3990,6 +4106,128 @@ This law applies even if all offset and length arithmetic is non-overflowing.
 
 Zero displacement is a parser progress failure, not a valid compact encoding.
 
+### 8.10.1.1A. Branch-Bounded Bounds Validation Implementation Law
+
+Bounds validation is correctness material first and physical optimization second.
+
+A compliant decoder MAY implement offset, length, cursor-progress, and physical-order checks using branch-hoisting,
+bitwise aggregation, status-word accumulation, table dispatch, or platform intrinsics.
+
+A compliant decoder MUST NOT remove a required validation check to reduce branches.
+
+A hot validation loop SHOULD avoid unpredictable per-field branch chains when a branch-bounded equivalent is available.
+
+Preferred implementation shape:
+
+``````text
+accumulatedInvalidBits = 0
+for each descriptor:
+    accumulatedInvalidBits |= invalidOffsetBit
+    accumulatedInvalidBits |= invalidLengthBit
+    accumulatedInvalidBits |= invalidBaseBit
+    accumulatedInvalidBits |= invalidProgressBit
+    accumulatedInvalidBits |= invalidPhysicalOrderBit
+
+if accumulatedInvalidBits != 0:
+    fail closed
+``````
+
+This is implementation guidance, not a different semantic rule.
+
+The branch-bounded implementation MUST produce the same accept/reject result as the direct validation law.
+
+Benchmark evidence MAY choose a clearer branched implementation for cold paths.
+
+The following are forbidden:
+
+- skipping checks because they are expensive;
+- relying on CPU exception behavior for bounds validation;
+- using platform-specific overflow wraparound as validation;
+- accepting data after a failed aggregated validation bit;
+- changing accepted/rejected payloads based on branch predictor behavior, JIT behavior, or profiling feedback.
+
+### 8.10.1.2. Short Inline Field Payload Encoding Law
+
+Very small variable payloads may suffer unnecessary pointer chasing when every access requires:
+
+``````text
+field table entry
+-> payload offset
+-> external payload slab load
+``````
+
+ADR-0041 therefore allows a versioned canonical short-inline field payload mode.
+
+This is canonical encoding material.
+
+It is not an implementation-local optimization.
+
+A field payload may be encoded inline only when all of the following are true:
+
+- the active `canonicalEncodingPolicyVersion32` ratifies short-inline field payload encoding;
+- the owning identity domain schema marks the field as inline-eligible;
+- the field wire type permits inline representation;
+- the payload byte length is less than or equal to `maxInlineFieldPayloadBytes`;
+- the field-table / inline-sidecar layout is defined by the active canonical encoding policy;
+- the same semantic field value always selects the same inline/external form under the same schema and policy.
+
+A compliant implementation MUST NOT choose inline vs external payload layout using:
+
+- runtime profiling;
+- observed field frequency;
+- branch predictor feedback;
+- GC behavior;
+- heap pressure;
+- CPU cache miss counters;
+- worker timing;
+- adapter preference;
+- or implementation-local threshold tuning inside an admitted scope.
+
+Lawful shape:
+
+``````text
+domain schema + canonicalEncodingPolicyVersion32
+-> field inline eligibility
+-> deterministic payload length check
+-> INLINE_SMALL_PAYLOAD or EXTERNAL_PAYLOAD
+-> canonical bytes
+``````
+
+Forbidden shape:
+
+``````text
+runtime profiling says this field is frequent
+-> inline this run
+-> external next run
+-> different canonical bytes
+``````
+
+Short-inline field payload encoding MUST preserve:
+
+- field tag identity;
+- wire type identity;
+- payload byte exactness;
+- unknown-tag behavior;
+- offset/length validation;
+- zero-displacement protection;
+- and canonical ordering.
+
+If short-inline encoding is not ratified by the active `canonicalEncodingPolicyVersion32`, variable payloads MUST use
+the
+ordinary external payload layout or another ratified bounded layout.
+
+The resolved metadata identity policy MUST define, or map to semantically equivalent fields:
+
+``````text
+maxInlineFieldPayloadBytes
+maxInlineFieldPayloadCountPerRecord
+maxTotalInlineFieldPayloadBytesPerRecord
+``````
+
+Changing the short-inline threshold or layout requires a `canonicalEncodingPolicyVersion32` change and golden vectors.
+
+It MUST NOT change semantic equality for material that remains representable under both layouts.
+
 ### 8.10.2. Zero-Copy Canonical Byte Slice Law
 
 Variable payload extraction on hot identity decode paths MUST return a bounded view over the immutable canonical byte
@@ -4035,14 +4273,11 @@ Zero-copy is a hot decode optimization.
 
 It is not a lifetime ownership model.
 
-If decoded payload material must survive the seal boundary, it MUST be copied, compacted, or migrated into one of:
+If decoded payload material must survive the seal boundary, it MUST be copied, compacted, migrated, or promoted under
+one
+of the ratified publication paths in this section.
 
-- a sealed canonical byte slab;
-- a frozen-image-owned slab;
-- a verified canonical byte handle;
-- or another published artifact-owned immutable byte surface.
-
-The lawful shape is:
+The ordinary lawful shape is:
 
 ``````text
 staging slab
@@ -4061,14 +4296,95 @@ staging slab
 -> entire staging slab pinned
 ``````
 
-Architecture tests MUST reject long-lived identity, planning, frozen, report, public DTO, or persistent artifact
-surfaces
-that store staging-slab slices.
+Architecture tests alone are not sufficient to prove runtime slab ownership.
+
+ADR-0041 therefore requires type-state separation between staging and published slices.
+
+A staging-slab slice MUST be represented by a staging-only type such as:
+
+``````text
+StagingSlice
+``````
+
+A published byte slice MUST be represented by a published-only type such as:
+
+``````text
+PublishedSlice
+``````
+
+or by a verified canonical byte handle with equivalent type-state guarantees.
+
+Publication APIs MUST accept only published-slab slices, sealed canonical byte handles, stable intern ids, or
+frozen-image
+owned handles.
+
+They MUST NOT accept staging-slab slice types.
+
+A `StagingSlice` MUST NOT implement or alias the same publication interface as `PublishedSlice` unless the type system
+also carries an unforgeable ownership/provenance state that distinguishes staging from published memory.
 
 If a slice crosses a publication boundary, it MUST carry proof that its base slab is owned by the published artifact and
 not by a transient staging phase.
 
-### 8.10.4. Sealed Slab Fragmentation and Epoch Reclamation Law
+### 8.10.4. Zero-Copy Promotion and Seal Ownership Transfer Law
+
+Copy-on-seal is the default safe publication path.
+
+However, if a staging slab is already a fully packed canonical byte artifact, ADR-0041 permits zero-copy promotion.
+
+Zero-copy promotion means:
+
+``````text
+staging slab ownership
+-> write closed
+-> fully validated
+-> transferred as published sealed slab
+``````
+
+It does not mean that arbitrary staging memory may be retained as published identity material.
+
+A staging slab MAY be promoted to a published sealed slab only when all of the following hold:
+
+- the staging slab has exactly one owner;
+- no writer can mutate the slab after the seal point;
+- no `StagingSlice` can outlive the promotion boundary;
+- all live slices covering promoted bytes are converted to `PublishedSlice` or verified canonical byte handles;
+- the promoted byte region is fully initialized;
+- the promoted byte region contains only canonical bytes for the published artifact;
+- unused capacity is either zero, absent, or bounded and charged to the published artifact under resolved policy;
+- the promoted region satisfies payload-offset, zero-displacement, and bounds-validation laws;
+- the promoted region satisfies the owning schema/version compatibility laws;
+- the promotion assigns a sealed slab id, image id, or equivalent immutable owner;
+- and promotion is atomic with respect to publication.
+
+A staging slab MUST NOT be promoted if it contains:
+
+- unrelated transient decode material;
+- rejected candidates;
+- abandoned scratch ranges;
+- mutable parser workspace;
+- worker-local garbage;
+- diagnostic-only temporary bytes;
+- or unused capacity that would pin excessive memory outside the resolved published budget.
+
+If the promotion proof fails, the implementation MUST fall back to copy/compact/migrate or fail the current publication
+scope closed.
+
+Zero-copy promotion is a physical optimization.
+
+It MUST NOT change canonical bytes, HID derivation, collision verification, stable intern id assignment, or semantic
+equality.
+
+A released implementation claiming zero-copy promotion MUST publish tests or benchmark evidence for:
+
+- single-owner proof;
+- write-closed proof;
+- no staging-slice escape;
+- published-slice conversion;
+- unused-capacity budget accounting;
+- and fallback to copy/compact when promotion is unsafe.
+
+### 8.10.5. Sealed Slab Fragmentation and Epoch Reclamation Law
 
 Published canonical byte slabs are immutable.
 
@@ -4093,7 +4409,7 @@ Lawful shapes:
 
 ``````text
 run-local staging slab
--> seal / compaction
+-> seal / compaction / promotion
 -> image-owned sealed slab
 -> image epoch retired as a whole
 ``````
@@ -4103,7 +4419,7 @@ old sealed image
 -> build new sealed image with compacted layout
 -> exact verification
 -> atomic publication of new image epoch
--> old image epoch reclaimed only after no reader can observe it
+-> old image epoch reclaimed only after no valid reader lease can observe it
 ``````
 
 Forbidden shapes:
@@ -4134,11 +4450,83 @@ If long-running processes need memory reclamation, Kontrakt MUST use:
 - image-epoch retirement;
 - whole-slab reclamation;
 - bounded rebuild / republish;
-- or adapter-owned lifecycle cleanup.
+- adapter-owned lifecycle cleanup;
+- or reader-lease enforcement as defined below.
 
 It MUST NOT use unsynchronized in-place defragmentation of identity-bearing slabs.
 
 Fragmentation evidence belongs in release-readiness benchmarking and daemon-hygiene tests.
+
+### 8.10.6. Reader Lease and Epoch Pin Budget Law
+
+Epoch reclamation is an availability boundary.
+
+An old sealed slab epoch cannot be reclaimed while a valid reader may still observe it.
+
+However, readers also cannot pin old epochs indefinitely without bounded accounting.
+
+A compliant implementation MUST represent published-slab reads through a reader lease, epoch guard, or equivalent
+cooperative read handle.
+
+A reader lease MUST record, or be derivable from:
+
+- reader epoch id;
+- image epoch id;
+- sealed slab id or image id;
+- acquisition time or monotonic lease sequence where runtime policy uses time;
+- owning worker / lane / adapter context where applicable;
+- and closed / released state.
+
+A reader lease MUST NOT be represented by an untracked raw byte-array reference, raw memory pointer, or unbounded
+`PublishedSlice` escape.
+
+A resolved runtime or adapter policy MUST define bounded epoch pinning using one or more of:
+
+- maximum pinned epoch count;
+- maximum pinned sealed bytes;
+- maximum active reader lease count;
+- maximum reader lease duration where wall-clock policy is explicitly admitted;
+- maximum generation gap between current image epoch and oldest pinned image epoch;
+- or a deterministic safe-point protocol.
+
+If a reader exceeds the resolved lease policy, the implementation MUST fail fast at a cooperative safe point, cancel the
+owning operation, or reject further access through that reader lease.
+
+It MUST NOT reclaim a sealed slab while an unsafe raw reader can still access it.
+
+Lawful slow-reader handling:
+
+``````text
+reader lease exceeds policy
+-> reader fails at safe point / owning operation is cancelled
+-> lease released
+-> epoch becomes reclaimable
+``````
+
+Forbidden slow-reader handling:
+
+``````text
+reader still has raw pointer
+-> epoch bytes freed or repurposed
+-> reader observes moved / reused identity bytes
+``````
+
+New epoch publication MAY be throttled, deferred, or failed closed if the pinned-epoch budget is exhausted.
+
+Such throttling is an availability decision.
+
+It MUST NOT change canonical bytes, HID derivation, collision verification, stable intern id assignment, or semantic
+equality for admitted material.
+
+A released implementation claiming daemon-safe long-running behavior MUST provide tests or profiling evidence for:
+
+- reader lease release on normal completion;
+- reader lease release on failure;
+- cancellation / safe-point handling for slow readers;
+- maximum pinned epoch count;
+- maximum pinned sealed bytes;
+- repeated rebuild / republish without unbounded epoch accumulation;
+- and absence of staging-slab pinning through published slices.
 
 ### 8.11. Decoder Dispatch and Branch Discipline
 
@@ -6195,7 +6583,7 @@ For v1, deterministic SCC-local ordinal encoding is preferred over unbounded fix
 
 SCC seal atomicity does not require wasting the entire SCC budget before discovering a deterministic failure.
 
-An implementation SHOULD fail an SCC as early as failure is deterministically provable.
+An implementation MUST fail an SCC as early as failure is deterministically provable.
 
 Required safeguards:
 
@@ -6211,6 +6599,7 @@ Forbidden:
 ``````text
 construct unbounded SCC
 -> allocate all member payloads
+-> derive all member HIDs
 -> discover the first cap violation only at final publication
 ``````
 
@@ -6225,6 +6614,80 @@ construct SCC candidate under metered preflight
 Early abort MUST NOT change which valid SCCs seal successfully.
 
 It only changes how quickly invalid SCCs are rejected.
+
+### 13.30.4. SCC Two-Phase Sizing and Budget Reservation Law
+
+A cyclic SCC SHOULD NOT perform expensive final materialization before deterministic sizing evidence exists.
+
+For SCCs whose member count, reference count, projected canonical bytes, sort scratch demand, or encoded payload shape
+can
+approach resolved caps, a compliant implementation MUST use a two-phase seal plan or a documented equivalent.
+
+Required two-phase shape:
+
+``````text
+Phase 1:
+    deterministic member ordering
+    field/schema compatibility preflight
+    object/message nesting preflight
+    reference-count preflight
+    size-only canonicalization where applicable
+    sort scratch estimate / reservation
+    SCC byte budget reservation
+    diagnostic budget reservation where required
+
+Phase 2:
+    canonical byte materialization
+    HID / version-bundle fingerprint use
+    collision verification
+    stable intern id assignment
+    atomic publication
+``````
+
+A size-only canonicalization pass computes deterministic encoded sizes and budget requirements without publishing:
+
+- final canonical bytes;
+- HIDs;
+- interner candidates;
+- stable intern ids;
+- frozen table rows;
+- planning-visible providers;
+- or report manifest entries.
+
+If exact size cannot be known without visiting a member payload, the implementation MUST meter that visit under the
+preflight budget and MUST NOT publish member identity material before aggregate SCC reservation succeeds.
+
+Budget reservation MUST cover:
+
+- per-member canonical byte fuses;
+- aggregate SCC canonical bytes;
+- SCC intra-reference count;
+- encoder / decoder frame count;
+- canonical sort scratchpad demand;
+- bounded cold exact sort demand where applicable;
+- diagnostic evidence budget where failure reporting is required.
+
+If reservation fails, the SCC MUST fail closed before expensive member publication, interner candidate publication,
+stable id assignment, frozen image publication, planning visibility, or report manifest publication.
+
+The reservation result is deterministic policy material.
+
+It MUST NOT depend on:
+
+- live heap availability;
+- GC timing;
+- thread scheduling;
+- worker completion order;
+- runtime profiling;
+- or adaptive retry behavior.
+
+A valid SCC that passes reservation and materialization MUST produce the same sealed identity as a single-pass exact
+implementation.
+
+The two-phase plan changes failure timing and resource usage only.
+
+It MUST NOT change canonical bytes, HID derivation, collision verification, stable intern id assignment, or semantic
+equality for accepted SCCs.
 
 ### 13.31. Parent-References-Child-InternId Law
 
@@ -6874,8 +7337,16 @@ metamodel.domain.identity.BoundedColdExactSortBudget
 metamodel.domain.identity.MapDuplicateKeyDetector
 metamodel.domain.identity.CanonicalByteSliceView
 metamodel.domain.identity.DecoderCursorProgressValidator
+metamodel.domain.identity.CanonicalSliceLinearOrderValidator
+metamodel.domain.identity.PayloadRelativeOffset
+metamodel.domain.identity.BranchBoundedBoundsValidator
 metamodel.domain.identity.CanonicalHeaderFlags
 metamodel.domain.identity.FixedPointCapacityArithmetic
+metamodel.domain.identity.ShortInlineFieldPayloadPolicy
+metamodel.domain.identity.ShortInlineFieldPayloadMode
+metamodel.domain.identity.SccSealPreflightPlanner
+metamodel.domain.identity.SccSizeOnlyCanonicalizer
+metamodel.domain.identity.SccBudgetReservation
 metamodel.domain.identity.SmallInlineVerificationMode
 metamodel.domain.identity.SmallInlineBenchmarkGate
 metamodel.domain.identity.CacheLineAlignmentEvidence
@@ -7577,6 +8048,49 @@ A compliant implementation MUST satisfy:
 221. Collision overflow does not ordinarily terminate the process or poison unrelated scopes, lanes, domains, or already
      published images.
 
+222. Short-inline field payload encoding is selected by schema and `canonicalEncodingPolicyVersion32`, not by runtime
+     profiling.
+223. Short-inline field payload layout is canonical encoding material and therefore versioned.
+224. Inline/external field payload choice is deterministic for the same semantic value, schema, and encoding policy.
+225. SCC sealing uses deterministic preflight and budget reservation when SCC size, references, projected bytes, sort
+     scratch, or payload shape can approach resolved caps.
+226. Size-only SCC canonicalization does not publish canonical bytes, HIDs, interner candidates, stable ids, frozen
+     rows,
+     planning providers, or report manifests.
+227. SCC budget reservation succeeds before member publication, interner candidate publication, stable id assignment,
+     frozen image publication, planning visibility, or report manifest publication.
+228. SCC preflight and reservation do not change canonical bytes, HID derivation, collision verification, stable intern
+     id
+     assignment, or semantic equality for accepted SCCs.
+
+229. External field payload slice offsets are payload-relative, not envelope-absolute.
+230. `fieldTableOffset32` and `payloadOffset32` are envelope-absolute offsets from the first byte of
+     `CanonicalEnvelopeHeader`.
+231. Payload-relative offset `0` means the first byte of the declared payload region.
+232. External payload slices that require non-overlap are encoded in physical payload order or use a ratified
+     linear-time
+     non-overlap proof.
+233. Ordinary decoders do not sort arbitrary slice intervals to prove non-overlap under adversarial input.
+234. Repeated-field and variable-payload decoder loops prove strict cursor, entry-index, or record-width progress.
+235. Zero-length semantic values are valid only when the enclosing descriptor or record still advances.
+236. Branch-bounded bounds validation may aggregate invalid bits, but it preserves every required fail-closed check.
+237. Branch reduction does not change accepted/rejected payloads.
+
+238. Staging slices and published slices are separated by type-state.
+239. Publication APIs accept only published-slab slices, verified canonical byte handles, stable intern ids, or
+     frozen-image
+     owned handles.
+240. Staging-slab slice types cannot cross publication boundaries.
+241. Zero-copy promotion is allowed only with single-owner, write-closed, fully validated, budget-accounted ownership
+     transfer.
+242. Unsafe zero-copy promotion falls back to copy/compact/migrate or fails the current publication scope closed.
+243. Published sealed slabs are immutable and never defragmented in place.
+244. Reader leases or equivalent epoch guards bound old epoch pinning.
+245. Slow readers fail at cooperative safe points, are cancelled, or block new publication according to resolved runtime
+     policy; sealed slabs are not reclaimed while unsafe raw readers can observe them.
+246. Pinned epoch count, pinned sealed bytes, active reader leases, lease duration, or generation gap are bounded by
+     resolved runtime/adapter policy.
+
 ## 23. Required Golden Vectors
 
 Golden vectors MUST exist for:
@@ -7885,12 +8399,20 @@ Architecture tests MUST verify:
 - canonical decoder hot paths do not use `Map` lookup for field dispatch;
 - canonical decoder message nesting is bounded by explicit depth/frame counters and not by JVM stack depth;
 - decoder cursor progress validators reject zero-displacement loops;
+- offset-base tests prove that external slice offsets are payload-relative and header offsets are envelope-absolute;
+- slice non-overlap tests use physical-order linear validation or a ratified linear proof, not adversarial interval
+  sorting;
 - zero-length semantic payload tests prove that enclosing encoded records still advance;
+- branch-bounded bounds validators are equivalence-tested against direct validation laws;
 - identity envelope decoding uses `CanonicalEnvelopeHeader` and rejects non-common header layouts;
 - header validation rejects invalid `magic32`, non-64 `headerSize16`, unratified `headerFlags16`, non-zero
   `reserved16`, and non-zero `reserved32`;
 - SCC-local reference decoding is controlled by `HEADER_FLAG_SCC_SEAL_PAYLOAD`, not by thread-local or mutable parser
   state;
+- SCC seal implementation performs deterministic preflight and reservation before expensive publication when caps are
+  near;
+- SCC size-only canonicalization cannot publish HIDs, interner candidates, stable ids, frozen rows, planning providers,
+  or report entries;
 - version-bundle fingerprint derivation is covered by golden vectors and does not depend on map/set iteration order;
 - version-bundle payload construction uses tagged axis entries, not delimiter-free concatenation;
 - version-bundle axis registry is not derived from enum ordinals, declaration order, source order, classpath order,
@@ -7937,6 +8459,8 @@ Architecture tests MUST verify:
 - unordered collection encoders precompute bounded canonical sort keys before sorting;
 - canonical sort key generation rejects runtime random seeds, per-scope entropy, thread ids, worker ids, time, heap
   addresses, and ASLR-dependent values;
+- canonical sort key generation uses the strongest deterministic projection available at the domain boundary;
+- adapter-level abuse throttling is outside canonical identity and cannot change admitted canonical order or equality;
 - nested unordered collection sorting consumes sealed child material or verified child handles and rejects recursive
   comparator traversal;
 - randomized route/probe hashes, where used, are non-authoritative and cannot change canonical ordering or equality;
@@ -7975,7 +8499,15 @@ Architecture tests MUST verify:
 - value-type / inline-object hot-path implementation remains behind a release adoption proof gate;
 - zero-copy slice views from staging slabs cannot be stored in frozen image, planning, interner, report, public DTO, or
   persistent artifact surfaces;
+- staging and published byte slices are distinct type-state surfaces;
+- publication APIs reject staging-slice types and accept only published slices, verified handles, stable intern ids, or
+  frozen-image-owned handles;
+- zero-copy promotion requires single-owner, write-closed, fully initialized, budget-accounted ownership transfer;
 - published sealed slabs are immutable and not compacted in place;
+- published sealed slab epochs are reclaimed through reader-lease / epoch-guard accounting, not untracked raw
+  references;
+- long-running daemon tests cover slow-reader lease cancellation, pinned epoch limits, and repeated rebuild / republish
+  without unbounded old-slab accumulation;
 - sealed slab reclamation uses image-epoch retirement or rebuild/republish rather than background offset rewriting;
 - canonical sort scratch arenas cannot be stored in frozen image, planning, interner, report, public DTO, or persistent
   artifact surfaces;
@@ -8561,7 +9093,14 @@ surfaces.
 
 Published identity slabs are immutable; fragmentation is handled by epoch ownership, not background pointer rewriting.
 
+Staging slices and published slices are type-state separated, and epoch reclamation is reader-lease bounded.
+
 Small-inline and exact cache-line grouping are benchmark-gated physical optimizations, not semantic obligations.
+
+Short-inline field payload layout and SCC preflight are deterministic protocol decisions.
+
+Offset validation uses explicit bases, linear slice proofs, strict progress, and branch-bounded implementations only
+when equivalent to direct fail-closed validation.
 
 Canonical sorting must either finish exact deterministic ordering before publication or fail closed.
 
