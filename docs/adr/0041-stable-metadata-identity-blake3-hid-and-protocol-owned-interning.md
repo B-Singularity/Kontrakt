@@ -30,6 +30,8 @@ Proposed
 
 ---
 
+- ADR-0042: Mechanical Sympathy, Primitive Lifecycle, and Async Ownership Governance
+
 ## 1. Context
 
 Kontrakt treats an interface as a real executable and analyzable contract, not merely as a JVM type surface.
@@ -328,6 +330,12 @@ ADR-0041 therefore must define:
 ---
 
 ## 3. Decision
+
+ADR-0041 owns metadata identity authority.
+
+Generic primitive substrate lifecycle, slab ownership, reader epoch reclamation, and asynchronous ownership boundaries
+are
+governed by ADR-0042 and are referenced by ADR-0041 only where they affect metadata identity publication.
 
 Kontrakt will introduce a **Stable Metadata Identity Substrate**.
 
@@ -4254,279 +4262,42 @@ Cold diagnostic paths MAY copy bounded payload slices when the diagnostic policy
 
 Such copies are not canonical identity material and remain subject to diagnostic evidence budgets.
 
-### 8.10.3. Zero-Copy Slice Lifetime and Slab Pinning Law
-
-Zero-copy slice views are decode-stage artifacts.
-
-A zero-copy slice derived from a staging slab MUST NOT cross into:
-
-- `FrozenMetamodelImage`;
-- planning-facing providers;
-- `PlanCacheKey`;
-- `CanonicalPlanNode`;
-- protocol-owned interner published tables;
-- persistent artifacts;
-- public DTOs;
-- report manifests.
-
-Zero-copy is a hot decode optimization.
-
-It is not a lifetime ownership model.
-
-If decoded payload material must survive the seal boundary, it MUST be copied, compacted, migrated, or promoted under
-one
-of the ratified publication paths in this section.
-
-The ordinary lawful shape is:
-
-``````text
-staging slab
--> bounded zero-copy decode slice
--> verification / seal
--> compact published slab or verified handle
--> staging slab becomes unreachable
-``````
-
-The forbidden shape is:
-
-``````text
-staging slab
--> tiny slice view
--> stored in frozen image / planning / report / interner
--> entire staging slab pinned
-``````
-
-Architecture tests alone are not sufficient to prove runtime slab ownership.
-
-ADR-0041 therefore requires type-state separation between staging and published slices.
-
-A staging-slab slice MUST be represented by a staging-only type such as:
-
-``````text
-StagingSlice
-``````
-
-A published byte slice MUST be represented by a published-only type such as:
-
-``````text
-PublishedSlice
-``````
-
-or by a verified canonical byte handle with equivalent type-state guarantees.
-
-Publication APIs MUST accept only published-slab slices, sealed canonical byte handles, stable intern ids, or
-frozen-image
-owned handles.
-
-They MUST NOT accept staging-slab slice types.
-
-A `StagingSlice` MUST NOT implement or alias the same publication interface as `PublishedSlice` unless the type system
-also carries an unforgeable ownership/provenance state that distinguishes staging from published memory.
-
-If a slice crosses a publication boundary, it MUST carry proof that its base slab is owned by the published artifact and
-not by a transient staging phase.
-
-### 8.10.4. Zero-Copy Promotion and Seal Ownership Transfer Law
-
-Copy-on-seal is the default safe publication path.
-
-However, if a staging slab is already a fully packed canonical byte artifact, ADR-0041 permits zero-copy promotion.
-
-Zero-copy promotion means:
-
-``````text
-staging slab ownership
--> write closed
--> fully validated
--> transferred as published sealed slab
-``````
-
-It does not mean that arbitrary staging memory may be retained as published identity material.
-
-A staging slab MAY be promoted to a published sealed slab only when all of the following hold:
-
-- the staging slab has exactly one owner;
-- no writer can mutate the slab after the seal point;
-- no `StagingSlice` can outlive the promotion boundary;
-- all live slices covering promoted bytes are converted to `PublishedSlice` or verified canonical byte handles;
-- the promoted byte region is fully initialized;
-- the promoted byte region contains only canonical bytes for the published artifact;
-- unused capacity is either zero, absent, or bounded and charged to the published artifact under resolved policy;
-- the promoted region satisfies payload-offset, zero-displacement, and bounds-validation laws;
-- the promoted region satisfies the owning schema/version compatibility laws;
-- the promotion assigns a sealed slab id, image id, or equivalent immutable owner;
-- and promotion is atomic with respect to publication.
-
-A staging slab MUST NOT be promoted if it contains:
-
-- unrelated transient decode material;
-- rejected candidates;
-- abandoned scratch ranges;
-- mutable parser workspace;
-- worker-local garbage;
-- diagnostic-only temporary bytes;
-- or unused capacity that would pin excessive memory outside the resolved published budget.
-
-If the promotion proof fails, the implementation MUST fall back to copy/compact/migrate or fail the current publication
-scope closed.
-
-Zero-copy promotion is a physical optimization.
-
-It MUST NOT change canonical bytes, HID derivation, collision verification, stable intern id assignment, or semantic
-equality.
-
-A released implementation claiming zero-copy promotion MUST publish tests or benchmark evidence for:
-
-- single-owner proof;
-- write-closed proof;
-- no staging-slice escape;
-- published-slice conversion;
-- unused-capacity budget accounting;
-- and fallback to copy/compact when promotion is unsafe.
-
-### 8.10.5. Sealed Slab Fragmentation and Epoch Reclamation Law
-
-Published canonical byte slabs are immutable.
-
-A sealed slab MUST NOT be compacted in place.
-
-A sealed slab MUST NOT be modified by a background defragmentation thread.
-
-A sealed slab MUST NOT have live offsets rewritten after publication.
-
-Reason:
-
-``````text
-background defrag
--> moving bytes
--> rewriting offsets / handles
--> reader-visible race or identity drift
-``````
-
-Fragmentation control is handled by ownership and epoch boundaries, not by in-place moving compaction.
-
-Lawful shapes:
-
-``````text
-run-local staging slab
--> seal / compaction / promotion
--> image-owned sealed slab
--> image epoch retired as a whole
-``````
-
-``````text
-old sealed image
--> build new sealed image with compacted layout
--> exact verification
--> atomic publication of new image epoch
--> old image epoch reclaimed only after no valid reader lease can observe it
-``````
-
-Forbidden shapes:
-
-``````text
-published sealed slab
--> background defrag moves bytes
--> offsets patched in place
-``````
-
-``````text
-stable intern id
--> raw mutable pointer into moving slab
-``````
-
-A published reference to canonical bytes MUST be one of:
-
-- image id + stable offset + length;
-- sealed slab id + stable offset + length;
-- verified canonical byte handle;
-- stable intern id that resolves through immutable published tables.
-
-It MUST NOT be a raw mutable pointer that can be rewritten by defragmentation.
-
-If long-running processes need memory reclamation, Kontrakt MUST use:
-
-- scope-local slab teardown;
-- image-epoch retirement;
-- whole-slab reclamation;
-- bounded rebuild / republish;
-- adapter-owned lifecycle cleanup;
-- or reader-lease enforcement as defined below.
-
-It MUST NOT use unsynchronized in-place defragmentation of identity-bearing slabs.
-
-Fragmentation evidence belongs in release-readiness benchmarking and daemon-hygiene tests.
-
-### 8.10.6. Reader Lease and Epoch Pin Budget Law
-
-Epoch reclamation is an availability boundary.
-
-An old sealed slab epoch cannot be reclaimed while a valid reader may still observe it.
-
-However, readers also cannot pin old epochs indefinitely without bounded accounting.
-
-A compliant implementation MUST represent published-slab reads through a reader lease, epoch guard, or equivalent
-cooperative read handle.
-
-A reader lease MUST record, or be derivable from:
-
-- reader epoch id;
-- image epoch id;
-- sealed slab id or image id;
-- acquisition time or monotonic lease sequence where runtime policy uses time;
-- owning worker / lane / adapter context where applicable;
-- and closed / released state.
-
-A reader lease MUST NOT be represented by an untracked raw byte-array reference, raw memory pointer, or unbounded
-`PublishedSlice` escape.
-
-A resolved runtime or adapter policy MUST define bounded epoch pinning using one or more of:
-
-- maximum pinned epoch count;
-- maximum pinned sealed bytes;
-- maximum active reader lease count;
-- maximum reader lease duration where wall-clock policy is explicitly admitted;
-- maximum generation gap between current image epoch and oldest pinned image epoch;
-- or a deterministic safe-point protocol.
-
-If a reader exceeds the resolved lease policy, the implementation MUST fail fast at a cooperative safe point, cancel the
-owning operation, or reject further access through that reader lease.
-
-It MUST NOT reclaim a sealed slab while an unsafe raw reader can still access it.
-
-Lawful slow-reader handling:
-
-``````text
-reader lease exceeds policy
--> reader fails at safe point / owning operation is cancelled
--> lease released
--> epoch becomes reclaimable
-``````
-
-Forbidden slow-reader handling:
-
-``````text
-reader still has raw pointer
--> epoch bytes freed or repurposed
--> reader observes moved / reused identity bytes
-``````
-
-New epoch publication MAY be throttled, deferred, or failed closed if the pinned-epoch budget is exhausted.
-
-Such throttling is an availability decision.
-
-It MUST NOT change canonical bytes, HID derivation, collision verification, stable intern id assignment, or semantic
-equality for admitted material.
-
-A released implementation claiming daemon-safe long-running behavior MUST provide tests or profiling evidence for:
-
-- reader lease release on normal completion;
-- reader lease release on failure;
-- cancellation / safe-point handling for slow readers;
-- maximum pinned epoch count;
-- maximum pinned sealed bytes;
-- repeated rebuild / republish without unbounded epoch accumulation;
-- and absence of staging-slab pinning through published slices.
+### 8.10.3. Metadata Identity Binding to ADR-0042 Primitive Lifecycle Governance
+
+ADR-0041 no longer owns the full generic primitive substrate lifecycle law.
+
+The generic laws for:
+
+- zero-copy slice lifetime;
+- staging-slice / published-slice type-state separation;
+- zero-copy promotion;
+- sealed slab fragmentation;
+- epoch-based reclamation;
+- reader epoch guards;
+- engine-owned lane epoch tables;
+- M:N worker/lane execution topology;
+- asynchronous reclaimer isolation;
+- event-ingestion boundaries;
+- non-suspending lease boundaries;
+- and slow-reader containment
+
+are governed by ADR-0042.
+
+ADR-0041 retains the metadata-identity binding:
+
+- canonical metadata identity bytes MAY use zero-copy decode views only inside bounded decode / verification phases;
+- staging-slab slices MUST NOT become metadata identity authority;
+- metadata identity publication MUST use sealed canonical bytes, verified canonical byte handles, stable intern ids, or
+  frozen-image-owned handles;
+- published metadata identity slabs are immutable;
+- old metadata identity image epochs are reclaimed only through ADR-0042-compatible epoch reclamation;
+- reader epoch ownership is engine-lane-owned, not `ThreadLocal`, worker-owned, coroutine-owned, scheduler-owned, or
+  callback-owned;
+- asynchronous callbacks and reclaimer notifications are event-ingestion boundaries, not canonical identity mutation
+  authority.
+
+Any metadata identity implementation that uses primitive slabs, published images, or zero-copy views MUST conform to
+ADR-0042.
 
 ### 8.11. Decoder Dispatch and Branch Discipline
 
@@ -7306,6 +7077,11 @@ Exact package placement may change.
 
 ``````text
 metamodel.domain.identity.CanonicalEnvelopeHeader
+metamodel.domain.identity.EngineLaneEpochTable
+metamodel.domain.identity.WorkerLaneTopology
+metamodel.domain.identity.LaneExecutionLease
+metamodel.domain.identity.AsyncOwnerEvent
+metamodel.domain.identity.EngineMaintenanceQueue
 metamodel.domain.identity.CanonicalEnvelopeHeaderValidator
 metamodel.domain.identity.CanonicalByteEncoder
 metamodel.domain.identity.CanonicalByteSink
@@ -8091,6 +7867,36 @@ A compliant implementation MUST satisfy:
 246. Pinned epoch count, pinned sealed bytes, active reader leases, lease duration, or generation gap are bounded by
      resolved runtime/adapter policy.
 
+247. Ordinary published-slab read hot paths use engine-owned lane epoch records, not globally contended
+     lock/counter lease acquisition.
+248. Asynchronous epoch reclaimer scanning is physical memory management and not canonical identity logic.
+249. Reader leases are released or suspended before external I/O, user callbacks, framework callbacks, coroutine
+     suspension, virtual-thread parking, or work-stealing migration boundaries.
+250. Reader-lease hot paths are non-suspending.
+251. `ThreadLocal`, coroutine-local, fiber-local, virtual-thread-local, JVM executor, OS scheduler, and work-stealing
+     queue state are forbidden as reader epoch ownership authority.
+252. Slow-reader containment is selected by resolved runtime/adapter policy and does not depend on heap pressure,
+     scheduling, random fallback, or unratified profiling.
+253. Asynchronous reclaimers reclaim only whole retired epochs/slabs that no valid reader lease can observe.
+254. Asynchronous reclaimers do not move published bytes, rewrite offsets, or invalidate active leases without a safe
+     cancellation boundary.
+
+255. Reader epoch ownership is engine-owned lane state, not hidden ambient thread state, worker ownership, or scheduler
+     state.
+256. Coroutine-based reader lease lifetime management is forbidden.
+257. Lease suspension as an implicit coroutine/fiber operation is forbidden; a lease must be released before external
+     scheduler or adapter boundaries.
+258. Asynchronous reclaimers scan explicit lane/topology/adapter epoch records, not hidden thread-local state.
+
+259. M:N worker/lane topology is dispatch topology, not reader epoch ownership.
+260. Workers acquire temporary `LaneExecutionLease` authority and do not own lane epoch slots.
+261. The engine-owned `LaneEpochTable` is the reader epoch authority.
+262. External callbacks, adapter completions, retired-epoch notifications, timeout signals, and reclaimer notifications
+     are event-ingestion boundaries and cannot directly mutate lane-owned state.
+263. Async sources interact with reader-lease state only through explicit event records delivered to an owning lane,
+     engine maintenance queue, epoch-reclaimer queue, or adapter ingress queue.
+264. `scheduler-owned` state is not a lawful reader epoch ownership model.
+
 ## 23. Required Golden Vectors
 
 Golden vectors MUST exist for:
@@ -8506,8 +8312,16 @@ Architecture tests MUST verify:
 - published sealed slabs are immutable and not compacted in place;
 - published sealed slab epochs are reclaimed through reader-lease / epoch-guard accounting, not untracked raw
   references;
+- ordinary reader lease acquisition uses explicit lane-owned or engine-owned lane epoch slots and avoids globally
+  contended hot-path counters;
+- asynchronous epoch reclaimer scans explicit lane/topology/adapter epoch records and never participates in canonical
+  identity;
 - long-running daemon tests cover slow-reader lease cancellation, pinned epoch limits, and repeated rebuild / republish
   without unbounded old-slab accumulation;
+- external I/O, user callback, framework callback, virtual-thread parking, work-stealing migration, adapter scheduler
+  handoff, and event-loop handoff tests verify lease release before crossing the boundary;
+- reader-lease hot-path tests reject coroutine/fiber/ThreadLocal/scheduler/worker-owned reader epoch ownership and
+  reject suspension while a published-slab lease is held;
 - sealed slab reclamation uses image-epoch retirement or rebuild/republish rather than background offset rewriting;
 - canonical sort scratch arenas cannot be stored in frozen image, planning, interner, report, public DTO, or persistent
   artifact surfaces;
@@ -9026,6 +8840,8 @@ The fixed common header does not require the intern-table probe group to share t
 
 ## 27. Final Rule
 
+Generic primitive lifecycle and asynchronous ownership governance are delegated to ADR-0042.
+
 Stable metadata identity is protocol material.
 
 It is not backend material.
@@ -9094,6 +8910,10 @@ surfaces.
 Published identity slabs are immutable; fragmentation is handled by epoch ownership, not background pointer rewriting.
 
 Staging slices and published slices are type-state separated, and epoch reclamation is reader-lease bounded.
+
+Reader epoch reclamation is asynchronous and engine-lane-owned in the hot path; M:N worker/lane topology is dispatch
+topology, not ownership, ThreadLocal/coroutine/scheduler-owned lease authority is forbidden, and leases do not cross
+external blocking or scheduler handoff boundaries.
 
 Small-inline and exact cache-line grouping are benchmark-gated physical optimizations, not semantic obligations.
 
