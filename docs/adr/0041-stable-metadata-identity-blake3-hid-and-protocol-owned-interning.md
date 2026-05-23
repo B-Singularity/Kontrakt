@@ -1067,31 +1067,21 @@ A digest is not semantic equality authority by itself.
 
 HID means **Hashed Identity Descriptor**.
 
-A HID is a domain-separated compact identity descriptor derived under an active digest suite.
+A HID is a domain-separated compact identity descriptor derived from canonical bytes, parent identity, local selector
+material, or equivalent canonical material under this ADR.
 
-The term HID has four distinct uses in this ADR:
+HID may be used for:
 
-| Term           | Meaning                                                                     | Authority                            |
-|----------------|-----------------------------------------------------------------------------|--------------------------------------|
-| HID descriptor | Fixed-width primitive digest-derived descriptor bytes or words              | Candidate identity only              |
-| HID width      | Ratified width family such as `HID64`, `HID128`, `HID256`                   | Storage/probe shape                  |
-| HID derivation | Protocol operation that produces a HID descriptor                           | Derivation law                       |
-| Contextual HID | HID derived from parent/context material and sealed child identity material | Context-sensitive candidate identity |
+- primitive membership;
+- routing;
+- table addressing;
+- deterministic ordering acceleration;
+- grouping collision candidates;
+- entropy derivation;
+- deterministic materialization;
+- stable intern preclassification.
 
-A HID is not semantic equality authority.
-
-A HID match means:
-
-```text
-candidate match
--> verification ladder required
-```
-
-It does not mean:
-
-```text
-semantic equality accepted
-```
+HID MUST NOT be used as final semantic equality authority without collision verification.
 
 ### 5.5. Stable Intern Id
 
@@ -5505,57 +5495,50 @@ The ability to replace the algorithm is part of the contract.
 
 The replacement itself is not an adapter-local decision.
 
-## 10. HID Descriptor, Width, and Authority Law
+## 10. HID Law
 
 ### 10.1. Definition
 
 HID is a domain-separated compact descriptor derived from canonical material.
 
-Illustrative shape:
+HID has two distinct representations:
 
-``````kotlin
-sealed interface HashedIdentityDescriptor {
-    val domain: IdentityDomain
-    val algorithmId: String
-    val algorithmVersion: Long
-    val encodingVersion: Long
-    val derivationVersion: Long
-    val widthBits: Int
-}
+| Representation           | Purpose                                                                | Allowed surface          |
+|--------------------------|------------------------------------------------------------------------|--------------------------|
+| cold descriptor facade   | diagnostics, public API, golden-vector fixtures, tests, boundary views | ordinary objects allowed |
+| hot primitive projection | intern probes, route probes, equality pre-screening, table rows        | primitive substrate only |
 
-class Hid64 private constructor(
-    override val domain: IdentityDomain,
-    override val algorithmId: String,
-    override val algorithmVersion: Long,
-    override val encodingVersion: Long,
-    override val derivationVersion: Long,
-    val bits: Long,
-) : HashedIdentityDescriptor
+No Kotlin interface, class hierarchy, wrapper object, enum object, or descriptor allocation shape is normative for hot
+HID storage.
 
-class Hid128 private constructor(
-    override val domain: IdentityDomain,
-    override val algorithmId: String,
-    override val algorithmVersion: Long,
-    override val encodingVersion: Long,
-    override val derivationVersion: Long,
-    val highBits: Long,
-    val lowBits: Long,
-) : HashedIdentityDescriptor
+The normative hot representation is fixed-width primitive words plus table-level proof material.
 
-class Hid256 private constructor(
-    override val domain: IdentityDomain,
-    override val algorithmId: String,
-    override val algorithmVersion: Long,
-    override val encodingVersion: Long,
-    override val derivationVersion: Long,
-    val word0: Long,
-    val word1: Long,
-    val word2: Long,
-    val word3: Long,
-) : HashedIdentityDescriptor
+For ordinary `HID128` hot membership, the primitive projection is:
+
+``````text
+hidHigh64
+hidLow64
 ``````
 
-The exact API may differ.
+For ordinary `HID64` routing, the primitive projection is:
+
+``````text
+routeOrHid64
+``````
+
+For ordinary `HID256` cold or strong-summary membership, the primitive projection is:
+
+``````text
+word0_64
+word1_64
+word2_64
+word3_64
+``````
+
+Cold descriptor facades MAY be materialized after hot probing or for diagnostic/export boundaries.
+
+They MUST NOT be the physical representation of committed intern-table rows, route-table rows, probe groups, or
+planning-visible hot identity state.
 
 The invariant is normative.
 
@@ -5724,7 +5707,7 @@ Each domain must define:
 
 ---
 
-## 11. HID Derivation and Hierarchical Context Law
+## 11. Hierarchical Identity Derivation
 
 ### 11.1. Purpose
 
@@ -6259,16 +6242,36 @@ issue final stable ids before the seal boundary.
 
 ### 13.5. Dense Id Shape
 
-Illustrative shape:
+A stable intern id has two representation layers.
 
-``````kotlin
-class TypeReferenceInternId private constructor(
-    val scope: InternScope,
-    val id: Int,
-    val identityDomain: IdentityDomain,
-    val interningProtocolVersion: Long,
-)
+| Layer                   | Purpose                                                                | Representation rule                   |
+|-------------------------|------------------------------------------------------------------------|---------------------------------------|
+| semantic/cold facade    | API, diagnostics, tests, report views, golden-vector fixtures          | ordinary wrapper object MAY exist     |
+| committed/hot substrate | intern table rows, probe groups, frozen indexes, planning acceleration | primitive id / table-level proof only |
+
+The normative dense-id material is:
+
+``````text
+scopeId32
+localStableInternId32
+identityDomainId32
+interningProtocolVersion64
 ``````
+
+A table MAY move `scopeId32`, `identityDomainId32`, and `interningProtocolVersion64` into a validated table header when
+the whole table is proven to share those values.
+
+In that case, the ordinary hot row MAY store only:
+
+``````text
+localStableInternId32
+``````
+
+or `localStableInternId32` plus the additional primitive projection fields required by the active probe layout.
+
+No class named `TypeReferenceInternId`, `StableInternId`, or similar facade is normative for committed interner storage.
+
+If such a facade exists, it is a cold boundary view over primitive material.
 
 Rules:
 
@@ -6277,6 +6280,61 @@ Rules:
 - `id` is not semantic equality authority alone;
 - `id` may index arrays only after table integrity validation;
 - `id` must not be persisted without scope/version metadata.
+
+### 13.5.1. Intern Id Facade and Primitive Substrate Split Law
+
+Intern id wrapper objects are not committed interning representation.
+
+They are optional cold facades over primitive intern material.
+
+A compliant implementation MUST NOT store committed intern membership as:
+
+``````text
+Array<TypeReferenceInternId>
+Array<StableInternId>
+Array<InternHandle>
+List<InternHandle>
+Map<WrapperObject, WrapperObject>
+``````
+
+for the ordinary hot interner path.
+
+The lawful hot shape is:
+
+``````text
+table header:
+    scopeId32
+    identityDomainId32
+    interningProtocolVersion64
+    versionBundleFingerprint128 where required
+    tableEpoch64 where required
+
+primitive rows:
+    localStableInternId32
+    hidHigh64 / hidLow64 or ratified HID width words
+    canonicalBytesOffset32
+    canonicalBytesLength32
+    inlineVerifierPrefix words where ratified
+    state / generation / occupancy bits
+``````
+
+or an equivalent primitive substrate backend admitted by ADR-0042.
+
+A cold facade may be constructed only after the row's table-level proof has been validated.
+
+The facade MUST NOT become:
+
+- equality authority;
+- interner row storage;
+- probe key storage;
+- route-table storage;
+- frozen image row storage;
+- planning hot-path state;
+- stable id assignment state;
+- or L2 exact-match key material.
+
+Architecture tests MUST reject hot-path arrays, maps, or published tables that store intern id wrapper objects as their
+ordinary committed representation.
 
 ### 13.6. No Global Mutable Interner
 
@@ -6430,6 +6488,115 @@ HID match
 
 The interner probe path must be physically boring: a few primitive loads, predictable comparisons, and rare full
 verification.
+
+### 13.9.1. Intern-Table Substrate Backend Boundary Law
+
+Intern-table physical layout is a substrate backend concern.
+
+ADR-0041 defines the semantic and protocol requirements for intern-table membership, candidate lookup, collision
+verification, stable id assignment, and publication.
+
+ADR-0041 does not make any concrete storage backend semantic authority.
+
+A compliant implementation MUST keep the following boundary:
+
+``````text
+core / domain / protocol:
+    canonical bytes
+    HID descriptor semantics
+    verification ladder
+    collision escalation law
+    stable intern id assignment law
+    publication law
+
+substrate adapter / infrastructure backend:
+    heap primitive arrays
+    off-heap storage
+    MemorySegment storage
+    native aligned allocation
+    generated physical layout
+    memory-mapped layout
+    SIMD / vectorized probe implementation
+``````
+
+The core MUST NOT depend on:
+
+- `ByteArray` object layout;
+- `IntArray` object layout;
+- `LongArray` object layout;
+- Java heap object headers;
+- compressed-oops layout;
+- GC compaction behavior;
+- `MemorySegment` implementation details;
+- native allocator identity;
+- off-heap base address;
+- SIMD width;
+- cache-line size;
+- or a particular digest library implementation.
+
+The core MAY require:
+
+- primitive-substrate-compatible access;
+- explicit offset / length / width material;
+- sealed immutable publication;
+- deterministic lifecycle boundaries;
+- no per-candidate hot-path wrapper allocation;
+- no object-graph authority in committed intern tables;
+- and cross-backend equivalence with golden vectors.
+
+Changing the substrate backend MUST NOT change:
+
+- canonical bytes;
+- HID derivation;
+- collision verification result;
+- semantic equality;
+- stable intern id assignment;
+- publication order;
+- or report/replay identity.
+
+### 13.9.2. V1 Mechanical Profile and Aligned Backend Admission Law
+
+The portable v1 baseline may use heap primitive arrays.
+
+However, a release claiming the ADR-0041 high-performance mechanical profile for protocol-owned interning SHOULD provide
+at least one explicitly aligned physical backend for hot probe groups.
+
+Acceptable aligned backend candidates include:
+
+- Java `MemorySegment` native allocation with explicit alignment proof;
+- off-heap direct-memory allocation with explicit alignment proof;
+- native aligned allocation through a contained infrastructure adapter;
+- generated persistent image layout with documented alignment;
+- or another substrate backend that proves base-address alignment, stride, and lifecycle safety.
+
+This requirement is a performance-profile requirement.
+
+It is not a semantic correctness requirement.
+
+A heap-only implementation MAY be compliant with ADR-0041 semantics, but it MUST document itself as a portable baseline
+backend and MUST NOT claim exact physical cache-line alignment.
+
+A high-performance mechanical profile MUST publish:
+
+- selected substrate backend;
+- base-address alignment proof;
+- entry stride;
+- slot padding rule;
+- hot/cold field split;
+- false-sharing analysis;
+- leak / teardown tests;
+- fallback behavior when aligned allocation is unavailable;
+- and cross-backend golden-vector equivalence against the reference heap backend.
+
+A substrate backend failure MUST NOT silently change identity semantics.
+
+If the aligned backend is unavailable, the implementation MUST choose one of:
+
+- fall back to the documented portable heap baseline;
+- disable the high-performance mechanical profile for that run;
+- or fail profile admission closed before identity scope admission.
+
+It MUST NOT partially mix backend semantics inside an admitted identity scope.
 
 ### 13.10. Inline Verification Prefix Law
 
@@ -6697,6 +6864,11 @@ Allowed small-inline modes:
   not
   a throughput regression for the target workload and runtime.
 
+`MEASURED_MIXED` is never the default high-performance mode.
+
+A high-performance mechanical profile SHOULD prefer `SEGREGATED_INLINE_TABLE` or `PRECLASSIFIED_TWO_PASS` unless the
+target benchmark corpus proves that mixed branching is stable for the selected runtime profile.
+
 A hot verification loop SHOULD NOT contain an unpredictable per-candidate branch of the form:
 
 ``````text
@@ -6762,6 +6934,46 @@ A release claiming small-inline acceleration MUST publish:
 - branch-miss / throughput benchmark evidence;
 - cache-miss benchmark evidence;
 - and fallback behavior when the benchmark gate is not met.
+
+### 13.18.1. Small-Inline Branch Entropy Containment Law
+
+Small-inline acceleration MUST NOT introduce an unpredictable hot-loop branch as the ordinary path.
+
+A mixed inline/external verifier is lawful only when the resolved physical policy selects `MEASURED_MIXED` before scope
+admission and the release evidence proves that the selected workload does not create branch-thrashing.
+
+The branch policy MUST be fixed before identity scope admission.
+
+It MUST NOT be selected by:
+
+- live branch-miss counters;
+- current input frequency distribution;
+- GC behavior;
+- worker timing;
+- lane timing;
+- adaptive runtime profiling;
+- or cache warmth observed inside the admitted scope.
+
+If benchmark evidence later shows that mixed branching regresses the target profile, the compliant fallback is:
+
+``````text
+MEASURED_MIXED
+-> disabled for that runtime profile
+-> SEGREGATED_INLINE_TABLE or PRECLASSIFIED_TWO_PASS
+``````
+
+not:
+
+``````text
+hot loop
+-> adapt per candidate
+-> change verification shape based on observed frequency
+``````
+
+Changing the small-inline branch policy may change latency or throughput.
+
+It MUST NOT change canonical bytes, HID derivation, collision verification, stable intern id assignment, or semantic
+equality.
 
 ### 13.19. Verified Canonical Bytes Handle Law
 
@@ -6835,6 +7047,79 @@ The ordinary policy outcome is semantic non-publication, bounded quarantine, or 
 
 A collision group escalation path MUST NOT change stable intern id assignment for already verified material in the same
 sealed scope.
+
+### 13.21.1. Persistent Collision Pressure Containment Law
+
+Collision escalation is not allowed to become an unbounded retry loop.
+
+If the same identity scope, adapter source, domain/schema/version tuple, or acquisition boundary repeatedly triggers
+collision escalation, the implementation MUST apply deterministic containment selected by resolved policy.
+
+Allowed containment outcomes include:
+
+- fail the current identity scope closed;
+- quarantine the current acquisition scope;
+- reject further candidates for the offending domain/schema/version tuple inside the admitted scope;
+- mark the adapter source as protocol-incompatible for that scope;
+- throttle or reject new publication attempts under bounded policy;
+- move to a bounded cold collision structure where ratified;
+- or fail the current artifact publication closed.
+
+The implementation MUST NOT:
+
+- repeatedly allocate exception objects on the hot path;
+- emit unbounded logs for each colliding candidate;
+- keep a worker lane permanently pinned in a failed state;
+- retry the same collision group without a deterministic state transition;
+- or allow collision diagnostics to exceed `maxDiagnosticEvidenceBytes`.
+
+Collision escalation events SHOULD be represented as primitive fault classifications or bounded diagnostic records.
+
+Repeated collision pressure is an availability fault.
+
+It is not semantic inequality.
+
+It MUST NOT change canonical bytes, HID derivation, collision verification semantics, stable intern id assignment, or
+semantic equality for material that remains accepted.
+
+### 13.21.2. Collision Escalation Lane Release Law
+
+Quarantine of a worker lane or acquisition boundary is a scoped containment outcome.
+
+It MUST release lane-local scratch, reader leases, staging slabs, and temporary collision descriptors according to
+ADR-0042 lifecycle rules.
+
+It MUST NOT permanently remove the physical worker or engine lane from future unrelated scopes unless a resolved runtime
+policy explicitly opens a broader circuit for the remainder of the run.
+
+A lane quarantine result MUST be represented as an explicit state.
+
+It MUST NOT be represented by:
+
+- leaked thread-local state;
+- hidden worker flags;
+- unbounded exception state;
+- callback-local state;
+- or a permanently poisoned primitive slot without an owner transition.
+
+The lawful shape is:
+
+``````text
+collision hot bound exceeded
+-> explicit escalation classification
+-> scoped quarantine / fail-closed outcome
+-> release transient resources
+-> prevent publication of the offending identity material
+``````
+
+The forbidden shape is:
+
+``````text
+collision hot bound exceeded
+-> lane spins / retries / logs indefinitely
+-> temporary slabs remain pinned
+-> publication never reaches a terminal state
+``````
 
 ### 13.21.1. Bounded Cold Collision Structure Law
 
@@ -6985,29 +7270,45 @@ They MUST NOT cross into:
 - public DTOs;
 - query-result reuse keys.
 
-The implementation SHOULD enforce this with distinct type-state surfaces.
+The type-state split is normative.
 
-Illustrative shape:
+The object shape is not normative.
 
-``````kotlin
-sealed interface InternHandle
+A compliant implementation may expose cold type-state facades for testing, diagnostics, or narrow package-private seal
+APIs, but the committed physical state MUST be primitive.
 
-sealed interface ProvisionalInternHandle : InternHandle {
-    val scopeId: InternScopeId
-}
+Required logical states:
 
-sealed interface VerifiedInternHandle : InternHandle {
-    val scopeId: InternScopeId
-    val verificationEpoch: InternVerificationEpoch
-}
+| State       | Meaning                                                                         |    May cross publication boundary? |
+|-------------|---------------------------------------------------------------------------------|-----------------------------------:|
+| provisional | candidate exists before exact verification and deterministic seal               |                                 no |
+| verified    | exact verification succeeded inside the current seal process                    |     only through a lawful seal API |
+| stable      | deterministic dense id assigned after scope seal and table integrity validation | yes, only with scope/version proof |
 
-sealed interface StableInternId : VerifiedInternHandle {
-    val id: Int
-    val domain: IdentityDomain
-}
+Preferred hot physical state material:
+
+``````text
+handleStateBits
+scopeId32
+localCandidateId32 or localStableInternId32
+identityDomainId32
+verificationEpoch64
+internerGeneration64
 ``````
 
-The exact API may differ, but the type-state split is normative.
+The same material MAY be packed into primitive words or split across primitive arrays by the selected substrate backend.
+
+Forbidden ordinary representation for committed hot state:
+
+``````text
+sealed interface InternHandle
+-> ProvisionalInternHandle object
+-> VerifiedInternHandle object
+-> StableInternId object
+``````
+
+The forbidden shape may exist only as a cold facade and only if architecture tests prove that it cannot become committed
+hot-path storage.
 
 Provisional handle implementations SHOULD have:
 
@@ -7049,6 +7350,36 @@ local physical staging
 -> sealed intern table
 -> stable id publication
 ``````
+
+### 13.25.1. Physical Locality Backend Isolation Law
+
+NUMA-local, CPU-local, worker-local, lane-local, off-heap-local, or native-local placement is physical implementation
+material.
+
+It is not metadata identity material.
+
+A physical backend MAY choose local arenas to reduce cache snooping, memory bandwidth contention, or allocator pressure.
+
+The backend MUST expose only deterministic sealed identity material to ADR-0041 publication.
+
+The core MUST NOT observe:
+
+- physical memory address;
+- NUMA node id;
+- native allocation id;
+- off-heap base pointer;
+- worker-local buffer id;
+- arena allocation order;
+- or placement-dependent timing.
+
+A v1 high-performance backend MAY use off-heap or `MemorySegment` arenas for local staging if it proves:
+
+- explicit ownership;
+- bounded lifetime;
+- deterministic merge input;
+- no staging-slab escape;
+- no publication before seal;
+- and cross-backend equivalence.
 
 ### 13.26. Prefetch-Aware Slab Layout Law
 
@@ -7378,6 +7709,94 @@ The two-phase plan changes failure timing and resource usage only.
 It MUST NOT change canonical bytes, HID derivation, collision verification, stable intern id assignment, or semantic
 equality for accepted SCCs.
 
+### 13.30.4.1. SCC Measure/Write Equivalence Law
+
+A two-phase SCC seal plan is lawful only if its size-only pass and materialization pass are equivalent over the same
+canonical encoder law.
+
+The size-only pass MUST use the same:
+
+- field order;
+- tag order;
+- wire type registry;
+- endian rule;
+- length-prefix rule;
+- varint rule where ratified;
+- string UTF-8 byte-count rule;
+- object/message nesting rule;
+- collection ordering law;
+- SCC-local reference encoding law;
+- and version-bundle compatibility decision
+
+as the materialization pass.
+
+The size-only pass MUST NOT estimate by:
+
+- platform string length;
+- UTF-16 code-unit count when UTF-8 byte count is required;
+- backend text encoding;
+- adapter serialization;
+- object `toString()`;
+- runtime display rendering;
+- approximate varint length;
+- cached stale length;
+- or implementation-specific object size.
+
+The materialization pass MUST verify that the final write cursor equals the preflight reserved byte count.
+
+Required shape:
+
+``````text
+size-only canonicalization
+-> exact byte count
+-> reservation
+-> materialization
+-> final cursor == reserved end
+-> publication may proceed
+``````
+
+Forbidden shape:
+
+``````text
+size estimate
+-> reservation
+-> materialization writes more or fewer bytes
+-> patch offsets / resize / continue publication
+``````
+
+If the materialization pass writes a different number of bytes than the size-only pass predicted, the implementation
+MUST treat this as a protocol implementation fault for the current SCC seal.
+
+It MUST fail the SCC seal closed before:
+
+- HID publication;
+- interner candidate publication;
+- stable intern id assignment;
+- frozen image publication;
+- planning visibility;
+- report manifest publication;
+- or persistent artifact publication.
+
+The implementation MUST NOT repair the mismatch by:
+
+- widening the slab in place;
+- shifting later offsets;
+- truncating bytes;
+- padding unratified bytes;
+- retrying with a different encoder;
+- or accepting a backend-specific serialized form.
+
+A released implementation using a two-phase SCC plan MUST provide golden vectors or tests for:
+
+- exact measure/write equality;
+- UTF-8 byte count parity;
+- varint length parity where varint is ratified;
+- nested message length parity;
+- collection sort-key parity;
+- SCC-local reference length parity;
+- reservation overflow fail-closed;
+- and cursor mismatch fail-closed.
+
 ### 13.31. Parent-References-Child-InternId Law
 
 When a parent identity payload references a child by intern id, the reference MUST include enough scope and version
@@ -7532,7 +7951,11 @@ Rules:
 
 ### 14.4. TypeReference Intern Id
 
-`TypeReferenceInternId` is assigned only by a protocol-owned interner.
+A TypeReference stable intern id is assigned only by a protocol-owned interner.
+
+The committed representation is primitive intern material, not a wrapper object.
+
+A cold facade named `TypeReferenceInternId` MAY exist only as a boundary view over validated primitive material.
 
 It may be used for:
 
@@ -7542,7 +7965,27 @@ It may be used for:
 - deterministic sort acceleration;
 - direct-to-slab future lowering.
 
-It must not replace TypeReference semantic equality without table validation.
+Hot consumers SHOULD use one of:
+
+``````text
+localStableInternId32
+``````
+
+when table-level proof supplies scope/domain/protocol material, or:
+
+``````text
+scopeId32
+localStableInternId32
+identityDomainId32
+interningProtocolVersion64
+``````
+
+when the proof must be carried with the reference.
+
+The wrapper/facade MUST NOT replace TypeReference semantic equality without table validation.
+
+The wrapper/facade MUST NOT be stored in ordinary hot-path intern tables, frozen row arrays, planning hot loops, or L2
+exact-match keys.
 
 ### 14.5. Cycle-Safe TypeReference Identity Stratification
 
@@ -7775,7 +8218,7 @@ Planning may consume stable metadata identity only through approved boundaries.
 Allowed:
 
 - `TypeReference`;
-- verified `TypeReferenceInternId`;
+- verified TypeReference stable intern material, represented as primitive id plus table-level proof on hot paths;
 - frozen ordinal from validated `FrozenTypeReferenceIndex`;
 - `TypeCycleIdentity` with exact canonical signature verification;
 - canonical active-member keys;
@@ -8130,7 +8573,8 @@ metamodel.domain.identity.TypeReferenceCanonicalMaterial
 metamodel.domain.identity.TypeReferenceCanonicalEncoder
 metamodel.domain.identity.TypeReferenceIdentityDomain
 metamodel.domain.identity.TypeReferenceHid
-metamodel.domain.identity.TypeReferenceInternId
+metamodel.domain.identity.TypeReferenceInternFacade
+metamodel.domain.identity.TypeReferenceInternPrimitiveProjection
 ``````
 
 ### 20.4. Collision Verification
@@ -8147,9 +8591,10 @@ metamodel.domain.identity.IdentityCollisionRecord
 ``````text
 metamodel.domain.identity.ProtocolOwnedInterner
 metamodel.domain.identity.InternScope
-metamodel.domain.identity.ProvisionalInternHandle
-metamodel.domain.identity.VerifiedInternHandle
-metamodel.domain.identity.StableInternId
+metamodel.domain.identity.ProvisionalInternFacade
+metamodel.domain.identity.VerifiedInternFacade
+metamodel.domain.identity.StableInternFacade
+metamodel.domain.identity.InternHandlePrimitiveProjection
 metamodel.domain.identity.DeterministicInternIdAssigner
 metamodel.domain.identity.InternedIdentityTable
 metamodel.domain.identity.InternVerificationEpoch
@@ -8920,6 +9365,30 @@ A compliant implementation MUST satisfy:
 315. Future lowered contract graph material for state, protocol, data, governance, DTO, boundaries, and explicit state
      machines remains reserved until ratified by the top-level contract definition document and ADR-0043.
 
+316. Intern-table physical storage backends are adapters, not semantic identity authorities.
+317. A high-performance mechanical profile SHOULD provide an explicitly aligned intern-table backend or document itself
+     as a portable heap baseline.
+318. Exact cache-line alignment claims require substrate-backend evidence and cross-backend golden-vector equivalence.
+319. `MEASURED_MIXED` small-inline mode is never the default high-performance mode.
+320. Small-inline branch policy is fixed before scope admission and cannot adapt per candidate.
+321. Persistent collision pressure must reach bounded deterministic containment, not unbounded retry, logging, or lane
+     pinning.
+322. Collision quarantine releases transient resources and reaches an explicit terminal state.
+323. NUMA/off-heap/native locality is physical backend material and cannot enter identity material.
+324. SCC two-phase sizing requires measure/write equivalence over the same canonical encoder law.
+325. SCC materialization cursor mismatch fails the SCC seal closed before publication.
+
+326. Intern id wrapper objects are cold facades only.
+327. Committed intern-table rows use primitive id material and table-level proof, not wrapper objects.
+328. `TypeReferenceInternId`, `StableInternId`, and `InternHandle` class/interface shapes are not normative hot-path
+     representations.
+329. Hot intern tables MUST NOT store `Array<TypeReferenceInternId>`, `Array<StableInternId>`, `Array<InternHandle>`,
+     or equivalent wrapper-object arrays as their ordinary committed representation.
+330. Type-state for provisional/verified/stable intern handles is normative; object hierarchy is not.
+331. Cold facades may be materialized only after primitive row/table integrity proof has been validated.
+332. Architecture tests reject wrapper-object intern ids in committed hot-path storage, frozen row arrays, planning hot
+     loops, and L2 exact-match keys.
+
 ## 23. Required Golden Vectors
 
 Golden vectors MUST exist for:
@@ -9220,6 +9689,22 @@ including whichever of the following categories become applicable:
 
 Until ratification, no concrete annotation, DSL, or compiler-metadata lowering vector is required by ADR-0041.
 
+- aligned intern-table backend equivalence fixture;
+- heap baseline versus off-heap / MemorySegment backend identity equivalence fixture;
+- small-inline segregated table fixture;
+- small-inline measured-mixed rejection fixture where benchmark gate is not met;
+- persistent collision pressure containment fixture;
+- collision quarantine resource-release fixture;
+- SCC two-phase measure/write equality fixture;
+- SCC two-phase cursor mismatch fail-closed fixture;
+
+
+- primitive stable intern id projection fixture;
+- table-level proof for local stable intern id fixture;
+- cold facade materialization after table validation fixture;
+- wrapper facade excluded from hot intern storage fixture;
+- provisional/verified/stable handle primitive state transition fixture;
+
 ## 24. Required Architecture Tests
 
 Architecture tests MUST verify:
@@ -9468,6 +9953,82 @@ influence canonical contract identity.
 ---
 
 ## 26. Alternatives Considered
+
+### 26.38. Use Wrapper Objects as Intern Id Storage
+
+Rejected.
+
+Typed wrapper objects are useful as cold semantic facades, but they are not lawful committed interner storage.
+
+Using wrapper objects in intern tables reintroduces object headers, reference arrays, pointer chasing, interface
+dispatch,
+and GC pressure on the path ADR-0041 is explicitly trying to make primitive and deterministic.
+
+The accepted shape is:
+
+``````text
+cold facade:
+    optional typed view for API / diagnostics / tests
+
+hot substrate:
+    primitive id words
+    primitive HID words
+    primitive offsets / lengths
+    table-level scope/domain/version proof
+``````
+
+### 26.39. Make the Intern Handle Interface Hierarchy the Normative Representation
+
+Rejected.
+
+The provisional / verified / stable state split is normative.
+
+The object hierarchy is not.
+
+A compliant implementation may enforce the split through primitive state bits, package-private seal APIs, generated
+tables, or other architecture-tested mechanisms.
+
+### 26.34. Make Off-Heap Storage Semantic Authority
+
+Rejected.
+
+Off-heap, `MemorySegment`, native allocation, and generated physical layouts are substrate backend implementations.
+
+They may improve locality, alignment, and allocation behavior.
+
+They do not define semantic identity.
+
+The same canonical material must produce the same canonical bytes, HID, collision verification result, and stable intern
+id under every compliant backend.
+
+### 26.35. Require Heap Arrays for V1 Intern Tables
+
+Rejected.
+
+Heap primitive arrays are a portable baseline, but they are not the only lawful v1 substrate.
+
+A v1 high-performance mechanical profile may use an aligned off-heap or `MemorySegment` backend if it proves alignment,
+lifecycle safety, and cross-backend equivalence.
+
+### 26.36. Treat Small-Inline Mixed Branching as the Default
+
+Rejected.
+
+Mixed inline/external branching can cause branch-thrashing on some workloads.
+
+The default high-performance direction is segregated tables or preclassified ranges.
+
+Mixed branching is lawful only when selected by resolved physical policy and benchmark evidence.
+
+### 26.37. Repair SCC Two-Phase Size Mismatch by Resizing or Patching Offsets
+
+Rejected.
+
+A measure/write mismatch means the size-only pass and materialization pass are not equivalent under the canonical
+encoder
+law.
+
+The SCC seal must fail closed before publication.
 
 ### 26.1. Use JVM `hashCode()`
 
@@ -9965,6 +10526,12 @@ Canonical encoding is deterministic and observation-independent, not stateless.
 HID values are compact candidate descriptors; equality requires verification, and digest-suite domain separation is
 canonical byte protocol material. BLAKE3 is the initial ratified suite implementation, not the semantic identity
 contract.
+
+Physical substrate backends may improve locality and alignment, but they are not semantic identity authority; SCC
+two-phase sizing must prove exact measure/write equivalence before publication.
+
+Intern id and handle wrappers are cold facades only; committed interning state is primitive substrate plus table-level
+proof.
 
 `DigestDomainSeparationPayloadV1` is a fixed 56-byte initialized canonical protocol payload; non-applicable axes and
 reserved bytes are zero-filled, never omitted or left stale.
