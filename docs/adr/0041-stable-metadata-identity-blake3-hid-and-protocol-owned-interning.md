@@ -31,6 +31,7 @@ Proposed
 ---
 
 - ADR-0042: Mechanical Sympathy, Primitive Lifecycle, and Async Ownership Governance
+- ADR-0043: Contract Graph Canonicalization, Sealed Structural References, and Incremental Identity Derivation
 
 ## 1. Context
 
@@ -370,7 +371,15 @@ This ADR defines:
 - planning consumer law;
 - L2 consumer law;
 - golden vector obligations;
-- enforcement rules.
+- integration boundary with ADR-0043 for structural/contextual contract graph identity.
+
+This ADR does not define the full contract graph ontology, contract fact taxonomy, software-contract state machine
+model,
+DTO/boundary contract model, governance contract vocabulary, or incremental contract-query dependency model.
+
+Those surfaces are intentionally left to the forthcoming top-level contract definition document and ADR-0043.
+
+ADR-0041 owns the digest/HID/interner substrate used by those surfaces after they are ratified.
 
 This ADR does not require every physical optimization to land in the first implementation patch.
 
@@ -1058,21 +1067,31 @@ A digest is not semantic equality authority by itself.
 
 HID means **Hashed Identity Descriptor**.
 
-A HID is a domain-separated compact identity descriptor derived from canonical bytes, parent identity, local selector
-material, or equivalent canonical material under this ADR.
+A HID is a domain-separated compact identity descriptor derived under an active digest suite.
 
-HID may be used for:
+The term HID has four distinct uses in this ADR:
 
-- primitive membership;
-- routing;
-- table addressing;
-- deterministic ordering acceleration;
-- grouping collision candidates;
-- entropy derivation;
-- deterministic materialization;
-- stable intern preclassification.
+| Term           | Meaning                                                                     | Authority                            |
+|----------------|-----------------------------------------------------------------------------|--------------------------------------|
+| HID descriptor | Fixed-width primitive digest-derived descriptor bytes or words              | Candidate identity only              |
+| HID width      | Ratified width family such as `HID64`, `HID128`, `HID256`                   | Storage/probe shape                  |
+| HID derivation | Protocol operation that produces a HID descriptor                           | Derivation law                       |
+| Contextual HID | HID derived from parent/context material and sealed child identity material | Context-sensitive candidate identity |
 
-HID MUST NOT be used as final semantic equality authority without collision verification.
+A HID is not semantic equality authority.
+
+A HID match means:
+
+```text
+candidate match
+-> verification ladder required
+```
+
+It does not mean:
+
+```text
+semantic equality accepted
+```
 
 ### 5.5. Stable Intern Id
 
@@ -1482,6 +1501,9 @@ class ResolvedMetadataIdentityPolicy private constructor(
      */
     val maxCanonicalMessageNestingDepth: Int,
     val maxCanonicalDecoderFrameCount: Int,
+    val maxRatifiedTag32: Int,
+    val maxGeneratedDecoderTableEntries: Int,
+    val maxGeneratedDecoderTableBytes: Int,
     val maxCanonicalObjectNestingDepth: Int,
     val maxCanonicalObjectFieldCount: Int,
     val maxCanonicalObjectReferenceCount: Int,
@@ -1559,6 +1581,9 @@ defaultInternHidWidthBits                      = 128
 routeHidWidthBits                              = 64
 maxCanonicalMessageNestingDepth                = 64
 maxCanonicalDecoderFrameCount                  = 1024
+maxRatifiedTag32                               = 65535
+maxGeneratedDecoderTableEntries                = 65536
+maxGeneratedDecoderTableBytes                  = 512 KiB
 maxCanonicalObjectNestingDepth                 = 64
 maxCanonicalObjectFieldCount                   = 1024
 maxCanonicalObjectReferenceCount               = 4096
@@ -4303,8 +4328,10 @@ ADR-0042.
 
 Canonical tag decoding MUST be table-driven or switch-table-friendly.
 
-Field tags SHOULD be dense enough for direct table indexing or jump-table-like lowering where the target runtime can
+Field tags MAY be dense enough for direct table indexing or jump-table-like lowering where the target runtime can
 support it.
+
+However, dense dispatch is lawful only after tag bounds validation.
 
 The hot successful decode path SHOULD avoid unpredictable chained semantic `if/else` dispatch.
 
@@ -4319,8 +4346,8 @@ Forbidden on the hot decode path:
 
 Allowed:
 
-- dense numeric tag indexing;
-- generated decoder tables;
+- bounded dense numeric tag indexing;
+- generated decoder tables with explicit tag upper bounds;
 - `tableswitch` / `lookupswitch`-friendly dispatch;
 - bit-mask extraction of wire type, field family, criticality, and fast flags;
 - fail-closed validation branches for unknown tags, invalid wire types, bounds violations, or version mismatch.
@@ -4331,11 +4358,16 @@ A validation branch is lawful when it protects:
 
 - bounds safety;
 - unknown field rejection;
+- sparse tag upper-bound rejection fixture;
+- dense decoder table out-of-range tag rejection fixture;
+- `tag32 = Int.MAX_VALUE` fail-closed fixture;
+- generated decoder table maximum-size fixture;
 - critical field presence;
 - schema compatibility;
 - canonical ordering validation;
 - duplicate field rejection;
 - integer overflow rejection;
+- sparse-tag / out-of-range tag rejection;
 - or malformed UTF-8 / surrogate defense.
 
 ### 8.11.1. Unknown Tag Default-Reject and Ratified Skip Law
@@ -4381,7 +4413,81 @@ known-skippable future field
 -> continue decoding under declared compatibility class
 ``````
 
-### 8.11.1. Message Nesting Depth Law
+### 8.11.2. Sparse Tag Bounds and Dense Table Admission Law
+
+Dense numeric tag indexing is an optimization surface.
+
+It is not permission to allocate or index a table from an unbounded attacker-controlled tag value.
+
+Every decoder schema MUST define:
+
+- `maxRatifiedTag32`;
+- ratified tag count;
+- dense table length where dense dispatch is used;
+- unknown-tag policy;
+- and maximum generated decoder table size.
+
+Before any direct table indexing, generated-table lookup, jump-table dispatch, or field-family extraction that assumes a
+bounded tag domain, the decoder MUST prove:
+
+``````text
+tag32 <= maxRatifiedTag32
+``````
+
+and, when dense table indexing is used:
+
+``````text
+tag32 < denseDecoderTableLength
+``````
+
+If either check fails, decoding MUST fail closed before table indexing.
+
+Forbidden shape:
+
+``````text
+tag32 = attacker input
+-> decoderTable[tag32]
+``````
+
+Forbidden shape:
+
+``````text
+tag32 = 2_147_483_647
+-> allocate table with length tag32 + 1
+``````
+
+Lawful shape:
+
+``````text
+tag32 = read fixed-width tag
+-> checked tag upper bound
+-> checked dense table bound where applicable
+-> table dispatch or fail closed
+``````
+
+Generated decoder tables MUST be produced from the ratified schema.
+
+They MUST NOT be dynamically resized to admit an unknown tag.
+
+They MUST NOT allocate proportional to the largest tag observed in the payload.
+
+If a schema uses sparse tag ids, the decoder MUST use a bounded generated lookup shape such as:
+
+- ratified sorted tag table with bounded binary/search strategy;
+- generated perfect-hash-like table with bounded size;
+- `lookupswitch`-friendly dispatch;
+- or another ratified bounded dispatch strategy.
+
+A released implementation MUST provide golden vectors for:
+
+- `tag32 = maxRatifiedTag32`;
+- `tag32 = maxRatifiedTag32 + 1`;
+- `tag32 = denseDecoderTableLength`;
+- `tag32 = Int.MAX_VALUE`;
+- unknown sparse tag fail-closed;
+- unknown skippable future tag where explicitly ratified.
+
+### 8.11.3. Message Nesting Depth Law
 
 `WIRE_TYPE_MESSAGE` decoding MUST be bounded by a deterministic structural depth counter.
 
@@ -4410,6 +4516,76 @@ A decoder MUST also fail closed if the explicit decode-frame stack would exceed 
 Malformed nested messages MUST NOT surface as ordinary JVM `StackOverflowError`.
 
 The ordinary policy outcome is structured fail-closed rejection.
+
+### 8.11.4. Branch-Bounded Text Validation Law
+
+Malformed UTF-8, invalid surrogate material, overlong encodings, and invalid continuation-byte sequences are identity
+decoder safety boundaries.
+
+They MUST be rejected before a string becomes canonical identity material.
+
+However, text validation MUST NOT introduce an avoidable unpredictable branch per byte on the ordinary hot path.
+
+A compliant implementation SHOULD use a branch-bounded validation shape, such as:
+
+- ASCII fast-path block validation;
+- bitwise invalid-state accumulation;
+- table-driven byte-class validation;
+- chunked validation;
+- platform vector / SIMD validation where available and evidence-backed;
+- or another ratified branch-bounded validator.
+
+The constitutional requirement is deterministic accept/reject equivalence.
+
+The implementation MAY choose scalar, table-driven, or vectorized validation as long as:
+
+- the same byte sequence produces the same accept/reject result on every supported platform;
+- malformed input fails closed;
+- validation does not depend on locale, JVM default charset, platform decoder replacement behavior, or normalization
+  side
+  effects;
+- validation remains bounded by resolved byte caps;
+- and benchmark evidence exists for any hot-path acceleration claim.
+
+Forbidden ordinary hot-path shape:
+
+``````text
+for each byte:
+    unpredictable semantic branch
+    update decoder state through backend charset replacement behavior
+``````
+
+Forbidden correctness shortcut:
+
+``````text
+platform string decoder accepts/replaces malformed bytes
+-> use produced String as canonical material
+``````
+
+Allowed direction:
+
+``````text
+canonical UTF-8 bytes
+-> branch-bounded validation
+-> explicit fail-closed invalid state
+-> ratified immutable String boundary only after validation
+``````
+
+Branchless or vectorized validation is an allowed implementation strategy.
+
+It is not a license to remove validation.
+
+A released implementation MUST provide golden vectors for:
+
+- ASCII-only text;
+- mixed ASCII and multibyte UTF-8;
+- invalid leading byte;
+- invalid continuation byte;
+- overlong encoding;
+- surrogate material where prohibited;
+- truncated multibyte sequence;
+- maximal accepted valid scalar sequence where ratified;
+- and branch-bounded validator equivalence with the canonical scalar validation oracle.
 
 ### 8.12. Tag Bit Partitioning Law
 
@@ -4519,9 +4695,32 @@ schema-aware stripping removes redundant descriptive metadata without relying on
 
 The optimization target is semantic redundancy removal, not generic compression.
 
-### 8.15. Stateless Canonical Encoding Law
+### 8.15. Deterministic Canonical Encoding and Observation-Independence Law
 
-Canonical identity encoding MUST be stateless with respect to:
+Canonical identity encoding is not observation-independent.
+
+It is explicitly stateful where the state is protocol-owned, metered, deterministic, and visible to the encoding law.
+
+A compliant encoder MAY use explicit deterministic protocol state such as:
+
+- encoder cursor;
+- bounded encoder frame stack;
+- field presence bitmap;
+- canonical byte offset;
+- arena write offset;
+- SCC-local deterministic ordinal state;
+- budget ledger;
+- diagnostic meter;
+- immutable protocol tables;
+- sealed intern tables;
+- precomputed canonical-base registries;
+- fixed schema descriptors;
+- resolved metadata identity policy;
+- deterministic version-bundle compatibility data.
+
+However, canonical identity output MUST be independent from non-authoritative observation state.
+
+Canonical identity encoding MUST NOT depend on:
 
 - acquisition order;
 - backend traversal order;
@@ -4540,7 +4739,8 @@ An encoder MAY use:
 - precomputed canonical-base registries;
 - fixed schema descriptors;
 - resolved metadata identity policy;
-- deterministic version-bundle compatibility data.
+- deterministic version-bundle compatibility data;
+- explicit bounded encoder state ratified by this ADR or by a domain-specific canonical encoding policy.
 
 An encoder MUST NOT use:
 
@@ -4551,12 +4751,17 @@ An encoder MUST NOT use:
 - thread-local previous values;
 - backend enumeration neighbors;
 - acquisition-batch neighbors;
-- compression bases chosen by observed frequency.
+- compression bases chosen by observed frequency;
+- hidden environment state;
+- ambient scheduler state;
+- callback completion state;
+- or cache hit/miss history.
 
 Allowed shape:
 
 ``````text
 canonical material
+-> explicit protocol-owned encoder state
 -> domain/schema/version-ratified encoding rule
 -> canonical bytes
 ``````
@@ -4569,9 +4774,35 @@ canonical material
 -> emit shorter run-order-dependent delta
 ``````
 
+Forbidden shape:
+
+``````text
+canonical material
+-> observe current run frequency distribution
+-> choose compression base
+-> canonical bytes depend on current run history
+``````
+
+The rule is not:
+
+``````text
+no state
+``````
+
+The rule is:
+
+``````text
+explicit deterministic protocol state is allowed
+ambient observation state is forbidden
+``````
+
 Reason:
 
-Order-sensitive compression is poison for deterministic identity.
+Order-sensitive compression, hidden observation state, and current-run adaptation are poison for deterministic identity.
+
+Changing hidden observation state MUST NOT change canonical bytes, HID derivation, collision verification, stable intern
+id
+assignment, canonical ordering, or semantic equality.
 
 ### 8.16. Bit-Packed Field Law
 
@@ -4665,21 +4896,95 @@ representation.
 
 ---
 
-## 9. BLAKE3 Suite Law
+## 9. Metadata Identity Digest Suite Law
 
-### 9.1. Default Suite
+### 9.1. Digest Suite Contract and Initial Ratified Suite
 
-Kontrakt standardizes on the BLAKE3 family for metadata identity digest and derivation surfaces.
+Kontrakt core does not make BLAKE3 a semantic domain contract.
 
-The initial suite is:
+Kontrakt core defines a deterministic metadata identity digest suite contract.
+
+A digest suite is an adapter-implemented, protocol-ratified mechanism that maps:
+
+``````text
+canonical identity bytes
++ canonical domain separation payload
++ suite id / version
++ requested output width
+-> deterministic digest / HID descriptor bytes
+``````
+
+The initial ratified suite is:
 
 ``````text
 algorithmFamily = BLAKE3
 algorithmId = KONTRAKT_BLAKE3_METADATA_IDENTITY
 algorithmVersion = 1
+hashSuite16 = 1
+hidDerivationVersion16 = 1
 ``````
 
-This suite governs:
+BLAKE3 is the v1 ratified suite implementation.
+
+BLAKE3 is not the semantic identity contract itself.
+
+The contract is the digest-suite law:
+
+``````text
+same canonical identity bytes
++ same canonical domain separation payload
++ same suite id / version
++ same requested output width
+-> same deterministic digest / HID descriptor bytes
+``````
+
+Digest algorithms are replaceable only through versioned suite ratification.
+
+Changing the digest suite changes protocol material.
+
+A later ADR may ratify another suite if it defines:
+
+- suite id;
+- algorithm id;
+- algorithm version;
+- derivation version;
+- canonical domain separation payload compatibility;
+- output width and split rules;
+- migration behavior;
+- coexistence behavior;
+- downgrade rejection;
+- cache invalidation;
+- stable intern id treatment;
+- and golden vectors.
+
+Forbidden shape:
+
+``````text
+same hashSuite16
+-> different digest algorithm
+-> different HID output
+``````
+
+Lawful shape:
+
+``````text
+hashSuite16 = 1
+-> BLAKE3 v1
+
+hashSuite16 = 2
+-> future ratified digest suite
+``````
+
+Suite mismatch is not ordinary inequality.
+
+Suite mismatch MUST be classified as one of:
+
+- cache miss with suite reason;
+- compatibility rejection;
+- protocol migration boundary;
+- or protocol violation depending on the boundary.
+
+This suite contract governs:
 
 - canonical metadata digest;
 - HID derivation;
@@ -4691,42 +4996,169 @@ This suite governs:
 
 ### 9.2. Adapter Boundary
 
-Adapters do not become BLAKE3 authorities.
+Adapters do not become digest-suite authorities.
 
 Backends may optimize locally, but planning-visible or frozen-visible digest material must be semantically equivalent to
-this ADR's BLAKE3 suite.
+the active ADR-ratified digest suite.
+
+The adapter implements the selected suite.
+
+The protocol selects and versions the suite.
 
 Forbidden:
 
 - backend-specific hashing as semantic identity;
 - JVM `hashCode()` as digest input;
-- backend manifest digest as Kontrakt digest unless re-verified through this ADR;
-- classloader-stable hash as Kontrakt identity.
+- backend manifest digest as Kontrakt digest unless re-verified through the active digest suite contract;
+- classloader-stable hash as Kontrakt identity;
+- swapping the digest algorithm without changing suite id/version;
+- treating a local hardware-accelerated digest path as protocol authority without golden-vector equivalence.
 
-### 9.3. Domain Separation
+### 9.3. Canonical Domain Separation Payload Law
 
-Every BLAKE3 invocation used for identity must include domain separation.
+Every digest invocation used for identity MUST include domain separation.
 
-Domain separation MUST include:
+Domain separation is byte-level protocol material.
 
-- Kontrakt protocol marker;
-- identity domain id;
-- identity domain version;
-- canonical encoding version;
-- hash algorithm suite id/version;
-- relevant schema version;
-- relevant semantic version tuple.
+It MUST NOT be assembled from:
+
+- display strings;
+- enum ordinals;
+- declaration order;
+- service-loader order;
+- map iteration order;
+- classpath order;
+- source traversal order;
+- or delimiter-joined text.
+
+The canonical domain separation payload for HID derivation is a fixed-width 56-byte canonical protocol payload:
+
+``````text
+DigestDomainSeparationPayloadV1
+
+offset  size  field
+0       4     protocolMarker32
+4       4     identityDomainId32
+8       4     identityDomainVersion32
+12      4     canonicalEncodingVersion32
+16      2     hashSuite16
+18      2     hidDerivationVersion16
+20      4     domainSchemaVersion32
+24      8     versionBundleFingerprintHigh64
+32      8     versionBundleFingerprintLow64
+40      4     canonicalEncodingPolicyVersion32
+44      4     canonicalOrderingAlgorithmVersion32
+48      4     typeIdentityAlgorithmVersion32
+52      4     reserved32
+``````
+
+Physical encoding:
+
+``````text
+protocolMarker32                       : u32 little-endian
+identityDomainId32                     : u32 little-endian
+identityDomainVersion32                : u32 little-endian
+canonicalEncodingVersion32             : u32 little-endian
+hashSuite16                            : u16 little-endian
+hidDerivationVersion16                 : u16 little-endian
+domainSchemaVersion32                  : u32 little-endian
+versionBundleFingerprintHigh64         : u64 little-endian
+versionBundleFingerprintLow64          : u64 little-endian
+canonicalEncodingPolicyVersion32       : u32 little-endian
+canonicalOrderingAlgorithmVersion32    : u32 little-endian, zero when not applicable
+typeIdentityAlgorithmVersion32         : u32 little-endian, zero when not applicable
+reserved32                             : u32 little-endian, MUST be zero
+``````
+
+The byte length of `DigestDomainSeparationPayloadV1` is exactly:
+
+``````text
+56 bytes
+``````
+
+All 56 bytes are digest-suite input.
+
+No field in `DigestDomainSeparationPayloadV1` may be omitted.
+
+The phrase `when not applicable` means:
+
+``````text
+write the fixed-width field with value zero
+``````
+
+It does not mean:
+
+``````text
+omit the field
+``````
+
+Length-shifting the payload by omitting non-applicable axes is forbidden.
+
+For `hashSuite16 = 1`, this payload is the input domain-separation payload for the BLAKE3 v1 suite.
+
+For a future digest suite, the same payload remains the default unless the suite migration ADR ratifies a different
+payload version.
+
+Rules:
+
+- `protocolMarker32` MUST be the ADR-ratified Kontrakt protocol marker;
+- `identityDomainId32` MUST be present even if the same value appears in `CanonicalEnvelopeHeader`;
+- `versionBundleFingerprintHigh64` and `versionBundleFingerprintLow64` MUST be derived by Section 8.9.3;
+- every integer field MUST use fixed-width little-endian encoding;
+- `canonicalOrderingAlgorithmVersion32` MUST be physically present and MUST be zero when not applicable;
+- `typeIdentityAlgorithmVersion32` MUST be physically present and MUST be zero when not applicable;
+- `reserved32` MUST be physically present and MUST be zero;
+- every byte of the 56-byte payload MUST be initialized before hashing;
+- a builder MAY zero-fill the whole 56-byte payload before writing fields, or explicitly write every field including
+  zero-valued fields;
+- hashing a reused scratch range that contains uninitialized or stale bytes is forbidden;
+- hashing more or fewer than 56 bytes for `DigestDomainSeparationPayloadV1` is forbidden;
+- delimiter-free concatenation is forbidden;
+- text domain labels are forbidden as digest input unless a future ADR ratifies a canonical text-domain encoding.
+
+The 56-byte length is the canonical digest input length for this payload version.
+
+It is not derived from JVM object headers, JVM array base offsets, compressed-oops layout, GC layout, cache-line
+subtraction, or any other runtime object-layout assumption.
+
+The 64-bit fingerprint words are placed at 8-byte-relative offsets within the canonical payload.
+
+This is a protocol-relative offset property.
+
+It does not, by itself, prove physical memory alignment on the JVM heap.
+
+A physical implementation MAY store this payload inside a wider cache-line-oriented slot, such as a 64-byte or 128-byte
+stride slot, when a substrate backend can prove the corresponding alignment and lifecycle properties.
+
+Unless a future digest-suite version ratifies a different payload length, only the canonical 56 bytes are digest-suite
+input.
+
+Physical padding in a wider slot is physical storage material.
+
+It is not canonical identity material.
+
+A portable JVM heap implementation MUST NOT claim exact cache-line placement or physical alignment merely because this
+payload's canonical length is 56 bytes or because an implementation stores it in a wider physical slot.
+
+Exact physical cache-line alignment claims remain governed by ADR-0042 and require implementation evidence.
 
 Different domains MUST produce different outputs even for identical payload bytes.
 
-### 9.4. Keyed Derivation vs Plain Digest
+The terms `relevant schema version` and `relevant semantic version tuple` are not open-ended phrases.
+
+For ADR-0041, their material is the ratified `CanonicalIdentityVersionBundle` and the
+`VersionBundleFingerprint128` defined in Section 8.9.3.
+
+A domain-specific extension may add a version axis only through the axis registry and golden vectors.
+
+### 9.4. Derivation Modes, Plain Digest, and Fixed-Width Output Law
 
 Kontrakt distinguishes:
 
 - plain digest over canonical bytes;
-- keyed derivation for HID/entropy surfaces;
+- keyed or context-derived derivation for HID/entropy surfaces;
 - parent-child hierarchical derivation;
-- XOF expansion where explicitly ratified.
+- fixed-width extensible output where the active suite ratifies it.
 
 Plain digest is suitable for:
 
@@ -4734,7 +5166,7 @@ Plain digest is suitable for:
 - collision candidate grouping;
 - manifest evidence.
 
-Keyed derivation is required for:
+Suite-ratified derivation is required for:
 
 - HID;
 - parent-child entropy derivation;
@@ -4742,46 +5174,120 @@ Keyed derivation is required for:
 - local selector derivation;
 - domain-separated primitive routing identity where a short width is emitted.
 
-### 9.5. Width Law
+For `hashSuite16 = 1`, the initial ratified suite uses BLAKE3 digest / derive / XOF semantics as specified by this ADR.
 
-BLAKE3 output width must be explicit.
+For future suites, equivalent derivation surfaces MUST be defined by suite id/version and golden vectors.
 
-Ratified widths:
+Extensible output is allowed only as fixed-width output material.
+
+A lawful extensible-output use MUST define:
+
+- purpose;
+- derivation context string or context id;
+- input payload law;
+- output offset, normally zero;
+- output length in bits and bytes;
+- width-specific split rule;
+- truncation rule;
+- suite id/version;
+- and golden vectors.
+
+Open-ended extensible output is forbidden.
+
+Forbidden shape:
+
+``````text
+derive digest output stream
+-> take arbitrary later bytes depending on runtime need
+``````
+
+Lawful shape:
+
+``````text
+domain-separated input
+-> suite-ratified digest/derive operation
+-> first N ratified bytes
+-> fixed-width primitive words
+``````
+
+### 9.5. Width Law and Candidate-Descriptor Authority Boundary
+
+Digest output width must be explicit.
+
+Ratified HID descriptor widths:
 
 ``````text
 HID64   = 64-bit compact routing / table acceleration only
-HID128  = 128-bit ordinary compact identity descriptor
-HID256  = 256-bit strong compact identity descriptor / digest-equivalent descriptor
+HID128  = 128-bit ordinary compact candidate descriptor
+HID256  = 256-bit strong compact candidate descriptor / digest-equivalent descriptor
 ``````
 
 Rules:
 
 - `HID64` is never semantic equality authority;
-- `HID128` is not semantic equality authority without verification;
-- `HID256` is still not semantic equality authority without verification unless a later ADR explicitly ratifies
-  digest-only equality for a non-semantic surface;
+- `HID128` is never semantic equality authority by itself;
+- `HID256` is still not semantic equality authority by itself unless a later ADR explicitly ratifies digest-only
+  equality
+  for a non-semantic surface;
 - route64 may be derived from HID material but remains routing-only;
-- width truncation must be deterministic and version-bound.
+- width truncation must be deterministic and version-bound;
+- width split into primitive words MUST be defined by the active suite law.
 
-### 9.6. HID Width Selection Law
+`HID128` being the default intern-table compact descriptor does not make it equality authority.
+
+It means:
+
+``````text
+HID128 match
+-> candidate lookup hit
+-> verification ladder required
+``````
+
+It does not mean:
+
+``````text
+HID128 match
+-> semantic equality accepted
+``````
+
+An implementation MUST NOT publish, intern, deduplicate, merge, resume, or report semantic equality solely from HID
+equality.
+
+### 9.6. HID Width Selection and Collision Probability Boundary Law
 
 Protocol-owned intern membership MUST use `HID128` or wider by default.
 
-`HID64` is routing-only unless a domain-specific cardinality proof allows a narrower compact identity for a non-semantic
-surface.
+`HID64` is routing-only unless a domain-specific cardinality proof allows a narrower compact descriptor for a
+non-semantic surface.
 
-Approximate collision probability must be reasoned from cardinality:
+Approximate collision probability MAY be reasoned from the birthday-bound approximation:
 
 ``````text
+p ≈ 1 - exp(-n(n - 1) / 2^(b + 1))
+
+For small p:
+
 p ≈ n(n - 1) / 2^(b + 1)
+  ≈ n^2 / 2^(b + 1)
 
 where:
     n = expected candidate count inside the identity scope
-    b = compact identity width in bits
+    b = compact descriptor width in bits
     p = approximate birthday-bound collision probability
 ``````
 
-Required safety condition:
+This probability model assumes uniform cryptographic output.
+
+It is a sizing aid, not an equality proof.
+
+It MUST NOT be used to remove exact verification.
+
+It MUST NOT be used to justify `HID64` semantic equality.
+
+It MUST NOT be used to ignore adversarial input, schema-correlated clusters, exact clone groups, or collision budget
+exhaustion.
+
+Required sizing condition:
 
 ``````text
 Choose b such that:
@@ -4798,8 +5304,8 @@ b >= ceil(log2(n(n - 1) / p_target)) - 1
 
 A released implementation MAY choose a wider ratified width than the minimum bound.
 
-The conservative default remains `HID128` for ordinary intern-table compact identity, even when the calculated minimum
-would be smaller.
+The conservative default remains `HID128` for ordinary intern-table compact candidate descriptors, even when the
+calculated minimum would be smaller.
 
 Default interpretation:
 
@@ -4808,7 +5314,7 @@ HID64:
     route / shard / bucket index only
 
 HID128:
-    default intern-table compact identity
+    default intern-table compact candidate descriptor
 
 HID256:
     strong artifact digest, persistent summary, or cold verification surface
@@ -4819,24 +5325,45 @@ A domain that uses `HID64` for anything beyond routing must document:
 - expected maximum cardinality;
 - target collision probability;
 - collision handling path;
-- why `HID128` is unnecessary for that surface.
+- why `HID128` is unnecessary for that surface;
+- and why the surface is non-semantic.
 
-### 9.7. BLAKE3 Seal-Time Derivation and Hot Projection Law
+Every HID width, including `HID128` and `HID256`, MUST define a verification path.
 
-BLAKE3 remains the protocol-owned metadata identity derivation root.
+### 9.7. Seal / Materialization Boundary and Hot Projection Law
 
-ADR-0041 does not replace BLAKE3 with non-cryptographic hashes for canonical identity, HID derivation, persistent
-summaries, replay manifests, or future query fingerprints.
+The active metadata identity digest suite remains the protocol-owned metadata identity derivation root.
 
-However, hot lookup paths MUST NOT repeatedly re-encode full canonical material and re-run full BLAKE3 derivation for
+ADR-0041 does not replace the active suite with non-cryptographic hashes for canonical identity, HID derivation,
+persistent summaries, replay manifests, or future query fingerprints.
+
+However, hot lookup paths MUST NOT repeatedly re-encode full canonical material and re-run full digest derivation for
 every shard, lane, bucket, or probe decision.
+
+A seal boundary is the deterministic point at which canonical material has been fully validated and canonical bytes are
+closed for the relevant identity unit.
+
+A materialization boundary is the deterministic point at which a sealed identity unit is converted into published or
+probe-visible primitive metadata.
+
+For ADR-0041, a seal or materialization boundary MUST occur only after:
+
+- canonical material is complete;
+- observation-independent canonical encoding has selected the byte representation;
+- version-bundle material is resolved;
+- domain separation payload is fixed;
+- canonical bytes are immutable for that identity unit;
+- resolved policy budgets have admitted the unit;
+- and no future field, child, SCC member, or unordered collection element can change the canonical bytes without
+  creating a
+  new identity unit or a new publication epoch.
 
 The lawful shape is:
 
 ``````text
 canonical material
 -> canonical bytes
--> BLAKE3 digest / HID derivation at seal or materialization boundary
+-> active-suite digest / HID derivation at seal or materialization boundary
 -> deterministic primitive projections
 -> route64 / shard bits / inline verifier prefix / probe metadata
 -> hot lookup reads the projections
@@ -4847,14 +5374,27 @@ The unlawful shape is:
 ``````text
 every hot route/probe operation
 -> re-create canonical bytes
--> re-run full BLAKE3 over the full payload
+-> re-run full digest over the full payload
 -> truncate again for route/probe
 ``````
+
+Projection invalidation law:
+
+- projections are immutable products of a sealed canonical byte unit;
+- a canonical material change MUST create a new sealed unit, new projection tuple, or new publication epoch;
+- stale projections MUST NOT remain reachable from newly published identity material;
+- mutable in-place canonical material changes are forbidden after seal;
+- route/probe tables MUST carry enough version, epoch, or handle material to reject stale projections;
+- rebuilding a table from sealed identity material MUST reproduce the same projection tuple.
 
 Non-cryptographic hashes such as Murmur3 or xxHash MAY be used only as explicitly non-semantic physical hints over
 already-ratified or already-verified material.
 
-They MUST NOT become:
+`already-verified material` means material that has passed the owning domain's equality verification path for the
+current
+operation and cannot change semantic equality if the hint collides.
+
+Non-cryptographic hashes MUST NOT become:
 
 - HID replacement;
 - persistent identity;
@@ -4862,14 +5402,110 @@ They MUST NOT become:
 - query fingerprint authority;
 - stable intern id assignment authority;
 - PlanCacheKey equality authority;
-- or canonical material equality authority.
+- canonical material equality authority;
+- stale-projection freshness authority;
+- or publication authority.
 
-A future domain may migrate a physical route projection from a non-cryptographic route hash to a BLAKE3-derived route
-projection only through a versioned route-derivation amendment, golden vectors, and a migration boundary.
+A future domain may migrate a physical route projection from a non-cryptographic route hash to an active-suite-derived
+route projection only through a versioned route-derivation amendment, golden vectors, and a migration boundary.
 
----
+### 9.8. Required Digest Suite Golden Vector Law
 
-## 10. HID Law
+Digest/HID law is not releaseable without golden vectors.
+
+A released implementation MUST provide a golden vector suite under the protocol golden-vector test surface.
+
+Recommended path:
+
+``````text
+src/test/resources/kontrakt/golden/adr-0041/digest-suite/
+``````
+
+The suite MUST include known inputs and expected outputs for the initial BLAKE3 v1 suite and for every future ratified
+suite:
+
+- empty canonical byte payload;
+- one minimal TypeReference canonical payload;
+- one RawFactRecord canonical payload;
+- one ActiveMemberKey canonical payload;
+- one RuntimeBinding identity payload;
+- one nested-message payload;
+- one unordered collection payload with shuffled input order;
+- one version-bundle fingerprint input;
+- one domain-separation payload;
+- `HID64` derivation;
+- `HID128` derivation;
+- `HID256` derivation;
+- route64 derivation from HID material;
+- inline verifier prefix derivation;
+- unknown domain id fail-closed;
+- domain id changed with identical canonical bytes;
+- schema version changed with identical canonical bytes;
+- canonical encoding version changed with identical canonical material;
+- hash suite version changed;
+- HID derivation version changed;
+- fixed-width extensible output fixture for every ratified width.
+
+Each vector entry MUST record:
+
+- vector id;
+- ADR version;
+- identity domain id;
+- domain schema version;
+- canonical encoding version;
+- hash suite id/version;
+- algorithm id/version;
+- HID derivation version;
+- version-bundle fingerprint high/low;
+- exact canonical input bytes as hex;
+- domain separation payload bytes as hex;
+- derivation context id/string;
+- requested output width;
+- expected output bytes as hex;
+- expected split into primitive words where applicable.
+
+Golden vectors are protocol tests.
+
+A reference implementation may generate them, but released implementations MUST treat the checked-in vector bytes as the
+compatibility authority.
+
+### 9.9. Digest Suite Migration and Algorithm Replacement Law
+
+Digest suite migration is a compatibility boundary.
+
+A future algorithm, suite id, context string, derivation version, or width split change MUST define:
+
+- old suite id/version;
+- new suite id/version;
+- old algorithm id/version;
+- new algorithm id/version;
+- migration trigger;
+- coexistence period if any;
+- cache invalidation rule;
+- stable intern id treatment;
+- published image compatibility rule;
+- golden vectors for old and new suite;
+- downgrade rejection rule;
+- and replay / manifest compatibility behavior.
+
+HID material from two different digest suites MUST NOT be compared as ordinary equality candidates without suite
+classification.
+
+Suite mismatch is:
+
+- cache miss with suite reason;
+- compatibility rejection;
+- or protocol violation depending on boundary.
+
+It is not silent inequality.
+
+BLAKE3 v1 may be replaced only through this law.
+
+The ability to replace the algorithm is part of the contract.
+
+The replacement itself is not an adapter-local decision.
+
+## 10. HID Descriptor, Width, and Authority Law
 
 ### 10.1. Definition
 
@@ -4923,7 +5559,45 @@ The exact API may differ.
 
 The invariant is normative.
 
-Hot-path HID material MUST be represented by fixed-width primitive words, not by `ByteArray` object references.
+The illustrative `HashedIdentityDescriptor` interface shape is a cold API, diagnostic, test, or boundary representation.
+
+It is not the required physical representation for intern-table, route-table, or probe hot paths.
+
+Hot-path HID material MUST be represented by fixed-width primitive words, not by `ByteArray` object references and not
+by
+interface-dispatched descriptor objects.
+
+A hot intern-table or route-table implementation MUST NOT require ordinary probes to call:
+
+``````text
+HashedIdentityDescriptor.equals(...)
+HashedIdentityDescriptor.hashCode()
+virtual/interface property dispatch
+sealed-interface polymorphic dispatch
+per-candidate descriptor object allocation
+``````
+
+The ordinary hot-path shape for HID128 is primitive projection material such as:
+
+``````text
+hidHigh64[]
+hidLow64[]
+identityDomainId32[]
+versionBundleFingerprintHigh64[]
+versionBundleFingerprintLow64[]
+canonicalLength32[]
+inlineVerifierPrefix64/128[] where ratified
+offset/length material for rare exact verification
+``````
+
+or an equivalent primitive substrate representation.
+
+For HID64 and HID256, the same law applies with the ratified primitive word width for that surface.
+
+Cold wrapper objects MAY be materialized after the hot probe path for diagnostics, public reporting, tests, or adapter
+boundary use.
+
+They MUST NOT be the ordinary authority representation used by committed intern/probe structures.
 
 `ByteArray` digest material is allowed only for cold artifact, persistence, or diagnostic surfaces where pointer chasing
 is not part of the ordinary probe path.
@@ -4964,6 +5638,59 @@ Version mismatch is:
 - cache miss with version reason;
 - or protocol violation depending on boundary.
 
+### 10.3.1. Version Mismatch Zero-Allocation Classification Law
+
+A version mismatch is a deterministic classification boundary.
+
+It is not an invitation to allocate exceptions, diagnostic strings, cache records, log events, or cold report material
+on
+the ordinary hot path.
+
+The ordinary HID comparison path MUST classify version mismatch using fixed-width primitive fields and return a bounded
+classification value such as:
+
+``````text
+HID_MISMATCH
+HID_MATCH_REQUIRES_VERIFICATION
+VERSION_MISMATCH_CACHE_MISS
+VERSION_MISMATCH_REHASH_REQUIRED
+VERSION_MISMATCH_REENCODE_REQUIRED
+VERSION_MISMATCH_REINTERN_REQUIRED
+VERSION_MISMATCH_INCOMPATIBLE_FAIL_CLOSED
+VERSION_MISMATCH_PROTOCOL_VIOLATION
+``````
+
+The exact names may differ.
+
+The invariant is normative:
+
+``````text
+hot version mismatch
+-> primitive classification
+-> no heap allocation required
+-> no exception object required
+-> no string concatenation required
+-> no synchronous log I/O required
+-> no cache structure allocation required
+``````
+
+Structured diagnostics MAY be emitted later through a cold, budgeted diagnostic path.
+
+That diagnostic path MUST be sanitized, metered by `maxDiagnosticEvidenceBytes`, and separated from ordinary
+intern-table
+probe execution.
+
+Repeated version mismatch from a stale or malicious adapter MUST be contained by bounded counters, admission policy,
+compatibility classification, or adapter quarantine.
+
+It MUST NOT produce unbounded log spam, exception churn, cache-entry churn, retry storms, or report material allocation.
+
+A cache miss with version reason is allowed only when the miss path is allocation-bounded and governed by resolved
+policy.
+
+A protocol violation may fail the current identity scope closed, but the hot classification step itself remains
+zero-allocation and non-blocking.
+
 ### 10.4. HID Domain Examples
 
 Initial identity domains:
@@ -4997,7 +5724,7 @@ Each domain must define:
 
 ---
 
-## 11. Hierarchical Identity Derivation
+## 11. HID Derivation and Hierarchical Context Law
 
 ### 11.1. Purpose
 
@@ -5034,12 +5761,18 @@ child_material =
     )
 
 child_hid =
-    BLAKE3_KEYED_DERIVE(
+    ACTIVE_DIGEST_SUITE_DERIVE(
+        suite = hashSuite16 / hidDerivationVersion16,
         key   = domain_separated_parent_key,
         input = child_material,
         width = ratified_width
     )
 ``````
+
+For `hashSuite16 = 1`, the active suite uses the BLAKE3 v1 derivation semantics ratified by Section 9.
+
+A future digest suite may replace the derivation algorithm only through versioned suite ratification, golden vectors,
+and migration law.
 
 ### 11.3. Local Selector Tuple
 
@@ -5091,6 +5824,191 @@ If parent semantic identity changes, child HID may change.
 This is expected.
 
 The hierarchy is semantic, not path-only.
+
+### 11.6. Hierarchical Re-Keying and Incremental Derivation Boundary Law
+
+Parent-dependent HID derivation intentionally creates an invalidation boundary.
+
+If parent semantic identity participates in a child HID, then a parent identity change MAY change the child HID.
+
+A compliant implementation MUST NOT keep using an old child HID after a parent identity change merely because the
+child's
+own canonical bytes are unchanged.
+
+However, Kontrakt may avoid unnecessary re-encoding of parent-independent child material.
+
+Lawful incremental shape:
+
+``````text
+child canonical material unchanged
+-> child canonical bytes / local selector bytes already sealed and verified
+-> parent identity changes
+-> derive new parent domain-separated key
+-> re-run active-suite child HID derivation from sealed child material and new parent key
+-> verify version/domain/scope compatibility
+-> publish new child projection only after the identity seal accepts it
+``````
+
+Forbidden incremental shape:
+
+``````text
+parent identity changes
+-> reuse old parent-dependent child HID
+-> treat old HID as still valid
+-> publish without version/scope/parent verification
+``````
+
+Also forbidden:
+
+``````text
+parent identity changes
+-> mutate child HID in place inside a published table
+-> readers observe mixed parent/child epochs
+``````
+
+A derived child HID is a projection over:
+
+- the active digest suite;
+- the parent identity or parent deterministic entropy;
+- the local selector tuple;
+- the child canonical material selected by the owning domain;
+- and the active version bundle.
+
+Therefore, an implementation MAY cache parent-independent child canonical bytes, child local-selector bytes, and sealed
+child-local digest projections when those cached values are version-bound and exact-verification safe.
+
+Such cached material is not semantic equality authority by itself.
+
+It is reusable derivation input only.
+
+The implementation MUST still derive the parent-dependent HID under the current parent key and active version bundle
+before publication.
+
+This optimization is a re-derivation optimization, not a semantic shortcut.
+
+It may reduce work from:
+
+``````text
+re-lower child material
+-> re-encode child canonical bytes
+-> rehash child local material
+-> derive parent-dependent HID
+``````
+
+to:
+
+``````text
+reuse sealed child canonical bytes / child-local projection
+-> derive parent-dependent HID with new parent key
+``````
+
+but it MUST NOT remove:
+
+- parent-version compatibility classification;
+- parent/child domain separation;
+- active suite id/version classification;
+- exact verification where a compact identity match is used;
+- publication epoch integrity;
+- dependency invalidation tracking;
+- or golden-vector equivalence.
+
+A future L2 or incremental-query layer MAY memoize parent-independent child material, but it MUST key that memoization
+by
+all version axes that can change the child canonical bytes or child-local derivation input.
+
+A parent identity change may still require O(number of affected parent-dependent children) projection updates.
+
+ADR-0041 does not promise O(1) invalidation for an entire subtree.
+
+It permits O(1)-per-child re-derivation when sealed parent-independent child material is already available and verified.
+
+Any broader incremental cutoff belongs to the future query/incremental work and must preserve this ADR's identity law.
+
+### 11.7. ADR-0043 Structural/Contextual Graph Identity Bridge
+
+ADR-0041 permits hierarchical derivation to consume sealed parent-independent child identity references.
+
+ADR-0041 does not define the full canonical contract graph.
+
+ADR-0043 owns:
+
+- contract graph unit boundaries;
+- structural identity versus contextual identity semantics;
+- sealed structural identity reference shape;
+- graph interning rules;
+- Merkle-like child-reference encoding;
+- SCC graph identity;
+- incremental dependency invalidation;
+- and future integration with lowered contract facts for state, protocol, data, governance, DTO, boundary, and explicit
+  state-machine contract material.
+
+ADR-0041 owns only the digest/HID/interner laws used by those identities after graph material has been ratified.
+
+A parent or context derivation may consume a child reference only when that child reference represents sealed structural
+identity material.
+
+A sealed structural identity reference means that the child-local material has completed:
+
+``````text
+child-local canonical material
+-> canonical byte encoding
+-> active digest-suite structural descriptor derivation
+-> collision verification
+-> seal
+-> stable reference publication inside an explicit scope
+``````
+
+The lawful ADR-0041 bridge shape is:
+
+``````text
+sealed child structural identity reference
++ parent/context key
++ local selector / edge role / position semantics where ratified
++ version bundle
+-> active-suite contextual descriptor derivation
+-> publication only after compatibility and identity-seal checks
+``````
+
+The forbidden bridge shape is:
+
+``````text
+bare child HID
+-> assume child equality
+-> parent re-keying
+-> publish contextual identity without child seal or compatibility validation
+``````
+
+ADR-0041 therefore allows a future ADR-0043 implementation to avoid re-reading unchanged child canonical bytes when the
+child-local material is already sealed.
+
+This optimization is bounded as:
+
+``````text
+O(1) with respect to the sealed child canonical byte length per child reference
+``````
+
+It is not:
+
+``````text
+O(1) for an entire subtree regardless of affected reference count
+``````
+
+If a parent owns `N` child references, parent/context derivation remains at least proportional to the number of
+parent-visible child references unless ADR-0043 ratifies a stronger dependency summary law.
+
+Any stronger incremental cutoff MUST preserve:
+
+- canonical byte equivalence;
+- digest-suite equivalence;
+- collision verification;
+- version compatibility;
+- publication epoch integrity;
+- dependency invalidation correctness;
+- and golden-vector reproducibility.
+
+Until ADR-0043 and the top-level contract definition document are ratified, ADR-0041 treats lowered contract graph
+material as reserved integration material.
+
 
 ---
 
@@ -7098,6 +8016,13 @@ metamodel.domain.identity.CanonicalObjectReference
 metamodel.domain.identity.CanonicalObjectFrameStack
 metamodel.domain.identity.CanonicalEncodedBytes
 metamodel.domain.identity.VersionBundleFingerprintDeriver
+metamodel.domain.identity.DigestDomainSeparationPayload
+metamodel.domain.identity.MetadataIdentityDigestSuite
+metamodel.domain.identity.DigestSuiteId
+metamodel.domain.identity.DigestSuiteGoldenVectorSuite
+metamodel.domain.identity.HidVerificationPath
+metamodel.domain.identity.SealedProjectionTuple
+metamodel.domain.identity.DigestSuiteMigrationPolicy
 metamodel.domain.identity.CanonicalDecodeFrame
 metamodel.domain.identity.CanonicalDecoderFrameStack
 metamodel.domain.identity.CanonicalSortKey
@@ -7113,6 +8038,10 @@ metamodel.domain.identity.BoundedColdExactSortBudget
 metamodel.domain.identity.MapDuplicateKeyDetector
 metamodel.domain.identity.CanonicalByteSliceView
 metamodel.domain.identity.DecoderCursorProgressValidator
+metamodel.domain.identity.DecoderTagBoundsValidator
+metamodel.domain.identity.DenseDecoderTableSpec
+metamodel.domain.identity.BranchBoundedUtf8Validator
+metamodel.domain.identity.CanonicalTextValidationOracle
 metamodel.domain.identity.CanonicalSliceLinearOrderValidator
 metamodel.domain.identity.PayloadRelativeOffset
 metamodel.domain.identity.BranchBoundedBoundsValidator
@@ -7452,7 +8381,7 @@ Introduce compactness laws without changing identity semantics.
 Deliverables:
 
 - schema-aware stripping checks;
-- stateless encoder checks;
+- observation-independent encoder checks;
 - bit-packed field golden vectors where bit packing is used;
 - layered child intern reference support;
 - metadata dependency graph extraction;
@@ -7576,7 +8505,8 @@ A compliant implementation MUST satisfy:
 69. Optimistic probing never becomes probabilistic equality.
 70. Canonical identity encoding does not encode semantic field names as string payload.
 71. Fixed positional physical layouts are used only after schema/version/domain validation.
-72. Canonical identity encoding is stateless with respect to previous item, recently seen item, and acquisition order.
+72. Canonical identity encoding is observation-independent with respect to previous item, recently seen item, and
+    acquisition order.
 73. Run-local adaptive compression dictionaries are not used for hot identity bytes.
 74. Bit-packed identity fields define offset, width, signedness, endian rule, reserved values, invalid values, and
     golden vectors.
@@ -7897,6 +8827,99 @@ A compliant implementation MUST satisfy:
      engine maintenance queue, epoch-reclaimer queue, or adapter ingress queue.
 264. `scheduler-owned` state is not a lawful reader epoch ownership model.
 
+265. Dense decoder table indexing is performed only after tag upper-bound validation.
+266. Decoder schemas define `maxRatifiedTag32`, ratified tag count, dense table length, and maximum generated table
+     size.
+267. Decoders fail closed before indexing if `tag32 > maxRatifiedTag32` or `tag32 >= denseDecoderTableLength` for dense
+     dispatch.
+268. Generated decoder tables are produced from ratified schema and are not dynamically resized from payload-observed
+     tags.
+269. Sparse tag schemas use bounded generated lookup strategies rather than payload-sized arrays.
+270. Text validation rejects malformed UTF-8 and invalid surrogate material before string material becomes identity
+     material.
+271. Text validation uses branch-bounded, table-driven, chunked, vectorized, or equivalent bounded validation where it
+     is
+     in the hot path.
+272. Platform charset replacement behavior, locale, JVM default charset, and backend decoder side effects are not
+     canonical text validation authority.
+
+273. Canonical identity encoding permits explicit deterministic protocol state.
+274. Canonical identity output is independent from non-authoritative observation state.
+275. Encoders do not use previous item state, recently seen values, cache hit/miss history, callback completion order,
+     thread-local previous values, acquisition-batch neighbors, or current-run frequency distribution as canonical
+     encoding authority.
+276. Explicit encoder cursors, bounded frame stacks, field presence bitmaps, arena offsets, SCC-local deterministic
+     ordinal state, budget ledgers, and diagnostic meters are lawful only when protocol-owned, metered, deterministic,
+     and visible to the encoding law.
+
+277. HID128 is a compact candidate descriptor, not semantic equality authority.
+278. Intern-table HID matches always enter a verification ladder before equality is accepted.
+279. Digest suite domain separation input is a canonical fixed-width payload, not text concatenation or enum/declaration
+     order.
+280. `VersionBundleFingerprint128` is part of HID domain separation input.
+281. Digest suite extensible output is fixed-width and ratified; arbitrary runtime XOF expansion is forbidden.
+282. HID width collision probability is a sizing aid under uniform-output assumptions and never removes exact
+     verification.
+283. Seal and materialization boundaries are defined before hot projections are generated.
+284. Sealed projection tuples are immutable and stale projections are rejected by version, epoch, or handle material.
+285. Non-cryptographic hashes are non-semantic hints only after the owning verification path has succeeded for the
+     current
+     operation.
+286. Digest suite/HID golden vectors are required release artifacts.
+287. Digest suite migration is versioned and cannot silently compare HID material across suites.
+
+288. BLAKE3 is the v1 ratified digest suite implementation, not the semantic identity contract.
+289. Digest algorithms are replaceable only through versioned suite ratification.
+290. The digest suite contract fixes suite id/version, domain separation payload, output width, split rule, migration
+     law,
+     and golden vectors.
+291. An adapter implements the selected digest suite but does not select or mutate the protocol suite.
+292. Swapping the digest algorithm without changing suite id/version is forbidden.
+
+293. `DigestDomainSeparationPayloadV1` is exactly 56 bytes.
+294. Non-applicable domain-separation axes are encoded as fixed-width zero fields, not omitted fields.
+295. `reserved32` is physically present and zero-initialized before hashing.
+296. Domain-separation payload builders initialize every byte before hashing.
+297. Reused scratch memory containing stale bytes cannot be hashed as a domain-separation payload.
+298. Exact cache-line alignment claims for domain-separation payloads require ADR-0042 evidence.
+
+299. All 56 bytes of `DigestDomainSeparationPayloadV1` are digest-suite input.
+300. The 56-byte payload is canonical digest input; physical cache-line-oriented slots are substrate-backend material
+     and do not prove JVM heap alignment.
+
+301. Physical padding around `DigestDomainSeparationPayloadV1` is not digest-suite input unless a future suite ratifies
+     a new payload length.
+302. Cache-line-oriented physical slots for domain-separation payloads are substrate-backend material governed by
+     ADR-0042.
+303. `DigestDomainSeparationPayloadV1` length is not derived from JVM object layout, array base offsets, or cache-line
+     subtraction.
+
+304. Hot intern/probe paths do not use `HashedIdentityDescriptor` interface dispatch, descriptor object equality, or
+     per-candidate descriptor object allocation as ordinary probe authority.
+305. HID hot-path material is stored as fixed-width primitive words or equivalent primitive substrate projections.
+306. Version mismatch classification on the HID hot path is zero-allocation, non-blocking, and does not require
+     exception
+     creation, string concatenation, synchronous log I/O, or cache-entry allocation.
+307. Repeated stale-version or malicious-version input is contained by primitive classification, resolved policy,
+     adapter
+     quarantine, or fail-closed scope handling rather than unbounded log/exception/cache churn.
+308. Parent-dependent child HID material is not reused after parent identity changes without active-suite re-derivation
+     under the new parent key and version bundle.
+309. Parent-independent child canonical bytes may be reused only as sealed, version-bound derivation input; they are not
+     equality authority and do not bypass verification.
+310. Hierarchical re-keying is O(1) per affected child only when sealed child-local material is already available;
+     ADR-0041
+     does not promise O(1) invalidation for an entire subtree.
+
+311. ADR-0043 owns full canonical contract graph identity semantics.
+312. ADR-0041 may consume sealed structural identity references but MUST NOT treat bare child HID as equality proof.
+313. Parent/context derivation MAY avoid re-reading unchanged child canonical bytes only after child-local material is
+     sealed and verification-safe.
+314. Structural/contextual graph identity optimization is O(1) with respect to sealed child byte length per child
+     reference, not O(1) for an entire affected subtree.
+315. Future lowered contract graph material for state, protocol, data, governance, DTO, boundaries, and explicit state
+     machines remains reserved until ratified by the top-level contract definition document and ADR-0043.
+
 ## 23. Required Golden Vectors
 
 Golden vectors MUST exist for:
@@ -7968,6 +8991,17 @@ Golden vectors MUST exist for:
 - HID width bound fixture satisfying `n(n - 1) / 2^(b + 1) <= p_target`;
 - seal-time BLAKE3 derivation with deterministic route64 projection;
 - hot route/probe path proving no full canonical-material rehash is required after seal-time projection.
+- hot HID128 primitive projection fixture proving interface-dispatched descriptor equality is not required;
+- version mismatch zero-allocation classification fixture;
+- repeated stale-version input containment fixture;
+- parent identity change re-derives child HID fixture;
+- unchanged child canonical bytes reused as sealed derivation input fixture;
+- old parent-dependent child HID rejection after parent identity change fixture.
+- ADR-0043 sealed structural reference bridge fixture;
+- bare child HID rejected as parent derivation proof fixture;
+- parent/context derivation over sealed structural child reference fixture;
+- structural/contextual identity split remains byte-equivalent after child-local material reuse fixture;
+- affected parent with multiple sealed child references proves fixed-reference-width derivation cost fixture.
 
 ### 23.3. TypeReference Identity
 
@@ -8083,6 +9117,8 @@ Microbenchmarks SHOULD measure:
 - allocation count per hot decode;
 - branch-miss-sensitive decode throughput where available;
 - HID miss probe throughput;
+- HID primitive projection probe throughput without descriptor polymorphism;
+- version mismatch classification throughput without exception/log allocation;
 - HID hit / prefix mismatch probe throughput;
 - HID hit / full verification path throughput;
 - canonical byte slab pointer-chasing frequency;
@@ -8129,7 +9165,7 @@ Golden vectors MUST exist for:
 
 - schema-aware stripping with numeric tags and no field-name strings;
 - positional physical layout rejection before schema validation;
-- stateless encoding under shuffled acquisition order;
+- observation-independent encoding under shuffled acquisition order;
 - previous-item delta rejection;
 - immutable canonical-base delta reconstruction where a domain ratifies canonical-base delta;
 - bit-packed field layout boundaries;
@@ -8197,6 +9233,14 @@ Architecture tests MUST verify:
 - frozen ordinal is not used in persistent identity classes;
 - route64 is not used as equality authority;
 - HID equality is followed by verification in lookup paths;
+- hot intern/probe lookup paths do not call `HashedIdentityDescriptor.equals`, descriptor object `hashCode`, or
+  interface-dispatched descriptor property access as ordinary probe authority;
+- hot HID128 lookup paths use primitive high/low words or equivalent primitive projections;
+- version mismatch hot paths return primitive classification and do not allocate exceptions, diagnostic strings, log
+  records, or cache entries before cold diagnostic admission;
+- parent-dependent child HID projections are invalidated or re-derived when parent identity changes;
+- parent-independent child canonical bytes reused by incremental derivation are sealed, version-bound, and
+  exact-verification safe;
 - protocol ids are not enum ordinals;
 - no process-global mutable interner exists for semantic identity.
 
@@ -8204,6 +9248,9 @@ Architecture tests MUST verify:
 - canonical decoder hot paths do not use string tag lookup;
 - canonical decoder hot paths do not use `Map` lookup for field dispatch;
 - canonical decoder message nesting is bounded by explicit depth/frame counters and not by JVM stack depth;
+- canonical text validators reject malformed UTF-8 before String material becomes identity material;
+- canonical text validation does not use platform charset replacement behavior as authority;
+- hot-path text validation is branch-bounded or benchmark-gated when acceleration is claimed;
 - decoder cursor progress validators reject zero-displacement loops;
 - offset-base tests prove that external slice offsets are payload-relative and header offsets are envelope-absolute;
 - slice non-overlap tests use physical-order linear validation or a ratified linear proof, not adversarial interval
@@ -8261,7 +9308,7 @@ Architecture tests MUST verify:
 - prefetch-aware slab order follows already-determined stable order and does not define it.
 
 - canonical identity encoding does not emit semantic field-name strings as identity payload;
-- stateless encoder tests reject previous-item, recently-seen, or acquisition-order dependent encoding;
+- observation-independent encoder tests reject previous-item, recently-seen, or acquisition-order dependent encoding;
 - unordered collection encoders precompute bounded canonical sort keys before sorting;
 - canonical sort key generation rejects runtime random seeds, per-scope entropy, thread ids, worker ids, time, heap
   addresses, and ASLR-dependent values;
@@ -8838,9 +9885,89 @@ Canonical envelope headers and intern probe projections remain distinct physical
 
 The fixed common header does not require the intern-table probe group to share the same layout.
 
+### 26.33Q. Use HID Descriptor Interface Objects as Hot Probe Representation
+
+Rejected.
+
+A sealed interface descriptor is useful as a cold boundary, test, diagnostic, or adapter representation.
+
+It is not the ordinary hot representation for intern-table or route-table probing.
+
+Hot probe structures use fixed-width primitive words or equivalent primitive substrate projections to avoid descriptor
+allocation, virtual/interface dispatch, megamorphic equality, and avoidable branch-prediction noise.
+
+### 26.33R. Allocate Exceptions or Logs for Every HID Version Mismatch
+
+Rejected.
+
+Version mismatch is a deterministic classification boundary.
+
+The hot path returns a primitive classification without exception allocation, string concatenation, synchronous log I/O,
+or cache-entry churn.
+
+Cold diagnostics may report the mismatch later under diagnostic budget.
+
+### 26.33S. Reuse Parent-Dependent Child HID After Parent Identity Changes
+
+Rejected.
+
+If parent identity participates in child HID derivation, a parent identity change invalidates the parent-dependent child
+projection.
+
+Kontrakt may reuse sealed parent-independent child canonical bytes as derivation input, but it must derive a new
+parent-dependent HID under the new parent key and active version bundle before publication.
+
+### 26.33T. Put Full Contract Graph Canonicalization into ADR-0041
+
+Rejected.
+
+ADR-0041 owns the stable metadata identity substrate.
+
+Full contract graph canonicalization, structural/contextual identity semantics, sealed structural references, graph
+interning, and incremental derivation are large enough to require ADR-0043.
+
+ADR-0041 keeps only the bridge law needed to preserve identity substrate correctness.
+
+### 26.33U. Treat Bare Child HID as a Sealed Structural Reference
+
+Rejected.
+
+A bare HID is a compact candidate descriptor.
+
+A sealed structural reference must represent child-local material that has passed canonical encoding, digest-suite
+derivation, collision verification, and publication under an explicit scope.
+
+### 26.33V. Promise O(1) Subtree Invalidation
+
+Rejected.
+
+ADR-0041 permits fixed-width derivation per already-sealed child reference.
+
+It does not promise constant-time invalidation for an entire affected subtree.
+
+Any stronger incremental cutoff belongs to ADR-0043 or a future query/incremental ADR and must preserve deterministic
+identity.
+
 ## 27. Final Rule
 
+Hot HID probe representations are primitive projections, version mismatch classification is zero-allocation on the hot
+path, and parent-dependent child HID projections are re-derived when parent identity changes.
+
 Generic primitive lifecycle and asynchronous ownership governance are delegated to ADR-0042.
+
+Canonical contract graph identity, sealed structural references, and incremental derivation semantics are delegated to
+ADR-0043 while ADR-0041 keeps the digest/HID/interner bridge law.
+
+Decoder dispatch is bounded by ratified tag space, and text validation is fail-closed and branch-bounded where hot.
+
+Canonical encoding is deterministic and observation-independent, not stateless.
+
+HID values are compact candidate descriptors; equality requires verification, and digest-suite domain separation is
+canonical byte protocol material. BLAKE3 is the initial ratified suite implementation, not the semantic identity
+contract.
+
+`DigestDomainSeparationPayloadV1` is a fixed 56-byte initialized canonical protocol payload; non-applicable axes and
+reserved bytes are zero-filled, never omitted or left stale.
 
 Stable metadata identity is protocol material.
 

@@ -55,7 +55,9 @@ publication rules.
 The following principles are ratified:
 
 - semantic meaning remains separate from physical representation;
-- committed hot-path state uses primitive substrates directly;
+- mechanical-sympathy laws are core governance;
+- physical substrate implementations are adapter / infrastructure backends;
+- committed hot-path state uses primitive-substrate-compatible representations directly;
 - transient arenas are reclaimed by deterministic reset / teardown;
 - published immutable slabs are reclaimed by epoch retirement;
 - reader epoch ownership is engine-lane-owned;
@@ -66,18 +68,159 @@ The following principles are ratified:
 - Kotlin `value class`, `ThreadLocal`, coroutine-local, virtual-thread-local, scheduler-owned, and worker-owned hidden
   state are not physical authority for committed core state.
 
+### 3.1. Core Law vs Physical Backend Law
+
+ADR-0042 separates mechanical sympathy into two authority layers.
+
+Core-owned law:
+
+- semantic meaning and physical representation are separate;
+- canonical bytes, HID derivation, stable intern id assignment, collision verification, and publication laws are
+  deterministic;
+- hot-path committed state must be compatible with primitive substrates and explicit lifecycle ownership;
+- object-graph-heavy committed state is rejected where it becomes identity, planning, interner, frozen-image, or
+  execution-lane authority;
+- staging, scratch, published, retired, diagnostic, and adapter material have distinct lifecycle classes;
+- publication and reclamation require explicit ownership boundaries;
+- asynchronous callbacks enter through event ingestion and do not directly mutate lane-owned or canonical state;
+- physical acceleration must be observationally equivalent to the deterministic reference pipeline.
+
+Adapter / infrastructure-owned backend:
+
+- JVM heap primitive arrays;
+- packed-word table implementations;
+- direct byte buffers;
+- Java `MemorySegment` layouts;
+- off-heap allocators;
+- native aligned allocators;
+- memory-mapped image stores;
+- SIMD / Vector API implementations;
+- native digest bindings;
+- generated physical layouts;
+- cache-line padding mechanisms;
+- allocator-specific alignment proofs;
+- runtime-profile-specific benchmark evidence.
+
+The core may require a substrate capability.
+
+The core MUST NOT require a specific physical substrate implementation.
+
+Forbidden core dependency shape:
+
+``````text
+metadata identity core
+-> ByteArray-specific slab implementation
+-> exact JVM heap array layout assumption
+``````
+
+Forbidden core dependency shape:
+
+``````text
+planning core
+-> MemorySegment allocator
+-> native address arithmetic
+``````
+
+Lawful shape:
+
+``````text
+core law
+-> CanonicalByteSubstrate / PrimitiveTableBackend / DigestSuite port
+-> adapter-owned HeapPrimitiveBackend or MemorySegmentBackend or NativeAlignedBackend
+-> golden-vector and benchmark evidence
+``````
+
+Backend selection may affect:
+
+- latency;
+- throughput;
+- allocation profile;
+- memory bandwidth;
+- cache locality;
+- physical alignment evidence;
+- reclamation implementation details.
+
+Backend selection MUST NOT affect:
+
+- canonical bytes;
+- HID derivation;
+- collision verification;
+- stable intern id assignment;
+- canonical ordering;
+- semantic equality;
+- frozen image identity;
+- `PlanCacheKey` equality;
+- report manifest identity;
+- or public protocol compatibility.
+
+### 3.2. Substrate Port and Backend Vocabulary
+
+ADR-0042 uses the following vocabulary.
+
+`Substrate port` means the core-facing contract for reading, writing, publishing, and reclaiming primitive-compatible
+state.
+
+Examples:
+
+- `CanonicalByteSubstrate`;
+- `PrimitiveTableBackend`;
+- `PublishedImageStore`;
+- `ReaderEpochRegistry`;
+- `MetadataIdentityDigestSuite`;
+- `CanonicalTextValidator`;
+- `InternProbeTableBackend`.
+
+`Substrate backend` means the physical implementation selected by infrastructure.
+
+Examples:
+
+- `HeapPrimitiveBackend`;
+- `MemorySegmentBackend`;
+- `DirectBufferBackend`;
+- `NativeAlignedBackend`;
+- `MappedImageBackend`;
+- `GeneratedLayoutBackend`;
+- `VectorizedValidatorBackend`;
+- `Blake3DigestSuiteAdapter` or another ratified digest-suite adapter.
+
+A port name may appear in domain or application code.
+
+A backend name must remain in adapter, infrastructure, benchmark, test-fixture, or runtime-profile code unless a later
+ADR
+explicitly promotes it to protocol material.
+
+The ordinary v1 backend may be JVM heap primitive arrays.
+
+That is an implementation baseline, not a core semantic dependency.
+
+The v2 physical acceleration track may introduce `MemorySegment`, off-heap, native aligned, vectorized, or mapped
+backends.
+
+Such backends must be substitutable behind the same core law and must pass cross-backend golden-vector equivalence.
+
 ## 4. Domain Mechanical Sympathy and Lifecycle Matrix
 
-| Domain                          | Mechanical sympathy target                                           | Reason                                                          | Physical substrate                                                 | Lifecycle                                                 | Ownership authority                                 | Reclamation strategy                                            | Async boundary                                |
-|---------------------------------|----------------------------------------------------------------------|-----------------------------------------------------------------|--------------------------------------------------------------------|-----------------------------------------------------------|-----------------------------------------------------|-----------------------------------------------------------------|-----------------------------------------------|
-| Metadata identity               | canonical bytes, HID projections, interner probe tables              | remove object churn, pointer chasing, unstable backend identity | `ByteArray`, `IntArray`, `LongArray`, packed words, sealed handles | staging -> seal -> publish -> retire                      | identity seal owner / protocol-owned interner scope | scope teardown or published epoch reclamation                   | yes, only for retired published epochs        |
-| Frozen metamodel image          | frozen tables, ordinal maps, coverage bitsets, image-local slabs     | avoid object graph traversal at read time                       | image-owned primitive tables and slabs                             | acquisition pass -> image publication -> epoch retirement | frozen image publisher                              | whole-image epoch retirement                                    | yes for old published images                  |
-| Planning L1 transient execution | frame stack, work queue, budget ledger, undo log, traversal buffers  | avoid recursive object graph and allocation churn               | run-local / lane-local primitive arenas                            | run/lane/scope-local                                      | planning run and engine lane                        | deterministic reset / teardown                                  | ordinarily no                                 |
-| Planning published artifacts    | sealed plan graph, shared planning snapshot, cacheable plan material | share immutable planning material without copying per reader    | published primitive tables / sealed slabs                          | build -> publish -> retire                                | planning artifact publisher                         | reader-epoch reclamation or equivalent                          | yes                                           |
-| L2 interner/cache               | slot state, waiter state, builder state, route/probe tables          | deterministic lifecycle terminalization and cache-local probing | packed state words, primitive arrays, bounded queues               | slot/shard lifecycle                                      | slot terminalization authority / owning lane        | shard rebuild, scope teardown, or epoch retire where applicable | yes: callback -> event -> owner transition    |
-| VM / execution                  | generated verification cases, fixture buffers, lane-local state      | keep verification loop allocation-free                          | lane-local arrays, primitive case buffers                          | verification-run / lane-local                             | execution lane                                      | teardown / cursor reset                                         | ordinarily no                                 |
-| Reporting / diagnostics         | bounded evidence bytes, sanitized failure records                    | avoid OOM during failure reporting                              | bounded byte buffers / report-owned material                       | failure/report scope                                      | reporting sink                                      | report lifecycle                                                | async sink possible, never identity authority |
-| Adapters                        | public DTOs, framework handles, external callbacks                   | isolate framework nondeterminism                                | ordinary JVM objects allowed on cold boundary                      | adapter request                                           | adapter boundary                                    | JVM GC / adapter lifecycle                                      | callback ingestion only                       |
+| Domain                          | Mechanical sympathy target                                           | Reason                                                          | Substrate port / backend family                           | Lifecycle                                                 | Ownership authority                                 | Reclamation strategy                                            | Async boundary                                |
+|---------------------------------|----------------------------------------------------------------------|-----------------------------------------------------------------|-----------------------------------------------------------|-----------------------------------------------------------|-----------------------------------------------------|-----------------------------------------------------------------|-----------------------------------------------|
+| Metadata identity               | canonical bytes, HID projections, interner probe tables              | remove object churn, pointer chasing, unstable backend identity | `CanonicalByteSubstrate` / `PrimitiveTableBackend` family | staging -> seal -> publish -> retire                      | identity seal owner / protocol-owned interner scope | scope teardown or published epoch reclamation                   | yes, only for retired published epochs        |
+| Frozen metamodel image          | frozen tables, ordinal maps, coverage bitsets, image-local slabs     | avoid object graph traversal at read time                       | `PublishedImageStore` / image-owned substrate backend     | acquisition pass -> image publication -> epoch retirement | frozen image publisher                              | whole-image epoch retirement                                    | yes for old published images                  |
+| Planning L1 transient execution | frame stack, work queue, budget ledger, undo log, traversal buffers  | avoid recursive object graph and allocation churn               | run-local / lane-local arena backend                      | run/lane/scope-local                                      | planning run and engine lane                        | deterministic reset / teardown                                  | ordinarily no                                 |
+| Planning published artifacts    | sealed plan graph, shared planning snapshot, cacheable plan material | share immutable planning material without copying per reader    | published artifact substrate backend                      | build -> publish -> retire                                | planning artifact publisher                         | reader-epoch reclamation or equivalent                          | yes                                           |
+| L2 interner/cache               | slot state, waiter state, builder state, route/probe tables          | deterministic lifecycle terminalization and cache-local probing | packed-state / probe-table backend                        | slot/shard lifecycle                                      | slot terminalization authority / owning lane        | shard rebuild, scope teardown, or epoch retire where applicable | yes: callback -> event -> owner transition    |
+| VM / execution                  | generated verification cases, fixture buffers, lane-local state      | keep verification loop allocation-free                          | lane-local execution substrate backend                    | verification-run / lane-local                             | execution lane                                      | teardown / cursor reset                                         | ordinarily no                                 |
+| Reporting / diagnostics         | bounded evidence bytes, sanitized failure records                    | avoid OOM during failure reporting                              | bounded report buffer backend                             | failure/report scope                                      | reporting sink                                      | report lifecycle                                                | async sink possible, never identity authority |
+| Adapters                        | public DTOs, framework handles, external callbacks                   | isolate framework nondeterminism                                | ordinary JVM objects allowed on cold boundary             | adapter request                                           | adapter boundary                                    | JVM GC / adapter lifecycle                                      | callback ingestion only                       |
+
+Matrix terminology note:
+
+`Substrate port / backend family` names the lawful substrate capability and ownership family.
+
+It does not require that domain or application core code import a concrete heap-array, `MemorySegment`, off-heap,
+native,
+or mapped implementation.
+
+Concrete physical backends are selected by infrastructure/runtime profile and must remain observationally equivalent to
+the core law.
 
 ## 5. Primitive Substrate Lifecycle Taxonomy
 
@@ -94,6 +237,17 @@ ADR-0042 distinguishes the following substrate lifecycles.
 | Diagnostic buffer        | failure evidence, report snippets                                     | yes within budget |     report-owned only | report lifecycle and diagnostic byte budget                      |
 | Adapter DTO              | external API/callback material                                        |               yes | no identity authority | JVM/adapter lifecycle                                            |
 
+Lifecycle taxonomy note:
+
+The lifecycle class is core law.
+
+The concrete storage vehicle is backend law.
+
+For example, a `Published sealed slab` may be backed by a JVM heap primitive array in v1, a `MemorySegment` in v2, a
+mapped image in a persistent profile, or a native aligned allocation in a platform-specific profile.
+
+All of those backends must expose the same publication, immutability, bounds, and reclamation semantics to the core.
+
 ## 6. Ownership and Authority Vocabulary
 
 | Term                           | Meaning                                                       | Authority boundary                                |
@@ -109,7 +263,7 @@ ADR-0042 distinguishes the following substrate lifecycles.
 
 ## 7. Governance Rules
 
-### 7.1. Semantic Wrapper and Primitive Substrate Separation Law
+### 7.1. Semantic Wrapper, Substrate Port, and Backend Separation Law
 
 Semantic wrappers MAY exist only at cold API, diagnostic, test, and documentation boundaries.
 
@@ -121,16 +275,91 @@ Reason:
 Kotlin value classes do not provide a stable physical representation guarantee across nullable use, generics, arrays,
 interface dispatch, reflection, boxing, or JVM lowering boundaries.
 
-Committed hot-path state MUST use primitive substrates directly:
+Committed hot-path state MUST use primitive-substrate-compatible material directly:
 
-- `ByteArray`;
-- `IntArray`;
-- `LongArray`;
+- bytes;
+- integer words;
 - packed primitive words;
 - offsets;
 - lengths;
 - stable integer ordinals;
-- sealed slab ids.
+- sealed slab ids;
+- published image ids;
+- explicit handles whose backing substrate is owned by a substrate backend.
+
+Concrete storage examples include, but are not limited to:
+
+- JVM heap `ByteArray`;
+- JVM heap `IntArray`;
+- JVM heap `LongArray`;
+- direct buffer storage;
+- Java `MemorySegment`;
+- off-heap storage;
+- native aligned storage;
+- mapped image storage;
+- generated physical layouts.
+
+These concrete storage examples are backend choices.
+
+They are not semantic authority.
+
+They MUST NOT be imported as required physical types by metadata identity, planning, interner, frozen-image, or
+execution
+domain law unless a later ADR explicitly ratifies a backend-specific runtime profile.
+
+Core-facing code SHOULD depend on substrate ports or explicit primitive-compatible handles.
+
+Allowed core-facing vocabulary includes:
+
+- `CanonicalByteSubstrate`;
+- `CanonicalBytesView`;
+- `CanonicalByteWriter`;
+- `PrimitiveTableBackend`;
+- `PublishedImageStore`;
+- `ReaderEpochRegistry`;
+- `InternProbeTableBackend`;
+- `MetadataIdentityDigestSuite`.
+
+Forbidden ordinary core shape:
+
+``````kotlin
+class MetadataIdentitySealService(
+    private val byteArraySlab: ByteArray,
+)
+``````
+
+Forbidden ordinary core shape:
+
+``````kotlin
+class PlanningFrameStore(
+    private val segment: java.lang.foreign.MemorySegment,
+)
+``````
+
+Lawful shape:
+
+``````kotlin
+class MetadataIdentitySealService(
+    private val canonicalBytes: CanonicalByteSubstrate,
+    private val digestSuite: MetadataIdentityDigestSuite,
+)
+``````
+
+Lawful shape:
+
+``````text
+core service
+-> substrate port
+-> runtime-profile-selected backend
+-> golden-vector equivalence
+``````
+
+The v1 heap primitive implementation is allowed.
+
+The v2 `MemorySegment`, off-heap, native-aligned, vectorized, or mapped implementation is allowed.
+
+Neither implementation family may change canonical bytes, HID derivation, collision verification, stable intern id
+assignment, canonical ordering, semantic equality, or publication law.
 
 ### 7.2. Transient Arena Reclamation Law
 
@@ -195,10 +424,71 @@ A release MAY claim a physical optimization only with evidence appropriate to th
 Examples:
 
 - JVM heap primitive arrays may claim logical grouping, not exact cache-line alignment;
-- exact alignment requires off-heap, `MemorySegment`, generated layout, or runtime-specific evidence;
+- exact alignment requires off-heap, `MemorySegment`, generated layout, native aligned allocation, or runtime-specific
+  evidence;
 - small-inline or branch-bounded hot paths require benchmark gates;
 - daemon-safe slab reuse requires leak / repeated-run tests;
-- async epoch reclamation requires slow-reader / pinned-epoch tests.
+- async epoch reclamation requires slow-reader / pinned-epoch tests;
+- a new physical substrate backend requires cross-backend golden-vector equivalence against the reference backend.
+
+Evidence must distinguish:
+
+``````text
+semantic equivalence:
+    same canonical bytes / HID / equality / stable ids
+
+physical effect:
+    lower allocation, better locality, lower cache misses, lower latency, or better throughput
+``````
+
+A backend that improves the physical effect but fails semantic equivalence is non-compliant.
+
+### 7.7. Core Dependency Rejection Law
+
+Core, domain, and application services governed by ADR-0042 MUST NOT depend on concrete physical backend classes as
+semantic collaborators.
+
+Forbidden imports in core/domain/application layers include, unless explicitly isolated behind a port adapter or test
+fixture:
+
+- `java.lang.foreign.MemorySegment`;
+- `java.nio.ByteBuffer` / `DirectByteBuffer`;
+- `sun.misc.Unsafe`;
+- native allocator bindings;
+- JNI / FFI allocator handles;
+- concrete digest-library classes;
+- concrete SIMD / Vector API validator classes;
+- mapped-file implementation classes;
+- backend-specific aligned allocation utilities.
+
+Primitive array types may appear inside v1 heap substrate adapters and low-level implementation packages.
+
+They SHOULD NOT become constructor parameters, public domain fields, or semantic authority in domain services.
+
+Allowed core/domain/application dependencies:
+
+- protocol ids;
+- canonical offsets and lengths;
+- stable ordinals;
+- sealed handle ids;
+- substrate ports;
+- immutable policy snapshots;
+- explicit lifecycle state;
+- explicit ownership guards.
+
+Architecture tests SHOULD enforce:
+
+- domain packages do not import backend-native allocator classes;
+- metadata identity domain services do not import concrete digest libraries;
+- planning domain services do not import `MemorySegment`, direct buffers, native allocators, or concrete heap-slab
+  implementations;
+- physical backend implementations live under infrastructure, adapter, runtime-profile, benchmark, or test-fixture
+  packages;
+- cross-backend implementations pass the same golden vectors.
+
+This law does not forbid efficient implementation.
+
+It prevents efficient implementation from becoming semantic architecture.
 
 ## 8. Extracted Generic Lifecycle Laws from ADR-0041
 
@@ -1287,22 +1577,38 @@ Physical order MUST NOT create deterministic intern id order.
 
 Every domain that uses primitive substrates MUST register:
 
-| Field              | Required meaning                                                                                                                |
-|--------------------|---------------------------------------------------------------------------------------------------------------------------------|
-| Domain             | metadata identity, frozen image, planning transient, planning published snapshot, L2 interner, VM execution, reporting, adapter |
-| Physical substrate | `ByteArray`, `IntArray`, `LongArray`, packed state word, off-heap segment, generated layout, etc.                               |
-| Reason             | allocation reduction, locality, branch discipline, deterministic ordering, DoS boundary, etc.                                   |
-| Owner              | lane, run, artifact publisher, interner scope, slot authority, adapter boundary                                                 |
-| Mutability         | staging mutable, scratch mutable, published immutable, retired immutable                                                        |
-| Publication rule   | none, copy/compact, zero-copy promotion, rebuild/republish, CAS terminalization, report lifecycle                               |
-| Reclamation rule   | reset, teardown, epoch retirement, whole-slab reclaim, diagnostic lifecycle, JVM GC                                             |
-| Async boundary     | none, event ingestion, async reclaimer, report sink, L2 completion lane                                                         |
-| Required tests     | golden vectors, architecture tests, leak tests, benchmarks, repeated-daemon tests                                               |
+| Field                 | Required meaning                                                                                                                |
+|-----------------------|---------------------------------------------------------------------------------------------------------------------------------|
+| Domain                | metadata identity, frozen image, planning transient, planning published snapshot, L2 interner, VM execution, reporting, adapter |
+| Substrate port        | `CanonicalByteSubstrate`, `PrimitiveTableBackend`, `PublishedImageStore`, or equivalent core-facing contract                    |
+| Physical backend      | heap primitive arrays, packed state word backend, off-heap segment, `MemorySegment`, native aligned, mapped, generated layout   |
+| Reason                | allocation reduction, locality, branch discipline, deterministic ordering, DoS boundary, etc.                                   |
+| Owner                 | lane, run, artifact publisher, interner scope, slot authority, adapter boundary                                                 |
+| Mutability            | staging mutable, scratch mutable, published immutable, retired immutable                                                        |
+| Publication rule      | none, copy/compact, zero-copy promotion, rebuild/republish, CAS terminalization, report lifecycle                               |
+| Reclamation rule      | reset, teardown, epoch retirement, whole-slab reclaim, diagnostic lifecycle, JVM GC                                             |
+| Async boundary        | none, event ingestion, async reclaimer, report sink, L2 completion lane                                                         |
+| Equivalence authority | golden vectors, reference implementation, canonical byte oracle, or exact structural oracle                                     |
+| Required tests        | golden vectors, architecture tests, leak tests, benchmarks, repeated-daemon tests, cross-backend equivalence tests              |
+
+Registry rule:
+
+A domain registry entry MUST name both the core-facing substrate port and the physical backend family.
+
+It MUST NOT collapse them into one concept.
+
+A backend may be replaced only if the replacement satisfies the same lifecycle law and cross-backend equivalence tests.
 
 ## 11. Consequences
 
 ### 11.1. Positive Consequences
 
+- physical backends can evolve from heap primitive arrays to `MemorySegment`, off-heap, native-aligned, mapped, or
+  generated layouts without changing core identity law;
+- domain/application core remains insulated from JVM heap layout, native allocator, digest-library, and SIMD
+  implementation details;
+- v2 physical acceleration can be admitted behind ports with golden-vector equivalence rather than by rewriting
+  canonical identity logic;
 - Mechanical sympathy becomes auditable rather than scattered across ADR-0041.
 - Primitive substrates can be introduced without losing lifecycle authority.
 - Metadata, frozen, planning, L2, VM, and reporting can reuse the same lifecycle vocabulary.
@@ -1311,6 +1617,9 @@ Every domain that uses primitive substrates MUST register:
 
 ### 11.2. Negative Consequences
 
+- substrate ports and physical backends add one explicit architectural seam;
+- low-level implementations must maintain cross-backend equivalence tests;
+- benchmark fixtures and runtime-profile evidence become mandatory for stronger physical claims;
 - More lifecycle states must be modeled explicitly.
 - Primitive performance work requires ownership and reclamation evidence.
 - Some simple JVM object patterns become unacceptable in committed hot paths.
@@ -1325,5 +1634,14 @@ merely move nondeterminism from GC behavior into hidden slab, lane, and callback
 
 Mechanical sympathy is not an implementation preference.
 
-In Kontrakt, every primitive substrate has an owner, a lifecycle, a publication rule, a reclamation rule, and a
-deterministic authority boundary.
+Mechanical-sympathy laws are core governance.
+
+Physical substrate implementations are adapter / infrastructure backends.
+
+In Kontrakt, every primitive substrate has an owner, a lifecycle, a publication rule, a reclamation rule, a
+deterministic authority boundary, a core-facing substrate port, and a replaceable physical backend.
+
+A physical backend may improve locality, allocation profile, alignment control, throughput, or latency.
+
+It MUST NOT change canonical bytes, HID derivation, collision verification, stable intern id assignment, canonical
+ordering, semantic equality, publication law, or report identity.
