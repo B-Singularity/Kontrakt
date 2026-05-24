@@ -7069,16 +7069,39 @@ sum(logicalTableCapacitySlotsByIdentityDomain[*])
     <= logicalTableCapacitySlots
 ``````
 
-A candidate insert MUST be rejected before publication if it would cause:
+A candidate insert MUST be rejected before publication if accepting it would violate the same integer
+cross-multiplication
+law used for admission-time feasibility:
 
 ``````text
-currentCandidateCountByIdentityDomain[identityDomainId] + pendingInsertCount
-    > floor(
-          logicalTableCapacitySlotsByIdentityDomain[identityDomainId]
-        * maxLoadFactorNumerator
-        / maxLoadFactorDenominator
-      )
+nextCandidateCountByIdentityDomain =
+    currentCandidateCountByIdentityDomain[identityDomainId] + pendingInsertCount
+
+nextCandidateCountByIdentityDomain * maxLoadFactorDenominator
+    <= logicalTableCapacitySlotsByIdentityDomain[identityDomainId] * maxLoadFactorNumerator
 ``````
+
+The implementation MUST reject the insert before publication if the inequality is false.
+
+This check MUST be evaluated with overflow-checked integer arithmetic.
+
+It MUST NOT be rewritten as a threshold-division form such as:
+
+``````text
+nextCandidateCountByIdentityDomain
+    <= integerThreshold(capacity * numerator / denominator)
+``````
+
+for hot insert validation.
+
+The threshold-division form is forbidden for this law because it reintroduces division, invites floating-point threshold
+interpretations, and weakens the existing cross-multiplication invariant.
+
+The load-factor numerator and denominator MUST have already passed Section 13.13.1 validation before this check can be
+executed.
+
+If either product overflows the selected integer width, the operation MUST fail closed through a bounded probe-budget
+classification before candidate visibility.
 
 The domain quota is admission material.
 
@@ -7206,15 +7229,17 @@ It MUST NOT silently expand the semantic scope.
 A `BOUNDED_STREAMING` interning scope MUST NOT debit a single global candidate counter for every candidate on the
 ordinary hot discovery path.
 
-The preferred lawful shape is lane-owned quota reservation:
+The preferred lawful shape is lane-owned quota reservation with a deterministic reserve pool:
 
 ``````text
 scope admission
 -> candidate caps / staged-byte caps resolved
 -> engine lane set resolved
--> deterministic lane quota slices assigned
+-> initial lane quota slices assigned deterministically
+-> deterministic reserve pool retained by the scope
 -> lane-local primitive quota debit during candidate discovery
--> deterministic quota reconciliation barrier when needed
+-> deterministic reserve-pool refill at explicit safe points
+-> deterministic quota reclamation barrier only when reserve-pool refill cannot satisfy a request
 -> deterministic seal reconciliation
 ``````
 
@@ -7229,9 +7254,32 @@ state.
 
 A lane quota slice MUST be represented by primitive lane-owned state selected by deterministic policy.
 
+A refill-capable profile MUST split the total candidate cap into at least:
+
+``````text
+initialLaneQuotaTotal
+scopeReserveQuotaPool
+reclaimableLaneQuota
+``````
+
+Required relationships:
+
+``````text
+initialLaneQuotaTotal + scopeReserveQuotaPool <= candidateCountCap
+
+sum(initialLaneQuotaByEngineLane[engineLaneId]) <= initialLaneQuotaTotal
+``````
+
+A profile MUST NOT preallocate the entire `candidateCountCap` into lane-local quota unless it selects a strict no-refill
+profile and accepts deterministic early exhaustion as part of that profile.
+
+A refill-capable profile SHOULD retain a deterministic reserve pool so that skewed lane demand is absorbed without
+running the reclamation barrier on the ordinary path.
+
 Allowed allocation strategies:
 
 - deterministic preallocation by `engineLaneId`, identity domain, and resolved scope policy;
+- deterministic reserve-pool refill processed by a maintenance owner at explicit safe points;
 - deterministic chunked refill processed by a maintenance owner at explicit safe points;
 - deterministic quota reclamation barrier before bounded refill failure where the profile permits refill;
 - or a stricter no-refill policy that fails closed when lane quota is exhausted.
@@ -7243,6 +7291,7 @@ A chunked refill is lawful only if:
 - `laneQuotaChunkSize` is resolved before scope admission;
 - `maxLaneQuotaRefillsPerScope` is resolved before scope admission;
 - all granted chunks are charged to the same scope candidate cap;
+- reserve-pool grants are charged before reclamation is attempted;
 - unused quota is reconciled at seal / scope close;
 - refill failure reaches a bounded classification;
 - and refill timing cannot change stable intern id assignment.
@@ -7252,7 +7301,7 @@ hold:
 
 - the scope uses refill-capable `BOUNDED_STREAMING`;
 - a lane requests additional quota;
-- the global unreserved quota pool is empty;
+- the deterministic reserve pool cannot satisfy the request;
 - other lanes may still hold unused reserved quota;
 - and the scope has not selected the stricter no-refill profile.
 
@@ -7263,9 +7312,10 @@ The reclamation barrier MUST:
 - reclaim only unused quota that has not been consumed by an already-issued provisional candidate;
 - keep already-issued provisional candidates valid;
 - redistribute reclaimed quota by deterministic `engineLaneId`, identity domain id, and request sequence;
-- record reclaimed, redistributed, and still-stranded quota in the probe ledger;
+- record reserve-pool grants, reclaimed quota, redistributed quota, and still-stranded quota in the probe ledger;
 - resume admission only after the maintenance owner publishes the new quota state;
-- and fail closed only if the deterministic reclamation pass still cannot satisfy the bounded refill request.
+- and fail closed only if the deterministic reserve-pool refill and the deterministic reclamation pass still cannot
+  satisfy the bounded refill request.
 
 The reclamation barrier MUST NOT be implemented as opportunistic quota stealing.
 
@@ -7309,10 +7359,11 @@ profile proves that the path is outside the hot discovery loop.
 
 Quota stranding is a budget state, not semantic inequality.
 
-A scope MUST NOT fail closed for quota exhaustion until the required deterministic reclamation barrier has either:
+A scope MUST NOT fail closed for quota exhaustion until the required deterministic reserve-pool refill and deterministic
+quota reclamation barrier have either:
 
 - recovered sufficient unused quota; or
-- proven that no reclaimable unused quota remains under the resolved policy.
+- proven that no reserve-pool quota or reclaimable unused lane quota remains under the resolved policy.
 
 #### 13.13.4.2. BOUNDED_STREAMING Staged Candidate Memory Budget Law
 
@@ -7323,6 +7374,8 @@ A `BOUNDED_STREAMING` scope MUST meter staged physical material before seal.
 The resolved budget MUST define at least:
 
 ``````text
+preScreenStagingBytesCap
+duplicateSuppressionTableBytesCap
 stagedCanonicalBytesCap
 stagedScratchBytesCap
 stagedHandleBytesCap
@@ -7331,7 +7384,47 @@ laneStagedScratchBytesCapByEngineLane[engineLaneId]
 stagedBytesCapByIdentityDomain[identityDomainId] where domain partitioning is enabled
 ``````
 
-Before a provisional candidate handle is issued, the implementation MUST prove:
+A `BOUNDED_STREAMING` implementation MAY use a bounded duplicate pre-screen stage before full canonical byte staging.
+
+The lawful shape is:
+
+``````text
+candidate discovered
+-> fixed-width pre-screen material staged
+-> bounded duplicate suppression lookup
+-> probable duplicate: delay or avoid full canonical staging until exact verification is required
+-> probable unique: admit full canonical staging under staged byte caps
+-> seal: exact canonical verification and deterministic deduplication
+``````
+
+Pre-screen material MAY include only ratified, bounded, domain-separated, version-bound material such as:
+
+- identity domain id;
+- version-bundle fingerprint;
+- canonical byte length where already known;
+- fixed-width local shape summary;
+- bounded sort-key summary;
+- HID / verifier prefix material derived under the active suite;
+- and a lane-local staging ticket.
+
+Pre-screen material is not equality authority.
+
+Pre-screen duplicate suppression MUST NOT replace:
+
+- canonical byte encoding;
+- collision verification;
+- deterministic stable id assignment;
+- table coverage validation;
+- or publication integrity validation.
+
+Before a pre-screen entry is issued, the implementation MUST prove:
+
+``````text
+nextPreScreenStagingBytes <= preScreenStagingBytesCap
+nextDuplicateSuppressionTableBytes <= duplicateSuppressionTableBytesCap
+``````
+
+Before a full provisional candidate handle is issued, the implementation MUST prove:
 
 ``````text
 nextStagedCanonicalBytes <= stagedCanonicalBytesCap
@@ -7356,6 +7449,8 @@ nextDomainStagedBytes[identityDomainId]
 
 Staging material includes at least:
 
+- pre-screen staging tickets;
+- duplicate suppression table entries;
 - provisional candidate descriptors;
 - candidate canonical bytes not yet sealed into an immutable artifact;
 - candidate sort keys;
@@ -7367,11 +7462,22 @@ Staging material includes at least:
 
 A provisional handle MUST NOT pin unbounded staging slabs.
 
+A duplicate pre-screen ticket MUST either be:
+
+- promoted into a full provisional candidate under full staging caps;
+- merged with an existing staged candidate after exact verification;
+- rejected before provisional handle issuance;
+- or discarded at rollback / scope close.
+
+It MUST NOT become a stable intern id, semantic equality authority, PlanCacheKey material, frozen-image material,
+report/replay identity, persistent artifact identity, cross-scope identity, or query reuse key.
+
 If staged byte admission fails, the implementation MUST choose one of:
 
 - fail the current identity scope closed;
 - quarantine the current acquisition/planning scope;
 - reject the current candidate before provisional handle issuance;
+- delay full canonical staging behind a bounded duplicate pre-screen where lawful;
 - or open a separately admitted scope if the caller explicitly owns that transition.
 
 It MUST NOT discover staged-memory exhaustion through `OutOfMemoryError` after admitting the provisional handle.
@@ -7394,6 +7500,8 @@ maxInvalidationTraversalNodes
 maxAffectedSetExpansionSteps
 maxReusedSealedReferenceReads
 maxInvalidationTraversalDiagnosticsBytes
+fullRebuildMinimumReserveBytes
+fullRebuildPreflightDiagnosticsBytes
 ``````
 
 The implementation MUST meter the affected-set discovery phase against these budgets before candidate seal /
@@ -7406,6 +7514,8 @@ Required classification vocabulary:
 
 ``````text
 INCREMENTAL_TRAVERSAL_BUDGET_EXHAUSTED
+INCREMENTAL_FULL_REBUILD_PREFLIGHT_PASSED
+INCREMENTAL_FULL_REBUILD_PREFLIGHT_FAILED
 INCREMENTAL_FULL_REBUILD_FALLBACK_ADMITTED
 INCREMENTAL_FULL_REBUILD_FALLBACK_REJECTED
 INCREMENTAL_DEPENDENCY_SHAPE_PATHOLOGICAL
@@ -7429,13 +7539,40 @@ Allowed deterministic outcomes are:
 A full-rebuild fallback is lawful only if the full-rebuild scope has its own resolved memory, traversal, staging,
 interner, and publication budgets.
 
+Before choosing `INCREMENTAL_FULL_REBUILD_FALLBACK_ADMITTED`, the implementation MUST run a full-rebuild preflight.
+
+The preflight MUST prove at least:
+
+``````text
+fullRebuildMinimumReserveBytes <= availableFullRebuildReserveBytes
+``````
+
+and MUST include, where applicable:
+
+- full graph traversal budget;
+- full contract graph / metadata candidate count caps;
+- full interner probe-table budget;
+- full staged canonical bytes budget;
+- full sort scratch budget;
+- full SCC seal budget;
+- full transient resize / rebuild high-water reserve;
+- full diagnostics budget;
+- and published artifact / replacement-image publication budget.
+
+A failed full-rebuild preflight MUST be classified as `INCREMENTAL_FULL_REBUILD_PREFLIGHT_FAILED` or
+`INCREMENTAL_FULL_REBUILD_FALLBACK_REJECTED`.
+
+It MUST NOT allocate the full rebuild first and discover the failure through heap exhaustion, probe exhaustion, or
+partial publication.
+
 The implementation MUST NOT use the incremental traversal budget as implicit permission to run a full rebuild.
 
 If repeated updates for the same contract graph, module snapshot, identity domain, or dependency slice exceed traversal
 budgets, the implementation SHOULD classify the condition as an incremental-shape / dependency-graph pressure event
 rather than treating every occurrence as an ordinary fallback.
 
-The diagnostic payload MUST be bounded by `maxInvalidationTraversalDiagnosticsBytes`.
+The diagnostic payload MUST be bounded by `maxInvalidationTraversalDiagnosticsBytes` and, for full-rebuild preflight,
+`fullRebuildPreflightDiagnosticsBytes`.
 
 It SHOULD include only deterministic summary evidence such as:
 
@@ -7445,6 +7582,8 @@ It SHOULD include only deterministic summary evidence such as:
 - first boundary where the limit was exceeded;
 - number of dirty candidates found before exhaustion;
 - number of reused sealed references read before exhaustion;
+- full-rebuild minimum reserve requested;
+- full-rebuild reserve available;
 - and the selected deterministic outcome.
 
 It MUST NOT include unbounded edge lists, object graph dumps, backend handles, source traversal order, callback order,
@@ -7454,8 +7593,9 @@ worker scheduling traces.
 ADR-0043 owns the full contract-graph invalidation law, dependency-edge semantics, repeated traversal pressure policy,
 and structural/contextual graph identity model.
 
-ADR-0041 requires only that any `INCREMENTAL_AFFECTED_SET` interning scope provide bounded traversal admission and
-bounded traversal-exhaustion classification before it may publish stable identity material.
+ADR-0041 requires only that any `INCREMENTAL_AFFECTED_SET` interning scope provide bounded traversal admission, bounded
+traversal-exhaustion classification, and full-rebuild preflight before it may publish stable identity material through a
+fallback path.
 
 #### 13.13.5. Hot Probe Work Feasibility Law
 
@@ -8089,6 +8229,9 @@ The interner ledger or scope-local accounting record MUST meter at least:
 - per-domain candidate counts;
 - per-domain capacity-slice consumption;
 - lane quota grants;
+- initial lane quota total;
+- deterministic reserve-pool quota;
+- reserve-pool grants;
 - lane quota refills;
 - lane-local quota consumed;
 - unused lane quota reconciled at seal / scope close;
@@ -8096,12 +8239,19 @@ The interner ledger or scope-local accounting record MUST meter at least:
 - quota reclaimed from inactive or underused lanes;
 - quota redistribution grants after reclamation;
 - quota still stranded after reclamation;
+- reserve-pool exhaustion outcomes;
+- pre-screen staging bytes;
+- duplicate suppression table bytes;
+- delayed full staging outcomes;
 - staged canonical bytes;
 - staged scratch bytes;
 - staged provisional handle bytes;
 - staged candidate metadata bytes;
 - invalidation traversal edges;
 - incremental traversal budget-exhaustion classifications;
+- full-rebuild preflight pass / fail outcomes;
+- full-rebuild minimum reserve requested;
+- full-rebuild reserve available;
 - full-rebuild fallback admission / rejection outcomes;
 - invalidation traversal nodes;
 - affected-set expansion steps;
@@ -11036,6 +11186,29 @@ A compliant implementation MUST satisfy:
 380. Repeated incremental traversal exhaustion should be classified as dependency-graph pressure or pathological shape
      rather than silently treated as ordinary fallback.
 381. Incremental traversal diagnostics are bounded by `maxInvalidationTraversalDiagnosticsBytes`.
+382. Insert-time load-factor checks must use overflow-checked integer cross multiplication; threshold-division forms are
+     forbidden.
+383. A load-factor insert check must reject before publication if
+     `nextCandidateCountByIdentityDomain * maxLoadFactorDenominator <= logicalTableCapacitySlotsByIdentityDomain[identityDomainId] * maxLoadFactorNumerator`
+     is false.
+384. Overflow in either product of a load-factor insert check fails closed through a bounded probe-budget classification
+     before candidate visibility.
+
+385. Refill-capable bounded streaming must retain a deterministic reserve pool or explicitly select a strict no-refill
+     profile.
+386. A refill-capable profile must not preallocate the entire candidate cap into lane-local quota unless it accepts
+     strict no-refill exhaustion semantics.
+387. Reserve-pool refill must be attempted before deterministic quota reclamation when the reserve pool can satisfy the
+     request.
+388. Duplicate pre-screen staging is allowed only as bounded, domain-separated, version-bound acceleration and is not
+     equality authority.
+389. Full canonical staging may be delayed behind duplicate pre-screening, but exact canonical verification and
+     deterministic deduplication remain required before seal.
+390. Pre-screen tickets must not become stable intern ids, PlanCacheKey material, frozen-image material, report
+     identity, persistent artifact identity, or query reuse keys.
+391. Incremental full-rebuild fallback requires full-rebuild preflight before fallback admission.
+392. Failed full-rebuild preflight must not allocate or partially publish a full rebuild before rejecting fallback.
+393. Full-rebuild fallback diagnostics must be bounded by `fullRebuildPreflightDiagnosticsBytes`.
 
 ## 23. Required Golden Vectors
 
@@ -11435,6 +11608,29 @@ Until ratification, no concrete annotation, DSL, or compiler-metadata lowering v
 - repeated traversal exhaustion dependency-pressure diagnostic fixture;
 - bounded invalidation traversal diagnostic payload fixture.
 
+### 23.x. Insert-Time Load-Factor Arithmetic
+
+- insert-time load-factor cross-multiplication fixture;
+- threshold-division form rejection fixture;
+- insert-time load-factor product overflow fail-closed fixture;
+- numerator/denominator validation-before-insert-check fixture;
+- domain-slice insert rejection before publication fixture.
+
+### 23.x. Reserve Pool, Duplicate Pre-Screen, and Full-Rebuild Preflight
+
+- deterministic reserve-pool refill before reclamation fixture;
+- strict no-refill profile early exhaustion fixture;
+- initial lane quota total plus reserve pool does not exceed candidate cap fixture;
+- reserve-pool refill does not change stable intern id assignment fixture;
+- duplicate pre-screen suppresses duplicate full staging without replacing exact verification fixture;
+- pre-screen ticket cannot become stable intern id / PlanCacheKey / frozen-image material fixture;
+- delayed full canonical staging admission fixture;
+- duplicate pre-screen staging budget exhaustion fixture;
+- full-rebuild preflight pass fixture;
+- full-rebuild preflight fail fixture;
+- full-rebuild fallback cannot allocate before preflight fixture;
+- bounded full-rebuild preflight diagnostic payload fixture.
+
 ## 24. Required Architecture Tests
 
 Architecture tests MUST verify:
@@ -11691,6 +11887,59 @@ influence canonical contract identity.
 ---
 
 ## 26. Alternatives Considered
+
+### 26.47. Preallocate the Entire Candidate Cap into Lane Quotas
+
+Rejected for refill-capable profiles.
+
+Preallocating the whole cap to lanes maximizes quota stranding under skewed workloads and forces reclamation barriers to
+become the ordinary path.
+
+A refill-capable profile must retain a deterministic reserve pool or explicitly select strict no-refill semantics.
+
+### 26.48. Treat Duplicate Pre-Screen Matches as Equality
+
+Rejected.
+
+Pre-screen material is an allocation and staging accelerator only.
+
+It is not semantic equality authority and cannot replace canonical byte encoding, collision verification, deterministic
+stable id assignment, table coverage validation, or publication integrity validation.
+
+### 26.49. Enter Full Rebuild Immediately After Incremental Traversal Exhaustion
+
+Rejected.
+
+Full rebuild is a separate expensive scope.
+
+It requires its own resolved memory, traversal, staging, interner, SCC, diagnostic, transient rebuild, and publication
+budgets.
+
+A fallback may be admitted only after full-rebuild preflight succeeds.
+
+### 26.47. Use Threshold Division for Insert-Time Load-Factor Checks
+
+Rejected.
+
+A threshold form such as:
+
+``````text
+nextCandidateCount <= integerThreshold(capacity * numerator / denominator)
+``````
+
+reintroduces division into a path that ADR-0041 intentionally defines through integer cross multiplication.
+
+It also invites floating-point threshold interpretation and creates an additional overflow surface in
+`capacity * numerator`
+before the division.
+
+The accepted form is:
+
+``````text
+nextCandidateCount * denominator <= capacity * numerator
+``````
+
+with checked integer arithmetic and fail-closed overflow handling.
 
 ### 26.44. Let Faster Lanes Steal Quota Opportunistically
 
@@ -12454,6 +12703,13 @@ stable id results.
 Bounded streaming quota refill may fail only after deterministic quota reclamation proves no reclaimable unused quota
 remains; transient rebuild reserve is a high-water mark, and incremental traversal exhaustion requires a bounded
 diagnostic classification.
+
+Refill-capable streaming uses deterministic reserve-pool refill before reclamation; duplicate pre-screen may reduce
+staging pressure but never becomes equality authority; full-rebuild fallback requires a separately admitted preflight
+before allocation or publication.
+
+Load-factor feasibility is expressed by checked integer cross multiplication; insert-time threshold-division forms are
+forbidden.
 
 Bounded streaming interning uses engine-lane-owned quota reservation, staged-byte admission, and owning-envelope memory
 accounting; it never relies on per-candidate global counters or unbounded add-on memory.
