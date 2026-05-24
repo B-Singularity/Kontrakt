@@ -6336,6 +6336,92 @@ The facade MUST NOT become:
 Architecture tests MUST reject hot-path arrays, maps, or published tables that store intern id wrapper objects as their
 ordinary committed representation.
 
+### 13.5.2. Cross-Scope Intern Id Translation Law
+
+Stable intern ids are scoped dense references.
+
+A local stable intern id from one scope is not comparable with a local stable intern id from another scope by numeric
+value.
+
+The following is forbidden:
+
+``````text
+sourceScope.localStableInternId32 == targetScope.localStableInternId32
+-> semantic equality accepted
+``````
+
+Cross-scope reuse is lawful only through one of the following validated paths:
+
+1. exact canonical material is verified again in the target scope;
+2. a sealed structural identity reference accepted by ADR-0043 is imported and verified against the target scope's
+   domain/version/suite policy;
+3. a ratified cross-scope translation table maps source scope id to target scope id after canonical verification; or
+4. the scopes share the same immutable published table instance and the same table-level proof.
+
+A cross-scope translation table MUST include at least:
+
+- source scope id;
+- target scope id;
+- identity domain id;
+- interning protocol version;
+- version bundle fingerprint;
+- digest suite id/version;
+- source local stable intern id;
+- target local stable intern id;
+- and verification epoch / publication epoch material.
+
+The translation table MUST NOT be derived from:
+
+- numeric id equality alone;
+- table row position;
+- frozen ordinal equality;
+- backend handle equality;
+- insertion order;
+- cache hit state;
+- or physical table layout.
+
+If no translation law is available, consumers MUST treat ids from different scopes as incomparable compact references.
+
+### 13.5.3. Intern Scope Retirement and Stale Reference Rejection Law
+
+Stable intern ids are valid only while their owning scope and table-level proof are valid.
+
+ADR-0041 does not define the full lifecycle reclamation mechanism for published intern tables.
+
+ADR-0042 owns physical retirement, reader leases, epoch reclamation, and substrate teardown.
+
+ADR-0043 owns graph/query invalidation for contract graph identities.
+
+ADR-0041 nevertheless requires a minimal stale-reference rejection contract:
+
+- every published intern table MUST expose scope id, identity domain id, interning protocol version, version bundle
+  fingerprint, and publication epoch material;
+- every consumer that accepts an intern id across a boundary MUST validate the table-level proof required by that
+  boundary;
+- a retired, superseded, or protocol-incompatible scope MUST NOT accept new lookups or publish new stable ids;
+- stale intern ids MUST fail closed or be translated through a ratified cross-scope translation law;
+- retirement MUST NOT make a stale numeric id silently refer to new canonical material.
+
+The forbidden shape is:
+
+``````text
+old scope numeric id
+-> new table row with same integer value
+-> accepted without scope/version proof
+``````
+
+The lawful shape is:
+
+``````text
+localStableInternId32
++ scope id
++ identity domain id
++ interning protocol version
++ version bundle fingerprint
++ publication epoch proof
+-> validate or reject / translate
+``````
+
 ### 13.6. No Global Mutable Interner
 
 A mutable process-global interner is forbidden for semantic identity.
@@ -6659,18 +6745,994 @@ consequences.
 
 Intern-table probing is not free.
 
-A compliant implementation MUST define bounded probe behavior.
+Probe behavior is an ADR-0041 admission-budget concern.
 
-At minimum:
+The physical probing algorithm is an ADR-0042 substrate-backend concern.
 
-- maximum probe length or displacement policy must be declared;
-- saturated segment behavior must fail closed or degrade through a non-semantic path;
-- resize / rebuild behavior must not change stable id assignment;
-- collision-chain amplification must be budgeted;
-- pathological collision groups must be detected and surfaced.
+ADR-0041 owns:
 
-Stable intern id assignment remains deterministic even if the physical table rebuilds, resizes, or changes probing
-strategy.
+- resolved probe-budget vocabulary;
+- domain-partitioned admission relationships;
+- feasibility relationships;
+- bootstrap cap values and bootstrap derivation formulas;
+- fail-closed probe exhaustion behavior;
+- stable-id independence from physical probing;
+- hot-loop enforcement boundaries;
+- and ledger/accounting requirements.
+
+ADR-0042 owns:
+
+- concrete probing algorithm;
+- heap/off-heap/`MemorySegment`/native layout;
+- control-byte layout;
+- physical stride;
+- physical padding;
+- internal fragmentation evidence;
+- transient rebuild/resize memory evidence;
+- read-path locality profile;
+- physical cache-line / cache-miss evidence;
+- branch-miss evidence;
+- and backend-specific benchmark gates.
+
+A compliant backend MAY use open addressing, grouped probing, Robin-Hood-style displacement, generated frozen indexes,
+or
+another ratified physical strategy.
+
+Regardless of strategy, the admitted scope MUST satisfy the resolved ADR-0041 probe budget before stable intern ids
+become planning-visible.
+
+Stable intern id assignment remains deterministic even if the physical table rebuilds, resizes, relocates, compacts, or
+changes probing strategy.
+
+#### 13.13.1. Resolved Interner Probe Budget Vector Law
+
+An interning scope MUST resolve a probe-budget vector before scope admission.
+
+The resolved probe-budget vector is policy/admission material.
+
+It is not a table-layout implementation.
+
+Required scalar vocabulary:
+
+``````text
+admittedCandidateCount
+    number of intern candidates admitted into this interning scope.
+
+admittedCandidateCountByIdentityDomain[identityDomainId]
+    number of candidates admitted for one identity domain.
+
+logicalTableCapacitySlots
+    physical table capacity measured in logical candidate slots.
+
+logicalTableCapacitySlotsByIdentityDomain[identityDomainId]
+    logical candidate slot capacity reserved for one identity domain when the scope uses domain-partitioned admission
+    or a shared table with domain quotas.
+
+maxLoadFactorNumerator / maxLoadFactorDenominator
+    maximum admitted load factor as a rational number:
+        maxLoadFactor = maxLoadFactorNumerator / maxLoadFactorDenominator
+
+probeGroupWidthSlots
+    number of logical candidate slots in one hot probe group.
+
+maxHotProbeGroups
+    maximum hot probe groups that may be scanned by one ordinary lookup or insert attempt.
+
+maxProbeDisplacementSlots
+    maximum logical displacement, measured in slots, admitted for ordinary hot probing.
+
+logicalHotSlotBytes
+    deterministic logical hot-probe projection byte cost per candidate slot.
+
+maxHotProbeProjectionBytesPerOperation
+    maximum logical hot-probe projection bytes read by one ordinary lookup or insert attempt.
+
+maxHotCollisionCandidates
+    maximum candidates in one ordinary hot collision group before escalation.
+
+maxExactVerificationBytesPerProbe
+    maximum canonical exact-verification bytes admitted for one lookup or insert attempt.
+
+maxResizeCountPerScope
+    maximum table resize count admitted for the scope before stable id publication.
+
+maxRebuildCountPerScope
+    maximum table rebuild / reindex count admitted for the scope before stable id publication.
+
+maxRebuildScratchBytes
+    maximum deterministic scratch bytes reserved for rebuild / reindex work.
+
+maxMigrationMetadataBytes
+    maximum deterministic metadata bytes required to describe migration from one table layout/capacity to another.
+
+maxProbeDiagnosticsBytes
+    maximum bounded diagnostic evidence bytes reserved for probe-budget failures.
+
+backendPhysicalOverheadBytes
+    deterministic physical backend overhead reserved for object headers, array headers, segment headers, alignment
+    padding, allocator metadata, table headers, and internal fragmentation.
+
+maxTransientRebuildBytes
+    maximum additional bytes that may be simultaneously live during resize, rebuild, reindex, or backend migration.
+
+maxColdCollisionStructureBytes
+    maximum bytes reserved for a bounded cold collision structure when that escalation path is ratified.
+
+maxColdCollisionProbeGroups
+    maximum cold-structure probe groups that may be scanned after hot collision escalation.
+
+identityTransientWorkBudgetBytes
+    shared transient bytes reserved for exact verification, canonical sort scratch, SCC collision handling, and
+    collision escalation work when those paths may overlap.
+``````
+
+All values MUST be integers.
+
+All ratio arithmetic MUST use integer arithmetic.
+
+Floating-point arithmetic is forbidden in probe-budget admission.
+
+Every multiplication, addition, shift, and `ceilDiv(...)` used by probe-budget resolution MUST be overflow-checked.
+
+A resolved probe-budget vector with a non-positive count, non-positive capacity, negative byte budget, or overflowed
+intermediate value is invalid and MUST fail before scope admission.
+
+The validation order is normative:
+
+``````text
+1. validate denominator / numerator positivity and ordering
+2. validate candidate count and capacity positivity
+3. validate per-domain candidate counts and per-domain capacities
+4. validate all byte-cap inputs are non-negative
+5. validate all multiplication inputs before multiplication
+6. validate every multiplication / addition for overflow
+7. compute derived capacities
+8. validate feasibility inequalities
+9. admit or fail closed
+``````
+
+The implementation MUST NOT evaluate `ceilDiv(...)`, division, multiplication by ratio material, or derived byte
+formulas before the corresponding denominator and numerator constraints have been validated.
+
+Invalid profile material is a profile-admission failure.
+
+It MUST NOT be represented by a hot-path arithmetic exception.
+
+Admission-time checked arithmetic MAY use implementation exceptions internally only if they are caught at the admission
+boundary and converted into a bounded fail-closed profile-admission result.
+
+Hot-path probing arithmetic MUST NOT rely on exception-throwing overflow detection.
+
+#### 13.13.2. Domain-Partitioned Probe Admission Law
+
+Scope-level probe feasibility is necessary but not sufficient.
+
+A hot identity domain must not consume all table capacity and starve a cold identity domain that has already been
+admitted into the same interning scope.
+
+For every admitted identity domain, the solver MUST prove:
+
+``````text
+admittedCandidateCountByIdentityDomain[identityDomainId] > 0
+
+logicalTableCapacitySlotsByIdentityDomain[identityDomainId] > 0
+
+admittedCandidateCountByIdentityDomain[identityDomainId] * maxLoadFactorDenominator
+    <= logicalTableCapacitySlotsByIdentityDomain[identityDomainId] * maxLoadFactorNumerator
+``````
+
+The domain partition may be implemented as:
+
+- physically separate tables per identity domain;
+- one table with deterministic domain slices;
+- one table with deterministic domain quotas and routing prefixes;
+- or another ratified layout that proves equivalent isolation.
+
+For a shared physical table, the solver MUST additionally prove:
+
+``````text
+sum(logicalTableCapacitySlotsByIdentityDomain[*])
+    <= logicalTableCapacitySlots
+``````
+
+A candidate insert MUST be rejected before publication if it would cause:
+
+``````text
+currentCandidateCountByIdentityDomain[identityDomainId] + pendingInsertCount
+    > floor(
+          logicalTableCapacitySlotsByIdentityDomain[identityDomainId]
+        * maxLoadFactorNumerator
+        / maxLoadFactorDenominator
+      )
+``````
+
+The domain quota is admission material.
+
+It is not semantic equality material.
+
+If an implementation chooses one physical table for multiple identity domains, it still MUST retain domain-specific
+candidate counts, collision counts, and probe exhaustion accounting.
+
+#### 13.13.3. Probe Capacity Feasibility Law
+
+The probe capacity solver MUST prove load-factor feasibility before scope admission and after any resize or rebuild that
+changes logical table capacity.
+
+Required relationships:
+
+``````text
+0 < maxLoadFactorNumerator < maxLoadFactorDenominator
+
+admittedCandidateCount > 0
+logicalTableCapacitySlots > 0
+
+admittedCandidateCount * maxLoadFactorDenominator
+    <= logicalTableCapacitySlots * maxLoadFactorNumerator
+``````
+
+Equivalently:
+
+``````text
+logicalTableCapacitySlots
+    >= ceilDiv(
+           admittedCandidateCount * maxLoadFactorDenominator,
+           maxLoadFactorNumerator
+       )
+``````
+
+The implementation MAY use a backend-ratified capacity schedule.
+
+For a power-of-two table backend, the accepted shape is:
+
+``````text
+minimumCapacityByLoad =
+    ceilDiv(
+        admittedCandidateCount * maxLoadFactorDenominator,
+        maxLoadFactorNumerator
+    )
+
+minimumCapacity =
+    max(
+        minimumCapacityByLoad,
+        minInternTableCapacitySlots
+    )
+
+logicalTableCapacitySlots =
+    nextPowerOfTwo(minimumCapacity)
+
+if logicalTableCapacitySlots > maxInternTableCapacitySlots:
+    fail closed before scope admission
+``````
+
+For a non-power-of-two backend, `nextPowerOfTwo(...)` is replaced by a ratified deterministic capacity schedule:
+
+``````text
+logicalTableCapacitySlots = nextRatifiedCapacity(minimumCapacity)
+``````
+
+The capacity schedule MUST be deterministic and versioned.
+
+It MUST NOT depend on:
+
+- live heap availability;
+- CPU count;
+- NUMA topology;
+- GC timing;
+- current collision observations;
+- previous run outcomes;
+- table construction timing;
+- JIT compilation state;
+- or runtime profiling.
+
+A scope that cannot satisfy load-factor feasibility MUST fail before stable id publication.
+
+It MUST NOT silently lower `admittedCandidateCount`, drop candidates, or publish a partial intern table.
+
+#### 13.13.4. Insert-Time and Resize-Time Revalidation Law
+
+Initial scope admission does not replace runtime table-state validation.
+
+A streaming candidate accumulation implementation MUST track:
+
+``````text
+currentCandidateCount
+currentCandidateCountByIdentityDomain[identityDomainId]
+currentLogicalTableCapacitySlots
+currentLogicalTableCapacitySlotsByIdentityDomain[identityDomainId]
+``````
+
+Before an insert becomes visible to the table builder, the implementation MUST prove:
+
+``````text
+(currentCandidateCount + pendingInsertCount) * maxLoadFactorDenominator
+    <= currentLogicalTableCapacitySlots * maxLoadFactorNumerator
+``````
+
+and, for the candidate's identity domain:
+
+``````text
+(currentCandidateCountByIdentityDomain[identityDomainId] + pendingInsertCount) * maxLoadFactorDenominator
+    <= currentLogicalTableCapacitySlotsByIdentityDomain[identityDomainId] * maxLoadFactorNumerator
+``````
+
+After any resize, rebuild, reindex, migration, or backend table replacement, the implementation MUST revalidate the same
+relationships against the new logical capacities before continuing insertion or publication.
+
+A resize may increase capacity.
+
+It MUST NOT retroactively admit more candidates than the resolved scope candidate cap allows.
+
+If the resolved `admittedCandidateCount` is exceeded, the scope fails closed or must open a new explicitly admitted
+scope.
+
+It MUST NOT silently expand the semantic scope.
+
+#### 13.13.5. Hot Probe Work Feasibility Law
+
+The hot probe work bound is derived from group count, group width, and logical hot-slot byte cost.
+
+Required formulas:
+
+``````text
+maxVisitedSlots =
+    maxHotProbeGroups * probeGroupWidthSlots
+
+maxProbeDisplacementSlots + 1 <= maxVisitedSlots
+
+maxHotProbeProjectionBytesPerOperation =
+    maxVisitedSlots * logicalHotSlotBytes
+``````
+
+The solver MUST fail closed before scope admission if:
+
+- `probeGroupWidthSlots <= 0`;
+- `maxHotProbeGroups <= 0`;
+- `logicalHotSlotBytes <= 0`;
+- `maxProbeDisplacementSlots < 0`;
+- `maxVisitedSlots` overflows;
+- `maxHotProbeProjectionBytesPerOperation` overflows;
+- `maxProbeDisplacementSlots + 1 > maxVisitedSlots`;
+- `maxHotProbeProjectionBytesPerOperation > configuredMaxHotProbeProjectionBytesPerOperation`;
+- or the selected backend cannot prove that one ordinary probe attempt terminates within `maxVisitedSlots`.
+
+The overflow checks in this section are explicit obligations.
+
+They are not merely inherited from Section 13.13.1.
+
+`logicalHotSlotBytes` is a deterministic logical projection cost.
+
+It is not a JVM object-size claim.
+
+It is not a physical cache-line alignment claim.
+
+It is not a physical cache-miss predictor.
+
+It may represent:
+
+- HID words;
+- domain/version projection;
+- canonical byte length;
+- inline verifier prefix words;
+- stable id / candidate id projection;
+- state/generation/control bits;
+- or table-level proof material amortized through a deterministic layout calibration.
+
+Backend-specific storage offsets, base addresses, object headers, pointer widths, cache-line alignment, stride,
+cache-line
+touch count, and cache-miss behavior belong to ADR-0042 substrate profiles.
+
+They are not ADR-0041 semantic identity material.
+
+#### 13.13.6. Probe Displacement Definition Law
+
+`maxProbeDisplacementSlots` is measured in logical slot distance from the candidate's deterministic home slot to the
+candidate's observed slot under the selected probing sequence.
+
+For grouped probing, the relationship to probe groups is:
+
+``````text
+visitedProbeGroupsForDisplacement =
+    ceilDiv(maxProbeDisplacementSlots + 1, probeGroupWidthSlots)
+
+visitedProbeGroupsForDisplacement <= maxHotProbeGroups
+``````
+
+A backend that cannot define logical displacement for its selected probing strategy MUST define an equivalent bounded
+progress metric before profile admission.
+
+The equivalent metric MUST prove ordinary lookup/insert termination within `maxVisitedSlots`.
+
+#### 13.13.7. Bootstrap Probe Profiles
+
+ADR-0041 v1 defines deterministic bootstrap probe profiles.
+
+The exact values may later move into a resolved policy table, but a released v1 implementation MUST produce a concrete
+resolved probe-budget vector equivalent to one of these profiles or a stricter profile.
+
+``````text
+SMALL:
+    maxLoadFactorNumerator                     = 1
+    maxLoadFactorDenominator                   = 2
+    probeGroupWidthSlots                       = 4
+    maxHotProbeGroups                          = 4
+    maxProbeDisplacementSlots                  = 15
+    maxHotCollisionCandidates                  = 4
+    maxResizeCountPerScope                     = 1
+    maxRebuildCountPerScope                    = 1
+    logicalHotSlotBytesTarget                  = 64
+    configuredMaxHotProbeProjectionBytesPerOp  = 1024
+    configuredMaxExactVerificationBytesPerProbe =
+        4 * maxCanonicalBytesPerInternCandidate
+    maxProbeDiagnosticsBytesFloor              = 4096
+    rebuildScratchBytesPerLogicalSlot          = 16
+    migrationMetadataBytesPerLogicalSlot       = 8
+    backendPhysicalOverheadBytes               = backendProfileDeclaredPhysicalOverheadBytes
+    maxTransientRebuildBytes                   = derived by Section 13.13.8.2
+
+STANDARD:
+    maxLoadFactorNumerator                     = 2
+    maxLoadFactorDenominator                   = 3
+    probeGroupWidthSlots                       = 8
+    maxHotProbeGroups                          = 4
+    maxProbeDisplacementSlots                  = 31
+    maxHotCollisionCandidates                  = 8
+    maxResizeCountPerScope                     = 2
+    maxRebuildCountPerScope                    = 2
+    logicalHotSlotBytesTarget                  = 64
+    configuredMaxHotProbeProjectionBytesPerOp  = 2048
+    configuredMaxExactVerificationBytesPerProbe =
+        8 * maxCanonicalBytesPerInternCandidate
+    maxProbeDiagnosticsBytesFloor              = 8192
+    rebuildScratchBytesPerLogicalSlot          = 16
+    migrationMetadataBytesPerLogicalSlot       = 8
+    backendPhysicalOverheadBytes               = backendProfileDeclaredPhysicalOverheadBytes
+    maxTransientRebuildBytes                   = derived by Section 13.13.8.2
+
+LARGE:
+    maxLoadFactorNumerator                     = 3
+    maxLoadFactorDenominator                   = 4
+    probeGroupWidthSlots                       = 8
+    maxHotProbeGroups                          = 6
+    maxProbeDisplacementSlots                  = 47
+    maxHotCollisionCandidates                  = 12
+    maxResizeCountPerScope                     = 2
+    maxRebuildCountPerScope                    = 2
+    logicalHotSlotBytesTarget                  = 64
+    configuredMaxHotProbeProjectionBytesPerOp  = 3072
+    configuredMaxExactVerificationBytesPerProbe =
+        12 * maxCanonicalBytesPerInternCandidate
+    maxProbeDiagnosticsBytesFloor              = 16384
+    rebuildScratchBytesPerLogicalSlot          = 16
+    migrationMetadataBytesPerLogicalSlot       = 8
+    backendPhysicalOverheadBytes               = backendProfileDeclaredPhysicalOverheadBytes
+    maxTransientRebuildBytes                   = derived by Section 13.13.8.2
+``````
+
+For v1:
+
+``````text
+AUTO = STANDARD
+``````
+
+A stricter profile may reduce load factor, probe groups, displacement, collision-group size, resize count, rebuild
+count, or hot probe bytes.
+
+A stricter profile may not weaken determinism, collision verification, or publication rules.
+
+A looser profile requires explicit ratification, benchmark evidence, capacity feasibility tests, and golden vectors.
+
+`logicalHotSlotBytesTarget = 64` is a logical hot-probe projection target.
+
+It is not a claim that JVM heap arrays are physically 64-byte aligned.
+
+It is not a promise that one lookup touches exactly one cache line.
+
+A high-performance substrate backend may use 64-byte or wider aligned physical probe groups only under ADR-0042
+evidence.
+
+The gap between average expected probe behavior and worst-case probe bound is intentional.
+
+ADR-0041 defines deterministic tail-bound admission.
+
+ADR-0042 may ratify stricter backend-specific profiles when benchmark and layout evidence support them.
+
+#### 13.13.8. Intern Table Byte Feasibility Law
+
+Probe admission must account for intern-table structural bytes before scope admission.
+
+The solver MUST validate:
+
+``````text
+totalInternTableBytes(resolvedProbeCaps) <= internTableBudgetBytes
+``````
+
+`totalInternTableBytes(...)` MUST include at least:
+
+- logical hot-slot projection bytes:
+  `logicalTableCapacitySlots * logicalHotSlotBytes`;
+- control/state bytes;
+- occupancy metadata bytes;
+- generation/state metadata bytes;
+- stable-id projection bytes;
+- candidate-id projection bytes where required;
+- collision-group metadata bytes;
+- overflow/cold-collision structure header bytes where ratified;
+- cold collision structure bytes where that escalation path is ratified:
+  `maxColdCollisionStructureBytes`;
+- table-level proof bytes;
+- version-bundle proof bytes where required;
+- rebuild/reindex scratch bytes:
+  `maxRebuildScratchBytes`;
+- migration metadata bytes:
+  `maxMigrationMetadataBytes`;
+- bounded probe diagnostic reserve:
+  `maxProbeDiagnosticsBytes`;
+- backend physical overhead bytes:
+  `backendPhysicalOverheadBytes`;
+- transient rebuild/resize/migration bytes:
+  `maxTransientRebuildBytes`;
+- deterministic alignment and padding bytes from the selected layout calibration;
+- and fixed table headroom bytes.
+
+The exact physical values are substrate-backend and calibration material.
+
+The accounting obligation is ADR-0041 material.
+
+A backend MAY store the same logical material using heap primitive arrays, off-heap memory, `MemorySegment`, native
+aligned storage, mapped image indexes, or generated layouts.
+
+The backend MUST provide a deterministic physical-layout byte model before scope admission.
+
+The model MUST account for, where applicable:
+
+- JVM array/object headers in heap primitive backends;
+- SoA array splitting overhead;
+- direct buffer / segment header overhead;
+- native allocator metadata;
+- memory-mapped page/header overhead;
+- table header/footer material;
+- control-byte region padding;
+- probe-group alignment padding;
+- internal fragmentation;
+- allocator granularity;
+- and backend-specific fixed headroom.
+
+This model is backend evidence.
+
+It is not semantic identity material.
+
+The backend MUST prove that its physical layout does not exceed the admitted byte budget for the scope.
+
+If `totalInternTableBytes(resolvedProbeCaps)` exceeds `internTableBudgetBytes`, the scope MUST fail before stable id
+publication.
+
+#### 13.13.8.1. Physical Overhead and Internal Fragmentation Law
+
+Logical hot-slot bytes are not sufficient proof of physical memory feasibility.
+
+A backend that splits logical probe material across multiple physical arrays, buffers, segments, native regions, mapped
+pages, or generated layout regions MUST include the resulting physical overhead in `backendPhysicalOverheadBytes`.
+
+`backendPhysicalOverheadBytes` MUST be deterministic for the selected backend profile, runtime profile, and resolved
+layout calibration.
+
+It MUST NOT be computed from:
+
+- current heap free bytes;
+- current GC region state;
+- current allocator success/failure;
+- observed object addresses;
+- live telemetry;
+- or previous run allocation outcomes.
+
+If a backend cannot provide a deterministic physical overhead model, it may still be a portable semantic backend only if
+it admits no exact physical memory claim and remains inside a conservative budget envelope.
+
+A backend claiming the high-performance mechanical profile MUST provide physical overhead evidence.
+
+#### 13.13.8.2. Transient Resize / Rebuild Memory Spike Law
+
+Resize, rebuild, reindex, migration, and compaction may require old and new tables to be simultaneously live.
+
+This transient two-table interval must be budgeted before scope admission.
+
+Required relationship:
+
+``````text
+maxTransientRebuildBytes
+    >= maxSimultaneouslyLiveOldTableBytes
+     + maxSimultaneouslyLiveNewTableBytes
+     + maxRebuildScratchBytes
+     + maxMigrationMetadataBytes
+``````
+
+`maxMigrationMetadataBytes` is the deterministic metadata required to track a migration operation.
+
+It includes, where applicable:
+
+- old-to-new slot mapping material;
+- domain-slice remap material;
+- displacement recomputation scratch;
+- generation/state transition metadata;
+- rebuild diagnostics reserved for the migration;
+- and backend-specific migration headers.
+
+If the backend uses grow-by-copy resizing, the conservative v1 bound is:
+
+``````text
+maxSimultaneouslyLiveOldTableBytes =
+    totalInternTableBytes(currentTableCaps)
+
+maxSimultaneouslyLiveNewTableBytes =
+    totalInternTableBytes(nextTableCaps)
+``````
+
+A backend may use a lower bound only if it proves a deterministic in-place, segmented, paged, or incremental migration
+strategy that never has both complete tables live.
+
+If `maxResizeCountPerScope > 0` or `maxRebuildCountPerScope > 0`, then `maxTransientRebuildBytes` MUST be positive and
+MUST fit inside the scope's resolved transient memory reserve.
+
+A profile that cannot reserve transient rebuild bytes MUST set:
+
+``````text
+maxResizeCountPerScope  = 0
+maxRebuildCountPerScope = 0
+``````
+
+or fail admission before stable id publication.
+
+The implementation MUST NOT discover the transient spike by actually allocating the new table first.
+
+Admission must prove the transient reserve before allocation.
+
+#### 13.13.9. Collision Amplification Budget Law
+
+Collision verification is mandatory, but collision amplification is budgeted.
+
+The solver MUST reserve hot collision and cold exact-verification budget before publication.
+
+Required relationships:
+
+``````text
+maxHotCollisionCandidates > 0
+
+maxHotCollisionCandidates <= configuredMaxHotCollisionCandidates
+
+maxExactVerificationBytesPerProbe =
+    maxHotCollisionCandidates * maxCanonicalBytesPerInternCandidate
+
+maxExactVerificationBytesPerProbe <= configuredMaxExactVerificationBytesPerProbe
+``````
+
+A domain MAY ratify a smaller `maxExactVerificationBytesPerCandidate` when its canonical material has a smaller local
+fuse.
+
+In that case:
+
+``````text
+maxExactVerificationBytesPerProbe =
+    maxHotCollisionCandidates * min(
+        maxCanonicalBytesPerInternCandidate,
+        maxExactVerificationBytesPerCandidate
+    )
+``````
+
+If a HID, route, or compact descriptor group exceeds `maxHotCollisionCandidates`, the implementation MUST NOT continue
+ordinary hot verification.
+
+It MUST enter the collision escalation law.
+
+Allowed escalation outcomes are those defined by Section 13.21.
+
+The implementation MUST NOT:
+
+- continue an unbounded collision chain;
+- allocate exception objects for each candidate;
+- log per-candidate unbounded diagnostics;
+- retry the same group without a deterministic state transition;
+- or promote a digest-only match to equality.
+
+#### 13.13.10. SCC Collision Budget Coupling Law
+
+SCC sealing does not bypass interner collision budgets.
+
+If SCC members, SCC-local references, or SCC seal payload candidates enter an intern table and share the same HID,
+route,
+or compact descriptor group, they count against `maxHotCollisionCandidates` and `maxExactVerificationBytesPerProbe`.
+
+SCC-local temporary references MAY be used before final seal only under the SCC laws in Section 13.30.
+
+They MUST NOT become a side channel for unbounded collision verification.
+
+The SCC seal process MUST reserve one of the following before publication:
+
+1. sufficient ordinary collision budget for the SCC member group;
+2. a bounded cold collision structure budget linked to Section 13.21; or
+3. a fail-closed SCC seal outcome when the collision budget is exceeded.
+
+If an SCC collision group exceeds the resolved collision budget, the implementation MUST fail the SCC seal closed
+before:
+
+- stable intern id assignment;
+- parent table publication;
+- frozen image publication;
+- planning visibility;
+- or persistent artifact publication.
+
+#### 13.13.11. Sort Scratchpad and Probe Budget Non-Double-Spend Law
+
+Exact verification may require canonical byte comparison only.
+
+Some domains may additionally require canonical sort scratch during collision verification if their exact-verification
+path invokes collection canonicalization or cold exact sort.
+
+Those bytes are not free.
+
+If collision verification can invoke canonical sort or cold sort machinery, the solver MUST prove one of:
+
+``````text
+identityTransientWorkBudgetBytes
+    >= maxExactVerificationBytesPerProbe
+     + maxCanonicalSortScratchBytesPerScope
+     + maxColdCollisionStructureBytes
+``````
+
+or:
+
+``````text
+exact verification scratch
+canonical sort scratch
+cold collision structure scratch
+are disjoint by construction and separately budgeted
+``````
+
+The implementation MUST NOT charge the same transient scratch bytes simultaneously to:
+
+- collision exact verification;
+- canonical collection sorting;
+- cold exact sorting;
+- SCC seal collision handling;
+- and cold collision structure escalation.
+
+If the implementation cannot prove non-overlap or sufficient shared reserve, the identity scope fails closed before
+stable id publication.
+
+#### 13.13.12. Cold Collision Structure Budget Coupling Law
+
+A bounded cold collision structure is lawful only if its budget is resolved before escalation.
+
+The resolved probe budget MUST define, or explicitly disable, the cold collision path.
+
+If enabled, the resolved budget MUST define at least:
+
+``````text
+maxColdCollisionStructureBytes
+maxColdCollisionProbeGroups
+maxColdCollisionCandidates
+maxColdExactVerificationBytes
+``````
+
+The cold collision structure may consume either:
+
+1. a sub-budget reserved inside the same interner probe budget vector; or
+2. a separately resolved cold-collision budget that is linked by scope id, identity domain id, and publication epoch.
+
+The linkage MUST be deterministic.
+
+It MUST NOT be acquired lazily from live heap availability after escalation.
+
+If no cold collision budget is resolved, the only lawful outcome after hot collision escalation is fail-closed or
+quarantine under Section 13.21.
+
+#### 13.13.13. Resize, Rebuild, and Reindex Budget Law
+
+Resize, rebuild, and reindex work are deterministic physical work.
+
+They are not semantic identity.
+
+A resolved probe-budget vector MUST declare:
+
+``````text
+maxResizeCountPerScope
+maxRebuildCountPerScope
+maxRebuildScratchBytes
+maxMigrationMetadataBytes
+maxTransientRebuildBytes
+``````
+
+Required relationships:
+
+``````text
+0 <= observedResizeCount <= maxResizeCountPerScope
+0 <= observedRebuildCount <= maxRebuildCountPerScope
+maxRebuildScratchBytes <= rebuildScratchBytesCap
+maxMigrationMetadataBytes <= migrationMetadataBytesCap
+maxTransientRebuildBytes <= transientRebuildBytesCap
+``````
+
+If `maxResizeCountPerScope` or `maxRebuildCountPerScope` is exhausted before the scope can satisfy table feasibility,
+the
+implementation MUST fail the scope closed before stable id publication.
+
+Resize / rebuild MAY change:
+
+- physical bucket index;
+- group placement;
+- displacement distance;
+- physical slot address;
+- table capacity;
+- control-byte layout;
+- and backend-local probe traces.
+
+Resize / rebuild MUST NOT change:
+
+- canonical bytes;
+- HID derivation;
+- collision verification result;
+- stable intern id assignment;
+- stable id publication order;
+- semantic equality;
+- report/replay identity;
+- or planning-visible facts.
+
+Stable intern ids are assigned from collision-verified canonical material and deterministic canonical ordering.
+
+They MUST NOT be assigned from:
+
+- bucket index;
+- probe order;
+- displacement distance;
+- resize timing;
+- rebuild timing;
+- insertion order;
+- table construction timing;
+- physical memory address;
+- or backend-specific table layout.
+
+#### 13.13.14. Saturated Segment and Probe Exhaustion Law
+
+Probe exhaustion is a bounded terminal classification for the current operation or scope.
+
+If lookup or insertion exceeds any of the following:
+
+- `maxHotProbeGroups`;
+- `maxVisitedSlots`;
+- `maxProbeDisplacementSlots`;
+- `maxHotProbeProjectionBytesPerOperation`;
+- `maxHotCollisionCandidates`;
+- `maxExactVerificationBytesPerProbe`;
+- `maxResizeCountPerScope`;
+- `maxRebuildCountPerScope`;
+- `maxRebuildScratchBytes`;
+- `maxMigrationMetadataBytes`;
+- `maxTransientRebuildBytes`;
+- `maxColdCollisionStructureBytes` where enabled;
+- `identityTransientWorkBudgetBytes` where shared transient work is enabled;
+- or any per-domain capacity slice;
+
+the implementation MUST NOT continue unbounded probing.
+
+Allowed outcomes:
+
+- fail the current identity scope closed;
+- quarantine the current acquisition scope;
+- fail the current artifact publication closed;
+- move the candidate group into a bounded cold collision structure where ratified and pre-budgeted;
+- trigger a deterministic rebuild if rebuild budget remains;
+- trigger a deterministic resize if resize budget remains and publication has not occurred;
+- or reject the current publication attempt before planning visibility.
+
+Probe exhaustion MUST be represented by a primitive fault classification or bounded diagnostic record.
+
+It MUST NOT be represented by:
+
+- unbounded exception allocation;
+- unbounded log emission;
+- retry spinning;
+- hidden worker-local state;
+- leaked thread-local state;
+- or process-wide hard termination as the ordinary path.
+
+#### 13.13.15. Probe Ledger Accounting Law
+
+A compliant implementation MUST account for probe work.
+
+The interner ledger or scope-local accounting record MUST meter at least:
+
+- hot probe attempts;
+- hot probe groups scanned;
+- logical candidate slots visited;
+- maximum observed displacement;
+- probe byte budget consumed;
+- per-domain candidate counts;
+- per-domain capacity-slice consumption;
+- collision candidates examined;
+- inline verifier prefix comparisons;
+- cold exact-verification attempts;
+- exact canonical bytes compared;
+- resize count;
+- rebuild count;
+- rebuild scratch bytes;
+- migration metadata bytes;
+- backend physical overhead bytes;
+- transient rebuild / resize bytes;
+- cold collision structure bytes where enabled;
+- shared transient identity work bytes where enabled;
+- saturated segment outcomes;
+- collision escalation outcomes;
+- and bounded diagnostic evidence bytes.
+
+Accounting uses deterministic counters.
+
+Budget enforcement in the hot probe loop SHOULD use loop-local primitive counters and compare-against constants that
+were resolved before scope admission.
+
+The ordinary hot loop MUST NOT require global atomic counter mutation per visited slot.
+
+Detailed diagnostics MAY be aggregated through lane-local counters, scope-local snapshots, or cold-path summaries after
+an operation reaches a bounded classification.
+
+The implementation MUST NOT use elapsed wall-clock time as semantic budget.
+
+Runtime watchdogs may abort at an outer orchestration boundary.
+
+They MUST NOT reinterpret probe exhaustion as semantic inequality or stable id assignment evidence.
+
+#### 13.13.16. Published Read-Path Locality Handoff Law
+
+ADR-0041 probe budgets bound semantic admission, candidate publication, and worst-case logical probe work.
+
+They do not prove published read-path cache residency.
+
+A high-performance claim for repeated published lookups MUST be owned by ADR-0042 substrate profile evidence.
+
+That evidence SHOULD define:
+
+- hot/cold table split;
+- expected cache-line touch model;
+- maximum physical cache lines touched by the ordinary probe path where measurable;
+- branch policy;
+- prefetch policy if any;
+- lane-local read ownership;
+- table epoch and reader lease interaction;
+- and benchmark gates for representative TypeReference-scale workloads.
+
+ADR-0041 requires the handoff.
+
+ADR-0041 does not make cache residency semantic identity.
+
+#### 13.13.17. ADR-0042 Backend Profile Handoff Law
+
+ADR-0041 probe budgets are backend-neutral admission contracts.
+
+ADR-0042 substrate profiles must prove that their chosen physical layout and probing strategy satisfy these budgets.
+
+A backend profile must document at least:
+
+- capacity schedule;
+- load-factor support;
+- per-domain capacity partitioning or equivalent isolation;
+- group width;
+- displacement implementation or equivalent bounded progress metric;
+- collision-group representation;
+- hot-slot projection byte cost;
+- physical overhead model;
+- internal fragmentation model;
+- transient rebuild/resize memory model;
+- cold collision structure budget where enabled;
+- read-path locality profile where high-performance lookup is claimed;
+- rebuild/resize strategy;
+- scratch reservation;
+- physical alignment claim if any;
+- fallback behavior;
+- and benchmark / golden-vector evidence.
+
+A backend that cannot prove compliance with the resolved ADR-0041 probe budget MUST fail backend profile admission
+before
+identity scope admission or fall back to a compliant profile.
+
+It MUST NOT weaken the ADR-0041 budget after candidates have been admitted.
 
 ### 13.14. Intern Probe Group Projection Law
 
@@ -9389,6 +10451,46 @@ A compliant implementation MUST satisfy:
 332. Architecture tests reject wrapper-object intern ids in committed hot-path storage, frozen row arrays, planning hot
      loops, and L2 exact-match keys.
 
+333. Intern-table probe budgets are resolved before identity scope admission.
+334. Probe-budget admission uses integer arithmetic only; floating-point arithmetic is forbidden.
+335. Probe capacity must satisfy
+     `admittedCandidateCount * maxLoadFactorDenominator <= logicalTableCapacitySlots * maxLoadFactorNumerator`.
+336. Denominator and numerator constraints are verified before any `ceilDiv(...)`, division, or ratio-derived
+     arithmetic.
+337. Power-of-two or backend-ratified capacity schedules must be deterministic and versioned.
+338. Hot probe work must satisfy `maxProbeDisplacementSlots + 1 <= maxHotProbeGroups * probeGroupWidthSlots`.
+339. Hot probe bytes must satisfy
+     `maxHotProbeProjectionBytesPerOperation = maxHotProbeGroups * probeGroupWidthSlots * logicalHotSlotBytes`.
+340. `totalInternTableBytes(resolvedProbeCaps) <= internTableBudgetBytes` must be proven before stable id publication.
+341. Backend physical overhead and internal fragmentation must be included in intern-table byte feasibility.
+342. Transient resize/rebuild/migration memory must be reserved before allocation.
+343. Collision amplification must satisfy the resolved `maxHotCollisionCandidates` and
+     `maxExactVerificationBytesPerProbe` bounds.
+344. Resize and rebuild counts are deterministic physical work and must be bounded by resolved policy.
+345. Resize, rebuild, relocation, or reindex must not change stable intern id assignment.
+346. Probe exhaustion must reach a bounded classification; unbounded probing, retry spinning, and per-candidate
+     exception/log allocation are forbidden.
+347. Probe work is ledger-accounted through deterministic counters, not elapsed wall-clock time.
+348. ADR-0042 backend profiles must prove compliance with ADR-0041 probe budgets before identity scope admission.
+349. Per-domain interner capacity feasibility must be proven before scope admission.
+350. Shared interner tables must prove deterministic domain capacity slices or an equivalent isolation mechanism.
+351. Insert-time and resize-time load-factor revalidation is mandatory.
+352. Invalid load-factor numerator/denominator material fails closed before any division or `ceilDiv(...)` execution.
+353. Hot-path probing must not rely on exception-throwing arithmetic for overflow detection.
+354. Physical cache-line residency must not be inferred from `logicalHotSlotBytes` or logical probe-byte budgets.
+355. Backend physical overhead, internal fragmentation, migration metadata, and transient rebuild memory must be
+     included in intern-table byte feasibility.
+356. Cold collision structures must have a resolved budget before they can be used as escalation outcomes.
+357. SCC sealing must not bypass interner collision budgets.
+358. Collision exact-verification scratch and canonical sort scratch must be proven disjoint or charged to a shared
+     transient identity work budget.
+359. Probe ledger enforcement must use bounded deterministic counters; ordinary hot loops must not require global atomic
+     counter mutation per visited slot.
+360. Published read-path locality claims are ADR-0042 backend-profile evidence, not ADR-0041 semantic identity material.
+361. Cross-scope intern id equality by numeric id alone is forbidden.
+362. Retired or superseded intern scopes must reject stale ids or translate through a ratified cross-scope translation
+     law.
+
 ## 23. Required Golden Vectors
 
 Golden vectors MUST exist for:
@@ -9705,6 +10807,54 @@ Until ratification, no concrete annotation, DSL, or compiler-metadata lowering v
 - wrapper facade excluded from hot intern storage fixture;
 - provisional/verified/stable handle primitive state transition fixture;
 
+### 23.x. Interner Probe Budget
+
+- probe capacity feasibility fixture:
+  `admittedCandidateCount * maxLoadFactorDenominator <= logicalTableCapacitySlots * maxLoadFactorNumerator`;
+- divide-by-zero / invalid load-factor fail-closed fixture;
+- numerator/denominator validation-before-division fixture;
+- power-of-two capacity schedule fixture;
+- backend-ratified non-power-of-two capacity schedule fixture where applicable;
+- hot probe work fixture:
+  `maxProbeDisplacementSlots + 1 <= maxHotProbeGroups * probeGroupWidthSlots`;
+- hot probe byte fixture:
+  `maxHotProbeProjectionBytesPerOperation = maxHotProbeGroups * probeGroupWidthSlots * logicalHotSlotBytes`;
+- `totalInternTableBytes(resolvedProbeCaps)` feasibility fixture;
+- backend physical overhead and internal fragmentation fixture;
+- transient resize/rebuild memory reserve fixture;
+- collision amplification budget fixture;
+- collision group exceeds `maxHotCollisionCandidates` fail-closed / escalation fixture;
+- resize budget exhaustion fixture;
+- rebuild budget exhaustion fixture;
+- rebuild does not change stable intern id assignment fixture;
+- physical bucket order does not affect stable id publication fixture;
+- probe exhaustion bounded diagnostic fixture;
+- probe ledger accounting fixture;
+- heap backend and aligned backend produce identical canonical bytes, HID, collision verification result, and stable
+  intern ids.
+
+### 23.x. Interner Probe Budget Extended Fixtures
+
+- per-domain probe capacity feasibility fixture;
+- shared table domain-slice isolation fixture;
+- hot-domain cannot starve cold-domain capacity fixture;
+- insert-time load-factor revalidation fixture;
+- resize-time load-factor revalidation fixture;
+- invalid numerator/denominator fail-closed-before-division fixture;
+- checked arithmetic admission failure converted to bounded fail-closed result fixture;
+- logicalHotSlotBytes does not claim cache-line residency fixture;
+- physical overhead model fixture for heap primitive SoA backend;
+- physical overhead model fixture for aligned off-heap or `MemorySegment` backend where enabled;
+- migration metadata byte accounting fixture;
+- transient resize/rebuild memory spike fixture;
+- cold collision structure budget linkage fixture;
+- SCC collision budget coupling fixture;
+- sort scratch and exact-verification scratch non-double-spend fixture;
+- hot-loop counter does not require global atomic mutation fixture;
+- read-path locality profile handoff fixture;
+- cross-scope intern id translation fixture;
+- stale intern id rejection after scope retirement fixture.
+
 ## 24. Required Architecture Tests
 
 Architecture tests MUST verify:
@@ -9953,6 +11103,104 @@ influence canonical contract identity.
 ---
 
 ## 26. Alternatives Considered
+
+### 26.44. Use One Scope-Level Probe Budget Without Domain Slices
+
+Rejected.
+
+Interning scopes may contain identity domains with highly skewed distributions.
+
+A single scope-level candidate count allows a hot domain to consume table capacity intended for colder domains.
+
+ADR-0041 therefore requires per-domain candidate counts and either physical partitioning, deterministic domain slices,
+or
+an equivalent isolation proof.
+
+### 26.45. Treat Logical Probe Bytes as Cache-Line Proof
+
+Rejected.
+
+`logicalHotSlotBytes` is budget accounting material.
+
+It does not prove physical cache-line alignment, physical cache-line touch count, cache residency, or cache-miss
+behavior.
+
+Those claims belong to ADR-0042 substrate backend evidence.
+
+### 26.46. Validate Load Factor Only at Initial Scope Admission
+
+Rejected.
+
+Streaming candidate accumulation, resize, rebuild, and migration can change the relationship between current candidate
+count and current table capacity.
+
+ADR-0041 requires insert-time and resize-time revalidation.
+
+### 26.47. Let Cold Collision Structures Allocate Their Own Budget Lazily
+
+Rejected.
+
+Cold collision structures are escalation paths for adversarial or pathological identity groups.
+
+Allowing them to allocate budget lazily from live heap state reopens resource-exhaustion behavior that this ADR is meant
+to close.
+
+### 26.48. Update Global Probe Counters on Every Hot-Loop Slot Visit
+
+Rejected.
+
+That would turn budget accounting into the hot-path bottleneck.
+
+ADR-0041 requires deterministic budget enforcement, but ordinary hot loops should use loop-local primitive counters and
+compare-against constants.
+
+Detailed diagnostics may be aggregated after a bounded classification or through lane-local snapshots.
+
+### 26.40. Leave Probe Budget as a Backend-Local Declaration
+
+Rejected.
+
+A backend-local declaration such as "maximum probe length must be declared" is too weak for ADR-0041.
+
+Protocol-owned interning is a semantic publication boundary.
+
+Therefore probe behavior requires resolved caps, integer feasibility relationships, deterministic byte accounting,
+collision-amplification bounds, physical-overhead accounting, transient rebuild reserve, and stable-id independence from
+physical probing.
+
+### 26.41. Put Interner Probe Budget Only in ADR-0042
+
+Rejected.
+
+ADR-0042 owns physical substrate profiles.
+
+ADR-0041 owns protocol-owned interning admission and publication.
+
+The mathematical probe-budget contract belongs to ADR-0041 because it determines when an identity scope may publish
+stable intern ids.
+
+ADR-0042 may choose a physical probing algorithm only after proving that it satisfies the ADR-0041 budget.
+
+### 26.42. Make Probe Displacement or Bucket Index Part of Stable Intern Id Assignment
+
+Rejected.
+
+Stable intern ids are assigned from collision-verified canonical material and deterministic ordering.
+
+Bucket index, probe order, displacement, resize timing, rebuild timing, physical memory address, and backend-specific
+table layout are physical placement material only.
+
+### 26.43. Count Only Logical Slot Bytes and Ignore Physical Backend Overhead
+
+Rejected.
+
+Logical slot bytes are necessary but insufficient.
+
+A backend may split one logical slot across multiple primitive arrays, off-heap regions, mapped pages, segment regions,
+or generated layout regions.
+
+Backend physical overhead, internal fragmentation, padding, allocator granularity, and transient rebuild memory must be
+accounted before scope admission.
 
 ### 26.38. Use Wrapper Objects as Intern Id Storage
 
@@ -10532,6 +11780,13 @@ two-phase sizing must prove exact measure/write equivalence before publication.
 
 Intern id and handle wrappers are cold facades only; committed interning state is primitive substrate plus table-level
 proof.
+
+Interner probe behavior is admitted by ADR-0041 integer budget feasibility; ADR-0042 may change the physical probing
+backend only after proving the same budget, including physical overhead and transient rebuild memory, while preserving
+stable id results.
+
+Probe budgets include per-domain admission, insert/resize revalidation, physical overhead, transient rebuild reserve,
+cold-collision linkage, and hot-loop accounting boundaries; physical read-path locality remains ADR-0042 evidence.
 
 `DigestDomainSeparationPayloadV1` is a fixed 56-byte initialized canonical protocol payload; non-applicable axes and
 reserved bytes are zero-filled, never omitted or left stale.
