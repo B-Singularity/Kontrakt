@@ -6864,6 +6864,45 @@ maxColdCollisionProbeGroups
 identityTransientWorkBudgetBytes
     shared transient bytes reserved for exact verification, canonical sort scratch, SCC collision handling, and
     collision escalation work when those paths may overlap.
+
+candidateCountingMode
+    ratified counting mode for this interning scope.
+
+laneQuotaChunkSize
+    number of candidate-count units reserved at once for one engine lane in bounded streaming mode.
+
+maxLaneQuotaRefillsPerScope
+    maximum deterministic quota-refill events admitted for one scope.
+
+laneCandidateQuotaByEngineLane[engineLaneId]
+    candidate-count quota reserved for a specific engine lane.
+
+laneStagedScratchBytesCapByEngineLane[engineLaneId]
+    staged scratch byte cap reserved for a specific engine lane.
+
+stagedCanonicalBytesCap
+    maximum canonical byte payload bytes that may remain staged before seal / publication.
+
+stagedScratchBytesCap
+    maximum mutable scratch bytes that may remain staged before seal / publication.
+
+stagedHandleBytesCap
+    maximum provisional handle / candidate descriptor bytes that may remain staged before seal / publication.
+
+stagedCandidateMetadataBytesCap
+    maximum metadata bytes for staged candidate descriptors, ownership records, and seal bookkeeping.
+
+maxInvalidationTraversalEdges
+    maximum dependency edges that may be traversed to discover an incremental affected candidate set.
+
+maxInvalidationTraversalNodes
+    maximum dependency nodes that may be traversed to discover an incremental affected candidate set.
+
+maxAffectedSetExpansionSteps
+    maximum deterministic expansion steps admitted while building an incremental affected set.
+
+maxReusedSealedReferenceReads
+    maximum reads of already-sealed references admitted while proving that unchanged material may be reused.
 ``````
 
 All values MUST be integers.
@@ -6902,6 +6941,101 @@ Admission-time checked arithmetic MAY use implementation exceptions internally o
 boundary and converted into a bounded fail-closed profile-admission result.
 
 Hot-path probing arithmetic MUST NOT rely on exception-throwing overflow detection.
+
+#### 13.13.1.1. Candidate Counting Phase Law
+
+Candidate count is not discovered at the same phase for every interning scope.
+
+A compliant interning scope MUST declare its counting mode before scope admission.
+
+Allowed counting modes:
+
+``````text
+PRECOUNTED_BATCH
+BOUNDED_STREAMING
+PUBLISHED_TABLE
+INCREMENTAL_AFFECTED_SET
+RATIFIED_STATIC_REGISTRY
+``````
+
+Meanings:
+
+``````text
+PRECOUNTED_BATCH:
+    candidateCountCap is resolved before execution.
+    observedCandidateCount is accumulated during staging.
+    sealedCandidateCount is known after the candidate set is closed and before identity seal.
+
+BOUNDED_STREAMING:
+    candidateCountCap is resolved before execution.
+    observedCandidateCount is incremented as candidates are discovered.
+    stable intern id publication is forbidden until deterministic seal.
+
+PUBLISHED_TABLE:
+    publishedTableCandidateCount is read from an immutable table header.
+    no new candidate is admitted.
+
+INCREMENTAL_AFFECTED_SET:
+    affectedCandidateCount is produced by a deterministic invalidation/query boundary.
+    reused sealed references are not counted as new candidates.
+    traversal work required to discover the affected set is separately budgeted.
+
+RATIFIED_STATIC_REGISTRY:
+    candidate count is defined by a ratified protocol registry version and golden vectors.
+``````
+
+Admission-time feasibility uses the resolved cap:
+
+``````text
+candidateCountCap * maxLoadFactorDenominator
+    <= plannedLogicalTableCapacitySlots * maxLoadFactorNumerator
+``````
+
+Streaming insertion uses the next observed value:
+
+``````text
+nextObservedCandidateCount * maxLoadFactorDenominator
+    <= currentLogicalTableCapacitySlots * maxLoadFactorNumerator
+``````
+
+Batch seal may use the closed set count:
+
+``````text
+sealedCandidateCount * maxLoadFactorDenominator
+    <= finalLogicalTableCapacitySlots * maxLoadFactorNumerator
+``````
+
+Published table read paths use the immutable table header:
+
+``````text
+publishedTableCandidateCount * maxLoadFactorDenominator
+    <= publishedLogicalTableCapacitySlots * maxLoadFactorNumerator
+``````
+
+The chosen counting mode MUST NOT affect canonical bytes, HID derivation, collision verification, stable intern id
+assignment, or semantic equality.
+
+A streaming scope MUST NOT assign stable intern ids from discovery order.
+
+The lawful streaming shape is:
+
+``````text
+candidate discovery
+-> cap / quota / staged-byte admission
+-> provisional candidate handle
+-> deterministic seal
+-> canonical ordering
+-> stable intern id assignment
+-> immutable publication
+``````
+
+The forbidden streaming shape is:
+
+``````text
+candidate discovery order
+-> stable intern id assignment
+-> later repair / reorder / rewrite
+``````
 
 #### 13.13.2. Domain-Partitioned Probe Admission Law
 
@@ -7066,6 +7200,262 @@ If the resolved `admittedCandidateCount` is exceeded, the scope fails closed or 
 scope.
 
 It MUST NOT silently expand the semantic scope.
+
+#### 13.13.4.1. BOUNDED_STREAMING Lane-Quota Reservation Law
+
+A `BOUNDED_STREAMING` interning scope MUST NOT debit a single global candidate counter for every candidate on the
+ordinary hot discovery path.
+
+The preferred lawful shape is lane-owned quota reservation:
+
+``````text
+scope admission
+-> candidate caps / staged-byte caps resolved
+-> engine lane set resolved
+-> deterministic lane quota slices assigned
+-> lane-local primitive quota debit during candidate discovery
+-> deterministic quota reconciliation barrier when needed
+-> deterministic seal reconciliation
+``````
+
+The quota owner is the engine lane.
+
+It is not the worker thread.
+
+It is not a `ThreadLocal`.
+
+It is not coroutine-local, virtual-thread-local, scheduler-owned hidden state, callback-local state, or adapter-local
+state.
+
+A lane quota slice MUST be represented by primitive lane-owned state selected by deterministic policy.
+
+Allowed allocation strategies:
+
+- deterministic preallocation by `engineLaneId`, identity domain, and resolved scope policy;
+- deterministic chunked refill processed by a maintenance owner at explicit safe points;
+- deterministic quota reclamation barrier before bounded refill failure where the profile permits refill;
+- or a stricter no-refill policy that fails closed when lane quota is exhausted.
+
+A chunked refill is lawful only if:
+
+- refill requests are explicit events;
+- grant order is deterministic by `engineLaneId`, identity domain id, and request sequence;
+- `laneQuotaChunkSize` is resolved before scope admission;
+- `maxLaneQuotaRefillsPerScope` is resolved before scope admission;
+- all granted chunks are charged to the same scope candidate cap;
+- unused quota is reconciled at seal / scope close;
+- refill failure reaches a bounded classification;
+- and refill timing cannot change stable intern id assignment.
+
+A deterministic quota reclamation barrier is required before fail-closed refill exhaustion when all of the following
+hold:
+
+- the scope uses refill-capable `BOUNDED_STREAMING`;
+- a lane requests additional quota;
+- the global unreserved quota pool is empty;
+- other lanes may still hold unused reserved quota;
+- and the scope has not selected the stricter no-refill profile.
+
+The reclamation barrier MUST:
+
+- stop new candidate admission for the affected scope or identity-domain slice at an explicit safe point;
+- read each lane's primitive used / reserved / remaining quota state in deterministic `engineLaneId` order;
+- reclaim only unused quota that has not been consumed by an already-issued provisional candidate;
+- keep already-issued provisional candidates valid;
+- redistribute reclaimed quota by deterministic `engineLaneId`, identity domain id, and request sequence;
+- record reclaimed, redistributed, and still-stranded quota in the probe ledger;
+- resume admission only after the maintenance owner publishes the new quota state;
+- and fail closed only if the deterministic reclamation pass still cannot satisfy the bounded refill request.
+
+The reclamation barrier MUST NOT be implemented as opportunistic quota stealing.
+
+Forbidden shapes:
+
+``````text
+lane A runs faster
+-> lane A steals quota from lane B without a barrier
+``````
+
+``````text
+first CAS winner
+-> obtains remaining global quota
+-> other lanes fail due to timing
+``````
+
+``````text
+worker-local or ThreadLocal remaining quota
+-> hidden ownership
+-> non-deterministic reuse across worker migration
+``````
+
+The implementation MUST NOT decide quota ownership by:
+
+- first CAS winner;
+- worker scheduling order;
+- callback completion order;
+- thread id;
+- wall-clock timing;
+- live queue depth;
+- current throughput;
+- cache warmth;
+- or GC behavior.
+
+The ordinary hot path may decrement lane-local primitive counters.
+
+It MUST NOT require a global atomic increment / decrement per discovered candidate.
+
+Global or scope-level counters may be updated at bounded reconciliation points, not per candidate, unless a released
+profile proves that the path is outside the hot discovery loop.
+
+Quota stranding is a budget state, not semantic inequality.
+
+A scope MUST NOT fail closed for quota exhaustion until the required deterministic reclamation barrier has either:
+
+- recovered sufficient unused quota; or
+- proven that no reclaimable unused quota remains under the resolved policy.
+
+#### 13.13.4.2. BOUNDED_STREAMING Staged Candidate Memory Budget Law
+
+Candidate count safety does not imply staged memory safety.
+
+A `BOUNDED_STREAMING` scope MUST meter staged physical material before seal.
+
+The resolved budget MUST define at least:
+
+``````text
+stagedCanonicalBytesCap
+stagedScratchBytesCap
+stagedHandleBytesCap
+stagedCandidateMetadataBytesCap
+laneStagedScratchBytesCapByEngineLane[engineLaneId]
+stagedBytesCapByIdentityDomain[identityDomainId] where domain partitioning is enabled
+``````
+
+Before a provisional candidate handle is issued, the implementation MUST prove:
+
+``````text
+nextStagedCanonicalBytes <= stagedCanonicalBytesCap
+nextStagedScratchBytes   <= stagedScratchBytesCap
+nextStagedHandleBytes    <= stagedHandleBytesCap
+nextStagedMetadataBytes  <= stagedCandidateMetadataBytesCap
+``````
+
+For the owning lane:
+
+``````text
+nextLaneStagedScratchBytes[engineLaneId]
+    <= laneStagedScratchBytesCapByEngineLane[engineLaneId]
+``````
+
+For the candidate's identity domain, when domain partitioning is enabled:
+
+``````text
+nextDomainStagedBytes[identityDomainId]
+    <= stagedBytesCapByIdentityDomain[identityDomainId]
+``````
+
+Staging material includes at least:
+
+- provisional candidate descriptors;
+- candidate canonical bytes not yet sealed into an immutable artifact;
+- candidate sort keys;
+- inline verifier prefix/suffix staging;
+- collision verification scratch;
+- SCC-local temporary material where applicable;
+- lane-local staging cursors;
+- and bounded diagnostics attached to staged candidates.
+
+A provisional handle MUST NOT pin unbounded staging slabs.
+
+If staged byte admission fails, the implementation MUST choose one of:
+
+- fail the current identity scope closed;
+- quarantine the current acquisition/planning scope;
+- reject the current candidate before provisional handle issuance;
+- or open a separately admitted scope if the caller explicitly owns that transition.
+
+It MUST NOT discover staged-memory exhaustion through `OutOfMemoryError` after admitting the provisional handle.
+
+#### 13.13.4.3. INCREMENTAL_AFFECTED_SET Traversal Budget Bridge Law
+
+`INCREMENTAL_AFFECTED_SET` mode counts changed or newly staged identity candidates.
+
+Reused sealed references are not new candidates.
+
+However, discovering the affected set is not free.
+
+Before an incremental affected-set interning scope is admitted, the resolved policy MUST define traversal budgets.
+
+Required bridge vocabulary:
+
+``````text
+maxInvalidationTraversalEdges
+maxInvalidationTraversalNodes
+maxAffectedSetExpansionSteps
+maxReusedSealedReferenceReads
+maxInvalidationTraversalDiagnosticsBytes
+``````
+
+The implementation MUST meter the affected-set discovery phase against these budgets before candidate seal /
+publication.
+
+If affected-set discovery exceeds the resolved traversal budget, the implementation MUST enter a bounded diagnostic
+classification before choosing an outcome.
+
+Required classification vocabulary:
+
+``````text
+INCREMENTAL_TRAVERSAL_BUDGET_EXHAUSTED
+INCREMENTAL_FULL_REBUILD_FALLBACK_ADMITTED
+INCREMENTAL_FULL_REBUILD_FALLBACK_REJECTED
+INCREMENTAL_DEPENDENCY_SHAPE_PATHOLOGICAL
+INCREMENTAL_INVALIDATION_SCOPE_QUARANTINED
+``````
+
+Traversal budget exhaustion is not semantic inequality.
+
+It is not stable-id evidence.
+
+It is not allowed to silently publish a partial affected set.
+
+Allowed deterministic outcomes are:
+
+- fall back to a separately admitted full-rebuild scope;
+- fail the incremental update closed;
+- quarantine the incremental invalidation scope;
+- reject the current artifact publication before planning visibility;
+- or surface a bounded diagnostic that classifies the dependency shape as pathological for incremental mode.
+
+A full-rebuild fallback is lawful only if the full-rebuild scope has its own resolved memory, traversal, staging,
+interner, and publication budgets.
+
+The implementation MUST NOT use the incremental traversal budget as implicit permission to run a full rebuild.
+
+If repeated updates for the same contract graph, module snapshot, identity domain, or dependency slice exceed traversal
+budgets, the implementation SHOULD classify the condition as an incremental-shape / dependency-graph pressure event
+rather than treating every occurrence as an ordinary fallback.
+
+The diagnostic payload MUST be bounded by `maxInvalidationTraversalDiagnosticsBytes`.
+
+It SHOULD include only deterministic summary evidence such as:
+
+- identity domain id;
+- dependency slice id where ratified;
+- traversal budget consumed;
+- first boundary where the limit was exceeded;
+- number of dirty candidates found before exhaustion;
+- number of reused sealed references read before exhaustion;
+- and the selected deterministic outcome.
+
+It MUST NOT include unbounded edge lists, object graph dumps, backend handles, source traversal order, callback order,
+or
+worker scheduling traces.
+
+ADR-0043 owns the full contract-graph invalidation law, dependency-edge semantics, repeated traversal pressure policy,
+and structural/contextual graph identity model.
+
+ADR-0041 requires only that any `INCREMENTAL_AFFECTED_SET` interning scope provide bounded traversal admission and
+bounded traversal-exhaustion classification before it may publish stable identity material.
 
 #### 13.13.5. Hot Probe Work Feasibility Law
 
@@ -7336,14 +7726,39 @@ Resize, rebuild, reindex, migration, and compaction may require old and new tabl
 
 This transient two-table interval must be budgeted before scope admission.
 
+`maxTransientRebuildBytes` is a high-water reserve.
+
+It is not the sum of every possible resize / rebuild spike across the scope.
+
 Required relationship:
 
 ``````text
 maxTransientRebuildBytes
-    >= maxSimultaneouslyLiveOldTableBytes
-     + maxSimultaneouslyLiveNewTableBytes
-     + maxRebuildScratchBytes
-     + maxMigrationMetadataBytes
+    >= maxOverAllowedResizeOrRebuildEvents(
+           maxSimultaneouslyLiveOldTableBytes(event)
+         + maxSimultaneouslyLiveNewTableBytes(event)
+         + maxRebuildScratchBytes(event)
+         + maxMigrationMetadataBytes(event)
+       )
+``````
+
+For a single event, the required event spike is:
+
+``````text
+transientRebuildBytesForEvent(event)
+    =
+        maxSimultaneouslyLiveOldTableBytes(event)
+      + maxSimultaneouslyLiveNewTableBytes(event)
+      + maxRebuildScratchBytes(event)
+      + maxMigrationMetadataBytes(event)
+``````
+
+Then:
+
+``````text
+maxTransientRebuildBytes
+    >= max(transientRebuildBytesForEvent(event))
+       over every resize / rebuild / reindex / migration event admitted by the profile
 ``````
 
 `maxMigrationMetadataBytes` is the deterministic metadata required to track a migration operation.
@@ -7357,15 +7772,33 @@ It includes, where applicable:
 - rebuild diagnostics reserved for the migration;
 - and backend-specific migration headers.
 
-If the backend uses grow-by-copy resizing, the conservative v1 bound is:
+If the backend uses grow-by-copy resizing, the conservative v1 bound for one event is:
 
 ``````text
-maxSimultaneouslyLiveOldTableBytes =
-    totalInternTableBytes(currentTableCaps)
+maxSimultaneouslyLiveOldTableBytes(event) =
+    totalInternTableBytes(currentTableCapsForEvent)
 
-maxSimultaneouslyLiveNewTableBytes =
-    totalInternTableBytes(nextTableCaps)
+maxSimultaneouslyLiveNewTableBytes(event) =
+    totalInternTableBytes(nextTableCapsForEvent)
 ``````
+
+For example, if a backend admits two grow-by-copy resize events:
+
+``````text
+table X  -> table 2X
+table 2X -> table 4X
+``````
+
+then the transient reserve is based on the larger event high-water mark:
+
+``````text
+max(
+    totalBytes(X)  + totalBytes(2X) + eventScratchAndMetadata(X -> 2X),
+    totalBytes(2X) + totalBytes(4X) + eventScratchAndMetadata(2X -> 4X)
+)
+``````
+
+not the sum of both event spikes.
 
 A backend may use a lower bound only if it proves a deterministic in-place, segmented, paged, or incremental migration
 strategy that never has both complete tables live.
@@ -7384,7 +7817,15 @@ or fail admission before stable id publication.
 
 The implementation MUST NOT discover the transient spike by actually allocating the new table first.
 
-Admission must prove the transient reserve before allocation.
+Admission must prove the transient high-water reserve before allocation.
+
+The transient high-water reserve may be reused across sequential resize / rebuild events only after the previous event
+has released its old table, scratch, and migration metadata according to ADR-0042 lifecycle rules.
+
+Overlapping resize / rebuild events in the same scope MUST either:
+
+- be forbidden by policy; or
+- be included in the high-water calculation as simultaneously live events.
 
 #### 13.13.9. Collision Amplification Budget Law
 
@@ -7647,6 +8088,24 @@ The interner ledger or scope-local accounting record MUST meter at least:
 - probe byte budget consumed;
 - per-domain candidate counts;
 - per-domain capacity-slice consumption;
+- lane quota grants;
+- lane quota refills;
+- lane-local quota consumed;
+- unused lane quota reconciled at seal / scope close;
+- quota reclamation barriers;
+- quota reclaimed from inactive or underused lanes;
+- quota redistribution grants after reclamation;
+- quota still stranded after reclamation;
+- staged canonical bytes;
+- staged scratch bytes;
+- staged provisional handle bytes;
+- staged candidate metadata bytes;
+- invalidation traversal edges;
+- incremental traversal budget-exhaustion classifications;
+- full-rebuild fallback admission / rejection outcomes;
+- invalidation traversal nodes;
+- affected-set expansion steps;
+- reused sealed reference reads;
 - collision candidates examined;
 - inline verifier prefix comparisons;
 - cold exact-verification attempts;
@@ -7656,7 +8115,7 @@ The interner ledger or scope-local accounting record MUST meter at least:
 - rebuild scratch bytes;
 - migration metadata bytes;
 - backend physical overhead bytes;
-- transient rebuild / resize bytes;
+- transient high-water rebuild / resize bytes;
 - cold collision structure bytes where enabled;
 - shared transient identity work bytes where enabled;
 - saturated segment outcomes;
@@ -7669,6 +8128,10 @@ Budget enforcement in the hot probe loop SHOULD use loop-local primitive counter
 were resolved before scope admission.
 
 The ordinary hot loop MUST NOT require global atomic counter mutation per visited slot.
+
+The ordinary bounded-streaming discovery loop MUST NOT require global atomic counter mutation per discovered candidate.
+
+Lane-local quota debit is the preferred hot-path enforcement shape.
 
 Detailed diagnostics MAY be aggregated through lane-local counters, scope-local snapshots, or cold-path summaries after
 an operation reaches a bounded classification.
@@ -7702,6 +8165,55 @@ ADR-0041 requires the handoff.
 
 ADR-0041 does not make cache residency semantic identity.
 
+#### 13.13.16.1. Owning Memory Envelope Integration Law
+
+Interner memory is not free add-on memory.
+
+An interner scope MUST charge its resolved memory to the owning bounded-context memory envelope.
+
+Allowed owning envelopes include, where applicable:
+
+- frozen acquisition memory envelope;
+- frozen image publication envelope;
+- metadata identity seal envelope;
+- planning run memory envelope;
+- L2 interner/cache partition envelope;
+- contract-graph lowering envelope once ADR-0043 ratifies it;
+- VM execution envelope once the VM execution pipeline ratifies primitive identity consumption;
+- reporting/diagnostic envelope for bounded report material only.
+
+The owning envelope MUST include, or explicitly reject, at least:
+
+- interner probe-table bytes;
+- candidate staging bytes;
+- canonical byte staging bytes;
+- provisional handle bytes;
+- sort scratch bytes;
+- exact-verification scratch bytes;
+- SCC-local temporary identity bytes;
+- collision escalation bytes;
+- cold collision structure bytes where enabled;
+- transient resize/rebuild/migration bytes;
+- published-retention bytes where the table survives the producer scope;
+- and bounded diagnostics.
+
+A planning run that uses interning charges the interner to the planning run memory envelope.
+
+A frozen acquisition pass that uses interning charges the interner to the frozen acquisition memory envelope.
+
+An L2 cache/interner charges the interner to the L2 storage / partition envelope.
+
+A published metadata identity table that survives its producer scope charges retained bytes to the published artifact or
+metadata identity retention envelope.
+
+The implementation MUST NOT admit identity interning by adding unbounded extra memory on top of the already resolved
+planning, frozen, L2, VM, or reporting budgets.
+
+If the owning envelope has insufficient remaining capacity, the interner scope MUST fail admission, choose a stricter
+profile, or require an explicitly resolved larger envelope before work begins.
+
+It MUST NOT discover envelope exhaustion through late OOM during staging, resize, seal, publication, or reporting.
+
 #### 13.13.17. ADR-0042 Backend Profile Handoff Law
 
 ADR-0041 probe budgets are backend-neutral admission contracts.
@@ -7722,6 +8234,10 @@ A backend profile must document at least:
 - transient rebuild/resize memory model;
 - cold collision structure budget where enabled;
 - read-path locality profile where high-performance lookup is claimed;
+- lane-quota reservation profile for bounded streaming scopes;
+- staged candidate memory model;
+- incremental affected-set traversal budget bridge where applicable;
+- owning memory-envelope integration proof;
 - rebuild/resize strategy;
 - scratch reservation;
 - physical alignment claim if any;
@@ -10491,6 +11007,36 @@ A compliant implementation MUST satisfy:
 362. Retired or superseded intern scopes must reject stale ids or translate through a ratified cross-scope translation
      law.
 
+363. Interner scopes declare their candidate counting mode before scope admission.
+364. `BOUNDED_STREAMING` scopes do not debit a global atomic candidate counter per discovered candidate.
+365. Bounded streaming quota is engine-lane-owned, not worker-owned, `ThreadLocal`, coroutine-local, scheduler-owned,
+     callback-local, or adapter-local hidden state.
+366. Chunked quota refill, when enabled, is processed through deterministic events and bounded safe points.
+367. Provisional candidate handles are admitted only after staged canonical bytes, scratch bytes, handle bytes, metadata
+     bytes, lane-local staging bytes, and domain staging bytes pass resolved caps.
+368. Staged-memory exhaustion is detected by admission checks, not by late `OutOfMemoryError` after provisional handle
+     issuance.
+369. `INCREMENTAL_AFFECTED_SET` mode requires bounded invalidation traversal budgets before stable identity publication.
+370. Reused sealed references are not counted as new candidates, but discovering reuse consumes traversal/read budgets.
+371. Interner memory is charged to the owning bounded-context memory envelope; it is not unbounded add-on memory.
+372. Planning interning charges the planning run memory envelope; frozen interning charges the frozen acquisition/image
+     envelope; L2 interning charges the L2 storage/partition envelope.
+
+373. Refill-capable bounded streaming must run a deterministic quota reclamation barrier before fail-closed refill
+     exhaustion when unused lane quota may still exist.
+374. Quota reclamation is a deterministic safe-point barrier, not opportunistic quota stealing.
+375. Quota stranding is budget state and must not be treated as semantic inequality.
+376. `maxTransientRebuildBytes` is a high-water reserve over admitted resize/rebuild events, not a sum of all sequential
+     event spikes.
+377. Reuse of transient rebuild reserve across sequential events is lawful only after prior event resources are released
+     under ADR-0042 lifecycle rules.
+378. Incremental affected-set traversal exhaustion must reach a bounded diagnostic classification before fallback,
+     quarantine, or fail-closed outcome.
+379. Full-rebuild fallback from incremental traversal exhaustion requires separately admitted full-rebuild budgets.
+380. Repeated incremental traversal exhaustion should be classified as dependency-graph pressure or pathological shape
+     rather than silently treated as ordinary fallback.
+381. Incremental traversal diagnostics are bounded by `maxInvalidationTraversalDiagnosticsBytes`.
+
 ## 23. Required Golden Vectors
 
 Golden vectors MUST exist for:
@@ -10855,6 +11401,40 @@ Until ratification, no concrete annotation, DSL, or compiler-metadata lowering v
 - cross-scope intern id translation fixture;
 - stale intern id rejection after scope retirement fixture.
 
+### 23.x. Bounded Streaming and Incremental Counting
+
+- candidate counting mode fixture for `PRECOUNTED_BATCH`, `BOUNDED_STREAMING`, `PUBLISHED_TABLE`,
+  `INCREMENTAL_AFFECTED_SET`, and `RATIFIED_STATIC_REGISTRY`;
+- bounded-streaming lane quota fixture;
+- deterministic lane quota refill order fixture;
+- unused lane quota reconciliation fixture;
+- global atomic per-candidate counter rejection architecture fixture;
+- staged canonical bytes cap fixture;
+- staged scratch bytes cap fixture;
+- staged provisional handle bytes cap fixture;
+- lane-local staged bytes cap fixture;
+- domain staged bytes cap fixture;
+- provisional handle rejection on staged-memory cap exhaustion fixture;
+- incremental affected-set traversal edge cap fixture;
+- incremental affected-set reused sealed reference read cap fixture;
+- owning memory-envelope admission fixture for planning interning;
+- owning memory-envelope admission fixture for frozen acquisition interning;
+- owning memory-envelope admission fixture for L2 interning.
+
+### 23.x. Quota Reclamation, Transient High-Water, and Incremental Traversal
+
+- lane quota stranding reclamation fixture;
+- refill failure before reclamation is rejected fixture;
+- deterministic quota redistribution by `engineLaneId`, identity domain id, and request sequence fixture;
+- quota reclamation does not change stable intern id assignment fixture;
+- transient resize high-water reserve fixture:
+  sequential `X -> 2X -> 4X` uses the maximum single-event spike, not the sum of all event spikes;
+- overlapping resize/rebuild events require combined high-water fixture;
+- incremental traversal budget exhaustion classification fixture;
+- incremental full-rebuild fallback requires separately admitted full-rebuild budget fixture;
+- repeated traversal exhaustion dependency-pressure diagnostic fixture;
+- bounded invalidation traversal diagnostic payload fixture.
+
 ## 24. Required Architecture Tests
 
 Architecture tests MUST verify:
@@ -11047,6 +11627,14 @@ Architecture tests MUST verify:
 - capacity solver outputs include target-average sizing evidence or an explicitly documented equivalent tightening
   relationship.
 
+
+- bounded streaming discovery loop does not mutate a global atomic candidate counter per candidate;
+- bounded streaming quota authority is engine-lane-owned, not worker/thread/ThreadLocal/coroutine/callback-owned;
+- provisional handles cannot be issued before staged byte budgets are admitted;
+- incremental affected-set traversal is metered separately from dirty candidate count;
+- interner scopes charge memory to an owning bounded-context envelope before work begins;
+- planning, frozen, L2, VM, and reporting envelopes cannot receive unbounded interner add-on memory.
+
 ## 25. Consequences
 
 ### 25.1. Positive Consequences
@@ -11103,6 +11691,84 @@ influence canonical contract identity.
 ---
 
 ## 26. Alternatives Considered
+
+### 26.44. Let Faster Lanes Steal Quota Opportunistically
+
+Rejected.
+
+Opportunistic quota stealing would make budget outcomes depend on worker scheduling, callback timing, cache warmth, or
+first-CAS timing.
+
+Unused quota may be reclaimed only through a deterministic safe-point reclamation barrier owned by the explicit engine
+lane protocol.
+
+### 26.45. Sum Every Sequential Resize Spike into the Transient Reserve
+
+Rejected.
+
+Sequential resize/rebuild events do not require all event spikes to be live at the same time.
+
+The reserve is a high-water mark over admitted events, unless the backend permits overlapping resize/rebuild events.
+
+Overlapping events must be explicitly accounted as simultaneously live.
+
+### 26.46. Treat Incremental Traversal Exhaustion as Ordinary Silent Full Rebuild
+
+Rejected.
+
+Traversal exhaustion may be a normal fallback, a pressure signal, or evidence of a pathological dependency shape.
+
+The implementation must classify the exhaustion with bounded diagnostics and may enter full rebuild only through a
+separately admitted full-rebuild scope.
+
+### 26.44. Use a Global Atomic Candidate Counter for Bounded Streaming
+
+Rejected.
+
+A single global atomic candidate counter is simple, but it creates cache-line contention and makes candidate discovery
+pay synchronization cost per candidate.
+
+The accepted shape is engine-lane-owned quota reservation with deterministic reconciliation.
+
+### 26.45. Use ThreadLocal or Worker-Local Candidate Quotas
+
+Rejected.
+
+Thread-local and worker-local quotas hide ownership in runtime scheduling state.
+
+Kontrakt's ownership authority is the engine lane.
+
+M:N worker/lane topology is dispatch topology, not identity or quota ownership.
+
+### 26.46. Budget Candidate Count but Not Staged Candidate Bytes
+
+Rejected.
+
+Candidate count does not bound provisional handles, canonical byte staging, scratch arenas, SCC-local material, sort
+keys,
+or bounded diagnostics.
+
+A bounded streaming scope must meter staged bytes before issuing provisional handles.
+
+### 26.47. Let Incremental Affected-Set Traversal Run Until Dirty Candidates Are Found
+
+Rejected.
+
+Dirty candidate count is not a traversal budget.
+
+A tiny dirty set can require a large dependency-graph traversal.
+
+Incremental affected-set mode requires explicit traversal budgets and ADR-0043 graph invalidation law.
+
+### 26.48. Treat Interner Memory as Extra Memory Outside the Owning Pipeline Envelope
+
+Rejected.
+
+Interning reduces comparison and lookup cost, but it still consumes probe-table, staging, scratch, collision, transient,
+and retained memory.
+
+The accepted model charges interning memory to the owning planning, frozen, L2, contract-graph, VM, or reporting
+envelope.
 
 ### 26.44. Use One Scope-Level Probe Budget Without Domain Slices
 
@@ -11784,6 +12450,13 @@ proof.
 Interner probe behavior is admitted by ADR-0041 integer budget feasibility; ADR-0042 may change the physical probing
 backend only after proving the same budget, including physical overhead and transient rebuild memory, while preserving
 stable id results.
+
+Bounded streaming quota refill may fail only after deterministic quota reclamation proves no reclaimable unused quota
+remains; transient rebuild reserve is a high-water mark, and incremental traversal exhaustion requires a bounded
+diagnostic classification.
+
+Bounded streaming interning uses engine-lane-owned quota reservation, staged-byte admission, and owning-envelope memory
+accounting; it never relies on per-candidate global counters or unbounded add-on memory.
 
 Probe budgets include per-domain admission, insert/resize revalidation, physical overhead, transient rebuild reserve,
 cold-collision linkage, and hot-loop accounting boundaries; physical read-path locality remains ADR-0042 evidence.
