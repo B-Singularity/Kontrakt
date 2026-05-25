@@ -7468,6 +7468,19 @@ maxRoutedBatchBuffersByEngineLane[engineLaneId]
 maxPendingRoutedBatchesPerOwnerLane[ownerEngineLaneId]
 maxOwnerInboxBytes[ownerEngineLaneId]
 maxOwnerInboxBatches[ownerEngineLaneId]
+steadyStateOwnerInboxBytes[ownerEngineLaneId]
+steadyStateOwnerInboxBatches[ownerEngineLaneId]
+producerLaneCount
+ownerLaneCount
+maxOpenRouteBuffersPerProducerLane
+maxBoundaryFlushBatchesPerProducerLane
+maxBoundaryFlushBatchesPerOwnerLane[ownerEngineLaneId]
+boundaryFlushHeadroomBatchesByOwnerLane[ownerEngineLaneId]
+boundaryFlushHeadroomBytesByOwnerLane[ownerEngineLaneId]
+maxBoundaryFlushEventsPerScope
+maxSingleActiveBatchOwnerSwitchFlushesPerScope
+maxSingleActiveBatchFragmentationRatioNumerator
+maxSingleActiveBatchFragmentationRatioDenominator
 maxRouteFlushRetries
 maxRouteDrainStepsPerBackpressure
 maxRouteBackpressureEventsPerScope
@@ -7482,7 +7495,9 @@ A routed batch MUST flush when any of the following deterministic conditions hol
   profile requires domain-segregated batches;
 - the batch's owning branch frame closes;
 - the batch's owning planning frame closes;
-- semantic validation boundary is reached for material owned by the batch;
+- a semantic validation boundary that changes candidate reachability, ownership, rollback visibility, provisional-handle
+  validity, seal eligibility, publication eligibility, or external visibility is reached for material owned by the
+  batch;
 - scope safe point is reached;
 - route epoch boundary is reached;
 - quota epoch boundary is reached;
@@ -7520,6 +7535,154 @@ Partial-fill batches are legal only while their owning branch/frame/scope/route 
 
 A partial-fill batch MUST flush at close, rollback, seal preflight, or publication preflight even if it contains fewer
 candidates than `maxRoutedCandidateBatchSize`.
+
+##### 13.13.4.1.2.1. Single-Active-Batch Fragmentation Budget Law
+
+Single-active-batch routing is a memory-constrained profile.
+
+It is not the preferred high-throughput profile.
+
+The preferred high-throughput profile remains a bounded per-owner route-buffer set.
+
+A single-active-batch profile is lawful only if the scope resolves and proves a fragmentation budget before admission.
+
+At minimum, the profile MUST declare:
+
+``````text
+maxSingleActiveBatchOwnerSwitchFlushesPerScope
+maxSingleActiveBatchFragmentationRatioNumerator
+maxSingleActiveBatchFragmentationRatioDenominator
+maxSingleActiveBatchRoutedBytesPerScope
+maxSingleActiveBatchRoutedBatchesPerScope
+``````
+
+The fragmentation ratio is interpreted as:
+
+``````text
+actualRoutedCandidateCount * maxSingleActiveBatchFragmentationRatioDenominator
+    <= actualRoutedBatchCount * maxRoutedCandidateBatchSize
+     * maxSingleActiveBatchFragmentationRatioNumerator
+``````
+
+The formula MUST be evaluated with checked integer arithmetic.
+
+A profile MAY replace this ratio with a stricter deterministic fragmentation metric if the metric is declared before
+scope admission and golden-vector covered.
+
+If the implementation cannot prove that the admitted workload shape satisfies the single-active-batch fragmentation
+budget, it MUST NOT select the single-active-batch profile.
+
+It MUST choose a per-owner route-buffer profile, a smaller bounded scope, or fail backend/profile admission.
+
+A single-active-batch profile MUST NOT be selected merely because it has lower memory footprint.
+
+It must also prove that owner interleaving cannot collapse batching into pathological one-candidate flushes.
+
+##### 13.13.4.1.2.2. Boundary Flush Storm Headroom Law
+
+Boundary flushes are not free.
+
+A lifecycle boundary may force every producer lane to flush non-empty partial-fill batches at the same deterministic
+boundary.
+
+The resolved owner inbox budget MUST reserve boundary flush storm headroom before scope admission.
+
+The required conservative v1 relationships are:
+
+``````text
+maxBoundaryFlushBatchesPerProducerLane
+    <= maxOpenRouteBuffersPerProducerLane
+
+boundaryFlushHeadroomBatchesByOwnerLane[ownerEngineLaneId]
+    >= producerLaneCount
+
+boundaryFlushHeadroomBytesByOwnerLane[ownerEngineLaneId]
+    >= boundaryFlushHeadroomBatchesByOwnerLane[ownerEngineLaneId]
+     * maxRoutedCandidateBatchBytes
+
+maxOwnerInboxBatches[ownerEngineLaneId]
+    >= steadyStateOwnerInboxBatches[ownerEngineLaneId]
+     + boundaryFlushHeadroomBatchesByOwnerLane[ownerEngineLaneId]
+
+maxOwnerInboxBytes[ownerEngineLaneId]
+    >= steadyStateOwnerInboxBytes[ownerEngineLaneId]
+     + boundaryFlushHeadroomBytesByOwnerLane[ownerEngineLaneId]
+``````
+
+All relationships MUST be evaluated with checked integer arithmetic.
+
+A stricter backend profile MAY use a lower `boundaryFlushHeadroomBatchesByOwnerLane[...]` only if it proves, before
+scope admission, that fewer producer-local partial-fill batches can target that owner at the same boundary.
+
+Such proof MUST be based on:
+
+- resolved route map;
+- resolved producer lane set;
+- resolved owner lane set;
+- resolved route-buffer topology;
+- resolved identity-domain partitioning;
+- and deterministic scope topology.
+
+It MUST NOT be based on:
+
+- observed queue depth;
+- consumer speed;
+- wall-clock latency;
+- CPU utilization;
+- GC timing;
+- thread scheduling;
+- runtime throughput;
+- or adaptive profiling.
+
+If boundary flush storm headroom cannot be reserved, the implementation MUST fail routing-profile admission, reduce the
+scope under an explicit caller-owned boundary, or select a stricter profile that proves a smaller deterministic storm
+surface.
+
+It MUST NOT rely on route-drain as the ordinary way to absorb predictable global boundary flushes.
+
+Route-drain remains a bounded fallback for conditions that exceed the admitted headroom.
+
+##### 13.13.4.1.2.3. Semantic Boundary Flush Narrowing Law
+
+Not every semantic check is a routed-batch lifecycle boundary.
+
+A semantic validation boundary triggers routed-batch flush only if the boundary may change one or more of the following
+for material owned by the batch:
+
+- reachability;
+- ownership;
+- rollback visibility;
+- provisional-handle validity;
+- branch-local commit status;
+- scope-local staging commit status;
+- seal eligibility;
+- publication eligibility;
+- external visibility;
+- or diagnostic terminality attached to the material.
+
+Pure local validation boundaries MUST NOT force a routed-batch flush merely because a semantic predicate was evaluated.
+
+Examples that MUST NOT force a flush by themselves:
+
+- pure local predicate checks;
+- expression-level checks that do not close, commit, reject, or roll back material;
+- non-owning validation steps;
+- read-only compatibility pre-checks;
+- and diagnostics that do not make the candidate unreachable, committed, rolled back, seal-eligible, or
+  publication-eligible.
+
+Examples that MUST flush if the batch owns affected material:
+
+- branch accept;
+- branch reject;
+- rollback mark crossing;
+- provisional handle visibility transition;
+- scope-local staging commit;
+- seal preflight;
+- publication preflight;
+- and any semantic decision that makes the candidate unreachable or externally visible.
+
+This law prevents semantic micro-boundaries from collapsing routed batching into pathological micro-batches.
 
 #### 13.13.4.1.3. Owner Inbox Backpressure and Deterministic Route-Drain Law
 
@@ -11804,6 +11967,16 @@ A compliant implementation MUST satisfy:
 423. A cold offline artifact migration procedure must not be planning-visible, staging-visible, or
      publication-visible as an ADR-0041 interner backend.
 
+424. Single-active-batch routing is a memory-constrained profile and must prove a deterministic fragmentation budget
+     before admission.
+425. Boundary flush storm headroom must be reserved in owner inbox budgets before routing-profile admission.
+426. Owner inbox budget must include steady-state capacity plus deterministic boundary-flush headroom.
+427. Route-drain must not be used as the ordinary substitute for predictable boundary flush storm headroom.
+428. Semantic validation boundaries trigger batch flush only when they may change candidate reachability, ownership,
+     rollback visibility, provisional-handle validity, seal eligibility, publication eligibility, or external
+     visibility.
+429. Pure local semantic predicate checks must not force routed-batch flush merely because they evaluated.
+
 ## 23. Required Golden Vectors
 
 Golden vectors MUST exist for:
@@ -12270,6 +12443,19 @@ Until ratification, no concrete annotation, DSL, or compiler-metadata lowering v
 - delayed-capacity profile rejects admission when resize reserve is unavailable fixture;
 - resize does not expand semantic candidate cap fixture.
 
+### 23.x. Routed Batch Fragmentation and Boundary Flush Storm
+
+- single-active-batch fragmentation budget fixture;
+- alternating owner pattern rejects single-active-batch profile without fragmentation proof fixture;
+- per-owner buffer alternating owner pattern preserves batching fixture;
+- boundary flush storm headroom fixture:
+  all producer lanes flush one partial batch to the same owner at a deterministic boundary;
+- owner inbox steady-state plus boundary-headroom feasibility fixture;
+- lower-than-conservative boundary headroom proof fixture where route topology permits it;
+- semantic micro-boundary does not flush fixture;
+- semantic branch close / rollback / seal preflight flushes affected batches fixture;
+- route-drain fallback after admitted headroom exhaustion fixture.
+
 ## 24. Required Architecture Tests
 
 Architecture tests MUST verify:
@@ -12526,6 +12712,43 @@ influence canonical contract identity.
 ---
 
 ## 26. Alternatives Considered
+
+### 26.53. Allow Single-Active-Batch Without a Fragmentation Budget
+
+Rejected.
+
+A single-active-batch profile can reduce memory footprint, but alternating owner discovery can collapse batch size to
+one
+candidate per flush.
+
+Therefore single-active-batch routing is lawful only as a memory-constrained profile with a declared and proven
+fragmentation budget.
+
+The preferred high-throughput shape is a bounded per-owner route-buffer set.
+
+### 26.54. Rely on Route-Drain to Absorb Predictable Boundary Flush Storms
+
+Rejected.
+
+Boundary flush storms are predictable lifecycle events.
+
+They must be represented in owner inbox headroom before routing-profile admission.
+
+Route-drain remains a bounded fallback for overflow beyond admitted headroom; it is not the ordinary capacity plan for
+global boundary flushes.
+
+### 26.55. Flush on Every Semantic Validation Boundary
+
+Rejected.
+
+Not every semantic predicate changes candidate reachability, ownership, rollback visibility, provisional-handle
+validity,
+seal eligibility, publication eligibility, or external visibility.
+
+Forcing a flush on every semantic validation boundary would destroy micro-batching and create pathological flush
+fragmentation.
+
+Only semantic lifecycle boundaries that affect material owned by the batch may force flush.
 
 ### 26.50. Use Whole-Table Grow-by-Copy as a Compliant Interner Resize Strategy
 
@@ -13468,6 +13691,9 @@ diagnostic classification.
 
 Owner-lane batch routing uses per-owner buffers by default; backpressure drains owner-owned inboxes first, and
 cooperative drain must not become remote payload work stealing.
+
+Routed batching must reserve boundary-flush headroom, single-active-batch profiles must prove fragmentation bounds, and
+semantic checks flush only when they change material lifecycle or visibility.
 
 Whole-table grow-by-copy resize is forbidden on the ADR-0041 compliant interner path; transient memory reuse requires
 physical reclamation evidence or continued retired-byte accounting.
