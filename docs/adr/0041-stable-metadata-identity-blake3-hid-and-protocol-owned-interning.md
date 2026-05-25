@@ -7365,6 +7365,270 @@ quota reclamation barrier have either:
 - recovered sufficient unused quota; or
 - proven that no reserve-pool quota or reclaimable unused lane quota remains under the resolved policy.
 
+#### 13.13.4.1.1. Deterministic Owner-Lane Routing Law
+
+A refill-capable `BOUNDED_STREAMING` interner SHOULD prefer deterministic owner-lane routing over moving quota between
+lanes.
+
+The preferred lawful shape is:
+
+``````text
+candidate discovered on any execution lane
+-> derive deterministic routing material
+-> resolve ownerEngineLaneId from the route map
+-> append to producer-local routed batch for that owner lane
+-> flush batch through bounded routing transport
+-> owner lane performs duplicate pre-screen, staging admission, provisional handle issuance, and seal participation
+``````
+
+The discovery lane is not the owner unless the resolved route map says so.
+
+The owner lane is derived from versioned, substrate-neutral routing material such as:
+
+- identity domain id;
+- interning scope id;
+- route-map version;
+- routing epoch id;
+- version-bundle fingerprint where required;
+- domain-separated route digest / route prefix;
+- canonical byte length where already known;
+- or another ratified fixed-width route projection.
+
+The owner lane MUST NOT be derived from:
+
+- worker id;
+- thread id;
+- callback completion order;
+- queue arrival order;
+- first discovery order;
+- wall-clock timing;
+- current queue depth;
+- current CPU utilization;
+- current throughput;
+- GC behavior;
+- or runtime profiling.
+
+Routing material is not equality authority.
+
+`routePrefix`, `route64`, HID prefix material, verifier-prefix material, and local shape summaries MAY route candidates.
+
+They MUST NOT replace canonical byte encoding, collision verification, deterministic stable id assignment, table
+coverage
+validation, or publication integrity validation.
+
+The route map MUST be resolved before the route epoch admits candidates.
+
+Changing the route map inside an open route epoch is forbidden.
+
+A route-map change MAY occur only at an explicit route-epoch boundary, quota-epoch boundary, or separately admitted
+scope boundary.
+
+A route-map change MUST NOT change:
+
+- canonical bytes;
+- HID derivation;
+- collision verification result;
+- semantic equality;
+- stable intern id assignment;
+- stable id publication order;
+- already-issued provisional handle ownership;
+- or report/replay identity.
+
+#### 13.13.4.1.2. Routed Candidate Batch Law
+
+Routed candidate transport MUST be bounded.
+
+A producer lane MAY batch outbound candidates by owner lane, identity domain, route epoch, and interning scope.
+
+Batch routing is the preferred transport shape for owner-lane routing.
+
+The resolved routing budget MUST define at least:
+
+``````text
+maxRoutedCandidateBatchSize
+maxRoutedCandidateBatchBytes
+maxRoutedBatchBufferBytesByEngineLane[engineLaneId]
+maxPendingRoutedBatchesPerOwnerLane[ownerEngineLaneId]
+maxOwnerInboxBytes[ownerEngineLaneId]
+maxOwnerInboxBatches[ownerEngineLaneId]
+maxRouteFlushRetries
+maxRouteDrainStepsPerBackpressure
+maxRouteBackpressureEventsPerScope
+``````
+
+A routed batch MUST flush when any of the following deterministic conditions holds:
+
+- `maxRoutedCandidateBatchSize` is reached;
+- `maxRoutedCandidateBatchBytes` is reached;
+- owner lane changes;
+- identity domain changes where the profile requires domain-segregated batches;
+- branch frame closes;
+- planning frame closes;
+- semantic validation boundary is reached;
+- scope safe point is reached;
+- route epoch boundary is reached;
+- quota epoch boundary is reached;
+- seal preflight begins;
+- publication preflight begins;
+- rollback / failure boundary is reached;
+- or the producer lane exits the owning pipeline phase.
+
+A non-empty routed batch MUST NOT remain buffered across a boundary that could make its candidates unreachable,
+unsealed, unaccounted, or owned by a closed branch / frame / scope.
+
+The implementation MUST NOT flush routed batches based on:
+
+- wall-clock timers;
+- elapsed time;
+- queue depth feedback;
+- consumer speed;
+- CPU utilization;
+- throughput feedback;
+- GC events;
+- thread scheduling delay;
+- or adaptive runtime profiling.
+
+Partial-fill batches are legal only while their owning branch/frame/scope/route epoch remains open and reachable.
+
+A partial-fill batch MUST flush at close, rollback, seal preflight, or publication preflight even if it contains fewer
+candidates than `maxRoutedCandidateBatchSize`.
+
+#### 13.13.4.1.3. Owner Inbox Backpressure and Deterministic Route-Drain Law
+
+Owner-lane routing MUST NOT rely on unbounded inbox growth.
+
+If a producer attempts to flush a routed batch and the owner inbox cannot admit it under the resolved inbox budget, the
+implementation MUST enter a bounded deterministic route-drain path before terminal failure, unless the selected profile
+explicitly uses a stricter no-drain fail-closed policy.
+
+The lawful backpressure path is:
+
+``````text
+producer flush attempt
+-> owner inbox admission fails under resolved inbox budget
+-> route-backpressure event recorded
+-> producer stops new admission for the affected route / domain / scope slice
+-> deterministic route-drain safe point entered
+-> owner inboxes drain in fixed ownerEngineLaneId order or by another ratified deterministic order
+-> producer retries flush under maxRouteFlushRetries
+-> success, or bounded route-backpressure classification
+``````
+
+Route-drain is step-bounded.
+
+It is not time-bounded.
+
+The implementation MUST NOT wait until an inbox becomes available based on wall-clock time.
+
+The implementation MUST NOT spin until an inbox has space.
+
+The implementation MUST NOT block a worker indefinitely.
+
+Allowed terminal classifications include:
+
+``````text
+ROUTE_BACKPRESSURE_DRAINED
+ROUTE_BACKPRESSURE_RETRY_EXHAUSTED
+ROUTE_INBOX_CAP_EXHAUSTED
+ROUTE_SCOPE_QUARANTINED
+ROUTE_PUBLICATION_REJECTED_BEFORE_VISIBILITY
+``````
+
+Cooperative route-drain MAY help routing infrastructure make progress.
+
+It MUST NOT transfer ownership of candidate staging, duplicate suppression, provisional handle issuance, collision
+verification, stable id assignment, or publication away from the deterministic owner lane.
+
+A producer lane MAY participate only in protocol-assigned drain work whose state transition remains attributed to the
+owner lane or routing infrastructure owner.
+
+It MUST NOT directly mutate another owner lane's candidate staging table, duplicate suppression table, provisional
+handle table, or stable-id assignment state.
+
+#### 13.13.4.1.4. Producer-Local Suppression Budget and Authority Law
+
+Producer-local route suppression is an optional traffic-reduction mechanism.
+
+It is not equality authority.
+
+It MUST NOT replace owner-lane duplicate suppression, canonical byte encoding, collision verification, deterministic
+stable id assignment, or publication integrity validation.
+
+A lawful producer-local suppression structure MUST be:
+
+- lane-owned;
+- primitive-substrate compatible;
+- bounded by resolved entry and byte caps;
+- cleared or reconciled at branch/frame/scope/route-epoch boundaries;
+- deterministic in eviction / overwrite behavior;
+- and charged to the owning staging / routing memory envelope.
+
+The resolved budget MUST define, when producer-local suppression is enabled:
+
+``````text
+localRouteSuppressionEntriesCapByEngineLane[engineLaneId]
+localRouteSuppressionBytesCapByEngineLane[engineLaneId]
+localRouteSuppressionBytesCapByIdentityDomain[identityDomainId]
+localRouteSuppressionEvictionCountCap
+``````
+
+The implementation MUST NOT use:
+
+- unbounded producer-local maps;
+- `HashMap` / `HashSet` as committed hot-path suppression state;
+- `ThreadLocal` suppression maps;
+- worker-local suppression maps;
+- runtime-adaptive suppression capacity;
+- object identity;
+- backend handle identity;
+- or recent-seen state that crosses a branch/frame/scope boundary without explicit lifecycle ownership.
+
+A suppression hit may suppress or merge routing traffic only under resolved policy.
+
+It MUST NOT publish a stable id, reject semantic equality, or construct a cache/reuse key.
+
+#### 13.13.4.1.5. Deterministic Route-Skew Handling Law
+
+Route skew must be handled by deterministic ownership policy, not runtime timing.
+
+The implementation MAY classify route pressure using deterministic ledger counters such as:
+
+- routed candidate count by route bucket;
+- routed batch count by route bucket;
+- producer-local suppression hits by route bucket;
+- owner-lane duplicate pre-screen hits by route bucket;
+- owner inbox admission rejections by route bucket;
+- staged bytes by route bucket;
+- and exact unique candidate count by route bucket where already sealed or verified.
+
+The implementation MUST NOT classify skew using:
+
+- queue processing speed;
+- wall-clock latency;
+- CPU utilization;
+- GC pause duration;
+- allocation speed;
+- thread scheduling delay;
+- consumer lag measured by time;
+- or runtime throughput.
+
+A route-range split is lawful only if:
+
+- it occurs at an explicit route-epoch or scope boundary;
+- split inputs are deterministic ledger counters;
+- the split formula is resolved before the new route epoch admits candidates;
+- already-issued provisional handles keep their original owner;
+- newly discovered candidates follow the new route map;
+- route map version changes are recorded in bounded diagnostics;
+- and stable intern id assignment remains based on canonical ordering, not owner lane.
+
+Exact hot-key pressure MUST NOT be solved by splitting the same canonical candidate across multiple owner lanes.
+
+For exact hot keys, the lawful mitigations are bounded duplicate suppression, cached resolved owner-lane material,
+sealed-reference reuse where already published, or fail-closed / quarantine under resolved policy.
+
+Range skew and exact hot-key pressure are distinct classifications.
+
 #### 13.13.4.2. BOUNDED_STREAMING Staged Candidate Memory Budget Law
 
 Candidate count safety does not imply staged memory safety.
@@ -7376,6 +7640,10 @@ The resolved budget MUST define at least:
 ``````text
 preScreenStagingBytesCap
 duplicateSuppressionTableBytesCap
+localRouteSuppressionBytesCapByEngineLane[engineLaneId] where producer-local suppression is enabled
+localRouteSuppressionBytesCapByIdentityDomain[identityDomainId] where producer-local suppression is enabled
+routedBatchBufferBytesCapByEngineLane[engineLaneId] where owner-lane routing is enabled
+ownerInboxBytesCapByOwnerLane[ownerEngineLaneId] where owner-lane routing is enabled
 stagedCanonicalBytesCap
 stagedScratchBytesCap
 stagedHandleBytesCap
@@ -7451,6 +7719,9 @@ Staging material includes at least:
 
 - pre-screen staging tickets;
 - duplicate suppression table entries;
+- producer-local route suppression entries;
+- routed candidate batch buffers;
+- owner inbox/routing queue entries;
 - provisional candidate descriptors;
 - candidate canonical bytes not yet sealed into an immutable artifact;
 - candidate sort keys;
@@ -8240,6 +8511,19 @@ The interner ledger or scope-local accounting record MUST meter at least:
 - quota redistribution grants after reclamation;
 - quota still stranded after reclamation;
 - reserve-pool exhaustion outcomes;
+- route-map version and routing epoch id;
+- routed candidate batches created;
+- routed candidate batch flushes;
+- partial-fill flush-on-boundary events;
+- owner inbox admission attempts;
+- owner inbox backpressure events;
+- deterministic route-drain steps;
+- route backpressure terminal classifications;
+- producer-local suppression entries;
+- producer-local suppression bytes;
+- producer-local suppression evictions;
+- route-range split classifications;
+- exact hot-key pressure classifications;
 - pre-screen staging bytes;
 - duplicate suppression table bytes;
 - delayed full staging outcomes;
@@ -11210,6 +11494,25 @@ A compliant implementation MUST satisfy:
 392. Failed full-rebuild preflight must not allocate or partially publish a full rebuild before rejecting fallback.
 393. Full-rebuild fallback diagnostics must be bounded by `fullRebuildPreflightDiagnosticsBytes`.
 
+394. Owner-lane routing derives ownership from a resolved deterministic route map, not discovery lane or runtime timing.
+395. Routing material is not equality authority and must not replace canonical byte verification or collision
+     verification.
+396. Routed candidate batches must flush on deterministic count, byte, ownership, branch/frame/scope, route/quota epoch,
+     seal, publication, rollback, or phase-exit boundaries.
+397. Partial-fill routed batches must not remain buffered across a boundary that can make candidates unreachable,
+     unsealed, or unaccounted.
+398. Routed batch flushing must not depend on wall-clock timers, queue depth, CPU utilization, throughput, GC behavior,
+     consumer speed, or adaptive runtime profiling.
+399. Owner inbox backpressure must use bounded deterministic route-drain or a stricter fail-closed profile; unbounded
+     blocking, spinning, and time-based waiting are forbidden.
+400. Cooperative route-drain must not transfer candidate staging, duplicate suppression, provisional handle issuance,
+     collision verification, stable id assignment, or publication ownership away from the deterministic owner lane.
+401. Producer-local suppression structures are optional traffic-reduction structures, not equality authority.
+402. Producer-local suppression entries, routed batch buffers, and owner inbox entries are charged to resolved staging /
+     routing memory budgets.
+403. Route-range split is lawful only at a route-epoch or scope boundary using deterministic ledger counters.
+404. Exact hot-key pressure must not be solved by splitting the same canonical candidate across multiple owner lanes.
+
 ## 23. Required Golden Vectors
 
 Golden vectors MUST exist for:
@@ -11631,6 +11934,25 @@ Until ratification, no concrete annotation, DSL, or compiler-metadata lowering v
 - full-rebuild fallback cannot allocate before preflight fixture;
 - bounded full-rebuild preflight diagnostic payload fixture.
 
+### 23.x. Deterministic Owner-Lane Routing and Routed Batching
+
+- deterministic owner-lane routing fixture;
+- discovery lane differs from owner lane fixture;
+- route material is not equality authority fixture;
+- routed candidate batch flush by count fixture;
+- routed candidate batch flush by byte budget fixture;
+- partial-fill flush-on-branch-close fixture;
+- partial-fill flush-on-scope-safe-point fixture;
+- partial-fill flush-on-rollback fixture;
+- no timer-based batch flush fixture;
+- owner inbox backpressure bounded route-drain fixture;
+- owner inbox retry exhaustion classification fixture;
+- cooperative route-drain does not mutate owner candidate state fixture;
+- producer-local suppression memory accounting fixture;
+- producer-local suppression is not equality authority fixture;
+- route-range split at route epoch boundary fixture;
+- exact hot-key pressure does not split one canonical candidate across owner lanes fixture.
+
 ## 24. Required Architecture Tests
 
 Architecture tests MUST verify:
@@ -11887,6 +12209,51 @@ influence canonical contract identity.
 ---
 
 ## 26. Alternatives Considered
+
+### 26.47. Flush Routed Batches by Wall-Clock Timer
+
+Rejected.
+
+Timer-based flushing may reduce partial-fill latency, but it makes routing behavior depend on wall-clock timing,
+scheduler delay, GC pauses, and runtime speed.
+
+Routed batches flush by deterministic count, byte, ownership, branch/frame/scope, epoch, seal, publication, rollback, or
+phase-exit boundaries instead.
+
+### 26.48. Block or Spin Until Owner Inbox Space Appears
+
+Rejected.
+
+Unbounded blocking and spinning convert transient inbox pressure into scheduler-dependent behavior and may deadlock the
+pipeline.
+
+Owner inbox pressure is handled through bounded deterministic route-drain or a stricter fail-closed profile.
+
+### 26.49. Let Producers Process Owner-Lane Candidate State Directly
+
+Rejected.
+
+Cooperative route-drain may help routing infrastructure, but candidate staging, duplicate suppression, provisional
+handle
+issuance, collision verification, stable id assignment, and publication remain owned by the deterministic owner lane.
+
+### 26.50. Use Unbounded Producer-Local Duplicate Maps
+
+Rejected.
+
+Producer-local suppression is a bounded traffic-reduction structure.
+
+It is charged to staging/routing memory budgets and is never equality authority.
+
+### 26.51. Split Exact Hot Keys Across Multiple Owner Lanes
+
+Rejected.
+
+Splitting one canonical candidate across multiple owners breaks duplicate suppression authority and risks inconsistent
+provisional ownership.
+
+Exact hot-key pressure is handled through bounded suppression, sealed-reference reuse, owner-lane cached material, or
+bounded fail-closed / quarantine outcomes.
 
 ### 26.47. Preallocate the Entire Candidate Cap into Lane Quotas
 
@@ -12699,6 +13066,9 @@ proof.
 Interner probe behavior is admitted by ADR-0041 integer budget feasibility; ADR-0042 may change the physical probing
 backend only after proving the same budget, including physical overhead and transient rebuild memory, while preserving
 stable id results.
+
+Bounded streaming owner-lane routing uses deterministic route maps, boundary-flushed routed batches, bounded route-drain
+backpressure handling, and budgeted producer-local suppression; routing material never becomes equality authority.
 
 Bounded streaming quota refill may fail only after deterministic quota reclamation proves no reclaimable unused quota
 remains; transient rebuild reserve is a high-water mark, and incremental traversal exhaustion requires a bounded
