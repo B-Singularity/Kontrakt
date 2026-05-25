@@ -7442,12 +7442,29 @@ A producer lane MAY batch outbound candidates by owner lane, identity domain, ro
 
 Batch routing is the preferred transport shape for owner-lane routing.
 
+The preferred physical shape is not a single mutable outbound batch that is repurposed for every destination.
+
+The preferred physical shape is a bounded producer-owned route-buffer set keyed by at least:
+
+``````text
+producerEngineLaneId
+ownerEngineLaneId
+identityDomainId
+routeEpochId
+interningScopeId
+``````
+
+A profile MAY use a stricter single-active-batch transport only if it proves that owner switching does not create
+pathological batch fragmentation for the admitted workload.
+
 The resolved routing budget MUST define at least:
 
 ``````text
 maxRoutedCandidateBatchSize
 maxRoutedCandidateBatchBytes
 maxRoutedBatchBufferBytesByEngineLane[engineLaneId]
+maxRoutedBatchBufferBytesByOwnerLane[producerEngineLaneId][ownerEngineLaneId]
+maxRoutedBatchBuffersByEngineLane[engineLaneId]
 maxPendingRoutedBatchesPerOwnerLane[ownerEngineLaneId]
 maxOwnerInboxBytes[ownerEngineLaneId]
 maxOwnerInboxBatches[ownerEngineLaneId]
@@ -7460,11 +7477,12 @@ A routed batch MUST flush when any of the following deterministic conditions hol
 
 - `maxRoutedCandidateBatchSize` is reached;
 - `maxRoutedCandidateBatchBytes` is reached;
-- owner lane changes;
-- identity domain changes where the profile requires domain-segregated batches;
-- branch frame closes;
-- planning frame closes;
-- semantic validation boundary is reached;
+- a single-active-batch profile would repurpose the same physical batch buffer for a different owner lane;
+- a single-active-batch profile would repurpose the same physical batch buffer for a different identity domain where the
+  profile requires domain-segregated batches;
+- the batch's owning branch frame closes;
+- the batch's owning planning frame closes;
+- semantic validation boundary is reached for material owned by the batch;
 - scope safe point is reached;
 - route epoch boundary is reached;
 - quota epoch boundary is reached;
@@ -7472,6 +7490,16 @@ A routed batch MUST flush when any of the following deterministic conditions hol
 - publication preflight begins;
 - rollback / failure boundary is reached;
 - or the producer lane exits the owning pipeline phase.
+
+For a profile that maintains independent per-owner route buffers, discovering a candidate for a different owner lane
+MUST NOT flush an unrelated non-empty owner buffer merely because the discovery stream changed owner.
+
+A per-owner route buffer flushes according to its own count, byte, lifecycle-boundary, epoch-boundary, or explicit
+profile-admitted deterministic flush condition.
+
+The implementation MUST NOT turn alternating owner discovery patterns into one-candidate batches unless the selected
+profile explicitly admits a single-active-batch transport and proves that the resulting message fragmentation remains
+within routing budget.
 
 A non-empty routed batch MUST NOT remain buffered across a boundary that could make its candidates unreachable,
 unsealed, unaccounted, or owned by a closed branch / frame / scope.
@@ -7509,6 +7537,7 @@ producer flush attempt
 -> route-backpressure event recorded
 -> producer stops new admission for the affected route / domain / scope slice
 -> deterministic route-drain safe point entered
+-> self-drain phase runs before cross-owner drain or terminal retry
 -> owner inboxes drain in fixed ownerEngineLaneId order or by another ratified deterministic order
 -> producer retries flush under maxRouteFlushRetries
 -> success, or bounded route-backpressure classification
@@ -7524,26 +7553,87 @@ The implementation MUST NOT spin until an inbox has space.
 
 The implementation MUST NOT block a worker indefinitely.
 
+#### 13.13.4.1.3.1. Self-Drain-First Backpressure Law
+
+Circular backpressure MUST be broken by deterministic self-drain before cross-owner assistance or terminal retry.
+
+When an engine lane enters a route-drain safe point, it MUST first drain its own inbound routing inbox and
+routing-control
+queue up to the resolved step budget before waiting on another owner lane's progress.
+
+The self-drain phase is lawful because the lane processes state that it already owns.
+
+The self-drain phase MUST be bounded by resolved counters such as:
+
+``````text
+maxSelfDrainBatchesPerBackpressure
+maxSelfDrainBytesPerBackpressure
+maxSelfDrainStepsPerBackpressure
+``````
+
+If two or more lanes are mutually blocked by full inboxes, the route-drain owner MUST process self-drain phases in a
+ratified deterministic order, such as ascending `ownerEngineLaneId`, before retrying blocked flushes.
+
+The implementation MUST NOT model circular backpressure as terminal failure until the required self-drain phase has
+either:
+
+- admitted enough inbox capacity for the blocked routed batch;
+- exhausted the resolved self-drain step budget;
+- or classified the route slice under a bounded backpressure outcome.
+
 Allowed terminal classifications include:
 
 ``````text
 ROUTE_BACKPRESSURE_DRAINED
+ROUTE_BACKPRESSURE_SELF_DRAIN_EXHAUSTED
 ROUTE_BACKPRESSURE_RETRY_EXHAUSTED
 ROUTE_INBOX_CAP_EXHAUSTED
 ROUTE_SCOPE_QUARANTINED
 ROUTE_PUBLICATION_REJECTED_BEFORE_VISIBILITY
 ``````
 
+#### 13.13.4.1.3.2. Cooperative Route-Drain Ownership and Cache-Locality Law
+
 Cooperative route-drain MAY help routing infrastructure make progress.
 
-It MUST NOT transfer ownership of candidate staging, duplicate suppression, provisional handle issuance, collision
-verification, stable id assignment, or publication away from the deterministic owner lane.
+It is not a general remote work-stealing mechanism.
 
-A producer lane MAY participate only in protocol-assigned drain work whose state transition remains attributed to the
-owner lane or routing infrastructure owner.
+The preferred shape is owner self-drain.
 
-It MUST NOT directly mutate another owner lane's candidate staging table, duplicate suppression table, provisional
-handle table, or stable-id assignment state.
+A producer lane MAY participate only in protocol-assigned routing-control work whose state transition remains attributed
+to the routing infrastructure owner or the deterministic owner lane.
+
+Cooperative drain MUST NOT transfer ownership of:
+
+- candidate staging;
+- duplicate suppression;
+- provisional handle issuance;
+- collision verification;
+- stable id assignment;
+- publication;
+- owner-lane candidate table mutation;
+- or owner-lane stable identity state.
+
+A producer lane MUST NOT directly mutate another owner lane's candidate staging table, duplicate suppression table,
+provisional handle table, or stable-id assignment state.
+
+A producer lane SHOULD NOT read another owner lane's candidate payload buffers, duplicate suppression payload tables, or
+owner-local canonical byte staging regions.
+
+Remote cooperative drain of owner payload material is forbidden by default.
+
+It may be admitted only by an ADR-0042 backend profile that proves all of the following:
+
+- the drain work is bounded;
+- the drain work is attributed to the owner lane's deterministic state machine;
+- the accessed memory is routing-control material rather than hot candidate payload material, or the backend provides
+  explicit cache-locality evidence;
+- the operation does not introduce false sharing or unbounded cache-line bouncing;
+- the operation cannot change stable id assignment, collision verification result, or publication order;
+- and the operation has golden-vector and stress-test coverage.
+
+A profile that cannot prove remote cooperative drain locality MUST use owner self-drain, route-drain control messages,
+bounded retry, route epoch rollover, quarantine, or fail-closed classification instead.
 
 #### 13.13.4.1.4. Producer-Local Suppression Budget and Authority Law
 
@@ -7553,6 +7643,19 @@ It is not equality authority.
 
 It MUST NOT replace owner-lane duplicate suppression, canonical byte encoding, collision verification, deterministic
 stable id assignment, or publication integrity validation.
+
+Producer-local suppression and producer-local route buffers are staging-adjacent structures.
+
+They MUST be charged to the owning route/staging budget.
+
+The charged material includes:
+
+- producer-local suppression entries;
+- producer-local suppression control bytes;
+- per-owner routed batch buffer bytes;
+- per-owner routed batch descriptors;
+- routing-control metadata;
+- and bounded diagnostics attached to suppression or routing-buffer decisions.
 
 A lawful producer-local suppression structure MUST be:
 
@@ -8133,43 +8236,93 @@ A backend claiming the high-performance mechanical profile MUST provide physical
 
 #### 13.13.8.2. Transient Resize / Rebuild Memory Spike Law
 
-Resize, rebuild, reindex, migration, and compaction may require old and new tables to be simultaneously live.
+Resize, rebuild, reindex, migration, and compaction are physical table-placement operations.
 
-This transient two-table interval must be budgeted before scope admission.
+They are not semantic-scope expansion.
+
+They MUST NOT change:
+
+- canonical bytes;
+- HID derivation;
+- collision verification result;
+- stable intern id assignment;
+- semantic equality;
+- publication order;
+- planning-visible identity;
+- or the resolved scope candidate cap.
+
+Because the scope candidate cap is resolved before scope admission, a compliant ADR-0041 interner backend MUST NOT use
+whole-table grow-by-copy resize as an ordinary runtime capacity strategy.
+
+A compliant backend MUST use one of the following non-copying or pre-admitted capacity shapes:
+
+- pre-sized table construction from the resolved candidate cap;
+- segmented table extension;
+- paged table extension;
+- incremental page/segment publication;
+- deterministic append-only segment indexing;
+- fixed-capacity staging followed by deterministic seal-time materialization;
+- or another ADR-0042-ratified non-copying substrate profile that avoids whole-table copy spikes.
+
+A backend MUST NOT require an old complete table and a new complete table to be simultaneously live merely to increase
+ordinary candidate capacity.
+
+Whole-table grow-by-copy MAY appear only as:
+
+- a rejected alternative;
+- a non-compliant diagnostic prototype;
+- or a cold offline artifact migration procedure outside the ADR-0041 compliant interner backend.
+
+A cold offline artifact migration procedure is not a planning-visible, staging-visible, or publication-visible ADR-0041
+interner backend.
+
+It MUST have its own adapter-owned budget, lifecycle, diagnostics, and failure policy if it is ever introduced.
+
+This transient interval must be budgeted before scope admission.
 
 `maxTransientRebuildBytes` is a high-water reserve.
 
 It is not the sum of every possible resize / rebuild spike across the scope.
 
+It is also not permission to assume immediate physical memory reclamation after logical release.
+
 Required relationship:
 
 ``````text
 maxTransientRebuildBytes
-    >= maxOverAllowedResizeOrRebuildEvents(
-           maxSimultaneouslyLiveOldTableBytes(event)
-         + maxSimultaneouslyLiveNewTableBytes(event)
-         + maxRebuildScratchBytes(event)
-         + maxMigrationMetadataBytes(event)
+    >= maxOverAllowedPlacementEvents(
+           transientPlacementBytesForEvent(event)
        )
 ``````
 
-For a single event, the required event spike is:
+For one admitted placement event:
 
 ``````text
-transientRebuildBytesForEvent(event)
+transientPlacementBytesForEvent(event)
     =
-        maxSimultaneouslyLiveOldTableBytes(event)
-      + maxSimultaneouslyLiveNewTableBytes(event)
+        liveSourceSegmentOrPageBytesRetainedDuringEvent(event)
+      + newlyAllocatedSegmentOrPageBytes(event)
       + maxRebuildScratchBytes(event)
       + maxMigrationMetadataBytes(event)
+      + retiredButNotPhysicallyReclaimedBytesVisibleToEvent(event)
+      + backendAllocatorCommitOverheadBytes(event)
 ``````
 
-Then:
+Where:
 
 ``````text
-maxTransientRebuildBytes
-    >= max(transientRebuildBytesForEvent(event))
-       over every resize / rebuild / reindex / migration event admitted by the profile
+liveSourceSegmentOrPageBytesRetainedDuringEvent(event)
+    bytes from the source segment/page set that must remain reachable while the event executes.
+
+newlyAllocatedSegmentOrPageBytes(event)
+    bytes for new segment/page/directory material allocated by the event.
+
+retiredButNotPhysicallyReclaimedBytesVisibleToEvent(event)
+    bytes logically retired by prior events but not proven physically reusable by the selected backend profile.
+
+backendAllocatorCommitOverheadBytes(event)
+    deterministic allocator / runtime commit overhead, guard-region cost, page granularity, native allocator overhead,
+    or conservative heap-profile reserve required by ADR-0042 evidence.
 ``````
 
 `maxMigrationMetadataBytes` is the deterministic metadata required to track a migration operation.
@@ -8181,43 +8334,151 @@ It includes, where applicable:
 - displacement recomputation scratch;
 - generation/state transition metadata;
 - rebuild diagnostics reserved for the migration;
+- segment/page directory transition metadata;
 - and backend-specific migration headers.
 
-If the backend uses grow-by-copy resizing, the conservative v1 bound for one event is:
+##### 13.13.8.2.1. Preferred Segmented / Paged Extension Law
+
+A backend that can satisfy probe, publication, and lookup invariants through segmented, paged, or incremental extension
+MUST prefer that profile over whole-table replacement.
+
+In a segmented or paged profile, the event high-water calculation MUST account for only the simultaneously live material
+for that event.
+
+For example:
 
 ``````text
-maxSimultaneouslyLiveOldTableBytes(event) =
-    totalInternTableBytes(currentTableCapsForEvent)
-
-maxSimultaneouslyLiveNewTableBytes(event) =
-    totalInternTableBytes(nextTableCapsForEvent)
+transientPlacementBytesForSegmentAppend(event)
+    =
+        liveSegmentDirectoryTransitionBytes(event)
+      + newSegmentOrPageBytes(event)
+      + maxRebuildScratchBytes(event)
+      + maxMigrationMetadataBytes(event)
+      + retiredButNotPhysicallyReclaimedBytesVisibleToEvent(event)
+      + backendAllocatorCommitOverheadBytes(event)
 ``````
 
-For example, if a backend admits two grow-by-copy resize events:
+A segmented / paged profile MUST prove:
+
+- deterministic capacity schedule;
+- deterministic segment/page ordering;
+- deterministic lookup/probe sequence across segments or pages;
+- bounded probe work;
+- bounded segment-directory work;
+- stable id independence from physical segment/page placement;
+- safe publication boundary;
+- and ADR-0042 lifecycle/reclamation evidence.
+
+Segmented or paged extension MUST NOT become a hidden semantic-scope expansion mechanism.
+
+The candidate cap and domain caps remain those resolved for the admitted scope.
+
+##### 13.13.8.2.2. Whole-Table Grow-by-Copy Prohibition Law
+
+Whole-table grow-by-copy resize is not a compliant ADR-0041 interner capacity strategy.
+
+The implementation MUST NOT use any of the following on the planning-visible, staging-visible, or publication-visible
+interner path:
 
 ``````text
 table X  -> table 2X
 table 2X -> table 4X
+copy all candidates from old complete table to new complete table
+publish replacement solely because ordinary capacity increased
 ``````
 
-then the transient reserve is based on the larger event high-water mark:
+This prohibition exists because the interner has a resolved candidate cap, resolved byte envelope, resolved probe
+budget,
+and resolved publication boundary before the scope is admitted.
+
+Blind doubling is an amortized general-purpose collection heuristic.
+
+It is not a lawful identity-substrate strategy.
+
+A compliant backend that cannot support pre-sized, segmented, paged, incremental, or otherwise non-copying capacity
+management MUST fail backend-profile admission.
+
+It MUST NOT become compliant by paying a larger transient reserve for whole-table copying.
+
+Whole-table replacement may still be used for a different purpose only if the operation is outside the ADR-0041 runtime
+interner path, such as a cold offline artifact migration adapter with separately admitted budget and lifecycle.
+
+Such a cold procedure MUST NOT be planning-visible and MUST NOT affect stable id assignment for an already admitted
+scope.
+
+##### 13.13.8.2.3. Physical Reclamation Lag Law
+
+Logical release is not physical reclamation.
+
+Dropping a reference, retiring a table, unlinking a segment, leaving a scope, or publishing a replacement table does not
+by itself prove that the bytes are physically reusable.
+
+This is especially true for heap-backed JVM profiles, where GC timing, heap compaction, region reuse, and OS memory
+return are not deterministic protocol events.
+
+A transient reserve may be reused across sequential resize / rebuild / reindex / migration events only after the
+selected
+ADR-0042 backend profile proves one of the following:
+
+- the bytes are still reserved inside the same pre-admitted arena and are immediately reusable by deterministic
+  pointer /
+  offset reset;
+- the backend uses explicit off-heap/native/`MemorySegment` lifetime control and has completed the required release /
+  close / ownership handoff proof;
+- the backend's allocator profile guarantees deterministic reuse of the retired region within the same scope;
+- or the retired bytes remain counted as
+  `retiredButNotPhysicallyReclaimedBytesVisibleToEvent(...)` for the next event.
+
+A heap-backed profile that cannot prove deterministic physical reuse MUST conservatively keep retired table bytes in the
+transient high-water calculation until the owning scope closes or until ADR-0042 evidence admits a stronger reclaim
+boundary.
+
+The implementation MUST NOT:
+
+- treat JVM reference unlinking as proof of physical heap availability;
+- rely on GC timing to satisfy an ADR-0041 memory budget;
+- allocate the next large segment/page/directory first and discover reclamation failure through `OutOfMemoryError`;
+- reuse transient reserve solely because retired material is no longer semantically reachable;
+- or make publication depend on whether the runtime happened to reclaim memory promptly.
+
+##### 13.13.8.2.4. Resize Admission and Zero-Resize Preference Law
+
+A released profile SHOULD prefer zero-resize admission when the resolved candidate cap and byte envelope make it
+feasible.
+
+The capacity solver MAY choose initial logical capacity large enough to satisfy the resolved candidate cap and
+load-factor
+law before ordinary insertion begins.
+
+If a profile intentionally starts below the cap to reduce initial footprint, it MUST declare:
 
 ``````text
-max(
-    totalBytes(X)  + totalBytes(2X) + eventScratchAndMetadata(X -> 2X),
-    totalBytes(2X) + totalBytes(4X) + eventScratchAndMetadata(2X -> 4X)
-)
+maxResizeCountPerScope
+deterministicResizeSchedule
+maxTransientRebuildBytes
+retiredButNotPhysicallyReclaimedBytes policy
+backendAllocatorCommitOverheadBytes policy
+fallback outcome if resize reserve is unavailable
+non-copying extension strategy
 ``````
 
-not the sum of both event spikes.
+The profile MUST prove that this delayed-capacity strategy does not weaken:
 
-A backend may use a lower bound only if it proves a deterministic in-place, segmented, paged, or incremental migration
-strategy that never has both complete tables live.
+- deterministic capacity feasibility;
+- probe-budget feasibility;
+- staging byte feasibility;
+- publication safety;
+- stable id assignment;
+- or semantic scope boundaries.
+
+A resize may increase logical table capacity through a compliant non-copying extension strategy.
+
+It MUST NOT retroactively admit more candidates than the resolved scope candidate cap allows.
 
 If `maxResizeCountPerScope > 0` or `maxRebuildCountPerScope > 0`, then `maxTransientRebuildBytes` MUST be positive and
 MUST fit inside the scope's resolved transient memory reserve.
 
-A profile that cannot reserve transient rebuild bytes MUST set:
+A profile that cannot reserve transient placement bytes MUST set:
 
 ``````text
 maxResizeCountPerScope  = 0
@@ -8226,12 +8487,9 @@ maxRebuildCountPerScope = 0
 
 or fail admission before stable id publication.
 
-The implementation MUST NOT discover the transient spike by actually allocating the new table first.
+The implementation MUST NOT discover the transient spike by actually allocating the new segment/page/directory first.
 
 Admission must prove the transient high-water reserve before allocation.
-
-The transient high-water reserve may be reused across sequential resize / rebuild events only after the previous event
-has released its old table, scratch, and migration metadata according to ADR-0042 lifecycle rules.
 
 Overlapping resize / rebuild events in the same scope MUST either:
 
@@ -11513,6 +11771,39 @@ A compliant implementation MUST satisfy:
 403. Route-range split is lawful only at a route-epoch or scope boundary using deterministic ledger counters.
 404. Exact hot-key pressure must not be solved by splitting the same canonical candidate across multiple owner lanes.
 
+405. Per-owner route buffers are the preferred batch-routing shape.
+406. Owner-lane changes must not flush unrelated per-owner buffers merely because discovery order alternates between
+     owners.
+407. Single-active-batch routing profiles must prove that owner switching does not create pathological batch
+     fragmentation.
+408. Route-drain must perform deterministic self-drain before cross-owner assistance or terminal retry.
+409. Circular backpressure must not be classified as terminal failure until the required self-drain phase is exhausted
+     or
+     succeeds.
+410. Cooperative route-drain is not remote work stealing and must not transfer candidate ownership away from the owner
+     lane.
+411. Remote cooperative drain of owner payload material is forbidden unless ADR-0042 profile evidence admits it.
+412. Producer-local route buffers and suppression structures are charged to routing/staging budgets.
+
+413. Whole-table grow-by-copy resize is forbidden on the ADR-0041 compliant interner path.
+414. Released profiles must use pre-sized, segmented, paged, incremental, or another ADR-0042-ratified non-copying
+     capacity shape.
+415. `maxTransientRebuildBytes` must account for live source segment/page bytes, newly allocated segment/page bytes,
+     scratch, migration metadata, retired-but-not-physically-reclaimed bytes, and allocator commit overhead.
+416. Logical release must not be treated as proof of physical memory reclamation.
+417. Heap-backed profiles that cannot prove deterministic physical reuse must keep retired bytes in the transient
+     high-water calculation until scope close or an ADR-0042 reclaim boundary is proven.
+418. A backend must not rely on GC timing to satisfy ADR-0041 transient memory budgets.
+419. Zero-resize admission is preferred when the resolved candidate cap and byte envelope make it feasible.
+420. Delayed-capacity profiles must declare deterministic resize schedule, transient reserve, reclamation-lag policy,
+     allocator-overhead policy, and fallback outcome before admission.
+
+421. A backend that cannot provide a non-copying capacity strategy must fail backend-profile admission.
+422. Whole-table grow-by-copy may appear only as a rejected alternative, non-compliant diagnostic prototype, or cold
+     offline artifact migration outside the ADR-0041 runtime interner path.
+423. A cold offline artifact migration procedure must not be planning-visible, staging-visible, or
+     publication-visible as an ADR-0041 interner backend.
+
 ## 23. Required Golden Vectors
 
 Golden vectors MUST exist for:
@@ -11953,6 +12244,32 @@ Until ratification, no concrete annotation, DSL, or compiler-metadata lowering v
 - route-range split at route epoch boundary fixture;
 - exact hot-key pressure does not split one canonical candidate across owner lanes fixture.
 
+### 23.x. Routed Batch Fragmentation, Self-Drain, and Cooperative Drain
+
+- alternating owner discovery does not force one-candidate flush fixture when per-owner route buffers are used;
+- single-active-batch routing profile fragmentation-bound fixture;
+- partial-fill per-owner batch flush-on-close fixture;
+- circular backpressure self-drain-first fixture;
+- self-drain exhaustion bounded classification fixture;
+- cooperative route-drain does not mutate remote owner candidate state fixture;
+- remote cooperative payload drain rejected without ADR-0042 locality evidence fixture;
+- producer-local route buffer byte accounting fixture;
+- producer-local suppression plus route-buffer combined budget fixture.
+
+### 23.x. Transient Resize, Segmented Extension, and Reclamation Lag
+
+- zero-resize admission fixture;
+- segmented extension transient high-water fixture;
+- paged extension transient high-water fixture;
+- whole-table grow-by-copy runtime interner rejection fixture;
+- cold offline artifact migration is outside ADR-0041 runtime interner path fixture;
+- sequential grow-by-copy high-water-not-sum fixture;
+- heap-backed logical release does not permit transient reserve reuse fixture;
+- retired-but-not-physically-reclaimed bytes carried into next event fixture;
+- off-heap / `MemorySegment` deterministic release proof fixture where admitted;
+- delayed-capacity profile rejects admission when resize reserve is unavailable fixture;
+- resize does not expand semantic candidate cap fixture.
+
 ## 24. Required Architecture Tests
 
 Architecture tests MUST verify:
@@ -12209,6 +12526,81 @@ influence canonical contract identity.
 ---
 
 ## 26. Alternatives Considered
+
+### 26.50. Use Whole-Table Grow-by-Copy as a Compliant Interner Resize Strategy
+
+Rejected.
+
+The scope already has a resolved candidate cap, resolved memory envelope, resolved probe budget, and resolved
+publication boundary.
+
+Blind grow-by-copy doubling is an amortized general-purpose collection heuristic.
+
+It is not a lawful identity-substrate strategy.
+
+It creates unnecessary complete old-table plus complete new-table coexistence, amplifies transient memory spikes, and
+invites reliance on physical reclamation behavior that ADR-0041 does not own.
+
+Whole-table grow-by-copy may exist only as a rejected alternative, a non-compliant diagnostic prototype, or a cold
+offline
+artifact migration procedure outside the ADR-0041 runtime interner path.
+
+### 26.51. Reuse Transient Reserve Immediately After Logical Release
+
+Rejected.
+
+Logical release is not physical reclamation.
+
+In heap-backed JVM profiles, GC timing and heap region reuse are not deterministic protocol events.
+
+Transient reserve may be reused only after ADR-0042 backend evidence proves deterministic physical reuse, or the retired
+bytes remain counted in the next high-water event.
+
+### 26.52. Require All Backends to Use Exactly Segmented or Paged Extension
+
+Rejected.
+
+Segmented and paged extension are preferred where feasible, but ADR-0041 does not require those exact physical shapes.
+
+A compliant backend may also use pre-sized construction, deterministic append-only segment indexing, fixed-capacity
+staging followed by deterministic seal-time materialization, incremental page/segment publication, or another
+ADR-0042-ratified non-copying substrate profile.
+
+Whole-table grow-by-copy remains forbidden on the ADR-0041 runtime interner path.
+
+### 26.47. Flush on Every Owner-Lane Change Even With Per-Owner Buffers
+
+Rejected.
+
+This would turn alternating owner discovery patterns into one-candidate batches and would erase the throughput benefit
+of
+batch routing.
+
+Owner-lane change is a flush condition only for a single-active-batch profile that repurposes the same physical batch
+buffer.
+
+The preferred physical shape is a bounded per-owner route-buffer set.
+
+### 26.48. Treat Circular Backpressure as Immediate Route Failure
+
+Rejected.
+
+Circular backpressure may be resolvable by draining each lane's own inbox at a deterministic safe point.
+
+A route-drain path must run self-drain first before cross-owner assistance or terminal retry unless a stricter no-drain
+profile has been explicitly selected.
+
+### 26.49. Allow Cooperative Drain to Read or Mutate Remote Owner Payload State
+
+Rejected.
+
+This would weaken the shared-nothing owner-lane model, introduce cache-line bouncing, and risk hidden ownership
+transfer.
+
+Cooperative drain may assist routing infrastructure only under explicit owner attribution.
+
+Remote payload drain is forbidden unless an ADR-0042 backend profile provides bounded cache-locality evidence and
+deterministic state-transition proof.
 
 ### 26.47. Flush Routed Batches by Wall-Clock Timer
 
@@ -13073,6 +13465,12 @@ backpressure handling, and budgeted producer-local suppression; routing material
 Bounded streaming quota refill may fail only after deterministic quota reclamation proves no reclaimable unused quota
 remains; transient rebuild reserve is a high-water mark, and incremental traversal exhaustion requires a bounded
 diagnostic classification.
+
+Owner-lane batch routing uses per-owner buffers by default; backpressure drains owner-owned inboxes first, and
+cooperative drain must not become remote payload work stealing.
+
+Whole-table grow-by-copy resize is forbidden on the ADR-0041 compliant interner path; transient memory reuse requires
+physical reclamation evidence or continued retired-byte accounting.
 
 Refill-capable streaming uses deterministic reserve-pool refill before reclamation; duplicate pre-screen may reduce
 staging pressure but never becomes equality authority; full-rebuild fallback requires a separately admitted preflight
