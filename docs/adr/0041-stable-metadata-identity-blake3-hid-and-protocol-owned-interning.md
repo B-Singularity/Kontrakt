@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted
+Proposed
 
 ## Date
 
@@ -15046,7 +15046,326 @@ It does not promise constant-time invalidation for an entire affected subtree.
 Any stronger incremental cutoff belongs to ADR-0043 or a future query/incremental ADR and must preserve deterministic
 identity.
 
-## 27. Final Rule
+## 27. Post-Acceptance Extraction and Maintenance Map
+
+ADR-0041 is accepted as the monolithic source decision for stable metadata identity, digest/HID derivation, and
+protocol-owned metadata interning.
+
+Post-acceptance extraction is permitted only as a documentation-maintenance operation.
+
+It MUST NOT weaken, remove, reinterpret, or silently supersede any accepted ADR-0041 invariant.
+
+The purpose of extraction is to reduce document size, isolate maintenance authority, and prevent future amendments from
+turning ADR-0041 into an unbounded catch-all document.
+
+### 27.1. Preservation Rule
+
+The accepted ADR-0041 text remains the historical authority for the decision as accepted.
+
+Extraction documents MAY become narrower maintenance authorities only after they explicitly preserve the corresponding
+ADR-0041 invariant and state their authority boundary.
+
+A compliant extraction MUST preserve:
+
+- canonical material authority;
+- canonical byte encoding authority;
+- domain separation authority;
+- digest suite / HID descriptor authority;
+- HID-not-equality authority;
+- collision verification authority;
+- protocol-owned interning authority;
+- stable intern id assignment authority;
+- publication-before-visibility authority;
+- TypeReference identity phasing authority;
+- L2 consumer cache-blindness authority;
+- persistent artifact boundary authority;
+- security / DoS containment authority;
+- golden-vector obligations;
+- architecture-test obligations;
+- and all accepted fail-closed behavior.
+
+Extraction MUST NOT convert an accepted ADR-0041 `MUST` into a `SHOULD`, `MAY`, implementation note, or non-normative
+comment.
+
+Extraction MUST NOT make a backend-specific optimization appear to be semantic identity authority.
+
+Extraction MUST NOT make a semantic identity law depend on a physical backend accident.
+
+### 27.2. Target Extraction Documents
+
+The following documents are the intended post-acceptance maintenance targets.
+
+``````text
+docs/design/stable-metadata-identity-protocol.md
+docs/design/protocol-owned-metadata-interning.md
+docs/adr/0042-mechanical-sympathy-primitive-lifecycle-and-async-ownership-governance.md
+docs/adr/0043-contract-graph-canonicalization-sealed-structural-references-and-incremental-identity-derivation.md
+docs/adr/0044-unified-runtime-memory-envelope-and-pipeline-lifecycle-governance.md
+docs/constitution/compiler-core-protocols.md
+``````
+
+A `docs/specs/` directory SHOULD NOT be introduced for this extraction unless Kontrakt later ratifies an external,
+cross-language, persistent binary, wire-format, or public compatibility specification.
+
+The current extraction target is design-level protocol maintenance, not an external artifact specification.
+
+### 27.3. Stable Metadata Identity Protocol Design Note
+
+`docs/design/stable-metadata-identity-protocol.md` owns the extracted maintenance surface for byte-level metadata
+identity protocol.
+
+It SHOULD receive the following ADR-0041 material:
+
+- canonical material law;
+- canonical byte encoding law;
+- canonical envelope/header law;
+- object/message encoding law;
+- unknown tag / decoder bound law;
+- canonical sort input law where it is protocol-semantic rather than physical;
+- domain separation payload law;
+- digest suite abstraction;
+- HID descriptor law;
+- HID width/version/suite law;
+- HID-not-equality-authority law;
+- hierarchical identity derivation semantics where not graph-specific;
+- TypeReference canonical material law;
+- TypeReference HID law;
+- TypeReference carrier meaning where semantic rather than physical;
+- TypeReference depth/cycle-key phasing law;
+- canonical identity golden-vector obligations.
+
+It MUST NOT absorb backend-specific slab, arena, cache-line, owner-lane, dispatch-lane, inbox, preclassification,
+small-inline, or memory-reclamation mechanics except as non-authoritative references to ADR-0042.
+
+### 27.4. Protocol-Owned Metadata Interning Design Note
+
+`docs/design/protocol-owned-metadata-interning.md` owns the extracted maintenance surface for metadata interning
+semantics.
+
+It SHOULD receive the following ADR-0041 material:
+
+- intern scope law;
+- interning candidate law;
+- provisional handle law;
+- staged-byte admission and failure policy;
+- stable intern id assignment law;
+- publication law;
+- no partial planning-visible table law;
+- collision verification law;
+- bounded cold collision containment law;
+- probe/admission budget semantic law;
+- deterministic stable id independence from physical table placement;
+- scope containment / quarantine semantics;
+- interner consumer obligations;
+- metadata interning golden-vector obligations.
+
+It MUST NOT own physical owner-lane routing, routed batch buffers, inbox backpressure mechanics, self-drain mechanics,
+cache-line grouping, off-heap/native allocation choices, reclamation epochs, or benchmark gates.
+
+Those are ADR-0042 maintenance surfaces.
+
+### 27.5. ADR-0042 Mechanical Substrate Extraction
+
+ADR-0042 owns the extracted maintenance surface for mechanical sympathy, primitive substrate lifecycle, and async
+ownership governance.
+
+It SHOULD receive the following ADR-0041 material where it is physical/backend-facing:
+
+- primitive-substrate lifecycle law;
+- staging/scratch/published/retired slab law;
+- zero-copy slice lifetime law;
+- zero-copy promotion law;
+- sealed slab fragmentation and reclamation law;
+- reader lease / epoch reclamation law;
+- async reclaimer law;
+- owner-lane routing transport;
+- routed candidate batch law;
+- boundary flush storm headroom law;
+- owner inbox backpressure law;
+- self-drain and cooperative-drain locality law;
+- producer-local suppression memory law;
+- verification ladder physical ordering;
+- inline verifier entropy / selector evidence gates;
+- small-inline mode law;
+- inline/external segregation routing-fragmentation law;
+- preclassification chunking law;
+- transient placement/rebuild reserve law;
+- whole-table grow-by-copy prohibition as a physical substrate law;
+- physical reclamation lag law;
+- TypeReference hot carrier packing where it is physical carrier mechanics;
+- ADR-0042 backend evidence / benchmark gates.
+
+ADR-0042 MUST keep the distinction between core-required substrate capabilities and concrete backend implementation
+choices.
+
+It MUST NOT redefine canonical identity semantics, HID equality meaning, or stable intern id assignment authority.
+
+### 27.6. ADR-0043 Contract Graph Extraction
+
+ADR-0043 owns the extracted maintenance surface for contract graph canonicalization, sealed structural references, and
+incremental identity derivation.
+
+It SHOULD receive the following ADR-0041 material where it is graph/contract-facing:
+
+- structural identity vs contextual identity law;
+- green/red or parent-free/path-aware identity stratification where applied to contract graph units;
+- sealed child structural reference law;
+- parent references sealed child identity law for contract graph units;
+- Merkle-like graph reference derivation;
+- graph interning law;
+- graph SCC sealing law;
+- graph SCC capacity/symmetry/refinement laws where generalized beyond TypeReference;
+- snapshot-backed graph materialization where graph-unit-specific;
+- incremental affected-set derivation law;
+- invalidation traversal budget law;
+- full-rebuild fallback preflight law;
+- L2/query/cache integration for graph units.
+
+ADR-0043 MUST NOT own the general metadata identity protocol or physical primitive substrate lifecycle.
+
+It consumes ADR-0041/metadata identity protocol and ADR-0042 substrate guarantees.
+
+### 27.7. ADR-0044 Runtime Memory Envelope Extraction
+
+ADR-0044 SHOULD be created to own cross-pipeline memory-envelope and lifecycle governance.
+
+It SHOULD define how one logical run or admitted pipeline allocates, reserves, retires, and transfers memory among:
+
+- metadata identity canonicalization;
+- protocol-owned metadata interning;
+- frozen acquisition;
+- planning L1;
+- contract graph canonicalization;
+- incremental derivation;
+- L2 cache/interner governance;
+- VM execution;
+- reporting and diagnostics;
+- emergency diagnostics;
+- retired epoch reserve;
+- continuation/restart reserve;
+- quarantine reserve;
+- and artifact/report materialization.
+
+ADR-0044 owns system-level memory allocation and lifecycle policy.
+
+It MUST NOT redefine the byte identity protocol, interner equality authority, graph identity semantics, or backend
+substrate mechanics.
+
+### 27.8. Compiler Constitution Enforcement Hook
+
+`docs/constitution/compiler-core-protocols.md` SHOULD NOT absorb the full ADR-0041 body.
+
+It SHOULD receive only enforcement hooks required to keep implementation aligned with the extracted documents.
+
+Examples:
+
+- architecture-test hooks for no reflection/KSP/backend handles in core identity material;
+- no boxed hot-path identity carriers;
+- no runtime object authority after normalization;
+- Local IR / Canonical IR boundary enforcement;
+- safe publication enforcement;
+- deterministic collection enforcement;
+- no raw adapter material crossing canonical identity boundaries;
+- no per-candidate hot wrapper allocation in primitive identity paths;
+- no direct dependency on backend-native ordering.
+
+The constitution is an enforcement index.
+
+It is not the maintenance location for the metadata identity protocol itself.
+
+### 27.9. Extraction Order
+
+The extraction SHOULD proceed in this order:
+
+``````text
+1. Preserve ADR-0041 as the accepted monolith and add this extraction map.
+2. Extract mechanical substrate laws into ADR-0042.
+3. Extract contract graph and incremental identity laws into ADR-0043.
+4. Add docs/design/stable-metadata-identity-protocol.md.
+5. Add docs/design/protocol-owned-metadata-interning.md.
+6. Optionally replace duplicated ADR-0041 sections with references only after extraction documents are complete and
+   checked against this preservation map.
+7. Add ADR-0044 when the unified runtime memory envelope is ready to be accepted.
+8. Add compiler-core-protocol enforcement hooks after extracted authority boundaries are stable.
+``````
+
+Step 6 is optional.
+
+If Step 6 is performed, it MUST be a separate change from extraction and MUST include a non-regression checklist showing
+that no accepted ADR-0041 invariant disappeared.
+
+### 27.10. Non-Regression Checklist for Extraction
+
+Every extraction pull request MUST answer the following checklist.
+
+``````text
+Does the extracted document preserve the original ADR-0041 MUST-level invariant?
+Does it preserve fail-closed behavior?
+Does it preserve exact canonical-byte equality where required?
+Does it preserve collision verification authority?
+Does it preserve HID-not-equality authority?
+Does it preserve stable intern id assignment independence from physical placement?
+Does it preserve publication-before-visibility?
+Does it preserve cache-blind semantics?
+Does it preserve TypeReference pre-SCC/final identity phasing?
+Does it preserve primitive hot-path allocation restrictions?
+Does it keep physical backend mechanics out of semantic identity authority?
+Does it keep semantic identity authority out of physical backend mechanics?
+Does it provide or reference the required golden vectors?
+Does it provide or reference the required architecture tests?
+Does it avoid creating a docs/specs surface prematurely?
+``````
+
+A failed checklist item means the extraction is incomplete.
+
+### 27.11. Authority After Extraction
+
+After extraction, the authority model is:
+
+``````text
+ADR-0041
+    accepted parent decision and historical source.
+
+docs/design/stable-metadata-identity-protocol.md
+    maintained byte-level metadata identity protocol.
+
+docs/design/protocol-owned-metadata-interning.md
+    maintained metadata interning protocol.
+
+ADR-0042
+    maintained primitive substrate / mechanical lifecycle / async ownership governance.
+
+ADR-0043
+    maintained contract graph canonicalization / sealed structural reference / incremental identity derivation.
+
+ADR-0044
+    maintained cross-pipeline memory envelope and runtime lifecycle governance.
+
+compiler-core-protocols.md
+    enforcement hooks and architecture-test obligations.
+``````
+
+If a later document conflicts with ADR-0041 before the extraction is explicitly accepted, ADR-0041 wins.
+
+After an extraction document is accepted as the narrower maintenance authority, conflict resolution MUST follow its
+declared authority boundary.
+
+No document may use extraction to make identity dependent on runtime cache state, thread scheduling, backend
+enumeration,
+object identity, physical address, GC behavior, or adaptive profiling.
+
+### 27.12. Final Extraction Rule
+
+Extraction may reduce duplication.
+
+Extraction may improve maintainability.
+
+Extraction may move implementation-specific mechanics to better documents.
+
+Extraction MUST NOT change what counts as the same metadata identity, the same canonical bytes, the same verified
+collision group, the same stable intern id, or the same cache-blind semantic result.
+
+## 28. Final Rule
 
 Hot HID probe representations are primitive projections, version mismatch classification is zero-allocation on the hot
 path, and parent-dependent child HID projections are re-derived when parent identity changes.
