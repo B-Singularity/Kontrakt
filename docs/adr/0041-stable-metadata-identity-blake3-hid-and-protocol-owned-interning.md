@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed
+Accepted
 
 ## Date
 
@@ -7726,6 +7726,9 @@ queue up to the resolved step budget before waiting on another owner lane's prog
 
 The self-drain phase is lawful because the lane processes state that it already owns.
 
+It is also mechanically preferred because processing the lane's own local inbox preserves L1 cache locality and avoids
+cross-lane cache-line bouncing on owner payload state.
+
 The self-drain phase MUST be bounded by resolved counters such as:
 
 ``````text
@@ -9511,6 +9514,10 @@ maxPreclassificationScratchBytes
 maxPreclassificationPasses
 maxPreclassificationCacheTouchBytes
 maxPreclassificationToVerificationWorkingSetBytes
+maxPreclassificationChunkCandidateCount
+maxPreclassificationChunkBytes
+maxPreclassificationChunkScratchBytes
+maxPreclassificationChunkMetadataBytes
 ``````
 
 A two-pass profile MUST fail profile admission or fall back to `DISABLED`, `SEGREGATED_INLINE_TABLE`, or an admitted
@@ -9524,6 +9531,62 @@ A two-pass profile MUST fail profile admission or fall back to `DISABLED`, `SEGR
 - the working set is small enough, or the backend evidence shows that the second pass does not suffer unacceptable
   cache-miss regression;
 - and classification does not change semantic identity or stable id assignment.
+
+##### 13.18.2.1. Chunked Preclassification Locality Law
+
+A `PRECLASSIFIED_TWO_PASS` implementation SHOULD process candidates in bounded cache-local chunks when the full
+candidate
+set may exceed the selected backend's verified cache-local working-set envelope.
+
+The preferred physical shape is:
+
+``````text
+for each deterministic candidate chunk:
+    preclassify inline/external shape for the chunk
+    verify the inline range for the chunk
+    verify the external range for the chunk
+    release or reuse chunk-local classification scratch
+``````
+
+The preferred physical shape is not:
+
+``````text
+preclassify the entire collection
+-> later verify the entire collection
+``````
+
+unless the profile proves that the full preclassification-to-verification working set remains within the admitted cache
+and memory envelope.
+
+The chunk policy MUST be resolved before scope admission.
+
+It SHOULD define:
+
+``````text
+preclassificationChunkCandidateCount
+preclassificationChunkBytes
+preclassificationChunkScratchBytes
+preclassificationChunkMetadataBytes
+preclassificationChunkOrderVersion
+``````
+
+The chunk policy MUST be deterministic.
+
+It MUST NOT be selected by live cache-miss feedback, live branch-miss feedback, wall-clock time, queue depth, CPU
+utilization, GC behavior, worker timing, or current run frequency distribution.
+
+Chunking MUST NOT change canonical bytes, HID derivation, collision verification result, stable intern id assignment,
+semantic equality, publication order, or routing ownership.
+
+A backend profile MAY call this cache-sized, L1-sized, cache-local, blocked, or chunked preclassification.
+
+The normative requirement is not a specific cache size.
+
+The normative requirement is that the implementation bound the preclassification-to-verification working set and avoid
+sweeping an unbounded collection twice when the evidence gate cannot prove locality.
+
+The implementation MUST NOT claim `PRECLASSIFIED_TWO_PASS` mechanical advantage merely because it removes a branch if it
+introduces a second unbounded memory pass over data that will not remain cache-local.
 
 The implementation MUST NOT select `PRECLASSIFIED_TWO_PASS` merely because branch removal is theoretically attractive.
 
@@ -10310,14 +10373,22 @@ SCC member B exceeds cap
 
 Metadata identity sealing MUST bound cyclic identity groups.
 
+An SCC capacity is not a universal hard-coded constant.
+
+It is resolved policy material.
+
 A resolved metadata identity policy MUST define:
 
 - maximum SCC member count;
 - maximum SCC canonical byte total;
 - maximum SCC intra-reference count;
-- maximum SCC seal iteration count.
+- maximum SCC seal iteration count;
+- maximum SCC sort scratch bytes;
+- maximum SCC ordinal table bytes;
+- maximum SCC symmetry-refinement rounds;
+- maximum SCC diagnostic bytes.
 
-The v1 bootstrap defaults are:
+The conservative v1 bootstrap profile is:
 
 ``````text
 maxSccMemberCount       = 256
@@ -10326,7 +10397,32 @@ maxSccIntraReferences   = 4096
 maxSccSealIterations    = 2
 ``````
 
-If any SCC cap is exceeded, the SCC MUST fail closed before stable ids are published.
+These bootstrap values are not a universal released-profile law.
+
+They are a conservative profile for early implementation, small manual metadata graphs, and deterministic test coverage.
+
+Released profiles MAY define larger SCC caps for declared source classes such as generated schema models, ORM/entity
+models, interface protocol graphs, GraphQL schemas, protobuf/thrift-like schema graphs, or other adapter-owned
+metadata families.
+
+A larger SCC profile is lawful only if it is selected before SCC construction by resolved policy material such as:
+
+- identity domain;
+- adapter source class;
+- schema version;
+- source manifest classification;
+- contract graph profile;
+- resource profile;
+- and caller-owned memory envelope.
+
+It MUST NOT be selected after observing that a concrete SCC exceeded a smaller cap.
+
+It MUST NOT be selected by retrying with larger caps after failure unless the caller-owned orchestration boundary opens
+a
+separately admitted scope with a new resolved memory envelope and a new publication boundary.
+
+If any SCC cap is exceeded under the resolved profile, the SCC MUST fail closed before stable ids are published, unless
+the caller-owned orchestration boundary has already admitted a different scope/profile that owns the transition.
 
 Silent partial publication is forbidden.
 
@@ -10334,6 +10430,155 @@ A fixed-point SCC identity algorithm, if later introduced, MUST consume `maxSccS
 bound.
 
 For v1, deterministic SCC-local ordinal encoding is preferred over unbounded fixed-point iteration.
+
+#### 13.30.2.1. Generated / Large SCC Admission Law
+
+Large SCCs are not illegal merely because they are large.
+
+They are illegal when they exceed the resolved profile that owns their publication boundary.
+
+An implementation SHOULD avoid a permanent availability cliff for known generated-source families by allowing explicit
+large-SCC profiles where the adapter/source manifest can prove that large cyclic metadata graphs are expected and
+bounded.
+
+A large-SCC profile MUST declare:
+
+``````text
+largeSccProfileId
+largeSccSourceClass
+maxSccMemberCount
+maxSccCanonicalBytes
+maxSccIntraReferences
+maxSccSortScratchBytes
+maxSccOrdinalTableBytes
+maxSccDiagnosticBytes
+maxSccSealIterations
+largeSccMemoryEnvelope
+largeSccFallbackOutcome
+``````
+
+A large-SCC profile MUST still satisfy:
+
+- two-phase sizing where required;
+- measure/write equivalence;
+- deterministic member ordering;
+- symmetry-breaking law;
+- bounded diagnostics;
+- no partial publication;
+- and safe publication boundary.
+
+If a generated-source SCC cannot be admitted under any resolved profile, the implementation MUST fail or quarantine the
+owning source/acquisition/contract boundary according to the resolved containment policy.
+
+It MUST NOT silently split the SCC, assign unstable ordinals, ignore references, or publish only the members that fit.
+
+#### 13.30.2.2. SCC Symmetry Breaking Law
+
+SCC-local ordinal encoding requires a deterministic total order over SCC members.
+
+The implementation MUST NOT derive SCC-local ordinals from:
+
+- object address;
+- allocation order;
+- discovery order;
+- thread scheduling;
+- worker/lane id;
+- backend traversal order;
+- HashMap / HashSet iteration order;
+- callback completion order;
+- source file enumeration order unless canonically ratified;
+- or unstable adapter enumeration.
+
+The SCC member ordering key MUST be a lexicographic tuple of ratified canonical material.
+
+A lawful ordering tuple SHOULD include, where applicable:
+
+``````text
+identityDomainId
+domainSchemaVersion
+versionBundleFingerprint
+memberKindTag
+canonical non-recursive member selector bytes
+canonical external dependency identity bytes
+canonical edge-label multiset summary
+canonical attribute bytes excluding unresolved intra-SCC ordinal references
+canonical source-stable declaration key where ratified
+``````
+
+The tuple MUST be encoded as canonical protocol bytes.
+
+It MUST NOT be display text, backend object identity, adapter handle, or platform collection iteration order.
+
+If two or more SCC members remain indistinguishable after every ratified non-recursive ordering key is applied, the
+implementation MUST enter a deterministic symmetry-resolution path.
+
+Allowed v1 symmetry outcomes are:
+
+``````text
+CANONICAL_EQUIVALENCE_COLLAPSE
+    members are proven to be the same canonical identity under the metadata identity law;
+    one canonical member is represented and all equivalent references target that canonical representative.
+
+SYMMETRIC_SCC_REJECTED
+    members are not proven equivalent, but no ratified deterministic tie-breaker exists;
+    the SCC seal fails closed before stable id publication.
+``````
+
+The implementation MUST NOT invent an ordinal by:
+
+- random choice;
+- first seen;
+- first encoded;
+- first thread;
+- first lane;
+- first successful CAS;
+- backend-provided index;
+- memory address;
+- or source traversal accident.
+
+If `CANONICAL_EQUIVALENCE_COLLAPSE` is used, the proof MUST be exact and canonical.
+
+It MUST verify that the indistinguishable members have the same canonical non-recursive material, the same external
+dependency material, the same intra-SCC reference pattern up to the equivalence relation, and the same version/schema
+material.
+
+Collapse is not allowed merely because two verifier prefixes, HIDs, display names, or partial selectors match.
+
+If `SYMMETRIC_SCC_REJECTED` is selected, the diagnostic MUST be bounded and MUST identify only deterministic summary
+material such as SCC profile id, member count, equivalence-class count, and the first ratified ordering key that failed
+to
+separate the class.
+
+The diagnostic MUST NOT dump unbounded graph material or backend object handles.
+
+A future ADR may ratify a stronger canonical graph-isomorphism refinement law.
+
+Until then, unresolved perfect symmetry fails closed or collapses only under exact canonical equivalence proof.
+
+#### 13.30.2.3. SCC Ordinal Refinement Bound Law
+
+If the implementation uses iterative partition refinement to assign SCC-local ordinals, the refinement process MUST be
+bounded.
+
+The resolved profile MUST define:
+
+``````text
+maxSccSymmetryRefinementRounds
+maxSccRefinementScratchBytes
+maxSccRefinementClassCount
+``````
+
+Refinement MUST operate over canonical protocol material and SCC-local reference summaries.
+
+It MUST NOT use runtime traversal order or mutable object graph identity.
+
+If refinement does not reach a unique deterministic total order within the resolved bound, the implementation MUST
+choose
+`CANONICAL_EQUIVALENCE_COLLAPSE` only if exact equivalence is proven.
+
+Otherwise it MUST select `SYMMETRIC_SCC_REJECTED`.
+
+The implementation MUST NOT continue refinement until a tie happens to break.
 
 ### 13.30.3. SCC Early Metering and Preflight Law
 
@@ -10445,6 +10690,80 @@ The two-phase plan changes failure timing and resource usage only.
 It MUST NOT change canonical bytes, HID derivation, collision verification, stable intern id assignment, or semantic
 equality for accepted SCCs.
 
+#### 13.30.4.0.1. SCC Chunked Measure/Write Locality Law
+
+A two-phase SCC plan MUST NOT require a whole-collection size sweep followed by a whole-collection materialization sweep
+when the resolved SCC working set exceeds the selected physical profile's cache-local working-set budget.
+
+For large SCCs, the preferred physical shape is chunked interleaving:
+
+``````text
+deterministic SCC member ordering
+-> deterministic chunk plan
+-> for each chunk in canonical chunk order:
+       snapshot / memoize canonical source values for the chunk
+       size-only canonicalization for the chunk
+       reserve or validate chunk-local output range
+       materialize the chunk from the snapshot / memoized IR
+       verify chunk cursor == chunk reserved end
+-> aggregate cursor / SCC byte total validation
+-> SCC-level collision verification
+-> stable intern id assignment
+-> atomic SCC publication
+``````
+
+Chunking is a physical locality strategy.
+
+It MUST NOT split the SCC into independently published semantic identities.
+
+The SCC still seals atomically.
+
+No stable id from any chunk may be published until the whole SCC seal succeeds.
+
+The resolved SCC profile SHOULD declare:
+
+``````text
+sccMeasureWriteChunkMemberCount
+sccMeasureWriteChunkBytes
+sccMeasureWriteChunkScratchBytes
+sccMeasureWriteChunkSnapshotBytes
+sccMeasureWriteChunkMetadataBytes
+sccMeasureWriteChunkOrderVersion
+maxSccMeasureWriteWorkingSetBytes
+``````
+
+A chunk plan MUST be:
+
+- deterministic;
+- derived from canonical SCC member order;
+- fixed before materialization begins;
+- bounded by resolved scratch/snapshot/metadata budgets;
+- independent of worker timing;
+- independent of runtime cache-miss feedback;
+- independent of live heap availability;
+- independent of GC behavior;
+- and golden-vector covered where it affects observable byte layout or diagnostics.
+
+The implementation SHOULD choose chunk sizes that keep the measure/write working set within the selected ADR-0042
+backend profile's cache-local budget.
+
+The implementation MUST NOT choose chunk size using:
+
+- wall-clock time;
+- live cache-miss counters;
+- live branch-miss counters;
+- CPU utilization;
+- throughput feedback;
+- GC timing;
+- thread scheduling;
+- or adaptive profiling inside an admitted scope.
+
+A whole-collection two-pass sweep remains lawful only if the resolved profile proves that the SCC working set is small
+enough, or that backend evidence shows no unacceptable cache-touch regression.
+
+If that evidence is unavailable, the implementation MUST use chunked interleaving, a stricter profile, or fail
+backend/profile admission before SCC publication.
+
 ### 13.30.4.1. SCC Measure/Write Equivalence Law
 
 A two-phase SCC seal plan is lawful only if its size-only pass and materialization pass are equivalent over the same
@@ -10522,6 +10841,101 @@ The implementation MUST NOT repair the mismatch by:
 - retrying with a different encoder;
 - or accepting a backend-specific serialized form.
 
+#### 13.30.4.1.1. SCC Snapshot-Backed Materialization Law
+
+The measure pass and materialization pass MUST observe the same canonical source values.
+
+For any SCC member field that can affect canonical byte length, canonical byte content, varint width, length prefix,
+field presence, collection count, reference count, or canonical ordering, the implementation MUST freeze the value into
+snapshot / memoized canonical IR material before size-only canonicalization is accepted.
+
+The materialization pass MUST write from the snapshot / memoized IR material or from an immutable sealed source proven
+equivalent to that snapshot.
+
+It MUST NOT reread mutable runtime source objects, adapter objects, counters, caches, statistics, local mutable fields,
+lazy backend values, or non-semantic runtime state after the size-only pass has accepted the byte count.
+
+Required direction:
+
+``````text
+snapshot canonical source values
+-> size-only canonicalization from snapshot / memoized IR
+-> reservation
+-> materialization from the same snapshot / memoized IR
+-> cursor equality check
+``````
+
+Forbidden direction:
+
+``````text
+size-only canonicalization reads source object
+-> source object mutates or lazy value resolves differently
+-> materialization rereads source object
+-> varint length / string length / field presence changes
+-> cursor mismatch
+``````
+
+Varint and length-prefix fields are especially sensitive.
+
+If a numeric value, length, count, or tag-width-driving value is encoded as varint or any future variable-width form,
+the
+materialization pass MUST use the exact value and exact width determined from the snapshot / memoized IR.
+
+It MUST NOT recompute the value from mutable source state.
+
+The snapshot / memoized IR budget MUST be resolved before SCC seal.
+
+The resolved profile SHOULD declare:
+
+``````text
+maxSccSnapshotBytes
+maxSccSnapshotEntries
+maxSccSnapshotStringBytes
+maxSccSnapshotVarintFields
+maxSccSnapshotCollectionEntries
+maxSccSnapshotReferenceEntries
+``````
+
+Snapshot material is protocol-owned seal material.
+
+It MUST be immutable after acceptance by the size-only pass.
+
+It MUST be released or retired according to the SCC seal lifecycle after success or failure.
+
+It MUST NOT become persistent artifact identity unless a later artifact format explicitly ratifies it.
+
+#### 13.30.4.1.2. SCC Chunk Cursor Equivalence Law
+
+When chunked measure/write interleaving is used, cursor equality MUST be checked at both chunk and aggregate levels.
+
+Required shape:
+
+``````text
+for each chunk:
+    snapshot chunk canonical source values
+    size-only canonicalization over chunk snapshot
+    reserve chunk output range
+    materialize chunk from the same snapshot
+    chunk write cursor == chunk reserved end
+
+after all chunks:
+    aggregate write cursor == SCC reserved end
+    aggregate byte total == SCC measured byte total
+``````
+
+A chunk cursor mismatch is a protocol implementation fault for the current SCC seal.
+
+It MUST fail the whole SCC seal closed before stable id publication.
+
+The implementation MUST NOT repair a chunk mismatch by shifting later chunks, widening a chunk, padding unratified
+bytes,
+or rerunning the chunk with different source values.
+
+Chunking changes physical locality and failure timing only.
+
+It MUST NOT change canonical bytes, HID derivation, collision verification result, stable intern id assignment, semantic
+equality, or publication order for accepted SCCs.
+
 A released implementation using a two-phase SCC plan MUST provide golden vectors or tests for:
 
 - exact measure/write equality;
@@ -10530,6 +10944,10 @@ A released implementation using a two-phase SCC plan MUST provide golden vectors
 - nested message length parity;
 - collection sort-key parity;
 - SCC-local reference length parity;
+- snapshot-backed varint stability;
+- snapshot-backed collection count stability;
+- chunk cursor parity;
+- aggregate cursor parity;
 - reservation overflow fail-closed;
 - and cursor mismatch fail-closed.
 
@@ -10635,7 +11053,9 @@ Therefore TypeReference requires a stable metadata identity surface.
 
 ### 14.2. TypeReference Canonical Material
 
-TypeReference canonical identity material must include:
+TypeReference canonical identity material is phase-aware.
+
+The final sealed TypeReference identity material must include:
 
 - `CanonicalTypeId`;
 - `TypeCycleKey`;
@@ -10647,6 +11067,14 @@ TypeReference canonical identity material must include:
 - normalization version;
 - type identity algorithm id/version;
 - canonical text policy fingerprint where relevant.
+
+The pre-SCC TypeReference pre-identity material MAY include only the subset required to construct the metadata identity
+dependency graph and discover SCCs.
+
+Pre-SCC material MUST NOT pretend to be the final sealed TypeReference identity.
+
+If `TypeCycleKey` is not yet available, the pre-SCC phase MUST use a fixed unresolved-cycle sentinel or a ratified
+node-local pre-identity surface that is explicitly marked as non-final.
 
 The TypeReference identity surface MAY include only ratified type-use qualifier / contract fact material derived from
 use-site annotations or equivalent contract surfaces. It MUST NOT include annotation descriptors or annotation backend
@@ -10665,6 +11093,86 @@ It must not include:
 - acquisition slot id;
 - frozen ordinal;
 - backend enumeration order.
+
+#### 14.2.1. Type Nesting and Generics Depth Fuse Law
+
+TypeReference canonicalization MUST bound nested and recursive type structure before expansion, flattening, signature
+materialization, or dependency-graph construction can recurse unboundedly.
+
+A resolved TypeReference identity policy MUST define at least:
+
+``````text
+maxTypeNestingDepth
+maxTypeArgumentCountPerType
+maxTypeProjectionCount
+maxTypeBoundCount
+maxFBoundExpansionDepth
+maxRecursiveTypeReferenceEdges
+maxTypeSignatureBytes
+maxTypeCanonicalizationFrames
+maxTypeDiagnosticBytes
+``````
+
+The implementation MUST meter these limits while traversing generic signatures, nullable wrappers, arrays, function
+types, type aliases where ratified, captured types, variance projections, upper/lower bounds, and F-bound recursive
+patterns.
+
+Examples of bounded structures include:
+
+``````text
+Enum<E extends Enum<E>>
+Comparable<T extends Comparable<T>>
+List<Map<String, List<...>>>
+recursive type aliases where supported by the backend
+mutually recursive generated schema types
+``````
+
+If any resolved depth/count/byte/frame fuse is exceeded, the TypeReference candidate MUST fail closed before:
+
+- final TypeReference canonical byte publication;
+- HID derivation;
+- stable intern id assignment;
+- frozen image publication;
+- planning visibility;
+- or report/replay identity publication.
+
+A depth fuse failure is not semantic equality.
+
+It is a bounded identity-canonicalization rejection.
+
+The implementation MUST NOT rely on JVM call-stack overflow, recursive function failure, backend exception behavior, or
+`StackOverflowError` as the boundary.
+
+Required implementation direction:
+
+``````text
+explicit type-canonicalization frame stack
+-> decrement / check resolved depth and frame budgets
+-> fail closed when the fuse is exceeded
+``````
+
+Forbidden implementation direction:
+
+``````text
+recursive descent through backend type objects
+-> rely on JVM stack depth
+-> catch StackOverflowError
+-> classify after the process is already unstable
+``````
+
+Depth and frame counters are protocol-owned metering material.
+
+They MUST NOT depend on:
+
+- backend lazy expansion timing;
+- source traversal order;
+- worker scheduling;
+- callback completion order;
+- or cache hit/miss behavior.
+
+A released profile MAY define larger depth/count fuses for generated-source or schema-heavy domains, but such fuses must
+be selected before traversal by resolved policy material and must be covered by capacity, staging, and diagnostic
+budgets.
 
 ### 14.3. TypeReference HID
 
@@ -10707,7 +11215,11 @@ Hot consumers SHOULD use one of:
 localStableInternId32
 ``````
 
-when table-level proof supplies scope/domain/protocol material, or:
+when table-level proof supplies scope/domain/protocol material, or a resolved primitive carrier profile when proof must
+be
+carried with the reference.
+
+The old logical proof tuple:
 
 ``````text
 scopeId32
@@ -10716,12 +11228,120 @@ identityDomainId32
 interningProtocolVersion64
 ``````
 
-when the proof must be carried with the reference.
+is a cold proof vocabulary, not a hot-path object shape.
+
+It MUST NOT imply allocation of a wrapper object, tuple object, boxed array, `IntArray`, `LongArray`, generic record,
+data class, or ordinary JVM object per candidate.
 
 The wrapper/facade MUST NOT replace TypeReference semantic equality without table validation.
 
 The wrapper/facade MUST NOT be stored in ordinary hot-path intern tables, frozen row arrays, planning hot loops, or L2
 exact-match keys.
+
+#### 14.4.1. Hot TypeReference Carrier Packing Law
+
+Hot-path TypeReference identity references MUST use primitive carrier material.
+
+A compliant implementation MUST declare a TypeReference carrier profile before scope admission.
+
+Allowed carrier profiles:
+
+``````text
+TABLE_PROVEN_LOCAL_ID32
+    localStableInternId32 is carried alone.
+    scope, domain, and interning protocol proof are supplied by table-level proof, lane-local table context, frozen image
+    proof, or another already-validated boundary.
+
+PACKED_LOCAL_REF64
+    a single u64 carrier packs a scope-local or table-local reference profile.
+    The bit layout is resolved by policy and golden-vector covered.
+
+PACKED_REF128
+    two u64 carriers carry reference and proof material where one word is insufficient.
+    The pair is still primitive carrier material and must not require wrapper allocation.
+
+SOA_PROOF_COLUMNS
+    proof material is carried in structure-of-arrays primitive columns controlled by the owning table / slab / arena.
+    Consumers pass primitive indexes or word pairs, not object wrappers.
+
+COLD_FULL_PROOF_TUPLE
+    the full logical proof tuple may appear only at cold boundaries, diagnostics, API facades, or validation adapters.
+``````
+
+`PACKED_LOCAL_REF64` is preferred for hot loops when the resolved table/domain/scope envelope makes it sufficient.
+
+However, ADR-0041 does not impose one universal bit layout such as `scope16 + id48` on every domain.
+
+The bit allocation must be resolved by policy because different scopes may require different capacities.
+
+A `PACKED_LOCAL_REF64` profile MUST declare:
+
+``````text
+packedRefProfileId
+scopeBits
+localStableInternIdBits
+identityDomainBits where carried
+protocolEpochBits where carried
+reservedSentinelBits
+maxScopeOrdinal
+maxLocalStableInternId
+maxIdentityDomainOrdinal where carried
+maxProtocolEpochOrdinal where carried
+``````
+
+Required relationships:
+
+``````text
+scopeBits
++ localStableInternIdBits
++ identityDomainBits
++ protocolEpochBits
++ reservedSentinelBits
+    <= 64
+``````
+
+All packing, masking, shifting, and sentinel remapping MUST use checked primitive arithmetic.
+
+A value that exceeds its resolved bit field MUST fail closed before carrier publication.
+
+The implementation MUST NOT silently truncate.
+
+If a domain cannot fit its required hot proof into `PACKED_LOCAL_REF64`, it MUST select `PACKED_REF128`,
+`SOA_PROOF_COLUMNS`, table-level proof, or a cold boundary.
+
+It MUST NOT allocate per-candidate wrapper objects to carry the overflow.
+
+Primitive carrier material MUST NOT be treated as semantic equality without table validation and collision verification.
+
+Carrier equality is at most a pre-screen for already validated table/scope/protocol context.
+
+Changing carrier packing layout MUST NOT change canonical bytes, HID derivation, collision verification result, stable
+intern id assignment, semantic equality, or publication order.
+
+#### 14.4.2. Hot Carrier Allocation Prohibition Law
+
+The following are forbidden in ordinary hot-path TypeReference intern tables, frozen row arrays, planning hot loops, and
+L2 exact-match keys:
+
+- per-candidate wrapper objects;
+- boxed primitive tuples;
+- data-class carrier allocation;
+- generic `Pair` / `Triple` carrier allocation;
+- per-candidate `IntArray` / `LongArray` / `ByteArray` carrier allocation;
+- interface-dispatched carrier objects;
+- reflection-based carrier views;
+- backend handle carriers.
+
+Allowed hot-path representations include:
+
+- primitive local variables;
+- primitive method parameters where inlining evidence exists;
+- primitive array columns owned by a table/slab/arena;
+- packed `Long` carriers;
+- two-word primitive carriers where resolved;
+- and table-level proof plus local primitive id.
+
+Any cold facade must be constructed only outside the hot path and must be explicitly marked as a boundary view.
 
 ### 14.5. Cycle-Safe TypeReference Identity Stratification
 
@@ -10806,6 +11426,10 @@ No layer may recursively inline a later layer as part of its own identity.
 
 It is computed before planning traversal and before ADR-0030 cycle truncation.
 
+It is not necessarily completed before ADR-0041 metadata identity SCC discovery.
+
+TypeReference identity uses a two-phase identity model to avoid a TypeCycleKey chicken-and-egg dependency.
+
 It MUST NOT encode:
 
 - planning traversal topology;
@@ -10823,12 +11447,115 @@ intern ids, or SCC-governed identity references.
 This preserves a strict boundary:
 
 ``````text
-metamodel identity graph
--> ADR-0041 SCC / intern seal
+metamodel pre-identity graph
+-> ADR-0041 SCC discovery / SCC seal
+-> final TypeReference identity with TypeCycleKey
 -> frozen image publication
 -> planning traversal
 -> ADR-0030 planning cycle handling
 ``````
+
+#### 14.7.1. Two-Phase TypeReference Identity Law
+
+Final TypeReference identity MUST NOT require a final `TypeCycleKey` before the metadata identity dependency graph has
+been constructed.
+
+The lawful v1 shape is:
+
+``````text
+Phase A: Pre-SCC TypeReference Pre-Identity
+    canonical node-local type material
+    canonical type signature prelude
+    bounded generic/depth metering
+    fixed unresolved-cycle sentinel where TypeCycleKey would appear
+    dependency edge extraction
+    no stable intern id publication
+
+Phase B: SCC Seal and Final TypeReference Identity
+    deterministic SCC discovery
+    SCC-local ordinal / reference encoding
+    TypeCycleKey derivation
+    final TypeReference canonical material
+    HID derivation
+    collision verification
+    stable intern id assignment
+    safe publication
+``````
+
+The pre-SCC identity is not a stable identity.
+
+It may be used only for:
+
+- dependency graph construction;
+- SCC discovery;
+- cycle preflight metering;
+- deterministic diagnostic evidence;
+- and bounded staging before final seal.
+
+It MUST NOT be used as:
+
+- stable intern id;
+- semantic equality authority;
+- PlanCacheKey material;
+- frozen-image material;
+- report/replay identity;
+- persistent artifact identity;
+- cross-scope identity;
+- or query reuse key.
+
+The unresolved-cycle sentinel MUST be fixed, versioned, domain-separated, and explicitly encoded.
+
+It MUST NOT be:
+
+- null omission;
+- absent field;
+- backend default value;
+- display text;
+- source traversal marker;
+- or object identity.
+
+After SCC seal, the final `TypeCycleKey` MUST replace the unresolved-cycle sentinel in the final canonical material.
+
+The implementation MUST verify that all provisional pre-SCC references are either:
+
+- resolved to final sealed TypeReference identity material;
+- represented by lawful SCC-local references during SCC seal; or
+- failed closed before publication.
+
+#### 14.7.2. TypeCycleKey Derivation Boundary Law
+
+`TypeCycleKey` is final sealed TypeReference identity material.
+
+It is not required as an input to construct the pre-SCC dependency graph.
+
+A `TypeCycleKey` MUST be derived only from ratified SCC / cycle material such as:
+
+- SCC profile id;
+- deterministic SCC member ordering;
+- SCC-local ordinal encoding;
+- canonical intra-SCC reference encoding;
+- canonical external dependency identity material;
+- version/schema compatibility material;
+- and canonical TypeReference member material accepted by the SCC seal.
+
+It MUST NOT be derived from:
+
+- planning cycle truncation;
+- active planning stack;
+- backend traversal order;
+- discovery order;
+- object address;
+- worker/lane id;
+- callback completion order;
+- or provisional handle allocation order.
+
+If TypeCycleKey derivation fails, the owning SCC seal MUST fail closed before final TypeReference stable intern id
+publication.
+
+The implementation MUST NOT publish a final TypeReference identity with a placeholder TypeCycleKey.
+
+
+---
 
 ---
 
@@ -12308,6 +13035,53 @@ A compliant implementation MUST satisfy:
 444. Physical lane quarantine is a scoped last-resort containment outcome, not the ordinary blame boundary for hostile
      identity material.
 
+445. Self-drain is mechanically preferred because it preserves lane-local cache locality and avoids cross-lane
+     cache-line bouncing on owner payload state.
+446. `PRECLASSIFIED_TWO_PASS` should use bounded chunked preclassification when the full candidate set may exceed the
+     admitted cache-local working-set envelope.
+447. Preclassification chunk policy must be resolved before scope admission and must not be selected by live cache or
+     branch feedback.
+448. Chunked preclassification must not change canonical identity, routing ownership, stable id assignment, or
+     publication order.
+
+449. SCC capacity values are resolved profile material, not universal hard-coded constants.
+450. The conservative `maxSccMemberCount = 256` value is a bootstrap profile, not a universal released-profile law.
+451. Large generated-source SCC profiles must be selected before SCC construction by resolved policy material.
+452. SCC caps must not be widened after observing that a concrete SCC exceeded a smaller cap unless a caller-owned
+     orchestration boundary opens a separately admitted scope.
+453. SCC-local ordinals must not be derived from discovery order, object address, thread scheduling, worker/lane id,
+     backend traversal order, or unstable collection iteration.
+454. Perfectly symmetric SCC members must either collapse under exact canonical equivalence proof or fail closed before
+     stable id publication.
+455. SCC partition refinement must be bounded by resolved rounds, scratch bytes, and class count.
+456. SCC symmetry diagnostics must be bounded and must not dump unbounded graph material or backend handles.
+
+457. Large SCC two-phase measure/write plans must use chunked interleaving unless a whole-collection sweep is
+     cache-evidence admitted.
+458. SCC chunk plans must be deterministic and derived from canonical SCC member order.
+459. SCC materialization must write from snapshot / memoized canonical IR or immutable sealed source equivalent to the
+     measured snapshot.
+460. SCC materialization must not reread mutable runtime source objects after size-only canonicalization accepts byte
+     counts.
+461. Varint and length-prefix-driving values must use the exact snapshot value and width accepted by the measure pass.
+462. Chunked SCC plans must verify cursor equality at both chunk and aggregate levels.
+463. Snapshot / memoized IR material must be budgeted, immutable after measure acceptance, and retired by SCC lifecycle.
+
+464. TypeReference hot proof material must be carried by resolved primitive carrier profiles, not per-candidate
+     wrappers.
+465. `PACKED_LOCAL_REF64` bit layouts must be resolved by policy and golden-vector covered.
+466. Domains that cannot fit hot proof into one u64 must use table-level proof, `PACKED_REF128`, `SOA_PROOF_COLUMNS`,
+     or a cold boundary; they must not allocate wrapper carriers.
+467. TypeReference canonicalization must enforce resolved generic depth, type argument, projection, F-bound, recursive
+     edge, signature byte, and frame fuses before publication.
+468. TypeReference depth fuse failure must be detected by explicit metering, not by JVM `StackOverflowError`.
+469. Final TypeReference identity uses a two-phase pre-SCC / post-SCC model.
+470. Pre-SCC TypeReference pre-identity is not stable identity and must not be used as equality, cache, frozen,
+     persistent, report, or cross-scope material.
+471. `TypeCycleKey` is final sealed material derived after SCC discovery/seal, not a prerequisite for pre-SCC graph
+     construction.
+472. A final TypeReference identity must not be published with an unresolved-cycle sentinel or placeholder TypeCycleKey.
+
 ## 23. Required Golden Vectors
 
 Golden vectors MUST exist for:
@@ -12815,6 +13589,60 @@ Until ratification, no concrete annotation, DSL, or compiler-metadata lowering v
 - targeted route-slice collision starvation containment fixture;
 - physical lane quarantine last-resort fixture.
 
+### 23.x. Self-Drain Locality and Chunked Preclassification
+
+- self-drain does not access remote owner payload state fixture;
+- self-drain preserves owner-lane attribution fixture;
+- chunked preclassification same identity as whole-range fixture;
+- chunked preclassification bounded working-set fixture;
+- chunked preclassification deterministic chunk order fixture;
+- chunked preclassification fallback when working-set evidence is unavailable fixture;
+- live cache/branch feedback cannot change preclassification chunk policy fixture.
+
+### 23.x. SCC Capacity Profiles and Symmetry Breaking
+
+- conservative bootstrap SCC cap fixture;
+- large generated SCC admitted profile fixture;
+- large SCC rejected without pre-admitted profile fixture;
+- SCC cap widening after observed failure rejected fixture;
+- SCC-local ordinal independent of discovery order fixture;
+- SCC-local ordinal independent of backend traversal order fixture;
+- symmetric SCC exact canonical equivalence collapse fixture;
+- symmetric SCC unresolved tie fail-closed fixture;
+- SCC partition refinement round bound fixture;
+- SCC symmetry bounded diagnostic fixture;
+- SCC stable id equality across lane scheduling permutations fixture.
+
+### 23.x. SCC Chunked Measure/Write and Snapshot Materialization
+
+- SCC chunked measure/write equivalence fixture;
+- SCC whole-collection sweep rejected without cache evidence fixture;
+- deterministic SCC chunk order fixture;
+- chunk cursor parity fixture;
+- aggregate cursor parity fixture;
+- snapshot-backed varint stability fixture;
+- snapshot-backed string UTF-8 byte-count stability fixture;
+- snapshot-backed collection count stability fixture;
+- mutable source reread rejection fixture;
+- chunk mismatch fail-closed fixture;
+- snapshot budget overflow fail-closed fixture.
+
+### 23.x. TypeReference Carrier, Depth Fuse, and Cycle-Key Phasing
+
+- TypeReference packed local ref64 carrier fixture;
+- TypeReference packed ref128 carrier fixture;
+- TypeReference carrier overflow fail-closed fixture;
+- TypeReference wrapper allocation forbidden architecture fixture;
+- generic nesting depth fuse fixture;
+- F-bound generic expansion depth fuse fixture;
+- recursive type alias / recursive type edge fuse fixture where backend supports aliases;
+- explicit frame stack avoids `StackOverflowError` fixture;
+- pre-SCC TypeReference pre-identity fixture with unresolved-cycle sentinel;
+- pre-SCC identity rejected as stable/cache/frozen/report identity fixture;
+- TypeCycleKey derivation after SCC seal fixture;
+- final TypeReference identity rejects unresolved-cycle sentinel fixture;
+- two-phase TypeReference identity stable across backend traversal permutations fixture.
+
 ## 24. Required Architecture Tests
 
 Architecture tests MUST verify:
@@ -13071,6 +13899,138 @@ influence canonical contract identity.
 ---
 
 ## 26. Alternatives Considered
+
+### 26.66. Carry Full TypeReference Proof as a Hot Wrapper Object
+
+Rejected.
+
+The full logical proof vocabulary may exceed what should be passed as ordinary object material on the JVM hot path.
+
+Hot paths must use table-level proof, packed primitive carriers, two-word primitive carriers, or structure-of-arrays
+proof
+columns.
+
+A facade object may exist only as a cold boundary view.
+
+### 26.67. Require One Universal 64-Bit TypeReference Carrier Layout
+
+Rejected.
+
+A single bit layout cannot serve every identity domain and scope capacity.
+
+`PACKED_LOCAL_REF64` is preferred when it fits the resolved scope/domain/protocol envelope, but the bit allocation is
+resolved policy material and must be golden-vector covered.
+
+Domains that do not fit must use another primitive carrier profile or a cold boundary.
+
+### 26.68. Let Generic Type Expansion Terminate by JVM Stack Limits
+
+Rejected.
+
+JVM stack overflow is not a deterministic protocol boundary.
+
+TypeReference canonicalization must use explicit depth, frame, signature byte, generic argument, projection, F-bound,
+and
+recursive edge fuses.
+
+### 26.69. Require Final TypeCycleKey Before SCC Discovery
+
+Rejected.
+
+This creates a chicken-and-egg dependency: final TypeReference identity would require a cycle key that can only be
+derived after dependency-graph SCC discovery.
+
+The lawful model is pre-SCC non-final TypeReference pre-identity followed by SCC seal and final TypeCycleKey
+integration.
+
+### 26.63. Sweep the Whole SCC Twice for Measure and Write
+
+Rejected as the ordinary large-SCC profile.
+
+A whole-collection measure pass followed by a whole-collection write pass may double memory-bandwidth pressure when the
+SCC working set exceeds cache-local budgets.
+
+It is lawful only when the resolved backend profile proves the working set is small enough or otherwise cache-evidence
+admitted.
+
+Large SCCs should use deterministic chunked measure/write interleaving.
+
+### 26.64. Recompute Variable-Width Values During Materialization
+
+Rejected.
+
+Varint width, length prefixes, field presence, collection counts, and reference counts may change if materialization
+rereads mutable runtime source state after sizing.
+
+The materialization pass must write from snapshot / memoized canonical IR or immutable sealed source equivalent to the
+measured snapshot.
+
+### 26.65. Repair SCC Cursor Mismatch by Shifting Later Chunks
+
+Rejected.
+
+Cursor mismatch means the measure/write equivalence contract failed.
+
+The implementation must fail the whole SCC seal closed before publication instead of shifting later chunks, widening
+output, padding unratified bytes, or retrying with different source values.
+
+### 26.59. Treat 256 SCC Members as a Universal Law
+
+Rejected.
+
+A conservative bootstrap cap is useful for early implementation and tests, but generated schema, ORM/entity, GraphQL,
+and
+protocol metadata families may lawfully contain larger cyclic components.
+
+Large SCCs must be admitted through resolved profile material and explicit memory envelopes rather than being silently
+rejected by a universal constant.
+
+### 26.60. Widen SCC Caps After Observing a Concrete Failure
+
+Rejected.
+
+Increasing SCC caps after observing a failure would make resource policy depend on traversal shape and runtime
+discovery.
+
+Large-SCC capacity must be selected before SCC construction by the caller-owned policy boundary or by a separately
+admitted continuation scope.
+
+### 26.61. Break SCC Symmetry by Discovery Order or Backend Index
+
+Rejected.
+
+Discovery order, backend index, allocation order, thread scheduling, and worker/lane id are not canonical protocol
+material.
+
+If ratified canonical ordering keys cannot separate symmetric SCC members, the implementation must either prove exact
+canonical equivalence and collapse, or fail the SCC seal closed.
+
+### 26.62. Run SCC Partition Refinement Until a Tie Breaks
+
+Rejected.
+
+Unbounded refinement is fixed-point iteration by another name.
+
+Any partition refinement used for SCC-local ordinal assignment must have resolved round, scratch, and class-count
+bounds.
+
+### 26.59. Sweep the Entire Collection Before Verification in PRECLASSIFIED_TWO_PASS
+
+Rejected as the ordinary high-performance shape.
+
+A whole-collection classification pass may evict the candidate working set before the verification pass starts.
+
+When the full working set cannot be proven cache-local, the lawful profile should use bounded chunked preclassification
+or fall back to another admitted small-inline profile.
+
+### 26.60. Justify Self-Drain Only by Logical Ownership
+
+Rejected as incomplete.
+
+Logical ownership is necessary, but the physical reason self-drain is preferred is that it processes lane-local inbox
+state without touching another lane's hot owner payload state.
+
+This preserves locality and avoids cross-lane cache-line bouncing.
 
 ### 26.59. Let Quarantined Owner Lanes Continue Route-Drain Retries
 
@@ -14129,6 +15089,18 @@ semantic checks flush only when they change material lifecycle or visibility.
 
 Inline acceleration is evidence-gated: verifier words must reject enough false survivors, segregation must budget
 routing fragmentation, and two-pass preclassification must prove cache-touch feasibility.
+
+SCC sealing uses resolved capacity profiles and bounded symmetry-breaking; unresolved perfect symmetry collapses only
+under exact canonical equivalence proof or fails closed before stable id publication.
+
+Large SCC two-phase sealing must be chunk-locality aware and snapshot-backed; materialization may not reread mutable
+source state after size-only measurement accepts byte counts.
+
+TypeReference identity is phase-aware: hot references use resolved primitive carrier profiles, generic expansion is
+bounded by explicit fuses, and final TypeCycleKey material is integrated only after SCC seal.
+
+Self-drain is both ownership-correct and cache-local; two-pass preclassification should be chunked when a full sweep
+cannot prove cache-local working-set feasibility.
 
 Collision overflow terminates through bounded cold handling, fail-closed, or source-first quarantine; it must not create
 route-drain deadlock, runtime rekeying, or primary physical-lane starvation.
