@@ -9276,6 +9276,74 @@ It MUST NOT become semantic equality authority.
 
 Exact canonical verification remains the final equality authority whenever compact metadata is not sufficient.
 
+#### 13.17.1. Inline Verifier Entropy and Selector Law
+
+Inline verifier prefix/suffix material is physical rejection material.
+
+It is not semantic equality authority.
+
+It MUST NOT be assumed effective merely because it is cache-local.
+
+A release claiming inline verifier acceleration MUST define how verifier words are selected from canonical material.
+
+Allowed selector shapes include:
+
+- fixed prefix plus fixed suffix;
+- fixed prefix plus deterministic middle window;
+- deterministic sampled windows selected from canonical byte length and domain-separated candidate route material;
+- compact secondary verifier derived from canonical bytes by a ratified deterministic verifier function;
+- or another ADR-0042-profiled selector with golden-vector coverage.
+
+A verifier selector MUST be:
+
+- deterministic;
+- versioned;
+- domain-separated where derived;
+- independent of runtime frequency distribution;
+- independent of backend traversal order;
+- independent of worker scheduling;
+- independent of live profiling;
+- and fixed before scope admission.
+
+The implementation MUST NOT select verifier windows using:
+
+- current collision observations;
+- live branch-miss feedback;
+- queue depth;
+- CPU utilization;
+- GC behavior;
+- recent candidate history;
+- or source traversal order.
+
+If canonical encodings have common headers, common namespaces, common package prefixes, common envelope bytes, or other
+low-entropy leading material, a prefix-only verifier is a weak physical filter.
+
+A profile MAY still use a prefix-only verifier only if it proves that the selected corpus and domain have sufficient
+rejection power under benchmark and golden-vector evidence.
+
+Otherwise, the profile MUST use a suffix, sampled-window, secondary-verifier, or exact-verification-first strategy.
+
+The resolved verifier policy SHOULD define bounded evidence terms such as:
+
+``````text
+inlineVerifierWordCount
+inlineVerifierSelectorVersion
+maxInlineVerifierFalseSurvivorRatioNumerator
+maxInlineVerifierFalseSurvivorRatioDenominator
+maxVerifierMetadataBytesPerSlot
+``````
+
+The false-survivor ratio is not semantic correctness.
+
+It is a mechanical-sympathy evidence gate used to decide whether keeping verifier words in the hot metadata plane is
+worth the bandwidth.
+
+If the verifier evidence gate is not met, the backend MUST NOT consume hot metadata-plane bytes for ineffective verifier
+words unless a stricter profile explicitly pays that cost and proves no regression.
+
+Changing verifier selector version, verifier word count, or verifier window placement MUST NOT change canonical bytes,
+HID derivation, collision verification result, stable intern id assignment, semantic equality, or publication order.
+
 ### 13.18. Small Canonical Bytes Inline Law
 
 Small-inline canonical bytes are an optional physical optimization.
@@ -9299,8 +9367,9 @@ Allowed small-inline modes:
 
 `MEASURED_MIXED` is never the default high-performance mode.
 
-A high-performance mechanical profile SHOULD prefer `SEGREGATED_INLINE_TABLE` or `PRECLASSIFIED_TWO_PASS` unless the
-target benchmark corpus proves that mixed branching is stable for the selected runtime profile.
+A high-performance mechanical profile SHOULD prefer `SEGREGATED_INLINE_TABLE` or `PRECLASSIFIED_TWO_PASS` only when the
+profile proves that their extra routing, classification, table-directory, and cache-touch costs do not exceed the branch
+cost they remove.
 
 A hot verification loop SHOULD NOT contain an unpredictable per-candidate branch of the form:
 
@@ -9366,47 +9435,126 @@ A release claiming small-inline acceleration MUST publish:
 - expected payload size distribution;
 - branch-miss / throughput benchmark evidence;
 - cache-miss benchmark evidence;
+- routing-fragmentation evidence where owner-lane routing is used;
+- preclassification cache-touch evidence where two-pass classification is used;
+- verifier entropy / false-survivor evidence where inline verifier words are used;
 - and fallback behavior when the benchmark gate is not met.
 
-### 13.18.1. Small-Inline Branch Entropy Containment Law
+#### 13.18.1. Inline/External Segregation and Routing Fragmentation Law
 
-Small-inline acceleration MUST NOT introduce an unpredictable hot-loop branch as the ordinary path.
+Segregating inline candidates from external-slab candidates is a physical table-layout decision.
 
-A mixed inline/external verifier is lawful only when the resolved physical policy selects `MEASURED_MIXED` before scope
-admission and the release evidence proves that the selected workload does not create branch-thrashing.
+It MUST NOT silently multiply routing-buffer dimensions, owner inbox dimensions, staged-byte budgets, or
+batch-fragmentation
+surfaces.
 
-The branch policy MUST be fixed before identity scope admission.
-
-It MUST NOT be selected by:
-
-- live branch-miss counters;
-- current input frequency distribution;
-- GC behavior;
-- worker timing;
-- lane timing;
-- adaptive runtime profiling;
-- or cache warmth observed inside the admitted scope.
-
-If benchmark evidence later shows that mixed branching regresses the target profile, the compliant fallback is:
+A profile using `SEGREGATED_INLINE_TABLE` with owner-lane routing MUST choose one of the following transport shapes
+before
+scope admission:
 
 ``````text
-MEASURED_MIXED
--> disabled for that runtime profile
--> SEGREGATED_INLINE_TABLE or PRECLASSIFIED_TWO_PASS
+ROUTE_NEUTRAL_TRANSPORT
+    candidates are routed by owner/domain/route epoch/scope only;
+    the owner lane classifies inline vs external after route admission.
+
+ROUTE_SEGREGATED_TRANSPORT
+    candidates are routed by owner/domain/route epoch/scope/table-shape;
+    routing budgets include the additional table-shape dimension.
+
+OWNER_LOCAL_SEGREGATION_ONLY
+    transport remains route-neutral;
+    segregation begins only after the owner lane accepts the batch.
 ``````
 
-not:
+`ROUTE_NEUTRAL_TRANSPORT` or `OWNER_LOCAL_SEGREGATION_ONLY` is preferred unless the backend proves that route-level
+segregation improves throughput without unacceptable batch fragmentation.
+
+If `ROUTE_SEGREGATED_TRANSPORT` is selected, the resolved routing budget MUST include at least:
 
 ``````text
-hot loop
--> adapt per candidate
--> change verification shape based on observed frequency
+maxRoutedBatchBuffersByTableShape[tableShape]
+maxRoutedBatchBufferBytesByOwnerLaneAndTableShape[producerEngineLaneId][ownerEngineLaneId][tableShape]
+maxPendingRoutedBatchesPerOwnerLaneAndTableShape[ownerEngineLaneId][tableShape]
+boundaryFlushHeadroomBatchesByOwnerLaneAndTableShape[ownerEngineLaneId][tableShape]
+boundaryFlushHeadroomBytesByOwnerLaneAndTableShape[ownerEngineLaneId][tableShape]
+maxSegregationFragmentationRatioNumerator
+maxSegregationFragmentationRatioDenominator
 ``````
 
-Changing the small-inline branch policy may change latency or throughput.
+The implementation MUST prove that segregation does not collapse routed batches into systematic half-filled or
+one-candidate batches for the admitted workload class.
 
-It MUST NOT change canonical bytes, HID derivation, collision verification, stable intern id assignment, or semantic
-equality.
+Segregation-driven batch fragmentation MUST be measured or bounded using deterministic counters.
+
+It MUST NOT be justified by wall-clock throughput, live queue depth, CPU utilization, GC behavior, or adaptive runtime
+profiling inside an admitted scope.
+
+If the additional table-shape routing dimension cannot be budgeted, the profile MUST keep transport route-neutral and
+perform inline/external segregation only inside the owner lane.
+
+#### 13.18.2. Preclassification Cache-Touch Evidence Law
+
+`PRECLASSIFIED_TWO_PASS` removes a branch from the hot verifier loop by adding classification work before verification.
+
+That classification work is not free.
+
+A profile selecting `PRECLASSIFIED_TWO_PASS` MUST prove, before scope admission, that the added classification pass does
+not exceed the branch-miss cost it removes for the selected workload and backend profile.
+
+The resolved physical policy SHOULD declare bounded evidence terms such as:
+
+``````text
+maxPreclassificationCandidateCount
+maxPreclassificationBytesRead
+maxPreclassificationMetadataBytesWritten
+maxPreclassificationScratchBytes
+maxPreclassificationPasses
+maxPreclassificationCacheTouchBytes
+maxPreclassificationToVerificationWorkingSetBytes
+``````
+
+A two-pass profile MUST fail profile admission or fall back to `DISABLED`, `SEGREGATED_INLINE_TABLE`, or an admitted
+`MEASURED_MIXED` profile if it cannot prove:
+
+- classification work is bounded;
+- classification scratch is budgeted;
+- classification metadata is deterministic;
+- classification ordering is deterministic;
+- the verification pass consumes the classified ranges deterministically;
+- the working set is small enough, or the backend evidence shows that the second pass does not suffer unacceptable
+  cache-miss regression;
+- and classification does not change semantic identity or stable id assignment.
+
+The implementation MUST NOT select `PRECLASSIFIED_TWO_PASS` merely because branch removal is theoretically attractive.
+
+It MUST prove that the extra pass is beneficial or at least non-regressive under ADR-0042 benchmark gates.
+
+The implementation MUST NOT use live branch-misprediction feedback, live cache-miss feedback, runtime data frequency,
+worker timing, or GC behavior to switch into or out of `PRECLASSIFIED_TWO_PASS` inside an admitted scope.
+
+#### 13.18.3. Inline Optimization Fallback Law
+
+If the selected inline optimization profile fails its routing-fragmentation, preclassification, verifier-entropy, or
+benchmark gate, the implementation MUST use a resolved fallback profile.
+
+Allowed fallback profiles:
+
+- `DISABLED`;
+- route-neutral owner-local segregation;
+- a stricter `SEGREGATED_INLINE_TABLE` profile with proven routing budget;
+- or an admitted `MEASURED_MIXED` profile with benchmark evidence.
+
+The fallback profile MUST be selected before scope admission.
+
+It MUST NOT be selected by live profiling inside an admitted scope.
+
+Failure of a physical inline optimization gate is not semantic inequality.
+
+It is a backend/profile admission failure or a physical-optimization fallback decision.
+
+It MUST NOT alter canonical bytes, HID derivation, collision verification, stable intern id assignment, semantic
+equality,
+or publication order.
 
 ### 13.19. Verified Canonical Bytes Handle Law
 
@@ -11977,6 +12125,18 @@ A compliant implementation MUST satisfy:
      visibility.
 429. Pure local semantic predicate checks must not force routed-batch flush merely because they evaluated.
 
+430. Inline verifier words require selector and false-survivor evidence before occupying hot metadata bytes.
+431. Prefix-only verifier profiles must prove sufficient rejection power or use suffix, sampled-window,
+     secondary-verifier,
+     or exact-verification-first strategy.
+432. Inline/external table segregation must not silently add routing-buffer dimensions without routing budget.
+433. Route-segregated transport must budget table-shape-specific buffers, inbox headroom, and fragmentation ratios.
+434. Transport route-neutral or owner-local segregation is preferred when route-level segregation cannot prove batch
+     efficiency.
+435. `PRECLASSIFIED_TWO_PASS` must prove bounded classification work, scratch, metadata, and cache-touch behavior before
+     profile admission.
+436. Inline optimization fallback must be resolved before scope admission and must not be selected by live profiling.
+
 ## 23. Required Golden Vectors
 
 Golden vectors MUST exist for:
@@ -12456,6 +12616,20 @@ Until ratification, no concrete annotation, DSL, or compiler-metadata lowering v
 - semantic branch close / rollback / seal preflight flushes affected batches fixture;
 - route-drain fallback after admitted headroom exhaustion fixture.
 
+### 23.x. Inline Verifier, Segregation, and Preclassification
+
+- inline verifier low-entropy prefix fallback fixture;
+- prefix+suffix verifier selector golden vector fixture;
+- sampled-window verifier selector golden vector fixture;
+- inline verifier selector version does not change canonical identity fixture;
+- route-neutral inline/external transport fixture;
+- route-segregated transport budget fixture;
+- segregation fragmentation rejection fixture;
+- per-owner route buffer plus table-shape routing headroom fixture;
+- preclassification two-pass bounded cache-touch fixture;
+- preclassification fallback to disabled / route-neutral profile fixture;
+- inline optimization fallback does not change HID, collision verification, stable id, or publication order fixture.
+
 ## 24. Required Architecture Tests
 
 Architecture tests MUST verify:
@@ -12712,6 +12886,39 @@ influence canonical contract identity.
 ---
 
 ## 26. Alternatives Considered
+
+### 26.56. Always Use Prefix-Only Inline Verifier Words
+
+Rejected.
+
+Canonical encodings often have common envelope headers, package prefixes, namespaces, or domain headers.
+
+A prefix-only verifier may consume hot metadata-plane bytes without rejecting many false survivors.
+
+Verifier-word selection must be deterministic and evidence-gated.
+
+### 26.57. Route Inline and External Candidates Through Separate Buffers Without Extra Budget
+
+Rejected.
+
+Inline/external segregation is a physical table-layout choice that may multiply route-buffer and inbox surfaces.
+
+If the table-shape dimension is added to transport, routing budgets must include table-shape-specific buffers,
+boundary-flush headroom, and fragmentation bounds.
+
+Otherwise, transport must remain route-neutral and segregation must occur inside the owner lane.
+
+### 26.58. Prefer Two-Pass Preclassification Without Cache Evidence
+
+Rejected.
+
+Preclassification removes a branch by adding another pass.
+
+For large working sets, the second pass may reread data after cache eviction and regress throughput.
+
+`PRECLASSIFIED_TWO_PASS` requires bounded classification work, scratch, metadata, and cache-touch evidence before
+profile
+admission.
 
 ### 26.53. Allow Single-Active-Batch Without a Fragmentation Budget
 
@@ -13694,6 +13901,9 @@ cooperative drain must not become remote payload work stealing.
 
 Routed batching must reserve boundary-flush headroom, single-active-batch profiles must prove fragmentation bounds, and
 semantic checks flush only when they change material lifecycle or visibility.
+
+Inline acceleration is evidence-gated: verifier words must reject enough false survivors, segregation must budget
+routing fragmentation, and two-pass preclassification must prove cache-touch feasibility.
 
 Whole-table grow-by-copy resize is forbidden on the ADR-0041 compliant interner path; transient memory reuse requires
 physical reclamation evidence or continued retired-byte accounting.
