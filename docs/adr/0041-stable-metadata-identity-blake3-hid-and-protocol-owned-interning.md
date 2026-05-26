@@ -9611,36 +9611,48 @@ Intern tables MUST define a maximum hot collision group size.
 If a HID collision group exceeds the configured hot bound, the implementation MUST NOT allow unbounded hot-path
 verification.
 
-A compliant implementation MUST choose one of:
+A compliant implementation MUST choose the escalation outcome through the resolved collision-overflow policy.
 
+Allowed outcomes include:
+
+- fail the current identity unit closed;
 - fail the current identity scope closed;
 - fail the current frozen image or artifact publication closed;
-- quarantine the current acquisition scope;
-- quarantine the current worker lane for the current admitted scope;
-- move the group into a bounded cold collision structure;
-- apply an explicitly ratified stronger-width rekeying strategy selected before the scope becomes planning-visible.
+- quarantine the current acquisition/planning/incremental scope;
+- reject further candidates for the offending identity domain / schema / version / adapter source / route slice inside
+  the admitted scope where that boundary is identifiable;
+- quarantine the current worker lane only as a scoped last-resort physical containment outcome;
+- move the group into a bounded cold collision structure where ratified;
+- or use an explicitly ratified stronger-width identity suite only if that suite was selected by resolved policy before
+  scope admission and before any planning-visible material exists.
 
 Silent unbounded collision chains are forbidden.
 
 Process-wide hard termination is not the ordinary escalation path for a bounded, diagnosable collision group.
 
-The ordinary policy outcome is semantic non-publication, bounded quarantine, or a ratified cold path.
+The ordinary policy outcome is semantic non-publication, source/domain/scope containment, bounded quarantine, or a
+ratified cold path.
 
 A collision group escalation path MUST NOT change stable intern id assignment for already verified material in the same
 sealed scope.
 
-### 13.21.1. Persistent Collision Pressure Containment Law
+Collision overflow is not a request to dynamically change hash seeds, suite ids, digest widths, routing functions, or
+stable-id assignment order.
+
+#### 13.21.1. Persistent Collision Pressure Containment Law
 
 Collision escalation is not allowed to become an unbounded retry loop.
 
-If the same identity scope, adapter source, domain/schema/version tuple, or acquisition boundary repeatedly triggers
-collision escalation, the implementation MUST apply deterministic containment selected by resolved policy.
+If the same identity scope, adapter source, domain/schema/version tuple, route slice, acquisition boundary, or
+incremental invalidation boundary repeatedly triggers collision escalation, the implementation MUST apply deterministic
+containment selected by resolved policy.
 
 Allowed containment outcomes include:
 
 - fail the current identity scope closed;
-- quarantine the current acquisition scope;
+- quarantine the current acquisition/planning/incremental scope;
 - reject further candidates for the offending domain/schema/version tuple inside the admitted scope;
+- reject further candidates for the offending route slice inside the admitted scope where the route slice is resolved;
 - mark the adapter source as protocol-incompatible for that scope;
 - throttle or reject new publication attempts under bounded policy;
 - move to a bounded cold collision structure where ratified;
@@ -9663,12 +9675,13 @@ It is not semantic inequality.
 It MUST NOT change canonical bytes, HID derivation, collision verification semantics, stable intern id assignment, or
 semantic equality for material that remains accepted.
 
-### 13.21.2. Collision Escalation Lane Release Law
+#### 13.21.2. Collision Escalation Lane Release Law
 
 Quarantine of a worker lane or acquisition boundary is a scoped containment outcome.
 
-It MUST release lane-local scratch, reader leases, staging slabs, and temporary collision descriptors according to
-ADR-0042 lifecycle rules.
+It MUST release lane-local scratch, reader leases, staging slabs, owner inbox material, routed-batch buffers,
+route-drain
+control records, and temporary collision descriptors according to ADR-0042 lifecycle rules.
 
 It MUST NOT permanently remove the physical worker or engine lane from future unrelated scopes unless a resolved runtime
 policy explicitly opens a broader circuit for the remainder of the run.
@@ -9689,7 +9702,9 @@ The lawful shape is:
 collision hot bound exceeded
 -> explicit escalation classification
 -> scoped quarantine / fail-closed outcome
+-> publish quarantine state for affected route / owner / scope boundary
 -> release transient resources
+-> reject or drain affected routed batches through bounded terminal records
 -> prevent publication of the offending identity material
 ``````
 
@@ -9699,10 +9714,12 @@ The forbidden shape is:
 collision hot bound exceeded
 -> lane spins / retries / logs indefinitely
 -> temporary slabs remain pinned
+-> owner inbox remains open but undrained
+-> producers continue retrying the quarantined target
 -> publication never reaches a terminal state
 ``````
 
-### 13.21.1. Bounded Cold Collision Structure Law
+#### 13.21.3. Bounded Cold Collision Structure Law
 
 A bounded cold collision structure is optional.
 
@@ -9723,11 +9740,25 @@ If a bounded cold collision structure is ratified, it MUST satisfy:
 - it cannot retroactively repair already-published semantic identity;
 - it cannot change already assigned stable ids inside a sealed scope.
 
-A stronger-width rekeying path, if ratified, MUST be selected before the scope becomes planning-visible and MUST
-preserve
-the same deterministic publication law.
+If the bounded cold collision structure exceeds its resolved member, byte, probe, comparison, or diagnostic budget, the
+implementation MUST terminate collision escalation for the current containment boundary.
 
-### 13.21.2. Collision Escalation Availability Containment Law
+It MUST fail closed or quarantine according to the resolved collision-overflow policy.
+
+It MUST NOT:
+
+- allocate another colder collision structure;
+- extend the cold structure unboundedly;
+- accept digest-only equality;
+- retry cold insertion without a deterministic state transition;
+- select a new hash seed or suite after observing the overflow;
+- or select a new stable-id assignment order.
+
+A stronger-width identity suite, if ratified, MUST be selected before scope admission by the resolved identity policy.
+
+It MUST NOT be selected as a runtime reaction to observed collision overflow inside an admitted scope.
+
+#### 13.21.4. Collision Escalation Availability Containment Law
 
 Collision escalation is an availability boundary.
 
@@ -9740,14 +9771,19 @@ A collision overflow MUST NOT ordinarily terminate the process.
 A collision overflow MUST NOT poison unrelated identity domains, unrelated admitted scopes, unrelated worker lanes, or
 already published immutable images.
 
-A compliant implementation MUST contain collision overflow to the smallest lawful boundary selected by resolved policy:
+A compliant implementation MUST contain collision overflow to the smallest lawful boundary selected by resolved policy.
 
-- current identity unit;
-- current identity scope;
-- current frozen image publication;
-- current artifact publication;
-- current worker lane inside the admitted scope;
-- or current acquisition scope.
+Preferred containment priority is:
+
+1. current identity unit;
+2. current identity scope;
+3. offending identity domain / schema / version tuple inside the admitted scope;
+4. offending adapter source or acquisition boundary where identifiable;
+5. offending route slice where the route slice is resolved and attributable;
+6. current frozen image or artifact publication;
+7. current acquisition/planning/incremental scope;
+8. scoped worker/engine lane quarantine only when physical lane-local state, owner inbox state, or ADR-0042 lifecycle
+   state requires physical containment.
 
 The selected containment boundary MUST be deterministic under the resolved policy.
 
@@ -9757,6 +9793,10 @@ It MUST NOT depend on:
 - thread scheduling;
 - worker completion order;
 - live profiling;
+- queue depth;
+- owner inbox backlog;
+- CPU utilization;
+- wall-clock delay;
 - or random fallback.
 
 Repeated collision overflow from the same external input source is outside ADR-0041 semantic identity, but adapters MAY
@@ -9767,6 +9807,121 @@ Such adapter-level throttling MUST NOT change canonical identity material for ad
 BLAKE3/HID collision resistance reduces ordinary collision probability, but ADR-0041 still treats collision overflow as
 a
 bounded diagnosable condition rather than as an impossible event.
+
+#### 13.21.5. Quarantine-Aware Routing and Backpressure Law
+
+Collision quarantine must not create routing deadlock.
+
+Before a producer lane retries a routed flush, enters route-drain, or waits for owner progress through bounded retry, it
+MUST observe the target route / owner / scope quarantine state through a safe publication boundary.
+
+If the target owner lane, route slice, identity-domain slice, acquisition boundary, or scope is quarantined for the
+current admitted scope, the producer MUST NOT continue ordinary route-drain retries to that target.
+
+The producer MUST classify the routed batch through a bounded terminal outcome such as:
+
+``````text
+ROUTE_TARGET_QUARANTINED
+ROUTE_OWNER_SCOPE_CLOSED
+ROUTE_DOMAIN_SLICE_QUARANTINED
+ROUTE_SOURCE_QUARANTINED
+ROUTE_BATCH_REJECTED_BEFORE_PROVISIONAL_HANDLE
+ROUTE_BATCH_ROLLBACK_REQUIRED
+ROUTE_PUBLICATION_REJECTED_BEFORE_VISIBILITY
+``````
+
+The owner or maintenance authority for the quarantine boundary MUST close or drain affected routing infrastructure by a
+bounded deterministic transition.
+
+Allowed transitions include:
+
+- reject inbound batches before provisional handle issuance;
+- roll back branch-local provisional material;
+- mark owner inbox entries as terminal for the affected scope;
+- return bounded terminal records to producers;
+- publish route-slice quarantine state;
+- or fail the current identity scope closed.
+
+The implementation MUST NOT:
+
+- keep an owner inbox open for a quarantined scope without a terminal drain policy;
+- keep producers retrying a quarantined owner until `maxRouteFlushRetries` is exhausted when quarantine is already
+  visible;
+- allow cooperative drain to wait for a quarantined owner to make progress;
+- reroute quarantined material to a different owner lane to bypass containment;
+- or convert quarantine into a hidden worker-local flag.
+
+If quarantine state becomes visible after a producer already entered a bounded route-drain path, the next deterministic
+retry or drain step MUST observe the quarantine and terminate the route attempt through the resolved terminal outcome.
+
+#### 13.21.6. Runtime Rekeying Prohibition Law
+
+Collision overflow MUST NOT trigger runtime rekeying.
+
+The implementation MUST NOT change any of the following in response to observed collision pressure inside an admitted
+scope:
+
+- hash seed;
+- digest suite id;
+- digest output width;
+- HID derivation version;
+- domain separation payload version;
+- canonical ordering algorithm version;
+- stable intern id assignment order;
+- route partition function;
+- or route map version.
+
+A stronger-width identity suite is lawful only when it is selected by resolved policy before scope admission and before
+any planning-visible material, provisional handle, stable id, frozen image material, report/replay identity, or
+persistent
+artifact identity exists for that scope.
+
+A stronger-width suite selected in this way is not a runtime fallback.
+
+It is a protocol-versioned identity policy.
+
+If collision overflow occurs after scope admission and no preselected stronger-width path is active, the lawful outcomes
+are bounded cold collision handling, fail-closed, or quarantine under the resolved containment policy.
+
+The implementation MUST NOT silently rerun the same candidate set under a new hash suite after observing an overflow.
+
+#### 13.21.7. Source-First Quarantine and Targeted Starvation Law
+
+Physical engine lanes are routing and execution resources.
+
+They are not the ordinary blame boundary for adversarial or pathological identity material.
+
+When repeated collision overflow is attributable to an adapter source, acquisition boundary, identity domain,
+schema/version tuple, or route slice, containment SHOULD target that logical source boundary before quarantining a
+physical lane.
+
+A physical lane quarantine is lawful only when:
+
+- lane-local state is corrupted or cannot be safely reused inside the admitted scope;
+- the owner inbox or route-drain infrastructure for that lane cannot reach a bounded terminal state;
+- ADR-0042 lifecycle evidence requires lane-local resource retirement;
+- or the resolved runtime policy explicitly opens a broader circuit.
+
+Targeted collision pressure MUST NOT repeatedly remove the same physical lane from useful work when a narrower logical
+input-source boundary can be identified.
+
+A source-first containment policy MAY classify:
+
+``````text
+COLLISION_SOURCE_QUARANTINED
+COLLISION_DOMAIN_VERSION_QUARANTINED
+COLLISION_ROUTE_SLICE_QUARANTINED
+COLLISION_ACQUISITION_BOUNDARY_QUARANTINED
+COLLISION_SCOPE_FAILED_CLOSED
+COLLISION_LANE_QUARANTINED_LAST_RESORT
+``````
+
+Such classifications are availability outcomes.
+
+They are not semantic inequality.
+
+They MUST NOT alter canonical bytes, HID derivation, collision verification, stable id assignment, or publication order
+for material that remains admitted.
 
 ### 13.22. Physical Acceleration Equivalence Law
 
@@ -12137,6 +12292,22 @@ A compliant implementation MUST satisfy:
      profile admission.
 436. Inline optimization fallback must be resolved before scope admission and must not be selected by live profiling.
 
+437. Collision quarantine must publish quarantine state to routing/backpressure paths.
+438. Producers must not continue ordinary route-drain retries to a visibly quarantined route, owner, domain slice, or
+     scope.
+439. Quarantined routing infrastructure must reach a bounded terminal drain, reject, rollback, or fail-closed state.
+440. Collision overflow must not trigger runtime rekeying, hash seed change, suite change, digest-width change, route
+     map
+     change, or stable-id reassignment.
+441. Stronger-width identity suites must be selected by resolved policy before scope admission and before any
+     planning-visible material exists.
+442. Bounded cold collision overflow must terminate escalation at the resolved containment boundary; colder unbounded
+     structures are forbidden.
+443. Repeated collision pressure should target source/domain/schema/version/route-slice containment before physical lane
+     quarantine when the logical boundary is identifiable.
+444. Physical lane quarantine is a scoped last-resort containment outcome, not the ordinary blame boundary for hostile
+     identity material.
+
 ## 23. Required Golden Vectors
 
 Golden vectors MUST exist for:
@@ -12630,6 +12801,20 @@ Until ratification, no concrete annotation, DSL, or compiler-metadata lowering v
 - preclassification fallback to disabled / route-neutral profile fixture;
 - inline optimization fallback does not change HID, collision verification, stable id, or publication order fixture.
 
+### 23.x. Collision Quarantine, Cold Overflow, and Runtime Rekeying
+
+- duplicate 13.21 subsection numbering is absent fixture;
+- bounded cold collision overflow fail-closed / quarantine fixture;
+- colder unbounded collision structure rejection fixture;
+- quarantine-aware route-drain termination fixture;
+- producer stops retrying visibly quarantined owner fixture;
+- owner inbox terminal drain after collision quarantine fixture;
+- runtime rekeying after observed collision overflow rejected fixture;
+- preselected stronger-width suite before scope admission fixture;
+- source-first quarantine before lane quarantine fixture;
+- targeted route-slice collision starvation containment fixture;
+- physical lane quarantine last-resort fixture.
+
 ## 24. Required Architecture Tests
 
 Architecture tests MUST verify:
@@ -12886,6 +13071,46 @@ influence canonical contract identity.
 ---
 
 ## 26. Alternatives Considered
+
+### 26.59. Let Quarantined Owner Lanes Continue Route-Drain Retries
+
+Rejected.
+
+A quarantined owner, route slice, domain slice, or scope may no longer be able to drain its inbox in the ordinary way.
+
+Producers must observe quarantine state and terminate routed batches through bounded terminal outcomes instead of
+waiting for a quarantined target to make progress.
+
+### 26.60. Use Runtime Rekeying After Collision Overflow
+
+Rejected.
+
+Changing hash seeds, digest suites, digest widths, route maps, or stable-id ordering after observing collision overflow
+would make identity outcomes depend on runtime collision timing.
+
+Stronger-width identity suites may only be selected by resolved policy before scope admission and before
+planning-visible
+material exists.
+
+### 26.61. Quarantine Physical Lanes as the Primary Collision Containment Boundary
+
+Rejected.
+
+Physical lanes are execution and routing resources, not the ordinary blame boundary for adversarial identity material.
+
+When an offending adapter source, domain/schema/version tuple, acquisition boundary, or route slice is identifiable,
+containment should target that logical source boundary before lane quarantine.
+
+Physical lane quarantine remains a scoped last-resort outcome for lane-local resource or lifecycle failure.
+
+### 26.62. Add Another Colder Collision Structure After Cold Overflow
+
+Rejected.
+
+The bounded cold collision structure is the final ratified collision escalation path.
+
+If its member, byte, probe, comparison, or diagnostic budget is exceeded, escalation terminates at the resolved
+containment boundary through fail-closed or quarantine.
 
 ### 26.56. Always Use Prefix-Only Inline Verifier Words
 
@@ -13904,6 +14129,9 @@ semantic checks flush only when they change material lifecycle or visibility.
 
 Inline acceleration is evidence-gated: verifier words must reject enough false survivors, segregation must budget
 routing fragmentation, and two-pass preclassification must prove cache-touch feasibility.
+
+Collision overflow terminates through bounded cold handling, fail-closed, or source-first quarantine; it must not create
+route-drain deadlock, runtime rekeying, or primary physical-lane starvation.
 
 Whole-table grow-by-copy resize is forbidden on the ADR-0041 compliant interner path; transient memory reuse requires
 physical reclamation evidence or continued retired-byte accounting.
