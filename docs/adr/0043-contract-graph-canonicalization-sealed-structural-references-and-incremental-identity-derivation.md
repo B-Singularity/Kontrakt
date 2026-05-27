@@ -23,6 +23,9 @@ Draft
 - `docs/design/canonical-ir-stage-and-lowering-protocol.md`
 - `docs/design/l1-planner-session-primitive-data-structures.md`
 - `docs/design/l2-plan-interner-partitioned-tier2-with-governance.md`
+- `docs/design/stable-metadata-identity-protocol.md` (post-ADR-0041 extraction target)
+- `docs/design/protocol-owned-metadata-interning.md` (post-ADR-0041 extraction target)
+- ADR-0044: Unified Runtime Memory Envelope and Pipeline Lifecycle Governance (planned)
 
 ---
 
@@ -194,6 +197,7 @@ Ownership split:
 | concrete contract fact ontology                          | top-level contract definition document |
 | execution state-machine runtime                          | future execution/runtime ADRs          |
 | public contract syntax                                   | future frontend contract documents     |
+| unified runtime memory envelope                          | ADR-0044 (planned)                     |
 
 ## 5. Vocabulary
 
@@ -825,7 +829,323 @@ Until then, ADR-0043 is a graph identity skeleton.
 
 It does not activate a concrete user-facing contract language.
 
-## 17. Golden Vectors
+## 17. ADR-0041 Contract Graph Extraction Addendum
+
+This addendum extracts the graph-facing material from ADR-0041 into ADR-0043 without changing the accepted ADR-0041
+metadata identity substrate.
+
+ADR-0043 remains a graph-identity layer.
+
+It consumes:
+
+- ADR-0041 canonical identity protocol;
+- ADR-0041 digest/HID/interner substrate;
+- post-ADR-0041 `docs/design/stable-metadata-identity-protocol.md`;
+- post-ADR-0041 `docs/design/protocol-owned-metadata-interning.md`;
+- ADR-0042 primitive substrate lifecycle;
+- and the forthcoming top-level contract definition.
+
+It MUST NOT redefine canonical byte encoding, HID equality meaning, metadata interning, physical substrate ownership,
+or final contract ontology.
+
+### 17.1. Graph-Lowered Contract Fact Boundary
+
+Future contract facts for state, protocol, data, governance, DTO boundaries, verification obligations, diagnostics, and
+explicit state machines MUST lower into ratified contract graph units before they become graph identity material.
+
+The lawful graph lowering shape is:
+
+``````text
+contract syntax / annotation / DSL / compiler metadata / generated index
+-> adapter-erased lowering
+-> lowered contract fact
+-> ratified graph unit
+-> canonical graph material
+-> structural identity
+-> sealed structural reference
+-> contextual identity where required
+``````
+
+The forbidden graph lowering shape is:
+
+``````text
+annotation object / DTO object / backend handle / source AST node
+-> direct graph identity
+``````
+
+A graph unit MUST NOT treat frontend syntax, backend descriptors, annotation descriptors, DTO runtime objects, or source
+spelling as graph identity authority merely because those surfaces are convenient to enumerate.
+
+### 17.2. Structural and Contextual Identity Stratification
+
+ADR-0043 adopts the structural/contextual split for contract graph identity.
+
+Structural identity is the graph-unit-local, parent-independent identity.
+
+Contextual identity is parent/use-site/edge-role/boundary/protocol-position identity.
+
+The following law is normative:
+
+``````text
+structural identity first
+-> sealed structural reference
+-> contextual derivation
+``````
+
+The reverse order is forbidden:
+
+``````text
+parent context first
+-> recursively derive child local identity through parent
+-> publish child identity as if parent-independent
+``````
+
+A contextual descriptor MUST NOT be accepted as proof that the structural child is equal.
+
+It is a candidate descriptor for the contextual surface and must preserve collision verification and compatibility
+boundaries.
+
+### 17.3. Sealed Child Reference Derivation
+
+A parent graph unit may reference a child only through:
+
+- sealed structural identity reference;
+- stable graph intern id inside a compatible graph intern scope;
+- SCC-local temporary reference inside the same SCC seal payload;
+- or bounded inline child material ratified by the owning graph unit schema.
+
+A parent graph unit MUST NOT reference:
+
+- bare HID;
+- provisional handle;
+- backend handle;
+- source object;
+- DTO object;
+- annotation descriptor object;
+- runtime graph node object;
+- or child material that has not crossed a seal boundary.
+
+A sealed child reference MUST include enough domain/version/width/provenance material to prevent accidental equality
+across incompatible graph domains or schema versions.
+
+### 17.4. Graph Interning over ADR-0041 Interner Substrate
+
+Graph interning is layered over the ADR-0041 metadata/interner substrate.
+
+It is not separate object interning.
+
+A graph interner MAY use ADR-0041 stable metadata/interner primitives such as:
+
+- canonical bytes;
+- active digest suite descriptors;
+- HID descriptors as candidate descriptors;
+- collision verification payloads;
+- scoped stable intern ids;
+- publication law;
+- and bounded diagnostics.
+
+However, graph interning MUST define its own graph-unit identity domains, graph intern scopes, and graph-unit
+compatibility
+axes.
+
+A graph stable intern id is not automatically comparable to a metadata stable intern id.
+
+Cross-scope conversion requires an explicit conversion law.
+
+### 17.5. Graph SCC Sealing and Symmetry
+
+Contract graph SCC sealing follows the same high-level safety law as ADR-0041 metadata SCC sealing but is owned here for
+graph units.
+
+A contract graph SCC MUST define:
+
+- SCC member capacity profile;
+- SCC canonical byte budget;
+- SCC intra-edge budget;
+- SCC-local temporary reference encoding;
+- deterministic member ordering;
+- deterministic edge ordering;
+- symmetry-breaking law;
+- snapshot-backed measure/write materialization where needed;
+- bounded diagnostic policy;
+- and fail-closed behavior before publication.
+
+Graph SCC-local temporary references MUST NOT escape the SCC seal payload.
+
+If SCC member ordering cannot be resolved by ratified canonical graph material, the implementation MUST either:
+
+- collapse members only under exact graph canonical equivalence proof; or
+- reject the SCC seal before publication.
+
+It MUST NOT break symmetry through discovery order, backend index, object identity, worker/lane id, callback order, or
+source enumeration accident.
+
+### 17.6. Graph Snapshot and Materialization
+
+Graph SCC materialization and large graph-unit materialization MAY use two-phase sizing, chunked measure/write
+interleaving, and snapshot-backed canonical IR materialization.
+
+If used, the graph materialization plan MUST preserve:
+
+- same canonical graph bytes as the single-pass reference;
+- same structural identity;
+- same contextual identity;
+- same graph intern id assignment;
+- same dependency invalidation result;
+- and same L2/query key behavior.
+
+The materialization pass MUST NOT reread mutable backend/source/adapter objects after the measure pass has accepted byte
+counts or edge counts.
+
+Snapshot or memoized graph IR used for materialization is staging material.
+
+It is not persistent artifact identity unless a future artifact format ratifies it.
+
+### 17.7. Incremental Affected-Set Derivation
+
+Incremental graph identity derivation MUST classify affected sets explicitly.
+
+A graph incremental implementation MUST define:
+
+- direct changed graph units;
+- structurally affected parent units;
+- contextually affected use sites;
+- dependency edge changes;
+- version-bundle changes;
+- graph intern scope changes;
+- compatibility-equivalent changes;
+- and compatibility-breaking changes.
+
+Incremental affected-set discovery MUST be budgeted.
+
+At minimum, a compliant graph profile SHOULD define:
+
+``````text
+maxGraphInvalidationTraversalEdges
+maxGraphInvalidationVisitedUnits
+maxGraphInvalidationFrontierUnits
+maxGraphInvalidationScratchBytes
+maxGraphInvalidationDiagnosticsBytes
+``````
+
+If affected-set discovery exceeds the resolved budget, the implementation MUST choose one of the pre-admitted outcomes:
+
+- fail the current graph identity scope closed;
+- quarantine the current graph acquisition/source boundary;
+- request caller-owned full rebuild preflight;
+- or use a separately admitted continuation scope.
+
+It MUST NOT silently reuse stale graph identity.
+
+It MUST NOT fall back to full rebuild unless the full rebuild memory/time envelope has already passed preflight.
+
+### 17.8. Structural Reference Reuse and Avalanche Containment
+
+Sealed structural references may reduce re-derivation cost by allowing parent/context identity to consume fixed-width
+child references instead of full child-local canonical bytes.
+
+This is an avalanche-containment mechanism, not a universal constant-time update guarantee.
+
+Allowed statement:
+
+``````text
+parent derivation can be independent of child canonical byte length once the child structural reference is sealed
+``````
+
+Forbidden statement:
+
+``````text
+arbitrary graph update is O(1)
+``````
+
+If a parent has many child references, parent derivation remains proportional to the number of relevant references or to
+a separately ratified dependency summary.
+
+A future dependency-summary law may strengthen this bound, but it must be ratified separately.
+
+### 17.9. Graph Dependency Summary Reservation
+
+A graph dependency summary is reserved for future work.
+
+Until ratified, a graph unit MUST NOT use a compact dependency summary as equality authority, invalidation authority, or
+complete affected-set proof.
+
+A graph dependency summary MAY be used as a routing or pre-screen hint only if exact dependency verification remains
+available.
+
+### 17.10. L2 / Query Integration for Graph Units
+
+L2 may cache graph-derived planning or query results.
+
+L2 MUST NOT decide graph equality.
+
+Graph cache keys MUST include or derive from:
+
+- graph unit identity domain;
+- graph unit schema version;
+- structural/contextual identity kind;
+- active digest suite id/version;
+- graph intern scope;
+- version-bundle fingerprint;
+- dependency identity set fingerprint;
+- contextual parent/use-site key where applicable;
+- and compatibility classification.
+
+A graph cache hit is valid only if all dependency axes remain unchanged or compatibility-equivalent under the owning
+graph unit compatibility matrix.
+
+A graph cache hit MUST NOT be used after:
+
+- parent context changed incompatibly;
+- edge role changed incompatibly;
+- dependency graph changed incompatibly;
+- graph intern scope changed;
+- digest/interner protocol changed;
+- contract lowering version changed incompatibly;
+- or the top-level contract definition changed incompatibly.
+
+### 17.11. Graph and Physical Layer Separation
+
+Graph identity authority belongs to canonical graph material and sealed references.
+
+It does not belong to:
+
+- primitive table slots;
+- slab offsets;
+- MemorySegment addresses;
+- off-heap addresses;
+- lane queues;
+- owner routing tables;
+- cache-line grouping;
+- backend object references;
+- or runtime graph node objects.
+
+ADR-0042 may optimize graph material storage and transport.
+
+ADR-0042 MUST NOT redefine graph equality.
+
+ADR-0043 may require physical substrate capabilities.
+
+ADR-0043 MUST NOT mandate a specific physical backend such as heap arrays, off-heap memory, native allocation, or
+MemorySegment as semantic graph authority.
+
+### 17.12. Graph Extraction Non-Regression Rule
+
+The extracted graph-facing laws from ADR-0041 preserve these invariants:
+
+- parents consume sealed structural references, not arbitrary child object graphs;
+- bare HID is not child proof;
+- graph interning is protocol-owned and collision-verified;
+- structural identity is parent-independent;
+- contextual identity is parent/context-dependent;
+- graph SCCs seal deterministically;
+- SCC-local temporary references do not escape;
+- incremental derivation equals from-scratch derivation;
+- physical substrate changes do not change graph identity;
+- L2 cache hits are not graph equality authority;
+- concrete contract fact vocabulary remains reserved until ratified.
+
+## 18. Golden Vectors
 
 A released ADR-0043 implementation MUST provide golden vectors for:
 
@@ -850,9 +1170,16 @@ A released ADR-0043 implementation MUST provide golden vectors for:
 - DTO boundary graph unit fixture once ratified;
 - governance policy graph unit fixture once ratified;
 - state-machine transition graph unit fixture once ratified;
-- protocol step graph unit fixture once ratified.
+- protocol step graph unit fixture once ratified;
+- structural/contextual identity stratification fixture;
+- graph SCC symmetry rejection fixture;
+- graph SCC exact equivalence collapse fixture where ratified;
+- graph snapshot-backed materialization fixture;
+- graph incremental affected-set budget exhaustion fixture;
+- full rebuild preflight required before fallback fixture;
+- graph cache hit rejected after incompatible parent/context change fixture.
 
-## 18. Compliance Rules
+## 19. Compliance Rules
 
 1. Contract graph units must be ratified before they become identity material.
 2. Structural identity is parent-independent.
@@ -875,10 +1202,22 @@ A released ADR-0043 implementation MUST provide golden vectors for:
 17. Physical substrate backends do not change graph identity.
 18. ADR-0042 owns physical lifecycle and async ownership.
 19. Concrete contract fact vocabulary remains reserved until the top-level contract definition is ratified.
+20. Lowered contract facts must become ratified graph units before becoming graph identity material.
+21. A graph stable intern id is not automatically comparable to a metadata stable intern id.
+22. Graph SCC symmetry must not be broken by discovery order, object identity, backend traversal, worker/lane id, or
+    callback order.
+23. Graph SCC-local temporary references must not escape the SCC seal payload.
+24. Graph materialization must not reread mutable backend/source/adapter objects after snapshot-backed measurement has
+    accepted graph byte or edge counts.
+25. Incremental affected-set discovery must be budgeted.
+26. Full rebuild fallback requires preflight before use.
+27. Graph dependency summaries are reserved and must not become equality or invalidation authority before ratification.
+28. Graph cache keys must include all dependency axes required by the owning graph unit compatibility matrix.
+29. Physical substrate mechanics must remain outside graph equality authority.
 
-## 19. Alternatives Considered
+## 20. Alternatives Considered
 
-### 19.1. Put Full Contract Graph Identity into ADR-0041
+### 20.1. Put Full Contract Graph Identity into ADR-0041
 
 Rejected.
 
@@ -886,13 +1225,13 @@ ADR-0041 is already responsible for the metadata identity substrate.
 
 Contract graph canonicalization is a separate semantic layer.
 
-### 19.2. Use Recursive Canonical Byte Inlining
+### 20.2. Use Recursive Canonical Byte Inlining
 
 Rejected as the ordinary graph identity strategy.
 
 It causes repeated expansion, poor incremental behavior, and diamond graph amplification.
 
-### 19.3. Use Bare HID as Child Proof
+### 20.3. Use Bare HID as Child Proof
 
 Rejected.
 
@@ -900,13 +1239,13 @@ A HID is a compact candidate descriptor.
 
 It is not equality authority and not sufficient provenance for graph parent derivation.
 
-### 19.4. Depend on Runtime Graph Object Identity
+### 20.4. Depend on Runtime Graph Object Identity
 
 Rejected.
 
 Runtime graph object identity depends on allocation, backend, object lifetime, and physical execution.
 
-### 19.5. Promise Constant-Time Subtree Updates
+### 20.5. Promise Constant-Time Subtree Updates
 
 Rejected.
 
@@ -915,7 +1254,7 @@ Kontrakt may reduce re-derivation from child byte length to fixed-width sealed r
 It cannot promise constant-time updates for arbitrary affected subtrees without a separately ratified dependency summary
 law.
 
-### 19.6. Let L2 Cache Decide Graph Equality
+### 20.6. Let L2 Cache Decide Graph Equality
 
 Rejected.
 
@@ -923,7 +1262,39 @@ L2 may accelerate candidate lookup and reuse.
 
 It cannot become semantic equality authority.
 
-## 20. Consequences
+### 20.7. Treat Graph Dependency Summary as Equality Authority
+
+Rejected.
+
+Dependency summaries are useful pre-screen and invalidation accelerators only after ratification.
+
+They cannot replace exact dependency classification and sealed reference verification without a separate law and golden
+vectors.
+
+### 20.8. Fall Back to Full Rebuild Without Preflight
+
+Rejected.
+
+Full rebuild is not free.
+
+It may consume more memory and execution budget than the incremental path that failed.
+
+A full rebuild fallback is lawful only after the caller-owned boundary proves that the full rebuild envelope is
+available
+or admits a separate continuation scope.
+
+### 20.9. Let Physical Substrate Define Graph Identity
+
+Rejected.
+
+Primitive tables, slabs, off-heap memory, MemorySegment addresses, lane queues, and cache-line grouping are physical
+mechanics.
+
+They may accelerate graph identity processing.
+
+They cannot become graph equality authority.
+
+## 21. Consequences
 
 Positive:
 
@@ -933,7 +1304,10 @@ Positive:
 - child-local canonical bytes can be reused safely after seal;
 - incremental derivation becomes possible without breaking ADR-0041;
 - future contract facts for state, protocol, data, governance, DTO, boundary, and explicit state machines have a graph
-  identity substrate.
+  identity substrate;
+- ADR-0041 graph-facing laws now have a narrower ADR-0043 maintenance surface;
+- graph SCC and incremental affected-set behavior are explicit rather than implicit;
+- future top-level contract definition can plug into a prepared graph identity architecture.
 
 Negative:
 
@@ -941,9 +1315,11 @@ Negative:
 - sealed structural references add protocol complexity;
 - SCC graph sealing must be implemented carefully;
 - from-scratch equivalence tests and golden vectors are mandatory;
-- the contract definition must classify graph units and edges precisely before activation.
+- the contract definition must classify graph units and edges precisely before activation;
+- graph extraction increases ADR-0043 surface area;
+- graph-specific capacity, SCC, and invalidation policies now need explicit tests and golden vectors.
 
-## 21. Final Rule
+## 22. Final Rule
 
 Kontrakt contract graph identity is not runtime object identity.
 
@@ -954,3 +1330,6 @@ Parents consume sealed structural references, not arbitrary child object graphs 
 
 Incremental derivation may reuse sealed child-local identity material, but it must produce the same result as the
 from-scratch deterministic pipeline.
+
+Graph SCCs must seal deterministically, graph affected-set reuse must be budgeted, and L2/query cache reuse must never
+become graph equality authority.

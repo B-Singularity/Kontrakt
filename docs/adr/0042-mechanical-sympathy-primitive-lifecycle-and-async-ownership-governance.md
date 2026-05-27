@@ -14,6 +14,10 @@ Proposed
 - ADR-0040: Deterministic Frozen Acquisition Pipeline
 - ADR-0034: Explicit L2 Join Lifecycle State Machine
 - ADR-0035: Deterministic Balanced Lanes for Tier-2 Join Completion Delivery
+- ADR-0043: Contract Graph Canonicalization, Sealed Structural References, and Incremental Identity Derivation
+- `docs/design/stable-metadata-identity-protocol.md` (post-acceptance extraction target)
+- `docs/design/protocol-owned-metadata-interning.md` (post-acceptance extraction target)
+- `docs/adr/0044-unified-runtime-memory-envelope-and-pipeline-lifecycle-governance.md` (planned)
 
 ## 1. Context
 
@@ -1573,7 +1577,1395 @@ Physical order may follow deterministic intern id order.
 
 Physical order MUST NOT create deterministic intern id order.
 
-## 10. Required Domain Registry
+## 10. ADR-0041 Mechanical Substrate Extraction Addendum
+
+This section extracts physical/backend-facing mechanical laws from the accepted ADR-0041 line into ADR-0042.
+
+The extraction is a maintenance operation.
+
+It does not change metadata identity semantics.
+
+ADR-0041 remains the parent decision for canonical material, canonical bytes, HID derivation, collision verification,
+protocol-owned metadata interning, and stable intern id assignment.
+
+ADR-0042 owns the physical substrate, backend profile, ownership, lifecycle, cache-locality, routing-transport,
+backpressure, and reclamation mechanics required to implement those laws without letting physical layout become semantic
+authority.
+
+### 10.0. Extraction Authority and Non-Regression Rule
+
+The following extracted laws are maintained here because they are physical/backend-facing rather than metadata-identity
+semantic authority.
+
+They MUST preserve the ADR-0041 invariants:
+
+- backend selection must not change canonical bytes;
+- backend selection must not change HID derivation;
+- backend selection must not change collision verification result;
+- backend selection must not change stable intern id assignment;
+- backend selection must not change semantic equality;
+- backend selection must not change `PlanCacheKey` equality;
+- backend selection must not make routing, cache locality, queue pressure, lane assignment, physical address, or GC
+  timing
+  semantic authority;
+- physical acceleration remains observationally equivalent to the deterministic reference pipeline.
+
+The subsection headings below preserve ADR-0041 section anchors so that later extraction reviews can trace every moved
+law
+back to its accepted source.
+
+#### 10.1. ADR-0041 13.13.4.1 Owner-Lane Routing, Routed Batches, Backpressure, Suppression, and Skew Handling
+
+#### 13.13.4.1.1. Deterministic Owner-Lane Routing Law
+
+A refill-capable `BOUNDED_STREAMING` interner SHOULD prefer deterministic owner-lane routing over moving quota between
+lanes.
+
+The preferred lawful shape is:
+
+``````text
+candidate discovered on any execution lane
+-> derive deterministic routing material
+-> resolve ownerEngineLaneId from the route map
+-> append to producer-local routed batch for that owner lane
+-> flush batch through bounded routing transport
+-> owner lane performs duplicate pre-screen, staging admission, provisional handle issuance, and seal participation
+``````
+
+The discovery lane is not the owner unless the resolved route map says so.
+
+The owner lane is derived from versioned, substrate-neutral routing material such as:
+
+- identity domain id;
+- interning scope id;
+- route-map version;
+- routing epoch id;
+- version-bundle fingerprint where required;
+- domain-separated route digest / route prefix;
+- canonical byte length where already known;
+- or another ratified fixed-width route projection.
+
+The owner lane MUST NOT be derived from:
+
+- worker id;
+- thread id;
+- callback completion order;
+- queue arrival order;
+- first discovery order;
+- wall-clock timing;
+- current queue depth;
+- current CPU utilization;
+- current throughput;
+- GC behavior;
+- or runtime profiling.
+
+Routing material is not equality authority.
+
+`routePrefix`, `route64`, HID prefix material, verifier-prefix material, and local shape summaries MAY route candidates.
+
+They MUST NOT replace canonical byte encoding, collision verification, deterministic stable id assignment, table
+coverage
+validation, or publication integrity validation.
+
+The route map MUST be resolved before the route epoch admits candidates.
+
+Changing the route map inside an open route epoch is forbidden.
+
+A route-map change MAY occur only at an explicit route-epoch boundary, quota-epoch boundary, or separately admitted
+scope boundary.
+
+A route-map change MUST NOT change:
+
+- canonical bytes;
+- HID derivation;
+- collision verification result;
+- semantic equality;
+- stable intern id assignment;
+- stable id publication order;
+- already-issued provisional handle ownership;
+- or report/replay identity.
+
+#### 13.13.4.1.2. Routed Candidate Batch Law
+
+Routed candidate transport MUST be bounded.
+
+A producer lane MAY batch outbound candidates by owner lane, identity domain, route epoch, and interning scope.
+
+Batch routing is the preferred transport shape for owner-lane routing.
+
+The preferred physical shape is not a single mutable outbound batch that is repurposed for every destination.
+
+The preferred physical shape is a bounded producer-owned route-buffer set keyed by at least:
+
+``````text
+producerEngineLaneId
+ownerEngineLaneId
+identityDomainId
+routeEpochId
+interningScopeId
+``````
+
+A profile MAY use a stricter single-active-batch transport only if it proves that owner switching does not create
+pathological batch fragmentation for the admitted workload.
+
+The resolved routing budget MUST define at least:
+
+``````text
+maxRoutedCandidateBatchSize
+maxRoutedCandidateBatchBytes
+maxRoutedBatchBufferBytesByEngineLane[engineLaneId]
+maxRoutedBatchBufferBytesByOwnerLane[producerEngineLaneId][ownerEngineLaneId]
+maxRoutedBatchBuffersByEngineLane[engineLaneId]
+maxPendingRoutedBatchesPerOwnerLane[ownerEngineLaneId]
+maxOwnerInboxBytes[ownerEngineLaneId]
+maxOwnerInboxBatches[ownerEngineLaneId]
+steadyStateOwnerInboxBytes[ownerEngineLaneId]
+steadyStateOwnerInboxBatches[ownerEngineLaneId]
+producerLaneCount
+ownerLaneCount
+maxOpenRouteBuffersPerProducerLane
+maxBoundaryFlushBatchesPerProducerLane
+maxBoundaryFlushBatchesPerOwnerLane[ownerEngineLaneId]
+boundaryFlushHeadroomBatchesByOwnerLane[ownerEngineLaneId]
+boundaryFlushHeadroomBytesByOwnerLane[ownerEngineLaneId]
+maxBoundaryFlushEventsPerScope
+maxSingleActiveBatchOwnerSwitchFlushesPerScope
+maxSingleActiveBatchFragmentationRatioNumerator
+maxSingleActiveBatchFragmentationRatioDenominator
+maxRouteFlushRetries
+maxRouteDrainStepsPerBackpressure
+maxRouteBackpressureEventsPerScope
+``````
+
+A routed batch MUST flush when any of the following deterministic conditions holds:
+
+- `maxRoutedCandidateBatchSize` is reached;
+- `maxRoutedCandidateBatchBytes` is reached;
+- a single-active-batch profile would repurpose the same physical batch buffer for a different owner lane;
+- a single-active-batch profile would repurpose the same physical batch buffer for a different identity domain where the
+  profile requires domain-segregated batches;
+- the batch's owning branch frame closes;
+- the batch's owning planning frame closes;
+- a semantic validation boundary that changes candidate reachability, ownership, rollback visibility, provisional-handle
+  validity, seal eligibility, publication eligibility, or external visibility is reached for material owned by the
+  batch;
+- scope safe point is reached;
+- route epoch boundary is reached;
+- quota epoch boundary is reached;
+- seal preflight begins;
+- publication preflight begins;
+- rollback / failure boundary is reached;
+- or the producer lane exits the owning pipeline phase.
+
+For a profile that maintains independent per-owner route buffers, discovering a candidate for a different owner lane
+MUST NOT flush an unrelated non-empty owner buffer merely because the discovery stream changed owner.
+
+A per-owner route buffer flushes according to its own count, byte, lifecycle-boundary, epoch-boundary, or explicit
+profile-admitted deterministic flush condition.
+
+The implementation MUST NOT turn alternating owner discovery patterns into one-candidate batches unless the selected
+profile explicitly admits a single-active-batch transport and proves that the resulting message fragmentation remains
+within routing budget.
+
+A non-empty routed batch MUST NOT remain buffered across a boundary that could make its candidates unreachable,
+unsealed, unaccounted, or owned by a closed branch / frame / scope.
+
+The implementation MUST NOT flush routed batches based on:
+
+- wall-clock timers;
+- elapsed time;
+- queue depth feedback;
+- consumer speed;
+- CPU utilization;
+- throughput feedback;
+- GC events;
+- thread scheduling delay;
+- or adaptive runtime profiling.
+
+Partial-fill batches are legal only while their owning branch/frame/scope/route epoch remains open and reachable.
+
+A partial-fill batch MUST flush at close, rollback, seal preflight, or publication preflight even if it contains fewer
+candidates than `maxRoutedCandidateBatchSize`.
+
+##### 13.13.4.1.2.1. Single-Active-Batch Fragmentation Budget Law
+
+Single-active-batch routing is a memory-constrained profile.
+
+It is not the preferred high-throughput profile.
+
+The preferred high-throughput profile remains a bounded per-owner route-buffer set.
+
+A single-active-batch profile is lawful only if the scope resolves and proves a fragmentation budget before admission.
+
+At minimum, the profile MUST declare:
+
+``````text
+maxSingleActiveBatchOwnerSwitchFlushesPerScope
+maxSingleActiveBatchFragmentationRatioNumerator
+maxSingleActiveBatchFragmentationRatioDenominator
+maxSingleActiveBatchRoutedBytesPerScope
+maxSingleActiveBatchRoutedBatchesPerScope
+``````
+
+The fragmentation ratio is interpreted as:
+
+``````text
+actualRoutedCandidateCount * maxSingleActiveBatchFragmentationRatioDenominator
+    <= actualRoutedBatchCount * maxRoutedCandidateBatchSize
+     * maxSingleActiveBatchFragmentationRatioNumerator
+``````
+
+The formula MUST be evaluated with checked integer arithmetic.
+
+A profile MAY replace this ratio with a stricter deterministic fragmentation metric if the metric is declared before
+scope admission and golden-vector covered.
+
+If the implementation cannot prove that the admitted workload shape satisfies the single-active-batch fragmentation
+budget, it MUST NOT select the single-active-batch profile.
+
+It MUST choose a per-owner route-buffer profile, a smaller bounded scope, or fail backend/profile admission.
+
+A single-active-batch profile MUST NOT be selected merely because it has lower memory footprint.
+
+It must also prove that owner interleaving cannot collapse batching into pathological one-candidate flushes.
+
+##### 13.13.4.1.2.2. Boundary Flush Storm Headroom Law
+
+Boundary flushes are not free.
+
+A lifecycle boundary may force every producer lane to flush non-empty partial-fill batches at the same deterministic
+boundary.
+
+The resolved owner inbox budget MUST reserve boundary flush storm headroom before scope admission.
+
+The required conservative v1 relationships are:
+
+``````text
+maxBoundaryFlushBatchesPerProducerLane
+    <= maxOpenRouteBuffersPerProducerLane
+
+boundaryFlushHeadroomBatchesByOwnerLane[ownerEngineLaneId]
+    >= producerLaneCount
+
+boundaryFlushHeadroomBytesByOwnerLane[ownerEngineLaneId]
+    >= boundaryFlushHeadroomBatchesByOwnerLane[ownerEngineLaneId]
+     * maxRoutedCandidateBatchBytes
+
+maxOwnerInboxBatches[ownerEngineLaneId]
+    >= steadyStateOwnerInboxBatches[ownerEngineLaneId]
+     + boundaryFlushHeadroomBatchesByOwnerLane[ownerEngineLaneId]
+
+maxOwnerInboxBytes[ownerEngineLaneId]
+    >= steadyStateOwnerInboxBytes[ownerEngineLaneId]
+     + boundaryFlushHeadroomBytesByOwnerLane[ownerEngineLaneId]
+``````
+
+All relationships MUST be evaluated with checked integer arithmetic.
+
+A stricter backend profile MAY use a lower `boundaryFlushHeadroomBatchesByOwnerLane[...]` only if it proves, before
+scope admission, that fewer producer-local partial-fill batches can target that owner at the same boundary.
+
+Such proof MUST be based on:
+
+- resolved route map;
+- resolved producer lane set;
+- resolved owner lane set;
+- resolved route-buffer topology;
+- resolved identity-domain partitioning;
+- and deterministic scope topology.
+
+It MUST NOT be based on:
+
+- observed queue depth;
+- consumer speed;
+- wall-clock latency;
+- CPU utilization;
+- GC timing;
+- thread scheduling;
+- runtime throughput;
+- or adaptive profiling.
+
+If boundary flush storm headroom cannot be reserved, the implementation MUST fail routing-profile admission, reduce the
+scope under an explicit caller-owned boundary, or select a stricter profile that proves a smaller deterministic storm
+surface.
+
+It MUST NOT rely on route-drain as the ordinary way to absorb predictable global boundary flushes.
+
+Route-drain remains a bounded fallback for conditions that exceed the admitted headroom.
+
+##### 13.13.4.1.2.3. Semantic Boundary Flush Narrowing Law
+
+Not every semantic check is a routed-batch lifecycle boundary.
+
+A semantic validation boundary triggers routed-batch flush only if the boundary may change one or more of the following
+for material owned by the batch:
+
+- reachability;
+- ownership;
+- rollback visibility;
+- provisional-handle validity;
+- branch-local commit status;
+- scope-local staging commit status;
+- seal eligibility;
+- publication eligibility;
+- external visibility;
+- or diagnostic terminality attached to the material.
+
+Pure local validation boundaries MUST NOT force a routed-batch flush merely because a semantic predicate was evaluated.
+
+Examples that MUST NOT force a flush by themselves:
+
+- pure local predicate checks;
+- expression-level checks that do not close, commit, reject, or roll back material;
+- non-owning validation steps;
+- read-only compatibility pre-checks;
+- and diagnostics that do not make the candidate unreachable, committed, rolled back, seal-eligible, or
+  publication-eligible.
+
+Examples that MUST flush if the batch owns affected material:
+
+- branch accept;
+- branch reject;
+- rollback mark crossing;
+- provisional handle visibility transition;
+- scope-local staging commit;
+- seal preflight;
+- publication preflight;
+- and any semantic decision that makes the candidate unreachable or externally visible.
+
+This law prevents semantic micro-boundaries from collapsing routed batching into pathological micro-batches.
+
+#### 13.13.4.1.3. Owner Inbox Backpressure and Deterministic Route-Drain Law
+
+Owner-lane routing MUST NOT rely on unbounded inbox growth.
+
+If a producer attempts to flush a routed batch and the owner inbox cannot admit it under the resolved inbox budget, the
+implementation MUST enter a bounded deterministic route-drain path before terminal failure, unless the selected profile
+explicitly uses a stricter no-drain fail-closed policy.
+
+The lawful backpressure path is:
+
+``````text
+producer flush attempt
+-> owner inbox admission fails under resolved inbox budget
+-> route-backpressure event recorded
+-> producer stops new admission for the affected route / domain / scope slice
+-> deterministic route-drain safe point entered
+-> self-drain phase runs before cross-owner drain or terminal retry
+-> owner inboxes drain in fixed ownerEngineLaneId order or by another ratified deterministic order
+-> producer retries flush under maxRouteFlushRetries
+-> success, or bounded route-backpressure classification
+``````
+
+Route-drain is step-bounded.
+
+It is not time-bounded.
+
+The implementation MUST NOT wait until an inbox becomes available based on wall-clock time.
+
+The implementation MUST NOT spin until an inbox has space.
+
+The implementation MUST NOT block a worker indefinitely.
+
+#### 13.13.4.1.3.1. Self-Drain-First Backpressure Law
+
+Circular backpressure MUST be broken by deterministic self-drain before cross-owner assistance or terminal retry.
+
+When an engine lane enters a route-drain safe point, it MUST first drain its own inbound routing inbox and
+routing-control
+queue up to the resolved step budget before waiting on another owner lane's progress.
+
+The self-drain phase is lawful because the lane processes state that it already owns.
+
+It is also mechanically preferred because processing the lane's own local inbox preserves L1 cache locality and avoids
+cross-lane cache-line bouncing on owner payload state.
+
+The self-drain phase MUST be bounded by resolved counters such as:
+
+``````text
+maxSelfDrainBatchesPerBackpressure
+maxSelfDrainBytesPerBackpressure
+maxSelfDrainStepsPerBackpressure
+``````
+
+If two or more lanes are mutually blocked by full inboxes, the route-drain owner MUST process self-drain phases in a
+ratified deterministic order, such as ascending `ownerEngineLaneId`, before retrying blocked flushes.
+
+The implementation MUST NOT model circular backpressure as terminal failure until the required self-drain phase has
+either:
+
+- admitted enough inbox capacity for the blocked routed batch;
+- exhausted the resolved self-drain step budget;
+- or classified the route slice under a bounded backpressure outcome.
+
+Allowed terminal classifications include:
+
+``````text
+ROUTE_BACKPRESSURE_DRAINED
+ROUTE_BACKPRESSURE_SELF_DRAIN_EXHAUSTED
+ROUTE_BACKPRESSURE_RETRY_EXHAUSTED
+ROUTE_INBOX_CAP_EXHAUSTED
+ROUTE_SCOPE_QUARANTINED
+ROUTE_PUBLICATION_REJECTED_BEFORE_VISIBILITY
+``````
+
+#### 13.13.4.1.3.2. Cooperative Route-Drain Ownership and Cache-Locality Law
+
+Cooperative route-drain MAY help routing infrastructure make progress.
+
+It is not a general remote work-stealing mechanism.
+
+The preferred shape is owner self-drain.
+
+A producer lane MAY participate only in protocol-assigned routing-control work whose state transition remains attributed
+to the routing infrastructure owner or the deterministic owner lane.
+
+Cooperative drain MUST NOT transfer ownership of:
+
+- candidate staging;
+- duplicate suppression;
+- provisional handle issuance;
+- collision verification;
+- stable id assignment;
+- publication;
+- owner-lane candidate table mutation;
+- or owner-lane stable identity state.
+
+A producer lane MUST NOT directly mutate another owner lane's candidate staging table, duplicate suppression table,
+provisional handle table, or stable-id assignment state.
+
+A producer lane SHOULD NOT read another owner lane's candidate payload buffers, duplicate suppression payload tables, or
+owner-local canonical byte staging regions.
+
+Remote cooperative drain of owner payload material is forbidden by default.
+
+It may be admitted only by an ADR-0042 backend profile that proves all of the following:
+
+- the drain work is bounded;
+- the drain work is attributed to the owner lane's deterministic state machine;
+- the accessed memory is routing-control material rather than hot candidate payload material, or the backend provides
+  explicit cache-locality evidence;
+- the operation does not introduce false sharing or unbounded cache-line bouncing;
+- the operation cannot change stable id assignment, collision verification result, or publication order;
+- and the operation has golden-vector and stress-test coverage.
+
+A profile that cannot prove remote cooperative drain locality MUST use owner self-drain, route-drain control messages,
+bounded retry, route epoch rollover, quarantine, or fail-closed classification instead.
+
+#### 13.13.4.1.4. Producer-Local Suppression Budget and Authority Law
+
+Producer-local route suppression is an optional traffic-reduction mechanism.
+
+It is not equality authority.
+
+It MUST NOT replace owner-lane duplicate suppression, canonical byte encoding, collision verification, deterministic
+stable id assignment, or publication integrity validation.
+
+Producer-local suppression and producer-local route buffers are staging-adjacent structures.
+
+They MUST be charged to the owning route/staging budget.
+
+The charged material includes:
+
+- producer-local suppression entries;
+- producer-local suppression control bytes;
+- per-owner routed batch buffer bytes;
+- per-owner routed batch descriptors;
+- routing-control metadata;
+- and bounded diagnostics attached to suppression or routing-buffer decisions.
+
+A lawful producer-local suppression structure MUST be:
+
+- lane-owned;
+- primitive-substrate compatible;
+- bounded by resolved entry and byte caps;
+- cleared or reconciled at branch/frame/scope/route-epoch boundaries;
+- deterministic in eviction / overwrite behavior;
+- and charged to the owning staging / routing memory envelope.
+
+The resolved budget MUST define, when producer-local suppression is enabled:
+
+``````text
+localRouteSuppressionEntriesCapByEngineLane[engineLaneId]
+localRouteSuppressionBytesCapByEngineLane[engineLaneId]
+localRouteSuppressionBytesCapByIdentityDomain[identityDomainId]
+localRouteSuppressionEvictionCountCap
+``````
+
+The implementation MUST NOT use:
+
+- unbounded producer-local maps;
+- `HashMap` / `HashSet` as committed hot-path suppression state;
+- `ThreadLocal` suppression maps;
+- worker-local suppression maps;
+- runtime-adaptive suppression capacity;
+- object identity;
+- backend handle identity;
+- or recent-seen state that crosses a branch/frame/scope boundary without explicit lifecycle ownership.
+
+A suppression hit may suppress or merge routing traffic only under resolved policy.
+
+It MUST NOT publish a stable id, reject semantic equality, or construct a cache/reuse key.
+
+#### 13.13.4.1.5. Deterministic Route-Skew Handling Law
+
+Route skew must be handled by deterministic ownership policy, not runtime timing.
+
+The implementation MAY classify route pressure using deterministic ledger counters such as:
+
+- routed candidate count by route bucket;
+- routed batch count by route bucket;
+- producer-local suppression hits by route bucket;
+- owner-lane duplicate pre-screen hits by route bucket;
+- owner inbox admission rejections by route bucket;
+- staged bytes by route bucket;
+- and exact unique candidate count by route bucket where already sealed or verified.
+
+The implementation MUST NOT classify skew using:
+
+- queue processing speed;
+- wall-clock latency;
+- CPU utilization;
+- GC pause duration;
+- allocation speed;
+- thread scheduling delay;
+- consumer lag measured by time;
+- or runtime throughput.
+
+A route-range split is lawful only if:
+
+- it occurs at an explicit route-epoch or scope boundary;
+- split inputs are deterministic ledger counters;
+- the split formula is resolved before the new route epoch admits candidates;
+- already-issued provisional handles keep their original owner;
+- newly discovered candidates follow the new route map;
+- route map version changes are recorded in bounded diagnostics;
+- and stable intern id assignment remains based on canonical ordering, not owner lane.
+
+Exact hot-key pressure MUST NOT be solved by splitting the same canonical candidate across multiple owner lanes.
+
+For exact hot keys, the lawful mitigations are bounded duplicate suppression, cached resolved owner-lane material,
+sealed-reference reuse where already published, or fail-closed / quarantine under resolved policy.
+
+Range skew and exact hot-key pressure are distinct classifications.
+
+#### 10.2. ADR-0041 13.13.8.2 Transient Placement, Non-Copying Extension, and Reclamation Lag
+
+#### 13.13.8.2. Transient Resize / Rebuild Memory Spike Law
+
+Resize, rebuild, reindex, migration, and compaction are physical table-placement operations.
+
+They are not semantic-scope expansion.
+
+They MUST NOT change:
+
+- canonical bytes;
+- HID derivation;
+- collision verification result;
+- stable intern id assignment;
+- semantic equality;
+- publication order;
+- planning-visible identity;
+- or the resolved scope candidate cap.
+
+Because the scope candidate cap is resolved before scope admission, a compliant ADR-0041 interner backend MUST NOT use
+whole-table grow-by-copy resize as an ordinary runtime capacity strategy.
+
+A compliant backend MUST use one of the following non-copying or pre-admitted capacity shapes:
+
+- pre-sized table construction from the resolved candidate cap;
+- segmented table extension;
+- paged table extension;
+- incremental page/segment publication;
+- deterministic append-only segment indexing;
+- fixed-capacity staging followed by deterministic seal-time materialization;
+- or another ADR-0042-ratified non-copying substrate profile that avoids whole-table copy spikes.
+
+A backend MUST NOT require an old complete table and a new complete table to be simultaneously live merely to increase
+ordinary candidate capacity.
+
+Whole-table grow-by-copy MAY appear only as:
+
+- a rejected alternative;
+- a non-compliant diagnostic prototype;
+- or a cold offline artifact migration procedure outside the ADR-0041 compliant interner backend.
+
+A cold offline artifact migration procedure is not a planning-visible, staging-visible, or publication-visible ADR-0041
+interner backend.
+
+It MUST have its own adapter-owned budget, lifecycle, diagnostics, and failure policy if it is ever introduced.
+
+This transient interval must be budgeted before scope admission.
+
+`maxTransientRebuildBytes` is a high-water reserve.
+
+It is not the sum of every possible resize / rebuild spike across the scope.
+
+It is also not permission to assume immediate physical memory reclamation after logical release.
+
+Required relationship:
+
+``````text
+maxTransientRebuildBytes
+    >= maxOverAllowedPlacementEvents(
+           transientPlacementBytesForEvent(event)
+       )
+``````
+
+For one admitted placement event:
+
+``````text
+transientPlacementBytesForEvent(event)
+    =
+        liveSourceSegmentOrPageBytesRetainedDuringEvent(event)
+      + newlyAllocatedSegmentOrPageBytes(event)
+      + maxRebuildScratchBytes(event)
+      + maxMigrationMetadataBytes(event)
+      + retiredButNotPhysicallyReclaimedBytesVisibleToEvent(event)
+      + backendAllocatorCommitOverheadBytes(event)
+``````
+
+Where:
+
+``````text
+liveSourceSegmentOrPageBytesRetainedDuringEvent(event)
+    bytes from the source segment/page set that must remain reachable while the event executes.
+
+newlyAllocatedSegmentOrPageBytes(event)
+    bytes for new segment/page/directory material allocated by the event.
+
+retiredButNotPhysicallyReclaimedBytesVisibleToEvent(event)
+    bytes logically retired by prior events but not proven physically reusable by the selected backend profile.
+
+backendAllocatorCommitOverheadBytes(event)
+    deterministic allocator / runtime commit overhead, guard-region cost, page granularity, native allocator overhead,
+    or conservative heap-profile reserve required by ADR-0042 evidence.
+``````
+
+`maxMigrationMetadataBytes` is the deterministic metadata required to track a migration operation.
+
+It includes, where applicable:
+
+- old-to-new slot mapping material;
+- domain-slice remap material;
+- displacement recomputation scratch;
+- generation/state transition metadata;
+- rebuild diagnostics reserved for the migration;
+- segment/page directory transition metadata;
+- and backend-specific migration headers.
+
+##### 13.13.8.2.1. Preferred Segmented / Paged Extension Law
+
+A backend that can satisfy probe, publication, and lookup invariants through segmented, paged, or incremental extension
+MUST prefer that profile over whole-table replacement.
+
+In a segmented or paged profile, the event high-water calculation MUST account for only the simultaneously live material
+for that event.
+
+For example:
+
+``````text
+transientPlacementBytesForSegmentAppend(event)
+    =
+        liveSegmentDirectoryTransitionBytes(event)
+      + newSegmentOrPageBytes(event)
+      + maxRebuildScratchBytes(event)
+      + maxMigrationMetadataBytes(event)
+      + retiredButNotPhysicallyReclaimedBytesVisibleToEvent(event)
+      + backendAllocatorCommitOverheadBytes(event)
+``````
+
+A segmented / paged profile MUST prove:
+
+- deterministic capacity schedule;
+- deterministic segment/page ordering;
+- deterministic lookup/probe sequence across segments or pages;
+- bounded probe work;
+- bounded segment-directory work;
+- stable id independence from physical segment/page placement;
+- safe publication boundary;
+- and ADR-0042 lifecycle/reclamation evidence.
+
+Segmented or paged extension MUST NOT become a hidden semantic-scope expansion mechanism.
+
+The candidate cap and domain caps remain those resolved for the admitted scope.
+
+##### 13.13.8.2.2. Whole-Table Grow-by-Copy Prohibition Law
+
+Whole-table grow-by-copy resize is not a compliant ADR-0041 interner capacity strategy.
+
+The implementation MUST NOT use any of the following on the planning-visible, staging-visible, or publication-visible
+interner path:
+
+``````text
+table X  -> table 2X
+table 2X -> table 4X
+copy all candidates from old complete table to new complete table
+publish replacement solely because ordinary capacity increased
+``````
+
+This prohibition exists because the interner has a resolved candidate cap, resolved byte envelope, resolved probe
+budget,
+and resolved publication boundary before the scope is admitted.
+
+Blind doubling is an amortized general-purpose collection heuristic.
+
+It is not a lawful identity-substrate strategy.
+
+A compliant backend that cannot support pre-sized, segmented, paged, incremental, or otherwise non-copying capacity
+management MUST fail backend-profile admission.
+
+It MUST NOT become compliant by paying a larger transient reserve for whole-table copying.
+
+Whole-table replacement may still be used for a different purpose only if the operation is outside the ADR-0041 runtime
+interner path, such as a cold offline artifact migration adapter with separately admitted budget and lifecycle.
+
+Such a cold procedure MUST NOT be planning-visible and MUST NOT affect stable id assignment for an already admitted
+scope.
+
+##### 13.13.8.2.3. Physical Reclamation Lag Law
+
+Logical release is not physical reclamation.
+
+Dropping a reference, retiring a table, unlinking a segment, leaving a scope, or publishing a replacement table does not
+by itself prove that the bytes are physically reusable.
+
+This is especially true for heap-backed JVM profiles, where GC timing, heap compaction, region reuse, and OS memory
+return are not deterministic protocol events.
+
+A transient reserve may be reused across sequential resize / rebuild / reindex / migration events only after the
+selected
+ADR-0042 backend profile proves one of the following:
+
+- the bytes are still reserved inside the same pre-admitted arena and are immediately reusable by deterministic
+  pointer /
+  offset reset;
+- the backend uses explicit off-heap/native/`MemorySegment` lifetime control and has completed the required release /
+  close / ownership handoff proof;
+- the backend's allocator profile guarantees deterministic reuse of the retired region within the same scope;
+- or the retired bytes remain counted as
+  `retiredButNotPhysicallyReclaimedBytesVisibleToEvent(...)` for the next event.
+
+A heap-backed profile that cannot prove deterministic physical reuse MUST conservatively keep retired table bytes in the
+transient high-water calculation until the owning scope closes or until ADR-0042 evidence admits a stronger reclaim
+boundary.
+
+The implementation MUST NOT:
+
+- treat JVM reference unlinking as proof of physical heap availability;
+- rely on GC timing to satisfy an ADR-0041 memory budget;
+- allocate the next large segment/page/directory first and discover reclamation failure through `OutOfMemoryError`;
+- reuse transient reserve solely because retired material is no longer semantically reachable;
+- or make publication depend on whether the runtime happened to reclaim memory promptly.
+
+##### 13.13.8.2.4. Resize Admission and Zero-Resize Preference Law
+
+A released profile SHOULD prefer zero-resize admission when the resolved candidate cap and byte envelope make it
+feasible.
+
+The capacity solver MAY choose initial logical capacity large enough to satisfy the resolved candidate cap and
+load-factor
+law before ordinary insertion begins.
+
+If a profile intentionally starts below the cap to reduce initial footprint, it MUST declare:
+
+``````text
+maxResizeCountPerScope
+deterministicResizeSchedule
+maxTransientRebuildBytes
+retiredButNotPhysicallyReclaimedBytes policy
+backendAllocatorCommitOverheadBytes policy
+fallback outcome if resize reserve is unavailable
+non-copying extension strategy
+``````
+
+The profile MUST prove that this delayed-capacity strategy does not weaken:
+
+- deterministic capacity feasibility;
+- probe-budget feasibility;
+- staging byte feasibility;
+- publication safety;
+- stable id assignment;
+- or semantic scope boundaries.
+
+A resize may increase logical table capacity through a compliant non-copying extension strategy.
+
+It MUST NOT retroactively admit more candidates than the resolved scope candidate cap allows.
+
+If `maxResizeCountPerScope > 0` or `maxRebuildCountPerScope > 0`, then `maxTransientRebuildBytes` MUST be positive and
+MUST fit inside the scope's resolved transient memory reserve.
+
+A profile that cannot reserve transient placement bytes MUST set:
+
+``````text
+maxResizeCountPerScope  = 0
+maxRebuildCountPerScope = 0
+``````
+
+or fail admission before stable id publication.
+
+The implementation MUST NOT discover the transient spike by actually allocating the new segment/page/directory first.
+
+Admission must prove the transient high-water reserve before allocation.
+
+Overlapping resize / rebuild events in the same scope MUST either:
+
+- be forbidden by policy; or
+- be included in the high-water calculation as simultaneously live events.
+
+#### 10.3. ADR-0041 13.13.17 Backend Profile Handoff
+
+#### 13.13.17. ADR-0042 Backend Profile Handoff Law
+
+ADR-0041 probe budgets are backend-neutral admission contracts.
+
+ADR-0042 substrate profiles must prove that their chosen physical layout and probing strategy satisfy these budgets.
+
+A backend profile must document at least:
+
+- capacity schedule;
+- load-factor support;
+- per-domain capacity partitioning or equivalent isolation;
+- group width;
+- displacement implementation or equivalent bounded progress metric;
+- collision-group representation;
+- hot-slot projection byte cost;
+- physical overhead model;
+- internal fragmentation model;
+- transient rebuild/resize memory model;
+- cold collision structure budget where enabled;
+- read-path locality profile where high-performance lookup is claimed;
+- lane-quota reservation profile for bounded streaming scopes;
+- staged candidate memory model;
+- incremental affected-set traversal budget bridge where applicable;
+- owning memory-envelope integration proof;
+- rebuild/resize strategy;
+- scratch reservation;
+- physical alignment claim if any;
+- fallback behavior;
+- and benchmark / golden-vector evidence.
+
+A backend that cannot prove compliance with the resolved ADR-0041 probe budget MUST fail backend profile admission
+before
+identity scope admission or fall back to a compliant profile.
+
+It MUST NOT weaken the ADR-0041 budget after candidates have been admitted.
+
+#### 10.4. ADR-0041 13.17 Verification Ladder and Inline Verifier Entropy
+
+### 13.17. Verification Ladder Law
+
+Intern-table candidate verification MUST be staged from cache-local metadata to cold payload verification.
+
+Required ordinary verification order:
+
+``````text
+1. occupancy / state check
+2. HID word comparison
+3. identity domain check
+4. version bundle fingerprint check
+5. canonical byte length check
+6. inline verifier prefix check
+7. inline verifier suffix or secondary verifier check
+8. small-inline verification only when the active physical layout selects a branch-bounded inline mode
+9. full canonical byte comparison
+``````
+
+The implementation MUST NOT read the canonical byte slab before the candidate survives the cache-local verification
+stages, except for explicitly measured and justified small-table implementations.
+
+A failure at any verification stage rejects the candidate only for the current equality check.
+
+It MUST NOT mutate semantic identity material.
+
+The verification ladder is a physical acceleration path.
+
+It MUST NOT become semantic equality authority.
+
+Exact canonical verification remains the final equality authority whenever compact metadata is not sufficient.
+
+#### 13.17.1. Inline Verifier Entropy and Selector Law
+
+Inline verifier prefix/suffix material is physical rejection material.
+
+It is not semantic equality authority.
+
+It MUST NOT be assumed effective merely because it is cache-local.
+
+A release claiming inline verifier acceleration MUST define how verifier words are selected from canonical material.
+
+Allowed selector shapes include:
+
+- fixed prefix plus fixed suffix;
+- fixed prefix plus deterministic middle window;
+- deterministic sampled windows selected from canonical byte length and domain-separated candidate route material;
+- compact secondary verifier derived from canonical bytes by a ratified deterministic verifier function;
+- or another ADR-0042-profiled selector with golden-vector coverage.
+
+A verifier selector MUST be:
+
+- deterministic;
+- versioned;
+- domain-separated where derived;
+- independent of runtime frequency distribution;
+- independent of backend traversal order;
+- independent of worker scheduling;
+- independent of live profiling;
+- and fixed before scope admission.
+
+The implementation MUST NOT select verifier windows using:
+
+- current collision observations;
+- live branch-miss feedback;
+- queue depth;
+- CPU utilization;
+- GC behavior;
+- recent candidate history;
+- or source traversal order.
+
+If canonical encodings have common headers, common namespaces, common package prefixes, common envelope bytes, or other
+low-entropy leading material, a prefix-only verifier is a weak physical filter.
+
+A profile MAY still use a prefix-only verifier only if it proves that the selected corpus and domain have sufficient
+rejection power under benchmark and golden-vector evidence.
+
+Otherwise, the profile MUST use a suffix, sampled-window, secondary-verifier, or exact-verification-first strategy.
+
+The resolved verifier policy SHOULD define bounded evidence terms such as:
+
+``````text
+inlineVerifierWordCount
+inlineVerifierSelectorVersion
+maxInlineVerifierFalseSurvivorRatioNumerator
+maxInlineVerifierFalseSurvivorRatioDenominator
+maxVerifierMetadataBytesPerSlot
+``````
+
+The false-survivor ratio is not semantic correctness.
+
+It is a mechanical-sympathy evidence gate used to decide whether keeping verifier words in the hot metadata plane is
+worth the bandwidth.
+
+If the verifier evidence gate is not met, the backend MUST NOT consume hot metadata-plane bytes for ineffective verifier
+words unless a stricter profile explicitly pays that cost and proves no regression.
+
+Changing verifier selector version, verifier word count, or verifier window placement MUST NOT change canonical bytes,
+HID derivation, collision verification result, stable intern id assignment, semantic equality, or publication order.
+
+#### 10.5. ADR-0041 13.18 Small Inline, Segregation, Preclassification, and Fallback
+
+### 13.18. Small Canonical Bytes Inline Law
+
+Small-inline canonical bytes are an optional physical optimization.
+
+They are not a mandatory ADR-0041 compliance requirement.
+
+A compliant implementation MAY inline small canonical byte payloads, or their word-equivalent representation, inside the
+intern metadata plane only when the active resolved physical policy selects a lawful small-inline mode.
+
+Allowed small-inline modes:
+
+- `DISABLED`: every candidate uses sealed slab / canonical byte handle verification;
+- `SEGREGATED_INLINE_TABLE`: inline candidates and external-slab candidates are stored or scanned through separate
+  primitive tables / lanes;
+- `PRECLASSIFIED_TWO_PASS`: candidates are preclassified into inline and external-slab ranges before the hot
+  verification
+  loop;
+- `MEASURED_MIXED`: a mixed inline/external layout is allowed only with benchmark evidence proving that the branch is
+  not
+  a throughput regression for the target workload and runtime.
+
+`MEASURED_MIXED` is never the default high-performance mode.
+
+A high-performance mechanical profile SHOULD prefer `SEGREGATED_INLINE_TABLE` or `PRECLASSIFIED_TWO_PASS` only when the
+profile proves that their extra routing, classification, table-directory, and cache-touch costs do not exceed the branch
+cost they remove.
+
+A hot verification loop SHOULD NOT contain an unpredictable per-candidate branch of the form:
+
+``````text
+if (isSmallInline) {
+    compare inline bytes
+} else {
+    chase slab pointer
+}
+``````
+
+unless `MEASURED_MIXED` is selected by resolved physical policy and justified by benchmark evidence.
+
+The preferred shapes are:
+
+``````text
+inline table
+-> inline verifier loop
+``````
+
+and:
+
+``````text
+external table
+-> sealed slab / canonical byte handle verifier loop
+``````
+
+or:
+
+``````text
+preclassification
+-> inline range verifier
+-> external range verifier
+``````
+
+If the complete canonical byte payload fits within the implementation's small-inline threshold, equality MAY be verified
+without chasing the canonical byte slab only inside a lawful small-inline mode.
+
+The small-inline threshold is a physical implementation policy.
+
+It MUST be fixed before scope admission.
+
+It MUST be benchmarked.
+
+It MUST NOT be selected by live profiling, GC behavior, branch-misprediction feedback, worker timing, or runtime data
+frequency inside an admitted scope.
+
+The small-inline representation MUST be byte-exact and MUST NOT use:
+
+- display strings;
+- object identity;
+- backend-native handles;
+- source text that bypassed canonical ratification;
+- delimiter-joined material.
+
+Changing the small-inline mode, threshold, or table shape MUST NOT change canonical bytes, HID derivation, collision
+verification, stable intern id assignment, or semantic equality.
+
+A release claiming small-inline acceleration MUST publish:
+
+- selected small-inline mode;
+- threshold;
+- expected payload size distribution;
+- branch-miss / throughput benchmark evidence;
+- cache-miss benchmark evidence;
+- routing-fragmentation evidence where owner-lane routing is used;
+- preclassification cache-touch evidence where two-pass classification is used;
+- verifier entropy / false-survivor evidence where inline verifier words are used;
+- and fallback behavior when the benchmark gate is not met.
+
+#### 13.18.1. Inline/External Segregation and Routing Fragmentation Law
+
+Segregating inline candidates from external-slab candidates is a physical table-layout decision.
+
+It MUST NOT silently multiply routing-buffer dimensions, owner inbox dimensions, staged-byte budgets, or
+batch-fragmentation
+surfaces.
+
+A profile using `SEGREGATED_INLINE_TABLE` with owner-lane routing MUST choose one of the following transport shapes
+before
+scope admission:
+
+``````text
+ROUTE_NEUTRAL_TRANSPORT
+    candidates are routed by owner/domain/route epoch/scope only;
+    the owner lane classifies inline vs external after route admission.
+
+ROUTE_SEGREGATED_TRANSPORT
+    candidates are routed by owner/domain/route epoch/scope/table-shape;
+    routing budgets include the additional table-shape dimension.
+
+OWNER_LOCAL_SEGREGATION_ONLY
+    transport remains route-neutral;
+    segregation begins only after the owner lane accepts the batch.
+``````
+
+`ROUTE_NEUTRAL_TRANSPORT` or `OWNER_LOCAL_SEGREGATION_ONLY` is preferred unless the backend proves that route-level
+segregation improves throughput without unacceptable batch fragmentation.
+
+If `ROUTE_SEGREGATED_TRANSPORT` is selected, the resolved routing budget MUST include at least:
+
+``````text
+maxRoutedBatchBuffersByTableShape[tableShape]
+maxRoutedBatchBufferBytesByOwnerLaneAndTableShape[producerEngineLaneId][ownerEngineLaneId][tableShape]
+maxPendingRoutedBatchesPerOwnerLaneAndTableShape[ownerEngineLaneId][tableShape]
+boundaryFlushHeadroomBatchesByOwnerLaneAndTableShape[ownerEngineLaneId][tableShape]
+boundaryFlushHeadroomBytesByOwnerLaneAndTableShape[ownerEngineLaneId][tableShape]
+maxSegregationFragmentationRatioNumerator
+maxSegregationFragmentationRatioDenominator
+``````
+
+The implementation MUST prove that segregation does not collapse routed batches into systematic half-filled or
+one-candidate batches for the admitted workload class.
+
+Segregation-driven batch fragmentation MUST be measured or bounded using deterministic counters.
+
+It MUST NOT be justified by wall-clock throughput, live queue depth, CPU utilization, GC behavior, or adaptive runtime
+profiling inside an admitted scope.
+
+If the additional table-shape routing dimension cannot be budgeted, the profile MUST keep transport route-neutral and
+perform inline/external segregation only inside the owner lane.
+
+#### 13.18.2. Preclassification Cache-Touch Evidence Law
+
+`PRECLASSIFIED_TWO_PASS` removes a branch from the hot verifier loop by adding classification work before verification.
+
+That classification work is not free.
+
+A profile selecting `PRECLASSIFIED_TWO_PASS` MUST prove, before scope admission, that the added classification pass does
+not exceed the branch-miss cost it removes for the selected workload and backend profile.
+
+The resolved physical policy SHOULD declare bounded evidence terms such as:
+
+``````text
+maxPreclassificationCandidateCount
+maxPreclassificationBytesRead
+maxPreclassificationMetadataBytesWritten
+maxPreclassificationScratchBytes
+maxPreclassificationPasses
+maxPreclassificationCacheTouchBytes
+maxPreclassificationToVerificationWorkingSetBytes
+maxPreclassificationChunkCandidateCount
+maxPreclassificationChunkBytes
+maxPreclassificationChunkScratchBytes
+maxPreclassificationChunkMetadataBytes
+``````
+
+A two-pass profile MUST fail profile admission or fall back to `DISABLED`, `SEGREGATED_INLINE_TABLE`, or an admitted
+`MEASURED_MIXED` profile if it cannot prove:
+
+- classification work is bounded;
+- classification scratch is budgeted;
+- classification metadata is deterministic;
+- classification ordering is deterministic;
+- the verification pass consumes the classified ranges deterministically;
+- the working set is small enough, or the backend evidence shows that the second pass does not suffer unacceptable
+  cache-miss regression;
+- and classification does not change semantic identity or stable id assignment.
+
+##### 13.18.2.1. Chunked Preclassification Locality Law
+
+A `PRECLASSIFIED_TWO_PASS` implementation SHOULD process candidates in bounded cache-local chunks when the full
+candidate
+set may exceed the selected backend's verified cache-local working-set envelope.
+
+The preferred physical shape is:
+
+``````text
+for each deterministic candidate chunk:
+    preclassify inline/external shape for the chunk
+    verify the inline range for the chunk
+    verify the external range for the chunk
+    release or reuse chunk-local classification scratch
+``````
+
+The preferred physical shape is not:
+
+``````text
+preclassify the entire collection
+-> later verify the entire collection
+``````
+
+unless the profile proves that the full preclassification-to-verification working set remains within the admitted cache
+and memory envelope.
+
+The chunk policy MUST be resolved before scope admission.
+
+It SHOULD define:
+
+``````text
+preclassificationChunkCandidateCount
+preclassificationChunkBytes
+preclassificationChunkScratchBytes
+preclassificationChunkMetadataBytes
+preclassificationChunkOrderVersion
+``````
+
+The chunk policy MUST be deterministic.
+
+It MUST NOT be selected by live cache-miss feedback, live branch-miss feedback, wall-clock time, queue depth, CPU
+utilization, GC behavior, worker timing, or current run frequency distribution.
+
+Chunking MUST NOT change canonical bytes, HID derivation, collision verification result, stable intern id assignment,
+semantic equality, publication order, or routing ownership.
+
+A backend profile MAY call this cache-sized, L1-sized, cache-local, blocked, or chunked preclassification.
+
+The normative requirement is not a specific cache size.
+
+The normative requirement is that the implementation bound the preclassification-to-verification working set and avoid
+sweeping an unbounded collection twice when the evidence gate cannot prove locality.
+
+The implementation MUST NOT claim `PRECLASSIFIED_TWO_PASS` mechanical advantage merely because it removes a branch if it
+introduces a second unbounded memory pass over data that will not remain cache-local.
+
+The implementation MUST NOT select `PRECLASSIFIED_TWO_PASS` merely because branch removal is theoretically attractive.
+
+It MUST prove that the extra pass is beneficial or at least non-regressive under ADR-0042 benchmark gates.
+
+The implementation MUST NOT use live branch-misprediction feedback, live cache-miss feedback, runtime data frequency,
+worker timing, or GC behavior to switch into or out of `PRECLASSIFIED_TWO_PASS` inside an admitted scope.
+
+#### 13.18.3. Inline Optimization Fallback Law
+
+If the selected inline optimization profile fails its routing-fragmentation, preclassification, verifier-entropy, or
+benchmark gate, the implementation MUST use a resolved fallback profile.
+
+Allowed fallback profiles:
+
+- `DISABLED`;
+- route-neutral owner-local segregation;
+- a stricter `SEGREGATED_INLINE_TABLE` profile with proven routing budget;
+- or an admitted `MEASURED_MIXED` profile with benchmark evidence.
+
+The fallback profile MUST be selected before scope admission.
+
+It MUST NOT be selected by live profiling inside an admitted scope.
+
+Failure of a physical inline optimization gate is not semantic inequality.
+
+It is a backend/profile admission failure or a physical-optimization fallback decision.
+
+It MUST NOT alter canonical bytes, HID derivation, collision verification, stable intern id assignment, semantic
+equality,
+or publication order.
+
+#### 10.6. ADR-0041 13.25.1 Physical Locality Backend Isolation
+
+### 13.25.1. Physical Locality Backend Isolation Law
+
+NUMA-local, CPU-local, worker-local, lane-local, off-heap-local, or native-local placement is physical implementation
+material.
+
+It is not metadata identity material.
+
+A physical backend MAY choose local arenas to reduce cache snooping, memory bandwidth contention, or allocator pressure.
+
+The backend MUST expose only deterministic sealed identity material to ADR-0041 publication.
+
+The core MUST NOT observe:
+
+- physical memory address;
+- NUMA node id;
+- native allocation id;
+- off-heap base pointer;
+- worker-local buffer id;
+- arena allocation order;
+- or placement-dependent timing.
+
+A v1 high-performance backend MAY use off-heap or `MemorySegment` arenas for local staging if it proves:
+
+- explicit ownership;
+- bounded lifetime;
+- deterministic merge input;
+- no staging-slab escape;
+- no publication before seal;
+- and cross-backend equivalence.
+
+#### 10.7. ADR-0041 14.4 Hot TypeReference Carrier Physical Mechanics
+
+#### 14.4.1. Hot TypeReference Carrier Packing Law
+
+Hot-path TypeReference identity references MUST use primitive carrier material.
+
+A compliant implementation MUST declare a TypeReference carrier profile before scope admission.
+
+Allowed carrier profiles:
+
+``````text
+TABLE_PROVEN_LOCAL_ID32
+    localStableInternId32 is carried alone.
+    scope, domain, and interning protocol proof are supplied by table-level proof, lane-local table context, frozen image
+    proof, or another already-validated boundary.
+
+PACKED_LOCAL_REF64
+    a single u64 carrier packs a scope-local or table-local reference profile.
+    The bit layout is resolved by policy and golden-vector covered.
+
+PACKED_REF128
+    two u64 carriers carry reference and proof material where one word is insufficient.
+    The pair is still primitive carrier material and must not require wrapper allocation.
+
+SOA_PROOF_COLUMNS
+    proof material is carried in structure-of-arrays primitive columns controlled by the owning table / slab / arena.
+    Consumers pass primitive indexes or word pairs, not object wrappers.
+
+COLD_FULL_PROOF_TUPLE
+    the full logical proof tuple may appear only at cold boundaries, diagnostics, API facades, or validation adapters.
+``````
+
+`PACKED_LOCAL_REF64` is preferred for hot loops when the resolved table/domain/scope envelope makes it sufficient.
+
+However, ADR-0041 does not impose one universal bit layout such as `scope16 + id48` on every domain.
+
+The bit allocation must be resolved by policy because different scopes may require different capacities.
+
+A `PACKED_LOCAL_REF64` profile MUST declare:
+
+``````text
+packedRefProfileId
+scopeBits
+localStableInternIdBits
+identityDomainBits where carried
+protocolEpochBits where carried
+reservedSentinelBits
+maxScopeOrdinal
+maxLocalStableInternId
+maxIdentityDomainOrdinal where carried
+maxProtocolEpochOrdinal where carried
+``````
+
+Required relationships:
+
+``````text
+scopeBits
++ localStableInternIdBits
++ identityDomainBits
++ protocolEpochBits
++ reservedSentinelBits
+    <= 64
+``````
+
+All packing, masking, shifting, and sentinel remapping MUST use checked primitive arithmetic.
+
+A value that exceeds its resolved bit field MUST fail closed before carrier publication.
+
+The implementation MUST NOT silently truncate.
+
+If a domain cannot fit its required hot proof into `PACKED_LOCAL_REF64`, it MUST select `PACKED_REF128`,
+`SOA_PROOF_COLUMNS`, table-level proof, or a cold boundary.
+
+It MUST NOT allocate per-candidate wrapper objects to carry the overflow.
+
+Primitive carrier material MUST NOT be treated as semantic equality without table validation and collision verification.
+
+Carrier equality is at most a pre-screen for already validated table/scope/protocol context.
+
+Changing carrier packing layout MUST NOT change canonical bytes, HID derivation, collision verification result, stable
+intern id assignment, semantic equality, or publication order.
+
+#### 14.4.2. Hot Carrier Allocation Prohibition Law
+
+The following are forbidden in ordinary hot-path TypeReference intern tables, frozen row arrays, planning hot loops, and
+L2 exact-match keys:
+
+- per-candidate wrapper objects;
+- boxed primitive tuples;
+- data-class carrier allocation;
+- generic `Pair` / `Triple` carrier allocation;
+- per-candidate `IntArray` / `LongArray` / `ByteArray` carrier allocation;
+- interface-dispatched carrier objects;
+- reflection-based carrier views;
+- backend handle carriers.
+
+Allowed hot-path representations include:
+
+- primitive local variables;
+- primitive method parameters where inlining evidence exists;
+- primitive array columns owned by a table/slab/arena;
+- packed `Long` carriers;
+- two-word primitive carriers where resolved;
+- and table-level proof plus local primitive id.
+
+Any cold facade must be constructed only outside the hot path and must be explicitly marked as a boundary view.
+
+## 11. Required Domain Registry
 
 Every domain that uses primitive substrates MUST register:
 
@@ -1599,9 +2991,9 @@ It MUST NOT collapse them into one concept.
 
 A backend may be replaced only if the replacement satisfies the same lifecycle law and cross-backend equivalence tests.
 
-## 11. Consequences
+## 12. Consequences
 
-### 11.1. Positive Consequences
+### 12.1. Positive Consequences
 
 - physical backends can evolve from heap primitive arrays to `MemorySegment`, off-heap, native-aligned, mapped, or
   generated layouts without changing core identity law;
@@ -1609,28 +3001,32 @@ A backend may be replaced only if the replacement satisfies the same lifecycle l
   implementation details;
 - v2 physical acceleration can be admitted behind ports with golden-vector equivalence rather than by rewriting
   canonical identity logic;
+- ADR-0041 physical/backend-facing laws now have a dedicated maintenance surface instead of continuing to bloat the
+  metadata identity ADR;
 - Mechanical sympathy becomes auditable rather than scattered across ADR-0041.
 - Primitive substrates can be introduced without losing lifecycle authority.
 - Metadata, frozen, planning, L2, VM, and reporting can reuse the same lifecycle vocabulary.
 - Thread-local, coroutine-local, scheduler-owned, and worker-owned hidden state is excluded from core authority.
 - Published immutable slabs have a uniform reclamation model.
 
-### 11.2. Negative Consequences
+### 12.2. Negative Consequences
 
 - substrate ports and physical backends add one explicit architectural seam;
 - low-level implementations must maintain cross-backend equivalence tests;
 - benchmark fixtures and runtime-profile evidence become mandatory for stronger physical claims;
+- ADR-0042 becomes larger because it now owns routed-batch, backpressure, inline-verifier, preclassification, carrier,
+  and reclamation mechanics extracted from ADR-0041;
 - More lifecycle states must be modeled explicitly.
 - Primitive performance work requires ownership and reclamation evidence.
 - Some simple JVM object patterns become unacceptable in committed hot paths.
 - Benchmark and leak-test burden increases.
 
-### 11.3. Accepted Trade-off
+### 12.3. Accepted Trade-off
 
 Kontrakt accepts explicit primitive lifecycle governance because object-allocation reduction without ownership law would
 merely move nondeterminism from GC behavior into hidden slab, lane, and callback behavior.
 
-## 12. Final Rule
+## 13. Final Rule
 
 Mechanical sympathy is not an implementation preference.
 
