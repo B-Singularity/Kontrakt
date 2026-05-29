@@ -60,36 +60,51 @@ A domain is only the set of values a machine may receive.
 
 It is not the machine's state.
 
-## Machine State Is Not Valuation Space
-
-When all software variables are treated like coordinates of a physical state space, state becomes a Cartesian product:
+This mistake becomes destructive when software state is built as a Cartesian product of value domains:
 
 ```text
-X × Y × Z × ...
+A × B × C × ...
 ```
 
-This may help certain proof techniques.
+Each added dimension multiplies the number of possible points.
 
-But it is not a good definition of machine state.
+That does not produce a better machine-state model.
 
-A machine is not defined by the Cartesian product of all possible input dimensions and variable valuations.
+It produces combinatorial value-space expansion.
 
-A machine is defined by the conditions under which its transitions are legal.
+A machine whose state is defined as the Cartesian product of all possible variable values cannot remain a
+well-controlled machine.
 
-Machine state is therefore:
+Its state vocabulary is no longer explicit, small, named, or transition-governing.
 
-> the machine-owned condition that determines what transitions are legal next.
+This contradicts the idea of a good machine.
 
-A value becomes state only when the machine owns it, preserves it across a transition boundary, and uses it to govern
-future transitions.
+A good machine should reduce control to explicit states and legal transitions.
 
-Raw input is not state.
+It should not inflate state into the full product of every possible data combination.
+
+Therefore, treating Cartesian value space as machine state is not merely a harmless abstraction.
+
+It makes the machine harder to control, harder to reason about, harder to recover, and harder to diagnose.
+
+## Machine State Is Not Valuation Space
+
+Machine state is not the set of all possible variable valuations.
+
+Machine state is the condition owned by the machine that determines what the machine may legally do next.
+
+A value becomes state only when the machine owns it, preserves it across a transition boundary, and uses it to determine
+future transition legality.
+
+A raw input value is not state.
 
 A payload is not state.
 
 A function argument is not state.
 
-A temporary value is not state.
+A temporary variable is not state.
+
+A value becomes state only when it is accepted into the machine's own transition structure.
 
 ## Software as Composed Transitions
 
