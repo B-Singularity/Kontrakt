@@ -18,17 +18,17 @@ The contract model that follows from it is rejected.
 The core objection is this:
 
 > Findler-style contracts place contract authority too close to runtime objects, classes, methods, getters, wrappers,
-> subtype hierarchies, and implementation bodies.
+> subtype hierarchies, higher-order function wrappers, blame tracking, and implementation bodies.
 
 That confuses contract authority with host-language implementation machinery.
 
 A contract must not depend on a class body, a private field, a getter, a wrapper object, a subtype hierarchy,
-inheritance, override, or a method-local runtime check.
+inheritance, override, a higher-order proxy, dynamic blame tracking, or a method-local runtime check.
 
 A contract fact must be admitted, lowered, normalized, and published as immutable material.
 
-Subtyping, inheritance, class structure, and object-oriented encapsulation may remain host-language implementation
-techniques.
+Subtyping, inheritance, class structure, higher-order functions, and object-oriented encapsulation may remain
+host-language implementation techniques or authoring conveniences.
 
 They are not contract authority.
 
@@ -133,6 +133,35 @@ A clause may be composed with another clause.
 If two clauses conflict, the composition is invalid.
 
 If two clauses do not conflict, the result is simply a larger contract.
+
+### 4. Higher-order functions reveal the weakness of runtime contract wrapping
+
+Higher-order functions expose an important problem:
+
+> a function value is not ordinary data.
+
+A function value is executable capability.
+
+It may carry:
+
+- future execution;
+- hidden control flow;
+- closure environment;
+- captured state;
+- callback behavior;
+- host-language dispatch;
+- runtime effects.
+
+Findler-style higher-order contracts reveal what happens when executable behavior is allowed to cross a contract
+boundary.
+
+That situation is rejected for this contract theory.
+
+The accepted lesson is limited:
+
+> executable behavior must not be allowed into canonical contract material.
+
+The rejected solution is runtime proxy wrapping and dynamic blame tracking.
 
 ## What Is Rejected
 
@@ -880,6 +909,243 @@ host subtype hierarchy
 -> contract authority
 ```
 
+### 16. Higher-order functions and higher-order composition are not contract material
+
+A higher-order function is a function that receives a function, returns a function, or treats a function as a value.
+
+That may be useful as a host-language authoring technique.
+
+It may reduce repeated loops.
+
+It may express callback, strategy, map, filter, fold, or composition patterns.
+
+But a function value is not ordinary material.
+
+A function value is executable capability.
+
+It carries future execution.
+
+It may carry hidden control flow, captured state, closure environment, runtime effects, and indirect calls.
+
+The rejected move is:
+
+```text
+function value
+= contract material
+```
+
+That is not accepted.
+
+The accepted rule is:
+
+```text
+A higher-order function is not accepted as contract material.
+
+A higher-order function is not accepted as contract authority.
+
+If a host language uses higher-order syntax as authoring convenience, that syntax must be eliminated before contract authority is formed.
+
+Systems must not carry the higher-order function forward.
+
+It must extract only an explicitly declared operation, predicate, projection, ordering law, transition, or policy rule.
+
+The target form must be explicit:
+
+```text
+OperationId
+PredicateId
+ProjectionId
+OrderingLawId
+TransitionId
+PolicyRuleId
+```
+
+not an opaque closure.
+
+A good machine may be compositional.
+
+But its composition must be explicit pipeline composition, not higher-order behavioral packaging.
+
+The rejected model is:
+
+```text
+compose(f, g)
+-> closure h
+-> h hides f, g, captured environment, and future control flow
+```
+
+This may look like mathematical composition.
+
+But in a machine, it hides behavior inside executable values.
+
+It may introduce:
+
+- closure allocation;
+- captured state;
+- indirect calls;
+- wrapper chains;
+- proxy mediation;
+- call-stack opacity;
+- blame metadata;
+- branch unpredictability.
+
+The accepted semantic model is pipeline composition:
+
+```text
+input material
+-> Stage G
+-> explicit intermediate material
+-> Stage F
+-> output material
+```
+
+A pipeline stage has:
+
+- a name;
+- input material;
+- output material;
+- edge obligation;
+- failure boundary;
+- resource envelope;
+- diagnostic surface.
+
+That is contract-visible.
+
+Higher-order closure composition is not.
+
+The final rule is:
+
+```text
+Pipeline is the semantic form.
+Fusion is the mechanical optimization.
+Higher-order closure is neither contract authority nor good machine structure.
+```
+
+This means that a pipeline may be optimized mechanically.
+
+A runtime may fuse stages, remove allocation, use primitive arrays, and execute flat loops.
+
+But that optimization must preserve the explicit semantic pipeline.
+
+The contract authority remains in the explicit stages and edges, not in hidden closures.
+
+### 17. Runtime proxy and blame tracking are rejected
+
+Findler's higher-order contract model depends heavily on runtime proxy wrapping and blame tracking.
+
+When a function crosses a boundary, it may be wrapped so that future calls can check arguments, check results, and
+decide who violated the contract.
+
+This turns the runtime into a court.
+
+It asks, during execution:
+
+```text
+Who is to blame?
+The caller?
+The callee?
+The provider of the function?
+The receiver of the function?
+```
+
+This contract theory rejects that model.
+
+A runtime engine is not a court.
+
+A runtime engine is a factory.
+
+Bad material should be rejected at the boundary.
+
+Accepted material should be lowered into canonical form before it enters the worker path.
+
+The rejected structure is:
+
+```text
+function crosses boundary
+-> wrap with contract proxy
+-> carry proxy into runtime
+-> check on every call
+-> track blame dynamically
+```
+
+The accepted structure is:
+
+```text
+boundary input
+-> reject invalid material
+-> or lower accepted material into canonical form
+-> execute explicit machine-owned stages
+```
+
+Dynamic blame tracking may be useful for debugging languages or educational contract systems.
+
+It is not contract authority for this theory.
+
+The contract system should not carry proxy-wrapped executable behavior into the runtime and later ask who is guilty.
+
+### 18. Recursion and higher-order functions hide the same kind of control
+
+This theory has the same objection to higher-order closure flow that it has to recursion as machine authority.
+
+Recursion hides control state in the call stack.
+
+Higher-order functions hide control state in executable values.
+
+Both move machine control out of explicit contract material.
+
+The rejected forms are:
+
+```text
+recursive call chain
+-> control hidden in call stack
+```
+
+and:
+
+```text
+closure / callback / higher-order value
+-> control hidden in executable value
+```
+
+The accepted forms are:
+
+```text
+implicit call stack
+-> explicit machine-owned stack
+```
+
+and:
+
+```text
+implicit closure flow
+-> explicit machine-owned pipeline stage
+```
+
+A good machine must own its control state.
+
+The contract position is strict:
+
+```text
+Higher-order functions are not allowed as contract authority.
+Recursive control is not allowed as contract authority.
+Both must be replaced by explicit machine-owned stages, stacks, and pipelines before canonical material is formed.
+```
+
+It must own:
+
+- stage order;
+- intermediate material;
+- budget consumption;
+- suspension point;
+- failure point;
+- diagnostic evidence;
+- transition legality.
+
+Therefore, higher-order behavior must not enter the core as contract authority.
+
+It must be lowered into explicit stages, explicit material, explicit edges, explicit failure boundaries, and explicit
+resource governance.
+
 ## Accepted Replacement Model
 
 The accepted model is:
@@ -897,6 +1163,10 @@ Raw host material
     proxy object
     subtype instance
     inherited implementation
+    higher-order function
+    closure
+    callback
+    proxy-wrapped function
 
         ↓
 
@@ -907,6 +1177,7 @@ Boundary Contract
     wrapper erasure
     direction check
     version check
+    executable-capability rejection or classification
 
         ↓
 
@@ -918,6 +1189,7 @@ Role Classification
     operation
     policy
     diagnostic
+    pipeline stage
 
         ↓
 
@@ -933,6 +1205,17 @@ Contract Composition
     required clauses selected
     conflicts detected
     obligations preserved
+    no subtype hierarchy
+
+        ↓
+
+Pipeline Formation
+    explicit stages
+    explicit input material
+    explicit output material
+    explicit edge obligations
+    explicit failure boundaries
+    explicit resource governance
 
         ↓
 
@@ -945,6 +1228,8 @@ Lowering Contract
     host-object removal
     class-shape removal
     hierarchy removal
+    closure removal
+    proxy removal
 
         ↓
 
@@ -957,6 +1242,8 @@ Canonical Contract Material
     contract-owned
     hierarchy-free
     class-authority-free
+    closure-free
+    proxy-free
 
         ↓
 
@@ -970,8 +1257,8 @@ Mechanical Runtime Representation
     bounded diagnostics
 ```
 
-The contract authority begins only after guard, role classification, segmentation, composition, lowering, normalization,
-and canonical publication.
+The contract authority begins only after guard, role classification, segmentation, composition, pipeline formation,
+lowering, normalization, and canonical publication.
 
 ## Final Judgment
 
@@ -983,7 +1270,8 @@ Accepted:
 2. interface shape is not full contract;
 3. relational obligations between values, methods, and boundaries matter;
 4. contract duplication is a real problem;
-5. class-shaped syntax may be tolerated as a host-language frontend for immutable fact declarations.
+5. class-shaped syntax may be tolerated as a host-language frontend for immutable fact declarations;
+6. higher-order contracts reveal the danger of letting executable behavior cross boundaries.
 
 Rejected:
 
@@ -999,9 +1287,15 @@ Rejected:
 10. implementation bodies as contract subjects;
 11. algorithms inside classes as contract meaning;
 12. subtyping as contract preservation;
-13. inheritance as contract inheritance;
-14. override as contract refinement;
-15. hierarchy as the solution to duplicated obligations.
+13. subtyping as contract variation;
+14. subtyping as contract reuse;
+15. inheritance as contract inheritance;
+16. override as contract refinement;
+17. hierarchy as the solution to duplicated obligations;
+18. higher-order functions, higher-order closure composition, and recursive control as contract material or good machine
+    structure;
+19. runtime proxy wrapping as contract authority;
+20. dynamic blame tracking as contract authority.
 
 The final judgment is:
 
@@ -1011,10 +1305,20 @@ The final judgment is:
 This contract theory keeps the need for richer obligations.
 
 It rejects the placement of contract authority inside classes, wrappers, getters, private fields, object methods,
-runtime assertion surfaces, subtype hierarchies, and inherited implementations.
+runtime assertion surfaces, subtype hierarchies, inherited implementations, higher-order proxies, and dynamic blame
+tracking.
 
 Contracts are not classes.
 
 Contracts are not inherited.
 
+Contracts are not subtyped.
+
+Contracts are not closures.
+
 Contracts are segmented, composed, lowered, and published as canonical material.
+
+A good machine is not a runtime court.
+
+A good machine is an explicit pipeline of admitted material, declared stages, bounded resources, and diagnosable
+failures.
