@@ -1209,7 +1209,211 @@ The internal realization is how the contract is realized, checked, lowered, diag
 
 This preserves Barbara's useful hiding idea while rejecting package-level contract authority.
 
-## 25. Current Working Rule
+
+---
+
+## 25. Subtyping, Overriding, and Overloading Are Not Contract Structure
+
+Barbara's discussion of subtyping, overriding, and overloading should be treated carefully.
+
+The host language may allow these mechanisms.
+
+That does not make them contract authority.
+
+The rejected interpretation is:
+
+```text
+subtype relation
+override
+overload
+= contract structure
+```
+
+This is not accepted.
+
+From this contract theory's perspective, these mechanisms are mostly host-language compatibility and reuse devices.
+
+They are not the proper way to define, modify, or reuse contracts.
+
+### 25.1 Subtyping Is Host-Language Compatibility
+
+Subtyping may provide callable compatibility.
+
+It may let one implementation be used where another type is expected.
+
+But it does not prove contract preservation.
+
+The rejected move is:
+
+```text
+B is a subtype of A.
+Therefore B preserves A's contract.
+```
+
+That does not follow.
+
+A contract relation must be explicit.
+
+A realization may satisfy a contract only if its behavior is checked against canonical contract material.
+
+The subtype relation itself is not enough.
+
+### 25.2 Contract Change Means Different Contract
+
+Object-oriented theory often tries to preserve subtype compatibility by allowing controlled changes to preconditions and
+postconditions.
+
+From this contract theory's perspective, that framing is weak.
+
+If the admitted input changes, the contract has changed.
+
+If the emitted guarantee changes, the contract has changed.
+
+If the failure behavior changes, the contract has changed.
+
+If the state transition or publication condition changes, the contract has changed.
+
+The correct response is not to hide the change inside a subtype.
+
+The correct response is:
+
+```text
+new contract
+new version
+or explicit contract composition
+```
+
+Working rule:
+
+```text
+If the obligation is preserved, it is the same contract with a different realization.
+
+If the obligation changes, it is a different contract.
+```
+
+### 25.3 Overriding Must Not Modify Contract Meaning
+
+Overriding is an implementation mechanism.
+
+It replaces or specializes a method body.
+
+It must not replace the contract.
+
+The rejected move is:
+
+```text
+override method
+-> silently change contract meaning
+```
+
+An override may be tolerated only when the new implementation remains a realization of the same contract.
+
+If the override changes required facts, emitted facts, failure behavior, state transition, or publication condition, it
+is no longer the same contract.
+
+It must be declared as a separate contract or version.
+
+Working rule:
+
+```text
+Implementation may vary.
+Contract meaning must not be silently overridden.
+```
+
+### 25.4 Overloading Is Name Reuse, Not Contract Reuse
+
+Overloading is not contract structure.
+
+Two operations with the same name but different parameter material are different operation contracts unless explicitly
+composed under a higher-level contract.
+
+The shared name is a host-language convenience.
+
+It is not semantic identity.
+
+The rejected move is:
+
+```text
+same method name
+-> same contract
+```
+
+For example:
+
+```text
+pay(amount: Int)
+pay(currency: String)
+```
+
+These do not become one contract merely because they share the name `pay`.
+
+They require different material.
+
+They may require different guards.
+
+They may require different lowering.
+
+They may emit different failures.
+
+Therefore, they should be treated as distinct operation contracts unless a separate contract explicitly groups them.
+
+### 25.5 Composition Replaces Inheritance
+
+The real pressure behind subtyping and inheritance is often reuse.
+
+Many contracts share repeated terms.
+
+Some contracts differ only in a small number of terms.
+
+But inheritance is the wrong answer.
+
+Repeated terms should be factored into explicit contract clauses.
+
+Different terms should remain separate.
+
+Concrete contracts are formed by composition:
+
+```text
+SharedCustomerIdentityClause
++ PositiveAmountClause
++ PaymentApprovalClause
+```
+
+not by hierarchy:
+
+```text
+PaymentContract extends BaseContract
+```
+
+Avoid `base contract` language when it suggests inheritance.
+
+Prefer:
+
+```text
+contract clause
+contract segment
+contract composition
+```
+
+### 25.6 Working Rule for This Reading
+
+The working rule is:
+
+```text
+Subtyping is not contract preservation.
+
+Overriding is not contract modification.
+
+Overloading is not contract reuse.
+
+Inheritance is not contract composition.
+
+A contract is preserved, composed, versioned, or replaced.
+
+If the contract changes, write a new contract.
+```
+
+## 26. Current Working Rule
 
 The current working rule is:
 
@@ -1223,6 +1427,10 @@ Do not treat abstraction as class genealogy.
 Do not treat package hiding as contract authority.
 Do not expose non-contractual bypass paths as public API.
 Do not let implementation publish truth directly.
+Do not treat subtype hierarchy as contract structure.
+Do not treat overriding as contract modification.
+Do not treat overloading as contract reuse.
+Do not use inheritance as contract composition.
 
 Decompose by contract selection and contract dependency.
 Represent dependencies as a DAG of contract terms, facts, and stages.
@@ -1254,8 +1462,5 @@ what evidence it leaves
 ```
 
 The composed DAG must be checked against the original problem contract.
-
----
-
 
 This draft stops here.
