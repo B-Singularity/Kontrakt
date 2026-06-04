@@ -83,13 +83,15 @@ The general abstraction problem is contract selection.
 
 The machine problem is contract realization.
 
-A module may implement a selected contract.
+A module may realize a selected contract.
 
 A module may support a stage.
 
 A module may organize code used by a stage.
 
 But a module does not define contract authority.
+
+Implementation is only a backend realization of contract meaning.
 
 ---
 
@@ -952,7 +954,262 @@ A worker processes the current material, emits accepted output or declared failu
 
 ---
 
-## 23. Current Working Rule
+---
+
+---
+
+## 23. Implementation as Shadow Realization
+
+Implementation must be described carefully.
+
+In this contract theory, implementation is not a parallel source of meaning.
+
+Implementation is a shadow realization of the contract.
+
+The contract owns meaning.
+
+Implementation realizes that meaning in a backend-specific way.
+
+All meaningful flow should pass through contract material:
+
+```text
+accepted facts
+declared boundaries
+declared transitions
+declared failures
+publication decisions
+```
+
+An implementation may use objects, callbacks, channels, repositories, platform APIs, or framework mechanisms internally.
+
+But those mechanisms must not become contract authority.
+
+The implementation should behave like a black box:
+
+```text
+accepted contract material
+-> implementation realization
+-> candidate fact / candidate transition
+-> Kontrakt judgment
+-> accepted fact / accepted transition / declared failure
+```
+
+The implementation does not publish truth directly.
+
+It produces candidates.
+
+Kontrakt judges whether those candidates can become accepted contract material.
+
+This is why contract and implementation must not be mixed.
+
+If implementation and contract are mixed, replacing an implementation changes the contract meaning.
+
+That is rejected.
+
+A realization must remain replaceable as long as it preserves the same contract obligations.
+
+Working rule:
+
+```text
+Implementation computes.
+Contract defines.
+Kontrakt judges.
+Only accepted contract material flows forward.
+```
+
+## 24. Package Hiding as Contract Entry Protection
+
+Barbara's package discussion can be useful if it is not treated as contract authority.
+
+The useful point is hiding.
+
+The rejected interpretation is:
+
+```text
+package boundary
+= contract authority
+```
+
+A package should not define contract meaning.
+
+A package should not own the contract.
+
+A package should not prove that the implementation satisfies the contract.
+
+However, package-level hiding can still be useful as a structural protection mechanism.
+
+In Kontrakt, the package should expose only the official contract entrypoint of a pipeline or use case.
+
+Everything else should remain hidden as realization support.
+
+The purpose is not merely information hiding.
+
+The purpose is to reduce non-contractual entry paths.
+
+### 24.1 Public Entry Should Be the Contract Boundary
+
+A pipeline or use case should have one intended public ingress.
+
+That public ingress may be:
+
+```text
+interface contract surface
+boundary port
+operation contract surface
+service contract facade
+state-machine command entrypoint
+```
+
+The public entrypoint is the point where Kontrakt can attach or verify:
+
+```text
+admission rule
+required terms
+emitted terms
+state transition rule
+failure vocabulary
+realization binding
+conformance tests
+```
+
+Other helpers should not be equally public.
+
+If internal helpers are public, callers can bypass the intended contract path.
+
+That makes the package structure hostile to contract verification.
+
+### 24.2 Internal Realization Should Stay Behind the Boundary
+
+Internal realization support may include:
+
+```text
+guard helper
+lowering helper
+mapper
+transition helper
+repository adapter
+diagnostic mapper
+service realization
+generated test fixture
+generated static gate
+```
+
+These may be necessary.
+
+But they should not become public contract entrypoints.
+
+A caller should not be encouraged to call:
+
+```text
+internal transition helper
+internal lowering function
+repository adapter directly
+guard bypass path
+diagnostic mapper as execution path
+```
+
+Those are realization details.
+
+They support the contract path.
+
+They do not define the contract.
+
+They must remain replaceable backend realization details.
+
+### 24.3 Package Hiding as Anti-Bypass Hygiene
+
+Package hiding is useful because it makes the correct path the convenient path.
+
+The package should make this easy:
+
+```text
+caller
+-> public contract boundary
+-> Kontrakt-controlled verification path
+-> implementation realization
+```
+
+The package should make this difficult:
+
+```text
+caller
+-> internal helper
+-> realization detail
+-> contract bypass
+```
+
+This is not absolute security.
+
+JVM visibility can be bypassed through reflection, framework access, test exposure, proxies, agents, or module opens.
+
+Therefore, package hiding must not be treated as a hard trust boundary.
+
+It is structural hygiene.
+
+The authority remains in canonical contract material and verifier evidence.
+
+### 24.4 Package Is Implementation Packaging
+
+The package is a realization packaging device.
+
+It may help align code with contract boundaries.
+
+It may help reduce accidental misuse.
+
+It may help keep generated guard, lowering, transition, and diagnostic code out of the public surface.
+
+But the package does not decide:
+
+```text
+what the software must promise
+which contract terms belong together
+which emitted terms satisfy downstream requirements
+which state transition is legal
+which result may be published
+```
+
+Those are contract questions.
+
+The package only protects the selected public surface.
+
+### 24.5 Kontrakt Rule for Packages
+
+The working rule is:
+
+```text
+A package should expose the contract-controlled entrypoint.
+
+A package should hide realization details.
+
+Package hiding protects the path to the contract boundary.
+
+Package hiding does not define the contract.
+```
+
+For example:
+
+```text
+order.submit public surface:
+    SubmitOrderContract
+    SubmitOrderPort
+    SubmitOrderBoundary
+
+order.submit internal realization:
+    SubmitOrderGuard
+    SubmitOrderLowering
+    SubmitOrderTransitionCheck
+    SubmitOrderHandler
+    SubmitOrderRepositoryAdapter
+    SubmitOrderDiagnostics
+```
+
+The public surface is where contract interaction begins.
+
+The internal realization is how the contract is realized, checked, lowered, diagnosed, or tested.
+
+This preserves Barbara's useful hiding idea while rejecting package-level contract authority.
+
+## 25. Current Working Rule
 
 The current working rule is:
 
@@ -963,6 +1220,9 @@ Do not decompose by implementation convenience.
 Do not make mechanical layout part of the contract.
 Do not import biological taxonomy as the default model of machine abstraction.
 Do not treat abstraction as class genealogy.
+Do not treat package hiding as contract authority.
+Do not expose non-contractual bypass paths as public API.
+Do not let implementation publish truth directly.
 
 Decompose by contract selection and contract dependency.
 Represent dependencies as a DAG of contract terms, facts, and stages.
@@ -997,28 +1257,5 @@ The composed DAG must be checked against the original problem contract.
 
 ---
 
-## 24. Open Thread
-
-The next question is how far Barbara's module theory can be retained once the module is no longer the primary contract
-unit.
-
-Possible directions to examine later:
-
-```text
-Can a module be treated only as implementation packaging?
-Can a module realize a pipeline stage without owning contract authority?
-Can module boundaries be aligned with stage boundaries?
-Can object-oriented modules be tolerated only on the cold authoring side?
-Can callback-based modularity be rejected while preserving useful decomposition?
-How should Kontrakt describe subproblem dependency in the canonical material model?
-How should the logical DAG be represented before backend lowering?
-Where should join-stage dependency policy live?
-How should retry facts be modeled without reverse flow?
-Can Barbara's abstraction theory be separated from biological taxonomy?
-Can taxonomy be retained only as vocabulary and not as machine structure?
-How should abstraction-as-contract-selection be stated as the general principle?
-How should good-machine boundaries and states be treated only as realization?
-Where is the line between contract flow and runtime lane?
-```
 
 This draft stops here.
