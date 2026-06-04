@@ -1,10 +1,11 @@
-# Notes on Barbara-Style Modules, Subproblems, Rails, and Kontrakt Pipeline Decomposition
+# Notes on Barbara-Style Modules, Subproblems, Taxonomy, Contract Flow, and Kontrakt Pipeline Decomposition
 
 ## Status
 
 This is an incomplete working draft.
 
-It records only the current position on modules, subproblems, rails, pipeline decomposition, and contract dependency.
+It records only the current position on modules, subproblems, taxonomy, abstraction, contract flow, pipeline
+decomposition, and contract dependency.
 
 It should not be read as a final judgment on Barbara's full argument.
 
@@ -25,7 +26,7 @@ However, this contract theory does not accept object-oriented modules as the pri
 
 The issue is not merely how to divide code.
 
-The issue is how to divide a machine's contract-preserving work.
+The issue is how to divide software obligations into contract-preserving units.
 
 Kontrakt should not treat the primary decomposition unit as:
 
@@ -40,9 +41,9 @@ implementation owner
 
 Those are host-language implementation structures.
 
-They may help organize source code, but they are not sufficient as contract-machine structure.
+They may help organize source code, but they are not sufficient as contract structure.
 
-Kontrakt should decompose work as explicit material transitions in a pipeline or DAG.
+Kontrakt should decompose work as explicit contract dependencies, material transitions, and pipeline stages.
 
 ---
 
@@ -54,24 +55,35 @@ A module usually answers:
 Which code owns this responsibility?
 ```
 
-A Kontrakt pipeline stage must answer:
+A Kontrakt contract decomposition must answer:
+
+```text
+What must the software promise?
+Which contract terms belong together?
+Where does one contract stop and another begin?
+Which implementation details are excluded?
+Which downstream contract depends on this result?
+Which changes would break the contract?
+```
+
+A machine realization may later answer:
 
 ```text
 Which material state is accepted?
 Which material state is emitted?
-Which obligations are required before the transition?
-Which obligations are guaranteed after the transition?
 Which obligations are preserved across the transition?
-Which failures close the transition?
+Which failure closes the path?
 Which resource envelope bounds the transition?
 Which diagnostic evidence proves the transition?
 ```
 
-Therefore, a module is not the primary unit.
+These are not the same level.
 
-A material transition is the primary unit.
+The general abstraction problem is contract selection.
 
-A module may implement a stage.
+The machine problem is contract realization.
+
+A module may implement a selected contract.
 
 A module may support a stage.
 
@@ -85,25 +97,26 @@ But a module does not define contract authority.
 
 Barbara-style decomposition can be read as if subproblems are independently solvable units.
 
-That assumption is unsafe for a contract machine.
+That assumption is unsafe for a contract system.
 
 A subproblem is not merely a local task.
 
-In Kontrakt, a subproblem is a material transition with contract consequences.
+In Kontrakt, a subproblem is a contract-bearing part of a larger dependency structure.
 
 When the contract of a subproblem changes, the effect is not local.
 
 It may change:
 
 ```text
-DTO admission rules
-boundary rejection rules
-lowering facts
+admission rules
+rejection rules
+required facts
+emitted facts
 canonical material shape
-invariant facts
+invariant terms
 state transition legality
-policy budget
-diagnostic evidence
+policy terms
+diagnostic terms
 downstream input requirements
 publication eligibility
 ```
@@ -114,7 +127,7 @@ They are conditionally composable.
 
 A stage may be implementation-independent, but it is not contract-independent.
 
-Its output obligations must still satisfy the input obligations of downstream stages.
+Its emitted contract terms must still satisfy the required terms of downstream contracts.
 
 ---
 
@@ -147,40 +160,40 @@ Local subproblem success does not imply global contract success.
 The Kontrakt model is:
 
 ```text
-Stage A accepts material M0.
-Stage A emits material M1 with obligations O1.
+Contract Part A requires input terms IA.
+Contract Part A emits output terms OA.
 
-Stage B accepts material M1 only if O1 satisfies B's requirements.
-Stage B emits material M2 with obligations O2.
+Contract Part B may consume OA only if OA satisfies B's required terms.
+Contract Part B emits output terms OB.
 
-Stage C accepts material M2 only if O2 satisfies C's requirements.
+Contract Part C may consume OB only if OB satisfies C's required terms.
 ```
 
 In logical form:
 
 ```text
-ensures(Stage A) => requires(Stage B)
-ensures(Stage B) => requires(Stage C)
+ensures(A) => requires(B)
+ensures(B) => requires(C)
 ```
 
-At the whole-pipeline level:
+At the whole-system level:
 
 ```text
-Stage A + Stage B + Stage C
+A + B + C
 => Original Problem Contract
 ```
 
-If any stage contract changes, the downstream edges must be reverified.
+If any subproblem contract changes, the downstream edges must be reverified.
 
-A change to one subproblem may invalidate the entire pipeline.
+A change to one subproblem may invalidate the entire dependency graph.
 
 This is not because the implementation is coupled.
 
-It is because the contract material is connected.
+It is because the contract terms are connected.
 
 ---
 
-## 6. Subproblem as Material Transition
+## 6. Subproblem as Contract-Bearing Transition
 
 A subproblem should not be modeled as an isolated implementation problem.
 
@@ -197,14 +210,14 @@ Accepted model:
 
 ```text
 Subproblem
-= contract-bearing material transition
-= one node in a material-transition DAG
+= contract-bearing transition
+= one node in a contract dependency DAG
 = valid only through edge compatibility
 ```
 
-A subproblem is not independent once its output becomes another stage's input material.
+A subproblem is not independent once its output becomes another contract's required input.
 
-The moment material crosses a stage edge, the subproblem participates in the global contract.
+The moment a result crosses a stage edge, the subproblem participates in the global contract.
 
 ---
 
@@ -212,7 +225,7 @@ The moment material crosses a stage edge, the subproblem participates in the glo
 
 A subproblem contract change is not merely an internal change.
 
-If the subproblem accepts different material, emits different material, or changes what it preserves, then its DTO and
+If the subproblem accepts different facts, emits different facts, or changes what it preserves, then its DTO and
 lowering consequences change.
 
 Example:
@@ -252,110 +265,403 @@ subproblem correctness != original problem correctness
 
 ---
 
-## 8. Contract Dependency Is Logical DAG, Not Object Tree
+## 8. Biological Taxonomy Is Not Machine Abstraction
 
-A real system may not be best understood as a simple tree.
+Barbara's mammal example treats abstraction as a hierarchy of common characteristics.
 
-Merge sort is a useful algorithmic decomposition example, but it is not enough as a system architecture example.
+At one level, the concept is `mammal`.
 
-A system can split work into parallel rails and later join the results.
+At a lower level, the model may distinguish groups such as primates or rodents.
 
-The logical structure is usually closer to a DAG:
+At a still lower level, it may distinguish species or individuals.
+
+This is a biological taxonomy model.
+
+It may be useful when the domain itself is a relatively stable classification hierarchy.
+
+But it is a dangerous default model for software machines.
+
+A machine is not a biological family tree.
+
+A machine is a system of contract selection, material admission, state transition, obligation preservation, failure
+closure, and publication.
+
+The mammal example encourages a parent-child view of abstraction:
 
 ```text
-Fact A ----            -> Join Stage -> Decision Fact
-Fact B ----/
+Mammal
+    -> Primate
+        -> Human
+        -> Chimpanzee
+    -> Rodent
 ```
 
-or:
+This is not how a contract machine should be understood.
+
+A contract machine should not begin with:
 
 ```text
-Boundary
-    -> Credit Fact
-    -> Inventory Fact
-    -> Risk Fact
-        -> Approval Decision
+general class
+-> specialized subclass
+-> lower-level subclass
+-> instance
 ```
 
-The key point is not whether the graph visually looks like a tree.
+It should begin with:
 
-The key point is that the dependency graph must be explicit and acyclic for one material lifecycle.
+```text
+software promise
+-> contract term
+-> dependency
+-> boundary of responsibility
+-> realization
+```
 
-A downstream stage must not secretly call upstream stages through callbacks.
+The biological hierarchy model is therefore limited.
 
-A downstream stage must wait for required upstream facts or reject the missing dependency.
+It may describe a stable vocabulary.
+
+It may describe a closed taxonomy.
+
+It may help name concepts.
+
+But it must not become the architectural principle of the machine.
 
 ---
 
-## 9. Physical Rails Are Implementation, Not Contract Meaning
+## 9. Why the Biological Model Misleads Machine Design
 
-The rail/pipeline implementation idea is useful, but it must not contaminate the contract.
-
-The contract should not say:
+The biological model assumes that abstraction primarily means:
 
 ```text
-offset 0 contains customer id
-offset 8 contains amount
-this lane is 16 bytes wide
-worker A writes byte range 0..7
-worker B writes byte range 8..15
+find common characteristics
+ignore differences
+organize concepts into levels
 ```
 
-Those are backend lowering decisions.
+This can easily lead to software principles centered on:
 
-They belong to the compiler or runtime substrate.
+```text
+class hierarchy
+inheritance
+subtype relation
+common method surface
+object taxonomy
+```
+
+That is the wrong center for Kontrakt.
+
+The machine does not need a family tree.
+
+The software first needs selected contracts.
+
+The machine later needs explicit ways to realize and enforce those selected contracts.
+
+A useful software abstraction should answer:
+
+```text
+What must the software promise?
+What may other units rely on?
+Which terms belong together?
+Which terms must remain separate?
+Where should a contract boundary be drawn?
+Which implementation details must be excluded?
+```
+
+A machine realization may then answer:
+
+```text
+Which facts are admitted?
+Which material state exists after this boundary?
+Which transitions are legal?
+Which failures close the path?
+What can be published?
+What evidence proves it?
+```
+
+The biological hierarchy does not naturally answer these questions.
+
+It answers a different question:
+
+```text
+What group does this thing belong to?
+```
+
+That may be useful for classification.
+
+It is not sufficient for contract authority.
+
+---
+
+## 10. Abstraction as Contract Selection, Not Machine Artifact Selection
+
+The more general position is:
+
+```text
+Abstraction is the act of deciding what contract must remain after implementation detail is removed.
+```
+
+This should not be stated first in machine-runtime terms.
+
+The primary question is not:
+
+```text
+Which boundary, state, failure, or publication mechanism should the machine implement?
+```
+
+The primary question is:
+
+```text
+What must the software promise?
+What must remain true even if the implementation changes?
+What may users, downstream stages, or other software units safely rely on?
+What should be stated as contract, and what should remain implementation detail?
+```
+
+Abstraction is therefore the act of selecting, refining, and grouping contract meaning.
+
+It decides:
+
+```text
+which software properties are essential enough to become contract terms
+which terms belong together as one contract
+which terms should remain separate contracts
+where one contract should stop and another should begin
+which changes are contract-breaking
+which details must be excluded as implementation
+```
+
+This is the general theory.
+
+A contract may later be realized by a good machine through boundaries, material states, legal transitions, failure
+closure, and publication rules.
+
+But those are machine realization concerns.
+
+They are not the first definition of abstraction.
+
+The general rule is:
+
+```text
+Abstraction selects the contract.
+The machine realizes and enforces the selected contract.
+```
+
+Therefore, the mammal-style hierarchy is not the general model of abstraction.
+
+At most, it is a domain vocabulary example.
+
+Kontrakt's abstraction model is contract-first, not taxonomy-first.
+
+---
+
+## 11. Limited Use of Taxonomy
+
+A taxonomy may be tolerated only in limited cases.
+
+Examples:
+
+```text
+closed vocabulary
+stable classification
+diagnostic category
+failure category
+state label
+domain naming
+```
+
+Even then, taxonomy does not own contract authority.
+
+For example:
+
+```text
+PaymentFailure
+    -> InsufficientFunds
+    -> InvalidCurrency
+    -> PolicyRejected
+```
+
+This may be a useful diagnostic classification.
+
+But the actual contract is not the inheritance tree.
+
+The actual contract is:
+
+```text
+which failure is emitted
+under what condition
+from which contract boundary or stage
+with what diagnostic evidence
+and whether the result may proceed
+```
+
+The hierarchy may name the failure.
+
+It does not define the software obligation.
+
+---
+
+## 12. Contract Flow Exists Before Machine Realization
+
+The contract world is not flat.
+
+Even before machine realization, contracts create logical flow.
+
+One contract term may require another term.
+
+One accepted fact may allow another fact to be derived.
+
+One contract may emit material required by another contract.
+
+A publication decision may depend on several accepted facts.
+
+This logical flow is contract meaning.
+
+However, it is not yet a runtime lane.
+
+The contract world owns the dependency DAG.
+
+The compiler lowers that DAG into stages, gates, slots, and possibly physical lanes.
+
+The runtime executes the lowered plan.
+
+Therefore, the working distinction is:
+
+```text
+Contract Flow
+    logical dependency between contract terms and emitted facts
+
+Runtime Lane
+    physical execution path selected by compiler/runtime lowering
+```
+
+The contract should acknowledge contract flow.
+
+It should not contain runtime lanes as physical implementation.
+
+---
+
+## 13. Contract Dependency DAG, Not Physical Lane
+
+A contract dependency graph may look like a rail or pipeline because facts move from input to output.
+
+That does not mean the contract contains physical rails.
 
 The contract should say:
 
 ```text
-PaymentApproval requires CustomerId.
-PaymentApproval requires PaymentAmount.
-PaymentAmount must be positive.
-Currency must be present if the policy requires currency validation.
-Approval may be published only if required facts are present and accepted.
+Fact B requires Fact A.
+Decision C requires Fact A and Fact B.
+Publication P requires Decision C.
+If Fact A is rejected, Decision C cannot be published.
 ```
 
-The pure contract contains facts and rules.
-
-The compiler may lower those facts into:
+The contract should not say:
 
 ```text
-SoA tables
-slots
-offsets
-ring buffers
-sequence barriers
-static gates
-worker lanes
+Fact A is produced in worker lane 3.
+Fact B waits on sequence barrier 7.
+Decision C reads ring buffer offset 128.
 ```
 
-But those are not contract authority.
+The first group is contract meaning.
 
-They are implementation strategy.
+The second group is runtime realization.
+
+Use the term:
+
+```text
+Contract Dependency DAG
+```
+
+for the logical structure.
+
+Reserve:
+
+```text
+Lane
+Rail
+Ring buffer
+Worker
+Barrier
+Offset
+```
+
+for compiler/runtime realization.
 
 ---
 
-## 10. Separating the Three Worlds
+## 14. Machine Abstraction Is Boundary-Oriented
+
+At the machine realization level, abstraction becomes boundary-oriented.
+
+For example:
+
+```text
+RawPaymentRequest
+-> Boundary Admission
+-> AdmittedPaymentCommand
+-> Policy Check
+-> ApprovalDecision
+-> Publication
+```
+
+This is not a species hierarchy.
+
+It is a sequence of material states and legal transitions.
+
+The abstraction is not:
+
+```text
+Payment is a kind of Request.
+PaymentApproval is a kind of Payment.
+PublishedPayment is a kind of PaymentApproval.
+```
+
+The machine realization is:
+
+```text
+this boundary admits these terms
+this stage preserves these obligations
+this transition is legal only under these conditions
+this result may proceed only after these checks
+```
+
+That is the machine-native form.
+
+But this remains a realization of the selected contract.
+
+It is not the first principle of abstraction.
+
+---
+
+## 15. Separating the Three Worlds
 
 The working separation is:
 
 ```text
 Contract World:
-    domain facts
-    obligations
-    rules
-    dependencies
-    accepted/rejected material
-    publication conditions
+    contract terms
+    selected software promises
+    contract grouping
+    contract boundaries in the semantic sense
+    required terms
+    emitted terms
+    dependency DAG
+    admissibility conditions
+    publishability conditions
+    declared failure meanings
 
 Compiler / Lowering World:
     canonical naming
     stable identity
     dependency DAG extraction
+    stage formation
     lowering plan
     slot assignment
     memory layout
     static gate generation
+    physical lane planning
 
 Runtime World:
     lanes
@@ -367,7 +673,15 @@ Runtime World:
     evidence segments
 ```
 
-The contract world must not contain physical memory layout.
+The contract world may contain logical flow.
+
+It may contain a dependency DAG.
+
+It may contain requirements that one fact must exist before another fact can be derived or published.
+
+But the contract world must not contain physical memory layout.
+
+The contract world must not contain runtime lanes as implementation.
 
 The runtime world must obey the lowered contract material.
 
@@ -375,13 +689,13 @@ The compiler connects the two.
 
 ---
 
-## 11. Lane-Based Thinking
+## 16. Lane-Based Thinking as Runtime Realization
 
-Kontrakt should express decomposition as lanes and stages.
+Kontrakt may express runtime execution as lanes and stages.
 
 A lane is a controlled path of material with a specific authority level.
 
-Example lanes:
+Example runtime lanes:
 
 ```text
 RawInputLane
@@ -397,7 +711,7 @@ A lane is not a class.
 
 A lane is not a queue of arbitrary objects.
 
-A lane is a contract-controlled material path.
+A lane is a runtime realization of a contract-controlled material path.
 
 Each lane determines what is allowed to exist there.
 
@@ -421,11 +735,15 @@ A stage moves material between lanes.
 
 The stage is valid only if the movement preserves the required obligations.
 
+However, the lane is a realization artifact.
+
+The contract-level structure is the dependency DAG.
+
 ---
 
-## 12. DAG Instead of Object Graph
+## 17. DAG Instead of Object Graph
 
-The decomposition target should be a DAG of material transitions.
+The decomposition target should be a DAG of contract dependencies and material transitions.
 
 Not:
 
@@ -438,15 +756,15 @@ callbacks wiring subproblems
 But:
 
 ```text
-material moving through lanes
-stages transforming material
+contract terms depending on contract terms
+material moving through realized stages
 edge contracts preserving obligations
 pipeline composition proving the original problem contract
 ```
 
-The nodes are stages.
+The nodes are contract-bearing stages or facts.
 
-The edges are material contracts.
+The edges are dependency obligations.
 
 The graph is not a class graph.
 
@@ -458,22 +776,22 @@ It is a contract dependency DAG.
 
 ---
 
-## 13. Parallel Rails and Join Stages
+## 18. Parallel Contract Flow and Join Stages
 
-Some stages can run independently.
+Some contract paths can proceed independently.
 
-Some stages must join several upstream facts.
+Some contract paths must join several upstream facts.
 
 Example:
 
 ```text
-CreditCheck Stage
+CreditCheck
     emits CreditFact
 
-InventoryCheck Stage
+InventoryCheck
     emits InventoryFact
 
-PaymentApproval Stage
+PaymentApproval
     requires CreditFact
     requires InventoryFact
     emits ApprovalDecision
@@ -492,25 +810,25 @@ But the contract is the dependency between facts, not the physical barrier itsel
 The join rule is:
 
 ```text
-A join stage may execute only when all required upstream facts are available and accepted.
+A join contract may proceed only when all required upstream facts are available and accepted.
 ```
 
-If a required upstream fact is absent or rejected, the join stage must not invent it.
+If a required upstream fact is absent or rejected, the join must not invent it.
 
-It must reject, wait according to policy, or emit a declared failure.
+It must reject, wait according to policy, or emit a declared dependency failure.
 
 ---
 
-## 14. Integration Is Not Wiring
+## 19. Integration Is Not Wiring
 
 Integration should not mean wiring modules together.
 
-Integration means verifying that the composed material transitions still satisfy the original problem contract.
+Integration means verifying that composed contract dependencies still satisfy the original problem contract.
 
-A stage edge is valid only if:
+A dependency edge is valid only if:
 
 ```text
-the upstream output obligations satisfy the downstream input obligations
+the upstream emitted terms satisfy the downstream required terms
 ```
 
 In logical form:
@@ -519,9 +837,9 @@ In logical form:
 ensures(upstream) => requires(downstream)
 ```
 
-If the upstream stage changes, this implication must be checked again.
+If the upstream contract changes, this implication must be checked again.
 
-If the downstream stage changes, this implication must be checked again.
+If the downstream contract changes, this implication must be checked again.
 
 If the original problem contract changes, the whole DAG must be checked again.
 
@@ -531,7 +849,7 @@ It is not a final wiring step.
 
 ---
 
-## 15. Callback-Based Decomposition Is Suspicious
+## 20. Callback-Based Decomposition Is Suspicious
 
 Callback-based module decomposition is especially dangerous.
 
@@ -567,7 +885,7 @@ not a callback value.
 
 ---
 
-## 16. Cycles, Waiting, and Callback Loops
+## 21. Cycles, Waiting, and Callback Loops
 
 The circular dependency problem is largely a control-flow problem.
 
@@ -582,13 +900,13 @@ Object B calls Object A back.
 
 In a pipeline-centered model, a downstream stage does not call upstream stages.
 
-It consumes accepted material from upstream lanes.
+It consumes accepted material from upstream contract paths or runtime lanes.
 
 If required material is not available, it waits, rejects, or emits a declared dependency failure according to policy.
 
 This avoids callback loops.
 
-The pipeline graph for one material lifecycle should remain acyclic.
+The contract dependency graph for one material lifecycle should remain acyclic.
 
 If business logic appears cyclic, it should not be implemented by reversing the pipeline or calling upstream objects.
 
@@ -596,7 +914,7 @@ It should be represented as a new upstream fact or a new material instance.
 
 ---
 
-## 17. Retry Is Not Reverse Flow
+## 22. Retry Is Not Reverse Flow
 
 A retry should not be implemented by a downstream worker pushing material backward into an upstream stage.
 
@@ -634,7 +952,7 @@ A worker processes the current material, emits accepted output or declared failu
 
 ---
 
-## 18. Current Working Rule
+## 23. Current Working Rule
 
 The current working rule is:
 
@@ -643,17 +961,32 @@ Do not decompose by class ownership.
 Do not decompose by callback structure.
 Do not decompose by implementation convenience.
 Do not make mechanical layout part of the contract.
+Do not import biological taxonomy as the default model of machine abstraction.
+Do not treat abstraction as class genealogy.
 
-Decompose by material state transition.
-Represent dependencies as a DAG of facts and stages.
+Decompose by contract selection and contract dependency.
+Represent dependencies as a DAG of contract terms, facts, and stages.
+Recognize contract flow as contract meaning.
 Lower the DAG into physical rails only after contract meaning is fixed.
+Treat runtime lanes as realization, not as primary contract meaning.
 ```
 
-Each stage must state:
+At the general contract level, each abstraction must clarify:
 
 ```text
-what it accepts
-what it emits
+what the software must promise
+which contract terms belong together
+where one contract ends and another begins
+which implementation details are excluded
+which changes would break the contract
+which downstream terms depend on the emitted terms
+```
+
+At the machine realization level, each stage may then define:
+
+```text
+what material it accepts
+what material it emits
 what it preserves
 what it rejects
 what resource envelope it consumes
@@ -664,7 +997,7 @@ The composed DAG must be checked against the original problem contract.
 
 ---
 
-## 19. Open Thread
+## 24. Open Thread
 
 The next question is how far Barbara's module theory can be retained once the module is no longer the primary contract
 unit.
@@ -681,6 +1014,11 @@ How should Kontrakt describe subproblem dependency in the canonical material mod
 How should the logical DAG be represented before backend lowering?
 Where should join-stage dependency policy live?
 How should retry facts be modeled without reverse flow?
+Can Barbara's abstraction theory be separated from biological taxonomy?
+Can taxonomy be retained only as vocabulary and not as machine structure?
+How should abstraction-as-contract-selection be stated as the general principle?
+How should good-machine boundaries and states be treated only as realization?
+Where is the line between contract flow and runtime lane?
 ```
 
 This draft stops here.
