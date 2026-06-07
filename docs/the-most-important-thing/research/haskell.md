@@ -313,10 +313,75 @@ Kontrakt judges acceptance
 Haskell's interpretation concepts may help describe meaning assignment.
 
 They are not sufficient for machine governance.
+---
+
+## 8. Formal Truth, Interpretation Validity, and Engineering Validity
+
+A formal theorem may remain true inside its own formal system.
+
+That does not give engineering authority to its interpretation.
+
+The useful distinction is:
+
+```text
+Formal truth:
+    whether a theorem follows from the rules of the formal system
+
+Interpretation validity:
+    whether the formal system has been correctly mapped to a subject matter
+
+Engineering validity:
+    whether that interpretation survives the machine:
+    cost, memory, failure, observability, determinism, diagnosability,
+    resource bounds, and replaceable realization
+```
+
+The dangerous move is:
+
+```text
+the theorem remains formally true
+-> therefore the applied model is acceptable
+```
+
+Kontrakt rejects that move.
+
+If a formal system is applied to software and its interpretation fails on the machine, then the applied model has failed
+for engineering purposes.
+
+The theorem may remain mathematically true.
+
+The engineering interpretation has failed.
+
+Kontrakt must not allow a theory to escape back into formal truth after its software interpretation fails.
+
+For Kontrakt, an applied formal model must survive:
+
+```text
+explicit boundary control
+accepted immutable facts
+legal transitions
+bounded resources
+diagnosable failure
+stable identity
+observable lifecycle
+controlled publication
+replaceable realization
+```
+
+If it does not survive those conditions, it is not acceptable as Kontrakt engineering material.
+
+Working rule:
+
+```text
+Formal truth is not engineering authority.
+
+A failed machine interpretation is an engineering failure,
+even if the formal theorem remains true.
+```
 
 ---
 
-## 8. Contract, Contract Presentation, and Type Name
+## 9. Contract, Contract Presentation, and Type Name
 
 The important reinterpretation is this:
 
@@ -361,7 +426,7 @@ The authority remains in canonical contract material.
 
 ---
 
-## 9. Type as Contract-Document Name
+## 10. Type as Contract-Document Name
 
 Traditional theory often treats a type as a category of values.
 
@@ -425,7 +490,7 @@ It must be acquired and lowered into canonical contract material.
 
 ---
 
-## 10. Haskell Types as Extremely Limited Mathematical Tools
+## 11. Haskell Types as Extremely Limited Mathematical Tools
 
 If types are understood as contract-presentation names, then a small part of Haskell's type-centered reasoning may be
 useful as mathematics.
@@ -476,7 +541,7 @@ canonical contract material
 
 ---
 
-## 11. Representation Is Not Contract Authority, But It Matters
+## 12. Representation Is Not Contract Authority, But It Matters
 
 A common mathematical move is to say that different representations may denote the same abstract object.
 
@@ -520,7 +585,7 @@ relevant constraints must be promoted into contract material.
 
 ---
 
-## 12. Representation Conditions Can Become Contract
+## 13. Representation Conditions Can Become Contract
 
 Not all representation details are contract.
 
@@ -565,7 +630,7 @@ representation preservation as contract is accepted
 
 ---
 
-## 13. What Must Be Rejected
+## 14. What Must Be Rejected
 
 Kontrakt should not import the following as contract architecture:
 
@@ -605,7 +670,7 @@ not function values, thunks, or closures.
 
 ---
 
-## 14. Mathematical Use Without Engineering Authority
+## 15. Mathematical Use Without Engineering Authority
 
 The current working position is:
 
@@ -637,7 +702,7 @@ engineering validity.
 
 ---
 
-## 15. Where the Tension Appears
+## 16. Where the Tension Appears
 
 The tension appears when Haskell-like explanations move between three levels without enough separation:
 
@@ -672,12 +737,14 @@ Each level must be separated and explicitly lowered.
 
 ---
 
-## 16. Current Working Rule
+## 17. Current Working Rule
 
 The current working rule is:
 
 ```text
 Do not treat Haskell theory as engineering authority.
+
+Do not confuse formal truth with engineering validity.
 
 Do not imply that most Haskell theory can be accepted by lowering.
 
@@ -698,7 +765,7 @@ Rewrite any retained idea into explicit Kontrakt contract material before consid
 
 ---
 
-## 17. Open Thread
+## 18. Open Thread
 
 Questions to examine while reading further:
 
@@ -712,6 +779,8 @@ How should Kontrakt reject thunk/closure/function-value material while still all
 How does interpretation differ from Kontrakt acquisition and lowering?
 Where does mathematical substitution become unsafe as software contract reasoning?
 How can contract-presentation naming be separated from category-based type thinking?
+When does formal truth become irrelevant to Kontrakt engineering validity?
+How should Kontrakt state that a failed machine interpretation is an engineering failure?
 ```
 
 This draft stops here.
