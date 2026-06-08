@@ -99,6 +99,87 @@ with enough clever machinery.
 
 A contract is the declared obligation.
 
+Now, there is a structural problem. If contracts can inherit other contracts, compose other contracts, include other
+contracts, and then those contracts do the same thing again, the whole thing becomes a genealogy. It becomes the same
+old
+family tree with a cleaner name.
+
+That is not contract clarity. That is inheritance cosplay.
+
+So the contract structure should be kept two-dimensional.
+
+The first dimension contains closed base contract presentations:
+
+```text
+input contract
+admission contract
+lowering contract
+fact contract
+invariant contract
+state machine contract
+failure contract
+publication contract
+diagnostic contract
+policy / budget / capacity contract
+```
+
+The second dimension contains interaction manifests. An interaction manifest does not inherit contracts. It does not
+compose interfaces. It does not pull in another manifest, which pulls in another manifest, which pulls in another one
+until nobody knows what the hell is actually required.
+
+It simply binds a flat list of closed base contracts for one interaction.
+
+```text
+interaction manifest
+    -> input contract
+    -> admission contract
+    -> lowering contract
+    -> fact contract
+    -> invariant contract
+    -> state machine contract
+    -> failure contract
+    -> publication contract
+    -> diagnostic contract
+    -> policy / budget / capacity contract
+```
+
+A state machine may feel like orchestration, but in this model it is still a closed base contract presentation. It
+should
+not inherit another state machine. It should not compose another state machine. It should state its own states and legal
+transitions and stop there.
+
+The rule is simple:
+
+```text
+No interface inheritance.
+No interface composition.
+No same-kind contract inheritance.
+No same-kind contract composition.
+No recursive manifest.
+No hidden transitive obligations.
+No cyclic contract reference.
+```
+
+A manifest is not genealogy. A manifest is a flat table. If I need to open five ancestors to understand one interaction,
+this is not a contract document. It is the same garbage coming back through the side door.
+
+And no, I do not trust people to follow this politely.
+
+People are too used to inheritance. If this is only written as advice, someone will bring inheritance and composition
+back into contracts and call it "reuse" or "clean design." I know how this shit goes.
+
+Normally, a contract theory should not talk about implementation here. But I will say it once.
+
+Contract inheritance and recursive contract composition must be rejected by the compiler.
+
+Not discouraged.
+
+Rejected.
+
+No interface inheritance. No interface composition. No same-kind contract inheritance. No same-kind contract
+composition.
+
+I do not trust you. The compiler should stop you.
 ---
 
 ## 4. Make Interfaces Great Again
@@ -120,22 +201,26 @@ nothing. A method list says, "you can call this shape." That is barely a contrac
 The rest of the contract gets scattered into external documents, comments, validation code, tests, wiki pages, hidden
 conventions, and runtime behavior. Then everyone acts surprised when the system becomes hard to reason about.
 
-A real interface should not only say what can be called. It should say what the interaction owes:
+A real interface should not only say what can be called. It should expose the contract structure of the interaction:
 
 ```text
-input obligations
-admission rules
-declared failures
-state transitions
-emitted facts
-publication shape
-diagnostic obligations
+input contract
+admission contract
+lowering contract
+fact contract
+invariant contract
+state machine contract
+failure contract
+publication contract
+diagnostic contract
+policy / budget / capacity contract
 ```
+
+But it must expose them as a flat manifest, not as an inheritance tree and not as recursive composition.
 
 The first goal is to turn the interface from a weak method shell into a rich contract document.
 
 Make interfaces great again.
-
 ---
 
 ## 5. Contract and Verification
@@ -500,6 +585,8 @@ And the machine I want is simple in spirit:
 ```text
 state the contract
 make the interface a real contract document
+keep contract structure two-dimensional
+bind closed base contracts through a flat interaction manifest
 admit only what passes the boundary
 produce immutable facts
 allow only declared transitions
