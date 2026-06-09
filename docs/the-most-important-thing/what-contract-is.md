@@ -19,8 +19,8 @@ I am not writing universal truth.
 I am writing the shape of a machine I want to build.
 ```
 
-If the machine does not fit the purpose, the theory is useless. If the theory is elegant but the machine is shit,
-then for engineering that theory is shit too. That is where this starts.
+If the machine does not fit the purpose, the theory is useless. If the theory is elegant but the machine is garbage,
+then for engineering that theory is garbage too. That is where this starts.
 
 ---
 
@@ -161,7 +161,7 @@ No cyclic contract reference.
 ```
 
 A manifest is not genealogy. A manifest is a flat table. If I need to open five ancestors to understand one interaction,
-this is not a contract document. It is the same shit coming back through the side door.
+this is not a contract document. It is the same garbage coming back through the side door.
 
 And no, I do not trust people to follow this politely.
 
@@ -410,7 +410,7 @@ input
 A good machine should still try to be function-like. It should be stable. It should be repeatable where repeatability is
 required. It should not randomly change its mind like a drunk bastard.
 
-But a good machine must also admit reality. Users are hostile. Inputs are shit. Networks die. Disks lie. Memory runs
+But a good machine must also admit reality. Users are hostile. Inputs are garbage. Networks die. Disks lie. Memory runs
 out. Threads race. Dependencies timeout. The environment is a mess. If your machine assumes the happy path, your machine
 is trash.
 
@@ -418,7 +418,7 @@ A good machine is not a fantasy function. It is a function-like system that admi
 
 ---
 
-## 8. Core, Boundary, and the fucking Bastards Outside
+## 8. Core, Boundary, and the Fucking Bastards Outside
 
 There is one thing worth taking from object-oriented programming: disciplined separation.
 
@@ -441,8 +441,8 @@ Why so strict?
 
 Because there are fucking bastards outside the boundary.
 
-Users do not use programs the way you hoped. Some users send shit by accident. Some send shit because they are
-careless. Some send shit because they are trying to break the machine.
+Users do not use programs the way you hoped. Some users send garbage by accident. Some send garbage because they are
+careless. Some send garbage because they are trying to break the machine.
 
 Attackers are worse. They inject strange input, exploit ambiguity, abuse serialization, forge shape, poison state, and
 look for every tiny crack between what the program accepts and what the program actually understands.
@@ -664,7 +664,91 @@ pretending to be the contract.
 
 ---
 
-## 11. Contract and Implementation
+## 11. Contract Presentations in the Pipeline
+
+Each contract kind in the pipeline needs its own explanation. Do not collapse them into one magic blob called
+"contract." That is how people smuggle confusion back in.
+
+Input, admission, lowering, fact, invariant, state machine, failure, publication, diagnostic, and policy contracts are
+not the same thing. They may appear together in one operation manifest, but they do different work.
+
+This section starts with the one that is easiest to mess up: fact.
+
+### Fact Contract and Immutable Fact
+
+An immutable fact must be described carefully.
+
+Do not say it is just ordinary data. That is too weak.
+
+Do not say it is the contract rule either. That is also wrong.
+
+An immutable fact is not a constraint, not an action rule, not a state transition rule, not a publication rule, and not
+a
+policy. Those are contract obligations.
+
+An immutable fact is contract-governed factual material inside the core.
+
+```text
+Fact Contract:
+    the contract that defines what kind of factual material may exist inside the core
+
+Immutable Fact:
+    the immutable factual material that exists under that fact contract
+```
+
+That distinction matters.
+
+A constraint contract may say that an amount must not exceed a limit. The immutable fact says what the amount is.
+
+A state machine contract may say which transition is legal. The immutable fact provides factual material that the
+transition judgment may inspect.
+
+A publication contract may say what may be exposed. The immutable fact provides factual material that the publication
+judgment may inspect.
+
+So the fact must stay dumb.
+
+It must not decide.
+
+It must not validate itself.
+
+It must not carry the rule.
+
+It must not hide behavior through methods, callbacks, proxies, inherited behavior, or framework bullshit.
+
+It is factual material governed by contract.
+
+Fixed.
+
+Referable.
+
+Comparable.
+
+Usable by later contract reasoning.
+
+The fact contract defines the laws for that material: shape, identity, version, reference, and immutability. It may also
+define the law that invalid factual material is not allowed to exist inside the core.
+
+But do not put constructors into this contract.
+
+Do not put factories, builders, guard functions, validation algorithms, storage layout, or object lifecycle tricks into
+this contract.
+
+Those are implementation mechanisms.
+
+The contract only says what kind of factual material the core is allowed to treat as fact. How the machine prevents
+invalid material from being born is implementation.
+
+The short rule is this:
+
+```text
+Fact Contract is contract.
+Immutable Fact is contract-governed factual material.
+```
+
+Keep those two apart, or the whole thing turns back into object-oriented mud.
+
+## 12. Contract and Implementation
 
 Contract and implementation must not be mixed.
 
@@ -683,7 +767,7 @@ the kind of debt this theory is trying to avoid.
 
 ---
 
-## 12. Message, Exposure, and Interaction
+## 13. Message, Exposure, and Interaction
 
 What the user sees and what the system uses to communicate internally should go through contracts.
 
@@ -707,7 +791,7 @@ If communication needs an implementation detail to make sense, the design is alr
 
 ---
 
-## 13. Whole Machine
+## 14. Whole Machine
 
 A whole machine is made of pipelines.
 
@@ -735,7 +819,7 @@ This needs more work later.
 
 ---
 
-## 14. Still Left
+## 15. Still Left
 
 There is a lot left.
 
@@ -766,7 +850,7 @@ Still left.
 
 ---
 
-## 15. Current Working Definition
+## 16. Current Working Definition
 
 For now:
 
