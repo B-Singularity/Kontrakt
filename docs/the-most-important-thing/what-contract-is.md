@@ -19,8 +19,8 @@ I am not writing universal truth.
 I am writing the shape of a machine I want to build.
 ```
 
-If the machine does not fit the purpose, the theory is useless. If the theory is elegant but the machine is garbage,
-then for engineering that theory is garbage too. That is where this starts.
+If the machine does not fit the purpose, the theory is useless. If the theory is elegant but the machine is shit,
+then for engineering that theory is shit too. That is where this starts.
 
 ---
 
@@ -161,7 +161,7 @@ No cyclic contract reference.
 ```
 
 A manifest is not genealogy. A manifest is a flat table. If I need to open five ancestors to understand one interaction,
-this is not a contract document. It is the same garbage coming back through the side door.
+this is not a contract document. It is the same shit coming back through the side door.
 
 And no, I do not trust people to follow this politely.
 
@@ -196,31 +196,94 @@ An interface is not an implementation skeleton. It is not a class without fields
 It is the software-visible contract document for interaction.
 
 The sad thing is that modern interfaces usually do not do this. They are mostly weak method shells. They say almost
-nothing. A method list says, "you can call this shape." That is barely a contract document.
+nothing. A method list says, "this operation shape exists." That is barely a contract document.
 
-The rest of the contract gets scattered into external documents, comments, validation code, tests, wiki pages, hidden
-conventions, and runtime behavior. Then everyone acts surprised when the system becomes hard to reason about.
+But the method surface should not be thrown away.
 
-A real interface should not only say what can be called. It should expose the contract structure of the interaction:
+That part is important.
 
-```text
-input contract
-admission contract
-lowering contract
-fact contract
-invariant contract
-state machine contract
-failure contract
-publication contract
-diagnostic contract
-policy / budget / capacity contract
+The old JVM interface method gives users something familiar:
+
+```kotlin
+interface OrderPort {
+    fun submit(command: SubmitOrderCommand): SubmitOrderResult
+}
 ```
 
-But it must expose them as a flat manifest, not as an inheritance tree and not as recursive composition.
+This shape is useful. It gives the operation name, input presentation, output presentation, and a familiar surface for
+implementation. If we remove that, the system becomes annoying to use. Nobody wants a contract theory that makes
+software feel like filing taxes.
+
+So the method remains.
+
+But the method is not the contract.
+
+And the call is not the contract either.
+
+That distinction matters because object-oriented programming trained people to confuse method calls, callbacks, virtual
+dispatch, and contract meaning. A method call is an implementation-level invocation mechanism. A callback is an
+object-oriented control-flow trick. These things became so common that people started treating them like the natural
+shape of software contracts.
+
+They are not.
+
+```text
+Method:
+    the operation selector and presentation handle of an interface contract.
+```
+
+A method signature is only the weakest shell of an operation contract. It tells us the operation name, the input
+presentation, and the output presentation. It does not tell us what the input must satisfy, what admission means, which
+state allows the operation, what fact is produced, what failure is declared, what may be published, what diagnostic
+evidence remains, or which budget and capacity rules apply.
+
+So the split is this:
+
+```text
+method:
+    familiar JVM operation surface
+
+method call:
+    implementation-level invocation mechanism
+
+operation manifest:
+    real declared obligations behind that operation
+```
+
+For one method, the operation manifest is still flat:
+
+```text
+submit(...)
+    -> input contract
+    -> admission contract
+    -> lowering contract
+    -> fact contract
+    -> invariant contract
+    -> state machine contract
+    -> failure contract
+    -> publication contract
+    -> diagnostic contract
+    -> policy / budget / capacity contract
+```
+
+Do not turn methods into another genealogy. No method inheritance as contract meaning. No overload as contract reuse. No
+default method as hidden contract behavior. The method is the handle. The manifest is the contract. The call is just how
+one implementation path may enter the operation.
+
+Do not confuse the handle with the contract.
+
+Do not confuse the call with the contract.
+
+Do not confuse callback-shaped control flow with contract flow.
+
+Do not remove methods.
+
+Make methods stop pretending they are enough.
 
 The first goal is to turn the interface from a weak method shell into a rich contract document.
 
 Make interfaces great again.
+
 ---
 
 ## 5. Contract and Verification
@@ -284,13 +347,14 @@ ugly. Of course people stopped using it.
 The answer is not to scatter contracts into comments, wiki pages, assertions, and test fragments. The answer is to make
 the contract document real.
 
-The interface should carry the contract. The verifier should derive what it can from the declared obligations. Tests
-should check what cannot be resolved earlier. All of them should come from the same declared contract, not from
-scattered human guesses.
+The interface should carry the contract. The method should remain the familiar operation handle. The verifier should
+derive what it can from the declared obligations. Tests should check what cannot be resolved earlier. All of them should
+come from the same declared contract, not from scattered human guesses.
 
 That is the part modern programming scattered all over the floor.
 
 Make interfaces great again.
+
 ---
 
 ## 6. Evolution and Contract
@@ -346,7 +410,7 @@ input
 A good machine should still try to be function-like. It should be stable. It should be repeatable where repeatability is
 required. It should not randomly change its mind like a drunk bastard.
 
-But a good machine must also admit reality. Users are hostile. Inputs are garbage. Networks die. Disks lie. Memory runs
+But a good machine must also admit reality. Users are hostile. Inputs are shit. Networks die. Disks lie. Memory runs
 out. Threads race. Dependencies timeout. The environment is a mess. If your machine assumes the happy path, your machine
 is trash.
 
@@ -354,16 +418,142 @@ A good machine is not a fantasy function. It is a function-like system that admi
 
 ---
 
-## 8. Applying Contract to a Good Machine
+## 8. Core, Boundary, and the fucking Bastards Outside
+
+There is one thing worth taking from object-oriented programming: disciplined separation.
+
+Not inheritance. Not subtype games. Not callback-shaped control flow. Most of that can go to hell. But the instinct to
+split responsibilities, keep things apart, and group what belongs together is useful. A real machine needs that.
+
+Once a machine has a logical pipeline, the space between input and output cannot stay as one magical blob. It naturally
+breaks into stages. And once there are stages, there are boundaries.
+
+A stage is not just code. It has an outside and an inside. It has material it receives, judgment it performs, and
+material
+it is allowed to pass forward. In that sense, each unit pipeline has a boundary and a core.
+
+The core is where the declared contract must hold.
+
+The boundary is where outside material is inspected, judged, rejected, or lowered into something the core is allowed to
+understand.
+
+Why so strict?
+
+Because there are fucking bastards outside the boundary.
+
+Users do not use programs the way you hoped. Some users send shit by accident. Some send shit because they are
+careless. Some send shit because they are trying to break the machine.
+
+Attackers are worse. They inject strange input, exploit ambiguity, abuse serialization, forge shape, poison state, and
+look for every tiny crack between what the program accepts and what the program actually understands.
+
+Fine. Everyone knows that part.
+
+The more annoying part is that users and attackers are not the only fucking bastards outside the boundary.
+
+Frameworks, libraries, proxies, bytecode agents, reflection tools, serializers, runtime hooks, build plugins, and
+instrumentation systems can also mutate what the machine thinks it received. They intercept calls, wrap objects, rewrite
+bytecode, fake types, decorate behavior, delay execution, and smuggle implementation tricks into places where people
+start treating them as facts.
+
+A lot of modern software depends on these things without thinking. It is like a latent infection. Everything looks fine
+until one dependency, one proxy, one bytecode trick, or one hidden runtime convention changes the meaning of what
+crossed
+the boundary.
+
+So the core must not trust material just because it arrived through a familiar API. It must not trust material just
+because a framework handed it over. It must not trust material just because a library says it is already shaped.
+
+Everything outside the core is untrusted until the boundary has judged it.
+
+This also applies to contracts.
+
+One of the easiest ways to poison a core is to accidentally drag an external contract into it. A language-library
+interface, framework interface, proxy interface, persistence interface, serialization interface, or test-tool interface
+can look harmless because it is already typed and familiar. That is the trap. The moment the core starts depending on
+that external interface as if it were its own contract, the outside has entered the inside.
+
+That is external contract infiltration.
+
+You cannot build everything from zero. That would be stupid. External libraries and frameworks are useful. But their
+interfaces must not be accepted as core contracts just because they exist. They must be judged, mapped, and adopted only
+when they match the internal contract you actually meant to declare.
+
+The rule is not:
+
+```text
+This framework gives me an interface, so I will use it as my contract.
+```
+
+The rule is:
+
+```text
+This external interface may be used only if it can be ratified against my internal contract.
+```
+
+If it matches, adopt it explicitly. If it does not match, isolate it behind a boundary. If it changes the obligation, do
+not pretend nothing happened. Your contract has been touched.
+
+External dependencies can change the meaning of your system without asking permission. A library update, framework
+proxy, generated adapter, bytecode agent, serializer rule, reflection convention, or default method can quietly bend the
+contract away from your intention. Remember that. Dependencies are not just code you call. They can be foreign contracts
+trying to move into your core.
+
+That is why boundary work is not decoration. It is contract work.
+
+The outside material must pass through input, admission, and lowering before the core treats it as core-owned material.
+After that, the core should work with accepted facts, declared state transitions, invariants, failures, publication
+rules, diagnostic evidence, and policy / budget / capacity constraints.
+
+This is where these contract presentations start to matter:
+
+```text
+input contract
+admission contract
+lowering contract
+fact contract
+invariant contract
+failure contract
+publication contract
+diagnostic contract
+policy / budget / capacity contract
+```
+
+Each one will need its own explanation later.
+
+For now, the important rule is simple:
+
+```text
+Never use outside material directly inside the core.
+Never import an external contract as a core contract without ratification.
+```
+
+Judge it.
+
+Reject it if it fails.
+
+Lower it if it passes.
+
+Adopt it only if it is coherent with the contract you declared.
+
+If the core accepts outside material as-is, the boundary is fake. If the core accepts external interfaces as its own
+contract without judgment, the contract is already infected.
+
+---
+
+## 9. Applying Contract to a Good Machine
 
 Now I want to apply the contract definition to a good machine and ask: what counts as contract inside that machine?
 
-The interface names the interaction contract at the software surface. When that contract is applied to a good machine,
-the interaction cannot remain a flat method call. It unfolds into a causal flow.
+The interface names the interaction contract at the software surface. The method names the operation surface inside that
+interface. When that contract is applied to a good machine, the operation cannot remain a flat invocation shape. It
+unfolds into a causal flow.
 
 The interface is the contract document at the surface.
 
-The pipeline is the explicit causal shape needed to satisfy that contract inside the machine.
+The method is the operation handle.
+
+The pipeline is the explicit causal shape needed to satisfy that operation contract inside the machine.
 
 From a purely functional view, we may care only about stable input and stable output. The middle can be ignored. But
 that is not enough for a real machine. A machine does not get to skip the middle. The middle is where admission,
@@ -415,7 +605,7 @@ This is still a working shape. Each step needs its own explanation later.
 
 ---
 
-## 9. What Counts as Contract in the Pipeline
+## 10. What Counts as Contract in the Pipeline
 
 The pipeline itself is not automatically contract. Do not confuse a processing sequence with a contract.
 
@@ -448,6 +638,7 @@ DTO
 raw request shape
 frontend type name
 interface surface
+method signature
 ```
 
 Some parts are usually implementation:
@@ -473,7 +664,7 @@ pretending to be the contract.
 
 ---
 
-## 10. Contract and Implementation
+## 11. Contract and Implementation
 
 Contract and implementation must not be mixed.
 
@@ -492,7 +683,7 @@ the kind of debt this theory is trying to avoid.
 
 ---
 
-## 11. Message, Exposure, and Interaction
+## 12. Message, Exposure, and Interaction
 
 What the user sees and what the system uses to communicate internally should go through contracts.
 
@@ -516,7 +707,7 @@ If communication needs an implementation detail to make sense, the design is alr
 
 ---
 
-## 12. Whole Machine
+## 13. Whole Machine
 
 A whole machine is made of pipelines.
 
@@ -544,7 +735,7 @@ This needs more work later.
 
 ---
 
-## 13. Still Left
+## 14. Still Left
 
 There is a lot left.
 
@@ -559,6 +750,9 @@ inheritance is not contract reuse
 subtyping is not contract preservation
 overriding is not contract modification
 overloading is not contract reuse
+method signature is not the full operation contract
+external interface is not core contract
+external dependency can mutate contract meaning
 function value is not contract material
 closure is not contract flow
 thunk is not accepted fact
@@ -572,7 +766,7 @@ Still left.
 
 ---
 
-## 14. Current Working Definition
+## 15. Current Working Definition
 
 For now:
 
@@ -585,8 +779,11 @@ And the machine I want is simple in spirit:
 ```text
 state the contract
 make the interface a real contract document
+preserve methods as operation handles
 keep contract structure two-dimensional
-bind closed base contracts through a flat interaction manifest
+bind closed base contracts through a flat operation manifest
+treat everything outside the core as untrusted
+adopt external interfaces only after ratifying them against internal contracts
 admit only what passes the boundary
 produce immutable facts
 allow only declared transitions
