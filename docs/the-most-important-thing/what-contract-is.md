@@ -24,7 +24,51 @@ then for engineering that theory is garbage too. That is where this starts.
 
 ---
 
-## 1. Mathematics, Physics, and Engineering
+## 1. The Explicit Machine
+
+The good machine I am describing is not a magical new invention.
+
+Most serious architecture already moves in this direction: boundaries, ports, states, transitions, schemas, invariants,
+policies, failures, diagnostics, versioning, publication rules, and resource limits. They are already inside the system.
+The real problem is that modern software learned to worship implicit structure.
+
+Mathematical elegance made recursive forms look noble. Object-oriented programming made inheritance and subtyping look
+like natural reuse. Frameworks made proxies, interception, reflection, and runtime decoration look harmless. Callbacks
+and
+dynamic dispatch made hidden control flow feel normal.
+
+So contracts did not merely get hidden in framework defaults, mutation, exceptions, tests, and configuration files.
+
+Those are symptoms.
+
+The deeper disease is that implicitness became a design foundation.
+
+That is the part I reject.
+
+So this work is not about inventing contracts from thin air. It is about dragging the contracts that already control the
+machine into visible software material.
+
+A good machine should be explicit about the things that decide its behavior: what may enter, what must be rejected,
+which state exists, which transition is legal, which failure is declared, which result may be published, which evidence
+remains, which policy is active, and which limits the machine must respect.
+
+If these things are not explicit, they do not disappear. They become hidden rule-makers. That is where software turns
+into bullshit. Not because the machine has no contracts, but because the contracts are implicit and everyone pretends
+the
+implementation is innocent.
+
+The surface should still be simple. I am not trying to make developers write legal paperwork in code. That would be
+another kind of stupidity. The point is to make the visible surface small, readable, and ordinary, while the machine
+keeps
+enough explicit contract material to verify, lower, diagnose, and govern the system.
+
+The goal is not more code.
+
+The goal is less hidden meaning.
+
+---
+
+## 2. Mathematics, Physics, and Engineering
 
 Mathematics, physics, and engineering do not play the same game. People mix them together all the time, and a lot of
 programming bullshit starts exactly there.
@@ -36,8 +80,8 @@ if it wants. Good for mathematics.
 But that does not mean a single fucking thing for engineering.
 
 A formal system being consistent does not mean it is a good machine. A formal reduction being possible does not mean it
-should be used. A beautiful proof does not pay for cache misses, allocation, failure modes, debugging, operational cost,
-or the poor bastard who has to maintain the thing at 3 a.m.
+should be used. A beautiful proof does not pay for failure modes, debugging, operational cost, or the poor bastard who
+has to maintain the thing at 3 a.m.
 
 Physics is different. Physics is not some church for worshiping absolute truth. Physics is a disciplined guessing game
 against the world. You look at reality and say:
@@ -53,29 +97,29 @@ If it does not fit the world, you do not worship it. You go back and say:
 Then maybe it works like this instead.
 ```
 
-That is the whole point. A physical theory is not truth itself. It is a useful approximation that survives contact with
-the world. No amount of beauty saves a theory that fails against reality. Reality does not give a shit about elegance.
+A physical theory is not truth itself. It is a useful approximation that survives contact with the world. No amount of
+beauty saves a theory that fails against reality. Reality does not give a shit about elegance.
 
-Engineering is physics with a stronger purpose. It does not ask whether the model is formally beautiful. It asks whether
-we can build the machine, whether it does the job, whether the cost is acceptable, whether failure can be diagnosed,
-whether it runs under real constraints, whether it can be maintained, and whether people can actually use it.
+Engineering is physics with a stronger purpose. It asks whether we can build the machine, whether it does the job,
+whether the cost is acceptable, whether failure can be diagnosed, whether it runs under real constraints, whether it can
+be maintained, and whether people can actually use it.
 
 If the answer is no, I do not care how elegant the theory is. Call it mathematics. Do not call it good engineering.
 
 ---
 
-## 2. Use Mathematics. Do Not Become Mathematics.
+## 3. Use Mathematics. Do Not Become Mathematics.
 
-Mathematics is useful. I am not saying to throw it away. Use it as a tool. Use it as a language. Use it to measure,
-describe, constrain, and reason. But when the job is to build a machine, do not turn engineering into pure mathematics.
+Mathematics is useful. Use it as a tool. Use it as a language. Use it to measure, describe, constrain, and reason. But
+when the job is to build a machine, do not turn engineering into pure mathematics.
 
-This is the part that keeps annoying me in programming. Again and again, people try to take a mathematical shape and
-smuggle it into engineering as if the machine owes it obedience. Formal systems, combinators, type theory, higher-order
-functions, lazy evaluation, inheritance hierarchies, subtyping games, callback hell, proxy magic. Some of these are
-interesting as mathematics. Some of them are useful in narrow places. But when they become the foundation of how we
-build machines, things often get ugly.
+This is the part that keeps annoying me in programming. Again and again, people take a mathematical shape and smuggle it
+into engineering as if the machine owes it obedience. Formal systems, combinators, type theory, higher-order functions,
+lazy evaluation, inheritance hierarchies, subtyping games, callback hell, proxy magic. Some of these are interesting as
+mathematics. Some of them are useful in narrow places. But when they become the foundation of how we build machines,
+things often get ugly.
 
-Beautiful on paper. Fucking miserable on real machines.
+Beautiful on paper. Fucking miserable in real machines.
 
 If something is so elegant, then where is the good machine? If nobody uses it because it is slow, opaque, hard to debug,
 hard to operate, and hostile to real constraints, then what exactly did we build? A mathematical artifact, maybe. Not
@@ -85,7 +129,7 @@ I am not interested in turning software into a shrine for formal elegance. I am 
 
 ---
 
-## 3. Contract
+## 4. Contract
 
 ```text
 A contract is the declared set of obligations software must satisfy.
@@ -94,14 +138,14 @@ A contract is the declared set of obligations software must satisfy.
 That is the definition I am using.
 
 This definition is intentionally not tied to class, object, type trick, framework, or implementation style. A contract
-is not what a class looks like. It is not what an object happens to contain. It is not what a type theorist can encode
-with enough clever machinery.
+is
+not what a class looks like. It is not what an object happens to contain. It is not what a type theorist can encode with
+enough clever machinery.
 
 A contract is the declared obligation.
 
-Now, there is a structural problem. If contracts can inherit other contracts, compose other contracts, include other
-contracts, and then those contracts do the same thing again, the whole thing becomes a genealogy. It becomes the same
-old
+But contract structure has a trap. If contracts can inherit other contracts, compose other contracts, include other
+contracts, and then those contracts do the same thing again, the whole thing becomes genealogy. It becomes the same old
 family tree with a cleaner name.
 
 That is not contract clarity. That is inheritance cosplay.
@@ -120,14 +164,14 @@ state machine contract
 failure contract
 publication contract
 diagnostic contract
-policy / budget / capacity contract
+policy / budget / capacity / governance contract
 ```
 
-The second dimension contains interaction manifests. An interaction manifest does not inherit contracts. It does not
-compose interfaces. It does not pull in another manifest, which pulls in another manifest, which pulls in another one
-until nobody knows what the hell is actually required.
+The second dimension contains interaction manifests. A manifest does not inherit contracts. It does not compose
+interfaces. It does not pull in another manifest, which pulls in another manifest, which pulls in another one until
+nobody knows what the hell is actually required.
 
-It simply binds a flat list of closed base contracts for one interaction.
+It binds a flat list of closed base contracts for one interaction.
 
 ```text
 interaction manifest
@@ -140,7 +184,7 @@ interaction manifest
     -> failure contract
     -> publication contract
     -> diagnostic contract
-    -> policy / budget / capacity contract
+    -> policy / budget / capacity / governance contract
 ```
 
 A state machine may feel like orchestration, but in this model it is still a closed base contract presentation. It
@@ -176,33 +220,27 @@ Not discouraged.
 
 Rejected.
 
-No interface inheritance. No interface composition. No same-kind contract inheritance. No same-kind contract
-composition.
-
 I do not trust you. The compiler should stop you.
+
 ---
 
-## 4. Make Interfaces Great Again
+## 5. Make Interfaces Great Again
 
-Software needs a way to present contracts. One of the most important surfaces for that is the interface.
+Software needs a way to present contracts. One important surface is the interface.
 
 ```text
 Interface:
     the software-visible contract presentation for interaction.
 ```
 
-An interface is not an implementation skeleton. It is not a class without fields. It is not a cute method list.
-
-It is the software-visible contract document for interaction.
+An interface is not an implementation skeleton. It is not a class without fields. It is not a naive method list. It is
+the
+software-visible contract document for interaction.
 
 The sad thing is that modern interfaces usually do not do this. They are mostly weak method shells. They say almost
 nothing. A method list says, "this operation shape exists." That is barely a contract document.
 
-But the method surface should not be thrown away.
-
-That part is important.
-
-The old JVM interface method gives users something familiar:
+But the method surface should not be thrown away. The old JVM interface method gives users something familiar:
 
 ```kotlin
 interface OrderPort {
@@ -212,7 +250,8 @@ interface OrderPort {
 
 This shape is useful. It gives the operation name, input presentation, output presentation, and a familiar surface for
 implementation. If we remove that, the system becomes annoying to use. Nobody wants a contract theory that makes
-software feel like filing taxes.
+software
+feel like filing taxes.
 
 So the method remains.
 
@@ -235,20 +274,7 @@ Method:
 A method signature is only the weakest shell of an operation contract. It tells us the operation name, the input
 presentation, and the output presentation. It does not tell us what the input must satisfy, what admission means, which
 state allows the operation, what fact is produced, what failure is declared, what may be published, what diagnostic
-evidence remains, or which budget and capacity rules apply.
-
-So the split is this:
-
-```text
-method:
-    familiar JVM operation surface
-
-method call:
-    implementation-level invocation mechanism
-
-operation manifest:
-    real declared obligations behind that operation
-```
+evidence remains, or which policy, budget, capacity, and governance rules apply.
 
 For one method, the operation manifest is still flat:
 
@@ -263,7 +289,7 @@ submit(...)
     -> failure contract
     -> publication contract
     -> diagnostic contract
-    -> policy / budget / capacity contract
+    -> policy / budget / capacity / governance contract
 ```
 
 Do not turn methods into another genealogy. No method inheritance as contract meaning. No overload as contract reuse. No
@@ -280,13 +306,11 @@ Do not remove methods.
 
 Make methods stop pretending they are enough.
 
-The first goal is to turn the interface from a weak method shell into a rich contract document.
-
 Make interfaces great again.
 
 ---
 
-## 5. Contract and Verification
+## 6. Contract and Verification
 
 If the interface is the contract document, verification is the check that a realization satisfies the declared
 obligations.
@@ -297,10 +321,8 @@ to satisfy the contract.
 
 If the contract is rich enough, some verification should happen before tests. A compiler, a contract compiler, a
 verifier, or generated checks should be able to resolve part of it earlier. The better the contract document is, the
-less we need to guess through scattered tests.
-
-A test is what we use when the compiler or verifier cannot see enough. Sometimes that is necessary. But do not worship
-it.
+less
+we need to guess through scattered tests.
 
 TDD sold one ordinary fact like it had discovered fire:
 
@@ -309,24 +331,9 @@ if you know the contract before the implementation,
 you can write the verification before the implementation.
 ```
 
-Fine. That part is useful. If verification exists first, the realization can be checked immediately while it is being
-built. But that is all it is.
-
-TDD is not a theory of quality. TDD is not a replacement for contract. TDD is not design by itself. It is just writing
-one verification document before the realization. And if the contract is explicit enough, even that verification should
-be derived from the contract as much as possible, not manually guessed into existence.
-
-The real problem is that modern programming often forgot to write the actual contract document. So the contract gets
-scattered into test cases. Then people start worshiping tests and say:
-
-```text
-but the tests pass
-```
-
-So what?
-
-Passing tests only means the checked cases passed. It does not mean the design is good. It does not mean the contract
-was complete. It does not mean the machine is well-shaped.
+Fine. That part is useful. But TDD is not a theory of quality. It is not a replacement for contract. It is just writing
+one verification document before the realization. If the contract is explicit enough, that verification should be
+derived from the contract as much as possible, not manually guessed into existence.
 
 The order should be simple:
 
@@ -347,17 +354,9 @@ ugly. Of course people stopped using it.
 The answer is not to scatter contracts into comments, wiki pages, assertions, and test fragments. The answer is to make
 the contract document real.
 
-The interface should carry the contract. The method should remain the familiar operation handle. The verifier should
-derive what it can from the declared obligations. Tests should check what cannot be resolved earlier. All of them should
-come from the same declared contract, not from scattered human guesses.
-
-That is the part modern programming scattered all over the floor.
-
-Make interfaces great again.
-
 ---
 
-## 6. Evolution and Contract
+## 7. Evolution and Contract
 
 Contracts should be stable and immutable. If every small implementation change rewrites the contract, then there is no
 contract. There is only noise.
@@ -378,7 +377,7 @@ This is not finished. The full versioning story is still left.
 
 ---
 
-## 7. Good Machine and Function
+## 8. Good Machine and Function
 
 A good machine should ideally behave like a function. Given the same accepted input, it should produce the same accepted
 output. That is the clean shape. That is what we want.
@@ -418,7 +417,7 @@ A good machine is not a fantasy function. It is a function-like system that admi
 
 ---
 
-## 8. Core, Boundary, and the Fucking Bastards Outside
+## 9. Core, Boundary, and the Fucking Bastards Outside
 
 There is one thing worth taking from object-oriented programming: disciplined separation.
 
@@ -501,26 +500,6 @@ trying to move into your core.
 
 That is why boundary work is not decoration. It is contract work.
 
-The outside material must pass through input, admission, and lowering before the core treats it as core-owned material.
-After that, the core should work with accepted facts, declared state transitions, invariants, failures, publication
-rules, diagnostic evidence, and policy / budget / capacity constraints.
-
-This is where these contract presentations start to matter:
-
-```text
-input contract
-admission contract
-lowering contract
-fact contract
-invariant contract
-failure contract
-publication contract
-diagnostic contract
-policy / budget / capacity contract
-```
-
-Each one will need its own explanation later.
-
 For now, the important rule is simple:
 
 ```text
@@ -528,20 +507,14 @@ Never use outside material directly inside the core.
 Never import an external contract as a core contract without ratification.
 ```
 
-Judge it.
-
-Reject it if it fails.
-
-Lower it if it passes.
-
-Adopt it only if it is coherent with the contract you declared.
+Judge it. Reject it if it fails. Lower it if it passes. Adopt it only if it is coherent with the contract you declared.
 
 If the core accepts outside material as-is, the boundary is fake. If the core accepts external interfaces as its own
 contract without judgment, the contract is already infected.
 
 ---
 
-## 9. Applying Contract to a Good Machine
+## 10. Applying Contract to a Good Machine
 
 Now I want to apply the contract definition to a good machine and ask: what counts as contract inside that machine?
 
@@ -549,28 +522,24 @@ The interface names the interaction contract at the software surface. The method
 interface. When that contract is applied to a good machine, the operation cannot remain a flat invocation shape. It
 unfolds into a causal flow.
 
-The interface is the contract document at the surface.
+```text
+interface:
+    contract document at the surface
 
-The method is the operation handle.
+method:
+    operation handle
 
-The pipeline is the explicit causal shape needed to satisfy that operation contract inside the machine.
+pipeline:
+    explicit causal shape needed to satisfy the operation contract inside the machine
+```
 
 From a purely functional view, we may care only about stable input and stable output. The middle can be ignored. But
-that is not enough for a real machine. A machine does not get to skip the middle. The middle is where admission,
-rejection, lowering, state, failure, evidence, and publication actually happen.
+that
+is not enough for a real machine. A machine does not get to skip the middle. The middle is where admission, rejection,
+lowering, state, failure, evidence, and publication actually happen.
 
-A more advanced machine splits and joins this middle causally. That looks like a logical pipeline. The machine is not
-one magic function. It is closer to a composition of staged functions, where each stage has its own input, output,
-judgment, and failure path.
-
-Mathematicians often hide the middle in implicit forms: nested calls, closures, lazy thunks, higher-order functions,
-reduction graphs. That may be fine for a formal model. It is not the machine I want.
-
-A good machine should not hide causal flow like that. It should make the causal process explicit.
-
-Each stage and each causal edge can be understood as a small function with a domain and a codomain. A pipeline with
-explicit flow is the good form of composition here. Not a naive expression that hides everything inside notation, but an
-actual causal line the machine can control.
+A good machine should not hide causal flow inside nested calls, closures, lazy thunks, higher-order function tricks, or
+callback-shaped control. Maybe those are fine for some formal model. They are not the machine I want.
 
 For control, each pipeline should have a single entry and a single exit. If everything can enter from everywhere and
 leave from anywhere, you do not have a pipeline. You have a mess.
@@ -594,18 +563,18 @@ input
 -> diagnostic evidence
 ```
 
-Policy, budget, and capacity are not one naive stage at the end. They cut across the whole flow:
+Policy, budget, capacity, and governance are not one naive stage at the end. They cut across the whole flow:
 
 ```text
-policy / budget / capacity:
-    applies across boundary, execution, failure, and publication
+policy / budget / capacity / governance:
+    applies across boundary, admission, execution, failure, publication, and diagnostic
 ```
 
 This is still a working shape. Each step needs its own explanation later.
 
 ---
 
-## 10. What Counts as Contract in the Pipeline
+## 11. What Counts as Contract in the Pipeline
 
 The pipeline itself is not automatically contract. Do not confuse a processing sequence with a contract.
 
@@ -628,7 +597,7 @@ state transition
 accepted immutable fact
 publication judgment
 diagnostic evidence
-policy / budget / capacity
+policy / budget / capacity / governance
 ```
 
 Some parts are usually presentation:
@@ -641,40 +610,127 @@ interface surface
 method signature
 ```
 
-Some parts are usually implementation:
+But even this split is not the real law.
 
-```text
-algorithm
-data structure
-library
-cache
-thread
-queue
-scheduler
-waiting mechanism
-physical execution order
-```
+The real line is whether changing it changes the declared obligation of the software. If it changes what the software
+may accept, reject, assert, transition, fail, expose, retain, diagnose, or publish, it is contract. If it only changes
+how the same obligation is realized, it is implementation.
 
-The line is not "is this step in the pipeline?" The line is whether changing it changes the declared obligation of the
-software. If it changes what the software may accept, reject, assert, transition, fail, expose, or publish, it is
-contract. If it only changes how the same obligation is realized, it is implementation.
+Contract and implementation must be kept on different axes. They can correspond, like mirror images, but they must not
+mix. The contract names the obligation. The implementation realizes it.
 
-That distinction matters. Without it, the contract becomes polluted with backend choices, and the backend starts
-pretending to be the contract.
+As long as the declared obligation is preserved, the implementation should be replaceable. If replacing the realization
+changes the contract, the realization was allowed to leak into the contract. That is not architecture. That is debt.
+
+The contract must not name the mechanism.
+
+The contract must name the obligation.
+
+Do not contract the tool.
+
+Contract the obligation the tool must satisfy.
 
 ---
 
-## 11. Contract Presentations in the Pipeline
+## 12. Contract Presentations in the Pipeline
 
 Each contract kind in the pipeline needs its own explanation. Do not collapse them into one magic blob called
 "contract." That is how people smuggle confusion back in.
 
-Input, admission, lowering, fact, invariant, state machine, failure, publication, diagnostic, and policy contracts are
-not the same thing. They may appear together in one operation manifest, but they do different work.
+Input, admission, lowering, fact, invariant, state machine, failure, publication, diagnostic, policy, budget, capacity,
+and governance contracts are not the same thing. They may appear together in one operation manifest, but they do
+different work.
 
-This section starts with the one that is easiest to mess up: fact.
+Before DTOs and admission, the cross-cutting contracts have to be named. Otherwise people will pretend the machine
+judges
+material in empty space. It does not.
 
-### Fact Contract and Immutable Fact
+### 12.1 Policy, Budget, Capacity, and Governance Contracts
+
+A good machine is not infinite.
+
+It has limits.
+
+It has a lifetime.
+
+It can accept only so much material, spend only so much effort, retain only so much evidence, expose only so much
+result,
+and survive only under conditions it can actually bear. Pretending otherwise is not elegance. It is engineering fantasy.
+
+So a good machine must be honest about its own limits.
+
+It must declare them.
+
+It must measure them.
+
+It must operate under them.
+
+A machine that does not know its limits will still hit them. It will just hit them by accident, under pressure, in the
+worst possible place, while everyone pretends the contract was fine.
+
+That is bullshit.
+
+Policy, budget, capacity, and governance exist because the machine is finite and must be operated wisely. They are not
+naive extra stages at the end of the pipeline. They cut across boundary, admission, lowering, core judgment, failure,
+publication, and diagnostic.
+
+```text
+Policy Contract:
+    the contract that declares which judgment criteria are active for a given machine context
+
+Budget Contract:
+    the contract that declares the finite consumable allowance of an operation, run, stage, or diagnostic path
+
+Capacity Contract:
+    the contract that declares the admissible envelope of a machine, surface, stage, or storage region
+
+Governance Contract:
+    the contract that declares how contract sets, policy sets, budget profiles, capacity envelopes, versions, and
+    manifest bindings become valid for a machine
+```
+
+Policy is about judgment criteria.
+
+It says under which declared criteria material may be accepted, rejected, deferred, failed, published, exposed,
+retained,
+or hidden. Policy is not configuration. Configuration may select a policy, but the selected policy must be declared
+contract material. Policy is not a callback, not an arbitrary function, and not hidden behavior wearing a nicer name.
+
+A policy must be finite, named, inspectable, governed, and explicitly bound to the interaction or surface where it
+applies. If it cannot be named, inspected, versioned, and governed, it is not contract. It is behavior hiding behind a
+nicer word.
+
+Budget is about finite consumption.
+
+It says how much a run, operation, stage, or diagnostic path may consume before the machine must stop, reject, defer, or
+declare failure. The contract declares the allowance and the required outcome when the allowance is exhausted.
+
+Capacity is about the machine's admissible envelope.
+
+It says how much a machine, surface, stage, or storage region may accept, retain, keep in flight, expose, or publish.
+Capacity should not be guessed from optimism. It should be measured, chosen, declared, and governed. Valid material may
+still be rejected or deferred by capacity. That is not a bug. That is a finite machine refusing to lie about what it can
+survive.
+
+Governance is about validity of the contract world.
+
+It says which contract set, policy set, budget profile, capacity envelope, version, and manifest binding is valid for a
+machine. Without governance, nobody knows which rules are actually active. That is how systems quietly rot.
+
+These contracts declare judgment criteria, finite allowance, admissible envelope, and validity.
+
+They do not declare mechanisms.
+
+The contract does not say how the machine stores work, schedules work, counts work, or physically enforces the limit.
+Those are realization choices. The contract says what limit exists, where it applies, under which governance it is
+valid,
+and what declared outcome follows when the limit is reached.
+
+A good machine does not pretend to be infinite.
+
+It declares its limits and operates inside them.
+
+### 12.2 Fact Contract and Immutable Fact
 
 An immutable fact must be described carefully.
 
@@ -696,8 +752,6 @@ Immutable Fact:
     the immutable factual material that exists under that fact contract
 ```
 
-That distinction matters.
-
 A constraint contract may say that an amount must not exceed a limit. The immutable fact says what the amount is.
 
 A state machine contract may say which transition is legal. The immutable fact provides factual material that the
@@ -716,25 +770,13 @@ It must not carry the rule.
 
 It must not hide behavior through methods, callbacks, proxies, inherited behavior, or framework bullshit.
 
-It is factual material governed by contract.
-
-Fixed.
-
-Referable.
-
-Comparable.
-
-Usable by later contract reasoning.
+It is factual material governed by contract: fixed, referable, comparable, and usable by later contract reasoning.
 
 The fact contract defines the laws for that material: shape, identity, version, reference, and immutability. It may also
 define the law that invalid factual material is not allowed to exist inside the core.
 
-But do not put constructors into this contract.
-
-Do not put factories, builders, guard functions, validation algorithms, storage layout, or object lifecycle tricks into
-this contract.
-
-Those are implementation mechanisms.
+But do not put constructors into this contract. Do not put factories, builders, guard functions, validation algorithms,
+storage layout, or object lifecycle tricks into this contract. Those are realization mechanisms.
 
 The contract only says what kind of factual material the core is allowed to treat as fact. How the machine prevents
 invalid material from being born is implementation.
@@ -748,26 +790,49 @@ Immutable Fact is contract-governed factual material.
 
 Keep those two apart, or the whole thing turns back into object-oriented mud.
 
-## 12. Contract and Implementation
+---
+
+## 13. Contract and Implementation
 
 Contract and implementation must not be mixed.
 
-Algorithms, time complexity, space complexity, hardware details, libraries, data structures, queues, threads, caches,
-and scheduling tricks do not belong inside the contract definition. They may matter a lot for the machine, but they are
-not the contract itself.
+This must be said carefully, because implementation is not unimportant. A real machine still needs concrete machinery to
+run. But that machinery belongs on a different axis.
 
-The contract and implementation should move together like mirror images on different axes. They correspond, but they are
-not the same thing.
+Contract and implementation move together like mirror images on different axes.
 
-The core should contain obligations that do not depend on implementation. The implementation should realize those
-obligations from the back side, isolated enough that it can be replaced when the contract does not change.
+The contract declares what must be true.
 
-If implementation changes the meaning, then the implementation was allowed to leak into the contract. That is exactly
-the kind of debt this theory is trying to avoid.
+The implementation realizes it.
+
+They correspond, but they must not mix.
+
+If the contract says that a result must be deterministic, the implementation may use any machinery that preserves that
+obligation.
+
+If the contract says that a stage has a capacity limit, the implementation may realize that limit in many different
+ways.
+
+If the contract says that a failure must be declared, the implementation may choose how to detect and report it.
+
+The contract must not name the mechanism.
+
+The contract must name the obligation.
+
+That is the line.
+
+As long as the declared obligation is preserved, the implementation should be replaceable. If replacing the mechanism
+changes the contract, then the mechanism was allowed to leak into the contract. That is not architecture. That is debt.
+
+So do not drag implementation machinery into the contract document.
+
+Do not contract the tool.
+
+Contract the obligation the tool must satisfy.
 
 ---
 
-## 13. Message, Exposure, and Interaction
+## 14. Message, Exposure, and Interaction
 
 What the user sees and what the system uses to communicate internally should go through contracts.
 
@@ -791,7 +856,7 @@ If communication needs an implementation detail to make sense, the design is alr
 
 ---
 
-## 14. Whole Machine
+## 15. Whole Machine
 
 A whole machine is made of pipelines.
 
@@ -812,14 +877,14 @@ contract pipeline:
     logical, causal, downstream
 
 implementation:
-    scheduling, waiting, execution, physical coordination
+    physical coordination behind the contract
 ```
 
 This needs more work later.
 
 ---
 
-## 15. Still Left
+## 16. Still Left
 
 There is a lot left.
 
@@ -844,13 +909,17 @@ lazy evaluation hides cost
 callback hides control flow
 proxy hides boundary
 recursion hides machine state
+DTO and raw request shape
+admission judgment and declared failure
+canonicalization and lowering
+publication and diagnostic evidence
 ```
 
 Still left.
 
 ---
 
-## 16. Current Working Definition
+## 17. Current Working Definition
 
 For now:
 
@@ -862,6 +931,7 @@ And the machine I want is simple in spirit:
 
 ```text
 state the contract
+make hidden obligations explicit
 make the interface a real contract document
 preserve methods as operation handles
 keep contract structure two-dimensional
@@ -869,12 +939,12 @@ bind closed base contracts through a flat operation manifest
 treat everything outside the core as untrusted
 adopt external interfaces only after ratifying them against internal contracts
 admit only what passes the boundary
-produce immutable facts
+produce contract-governed immutable facts
 allow only declared transitions
 reject through declared failures
 publish only accepted results
 declare failure instead of hiding it
-declare resource limits instead of pretending they do not exist
+declare policy, budget, capacity, and governance instead of hiding them
 verify realization against the declared contract
 keep implementation out of the contract
 ```
