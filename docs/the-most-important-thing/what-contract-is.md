@@ -637,106 +637,15 @@ Contract the obligation the tool must satisfy.
 Each contract kind in the pipeline needs its own explanation. Do not collapse them into one magic blob called
 "contract." That is how people smuggle confusion back in.
 
-Input, admission, lowering, fact, invariant, state machine, failure, publication, diagnostic, policy, budget, capacity,
-and governance contracts are not the same thing. They may appear together in one operation manifest, but they do
-different work.
+The order here is intentional. First, describe what kind of factual material the core may treat as fact. Then describe
+the finite machine conditions that govern judgment. After that, explain how outside presentation reaches the boundary,
+how admission decides, and what happens when the material is stopped or allowed to continue.
 
-Before DTOs and admission, the cross-cutting contracts have to be named. Otherwise people will pretend the machine
-judges
-material in empty space. It does not.
-
-### 12.1 Policy, Budget, Capacity, and Governance Contracts
-
-A good machine is not infinite.
-
-It has limits.
-
-It has a lifetime.
-
-It can accept only so much material, spend only so much effort, retain only so much evidence, expose only so much
-result,
-and survive only under conditions it can actually bear. Pretending otherwise is not elegance. It is engineering fantasy.
-
-So a good machine must be honest about its own limits.
-
-It must declare them.
-
-It must measure them.
-
-It must operate under them.
-
-A machine that does not know its limits will still hit them. It will just hit them by accident, under pressure, in the
-worst possible place, while everyone pretends the contract was fine.
-
-That is bullshit.
-
-Policy, budget, capacity, and governance exist because the machine is finite and must be operated wisely. They are not
-naive extra stages at the end of the pipeline. They cut across boundary, admission, lowering, core judgment, failure,
-publication, and diagnostic.
-
-```text
-Policy Contract:
-    the contract that declares which judgment criteria are active for a given machine context
-
-Budget Contract:
-    the contract that declares the finite consumable allowance of an operation, run, stage, or diagnostic path
-
-Capacity Contract:
-    the contract that declares the admissible envelope of a machine, surface, stage, or storage region
-
-Governance Contract:
-    the contract that declares how contract sets, policy sets, budget profiles, capacity envelopes, versions, and
-    manifest bindings become valid for a machine
-```
-
-Policy is about judgment criteria.
-
-It says under which declared criteria material may be accepted, rejected, deferred, failed, published, exposed,
-retained,
-or hidden. Policy is not configuration. Configuration may select a policy, but the selected policy must be declared
-contract material. Policy is not a callback, not an arbitrary function, and not hidden behavior wearing a nicer name.
-
-A policy must be finite, named, inspectable, governed, and explicitly bound to the interaction or surface where it
-applies. If it cannot be named, inspected, versioned, and governed, it is not contract. It is behavior hiding behind a
-nicer word.
-
-Budget is about finite consumption.
-
-It says how much a run, operation, stage, or diagnostic path may consume before the machine must stop, reject, defer, or
-declare failure. The contract declares the allowance and the required outcome when the allowance is exhausted.
-
-Capacity is about the machine's admissible envelope.
-
-It says how much a machine, surface, stage, or storage region may accept, retain, keep in flight, expose, or publish.
-Capacity should not be guessed from optimism. It should be measured, chosen, declared, and governed. Valid material may
-still be rejected or deferred by capacity. That is not a bug. That is a finite machine refusing to lie about what it can
-survive.
-
-Governance is about validity of the contract world.
-
-It says which contract set, policy set, budget profile, capacity envelope, version, and manifest binding is valid for a
-machine. Without governance, nobody knows which rules are actually active. That is how systems quietly rot.
-
-These contracts declare judgment criteria, finite allowance, admissible envelope, and validity.
-
-They do not declare mechanisms.
-
-The contract does not say how the machine stores work, schedules work, counts work, or physically enforces the limit.
-Those are realization choices. The contract says what limit exists, where it applies, under which governance it is
-valid,
-and what declared outcome follows when the limit is reached.
-
-A good machine does not pretend to be infinite.
-
-It declares its limits and operates inside them.
-
-### 12.2 Fact Contract and Immutable Fact
+### 12.1 Fact Contract and Immutable Fact
 
 An immutable fact must be described carefully.
 
-Do not say it is just ordinary data. That is too weak.
-
-Do not say it is the contract rule either. That is also wrong.
+Do not say it is just ordinary data. That is too weak. Do not say it is the contract rule either. That is also wrong.
 
 An immutable fact is not a constraint, not an action rule, not a state transition rule, not a publication rule, and not
 a
@@ -760,15 +669,9 @@ transition judgment may inspect.
 A publication contract may say what may be exposed. The immutable fact provides factual material that the publication
 judgment may inspect.
 
-So the fact must stay dumb.
-
-It must not decide.
-
-It must not validate itself.
-
-It must not carry the rule.
-
-It must not hide behavior through methods, callbacks, proxies, inherited behavior, or framework bullshit.
+So the fact must stay dumb. It must not decide. It must not validate itself. It must not carry the rule. It must not
+hide
+behavior through methods, callbacks, proxies, inherited behavior, or framework bullshit.
 
 It is factual material governed by contract: fixed, referable, comparable, and usable by later contract reasoning.
 
@@ -789,6 +692,292 @@ Immutable Fact is contract-governed factual material.
 ```
 
 Keep those two apart, or the whole thing turns back into object-oriented mud.
+
+### 12.2 Policy, Budget, Capacity, and Governance Contracts
+
+A good machine is not infinite. It has limits, and it has a lifetime.
+
+It can accept only so much material, spend only so much effort, retain only so much evidence, expose only so much
+result,
+and survive only under conditions it can actually bear. Pretending otherwise is not elegance. It is engineering fantasy.
+
+A good machine must be honest about its own limits. It declares them, measures them, and operates under them.
+
+A machine that does not know its limits will still hit them. It will just hit them by accident, under pressure, in the
+worst possible place, while everyone pretends the contract was fine. That is bullshit.
+
+Policy, budget, capacity, and governance exist because the machine is finite and must be operated wisely. They are not
+little stages tacked onto the end of the pipeline. They cut across boundary, admission, lowering, core judgment,
+failure,
+publication, and diagnostic.
+
+```text
+Policy Contract:
+    the contract that declares which judgment criteria are active for a given machine context
+
+Budget Contract:
+    the contract that declares the finite consumable allowance of an operation, run, stage, or diagnostic path
+
+Capacity Contract:
+    the contract that declares the admissible envelope of a machine, surface, stage, or storage region
+
+Governance Contract:
+    the contract that declares how contract sets, policy sets, budget profiles, capacity envelopes, versions, and
+    manifest bindings become valid for a machine
+```
+
+Policy is about judgment criteria.
+
+It says under which declared criteria material may be accepted, rejected, deferred, quarantined, failed, published,
+exposed, retained, or hidden. Policy is not configuration. Configuration may select a policy, but the selected policy
+must be declared contract material. Policy is not a callback, not an arbitrary function, and not hidden behavior wearing
+a nicer name.
+
+A policy must be finite, named, inspectable, governed, and explicitly bound to the interaction or surface where it
+applies. If it cannot be named, inspected, versioned, and governed, it is not contract. It is behavior hiding behind a
+nicer word.
+
+Policy axes may include boundary strictness, unknown material handling, external contract infiltration, capacity
+overflow, budget exhaustion, publication exposure, diagnostic evidence, version compatibility, duplicate or replay
+handling, determinism requirement, degradation permission, priority, fairness, and trust requirement.
+
+These are not algorithms. They are declared judgment criteria. Do not confuse the rule axis with the tool that later
+realizes it.
+
+Budget is about finite consumption.
+
+It says how much a run, operation, stage, or diagnostic path may consume before the machine must stop, reject, defer, or
+declare failure. The contract declares the allowance and the required outcome when the allowance is exhausted.
+
+Capacity is about the machine's admissible envelope.
+
+It says how much a machine, surface, stage, or storage region may accept, retain, keep in flight, expose, or publish.
+Capacity should not be guessed from optimism. It should be measured, chosen, declared, and governed. Valid material may
+still be rejected or deferred by capacity. That is not a bug. That is a finite machine refusing to lie about what it can
+survive.
+
+Governance is about validity of the contract world.
+
+It says which contract set, policy set, budget profile, capacity envelope, version, and manifest binding is valid for a
+machine. Without governance, nobody knows which rules are actually active. That is how systems quietly rot.
+
+These contracts declare judgment criteria, finite allowance, admissible envelope, and validity. They do not declare
+mechanisms.
+
+The contract does not say how the machine stores work, schedules work, counts work, or physically enforces the limit.
+Those are realization choices. The contract says what limit exists, where it applies, under which governance it is
+valid,
+and what declared outcome follows when the limit is reached.
+
+A good machine does not pretend to be infinite. It declares its limits and operates inside them.
+
+### 12.3 DTO and Raw Presentation
+
+A DTO is not the contract rule.
+
+It is not a core fact.
+
+It is not a domain object.
+
+A DTO is the boundary-facing presentation shape that makes outside material judgeable by the machine.
+
+Outside material does not arrive in a form the core should trust. It may arrive as a request body, message payload,
+serialized structure, framework object, generated object, proxy-wrapped object, or some other external shape. A good
+machine does not judge that chaos directly.
+
+The boundary needs a declared presentation shape. That is the role of the DTO.
+
+The DTO gives the boundary something finite, named, and inspectable to judge. It is material presented to the airlock,
+not material allowed to live inside the core.
+
+```text
+Input Contract:
+    the contract that declares what presentation shape may appear at the boundary
+
+DTO / Raw Presentation:
+    the boundary-facing data shape presented for judgment
+```
+
+The DTO must not carry contract authority. It must not validate itself, decide, become a domain object, or smuggle
+framework rules, serializer rules, persistence rules, proxy behavior, or external interface meaning into the core.
+
+The DTO exists so the boundary can judge outside material under declared policy, budget, capacity, and governance. That
+connection matters.
+
+A DTO may be structurally valid and still be rejected by policy. It may be meaningful and still be deferred by capacity.
+It may be malformed and fail fast. It may be suspicious and be quarantined outside the core for diagnostic or review
+use.
+
+Those are not random implementation choices. They are declared boundary outcomes under policy, capacity, budget, and
+governance.
+
+Examples:
+
+```text
+fast-fail policy:
+    reject invalid presentation immediately with declared failure
+
+quarantine policy:
+    keep suspicious or rejected material outside the core, only as diagnostic or review material
+
+diagnostic-only policy:
+    allow material to remain visible for evidence, but never for authoritative core reasoning
+
+reject-unknown policy:
+    reject undeclared fields, metadata, shape, or external contract material
+
+compatibility policy:
+    allow legacy presentation only under a declared compatibility rule
+
+capacity-overflow policy:
+    reject or defer material when the declared capacity envelope cannot admit it
+
+budget-exhaustion policy:
+    stop, defer, or fail when the declared allowance is exhausted
+```
+
+The short rule is simple:
+
+```text
+DTO is judgeable outside presentation.
+It is not core fact.
+It is not contract authority.
+```
+
+If a DTO enters the core as-is, the boundary is fake.
+
+### 12.4 Guard and Admission Judgment
+
+The guard is not the contract.
+
+The guard is the boundary point where the admission contract is applied. If the guard becomes the contract, the
+obligation disappears into implementation code again. Same old garbage, better name.
+
+The admission contract declares the conditions under which boundary presentation material may continue.
+
+The admission judgment is the machine's answer under that contract.
+
+```text
+Admission Contract:
+    the contract that declares when boundary presentation may be admitted, rejected, deferred, or failed
+
+Admission Judgment:
+    the contract-governed verdict produced at the boundary
+```
+
+Admission is not the whole domain. It is not deep business reasoning. It is not an excuse to drag the entire core into
+the boundary.
+
+It is the airlock judgment.
+
+The boundary asks whether the presented material may move forward under the active input contract, policy, budget,
+capacity, and governance.
+
+Do not mix admission verdict with material disposition. They are different questions.
+
+```text
+Admission Verdict:
+    can this material continue through the pipeline?
+
+Material Disposition:
+    what happens to material that does not continue?
+```
+
+A useful top-level admission verdict is small:
+
+```text
+admitted
+rejected
+deferred
+failed
+```
+
+`Admitted` means the boundary presentation may continue to normalization, canonicalization, and lowering.
+
+`Rejected` means the material does not satisfy the boundary obligation.
+
+`Deferred` means the material may be valid, but the machine cannot or must not process it now under declared capacity,
+budget, policy, or governance.
+
+`Failed` means the machine cannot safely complete the admission judgment itself: the active contract world is invalid,
+required governance is missing, a required policy set is not valid, or the boundary cannot produce the evidence it is
+obligated to produce.
+
+`Quarantined` is not an admission verdict.
+
+That matters.
+
+Quarantine is a disposition for material that must not continue into authoritative core reasoning, but may still be kept
+outside the core for diagnostic, audit, security review, or human review.
+
+```text
+Material Disposition:
+    discard
+    retain diagnostic evidence
+    quarantine for review
+    redact and expose summary
+```
+
+Do not put quarantine beside admission as if it were the same kind of decision. Admission decides whether material may
+continue. Disposition decides what happens to material that does not continue.
+
+Do not throw admission failure into the void as a random exception. Do not let a framework decide what failure means.
+
+Admission failure is part of the contract.
+
+The guard may be realized in many ways. The contract does not care. The contract only declares what the boundary must
+judge, which verdicts are legal, and which dispositions may be applied to material that does not continue.
+
+### 12.5 Declared Failure and Admitted Material
+
+Admission has two honest directions.
+
+The material is allowed to continue under a declared condition.
+
+Or it is not.
+
+If the material is not allowed to continue, the machine must produce a declared result for that path. Sometimes that is
+rejection. Sometimes it is deferral. Sometimes the admission judgment itself failed. The contract must say which one it
+is. Do not mash them into one lazy error bucket.
+
+A declared failure is not a crash wearing a clean coat. It is not an unhandled exception. It is not whatever the
+framework happened to throw.
+
+A declared failure is a contract-governed stop result. It states which obligation failed, under which input, admission,
+policy, budget, capacity, or governance rule the failure was produced, and what may be exposed about that failure.
+
+Failure must be declared because failure is part of the machine. A machine that hides failure is lying. A machine that
+throws failure into the void is lazy.
+
+If the material is allowed to continue, it becomes admitted material.
+
+Admitted material is not an immutable fact. It is not core truth. It is not yet canonical, not yet lowered, and not yet
+something the state machine may freely reason from.
+
+It is simply material that survived the boundary judgment and may continue to normalization, canonicalization, and
+lowering.
+
+```text
+Declared Failure:
+    contract-governed stop result
+
+Admitted Material:
+    boundary-admitted material that may continue toward canonicalization and lowering
+
+Quarantined Material:
+    non-authoritative material retained outside the core under a declared disposition
+```
+
+Do not treat admitted material as fact.
+
+Do not treat declared failure as an exception.
+
+Do not treat quarantined material as admitted material.
+
+Do not let rejected material leak forward because it is convenient.
+
+The airlock exists for a reason. Outside material must either continue under an admission verdict or stop under a
+contract-governed outcome and disposition.
 
 ---
 
@@ -909,8 +1098,6 @@ lazy evaluation hides cost
 callback hides control flow
 proxy hides boundary
 recursion hides machine state
-DTO and raw request shape
-admission judgment and declared failure
 canonicalization and lowering
 publication and diagnostic evidence
 ```
@@ -938,7 +1125,8 @@ keep contract structure two-dimensional
 bind closed base contracts through a flat operation manifest
 treat everything outside the core as untrusted
 adopt external interfaces only after ratifying them against internal contracts
-admit only what passes the boundary
+judge DTOs as outside presentation at the boundary
+admit only what passes admission
 produce contract-governed immutable facts
 allow only declared transitions
 reject through declared failures
