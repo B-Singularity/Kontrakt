@@ -669,7 +669,8 @@ name.
 
 The order here is intentional. First, describe what kind of factual material the core may treat as fact. Then describe
 the finite machine conditions that govern judgment. After that, explain how outside presentation reaches the boundary,
-how admission decides, and what happens when the material is stopped or allowed to continue.
+how admission decides, what happens when the material is stopped or allowed to continue, and how admitted material
+becomes stable enough for the core to own.
 
 ### 12.1 Fact Contract and Immutable Fact
 
@@ -977,6 +978,180 @@ Rejected material cannot leak forward just because doing so is convenient.
 The boundary exists for a reason. Outside material must either continue under an admission verdict or stop under a
 contract-governed outcome and disposition.
 
+### 12.6 Canonicalization Rule
+
+Admitted material has passed the boundary. That is all. Do not let it into the core yet.
+
+Here is the problem.
+
+The machine receives material through adapters, runtimes, compilers, serializers, metadata readers, reflection surfaces,
+and libraries. Those things are not stable enough to define identity for the core. Even the same adapter may change a
+little across versions. A JVM-facing source may expose a slightly different Unicode shape, metadata order, reflection
+detail, backend name, or text form. A library update may move one small piece of presentation and still say, "same
+meaning."
+
+Maybe it is the same meaning.
+
+Maybe it is not.
+
+The outside does not get to decide that.
+
+If the machine lets outside presentation define identity, determinism is already in danger. Yesterday the contract had
+one handle. Today the same meaning gets another handle. A fact splits. A graph node changes. A diagnostic points at a
+different shape. Verification starts fighting representation noise instead of contract meaning.
+
+That is a stupid way to lose a machine.
+
+Other systems run into the same kind of trouble. A database has to decide what counts as the same key. A compiler has to
+decide when different syntax carries the same meaning. A signature system has to decide which bytes stand for a document
+before signing it. The examples change, but the wound is the same:
+
+```text
+same meaning must not split into many identities
+different meaning must not be collapsed into one identity
+```
+
+Canonicalization is the contract that handles that wound.
+
+It says: when admitted presentations are declared equivalent, the machine translates them into one stable representation
+chosen by the system's own rule. Not the adapter's habit. Not the JVM's accident. Not the serializer's mood. Not
+whatever
+Unicode library happened to be on the classpath today.
+
+The system chooses the representative.
+
+If equivalence is declared, the same meaning gets the same representative every time.
+
+If equivalence is not declared, the material stays distinct.
+
+```text
+Canonicalization Rule:
+    the contract that declares how admitted presentation material with declared-equivalent meaning is reduced to the
+    system's stable representation before identity is issued
+
+Canonical Representation:
+    the system-owned stable representative produced by that rule
+```
+
+The word `declared` does real work here. Two shapes do not become equivalent because they look similar, because a
+framework treats them the same, because an adapter produced them, or because a test would break otherwise. That is how
+implicit contracts sneak back in with a clean face.
+
+A canonicalization rule has to declare the pieces that matter:
+
+```text
+equivalence:
+    which presentation differences do not change declared meaning
+
+representative:
+    which system-owned stable representation stands for that meaning
+
+source drift:
+    which adapter, backend, version, text, metadata, or encoding differences are tolerated as equivalent
+
+failure:
+    what declared result follows when the representative cannot be produced safely
+```
+
+The contract does not need to name the parser, table, cache, string routine, or data structure used to do the work. That
+is machinery. The obligation is smaller and sharper: declared-equivalent material must be translated into the system's
+stable standard, and material without declared equivalence must not be merged because it feels convenient.
+
+Only after this can identity become safe.
+
+Before the machine issues identifiers, compares material, derives facts, builds graph nodes, verifies obligations,
+publishes results, or writes diagnostics, it needs one internal handle for one declared meaning.
+
+Canonicalization gives declared meaning that deterministic handle.
+
+### 12.7 Lowering Obligation
+
+Canonical representation is better than raw presentation, but it is still not core material.
+
+That distinction is easy to miss.
+
+After canonicalization, the machine has a stable representative. Good. Now it knows which internal shape stands for the
+declared meaning. But the representative may still be tied to a presentation layer: a DTO shape, a method surface, an
+annotation form, a DSL term, metadata text, or adapter material.
+
+The core should not be built from that stuff.
+
+The core needs material it owns.
+
+That is what lowering is for.
+
+Lowering takes the canonical representation and turns it into core-owned contract material without changing the declared
+meaning. The shape changes. The meaning must not.
+
+```text
+Lowering Obligation:
+    the contract that declares how a canonical representation becomes core-owned contract material without changing
+    declared meaning
+
+Lowered Material:
+    core-owned contract material produced under that obligation
+```
+
+Do not confuse this with ordinary mapping. Ordinary mapping often means, "take this object and make another object that
+fits the next layer." That is not strong enough here. If the mapping carries framework behavior, serializer assumptions,
+reflection handles, backend accidents, or proxy tricks into the core, it has not lowered the material. It has smuggled
+foreign meaning across the boundary.
+
+Lowering has a stricter job. It moves material from the presentation side of the machine into the contract side of the
+machine. After lowering, the core should be able to compare it, reference it, govern it, diagnose it, and reason over it
+without asking the outside world what the material was supposed to mean.
+
+The obligation has to preserve what makes the material meaningful:
+
+```text
+declared meaning
+identity material
+shape law
+reference law
+version law
+governance binding
+failure law
+diagnostic evidence
+```
+
+It also has to block what must not cross:
+
+```text
+framework behavior
+proxy behavior
+serializer convention
+reflection handle
+backend accident
+unratified external contract meaning
+```
+
+Canonicalization and lowering sit next to each other, but they are not the same move.
+
+```text
+canonicalization:
+    stops one declared meaning from splitting into many identities
+
+lowering:
+    stops outside presentation from entering the core without becoming system-owned contract material
+```
+
+Canonicalization fixes the representative.
+
+Lowering changes the ownership of the material.
+
+If lowering cannot preserve the declared meaning, the machine must stop with a declared failure. No half-lowered object.
+No "the next stage will figure it out." That is how rotten material reaches the core.
+
+Lowered material may become a candidate fact, a candidate transition, or another internal contract material. But
+lowering
+does not make it accepted truth. It only prepares the material for core judgment.
+
+The core still has to judge it.
+
+Lowering gives the core material it can own.
+
+It does not give the material authority by itself.
+
 ---
 
 ## 13. Contract and Implementation
@@ -1081,7 +1256,6 @@ lazy evaluation hides cost
 callback hides control flow
 proxy hides boundary
 recursion hides machine state
-canonicalization and lowering
 publication and diagnostic evidence
 ```
 
@@ -1110,6 +1284,8 @@ treat everything outside the core as untrusted
 adopt external interfaces only after ratifying them against internal contracts
 judge DTOs as outside presentation at the boundary
 admit only what passes admission
+canonicalize declared-equivalent admitted material into the system's stable internal standard before identity becomes authoritative
+lower canonical representation into core-owned contract material
 produce contract-governed immutable facts
 allow only declared transitions
 reject through declared failures
