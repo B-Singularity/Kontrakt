@@ -750,7 +750,7 @@ Governance Contract:
 ```
 
 Policy is about judgment criteria. It says under which declared criteria material may be accepted, rejected, deferred,
-quarantined, failed, published, exposed, retained, or hidden. Policy is not configuration. Configuration may select a
+failed, published, exposed, retained as evidence, or hidden. Policy is not configuration. Configuration may select a
 policy, but the selected policy must be declared contract material. Policy is not a callback, not an arbitrary function,
 and not hidden behavior wearing a nicer name.
 
@@ -759,7 +759,7 @@ applies. If it cannot be named, inspected, versioned, and governed, it is not co
 nicer word.
 
 Policy axes may include boundary strictness, unknown material handling, external contract infiltration, capacity
-overflow, budget exhaustion, publication exposure, diagnostic evidence, version compatibility, duplicate or replay
+overflow, budget exhaustion, diagnostic retention, publication exposure, version compatibility, duplicate or replay
 handling, determinism requirement, degradation permission, priority, fairness, and trust requirement.
 
 These axes are declared judgment criteria, not algorithms. The rule axis and the tool that later realizes it are
@@ -771,9 +771,9 @@ must stop, reject, defer, or declare failure. The contract declares the allowanc
 allowance is exhausted.
 
 Capacity is the machine's admissible envelope. It says how much a machine, surface, stage, or storage region may accept,
-retain, keep in flight, expose, or publish. Capacity should not be guessed from optimism. It should be measured, chosen,
-declared, and governed. Valid material may still be rejected or deferred by capacity. A finite machine can reject valid
-material when accepting it would exceed what the machine can survive.
+retain as bounded evidence, keep in flight, expose, or publish. Capacity should not be guessed from optimism. It should
+be measured, chosen, declared, and governed. Valid material may still be rejected or deferred by capacity. A finite
+machine can reject valid material when accepting it would exceed what the machine can survive.
 
 Governance is the validity of the contract world. It says which contract set, policy set, budget profile, capacity
 envelope, version, and manifest binding is valid for a machine. Without governance, nobody knows which rules are
@@ -820,10 +820,22 @@ rules, serializer rules, persistence rules, proxy behavior, or external interfac
 The DTO exists so the boundary can judge outside material under declared policy, budget, capacity, and governance.
 
 In practice, a structurally valid DTO can still be rejected by policy. A meaningful DTO can still be deferred by
-capacity. A malformed DTO can fail fast. A suspicious DTO can be quarantined outside the core for diagnostic or review
-use.
+capacity. A malformed DTO can fail fast. A suspicious DTO may leave bounded diagnostic evidence if the diagnostic policy
+allows it.
 
-These are declared boundary outcomes, not random implementation choices.
+That last sentence needs discipline.
+
+Rejected material does not get a second life just because somebody wants a debug trail. Keeping hostile material around
+is not free. It consumes storage, leaks secrets, creates replay paths, gives review tools a dangerous appetite, and
+tempts some later piece of code to treat rejected junk as if it were almost admitted.
+
+So the contract should not introduce a special kind of "quarantined material" as if it were part of the pipeline.
+
+The pipeline continues with admitted material.
+
+Everything else stops.
+
+What may remain is evidence, not authority.
 
 Examples:
 
@@ -831,11 +843,11 @@ Examples:
 fast-fail policy:
     reject invalid presentation immediately with declared failure
 
-quarantine policy:
-    keep suspicious or rejected material outside the core, only as diagnostic or review material
+diagnostic-retention policy:
+    retain only bounded, non-authoritative evidence from material that did not continue
 
 diagnostic-only policy:
-    allow material to remain visible for evidence, but never for authoritative core reasoning
+    allow evidence to remain visible for diagnosis, but never for authoritative core reasoning
 
 reject-unknown policy:
     reject undeclared fields, metadata, shape, or external contract material
@@ -856,6 +868,8 @@ Compressed:
 DTO is judgeable outside presentation.
 It is not core fact.
 It is not contract authority.
+Rejected material may leave evidence.
+It must not leave authority.
 ```
 
 A DTO entering the core as-is means the boundary did no real work.
@@ -866,9 +880,9 @@ Once the boundary has a shape to look at, it has to decide whether the material 
 
 That decision is admission.
 
-Admission is narrower than the domain. It is not where the machine solves the business, and it is not an excuse
-to drag the entire core into the boundary. Admission is the airlock judgment. It asks a smaller question: can this
-presented material move forward under the active input contract, policy, budget, capacity, and governance?
+Admission is narrower than the domain. It is not where the machine solves the business, and it is not an excuse to drag
+the entire core into the boundary. Admission is the airlock judgment. It asks a smaller question: can this presented
+material move forward under the active input contract, policy, budget, capacity, and governance?
 
 The guard is the place where the admission contract is applied; it is not the contract itself. If the guard becomes the
 contract, the obligation has gone back into implementation code. The old problem returns with a better name.
@@ -888,7 +902,7 @@ Admission Verdict:
     can this material continue through the pipeline?
 
 Material Disposition:
-    what happens to material that does not continue?
+    what declared handling applies to material that does not continue?
 ```
 
 A useful top-level admission verdict is small:
@@ -911,21 +925,26 @@ budget, policy, or governance.
 required governance is missing, a required policy set is not valid, or the boundary cannot produce the evidence it is
 obligated to produce.
 
-Quarantine belongs to a different question; it is not an admission verdict. It is a disposition for material that must
-not continue into
-authoritative core reasoning, but may still be kept outside the core for diagnostic, audit, security, or review.
+Disposition is not another verdict. It is the declared handling for material that did not continue. The safe default is
+simple: discard it.
+
+If the machine keeps anything, it keeps bounded diagnostic evidence, not the material as a second pipeline.
 
 ```text
 Material Disposition:
     discard
-    retain diagnostic evidence
-    quarantine for review
+    retain bounded diagnostic evidence
     redact and expose summary
 ```
 
-Admission decides whether material may continue. Disposition decides what happens to material that does not continue. If
-you put quarantine beside admission as if it were the same kind of decision, someone will treat it as another way into
-the machine. It stays outside authoritative reasoning.
+That is the line. Rejected material must not become a shadow pipeline. A review queue, dead-letter table, audit store,
+debug file, replay buffer, or security workbench may be a useful implementation, but it is still implementation. The
+contract only declares whether evidence may remain, what evidence may remain, how it is bounded, and what may be
+exposed.
+
+Admission decides whether material may continue. Disposition decides what remains after material does not continue. If
+you put a retained blob beside admission as if it were another way forward, someone will eventually wire it back into
+the machine. Do not give them the hole.
 
 Admission failure should not disappear into a random exception, and a framework should not decide what failure means.
 Admission failure is part of the contract.
@@ -933,7 +952,7 @@ Admission failure is part of the contract.
 The guard may be realized in many ways. The contract does not care. The contract only declares what the boundary must
 judge, which verdicts are legal, and which dispositions may be applied to material that does not continue.
 
-### 12.5 Declared Failure and Admitted Material
+### 12.5 Declared Failure, Admitted Material, and Diagnostic Evidence
 
 Admission has two honest directions.
 
@@ -945,8 +964,9 @@ When material cannot continue, the machine must produce a declared result for th
 rejection. Sometimes it is deferral. Sometimes the admission judgment itself failed. They should not be collapsed into
 one vague error bucket.
 
-A declared failure is not a cleaned-up crash. It is not an unhandled exception. It is not whatever the
-framework happened to throw.
+A declared failure is not a cleaned-up crash. It is not an unhandled exception. It is not whatever the framework
+happened
+to throw.
 
 A declared failure is a contract-governed stop result. It states which obligation failed, under which input, admission,
 policy, budget, capacity, or governance rule the failure was produced, and what may be exposed about that failure.
@@ -961,6 +981,12 @@ something the state machine may freely reason from.
 
 It is material that survived the boundary judgment and may continue to normalization, canonicalization, and lowering.
 
+If the material does not continue, the material stops.
+
+That does not mean the machine must remember nothing. It may need evidence for diagnosis, audit, security, rate-limit
+enforcement, replay defense, or user-facing explanation. But evidence is not the rejected material continuing under a
+different hat. Evidence is a bounded, non-authoritative remainder allowed only by declared policy.
+
 ```text
 Declared Failure:
     contract-governed stop result
@@ -968,61 +994,66 @@ Declared Failure:
 Admitted Material:
     boundary-admitted material that may continue toward canonicalization and lowering
 
-Quarantined Material:
-    non-authoritative material retained outside the core under a declared disposition
+Diagnostic Evidence:
+    bounded, non-authoritative evidence retained under declared diagnostic policy from material that did not continue
+
+Retention Policy:
+    the policy that declares whether rejected or failed material may leave evidence, what may be retained, how it is
+    bounded, and what may be exposed
 ```
 
-Admitted material is not fact. Declared failure is not an exception. Quarantined material is not admitted material.
-Rejected material cannot leak forward just because doing so is convenient.
+Admitted material is not fact.
+
+Declared failure is not an exception.
+
+Diagnostic evidence is not admitted material.
+
+Rejected material may leave evidence. It must not leave authority.
 
 The boundary exists for a reason. Outside material must either continue under an admission verdict or stop under a
-contract-governed outcome and disposition.
+contract-governed outcome and disposition. It must not become a second pipeline just because a debug path, review path,
+or storage mechanism exists.
 
 ### 12.6 Canonicalization Rule
 
-Admitted material has passed the boundary. That is all. Do not let it into the core yet.
+Admitted material has passed the boundary. That is all.
 
-Here is the problem.
+It is not ready for the core yet.
 
-The machine receives material through adapters, runtimes, compilers, serializers, metadata readers, reflection surfaces,
-and libraries. Those things are not stable enough to define identity for the core. Even the same adapter may change a
-little across versions. A JVM-facing source may expose a slightly different Unicode shape, metadata order, reflection
-detail, backend name, or text form. A library update may move one small piece of presentation and still say, "same
-meaning."
+The outside world is not stable enough to define the machine's identity. Even the same adapter can drift across
+versions.
+A JVM-facing source may expose slightly different text, Unicode shape, metadata order, reflection detail, or backend
+material. A serializer, compiler backend, library update, or framework convention can move one tiny piece of
+presentation
+and still claim it is giving the same meaning.
 
-Maybe it is the same meaning.
+The machine cannot trust that.
 
-Maybe it is not.
+If the machine accepts external presentation as its standard, identity starts depending on whatever the outside happened
+to produce today. The contract that was one thing yesterday becomes two things tomorrow. A fact gets a different handle.
+A graph node changes shape. A diagnostic no longer points at the same material. Verification starts arguing with
+representation noise instead of contract meaning.
 
-The outside does not get to decide that.
+That is not harmless variation. It is a threat to determinism.
 
-If the machine lets outside presentation define identity, determinism is already in danger. Yesterday the contract had
-one handle. Today the same meaning gets another handle. A fact splits. A graph node changes. A diagnostic points at a
-different shape. Verification starts fighting representation noise instead of contract meaning.
+This problem is not unique to this system. Databases meet it with keys, collation, and spelling. Compilers meet it when
+different syntax carries the same meaning. Signature systems meet it when field order, whitespace, or byte encoding
+changes the thing being signed. The details differ, but the machine problem is the same.
 
-That is a stupid way to lose a machine.
+Same meaning must not split into many identities.
 
-Other systems run into the same kind of trouble. A database has to decide what counts as the same key. A compiler has to
-decide when different syntax carries the same meaning. A signature system has to decide which bytes stand for a document
-before signing it. The examples change, but the wound is the same:
+Different meaning must not be collapsed into one identity.
 
-```text
-same meaning must not split into many identities
-different meaning must not be collapsed into one identity
-```
+That is why canonicalization exists.
 
-Canonicalization is the contract that handles that wound.
+Canonicalization is the contract-governed act of translating admitted presentation into the system's own stable standard
+when equivalence has already been declared. It is not cleanup. It is not repair. It is not trust in an adapter, a JVM, a
+compiler backend, a serializer, a framework, or a Unicode library. It is the machine refusing to let outside
+presentation
+define internal identity.
 
-It says: when admitted presentations are declared equivalent, the machine translates them into one stable representation
-chosen by the system's own rule. Not the adapter's habit. Not the JVM's accident. Not the serializer's mood. Not
-whatever
-Unicode library happened to be on the classpath today.
-
-The system chooses the representative.
-
-If equivalence is declared, the same meaning gets the same representative every time.
-
-If equivalence is not declared, the material stays distinct.
+If equivalence is declared, the machine chooses the same representative every time under its own rule. If equivalence is
+not declared, the machine keeps the material distinct.
 
 ```text
 Canonicalization Rule:
@@ -1033,11 +1064,18 @@ Canonical Representation:
     the system-owned stable representative produced by that rule
 ```
 
-The word `declared` does real work here. Two shapes do not become equivalent because they look similar, because a
-framework treats them the same, because an adapter produced them, or because a test would break otherwise. That is how
-implicit contracts sneak back in with a clean face.
+The important word is declared.
 
-A canonicalization rule has to declare the pieces that matter:
+A behavior does not become equivalent because somebody observed it behaving that way. An adapter does not get to define
+equivalence just because it produced the bytes. A framework convention does not become equivalence because the framework
+got there first. A test expectation does not become equivalence because the test would break otherwise.
+
+Without declared equivalence, canonicalization becomes another hole where implicit contracts crawl back into the
+machine.
+
+A canonicalization rule must say what differences do not change meaning, which system-owned representative stands for
+that meaning, which source drift is tolerated, and what failure is declared when the representative cannot be produced
+safely.
 
 ```text
 equivalence:
@@ -1050,58 +1088,59 @@ source drift:
     which adapter, backend, version, text, metadata, or encoding differences are tolerated as equivalent
 
 failure:
-    what declared result follows when the representative cannot be produced safely
+    what declared result follows when canonicalization cannot safely complete
 ```
 
-The contract does not need to name the parser, table, cache, string routine, or data structure used to do the work. That
-is machinery. The obligation is smaller and sharper: declared-equivalent material must be translated into the system's
-stable standard, and material without declared equivalence must not be merged because it feels convenient.
+The contract does not need to name the parser, table, cache, string routine, or data structure used to do the work.
+Those
+belong to realization.
 
-Only after this can identity become safe.
+The contract has to name the obligation: declared-equivalent material must be translated into the system's stable
+standard, and non-equivalent material must not be merged for convenience.
 
-Before the machine issues identifiers, compares material, derives facts, builds graph nodes, verifies obligations,
-publishes results, or writes diagnostics, it needs one internal handle for one declared meaning.
+This is where identity starts to become safe. Before the machine can compare material, issue identifiers, derive facts,
+build graph nodes, verify obligations, publish results, or produce useful diagnostics, it needs one internal handle for
+one declared meaning.
 
-Canonicalization gives declared meaning that deterministic handle.
+Canonicalization gives declared meaning a deterministic internal handle.
 
 ### 12.7 Lowering Obligation
 
-Canonical representation is better than raw presentation, but it is still not core material.
+Canonical representation is not core material yet.
 
-That distinction is easy to miss.
+It has a stable handle now. Good. The machine has stopped the outside from deciding identity. But a stable handle is
+still only a handle. The core needs material it can compare with the facts and state it already accepts.
 
-After canonicalization, the machine has a stable representative. Good. Now it knows which internal shape stands for the
-declared meaning. But the representative may still be tied to a presentation layer: a DTO shape, a method surface, an
-annotation form, a DSL term, metadata text, or adapter material.
+That is the job of lowering.
 
-The core should not be built from that stuff.
+Lowering takes the canonical representation and refines it into core-owned candidate material. This is not blind object
+mapping. It may need declared contract facts, accepted immutable facts, reference laws, identity laws, version laws, and
+governance binding to decide what the candidate actually points to.
 
-The core needs material it owns.
+A refund request is a simple example. The DTO may carry an order id and an amount. Canonicalization may settle the text,
+unit, and identity spelling. Lowering then asks which accepted payment fact this request refers to, what money shape the
+core uses, which reference law applies, and what candidate fact or candidate transition can be formed without changing
+the declared meaning.
 
-That is what lowering is for.
+The result is not truth.
 
-Lowering takes the canonical representation and turns it into core-owned contract material without changing the declared
-meaning. The shape changes. The meaning must not.
+The result is a candidate the core can read.
 
 ```text
 Lowering Obligation:
-    the contract that declares how a canonical representation becomes core-owned contract material without changing
-    declared meaning
+    the contract that declares how a canonical representation is refined into core-owned candidate material without
+    changing declared meaning
 
-Lowered Material:
-    core-owned contract material produced under that obligation
+Lowered Candidate Material:
+    core-owned candidate material produced under that obligation
 ```
 
-Do not confuse this with ordinary mapping. Ordinary mapping often means, "take this object and make another object that
-fits the next layer." That is not strong enough here. If the mapping carries framework behavior, serializer assumptions,
-reflection handles, backend accidents, or proxy tricks into the core, it has not lowered the material. It has smuggled
-foreign meaning across the boundary.
+Ordinary mapping is too weak here. Ordinary mapping often means, "take this object and make another object that fits the
+next layer." That is not enough. If the mapping carries framework behavior, serializer assumptions, reflection handles,
+backend accidents, proxy tricks, or unratified external contract meaning into the core, it has not lowered the material.
+It has smuggled foreign meaning across the boundary.
 
-Lowering has a stricter job. It moves material from the presentation side of the machine into the contract side of the
-machine. After lowering, the core should be able to compare it, reference it, govern it, diagnose it, and reason over it
-without asking the outside world what the material was supposed to mean.
-
-The obligation has to preserve what makes the material meaningful:
+Lowering has to preserve the parts that make the material contract material:
 
 ```text
 declared meaning
@@ -1125,32 +1164,203 @@ backend accident
 unratified external contract meaning
 ```
 
-Canonicalization and lowering sit next to each other, but they are not the same move.
+Canonicalization and lowering sit next to each other, but they do different work.
 
 ```text
 canonicalization:
-    stops one declared meaning from splitting into many identities
+    gives one declared meaning one deterministic internal handle
 
 lowering:
-    stops outside presentation from entering the core without becoming system-owned contract material
+    uses that handle, accepted facts, and core laws to form core-owned candidate material
 ```
 
-Canonicalization fixes the representative.
+If lowering cannot preserve the declared meaning, cannot resolve the required reference, or cannot form candidate
+material under the active governance, the machine must stop with a declared failure. No half-lowered object. No "the
+next
+stage will figure it out." That is how rotten material reaches the core.
 
-Lowering changes the ownership of the material.
+Lowering forms the candidate.
 
-If lowering cannot preserve the declared meaning, the machine must stop with a declared failure. No half-lowered object.
-No "the next stage will figure it out." That is how rotten material reaches the core.
+It does not promote the candidate into accepted core material.
 
-Lowered material may become a candidate fact, a candidate transition, or another internal contract material. But
+### 12.8 Invariant Contract
+
+After lowering, the material is inside the core as candidate material.
+
+It has crossed the boundary. It has a canonical handle. It has been shaped by core laws. The outside junk has been cut
+away.
+
+Still, truth has not happened.
+
+Lowering only says that the core can form this candidate without changing declared meaning. Invariant asks the next
+question: may the core accept this candidate under the law attached to this pipeline?
+
+That judgment needs a basis.
+
+```text
+Accepted Core Basis:
+    accepted core material named by the pipeline as the basis for judgment, including declared contract facts, accepted
+    immutable facts, derived core facts, and current core state
+```
+
+Do not call the whole thing history.
+
+Some of it may come from earlier accepted machine judgment. Some of it may have been declared up front by the contract
+author: state definitions, transition laws, identity laws, shape laws, reference laws, publication rules, and other core
+facts. Calling all of that history makes the model narrower than the machine.
+
+The candidate does not walk into an empty room. The pipeline has already named the core basis that matters for this
+judgment. The invariant does not go hunting through the machine.
+
+The candidate may be well-shaped.
+
+The candidate may be readable.
+
+The candidate may have a valid canonical handle.
+
+That still does not mean the core may accept it.
+
+The question is whether accepting the candidate would make the core lie under the invariant attached to this pipeline.
+
+That is invariant work.
+
+```text
+Invariant Contract:
+    the contract that judges whether lowered candidate material may be accepted as core material under a pipeline-bound
+    acceptance law
+```
+
+Do not confuse this with the old object-oriented class invariant.
+
+That model ties invariant to a mutable object. The object mutates itself, breaks its own invariant during a method call,
+and tries to repair the mess before anyone looks. State, validation, mutation, and behavior sit in the same object and
+pretend the result is discipline.
+
+This machine uses invariant differently.
+
+Invariant is the core's acceptance judgment. A candidate comes in. The pipeline supplies the binding and basis. The
+acceptance law says whether the candidate may stand. If the law does not hold, the candidate is not accepted. If it
+holds, the machine may accept the candidate as core material.
+
+```text
+candidate fact
+    -> invariant judgment
+    -> accepted immutable fact
+       or declared failure
+
+candidate transition
+    -> invariant / state judgment
+    -> accepted transition
+       or declared failure
+```
+
+The declaration must be precise enough to keep invariant from turning into a vague validator, but not so bloated that it
+becomes a runtime object garden.
+
+Use the smallest coordinates that keep the judgment honest:
+
+```text
+invariant:
+    the declared invariant being applied
+
+binding:
+    the pipeline position where the invariant is attached
+
+basis:
+    the accepted core material named by the pipeline as the basis of judgment
+
+candidate:
+    the lowered candidate being judged for acceptance
+
+acceptance law:
+    what must be true for the candidate to be accepted under this invariant
+
+failure:
+    the declared result when the acceptance law does not hold
+```
+
+That is enough.
+
+`Invariant` is the contract identity. Do not split it into a separate authority object. The declared invariant is the
+authority.
+
+`Binding` is just the place where the invariant sits in the contract pipeline. In the normal case, that place is already
+obvious:
+
+```text
 lowering
-does not make it accepted truth. It only prepares the material for core judgment.
+-> invariant
+-> accepted core material
+```
 
-The core still has to judge it.
+That position tells the machine which candidate is being judged and which core basis may be used. Do not invent a
+separate scope model to repeat what the pipeline already says. If the pipeline makes the attachment clear, the binding
+is
+already clear.
 
-Lowering gives the core material it can own.
+`Basis` is not a little object graph built for the invariant.
 
-It does not give the material authority by itself.
+Do not make one.
+
+The basis is the accepted core material named by the pipeline for this judgment. The contract does not care whether a
+real machine stores that material in objects, tables, arrays, files, generated code, or some ugly metal box under the
+floor. That is not the contract.
+
+The contract says only this: the candidate is judged under the basis named by this pipeline, and the judgment must not
+drag the whole machine into the room.
+
+`Candidate` is the lowered candidate material under judgment. It should not become a nested object bundle just because
+somebody wants the model to look important.
+
+`Acceptance law` is the declared law that decides whether the lowered candidate may be accepted under this invariant.
+
+It is not a relationship graph.
+
+It is not a hidden query plan.
+
+It is not a runtime object that carries old material around.
+
+The contract names what must be true for acceptance. It does not prescribe how a realization finds, stores, addresses,
+or
+evaluates the material needed to decide that truth.
+
+Presentation shape was handled before this. Core formation was handled by lowering. The acceptance law only says whether
+this candidate may be accepted without making the core lie.
+
+`Failure` folds together the contradiction and the declared result. If the acceptance law does not hold, the machine
+needs a declared failure law: reject the candidate, deny the transition, stop the path, or produce another declared
+result. Diagnostic evidence is not owned here; it belongs to diagnostic retention policy. The invariant may point to
+that
+policy, but it should not grow its own evidence object pile.
+
+These coordinates are not runtime objects the machine must allocate per candidate.
+
+They are contract coordinates.
+
+The contract does not prescribe how a machine stores, addresses, evaluates, or optimizes these coordinates. That belongs
+to realization. If the contract description turns into a graph of runtime objects, the design has already gone sideways.
+
+Fact and invariant must stay separate.
+
+The fact is material.
+
+The invariant is the acceptance law over candidate material under a named core basis.
+
+Mix them and the old object soup returns: data carrying rules, methods hiding validation, mutation pretending to be
+state, and behavior sneaking into identity. That road is already full of wreckage.
+
+A candidate fact can pass lowering and still fail invariant.
+
+A candidate transition can be well-shaped and still be illegal.
+
+A candidate publication can be available and still be forbidden.
+
+Clean shape is not truth.
+
+Core-owned candidate form is not truth.
+
+Only material that survives the declared invariant can become accepted core material.
+
 
 ---
 
@@ -1285,7 +1495,8 @@ adopt external interfaces only after ratifying them against internal contracts
 judge DTOs as outside presentation at the boundary
 admit only what passes admission
 canonicalize declared-equivalent admitted material into the system's stable internal standard before identity becomes authoritative
-lower canonical representation into core-owned contract material
+lower canonical representation into core-owned candidate material
+accept candidates only under pipeline-bound invariants and their declared acceptance laws
 produce contract-governed immutable facts
 allow only declared transitions
 reject through declared failures
