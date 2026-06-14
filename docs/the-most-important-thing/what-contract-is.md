@@ -1361,6 +1361,114 @@ Core-owned candidate form is not truth.
 
 Only material that survives the declared invariant can become accepted core material.
 
+### 12.9 State Contract
+
+The word `state` is already dirty. Everyone brings their own meaning and then acts surprised when the machine turns into
+mud.
+
+So narrow it first.
+
+A mathematical model may call a point in a value space a state. That can be useful for reasoning on paper. It is not the
+state contract of this machine. If every possible combination of values becomes state, the machine no longer has a small
+set of named operating conditions. It has a swollen value universe. Nothing is really controlled. Everything is merely
+possible.
+
+That is not good machine state.
+
+A functional program may carry state as an explicit value from one function to the next. That can be a clean way to
+compute. It can avoid hidden mutation. Good. But a value being carried through a calculation is still not enough here. A
+carried value does not, by itself, declare whether the next machine move is legal or illegal.
+
+That is not good machine state either.
+
+An object-oriented program often calls fields inside an instance its state. This is the worst import. A private variable
+named `status` is still an implementation field. A lifecycle hidden behind methods is still hidden lifecycle. Putting
+the
+field behind getters and setters does not make it contract state. It only gives the mud a nice little jacket.
+
+That is not good machine state.
+
+In this document, state means the declared operating condition of the machine.
+
+```text
+State Contract:
+    the contract that declares the machine condition under which the next machine move is legal or illegal
+```
+
+State is not where data lives.
+
+A machine may contain DTOs, admitted material, canonical representations, lowered candidates, accepted facts, diagnostic
+evidence, and publication material. Those are materials. They may be judged. They may be named. They may be accepted,
+rejected, lowered, published, or retained as evidence. They do not become state merely because they exist.
+
+State is the machine's declared permission surface.
+
+A good machine is not a sack of values. It is an active mapping and transition engine. It consumes material, makes
+declared judgments, accepts some material, rejects some material, closes failures, and exposes only what its contract
+allows. The machine needs to know whether the next move is legal under the condition it is in. That is what state is
+for.
+
+A state matters only when the operating condition changes the legality of the next machine move.
+
+If a label does not change what the machine may legally do next, it should not be promoted to state. It may be a stage
+name, a diagnostic label, a progress marker, a log word, or a developer's emotional support noun. Fine. It is not state.
+
+The next move may be admission, canonicalization, lowering, candidate acceptance, transition, failure closure,
+publication, diagnostic exposure, recovery, ownership transfer, governance change, or something else the contract
+governs. The list is not the definition. The list only shows where state has teeth.
+
+Introduce a state only when the declared operating condition changes the legality of the next machine move.
+
+A label is not state merely because it names a moment in the pipeline.
+
+The machine may have many useful labels: material has been read, shaped, checked, lowered, or emitted. Those labels may
+help diagnostics or explanation. But they do not become state unless they change the legality of the next machine move.
+
+If the same next moves remain legal before and after the label, the label is not state. It is only a name for progress.
+
+A state exists only when the declared machine condition changes what may legally happen next.
+
+State must be declared.
+
+State must be finite.
+
+State must be closed for the surface it governs.
+
+A machine should not learn its states after the run.
+
+If a new condition appears only because a callback fired, a subclass behaved strangely, an exception escaped through a
+side path, or an object happened to contain some field value after a method returned, then the state contract has
+already
+lost the plot. That condition may be evidence. It may be a failure symptom. It may be useful for diagnosis. But it is
+not
+a state the machine is allowed to treat as contract authority.
+
+The same line applies to ordinary material inside the pipeline. Facts, candidates, and diagnostic records may explain
+why a machine is in a condition, or why a move was allowed, denied, failed, or exposed. They may be part of the evidence
+used by a judgment. But they do not become state merely by being present.
+
+State belongs to the declared machine condition.
+
+The implementation may encode that condition in whatever form preserves the contract, but the encoding is not the state
+contract. The contract is the declared condition and the legality of the next move under that condition.
+
+State also explains why invariant comes first in this part of the pipeline.
+
+Invariant asks whether a lowered candidate may be accepted under the pipeline-bound acceptance law.
+
+State tells the machine which operating condition that judgment belongs to and whether the next move remains legal if
+the
+judgment passes or fails.
+
+Do not merge them.
+
+Invariant is acceptance law.
+
+State is operating condition.
+
+A good machine uses state to keep the next move explicit. It does not let values, objects, or proof vocabulary quietly
+pretend to be lifecycle.
+
 
 ---
 
@@ -1498,6 +1606,7 @@ canonicalize declared-equivalent admitted material into the system's stable inte
 lower canonical representation into core-owned candidate material
 accept candidates only under pipeline-bound invariants and their declared acceptance laws
 produce contract-governed immutable facts
+treat state as the machine condition under which the next move is legal or illegal
 allow only declared transitions
 reject through declared failures
 publish only accepted results
