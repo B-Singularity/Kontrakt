@@ -1363,111 +1363,85 @@ Only material that survives the declared invariant can become accepted core mate
 
 ### 12.9 State Contract
 
-The word `state` is already dirty. Everyone brings their own meaning and then acts surprised when the machine turns into
-mud.
+`State` is a dangerous word because it arrives with luggage.
 
-So narrow it first.
+A mathematical model may call a point in a value space a state. Useful on paper. Dangerous as machine doctrine. If a
+software machine imports that meaning directly, every possible combination of values starts asking to be treated as
+state. The machine loses a small lifecycle vocabulary and gets a fat cloud of possibilities. That may help a proof. It
+does not give the machine a clean next move.
 
-A mathematical model may call a point in a value space a state. That can be useful for reasoning on paper. It is not the
-state contract of this machine. If every possible combination of values becomes state, the machine no longer has a small
-set of named operating conditions. It has a swollen value universe. Nothing is really controlled. Everything is merely
-possible.
+Functional programming cleans up another mess. It may carry state as an explicit value from one function to the next.
+That is often better than hiding mutation in some filthy corner. But a carried value is still only a carried value until
+the contract gives it authority. Purity does not declare lifecycle. Passing a value forward does not decide whether the
+next machine move is legal.
 
-That is not good machine state.
+Object-oriented state is worse here. A field named `status`, a private variable behind a getter, or an object mutating
+itself through methods is implementation material. If the lifecycle has to be inferred from whatever the object contains
+after a method returns, the contract is doing archaeology instead of governing the machine.
 
-A functional program may carry state as an explicit value from one function to the next. That can be a clean way to
-compute. It can avoid hidden mutation. Good. But a value being carried through a calculation is still not enough here. A
-carried value does not, by itself, declare whether the next machine move is legal or illegal.
+This document uses the word more narrowly.
 
-That is not good machine state either.
+State is explicitly declared contract material for machine-move legality
 
-An object-oriented program often calls fields inside an instance its state. This is the worst import. A private variable
-named `status` is still an implementation field. A lifecycle hidden behind methods is still hidden lifecycle. Putting
-the
-field behind getters and setters does not make it contract state. It only gives the mud a nice little jacket.
-
-That is not good machine state.
-
-In this document, state means the declared operating condition of the machine.
+It has to be declared before it governs anything. The machine cannot run first, inspect the wreckage, and then decide
+what state it must have been in. That may be diagnosis. It may be explanation. It is not state authority.
 
 ```text
 State Contract:
-    the contract that declares the machine condition under which the next machine move is legal or illegal
+    the explicitly declared contract surface that defines the machine conditions under which a pipeline's next move is
+    legal or illegal
 ```
 
-State is not where data lives.
+This is why state feels like it runs beside the pipeline. Every pipeline move happens under some machine condition. But
+the condition runs there as contract, not as implementation.
 
-A machine may contain DTOs, admitted material, canonical representations, lowered candidates, accepted facts, diagnostic
-evidence, and publication material. Those are materials. They may be judged. They may be named. They may be accepted,
-rejected, lowered, published, or retained as evidence. They do not become state merely because they exist.
+Do not draw the state surface by tracing the contract document. If every obligation becomes a state, the lifecycle turns
+into a pile of nouns.
 
-State is the machine's declared permission surface.
+Do not draw it by tracing the implementation either. If every implementation step becomes a state, the implementation
+has started writing the contract in crayon.
 
-A good machine is not a sack of values. It is an active mapping and transition engine. It consumes material, makes
-declared judgments, accepts some material, rejects some material, closes failures, and exposes only what its contract
-allows. The machine needs to know whether the next move is legal under the condition it is in. That is what state is
-for.
+A contract clause does not automatically create a state. An implementation stage does not automatically create a state.
+A log label, progress marker, or status word does not become state just because somebody gave it a serious name.
 
-A state matters only when the operating condition changes the legality of the next machine move.
+A label becomes state only when it changes the legality of the next machine move.
 
-If a label does not change what the machine may legally do next, it should not be promoted to state. It may be a stage
-name, a diagnostic label, a progress marker, a log word, or a developer's emotional support noun. Fine. It is not state.
+The next move may be admission, canonicalization, or some other move the contract governs. That list is not the
+definition. It only shows where state starts to bite.
 
-The next move may be admission, canonicalization, lowering, candidate acceptance, transition, failure closure,
-publication, diagnostic exposure, recovery, ownership transfer, governance change, or something else the contract
-governs. The list is not the definition. The list only shows where state has teeth.
+If the same moves remain legal before and after a label, the label is not state. It may still be useful for diagnostics
+or explanation. Keep it there. Do not smuggle it into the state contract.
 
-Introduce a state only when the declared operating condition changes the legality of the next machine move.
+The same discipline applies to material already moving through the pipeline. DTOs, canonical representations, lowered
+candidates, accepted facts, and diagnostic records may support a judgment. They may explain why a condition holds or why
+a move was allowed. Their presence does not create lifecycle authority.
 
-A label is not state merely because it names a moment in the pipeline.
+A condition discovered only after execution may explain what happened. It may help diagnosis. But it cannot become state
+authority. Explicit declaration comes first. Otherwise the machine is not following a lifecycle; it is naming wreckage
+after the fact.
 
-The machine may have many useful labels: material has been read, shaped, checked, lowered, or emitted. Those labels may
-help diagnostics or explanation. But they do not become state unless they change the legality of the next machine move.
+For the surface it governs, state must be declared, finite, and closed. Open-ended lifecycle vocabulary makes the next
+move slippery. Once the machine can invent, inherit, or infer new conditions while moving, legality is no longer
+governed
+by the state contract. It is guessed from whatever shape the run happened to leave behind.
 
-If the same next moves remain legal before and after the label, the label is not state. It is only a name for progress.
+Multiple pipelines may each carry their own explicitly declared state contract. That still does not create a
+parent-child
+state tree. The state surface of one pipeline does not lend meaning to another pipeline by ancestry. If pipelines must
+coordinate, the coordination has to be declared explicitly. Containment is not authority. Similar shape is not
+authority.
+Shared names are not authority.
 
-A state exists only when the declared machine condition changes what may legally happen next.
+State also explains why invariant had to come first in this part of the document.
 
-State must be declared.
+Invariant asks whether a lowered candidate may be accepted under a pipeline-bound acceptance law. State says which
+declared machine condition that judgment is happening under, and whether the next move of that pipeline remains legal
+after the judgment succeeds or fails.
 
-State must be finite.
+Mix those together and the old swamp comes back: values pretending to be lifecycle, objects hiding state, proofs
+ignoring the machine, and implementation steps dressing themselves up as contract.
 
-State must be closed for the surface it governs.
-
-A machine should not learn its states after the run.
-
-If a new condition appears only because a callback fired, a subclass behaved strangely, an exception escaped through a
-side path, or an object happened to contain some field value after a method returned, then the state contract has
-already
-lost the plot. That condition may be evidence. It may be a failure symptom. It may be useful for diagnosis. But it is
-not
-a state the machine is allowed to treat as contract authority.
-
-The same line applies to ordinary material inside the pipeline. Facts, candidates, and diagnostic records may explain
-why a machine is in a condition, or why a move was allowed, denied, failed, or exposed. They may be part of the evidence
-used by a judgment. But they do not become state merely by being present.
-
-State belongs to the declared machine condition.
-
-The implementation may encode that condition in whatever form preserves the contract, but the encoding is not the state
-contract. The contract is the declared condition and the legality of the next move under that condition.
-
-State also explains why invariant comes first in this part of the pipeline.
-
-Invariant asks whether a lowered candidate may be accepted under the pipeline-bound acceptance law.
-
-State tells the machine which operating condition that judgment belongs to and whether the next move remains legal if
-the
-judgment passes or fails.
-
-Do not merge them.
-
-Invariant is acceptance law.
-
-State is operating condition.
-
-A good machine uses state to keep the next move explicit. It does not let values, objects, or proof vocabulary quietly
-pretend to be lifecycle.
+A good machine declares state before movement and uses that declared state to keep movement honest.
 
 
 ---
@@ -1606,7 +1580,7 @@ canonicalize declared-equivalent admitted material into the system's stable inte
 lower canonical representation into core-owned candidate material
 accept candidates only under pipeline-bound invariants and their declared acceptance laws
 produce contract-governed immutable facts
-treat state as the machine condition under which the next move is legal or illegal
+treat state as explicitly declared contract material for pipeline lifecycle legality
 allow only declared transitions
 reject through declared failures
 publish only accepted results
