@@ -1443,6 +1443,77 @@ ignoring the machine, and implementation steps dressing themselves up as contrac
 
 A good machine declares state before movement and uses that declared state to keep movement honest.
 
+### 12.10 State Transition Contract
+
+State already explained the condition that governs movement.
+
+Transition has a different problem to solve.
+
+A good machine does not merely end up in the next condition. It moves there under declared permission. That is why
+transition has to be explicit.
+
+Movement is where the machine changes what it may do next. Before the move, one set of actions may be legal, one set of
+failures may be reachable, and one set of obligations may still be waiting. After the move, that legal surface may
+change. If the movement that changes those possibilities is implicit, then implementation order has become contract
+authority.
+
+That is the danger.
+
+Hidden transition lets progress pretend to be permission. It lets a later condition inherit meaning from the fact that
+an earlier step happened to finish. It lets successful execution pretend to prove that the move was legal.
+
+A stored value can be rewritten, a status label can be moved, and an implementation step can mark progress. None of
+that creates a contract transition by itself. A contract transition exists only when the contract has already permitted
+a one-way machine move between flat declared conditions.
+
+```text
+State Transition Contract:
+    the explicitly declared contract that permits a one-way machine move between flat declared conditions
+```
+
+This does not make transition a spare branch statement for the pipeline. The pipeline gives the movement surface.
+Judgments may decide admission, acceptance, policy, failure, or some other contract result. Transition does not do that
+job again. It only declares which condition-to-condition move is allowed after the relevant judgment has produced a
+declared result.
+
+The move must be declared before the machine performs it. If the machine moves first and the contract names the result
+afterward, the transition did not govern movement. It only described the accident. That may be useful for diagnosis, but
+it is not transition authority.
+
+A transition declaration therefore needs more than a target label. The current condition has to be declared. The target
+condition has to be declared. The permitted move between them has to be declared. If the move depends on an admission,
+invariant, policy, or failure result, that result has to exist before the transition uses it. The transition does not
+discover that result. It only refuses to let the machine move as if the result had appeared by magic.
+
+If any of those terms is missing, the machine should not pretend that the move is merely incomplete or waiting for
+implementation detail. The move is not a valid contract transition.
+
+Transition is one-way inside the same pipeline movement. Regression is not a transition. A correction, retry, or
+restart does not mean old material walks backward through the state surface. It enters as new contract-governed
+material, a new run, or a new epoch. That distinction matters because backward movement lets the machine rewrite its own
+story after the fact.
+
+A cycle is not a disciplined transition model for the same movement surface. If the machine can move from one declared
+condition to another and eventually return to the first condition inside the same surface, the contract is no longer
+describing forward legality. It is hiding repetition inside state authority. When repetition is necessary, it must be
+declared as governed repetition under policy, budget, capacity, failure, and diagnostic rules. It must not be smuggled
+in as a state transition cycle.
+
+A transition also does not move through a state tree. There is no parent state lending meaning to a child state. There
+is no inherited transition. There is no override of a parent failure rule. States are flat declared conditions.
+Transitions are explicit moves between those flat conditions.
+
+Branching can still exist, but transition should not become a decorated `if` statement. A prior judgment may leave one
+of several declared results on the table, and each result may permit a different next move. That still does not create
+hierarchy. A branch is a set of permitted next moves, not a child surface.
+
+Invariant and transition may touch near acceptance, but treating them as one big judge is how the mud comes back. The
+invariant asks whether candidate material may be accepted without making the core lie. Transition does not rerun that
+question. It only says which move is allowed once that declared result exists. Accepting material and moving the machine
+stay close, but they do not become one vague validation step.
+
+A good machine does not mutate itself and then search for a story that makes the mutation legal. It lets the relevant
+judgment produce a declared result, then follows only the movement that the transition contract permits.
 
 ---
 
