@@ -1515,6 +1515,71 @@ stay close, but they do not become one vague validation step.
 A good machine does not mutate itself and then search for a story that makes the mutation legal. It lets the relevant
 judgment produce a declared result, then follows only the movement that the transition contract permits.
 
+### 12.11 Explicit State Machine
+
+State and transition are enough to form a state machine.
+
+That is exactly why the state machine must be explicit.
+
+If the contract declares the flat machine conditions, and it declares the one-way moves between those conditions, then
+the state machine is already sitting there. A polite design document could say the state machine is implied.
+
+I do not trust implied machinery.
+
+Good ideas rot fast when the important part is left as an implication. People keep the name, mix the responsibility with
+whatever code is nearby, and then act surprised when the machine turns into soup. Here the likely failure is boring and
+obvious: the state machine gets buried inside admission code, invariant checks, policy evaluation, failure handling,
+method bodies, callbacks, hooks, or some status label that happens to change at the right time.
+
+No.
+
+A transition should not be discovered by reading the implementation like a crime scene.
+
+```text
+Explicit State Machine:
+    the declared manifest that manages only the states and one-way transitions of one state surface, including its
+    initial condition and terminal conditions
+```
+
+The word `only` matters.
+
+Acceptance, rejection, policy, and failure still belong to their own contracts. The explicit state machine keeps only
+the
+movement surface visible: states here, transitions here, initial condition here, terminal conditions here.
+
+That manifest creates no new boss above state and transition. It should not become the pipeline, a workflow engine, or a
+clever place to hide validation. It is the small, annoying, necessary table that prevents everyone from pretending the
+state machine can be reconstructed later from whatever the implementation happened to do.
+
+The initial condition says where movement through this state surface begins.
+
+The state set says which flat conditions belong to this surface.
+
+The transition set says which one-way moves exist between those conditions.
+
+The terminal conditions say which declared conditions have no outgoing move inside this surface. A terminal condition is
+not a verdict that the machine succeeded. It is not an invariant result wearing a nicer hat. It only says that, inside
+this state surface, movement stops there.
+
+The transition set must stay clean as well. For one state-to-state move, there must be one explicit transition
+declaration. Not aliases scattered around the code. Not one transition in the manifest and another hidden in a callback.
+Not a method that changes a label and calls the result architecture.
+
+If the move is:
+
+```text
+A -> B
+```
+
+then the state surface declares that move once. If the machine needs a different meaning, it needs a different declared
+move. If the meaning belongs to admission, invariant, policy, or failure, then it belongs there. Do not stuff it into
+the state machine because the drawer was open.
+
+The point is not ceremony.
+
+The point is to keep state and transition from becoming implementation folklore. The explicit state machine names the
+whole state surface so nobody gets to smuggle in extra movement later and call the mess a model.
+
 ---
 
 ## 13. Contract and Implementation
