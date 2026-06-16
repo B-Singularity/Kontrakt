@@ -1580,6 +1580,60 @@ The point is not ceremony.
 The point is to keep state and transition from becoming implementation folklore. The explicit state machine names the
 whole state surface so nobody gets to smuggle in extra movement later and call the mess a model.
 
+### 12.12 Publication Judgment
+
+Accepted material is not automatically public material.
+
+That sentence is dull. Good. A machine that forgets it starts leaking internal truth as public claim.
+
+An accepted immutable fact says the core may stand on that material. It does not say the outside world may see it, rely
+on it, or receive it in some public shape. Core truth and public claim are different surfaces.
+
+Publication is the point where the machine speaks outward.
+
+```text
+Publication Judgment:
+    the contract judgment that decides whether a public claim may be formed from accepted material, what that claim is
+    allowed to say, and which stable public meaning governs it
+```
+
+The important word is `claim`.
+
+Publication does not mean the accepted fact walks outside wearing a public hat. The public claim may have its own public
+shape. That shape is not the core fact.
+
+Publication is not the machine dumping whatever it has. A published result is the machine saying something to an outside
+surface under contract authority. If the contract has not allowed that outward claim, then the machine has not
+published. It has leaked.
+
+A fact can be true in the core and still be forbidden in public.
+
+That is not contradiction. That is boundary discipline. The core may need material that the outside surface must not
+receive. The outside may need a shape that the core should never treat as its own material. Publication judgment
+protects
+that crossing.
+
+The judgment has to name the accepted material it is speaking from, the public surface it is speaking to, the claim
+shape
+it wants to expose, and the public meaning under which the claim is allowed. If publication is denied, the denial must
+also be declared. Silence is not a publication rule.
+
+Stable public meaning matters because a published claim must not quietly change after it leaves. If the public meaning
+changes later, the old claim does not improve itself in the dark. The machine needs a new public meaning, a new claim,
+or a later version coordinate. It does not get to pretend the old publication was always saying the new thing.
+
+Diagnostic evidence is not publication just because somebody can read it. Evidence may explain why publication was
+allowed or denied. It may be retained for diagnosis. But unless the publication judgment allows it to become an outward
+claim, it stays evidence. A debug-shaped leak is still a leak.
+
+Publication judgment also keeps the pipeline honest. A value returned, written, emitted, or displayed by implementation
+machinery has no publication authority by itself. The authority is the declared judgment that this public claim may be
+formed from accepted material under this public meaning.
+
+The point is simple.
+
+The machine may know more than it is allowed to say.
+
 ---
 
 ## 13. Contract and Implementation
