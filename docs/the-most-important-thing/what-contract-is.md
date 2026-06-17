@@ -1720,7 +1720,59 @@ If retained evidence needs to leave the machine, it must pass publication judgme
 A debug-shaped leak is still a leak, even when the leak has a very serious incident number attached to it.
 
 Diagnostic evidence must also remain interpretable under the contract meaning that produced it. That is why version
-coordinates come next.
+coordinates still have to appear. Before that, one more cleanup is needed: the language of execution flow.
+
+### 12.14 Execution Flow, Not Lifecycle Vocabulary
+
+This section is not a new contract type.
+
+If someone reads this and builds a `Lifecycle Contract` or a `Scope Contract`, they have found a very expensive way to
+miss the point.
+
+The issue is language. `Scope` and `lifecycle` already carry too much baggage. Some of it comes from ordinary
+programming-language visibility and storage rules. Some of it comes from objects, callbacks, framework phases, ownership
+models, containers, inheritance, and subtype tricks. Whatever the source, the words pull attention toward the life,
+reach, activation, disposal, and managed existence of things.
+
+That is the wrong axis here.
+
+When execution is hidden inside objects, callbacks, framework phases, and indirect dispatch, that vocabulary may help
+people keep the mess from eating itself. Fine. Let that world have its tools.
+
+It is not the language of this machine.
+
+This machine is not trying to manage a crowd of objects whispering to each other through callbacks. It is trying to run
+a declared pipeline. The useful questions are simpler and less theatrical:
+
+```text
+which pipeline run is this?
+which declared stage is speaking?
+which judgment point produced a result?
+did the flow continue, stop, defer, fail, move, publish, or retain evidence?
+```
+
+That is enough.
+
+If a machine has an explicit pipeline, it does not need a little mythology of object birth and death to explain what is
+happening. The run enters. A declared stage acts. A judgment produces a declared result. The flow either continues,
+stops, waits, fails, publishes, or leaves retained evidence under a declared boundary.
+
+No hidden ceremony is required.
+
+This matters for diagnostic evidence. Diagnostic material does not need object lifetime to explain itself. It appears at
+a declared judgment point in the pipeline flow. Most explanation material should end with the run. Only material
+admitted
+by the diagnostic retention boundary remains as retained diagnostic evidence. Crossing that boundary still does not make
+it publication. It only means the machine kept enough internal explanation to account for what happened.
+
+So when this document talks about a run, a stage, a judgment point, a result, or a retention boundary, it is not
+smuggling
+scope and lifecycle back under better branding. It is choosing the vocabulary of a straight machine over the vocabulary
+of an object jungle.
+
+Good.
+
+The jungle had its chance.
 
 ---
 
