@@ -1634,6 +1634,94 @@ The point is simple.
 
 The machine may know more than it is allowed to say.
 
+### 12.13 Diagnostic Evidence
+
+A good machine should be able to describe its own condition.
+
+Not because logging is accountability. A pile of records is often just a landfill with timestamps.
+
+Other engineering disciplines do not treat failure as mystical weather. An aircraft does not become safer because
+everyone shrugs at the wreckage; it carries flight records so the event can be reconstructed. A car does not ask the
+mechanic to guess the mood of the engine; it exposes diagnostic trouble codes because "something went wrong somewhere"
+is not engineering. A power system does not merely say the lights went out; its protection records help explain which
+condition tripped and why the rest of the system was protected.
+
+Software should not get a cheaper standard just because its wreckage is made of bits.
+
+A good software machine must be able to name its own situation: which declared judgment spoke, what result it produced,
+and what contract reason made that result honest. If it rejects, defers, denies movement, refuses publication, or fails,
+it should not leave the next reader staring at smoke and inventing a theory after the fact.
+
+This is not about logs as a fetish. It is about refusing to let failure become folklore.
+
+```text
+Diagnostic Evidence:
+    declared explanatory material retained from a contract judgment so the machine can account for a declared result
+    without making the evidence the authority that produced the result
+```
+
+Diagnostic evidence explains.
+
+It does not govern.
+
+The pipeline location matters. Evidence should appear near declared judgment stages, not at the end as a bag of guesses.
+Admission may need to explain why material continued, stopped, failed, or was deferred. Lowering may need to explain why
+a candidate could or could not be formed. Invariant judgment may need to explain why material became accepted core
+material or did not. State movement may need to explain why a declared move was followed or denied. Publication judgment
+may need to explain why a public claim was formed or refused.
+
+The common shape is the same:
+
+```text
+declared judgment stage
+    -> declared result
+    -> diagnostic evidence candidate
+    -> diagnostic retention boundary
+        -> retained diagnostic evidence
+        -> discarded diagnostic material
+```
+
+The judgment stage may offer explanation material for the result it produced. That does not mean the explanation
+survives the run. A thing existed during a pipeline run. So what? Existence is not retention.
+
+The diagnostic retention boundary decides what crosses out of the run as retained diagnostic evidence. That boundary is
+contract material: it says what kind of explanation may remain, what must be reduced or discarded, and which declared
+result the retained evidence is allowed to explain.
+
+This is where discipline matters.
+
+Diagnostic evidence is dangerous. It can leak internal meaning. It can retain hostile input. It can expose policy shape.
+It can become a denial-of-service surface if the machine keeps every helpful little scrap. A machine that records
+everything has not become transparent. It has become easier to attack.
+
+So the evidence must be bounded by contract. The machine should preserve enough declared explanation to account for its
+result, and no more authority than that explanation is allowed to carry.
+
+Do not turn this into surveillance.
+
+A proxy layer is not a conscience. Wrapping every call, hooking every method, monitoring every object, and scraping
+every
+exception does not make the machine honest. It creates another implicit control system and then asks that system to
+explain the first one.
+
+The alternative is boring, which is usually a good sign.
+
+Each declared judgment carries a diagnostic obligation. When the judgment produces a declared result, the contract also
+declares what kind of explanation may be offered for that result and what kind of material must not survive as evidence.
+The explanation is tied to the judgment, not stolen from the side by an observer.
+
+Operational telemetry may still exist. It may be useful. It may even be necessary. But it lives on the implementation
+axis. Contract diagnostic evidence must come from declared judgment stages and pass the declared retention boundary.
+Otherwise it is just observation wearing a contract hat.
+
+Retained diagnostic evidence is still not publication.
+
+If retained evidence needs to leave the machine, it must pass publication judgment as its own public diagnostic claim.
+A debug-shaped leak is still a leak, even when the leak has a very serious incident number attached to it.
+
+Diagnostic evidence must also remain interpretable under the contract meaning that produced it. That is why version
+coordinates come next.
+
 ---
 
 ## 13. Contract and Implementation
