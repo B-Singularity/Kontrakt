@@ -1720,9 +1720,83 @@ If retained evidence needs to leave the machine, it must pass publication judgme
 A debug-shaped leak is still a leak, even when the leak has a very serious incident number attached to it.
 
 Diagnostic evidence must also remain interpretable under the contract meaning that produced it. That is why version
-coordinates still have to appear. Before that, one more cleanup is needed: the language of execution flow.
+coordinates come next.
 
-### 12.14 Execution Flow, Not Lifecycle Vocabulary
+### 12.14 Version Coordinate
+
+A version number is not magic dust.
+
+Versioning is not bookkeeping. It becomes contract material when meaning can move while the material still looks
+familiar.
+
+That distinction matters because this document is not talking about release labels. A build version, library version,
+deployment version, storage format version, or migration script version may be useful to a realization. Fine. Let the
+implementation keep its paperwork. The contract needs something narrower.
+
+A lowered candidate may be cached. An accepted fact may be reused. A public claim may be read later. Diagnostic evidence
+may be opened long after the run that produced it. If contract meaning changed in the meantime, the machine must not
+read
+that old material as if nothing happened.
+
+That is the first reason for a version coordinate.
+
+The second reason is stronger: a good machine should own its meaning.
+
+Without versioned meaning, the latest code becomes king. The newest adapter, schema, deployment, framework behavior, or
+migration script starts deciding what old material means. That is backwards. The machine should decide which contract
+meanings remain authority, which meanings require compatibility, which meanings must be judged again, and which
+meanings are no longer accepted.
+
+```text
+Version Coordinate:
+    the declared coordinate that tells the machine which contract meaning was active when a judgment, material, claim, or
+    evidence was produced
+```
+
+The important word is `meaning`.
+
+The coordinate is needed when the machine must decide whether older material is still allowed to participate in the
+current contract world. Can it be lowered? Can it still count as accepted? Can it form a public claim? Can its
+diagnostic
+evidence still explain anything? Should it be reused, rejected, or judged again?
+
+Those are not clerical questions. They change what the machine is allowed to claim, trust, expose, or preserve. That is
+why the coordinate belongs to the contract basis.
+
+Without a version coordinate, the machine starts doing a nasty little trick: it reads yesterday's material with today's
+meaning and calls the result consistency.
+
+That is not consistency.
+
+That is a costume change.
+
+Lowering needs the coordinate because raw presentation does not carry canonical meaning by itself. The machine must know
+which lowering meaning produced the candidate it is about to discuss.
+
+Invariant needs the coordinate because accepted material must remember the meaning under which it was accepted. If the
+acceptance law changes later, the old material does not automatically become accepted under the new law just because the
+machine likes continuity.
+
+Publication needs the coordinate because a public claim is not just a shape leaving the machine. It is a claim under a
+public meaning. If that public meaning changes, the old claim does not quietly grow a new soul.
+
+Diagnostic evidence needs the coordinate because explanation rots when meaning moves. A retained reason, rule name,
+state label, transition name, or publication denial can be read honestly only under the meaning that made it true.
+
+Version change should not be smuggled into state transition, pipeline progress, or mutation. When contract meaning
+changes, old material does not walk forward wearing a new badge. The machine needs a new judgment, a compatibility
+decision, a new public claim, or a declared refusal to reuse the old material. If old material is allowed to survive
+under new meaning, the machine has to say so through contract-governed compatibility. Otherwise it is just
+reinterpretation with a better haircut.
+
+The version coordinate should not become a wrapper either. Do not build a tiny version object and hang it around every
+value like a decorative tag. The contract asks for a declared coordinate of meaning. A realization may lower that into
+facts, manifests, tables, generated images, identifiers, or some uglier machinery. The mechanism is not the point.
+
+The point is to stop the machine from confusing stable-looking material with stable meaning, and to keep authority over
+which meanings the machine is still willing to recognize.
+
+### 12.15 Execution Flow, Not Lifecycle Vocabulary
 
 This section is not a new contract type.
 
