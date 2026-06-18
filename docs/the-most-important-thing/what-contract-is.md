@@ -34,8 +34,8 @@ The document stays inside that scope.
 
 The good machine I am describing is not meant to be a universal machine for every context.
 
-Most serious architecture already moves in this direction. Boundaries, ports, states, transitions, schemas, invariants,
-policies, failures, diagnostics, versioning, publication rules, and resource limits are already inside real systems.
+Most serious architecture already moves in this direction. Real systems already depend on contract-shaped structure;
+they just leave too much of it implicit.
 
 The problem is that modern software made implicit structure look normal.
 
@@ -146,7 +146,7 @@ That structure does not clarify contracts. It gives inheritance better branding.
 
 So contract structure has to stay two-dimensional.
 
-The first dimension contains closed base contract presentations:
+The first dimension contains closed contract presentations and required coordinates:
 
 ```text
 input contract
@@ -154,10 +154,13 @@ admission contract
 lowering contract
 fact contract
 invariant contract
-state machine contract
+state contract
+state transition contract
+explicit state machine manifest
 failure contract
 publication contract
-diagnostic contract
+diagnostic evidence / retention contract
+version coordinate
 policy / budget / capacity / governance contract
 ```
 
@@ -165,7 +168,7 @@ The second dimension contains interaction manifests. A manifest does not inherit
 interfaces. It does not pull in another manifest, which pulls in another manifest, which pulls in another one until
 nobody knows what is actually required.
 
-It binds a flat list of closed base contracts for one interaction.
+It binds a flat list of closed contract presentations and required coordinates for one interaction.
 
 ```text
 interaction manifest
@@ -174,17 +177,20 @@ interaction manifest
     -> lowering contract
     -> fact contract
     -> invariant contract
-    -> state machine contract
+    -> state contract
+    -> state transition contract
+    -> explicit state machine manifest
     -> failure contract
     -> publication contract
-    -> diagnostic contract
+    -> diagnostic evidence / retention contract
+    -> version coordinate
     -> policy / budget / capacity / governance contract
 ```
 
-A state machine may feel like orchestration, but in this model it is still a closed base contract presentation. It
-should
-state its own states and legal transitions and stop there. It should not inherit another state machine. It should not
-compose another state machine.
+An explicit state machine manifest may feel like orchestration, but in this model it is only the declared surface of
+states and one-way transitions. It is listed here because the movement surface must be explicit, not because it becomes
+a parent contract above state and transition. It should state its own conditions and legal moves and stop there. It
+should not inherit another state machine. It should not compose another state machine.
 
 The model rejects these shapes:
 
@@ -215,6 +221,8 @@ A manifest is not a family tree.
 
 If contract inheritance is allowed, people will use it. If recursive contract composition is allowed, people will build
 it. Not because it is correct, but because the habit is already burned into their hands.
+
+I do not trust you.
 
 So this cannot be a style guide.
 
@@ -282,10 +290,13 @@ submit(...)
     -> lowering contract
     -> fact contract
     -> invariant contract
-    -> state machine contract
+    -> state contract
+    -> state transition contract
+    -> explicit state machine manifest
     -> failure contract
     -> publication contract
-    -> diagnostic contract
+    -> diagnostic evidence / retention contract
+    -> version coordinate
     -> policy / budget / capacity / governance contract
 ```
 
@@ -307,10 +318,12 @@ The important part is not "tests." Tests are only one late way to look at a mach
 
 The better direction is earlier than that.
 
-First make the contract material rich enough to say what the machine actually promises. The closed base contracts name
-the obligations: input, admission, lowering, fact, invariant, state machine, failure, publication, diagnostic, policy,
-budget, capacity, and governance. The manifest binds those closed contracts to one interaction without inheritance,
-composition, or hidden ancestry.
+First make the contract material rich enough to say what the machine actually promises. The closed contract
+presentations name the obligations: input, admission, lowering, fact, invariant, state, transition, failure,
+publication,
+diagnostic, policy, budget, capacity, and governance. Required coordinates name the active meaning and binding. The
+explicit state machine manifest names the closed state surface for that interaction. The manifest binds those materials
+to one interaction without inheritance, composition, or hidden ancestry.
 
 That gives the compiler something real to guard.
 
@@ -337,9 +350,9 @@ Does it stay under the active policy, budget, capacity, and governance contracts
 Does it produce the diagnostic evidence the contract requires?
 ```
 
-That is the point of making the one-dimensional contracts and the manifest explicit. The compiler cannot guard meaning
-that was never declared. If the contract surface is too thin, the compiler has nothing to hold. Then people compensate
-with tests, conventions, annotations, comments, and hope.
+That is the point of making the contract presentations, coordinates, and manifest explicit. The compiler cannot guard
+meaning that was never declared. If the contract surface is too thin, the compiler has nothing to hold. Then people
+compensate with tests, conventions, annotations, comments, and hope.
 
 Hope is not a verification strategy.
 
@@ -349,7 +362,7 @@ realization. But a test should not be the first place where the contract becomes
 The order should be:
 
 ```text
-closed base contracts
+closed contract presentations and required coordinates
 -> flat interaction manifest
 -> compiler / verifier / generated checks where possible
 -> tests where needed
@@ -370,9 +383,54 @@ not manually guessed into existence.
 The best verification is not a mountain of tests. The best verification is making invalid software impossible to write,
 impossible to compile, or impossible to publish before it becomes a runtime mess.
 
-DBC was not wrong because it wanted contracts. It went wrong because it glued contracts onto the wrong substrate:
-classes, inheritance, runtime wrappers, proxies, and implementation-shaped objects. Of course that became slow and ugly.
-Of course people stopped using it.
+DBC was not wrong because it wanted contracts. That instinct was good.
+
+The problem was the shape it trusted.
+
+Traditional DBC speaks in `precondition` and `postcondition` because it stands around a callable operation. Before this
+method runs, these things must be true. After this method returns, these things must be true. Fine. That is a reasonable
+place to start if the method is the center of the world.
+
+But the method is not the center of this machine.
+
+This contract model does not reject the concern behind preconditions and postconditions. It moves the concern out of the
+method and into the declared pipeline surface.
+
+A precondition becomes the question of entrance and movement: what presentation may enter, what admission must decide,
+which policy or capacity limit is active, which declared state the machine is in, and which transition is permitted. The
+question is no longer "may this method run?" That question is too small. The better question is:
+
+```text
+may this material enter the next declared judgment surface?
+```
+
+A postcondition becomes the question of what the movement leaves behind: admitted material, accepted fact, preserved
+invariant, declared failure, diagnostic evidence, state movement, or public claim. The method return is not allowed to
+pretend it explains the machine. The pipeline has to say what survived judgment and what authority that result has.
+
+So this is not a new paint job for old preconditions and postconditions.
+
+It is a relocation of authority.
+
+The old shape says:
+
+```text
+before this call
+after this call
+```
+
+This machine says:
+
+```text
+at this declared boundary
+after this declared judgment
+through this permitted movement
+under this publication rule
+with this diagnostic residue
+```
+
+DBC went wrong when those obligations were glued onto classes, inheritance, runtime wrappers, proxies, and
+implementation-shaped objects. Of course that became slow and ugly. Of course people stopped using it.
 
 The answer is not to scatter contracts into comments, wiki pages, assertions, and test fragments. The answer is to make
 the contract document real enough that the compiler can guard implementation against it.
@@ -396,7 +454,7 @@ When the obligation changes, the contract changes.
 When only the realization changes, the contract should not change.
 ```
 
-The full versioning story is still left.
+The version coordinate appears later in the pipeline discussion.
 
 ---
 
@@ -579,8 +637,11 @@ input
 -> invariant / state judgment
 -> accepted immutable fact or declared failure
 -> publication judgment
--> published result
--> diagnostic evidence
+-> public claim or publication denial
+
+diagnostic evidence:
+    may be offered at declared judgment stages
+    retained only through the diagnostic retention boundary
 ```
 
 Policy, budget, capacity, and governance are not one naive stage at the end. They cut across the whole flow:
@@ -597,50 +658,42 @@ The shape is still provisional. Each step needs its own explanation.
 ## 11. What Counts as Contract in the Pipeline
 
 A pipeline does not automatically become a contract. A processing sequence is just a processing sequence until it
-declares an
-obligation.
+declares an obligation.
 
-The contract is what the software must satisfy at each meaningful point: what may enter, what must be rejected, what
-becomes admitted material, what must become canonical, what may become fact, what transition is legal, what failure is
-declared, what evidence remains, and what may be published.
+The distinction is simple enough to miss.
 
-Strongly contract-shaped material includes:
+A stage says that something happens. A contract says what the machine must preserve, permit, reject, produce, or refuse
+while it happens.
 
-```text
-boundary
-guard / admission judgment
-declared failure
-admitted material
-canonicalization rule
-lowering obligation
-invariant
-state
-state transition
-accepted immutable fact
-publication judgment
-diagnostic evidence
-policy / budget / capacity / governance
-```
+This means a pipeline name is not contract authority. Neither is execution order. A stage becomes contract-shaped only
+when changing or removing its declared obligation would change what the machine is allowed to accept, believe, move,
+retain, or publish.
 
-Some material is presentation:
+The same test works in the other direction. If a step can be replaced, fused with another step, or removed without
+changing any declared obligation, that step belongs to realization. It may be necessary machinery. It is still not a
+contract merely because the pipeline contains it.
+
+So the useful question is not:
 
 ```text
-DTO
-raw request shape
-frontend type name
-interface surface
-method signature
+Is this part of the pipeline?
 ```
 
-Even this split is only a guide.
+It is:
 
-The real line is declaration.
+```text
+What obligation would the machine lose if this declaration disappeared?
+```
+
+If there is no clear answer, the declaration is probably describing implementation.
+
+The real line is still declaration.
 
 A behavior does not become contract just because someone can observe it, depend on it, or break when it changes. That is
 how duck typing, framework convention, accidental behavior, and test expectation sneak back in as implicit contracts.
 
 A contract exists only when the obligation is declared as contract material and bound through the valid contract world:
-a closed base contract, a flat interaction manifest, or governed contract metadata.
+a closed contract presentation, a flat interaction manifest, a required coordinate, or governed contract metadata.
 
 If a change alters a declared obligation, it is contract change.
 
@@ -650,27 +703,20 @@ If a change breaks undeclared reliance, that reliance is compatibility debt, not
 
 Do not let observed behavior become contract by accident.
 
-Contract and implementation stay on different axes. They can correspond, like mirror images, but they must not mix. The
-contract names the obligation. The implementation realizes it.
+Contract and implementation stay on different axes. The contract names the obligation. The implementation realizes it.
+As long as the obligation survives, the realization may change. If changing the realization also changes the contract,
+the mechanism has leaked into authority.
 
-As long as the declared obligation is preserved, the implementation should be replaceable. If replacing the realization
-changes the contract, the realization leaked into the contract. At that point, the design has debt, not architecture.
-
-The contract must not name the mechanism. It must name the obligation.
-
-The tool is not the contract. The obligation the tool must satisfy is the contract.
+The following section applies this distinction to the contract presentations that appear in the pipeline.
 
 ---
 
 ## 12. Contract Presentations in the Pipeline
 
-Collapsing every contract kind into one vague blob called "contract" only brings the old confusion back under a new
-name.
+Calling everything `contract` does not make the machine explicit. It only gives the confusion a respectable name.
 
-The order here is intentional. First, describe what kind of factual material the core may treat as fact. Then describe
-the finite machine conditions that govern judgment. After that, explain how outside presentation reaches the boundary,
-how admission decides, what happens when the material is stopped or allowed to continue, and how admitted material
-becomes stable enough for the core to own.
+This section follows material through the pipeline and separates the obligations that govern it along the way. Those
+obligations belong to one machine, but they do not answer the same question and should not be allowed to blur together.
 
 ### 12.1 Fact Contract and Immutable Fact
 
@@ -683,16 +729,16 @@ contract obligations. The fact is the factual material those obligations inspect
 
 ```text
 Fact Contract:
-    the contract that defines what kind of factual material may exist inside the core
+    the declared law that defines what kind of material may gain factual authority inside the core
 
-Immutable Fact:
-    the immutable factual material that exists under that fact contract
+Accepted Immutable Fact:
+    immutable material that has survived the required judgments and gained factual authority under that law
 ```
 
 Think of a constraint contract that says an amount must not exceed a limit. The immutable fact says what the amount is.
-Think of a state machine contract that says which transition is legal. The immutable fact provides the factual material
-that transition judgment may inspect. Think of a publication contract that says what may be exposed. The immutable fact
-provides the factual material that publication judgment may inspect.
+Think of a state transition contract that says which move is legal. The immutable fact provides the factual material
+that transition judgment may inspect. Think of a publication contract that says what public claim may be formed. The
+immutable fact provides the factual material that publication judgment may inspect.
 
 The fact stays dumb in this model. It must not decide, validate itself, carry the rule, or hide behavior through
 methods,
@@ -742,10 +788,10 @@ Budget Contract:
     the contract that declares the finite consumable allowance of an operation, run, stage, or diagnostic path
 
 Capacity Contract:
-    the contract that declares the admissible envelope of a machine, surface, stage, or storage region
+    the contract that declares the admissible limit of a machine, surface, stage, or storage region
 
 Governance Contract:
-    the contract that declares how contract sets, policy sets, budget profiles, capacity envelopes, versions, and
+    the contract that declares how contract sets, policy sets, budget profiles, capacity limits, versions, and
     manifest bindings become valid for a machine
 ```
 
@@ -770,17 +816,18 @@ machine
 must stop, reject, defer, or declare failure. The contract declares the allowance and the required outcome when the
 allowance is exhausted.
 
-Capacity is the machine's admissible envelope. It says how much a machine, surface, stage, or storage region may accept,
+Capacity is the machine's declared admissible limit. It says how much a machine, surface, stage, or storage region may
+accept,
 retain as bounded evidence, keep in flight, expose, or publish. Capacity should not be guessed from optimism. It should
 be measured, chosen, declared, and governed. Valid material may still be rejected or deferred by capacity. A finite
 machine can reject valid material when accepting it would exceed what the machine can survive.
 
 Governance is the validity of the contract world. It says which contract set, policy set, budget profile, capacity
-envelope, version, and manifest binding is valid for a machine. Without governance, nobody knows which rules are
+limit, version, and manifest binding is valid for a machine. Without governance, nobody knows which rules are
 actually
 active. Systems quietly rot in that gap.
 
-These contracts declare judgment criteria, finite allowance, admissible envelope, and validity. They do not declare
+These contracts declare judgment criteria, finite allowance, admissible limit, and validity. They do not declare
 mechanisms.
 
 The contract does not say how the machine stores work, schedules work, counts work, or physically enforces the limit.
@@ -856,7 +903,7 @@ compatibility policy:
     allow legacy presentation only under a declared compatibility rule
 
 capacity-overflow policy:
-    reject or defer material when the declared capacity envelope cannot admit it
+    reject or defer material when the declared capacity limit cannot admit it
 
 budget-exhaustion policy:
     stop, defer, or fail when the declared allowance is exhausted
@@ -995,10 +1042,10 @@ Admitted Material:
     boundary-admitted material that may continue toward canonicalization and lowering
 
 Diagnostic Evidence:
-    bounded, non-authoritative evidence retained under declared diagnostic policy from material that did not continue
+    bounded, non-authoritative explanation retained under declared diagnostic policy from a declared judgment result
 
 Retention Policy:
-    the policy that declares whether rejected or failed material may leave evidence, what may be retained, how it is
+    the policy that declares whether a declared judgment result may leave evidence, what may be retained, how it is
     bounded, and what may be exposed
 ```
 
@@ -1117,10 +1164,10 @@ Lowering takes the canonical representation and refines it into core-owned candi
 mapping. It may need declared contract facts, accepted immutable facts, reference laws, identity laws, version laws, and
 governance binding to decide what the candidate actually points to.
 
-A refund request is a simple example. The DTO may carry an order id and an amount. Canonicalization may settle the text,
-unit, and identity spelling. Lowering then asks which accepted payment fact this request refers to, what money shape the
-core uses, which reference law applies, and what candidate fact or candidate transition can be formed without changing
-the declared meaning.
+A raw presentation may carry a public reference, a value shape, and a claimed operation. Canonicalization may settle the
+spelling, ordering, and representation of that presentation. Lowering then asks which accepted core material the
+reference may point to, which reference law applies, and what candidate fact or candidate transition can be formed
+without changing the declared meaning.
 
 The result is not truth.
 
@@ -1150,7 +1197,7 @@ reference law
 version law
 governance binding
 failure law
-diagnostic evidence
+diagnostic obligation
 ```
 
 It also has to block what must not cross:
@@ -1367,16 +1414,18 @@ Only material that survives the declared invariant can become accepted core mate
 
 A mathematical model may call a point in a value space a state. Useful on paper. Dangerous as machine doctrine. If a
 software machine imports that meaning directly, every possible combination of values starts asking to be treated as
-state. The machine loses a small lifecycle vocabulary and gets a fat cloud of possibilities. That may help a proof. It
+state. The machine loses a small movement vocabulary and gets a fat cloud of possibilities. That may help a proof. It
 does not give the machine a clean next move.
 
 Functional programming cleans up another mess. It may carry state as an explicit value from one function to the next.
 That is often better than hiding mutation in some filthy corner. But a carried value is still only a carried value until
-the contract gives it authority. Purity does not declare lifecycle. Passing a value forward does not decide whether the
+the contract gives it authority. Purity does not declare machine condition. Passing a value forward does not decide
+whether the
 next machine move is legal.
 
 Object-oriented state is worse here. A field named `status`, a private variable behind a getter, or an object mutating
-itself through methods is implementation material. If the lifecycle has to be inferred from whatever the object contains
+itself through methods is implementation material. If the machine condition has to be inferred from whatever the object
+contains
 after a method returns, the contract is doing archaeology instead of governing the machine.
 
 This document uses the word more narrowly.
@@ -1395,8 +1444,8 @@ State Contract:
 This is why state feels like it runs beside the pipeline. Every pipeline move happens under some machine condition. But
 the condition runs there as contract, not as implementation.
 
-Do not draw the state surface by tracing the contract document. If every obligation becomes a state, the lifecycle turns
-into a pile of nouns.
+Do not draw the state surface by tracing the contract document. If every obligation becomes a state, the movement
+surface turns into a pile of nouns.
 
 Do not draw it by tracing the implementation either. If every implementation step becomes a state, the implementation
 has started writing the contract in crayon.
@@ -1414,13 +1463,14 @@ or explanation. Keep it there. Do not smuggle it into the state contract.
 
 The same discipline applies to material already moving through the pipeline. DTOs, canonical representations, lowered
 candidates, accepted facts, and diagnostic records may support a judgment. They may explain why a condition holds or why
-a move was allowed. Their presence does not create lifecycle authority.
+a move was allowed. Their presence does not create movement authority.
 
 A condition discovered only after execution may explain what happened. It may help diagnosis. But it cannot become state
-authority. Explicit declaration comes first. Otherwise the machine is not following a lifecycle; it is naming wreckage
+authority. Explicit declaration comes first. Otherwise the machine is not following a declared movement surface; it is
+naming wreckage
 after the fact.
 
-For the surface it governs, state must be declared, finite, and closed. Open-ended lifecycle vocabulary makes the next
+For the surface it governs, state must be declared, finite, and closed. Open-ended movement vocabulary makes the next
 move slippery. Once the machine can invent, inherit, or infer new conditions while moving, legality is no longer
 governed
 by the state contract. It is guessed from whatever shape the run happened to leave behind.
@@ -1438,7 +1488,8 @@ Invariant asks whether a lowered candidate may be accepted under a pipeline-boun
 declared machine condition that judgment is happening under, and whether the next move of that pipeline remains legal
 after the judgment succeeds or fails.
 
-Mix those together and the old swamp comes back: values pretending to be lifecycle, objects hiding state, proofs
+Mix those together and the old swamp comes back: values pretending to be movement authority, objects hiding state,
+proofs
 ignoring the machine, and implementation steps dressing themselves up as contract.
 
 A good machine declares state before movement and uses that declared state to keep movement honest.
@@ -1796,7 +1847,71 @@ facts, manifests, tables, generated images, identifiers, or some uglier machiner
 The point is to stop the machine from confusing stable-looking material with stable meaning, and to keep authority over
 which meanings the machine is still willing to recognize.
 
-### 12.15 Execution Flow, Not Lifecycle Vocabulary
+### 12.15 Where Preconditions and Postconditions Went
+
+Someone familiar with DBC will eventually ask an obvious question:
+
+```text
+Where are the preconditions and postconditions?
+```
+
+`Precondition`, `postcondition`, and `invariant` make sense when a routine or callable boundary is the center of the
+picture. Something must hold before the call. Something must hold after it. Something must remain true while the object
+or operation does its work. That vocabulary is useful in the machine it was made for.
+
+Nothing was forgotten here. The pipeline simply changed the picture enough that those three names stopped being useful
+as contract kinds of their own. There is no single useful moment called `before`, followed by one clean moment called
+`after`. Material reaches a declared judgment, receives a declared result, and that result may become material for the
+next judgment. What looks like a postcondition from one position may look like a precondition from the next.
+
+```text
+judgment result
+-> material for the next judgment
+```
+
+Take admission. Raw presentation, active policy, budget, and capacity may all matter before admission can produce
+admitted material. From the narrow view of that judgment, they resemble preconditions, and admitted material resembles
+a postcondition.
+
+Move one step forward and the labels shift. Admitted material is now something canonicalization or lowering receives.
+The former postcondition has become part of the next judgment's starting material. A lowered candidate then reaches
+invariant judgment. An accepted fact may later reach state movement or publication judgment. The words `pre` and `post`
+keep moving because the machine keeps moving.
+
+That moving viewpoint is exactly why those words are too relative to organize the contract pipeline. A good machine
+needs each obligation where it has authority. The entrance question belongs to admission. Whether candidate material may
+become core truth belongs to invariant. Whether accepted material may leave the machine belongs to publication. Calling
+all three `conditions` is possible, but it throws away the reason they were separated.
+
+Calling the first half `preconditions` and the second half `postconditions` would not make the machine clearer. It would
+put several different judgments into two large boxes, then force the reader to open the boxes and sort everything out
+again.
+
+Worse, declaring separate pipeline preconditions and postconditions would repeat obligations already declared where
+they belong. Now the machine has two descriptions of the same law. Sooner or later they disagree, and somebody gets the
+excellent job of deciding which lie is official.
+
+Preconditions and postconditions may still be useful inside a realization or a narrow proof. They simply add no new
+authority to the contract pipeline.
+
+If someone insists on translating this machine back into that vocabulary, the translation is possible:
+
+```text
+precondition:
+    whatever declared material and authority a particular judgment requires before it can decide
+
+postcondition:
+    whatever declared result that judgment produces
+
+invariant:
+    the acceptance law applied where candidate material seeks core authority
+```
+
+That translation is a view of the pipeline, not its structure. The useful declaration is already sitting at the
+judgment where the machine needs it. Wrapping the same obligation in another `before` or `after` would only give the
+machine a second place to contradict itself.
+
+### 12.16 Execution Flow, Not Lifecycle Vocabulary
 
 This section is not a new contract type.
 
@@ -1975,7 +2090,7 @@ make hidden obligations explicit
 make the interface a real contract document
 preserve methods as operation handles
 keep contract structure two-dimensional
-bind closed base contracts through a flat operation manifest
+bind closed contract presentations and required coordinates through a flat operation manifest
 treat everything outside the core as untrusted
 adopt external interfaces only after ratifying them against internal contracts
 judge DTOs as outside presentation at the boundary
@@ -1984,7 +2099,7 @@ canonicalize declared-equivalent admitted material into the system's stable inte
 lower canonical representation into core-owned candidate material
 accept candidates only under pipeline-bound invariants and their declared acceptance laws
 produce contract-governed immutable facts
-treat state as explicitly declared contract material for pipeline lifecycle legality
+treat state as explicitly declared contract material for governing the legality of the next machine move
 allow only declared transitions
 reject through declared failures
 publish only accepted results
