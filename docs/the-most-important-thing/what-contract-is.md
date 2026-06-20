@@ -309,95 +309,7 @@ Keep the method, but make it stop pretending to be enough. Make interfaces great
 
 ---
 
-## 6. Contract and Verification
-
-If the interface is the contract document, verification is the check that a realization satisfies the declared
-obligations.
-
-The important part is not "tests." Tests are only one late way to look at a machine after it already exists.
-
-The better direction is earlier than that.
-
-First make the contract material rich enough to say what the machine actually promises. The closed contract
-presentations name the obligations: input, admission, lowering, fact, invariant, state, transition, failure,
-publication,
-diagnostic, policy, budget, capacity, and governance. Required coordinates name the active meaning and binding. The
-explicit state machine manifest names the closed state surface for that interaction. The manifest binds those materials
-to one interaction without inheritance, composition, or hidden ancestry.
-
-That gives the compiler something real to guard.
-
-Not a vague method name.
-
-Not a class shape.
-
-Not a comment.
-
-A declared contract surface.
-
-If the implementation claims to realize an interaction, the compiler or verifier should be able to ask ordinary
-questions before the machine turns into runtime soup:
-
-```text
-Does the implementation expose the required operation handle?
-Does it accept only the declared input presentation?
-Does it apply the required admission contract?
-Does it produce the declared failure outcomes?
-Does it preserve the declared invariant?
-Does it obey the declared state transitions?
-Does it publish only what the publication contract allows?
-Does it stay under the active policy, budget, capacity, and governance contracts?
-Does it produce the diagnostic evidence the contract requires?
-```
-
-That is the point of making the contract presentations, coordinates, and manifest explicit. The compiler cannot guard
-meaning that was never declared. If the contract surface is too thin, the compiler has nothing to hold. Then people
-compensate with tests, conventions, annotations, comments, and hope.
-
-Hope is not a verification strategy.
-
-A test can still be useful. It can check concrete behavior. It can exercise examples. It can catch mistakes in a
-realization. But a test should not be the first place where the contract becomes visible.
-
-The order should be:
-
-```text
-closed contract presentations and required coordinates
--> flat interaction manifest
--> compiler / verifier / generated checks where possible
--> tests where needed
--> realization
-```
-
-TDD sold one ordinary fact like it had discovered fire:
-
-```text
-if you know the contract before the implementation,
-you can write the verification before the implementation.
-```
-
-Fine. That part is useful. But TDD is not a theory of quality. It is just one way to write some verification before the
-realization. If the contract document is explicit enough, much of that verification should be derived from the contract,
-not manually guessed into existence.
-
-The best verification is not a mountain of tests. The best verification is making invalid software impossible to write,
-impossible to compile, or impossible to publish before it becomes a runtime mess.
-
-Traditional DBC usually describes verification around what must hold before and after a callable operation.
-
-That vocabulary is not used as the organizing structure here. The contract authority has been placed at the declared
-judgment where each obligation actually belongs, so verification follows those contract surfaces instead of
-reconstructing one large `before` and `after` around a method.
-
-The pipeline consequences of that choice are explained later, after the individual contract presentations have been
-introduced.
-
-The answer is not to scatter contracts into comments, wiki pages, assertions, and test fragments. The answer is to make
-the contract document real enough that the compiler can guard implementation against it.
-
----
-
-## 7. Evolution and Contract
+## 6. Evolution and Contract
 
 Contracts should be stable and immutable. If every small implementation change rewrites the contract, there is no
 contract. There is only noise.
@@ -418,7 +330,7 @@ The version coordinate appears later in the pipeline discussion.
 
 ---
 
-## 8. Good Machine and Function
+## 7. Good Machine and Function
 
 A good machine should ideally behave like a function. Given the same accepted input, it should produce the same accepted
 output. The clean target is still function-like behavior.
@@ -459,7 +371,7 @@ A good machine cannot be a fantasy function. It is a function-like system that a
 
 ---
 
-## 9. Core, Boundary, and the Fucking Bastards Outside
+## 8. Core, Boundary, and the Fucking Bastards Outside
 
 There is one thing worth taking from object-oriented programming: disciplined separation.
 
@@ -553,7 +465,7 @@ contract without judgment, the contract is already infected.
 
 ---
 
-## 10. Applying Contract to a Good Machine
+## 9. Applying Contract to a Good Machine
 
 Now apply the contract definition to this machine.
 
@@ -615,7 +527,7 @@ The shape is still provisional. Each step needs its own explanation.
 
 ---
 
-## 11. What Counts as Contract in the Pipeline
+## 10. What Counts as Contract in the Pipeline
 
 A pipeline does not automatically become a contract. A processing sequence is just a processing sequence until it
 declares an obligation.
@@ -671,14 +583,14 @@ The following section applies this distinction to the contract presentations tha
 
 ---
 
-## 12. Contract Presentations in the Pipeline
+## 11. Contract Presentations in the Pipeline
 
 Calling everything `contract` does not make the machine explicit. It only gives the confusion a respectable name.
 
 This section follows material through the pipeline and separates the obligations that govern it along the way. Those
 obligations belong to one machine, but they do not answer the same question and should not be allowed to blur together.
 
-### 12.1 Fact Contract and Immutable Fact
+### 11.1 Fact Contract and Immutable Fact
 
 An immutable fact needs a careful description.
 
@@ -722,7 +634,7 @@ Immutable Fact is contract-governed factual material.
 
 Keeping those two apart prevents the old object-oriented mixture of rule, data, and behavior from coming back.
 
-### 12.2 Policy, Budget, Capacity, and Governance Contracts
+### 11.2 Policy, Budget, Capacity, and Governance Contracts
 
 A real machine is not an idea floating outside the world. It can bear only so much load before its operation begins to
 degrade or fails altogether.
@@ -797,7 +709,7 @@ valid, and what declared outcome follows when the limit is reached.
 
 A good machine admits it is finite, declares its limits, and operates inside them.
 
-### 12.3 DTO and Raw Presentation
+### 11.3 DTO and Raw Presentation
 
 Something has to arrive at the boundary. Whatever arrives there is not yet a core fact and not a contract rule. It is
 just the form in which the outside world showed up.
@@ -882,7 +794,7 @@ It must not leave authority.
 
 A DTO entering the core as-is means the boundary did no real work.
 
-### 12.4 Guard and Admission Judgment
+### 11.4 Guard and Admission Judgment
 
 Once the boundary has a shape to look at, it has to decide whether the material may continue.
 
@@ -960,7 +872,7 @@ Admission failure is part of the contract.
 The guard may be realized in many ways. The contract does not care. The contract only declares what the boundary must
 judge, which verdicts are legal, and which dispositions may be applied to material that does not continue.
 
-### 12.5 Declared Failure, Admitted Material, and Diagnostic Evidence
+### 11.5 Declared Failure, Admitted Material, and Diagnostic Evidence
 
 Admission has two honest directions.
 
@@ -1044,7 +956,7 @@ The boundary exists for a reason. Outside material must either continue under an
 contract-governed outcome and disposition. It must not become a second pipeline just because a debug path, review path,
 or storage mechanism exists.
 
-### 12.6 Canonicalization Rule
+### 11.6 Canonicalization Rule
 
 Admitted material has passed the boundary. That is all.
 
@@ -1134,7 +1046,7 @@ one declared meaning.
 
 Canonicalization gives declared meaning a deterministic internal handle.
 
-### 12.7 Lowering Obligation
+### 11.7 Lowering Obligation
 
 Canonical representation is not core material yet.
 
@@ -1226,7 +1138,7 @@ Lowering forms the candidate.
 
 It does not promote the candidate into accepted core material.
 
-### 12.8 Invariant Contract
+### 11.8 Invariant Contract
 
 After lowering, the material is inside the core as candidate material.
 
@@ -1404,7 +1316,7 @@ Core-owned candidate form is not truth.
 
 Only material that survives the declared invariant can become accepted core material.
 
-### 12.9 State Contract
+### 11.9 State Contract
 
 `State` is a dangerous word because it arrives with luggage.
 
@@ -1490,7 +1402,7 @@ ignoring the machine, and implementation steps dressing themselves up as contrac
 
 A good machine declares state before movement and uses that declared state to keep movement honest.
 
-### 12.10 State Transition Contract
+### 11.10 State Transition Contract
 
 State already explained the condition that governs movement.
 
@@ -1562,7 +1474,7 @@ stay close, but they do not become one vague validation step.
 A good machine does not mutate itself and then search for a story that makes the mutation legal. It lets the relevant
 judgment produce a declared result, then follows only the movement that the transition contract permits.
 
-### 12.11 Explicit State Machine
+### 11.11 Explicit State Machine
 
 State and transition are enough to form a state machine.
 
@@ -1627,7 +1539,7 @@ The point is not ceremony.
 The point is to keep state and transition from becoming implementation folklore. The explicit state machine names the
 whole state surface so nobody gets to smuggle in extra movement later and call the mess a model.
 
-### 12.12 Publication Judgment
+### 11.12 Publication Judgment
 
 Accepted material is not automatically public material.
 
@@ -1681,7 +1593,7 @@ The point is simple.
 
 The machine may know more than it is allowed to say.
 
-### 12.13 Diagnostic Evidence
+### 11.13 Diagnostic Evidence
 
 A good machine should be able to describe its own condition.
 
@@ -1769,7 +1681,7 @@ A debug-shaped leak is still a leak, even when the leak has a very serious incid
 Diagnostic evidence must also remain interpretable under the contract meaning that produced it. That is why version
 coordinates come next.
 
-### 12.14 Version Coordinate
+### 11.14 Version Coordinate
 
 A version number is not magic dust.
 
@@ -1843,7 +1755,7 @@ facts, manifests, tables, generated images, identifiers, or some uglier machiner
 The point is to stop the machine from confusing stable-looking material with stable meaning, and to keep authority over
 which meanings the machine is still willing to recognize.
 
-### 12.15 Where Preconditions and Postconditions Went
+### 11.15 Where Preconditions and Postconditions Went
 
 Someone familiar with DBC will eventually ask an obvious question:
 
@@ -1907,7 +1819,7 @@ That translation is a view of the pipeline, not its structure. The useful declar
 judgment where the machine needs it. Wrapping the same obligation in another `before` or `after` would only give the
 machine a second place to contradict itself.
 
-### 12.16 Execution Flow, Not Lifecycle Vocabulary
+### 11.16 Execution Flow, Not Lifecycle Vocabulary
 
 This section is not a new contract type.
 
@@ -1958,6 +1870,115 @@ of an object jungle.
 Good.
 
 The jungle had its chance.
+
+---
+
+## 12. Contract and Verification
+
+If the interface is the contract document, verification is the check that a realization satisfies the declared
+obligations.
+
+The important part is not "tests." Tests are only one late way to look at a machine after it already exists.
+
+The better direction is earlier than that.
+
+First make the contract material rich enough to say what the machine actually promises. The closed contract
+presentations name the obligations: input, admission, lowering, fact, invariant, state, transition, failure,
+publication,
+diagnostic, policy, budget, capacity, and governance. Required coordinates name the active meaning and binding. The
+explicit state machine manifest names the closed state surface for that interaction. The manifest binds those materials
+to one interaction without inheritance, composition, or hidden ancestry.
+
+That gives the compiler something real to guard.
+
+Not a vague method name.
+
+Not a class shape.
+
+Not a comment.
+
+A declared contract surface.
+
+If the implementation claims to realize an interaction, the compiler or verifier should be able to ask ordinary
+questions before the machine turns into runtime soup:
+
+```text
+Does the implementation expose the required operation handle?
+Does it accept only the declared input presentation?
+Does it apply the required admission contract?
+Does it produce the declared failure outcomes?
+Does it preserve the declared invariant?
+Does it obey the declared state transitions?
+Does it publish only what the publication contract allows?
+Does it stay under the active policy, budget, capacity, and governance contracts?
+Does it produce the diagnostic evidence the contract requires?
+```
+
+That is the point of making the contract presentations, coordinates, and manifest explicit. The compiler cannot guard
+meaning that was never declared. If the contract surface is too thin, the compiler has nothing to hold. Then people
+compensate with tests, conventions, annotations, comments, and hope.
+
+Hope is not a verification strategy.
+
+A test can still be useful. It can check concrete behavior. It can exercise examples. It can catch mistakes in a
+realization.
+
+But once the contract has been made explicit, tests lose one old excuse.
+
+A test is a small verification document. It says, "under this condition, this machine should do this." If the machine
+already declares its input, admission, lowering, invariant, state movement, failure, publication, diagnostic evidence,
+policy, budget, capacity, and governance, then the test should not invent a private little religion about what the
+machine probably means.
+
+It should verify the declared contract surface.
+
+That changes the target. A test over one declared judgment surface is not a ritual around a method body. It is a check
+of that surface: admission, canonicalization, lowering, invariant judgment, transition, publication, or diagnostic
+retention. A test over the airlock from presented input to admission result is a boundary test. A test over a small
+logical pipeline from declared input to declared result is already an integration test for that pipeline.
+
+The labels are not the important part.
+
+The contract tells the test where to look. If a test verifies a declared obligation, it is helping verify the contract.
+If it only freezes incidental behavior, object shape, call order, framework output, or whatever state happened to be
+left behind this week, then it is not protecting the contract. It is preserving implementation residue and calling the
+fossil a quality strategy.
+
+The order should be:
+
+```text
+closed contract presentations and required coordinates
+-> flat interaction manifest
+-> compiler / verifier / generated checks where possible
+-> tests where needed
+-> realization
+```
+
+TDD sold one ordinary fact like it had discovered fire:
+
+```text
+if you know the contract before the implementation,
+you can write the verification before the implementation.
+```
+
+Fine. That part is useful. But TDD is not a theory of quality. It is just one way to write some verification before the
+realization. When the contract is explicit enough, tests should be derived from it where possible, not manually guessed
+into existence around whatever the implementation happened to do.
+
+The best verification is not a mountain of tests. The best verification is making invalid software impossible to write,
+impossible to compile, or impossible to publish before it becomes a runtime mess.
+
+Traditional DBC usually describes verification around what must hold before and after a callable operation.
+
+That vocabulary is not used as the organizing structure here. The contract authority has been placed at the declared
+judgment where each obligation actually belongs, so verification follows those contract surfaces instead of
+reconstructing one large `before` and `after` around a method.
+
+The pipeline consequences of that choice are easier to see after the individual contract presentations have been
+introduced.
+
+The answer is not to scatter contracts into comments, wiki pages, assertions, and test fragments. The answer is to make
+the contract document real enough that the compiler can guard implementation against it.
 
 ---
 
