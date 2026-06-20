@@ -383,54 +383,14 @@ not manually guessed into existence.
 The best verification is not a mountain of tests. The best verification is making invalid software impossible to write,
 impossible to compile, or impossible to publish before it becomes a runtime mess.
 
-DBC was not wrong because it wanted contracts. That instinct was good.
+Traditional DBC usually describes verification around what must hold before and after a callable operation.
 
-The problem was the shape it trusted.
+That vocabulary is not used as the organizing structure here. The contract authority has been placed at the declared
+judgment where each obligation actually belongs, so verification follows those contract surfaces instead of
+reconstructing one large `before` and `after` around a method.
 
-Traditional DBC speaks in `precondition` and `postcondition` because it stands around a callable operation. Before this
-method runs, these things must be true. After this method returns, these things must be true. Fine. That is a reasonable
-place to start if the method is the center of the world.
-
-But the method is not the center of this machine.
-
-This contract model does not reject the concern behind preconditions and postconditions. It moves the concern out of the
-method and into the declared pipeline surface.
-
-A precondition becomes the question of entrance and movement: what presentation may enter, what admission must decide,
-which policy or capacity limit is active, which declared state the machine is in, and which transition is permitted. The
-question is no longer "may this method run?" That question is too small. The better question is:
-
-```text
-may this material enter the next declared judgment surface?
-```
-
-A postcondition becomes the question of what the movement leaves behind: admitted material, accepted fact, preserved
-invariant, declared failure, diagnostic evidence, state movement, or public claim. The method return is not allowed to
-pretend it explains the machine. The pipeline has to say what survived judgment and what authority that result has.
-
-So this is not a new paint job for old preconditions and postconditions.
-
-It is a relocation of authority.
-
-The old shape says:
-
-```text
-before this call
-after this call
-```
-
-This machine says:
-
-```text
-at this declared boundary
-after this declared judgment
-through this permitted movement
-under this publication rule
-with this diagnostic residue
-```
-
-DBC went wrong when those obligations were glued onto classes, inheritance, runtime wrappers, proxies, and
-implementation-shaped objects. Of course that became slow and ugly. Of course people stopped using it.
+The pipeline consequences of that choice are explained later, after the individual contract presentations have been
+introduced.
 
 The answer is not to scatter contracts into comments, wiki pages, assertions, and test fragments. The answer is to make
 the contract document real enough that the compiler can guard implementation against it.
@@ -729,10 +689,10 @@ contract obligations. The fact is the factual material those obligations inspect
 
 ```text
 Fact Contract:
-    the declared law that defines what kind of material may gain factual authority inside the core
+    the contract that defines what kind of factual material may exist inside the core
 
-Accepted Immutable Fact:
-    immutable material that has survived the required judgments and gained factual authority under that law
+Immutable Fact:
+    the immutable factual material that exists under that fact contract
 ```
 
 Think of a constraint contract that says an amount must not exceed a limit. The immutable fact says what the amount is.
@@ -764,11 +724,12 @@ Keeping those two apart prevents the old object-oriented mixture of rule, data, 
 
 ### 12.2 Policy, Budget, Capacity, and Governance Contracts
 
-A good machine is finite. It has limits, and it has a lifetime.
+A real machine is not an idea floating outside the world. It can bear only so much load before its operation begins to
+degrade or fails altogether.
 
-It can accept only so much material, spend only so much effort, retain only so much evidence, expose only so much
-result,
-and survive only under conditions it can actually bear. Pretending otherwise is engineering fantasy.
+A good machine admits this before reality demonstrates it the hard way. Its usable capacity and operating limits belong
+in the contract because pretending the machine can endure anything does not make it stronger. It only makes the failure
+dishonest.
 
 A good machine must be honest about its own limits. It declares them, measures them, and operates under them.
 
@@ -891,10 +852,10 @@ fast-fail policy:
     reject invalid presentation immediately with declared failure
 
 diagnostic-retention policy:
-    retain only bounded, non-authoritative evidence from material that did not continue
+    bound how much diagnostic evidence remains and how long it remains available
 
-diagnostic-only policy:
-    allow evidence to remain visible for diagnosis, but never for authoritative core reasoning
+diagnostic-use policy:
+    allow retained evidence to support diagnosis, but never authoritative core reasoning or publication
 
 reject-unknown policy:
     reject undeclared fields, metadata, shape, or external contract material
@@ -1014,6 +975,28 @@ one vague error bucket.
 A declared failure is not a cleaned-up crash. It is not an unhandled exception. It is not whatever the framework
 happened
 to throw.
+
+A contract can govern a failure only while some software remains able to carry out that governance.
+
+The machine may declare what happens under bounded shortage, an expected interruption, or a failure from which another
+execution can recover. Those cases still leave machinery capable of producing a result, preserving already committed
+material, or beginning a declared recovery path.
+
+There is another kind of ending. The process may be killed without a final instruction. The kernel may fail. Power may
+disappear. The physical substrate may stop existing in a form the software can use. The dead execution cannot perform
+one last judgment, publish one last failure, or carefully finish its diagnostic evidence. Asking it to do so would be
+asking the missing machinery to operate.
+
+This document does not turn that physical ending into another contract result. It marks the point where the authority
+of the running software ends.
+
+The machine may still contract for what must become durable before such an ending, and another execution may contract
+for how that durable material is inspected or recovered afterward. That is different. Those obligations belong to the
+living execution before the loss and to the recovering execution after it, not to an imaginary final act performed by
+the execution that was destroyed.
+
+A good machine should admit this boundary. Otherwise `declared failure` quietly becomes a promise that software will
+remain in control after the means of control are gone.
 
 A declared failure is a contract-governed stop result. It states which obligation failed, under which input, admission,
 policy, budget, capacity, or governance rule the failure was produced, and what may be exposed about that failure.
@@ -1187,18 +1170,31 @@ next layer." That is not enough. If the mapping carries framework behavior, seri
 backend accidents, proxy tricks, or unratified external contract meaning into the core, it has not lowered the material.
 It has smuggled foreign meaning across the boundary.
 
-Lowering has to preserve the parts that make the material contract material:
+Lowering has to preserve the contract meaning carried into candidate material:
 
 ```text
 declared meaning
 identity material
+candidate kind
 shape law
 reference law
-version law
+version coordinate
 governance binding
+candidate authority
+```
+
+It also has to obey the obligations governing the lowering judgment:
+
+```text
 failure law
 diagnostic obligation
 ```
+
+`Candidate kind` says whether lowering formed a candidate fact, a candidate transition, or another declared candidate
+form.
+
+`Candidate authority` says what lowering did not do. The result is core-readable candidate material. It is not accepted
+fact, established state, or permitted transition merely because lowering succeeded.
 
 It also has to block what must not cross:
 
@@ -1948,11 +1944,11 @@ stops, waits, fails, publishes, or leaves retained evidence under a declared bou
 
 No hidden ceremony is required.
 
-This matters for diagnostic evidence. Diagnostic material does not need object lifetime to explain itself. It appears at
-a declared judgment point in the pipeline flow. Most explanation material should end with the run. Only material
-admitted
-by the diagnostic retention boundary remains as retained diagnostic evidence. Crossing that boundary still does not make
-it publication. It only means the machine kept enough internal explanation to account for what happened.
+This matters for diagnostic evidence. Diagnostic material does not need the managed existence of an object to explain
+itself. It appears at a declared judgment point in the pipeline flow. Most explanation material should end with the run.
+Only material admitted by the diagnostic retention boundary remains as retained diagnostic evidence. Crossing that
+boundary still does not make it publication. It only means the machine kept enough internal explanation to account for
+what happened.
 
 So when this document talks about a run, a stage, a judgment point, a result, or a retention boundary, it is not
 smuggling
