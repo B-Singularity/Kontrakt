@@ -2065,136 +2065,114 @@ This needs more work later.
 
 Let's cut the philosophical bullshit.
 
-Inheritance is code reuse. That is the deal. Strip away the lectures about abstraction, taxonomy, extensibility,
-polymorphism, and elegant modeling. The pressure underneath is small and ordinary: some code was duplicated, and people
-did not want to write it twice.
+Inheritance is a cheap trick for code reuse. That is the whole fucking gig. Strip away the lectures about abstraction,
+taxonomy, extensibility, polymorphism, and elegant modeling. The pressure underneath is pathetic and ordinary: some code
+was duplicated, and programmers were too lazy to write it twice.
 
 Then software started treating that convenience as sacred.
+Reuse stopped being a trade-off and became a religion people worshiped before asking what it would cost.
 
-Reuse stopped being a trade-off and became something people worshiped before asking what it would cost.
+The disaster is the physical price we paid for it.
+They chose the dirtiest possible shape for reuse: shove the common body up top, puke the variations down below, and
+force the rest of the program to walk through this incestuous vertical structure. A few shared methods stopped being a
+local hack. They became a class hierarchy.
 
-The disaster was the price software agreed to pay for it.
-
-Inheritance chose the dirtiest shape for reuse. It pushed the common body upward, put the variations underneath, and
-made the rest of the program walk through that vertical structure. A few shared methods stopped being a local trick.
-They became a class hierarchy.
-
-From there the damage spread.
+From there, the damage spread.
 
 Object-oriented software was already fragmented before inheritance made it worse. Behavior did not move through a clean
 pipeline. Objects called other objects, methods bounced through message-shaped control flow, and both the reader and the
-machine
-had to follow little jumps across the program to understand what actually happened.
+machine had to follow little jumps across the program just to understand what actually happened.
 
-Inheritance added a second burden on top of that.
+Inheritance dropped a second massive burden on top of that.
 
-Now the reader and machine does not only chase object-to-object movement. The reader and machine also has to climb the
-parent-child structure:
-which behavior came from the parent, which part the child replaced, which hook was meant to be called, which override
-changed the path, and which inherited assumption still survived underneath.
+Now, the reader doesn't just chase object-to-object movement. They have to climb the parent-child structure: which
+behavior came from the parent, which part the child butchered, which hook was meant to be called, which override
+hijacked the path, and which inherited assumption still survived underneath. Callback-shaped fragmentation mutated into
+ancestry-shaped recursion.
 
-That is the deeper damage.
-
-Callback-shaped fragmentation became ancestry-shaped recursion.
+And the hardware is forced to pay the bill for this garbage.
+Every time the machine tries to do something simple, it has to chase pointers through virtual method tables (v-tables)
+just to find out which mutated child is actually running. It destroys memory locality. It blows out JIT inline caches
+because the runtime types keep shifting. We voluntarily sacrificed CPU cycles and mechanical predictability just to save
+a few lines of boilerplate.
 
 That is a stupid amount of machinery for avoiding duplicated code.
 
-The field eventually had to admit the split. Cook, Hill, and Canning said the part that should have been obvious:
-inheritance is not subtyping. Reusing the parent's guts does not prove that the child preserves the parent's promise.
-Implementation reuse and substitutability are different animals.
+Even the academics had to admit it was dogshit. Cook, Hill, and Canning proved the part that should have been painfully
+obvious: inheritance is not subtyping. Stealing a parent's guts does not mean the child keeps the parent's promise.
+Implementation reuse and substitutability are completely different animals.
 
 That should have killed the magic.
-
 It did not.
 
-Instead of treating inheritance as a replaceable implementation shortcut, object-oriented theory kept trying to make the
-child safe under the parent. Liskov's substitution principle is the cleanest version of that attempt. It says, in
-effect,
-that a subtype should be usable where the supertype was expected without breaking the desirable properties of the
-program.
+Instead of treating inheritance like the dirty shortcut it is, OOP cultists tried to make the child safe under the
+parent. Barbara Liskov's substitution principle is the cleanest version of that desperate attempt. It says, in effect,
+that a subtype should be usable where the supertype was expected without breaking the program.
 
 Useful rule.
+Also a massive confession.
 
-Also a confession.
+If your parent-child hierarchy needs a mathematical thesis to stop it from lying, then it was never contract authority.
+It was a ticking bomb that needed a leash.
 
-If a parent-child hierarchy needs a substitution principle to stop it from lying, then the hierarchy was never contract
-authority. It was a risk that needed a law wrapped around it.
-
-The fragile base class problem shows the same thing without theory. A base class changes its own internal call path, and
-a subclass breaks without touching its own code. The parent moved inside its private little kingdom, and the child still
-got fucked.
+The Fragile Base Class problem is just reality hitting back without the theory. A base class changes its own internal
+plumbing, and the child completely shits the bed without touching a single line of its own code. The parent moved inside
+its private little kingdom, and the child still got fucked.
 
 That is not abstraction.
+That is parasite-level coupling wearing a clean name.
 
-That is hidden coupling with a clean name.
-
-Now look at the bill.
-
-For the sake of reuse, software accepted virtual dispatch, inherited layout, reference chasing, parent-child coupling,
-override traps, fragile initialization paths, and the constant need to ask whether a child still behaves like the
-parent.
-Then contract theory walked in and started asking how to preserve obligations across that mess.
+Now look at the actual bill.
+For the sake of reuse, software accepted virtual dispatch, inherited memory layout, pointer chasing, parent-child
+coupling, override traps, and fragile initialization paths. Then contract theory walked in and started asking how to
+preserve obligations across that mess.
 
 Wrong question.
-
-The useful question was why that mess was allowed to carry obligations at all.
+The useful question was why that mess was allowed to carry obligations in the first place.
 
 A contract should not have to crawl through ancestry to find meaning. It should not depend on whether an override stayed
 polite. It should not trust a subtype relation just because the compiler accepted the class header. It should not pay
-runtime and reasoning costs for a structure whose original purpose was saving duplicated implementation.
+runtime and reasoning costs for a structure whose original purpose was saving duplicated typing.
 
 That is the obscene part.
+We sacrificed the entire fucking machine to save five lines of code.
 
-Software spent the whole machine to save a few lines.
-
-And the goal was not even worth that much.
-
-Most software change is not a clean little variation under a stable parent. A policy changes. A boundary changes. A
-failure meaning changes. A state move changes. A published result becomes illegal. That is not "child specializes
-parent." That is a different obligation.
+And the goal wasn't even worth it.
+Most software change is not a clean little variation under a stable parent. A policy changes. A boundary locks down. A
+failure meaning splits. A state move becomes illegal. That is not "child specializes parent." That is a completely
+different physical obligation.
 
 Inheritance is bad at that kind of change because it wants the old body to remain above the new meaning. It wants the
-shared implementation to stay sacred while the promise underneath starts moving. So the child hides the change in an
-override, the parent keeps its respectable name, and everyone pretends the tree still explains the software.
+shared implementation to stay sacred while the promise underneath starts moving. So the child hides the shifting reality
+inside an override, the parent keeps its respectable name, and everyone pretends the tree still explains the software.
 
 Bullshit.
-
-The tree explains the reuse.
-
-It does not explain the contract.
-
-This is where inheritance fucked up software: it promoted a cheap implementation trick into structure, then let that
-structure pretend to be meaning. After that, the theory had to protect the structure, the runtime had to execute through
-the structure, and the programmer had to debug the structure when it cracked.
+The tree explains the reuse. It does not explain the contract.
 
 A better contract model does not need this inheritance drama.
 
-Repeated obligations can be pulled out as clauses. A concrete contract can select the clauses it needs. When an
-obligation changes, the contract changes. When implementation wants reuse, it can reuse behind the surface, after the
-promise is already declared.
+It does not start by hunting for duplicated code and promoting it into a rule. It starts with explicit declaration. You
+declare the promise first. If multiple interactions happen to enforce the exact same rule, you compose explicit contract
+clauses. But composition is just a mechanic; the explicit declaration is the authority.
+
+When the promise changes, you declare a new contract or bump a version coordinate.
+When the implementation wants to avoid typing the same logic twice, it can share whatever machinery it wants—but
+strictly in the dark, behind the boundary, after the contract is already locked in place.
 
 No bloodline required.
-
 No child class needs to cosplay as a legal variation.
-
 No parent class gets to act like a constitution.
 
-Inheritance may remain a dirty implementation convenience in some corner of the backend. Fine. Let it rot there if the
-damage stays local.
-
-But the moment it starts carrying contract authority, the implementation has stolen the law.
-
 Hiding a changed promise inside a child class is not abstraction.
-
 It is contract fraud with inheritance syntax.
 
 ### 16.2 Polymorphism, Substitution, Segregation, and Inversion
 
 Let’s get the physical timeline straight before we look at this mess.
 
-A contract must be declared FIRST. It is the explicit, law. Because that law exists up front, you can have ten different
-implementations. You can swap them, delete them, or rewrite them from scratch at 3 AM. Nobody gives a single fuck, as
-long as they satisfy the contract.
+A contract must be declared FIRST. It is the explicit, unbreakable law. Because that law exists up front, you can have
+ten different implementations. You can swap them, delete them, or rewrite them from scratch at 3 AM. Nobody gives a
+single fuck, as long as they satisfy the contract.
 
 That is how a sane machine works.
 
@@ -2204,12 +2182,14 @@ machine started collapsing. The "principles" we are about to look at—Polymorph
 pieces of software wisdom floating down from the heavens.
 
 They are frantic repair jobs.
-
 They are duct tape applied to keep the inheritance lie from exploding in everyone's faces. And then, these goons had the
 absolute audacity to sell their duct tape as "Design Principles."
 
-(We can ignore Single Responsibility and Open-Closed here. Those are mostly just ordinary refactoring habits. The real
-cancer is the mess built to protect inheritance.)
+(Let’s deal with the elephant in the room: The Open-Closed Principle. OCP is the ultimate excuse for this garbage. "Open
+for extension, closed for modification" sounds profound until you realize it is exactly what justifies throwing new
+subclasses at a problem instead of fixing the actual contract. It is a coward’s rule. If the physical obligation
+changes, the contract MUST be modified. OCP just trains developers to hide shifting realities inside new mutant children
+so the old code doesn't get its feelings hurt.)
 
 Polymorphism was the first trick to hide the rot.
 In OOP, it let an inherited surface speak for several implementations at once. The problem isn't that multiple
@@ -2256,16 +2236,14 @@ These ideas are not equally wrong in every local use. Some of them can be practi
 rotten, legacy codebase. Fine. Bad worlds need bandages.
 
 But do not confuse the bandage with the body.
-
 Polymorphism let an inherited surface cosplay as a contract. Liskov substitution desperately tried to keep children from
 betraying their parents. Interface segregation chopped up weak method bags after the contract was already left implicit.
 Dependency inversion tried to reverse the fact that implementation had illegally stolen the center of the architecture.
 
-They are all orbiting the exact same mistake: Inheritance and implementation were allowed to act like authority.
+They are all orbiting the exact same original sin.
 
-That is the original sin this model rejects.
 The contract explicitly carries the obligation. The implementation either satisfies it, or it doesn't. Everything else
-is just academic theater.
+is just academic theater trying to cover up a bad structure.
 
 ---
 
