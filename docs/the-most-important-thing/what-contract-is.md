@@ -2098,8 +2098,8 @@ a few lines of boilerplate.
 
 That is a stupid amount of machinery for avoiding duplicated code.
 
-Even the academics had to admit it was dogshit. Cook, Hill, and Canning proved the part that should have been painfully
-obvious: inheritance is not subtyping. Stealing a parent's guts does not mean the child keeps the parent's promise.
+Even the academics had to admit it was shit. Cook, Hill, and Canning proved the part that should have been painfully
+obvious: inheritance is not subtyping. Stealing a parent's guts does not mean the child keeps the parent's obligations.
 Implementation reuse and substitutability are completely different animals.
 
 That should have killed the magic.
@@ -2143,7 +2143,8 @@ failure meaning splits. A state move becomes illegal. That is not "child special
 different physical obligation.
 
 Inheritance is bad at that kind of change because it wants the old body to remain above the new meaning. It wants the
-shared implementation to stay sacred while the promise underneath starts moving. So the child hides the shifting reality
+shared implementation to stay sacred while the obligation underneath starts moving. So the child hides the shifting
+reality
 inside an override, the parent keeps its respectable name, and everyone pretends the tree still explains the software.
 
 Bullshit.
@@ -2152,10 +2153,11 @@ The tree explains the reuse. It does not explain the contract.
 A better contract model does not need this inheritance drama.
 
 It does not start by hunting for duplicated code and promoting it into a rule. It starts with explicit declaration. You
-declare the promise first. If multiple interactions happen to enforce the exact same rule, you compose explicit contract
+declare the obligation first. If multiple interactions happen to enforce the exact same rule, you compose explicit
+contract
 clauses. But composition is just a mechanic; the explicit declaration is the authority.
 
-When the promise changes, you declare a new contract or bump a version coordinate.
+When the obligation changes, you declare a new contract or bump a version coordinate.
 When the implementation wants to avoid typing the same logic twice, it can share whatever machinery it wants—but
 strictly in the dark, behind the boundary, after the contract is already locked in place.
 
@@ -2163,14 +2165,14 @@ No bloodline required.
 No child class needs to cosplay as a legal variation.
 No parent class gets to act like a constitution.
 
-Hiding a changed promise inside a child class is not abstraction.
+Hiding a changed obligations inside a child class is not abstraction.
 It is contract fraud with inheritance syntax.
 
 ### 16.2 Polymorphism, Substitution, Segregation, and Inversion
 
 Let’s get the physical timeline straight before we look at this mess.
 
-A contract must be declared FIRST. It is the explicit, unbreakable law. Because that law exists up front, you can have
+A contract must be declared FIRST. It is the explicit, law. Because that law exists up front, you can have
 ten different implementations. You can swap them, delete them, or rewrite them from scratch at 3 AM. Nobody gives a
 single fuck, as long as they satisfy the contract.
 
@@ -2185,11 +2187,13 @@ They are frantic repair jobs.
 They are duct tape applied to keep the inheritance lie from exploding in everyone's faces. And then, these goons had the
 absolute audacity to sell their duct tape as "Design Principles."
 
-(Let’s deal with the elephant in the room: The Open-Closed Principle. OCP is the ultimate excuse for this garbage. "Open
-for extension, closed for modification" sounds profound until you realize it is exactly what justifies throwing new
-subclasses at a problem instead of fixing the actual contract. It is a coward’s rule. If the physical obligation
-changes, the contract MUST be modified. OCP just trains developers to hide shifting realities inside new mutant children
-so the old code doesn't get its feelings hurt.)
+We can leave Open-Closed mostly aside. At its best, it says a simple refactoring thing: when the obligation has not
+changed, adding a new realization should not force old dependent code to be rewritten.
+
+Fine.
+
+The problem begins when people use that rule after the obligation has changed. If the contract changed, the contract
+must be modified. Hiding the new reality inside another subclass is not extension. It is avoiding the contract change.
 
 Polymorphism was the first trick to hide the rot.
 In OOP, it let an inherited surface speak for several implementations at once. The problem isn't that multiple
@@ -2201,7 +2205,7 @@ convenience. It becomes a massive grift allowing inheritance to pretend it carri
 
 Liskov Substitution (LSP) is the exact same disease wearing a nicer suit.
 It asks whether a child can safely stand where the parent was expected. Do you see the problem? This question assumes
-the hierarchy has already won. It assumes the parent class is allowed to hold the promise, and then writes a
+the hierarchy has already won. It assumes the parent class is allowed to hold the obligations, and then writes a
 mathematical thesis on how polite the child needs to be so it doesn’t hurt the parent's feelings.
 What an absolute cope.
 If you explicitly declare the contract first, the real question has nothing to do with replacing a parent. It’s simply:
@@ -2244,6 +2248,34 @@ They are all orbiting the exact same original sin.
 
 The contract explicitly carries the obligation. The implementation either satisfies it, or it doesn't. Everything else
 is just academic theater trying to cover up a bad structure.
+
+### 16.3 Abstraction
+
+Abstraction should have been the only good idea in this mess. At its core, it is just contract work. The problem, as we
+already established, is that software tried to extract these contracts from implicit implementation residue.
+
+But the deeper failure is the explanation itself.
+
+The definition of abstraction is abstract as hell. "Hide the details." "Expose the essence." Fine. But how the fuck do
+you actually abstract? Which detail disappears? Which part becomes the strict contract? The academics abstracted the
+explanation of abstraction. They left a massive void, and nobody actually knew what to do.
+
+Because the definition was empty, object-oriented programming filled it with inheritance.
+
+The rigorous work of defining a physical boundary mutated into the lazy act of building a parent class. This is how it
+is still taught today: developers learn abstraction right next to inheritance. The lesson becomes simple and fatal: to
+abstract is to build a parent.
+
+That lesson is pure poison.
+
+Engineering is driven by purpose. There is no universal, divine shape floating above the machine. Very few developers
+understand this. Most just memorize the first inheritance pattern they see. Years pass, they get a "Senior" title, and
+suddenly they act like Jesus Christ handing down sacred laws. They preach this same brain-dead bullshit to the next
+generation, ensuring the industry stays completely fucked.
+
+Abstraction is not the enemy.
+Implicit, inheritance-shaped abstraction is.
+
 
 ---
 
