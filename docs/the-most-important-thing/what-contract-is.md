@@ -2350,6 +2350,80 @@ decade trying to buy back representation freedom without breaking the world, and
 
 That is the lesson.
 
+Do not expose machinery as authority.
+
+Do not let class, object identity, inheritance, reference layout, or OOP representation become the contract unless you
+are willing to drag that exact shape through the rest of the machine's life.
+
+### 16.5 Type Is a Contract Name, Not Contract Authority
+
+Type theory is too massive to settle here. I am not writing a thesis on every branch of it, nor am I pretending to pass
+final judgment on the entire field. That would be dishonest and miss the point entirely.
+The parts of type theory that matter to this model will need separate treatment later.
+
+This section only needs to establish two things: what a type means in this machine, and why subtyping must never be
+treated as contract reuse.
+
+Type is the next respectable place where software engineers pretend they have found a contract. It looks safer than a
+class. It looks cleaner than an object. It wears the intimidating costume of pure mathematics. Because the compiler can
+use it to reject static nonsense, developers blindly elevate it to the level of ultimate authority.
+
+That is a delusion.
+
+Use the type system. It is a good tool. But never confuse the tool with the authority.
+
+A type is a classifier. It is a static use rule that tells the compiler, "This thing may be treated as this kind of
+thing here."
+
+In this document, a type may be a contract name, a static surface, or a handle for later judgment. Names like OrderId,
+AcceptedFact, or DiagnosticEvidence are useful because they point at different contract surfaces.
+
+But the name does not create the obligation.
+
+A type named OrderId does not tell the machine how to validate raw input, what the canonical identity law is, or how it
+must fail when rejected. A type checker proving that a phrase fits a static surface does not prove state movement,
+failure meaning, or publication authority.
+
+The type points.
+
+The contract must declare.
+
+Subtyping becomes the same trap when people let it stand in for contract preservation.
+
+A subtype relation says that one type may be used where another type is expected under the type system's substitution
+rule. Whether that machinery is nominal, structural, inferred, bounded, intersection-shaped, or union-shaped, it is
+still a mechanical permission rule.
+
+That is useful.
+
+It is not contract reuse.
+
+Subtype acceptance is not contract permission.
+
+If an obligation changes, the contract has changed. You do not get to hide a semantic mutation by slipping it through as
+a child type, a narrower generic bound, or a clever intersection alias. A changed obligation demands a different
+contract, a new version coordinate, or an explicit compatibility rule.
+
+This does not make types useless.
+
+They are excellent handles. They catch garbage early. They can carry names, shapes, bounds, and equality material that
+may help later judgment.
+
+But useful material is not authority.
+
+A type-level equality check may help compare two presented surfaces. It does not decide that the contract obligation is
+the same. A subtype relation may help decide that one static surface can stand where another was expected. It does not
+decide that one contract has preserved, inherited, or reused another contract.
+
+If type machinery is allowed to affect contract meaning, it must be judged under declared contract material first.
+
+The contract carries the declared obligation.
+
+The type carries the name, surface, or static handle.
+
+Keep those two strictly separated. If you let the type system act as the authority, the old disease of object-oriented
+inheritance will return. It will just have more complicated math to hide behind.
+
 ---
 
 ## 17. Still Left
@@ -2359,12 +2433,10 @@ There is a lot left.
 Later sections will handle the parts I am not finishing here:
 
 ```text
-type as contract presentation name
 class as frontend presentation
 object as temporary frontend/runtime instance
 object identity is not contract identity
 inheritance is not contract reuse
-subtyping is not contract preservation
 overriding is not contract modification
 overloading is not contract reuse
 method signature is not the full operation contract
