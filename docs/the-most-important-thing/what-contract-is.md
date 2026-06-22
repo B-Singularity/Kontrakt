@@ -2350,11 +2350,6 @@ decade trying to buy back representation freedom without breaking the world, and
 
 That is the lesson.
 
-Do not expose machinery as authority.
-
-Do not let class, object identity, inheritance, reference layout, or OOP representation become the contract unless you
-are willing to drag that exact shape through the rest of the machine's life.
-
 ---
 
 ## 17. Still Left
