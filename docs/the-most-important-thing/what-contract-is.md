@@ -2273,6 +2273,13 @@ understand this. Most just memorize the first inheritance pattern they see. Year
 suddenly they act like Jesus Christ handing down sacred laws. They preach this same brain-dead bullshit to the next
 generation, ensuring the industry stays completely fucked.
 
+That is how the structure survived.
+
+Not because nobody saw the damage, but because the damage was treated as misuse, overuse, or bad style. The deeper
+crime was left alone: inheritance was allowed to carry contract authority.
+
+The people who should have questioned that authority were too busy teaching the shape that smuggled it in.
+
 Abstraction is not the enemy.
 Implicit, inheritance-shaped abstraction is.
 
