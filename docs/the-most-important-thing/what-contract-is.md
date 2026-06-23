@@ -2571,13 +2571,7 @@ Because it made its implementation too public to ever replace.
 
 ---
 
-## 17. Still Left
-
-done
-
----
-
-## 18. Current Working Definition
+## 17. Current Working Definition
 
 For now:
 
