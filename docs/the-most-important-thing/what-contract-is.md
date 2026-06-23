@@ -2424,6 +2424,65 @@ The type carries the name, surface, or static handle.
 Keep those two strictly separated. If you let the type system act as the authority, the old disease of object-oriented
 inheritance will return. It will just have more complicated math to hide behind.
 
+### 16.6 Class Is Where Roles Collapsed
+
+I respect a class for its exact mechanical purpose—nothing more, nothing less. When you need to organize implementation,
+define the physical shape of an object, or hand the runtime a construction template to instantiate, a class does the
+job. None of that is the problem.
+
+The disaster starts the moment you ask a class to carry contract authority.
+
+Historically, a class defined the shape of objects that held mutable data, exposed behavior through methods, and
+participated in message-driven control flow. Developers then looked at that massively overloaded construct and treated
+it as the natural place to define software contracts. That is exactly where the roles collapsed.
+
+This was not an accidental bug. The object-oriented model intentionally bound data and behavior together. It wanted
+mutable local cells communicating through distributed control. The resulting damage is not a side effect of bad
+programming; it is the physical cost of the model doing exactly what it was designed to do.
+
+By jamming data and the operations that mutate it into the same artifact, mutation stops being a rare accident and
+becomes the default reality. Once you accept that, you inevitably hit the "class invariant" problem. If an object is
+allowed to scramble its own variables, you desperately need a consistency rule to ensure the data still makes logical
+sense afterward.
+
+The Design by Contract practitioners tried to formalize this rot by enforcing preconditions, postconditions, and class
+invariants. But they made a fatal compromise: they tied the contract directly to the receiver object and the method
+execution boundary.
+
+That local boundary is useless against the reality of the cell-shaped model. If software is a network of objects
+hoarding mutable data and passing references, callbacks and dynamic dispatch are not edge cases—they are the natural
+movement of the system. Because the contract is tied to the receiver object, the moment a callback, proxy, or leaked
+reference physically bypasses that expected boundary, the contract goes blind.
+
+You cannot use a local restriction to govern a distributed control path. The invariant sits blindly on one class, while
+the actual meaning of the system leaks everywhere through hidden, implicit links. It shares the exact same architectural
+flaw as a neural network: meaning is distributed across the graph instead of being declared on one explicit machine
+surface.
+
+No wonder the academic repair work never ends. Encapsulation tries to hide the mutating variables, invariants try to
+keep them sound, and callback rules or ownership types try to stop the graph from collapsing under its own weight. These
+are heavy bandages placed on a broken substrate. Add enough restrictions, and the object model's reason for existing is
+destroyed. Add too few, and it cannot safely carry contract authority.
+
+The machine we are building here does not waste time trying to make an inherently flawed object graph honest. We
+surgically remove contract authority from the object entirely.
+
+There are two strict, physical reasons for this absolute line.
+
+First, a class almost never declares its obligations with enough authority. Attaching a name to a class and checking an
+invariant against mutable fields tells the machine absolutely nothing about admission, lowering, state transitions,
+failure modes, budgets, or governance.
+
+Second, whatever tiny fragment of contract meaning does appear is tied far too tightly to the actual plumbing. The data
+layout, method bodies, callback paths, and invariant checks all sit inside the exact same artifact.
+
+When the supposed contract is expressed through that artifact, a simple change in the implementation plumbing can
+completely shake what people thought the contract actually meant. And if a contract shakes just because the underlying
+plumbing moved, it was never an authority in the first place. It was merely a byproduct of the implementation.
+
+A class is allowed to be useful mechanical machinery.
+It is not allowed to be the authority.
+
 ---
 
 ## 17. Still Left
