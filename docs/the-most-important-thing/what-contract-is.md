@@ -1,5 +1,36 @@
 # What Is Contract
 
+## Table of Contents
+
+- [0. Intention](#0-intention)
+- [1. The Explicit Machine](#1-the-explicit-machine)
+- [2. Mathematics, Physics, and Engineering](#2-mathematics-physics-and-engineering)
+- [3. Use Mathematics. Do Not Become Mathematics.](#3-use-mathematics-do-not-become-mathematics)
+- [4. Contract](#4-contract)
+- [5. Make Interfaces Great Again](#5-make-interfaces-great-again)
+- [6. Evolution and Contract](#6-evolution-and-contract)
+- [7. Good Machine and Function](#7-good-machine-and-function)
+- [8. Core, Boundary, and the Fucking Bastards Outside](#8-core-boundary-and-the-fucking-bastards-outside)
+- [9. Applying Contract to a Good Machine](#9-applying-contract-to-a-good-machine)
+- [10. What Counts as Contract in the Pipeline](#10-what-counts-as-contract-in-the-pipeline)
+- [11. Contract Presentations in the Pipeline](#11-contract-presentations-in-the-pipeline)
+- [12. Contract and Verification](#12-contract-and-verification)
+- [13. Contract and Implementation](#13-contract-and-implementation)
+- [14. Message, Exposure, and Interaction](#14-message-exposure-and-interaction)
+- [15. Whole Machine](#15-whole-machine)
+- [16. Object Orientation and Inheritance](#16-object-orientation-and-inheritance)
+    - [16.1 How Inheritance Fucked Up Software](#161-how-inheritance-fucked-up-software)
+    - [16.2 Polymorphism, Substitution, Segregation, and Inversion](#162-polymorphism-substitution-segregation-and-inversion)
+    - [16.3 Abstraction](#163-abstraction)
+    - [16.4 The JVM Is What Happens When Implementation Becomes Contract](#164-the-jvm-is-what-happens-when-implementation-becomes-contract)
+    - [16.5 Type Is a Contract Name, Not Contract Authority](#165-type-is-a-contract-name-not-contract-authority)
+    - [16.6 Class Is Where Roles Collapsed](#166-class-is-where-roles-collapsed)
+    - [16.7 Rust Exposes Implementation as Contract](#167-rust-exposes-implementation-as-contract)
+- [17. Still Left](#17-still-left)
+- [18. Current Working Definition](#18-current-working-definition)
+
+---
+
 ## 0. Intention
 
 The most important thing in software is intention. Not class, not object, not type theory, and not an abstract model
@@ -2498,13 +2529,13 @@ It is not allowed to be the authority.
 This is not a debate about whether Rust is a good or bad language. That is entirely irrelevant. The only architectural
 question that matters is whether the contract and the implementation remain strictly isolated.
 
-In a functioning machine, the contract is the absolute communication surface. The implementation is nothing more than a
+In a good machine, the contract is the absolute communication surface. The implementation is nothing more than a
 swappable backend. If the hardware, the compiler, the memory model, or the verification method changes, you must be able
 to discard the implementation and replace it entirely, as long as the declared contract still holds.
 
 Rust fails to keep that line clean.
 
-It takes low-level implementation mechanics—ownership, borrowing, lifetimes, trait bounds, pinning rules, sendability,
+It takes low-level implementation rules—ownership, borrowing, lifetimes, trait bounds, pinning rules, sendability,
 and aliasing—and exposes them directly as the public contract. Yes, inside the Rust compiler, those rules are exactly
 how the implementation is controlled. But architecturally, they are still just implementation. They are not the
 contract.
@@ -2515,7 +2546,8 @@ invariant is hidden, and exactly how memory is allowed to move.
 
 The implementation has merged directly with the contract surface.
 
-Once the public ecosystem learns and depends on that exact mechanical shape, the implementation ceases to be free. A
+Once the public ecosystem learns and depends on those exact implementation details, the implementation ceases to be
+free. A
 future hardware architecture, compiler strategy, or memory model might demand a completely different backend, but you
 are stuck. You cannot simply swap it out, because the public surface has already locked the users into depending on
 those old implementation details.
@@ -2526,7 +2558,7 @@ Rust is doing the exact same thing with ownership, borrowing, lifetimes, traits,
 Different implementation. Same architectural leak.
 
 If Rust expects to survive the next generation of hardware and software models, it must strictly isolate its contract
-from the implementation mechanics that currently enforce it. The contract declares the obligation. The implementation
+from the implementation rules that currently enforce it. The contract declares the obligation. The implementation
 remains a hidden, replaceable detail behind that surface.
 
 Otherwise, Rust is going to age exactly like the JVM.
