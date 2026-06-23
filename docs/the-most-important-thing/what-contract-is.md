@@ -2150,6 +2150,13 @@ inside an override, the parent keeps its respectable name, and everyone pretends
 Bullshit.
 The tree explains the reuse. It does not explain the contract.
 
+Overriding does not modify a contract.
+
+Overloading does not reuse a contract.
+
+If the obligation changed, a new contract has appeared. If the operation shape changed, the machine needs a declared
+operation surface, not another method trick hiding under the same family name.
+
 A better contract model does not need this inheritance drama.
 
 It does not start by hunting for duplicated code and promoting it into a rule. It starts with explicit declaration. You
@@ -2350,10 +2357,13 @@ decade trying to buy back representation freedom without breaking the world, and
 
 That is the lesson.
 
-Do not expose machinery as authority.
-
-Do not let class, object identity, inheritance, reference layout, or OOP representation become the contract unless you
-are willing to drag that exact shape through the rest of the machine's life.
+Rip the contract completely out of the implementation.
+When the contract stands as the absolute center of the machine, the implementation is reduced to a mere backend—a
+mechanical detail you can swap out, rewrite, or discard at any time.
+But if you bind your system's legal authority to the physical layout of its memory, you permanently destroy that
+freedom.
+Keep the contractual rules and the memory structure strictly isolated. Fail to do this, and you will spend decades
+paying the massive engineering cost of trying to escape a structural nightmare you locked yourself into.
 
 ### 16.5 Type Is a Contract Name, Not Contract Authority
 
@@ -2483,35 +2493,52 @@ plumbing moved, it was never an authority in the first place. It was merely a by
 A class is allowed to be useful mechanical machinery.
 It is not allowed to be the authority.
 
+### 16.7 Rust Exposes Implementation as Contract
+
+This is not a debate about whether Rust is a good or bad language. That is entirely irrelevant. The only architectural
+question that matters is whether the contract and the implementation remain strictly isolated.
+
+In a functioning machine, the contract is the absolute communication surface. The implementation is nothing more than a
+swappable backend. If the hardware, the compiler, the memory model, or the verification method changes, you must be able
+to discard the implementation and replace it entirely, as long as the declared contract still holds.
+
+Rust fails to keep that line clean.
+
+It takes low-level implementation mechanics—ownership, borrowing, lifetimes, trait bounds, pinning rules, sendability,
+and aliasing—and exposes them directly as the public contract. Yes, inside the Rust compiler, those rules are exactly
+how the implementation is controlled. But architecturally, they are still just implementation. They are not the
+contract.
+
+Look at a public Rust API. It rarely just states what obligation must hold. Instead, it dictates the exact shape of the
+current implementation: who owns, who borrows, which lifetime is attached, which trait bound is required, which unsafe
+invariant is hidden, and exactly how memory is allowed to move.
+
+The implementation has merged directly with the contract surface.
+
+Once the public ecosystem learns and depends on that exact mechanical shape, the implementation ceases to be free. A
+future hardware architecture, compiler strategy, or memory model might demand a completely different backend, but you
+are stuck. You cannot simply swap it out, because the public surface has already locked the users into depending on
+those old implementation details.
+
+The JVM did exactly this with classes, object identity, references, inheritance, and virtual dispatch.
+Rust is doing the exact same thing with ownership, borrowing, lifetimes, traits, unsafe invariants, and aliasing rules.
+
+Different implementation. Same architectural leak.
+
+If Rust expects to survive the next generation of hardware and software models, it must strictly isolate its contract
+from the implementation mechanics that currently enforce it. The contract declares the obligation. The implementation
+remains a hidden, replaceable detail behind that surface.
+
+Otherwise, Rust is going to age exactly like the JVM.
+Not because it lacked intention.
+Because it made its implementation too public to ever replace.
+
+
 ---
 
 ## 17. Still Left
 
-There is a lot left.
-
-Later sections will handle the parts I am not finishing here:
-
-```text
-class as frontend presentation
-object as temporary frontend/runtime instance
-object identity is not contract identity
-inheritance is not contract reuse
-overriding is not contract modification
-overloading is not contract reuse
-method signature is not the full operation contract
-external interface is not core contract
-external dependency can mutate contract meaning
-function value is not contract material
-closure is not contract flow
-thunk is not accepted fact
-lazy evaluation hides cost
-callback hides control flow
-proxy hides boundary
-recursion hides machine state
-publication and diagnostic evidence
-```
-
-Still left.
+done
 
 ---
 
