@@ -65,6 +65,9 @@ The document stays inside that scope.
 
 The good machine I am describing is not meant to be a universal machine for every context.
 
+In this document, a good machine means a machine that actually works in reality, knows its limits, prepares for them,
+fulfills its declared purpose, and makes the conditions that govern its behavior explicit.
+
 Most serious architecture already moves in this direction. Real systems already depend on contract-shaped structure;
 they just leave too much of it implicit.
 
