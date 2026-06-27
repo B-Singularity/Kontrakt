@@ -1,8 +1,8 @@
-# ADR-0045: Contract-First Package Architecture and Explicit Machine Refactoring Boundary
+# ADR-0045: Stage-First Package Architecture and Contract Boundary Refactoring
 
 ## Status
 
-Draft
+Accepted
 
 ## Date
 
@@ -10,7 +10,7 @@ Draft
 
 ## Related
 
-- `docs/what-contract-is.md`
+- `docs/the-most-important-thing/what-contract-is.md`
 - ADR-0044: Unified Runtime Memory Envelope and Pipeline Lifecycle Governance
 - ADR-0043: Contract Graph Canonicalization, Sealed Structural References, and Incremental Identity Derivation
 - ADR-0042: Mechanical Sympathy, Primitive Lifecycle, and Async Ownership Governance
@@ -34,30 +34,16 @@ Draft
 
 ## 1. Context
 
-Kontrakt has moved beyond its original shape as a test automation framework.
+Kontrakt started with test automation vocabulary, but the current direction is broader. The project is now being shaped
+as a deterministic contract system whose authority comes from declared obligations, canonical material, explicit machine
+movement, governed failure, and controlled publication.
 
-Earlier architecture decisions introduced discovery, linking, execution, reporting, tracing, planning, frozen metamodel
-material, L1 planner structures, L2 interning, runtime policy, lifecycle governance, adapter-neutral acquisition, and
-stable identity protocols.
+Earlier ADRs remain relevant. They introduced adapter-neutral acquisition, frozen metamodel material, stable identity
+protocols, L1 planner structures, L2 interning, runtime policy, lifecycle governance, bounded diagnostics, and
+backend-handle erasure. Those decisions already push the implementation toward determinism.
 
-Much of that work remains valuable.
-
-The current implementation already contains strong deterministic laws:
-
-- backend handles are erased before frozen planning material;
-- adapter discovery order is not trusted as semantic order;
-- canonical material must be separated from physical representation;
-- transitional hash values are not persistent identity;
-- frozen material is published only after validation;
-- lifecycle states are explicit in several runtime subsystems;
-- L1 and L2 planning structures avoid hidden semantic dependence on cache behavior;
-- runtime policy is resolved before expensive work begins;
-- failure, quarantine, continuation, and bounded diagnostics are treated as governed paths.
-
-However, the current package structure was created before the current contract theory was clarified in
-`What Contract Is`.
-
-The current codebase still exposes older implementation vocabulary near the top of the architecture:
+The remaining problem is architectural language. The current package tree still exposes older implementation terms near
+the top:
 
 ```text
 discovery
@@ -73,128 +59,89 @@ test result
 scenario
 ```
 
-Some of these names are still useful, but only as implementation vocabulary. Others are old transitional names. A few
-now point the reader toward the wrong architecture.
+Some of these names are still useful inside realization code. Some are transitional. Some now lead readers toward the
+wrong architecture.
 
-After `What Contract Is`, the authority model is clearer: Kontrakt should be read first as a contract machine. Test
-execution, compiler-style processing, runtime management, reflection, metadata acquisition, and planning are all
-important, but they are machinery under that contract machine. They are not the product domain itself.
-
-A contract is the declared set of obligations that software must satisfy. Implementation may read, lower, normalize,
-canonicalize, verify, execute, publish, cache, and report, but implementation machinery must not become contract
-authority.
-
-The package architecture must now reflect that rule.
-
-If package roots are organized around compiler machinery, interceptor flow, execution plumbing, reflection surfaces, or
-legacy test framework vocabulary, the codebase teaches the wrong architecture.
-
-The structure must say what Kontrakt is before it says how Kontrakt realizes that meaning.
+`What Contract Is` gives the stronger rule: implementation machinery must not become contract authority. The package
+structure should make that visible. It should show stage-owned contract boundaries first, and compiler/runtime/adapters
+as realization or outside technology.
 
 ## 2. Problem
 
-The current package architecture has five structural problems.
+The current package architecture has five problems.
 
-### 2.1. Implementation vocabulary is too high in the package tree
+### 2.1. Implementation vocabulary is too high in the tree
 
-Packages such as `execution`, `planning`, `metamodel`, `reporting`, and `runtime` are not wrong by themselves. The
-problem is their position. When they sit near the top of the package tree, they start to look like product-domain
-authority, even though they are mostly realization machinery.
+Packages such as `execution`, `planning`, `metamodel`, `reporting`, and `runtime` are useful implementation areas, but
+their current position makes them look like primary product domains.
 
-This matters because Kontrakt deliberately uses compiler-like architecture. That architecture is useful, but it must
-stay in its lane: it realizes declared contract authority. It does not define that authority.
+That is not accurate. Planning, execution, metamodel acquisition, identity derivation, runtime storage, and reporting
+are realization machinery unless a specific type is deliberately promoted into contract authority, stage-local material,
+stage-local judgment, governance, diagnostics, or publication.
 
-### 2.2. Callback and interceptor flow hide machine authority
+### 2.2. Interceptor flow hides movement
 
-Some earlier pipeline code uses interceptor-style flow control. In that structure, the next legal move depends on
-whether an interceptor calls `proceed`. That makes the transition implicit. The machine still moves, but the rule for
-movement is hidden inside callback behavior instead of being declared as machine law.
+Some older execution code uses interceptor-style flow. In that model, the next move depends on whether an interceptor
+calls `proceed`. The transition is real, but the rule for the transition is hidden inside callback behavior.
 
-That does not match `What Contract Is`. A good machine has to expose the conditions under which it may move. Legal
-movement should not be buried in callback chains, recursive interceptor delegation, method-local orchestration tricks,
-or framework-style continuation calls.
+That conflicts with the explicit machine direction. Legal movement must be declared as state, transition, stage law,
+judgment, failure, diagnostic evidence, and publication decision. It must not be hidden in recursive chain delegation or
+callback continuation.
 
-### 2.3. Deterministic implementation work is not yet aligned under contract vocabulary
+### 2.3. Good deterministic work is not aligned under the right vocabulary
 
-Several implementation areas already move in the correct direction. Examples include frozen metamodel material,
-adapter-neutral raw facts, canonical type references, explicit type shape ratification, planner session primitive
-structures, L2 lifecycle laws, runtime policy epochs, dispatch lane lifecycle states, and bounded diagnostic/reporting
-paths.
+The implementation already contains useful deterministic mechanisms:
 
-So the problem is not that the implementation has to be thrown away. The problem is that good deterministic
-implementation is still sitting under package names that do not explain its role in the contract machine.
+- adapter order is not trusted as semantic order;
+- backend handles are erased before frozen planning material;
+- canonical material is separated from physical representation;
+- transitional hash values are not persistent identity;
+- frozen material is published only after validation;
+- lifecycle states are explicit in several runtime subsystems;
+- planning structures avoid semantic dependence on cache behavior;
+- runtime policy is resolved before expensive work begins;
+- failure, continuation, quarantine, and diagnostics are governed.
 
-The codebase must separate:
+Those parts should be preserved. The refactor is not a rewrite of the deterministic core. It is a package-authority
+refactor: the existing work must be placed under names that explain whether it is contract authority, stage-local
+material, judgment, governance, realization, or adapter code.
 
-```text
-contract authority
-machine law
-stage-local contract domains
-stage-local material law
-stage-local judgment law
-governance law
-diagnostic evidence
-publication claim
-realization machinery
-outside adapters
-```
+### 2.4. Stage-local roles can collapse into global buckets
 
-### 2.4. Stage-local contract roles are at risk of being collapsed into global buckets
+A pipeline stage is a contract point. A substantial stage may own its own contract declarations, boundary material,
+accepted material, rejected material, judgment result, failure vocabulary, diagnostic evidence, publication condition,
+and movement law.
 
-A pipeline stage is not just a function call or a folder. A substantial stage may have its own contract declarations,
-boundary material, admitted material, rejected material, judgment result, failure vocabulary, diagnostic evidence, and
-publication eligibility.
+If the top-level package tree uses only global role packages such as `material`, `judgment`, `diagnostics`, and
+`publication`, stage ownership becomes unclear. Admission judgment, lowering judgment, invariant judgment, state
+judgment, transition judgment, and publication judgment are not interchangeable just because each is a judgment.
 
-If packages are organized only by role at the root, then all stages eventually share the same global buckets:
+The package structure must be stage-first for pipeline-specific material.
 
-```text
-boundary
-material
-judgment
-diagnostics
-publication
-```
+### 2.5. File movement and semantic replacement are separate changes
 
-That looks tidy, but it hides which stage owns which obligation.
+Package relocation will touch many files. Interceptor removal will change behavior. Those changes must be separated.
 
-Admission judgment, lowering judgment, invariant judgment, state judgment, transition judgment, and publication judgment
-are not the same thing just because they are all judgments. Each exists at a different machine point and protects a
-different transition.
+The first pass is movement-only: package declarations, imports, directory paths, build configuration, and architecture
+tests. Incompatible structures are marked for later replacement, not normalized into the new package law.
 
-Therefore, the package architecture must be stage-first for pipeline-specific material.
+## 3. Decision Drivers
 
-### 2.5. Package movement and semantic replacement are being conflated
+The package decision is evaluated by these criteria:
 
-The architecture must change substantially, but package relocation and semantic replacement are different operations.
-Moving files affects package declarations, imports, directory structure, visibility, dependency rules, build
-configuration, and architecture tests. Replacing interceptor flow changes execution semantics.
+- contract authority remains visible;
+- each stage can hide internal implementation;
+- deterministic laws remain easy to locate and test;
+- the first refactor can preserve behavior;
+- the design does not add speculative future layers;
+- Kotlin/JVM visibility limits are acknowledged;
+- the current single pipeline can later grow into multiple pipeline modules without another conceptual rewrite.
 
-Those two changes must not be mixed in the first pass. The first pass should make the architectural boundary visible
-without changing behavior. Incompatible flow structures should be identified as removal/replacement work, not renamed
-into the new architecture as if they were accepted design elements.
+## 4. Alternatives
 
-## 3. Decision Process
+### 4.1. One Gradle module per stage now
 
-The package decision is not only a naming decision. It is also a boundary decision.
-
-The question was whether stage boundaries should be enforced as physical build modules, as packages inside the current
-core module, or as global role packages shared by every stage.
-
-The decision was evaluated against these criteria:
-
-- whether contract authority stays visible;
-- whether each stage can hide its internal implementation;
-- whether deterministic laws remain easy to test;
-- whether the first refactor can preserve behavior;
-- whether the structure avoids speculative future layers;
-- whether Kotlin/JVM limitations are acknowledged instead of hidden;
-- whether the project can later grow into multiple pipeline modules without another conceptual rewrite.
-
-### 3.1. Alternative A: one module per stage now
-
-This would make each stage a Gradle module.
-
-Example shape:
+This would create modules such as:
 
 ```text
 kontrakt-stage-admission
@@ -203,42 +150,30 @@ kontrakt-stage-lowering
 kontrakt-stage-publication
 ```
 
-The advantage is strong physical isolation.
+Advantages:
 
-A module can expose only its intended API. Kotlin `internal` visibility becomes module-scoped. Gradle `api` and
-`implementation` dependencies can prevent some illegal access at compile time. This would make it harder for one stage
-to reach another stage's internal helpers by accident.
+- strong physical isolation;
+- module-scoped Kotlin `internal`;
+- Gradle `api` / `implementation` boundaries;
+- fewer accidental imports from another stage's internals.
 
-That is attractive, but it is too early for the current refactor.
+Disadvantages:
 
-The current codebase has one primary pipeline, and the stage vocabulary is still being aligned with `What Contract Is`.
-Turning every stage into a module now would freeze a physical build boundary before the conceptual boundary is stable
-enough. It would also mix a package-authority refactor with Gradle graph design, API surface design, dependency
-publication, source-set movement, and build-performance concerns.
+- too much module churn during an already large refactor;
+- stage vocabulary is not stable enough to freeze as build modules;
+- Gradle graph design would be mixed with package-authority work;
+- API surfaces would be forced before explicit machine replacement;
+- circular dependency pressure may appear before material boundaries are clean.
 
-The expected costs are high:
+Runtime performance is not the main objection. The issue is timing. Module boundaries are harder to move than package
+boundaries.
 
-- too many modules too early;
-- more Gradle configuration during an already large refactor;
-- more API/implementation churn while names are still moving;
-- premature module dependency edges;
-- possible circular dependency pressure before material boundaries are fully extracted;
-- harder review because package movement and build-boundary design would be mixed;
-- more friction when files still need to move again after explicit machine replacement.
+Decision: rejected for the first pass. A stage may be promoted to a module later if the boundary becomes stable and the
+isolation benefit justifies the build cost.
 
-Runtime efficiency is not the main objection. A module boundary does not automatically make runtime execution slower.
-The issue is architectural timing: module boundaries are harder to move than package boundaries, and this ADR is still
-establishing the vocabulary and stage ownership law.
+### 4.2. Role-first packages
 
-Decision: rejected for the first pass.
-
-Stage modules may be introduced later when a pipeline boundary is stable enough to deserve a physical build boundary.
-
-### 3.2. Alternative B: role-first packages
-
-This would make roles the first package split.
-
-Example shape:
+This would organize by role first:
 
 ```text
 material.admission
@@ -249,242 +184,89 @@ judgment.lowering
 judgment.publication
 ```
 
-The advantage is that shared role vocabulary is easy to see. All material types live under `material`, all judgment
-types live under `judgment`, and so on.
+Advantages:
 
-The problem is that a pipeline stage stops being visible as a coherent contract domain.
+- role vocabulary is easy to find;
+- cross-stage concepts are easy to group.
 
-Admission material, admission judgment, admission diagnostics, and admission failure vocabulary belong together because
-they protect one machine point. Splitting them across global role packages makes the reader reconstruct the stage
-mentally. It also makes global buckets grow over time.
+Disadvantages:
 
-Decision: rejected.
+- one stage is scattered across many package areas;
+- stage ownership becomes a mental reconstruction task;
+- global role packages tend to become dumping grounds;
+- the same word, such as `judgment`, hides different machine points.
 
-Role names should repeat under stage packages. The repetition is intentional because each stage owns its own local
-contract world.
+Decision: rejected. For pipeline-specific material, the stage is the stronger boundary.
 
-### 3.3. Alternative C: pipeline-name package layer now
+### 4.3. Pipeline-name package layer now
 
-This would introduce a pipeline layer even though the current core has one primary pipeline.
-
-Example shape:
+This would introduce a pipeline layer immediately:
 
 ```text
 io.kontrakt.pipeline.core.stage.admission.contract
 io.kontrakt.pipeline.core.stage.lowering.material
 ```
 
-The advantage is future readability if Kontrakt later contains several independent pipeline families.
+Advantages:
 
-The problem is that this is speculative. The current project does not yet need multiple pipeline modules. Adding a
-pipeline-name layer now would make every package longer while pretending that a future boundary already exists.
+- future multi-pipeline shape is visible;
+- package names reserve a place for pipeline families.
 
-Decision: rejected for the current codebase.
+Disadvantages:
 
-If multiple independent pipeline families appear later, the pipeline boundary should be introduced as a module boundary
-first. Inside that module, the same stage-first package law applies.
+- the current core has one primary pipeline;
+- the layer is speculative;
+- every package gets longer without adding current isolation;
+- it simulates a future boundary instead of waiting for a real one.
 
-### 3.4. Alternative D: package-first stage separation inside the current core module
+Decision: rejected for the current codebase. If independent pipeline families appear later, the pipeline boundary should
+be introduced as a module boundary first. Inside that module, the same stage-first rule applies.
 
-This is the accepted first-pass strategy.
+### 4.4. Package-first stage separation inside the current core module
 
-The current core remains one module for now. Stages are separated by package structure:
+This keeps the current core as one module and organizes the package tree as:
 
 ```text
 io.kontrakt.stage.<stage-name>.<role>
 ```
 
-A stage may expose only narrow public surfaces:
+Advantages:
+
+- stage ownership is explicit;
+- the first pass can preserve behavior;
+- package movement can be reviewed without Gradle module redesign;
+- architecture tests can enforce forbidden dependencies;
+- the design can later promote stable pipeline boundaries into modules.
+
+Disadvantages:
+
+- Kotlin/JVM packages are not hard access-control boundaries;
+- `internal` is module-scoped, not package-scoped;
+- architecture tests become part of the boundary enforcement;
+- role package names repeat under stages.
+
+Decision: accepted.
+
+## 5. Decision
+
+Kontrakt adopts a stage-first package architecture that preserves contract authority at the stage boundary.
+
+The current top-level vocabulary is:
 
 ```text
-stage.<stage>.contract
-stage.<stage>.boundary
-stage.<stage>.material
-stage.<stage>.judgment
-stage.<stage>.diagnostics
-stage.<stage>.publication
-stage.<stage>.machine
-```
-
-Its implementation helpers must stay out of that public surface and must not become dependency targets for other stages.
-
-The advantage is that this preserves the conceptual boundary without prematurely committing to build modules. It keeps
-the first refactor reviewable: package names, imports, architecture tests, and dependency direction can be changed
-without redesigning the Gradle graph at the same time.
-
-The weakness is that Kotlin/JVM packages are not a perfect access-control boundary. Kotlin has module-scoped `internal`,
-not package-private visibility. Therefore, package structure alone cannot prevent every illegal dependency.
-
-The accepted mitigation is architecture testing.
-
-Architecture tests must reject imports from another stage's internal implementation area and must reject forbidden
-dependency directions. A package boundary is therefore treated as a declared architectural boundary enforced by tests,
-not as a hard JVM security boundary.
-
-Decision: accepted for this ADR.
-
-### 3.5. Future promotion rule
-
-A stage may later be promoted into a separate module only when the boundary is stable enough to justify that cost.
-
-The trigger is not aesthetic package cleanliness. The trigger is one of these conditions:
-
-- multiple independent pipeline families exist;
-- one pipeline needs to be built, tested, or released independently;
-- a stage's public surface is stable enough to expose as a module API;
-- module-level `internal` visibility is needed to prevent repeated boundary violations;
-- build or dependency analysis shows that physical separation is worth the additional Gradle complexity.
-
-Until then, the rule is:
-
-```text
-single pipeline:
-    package-first stage separation
-    architecture tests enforce forbidden dependencies
-
-multiple pipelines:
-    module-level pipeline separation
-    stage packages inside each pipeline module
-```
-
-This preserves the current refactor's intent without pretending that today's single-pipeline core already has the shape
-of a future multi-pipeline system.
-
-## 4. Decision
-
-Kontrakt will adopt a contract-first and stage-first package architecture.
-
-The top-level package structure must be organized around Kontrakt's product domain and contract theory, not around
-compiler phases, test framework machinery, reflection surfaces, or runtime implementation techniques.
-
-The top-level architectural vocabulary is:
-
-```text
-contract
 stage
 governance
 realization
 adapter
 ```
 
-`machine` is not listed here as a peer of `stage` in the current package layout. In this ADR, machine law is a role that
-appears inside the stage that owns the movement. A shared machine vocabulary may be introduced only when a concept is
-genuinely pipeline-wide and cannot be owned by one stage.
-
-The central rule is:
+For the current single-pipeline core, pipeline-specific domains live under:
 
 ```text
-contract authority first
-stage-local contract domains second
-realization machinery third
-outside technology behind adapters
+io.kontrakt.stage.<stage-name>.<role>
 ```
 
-The current codebase has one primary pipeline. Therefore, this ADR does not introduce a multi-pipeline package root yet.
-
-For the current system, pipeline stages live under `stage.<stage-name>`. Each substantial stage may then contain its own
-role packages, such as `contract`, `boundary`, `material`, `judgment`, `diagnostics`, `publication`, and, where the
-stage owns legal movement, `machine`.
-
-Future multi-pipeline architecture must not be modeled by dumping several pipelines into the same package tree. If
-Kontrakt later grows multiple independent pipeline families, each pipeline should be separated by a module boundary
-first. Inside that module, the same rule applies: pipeline module -> stages -> stage-local contract packages.
-
-Compiler architecture, planning, execution, metamodel acquisition, identity derivation, graph operations, runtime
-storage,
-and reporting engines are realization machinery unless a specific type is explicitly promoted into shared contract
-vocabulary,
-stage-local material, stage-local judgment, stage-local machine law, governance, diagnostics, or publication authority.
-
-Compiler architecture is retained, but it belongs under `realization.compiler`. Interceptor-style flow is different. It
-is not part of the target architecture, and it should not be described as a package layer to keep. Existing interceptor
-files are only evidence of the old execution model; they must be removed or replaced by an explicit
-machine/state/transition solution after the relocation boundary is clear.
-
-## 5. Authority and Boundaries
-
-ADR-0045 owns:
-
-- contract-first top-level package law;
-- stage-first package law for pipeline-specific domains;
-- single-pipeline package assumption for the current codebase;
-- future multi-pipeline module boundary rule;
-- package authority boundaries;
-- realization boundary law;
-- adapter boundary law;
-- compiler-as-realization placement law;
-- interceptor removal and replacement boundary law;
-- behavior-preserving relocation sequence;
-- dependency direction rules for the new package architecture;
-- and architecture-test requirements for package dependency enforcement.
-
-ADR-0045 does not own:
-
-- final contract fact taxonomy;
-- final public contract syntax;
-- exact compiler frontend implementation;
-- exact IR schema;
-- canonical metadata byte encoding;
-- HID derivation;
-- frozen acquisition state machine internals;
-- L1 planner primitive data structure mechanics;
-- L2 interner storage mechanics;
-- runtime memory envelope vector;
-- report artifact schema;
-- or the explicit execution machine replacement itself.
-
-Ownership split:
-
-| Surface                                    | Owner                                |
-|--------------------------------------------|--------------------------------------|
-| top-level contract meaning                 | `What Contract Is`                   |
-| package authority law                      | ADR-0045                             |
-| stage-first package law                    | ADR-0045                             |
-| future multi-pipeline module boundary      | ADR-0045                             |
-| compiler constitution and low-level rules  | compiler-core protocols              |
-| canonical metadata identity                | ADR-0041 and identity protocol notes |
-| primitive lifecycle and physical substrate | ADR-0042                             |
-| contract graph identity                    | ADR-0043                             |
-| unified memory envelope                    | ADR-0044                             |
-| frozen acquisition lifecycle               | ADR-0040                             |
-| explicit L2 lifecycle                      | ADR-0034 / ADR-0035                  |
-| package relocation execution               | ADR-0045 implementation plan         |
-| interceptor removal/replacement solution   | future explicit machine ADR          |
-
-## 6. Vocabulary
-
-### 6.1. Shared contract authority package
-
-A shared contract authority package contains declared obligation meaning that is not owned by one specific stage.
-
-It must not depend on compiler passes, runtime storage, reflection handles, test framework concepts, or adapter-specific
-objects.
-
-A contract package is intentionally narrow. It may contain contract-facing interfaces, immutable declaration objects,
-stable
-value records, enums, sealed declaration shapes, and small structural types needed to name obligations. It must not
-contain
-algorithms that perform discovery, traversal, lowering, planning, caching, execution, publication, reflection,
-scheduling,
-I/O, or environment inspection.
-
-JVM and Kotlin still require some implementation shape to represent immutable objects. Constructors, property accessors,
-and private structural guards may therefore remain in contract packages as a platform representation limit. They do not
-become contract authority by existing there. They must stay boring: accept already supplied material, store it, and
-protect
-the object from being malformed. Any meaningful computation belongs outside `contract`, usually under `stage`,
-`realization`,
-or `governance`, depending on what the computation does.
-
-### 6.2. Stage package
-
-A stage package contains the contract domain for one point in the current Kontrakt pipeline.
-
-A stage package is not just an implementation folder. It is the place where a specific pipeline point names the
-obligations, material, judgments, failures, evidence, publication conditions, and legal movements that belong to that
-point.
-
-A substantial stage may contain:
+A substantial stage may contain role packages such as:
 
 ```text
 stage.<stage-name>
@@ -497,131 +279,93 @@ stage.<stage-name>
 └── machine
 ```
 
-A stage should include only the roles it actually owns.
+Not every stage needs every role.
 
-`machine` appears here as a stage-local role, not as a package peer of `stage`. This matters because the legal movement
-of a stage should be read together with that stage's material, judgment, failure, and diagnostic vocabulary. It must not
-be pulled upward into a global bucket unless the concept is deliberately shared across the whole pipeline.
+`machine` is not a top-level peer of `stage`. In this ADR, machine law is a stage-local role. Pipeline-wide machine
+vocabulary is not introduced by this ADR; it would require a later decision and a specific reason.
 
-If a type is shared across stages, it must be promoted deliberately into a shared package with a clear reason. Shared
-placement must not be used just to avoid repeated package names.
-
-### 6.3. Stage-local contract package
-
-A stage-local contract package contains the obligations that apply to one specific stage.
-
-It follows the same narrow rule as the shared `contract` package: interfaces, immutable declaration structures, enums,
-sealed declaration shapes, stable value records, and small structural types are allowed. Algorithms are not allowed.
-
-### 6.4. Stage-local boundary package
-
-A stage-local boundary package contains the boundary surface for that stage.
-
-For an early input or admission stage, this may include DTO and external-material admission surfaces. For later stages,
-it may include the accepted input material that the stage is allowed to consume.
-
-### 6.5. Stage-local material package
-
-A stage-local material package contains material owned by that stage.
-
-Examples include raw, admitted, normalized, canonical, lowered, frozen, rejected, failed, or publication-eligible
-material, depending on the stage.
-
-### 6.6. Stage-local judgment package
-
-A stage-local judgment package contains the decisions made at that stage under declared contract law.
-
-Admission judgment, lowering judgment, invariant judgment, state judgment, transition judgment, and publication judgment
-should remain stage-local unless a shared judgment vocabulary is intentionally promoted.
-
-### 6.7. Stage-local machine package
-
-A stage-local machine package contains the explicit movement law owned by that stage.
-
-It may define the states, transition names, stage legality, terminal conditions, and legal movement rules that belong to
-that particular stage.
-
-Stage-local machine law is not callback flow. It is also not a global package layer that sits beside `stage`. If the
-reader sees `machine` before the stage that owns it, the structure is already pointing in the wrong direction.
-
-### 6.8. Governance package
-
-A governance package contains policy, budget, capacity, capability, epoch, and resource admission law.
-
-Governance is not arbitrary configuration.
-
-Governance is resolved machine law.
-
-### 6.9. Stage-local diagnostics package
-
-A stage-local diagnostics package contains bounded evidence, trace, retention, redaction, and diagnostic summary
-material for that stage.
-
-Diagnostic material explains judgment.
-
-It is not contract authority by itself.
-
-### 6.10. Stage-local publication package
-
-A stage-local publication package contains public claim, denial, exposure, report, and artifact material produced by
-that stage when that stage owns publication responsibility.
-
-Publication is a judgment-controlled exposure surface.
-
-It is not a raw dump of internal implementation state.
-
-### 6.11. Realization package
-
-A realization package contains machinery used to realize contract authority.
-
-Compiler passes, metamodel acquisition, planning, runtime storage, graph algorithms, identity derivation, execution
-engines,
-and reporting engines belong here unless a later ADR promotes a specific piece into one of the authority packages or a
-stage-local domain package.
-
-### 6.12. Adapter package
-
-An adapter package contains outside-world bindings.
-
-Reflection, KSP, ClassGraph, JUnit, Mockito, file systems, JSON libraries, console output, and platform APIs belong here
-unless they are erased before reaching Kontrakt-owned material.
-
-## 7. Package Authority Law
-
-The package tree MUST obey this law:
+The current rule is:
 
 ```text
-contract authority must not depend on realization architecture.
-stage-local contract domains must not depend on realization architecture.
-realization architecture may depend on contract authority and stage-local domains.
-adapters may feed realization machinery.
-adapters must not become contract authority.
+stage-local contract authority first
+realization machinery second
+outside technology behind adapters
 ```
 
-This implies:
+Compiler-related implementation is treated as realization, but this ADR does not create a compiler package tree.
+Existing compiler-domain code should keep its current domain vocabulary inside the appropriate realization area.
+Planning, execution, runtime, metamodel, identity, graph, and reporting belong under `realization` unless a specific
+type is deliberately promoted into contract authority, a stage-local domain, governance, diagnostics, or publication.
 
-- `contract` must not depend on `realization`;
-- `contract` must not depend on `adapter`;
-- `contract` must not contain realization algorithms;
-- `contract` may contain interfaces and immutable declaration structures only in the limited sense described in Section
-  6.1;
-- `stage.<stage>.contract` must not contain realization algorithms;
-- `stage.<stage>.material` must not depend on backend handles after material is accepted as Kontrakt-owned material;
-- `stage.<stage>.judgment` must not depend on framework callbacks;
-- `stage.<stage>.machine` must not depend on `adapter`;
-- `governance` must not depend on environment inspection inside core law;
-- `stage.<stage>.diagnostics` must not smuggle implementation authority into public claims;
-- `stage.<stage>.publication` must not publish raw internal state as a claim;
-- `realization` may depend inward;
-- `adapter` may depend inward and outward as needed to isolate outside technology.
+Interceptor-style flow is outside the target architecture. Existing interceptor files are evidence of the old execution
+model and are removal/replacement targets. The first movement pass may keep temporary compatibility only where required
+to compile.
 
-## 8. Stage-First Package Law
+## 6. Authority and Boundaries
 
-The package architecture MUST NOT collapse all stage-specific contract roles into one global role bucket.
+ADR-0045 owns:
 
-Many stages repeat the same role names. That repetition is intentional.
+- contract-first authority law;
+- stage-first package law;
+- current single-pipeline package assumption;
+- future multi-pipeline module boundary rule;
+- realization boundary law;
+- adapter boundary law;
+- compiler-related realization boundary;
+- interceptor removal boundary;
+- behavior-preserving relocation sequence;
+- dependency direction rules;
+- architecture-test requirements.
 
-A stage may have its own:
+ADR-0045 does not own:
+
+- final public contract syntax;
+- final IR schema;
+- canonical metadata byte encoding;
+- HID derivation;
+- frozen acquisition internals;
+- L1 planner primitive mechanics;
+- L2 interner storage mechanics;
+- runtime memory envelope vector;
+- report artifact schema;
+- explicit execution machine replacement.
+
+Ownership split:
+
+| Surface                                    | Owner                                |
+|--------------------------------------------|--------------------------------------|
+| contract meaning                           | `What Contract Is`                   |
+| package authority law                      | ADR-0045                             |
+| stage-first package law                    | ADR-0045                             |
+| future multi-pipeline module boundary      | ADR-0045                             |
+| compiler low-level rules                   | compiler-core protocols              |
+| canonical metadata identity                | ADR-0041 and identity protocol notes |
+| primitive lifecycle and physical substrate | ADR-0042                             |
+| contract graph identity                    | ADR-0043                             |
+| unified memory envelope                    | ADR-0044                             |
+| frozen acquisition lifecycle               | ADR-0040                             |
+| explicit L2 lifecycle                      | ADR-0034 / ADR-0035                  |
+| package relocation execution               | ADR-0045 implementation plan         |
+| interceptor replacement                    | future explicit machine ADR          |
+
+## 7. Vocabulary
+
+### 7.1. `stage` package
+
+A top-level `contract` package is not part of the current target architecture.
+
+The reason is boundary clarity. In the current single-pipeline design, contract obligations are owned by stages. A
+top-level `contract` package would easily become a common bucket for declarations that actually belong under
+`stage.<stage>.contract`. This ADR therefore keeps contract packages stage-local by default.
+
+A later ADR may introduce a project-wide contract package only if there is a concrete non-stage concept that cannot
+honestly belong to any stage. This ADR does not define such a package.
+
+### 7.2. `stage`
+
+A `stage` package contains the local contract world for one point in the pipeline.
+
+A stage may own:
 
 ```text
 contract declarations
@@ -636,7 +380,105 @@ publication eligibility
 machine transition law
 ```
 
-These roles must remain stage-local unless a type is deliberately promoted into shared vocabulary.
+These roles remain local by default. Moving a concept out of a stage requires a separate reason; convenience is not
+enough.
+
+### 7.3. `stage.<stage>.contract`
+
+A stage-local contract package contains obligations for one specific stage.
+
+It is intentionally narrow: interfaces, immutable declarations, enums, sealed shapes, stable value records, and small
+structural types are allowed. Algorithms are not.
+
+### 7.4. `stage.<stage>.boundary`
+
+A stage-local boundary package contains the surface through which outside material enters that stage.
+
+For early stages, this may include DTO or external input surfaces. For later stages, this is still a boundary: upstream
+output is not trusted as already-accepted material.
+
+### 7.5. `stage.<stage>.material`
+
+A stage-local material package contains material owned by that stage.
+
+Examples include raw, admitted, normalized, canonical, lowered, frozen, rejected, failed, or publication-eligible
+material, depending on the stage.
+
+### 7.6. `stage.<stage>.judgment`
+
+A stage-local judgment package contains decisions made by that stage under declared law.
+
+Admission judgment, lowering judgment, invariant judgment, state judgment, transition judgment, and publication judgment
+should remain separate unless a later decision defines a specific top-level package placement for a cross-stage concept.
+
+### 7.7. `stage.<stage>.diagnostics`
+
+A stage-local diagnostics package contains bounded evidence, trace, retention, redaction, and diagnostic summary
+material for that stage.
+
+Diagnostics explain judgment. They are not authority by themselves.
+
+### 7.8. `stage.<stage>.publication`
+
+A stage-local publication package contains public claim, denial, exposure, report, artifact, or stage-output
+presentation material owned by that stage.
+
+Publication is controlled exposure. It is not a dump of internal state.
+
+### 7.9. `stage.<stage>.machine`
+
+A stage-local machine package contains movement law owned by that stage.
+
+It may define states, transition names, stage legality, terminal conditions, and legal movement rules for that stage.
+
+It is not callback flow and it is not a top-level package layer.
+
+### 7.10. `governance`
+
+A governance package contains policy, budget, capacity, capability, epoch, and resource admission law.
+
+Governance is resolved law, not arbitrary configuration.
+
+### 7.11. `realization`
+
+A realization package contains machinery used to realize contract authority.
+
+Metamodel acquisition, identity derivation, graph operations, planning, execution, runtime storage, reporting engines,
+and other compiler-style implementation work belong here unless a later decision promotes a specific piece into an
+authority package or a stage-local domain.
+
+### 7.12. `adapter`
+
+An adapter package contains outside-world bindings.
+
+Reflection, KSP, ClassGraph, JUnit, Mockito, file systems, JSON libraries, console output, and platform APIs belong here
+unless their information has been erased and lowered into Kontrakt-owned material.
+
+## 8. Package Authority Law
+
+The package tree must obey these rules:
+
+```text
+stage-local contract domains must not depend on realization architecture.
+realization may depend on stage-local domains and governance.
+adapters may feed realization machinery.
+adapters must not become contract authority.
+```
+
+Consequences:
+
+- `stage.<stage>.contract` must not depend on `realization` or `adapter`;
+- `stage.<stage>.contract` must not contain realization algorithms;
+- accepted stage material must not depend on backend handles;
+- stage judgment must not depend on framework callbacks;
+- stage-local machine law must not depend on adapters;
+- governance law must not inspect the environment directly;
+- diagnostics must not smuggle implementation authority into public claims;
+- publication must not expose raw internal state as a claim.
+
+## 9. Stage-First Package Law
+
+Pipeline-specific material is stage-first.
 
 The default shape for a substantial stage is:
 
@@ -651,30 +493,31 @@ stage.<stage-name>
 └── machine
 ```
 
-Not every stage must contain every role package. A stage should only contain what it owns.
+A stage includes only the roles it owns.
 
-The package tree should repeat role names under stage packages rather than force unrelated stages into shared global
-buckets.
+Role names may repeat under different stages. The repetition is intentional because each stage owns different
+obligations, material, judgments, failures, evidence, and movement law.
 
-## 9. Current Single-Pipeline Law and Future Multi-Pipeline Rule
+A cross-stage type must not be created just to avoid repeated package names. If a concept cannot belong to one stage, it
+needs an explicit later decision that explains the new package boundary. The expected default is no promotion.
 
-The current Kontrakt core is treated as one primary pipeline for this ADR.
+## 10. Current Single-Pipeline Law and Future Multi-Pipeline Rule
 
-Therefore, the current target structure is:
+The current Kontrakt core is treated as one primary pipeline.
+
+Current shape:
 
 ```text
 io.kontrakt.stage.<stage-name>.<role>
 ```
 
-not:
+Do not introduce this shape yet:
 
 ```text
 io.kontrakt.pipeline.<pipeline-name>.stage.<stage-name>.<role>
 ```
 
-A future multi-pipeline architecture must be introduced through module boundaries first.
-
-The future shape should be:
+If independent pipeline families appear later, the pipeline boundary should be a module boundary first:
 
 ```text
 <new pipeline module>
@@ -689,22 +532,42 @@ The future shape should be:
         └── machine
 ```
 
-This ADR does not design those future modules.
+This ADR reserves that direction but does not design those future modules.
 
-It only reserves the rule: if multiple independent pipeline families exist later, separate the pipeline first by module,
-then define stages inside that module, then define stage-local contract packages inside each stage.
+## 11. Stage Boundary and Acquisition Law
 
-Do not simulate multi-pipeline architecture today by adding a pipeline-name layer that the current system does not need.
+Stages do not transfer trusted material by direct package dependency.
 
-## 10. Stage Boundary Enforcement Law
+A stage may finish with accepted output material inside its own contract world. If that result is exposed to another
+stage, it becomes an output presentation at the first stage's publication boundary.
 
-Stages must not know each other's internal implementation.
+For the receiving stage, that presentation is external material. It is not already-accepted receiving-stage material.
 
-A stage may depend on another stage only through that stage's published contract-facing surface. That surface may
-include declared contract types, accepted material types, judgment result types, diagnostic evidence types,
-publication-facing types, and stage-local machine law when that law is intentionally public.
+Legal movement:
 
-Allowed dependency shape:
+```text
+stage.A accepted output
+    -> stage.A publication boundary
+    -> external output presentation
+    -> stage.B boundary
+    -> stage.B guard / admission
+    -> stage.B lowering
+    -> stage.B judgment
+    -> stage.B-owned material
+       or stage.B-declared rejection / failure / deferral
+```
+
+Stage A's material identity, judgment status, and local machine state do not carry into Stage B. Stage B may record
+provenance or diagnostic reference, but provenance is not acceptance.
+
+Forbidden shortcut:
+
+```text
+stage.A output presentation
+    -> stage.B.material
+```
+
+Forbidden dependency shape:
 
 ```text
 stage.A
@@ -714,43 +577,27 @@ stage.A
     -> stage.B.diagnostics
     -> stage.B.publication
     -> stage.B.machine
-```
-
-Forbidden dependency shape:
-
-```text
-stage.A
     -> stage.B.internal
     -> stage.B.helper
     -> stage.B.realization
     -> stage.B.adapter
-    -> stage.B.implementation detail
 ```
 
-This ADR does not require one Gradle module per stage. The current boundary is package-first, enforced by architecture
-tests.
+If several stages appear to need the same concept, first check whether they are using the same word for different
+stage-local meanings. The expected default is to keep the concept stage-local. If a genuinely non-stage concept appears,
+its package boundary requires a separate ADR. That decision still does not allow a stage to skip another stage's guard,
+lowering, or judgment.
 
-If a stage needs implementation helpers, they must be placed so that architecture tests can identify them as non-public
-stage implementation. The exact folder name may be `internal`, `support`, or another project-standard name, but the rule
-is fixed: other stages must not depend on it.
+This ADR does not require one Gradle module per stage. The current boundary is package-first and must be enforced by
+architecture tests.
 
-Kotlin/JVM package structure alone cannot fully enforce this boundary. Therefore, architecture tests are part of the
-architecture, not optional test decoration.
+## 12. Target Package Shape
 
-## 11. Target Package Shape
-
-The target package shape for the current single-pipeline core is:
+Current single-pipeline target:
 
 ```text
 io.kontrakt
 
-├── contract
-│   ├── presentation
-│   ├── obligation
-│   ├── clause
-│   ├── operation
-│   └── version
-│
 ├── stage
 │   ├── input
 │   │   ├── contract
@@ -827,17 +674,6 @@ io.kontrakt
 │   └── epoch
 │
 ├── realization
-│   ├── compiler
-│   │   ├── frontend
-│   │   ├── syntax
-│   │   ├── semantic
-│   │   ├── ir
-│   │   ├── pass
-│   │   ├── analysis
-│   │   ├── checking
-│   │   ├── generation
-│   │   └── emission
-│   │
 │   ├── metamodel
 │   ├── identity
 │   ├── graph
@@ -857,46 +693,30 @@ io.kontrakt
     └── console
 ```
 
-The exact JVM group prefix may be adjusted by module policy.
+The JVM group prefix may change by module policy. The architectural vocabulary must not.
 
-The architectural vocabulary is not optional.
+## 13. Compiler-Related Realization Law
 
-## 12. Compiler Boundary Law
+Compiler architecture is an implementation method, not a package taxonomy chosen by this ADR.
 
-Compiler architecture is accepted only as realization machinery.
+This ADR does not create `realization.compiler` or prescribe compiler-layer packages. Compiler-related code should keep
+the existing Kontrakt domain vocabulary and be placed in the realization area that owns the work, such as metamodel
+acquisition, identity, graph, planning, execution, runtime, or reporting.
 
-The following package shape is allowed under `realization.compiler`:
+Do not introduce generic compiler packages such as `frontend`, `syntax`, `semantic`, `pass`, `analysis`, `generation`,
+or `emission` merely because conventional compiler architecture uses those names.
 
-```text
-realization.compiler
-├── frontend
-├── syntax
-├── semantic
-├── ir
-├── pass
-├── analysis
-├── checking
-├── generation
-└── emission
-```
+The allowed first-pass movement is limited to placing compiler-related implementation behind the realization boundary
+while preserving the existing domain structure.
 
-The compiler may:
+Compiler-style work may acquire presentations, lower material, run checks, prepare generated machinery, and emit
+artifacts. Those activities remain realization. They do not create contract authority.
 
-- read syntax;
-- interpret declared contract presentations;
-- lower syntax into internal material;
-- run static checks;
-- generate enforcement machinery;
-- emit generated artifacts;
-- compare generated projection behavior with reference judgment behavior.
+## 14. Interceptor Removal Boundary Law
 
-The compiler must not create contract authority; it only realizes declared contract authority.
+Interceptor-style flow is not part of the target architecture.
 
-## 13. Interceptor Removal Boundary Law
-
-Interceptor-style flow is not accepted as a machine model and is not part of the target package architecture.
-
-The following are incompatible with the target architecture:
+Incompatible forms include:
 
 ```text
 ScenarioInterceptor
@@ -907,19 +727,12 @@ callback-driven proceed flow
 recursive interceptor chain delegation
 ```
 
-This ADR does not define the replacement implementation. It only marks these files and patterns as removal/replacement
-targets. They should not be given a normal target package, because that would make the old callback model look like an
-accepted layer of the new architecture.
+This ADR does not define the replacement. It only marks these forms as removal/replacement targets.
 
-If a temporary compatibility bridge is absolutely required to keep the project compiling during the relocation work, it
-must be treated as a short-lived migration artifact, not as part of the target package tree. It must not be depended on
-by `contract`, `stage`, `stage.<stage>.machine`, or `governance` packages.
+If a temporary compatibility bridge is required during relocation, it must remain visibly temporary and outside the
+target package law. It must not be depended on by `contract`, `stage`, stage-local `machine`, or `governance`.
 
-The issue is not that interceptors are always invalid in ordinary software. The issue is narrower: Kontrakt's machine
-law requires explicit movement. A `proceed` call is not a transition manifest, a recursive chain is not an explicit
-machine, and a callback is not state authority.
-
-The replacement direction is:
+The replacement direction is explicit machine flow:
 
 ```text
 explicit machine manifest
@@ -933,11 +746,11 @@ explicit machine manifest
 
 The exact replacement belongs to a later ADR.
 
-## 14. Behavior-Preserving Relocation Law
+## 15. Behavior-Preserving Relocation Law
 
-The first implementation pass MUST be movement-only.
+The first implementation pass is movement-only.
 
-Allowed changes:
+Allowed:
 
 - directory movement;
 - package declaration updates;
@@ -945,9 +758,9 @@ Allowed changes:
 - build configuration updates required by package movement;
 - temporary compatibility aliases when required;
 - architecture test scaffolding;
-- temporary migration markers for files that are already marked for removal or replacement.
+- temporary migration markers for files marked for removal or replacement.
 
-Forbidden changes in the first pass:
+Forbidden in the first pass:
 
 - deleting interceptor files as part of the movement-only pass;
 - changing execution semantics;
@@ -960,24 +773,20 @@ Forbidden changes in the first pass:
 - changing report output semantics;
 - mixing algorithmic changes with package relocation.
 
-Reason:
+Rule:
 
 ```text
 Move first.
 Then replace.
 ```
 
-A package-authority refactor touches too many files to be safely mixed with semantic changes.
-
-## 15. Initial Relocation Guide
+## 16. Initial Relocation Guide
 
 This guide is non-exhaustive.
 
-It exists to make the first movement pass reviewable.
+### 16.1. Discovery
 
-### 15.1. Discovery
-
-Current area:
+Current:
 
 ```text
 discovery.api
@@ -985,35 +794,32 @@ discovery.adapter
 discovery.domain
 ```
 
-Target direction:
+Target:
 
 ```text
-contract.presentation
 stage.input.contract
 stage.input.boundary
 stage.admission.contract
 stage.admission.material
 stage.admission.judgment
 stage.admission.diagnostics
-realization.compiler.frontend
 adapter.classgraph
 adapter.jvm
 ```
 
-Discovery that reads classpath, annotations, or outside runtime surfaces belongs to adapters or compiler frontend.
+Classpath, annotation, or runtime-surface reading belongs to adapters or the existing realization domain that owns that
+work. Results that become contract presentation material belong under the stage that owns their admission and lowering
+path. This ADR does not create a top-level contract package for such material.
 
-Discovery results that become software-visible contract presentation material must move toward shared contract or
-stage-local packages according to authority.
+### 16.2. Linking
 
-### 15.2. Linking
-
-Current area:
+Current:
 
 ```text
 linking
 ```
 
-Target direction:
+Target:
 
 ```text
 realization.graph
@@ -1023,12 +829,12 @@ stage.lowering.judgment
 stage.admission.judgment
 ```
 
-Binding and linking are realization mechanics unless the linked object becomes ratified material or a stage-local
-judgment concept.
+Binding and linking are realization mechanics unless the linked result becomes ratified material or stage-local
+judgment.
 
-### 15.3. Metamodel and frozen material
+### 16.3. Metamodel and frozen material
 
-Current area:
+Current:
 
 ```text
 metamodel.domain
@@ -1036,7 +842,7 @@ metamodel.adapter.reflection
 metamodel.domain.frozen
 ```
 
-Target direction:
+Target:
 
 ```text
 stage.input.material
@@ -1048,15 +854,12 @@ realization.metamodel
 adapter.reflection
 ```
 
-Reflection-specific material must stay outside authority.
+Reflection-specific material stays outside authority. Adapter-neutral frozen material may move under the stage that owns
+its ratified meaning. Acquisition mechanics may remain under `realization.metamodel`.
 
-Adapter-neutral frozen material may move under the stage that owns its ratified meaning.
+### 16.4. Planning
 
-Acquisition mechanics may remain under `realization.metamodel`.
-
-### 15.4. Planning
-
-Current area:
+Current:
 
 ```text
 planning.domain.expansion
@@ -1066,7 +869,7 @@ planning.domain.runtime
 planning.infrastructure.runtime
 ```
 
-Target direction:
+Target:
 
 ```text
 realization.planning
@@ -1079,17 +882,13 @@ governance.budget
 governance.capacity
 ```
 
-Planning algorithms are realization machinery.
+Planning algorithms are realization machinery. Ratified canonical or lowered material may live under stage-local
+`material`. Lifecycle law may move under `stage.<stage>.machine` when it expresses legal movement rather than physical
+storage.
 
-Canonical or lowered material produced by planning may live under a stage-local `material` package when it becomes
-ratified material.
+### 16.5. Execution
 
-Lifecycle law may move under `stage.<stage>.machine` when it expresses legal machine movement rather than physical
-storage mechanics.
-
-### 15.5. Execution
-
-Current area:
+Current:
 
 ```text
 execution.domain
@@ -1097,7 +896,7 @@ execution.port
 execution.infrastructure
 ```
 
-Target direction:
+Target:
 
 ```text
 realization.execution
@@ -1110,17 +909,12 @@ stage.publication.exposure
 adapter.junit
 ```
 
-Execution is realization.
-
-Result resolution is stage-local judgment.
-
-Trace and audit evidence are diagnostics.
-
+Execution is realization. Result resolution is stage-local judgment. Trace and audit evidence are diagnostics.
 Externally visible reports and results are publication.
 
-### 15.6. Runtime and policy
+### 16.6. Runtime and policy
 
-Current area:
+Current:
 
 ```text
 planning.domain.runtime
@@ -1129,7 +923,7 @@ runtime policy files
 worker lifecycle files
 ```
 
-Target direction:
+Target:
 
 ```text
 realization.runtime
@@ -1140,15 +934,12 @@ governance.epoch
 stage.transition.machine
 ```
 
-Policy resolution belongs to governance when it defines machine law.
+Policy resolution belongs to governance when it defines law. Worker backing, storage, lanes, and physical lifecycle
+belong to realization runtime unless promoted to stage-local machine law.
 
-Worker backing, storage, lanes, and physical lifecycle belong to realization runtime unless promoted to stage-local
-machine
-law.
+### 16.7. Reporting
 
-### 15.7. Reporting
-
-Current area:
+Current:
 
 ```text
 reporting
@@ -1158,7 +949,7 @@ html reporter
 trace sinks
 ```
 
-Target direction:
+Target:
 
 ```text
 stage.publication.exposure
@@ -1172,18 +963,16 @@ adapter.file
 adapter.json
 ```
 
-A report is not contract authority. It is publication or diagnostic material derived from accepted judgment/evidence.
+A report is publication or diagnostic material derived from accepted judgment/evidence. It is not contract authority.
 
-## 16. Dependency Direction Law
+## 17. Dependency Direction Law
 
-The following dependencies are forbidden:
+Forbidden:
 
 ```text
-contract -> realization
-contract -> adapter
 stage.<stage>.contract -> realization
 stage.<stage>.contract -> adapter
-stage.<stage>.stage.<stage>.machine -> adapter
+stage.<stage>.machine -> adapter
 stage.<stage>.material.accepted -> adapter.reflection
 stage.<stage>.material.accepted -> adapter.ksp
 stage.<stage>.judgment -> adapter
@@ -1191,29 +980,22 @@ governance -> adapter
 stage.publication.exposure core claim -> adapter
 ```
 
-The following dependencies are allowed:
+Allowed, subject to narrower package laws:
 
 ```text
-realization -> contract
-realization -> stage.<stage>.machine
 realization -> stage
 realization -> governance
 adapter -> realization
-adapter -> contract presentation surfaces when required to read external declarations
 adapter -> stage.input.boundary when required to deliver raw external input
 ```
 
-Any allowed dependency must still respect the narrower law of the target package.
+Allowed direction does not mean unrestricted coupling.
 
-Allowed direction does not imply unrestricted coupling.
+## 18. Determinism Law
 
-## 17. Determinism Law
+The refactor must preserve and strengthen determinism.
 
-This refactor must preserve and strengthen determinism.
-
-Package structure must make deterministic authority visible.
-
-The following rules remain binding:
+Rules that remain binding:
 
 - input order is not semantic order unless ratified;
 - backend enumeration order is not semantic order;
@@ -1229,9 +1011,9 @@ The following rules remain binding:
 - budget exhaustion must fail closed;
 - ordering law must be explicit, stable, and testable.
 
-This refactor is not aesthetic. Its purpose is to make deterministic laws difficult to violate accidentally.
+The package structure exists to make these laws harder to violate accidentally.
 
-## 18. Explicit Machine Reservation
+## 19. Explicit Machine Reservation
 
 This ADR reserves a follow-up explicit machine refactoring.
 
@@ -1248,218 +1030,111 @@ DiagnosticEvidence
 PublicationJudgment
 ```
 
-Names may change, but the authority rule may not:
+Names may change. The authority rule may not:
 
 ```text
 legal movement belongs to the explicit machine manifest,
 not to callback behavior.
 ```
 
-## 19. Architecture Tests
+## 20. Architecture Tests
 
 The package refactor must introduce architecture tests.
 
-Required test categories:
+Required categories:
 
 1. **forbidden dependency tests**
 
-   Verify that authority packages do not depend on realization or adapter packages.
+   Authority packages must not depend on realization or adapter packages.
 
 2. **stage-local role tests**
 
-   Verify that pipeline-specific contract, material, judgment, diagnostic, and publication types live under the owning
-   `stage.<stage-name>` package unless deliberately promoted into shared vocabulary.
+   Pipeline-specific contract, material, judgment, diagnostic, publication, and machine types must live under the owning
+   stage. Promotion to a top-level package requires a separate reason and should be rare.
 
-3. **adapter isolation tests**
+3. **inter-stage acquisition tests**
 
-   Verify that reflection, KSP, ClassGraph, JUnit, Mockito, JSON, file, and console implementation details do not leak
-   into contract authority packages or stage-local authority packages.
+   One stage must not import another stage's local role packages as ordinary dependencies. Upstream output is treated as
+   external input by the receiving stage and must pass through the receiving stage's boundary, guard/admission,
+   lowering, and judgment.
 
-4. **contract package content tests**
+4. **adapter isolation tests**
 
-   Verify that shared and stage-local contract packages contain only contract-facing interfaces, immutable declaration
-   objects, stable value records, enums, sealed declaration shapes, and small structural types. They must not contain
-   discovery, traversal, lowering, planning, execution, caching, publication, reflection, scheduling, I/O, or
-   environment-inspection algorithms.
+   Reflection, KSP, ClassGraph, JUnit, Mockito, JSON, file, console, and other platform details must not leak into
+   authority packages.
 
-5. **interceptor dependency isolation tests**
+5. **contract package content tests**
 
-   Verify that target authority packages do not depend on interceptor-style flow. If any temporary migration bridge
-   exists, it must remain outside the target architecture and must have no inbound dependency from contract, stage,
-   stage-local machine, or governance packages.
+   Stage-local contract packages may contain only interfaces, immutable declaration objects, stable value records,
+   enums, sealed declaration shapes, and small structural types. They must not contain discovery, traversal, lowering,
+   planning, execution, caching, publication, reflection, scheduling, I/O, or environment-inspection algorithms.
 
-6. **material purity tests**
+6. **interceptor isolation tests**
 
-   Verify that accepted material packages do not depend on backend handles or adapter-specific types.
+   Target authority packages must not depend on interceptor-style flow. Temporary migration bridges must remain outside
+   the target architecture.
 
-7. **realization inward dependency tests**
+7. **material purity tests**
 
-   Verify that realization depends inward on authority packages rather than authority packages depending outward on
-   realization.
+   Accepted material packages must not depend on backend handles or adapter-specific types.
 
-## 20. Compliance Rules
+8. **realization inward dependency tests**
 
-A change complies with this ADR only if all of the following are true:
+   Realization depends inward on authority packages. Authority packages do not depend outward on realization.
 
-1. New top-level package names use contract-first vocabulary.
-2. Pipeline-specific domains are organized stage-first under `stage.<stage-name>`.
-3. Stage-local role packages are not collapsed into global buckets merely to avoid repeated package names.
-4. Shared `contract` packages contain only narrow authority material: interfaces, immutable declaration structures,
-   stable value records, enums, sealed declaration shapes, and small structural types. They must not contain realization
-   algorithms.
-5. Stage-local `contract` packages follow the same narrow content rule.
-6. Constructor/property machinery inside contract packages is treated as a JVM/Kotlin representation limit, not as
-   contract authority or a place for meaningful computation.
-7. Compiler-specific names remain under `realization.compiler`.
-8. Runtime, planning, graph, metamodel, identity, execution, and reporting machinery remain under `realization` unless
+## 21. Compliance Rules
+
+A change complies with this ADR only if:
+
+1. Top-level packages do not create a global contract bucket.
+2. Pipeline-specific domains are stage-first under `stage.<stage-name>`.
+3. Stage-local role packages are not collapsed into global buckets for convenience.
+4. Inter-stage movement follows publication-to-boundary acquisition. The receiving stage must guard, lower, and judge
+   external input before downstream-owned material may exist.
+5. A stage does not depend on another stage's local contract, material, judgment, diagnostics, publication, machine,
+   helper, realization, or adapter packages as ordinary peer dependencies.
+6. Stage-local `contract` packages contain only narrow declaration vocabulary and no realization algorithms.
+7. Constructor and property machinery inside contract packages is treated as a JVM/Kotlin representation limit, not as
+   contract authority.
+8. Compiler-related implementation stays behind the realization boundary and keeps the existing Kontrakt domain
+   vocabulary unless changed by a later compiler-specific ADR.
+9. Runtime, planning, graph, metamodel, identity, execution, and reporting machinery remain under `realization` unless
    explicitly promoted by a later ADR.
-9. Adapter-specific code remains under `adapter`.
-10. No behavior changes are mixed into the first relocation pass.
-11. Interceptor-style flow is not treated as a target package layer.
-12. Interceptor-style files are marked for removal or replacement by a follow-up explicit-machine decision, not
-    preserved as accepted transitional machinery.
-13. Architecture tests protect the new dependency direction.
-14. Existing deterministic material, identity, planning, runtime, and publication laws remain intact.
-15. Any semantic replacement after relocation receives its own decision boundary.
-16. Future multi-pipeline architecture is introduced by module boundary first, not by adding unnecessary pipeline-name
-    layers to the current single-pipeline core.
-
-## 21. Alternatives Considered
-
-### 21.1. Use compiler architecture as the top-level package structure
-
-Rejected.
-
-A compiler-style root such as:
-
-```text
-frontend
-middleend
-backend
-optimizer
-emitter
-```
-
-would explain implementation mechanics while hiding Kontrakt's product domain.
-
-Kontrakt uses compiler architecture, but that architecture is not contract authority.
-
-### 21.2. Keep the current package structure and only rename individual classes
-
-Rejected.
-
-The problem is not only naming. The current structure still groups responsibilities according to older test-framework,
-discovery, execution, and interceptor-era architecture, so small renames would preserve the same authority error.
-
-### 21.3. Delete incompatible files during package movement
-
-Rejected for this ADR.
-
-Some files are conceptually incompatible with the final direction, especially interceptor-driven flow. This ADR does not
-preserve them as a target structure. It only separates package relocation from the later removal/replacement work so the
-first pass remains reviewable and reversible.
-
-### 21.4. Put all contract-theory vocabulary at the root without a realization boundary
-
-Rejected.
-
-A pure contract-vocabulary root without `realization` would eventually turn authority packages into implementation trash
-bins.
-
-Kontrakt needs both:
-
-```text
-contract authority vocabulary
-realization machinery boundary
-```
-
-That boundary must stay explicit.
-
-### 21.5. Treat pipeline as the top-level package authority
-
-Rejected.
-
-Pipeline is a useful orchestration concept.
-
-Pipeline is not automatically contract authority.
-
-A pipeline stage becomes contract-relevant only when a declared obligation, judgment, material law, or explicit machine
-transition is attached to it.
-
-Pipeline must be represented through stage-local contract domains and explicit machine law, not as a global bucket.
-
-### 21.6. Use role-first packages for pipeline-specific material
-
-Rejected.
-
-A role-first tree such as:
-
-```text
-material.admission
-material.lowering
-material.publication
-judgment.admission
-judgment.lowering
-judgment.publication
-```
-
-makes role vocabulary visible, but it splits one stage across several distant package areas.
-
-For Kontrakt, the more important boundary is the stage. A stage owns the local contract terms, accepted material,
-judgment, failure vocabulary, evidence, and movement law for one machine point.
-
-Therefore, stage-first is preferred:
-
-```text
-stage.admission.contract
-stage.admission.material
-stage.admission.judgment
-stage.admission.diagnostics
-```
-
-### 21.7. Introduce pipeline-name packages now
-
-Rejected for the current codebase.
-
-The current core has one primary pipeline. A package layer such as `pipeline.<name>.stage.<stage>` would add abstraction
-before the system needs it.
-
-If multiple independent pipeline families appear later, they should be separated by module first. Inside each pipeline
-module, the stage-first rule applies.
+10. Adapter-specific code remains under `adapter`.
+11. The first relocation pass does not change behavior.
+12. Interceptor-style flow is not treated as a target package layer.
+13. Interceptor-style files are marked for later removal or replacement.
+14. Architecture tests protect the new dependency direction.
+15. Existing deterministic material, identity, planning, runtime, and publication laws remain intact.
+16. Future multi-pipeline architecture is introduced by module boundary first.
 
 ## 22. Consequences
 
-### 22.1. Positive consequences
+### 22.1. Positive
 
-- The package structure will reflect `What Contract Is`.
-- Contract authority will be separated from compiler/runtime realization.
-- Stage-local obligations will remain visible instead of being collapsed into global role buckets.
-- Deterministic laws will become easier to locate and protect.
-- Adapter-specific technology will be isolated more clearly.
-- Interceptor-style hidden flow will be identified as removal/replacement work instead of being normalized as a target
-  package layer.
-- Large refactoring becomes reviewable because movement and behavior changes are separated.
-- Future contributors will see that Kontrakt is a contract machine, not a test framework or compiler clone.
+- Package names align with `What Contract Is`.
+- Stage-local obligations remain visible.
+- Deterministic laws become easier to locate and protect.
+- Realization machinery is separated from authority packages.
+- Adapter-specific technology is isolated.
+- Interceptor-style flow is marked as replacement work rather than normalized.
+- The first pass remains reviewable because movement and behavior changes are separated.
+- Future multi-pipeline structure can be introduced without changing the stage-first rule.
 
-### 22.2. Negative consequences
+### 22.2. Negative
 
-- The refactor will touch many files.
-- Imports will churn heavily.
-- Existing ADR references and documentation may temporarily point to old package names.
-- Tests may require broad import updates.
-- The stage-first tree repeats role package names under several stages.
-- Temporary migration artifacts may feel awkward until the explicit machine replacement is complete.
-- Architecture tests must be added before the package boundary is fully stable.
+- Many files and imports will move.
+- Documentation and ADR references may temporarily point to old package names.
+- Stage-first packages repeat role names.
+- Kotlin/JVM packages do not fully enforce access boundaries.
+- Architecture tests become required enforcement, not optional hygiene.
+- Temporary migration artifacts may remain until explicit machine replacement is complete.
 
 ### 22.3. Accepted cost
 
-The churn is accepted because the current package structure still tells an outdated architectural story. Keeping it
-would preserve short-term convenience, but it would keep pushing the project back toward the wrong mental model.
+The churn is accepted because the current package structure still tells an outdated architectural story.
 
-Repeated stage-local package names are also accepted. The repetition is not noise. It preserves the fact that each stage
-owns different obligations, material, judgments, failures, and evidence.
-
-Kontrakt's package structure must make the machine's authority visible.
+Repeated role names under stages are accepted because they preserve stage ownership.
 
 ## 23. Implementation Plan
 
@@ -1469,29 +1144,24 @@ Create the target package tree and dependency direction law from this ADR.
 
 ### 23.2. Add architecture tests
 
-Add package dependency tests before or during movement so violations are visible early.
+Add dependency tests before or during file movement.
 
 ### 23.3. Move files without semantic edits
 
 Move files according to the target package structure.
 
-Only package declarations, imports, directory paths, build configuration, and temporary compatibility wrappers are
-allowed.
+Allowed edits are package declarations, imports, directory paths, build configuration, and temporary compatibility
+wrappers.
 
 ### 23.4. Keep pipeline module boundary out of the current move
 
 Do not add a pipeline-name package layer during this refactor.
 
-The current codebase is treated as one primary pipeline. Future multi-pipeline structure must be introduced by module
-boundary when it becomes real.
-
 ### 23.5. Mark interceptor-style flow as removal/replacement work
 
-Do not give interceptor-era files a normal target package. They are not an accepted layer of the new architecture.
+Do not give interceptor-era files a normal target package.
 
-If the movement-only pass cannot compile without a temporary bridge, keep that bridge visibly short-lived and outside
-the target package law. The actual solution is a later explicit machine/state/transition replacement, not an interceptor
-package rename.
+Temporary bridges, if required, must remain visibly short-lived and outside the target package law.
 
 ### 23.6. Compile and run current tests
 
@@ -1504,17 +1174,21 @@ flow.
 
 ## 24. Final Rule
 
-Kontrakt's package structure must describe contract authority before it describes realization machinery.
+Kontrakt's package structure must describe contract authority before realization machinery.
 
 Current pipeline-specific domains are stage-first.
 
-A stage owns its own local contract, boundary, material, judgment, diagnostic, publication, and machine role packages as
-needed.
+A stage owns its own local contract, boundary, material, judgment, diagnostics, publication, and machine role packages
+as needed.
 
-Shared packages are allowed only for deliberately shared vocabulary. They must not become dumping grounds for
-stage-specific material.
+Stage movement is not peer package dependency. One stage may expose an output presentation at its publication boundary.
+The next stage must treat that presentation as external input and run its own boundary, guard/admission, lowering, and
+judgment before creating its own material.
 
-Compiler architecture is internal machinery.
+This ADR does not create a top-level `contract` package. Contract packages are stage-local unless a later ADR introduces
+a concrete non-stage package boundary.
+
+Compiler-style architecture is internal realization machinery. This ADR does not create a compiler package tree.
 
 Planning, execution, runtime, metamodel, identity, graph, and reporting are realization machinery unless explicitly
 promoted by contract authority or stage-local authority.
@@ -1526,11 +1200,7 @@ algorithms. Constructors and property machinery that remain there are accepted o
 
 Interceptor-style flow is outside the target architecture and is marked for removal or replacement.
 
-The first refactoring pass moves compatible files only and does not pretend the interceptor model is part of the new
-package law.
+The first refactoring pass moves compatible files only.
 
 Future multi-pipeline architecture should be introduced through module boundaries first. Inside each pipeline module,
 stages own their own stage-local contract packages.
-
-No incompatible flow is normalized as target architecture before the explicit machine replacement is designed and
-reviewed.
