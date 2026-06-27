@@ -1,4 +1,4 @@
-# ADR-0045: Stage-First Package Architecture and Contract Boundary Refactoring
+# ADR-0045: Contract Pipeline Package Architecture and Explicit State-Machine Axis
 
 ## Status
 
@@ -10,7 +10,7 @@ Accepted
 
 ## Related
 
-- `docs/the-most-important-thing/what-contract-is.md`
+- `docs/what-contract-is.md`
 - ADR-0044: Unified Runtime Memory Envelope and Pipeline Lifecycle Governance
 - ADR-0043: Contract Graph Canonicalization, Sealed Structural References, and Incremental Identity Derivation
 - ADR-0042: Mechanical Sympathy, Primitive Lifecycle, and Async Ownership Governance
@@ -162,7 +162,7 @@ Disadvantages:
 - too much module churn during an already large refactor;
 - stage vocabulary is not stable enough to freeze as build modules;
 - Gradle graph design would be mixed with package-authority work;
-- API surfaces would be forced before explicit machine replacement;
+- API surfaces would be forced before explicit state-machine replacement;
 - circular dependency pressure may appear before material boundaries are clean.
 
 Runtime performance is not the main objection. The issue is timing. Module boundaries are harder to move than package
@@ -203,8 +203,8 @@ Decision: rejected. For pipeline-specific material, the stage is the stronger bo
 This would introduce a pipeline layer immediately:
 
 ```text
-io.kontrakt.pipeline.core.stage.admission.contract
-io.kontrakt.pipeline.core.stage.lowering.material
+Kontrakt.pipeline.core.stage.admission.contract
+Kontrakt.pipeline.core.stage.lowering.material
 ```
 
 Advantages:
@@ -227,7 +227,7 @@ be introduced as a module boundary first. Inside that module, the same stage-fir
 This keeps the current core as one module and organizes the package tree as:
 
 ```text
-io.kontrakt.stage.<stage-name>.<role>
+Kontrakt.stage.<stage-name>.<role>
 ```
 
 Advantages:
@@ -249,21 +249,31 @@ Decision: accepted.
 
 ## 5. Decision
 
-Kontrakt adopts a stage-first package architecture that preserves contract authority at the stage boundary.
+Kontrakt adopts a contract-pipeline package architecture and a parallel explicit state-machine contract axis.
+
+The explicit state machine is still contract authority. It is separated from `stage` because it is a special axis that
+carries state, transition, and explicit state-machine manifest material beside the logical contract pipeline.
 
 The current top-level vocabulary is:
 
 ```text
 stage
+stateMachine
 governance
 realization
 adapter
 ```
 
-For the current single-pipeline core, pipeline-specific domains live under:
+For the current single-pipeline core, stage-owned contract domains live under:
 
 ```text
-io.kontrakt.stage.<stage-name>.<role>
+Kontrakt.stage.<stage-name>.<role>
+```
+
+The explicit state machine is a separate contract axis. It does not duplicate every stage name. Its package shape is:
+
+```text
+Kontrakt.stateMachine.<manifest|state|transition>.<role>
 ```
 
 A substantial stage may contain role packages such as:
@@ -275,20 +285,21 @@ stage.<stage-name>
 ├── material
 ├── judgment
 ├── diagnostics
-├── publication
-└── machine
+└── publication
 ```
 
 Not every stage needs every role.
 
-`machine` is not a top-level peer of `stage`. In this ADR, machine law is a stage-local role. Pipeline-wide machine
-vocabulary is not introduced by this ADR; it would require a later decision and a specific reason.
+`machine` is not a package role under `stage`. `state` and `transition` are not ordinary stage packages either. They
+belong under `stateMachine` because the explicit state machine is itself a contract axis: state contract, state
+transition contract, and explicit state-machine manifest.
 
 The current rule is:
 
 ```text
-stage-local contract authority first
-realization machinery second
+contract pipeline authority first
+explicit state-machine movement surface beside it
+realization machinery behind both
 outside technology behind adapters
 ```
 
@@ -306,7 +317,8 @@ to compile.
 ADR-0045 owns:
 
 - contract-first authority law;
-- stage-first package law;
+- contract-pipeline package law for the stage axis;
+- explicit state-machine axis law;
 - current single-pipeline package assumption;
 - future multi-pipeline module boundary rule;
 - realization boundary law;
@@ -346,7 +358,7 @@ Ownership split:
 | frozen acquisition lifecycle               | ADR-0040                             |
 | explicit L2 lifecycle                      | ADR-0034 / ADR-0035                  |
 | package relocation execution               | ADR-0045 implementation plan         |
-| interceptor replacement                    | future explicit machine ADR          |
+| interceptor replacement                    | future explicit state-machine ADR    |
 
 ## 7. Vocabulary
 
@@ -363,7 +375,7 @@ honestly belong to any stage. This ADR does not define such a package.
 
 ### 7.2. `stage`
 
-A `stage` package contains the local contract world for one point in the pipeline.
+A `stage` package contains the local contract world for one declared judgment position in the logical pipeline.
 
 A stage may own:
 
@@ -377,11 +389,13 @@ judgment result
 failure vocabulary
 diagnostic evidence
 publication eligibility
-machine transition law
 ```
 
 These roles remain local by default. Moving a concept out of a stage requires a separate reason; convenience is not
 enough.
+
+A stage does not own the explicit state machine as an internal role package. State-machine material that defines
+condition, transition, terminality, or legality belongs to the parallel `stateMachine` axis.
 
 ### 7.3. `stage.<stage>.contract`
 
@@ -425,13 +439,16 @@ presentation material owned by that stage.
 
 Publication is controlled exposure. It is not a dump of internal state.
 
-### 7.9. `stage.<stage>.machine`
+### 7.9. `stateMachine`
 
-A stage-local machine package contains movement law owned by that stage.
+The `stateMachine` package contains the explicit state-machine contract axis.
 
-It may define states, transition names, stage legality, terminal conditions, and legal movement rules for that stage.
+It owns the state contract, the state transition contract, and the explicit state-machine manifest. It may define
+declared conditions, transition names, initial conditions, terminal conditions, legality, and legal movement rules.
 
-It is not callback flow and it is not a top-level package layer.
+It is not callback flow, interceptor flow, runtime orchestration, or the whole Good Machine. It is contract authority,
+but it is not an ordinary stage in the logical contract pipeline. It is separated because this contract surface runs
+beside the pipeline and governs legal movement.
 
 ### 7.10. `governance`
 
@@ -460,7 +477,8 @@ The package tree must obey these rules:
 
 ```text
 stage-local contract domains must not depend on realization architecture.
-realization may depend on stage-local domains and governance.
+state-machine contract declarations must not depend on realization architecture or adapters.
+realization may depend on stage-local domains, state-machine declarations, and governance.
 adapters may feed realization machinery.
 adapters must not become contract authority.
 ```
@@ -471,7 +489,7 @@ Consequences:
 - `stage.<stage>.contract` must not contain realization algorithms;
 - accepted stage material must not depend on backend handles;
 - stage judgment must not depend on framework callbacks;
-- stage-local machine law must not depend on adapters;
+- state-machine law must not depend on adapters;
 - governance law must not inspect the environment directly;
 - diagnostics must not smuggle implementation authority into public claims;
 - publication must not expose raw internal state as a claim.
@@ -489,14 +507,15 @@ stage.<stage-name>
 ├── material
 ├── judgment
 ├── diagnostics
-├── publication
-└── machine
+└── publication
 ```
 
 A stage includes only the roles it owns.
 
 Role names may repeat under different stages. The repetition is intentional because each stage owns different
-obligations, material, judgments, failures, evidence, and movement law.
+obligations, material, judgments, failures, evidence, and publication surfaces.
+
+Movement law is not removed. It belongs to the parallel `stateMachine` axis, not to a `machine` role inside each stage.
 
 A cross-stage type must not be created just to avoid repeated package names. If a concept cannot belong to one stage, it
 needs an explicit later decision that explains the new package boundary. The expected default is no promotion.
@@ -508,28 +527,33 @@ The current Kontrakt core is treated as one primary pipeline.
 Current shape:
 
 ```text
-io.kontrakt.stage.<stage-name>.<role>
+Kontrakt.stage.<stage-name>.<role>
 ```
 
 Do not introduce this shape yet:
 
 ```text
-io.kontrakt.pipeline.<pipeline-name>.stage.<stage-name>.<role>
+Kontrakt.pipeline.<pipeline-name>.stage.<stage-name>.<role>
 ```
 
 If independent pipeline families appear later, the pipeline boundary should be a module boundary first:
 
 ```text
 <new pipeline module>
-└── stage
+├── stage
+│   └── <stage-name>
+│       ├── contract
+│       ├── boundary
+│       ├── material
+│       ├── judgment
+│       ├── diagnostics
+│       └── publication
+└── stateMachine
     └── <stage-name>
-        ├── contract
-        ├── boundary
-        ├── material
-        ├── judgment
-        ├── diagnostics
-        ├── publication
-        └── machine
+        ├── condition
+        ├── transition
+        ├── legality
+        └── terminal
 ```
 
 This ADR reserves that direction but does not design those future modules.
@@ -557,7 +581,7 @@ stage.A accepted output
        or stage.B-declared rejection / failure / deferral
 ```
 
-Stage A's material identity, judgment status, and local machine state do not carry into Stage B. Stage B may record
+Stage A's material identity, judgment status, and state-machine condition do not carry into Stage B. Stage B may record
 provenance or diagnostic reference, but provenance is not acceptance.
 
 Forbidden shortcut:
@@ -576,7 +600,6 @@ stage.A
     -> stage.B.judgment
     -> stage.B.diagnostics
     -> stage.B.publication
-    -> stage.B.machine
     -> stage.B.internal
     -> stage.B.helper
     -> stage.B.realization
@@ -596,7 +619,7 @@ architecture tests.
 Current single-pipeline target:
 
 ```text
-io.kontrakt
+Kontrakt
 
 ├── stage
 │   ├── input
@@ -627,26 +650,13 @@ io.kontrakt
 │   │
 │   ├── lowering
 │   │   ├── contract
+│   │   ├── boundary
 │   │   ├── material
 │   │   ├── judgment
 │   │   └── diagnostics
 │   │
 │   ├── invariant
 │   │   ├── contract
-│   │   ├── material
-│   │   ├── judgment
-│   │   └── diagnostics
-│   │
-│   ├── state
-│   │   ├── contract
-│   │   ├── machine
-│   │   ├── material
-│   │   ├── judgment
-│   │   └── diagnostics
-│   │
-│   ├── transition
-│   │   ├── contract
-│   │   ├── machine
 │   │   ├── material
 │   │   ├── judgment
 │   │   └── diagnostics
@@ -665,6 +675,25 @@ io.kontrakt
 │       ├── evidence
 │       ├── retention
 │       └── redaction
+│
+├── stateMachine
+│   ├── manifest
+│   │   ├── contract
+│   │   ├── material
+│   │   ├── judgment
+│   │   └── diagnostics
+│   │
+│   ├── state
+│   │   ├── contract
+│   │   ├── material
+│   │   ├── judgment
+│   │   └── diagnostics
+│   │
+│   └── transition
+│       ├── contract
+│       ├── material
+│       ├── judgment
+│       └── diagnostics
 │
 ├── governance
 │   ├── policy
@@ -688,12 +717,18 @@ io.kontrakt
     ├── junit
     ├── mockito
     ├── classgraph
+    ├── normalization
+    ├── jvm
     ├── file
     ├── json
     └── console
 ```
 
 The JVM group prefix may change by module policy. The architectural vocabulary must not.
+
+`stateMachine` is a top-level contract axis, not a generic `machine` root. It exists because state contract, state
+transition contract, and explicit state-machine manifest are contract authority, but they are not ordinary
+contract-pipeline stages.
 
 ## 13. Compiler-Related Realization Law
 
@@ -730,12 +765,12 @@ recursive interceptor chain delegation
 This ADR does not define the replacement. It only marks these forms as removal/replacement targets.
 
 If a temporary compatibility bridge is required during relocation, it must remain visibly temporary and outside the
-target package law. It must not be depended on by `contract`, `stage`, stage-local `machine`, or `governance`.
+target package law. It must not be depended on by `contract`, `stage`, `stateMachine`, or `governance`.
 
-The replacement direction is explicit machine flow:
+The replacement direction is explicit state-machine flow:
 
 ```text
-explicit machine manifest
+explicit state-machine manifest
 -> explicit state set
 -> explicit transition set
 -> explicit stage law
@@ -876,15 +911,15 @@ realization.planning
 realization.runtime
 stage.canonicalization.material
 stage.lowering.material
-stage.transition.material
-stage.transition.machine
+stateMachine.transition.material
+stateMachine.transition.contract
 governance.budget
 governance.capacity
 ```
 
 Planning algorithms are realization machinery. Ratified canonical or lowered material may live under stage-local
-`material`. Lifecycle law may move under `stage.<stage>.machine` when it expresses legal movement rather than physical
-storage.
+`material`. Lifecycle law may move under `stateMachine.state` or `stateMachine.transition` when it expresses legal
+movement rather than physical storage.
 
 ### 16.5. Execution
 
@@ -900,8 +935,8 @@ Target:
 
 ```text
 realization.execution
-stage.transition.machine
-stage.transition.judgment
+stateMachine.transition.contract
+stateMachine.transition.judgment
 stage.diagnostic.material
 stage.diagnostic.judgment
 stage.publication.judgment
@@ -931,11 +966,11 @@ governance.policy
 governance.budget
 governance.capacity
 governance.epoch
-stage.transition.machine
+stateMachine.transition
 ```
 
 Policy resolution belongs to governance when it defines law. Worker backing, storage, lanes, and physical lifecycle
-belong to realization runtime unless promoted to stage-local machine law.
+belong to realization runtime unless promoted to state-machine law.
 
 ### 16.7. Reporting
 
@@ -972,7 +1007,7 @@ Forbidden:
 ```text
 stage.<stage>.contract -> realization
 stage.<stage>.contract -> adapter
-stage.<stage>.machine -> adapter
+stateMachine.<manifest|state|transition> -> adapter
 stage.<stage>.material.accepted -> adapter.reflection
 stage.<stage>.material.accepted -> adapter.ksp
 stage.<stage>.judgment -> adapter
@@ -1013,14 +1048,14 @@ Rules that remain binding:
 
 The package structure exists to make these laws harder to violate accidentally.
 
-## 19. Explicit Machine Reservation
+## 19. Explicit State-Machine Axis Reservation
 
-This ADR reserves a follow-up explicit machine refactoring.
+This ADR reserves a follow-up explicit state-machine refactoring.
 
 That work should define or ratify concepts such as:
 
 ```text
-MachineManifest
+StateMachineManifest
 StateManifest
 TransitionManifest
 StageManifest
@@ -1033,7 +1068,7 @@ PublicationJudgment
 Names may change. The authority rule may not:
 
 ```text
-legal movement belongs to the explicit machine manifest,
+legal movement belongs to the explicit state-machine manifest,
 not to callback behavior.
 ```
 
@@ -1049,8 +1084,9 @@ Required categories:
 
 2. **stage-local role tests**
 
-   Pipeline-specific contract, material, judgment, diagnostic, publication, and machine types must live under the owning
-   stage. Promotion to a top-level package requires a separate reason and should be rare.
+   Pipeline-specific contract, material, judgment, diagnostic, and publication types must live under the owning stage.
+   Explicit state-machine types must live under the parallel `stateMachine` axis. Promotion to a top-level package
+   requires a separate reason and should be rare.
 
 3. **inter-stage acquisition tests**
 
@@ -1091,8 +1127,8 @@ A change complies with this ADR only if:
 3. Stage-local role packages are not collapsed into global buckets for convenience.
 4. Inter-stage movement follows publication-to-boundary acquisition. The receiving stage must guard, lower, and judge
    external input before downstream-owned material may exist.
-5. A stage does not depend on another stage's local contract, material, judgment, diagnostics, publication, machine,
-   helper, realization, or adapter packages as ordinary peer dependencies.
+5. A stage does not depend on another stage's local contract, material, judgment, diagnostics, publication, helper,
+   realization, or adapter packages as ordinary peer dependencies.
 6. Stage-local `contract` packages contain only narrow declaration vocabulary and no realization algorithms.
 7. Constructor and property machinery inside contract packages is treated as a JVM/Kotlin representation limit, not as
    contract authority.
@@ -1128,7 +1164,7 @@ A change complies with this ADR only if:
 - Stage-first packages repeat role names.
 - Kotlin/JVM packages do not fully enforce access boundaries.
 - Architecture tests become required enforcement, not optional hygiene.
-- Temporary migration artifacts may remain until explicit machine replacement is complete.
+- Temporary migration artifacts may remain until explicit state-machine replacement is complete.
 
 ### 22.3. Accepted cost
 
@@ -1136,71 +1172,3 @@ The churn is accepted because the current package structure still tells an outda
 
 Repeated role names under stages are accepted because they preserve stage ownership.
 
-## 23. Implementation Plan
-
-### 23.1. Ratify package law
-
-Create the target package tree and dependency direction law from this ADR.
-
-### 23.2. Add architecture tests
-
-Add dependency tests before or during file movement.
-
-### 23.3. Move files without semantic edits
-
-Move files according to the target package structure.
-
-Allowed edits are package declarations, imports, directory paths, build configuration, and temporary compatibility
-wrappers.
-
-### 23.4. Keep pipeline module boundary out of the current move
-
-Do not add a pipeline-name package layer during this refactor.
-
-### 23.5. Mark interceptor-style flow as removal/replacement work
-
-Do not give interceptor-era files a normal target package.
-
-Temporary bridges, if required, must remain visibly short-lived and outside the target package law.
-
-### 23.6. Compile and run current tests
-
-The movement pass is complete only after current behavior is preserved.
-
-### 23.7. Prepare explicit machine ADR
-
-After relocation, prepare a follow-up ADR for replacing callback/interceptor flow with explicit machine/state/transition
-flow.
-
-## 24. Final Rule
-
-Kontrakt's package structure must describe contract authority before realization machinery.
-
-Current pipeline-specific domains are stage-first.
-
-A stage owns its own local contract, boundary, material, judgment, diagnostics, publication, and machine role packages
-as needed.
-
-Stage movement is not peer package dependency. One stage may expose an output presentation at its publication boundary.
-The next stage must treat that presentation as external input and run its own boundary, guard/admission, lowering, and
-judgment before creating its own material.
-
-This ADR does not create a top-level `contract` package. Contract packages are stage-local unless a later ADR introduces
-a concrete non-stage package boundary.
-
-Compiler-style architecture is internal realization machinery. This ADR does not create a compiler package tree.
-
-Planning, execution, runtime, metamodel, identity, graph, and reporting are realization machinery unless explicitly
-promoted by contract authority or stage-local authority.
-
-Adapters isolate outside technology.
-
-Contract packages are deliberately small. They hold contract-facing interfaces and immutable declaration material, not
-algorithms. Constructors and property machinery that remain there are accepted only as JVM/Kotlin representation limits.
-
-Interceptor-style flow is outside the target architecture and is marked for removal or replacement.
-
-The first refactoring pass moves compatible files only.
-
-Future multi-pipeline architecture should be introduced through module boundaries first. Inside each pipeline module,
-stages own their own stage-local contract packages.
