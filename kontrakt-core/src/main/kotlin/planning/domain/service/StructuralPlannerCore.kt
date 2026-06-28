@@ -2,23 +2,23 @@ package planning.domain.service
 
 import governance.budget.CostCenter
 import metamodel.port.outgoing.NormalizationEngine
-import planning.domain.exception.ActiveCycleWithoutBreakpointException
-import planning.domain.exception.AmbiguousEdgeKeyException
-import planning.domain.exception.AmbiguousEntropyTargetKeyException
-import planning.domain.exception.CapacityExceededException
-import planning.domain.exception.InvalidCanonicalKeyComponentException
-import planning.domain.exception.PlanningProtocolIntegrityException
-import planning.domain.exception.PortContractViolationException
-import planning.domain.exception.UnsupportedTypeExpansionException
-import planning.domain.expansion.SessionTypeExpansionWorkMeter
-import planning.domain.expansion.TypeExpansionPipeline
-import planning.domain.expansion.TypeExpansionPreflightDecision
+import stage.lowering.diagnostics.ActiveCycleWithoutBreakpointException
+import stage.lowering.diagnostics.AmbiguousEdgeKeyException
+import stage.lowering.diagnostics.AmbiguousEntropyTargetKeyException
+import stage.lowering.diagnostics.CapacityExceededException
+import stage.lowering.diagnostics.InvalidCanonicalKeyComponentException
+import stage.lowering.diagnostics.PlanningProtocolIntegrityException
+import stage.lowering.diagnostics.PortContractViolationException
+import stage.lowering.diagnostics.UnsupportedTypeExpansionException
+import stage.lowering.material.expansion.SessionTypeExpansionWorkMeter
+import stage.lowering.material.expansion.TypeExpansionPipeline
+import stage.lowering.material.expansion.TypeExpansionPreflightDecision
 import planning.domain.interner.InternerInvocationSite
 import planning.domain.interner.InternerStepResult
 import planning.domain.interner.PlanInterner
 import planning.domain.interner.PlanKeyFactory
-import planning.domain.projection.CapabilityProfile
-import planning.domain.protocol.TraversalDisposition
+import stage.lowering.material.projection.CapabilityProfile
+import stage.lowering.contract.TraversalDisposition
 import planning.domain.runtime.CommittedPlanNode
 import planning.domain.service.assembly.CycleBreakPayloadAssembler
 import planning.domain.service.assembly.PassiveIrAssembler
@@ -31,9 +31,10 @@ import planning.domain.session.ExpandEdgeFrame
 import planning.domain.session.IterateMembersFrame
 import planning.domain.session.PlanNodeFrame
 import planning.domain.session.PlannerSession
-import planning.domain.vo.PartitionId
+import stage.lowering.material.PartitionId
 import stage.canonicalization.material.TypeReference
 import stage.input.material.MemberFact
+import stage.lowering.material.CanonicalPlanNode
 
 /**
  * Compiler-style structural planner core.
@@ -491,7 +492,7 @@ class StructuralPlannerCore private constructor(
     private fun requireImmediateInternerCompletion(
         result: InternerStepResult,
         site: InternerInvocationSite,
-    ): ir.plan.node.CanonicalPlanNode =
+    ): CanonicalPlanNode =
         when (result) {
             is InternerStepResult.Completed -> result.node
 

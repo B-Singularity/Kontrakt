@@ -1,6 +1,6 @@
 package planning.infrastructure.runtime.orchestration
 
-import planning.domain.port.outgoing.JoinHandle
+import stage.lowering.boundary.JoinHandle
 import planning.domain.runtime.orchestration.PlanningResumePoint
 
 /**

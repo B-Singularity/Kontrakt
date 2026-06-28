@@ -1,6 +1,6 @@
 package planning.infrastructure.runtime.orchestration
 
-import planning.domain.exception.PlanningProtocolIntegrityException
+import stage.lowering.diagnostics.PlanningProtocolIntegrityException
 import planning.infrastructure.runtime.orchestration.lifecycle.PlanningRunSuspensionBridgeState
 
 /**
@@ -18,11 +18,11 @@ object PlanningRunSuspensionBridgeLifecycleLaw {
         when (from) {
             PlanningRunSuspensionBridgeState.INITIAL ->
                 to == PlanningRunSuspensionBridgeState.CALLBACK_REGISTERED ||
-                    to == PlanningRunSuspensionBridgeState.CANCELLED
+                        to == PlanningRunSuspensionBridgeState.CANCELLED
 
             PlanningRunSuspensionBridgeState.CALLBACK_REGISTERED ->
                 to == PlanningRunSuspensionBridgeState.READY_PUBLISHED ||
-                    to == PlanningRunSuspensionBridgeState.CANCELLED
+                        to == PlanningRunSuspensionBridgeState.CANCELLED
 
             PlanningRunSuspensionBridgeState.READY_PUBLISHED ->
                 to == PlanningRunSuspensionBridgeState.CONSUME_PERMITTED
@@ -35,7 +35,7 @@ object PlanningRunSuspensionBridgeLifecycleLaw {
 
             PlanningRunSuspensionBridgeState.CONSUMED,
             PlanningRunSuspensionBridgeState.CANCELLED,
-            ->
+                ->
                 false
         }
 
@@ -91,5 +91,5 @@ object PlanningRunSuspensionBridgeLifecycleLaw {
     @JvmStatic
     fun canTransitionToCancelled(state: PlanningRunSuspensionBridgeState): Boolean =
         state == PlanningRunSuspensionBridgeState.INITIAL ||
-            state == PlanningRunSuspensionBridgeState.CALLBACK_REGISTERED
+                state == PlanningRunSuspensionBridgeState.CALLBACK_REGISTERED
 }

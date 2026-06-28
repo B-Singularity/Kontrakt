@@ -2,10 +2,10 @@ package planning.domain.interner
 
 import governance.budget.CostCenter
 import planning.domain.fault.L2FaultKind
-import planning.domain.port.outgoing.JoinContinuation
-import planning.domain.port.outgoing.JoinHandle
-import planning.domain.port.outgoing.JoinRegistrationDecision
-import planning.domain.port.outgoing.JoinResumeStep
+import stage.lowering.boundary.JoinContinuation
+import stage.lowering.boundary.JoinHandle
+import stage.lowering.boundary.JoinRegistrationDecision
+import stage.lowering.boundary.JoinResumeStep
 import planning.domain.service.assembly.CanonicalPayloadSealer
 import planning.domain.session.PlannerSession
 

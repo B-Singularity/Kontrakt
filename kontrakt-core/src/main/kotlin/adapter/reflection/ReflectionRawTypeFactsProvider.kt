@@ -1,8 +1,8 @@
 package adapter.reflection
 
 import metamodel.domain.service.TypeIdentity64Deriver
-import planning.domain.port.outgoing.RawTypeFactsProvider
-import planning.domain.port.outgoing.RawTypeFactsResolution
+import stage.lowering.boundary.RawTypeFactsProvider
+import stage.lowering.boundary.RawTypeFactsResolution
 import stage.canonicalization.material.TypeReference
 import stage.input.diagnostics.StrictModeViolationException
 import stage.input.material.ConstructorCandidateFact

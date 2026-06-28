@@ -1,16 +1,16 @@
 package planning.infrastructure.cache.adapter.outgoing
 
 import governance.budget.CostCenter
-import ir.plan.node.CanonicalPlanNode
-import planning.domain.exception.PlanningProtocolIntegrityException
+import stage.lowering.material.CanonicalPlanNode
+import stage.lowering.diagnostics.PlanningProtocolIntegrityException
 import planning.domain.fault.L2FaultKind
 import planning.domain.interner.PlanCacheKey
-import planning.domain.port.outgoing.BuildHandle
-import planning.domain.port.outgoing.JoinContinuation
-import planning.domain.port.outgoing.JoinHandle
-import planning.domain.port.outgoing.JoinRegistrationDecision
-import planning.domain.port.outgoing.JoinResumeStep
-import planning.domain.port.outgoing.PlanInternStep
+import stage.lowering.boundary.BuildHandle
+import stage.lowering.boundary.JoinContinuation
+import stage.lowering.boundary.JoinHandle
+import stage.lowering.boundary.JoinRegistrationDecision
+import stage.lowering.boundary.JoinResumeStep
+import stage.lowering.boundary.PlanInternStep
 import planning.domain.session.PlannerSession
 import planning.infrastructure.cache.BuilderHandleCell
 import planning.infrastructure.cache.BuilderHandleRegisterDecision

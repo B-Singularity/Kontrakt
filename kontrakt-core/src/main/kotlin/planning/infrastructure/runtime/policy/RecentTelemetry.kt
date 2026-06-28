@@ -1,6 +1,6 @@
 package planning.infrastructure.runtime.policy
 
-import planning.domain.exception.PlanningProtocolIntegrityException
+import stage.lowering.diagnostics.PlanningProtocolIntegrityException
 
 /**
  * Aggregated telemetry snapshot used by adaptive runtime policy resolution.

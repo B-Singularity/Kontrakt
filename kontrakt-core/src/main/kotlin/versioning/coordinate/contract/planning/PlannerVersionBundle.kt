@@ -1,6 +1,6 @@
 package versioning.coordinate.contract.planning
 
-import planning.domain.exception.PlanningProtocolIntegrityException
+import stage.lowering.diagnostics.PlanningProtocolIntegrityException
 
 /**
  * Immutable version tuple for deterministic planning, cache stability,

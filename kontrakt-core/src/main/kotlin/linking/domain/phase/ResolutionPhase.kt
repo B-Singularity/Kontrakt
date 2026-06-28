@@ -1,8 +1,8 @@
 package linking.domain.phase
 
-import linking.domain.model.ResolvedSpec
-import linking.domain.model.ScenarioRequirements
-import linking.domain.port.outgoing.BindingStrategy
+import stage.lowering.material.ResolvedSpec
+import stage.lowering.material.ScenarioRequirements
+import stage.lowering.boundary.BindingStrategy
 import java.util.SortedSet
 
 /**

@@ -1,6 +1,6 @@
 package governance.policy
 
-import planning.domain.exception.PlanningProtocolIntegrityException
+import stage.lowering.diagnostics.PlanningProtocolIntegrityException
 
 /**
  * Immutable runtime-policy snapshot for adapter-owned dispatch-lane execution.

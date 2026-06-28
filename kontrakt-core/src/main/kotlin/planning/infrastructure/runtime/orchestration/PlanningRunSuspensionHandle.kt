@@ -1,6 +1,6 @@
 package planning.infrastructure.runtime.orchestration
 
-import planning.domain.port.outgoing.JoinResumeStep
+import stage.lowering.boundary.JoinResumeStep
 import planning.domain.session.PlannerSession
 
 /**

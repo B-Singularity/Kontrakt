@@ -1,6 +1,6 @@
 package planning.domain.runtime.orchestration
 
-import planning.domain.exception.PlanningProtocolIntegrityException
+import stage.lowering.diagnostics.PlanningProtocolIntegrityException
 
 /**
  * Immutable continuity identifier for one logical end-to-end planning run.

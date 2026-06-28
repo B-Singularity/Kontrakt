@@ -1,7 +1,7 @@
 package linking.domain.service
 
-import linking.domain.model.ResolvedSpec
-import linking.domain.model.ScenarioRequirements
+import stage.lowering.material.ResolvedSpec
+import stage.lowering.material.ScenarioRequirements
 import linking.domain.phase.IntegrityPhase
 import linking.domain.phase.ResolutionPhase
 import java.util.SortedSet

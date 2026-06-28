@@ -1,6 +1,6 @@
 package planning.infrastructure.runtime.worker
 
-import planning.domain.exception.PlanningProtocolIntegrityException
+import stage.lowering.diagnostics.PlanningProtocolIntegrityException
 
 /**
  * Freshness/version marker for reusable worker-local planner backing.

@@ -1,6 +1,6 @@
 package planning.infrastructure.runtime.orchestration
 
-import planning.domain.exception.PlanningProtocolIntegrityException
+import stage.lowering.diagnostics.PlanningProtocolIntegrityException
 import planning.domain.runtime.orchestration.PlanningResumePoint
 
 /**

@@ -1,8 +1,9 @@
 package planning.domain.runtime
 
-import ir.plan.node.CanonicalPlanNode
-import planning.domain.exception.FaultKind
+import stage.lowering.material.CanonicalPlanNode
+import stage.lowering.diagnostics.FaultKind
 import planning.domain.interner.PlanCacheKey
+import stage.lowering.diagnostics.PlanningProtocolIntegrityException
 
 /**
  * Runtime wrapper around a passive IR node.
@@ -32,7 +33,7 @@ class FinalCommittedPlanNode private constructor(
             treeSemanticCostUpperBound: Long,
         ): FinalCommittedPlanNode {
             if (treeSemanticCostUpperBound < 0L) {
-                throw planning.domain.exception.PlanningProtocolIntegrityException(
+                throw PlanningProtocolIntegrityException(
                     "FinalCommittedPlanNode.treeSemanticCostUpperBound must be >= 0: $treeSemanticCostUpperBound",
                 )
             }
@@ -65,7 +66,7 @@ class DeferredCommittedPlanNode private constructor(
             faultKind: FaultKind,
         ): DeferredCommittedPlanNode {
             if (structuralPath.isEmpty()) {
-                throw planning.domain.exception.PlanningProtocolIntegrityException(
+                throw PlanningProtocolIntegrityException(
                     "DeferredCommittedPlanNode.structuralPath must not be empty.",
                 )
             }
@@ -99,7 +100,7 @@ class SubstitutionCommittedPlanNode private constructor(
             reason: String,
         ): SubstitutionCommittedPlanNode {
             if (reason.isEmpty()) {
-                throw planning.domain.exception.PlanningProtocolIntegrityException(
+                throw PlanningProtocolIntegrityException(
                     "SubstitutionCommittedPlanNode.reason must not be empty.",
                 )
             }

@@ -2,8 +2,8 @@ package metamodel.adapter.frozen.provider
 
 import stage.canonicalization.material.frozen.table.FrozenMetamodelImageTableId
 import stage.canonicalization.material.frozen.table.FrozenTypeReferenceIndex
-import planning.domain.expansion.TypeCycleIdentity
-import planning.domain.port.outgoing.TypeCycleIdentityProvider
+import stage.lowering.material.expansion.TypeCycleIdentity
+import stage.lowering.boundary.TypeCycleIdentityProvider
 import stage.canonicalization.material.TypeReference
 import stage.canonicalization.material.frozen.image.FrozenMetamodelImage
 import stage.input.diagnostics.FrozenMetamodelIncompleteTableException

@@ -1,7 +1,7 @@
 package stage.canonicalization.material
 
-import planning.domain.exception.CanonicalContractViolationException
-import planning.domain.exception.CanonicalVersionMismatchException
+import stage.lowering.diagnostics.CanonicalContractViolationException
+import stage.lowering.diagnostics.CanonicalVersionMismatchException
 import versioning.coordinate.contract.CanonicalVersionTuple
 
 /**

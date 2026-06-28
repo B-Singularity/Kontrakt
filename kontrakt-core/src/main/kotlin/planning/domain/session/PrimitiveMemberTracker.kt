@@ -1,6 +1,6 @@
 package planning.domain.session
 
-import planning.domain.exception.PlanningProtocolIntegrityException
+import stage.lowering.diagnostics.PlanningProtocolIntegrityException
 import stage.input.material.MemberFact
 import java.util.Arrays
 

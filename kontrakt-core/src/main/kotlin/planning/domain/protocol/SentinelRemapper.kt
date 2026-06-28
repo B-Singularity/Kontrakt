@@ -1,6 +1,6 @@
 package kontrakt.planning.domain.protocol
 
-import planning.domain.exception.EnvironmentIntegrityException
+import stage.lowering.diagnostics.EnvironmentIntegrityException
 
 /**
  * [SSOT] Sentinel Safety Law.

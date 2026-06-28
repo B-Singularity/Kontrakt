@@ -1,6 +1,6 @@
 package planning.infrastructure.cache.adapter.outgoing.dispatch.lifecycle
 
-import planning.domain.exception.PlanningProtocolIntegrityException
+import stage.lowering.diagnostics.PlanningProtocolIntegrityException
 
 /**
  * Single source of truth for closed top-level lifecycle legality across the dispatch plane.
@@ -53,15 +53,15 @@ internal object DispatchLifecycleLaw {
 
             DeliveryEntryState.REGISTERED ->
                 to == DeliveryEntryState.SIGNALED ||
-                    to == DeliveryEntryState.ABANDONED
+                        to == DeliveryEntryState.ABANDONED
 
             DeliveryEntryState.SIGNALED ->
                 to == DeliveryEntryState.QUEUED ||
-                    to == DeliveryEntryState.ABANDONED
+                        to == DeliveryEntryState.ABANDONED
 
             DeliveryEntryState.QUEUED ->
                 to == DeliveryEntryState.DELIVERING ||
-                    to == DeliveryEntryState.ABANDONED
+                        to == DeliveryEntryState.ABANDONED
 
             DeliveryEntryState.DELIVERING ->
                 to == DeliveryEntryState.DONE
@@ -128,7 +128,8 @@ internal object DispatchLifecycleLaw {
      * Fresh continuation registration is lawful only from EMPTY.
      */
     @JvmStatic
-    fun canAdmitFreshDeliveryRegistration(entryState: DeliveryEntryState): Boolean = entryState == DeliveryEntryState.EMPTY
+    fun canAdmitFreshDeliveryRegistration(entryState: DeliveryEntryState): Boolean =
+        entryState == DeliveryEntryState.EMPTY
 
     @JvmStatic
     fun requireEmptyForFreshDeliveryRegistration(entryState: DeliveryEntryState) {
@@ -143,7 +144,8 @@ internal object DispatchLifecycleLaw {
      * Ready-queue ownership is lawful only after a delivery signal has become visible.
      */
     @JvmStatic
-    fun canAcquireReadyQueueOwnership(entryState: DeliveryEntryState): Boolean = entryState == DeliveryEntryState.SIGNALED
+    fun canAcquireReadyQueueOwnership(entryState: DeliveryEntryState): Boolean =
+        entryState == DeliveryEntryState.SIGNALED
 
     @JvmStatic
     fun requireSignaledForReadyQueueOwnership(entryState: DeliveryEntryState) {
@@ -165,8 +167,8 @@ internal object DispatchLifecycleLaw {
     @JvmStatic
     fun canBeCloseAbandoned(entryState: DeliveryEntryState): Boolean =
         entryState == DeliveryEntryState.REGISTERED ||
-            entryState == DeliveryEntryState.SIGNALED ||
-            entryState == DeliveryEntryState.QUEUED
+                entryState == DeliveryEntryState.SIGNALED ||
+                entryState == DeliveryEntryState.QUEUED
 
     @JvmStatic
     fun requireCloseAbandonable(entryState: DeliveryEntryState) {
@@ -183,9 +185,9 @@ internal object DispatchLifecycleLaw {
     @JvmStatic
     fun isLiveOperational(entryState: DeliveryEntryState): Boolean =
         entryState == DeliveryEntryState.REGISTERED ||
-            entryState == DeliveryEntryState.SIGNALED ||
-            entryState == DeliveryEntryState.QUEUED ||
-            entryState == DeliveryEntryState.DELIVERING
+                entryState == DeliveryEntryState.SIGNALED ||
+                entryState == DeliveryEntryState.QUEUED ||
+                entryState == DeliveryEntryState.DELIVERING
 
     /**
      * Reclamation to EMPTY is lawful only after the current episode has terminalized.
@@ -193,7 +195,7 @@ internal object DispatchLifecycleLaw {
     @JvmStatic
     fun canReclaimToEmpty(entryState: DeliveryEntryState): Boolean =
         entryState == DeliveryEntryState.DONE ||
-            entryState == DeliveryEntryState.ABANDONED
+                entryState == DeliveryEntryState.ABANDONED
 
     @JvmStatic
     fun requireTerminalForReclaimToEmpty(entryState: DeliveryEntryState) {
@@ -254,11 +256,11 @@ internal object DispatchLifecycleLaw {
         dirtyShardCount: Int,
     ): Boolean =
         laneState == DispatchLaneState.DRAINING &&
-            commandRingIsEmpty &&
-            readyQueuePublishedSize == 0 &&
-            activeCallbackCount == 0 &&
-            liveOperationalEntryCount == 0 &&
-            dirtyShardCount == 0
+                commandRingIsEmpty &&
+                readyQueuePublishedSize == 0 &&
+                activeCallbackCount == 0 &&
+                liveOperationalEntryCount == 0 &&
+                dirtyShardCount == 0
 
     @JvmStatic
     fun requireLaneMayPublishStopped(
@@ -281,12 +283,12 @@ internal object DispatchLifecycleLaw {
         ) {
             throw PlanningProtocolIntegrityException(
                 "Dispatch lane may not publish STOPPED: " +
-                    "laneState=$laneState, " +
-                    "commandRingIsEmpty=$commandRingIsEmpty, " +
-                    "readyQueuePublishedSize=$readyQueuePublishedSize, " +
-                    "activeCallbackCount=$activeCallbackCount, " +
-                    "liveOperationalEntryCount=$liveOperationalEntryCount, " +
-                    "dirtyShardCount=$dirtyShardCount",
+                        "laneState=$laneState, " +
+                        "commandRingIsEmpty=$commandRingIsEmpty, " +
+                        "readyQueuePublishedSize=$readyQueuePublishedSize, " +
+                        "activeCallbackCount=$activeCallbackCount, " +
+                        "liveOperationalEntryCount=$liveOperationalEntryCount, " +
+                        "dirtyShardCount=$dirtyShardCount",
             )
         }
     }

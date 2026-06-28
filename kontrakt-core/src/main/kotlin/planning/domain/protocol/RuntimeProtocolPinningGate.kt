@@ -3,8 +3,9 @@ package planning.domain.protocol
 import kontrakt.planning.domain.protocol.HashInputEncodingSpec
 import kontrakt.planning.domain.protocol.PrimitiveHash
 import kontrakt.planning.domain.protocol.SentinelRemapper
-import planning.domain.exception.EnvironmentIntegrityException
-import planning.domain.exception.PortContractViolationException
+import stage.lowering.diagnostics.EnvironmentIntegrityException
+import stage.lowering.diagnostics.PortContractViolationException
+import stage.lowering.contract.ProtocolGoldenVectors
 
 /**
  * Boot-time runtime pinning gate for order-critical primitives.

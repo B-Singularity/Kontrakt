@@ -1,10 +1,10 @@
 package planning.infrastructure.cache.adapter.outgoing.dispatch
 
 import governance.policy.ResolvedDispatchLanePolicy
-import ir.plan.node.CanonicalPlanNode
-import planning.domain.port.outgoing.JoinContinuation
-import planning.domain.port.outgoing.JoinRegistrationDecision
-import planning.domain.port.outgoing.JoinResumeSignal
+import stage.lowering.material.CanonicalPlanNode
+import stage.lowering.boundary.JoinContinuation
+import stage.lowering.boundary.JoinRegistrationDecision
+import stage.lowering.boundary.JoinResumeSignal
 import planning.infrastructure.cache.InFlightSlot
 import planning.infrastructure.cache.WaiterCell
 import planning.infrastructure.cache.adapter.outgoing.dispatch.lifecycle.DeliveryEntryState

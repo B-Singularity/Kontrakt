@@ -1,6 +1,6 @@
 package planning.domain.interner
 
-import ir.plan.node.CanonicalPlanNode
+import stage.lowering.material.CanonicalPlanNode
 
 /**
  * Domain-level orchestration result returned by PlanInterner.

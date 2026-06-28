@@ -1,6 +1,6 @@
 package planning.domain.session
 
-import planning.domain.exception.PlanningProtocolIntegrityException
+import stage.lowering.diagnostics.PlanningProtocolIntegrityException
 
 /**
  * Fixed-capacity frame stack.

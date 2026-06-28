@@ -1,8 +1,8 @@
 package metamodel.adapter.frozen.provider
 
-import planning.domain.port.outgoing.RawTypeFactsProvider
-import planning.domain.port.outgoing.TypeCycleIdentityProvider
-import planning.domain.port.outgoing.TypeShapeProvider
+import stage.lowering.boundary.RawTypeFactsProvider
+import stage.lowering.boundary.TypeCycleIdentityProvider
+import stage.lowering.boundary.TypeShapeProvider
 import stage.canonicalization.material.frozen.image.FrozenMetamodelImage
 
 /**

@@ -1,7 +1,7 @@
 package planning.infrastructure.runtime.policy
 
 import governance.policy.RuntimePolicyEpoch
-import planning.domain.exception.PlanningProtocolIntegrityException
+import stage.lowering.diagnostics.PlanningProtocolIntegrityException
 import java.util.concurrent.atomic.AtomicReference
 
 /**

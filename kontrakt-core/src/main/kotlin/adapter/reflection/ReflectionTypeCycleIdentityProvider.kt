@@ -1,8 +1,8 @@
 package adapter.reflection
 
 import metamodel.domain.service.TypeIdentity64Deriver
-import planning.domain.expansion.TypeCycleIdentity
-import planning.domain.port.outgoing.TypeCycleIdentityProvider
+import stage.lowering.material.expansion.TypeCycleIdentity
+import stage.lowering.boundary.TypeCycleIdentityProvider
 import stage.canonicalization.material.TypeReference
 
 /**

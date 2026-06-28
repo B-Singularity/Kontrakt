@@ -1,8 +1,8 @@
 package planning.domain.session
 
 import ir.identity.CanonicalSignature
-import planning.domain.exception.PlanningProtocolIntegrityException
-import planning.domain.vo.OrderedActiveMembers
+import stage.lowering.diagnostics.PlanningProtocolIntegrityException
+import stage.lowering.material.OrderedActiveMembers
 import stage.canonicalization.material.TypeReference
 
 /**

@@ -6,17 +6,17 @@ import ir.identity.CanonicalSignature
 import kontrakt.planning.domain.protocol.HashInputEncodingSpec
 import kontrakt.planning.domain.protocol.PrimitiveHash
 import kontrakt.planning.domain.protocol.SentinelRemapper
-import planning.domain.exception.EnvironmentIntegrityException
-import planning.domain.exception.SentinelIntegrityException
+import stage.lowering.diagnostics.EnvironmentIntegrityException
+import stage.lowering.diagnostics.SentinelIntegrityException
 import planning.domain.session.PlannerSession
-import planning.domain.vo.PartitionId
+import stage.lowering.material.PartitionId
 
 /**
  * Domain service for deterministic plan-cache key issuance.
  *
  * Current alignment:
  * - [PlanCacheKey] carries the full exact-match tuple and route64.
- * - [planning.domain.vo.PartitionId] remains the domain-level argument.
+ * - [PartitionId] remains the domain-level argument.
  * - lowering to [ir.identity.CanonicalIdentifier] happens only inside this service.
  */
 class PlanKeyFactory private constructor(

@@ -1,6 +1,6 @@
 package planning.domain.service.derivation
 
-import planning.domain.vo.ActiveEdgeDescriptor
+import stage.lowering.material.ActiveEdgeDescriptor
 import stage.input.material.MemberFact
 import stage.input.material.TypeFactsDTO
 

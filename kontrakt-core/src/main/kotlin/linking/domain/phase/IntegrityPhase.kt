@@ -1,10 +1,10 @@
 package linking.domain.phase
 
-import linking.domain.exception.LinkingAmbiguityException
-import linking.domain.exception.LinkingInputException
-import linking.domain.exception.LinkingProtocolException
-import linking.domain.model.ResolvedSpec
-import linking.domain.vo.FeatureName
+import stage.lowering.diagnostics.LinkingAmbiguityException
+import stage.lowering.diagnostics.LinkingInputException
+import stage.lowering.diagnostics.LinkingProtocolException
+import stage.lowering.material.ResolvedSpec
+import stage.lowering.material.FeatureName
 import java.util.SortedSet
 
 /**

@@ -1,6 +1,6 @@
 package planning.infrastructure.cache.adapter.outgoing
 
-import ir.plan.node.CanonicalPlanNode
+import stage.lowering.material.CanonicalPlanNode
 import planning.domain.interner.PlanCacheKey
 
 /**

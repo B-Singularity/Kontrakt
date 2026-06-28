@@ -1,6 +1,6 @@
 package planning.domain.service.derivation
 
-import planning.domain.vo.OrderedActiveMembers
+import stage.lowering.material.OrderedActiveMembers
 import stage.input.material.TypeFactsDTO
 
 /**

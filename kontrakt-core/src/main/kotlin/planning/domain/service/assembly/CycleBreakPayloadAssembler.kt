@@ -1,7 +1,7 @@
 package planning.domain.service.assembly
 
-import planning.domain.protocol.BreakpointStage
-import planning.domain.vo.CycleBreakAssembly
+import stage.lowering.contract.BreakpointStage
+import stage.lowering.material.CycleBreakAssembly
 import stage.input.material.MemberFact
 import stage.input.material.TypeFactsDTO
 

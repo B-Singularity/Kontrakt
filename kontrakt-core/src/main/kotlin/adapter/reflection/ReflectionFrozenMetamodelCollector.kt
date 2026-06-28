@@ -1,7 +1,7 @@
 package adapter.reflection
 
-import planning.domain.expansion.TypeCycleIdentity
-import planning.domain.port.outgoing.RawTypeFactsResolution
+import stage.lowering.material.expansion.TypeCycleIdentity
+import stage.lowering.boundary.RawTypeFactsResolution
 import stage.canonicalization.material.TypeReference
 import stage.canonicalization.material.frozen.image.FrozenMetamodelImageAssemblyInput
 import stage.canonicalization.material.frozen.image.FrozenMetamodelImageId

@@ -1,6 +1,6 @@
 package planning.infrastructure.cache
 
-import planning.domain.exception.PlanningProtocolIntegrityException
+import stage.lowering.diagnostics.PlanningProtocolIntegrityException
 import planning.domain.runtime.lifecycle.CommitRightState
 import planning.domain.runtime.lifecycle.L2LifecycleLaw
 import planning.domain.runtime.lifecycle.SharedSlotState
@@ -256,11 +256,11 @@ internal class InFlightSlot<N : Any> private constructor(
         when (readSharedStateAcquire()) {
             SharedSlotState.FAILED,
             SharedSlotState.DROPPED,
-            -> TERMINAL_FAILURE_HANDLE.getAcquire(this) as Throwable?
+                -> TERMINAL_FAILURE_HANDLE.getAcquire(this) as Throwable?
 
             SharedSlotState.PENDING,
             SharedSlotState.SUCCESS,
-            -> null
+                -> null
         }
 
     fun readCommitRightAcquire(): CommitRightState {
@@ -885,7 +885,8 @@ internal class InFlightSlot<N : Any> private constructor(
             return stateBits or countBits or flagBits
         }
 
-        private fun decodeSharedState(word: Long): SharedSlotState = SharedSlotState.fromCode((word and STATE_MASK).toInt())
+        private fun decodeSharedState(word: Long): SharedSlotState =
+            SharedSlotState.fromCode((word and STATE_MASK).toInt())
 
         private fun decodeAttachedWaiterCount(word: Long): Int = ((word and COUNT_MASK) ushr COUNT_SHIFT).toInt()
 

@@ -1,9 +1,9 @@
 package planning.infrastructure.runtime.orchestration
 
-import planning.domain.port.outgoing.JoinHandle
-import planning.domain.port.outgoing.JoinRegistrationDecision
-import planning.domain.port.outgoing.JoinResumeSignal
-import planning.domain.port.outgoing.JoinResumeStep
+import stage.lowering.boundary.JoinHandle
+import stage.lowering.boundary.JoinRegistrationDecision
+import stage.lowering.boundary.JoinResumeSignal
+import stage.lowering.boundary.JoinResumeStep
 import planning.domain.session.PlannerSession
 import planning.infrastructure.runtime.orchestration.lifecycle.PlanningRunSuspensionBridgeState
 import java.util.concurrent.atomic.AtomicInteger

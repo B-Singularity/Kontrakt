@@ -1,6 +1,6 @@
 package planning.infrastructure.runtime.policy
 
-import planning.domain.exception.PlanningProtocolIntegrityException
+import stage.lowering.diagnostics.PlanningProtocolIntegrityException
 
 /**
  * Environment snapshot consumed by the runtime policy resolver.

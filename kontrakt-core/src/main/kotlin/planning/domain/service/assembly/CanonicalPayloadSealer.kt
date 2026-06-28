@@ -1,8 +1,8 @@
 package planning.domain.service.assembly
 
-import ir.plan.node.CanonicalPlanNode
-import ir.plan.node.RawCycleBreakPayload
-import ir.plan.node.RawPayloadNode
+import stage.lowering.material.CanonicalPlanNode
+import stage.lowering.material.RawCycleBreakPayload
+import stage.lowering.material.RawPayloadNode
 
 /**
  * Adapter-local canonical sealing boundary.

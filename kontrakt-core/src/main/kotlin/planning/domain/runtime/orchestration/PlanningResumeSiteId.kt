@@ -1,6 +1,6 @@
 package planning.domain.runtime.orchestration
 
-import planning.domain.exception.PlanningProtocolIntegrityException
+import stage.lowering.diagnostics.PlanningProtocolIntegrityException
 
 @JvmInline
 value class PlanningResumeSiteId private constructor(

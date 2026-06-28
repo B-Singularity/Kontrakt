@@ -1,8 +1,8 @@
 package planning.infrastructure.runtime.orchestration
 
 import governance.policy.RuntimePolicyEpoch
-import planning.domain.exception.CapacityExceededException
-import planning.domain.exception.PlanningProtocolIntegrityException
+import stage.lowering.diagnostics.CapacityExceededException
+import stage.lowering.diagnostics.PlanningProtocolIntegrityException
 import planning.domain.runtime.lifecycle.PlanningRunLifecycleLaw
 import planning.domain.runtime.lifecycle.PlanningRunState
 import planning.domain.runtime.orchestration.PlanningResumePoint

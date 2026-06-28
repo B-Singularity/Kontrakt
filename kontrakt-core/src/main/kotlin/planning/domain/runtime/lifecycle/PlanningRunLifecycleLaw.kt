@@ -1,6 +1,6 @@
 package planning.domain.runtime.lifecycle
 
-import planning.domain.exception.PlanningProtocolIntegrityException
+import stage.lowering.diagnostics.PlanningProtocolIntegrityException
 
 /**
  * Normative transition law for PlanningRunState.
@@ -29,28 +29,28 @@ object PlanningRunLifecycleLaw {
         when (from) {
             PlanningRunState.INITIALIZED ->
                 to == PlanningRunState.RUNNING ||
-                    to == PlanningRunState.ABORTED ||
-                    to == PlanningRunState.PANIC_ISOLATED
+                        to == PlanningRunState.ABORTED ||
+                        to == PlanningRunState.PANIC_ISOLATED
 
             PlanningRunState.RUNNING ->
                 to == PlanningRunState.SUSPENDED_ON_JOIN ||
-                    to == PlanningRunState.COMPLETED ||
-                    to == PlanningRunState.ABORTED ||
-                    to == PlanningRunState.PANIC_ISOLATED
+                        to == PlanningRunState.COMPLETED ||
+                        to == PlanningRunState.ABORTED ||
+                        to == PlanningRunState.PANIC_ISOLATED
 
             PlanningRunState.SUSPENDED_ON_JOIN ->
                 to == PlanningRunState.READY_TO_RESTART ||
-                    to == PlanningRunState.ABORTED ||
-                    to == PlanningRunState.PANIC_ISOLATED
+                        to == PlanningRunState.ABORTED ||
+                        to == PlanningRunState.PANIC_ISOLATED
 
             PlanningRunState.READY_TO_RESTART ->
                 to == PlanningRunState.RUNNING ||
-                    to == PlanningRunState.ABORTED ||
-                    to == PlanningRunState.PANIC_ISOLATED
+                        to == PlanningRunState.ABORTED ||
+                        to == PlanningRunState.PANIC_ISOLATED
 
             PlanningRunState.COMPLETED,
             PlanningRunState.ABORTED,
             PlanningRunState.PANIC_ISOLATED,
-            -> false
+                -> false
         }
 }

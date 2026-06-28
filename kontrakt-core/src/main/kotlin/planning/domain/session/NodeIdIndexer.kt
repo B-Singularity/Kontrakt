@@ -3,8 +3,8 @@ package planning.domain.session
 import governance.budget.CostCenter
 import governance.policy.ResolvedPlannerSessionCaps
 import kontrakt.planning.domain.protocol.PrimitiveHash
-import planning.domain.exception.PlanningProtocolException
-import planning.domain.exception.PlanningProtocolIntegrityException
+import stage.lowering.diagnostics.PlanningProtocolException
+import stage.lowering.diagnostics.PlanningProtocolIntegrityException
 
 /**
  * Worker-local primitive two-phase identity indexer.

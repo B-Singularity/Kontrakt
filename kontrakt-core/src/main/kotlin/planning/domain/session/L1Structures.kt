@@ -1,7 +1,7 @@
 package planning.domain.session
 
-import planning.domain.exception.PlanningProtocolIntegrityException
-import planning.domain.protocol.BreakpointStage
+import stage.lowering.diagnostics.PlanningProtocolIntegrityException
+import stage.lowering.contract.BreakpointStage
 import java.util.Arrays
 
 /**

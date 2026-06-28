@@ -2,8 +2,8 @@ package metamodel.adapter.frozen.provider
 
 import stage.canonicalization.material.frozen.table.FrozenMetamodelImageTableId
 import stage.canonicalization.material.frozen.table.FrozenTypeReferenceIndex
-import planning.domain.port.outgoing.RawTypeFactsProvider
-import planning.domain.port.outgoing.RawTypeFactsResolution
+import stage.lowering.boundary.RawTypeFactsProvider
+import stage.lowering.boundary.RawTypeFactsResolution
 import stage.canonicalization.material.TypeReference
 import stage.canonicalization.material.frozen.image.FrozenMetamodelImage
 import stage.input.diagnostics.FrozenMetamodelIncompleteTableException

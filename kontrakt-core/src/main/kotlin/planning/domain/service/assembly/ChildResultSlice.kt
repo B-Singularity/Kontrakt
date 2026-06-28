@@ -1,6 +1,6 @@
 package planning.domain.service.assembly
 
-import ir.plan.node.CanonicalPlanNode
+import stage.lowering.material.CanonicalPlanNode
 
 /**
  * Zero-allocation cursor over committed child results.

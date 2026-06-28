@@ -1,6 +1,6 @@
 package governance.budget
 
-import planning.domain.exception.PlanningProtocolIntegrityException
+import stage.lowering.diagnostics.PlanningProtocolIntegrityException
 
 /**
  * Single source of truth for planner budget-track semantics.

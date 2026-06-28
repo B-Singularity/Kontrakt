@@ -1,10 +1,10 @@
 package adapter.reflection
 
-import planning.domain.expansion.TypeCycleIdentity
-import planning.domain.port.outgoing.RawTypeFactsProvider
-import planning.domain.port.outgoing.RawTypeFactsResolution
-import planning.domain.port.outgoing.TypeCycleIdentityProvider
-import planning.domain.port.outgoing.TypeShapeProvider
+import stage.lowering.material.expansion.TypeCycleIdentity
+import stage.lowering.boundary.RawTypeFactsProvider
+import stage.lowering.boundary.RawTypeFactsResolution
+import stage.lowering.boundary.TypeCycleIdentityProvider
+import stage.lowering.boundary.TypeShapeProvider
 import stage.canonicalization.material.TypeReference
 import stage.input.diagnostics.MetamodelAdapterStateViolationException
 import stage.input.material.ResolvedTypeShape

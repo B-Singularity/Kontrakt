@@ -1,6 +1,6 @@
 package governance.policy.adapter
 
-import planning.domain.exception.PlanningProtocolIntegrityException
+import stage.lowering.diagnostics.PlanningProtocolIntegrityException
 
 /**
  * Explicit transition law for adapter-level administrative lifecycle.

@@ -1,6 +1,6 @@
 package planning.infrastructure.cache.adapter.outgoing.dispatch.lifecycle
 
-import planning.domain.exception.PlanningProtocolIntegrityException
+import stage.lowering.diagnostics.PlanningProtocolIntegrityException
 import kotlin.enums.EnumEntries
 
 /**

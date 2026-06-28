@@ -1,6 +1,6 @@
 package adapter.reflection
 
-import planning.domain.port.outgoing.TypeShapeProvider
+import stage.lowering.boundary.TypeShapeProvider
 import stage.canonicalization.material.TypeReference
 import stage.input.diagnostics.StrictModeViolationException
 import stage.input.material.NullabilityKind

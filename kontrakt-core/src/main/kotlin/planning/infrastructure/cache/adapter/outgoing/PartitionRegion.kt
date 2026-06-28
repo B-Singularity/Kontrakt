@@ -3,14 +3,14 @@ package planning.infrastructure.cache.adapter.outgoing
 import governance.budget.CostCenter
 import governance.policy.ResolvedJoinGovernance
 import governance.policy.ResolvedStorageGovernance
-import planning.domain.exception.PlanningProtocolIntegrityException
+import stage.lowering.diagnostics.PlanningProtocolIntegrityException
 import planning.domain.fault.L2FaultKind
 import planning.domain.interner.PlanCacheKey
-import planning.domain.port.outgoing.PlanInternStep
+import stage.lowering.boundary.PlanInternStep
 import planning.domain.runtime.lifecycle.L2LifecycleLaw
 import planning.domain.runtime.lifecycle.PartitionRegionState
 import planning.domain.session.PlannerSession
-import planning.domain.vo.PartitionId
+import stage.lowering.material.PartitionId
 import planning.infrastructure.cache.adapter.outgoing.dispatch.L2JoinDispatchPlane
 import planning.infrastructure.runtime.time.MonotonicTimeSource
 import java.util.concurrent.atomic.AtomicInteger

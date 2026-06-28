@@ -1,6 +1,6 @@
 package planning.infrastructure.runtime.orchestration.lifecycle
 
-import planning.domain.exception.PlanningProtocolIntegrityException
+import stage.lowering.diagnostics.PlanningProtocolIntegrityException
 import kotlin.enums.EnumEntries
 
 /**

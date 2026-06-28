@@ -1,6 +1,6 @@
 package planning.domain.service.assembly
 
-import planning.domain.vo.PassiveIrAssembly
+import stage.lowering.material.PassiveIrAssembly
 import stage.input.material.TypeFactsDTO
 
 /**

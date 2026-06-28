@@ -1,7 +1,7 @@
 package kontrakt.planning.domain.protocol
 
 import metamodel.domain.port.outgoing.NormalizationEngine
-import planning.domain.exception.PortContractViolationException
+import stage.lowering.diagnostics.PortContractViolationException
 
 /**
  * [SSOT] Hash Input Encoding + Normalization Rejection Law (NFC-REJECT).

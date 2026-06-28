@@ -1,9 +1,9 @@
 package planning.domain.expansion.context
 
-import planning.domain.expansion.polymorphic.ContractVacancyPolicy
-import planning.domain.expansion.polymorphic.PolymorphicResolutionMode
-import planning.domain.expansion.polymorphic.RuntimeBindingSnapshotId
-import planning.domain.expansion.seed.DeterministicSeedSurfaceId
+import stage.lowering.material.polymorphic.ContractVacancyPolicy
+import stage.lowering.material.polymorphic.PolymorphicResolutionMode
+import stage.lowering.material.polymorphic.RuntimeBindingSnapshotId
+import stage.lowering.material.seed.DeterministicSeedSurfaceId
 
 /**
  * Explicit type-expansion context.
@@ -45,8 +45,8 @@ sealed interface TypeExpansionContext {
             if (other !is ContractSubject) return false
 
             return runtimeBindingSnapshotId == other.runtimeBindingSnapshotId &&
-                deterministicSeedSurfaceId == other.deterministicSeedSurfaceId &&
-                contractVacancyPolicy == other.contractVacancyPolicy
+                    deterministicSeedSurfaceId == other.deterministicSeedSurfaceId &&
+                    contractVacancyPolicy == other.contractVacancyPolicy
         }
 
         override fun hashCode(): Int {
@@ -86,7 +86,7 @@ sealed interface TypeExpansionContext {
             if (other !is DependencySite) return false
 
             return runtimeBindingSnapshotId == other.runtimeBindingSnapshotId &&
-                deterministicSeedSurfaceId == other.deterministicSeedSurfaceId
+                    deterministicSeedSurfaceId == other.deterministicSeedSurfaceId
         }
 
         override fun hashCode(): Int {
@@ -123,7 +123,7 @@ sealed interface TypeExpansionContext {
             if (other !is StructuralMember) return false
 
             return runtimeBindingSnapshotId == other.runtimeBindingSnapshotId &&
-                deterministicSeedSurfaceId == other.deterministicSeedSurfaceId
+                    deterministicSeedSurfaceId == other.deterministicSeedSurfaceId
         }
 
         override fun hashCode(): Int {

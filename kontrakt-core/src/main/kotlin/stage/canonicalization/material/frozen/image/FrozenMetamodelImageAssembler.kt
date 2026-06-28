@@ -6,7 +6,7 @@ import stage.canonicalization.material.frozen.table.ObjectArrayFrozenRawFactTabl
 import stage.canonicalization.material.frozen.table.ObjectArrayFrozenTypeCycleIdentityTable
 import stage.canonicalization.material.frozen.table.ObjectArrayFrozenTypeReferenceIndex
 import stage.canonicalization.material.frozen.table.ObjectArrayFrozenTypeShapeTable
-import planning.domain.expansion.TypeCycleIdentity
+import stage.lowering.material.expansion.TypeCycleIdentity
 import stage.canonicalization.material.TypeReference
 import stage.input.diagnostics.FrozenMetamodelIntegrityViolationException
 import stage.input.diagnostics.FrozenMetamodelSequenceViolationException

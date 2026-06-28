@@ -3,14 +3,14 @@ package planning.domain.session
 import governance.budget.BudgetTrack
 import governance.budget.CostCenter
 import ir.identity.CanonicalSignature
-import planning.domain.exception.FuelExhaustedException
-import planning.domain.exception.PlanningProtocolIntegrityException
-import planning.domain.exception.PlanningRuntimeInvariantException
+import stage.lowering.diagnostics.FuelExhaustedException
+import stage.lowering.diagnostics.PlanningProtocolIntegrityException
+import stage.lowering.diagnostics.PlanningRuntimeInvariantException
 import planning.domain.interner.PlanCacheKey
-import planning.domain.protocol.BreakpointStage
+import stage.lowering.contract.BreakpointStage
 import planning.domain.runtime.CommittedPlanNode
 import planning.domain.service.assembly.ChildResultSlice
-import planning.domain.vo.OrderedActiveMembers
+import stage.lowering.material.OrderedActiveMembers
 import stage.input.material.MemberFact
 
 /**

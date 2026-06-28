@@ -1,7 +1,7 @@
 package planning.domain.runtime
 
-import ir.plan.node.CanonicalPlanNode
-import planning.domain.exception.PlanningProtocolIntegrityException
+import stage.lowering.material.CanonicalPlanNode
+import stage.lowering.diagnostics.PlanningProtocolIntegrityException
 import planning.domain.interner.PlanCacheKey
 
 /**

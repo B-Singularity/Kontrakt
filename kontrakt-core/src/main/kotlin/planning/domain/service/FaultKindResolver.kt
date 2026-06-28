@@ -1,6 +1,6 @@
 package planning.domain.service
 
-import planning.domain.exception.FaultKind
+import stage.lowering.diagnostics.FaultKind
 import stage.input.material.MemberFact
 import stage.input.material.TypeFactsDTO
 

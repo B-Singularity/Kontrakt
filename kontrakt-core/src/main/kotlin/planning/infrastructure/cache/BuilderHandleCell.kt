@@ -1,6 +1,6 @@
 package planning.infrastructure.cache
 
-import planning.domain.exception.PlanningProtocolIntegrityException
+import stage.lowering.diagnostics.PlanningProtocolIntegrityException
 import planning.domain.runtime.lifecycle.BuilderHandleState
 import planning.domain.runtime.lifecycle.L2LifecycleLaw
 import java.lang.invoke.MethodHandles

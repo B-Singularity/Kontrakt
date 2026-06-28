@@ -1,6 +1,6 @@
 package governance.policy
 
-import planning.domain.exception.PlanningProtocolIntegrityException
+import stage.lowering.diagnostics.PlanningProtocolIntegrityException
 
 /**
  * Concrete capacity output derived from the resolved structural budget.

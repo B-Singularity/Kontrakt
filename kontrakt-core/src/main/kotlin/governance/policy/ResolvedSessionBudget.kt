@@ -1,6 +1,6 @@
 package governance.policy
 
-import planning.domain.exception.PlanningProtocolIntegrityException
+import stage.lowering.diagnostics.PlanningProtocolIntegrityException
 
 /**
  * Immutable snapshot of planner-core structural/runtime budget for a single worker.

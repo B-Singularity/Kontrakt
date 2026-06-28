@@ -1,8 +1,8 @@
 package planning.domain.runtime.orchestration
 
 import governance.policy.ResolvedSessionBudget
-import planning.domain.exception.CapacityExceededException
-import planning.domain.exception.PlanningProtocolIntegrityException
+import stage.lowering.diagnostics.CapacityExceededException
+import stage.lowering.diagnostics.PlanningProtocolIntegrityException
 
 /**
  * Immutable run-scoped remaining execution budget ledger.

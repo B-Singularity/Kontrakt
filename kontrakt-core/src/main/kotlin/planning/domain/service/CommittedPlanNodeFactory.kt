@@ -1,9 +1,9 @@
 package planning.domain.service
 
-import ir.plan.node.CanonicalPlanNode
+import stage.lowering.material.CanonicalPlanNode
 import planning.domain.interner.PlanCacheKey
 import planning.domain.runtime.CommittedPlanNode
-import planning.domain.vo.CycleBreakAssembly
+import stage.lowering.material.CycleBreakAssembly
 
 /**
  * Factory for committed runtime nodes.

@@ -2,7 +2,7 @@ package planning.domain.session
 
 import governance.policy.ResolvedPlannerSessionCaps
 import governance.policy.ResolvedSessionBudget
-import planning.domain.exception.PlanningProtocolIntegrityException
+import stage.lowering.diagnostics.PlanningProtocolIntegrityException
 import versioning.coordinate.contract.planning.PlannerVersionBundle
 
 /**

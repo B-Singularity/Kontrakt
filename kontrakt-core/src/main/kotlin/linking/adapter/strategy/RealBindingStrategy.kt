@@ -1,9 +1,9 @@
 package linking.adapter.strategy
 
-import linking.domain.model.ResolvedSpec
-import linking.domain.model.ScenarioRequirements
-import linking.domain.port.outgoing.BindingStrategy
-import linking.domain.vo.FeatureName
+import stage.lowering.material.ResolvedSpec
+import stage.lowering.material.ScenarioRequirements
+import stage.lowering.boundary.BindingStrategy
+import stage.lowering.material.FeatureName
 import java.util.Collections
 import java.util.Locale
 import java.util.SortedSet

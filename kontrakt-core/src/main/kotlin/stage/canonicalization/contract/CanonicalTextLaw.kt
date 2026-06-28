@@ -1,6 +1,6 @@
 package stage.canonicalization.contract
 
-import planning.domain.exception.CanonicalContractViolationException
+import stage.lowering.diagnostics.CanonicalContractViolationException
 import java.text.Normalizer
 
 /**

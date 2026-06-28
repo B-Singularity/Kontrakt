@@ -1,6 +1,6 @@
 package planning.domain.runtime.lifecycle
 
-import planning.domain.exception.PlanningProtocolIntegrityException
+import stage.lowering.diagnostics.PlanningProtocolIntegrityException
 
 /**
  * Single source of truth for closed top-level lifecycle legality across the Planning L2 runtime.
@@ -50,13 +50,13 @@ object L2LifecycleLaw {
         when (from) {
             SharedSlotState.PENDING ->
                 to == SharedSlotState.SUCCESS ||
-                    to == SharedSlotState.FAILED ||
-                    to == SharedSlotState.DROPPED
+                        to == SharedSlotState.FAILED ||
+                        to == SharedSlotState.DROPPED
 
             SharedSlotState.SUCCESS,
             SharedSlotState.FAILED,
             SharedSlotState.DROPPED,
-            -> false
+                -> false
         }
 
     @JvmStatic
@@ -83,13 +83,13 @@ object L2LifecycleLaw {
         when (from) {
             WaiterState.ATTACHED ->
                 to == WaiterState.RESUMED ||
-                    to == WaiterState.TIMED_OUT ||
-                    to == WaiterState.CANCELLED
+                        to == WaiterState.TIMED_OUT ||
+                        to == WaiterState.CANCELLED
 
             WaiterState.RESUMED,
             WaiterState.TIMED_OUT,
             WaiterState.CANCELLED,
-            -> false
+                -> false
         }
 
     @JvmStatic
@@ -116,11 +116,11 @@ object L2LifecycleLaw {
         when (from) {
             BuilderHandleState.OPEN ->
                 to == BuilderHandleState.COMMITTED ||
-                    to == BuilderHandleState.ABORTED
+                        to == BuilderHandleState.ABORTED
 
             BuilderHandleState.COMMITTED,
             BuilderHandleState.ABORTED,
-            -> false
+                -> false
         }
 
     @JvmStatic
@@ -237,8 +237,8 @@ object L2LifecycleLaw {
     @JvmStatic
     fun isSharedTerminalSignalSource(sharedState: SharedSlotState): Boolean =
         sharedState == SharedSlotState.SUCCESS ||
-            sharedState == SharedSlotState.FAILED ||
-            sharedState == SharedSlotState.DROPPED
+                sharedState == SharedSlotState.FAILED ||
+                sharedState == SharedSlotState.DROPPED
 
     /**
      * Returns true if the waiter terminalization is purely waiter-local and must not
@@ -247,7 +247,7 @@ object L2LifecycleLaw {
     @JvmStatic
     fun isWaiterLocalOnly(waiterTarget: WaiterState): Boolean =
         waiterTarget == WaiterState.TIMED_OUT ||
-            waiterTarget == WaiterState.CANCELLED
+                waiterTarget == WaiterState.CANCELLED
 
     /**
      * Returns true if the waiter terminalization is caused by observation of an
@@ -277,7 +277,7 @@ object L2LifecycleLaw {
 
             WaiterState.TIMED_OUT,
             WaiterState.CANCELLED,
-            ->
+                ->
                 true
         }
 
@@ -319,7 +319,8 @@ object L2LifecycleLaw {
      * of fresh attach admission.
      */
     @JvmStatic
-    fun canRegionAdmitFreshLifecycleWork(regionState: PartitionRegionState): Boolean = regionState == PartitionRegionState.OPEN
+    fun canRegionAdmitFreshLifecycleWork(regionState: PartitionRegionState): Boolean =
+        regionState == PartitionRegionState.OPEN
 
     @JvmStatic
     fun requireRegionOpenForFreshLifecycleWork(regionState: PartitionRegionState) {
@@ -361,8 +362,8 @@ object L2LifecycleLaw {
         sharedState: SharedSlotState,
     ): Boolean =
         builderState == BuilderHandleState.OPEN &&
-            commitRightState == CommitRightState.CLAIMED &&
-            sharedState == SharedSlotState.PENDING
+                commitRightState == CommitRightState.CLAIMED &&
+                sharedState == SharedSlotState.PENDING
 
     @JvmStatic
     fun requireAuthoritativePublicationEntry(
