@@ -4,7 +4,6 @@ import discovery.domain.policy.SpecPolicy
 import discovery.domain.policy.SpecValidator
 import io.github.classgraph.ClassInfo
 import io.github.classgraph.ScanResult
-import kontrakt.ir.TypeId
 import kontrakt.ir.exception.IrProtocolViolationException
 import java.util.TreeSet
 

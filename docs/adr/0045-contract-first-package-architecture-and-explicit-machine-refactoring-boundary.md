@@ -285,6 +285,7 @@ The versioning package shape is:
 
 ```text
 Kontrakt.versioning.coordinate.<role>
+Kontrakt.versioning.coordinate.contract.<frozen|planning|seed>
 ```
 
 A substantial stage may contain role packages such as:
@@ -318,6 +319,13 @@ Compiler-related implementation is treated as realization, but this ADR does not
 Existing compiler-domain code should keep its current domain vocabulary inside the appropriate realization area.
 Planning, execution, runtime, metamodel, identity, graph, and reporting belong under `realization` unless a specific
 type is deliberately promoted into contract authority, a stage-local domain, governance, diagnostics, or publication.
+
+Older DDD, hexagonal, and port vocabulary may remain only when it names implementation machinery without becoming
+authority. The words are not imported as theory. `port` and `state` must not become stable subpackages under
+`realization.execution` because contract-facing ports and explicit state have already been separated into the contract
+axes. Execution may keep implementation terms such as aggregate, factory, service, strategy, orchestration, plan,
+generation, context, or vm when they describe realization mechanics. Those names do not define contract authority and
+must be revised later if they start acting as the single public entry point or legal surface of the machine.
 
 Interceptor-style flow is outside the target architecture. Existing interceptor files are evidence of the old execution
 model and are removal/replacement targets. The first movement pass may keep temporary migration support only where
@@ -485,6 +493,14 @@ A realization package contains machinery used to realize contract authority.
 Metamodel acquisition, identity derivation, graph operations, planning, execution, runtime storage, reporting engines,
 and other compiler-style implementation work belong here unless a later decision promotes a specific piece into an
 authority package or a stage-local domain.
+
+Realization vocabulary is allowed only as implementation vocabulary. DDD and hexagonal terms may appear here when they
+name concrete machinery, but they do not carry their original architectural authority into Kontrakt. `aggregate` may
+remain as implementation grouping if it does not become contract meaning. `port` is not a stable realization package
+because contract surfaces and adapter boundaries have explicit homes. `state` is not a stable execution package because
+explicit state belongs to `statemachine`. If old files use those names, the relocation must split them into stage,
+statemachine, adapter, reporting, runtime support, or temporary migration locations instead of normalizing the old
+vocabulary.
 
 ### 7.13. `adapter`
 
@@ -724,6 +740,10 @@ Kontrakt
 ├── versioning
 │   └── coordinate
 │       ├── contract
+│       │   ├── frozen
+│       │   │   └── image
+│       │   ├── planning
+│       │   └── seed
 │       ├── material
 │       ├── judgment
 │       └── diagnostics
@@ -972,6 +992,11 @@ Target:
 
 ```text
 realization.execution
+realization.execution.context
+realization.execution.mocking
+realization.execution.scenario
+realization.runtime.support
+realization.reporting
 statemachine.transition.contract
 statemachine.transition.judgment
 stage.diagnostic.material
@@ -983,6 +1008,15 @@ adapter.junit
 
 Execution is realization. Result resolution is stage-local judgment. Trace and audit evidence are diagnostics.
 Externally visible reports and results are publication.
+
+`execution.port` is old hexagonal vocabulary and is not a target package. Incoming execution surfaces must move to the
+stage boundary that owns entry. Outgoing reporting surfaces must move to publication, diagnostic, reporting, or adapter
+packages according to what they actually do. Mocking and scenario support may remain under realization as implementation
+machinery, but not as contract-facing ports.
+
+`execution.adapter.state` and similar state-shaped execution packages are not target vocabulary. If the file expresses
+explicit movement legality, it belongs under `statemachine`. If it stores runtime context or thread-local machinery, it
+belongs under realization context or runtime support.
 
 ### 16.6. Runtime and policy
 
@@ -1124,6 +1158,9 @@ Required categories:
    Pipeline-specific contract, material, judgment, diagnostic, and publication types must live under the owning stage.
    Explicit state-machine types must live under the parallel `statemachine` axis. Version-coordinate types must live
    under the parallel `versioning` axis. Promotion to a top-level package requires a separate reason and should be rare.
+
+   `realization.execution.port` and `realization.execution.state` must not be introduced as stable target packages.
+   Existing files with those old names must be split or placed under more precise packages during relocation.
 
 3. **inter-stage acquisition tests**
 
