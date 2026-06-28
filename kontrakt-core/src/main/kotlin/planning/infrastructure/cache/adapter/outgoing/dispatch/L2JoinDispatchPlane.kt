@@ -1,5 +1,6 @@
 package planning.infrastructure.cache.adapter.outgoing.dispatch
 
+import governance.policy.ResolvedDispatchLanePolicy
 import ir.plan.node.CanonicalPlanNode
 import planning.domain.port.outgoing.JoinContinuation
 import planning.domain.port.outgoing.JoinRegistrationDecision
@@ -10,7 +11,6 @@ import planning.infrastructure.cache.adapter.outgoing.dispatch.lifecycle.Deliver
 import planning.infrastructure.cache.adapter.outgoing.dispatch.lifecycle.DispatchLaneState
 import planning.infrastructure.cache.adapter.outgoing.dispatch.lifecycle.DispatchLifecycleLaw
 import planning.infrastructure.exception.PlanningInfrastructureException
-import planning.infrastructure.runtime.policy.ResolvedDispatchLanePolicy
 import planning.infrastructure.runtime.time.MonotonicTimeSource
 import java.util.IdentityHashMap
 import java.util.concurrent.TimeUnit
@@ -395,10 +395,10 @@ internal class DeterministicL2JoinDispatchPlane private constructor(
         fun isQuiescentPublished(): Boolean {
             val snapshot = publishedSnapshot.get()
             return snapshot.commandRingEmpty &&
-                snapshot.readyQueueSize == 0 &&
-                snapshot.activeCallbackCount == 0 &&
-                snapshot.liveOperationalEntryCount == 0 &&
-                snapshot.dirtyShardCount == 0
+                    snapshot.readyQueueSize == 0 &&
+                    snapshot.activeCallbackCount == 0 &&
+                    snapshot.liveOperationalEntryCount == 0 &&
+                    snapshot.dirtyShardCount == 0
         }
 
         fun offerCommand(command: LaneCommand): Boolean {
@@ -580,7 +580,7 @@ internal class DeterministicL2JoinDispatchPlane private constructor(
                     DeliveryEntryState.DONE,
                     DeliveryEntryState.ABANDONED,
                     DeliveryEntryState.EMPTY,
-                    -> Unit
+                        -> Unit
                 }
             }
 
@@ -594,7 +594,7 @@ internal class DeterministicL2JoinDispatchPlane private constructor(
                 DeliveryEntryState.REGISTERED,
                 DeliveryEntryState.SIGNALED,
                 DeliveryEntryState.QUEUED,
-                -> {
+                    -> {
                     DispatchLifecycleLaw.requireCloseAbandonable(entry.state)
                     transitionEntry(entry, DeliveryEntryState.ABANDONED)
                     reclaim(entry)
@@ -604,7 +604,7 @@ internal class DeterministicL2JoinDispatchPlane private constructor(
                 DeliveryEntryState.DONE,
                 DeliveryEntryState.ABANDONED,
                 DeliveryEntryState.EMPTY,
-                -> Unit
+                    -> Unit
             }
         }
 
@@ -739,7 +739,7 @@ internal class DeterministicL2JoinDispatchPlane private constructor(
                     DeliveryEntryState.REGISTERED,
                     DeliveryEntryState.SIGNALED,
                     DeliveryEntryState.QUEUED,
-                    -> {
+                        -> {
                         DispatchLifecycleLaw.requireCloseAbandonable(entry.state)
                         transitionEntry(entry, DeliveryEntryState.ABANDONED)
                         reclaim(entry)
@@ -749,7 +749,7 @@ internal class DeterministicL2JoinDispatchPlane private constructor(
                     DeliveryEntryState.DONE,
                     DeliveryEntryState.ABANDONED,
                     DeliveryEntryState.EMPTY,
-                    -> Unit
+                        -> Unit
                 }
             }
 

@@ -2,13 +2,13 @@ package execution.adapter.runtime
 
 import adapter.file.WorkerTraceSinkPool
 import adapter.jvm.DefaultRuntimeFactory
-import execution.domain.vo.config.ExecutionPolicy
 import execution.port.incoming.KontraktRuntimeFactory
 import execution.port.incoming.KontraktRuntimeFactoryContract
 import execution.port.incoming.TestScenarioExecutor
 import execution.port.outgoing.MockingEngine
 import execution.port.outgoing.ScenarioControl
 import execution.port.outgoing.TestResultPublisher
+import governance.policy.ExecutionPolicy
 import io.mockk.mockk
 import ir.TestSpecification
 import java.time.Clock

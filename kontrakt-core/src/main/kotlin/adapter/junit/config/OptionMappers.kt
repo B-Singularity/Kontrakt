@@ -1,12 +1,12 @@
 package adapter.junit.config
 
 import discovery.domain.vo.ScanScope
-import execution.domain.vo.config.AuditDepth
-import execution.domain.vo.config.AuditPolicy
-import execution.domain.vo.config.DeterminismPolicy
-import execution.domain.vo.config.ExecutionPolicy
-import execution.domain.vo.config.LogRetention
-import execution.domain.vo.config.ResourcePolicy
+import governance.policy.AuditDepth
+import governance.policy.AuditPolicy
+import governance.policy.DeterminismPolicy
+import governance.policy.ExecutionPolicy
+import governance.policy.LogRetention
+import governance.policy.ResourcePolicy
 import reporting.adapter.config.ReportingDirectives
 import java.nio.file.Paths
 

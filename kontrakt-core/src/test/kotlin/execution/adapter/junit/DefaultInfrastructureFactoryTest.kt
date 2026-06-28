@@ -7,8 +7,8 @@ import adapter.console.StandardConsoleLayout
 import adapter.file.WorkerTraceSinkPool
 import adapter.junit.DefaultInfrastructureFactory
 import execution.adapter.reporting.BroadcastingResultPublisher
-import execution.domain.vo.config.AuditPolicy
 import execution.port.outgoing.TestResultPublisher
+import governance.policy.AuditPolicy
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.InstanceOfAssertFactories

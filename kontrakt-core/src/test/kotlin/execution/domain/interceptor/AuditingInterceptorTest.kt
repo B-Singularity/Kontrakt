@@ -2,9 +2,6 @@ package execution.domain.interceptor
 
 import execution.domain.entity.EphemeralTestContext
 import execution.domain.service.VerdictDecider
-import execution.domain.vo.config.AuditDepth
-import execution.domain.vo.config.AuditPolicy
-import execution.domain.vo.config.LogRetention
 import execution.domain.vo.context.WorkerId
 import execution.domain.vo.result.TestResultEvent
 import execution.domain.vo.result.TestStatus
@@ -21,6 +18,9 @@ import execution.port.outgoing.ScenarioInterceptor
 import execution.port.outgoing.ScenarioTrace
 import execution.port.outgoing.TestResultPublisher
 import execution.port.outgoing.TraceSink
+import governance.policy.AuditDepth
+import governance.policy.AuditPolicy
+import governance.policy.LogRetention
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -290,9 +290,9 @@ class AuditingInterceptorTest : ScenarioInterceptorContract {
         every { chain.proceed(any()) } throws exceptionWithNullMessage
 
         every { verdictDecider.decide(exceptionWithNullMessage, any()) } returns
-            TestStatus.ExecutionError(
-                exceptionWithNullMessage,
-            )
+                TestStatus.ExecutionError(
+                    exceptionWithNullMessage,
+                )
 
         assertThatThrownBy {
             sut.intercept(chain)
@@ -302,7 +302,7 @@ class AuditingInterceptorTest : ScenarioInterceptorContract {
             traceSink.emit(
                 match<ExceptionTrace> {
                     it.message == "" &&
-                        it.exceptionType == RuntimeException::class.java.name
+                            it.exceptionType == RuntimeException::class.java.name
                 },
             )
         }

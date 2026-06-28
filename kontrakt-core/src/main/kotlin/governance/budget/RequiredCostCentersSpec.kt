@@ -1,4 +1,4 @@
-package planning.domain.protocol
+package governance.budget
 
 import planning.domain.exception.PlanningProtocolIntegrityException
 

@@ -1,13 +1,9 @@
 package execution.domain.aggregate
 
-import exception.KontraktInternalException
 import adapter.file.WorkerTraceSinkPool
+import exception.KontraktInternalException
 import execution.domain.entity.EphemeralTestContext
 import execution.domain.service.generation.TestInstanceFactory
-import execution.domain.vo.config.AuditDepth
-import execution.domain.vo.config.AuditPolicy
-import execution.domain.vo.config.DeterminismPolicy
-import execution.domain.vo.config.ExecutionPolicy
 import execution.domain.vo.result.ExecutionResult
 import execution.domain.vo.result.TestStatus
 import execution.domain.vo.verification.AssertionRecord
@@ -16,6 +12,10 @@ import execution.domain.vo.verification.AssertionStatus
 import execution.port.incoming.TestScenarioExecutor
 import execution.port.outgoing.TestResultPublisher
 import execution.port.outgoing.TraceSink
+import governance.policy.AuditDepth
+import governance.policy.AuditPolicy
+import governance.policy.DeterminismPolicy
+import governance.policy.ExecutionPolicy
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify

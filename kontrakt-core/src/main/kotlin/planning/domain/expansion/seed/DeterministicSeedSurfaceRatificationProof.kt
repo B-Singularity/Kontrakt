@@ -1,6 +1,7 @@
 package planning.domain.expansion.seed
 
 import planning.domain.exception.TypeExpansionContractViolationException
+import versioning.coordinate.contract.seed.SeedVersionTuple
 
 /**
  * Proof that a DeterministicSeedSurface tuple was accepted by the run

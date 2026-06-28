@@ -1,5 +1,6 @@
 package planning.domain.interner
 
+import governance.budget.CostCenter
 import ir.plan.node.CanonicalPlanNode
 import ir.plan.node.RawCycleBreakPayload
 import ir.plan.node.RawPayloadNode
@@ -7,7 +8,6 @@ import planning.domain.fault.L2FaultKind
 import planning.domain.port.outgoing.BuildHandle
 import planning.domain.port.outgoing.PlanInternRepository
 import planning.domain.port.outgoing.PlanInternStep
-import planning.domain.protocol.CostCenter
 import planning.domain.service.assembly.CanonicalPayloadSealer
 import planning.domain.session.PlannerSession
 import planning.domain.vo.PartitionId

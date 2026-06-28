@@ -1,8 +1,8 @@
 package planning.domain.runtime.orchestration
 
+import governance.policy.ResolvedSessionBudget
 import planning.domain.exception.CapacityExceededException
 import planning.domain.exception.PlanningProtocolIntegrityException
-import planning.domain.session.policy.ResolvedSessionBudget
 
 /**
  * Immutable run-scoped remaining execution budget ledger.
@@ -71,7 +71,7 @@ class PlanningRunRemainingBudget private constructor(
         if (other !is PlanningRunRemainingBudget) return false
 
         return remainingPhysicalSteps == other.remainingPhysicalSteps &&
-            remainingSemanticWorkUnits == other.remainingSemanticWorkUnits
+                remainingSemanticWorkUnits == other.remainingSemanticWorkUnits
     }
 
     override fun hashCode(): Int {

@@ -1,9 +1,6 @@
 package execution.domain.interceptor
 
 import execution.domain.service.VerdictDecider
-import execution.domain.vo.config.AuditDepth
-import execution.domain.vo.config.AuditPolicy
-import execution.domain.vo.config.LogRetention
 import execution.domain.vo.context.WorkerId
 import execution.domain.vo.result.TestResultEvent
 import execution.domain.vo.trace.ExceptionTrace
@@ -15,6 +12,9 @@ import execution.port.outgoing.ScenarioInterceptor
 import execution.port.outgoing.ScenarioTrace
 import execution.port.outgoing.TestResultPublisher
 import execution.port.outgoing.TraceSink
+import governance.policy.AuditDepth
+import governance.policy.AuditPolicy
+import governance.policy.LogRetention
 import java.time.Clock
 import kotlin.math.max
 

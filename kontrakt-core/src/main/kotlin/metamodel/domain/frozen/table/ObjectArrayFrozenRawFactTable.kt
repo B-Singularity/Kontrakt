@@ -3,7 +3,7 @@ package metamodel.domain.frozen.table
 import metamodel.domain.dto.RawTypeFactsDTO
 import metamodel.domain.exception.FrozenMetamodelSequenceIndexOutOfBoundsException
 import metamodel.domain.frozen.image.FrozenMetamodelImageId
-import metamodel.domain.frozen.image.FrozenMetamodelImageSchemaVersion
+import versioning.coordinate.contract.frozen.image.FrozenMetamodelImageSchemaVersion
 
 /**
  * Object-array-backed FrozenRawFactTable.

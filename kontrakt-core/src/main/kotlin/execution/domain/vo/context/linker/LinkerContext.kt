@@ -1,7 +1,7 @@
 package execution.domain.vo.context.linker
 
 import execution.domain.strategy.generation.Generator
-import execution.domain.vo.config.ExecutionPolicy
+import governance.policy.ExecutionPolicy
 
 /**
  * [Context Firewall]

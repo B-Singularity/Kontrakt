@@ -1,11 +1,11 @@
 package planning.domain.interner
 
+import governance.budget.CostCenter
 import planning.domain.fault.L2FaultKind
 import planning.domain.port.outgoing.JoinContinuation
 import planning.domain.port.outgoing.JoinHandle
 import planning.domain.port.outgoing.JoinRegistrationDecision
 import planning.domain.port.outgoing.JoinResumeStep
-import planning.domain.protocol.CostCenter
 import planning.domain.service.assembly.CanonicalPayloadSealer
 import planning.domain.session.PlannerSession
 
@@ -28,7 +28,8 @@ class PendingJoin private constructor(
     /**
      * Registers a continuation for non-blocking completion delivery.
      */
-    fun registerContinuation(continuation: JoinContinuation): JoinRegistrationDecision = handle.registerContinuation(continuation)
+    fun registerContinuation(continuation: JoinContinuation): JoinRegistrationDecision =
+        handle.registerContinuation(continuation)
 
     /**
      * Exposes the monotonic waiter deadline for orchestration / diagnostics.

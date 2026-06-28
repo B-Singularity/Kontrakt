@@ -1,19 +1,19 @@
 package planning.infrastructure.cache.adapter.outgoing
 
+import governance.budget.CostCenter
+import governance.policy.ResolvedDispatchLanePolicy
+import governance.policy.ResolvedJoinGovernance
+import governance.policy.ResolvedStorageGovernance
+import governance.policy.adapter.AdapterAdminLifecycleLaw
+import governance.policy.adapter.AdapterAdminState
 import planning.domain.exception.PlanningProtocolIntegrityException
 import planning.domain.interner.PlanCacheKey
 import planning.domain.port.outgoing.PlanInternRepository
 import planning.domain.port.outgoing.PlanInternStep
-import planning.domain.protocol.CostCenter
 import planning.domain.session.PlannerSession
-import planning.domain.session.policy.ResolvedJoinGovernance
-import planning.domain.session.policy.ResolvedStorageGovernance
 import planning.domain.vo.PartitionId
 import planning.infrastructure.cache.adapter.outgoing.dispatch.DeterministicL2JoinDispatchPlane
 import planning.infrastructure.cache.adapter.outgoing.dispatch.L2JoinDispatchPlane
-import planning.infrastructure.cache.adapter.outgoing.lifecycle.AdapterAdminLifecycleLaw
-import planning.infrastructure.cache.adapter.outgoing.lifecycle.AdapterAdminState
-import planning.infrastructure.runtime.policy.ResolvedDispatchLanePolicy
 import planning.infrastructure.runtime.time.MonotonicTimeSource
 import planning.infrastructure.runtime.time.SystemMonotonicTimeSource
 import java.util.concurrent.TimeUnit
@@ -129,7 +129,7 @@ class InMemoryPlanInternRepositoryAdapter private constructor(
             return when (adminStateAcquire()) {
                 AdapterAdminState.CLOSING,
                 AdapterAdminState.CLOSED,
-                -> false
+                    -> false
 
                 AdapterAdminState.DROP_IN_PROGRESS -> {
                     throw PlanningProtocolIntegrityException(
@@ -184,7 +184,7 @@ class InMemoryPlanInternRepositoryAdapter private constructor(
             when (adminStateAcquire()) {
                 AdapterAdminState.CLOSED,
                 AdapterAdminState.CLOSING,
-                -> return
+                    -> return
 
                 AdapterAdminState.DROP_IN_PROGRESS -> {
                     throw PlanningProtocolIntegrityException(
@@ -357,7 +357,7 @@ class InMemoryPlanInternRepositoryAdapter private constructor(
             if (effectiveLaneCount <= 0 || effectiveLaneCount.countOneBits() != 1) {
                 throw PlanningProtocolIntegrityException(
                     "InMemoryPlanInternRepositoryAdapter.effectiveLaneCount must be a positive power-of-two: " +
-                        effectiveLaneCount,
+                            effectiveLaneCount,
                 )
             }
 
@@ -368,8 +368,8 @@ class InMemoryPlanInternRepositoryAdapter private constructor(
             if (dispatchLanePolicy.deadlineHeapCapacity < minRequiredDeadlineHeapCapacity) {
                 throw PlanningProtocolIntegrityException(
                     "ResolvedDispatchLanePolicy.deadlineHeapCapacity is too small for the maximum lane-owned " +
-                        "registration population: ${dispatchLanePolicy.deadlineHeapCapacity} < " +
-                        minRequiredDeadlineHeapCapacity,
+                            "registration population: ${dispatchLanePolicy.deadlineHeapCapacity} < " +
+                            minRequiredDeadlineHeapCapacity,
                 )
             }
         }

@@ -1,4 +1,4 @@
-package execution.domain.vo.config
+package governance.policy
 
 /**
  * [Domain Enum] Log Retention Policy

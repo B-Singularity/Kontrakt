@@ -2,7 +2,7 @@ package adapter.reflection
 
 import metamodel.domain.exception.MetamodelAdapterAssemblyException
 import metamodel.domain.frozen.image.FrozenMetamodelImageId
-import metamodel.domain.frozen.image.FrozenMetamodelImageSchemaVersion
+import versioning.coordinate.contract.frozen.image.FrozenMetamodelImageSchemaVersion
 import kotlin.reflect.KType
 
 /**

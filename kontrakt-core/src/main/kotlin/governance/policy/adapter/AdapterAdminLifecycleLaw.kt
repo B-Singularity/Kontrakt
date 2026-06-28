@@ -1,4 +1,4 @@
-package planning.infrastructure.cache.adapter.outgoing.lifecycle
+package governance.policy.adapter
 
 import planning.domain.exception.PlanningProtocolIntegrityException
 
@@ -17,7 +17,7 @@ internal object AdapterAdminLifecycleLaw {
         when (from) {
             AdapterAdminState.OPEN ->
                 to == AdapterAdminState.DROP_IN_PROGRESS ||
-                    to == AdapterAdminState.CLOSING
+                        to == AdapterAdminState.CLOSING
 
             AdapterAdminState.DROP_IN_PROGRESS ->
                 to == AdapterAdminState.OPEN

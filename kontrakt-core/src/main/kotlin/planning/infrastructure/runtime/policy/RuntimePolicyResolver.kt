@@ -1,6 +1,7 @@
 package planning.infrastructure.runtime.policy
 
-import planning.domain.session.policy.ResolvedRuntimePolicy
+import governance.policy.ResolvedRuntimePolicy
+import governance.policy.ResourceProfile
 
 /**
  * Resolves a new immutable runtime policy snapshot from:

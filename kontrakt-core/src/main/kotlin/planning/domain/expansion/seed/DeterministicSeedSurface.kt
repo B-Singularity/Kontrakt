@@ -1,5 +1,7 @@
 package planning.domain.expansion.seed
 
+import versioning.coordinate.contract.seed.SeedVersionTuple
+
 /**
  * Run-ratified deterministic seed surface.
  *

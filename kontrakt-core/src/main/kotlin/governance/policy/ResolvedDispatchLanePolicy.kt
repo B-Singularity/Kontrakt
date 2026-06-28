@@ -1,4 +1,4 @@
-package planning.infrastructure.runtime.policy
+package governance.policy
 
 import planning.domain.exception.PlanningProtocolIntegrityException
 
@@ -66,36 +66,36 @@ class ResolvedDispatchLanePolicy private constructor(
             if (commandBatchBudget > commandRingCapacity) {
                 throw PlanningProtocolIntegrityException(
                     "ResolvedDispatchLanePolicy.commandBatchBudget must be <= commandRingCapacity: " +
-                        "$commandBatchBudget > $commandRingCapacity",
+                            "$commandBatchBudget > $commandRingCapacity",
                 )
             }
 
             if (deliveryBatchBudget > readyQueueCapacity) {
                 throw PlanningProtocolIntegrityException(
                     "ResolvedDispatchLanePolicy.deliveryBatchBudget must be <= readyQueueCapacity: " +
-                        "$deliveryBatchBudget > $readyQueueCapacity",
+                            "$deliveryBatchBudget > $readyQueueCapacity",
                 )
             }
 
             if (replayBatchBudgetPerShard > registrationStoreCapacityPerShard) {
                 throw PlanningProtocolIntegrityException(
                     "ResolvedDispatchLanePolicy.replayBatchBudgetPerShard must be <= " +
-                        "registrationStoreCapacityPerShard: " +
-                        "$replayBatchBudgetPerShard > $registrationStoreCapacityPerShard",
+                            "registrationStoreCapacityPerShard: " +
+                            "$replayBatchBudgetPerShard > $registrationStoreCapacityPerShard",
                 )
             }
 
             if (partitionDropQuiescenceTimeoutNanos <= 0L) {
                 throw PlanningProtocolIntegrityException(
                     "ResolvedDispatchLanePolicy.partitionDropQuiescenceTimeoutNanos must be > 0: " +
-                        partitionDropQuiescenceTimeoutNanos,
+                            partitionDropQuiescenceTimeoutNanos,
                 )
             }
 
             if (adapterCloseQuiescenceTimeoutNanos <= 0L) {
                 throw PlanningProtocolIntegrityException(
                     "ResolvedDispatchLanePolicy.adapterCloseQuiescenceTimeoutNanos must be > 0: " +
-                        adapterCloseQuiescenceTimeoutNanos,
+                            adapterCloseQuiescenceTimeoutNanos,
                 )
             }
 

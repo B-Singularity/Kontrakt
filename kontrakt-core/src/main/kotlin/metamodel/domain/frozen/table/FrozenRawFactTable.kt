@@ -1,7 +1,7 @@
 package metamodel.domain.frozen.table
 
 import metamodel.domain.dto.RawTypeFactsDTO
-import metamodel.domain.frozen.image.FrozenMetamodelImageSchemaVersion
+import versioning.coordinate.contract.frozen.image.FrozenMetamodelImageSchemaVersion
 
 /**
  * Frozen raw fact table.

@@ -1,5 +1,6 @@
 package planning.domain.service
 
+import governance.budget.CostCenter
 import metamodel.domain.dto.MemberFact
 import metamodel.domain.vo.TypeReference
 import metamodel.port.outgoing.NormalizationEngine
@@ -19,7 +20,6 @@ import planning.domain.interner.InternerStepResult
 import planning.domain.interner.PlanInterner
 import planning.domain.interner.PlanKeyFactory
 import planning.domain.projection.CapabilityProfile
-import planning.domain.protocol.CostCenter
 import planning.domain.protocol.TraversalDisposition
 import planning.domain.runtime.CommittedPlanNode
 import planning.domain.service.assembly.CycleBreakPayloadAssembler
@@ -498,8 +498,8 @@ class StructuralPlannerCore private constructor(
             is InternerStepResult.SuspendedOnJoin -> {
                 throw PlanningProtocolIntegrityException(
                     "StructuralPlannerCore encountered InternerStepResult.SuspendedOnJoin during ${site.diagnosticLabel} " +
-                        "before runtime-boundary orchestration uplift. Phase 7 must route this through " +
-                        "PlanningRunContext / PlanningRunJoinBridge instead of forcing immediate completion.",
+                            "before runtime-boundary orchestration uplift. Phase 7 must route this through " +
+                            "PlanningRunContext / PlanningRunJoinBridge instead of forcing immediate completion.",
                 )
             }
         }

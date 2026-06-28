@@ -1,4 +1,4 @@
-package planning.domain.session.policy
+package governance.policy
 
 import planning.domain.exception.PlanningProtocolIntegrityException
 

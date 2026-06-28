@@ -1,6 +1,6 @@
 package planning.infrastructure.cache.adapter.outgoing
 
-import planning.domain.session.policy.ResolvedJoinGovernance
+import governance.policy.ResolvedJoinGovernance
 
 /**
  * Adapter-local immutable bridge for join/wait governance.

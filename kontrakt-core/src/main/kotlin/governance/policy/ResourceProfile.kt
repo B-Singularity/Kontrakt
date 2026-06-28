@@ -1,4 +1,4 @@
-package planning.infrastructure.runtime.policy
+package governance.policy
 
 /**
  * High-level external control surface for runtime policy resolution.

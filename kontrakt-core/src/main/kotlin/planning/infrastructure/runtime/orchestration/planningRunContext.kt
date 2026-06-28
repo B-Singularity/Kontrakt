@@ -1,5 +1,6 @@
 package planning.infrastructure.runtime.orchestration
 
+import governance.policy.RuntimePolicyEpoch
 import planning.domain.exception.CapacityExceededException
 import planning.domain.exception.PlanningProtocolIntegrityException
 import planning.domain.runtime.lifecycle.PlanningRunLifecycleLaw
@@ -7,7 +8,6 @@ import planning.domain.runtime.lifecycle.PlanningRunState
 import planning.domain.runtime.orchestration.PlanningResumePoint
 import planning.domain.runtime.orchestration.PlanningRunEpoch
 import planning.domain.runtime.orchestration.PlanningRunRemainingBudget
-import planning.infrastructure.runtime.policy.RuntimePolicyEpoch
 
 /**
  * Runtime-boundary aggregate owning one logical end-to-end planning run.
@@ -351,7 +351,7 @@ class PlanningRunContext private constructor(
 
             PlanningRunState.SUSPENDED_ON_JOIN,
             PlanningRunState.READY_TO_RESTART,
-            -> {
+                -> {
                 if (activeLease != null) {
                     throw PlanningProtocolIntegrityException(
                         "$state -> $targetState must not receive an active worker-session lease.",
@@ -374,7 +374,7 @@ class PlanningRunContext private constructor(
             PlanningRunState.COMPLETED,
             PlanningRunState.ABORTED,
             PlanningRunState.PANIC_ISOLATED,
-            -> {
+                -> {
                 throw PlanningProtocolIntegrityException(
                     "Cannot terminate terminal planning-run state: $state",
                 )
@@ -484,7 +484,7 @@ class PlanningRunContext private constructor(
 
             PlanningRunState.SUSPENDED_ON_JOIN,
             PlanningRunState.READY_TO_RESTART,
-            -> {
+                -> {
                 if (activeWorkerSessionLease != null) {
                     throw PlanningProtocolIntegrityException(
                         "$state PlanningRunContext must not retain an active worker-session lease.",
@@ -522,7 +522,7 @@ class PlanningRunContext private constructor(
 
             PlanningRunState.ABORTED,
             PlanningRunState.PANIC_ISOLATED,
-            -> {
+                -> {
                 if (activeWorkerSessionLease != null) {
                     throw PlanningProtocolIntegrityException(
                         "$state PlanningRunContext must not retain an active worker-session lease.",

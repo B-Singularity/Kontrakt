@@ -1,6 +1,6 @@
 package planning.domain.expansion
 
-import planning.domain.protocol.CostCenter
+import governance.budget.CostCenter
 
 /**
  * Single mapping authority from TypeExpansionWorkEvent to CostCenter.

@@ -1,7 +1,6 @@
-package planning.infrastructure.runtime.policy
+package governance.policy
 
 import planning.domain.exception.PlanningProtocolIntegrityException
-import planning.domain.session.policy.ResolvedRuntimePolicy
 
 /**
  * Immutable runtime-policy snapshot tagged with a monotonic epoch identifier.

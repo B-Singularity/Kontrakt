@@ -1,7 +1,7 @@
 package metamodel.domain.frozen.table
 
-import metamodel.domain.frozen.image.FrozenMetamodelImageSchemaVersion
 import planning.domain.expansion.TypeCycleIdentity
+import versioning.coordinate.contract.frozen.image.FrozenMetamodelImageSchemaVersion
 
 /**
  * Frozen type cycle-identity table.

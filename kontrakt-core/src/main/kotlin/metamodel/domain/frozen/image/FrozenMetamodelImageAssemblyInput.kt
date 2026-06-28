@@ -3,6 +3,7 @@ package metamodel.domain.frozen.image
 import metamodel.domain.exception.FrozenMetamodelSequenceViolationException
 import metamodel.domain.frozen.table.FrozenMetamodelImageTableId
 import metamodel.domain.vo.TypeReference
+import versioning.coordinate.contract.frozen.image.FrozenMetamodelImageSchemaVersion
 
 /**
  * Immutable command object for frozen metamodel image assembly.

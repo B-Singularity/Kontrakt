@@ -1,10 +1,10 @@
 package planning.domain.session
 
+import governance.budget.CostCenter
+import governance.policy.ResolvedPlannerSessionCaps
 import kontrakt.planning.domain.protocol.PrimitiveHash
 import planning.domain.exception.PlanningProtocolException
 import planning.domain.exception.PlanningProtocolIntegrityException
-import planning.domain.protocol.CostCenter
-import planning.domain.session.policy.ResolvedPlannerSessionCaps
 
 /**
  * Worker-local primitive two-phase identity indexer.
@@ -169,7 +169,7 @@ internal class NodeIdIndexer private constructor(
 
                     val oldKey =
                         ((oldKeyHigh.toLong() and UINT32_MASK) shl 32) or
-                            (oldKeyLow.toLong() and UINT32_MASK)
+                                (oldKeyLow.toLong() and UINT32_MASK)
 
                     tableHeads[slot] = oldHead
                     tableStamps[slot] = oldStamp
@@ -521,7 +521,7 @@ internal class NodeIdIndexer private constructor(
             if (maxSignatureLen > caps.maxSignatureBytes) {
                 throw PlanningProtocolIntegrityException(
                     "NodeIdIndexer.maxSignatureLen must be <= caps.maxSignatureBytes: " +
-                        "maxSignatureLen=$maxSignatureLen, maxSignatureBytes=${caps.maxSignatureBytes}",
+                            "maxSignatureLen=$maxSignatureLen, maxSignatureBytes=${caps.maxSignatureBytes}",
                 )
             }
 

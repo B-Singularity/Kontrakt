@@ -1,10 +1,10 @@
 package adapter.console
 
-import execution.domain.vo.config.AuditDepth
-import execution.domain.vo.config.AuditPolicy
-import execution.domain.vo.config.LogRetention
 import execution.domain.vo.result.TestResultEvent
 import execution.domain.vo.result.TestStatus
+import governance.policy.AuditDepth
+import governance.policy.AuditPolicy
+import governance.policy.LogRetention
 
 /**
  * [View] Console Layout Strategy

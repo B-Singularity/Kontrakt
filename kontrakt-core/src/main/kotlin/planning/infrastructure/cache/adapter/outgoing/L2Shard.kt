@@ -1,5 +1,6 @@
 package planning.infrastructure.cache.adapter.outgoing
 
+import governance.budget.CostCenter
 import ir.plan.node.CanonicalPlanNode
 import planning.domain.exception.PlanningProtocolIntegrityException
 import planning.domain.fault.L2FaultKind
@@ -10,7 +11,6 @@ import planning.domain.port.outgoing.JoinHandle
 import planning.domain.port.outgoing.JoinRegistrationDecision
 import planning.domain.port.outgoing.JoinResumeStep
 import planning.domain.port.outgoing.PlanInternStep
-import planning.domain.protocol.CostCenter
 import planning.domain.session.PlannerSession
 import planning.infrastructure.cache.BuilderHandleCell
 import planning.infrastructure.cache.BuilderHandleRegisterDecision

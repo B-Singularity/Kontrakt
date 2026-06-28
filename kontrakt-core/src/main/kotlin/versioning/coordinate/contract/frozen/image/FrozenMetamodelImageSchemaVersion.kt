@@ -1,4 +1,4 @@
-package metamodel.domain.frozen.image
+package versioning.coordinate.contract.frozen.image
 
 import metamodel.domain.protocol.MetamodelProtocolTextGuards
 

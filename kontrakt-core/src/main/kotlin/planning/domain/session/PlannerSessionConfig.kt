@@ -1,8 +1,9 @@
 package planning.domain.session
 
+import governance.policy.ResolvedPlannerSessionCaps
+import governance.policy.ResolvedSessionBudget
 import planning.domain.exception.PlanningProtocolIntegrityException
-import planning.domain.session.policy.ResolvedPlannerSessionCaps
-import planning.domain.session.policy.ResolvedSessionBudget
+import versioning.coordinate.contract.planning.PlannerVersionBundle
 
 /**
  * Lean core runtime configuration for PlannerSession.
@@ -49,8 +50,8 @@ class PlannerSessionConfig private constructor(
             if (caps.maxSignatureBytes < budget.maxSignatureLen) {
                 throw PlanningProtocolIntegrityException(
                     "PlannerSessionConfig slab contract violated: " +
-                        "caps.maxSignatureBytes (${caps.maxSignatureBytes}) < " +
-                        "budget.maxSignatureLen (${budget.maxSignatureLen})",
+                            "caps.maxSignatureBytes (${caps.maxSignatureBytes}) < " +
+                            "budget.maxSignatureLen (${budget.maxSignatureLen})",
                 )
             }
             if (caps.structBudgetBytes <= 0L) {

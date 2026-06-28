@@ -1,6 +1,6 @@
 package planning.domain.session
 
-import planning.domain.protocol.CostCenter
+import governance.budget.CostCenter
 
 /**
  * [Kernel Port] Minimal internal callback surface for L1 primitives.

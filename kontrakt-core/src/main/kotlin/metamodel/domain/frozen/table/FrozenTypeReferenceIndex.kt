@@ -1,8 +1,8 @@
 package metamodel.domain.frozen.table
 
-import metamodel.domain.frozen.image.FrozenMetamodelImageSchemaVersion
 import metamodel.domain.frozen.table.FrozenTypeReferenceIndex.Companion.MISSING_ORDINAL
 import metamodel.domain.vo.TypeReference
+import versioning.coordinate.contract.frozen.image.FrozenMetamodelImageSchemaVersion
 
 /**
  * Frozen TypeReference index.

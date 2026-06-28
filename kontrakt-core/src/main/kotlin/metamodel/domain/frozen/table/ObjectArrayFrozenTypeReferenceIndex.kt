@@ -3,10 +3,10 @@ package metamodel.domain.frozen.table
 import metamodel.domain.exception.FrozenMetamodelSequenceIndexOutOfBoundsException
 import metamodel.domain.exception.FrozenMetamodelSequenceViolationException
 import metamodel.domain.frozen.image.FrozenMetamodelImageId
-import metamodel.domain.frozen.image.FrozenMetamodelImageSchemaVersion
 import metamodel.domain.frozen.order.FrozenTypeReferenceOrder
 import metamodel.domain.frozen.sequence.FrozenSequenceSorter
 import metamodel.domain.vo.TypeReference
+import versioning.coordinate.contract.frozen.image.FrozenMetamodelImageSchemaVersion
 
 /**
  * Object-array-backed frozen TypeReference index.

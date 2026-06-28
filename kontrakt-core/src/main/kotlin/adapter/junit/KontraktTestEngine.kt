@@ -13,11 +13,11 @@ import discovery.domain.vo.ScanScope
 import exception.KontraktInternalException
 import execution.adapter.state.ThreadLocalScenarioControl
 import execution.domain.factory.ExecutionEnvironmentFactory
-import execution.domain.vo.config.ExecutionPolicy
 import execution.domain.vo.result.TestResult
 import execution.domain.vo.result.TestStatus
 import execution.port.incoming.KontraktRuntimeFactory
 import execution.port.outgoing.TestResultPublisher
+import governance.policy.ExecutionPolicy
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.runBlocking
 import org.junit.platform.engine.EngineDiscoveryRequest

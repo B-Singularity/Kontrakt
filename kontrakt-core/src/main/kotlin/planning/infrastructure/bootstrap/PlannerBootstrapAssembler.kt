@@ -1,11 +1,11 @@
 package planning.infrastructure.bootstrap
 
+import governance.policy.PlannerCapacityResolver
 import planning.domain.session.PlannerSessionConfig
-import planning.domain.session.PlannerVersionBundle
-import planning.domain.session.policy.PlannerCapacityResolver
 import planning.infrastructure.cache.adapter.outgoing.L2GovernanceConfig
 import planning.infrastructure.cache.adapter.outgoing.L2StorageGovernanceConfig
 import planning.infrastructure.runtime.policy.RuntimePolicyRegistry
+import versioning.coordinate.contract.planning.PlannerVersionBundle
 
 /**
  * Runtime-boundary assembler that:

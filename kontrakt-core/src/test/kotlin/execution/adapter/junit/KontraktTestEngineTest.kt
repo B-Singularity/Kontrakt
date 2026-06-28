@@ -13,12 +13,12 @@ import discovery.domain.vo.ScanScope
 import execution.adapter.state.ThreadLocalScenarioControl
 import execution.domain.aggregate.TestExecution
 import execution.domain.factory.ExecutionEnvironmentFactory
-import execution.domain.vo.config.AuditPolicy
 import execution.domain.vo.context.ExecutionEnvironment
 import execution.domain.vo.result.TestResult
 import execution.domain.vo.result.TestStatus
 import execution.port.incoming.TestScenarioExecutor
 import execution.port.outgoing.TestResultPublisher
+import governance.policy.AuditPolicy
 import io.mockk.Runs
 import io.mockk.clearAllMocks
 import io.mockk.coEvery

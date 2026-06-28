@@ -1,4 +1,4 @@
-package planning.infrastructure.cache.adapter.outgoing.lifecycle
+package governance.policy.adapter
 
 import planning.domain.exception.PlanningProtocolIntegrityException
 import kotlin.enums.EnumEntries

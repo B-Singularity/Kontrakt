@@ -1,9 +1,10 @@
 package planning.infrastructure.runtime.policy
 
-import planning.domain.session.policy.ResolvedJoinGovernance
-import planning.domain.session.policy.ResolvedRuntimePolicy
-import planning.domain.session.policy.ResolvedSessionBudget
-import planning.domain.session.policy.ResolvedStorageGovernance
+import governance.policy.ResolvedJoinGovernance
+import governance.policy.ResolvedRuntimePolicy
+import governance.policy.ResolvedSessionBudget
+import governance.policy.ResolvedStorageGovernance
+import governance.policy.ResourceProfile
 
 /**
  * Official v1 bootstrap runtime-policy resolver.

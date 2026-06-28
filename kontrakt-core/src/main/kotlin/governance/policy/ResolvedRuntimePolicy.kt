@@ -1,4 +1,4 @@
-package planning.domain.session.policy
+package governance.policy
 
 /**
  * Top-level immutable runtime-policy snapshot pinned at session start.

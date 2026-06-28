@@ -1,14 +1,12 @@
 package execution.domain.aggregate
 
+import adapter.file.WorkerTraceSinkPool
 import common.util.unwrapped
 import exception.KontraktInternalException
-import adapter.file.WorkerTraceSinkPool
 import execution.domain.interceptor.AuditingInterceptor
 import execution.domain.interceptor.ResultResolverInterceptor
 import execution.domain.service.generation.TestInstanceFactory
 import execution.domain.service.orchestration.ScenarioExecutionChain
-import execution.domain.vo.config.AuditDepth
-import execution.domain.vo.config.ExecutionPolicy
 import execution.domain.vo.context.WorkerId
 import execution.domain.vo.result.TestResult
 import execution.domain.vo.result.TestStatus
@@ -16,6 +14,8 @@ import execution.domain.vo.verification.AssertionRecord
 import execution.domain.vo.verification.AssertionStatus
 import execution.port.incoming.TestScenarioExecutor
 import execution.port.outgoing.TestResultPublisher
+import governance.policy.AuditDepth
+import governance.policy.ExecutionPolicy
 import io.github.oshai.kotlinlogging.KotlinLogging
 import ir.TestSpecification
 import java.time.Clock

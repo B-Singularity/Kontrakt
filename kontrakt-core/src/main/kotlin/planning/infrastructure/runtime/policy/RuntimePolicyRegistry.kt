@@ -1,5 +1,6 @@
 package planning.infrastructure.runtime.policy
 
+import governance.policy.RuntimePolicyEpoch
 import planning.domain.exception.PlanningProtocolIntegrityException
 import java.util.concurrent.atomic.AtomicReference
 
@@ -33,7 +34,7 @@ class RuntimePolicyRegistry(
         if (next.id < previous.id) {
             throw PlanningProtocolIntegrityException(
                 "RuntimePolicyEpoch integrity violation: attempted to install stale epoch. " +
-                    "current=${previous.id}, rejected=${next.id}",
+                        "current=${previous.id}, rejected=${next.id}",
             )
         }
 
@@ -44,7 +45,7 @@ class RuntimePolicyRegistry(
 
             throw PlanningProtocolIntegrityException(
                 "RuntimePolicyEpoch integrity violation: same epoch id carries a different payload. " +
-                    "id=${next.id}",
+                        "id=${next.id}",
             )
         }
 

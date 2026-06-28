@@ -1,4 +1,4 @@
-package planning.domain.session.policy
+package governance.policy
 
 /**
  * Deterministic solver that translates resolved numeric budget into concrete L1 caps.

@@ -1,5 +1,6 @@
 package planning.domain.interner
 
+import governance.budget.CostCenter
 import ir.identity.CanonicalIdentifier
 import ir.identity.CanonicalSignature
 import kontrakt.planning.domain.protocol.HashInputEncodingSpec
@@ -7,7 +8,6 @@ import kontrakt.planning.domain.protocol.PrimitiveHash
 import kontrakt.planning.domain.protocol.SentinelRemapper
 import planning.domain.exception.EnvironmentIntegrityException
 import planning.domain.exception.SentinelIntegrityException
-import planning.domain.protocol.CostCenter
 import planning.domain.session.PlannerSession
 import planning.domain.vo.PartitionId
 
@@ -87,7 +87,8 @@ class PlanKeyFactory private constructor(
         return nonMax
     }
 
-    private fun lowerPartitionId(partitionId: PartitionId): CanonicalIdentifier = CanonicalIdentifier.Companion.issue(partitionId.value)
+    private fun lowerPartitionId(partitionId: PartitionId): CanonicalIdentifier =
+        CanonicalIdentifier.Companion.issue(partitionId.value)
 
     private fun wrapLengthPrefix(bytes: ByteArray): ByteArray {
         val result = ByteArray(Int.SIZE_BYTES + bytes.size)
@@ -107,7 +108,7 @@ class PlanKeyFactory private constructor(
         if (sessionVersion != encodingSpec.normalizationSpecVersion) {
             throw EnvironmentIntegrityException(
                 "Normalization version mismatch: session=$sessionVersion, " +
-                    "encodingSpec=${encodingSpec.normalizationSpecVersion}",
+                        "encodingSpec=${encodingSpec.normalizationSpecVersion}",
             )
         }
     }

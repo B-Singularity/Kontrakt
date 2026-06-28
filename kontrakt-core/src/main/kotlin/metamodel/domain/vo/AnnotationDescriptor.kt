@@ -1,7 +1,7 @@
 package metamodel.domain.vo
 
+import governance.budget.DiagnosticBudget
 import metamodel.domain.exception.MetamodelFactContractViolationException
-import metamodel.domain.protocol.DiagnosticBudget
 import metamodel.domain.protocol.MetamodelProtocolOrdering
 
 /**

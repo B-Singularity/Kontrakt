@@ -1,4 +1,4 @@
-package metamodel.domain.protocol
+package governance.budget
 
 /**
  * Small bounded string rendering helper for metamodel diagnostics.

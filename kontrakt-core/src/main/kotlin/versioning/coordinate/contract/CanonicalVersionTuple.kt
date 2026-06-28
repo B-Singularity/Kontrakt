@@ -1,4 +1,4 @@
-package planning.domain.canonical
+package versioning.coordinate.contract
 
 import planning.domain.canonical.text.CanonicalTextLaw
 

@@ -11,6 +11,7 @@ import metamodel.domain.frozen.table.FrozenTypeReferenceIndex
 import metamodel.domain.frozen.table.FrozenTypeShapeTable
 import metamodel.domain.vo.TypeReference
 import planning.domain.expansion.TypeCycleIdentity
+import versioning.coordinate.contract.frozen.image.FrozenMetamodelImageSchemaVersion
 
 /**
  * Freeze-final integrity validator.

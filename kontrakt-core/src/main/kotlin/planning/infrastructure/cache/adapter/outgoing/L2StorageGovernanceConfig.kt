@@ -1,6 +1,6 @@
 package planning.infrastructure.cache.adapter.outgoing
 
-import planning.domain.session.policy.ResolvedStorageGovernance
+import governance.policy.ResolvedStorageGovernance
 
 /**
  * Adapter-local immutable bridge for L2 storage governance.

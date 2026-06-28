@@ -1,4 +1,4 @@
-package planning.domain.session
+package versioning.coordinate.contract.planning
 
 import planning.domain.exception.PlanningProtocolIntegrityException
 

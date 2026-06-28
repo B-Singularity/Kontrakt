@@ -4,6 +4,7 @@ import metamodel.domain.frozen.table.FrozenRawFactTable
 import metamodel.domain.frozen.table.FrozenTypeCycleIdentityTable
 import metamodel.domain.frozen.table.FrozenTypeReferenceIndex
 import metamodel.domain.frozen.table.FrozenTypeShapeTable
+import versioning.coordinate.contract.frozen.image.FrozenMetamodelImageSchemaVersion
 
 /**
  * Immutable adapter-neutral metamodel image.

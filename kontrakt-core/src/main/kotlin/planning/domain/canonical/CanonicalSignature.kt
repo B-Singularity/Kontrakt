@@ -2,6 +2,7 @@ package planning.domain.canonical
 
 import planning.domain.exception.CanonicalContractViolationException
 import planning.domain.exception.CanonicalVersionMismatchException
+import versioning.coordinate.contract.CanonicalVersionTuple
 
 /**
  * Version-aware canonical signature.

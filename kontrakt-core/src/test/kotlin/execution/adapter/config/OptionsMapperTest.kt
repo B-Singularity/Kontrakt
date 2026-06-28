@@ -5,8 +5,8 @@ import adapter.junit.config.toDiscoveryPolicy
 import adapter.junit.config.toExecutionPolicy
 import adapter.junit.config.toReportingDirectives
 import discovery.domain.vo.ScanScope
-import execution.domain.vo.config.AuditDepth
-import execution.domain.vo.config.LogRetention
+import governance.policy.AuditDepth
+import governance.policy.LogRetention
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
