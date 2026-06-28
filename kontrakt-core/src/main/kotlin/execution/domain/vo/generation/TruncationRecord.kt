@@ -1,8 +1,8 @@
 package execution.domain.vo.generation
 
-import execution.domain.vo.trace.TraceEvent
-import execution.domain.vo.trace.TracePhase
 import ir.EdgeModel
+import stage.diagnostic.evidence.TraceEvent
+import stage.diagnostic.evidence.TracePhase
 
 /**
  * [Trace Event] Records a decision made to truncate a recursive cycle.

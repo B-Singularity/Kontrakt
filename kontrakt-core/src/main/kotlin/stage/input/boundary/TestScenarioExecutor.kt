@@ -1,13 +1,13 @@
 package stage.input.boundary
 
 import execution.domain.entity.EphemeralTestContext
-import execution.domain.vo.result.ExecutionResult
+import stage.publication.material.ExecutionResult
 
 /**
  * [API] Test Scenario Executor.
  *
  * Defines the contract for executing a specific test strategy (e.g., User Scenario, Contract Fuzzing).
- * Implementations must return an [execution.domain.vo.result.ExecutionResult] containing both the assertion records
+ * Implementations must return an [ExecutionResult] containing both the assertion records
  * and the arguments used during execution to ensure transparency.
  */
 interface TestScenarioExecutor {

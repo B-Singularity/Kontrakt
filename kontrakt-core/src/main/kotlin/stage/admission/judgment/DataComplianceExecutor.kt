@@ -4,11 +4,11 @@ import common.util.unwrapped
 import execution.domain.entity.EphemeralTestContext
 import execution.domain.service.generation.FixtureGenerator
 import execution.domain.vo.context.generation.GenerationContext
-import execution.domain.vo.result.DataComplianceResult
-import execution.domain.vo.verification.AssertionRecord
-import execution.domain.vo.verification.AssertionStatus
-import execution.domain.vo.verification.DataContractRule
-import execution.domain.vo.verification.SourceLocation
+import stage.invariant.judgment.AssertionRecord
+import stage.invariant.judgment.AssertionStatus
+import stage.invariant.judgment.DataContractRule
+import stage.invariant.judgment.SourceLocation
+import stage.publication.material.DataComplianceResult
 import kotlin.reflect.KFunction
 import kotlin.reflect.full.primaryConstructor
 

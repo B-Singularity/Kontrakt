@@ -1,4 +1,4 @@
-package exception
+package stage.diagnostic.material
 
 import exception.safety.PayloadSanitizer
 

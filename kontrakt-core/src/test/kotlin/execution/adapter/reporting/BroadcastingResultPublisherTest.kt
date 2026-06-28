@@ -1,7 +1,6 @@
 package execution.adapter.reporting
 
 import exception.KontraktInternalException
-import execution.domain.vo.result.TestResultEvent
 import execution.port.outgoing.TestResultPublisher
 import io.mockk.confirmVerified
 import io.mockk.every
@@ -11,6 +10,7 @@ import io.mockk.runs
 import io.mockk.verify
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
+import stage.publication.material.TestResultEvent
 
 class BroadcastingResultPublisherTest {
     private val publisher1 = mockk<TestResultPublisher>(name = "Publisher1", relaxed = true)
@@ -102,7 +102,7 @@ class BroadcastingResultPublisherTest {
                 any(),
                 match {
                     it is KontraktInternalException &&
-                        it.message!!.contains("failed during 'close'")
+                            it.message!!.contains("failed during 'close'")
                 },
             )
         }

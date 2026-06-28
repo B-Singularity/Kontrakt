@@ -1,9 +1,12 @@
 package exception
 
-import execution.domain.vo.verification.AssertionRule
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import stage.diagnostic.material.ContractViolationException
+import stage.diagnostic.material.KontraktConfigurationException
+import stage.diagnostic.material.KontraktException
+import stage.invariant.judgment.AssertionRule
 
 class KontraktExceptionTest {
     // -- Base Exception (Direct Instantiation for 100% Coverage) --

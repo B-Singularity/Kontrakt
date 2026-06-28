@@ -1,6 +1,6 @@
 package execution.domain.vo.context.generation
 
-import execution.port.outgoing.TraceSink
+import stage.diagnostic.evidence.TraceSink
 import java.time.Clock
 import kotlin.random.Random
 

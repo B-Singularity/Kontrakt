@@ -1,7 +1,7 @@
-package execution.domain.vo.trace
+package stage.diagnostic.evidence
 
-import execution.domain.vo.verification.AssertionRecord
-import execution.domain.vo.verification.AssertionStatus
+import stage.invariant.judgment.AssertionRecord
+import stage.invariant.judgment.AssertionStatus
 
 data class VerificationTrace(
     val records: List<AssertionRecord>,

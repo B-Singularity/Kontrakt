@@ -1,4 +1,4 @@
-package reporting.adapter.config
+package stage.publication.claim
 
 /**
  * [Configuration] Supported Report Formats

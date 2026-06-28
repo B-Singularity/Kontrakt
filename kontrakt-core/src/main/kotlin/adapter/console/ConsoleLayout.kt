@@ -1,10 +1,10 @@
 package adapter.console
 
-import execution.domain.vo.result.TestResultEvent
-import execution.domain.vo.result.TestStatus
 import governance.policy.AuditDepth
 import governance.policy.AuditPolicy
 import governance.policy.LogRetention
+import stage.publication.material.TestResultEvent
+import stage.publication.material.TestStatus
 
 /**
  * [View] Console Layout Strategy

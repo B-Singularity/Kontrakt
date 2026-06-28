@@ -3,8 +3,8 @@ package execution.domain.entity
 import exception.KontraktInternalException
 import execution.port.outgoing.MockingEngine
 import execution.port.outgoing.ScenarioControl
-import execution.port.outgoing.ScenarioTrace
 import ir.TestSpecification
+import stage.diagnostic.evidence.ScenarioTrace
 import java.lang.reflect.Method
 import kotlin.reflect.KClass
 

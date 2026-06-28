@@ -4,11 +4,11 @@ import common.util.unwrapped
 import execution.domain.entity.EphemeralTestContext
 import execution.domain.service.generation.FixtureGenerator
 import execution.domain.vo.context.generation.GenerationContext
-import execution.domain.vo.verification.AssertionRecord
-import execution.domain.vo.verification.AssertionStatus
-import execution.domain.vo.verification.ConstructorSanityRule
-import execution.domain.vo.verification.DefensiveCheckRule
-import execution.domain.vo.verification.SourceLocation
+import stage.invariant.judgment.AssertionRecord
+import stage.invariant.judgment.AssertionStatus
+import stage.invariant.judgment.ConstructorSanityRule
+import stage.invariant.judgment.DefensiveCheckRule
+import stage.invariant.judgment.SourceLocation
 import kotlin.reflect.KFunction
 import kotlin.reflect.full.primaryConstructor
 

@@ -1,4 +1,4 @@
-package execution.domain.vo.verification
+package stage.invariant.judgment
 
 /**
  * [Value Object] Source Location

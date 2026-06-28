@@ -1,4 +1,4 @@
-package execution.domain.vo.trace
+package stage.diagnostic.evidence
 
 /**
  * [Domain Event] Represents an atomic event captured during test execution.

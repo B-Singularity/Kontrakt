@@ -6,8 +6,8 @@ import governance.policy.DeterminismPolicy
 import governance.policy.ExecutionPolicy
 import governance.policy.LogRetention
 import governance.policy.ResourcePolicy
-import reporting.adapter.config.ReportingDirectives
 import stage.input.material.ScanScope
+import stage.publication.claim.ReportingDirectives
 import java.nio.file.Paths
 
 /**

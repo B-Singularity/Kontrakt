@@ -1,6 +1,6 @@
 package adapter.junit.config
 
-import reporting.adapter.config.ReportFormat
+import stage.publication.claim.ReportFormat
 
 /**
  * [ADR-016] User Control Surface

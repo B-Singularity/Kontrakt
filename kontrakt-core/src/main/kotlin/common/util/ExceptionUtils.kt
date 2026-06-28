@@ -1,9 +1,9 @@
 package common.util
 
-import exception.ContractViolationException
-import exception.KontraktConfigurationException
-import exception.KontraktException
-import execution.domain.vo.verification.SourceLocation
+import stage.diagnostic.material.ContractViolationException
+import stage.diagnostic.material.KontraktConfigurationException
+import stage.diagnostic.material.KontraktException
+import stage.invariant.judgment.SourceLocation
 import java.lang.reflect.InvocationTargetException
 import kotlin.reflect.KClass
 
@@ -68,7 +68,7 @@ fun Throwable.analyzeBlame(): Blame =
         // Business Logic Failure (Assertion / Contract)
         is AssertionError,
         is ContractViolationException,
-        -> Blame.TEST_FAILURE
+            -> Blame.TEST_FAILURE
 
         // User Configuration Error
         is KontraktConfigurationException -> Blame.SETUP_FAILURE

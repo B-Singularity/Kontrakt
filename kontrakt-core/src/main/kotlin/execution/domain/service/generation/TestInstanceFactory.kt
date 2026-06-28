@@ -1,16 +1,16 @@
 package execution.domain.service.generation
 
 import common.util.unwrapped
-import exception.KontraktConfigurationException
 import exception.KontraktInternalException
 import execution.domain.entity.EphemeralTestContext
-import execution.domain.trace.InMemoryScenarioTrace
 import execution.domain.vo.context.generation.GenerationContext
 import execution.domain.vo.context.generation.GenerationRequest
 import execution.port.outgoing.MockingContext
 import execution.port.outgoing.MockingEngine
 import execution.port.outgoing.ScenarioControl
 import ir.TestSpecification
+import stage.diagnostic.evidence.InMemoryScenarioTrace
+import stage.diagnostic.material.KontraktConfigurationException
 import stage.input.contract.Test
 import java.time.Clock
 import java.util.UUID

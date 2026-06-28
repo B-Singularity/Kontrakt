@@ -1,6 +1,6 @@
 package adapter.console
 
-import execution.domain.vo.result.TestStatus
+import stage.publication.material.TestStatus
 
 /**
  * [Style] Console Theme Strategy

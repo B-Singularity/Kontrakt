@@ -1,6 +1,6 @@
 package ir.exception
 
-import exception.KontraktException
+import stage.diagnostic.material.KontraktException
 
 /**
  * Machine-readable fault taxonomy for routing and observability.

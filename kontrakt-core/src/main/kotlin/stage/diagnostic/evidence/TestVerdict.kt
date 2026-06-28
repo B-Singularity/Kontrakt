@@ -1,6 +1,6 @@
-package execution.domain.vo.trace
+package stage.diagnostic.evidence
 
-import execution.domain.vo.result.TestStatus
+import stage.publication.material.TestStatus
 
 data class TestVerdict(
     val status: TestStatus,

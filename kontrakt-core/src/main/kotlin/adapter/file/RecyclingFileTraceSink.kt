@@ -1,12 +1,12 @@
 package adapter.file
 
+import adapter.json.JsonUtils
 import exception.safety.PayloadSanitizer
 import execution.domain.exception.KontraktLifecycleException
-import execution.domain.vo.trace.TraceEvent
-import execution.domain.vo.trace.TracePhase
-import execution.port.outgoing.TraceSink
-import adapter.json.JsonUtils
 import io.github.oshai.kotlinlogging.KotlinLogging
+import stage.diagnostic.evidence.TraceEvent
+import stage.diagnostic.evidence.TracePhase
+import stage.diagnostic.evidence.TraceSink
 import java.io.RandomAccessFile
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files

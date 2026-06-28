@@ -1,6 +1,6 @@
 package execution.domain.exception
 
-import exception.KontraktException
+import stage.diagnostic.material.KontraktException
 
 enum class LifecyclePhase { SETUP, EXECUTION, CLEANUP }
 
@@ -31,11 +31,11 @@ class RuntimeInstantiationException(
     message: String,
     cause: Throwable? = null,
 ) : ExecutionDomainException(
-        message,
-        cause,
-        FaultKind.SYSTEM_INTERNAL,
-        LifecyclePhase.EXECUTION,
-    ) {
+    message,
+    cause,
+    FaultKind.SYSTEM_INTERNAL,
+    LifecyclePhase.EXECUTION,
+) {
     override val errorCode = "RUNTIME_INSTANTIATION_FAILED"
 }
 

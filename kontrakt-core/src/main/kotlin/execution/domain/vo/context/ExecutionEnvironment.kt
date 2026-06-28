@@ -1,6 +1,6 @@
 package execution.domain.vo.context
 
-import execution.domain.vo.trace.ExecutionTrace
+import stage.diagnostic.evidence.ExecutionTrace
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneId

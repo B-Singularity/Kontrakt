@@ -1,7 +1,7 @@
 package execution.port.outgoing
 
 import execution.domain.entity.EphemeralTestContext
-import execution.domain.vo.verification.AssertionRecord
+import stage.invariant.judgment.AssertionRecord
 
 /**
  *

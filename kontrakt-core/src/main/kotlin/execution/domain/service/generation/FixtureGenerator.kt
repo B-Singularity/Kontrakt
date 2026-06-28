@@ -1,6 +1,5 @@
 package execution.domain.service.generation
 
-import stage.admission.judgment.ContractConfigurationValidator
 import execution.domain.strategy.generation.TimeTypeGenerator
 import execution.domain.vo.context.generation.GenerationContext
 import execution.domain.vo.context.generation.GenerationRequest
@@ -9,8 +8,9 @@ import execution.exception.RecursiveGenerationFailedException
 import execution.exception.UnsupportedGeneratorException
 import execution.port.outgoing.MockingContext
 import execution.port.outgoing.MockingEngine
-import execution.port.outgoing.ScenarioTrace
 import io.github.oshai.kotlinlogging.KotlinLogging
+import stage.admission.judgment.ContractConfigurationValidator
+import stage.diagnostic.evidence.ScenarioTrace
 import stage.input.contract.NotNull
 import stage.input.contract.Null
 import java.time.Clock

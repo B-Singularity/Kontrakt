@@ -1,7 +1,7 @@
 package stage.input.diagnostics
 
-import exception.KontraktException
 import stage.canonicalization.material.frozen.image.FrozenMetamodelImageId
+import stage.diagnostic.material.KontraktException
 
 /**
  * Base exception for Metamodel domain errors.

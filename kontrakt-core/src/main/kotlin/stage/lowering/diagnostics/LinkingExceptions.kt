@@ -1,7 +1,7 @@
 package stage.lowering.diagnostics
 
-import exception.KontraktException
 import exception.safety.PayloadSanitizer
+import stage.diagnostic.material.KontraktException
 
 /**
  * [Domain Root] Base exception for all errors occurring in the Linking Phase (Step 3).

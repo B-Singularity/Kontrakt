@@ -4,13 +4,7 @@ import adapter.file.WorkerTraceSinkPool
 import exception.KontraktInternalException
 import execution.domain.entity.EphemeralTestContext
 import execution.domain.service.generation.TestInstanceFactory
-import execution.domain.vo.result.ExecutionResult
-import execution.domain.vo.result.TestStatus
-import execution.domain.vo.verification.AssertionRecord
-import execution.domain.vo.verification.AssertionRule
-import execution.domain.vo.verification.AssertionStatus
 import execution.port.outgoing.TestResultPublisher
-import execution.port.outgoing.TraceSink
 import governance.policy.AuditDepth
 import governance.policy.AuditPolicy
 import governance.policy.DeterminismPolicy
@@ -23,7 +17,13 @@ import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import stage.diagnostic.evidence.TraceSink
 import stage.input.boundary.TestScenarioExecutor
+import stage.invariant.judgment.AssertionRecord
+import stage.invariant.judgment.AssertionRule
+import stage.invariant.judgment.AssertionStatus
+import stage.publication.material.ExecutionResult
+import stage.publication.material.TestStatus
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneId

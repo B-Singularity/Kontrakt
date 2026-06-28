@@ -10,8 +10,8 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import reporting.adapter.config.ReportFormat
 import stage.input.material.ScanScope
+import stage.publication.claim.ReportFormat
 import java.nio.file.Paths
 
 class OptionsMapperTest {

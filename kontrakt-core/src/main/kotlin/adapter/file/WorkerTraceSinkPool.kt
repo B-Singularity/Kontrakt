@@ -2,7 +2,7 @@ package adapter.file
 
 import execution.domain.exception.KontraktLifecycleException
 import execution.domain.vo.context.WorkerId
-import execution.port.outgoing.TraceSink
+import stage.diagnostic.evidence.TraceSink
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean

@@ -1,9 +1,9 @@
 package execution.adapter.reporting
 
 import exception.KontraktInternalException
-import execution.domain.vo.result.TestResultEvent
 import execution.port.outgoing.TestResultPublisher
 import io.github.oshai.kotlinlogging.KotlinLogging
+import stage.publication.material.TestResultEvent
 
 /**
  * [Infrastructure] Broadcasting Publisher

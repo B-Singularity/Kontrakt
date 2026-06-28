@@ -1,4 +1,4 @@
-package execution.domain.vo.result
+package stage.publication.material
 
 import execution.domain.vo.context.WorkerId
 import infrastructure.json.escapeJson

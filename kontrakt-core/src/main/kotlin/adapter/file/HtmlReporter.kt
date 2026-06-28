@@ -1,8 +1,8 @@
 package adapter.file
 
-import execution.domain.vo.result.TestResultEvent
 import execution.port.outgoing.TestResultPublisher
-import reporting.adapter.config.ReportingDirectives
+import stage.publication.claim.ReportingDirectives
+import stage.publication.material.TestResultEvent
 import java.util.concurrent.ConcurrentLinkedQueue
 
 /**

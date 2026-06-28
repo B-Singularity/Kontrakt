@@ -1,8 +1,6 @@
 package stage.admission.judgment
 
-import exception.ContractViolationException
-import execution.domain.vo.verification.AnnotationRule
-import execution.domain.vo.verification.AssertionRule
+import stage.diagnostic.material.ContractViolationException
 import stage.input.contract.AssertFalse
 import stage.input.contract.AssertTrue
 import stage.input.contract.DecimalMax
@@ -29,6 +27,8 @@ import stage.input.contract.Size
 import stage.input.contract.StringLength
 import stage.input.contract.Url
 import stage.input.contract.Uuid
+import stage.invariant.judgment.AnnotationRule
+import stage.invariant.judgment.AssertionRule
 import java.math.BigDecimal
 import java.time.Clock
 import java.time.Instant

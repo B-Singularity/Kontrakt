@@ -1,6 +1,5 @@
 package execution.domain.service.generation
 
-import exception.KontraktConfigurationException
 import exception.KontraktInternalException
 import execution.domain.entity.EphemeralTestContext
 import execution.port.outgoing.MockingContext
@@ -15,6 +14,7 @@ import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
+import stage.diagnostic.material.KontraktConfigurationException
 import stage.input.contract.Test
 import java.time.Clock
 import java.time.Instant

@@ -1,6 +1,6 @@
 package infrastructure.exception
 
-import exception.KontraktException
+import stage.diagnostic.material.KontraktException
 
 /**
  * Base exception for all infrastructure-related failures.
@@ -26,8 +26,8 @@ sealed class RegistryException(
         val existing: String,
         val new: String,
     ) : RegistryException(
-            "Registry Collision Detected! Key: '$key'.\nExisting: $existing\nNew:      $new",
-        )
+        "Registry Collision Detected! Key: '$key'.\nExisting: $existing\nNew:      $new",
+    )
 
     /**
      * Thrown when attempting to register a payload after the registry has been sealed.

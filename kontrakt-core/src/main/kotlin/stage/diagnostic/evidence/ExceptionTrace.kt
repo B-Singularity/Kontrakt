@@ -1,6 +1,6 @@
-package execution.domain.vo.trace
+package stage.diagnostic.evidence
 
-import exception.KontraktException
+import stage.diagnostic.material.KontraktException
 
 data class ExceptionTrace(
     val exception: Throwable,

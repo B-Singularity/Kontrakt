@@ -3,19 +3,19 @@ package execution.domain.interceptor
 import common.util.extractSourceLocation
 import common.util.sanitizeStackTrace
 import common.util.unwrapped
-import exception.ContractViolationException
-import exception.KontraktConfigurationException
 import exception.KontraktInternalException
-import execution.domain.vo.verification.AssertionRecord
-import execution.domain.vo.verification.AssertionRule
-import execution.domain.vo.verification.AssertionStatus
-import execution.domain.vo.verification.ConfigurationErrorRule
-import execution.domain.vo.verification.SourceLocation
-import execution.domain.vo.verification.StandardAssertion
-import execution.domain.vo.verification.SystemErrorRule
-import execution.domain.vo.verification.UserExceptionRule
 import execution.port.outgoing.ScenarioInterceptor
 import ir.TestSpecification
+import stage.diagnostic.material.ContractViolationException
+import stage.diagnostic.material.KontraktConfigurationException
+import stage.invariant.judgment.AssertionRecord
+import stage.invariant.judgment.AssertionRule
+import stage.invariant.judgment.AssertionStatus
+import stage.invariant.judgment.ConfigurationErrorRule
+import stage.invariant.judgment.SourceLocation
+import stage.invariant.judgment.StandardAssertion
+import stage.invariant.judgment.SystemErrorRule
+import stage.invariant.judgment.UserExceptionRule
 
 /**
  * [Domain Service] Centralized Result Resolution Interceptor.

@@ -1,6 +1,6 @@
 package stage.lowering.diagnostics
 
-import exception.KontraktException
+import stage.diagnostic.material.KontraktException
 import stage.lowering.material.projection.ConstructorRejectionRecord
 
 /**

@@ -1,9 +1,9 @@
 package execution.domain.service.orchestration
 
 import execution.domain.entity.EphemeralTestContext
-import execution.domain.vo.verification.AssertionRecord
 import execution.port.outgoing.ScenarioInterceptor
 import stage.input.boundary.TestScenarioExecutor
+import stage.invariant.judgment.AssertionRecord
 
 /**
  * [Infrastructure] Scenario Execution Chain

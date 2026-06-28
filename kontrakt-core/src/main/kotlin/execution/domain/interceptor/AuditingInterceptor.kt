@@ -2,19 +2,19 @@ package execution.domain.interceptor
 
 import execution.domain.service.VerdictDecider
 import execution.domain.vo.context.WorkerId
-import execution.domain.vo.result.TestResultEvent
-import execution.domain.vo.trace.ExceptionTrace
-import execution.domain.vo.trace.TestVerdict
-import execution.domain.vo.trace.TracePhase
-import execution.domain.vo.trace.VerificationTrace
-import execution.domain.vo.verification.AssertionRecord
 import execution.port.outgoing.ScenarioInterceptor
-import execution.port.outgoing.ScenarioTrace
 import execution.port.outgoing.TestResultPublisher
-import execution.port.outgoing.TraceSink
 import governance.policy.AuditDepth
 import governance.policy.AuditPolicy
 import governance.policy.LogRetention
+import stage.diagnostic.evidence.ExceptionTrace
+import stage.diagnostic.evidence.ScenarioTrace
+import stage.diagnostic.evidence.TestVerdict
+import stage.diagnostic.evidence.TracePhase
+import stage.diagnostic.evidence.TraceSink
+import stage.diagnostic.evidence.VerificationTrace
+import stage.invariant.judgment.AssertionRecord
+import stage.publication.material.TestResultEvent
 import java.time.Clock
 import kotlin.math.max
 

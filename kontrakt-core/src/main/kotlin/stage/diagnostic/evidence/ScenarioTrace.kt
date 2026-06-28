@@ -1,6 +1,4 @@
-package execution.port.outgoing
-
-import execution.domain.vo.trace.TraceEvent
+package stage.diagnostic.evidence
 
 /**
  * [SPI] Scenario Trace

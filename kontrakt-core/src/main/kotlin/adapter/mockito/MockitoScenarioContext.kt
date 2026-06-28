@@ -1,9 +1,9 @@
 package adapter.mockito
 
-import exception.KontraktConfigurationException
 import execution.port.outgoing.ScenarioContext
 import execution.port.outgoing.StubbingBuilder
 import org.mockito.Mockito
+import stage.diagnostic.material.KontraktConfigurationException
 
 class MockitoScenarioContext : ScenarioContext {
     override infix fun <T> every(methodCall: () -> T): StubbingBuilder<T> = MockitoStubbingBuilder(methodCall)

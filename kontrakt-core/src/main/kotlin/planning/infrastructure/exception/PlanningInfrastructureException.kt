@@ -1,6 +1,6 @@
 package planning.infrastructure.exception
 
-import exception.KontraktException
+import stage.diagnostic.material.KontraktException
 
 /**
  * Root for planning infrastructure/runtime conditions.

@@ -1,6 +1,6 @@
 package stage.input.diagnostics
 
-import exception.KontraktException
+import stage.diagnostic.material.KontraktException
 
 /**
  * [Integrity Violation]

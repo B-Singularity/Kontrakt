@@ -4,13 +4,13 @@ import execution.domain.vo.context.generation.GenerationContext
 import execution.domain.vo.context.generation.GenerationRequest
 import execution.exception.GenerationFailedException
 import execution.port.outgoing.MockingEngine
-import execution.port.outgoing.ScenarioTrace
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import stage.diagnostic.evidence.ScenarioTrace
 import stage.input.contract.Null
 import java.time.Clock
 import java.time.Instant

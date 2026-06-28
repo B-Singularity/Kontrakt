@@ -1,4 +1,4 @@
-package execution.domain.vo.result
+package stage.publication.material
 
 sealed interface TestStatus {
     val isPassed: Boolean

@@ -1,13 +1,13 @@
 package common.util
 
-import exception.ContractViolationException
-import exception.KontraktConfigurationException
 import exception.KontraktInternalException
-import execution.domain.vo.verification.AssertionRule
-import execution.domain.vo.verification.SourceLocation
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import stage.diagnostic.material.ContractViolationException
+import stage.diagnostic.material.KontraktConfigurationException
+import stage.invariant.judgment.AssertionRule
+import stage.invariant.judgment.SourceLocation
 import java.lang.reflect.InvocationTargetException
 
 /**

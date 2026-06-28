@@ -1,6 +1,7 @@
 package execution.port.outgoing
 
 import execution.domain.service.generation.FixtureGenerator
+import stage.diagnostic.evidence.ScenarioTrace
 
 /**
  * [Context Object] Encapsulates the execution context required for mocking operations.

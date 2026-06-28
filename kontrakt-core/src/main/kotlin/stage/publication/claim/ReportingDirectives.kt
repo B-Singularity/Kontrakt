@@ -1,4 +1,4 @@
-package reporting.adapter.config
+package stage.publication.claim
 
 import java.nio.file.Path
 

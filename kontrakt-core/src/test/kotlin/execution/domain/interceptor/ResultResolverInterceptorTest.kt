@@ -2,17 +2,7 @@ package execution.domain.interceptor
 
 import common.util.extractSourceLocation
 import common.util.sanitizeStackTrace
-import exception.ContractViolationException
-import exception.KontraktConfigurationException
 import exception.KontraktInternalException
-import execution.domain.vo.verification.AssertionRecord
-import execution.domain.vo.verification.AssertionRule
-import execution.domain.vo.verification.AssertionStatus
-import execution.domain.vo.verification.ConfigurationErrorRule
-import execution.domain.vo.verification.SourceLocation
-import execution.domain.vo.verification.StandardAssertion
-import execution.domain.vo.verification.SystemErrorRule
-import execution.domain.vo.verification.UserExceptionRule
 import execution.port.outgoing.ScenarioInterceptor
 import io.mockk.every
 import io.mockk.mockk
@@ -23,6 +13,16 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import stage.diagnostic.material.ContractViolationException
+import stage.diagnostic.material.KontraktConfigurationException
+import stage.invariant.judgment.AssertionRecord
+import stage.invariant.judgment.AssertionRule
+import stage.invariant.judgment.AssertionStatus
+import stage.invariant.judgment.ConfigurationErrorRule
+import stage.invariant.judgment.SourceLocation
+import stage.invariant.judgment.StandardAssertion
+import stage.invariant.judgment.SystemErrorRule
+import stage.invariant.judgment.UserExceptionRule
 
 class ResultResolverInterceptorTest {
     private val spec = mockk<TestSpecification>()

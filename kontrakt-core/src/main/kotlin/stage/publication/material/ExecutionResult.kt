@@ -1,6 +1,6 @@
-package execution.domain.vo.result
+package stage.publication.material
 
-import execution.domain.vo.verification.AssertionRecord
+import stage.invariant.judgment.AssertionRecord
 
 /**
  * [Value Object] The comprehensive result of a test execution.

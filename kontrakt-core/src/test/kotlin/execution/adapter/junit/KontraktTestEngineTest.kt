@@ -13,8 +13,6 @@ import execution.adapter.state.ThreadLocalScenarioControl
 import execution.domain.aggregate.TestExecution
 import execution.domain.factory.ExecutionEnvironmentFactory
 import execution.domain.vo.context.ExecutionEnvironment
-import execution.domain.vo.result.TestResult
-import execution.domain.vo.result.TestStatus
 import execution.port.outgoing.TestResultPublisher
 import governance.policy.AuditPolicy
 import io.mockk.Runs
@@ -49,6 +47,8 @@ import org.junit.platform.engine.discovery.ClassSelector
 import org.junit.platform.engine.discovery.PackageSelector
 import stage.input.boundary.TestScenarioExecutor
 import stage.input.material.ScanScope
+import stage.publication.material.TestResult
+import stage.publication.material.TestStatus
 import java.time.Duration
 
 /**

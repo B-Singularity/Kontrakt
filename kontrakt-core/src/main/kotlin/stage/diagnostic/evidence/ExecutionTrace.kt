@@ -1,4 +1,4 @@
-package execution.domain.vo.trace
+package stage.diagnostic.evidence
 
 import infrastructure.json.escapeJson
 

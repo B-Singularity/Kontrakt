@@ -1,7 +1,5 @@
-package execution.domain.trace
+package stage.diagnostic.evidence
 
-import execution.domain.vo.trace.TraceEvent
-import execution.port.outgoing.ScenarioTrace
 import java.util.Collections
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
@@ -15,7 +13,7 @@ import java.util.concurrent.atomic.AtomicInteger
  *
  * Key Features:
  * 1. **Bounded Capacity:** Automatically evicts oldest events when [maxCapacity] is reached.
- * 2. **Non-Blocking:** Uses [ConcurrentLinkedQueue] and [AtomicInteger] for lock-free operations.
+ * 2. **Non-Blocking:** Uses [java.util.concurrent.ConcurrentLinkedQueue] and [java.util.concurrent.atomic.AtomicInteger] for lock-free operations.
  * 3. **Operational Safety:** Ensures counter consistency even under race conditions.
  *
  * @param runId Unique identifier for the test run.
@@ -44,7 +42,7 @@ class InMemoryScenarioTrace(
 
     /**
      * Returns a strictly immutable view of the events.
-     * Uses [Collections.unmodifiableList] to enforce the read-only contract at runtime.
+     * Uses [java.util.Collections.unmodifiableList] to enforce the read-only contract at runtime.
      * Note: This returns a snapshot at the time of calling.
      */
     override val events: List<TraceEvent>

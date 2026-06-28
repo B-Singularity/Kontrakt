@@ -1,8 +1,9 @@
 package execution.port.outgoing
 
-import execution.domain.vo.trace.TraceEvent
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import stage.diagnostic.evidence.TraceEvent
+import stage.diagnostic.evidence.TraceSink
 import java.io.File
 
 interface TraceSinkTest {

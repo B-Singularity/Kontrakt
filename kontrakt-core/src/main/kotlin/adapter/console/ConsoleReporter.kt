@@ -1,8 +1,8 @@
 package adapter.console
 
-import execution.domain.vo.result.TestResultEvent
-import execution.domain.vo.result.TestStatus
 import execution.port.outgoing.TestResultPublisher
+import stage.publication.material.TestResultEvent
+import stage.publication.material.TestStatus
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicInteger
 

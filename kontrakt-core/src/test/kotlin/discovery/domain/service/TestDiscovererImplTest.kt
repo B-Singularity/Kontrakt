@@ -13,6 +13,7 @@ import kotlinx.coroutines.test.runTest
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import stage.diagnostic.material.KontraktConfigurationException
 import stage.input.boundary.ClasspathScanner
 import stage.input.contract.Contract
 import stage.input.contract.DataContract
@@ -344,7 +345,7 @@ class TestDiscovererImplTest {
         try {
             method.invoke(discoverer, listOf(spec1, spec2))
         } catch (e: java.lang.reflect.InvocationTargetException) {
-            val cause = e.cause as exception.KontraktConfigurationException
+            val cause = e.cause as KontraktConfigurationException
             val message = cause.message ?: ""
 
             // [Critical] Access message property to trigger lambda

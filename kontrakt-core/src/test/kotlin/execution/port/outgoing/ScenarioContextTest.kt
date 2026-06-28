@@ -1,12 +1,12 @@
 package execution.port.outgoing
 
 import adapter.mockito.MockitoScenarioContext
-import exception.KontraktConfigurationException
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito
+import stage.diagnostic.material.KontraktConfigurationException
 
 /**
  * Defines the contract requirements for any [ScenarioContext] implementation.

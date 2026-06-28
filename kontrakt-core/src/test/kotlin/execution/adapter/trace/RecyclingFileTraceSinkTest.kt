@@ -1,15 +1,6 @@
 package execution.adapter.trace
 
 import adapter.file.RecyclingFileTraceSink
-import execution.domain.vo.result.TestStatus
-import execution.domain.vo.trace.DesignDecision
-import execution.domain.vo.trace.ExceptionTrace
-import execution.domain.vo.trace.ExecutionTrace
-import execution.domain.vo.trace.TestVerdict
-import execution.domain.vo.trace.TraceEvent
-import execution.domain.vo.trace.VerificationTrace
-import execution.domain.vo.verification.AssertionStatus
-import execution.port.outgoing.TraceSink
 import execution.port.outgoing.TraceSinkTest
 import io.mockk.every
 import io.mockk.mockk
@@ -18,6 +9,15 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
+import stage.diagnostic.evidence.DesignDecision
+import stage.diagnostic.evidence.ExceptionTrace
+import stage.diagnostic.evidence.ExecutionTrace
+import stage.diagnostic.evidence.TestVerdict
+import stage.diagnostic.evidence.TraceEvent
+import stage.diagnostic.evidence.TraceSink
+import stage.diagnostic.evidence.VerificationTrace
+import stage.invariant.judgment.AssertionStatus
+import stage.publication.material.TestStatus
 import java.io.File
 import java.io.IOException
 import java.io.RandomAccessFile

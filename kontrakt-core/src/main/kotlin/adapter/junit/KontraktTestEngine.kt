@@ -11,8 +11,6 @@ import adapter.mockito.MockitoEngineAdapter
 import exception.KontraktInternalException
 import execution.adapter.state.ThreadLocalScenarioControl
 import execution.domain.factory.ExecutionEnvironmentFactory
-import execution.domain.vo.result.TestResult
-import execution.domain.vo.result.TestStatus
 import execution.port.outgoing.TestResultPublisher
 import governance.policy.ExecutionPolicy
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -26,10 +24,12 @@ import org.junit.platform.engine.TestExecutionResult
 import org.junit.platform.engine.UniqueId
 import org.junit.platform.engine.discovery.ClassSelector
 import org.junit.platform.engine.discovery.PackageSelector
-import reporting.adapter.config.ReportFormat
 import stage.input.boundary.KontraktRuntimeFactory
 import stage.input.contract.Contract
 import stage.input.material.ScanScope
+import stage.publication.claim.ReportFormat
+import stage.publication.material.TestResult
+import stage.publication.material.TestStatus
 import java.nio.file.Path
 import java.time.Clock
 

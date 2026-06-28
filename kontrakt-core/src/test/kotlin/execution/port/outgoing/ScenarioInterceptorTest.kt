@@ -1,7 +1,6 @@
 package execution.domain.interceptor
 
 import execution.domain.entity.EphemeralTestContext
-import execution.domain.vo.verification.AssertionRecord
 import execution.port.outgoing.ScenarioInterceptor
 import io.mockk.every
 import io.mockk.mockk
@@ -9,6 +8,7 @@ import io.mockk.verify
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
+import stage.invariant.judgment.AssertionRecord
 
 /**
  * Defines the behavioral contract for [ScenarioInterceptor] implementations.
