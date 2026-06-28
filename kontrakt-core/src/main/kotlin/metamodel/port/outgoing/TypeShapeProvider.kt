@@ -1,6 +1,6 @@
 package planning.domain.port.outgoing
 
-import metamodel.domain.vo.TypeReference
+import stage.canonicalization.material.TypeReference
 import stage.input.material.ResolvedTypeShape
 
 /**

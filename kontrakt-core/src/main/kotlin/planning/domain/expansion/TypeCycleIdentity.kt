@@ -1,8 +1,8 @@
 package planning.domain.expansion
 
 import ir.identity.CanonicalSignature
-import metamodel.domain.vo.TypeReference
 import planning.domain.exception.TypeCycleIdentityContractViolationException
+import stage.canonicalization.material.TypeReference
 
 /**
  * Minimal identity material for active-cycle detection.

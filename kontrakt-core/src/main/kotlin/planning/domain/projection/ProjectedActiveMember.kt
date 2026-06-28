@@ -1,7 +1,7 @@
 package planning.domain.projection
 
-import metamodel.domain.vo.TypeReference
 import planning.domain.exception.ActiveMemberProjectionException
+import stage.canonicalization.material.TypeReference
 import stage.input.material.DeclarationOrdinal
 import stage.input.material.NullabilityKind
 

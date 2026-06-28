@@ -1,6 +1,6 @@
 package planning.domain.expansion.polymorphic
 
-import metamodel.domain.vo.TypeReference
+import stage.canonicalization.material.TypeReference
 
 /**
  * Concrete implementation candidate for one interface / abstract contract.

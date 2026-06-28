@@ -1,7 +1,7 @@
 package planning.domain.expansion
 
-import metamodel.domain.vo.TypeReference
 import planning.domain.session.PlannerSession
+import stage.canonicalization.material.TypeReference
 
 /**
  * Session-bound implementation of TypeExpansionWorkMeter.

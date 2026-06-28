@@ -1,6 +1,6 @@
 package planning.domain.expansion.seed
 
-import planning.domain.canonical.text.CanonicalTextLaw
+import stage.canonicalization.contract.CanonicalTextLaw
 
 /**
  * Lightweight identifier for a run-ratified DeterministicSeedSurface.

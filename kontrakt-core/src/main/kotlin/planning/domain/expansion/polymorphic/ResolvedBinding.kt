@@ -1,7 +1,7 @@
 package planning.domain.expansion.polymorphic
 
-import metamodel.domain.vo.TypeReference
 import planning.domain.exception.TypeExpansionContractViolationException
+import stage.canonicalization.material.TypeReference
 
 /**
  * Frozen host-project runtime binding fact.

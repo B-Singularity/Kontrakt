@@ -1,11 +1,11 @@
 package adapter.reflection
 
-import metamodel.domain.vo.TypeReference
 import planning.domain.expansion.TypeCycleIdentity
 import planning.domain.port.outgoing.RawTypeFactsProvider
 import planning.domain.port.outgoing.RawTypeFactsResolution
 import planning.domain.port.outgoing.TypeCycleIdentityProvider
 import planning.domain.port.outgoing.TypeShapeProvider
+import stage.canonicalization.material.TypeReference
 import stage.input.diagnostics.MetamodelAdapterStateViolationException
 import stage.input.material.ResolvedTypeShape
 import java.util.concurrent.atomic.AtomicBoolean

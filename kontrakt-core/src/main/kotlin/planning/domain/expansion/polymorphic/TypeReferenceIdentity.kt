@@ -1,8 +1,8 @@
 package planning.domain.expansion.polymorphic
 
-import metamodel.domain.protocol.MetamodelProtocolOrdering
-import metamodel.domain.vo.TypeReference
 import planning.domain.exception.TypeExpansionContractViolationException
+import stage.canonicalization.material.TypeReference
+import stage.normalization.contract.MetamodelProtocolOrdering
 
 /**
  * Semantic identity helper for TypeReference values inside polymorphic expansion.

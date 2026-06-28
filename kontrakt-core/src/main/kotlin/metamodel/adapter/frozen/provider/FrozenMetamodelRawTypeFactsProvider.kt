@@ -1,11 +1,11 @@
 package metamodel.adapter.frozen.provider
 
-import metamodel.domain.frozen.image.FrozenMetamodelImage
-import metamodel.domain.frozen.table.FrozenMetamodelImageTableId
-import metamodel.domain.frozen.table.FrozenTypeReferenceIndex
-import metamodel.domain.vo.TypeReference
+import stage.canonicalization.material.frozen.table.FrozenMetamodelImageTableId
+import stage.canonicalization.material.frozen.table.FrozenTypeReferenceIndex
 import planning.domain.port.outgoing.RawTypeFactsProvider
 import planning.domain.port.outgoing.RawTypeFactsResolution
+import stage.canonicalization.material.TypeReference
+import stage.canonicalization.material.frozen.image.FrozenMetamodelImage
 import stage.input.diagnostics.FrozenMetamodelIncompleteTableException
 import stage.input.diagnostics.FrozenMetamodelUnknownTypeReferenceException
 

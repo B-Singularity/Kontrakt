@@ -1,10 +1,10 @@
 package planning.domain.expansion.polymorphic
 
-import metamodel.domain.protocol.MetamodelProtocolOrdering
-import metamodel.domain.vo.CanonicalTypeId
-import metamodel.domain.vo.CanonicalTypeSignature
 import planning.domain.exception.TypeExpansionContractViolationException
 import planning.domain.expansion.sequence.ExpansionSequence
+import stage.canonicalization.material.CanonicalTypeId
+import stage.canonicalization.material.CanonicalTypeSignature
+import stage.normalization.contract.MetamodelProtocolOrdering
 
 /**
  * Run-ratified immutable host runtime binding snapshot.

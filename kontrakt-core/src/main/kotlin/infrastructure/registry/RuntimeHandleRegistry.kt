@@ -1,7 +1,7 @@
 package infrastructure.registry
 
 import infrastructure.exception.RegistryException
-import metamodel.domain.vo.TypeReference
+import stage.canonicalization.material.TypeReference
 import java.util.concurrent.ConcurrentHashMap
 
 /**

@@ -1,6 +1,5 @@
 package planning.domain.expansion
 
-import metamodel.domain.vo.TypeReference
 import planning.domain.exception.CorruptResolvedTypeShapeException
 import planning.domain.exception.PlanningExpansionException
 import planning.domain.exception.RawTypeFactsSubjectMismatchException
@@ -14,6 +13,7 @@ import planning.domain.port.outgoing.TypeShapeProvider
 import planning.domain.projection.ActiveMemberOrderer
 import planning.domain.projection.ActiveMemberProjector
 import planning.domain.projection.CapabilityProfile
+import stage.canonicalization.material.TypeReference
 import stage.input.material.RawTypeFactsDTO
 import stage.input.material.ResolvedTypeShape
 import stage.input.material.TypeKind

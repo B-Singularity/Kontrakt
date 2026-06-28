@@ -1,9 +1,9 @@
 package planning.domain.session
 
 import ir.identity.CanonicalSignature
-import metamodel.domain.vo.TypeReference
 import planning.domain.exception.PlanningProtocolIntegrityException
 import planning.domain.vo.OrderedActiveMembers
+import stage.canonicalization.material.TypeReference
 
 /**
  * Explicit execution frame for the iterative DFS machine.

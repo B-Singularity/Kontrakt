@@ -1,9 +1,9 @@
 package metamodel.adapter.frozen.provider
 
-import metamodel.domain.frozen.image.FrozenMetamodelImage
 import planning.domain.port.outgoing.RawTypeFactsProvider
 import planning.domain.port.outgoing.TypeCycleIdentityProvider
 import planning.domain.port.outgoing.TypeShapeProvider
+import stage.canonicalization.material.frozen.image.FrozenMetamodelImage
 
 /**
  * Planning-facing provider bundle backed by a FrozenMetamodelImage.

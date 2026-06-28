@@ -1,6 +1,6 @@
 package adapter.reflection
 
-import metamodel.domain.frozen.image.FrozenMetamodelImageId
+import stage.canonicalization.material.frozen.image.FrozenMetamodelImageId
 import stage.input.diagnostics.MetamodelAdapterAssemblyException
 import versioning.coordinate.contract.frozen.image.FrozenMetamodelImageSchemaVersion
 import kotlin.reflect.KType

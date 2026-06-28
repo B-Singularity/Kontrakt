@@ -2,7 +2,7 @@ package adapter.reflection
 
 import metamodel.domain.service.CanonicalTypeReferenceIssuer
 import metamodel.domain.service.CanonicalTypeReferenceMaterial
-import metamodel.domain.vo.TypeReference
+import stage.canonicalization.material.TypeReference
 import kotlin.reflect.KType
 
 /**

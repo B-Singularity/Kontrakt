@@ -1,9 +1,9 @@
 package stage.input.boundary
 
-import metamodel.domain.vo.CanonicalTypeText
-import metamodel.domain.vo.FingerprintTokenEncoding
-import metamodel.domain.vo.TypeShapeRatificationFingerprint
-import metamodel.domain.vo.TypeShapeRatificationVerification
+import stage.canonicalization.material.CanonicalTypeText
+import stage.canonicalization.material.FingerprintTokenEncoding
+import stage.canonicalization.material.TypeShapeRatificationFingerprint
+import stage.canonicalization.material.TypeShapeRatificationVerification
 import stage.input.material.TypeShapeSummary
 
 /**

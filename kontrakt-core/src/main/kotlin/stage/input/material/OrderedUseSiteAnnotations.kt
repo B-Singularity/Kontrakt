@@ -1,8 +1,8 @@
 package stage.input.material
 
 import governance.budget.DiagnosticBudget
-import metamodel.domain.vo.AnnotationDescriptor
 import stage.input.diagnostics.MetamodelFactContractViolationException
+import stage.normalization.material.AnnotationDescriptor
 
 /**
  * Deterministically ordered use-site annotation collection.

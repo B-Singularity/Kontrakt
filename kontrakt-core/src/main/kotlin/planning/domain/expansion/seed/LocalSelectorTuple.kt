@@ -1,8 +1,8 @@
 package planning.domain.expansion.seed
 
-import metamodel.domain.protocol.MetamodelProtocolTextGuards
-import metamodel.domain.vo.TypeReference
 import planning.domain.exception.TypeExpansionContractViolationException
+import stage.canonicalization.material.TypeReference
+import stage.normalization.contract.MetamodelProtocolTextGuards
 
 /**
  * Local HID selector tuple.

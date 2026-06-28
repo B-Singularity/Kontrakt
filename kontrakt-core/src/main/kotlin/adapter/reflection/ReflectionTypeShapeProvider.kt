@@ -1,7 +1,7 @@
 package adapter.reflection
 
-import metamodel.domain.vo.TypeReference
 import planning.domain.port.outgoing.TypeShapeProvider
+import stage.canonicalization.material.TypeReference
 import stage.input.diagnostics.StrictModeViolationException
 import stage.input.material.NullabilityKind
 import stage.input.material.ResolvedTypeShape

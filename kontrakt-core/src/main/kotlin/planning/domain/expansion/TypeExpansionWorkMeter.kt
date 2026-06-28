@@ -1,6 +1,6 @@
 package planning.domain.expansion
 
-import metamodel.domain.vo.TypeReference
+import stage.canonicalization.material.TypeReference
 
 /**
  * Per-expansion work-meter bridge.

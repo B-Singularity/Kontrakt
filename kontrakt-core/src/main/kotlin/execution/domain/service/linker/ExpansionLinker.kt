@@ -18,6 +18,7 @@ import execution.port.outgoing.RuntimeInstantiator
 import execution.port.outgoing.RuntimeTypeResolver
 import ir.Attribute
 import ir.AttributeOrigin
+import stage.normalization.material.AnnotationDescriptor
 
 /**
  * [Domain Service] Expansion Linker.
@@ -128,7 +129,7 @@ class ExpansionLinker(
     }
 
     private fun toAttribute(
-        desc: metamodel.domain.vo.AnnotationDescriptor,
+        desc: AnnotationDescriptor,
         origin: AttributeOrigin,
     ): Attribute.AnnotationAttribute = Attribute.AnnotationAttribute(desc.qualifiedName, origin, desc.values)
 }

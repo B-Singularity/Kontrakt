@@ -1,6 +1,6 @@
 package stage.input.material
 
-import metamodel.domain.vo.CanonicalTypeShapeKind
+import stage.canonicalization.material.CanonicalTypeShapeKind
 import stage.input.diagnostics.MetamodelFactContractViolationException
 
 /**

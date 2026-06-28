@@ -1,6 +1,6 @@
 package versioning.coordinate.contract.seed
 
-import planning.domain.canonical.text.CanonicalTextLaw
+import stage.canonicalization.contract.CanonicalTextLaw
 
 /**
  * Version tuple for deterministic seed materialization.

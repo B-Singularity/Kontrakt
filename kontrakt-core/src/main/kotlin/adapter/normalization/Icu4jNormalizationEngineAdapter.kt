@@ -7,10 +7,10 @@ import com.ibm.icu.lang.UCharacterCategory
 import com.ibm.icu.text.Normalizer2
 import com.ibm.icu.util.VersionInfo
 import metamodel.domain.port.outgoing.NormalizationEngine
-import metamodel.domain.vo.CanonicalTypeLexicalProfile
-import metamodel.domain.vo.CanonicalTypeTextInspectionPolicy
-import metamodel.domain.vo.CanonicalTypeTextInspectionResult
-import metamodel.domain.vo.CanonicalTypeTextViolationCode
+import stage.canonicalization.material.CanonicalTypeLexicalProfile
+import stage.canonicalization.material.CanonicalTypeTextInspectionPolicy
+import stage.canonicalization.material.CanonicalTypeTextInspectionResult
+import stage.canonicalization.material.CanonicalTypeTextViolationCode
 
 /**
  * ICU4J-backed implementation of [metamodel.domain.port.outgoing.NormalizationEngine].
@@ -38,9 +38,9 @@ import metamodel.domain.vo.CanonicalTypeTextViolationCode
  *
  * It only returns:
  *
- * - [metamodel.domain.vo.CanonicalTypeTextInspectionResult.Accepted] with an immutable snapshot and
+ * - [CanonicalTypeTextInspectionResult.Accepted] with an immutable snapshot and
  *   lexical profile; or
- * - [metamodel.domain.vo.CanonicalTypeTextInspectionResult.Rejected] with a stable violation code
+ * - [CanonicalTypeTextInspectionResult.Rejected] with a stable violation code
  *   and bounded diagnostic reason.
  *
  * NFC law:
@@ -60,7 +60,7 @@ import metamodel.domain.vo.CanonicalTypeTextViolationCode
  * 3. copies into an immutable [String] snapshot;
  * 4. re-checks the snapshot length;
  * 5. inspects only the snapshot from that point onward;
- * 6. returns the exact snapshot in [metamodel.domain.vo.CanonicalTypeTextInspectionResult.Accepted].
+ * 6. returns the exact snapshot in [CanonicalTypeTextInspectionResult.Accepted].
  *
  * Mandatory inspection order:
  *
@@ -140,7 +140,7 @@ import metamodel.domain.vo.CanonicalTypeTextViolationCode
  *
  * Diagnostic law:
  *
- * This adapter emits stable [metamodel.domain.vo.CanonicalTypeTextViolationCode] values directly.
+ * This adapter emits stable [CanonicalTypeTextViolationCode] values directly.
  * It never parses exception messages to infer violation codes.
  */
 class Icu4jNormalizationEngineAdapter private constructor(

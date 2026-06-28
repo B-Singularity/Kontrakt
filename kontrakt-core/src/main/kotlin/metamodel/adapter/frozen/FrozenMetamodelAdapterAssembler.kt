@@ -1,9 +1,9 @@
 package metamodel.adapter.frozen
 
 import metamodel.adapter.frozen.provider.FrozenMetamodelProviderBundle
-import metamodel.domain.frozen.image.FrozenMetamodelImage
-import metamodel.domain.frozen.image.FrozenMetamodelImageAssembler
-import metamodel.domain.frozen.image.FrozenMetamodelImageAssemblyInput
+import stage.canonicalization.material.frozen.image.FrozenMetamodelImage
+import stage.canonicalization.material.frozen.image.FrozenMetamodelImageAssembler
+import stage.canonicalization.material.frozen.image.FrozenMetamodelImageAssemblyInput
 import stage.input.diagnostics.MetamodelAdapterAssemblyException
 import stage.input.diagnostics.MetamodelException
 

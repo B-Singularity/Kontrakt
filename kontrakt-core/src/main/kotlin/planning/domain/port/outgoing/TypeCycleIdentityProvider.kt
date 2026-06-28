@@ -1,7 +1,7 @@
 package planning.domain.port.outgoing
 
-import metamodel.domain.vo.TypeReference
 import planning.domain.expansion.TypeCycleIdentity
+import stage.canonicalization.material.TypeReference
 
 /**
  * Outbound port for active-cycle identity preflight.

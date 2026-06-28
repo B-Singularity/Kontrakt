@@ -1,13 +1,13 @@
 package adapter.reflection
 
-import metamodel.domain.frozen.image.FrozenMetamodelImageAssemblyInput
-import metamodel.domain.frozen.image.FrozenMetamodelImageId
-import metamodel.domain.frozen.image.FrozenRawFactTableEntry
-import metamodel.domain.frozen.image.FrozenTypeCycleIdentityTableEntry
-import metamodel.domain.frozen.image.FrozenTypeShapeTableEntry
-import metamodel.domain.vo.TypeReference
 import planning.domain.expansion.TypeCycleIdentity
 import planning.domain.port.outgoing.RawTypeFactsResolution
+import stage.canonicalization.material.TypeReference
+import stage.canonicalization.material.frozen.image.FrozenMetamodelImageAssemblyInput
+import stage.canonicalization.material.frozen.image.FrozenMetamodelImageId
+import stage.canonicalization.material.frozen.image.FrozenRawFactTableEntry
+import stage.canonicalization.material.frozen.image.FrozenTypeCycleIdentityTableEntry
+import stage.canonicalization.material.frozen.image.FrozenTypeShapeTableEntry
 import stage.input.diagnostics.MetamodelAdapterAssemblyException
 import stage.input.diagnostics.MetamodelException
 import stage.input.material.ResolvedTypeShape

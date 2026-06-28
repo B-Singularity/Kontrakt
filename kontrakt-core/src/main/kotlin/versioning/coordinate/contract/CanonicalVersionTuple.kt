@@ -1,6 +1,6 @@
 package versioning.coordinate.contract
 
-import planning.domain.canonical.text.CanonicalTextLaw
+import stage.canonicalization.contract.CanonicalTextLaw
 
 /**
  * Canonical version tuple carried by canonical signatures and canonical byte

@@ -1,6 +1,6 @@
 package adapter.reflection
 
-import metamodel.domain.vo.TypeReference
+import stage.canonicalization.material.TypeReference
 import stage.input.diagnostics.MetamodelAdapterStateViolationException
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean

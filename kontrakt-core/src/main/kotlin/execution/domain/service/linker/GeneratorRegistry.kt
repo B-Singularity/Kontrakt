@@ -3,7 +3,7 @@ package execution.domain.service.linker
 import execution.domain.strategy.generation.Generator
 import execution.domain.vo.plan.ExecutableNode
 import ir.Attribute
-import metamodel.domain.vo.TypeReference
+import stage.canonicalization.material.TypeReference
 
 /**
  * [Domain Service] Registry for looking up generators.

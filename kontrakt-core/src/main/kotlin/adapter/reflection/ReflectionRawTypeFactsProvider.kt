@@ -1,11 +1,9 @@
 package adapter.reflection
 
-import stage.input.material.VisibilityKind
-import metamodel.domain.protocol.MetamodelProtocolOrdering
 import metamodel.domain.service.TypeIdentity64Deriver
-import metamodel.domain.vo.TypeReference
 import planning.domain.port.outgoing.RawTypeFactsProvider
 import planning.domain.port.outgoing.RawTypeFactsResolution
+import stage.canonicalization.material.TypeReference
 import stage.input.diagnostics.StrictModeViolationException
 import stage.input.material.ConstructorCandidateFact
 import stage.input.material.ConstructorParameterFact
@@ -17,6 +15,8 @@ import stage.input.material.PropertyFact
 import stage.input.material.PropertyMutability
 import stage.input.material.PropertyStorageKind
 import stage.input.material.RawTypeFactsDTO
+import stage.input.material.VisibilityKind
+import stage.normalization.contract.MetamodelProtocolOrdering
 import kotlin.reflect.KClass
 import kotlin.reflect.KFunction
 import kotlin.reflect.KMutableProperty1

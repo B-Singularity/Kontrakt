@@ -251,7 +251,7 @@ class RuntimeBindingScopeId private constructor(
 /**
  * Local order guard for runtime binding scope names.
  *
- * This deliberately avoids planning.domain.canonical.text.CanonicalTextLaw.
+ * This deliberately avoids stage.canonicalization.contract.CanonicalTextLaw.
  *
  * Allowed:
  *

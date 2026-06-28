@@ -1,12 +1,12 @@
 package adapter.reflection
 
-import metamodel.domain.vo.CanonicalTypeShapeKind
-import stage.input.material.TypeNestingDepthLaw
-import stage.input.material.TypeShapeSummary
+import stage.canonicalization.material.CanonicalTypeShapeKind
 import stage.input.diagnostics.StrictModeViolationException
 import stage.input.material.ArrayComponentShapeHint
 import stage.input.material.AtomicShapeFamily
 import stage.input.material.OrderedUseSiteAnnotations
+import stage.input.material.TypeNestingDepthLaw
+import stage.input.material.TypeShapeSummary
 import java.math.BigDecimal
 import java.math.BigInteger
 import java.time.Duration

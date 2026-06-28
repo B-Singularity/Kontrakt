@@ -1,7 +1,7 @@
 package metamodel.domain.port.outgoing
 
-import metamodel.domain.vo.CanonicalTypeTextInspectionPolicy
-import metamodel.domain.vo.CanonicalTypeTextInspectionResult
+import stage.canonicalization.material.CanonicalTypeTextInspectionPolicy
+import stage.canonicalization.material.CanonicalTypeTextInspectionResult
 
 /**
  * Hexagonal Port: pinned Unicode normalization and canonical type-text inspection.

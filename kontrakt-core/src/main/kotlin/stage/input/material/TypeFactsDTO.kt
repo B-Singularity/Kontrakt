@@ -1,6 +1,6 @@
 package stage.input.material
 
-import metamodel.domain.vo.TypeReference
+import stage.canonicalization.material.TypeReference
 import stage.input.diagnostics.MetamodelException
 import java.util.Collections
 

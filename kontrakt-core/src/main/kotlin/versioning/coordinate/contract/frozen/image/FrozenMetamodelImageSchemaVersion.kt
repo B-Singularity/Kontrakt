@@ -1,6 +1,6 @@
 package versioning.coordinate.contract.frozen.image
 
-import metamodel.domain.protocol.MetamodelProtocolTextGuards
+import stage.normalization.contract.MetamodelProtocolTextGuards
 
 /**
  * Compatibility version for the frozen metamodel image structure.

@@ -1,6 +1,6 @@
 package metamodel.domain.service
 
-import metamodel.domain.vo.TypeReference
+import stage.canonicalization.material.TypeReference
 
 /**
  * Canonical 64-bit type identity derivation service.

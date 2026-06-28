@@ -1,9 +1,9 @@
 package stage.input.material
 
-import metamodel.domain.vo.CanonicalTypeId
-import metamodel.domain.vo.CanonicalTypeShapeKind
-import metamodel.domain.vo.CanonicalTypeSignature
-import metamodel.domain.vo.TypeShapeRatificationFingerprint
+import stage.canonicalization.material.CanonicalTypeId
+import stage.canonicalization.material.CanonicalTypeShapeKind
+import stage.canonicalization.material.CanonicalTypeSignature
+import stage.canonicalization.material.TypeShapeRatificationFingerprint
 import stage.input.diagnostics.MetamodelFactContractViolationException
 
 /**

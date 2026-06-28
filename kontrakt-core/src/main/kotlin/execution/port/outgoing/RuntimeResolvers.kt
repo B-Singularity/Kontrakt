@@ -1,6 +1,6 @@
 package execution.port.outgoing
 
-import metamodel.domain.vo.TypeReference
+import stage.canonicalization.material.TypeReference
 
 /**
  * [Port] Resolves an opaque handle for runtime operations.

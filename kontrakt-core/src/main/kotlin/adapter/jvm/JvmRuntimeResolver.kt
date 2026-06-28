@@ -4,7 +4,7 @@ import execution.port.outgoing.RuntimeTypeHandle
 import execution.port.outgoing.RuntimeTypeResolver
 import infrastructure.exception.RegistryException
 import infrastructure.registry.RuntimeHandleRegistry
-import metamodel.domain.vo.TypeReference
+import stage.canonicalization.material.TypeReference
 import java.lang.reflect.Array
 import java.lang.reflect.GenericArrayType
 import java.lang.reflect.ParameterizedType

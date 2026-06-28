@@ -1,9 +1,9 @@
 package stage.input.material
 
-import metamodel.domain.protocol.MetamodelProtocolOrdering
-import metamodel.domain.protocol.MetamodelProtocolTextGuards
 import stage.input.diagnostics.InvalidTypeFactShapeException
 import stage.input.diagnostics.MetamodelFactOwnershipMismatchException
+import stage.normalization.contract.MetamodelProtocolOrdering
+import stage.normalization.contract.MetamodelProtocolTextGuards
 
 /**
  * Raw normalized type-facts DTO.

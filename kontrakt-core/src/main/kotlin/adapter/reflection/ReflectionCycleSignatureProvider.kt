@@ -1,7 +1,7 @@
 package adapter.reflection
 
 import ir.identity.CanonicalSignature
-import metamodel.domain.vo.TypeReference
+import stage.canonicalization.material.TypeReference
 
 /**
  * Adapter-side bridge for the exact cycle-signature material required by
@@ -11,7 +11,7 @@ import metamodel.domain.vo.TypeReference
  *
  * The current codebase has two signature concepts:
  *
- * - metamodel.domain.vo.CanonicalTypeSignature
+ * - stage.canonicalization.material.CanonicalTypeSignature
  * - ir.identity.CanonicalSignature
  *
  * TypeReference carries the metamodel-domain signature material.

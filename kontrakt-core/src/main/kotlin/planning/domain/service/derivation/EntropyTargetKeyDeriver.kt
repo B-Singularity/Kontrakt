@@ -1,6 +1,6 @@
 package planning.domain.service.derivation
 
-import metamodel.domain.vo.TypeReference
+import stage.canonicalization.material.TypeReference
 
 /**
  * Deterministic entropy-target ordering key.

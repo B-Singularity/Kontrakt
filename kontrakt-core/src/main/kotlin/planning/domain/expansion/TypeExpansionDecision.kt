@@ -1,6 +1,6 @@
 package planning.domain.expansion
 
-import metamodel.domain.vo.TypeReference
+import stage.canonicalization.material.TypeReference
 
 /**
  * Full expansion decision produced after active-cycle detection reports cycle miss.

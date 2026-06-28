@@ -1,6 +1,6 @@
 package planning.domain.expansion
 
-import metamodel.domain.vo.TypeReference
+import stage.canonicalization.material.TypeReference
 
 /**
  * Preflight result produced before raw facts are resolved.

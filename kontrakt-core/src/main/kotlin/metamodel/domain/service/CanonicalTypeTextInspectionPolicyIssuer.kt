@@ -1,8 +1,8 @@
 package metamodel.domain.service
 
 import metamodel.domain.port.outgoing.PolicyFingerprintDeriver
-import metamodel.domain.protocol.CanonicalTextPolicyFingerprintSpec
-import metamodel.domain.vo.CanonicalTypeTextInspectionPolicy
+import stage.canonicalization.material.CanonicalTypeTextInspectionPolicy
+import stage.normalization.contract.CanonicalTextPolicyFingerprintSpec
 
 /**
  * Domain service for issuing pinned canonical type-text inspection policies.
