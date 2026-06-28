@@ -1,9 +1,16 @@
 package execution.adapter.junit
 
-import discovery.domain.vo.ScanScope
-import execution.adapter.runtime.DefaultRuntimeFactory
-import execution.adapter.state.ThreadLocalScenarioControl
+import adapter.console.ConsoleReporter
+import adapter.file.HtmlReporter
+import adapter.file.JsonReporter
 import adapter.file.WorkerTraceSinkPool
+import adapter.junit.KontraktTestDescriptor
+import adapter.junit.KontraktTestEngine
+import adapter.junit.ReportingInfrastructureFactory
+import adapter.junit.TracingInfrastructureFactory
+import adapter.jvm.DefaultRuntimeFactory
+import discovery.domain.vo.ScanScope
+import execution.adapter.state.ThreadLocalScenarioControl
 import execution.domain.aggregate.TestExecution
 import execution.domain.factory.ExecutionEnvironmentFactory
 import execution.domain.vo.config.AuditPolicy
@@ -42,9 +49,6 @@ import org.junit.platform.engine.TestExecutionResult
 import org.junit.platform.engine.UniqueId
 import org.junit.platform.engine.discovery.ClassSelector
 import org.junit.platform.engine.discovery.PackageSelector
-import adapter.console.ConsoleReporter
-import adapter.file.HtmlReporter
-import adapter.file.JsonReporter
 import java.time.Duration
 
 /**

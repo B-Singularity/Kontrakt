@@ -1,7 +1,7 @@
 package execution.adapter.state
 
+import adapter.mockito.MockitoScenarioContext
 import exception.KontraktInternalException
-import execution.adapter.mockito.MockitoScenarioContext
 import execution.domain.vo.context.ExecutionEnvironment
 import execution.port.outgoing.ScenarioContext
 import execution.port.outgoing.ScenarioControl

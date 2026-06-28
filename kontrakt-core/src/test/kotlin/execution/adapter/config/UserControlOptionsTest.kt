@@ -1,5 +1,6 @@
 package execution.adapter.config
 
+import adapter.junit.config.UserControlOptions
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 

@@ -1,7 +1,7 @@
 package execution.port.outgoing
 
+import adapter.mockito.MockitoScenarioContext
 import exception.KontraktConfigurationException
-import execution.adapter.mockito.MockitoScenarioContext
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.DisplayName

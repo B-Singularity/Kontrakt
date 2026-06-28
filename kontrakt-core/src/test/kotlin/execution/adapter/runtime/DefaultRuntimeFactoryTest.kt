@@ -1,6 +1,7 @@
 package execution.adapter.runtime
 
 import adapter.file.WorkerTraceSinkPool
+import adapter.jvm.DefaultRuntimeFactory
 import execution.domain.vo.config.ExecutionPolicy
 import execution.port.incoming.KontraktRuntimeFactory
 import execution.port.incoming.KontraktRuntimeFactoryContract

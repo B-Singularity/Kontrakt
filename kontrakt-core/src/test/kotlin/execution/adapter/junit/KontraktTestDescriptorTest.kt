@@ -1,5 +1,6 @@
 package execution.adapter.junit
 
+import adapter.junit.KontraktTestDescriptor
 import io.mockk.every
 import io.mockk.mockk
 import ir.TestSpecification

@@ -1,17 +1,18 @@
 package execution.adapter.junit
 
-import execution.adapter.reporting.BroadcastingResultPublisher
+import adapter.console.AnsiTheme
+import adapter.console.ConsoleReporter
+import adapter.console.NoColorTheme
+import adapter.console.StandardConsoleLayout
 import adapter.file.WorkerTraceSinkPool
+import adapter.junit.DefaultInfrastructureFactory
+import execution.adapter.reporting.BroadcastingResultPublisher
 import execution.domain.vo.config.AuditPolicy
 import execution.port.outgoing.TestResultPublisher
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.InstanceOfAssertFactories
 import org.junit.jupiter.api.Test
-import adapter.console.AnsiTheme
-import adapter.console.ConsoleReporter
-import adapter.console.NoColorTheme
-import adapter.console.StandardConsoleLayout
 import java.nio.file.Paths
 
 class DefaultInfrastructureFactoryTest {

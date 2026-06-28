@@ -1,5 +1,9 @@
 package execution.adapter.config
 
+import adapter.junit.config.UserControlOptions
+import adapter.junit.config.toDiscoveryPolicy
+import adapter.junit.config.toExecutionPolicy
+import adapter.junit.config.toReportingDirectives
 import discovery.domain.vo.ScanScope
 import execution.domain.vo.config.AuditDepth
 import execution.domain.vo.config.LogRetention

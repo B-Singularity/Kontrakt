@@ -1,6 +1,6 @@
 package execution.port.outgoing
 
-import execution.adapter.mockito.MockitoScenarioContext
+import adapter.mockito.MockitoScenarioContext
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 

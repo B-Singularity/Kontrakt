@@ -1,5 +1,6 @@
 package execution.adapter.mockito
 
+import adapter.mockito.MockitoEngineAdapter
 import exception.KontraktConfigurationException
 import execution.domain.service.generation.FixtureGenerator
 import execution.domain.vo.context.generation.GenerationRequest
@@ -485,7 +486,7 @@ class MockitoEngineAdapterTest {
         vararg args: Any?,
     ): Any {
         val clazz =
-            MockitoEngineAdapter::class.java.declaredClasses
+            adapter.mockito.MockitoEngineAdapter::class.java.declaredClasses
                 .firstOrNull { it.simpleName == className }
                 ?: throw IllegalArgumentException("Inner class $className not found in MockitoEngineAdapter")
 
