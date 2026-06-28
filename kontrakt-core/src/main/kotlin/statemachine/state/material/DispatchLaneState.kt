@@ -1,4 +1,4 @@
-package planning.infrastructure.cache.adapter.outgoing.dispatch.lifecycle
+package statemachine.state.material
 
 import stage.lowering.diagnostics.PlanningProtocolIntegrityException
 import kotlin.enums.EnumEntries

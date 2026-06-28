@@ -2,8 +2,8 @@ package linking.domain.service
 
 import stage.lowering.material.ResolvedSpec
 import stage.lowering.material.ScenarioRequirements
-import linking.domain.phase.IntegrityPhase
-import linking.domain.phase.ResolutionPhase
+import statemachine.state.material.IntegrityPhase
+import statemachine.state.material.ResolutionPhase
 import java.util.SortedSet
 
 /**

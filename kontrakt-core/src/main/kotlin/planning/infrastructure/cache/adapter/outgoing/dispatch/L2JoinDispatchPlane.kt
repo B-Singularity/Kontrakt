@@ -1,17 +1,17 @@
 package planning.infrastructure.cache.adapter.outgoing.dispatch
 
 import governance.policy.ResolvedDispatchLanePolicy
-import stage.lowering.material.CanonicalPlanNode
+import planning.infrastructure.cache.InFlightSlot
+import planning.infrastructure.cache.WaiterCell
+import planning.infrastructure.exception.PlanningInfrastructureException
+import planning.infrastructure.runtime.time.MonotonicTimeSource
 import stage.lowering.boundary.JoinContinuation
 import stage.lowering.boundary.JoinRegistrationDecision
 import stage.lowering.boundary.JoinResumeSignal
-import planning.infrastructure.cache.InFlightSlot
-import planning.infrastructure.cache.WaiterCell
-import planning.infrastructure.cache.adapter.outgoing.dispatch.lifecycle.DeliveryEntryState
-import planning.infrastructure.cache.adapter.outgoing.dispatch.lifecycle.DispatchLaneState
-import planning.infrastructure.cache.adapter.outgoing.dispatch.lifecycle.DispatchLifecycleLaw
-import planning.infrastructure.exception.PlanningInfrastructureException
-import planning.infrastructure.runtime.time.MonotonicTimeSource
+import stage.lowering.material.CanonicalPlanNode
+import statemachine.state.material.DeliveryEntryState
+import statemachine.state.material.DispatchLaneState
+import statemachine.transition.contract.DispatchLifecycleLaw
 import java.util.IdentityHashMap
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean

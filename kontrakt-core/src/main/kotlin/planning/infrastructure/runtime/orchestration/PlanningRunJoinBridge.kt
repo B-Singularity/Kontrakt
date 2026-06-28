@@ -1,7 +1,7 @@
 package planning.infrastructure.runtime.orchestration
 
 import stage.lowering.boundary.JoinHandle
-import planning.domain.runtime.orchestration.PlanningResumePoint
+import statemachine.transition.material.PlanningResumePoint
 
 /**
  * Runtime-boundary bridge from adapter-level joined wait to planning-run orchestration.

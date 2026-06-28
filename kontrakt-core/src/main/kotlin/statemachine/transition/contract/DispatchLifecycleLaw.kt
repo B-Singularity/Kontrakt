@@ -1,6 +1,8 @@
-package planning.infrastructure.cache.adapter.outgoing.dispatch.lifecycle
+package statemachine.transition.contract
 
 import stage.lowering.diagnostics.PlanningProtocolIntegrityException
+import statemachine.state.material.DeliveryEntryState
+import statemachine.state.material.DispatchLaneState
 
 /**
  * Single source of truth for closed top-level lifecycle legality across the dispatch plane.

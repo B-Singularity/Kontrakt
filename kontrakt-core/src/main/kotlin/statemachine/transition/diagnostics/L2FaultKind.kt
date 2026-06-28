@@ -1,4 +1,4 @@
-package planning.domain.fault
+package statemachine.transition.diagnostics
 
 /**
  * Tier-2 fault categories exposed to the Domain Core.

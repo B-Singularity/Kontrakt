@@ -1,8 +1,8 @@
-package linking.domain.phase
+package statemachine.state.material
 
+import stage.lowering.boundary.BindingStrategy
 import stage.lowering.material.ResolvedSpec
 import stage.lowering.material.ScenarioRequirements
-import stage.lowering.boundary.BindingStrategy
 import java.util.SortedSet
 
 /**

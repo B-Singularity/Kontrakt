@@ -2,8 +2,6 @@ package execution.domain.strategy.generation
 
 import execution.domain.exception.RuntimeInstantiationException
 import execution.domain.vo.context.generation.GenerationContext
-import execution.domain.vo.generation.TruncationRecord
-import execution.domain.vo.generation.TruncationRule
 import execution.domain.vo.plan.UnlinkedCycleNode
 import execution.port.outgoing.RuntimeInstantiator
 import execution.port.outgoing.RuntimeTypeHandle
@@ -11,6 +9,8 @@ import ir.Attribute
 import metamodel.domain.model.TypeDescriptor
 import stage.diagnostic.evidence.TracePhase
 import stage.input.material.TypeKind
+import statemachine.transition.diagnostics.TruncationRecord
+import statemachine.transition.diagnostics.TruncationRule
 
 class CycleBreakingGenerator(
     private val descriptor: TypeDescriptor,

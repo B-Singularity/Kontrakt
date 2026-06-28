@@ -1,4 +1,4 @@
-package execution.domain.vo.generation
+package statemachine.transition.diagnostics
 
 /**
  * [Policy] Strategies for breaking recursive cycles.

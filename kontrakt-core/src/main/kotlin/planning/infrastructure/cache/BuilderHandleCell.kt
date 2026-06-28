@@ -1,8 +1,8 @@
 package planning.infrastructure.cache
 
 import stage.lowering.diagnostics.PlanningProtocolIntegrityException
-import planning.domain.runtime.lifecycle.BuilderHandleState
-import planning.domain.runtime.lifecycle.L2LifecycleLaw
+import statemachine.state.material.BuilderHandleState
+import statemachine.transition.contract.L2LifecycleLaw
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.VarHandle
 

@@ -1,10 +1,10 @@
-package linking.domain.phase
+package statemachine.state.material
 
 import stage.lowering.diagnostics.LinkingAmbiguityException
 import stage.lowering.diagnostics.LinkingInputException
 import stage.lowering.diagnostics.LinkingProtocolException
-import stage.lowering.material.ResolvedSpec
 import stage.lowering.material.FeatureName
+import stage.lowering.material.ResolvedSpec
 import java.util.SortedSet
 
 /**

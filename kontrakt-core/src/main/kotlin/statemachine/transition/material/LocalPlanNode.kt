@@ -1,8 +1,8 @@
-package planning.domain.runtime
+package statemachine.transition.material
 
-import stage.lowering.material.CanonicalPlanNode
-import stage.lowering.diagnostics.PlanningProtocolIntegrityException
 import planning.domain.interner.PlanCacheKey
+import stage.lowering.diagnostics.PlanningProtocolIntegrityException
+import stage.lowering.material.CanonicalPlanNode
 
 /**
  * Internal assembly state used before commit/intern.

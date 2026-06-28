@@ -1,9 +1,9 @@
 package planning.infrastructure.runtime.orchestration
 
 import governance.policy.RuntimePolicyEpoch
-import planning.domain.runtime.orchestration.PlanningResumePoint
-import planning.domain.runtime.orchestration.PlanningRunEpoch
-import planning.domain.runtime.orchestration.PlanningRunRemainingBudget
+import statemachine.transition.material.PlanningResumePoint
+import statemachine.transition.material.PlanningRunEpoch
+import statemachine.transition.material.PlanningRunRemainingBudget
 
 /**
  * Runtime-boundary admission result for a lawful fresh-session restart.

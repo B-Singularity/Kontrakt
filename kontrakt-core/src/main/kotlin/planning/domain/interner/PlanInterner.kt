@@ -1,16 +1,16 @@
 package planning.domain.interner
 
 import governance.budget.CostCenter
-import stage.lowering.material.CanonicalPlanNode
-import stage.lowering.material.RawCycleBreakPayload
-import stage.lowering.material.RawPayloadNode
-import planning.domain.fault.L2FaultKind
+import planning.domain.service.assembly.CanonicalPayloadSealer
+import planning.domain.session.PlannerSession
 import stage.lowering.boundary.BuildHandle
 import stage.lowering.boundary.PlanInternRepository
 import stage.lowering.boundary.PlanInternStep
-import planning.domain.service.assembly.CanonicalPayloadSealer
-import planning.domain.session.PlannerSession
+import stage.lowering.material.CanonicalPlanNode
 import stage.lowering.material.PartitionId
+import stage.lowering.material.RawCycleBreakPayload
+import stage.lowering.material.RawPayloadNode
+import statemachine.transition.diagnostics.L2FaultKind
 
 /**
  * Domain service orchestrating Tier-2 structural interning.

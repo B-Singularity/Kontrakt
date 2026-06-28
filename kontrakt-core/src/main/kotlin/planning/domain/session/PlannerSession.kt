@@ -3,15 +3,15 @@ package planning.domain.session
 import governance.budget.BudgetTrack
 import governance.budget.CostCenter
 import ir.identity.CanonicalSignature
+import planning.domain.interner.PlanCacheKey
+import planning.domain.service.assembly.ChildResultSlice
+import stage.input.material.MemberFact
+import stage.lowering.contract.BreakpointStage
 import stage.lowering.diagnostics.FuelExhaustedException
 import stage.lowering.diagnostics.PlanningProtocolIntegrityException
 import stage.lowering.diagnostics.PlanningRuntimeInvariantException
-import planning.domain.interner.PlanCacheKey
-import stage.lowering.contract.BreakpointStage
-import planning.domain.runtime.CommittedPlanNode
-import planning.domain.service.assembly.ChildResultSlice
 import stage.lowering.material.OrderedActiveMembers
-import stage.input.material.MemberFact
+import statemachine.transition.material.CommittedPlanNode
 
 /**
  * Aggregate root for the worker-local semantic planning runtime.

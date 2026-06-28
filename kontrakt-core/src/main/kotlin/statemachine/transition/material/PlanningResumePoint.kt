@@ -1,4 +1,4 @@
-package planning.domain.runtime.orchestration
+package statemachine.transition.material
 
 /**
  * Immutable restart descriptor for one planning-run suspension site.

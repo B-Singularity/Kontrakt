@@ -1,4 +1,4 @@
-package planning.domain.runtime.lifecycle
+package statemachine.state.material
 
 import stage.lowering.diagnostics.PlanningProtocolIntegrityException
 import kotlin.enums.EnumEntries

@@ -1,10 +1,10 @@
 package stage.lowering.boundary
 
-import stage.lowering.material.CanonicalPlanNode
-import planning.domain.fault.L2FaultKind
 import planning.domain.interner.PlanCacheKey
 import planning.domain.session.PlannerSession
+import stage.lowering.material.CanonicalPlanNode
 import stage.lowering.material.PartitionId
+import statemachine.transition.diagnostics.L2FaultKind
 
 /**
  * Outbound port for Tier-2 structural interning.

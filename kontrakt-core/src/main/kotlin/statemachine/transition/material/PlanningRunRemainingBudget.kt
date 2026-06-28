@@ -1,4 +1,4 @@
-package planning.domain.runtime.orchestration
+package statemachine.transition.material
 
 import governance.policy.ResolvedSessionBudget
 import stage.lowering.diagnostics.CapacityExceededException

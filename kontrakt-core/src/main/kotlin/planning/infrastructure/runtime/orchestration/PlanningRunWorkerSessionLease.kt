@@ -1,7 +1,7 @@
 package planning.infrastructure.runtime.orchestration
 
 import stage.lowering.diagnostics.PlanningProtocolIntegrityException
-import planning.domain.runtime.orchestration.PlanningRunEpoch
+import statemachine.transition.material.PlanningRunEpoch
 
 /**
  * Runtime-boundary lease proving which worker-local session currently owns

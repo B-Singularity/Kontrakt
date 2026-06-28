@@ -1,9 +1,9 @@
 package linking.bootstrap
 
 import linking.adapter.strategy.RealBindingStrategy
-import linking.domain.phase.IntegrityPhase
-import linking.domain.phase.ResolutionPhase
 import linking.domain.service.LinkerService
+import statemachine.state.material.IntegrityPhase
+import statemachine.state.material.ResolutionPhase
 
 /**
  * Bootstrap factory for the Linker subsystem.

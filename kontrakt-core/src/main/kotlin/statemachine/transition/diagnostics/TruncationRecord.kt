@@ -1,4 +1,4 @@
-package execution.domain.vo.generation
+package statemachine.transition.diagnostics
 
 import ir.EdgeModel
 import stage.diagnostic.evidence.TraceEvent

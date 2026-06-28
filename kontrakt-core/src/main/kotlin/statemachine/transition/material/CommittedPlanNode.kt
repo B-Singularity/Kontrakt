@@ -1,9 +1,9 @@
-package planning.domain.runtime
+package statemachine.transition.material
 
-import stage.lowering.material.CanonicalPlanNode
-import stage.lowering.diagnostics.FaultKind
 import planning.domain.interner.PlanCacheKey
+import stage.lowering.diagnostics.FaultKind
 import stage.lowering.diagnostics.PlanningProtocolIntegrityException
+import stage.lowering.material.CanonicalPlanNode
 
 /**
  * Runtime wrapper around a passive IR node.

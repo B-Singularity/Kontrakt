@@ -2,24 +2,10 @@ package planning.domain.service
 
 import governance.budget.CostCenter
 import metamodel.port.outgoing.NormalizationEngine
-import stage.lowering.diagnostics.ActiveCycleWithoutBreakpointException
-import stage.lowering.diagnostics.AmbiguousEdgeKeyException
-import stage.lowering.diagnostics.AmbiguousEntropyTargetKeyException
-import stage.lowering.diagnostics.CapacityExceededException
-import stage.lowering.diagnostics.InvalidCanonicalKeyComponentException
-import stage.lowering.diagnostics.PlanningProtocolIntegrityException
-import stage.lowering.diagnostics.PortContractViolationException
-import stage.lowering.diagnostics.UnsupportedTypeExpansionException
-import stage.lowering.material.expansion.SessionTypeExpansionWorkMeter
-import stage.lowering.material.expansion.TypeExpansionPipeline
-import stage.lowering.material.expansion.TypeExpansionPreflightDecision
 import planning.domain.interner.InternerInvocationSite
 import planning.domain.interner.InternerStepResult
 import planning.domain.interner.PlanInterner
 import planning.domain.interner.PlanKeyFactory
-import stage.lowering.material.projection.CapabilityProfile
-import stage.lowering.contract.TraversalDisposition
-import planning.domain.runtime.CommittedPlanNode
 import planning.domain.service.assembly.CycleBreakPayloadAssembler
 import planning.domain.service.assembly.PassiveIrAssembler
 import planning.domain.service.derivation.CanonicalEdgeKeyProvider
@@ -31,10 +17,24 @@ import planning.domain.session.ExpandEdgeFrame
 import planning.domain.session.IterateMembersFrame
 import planning.domain.session.PlanNodeFrame
 import planning.domain.session.PlannerSession
-import stage.lowering.material.PartitionId
 import stage.canonicalization.material.TypeReference
 import stage.input.material.MemberFact
+import stage.lowering.contract.TraversalDisposition
+import stage.lowering.diagnostics.ActiveCycleWithoutBreakpointException
+import stage.lowering.diagnostics.AmbiguousEdgeKeyException
+import stage.lowering.diagnostics.AmbiguousEntropyTargetKeyException
+import stage.lowering.diagnostics.CapacityExceededException
+import stage.lowering.diagnostics.InvalidCanonicalKeyComponentException
+import stage.lowering.diagnostics.PlanningProtocolIntegrityException
+import stage.lowering.diagnostics.PortContractViolationException
+import stage.lowering.diagnostics.UnsupportedTypeExpansionException
 import stage.lowering.material.CanonicalPlanNode
+import stage.lowering.material.PartitionId
+import stage.lowering.material.expansion.SessionTypeExpansionWorkMeter
+import stage.lowering.material.expansion.TypeExpansionPipeline
+import stage.lowering.material.expansion.TypeExpansionPreflightDecision
+import stage.lowering.material.projection.CapabilityProfile
+import statemachine.transition.material.CommittedPlanNode
 
 /**
  * Compiler-style structural planner core.

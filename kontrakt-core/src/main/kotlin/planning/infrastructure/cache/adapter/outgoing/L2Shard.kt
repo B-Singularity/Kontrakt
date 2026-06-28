@@ -1,16 +1,7 @@
 package planning.infrastructure.cache.adapter.outgoing
 
 import governance.budget.CostCenter
-import stage.lowering.material.CanonicalPlanNode
-import stage.lowering.diagnostics.PlanningProtocolIntegrityException
-import planning.domain.fault.L2FaultKind
 import planning.domain.interner.PlanCacheKey
-import stage.lowering.boundary.BuildHandle
-import stage.lowering.boundary.JoinContinuation
-import stage.lowering.boundary.JoinHandle
-import stage.lowering.boundary.JoinRegistrationDecision
-import stage.lowering.boundary.JoinResumeStep
-import stage.lowering.boundary.PlanInternStep
 import planning.domain.session.PlannerSession
 import planning.infrastructure.cache.BuilderHandleCell
 import planning.infrastructure.cache.BuilderHandleRegisterDecision
@@ -23,6 +14,15 @@ import planning.infrastructure.cache.SharedTerminalResolution
 import planning.infrastructure.cache.WaiterCell
 import planning.infrastructure.cache.adapter.outgoing.dispatch.L2JoinDispatchPlane
 import planning.infrastructure.runtime.time.MonotonicTimeSource
+import stage.lowering.boundary.BuildHandle
+import stage.lowering.boundary.JoinContinuation
+import stage.lowering.boundary.JoinHandle
+import stage.lowering.boundary.JoinRegistrationDecision
+import stage.lowering.boundary.JoinResumeStep
+import stage.lowering.boundary.PlanInternStep
+import stage.lowering.diagnostics.PlanningProtocolIntegrityException
+import stage.lowering.material.CanonicalPlanNode
+import statemachine.transition.diagnostics.L2FaultKind
 import java.util.concurrent.CancellationException
 import java.util.concurrent.atomic.AtomicLong
 

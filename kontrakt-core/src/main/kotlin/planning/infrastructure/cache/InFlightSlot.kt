@@ -1,10 +1,10 @@
 package planning.infrastructure.cache
 
 import stage.lowering.diagnostics.PlanningProtocolIntegrityException
-import planning.domain.runtime.lifecycle.CommitRightState
-import planning.domain.runtime.lifecycle.L2LifecycleLaw
-import planning.domain.runtime.lifecycle.SharedSlotState
-import planning.domain.runtime.lifecycle.SpeculativeLeaseState
+import statemachine.state.material.CommitRightState
+import statemachine.state.material.SharedSlotState
+import statemachine.state.material.SpeculativeLeaseState
+import statemachine.transition.contract.L2LifecycleLaw
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.VarHandle
 

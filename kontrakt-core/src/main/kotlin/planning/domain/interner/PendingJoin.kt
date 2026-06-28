@@ -1,13 +1,13 @@
 package planning.domain.interner
 
 import governance.budget.CostCenter
-import planning.domain.fault.L2FaultKind
+import planning.domain.service.assembly.CanonicalPayloadSealer
+import planning.domain.session.PlannerSession
 import stage.lowering.boundary.JoinContinuation
 import stage.lowering.boundary.JoinHandle
 import stage.lowering.boundary.JoinRegistrationDecision
 import stage.lowering.boundary.JoinResumeStep
-import planning.domain.service.assembly.CanonicalPayloadSealer
-import planning.domain.session.PlannerSession
+import statemachine.transition.diagnostics.L2FaultKind
 
 /**
  * Suspended join episode lifted into domain/service space.
