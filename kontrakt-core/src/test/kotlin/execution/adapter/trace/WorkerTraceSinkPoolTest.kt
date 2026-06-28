@@ -1,5 +1,7 @@
 package execution.adapter.trace
 
+import adapter.file.RecyclingFileTraceSink
+import adapter.file.WorkerTraceSinkPool
 import execution.domain.vo.context.WorkerId
 import execution.exception.KontraktLifecycleException
 import io.mockk.Runs

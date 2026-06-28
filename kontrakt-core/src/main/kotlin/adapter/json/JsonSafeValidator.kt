@@ -1,5 +1,7 @@
-package infrastructure.json
+package adapter.json
 
+import java.math.BigDecimal
+import java.math.BigInteger
 import java.util.IdentityHashMap
 
 /**
@@ -36,8 +38,12 @@ object JsonSafeValidator {
             is Number ->
                 when (value) {
                     // [Allowlist] Only standard JVM numbers are allowed.
-                    is Byte, is Short, is Int, is Long, is java.math.BigInteger, is java.math.BigDecimal -> return
-                    is Double -> if (!value.isFinite()) throw throwUnsafe("Non-finite number ($value) at '$path'", value)
+                    is Byte, is Short, is Int, is Long, is BigInteger, is BigDecimal -> return
+                    is Double -> if (!value.isFinite()) throw throwUnsafe(
+                        "Non-finite number ($value) at '$path'",
+                        value
+                    )
+
                     is Float -> if (!value.isFinite()) throw throwUnsafe("Non-finite number ($value) at '$path'", value)
 
                     // [Strict Policy] Reject Custom Numbers in QA to enforce schema consistency.

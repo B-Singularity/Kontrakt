@@ -1,6 +1,6 @@
 package execution.adapter.junit
 
-import execution.adapter.trace.WorkerTraceSinkPool
+import adapter.file.WorkerTraceSinkPool
 import java.nio.file.Path
 
 /**

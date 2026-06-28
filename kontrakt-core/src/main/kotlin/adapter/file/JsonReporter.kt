@@ -1,4 +1,4 @@
-package reporting.adapter.outgoing.file
+package adapter.file
 
 import exception.KontraktException
 import execution.domain.vo.result.TestResultEvent
@@ -109,11 +109,11 @@ private class TestResultMapper {
                 mapOf(
                     "status" to "REPORTING_ERROR",
                     "error" to
-                        mapOf(
-                            "message" to "Serialization failed",
-                            "testName" to event.testName,
-                            "type" to e::class.java.name,
-                        ),
+                            mapOf(
+                                "message" to "Serialization failed",
+                                "testName" to event.testName,
+                                "type" to e::class.java.name,
+                            ),
                 ).toJson()
             }.getOrElse {
                 // Triple-Fallback: Absolute Constant

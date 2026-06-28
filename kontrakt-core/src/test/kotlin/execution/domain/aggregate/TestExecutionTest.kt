@@ -1,7 +1,7 @@
 package execution.domain.aggregate
 
 import exception.KontraktInternalException
-import execution.adapter.trace.WorkerTraceSinkPool
+import adapter.file.WorkerTraceSinkPool
 import execution.domain.entity.EphemeralTestContext
 import execution.domain.service.generation.TestInstanceFactory
 import execution.domain.vo.config.AuditDepth

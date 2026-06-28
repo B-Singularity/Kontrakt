@@ -1,6 +1,6 @@
 package execution.adapter.junit
 
-import discovery.adapter.ClassGraphScannerAdapter
+import adapter.classgraph.ClassGraphScannerAdapter
 import discovery.api.Contract
 import discovery.domain.vo.ScanScope
 import exception.KontraktInternalException
@@ -28,8 +28,8 @@ import org.junit.platform.engine.UniqueId
 import org.junit.platform.engine.discovery.ClassSelector
 import org.junit.platform.engine.discovery.PackageSelector
 import reporting.adapter.config.ReportFormat
-import reporting.adapter.outgoing.file.HtmlReporter
-import reporting.adapter.outgoing.file.JsonReporter
+import adapter.file.HtmlReporter
+import adapter.file.JsonReporter
 import java.nio.file.Path
 import java.time.Clock
 

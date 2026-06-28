@@ -1,6 +1,6 @@
 package execution.adapter.runtime
 
-import execution.adapter.trace.WorkerTraceSinkPool
+import adapter.file.WorkerTraceSinkPool
 import execution.domain.aggregate.TestExecution
 import execution.domain.service.generation.TestInstanceFactory
 import execution.domain.service.orchestration.DefaultScenarioExecutor

@@ -1,11 +1,11 @@
-package execution.adapter.trace
+package adapter.file
 
 import exception.safety.PayloadSanitizer
 import execution.domain.exception.KontraktLifecycleException
 import execution.domain.vo.trace.TraceEvent
 import execution.domain.vo.trace.TracePhase
 import execution.port.outgoing.TraceSink
-import infrastructure.json.JsonUtils
+import adapter.json.JsonUtils
 import io.github.oshai.kotlinlogging.KotlinLogging
 import java.io.RandomAccessFile
 import java.nio.charset.StandardCharsets

@@ -1,4 +1,4 @@
-package discovery.adapter
+package adapter.classgraph
 
 import discovery.domain.exception.RuntimeIntegrityException
 import discovery.domain.vo.ScanIndex

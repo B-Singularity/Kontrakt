@@ -2,7 +2,7 @@ package execution.domain.aggregate
 
 import common.util.unwrapped
 import exception.KontraktInternalException
-import execution.adapter.trace.WorkerTraceSinkPool
+import adapter.file.WorkerTraceSinkPool
 import execution.domain.interceptor.AuditingInterceptor
 import execution.domain.interceptor.ResultResolverInterceptor
 import execution.domain.service.generation.TestInstanceFactory

@@ -1,5 +1,6 @@
 package execution.adapter.trace
 
+import adapter.file.RecyclingFileTraceSink
 import execution.domain.vo.result.TestStatus
 import execution.domain.vo.trace.DesignDecision
 import execution.domain.vo.trace.ExceptionTrace

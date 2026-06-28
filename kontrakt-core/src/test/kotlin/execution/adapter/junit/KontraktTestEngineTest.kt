@@ -3,7 +3,7 @@ package execution.adapter.junit
 import discovery.domain.vo.ScanScope
 import execution.adapter.runtime.DefaultRuntimeFactory
 import execution.adapter.state.ThreadLocalScenarioControl
-import execution.adapter.trace.WorkerTraceSinkPool
+import adapter.file.WorkerTraceSinkPool
 import execution.domain.aggregate.TestExecution
 import execution.domain.factory.ExecutionEnvironmentFactory
 import execution.domain.vo.config.AuditPolicy
@@ -42,9 +42,9 @@ import org.junit.platform.engine.TestExecutionResult
 import org.junit.platform.engine.UniqueId
 import org.junit.platform.engine.discovery.ClassSelector
 import org.junit.platform.engine.discovery.PackageSelector
-import reporting.adapter.outgoing.console.ConsoleReporter
-import reporting.adapter.outgoing.file.HtmlReporter
-import reporting.adapter.outgoing.file.JsonReporter
+import adapter.console.ConsoleReporter
+import adapter.file.HtmlReporter
+import adapter.file.JsonReporter
 import java.time.Duration
 
 /**
@@ -208,9 +208,9 @@ class KontraktTestEngineTest {
 
         mockkConstructor(TestDiscovererImpl::class)
         coEvery { anyConstructed<TestDiscovererImpl>().discover(any(), any()) } returns
-            Result.failure(
-                RuntimeException("Discovery Failed"),
-            )
+                Result.failure(
+                    RuntimeException("Discovery Failed"),
+                )
 
         val descriptor = engine.discover(request, uniqueId)
         assertThat(descriptor.children).isEmpty()
@@ -224,7 +224,8 @@ class KontraktTestEngineTest {
         mockkConstructor(TestDiscovererImpl::class)
         val mockSpec =
             mockk<TestSpecification>(relaxed = true) {
-                every { target } returns DiscoveredTestTarget.create(String::class, "DisplayName", "pkg.Class").getOrThrow()
+                every { target } returns DiscoveredTestTarget.create(String::class, "DisplayName", "pkg.Class")
+                    .getOrThrow()
             }
         coEvery { anyConstructed<TestDiscovererImpl>().discover(any(), any()) } returns Result.success(listOf(mockSpec))
 
@@ -318,9 +319,9 @@ class KontraktTestEngineTest {
         val rootDescriptor = mockk<TestDescriptor>()
         every { request.rootTestDescriptor } returns rootDescriptor
         every { rootDescriptor.children } returns
-            mutableSetOf(
-                KontraktTestDescriptor(UniqueId.forEngine("t"), "c", mockk(relaxed = true)),
-            )
+                mutableSetOf(
+                    KontraktTestDescriptor(UniqueId.forEngine("t"), "c", mockk(relaxed = true)),
+                )
 
         mockkConstructor(ExecutionEnvironmentFactory::class)
         mockkConstructor(DefaultRuntimeFactory::class)
@@ -457,8 +458,8 @@ class KontraktTestEngineTest {
                 descriptor,
                 match {
                     it.status == TestExecutionResult.Status.FAILED &&
-                        it.throwable.get() is AssertionError &&
-                        it.throwable.get().message == failureMessage
+                            it.throwable.get() is AssertionError &&
+                            it.throwable.get().message == failureMessage
                 },
             )
         }
@@ -533,11 +534,11 @@ class KontraktTestEngineTest {
         every { request.rootTestDescriptor } returns rootDescriptor
         every { request.engineExecutionListener } returns listener
         every { rootDescriptor.children } returns
-            mutableSetOf(
-                validDescriptor,
-                invalidTypeDescriptor,
-                emptySpecDescriptor,
-            )
+                mutableSetOf(
+                    validDescriptor,
+                    invalidTypeDescriptor,
+                    emptySpecDescriptor,
+                )
 
         // Mocks for runtime
         mockkConstructor(DefaultRuntimeFactory::class)

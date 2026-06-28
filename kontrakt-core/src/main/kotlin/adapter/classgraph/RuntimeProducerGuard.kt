@@ -1,4 +1,4 @@
-package discovery.adapter
+package adapter.classgraph
 
 import discovery.domain.exception.RuntimeIntegrityException
 import discovery.port.outgoing.ClasspathScanner
@@ -43,8 +43,8 @@ internal object RuntimeProducerGuard {
 
                 throw RuntimeIntegrityException(
                     "Environment Integrity Violation: Provider Shadowing detected. " +
-                        "Multiple distinct classes found for the same provider name(s): [$conflictDetails]. " +
-                        "Check your classpath for duplicate artifacts.",
+                            "Multiple distinct classes found for the same provider name(s): [$conflictDetails]. " +
+                            "Check your classpath for duplicate artifacts.",
                 )
             }
 

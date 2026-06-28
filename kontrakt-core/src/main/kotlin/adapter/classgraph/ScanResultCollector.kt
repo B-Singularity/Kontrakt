@@ -1,6 +1,5 @@
-package discovery.adapter
+package adapter.classgraph
 
-import discovery.adapter.policy.NoiseFilter
 import discovery.domain.policy.SpecPolicy
 import discovery.domain.policy.SpecValidator
 import io.github.classgraph.ClassInfo

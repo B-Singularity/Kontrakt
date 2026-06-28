@@ -1,4 +1,7 @@
-package infrastructure.json
+package adapter.json
+
+import kotlin.collections.iterator
+import kotlin.text.iterator
 
 /**
  * [Infrastructure] Simple JSON Serializer.

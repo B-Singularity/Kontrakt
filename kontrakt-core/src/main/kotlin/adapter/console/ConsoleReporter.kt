@@ -1,4 +1,4 @@
-package reporting.adapter.outgoing.console
+package adapter.console
 
 import execution.domain.vo.result.TestResultEvent
 import execution.domain.vo.result.TestStatus

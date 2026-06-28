@@ -2,7 +2,7 @@ package execution.adapter.junit
 
 import execution.domain.vo.config.AuditPolicy
 import execution.port.outgoing.TestResultPublisher
-import reporting.adapter.outgoing.console.ConsoleReporter
+import adapter.console.ConsoleReporter
 
 /**
  * [Testing Seam] Factory interface for Reporting Infrastructure.

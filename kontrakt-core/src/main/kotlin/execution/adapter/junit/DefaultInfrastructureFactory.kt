@@ -1,14 +1,14 @@
 package execution.adapter.junit
 
 import execution.adapter.reporting.BroadcastingResultPublisher
-import execution.adapter.trace.WorkerTraceSinkPool
+import adapter.file.WorkerTraceSinkPool
 import execution.domain.vo.config.AuditPolicy
 import execution.port.outgoing.TestResultPublisher
-import reporting.adapter.outgoing.console.AnsiTheme
-import reporting.adapter.outgoing.console.ConsoleReporter
-import reporting.adapter.outgoing.console.ConsoleTheme
-import reporting.adapter.outgoing.console.NoColorTheme
-import reporting.adapter.outgoing.console.StandardConsoleLayout
+import adapter.console.AnsiTheme
+import adapter.console.ConsoleReporter
+import adapter.console.ConsoleTheme
+import adapter.console.NoColorTheme
+import adapter.console.StandardConsoleLayout
 import java.nio.file.Path
 
 /**
@@ -43,5 +43,6 @@ object DefaultInfrastructureFactory : ReportingInfrastructureFactory, TracingInf
      *
      * @return [ConsoleTheme] (Abstraction) instead of concrete implementation.
      */
-    internal fun resolveTheme(noColorEnv: String?): ConsoleTheme = if (noColorEnv.isNullOrEmpty()) AnsiTheme else NoColorTheme
+    internal fun resolveTheme(noColorEnv: String?): ConsoleTheme =
+        if (noColorEnv.isNullOrEmpty()) AnsiTheme else NoColorTheme
 }

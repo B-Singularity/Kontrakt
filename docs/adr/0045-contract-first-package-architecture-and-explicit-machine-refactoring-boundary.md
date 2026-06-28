@@ -259,6 +259,7 @@ The current top-level vocabulary is:
 ```text
 stage
 statemachine
+versioning
 governance
 realization
 adapter
@@ -274,6 +275,16 @@ The explicit state machine is a separate contract axis. It does not duplicate ev
 
 ```text
 Kontrakt.statemachine.<manifest|state|transition>.<role>
+```
+
+Version coordinates are also contract authority. They are separated from `stage` because version meaning is not a
+pipeline processing step, and they are separated from `realization` because version meaning ownership must not be hidden
+inside implementation machinery.
+
+The versioning package shape is:
+
+```text
+Kontrakt.versioning.coordinate.<role>
 ```
 
 A substantial stage may contain role packages such as:
@@ -309,8 +320,8 @@ Planning, execution, runtime, metamodel, identity, graph, and reporting belong u
 type is deliberately promoted into contract authority, a stage-local domain, governance, diagnostics, or publication.
 
 Interceptor-style flow is outside the target architecture. Existing interceptor files are evidence of the old execution
-model and are removal/replacement targets. The first movement pass may keep temporary compatibility only where required
-to compile.
+model and are removal/replacement targets. The first movement pass may keep temporary migration support only where
+required to compile.
 
 ## 6. Authority and Boundaries
 
@@ -450,13 +461,24 @@ It is not callback flow, interceptor flow, runtime orchestration, or the whole G
 but it is not an ordinary stage in the logical contract pipeline. It is separated because this contract surface runs
 beside the pipeline and governs legal movement.
 
-### 7.10. `governance`
+### 7.10. `versioning`
+
+The `versioning` package contains the version-coordinate contract axis.
+
+It owns version coordinates. It may define which contract meaning was active when material, judgment, claim, or
+diagnostic evidence was produced. It does not currently define a compatibility package; old material under a different
+coordinate is not current authority unless a later ADR explicitly introduces a compatibility law.
+
+It is not release bookkeeping, build metadata, or implementation migration machinery. Versioning is contract authority
+when meaning can move while material still looks familiar.
+
+### 7.11. `governance`
 
 A governance package contains policy, budget, capacity, capability, epoch, and resource admission law.
 
 Governance is resolved law, not arbitrary configuration.
 
-### 7.11. `realization`
+### 7.12. `realization`
 
 A realization package contains machinery used to realize contract authority.
 
@@ -464,7 +486,7 @@ Metamodel acquisition, identity derivation, graph operations, planning, executio
 and other compiler-style implementation work belong here unless a later decision promotes a specific piece into an
 authority package or a stage-local domain.
 
-### 7.12. `adapter`
+### 7.13. `adapter`
 
 An adapter package contains outside-world bindings.
 
@@ -478,7 +500,8 @@ The package tree must obey these rules:
 ```text
 stage-local contract domains must not depend on realization architecture.
 state-machine contract declarations must not depend on realization architecture or adapters.
-realization may depend on stage-local domains, state-machine declarations, and governance.
+version-coordinate contract declarations must not depend on realization architecture or adapters.
+realization may depend on stage-local domains, state-machine declarations, versioning declarations, and governance.
 adapters may feed realization machinery.
 adapters must not become contract authority.
 ```
@@ -490,6 +513,7 @@ Consequences:
 - accepted stage material must not depend on backend handles;
 - stage judgment must not depend on framework callbacks;
 - state-machine law must not depend on adapters;
+- version-coordinate law must not depend on adapters or realization machinery;
 - governance law must not inspect the environment directly;
 - diagnostics must not smuggle implementation authority into public claims;
 - publication must not expose raw internal state as a claim.
@@ -516,6 +540,8 @@ Role names may repeat under different stages. The repetition is intentional beca
 obligations, material, judgments, failures, evidence, and publication surfaces.
 
 Movement law is not removed. It belongs to the parallel `statemachine` axis, not to a `machine` role inside each stage.
+Version meaning is not removed either. It belongs to the parallel `versioning` axis, not to stage-local implementation
+material.
 
 A cross-stage type must not be created just to avoid repeated package names. If a concept cannot belong to one stage, it
 needs an explicit later decision that explains the new package boundary. The expected default is no promotion.
@@ -548,12 +574,12 @@ If independent pipeline families appear later, the pipeline boundary should be a
 │       ├── judgment
 │       ├── diagnostics
 │       └── publication
-└── statemachine
-    └── <stage-name>
-        ├── condition
-        ├── transition
-        ├── legality
-        └── terminal
+├── statemachine
+│   ├── manifest
+│   ├── state
+│   └── transition
+└── versioning
+    └── coordinate
 ```
 
 This ADR reserves that direction but does not design those future modules.
@@ -695,6 +721,13 @@ Kontrakt
 │       ├── judgment
 │       └── diagnostics
 │
+├── versioning
+│   └── coordinate
+│       ├── contract
+│       ├── material
+│       ├── judgment
+│       └── diagnostics
+│
 ├── governance
 │   ├── policy
 │   ├── budget
@@ -730,6 +763,10 @@ The JVM group prefix may change by module policy. The architectural vocabulary m
 transition contract, and explicit state-machine manifest are contract authority, but they are not ordinary
 contract-pipeline stages.
 
+`versioning` is a top-level contract-coordinate axis. It exists because version coordinates determine which contract
+meaning was active for material, judgment, claim, or evidence. Versioning is not an ordinary pipeline stage and not an
+implementation detail.
+
 ## 13. Compiler-Related Realization Law
 
 Compiler architecture is an implementation method, not a package taxonomy chosen by this ADR.
@@ -764,8 +801,8 @@ recursive interceptor chain delegation
 
 This ADR does not define the replacement. It only marks these forms as removal/replacement targets.
 
-If a temporary compatibility bridge is required during relocation, it must remain visibly temporary and outside the
-target package law. It must not be depended on by `contract`, `stage`, `statemachine`, or `governance`.
+If temporary migration support is required during relocation, it must remain visibly temporary and outside the target
+package law. It must not be depended on by `contract`, `stage`, `statemachine`, `versioning`, or `governance`.
 
 The replacement direction is explicit state-machine flow:
 
@@ -791,7 +828,7 @@ Allowed:
 - package declaration updates;
 - import updates;
 - build configuration updates required by package movement;
-- temporary compatibility aliases when required;
+- temporary migration aliases when required;
 - architecture test scaffolding;
 - temporary migration markers for files marked for removal or replacement.
 
@@ -1085,8 +1122,8 @@ Required categories:
 2. **stage-local role tests**
 
    Pipeline-specific contract, material, judgment, diagnostic, and publication types must live under the owning stage.
-   Explicit state-machine types must live under the parallel `statemachine` axis. Promotion to a top-level package
-   requires a separate reason and should be rare.
+   Explicit state-machine types must live under the parallel `statemachine` axis. Version-coordinate types must live
+   under the parallel `versioning` axis. Promotion to a top-level package requires a separate reason and should be rare.
 
 3. **inter-stage acquisition tests**
 
@@ -1186,8 +1223,7 @@ Add dependency tests before or during file movement.
 
 Move files according to the target package structure.
 
-Allowed edits are package declarations, imports, directory paths, build configuration, and temporary compatibility
-wrappers.
+Allowed edits are package declarations, imports, directory paths, build configuration, and temporary migration wrappers.
 
 ### 23.4. Keep pipeline module boundary out of the current move
 

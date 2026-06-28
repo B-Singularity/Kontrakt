@@ -1,4 +1,4 @@
-package infrastructure.json
+package adapter.json
 
 /**
  * Base exception for JSON infrastructure errors.

@@ -1,4 +1,4 @@
-package reporting.adapter.outgoing.file
+package adapter.file
 
 import execution.domain.vo.result.TestResultEvent
 import execution.port.outgoing.TestResultPublisher

@@ -1,6 +1,6 @@
 package execution.adapter.runtime
 
-import execution.adapter.trace.WorkerTraceSinkPool
+import adapter.file.WorkerTraceSinkPool
 import execution.domain.vo.config.ExecutionPolicy
 import execution.port.incoming.KontraktRuntimeFactory
 import execution.port.incoming.KontraktRuntimeFactoryContract

@@ -1,4 +1,4 @@
-package discovery.adapter.policy
+package adapter.classgraph
 
 import io.github.classgraph.ClassInfo
 

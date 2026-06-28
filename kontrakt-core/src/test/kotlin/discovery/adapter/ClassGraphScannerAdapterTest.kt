@@ -1,5 +1,6 @@
 package discovery.adapter
 
+import adapter.classgraph.ClassGraphScannerAdapter
 import discovery.domain.vo.ScanScope
 import discovery.port.outgoing.ClasspathScanner
 import kotlinx.coroutines.test.StandardTestDispatcher
