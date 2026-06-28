@@ -1,7 +1,8 @@
 package metamodel.domain.vo
 
-import metamodel.domain.exception.MetamodelFactContractViolationException
 import metamodel.domain.service.TypeShapeCoherenceReceipt
+import stage.input.diagnostics.MetamodelFactContractViolationException
+import stage.input.material.TypeShapeSummary
 
 /**
  * Canonical type identity issued by the metamodel identity boundary.

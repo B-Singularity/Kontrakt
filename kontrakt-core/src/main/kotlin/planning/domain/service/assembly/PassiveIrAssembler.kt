@@ -1,7 +1,7 @@
 package planning.domain.service.assembly
 
-import metamodel.domain.dto.TypeFactsDTO
 import planning.domain.vo.PassiveIrAssembly
+import stage.input.material.TypeFactsDTO
 
 /**
  * Outbound port for passive assembly.

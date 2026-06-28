@@ -1,7 +1,7 @@
 package metamodel.domain.frozen.sequence
 
-import metamodel.domain.exception.FrozenMetamodelSequenceViolationException
 import metamodel.domain.frozen.image.FrozenMetamodelImageId
+import stage.input.diagnostics.FrozenMetamodelSequenceViolationException
 
 /**
  * Kontrakt-owned deterministic sorter for frozen object-array sequences.

@@ -1,7 +1,7 @@
 package planning.domain.session
 
-import metamodel.domain.dto.MemberFact
 import planning.domain.exception.PlanningProtocolIntegrityException
+import stage.input.material.MemberFact
 import java.util.Arrays
 
 /**

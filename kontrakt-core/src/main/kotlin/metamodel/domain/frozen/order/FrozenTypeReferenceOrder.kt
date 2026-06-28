@@ -1,9 +1,9 @@
 package metamodel.domain.frozen.order
 
 import metamodel.domain.protocol.MetamodelProtocolOrdering
-import metamodel.domain.vo.ArrayComponentShapeHint
 import metamodel.domain.vo.TypeReference
-import metamodel.domain.vo.TypeShapeSummary
+import stage.input.material.TypeShapeSummary
+import stage.input.material.ArrayComponentShapeHint
 
 /**
  * Deterministic ordering authority for TypeReference inside frozen metamodel

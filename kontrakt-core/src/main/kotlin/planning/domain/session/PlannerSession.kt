@@ -3,7 +3,6 @@ package planning.domain.session
 import governance.budget.BudgetTrack
 import governance.budget.CostCenter
 import ir.identity.CanonicalSignature
-import metamodel.domain.dto.MemberFact
 import planning.domain.exception.FuelExhaustedException
 import planning.domain.exception.PlanningProtocolIntegrityException
 import planning.domain.exception.PlanningRuntimeInvariantException
@@ -12,6 +11,7 @@ import planning.domain.protocol.BreakpointStage
 import planning.domain.runtime.CommittedPlanNode
 import planning.domain.service.assembly.ChildResultSlice
 import planning.domain.vo.OrderedActiveMembers
+import stage.input.material.MemberFact
 
 /**
  * Aggregate root for the worker-local semantic planning runtime.

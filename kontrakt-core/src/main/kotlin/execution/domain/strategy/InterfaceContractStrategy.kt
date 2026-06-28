@@ -1,10 +1,11 @@
 package execution.domain.strategy
 
-import discovery.api.Contract
+import stage.input.contract.Contract
 import kotlin.reflect.KClass
 
 class InterfaceContractStrategy : ComplianceStrategy {
-    override fun supports(kClass: KClass<*>): Boolean = !kClass.java.isInterface && findContractAnnotation(kClass) != null
+    override fun supports(kClass: KClass<*>): Boolean =
+        !kClass.java.isInterface && findContractAnnotation(kClass) != null
 
     override fun decide(kClass: KClass<*>): StrategyResult {
         val annotation = findContractAnnotation(kClass) ?: return StrategyResult.Skip

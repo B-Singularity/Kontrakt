@@ -1,9 +1,9 @@
 package metamodel.domain.frozen.record
 
-import metamodel.domain.exception.MetamodelFactContractViolationException
 import metamodel.domain.frozen.availability.FrozenMetadataAvailability
 import metamodel.domain.frozen.sequence.FrozenAnnotationRecordSequence
 import metamodel.domain.frozen.sequence.FrozenConstructorParameterRecordSequence
+import stage.input.diagnostics.MetamodelFactContractViolationException
 
 /**
  * Frozen constructor record.

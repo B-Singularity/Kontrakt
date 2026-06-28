@@ -10,7 +10,7 @@ import execution.port.outgoing.RuntimeInstantiator
 import execution.port.outgoing.RuntimeTypeHandle
 import ir.Attribute
 import metamodel.domain.model.TypeDescriptor
-import metamodel.domain.vo.TypeKind
+import stage.input.material.TypeKind
 
 class CycleBreakingGenerator(
     private val descriptor: TypeDescriptor,
@@ -46,7 +46,7 @@ class CycleBreakingGenerator(
 
             TruncationRule.FAIL_FAST -> throw RuntimeInstantiationException(
                 "Cycle detected on non-nullable concrete type: ${descriptor.name}. " +
-                    "Kontrakt cannot safely instantiate this cycle. Consider making the field nullable or breaking the cycle in your test setup.",
+                        "Kontrakt cannot safely instantiate this cycle. Consider making the field nullable or breaking the cycle in your test setup.",
             )
         }
     }

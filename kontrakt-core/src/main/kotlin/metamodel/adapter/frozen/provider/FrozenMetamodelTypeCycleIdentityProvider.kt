@@ -1,13 +1,13 @@
 package metamodel.adapter.frozen.provider
 
-import metamodel.domain.exception.FrozenMetamodelIncompleteTableException
-import metamodel.domain.exception.FrozenMetamodelUnknownTypeReferenceException
 import metamodel.domain.frozen.image.FrozenMetamodelImage
 import metamodel.domain.frozen.table.FrozenMetamodelImageTableId
 import metamodel.domain.frozen.table.FrozenTypeReferenceIndex
 import metamodel.domain.vo.TypeReference
 import planning.domain.expansion.TypeCycleIdentity
 import planning.domain.port.outgoing.TypeCycleIdentityProvider
+import stage.input.diagnostics.FrozenMetamodelIncompleteTableException
+import stage.input.diagnostics.FrozenMetamodelUnknownTypeReferenceException
 
 /**
  * Planning-facing TypeCycleIdentityProvider backed by FrozenMetamodelImage.

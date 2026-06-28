@@ -1,9 +1,9 @@
 package planning.domain.projection
 
-import metamodel.domain.dto.MemberOrigin
-import metamodel.domain.dto.VisibilityKind
-import metamodel.domain.vo.DeclarationOrdinal
+import stage.input.material.VisibilityKind
 import planning.domain.exception.ActiveMemberProjectionException
+import stage.input.material.DeclarationOrdinal
+import stage.input.material.MemberOrigin
 
 /**
  * Structured, deterministically sortable rejection evidence for constructor selection.
@@ -37,7 +37,7 @@ class ConstructorRejectionRecord private constructor(
             if (constructorSignatureNormalizationVersion < 0L) {
                 throw ActiveMemberProjectionException(
                     "ConstructorRejectionRecord.constructorSignatureNormalizationVersion must be >= 0: " +
-                        constructorSignatureNormalizationVersion,
+                            constructorSignatureNormalizationVersion,
                 )
             }
 

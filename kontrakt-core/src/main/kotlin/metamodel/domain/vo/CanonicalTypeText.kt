@@ -1,8 +1,8 @@
 package metamodel.domain.vo
 
-import metamodel.domain.exception.MetamodelFactContractViolationException
-import metamodel.domain.exception.MetamodelNormalizationViolationException
 import metamodel.domain.port.outgoing.NormalizationEngine
+import stage.input.diagnostics.MetamodelFactContractViolationException
+import stage.input.diagnostics.MetamodelNormalizationViolationException
 
 /**
  * Canonical textual material for metamodel type identity.

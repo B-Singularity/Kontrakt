@@ -1,6 +1,5 @@
 package adapter.junit.config
 
-import discovery.domain.vo.ScanScope
 import governance.policy.AuditDepth
 import governance.policy.AuditPolicy
 import governance.policy.DeterminismPolicy
@@ -8,6 +7,7 @@ import governance.policy.ExecutionPolicy
 import governance.policy.LogRetention
 import governance.policy.ResourcePolicy
 import reporting.adapter.config.ReportingDirectives
+import stage.input.material.ScanScope
 import java.nio.file.Paths
 
 /**

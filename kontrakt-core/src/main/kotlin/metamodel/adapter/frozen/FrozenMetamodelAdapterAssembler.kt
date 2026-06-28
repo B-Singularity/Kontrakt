@@ -1,11 +1,11 @@
 package metamodel.adapter.frozen
 
 import metamodel.adapter.frozen.provider.FrozenMetamodelProviderBundle
-import metamodel.domain.exception.MetamodelAdapterAssemblyException
-import metamodel.domain.exception.MetamodelException
 import metamodel.domain.frozen.image.FrozenMetamodelImage
 import metamodel.domain.frozen.image.FrozenMetamodelImageAssembler
 import metamodel.domain.frozen.image.FrozenMetamodelImageAssemblyInput
+import stage.input.diagnostics.MetamodelAdapterAssemblyException
+import stage.input.diagnostics.MetamodelException
 
 /**
  * Frozen metamodel adapter composition root.

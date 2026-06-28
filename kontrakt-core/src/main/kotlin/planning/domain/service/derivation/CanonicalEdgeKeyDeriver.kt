@@ -1,6 +1,6 @@
 package planning.domain.service.derivation
 
-import metamodel.domain.dto.MemberOrigin
+import stage.input.material.MemberOrigin
 
 /**
  * Deterministic edge-key lowering bound to edgeOrderingVersion.

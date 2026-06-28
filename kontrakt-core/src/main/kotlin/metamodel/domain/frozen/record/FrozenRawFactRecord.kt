@@ -1,12 +1,12 @@
 package metamodel.domain.frozen.record
 
-import metamodel.domain.dto.RawTypeFactsDTO
-import metamodel.domain.exception.MetamodelFactContractViolationException
 import metamodel.domain.frozen.availability.FrozenMetadataAvailability
 import metamodel.domain.frozen.sequence.FrozenAnnotationRecordSequence
 import metamodel.domain.frozen.sequence.FrozenConstructorRecordSequence
 import metamodel.domain.frozen.sequence.FrozenPropertyRecordSequence
 import metamodel.domain.vo.TypeReference
+import stage.input.diagnostics.MetamodelFactContractViolationException
+import stage.input.material.RawTypeFactsDTO
 
 /**
  * Frozen adapter-neutral raw fact material for one TypeReference.

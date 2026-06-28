@@ -1,12 +1,12 @@
 package planning.domain.projection
 
-import metamodel.domain.dto.ConstructorCandidateFact
-import metamodel.domain.dto.DefaultValuePresence
-import metamodel.domain.dto.NullabilityKind
-import metamodel.domain.dto.RawTypeFactsDTO
-import metamodel.domain.vo.DeclarationOrdinal
 import planning.domain.exception.AmbiguousConstructorSelectionException
 import planning.domain.exception.NoEligibleConstructorSelectionException
+import stage.input.material.ConstructorCandidateFact
+import stage.input.material.DeclarationOrdinal
+import stage.input.material.DefaultValuePresence
+import stage.input.material.NullabilityKind
+import stage.input.material.RawTypeFactsDTO
 
 /**
  * Core-owned semantic projector.
@@ -223,7 +223,7 @@ class ActiveMemberProjector private constructor() {
             when (parameter.nullability) {
                 NullabilityKind.NON_NULL,
                 NullabilityKind.UNKNOWN,
-                -> strong++
+                    -> strong++
 
                 NullabilityKind.NULLABLE -> nullableAvailable++
             }

@@ -1,8 +1,8 @@
 package metamodel.domain.vo
 
-import metamodel.domain.exception.MetamodelFactContractViolationException
 import metamodel.domain.protocol.MetamodelProtocolOrdering
 import metamodel.domain.protocol.MetamodelProtocolTextGuards
+import stage.input.diagnostics.MetamodelFactContractViolationException
 
 /**
  * Canonical qualified name of an annotation type.

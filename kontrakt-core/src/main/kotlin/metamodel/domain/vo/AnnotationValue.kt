@@ -1,8 +1,8 @@
 package metamodel.domain.vo
 
 import governance.budget.DiagnosticBudget
-import metamodel.domain.exception.MetamodelFactContractViolationException
 import metamodel.domain.protocol.MetamodelProtocolTextGuards
+import stage.input.diagnostics.MetamodelFactContractViolationException
 import java.util.Collections
 
 /**
@@ -496,7 +496,7 @@ sealed interface AnnotationValue {
 
                 if (elements.size > AnnotationValue.MAX_ARRAY_ELEMENTS) {
                     throw MetamodelFactContractViolationException(
-                        "AnnotationValue.ArrayValue.elements exceeds order cap=${AnnotationValue.MAX_ARRAY_ELEMENTS}.",
+                        "AnnotationValue.ArrayValue.elements exceeds order cap=${MAX_ARRAY_ELEMENTS}.",
                     )
                 }
 

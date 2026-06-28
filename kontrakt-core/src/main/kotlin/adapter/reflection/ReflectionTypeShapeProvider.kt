@@ -1,10 +1,10 @@
 package adapter.reflection
 
-import metamodel.domain.dto.NullabilityKind
-import metamodel.domain.dto.ResolvedTypeShape
-import metamodel.domain.exception.StrictModeViolationException
 import metamodel.domain.vo.TypeReference
 import planning.domain.port.outgoing.TypeShapeProvider
+import stage.input.diagnostics.StrictModeViolationException
+import stage.input.material.NullabilityKind
+import stage.input.material.ResolvedTypeShape
 import java.math.BigDecimal
 import java.math.BigInteger
 import java.time.Duration

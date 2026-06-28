@@ -1,7 +1,7 @@
 package adapter.reflection
 
-import metamodel.domain.exception.MetamodelNormalizationViolationException
-import metamodel.domain.exception.safeDiagnosticValue
+import stage.input.diagnostics.MetamodelNormalizationViolationException
+import stage.input.diagnostics.safeDiagnosticValue
 
 /**
  * Reflection adapter-local text-surface preflight guard.

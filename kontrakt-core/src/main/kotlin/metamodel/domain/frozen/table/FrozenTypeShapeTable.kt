@@ -1,6 +1,6 @@
 package metamodel.domain.frozen.table
 
-import metamodel.domain.dto.ResolvedTypeShape
+import stage.input.material.ResolvedTypeShape
 import versioning.coordinate.contract.frozen.image.FrozenMetamodelImageSchemaVersion
 
 /**

@@ -1,12 +1,12 @@
 package adapter.reflection
 
-import metamodel.domain.exception.StrictModeViolationException
-import metamodel.domain.vo.ArrayComponentShapeHint
-import metamodel.domain.vo.AtomicShapeFamily
 import metamodel.domain.vo.CanonicalTypeShapeKind
-import metamodel.domain.vo.OrderedUseSiteAnnotations
-import metamodel.domain.vo.TypeNestingDepthLaw
-import metamodel.domain.vo.TypeShapeSummary
+import stage.input.material.TypeNestingDepthLaw
+import stage.input.material.TypeShapeSummary
+import stage.input.diagnostics.StrictModeViolationException
+import stage.input.material.ArrayComponentShapeHint
+import stage.input.material.AtomicShapeFamily
+import stage.input.material.OrderedUseSiteAnnotations
 import java.math.BigDecimal
 import java.math.BigInteger
 import java.time.Duration

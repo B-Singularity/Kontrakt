@@ -1,6 +1,6 @@
 package metamodel.domain.protocol
 
-import metamodel.domain.exception.MetamodelFactContractViolationException
+import stage.input.diagnostics.MetamodelFactContractViolationException
 
 /**
  * Shared low-level order text guards for metamodel value objects.

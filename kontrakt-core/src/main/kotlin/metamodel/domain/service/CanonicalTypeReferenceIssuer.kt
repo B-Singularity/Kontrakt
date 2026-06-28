@@ -1,15 +1,15 @@
 package metamodel.domain.service
 
-import metamodel.domain.exception.MetamodelFactContractViolationException
 import metamodel.domain.port.outgoing.NormalizationEngine
 import metamodel.domain.vo.CanonicalTypeSignature
 import metamodel.domain.vo.CanonicalTypeText
 import metamodel.domain.vo.CanonicalTypeTextInspectionPolicy
-import metamodel.domain.vo.OrderedUseSiteAnnotations
-import metamodel.domain.vo.TypeIdentityCoherenceProof
 import metamodel.domain.vo.TypeReference
 import metamodel.domain.vo.TypeShapeRatificationFingerprint
-import metamodel.domain.vo.TypeShapeSummary
+import stage.input.material.TypeShapeSummary
+import stage.input.diagnostics.MetamodelFactContractViolationException
+import stage.input.material.OrderedUseSiteAnnotations
+import stage.input.material.TypeIdentityCoherenceProof
 
 /**
  * Domain service that issues TypeReference from adapter-rendered identity

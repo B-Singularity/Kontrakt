@@ -1,7 +1,7 @@
 package adapter.reflection
 
 import metamodel.domain.vo.TypeShapeRatificationFingerprint
-import metamodel.domain.vo.TypeShapeSummary
+import stage.input.material.TypeShapeSummary
 
 /**
  * Reflection-adapter provider for TypeShapeRatificationFingerprint material.

@@ -1,13 +1,13 @@
 package discovery.adapter
 
 import adapter.classgraph.ClassGraphScannerAdapter
-import discovery.domain.vo.ScanScope
-import discovery.port.outgoing.ClasspathScanner
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import stage.input.boundary.ClasspathScanner
+import stage.input.material.ScanScope
 
 /**
  * [ADR-025] Test Interface Pattern.

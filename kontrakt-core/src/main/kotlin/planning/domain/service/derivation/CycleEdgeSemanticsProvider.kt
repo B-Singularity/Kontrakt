@@ -1,8 +1,8 @@
 package planning.domain.service.derivation
 
-import metamodel.domain.dto.MemberFact
-import metamodel.domain.dto.TypeFactsDTO
 import planning.domain.vo.ActiveEdgeDescriptor
+import stage.input.material.MemberFact
+import stage.input.material.TypeFactsDTO
 
 /**
  * Planner-visible edge semantics.

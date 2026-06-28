@@ -1,8 +1,8 @@
 package adapter.reflection
 
-import metamodel.domain.exception.MetamodelAdapterAssemblyException
 import metamodel.domain.service.CanonicalTypeReferenceIssuer
 import metamodel.domain.service.TypeIdentity64Deriver
+import stage.input.diagnostics.MetamodelAdapterAssemblyException
 
 /**
  * Reflection metamodel adapter composition root.

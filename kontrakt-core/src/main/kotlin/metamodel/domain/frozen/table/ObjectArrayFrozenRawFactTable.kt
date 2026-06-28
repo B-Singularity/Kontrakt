@@ -1,8 +1,8 @@
 package metamodel.domain.frozen.table
 
-import metamodel.domain.dto.RawTypeFactsDTO
-import metamodel.domain.exception.FrozenMetamodelSequenceIndexOutOfBoundsException
 import metamodel.domain.frozen.image.FrozenMetamodelImageId
+import stage.input.diagnostics.FrozenMetamodelSequenceIndexOutOfBoundsException
+import stage.input.material.RawTypeFactsDTO
 import versioning.coordinate.contract.frozen.image.FrozenMetamodelImageSchemaVersion
 
 /**

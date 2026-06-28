@@ -1,7 +1,7 @@
 package metamodel.domain.vo
 
-import metamodel.domain.exception.MetamodelFactContractViolationException
 import metamodel.domain.protocol.CanonicalTextPolicyFingerprintSpec
+import stage.input.diagnostics.MetamodelFactContractViolationException
 
 /**
  * Fixed-size governance fingerprint.

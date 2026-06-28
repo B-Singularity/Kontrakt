@@ -1,7 +1,6 @@
 package execution.domain.service.generation
 
 import common.util.unwrapped
-import discovery.api.Test
 import exception.KontraktConfigurationException
 import exception.KontraktInternalException
 import execution.domain.entity.EphemeralTestContext
@@ -12,6 +11,7 @@ import execution.port.outgoing.MockingContext
 import execution.port.outgoing.MockingEngine
 import execution.port.outgoing.ScenarioControl
 import ir.TestSpecification
+import stage.input.contract.Test
 import java.time.Clock
 import java.util.UUID
 import kotlin.random.Random
@@ -76,7 +76,7 @@ class TestInstanceFactory(
             context.targetMethod = targetMethod.javaMethod
                 ?: throw KontraktInternalException(
                     "Reflection failure: Could not resolve Java method for Kotlin function '${targetMethod.name}' " +
-                        "in class '${spec.target.displayName}'.",
+                            "in class '${spec.target.displayName}'.",
                 )
         } catch (e: KontraktConfigurationException) {
             throw e
@@ -109,7 +109,7 @@ class TestInstanceFactory(
                     .firstOrNull()
                     ?: throw KontraktConfigurationException(
                         "No executable business methods found in implementation '${type.simpleName}'. " +
-                            "Standard methods (toString, equals, hashCode) are excluded from ContractAuto discovery.",
+                                "Standard methods (toString, equals, hashCode) are excluded from ContractAuto discovery.",
                     )
             }
 
@@ -263,14 +263,14 @@ class TestInstanceFactory(
 
     private fun isBasicValueType(type: KClass<*>): Boolean =
         type == String::class ||
-            type == Int::class ||
-            type == Long::class ||
-            type == Double::class ||
-            type == Boolean::class ||
-            type == List::class ||
-            type == Map::class ||
-            type == Set::class ||
-            type.isData
+                type == Int::class ||
+                type == Long::class ||
+                type == Double::class ||
+                type == Boolean::class ||
+                type == List::class ||
+                type == Map::class ||
+                type == Set::class ||
+                type.isData
 
     // --- Extensions & Constants ---
 

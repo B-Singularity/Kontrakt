@@ -1,9 +1,9 @@
 package planning.domain.projection
 
-import metamodel.domain.dto.NullabilityKind
-import metamodel.domain.vo.DeclarationOrdinal
 import metamodel.domain.vo.TypeReference
 import planning.domain.exception.ActiveMemberProjectionException
+import stage.input.material.DeclarationOrdinal
+import stage.input.material.NullabilityKind
 
 /**
  * Planner-facing projected active member.
@@ -48,7 +48,7 @@ class ProjectedActiveMember private constructor(
             if (typeSignatureNormalizationVersion < 0L) {
                 throw ActiveMemberProjectionException(
                     "ProjectedActiveMember.typeSignatureNormalizationVersion must be >= 0: " +
-                        typeSignatureNormalizationVersion,
+                            typeSignatureNormalizationVersion,
                 )
             }
 

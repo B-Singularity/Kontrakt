@@ -9,7 +9,6 @@ import execution.domain.vo.result.TestStatus
 import execution.domain.vo.verification.AssertionRecord
 import execution.domain.vo.verification.AssertionRule
 import execution.domain.vo.verification.AssertionStatus
-import execution.port.incoming.TestScenarioExecutor
 import execution.port.outgoing.TestResultPublisher
 import execution.port.outgoing.TraceSink
 import governance.policy.AuditDepth
@@ -24,6 +23,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import stage.input.boundary.TestScenarioExecutor
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneId

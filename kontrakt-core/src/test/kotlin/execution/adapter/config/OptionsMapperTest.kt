@@ -4,7 +4,6 @@ import adapter.junit.config.UserControlOptions
 import adapter.junit.config.toDiscoveryPolicy
 import adapter.junit.config.toExecutionPolicy
 import adapter.junit.config.toReportingDirectives
-import discovery.domain.vo.ScanScope
 import governance.policy.AuditDepth
 import governance.policy.LogRetention
 import org.assertj.core.api.Assertions.assertThat
@@ -12,6 +11,7 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import reporting.adapter.config.ReportFormat
+import stage.input.material.ScanScope
 import java.nio.file.Paths
 
 class OptionsMapperTest {

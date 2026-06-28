@@ -1,7 +1,7 @@
 package metamodel.domain.frozen.image
 
-import metamodel.domain.exception.FrozenMetamodelIntegrityViolationException
 import metamodel.domain.frozen.provenance.FrozenMetamodelImageDiagnosticHeader
+import stage.input.diagnostics.FrozenMetamodelIntegrityViolationException
 
 /**
  * Adapter/bootstrap return object for one frozen metamodel image.

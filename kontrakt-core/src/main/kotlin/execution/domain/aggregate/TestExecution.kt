@@ -12,12 +12,12 @@ import execution.domain.vo.result.TestResult
 import execution.domain.vo.result.TestStatus
 import execution.domain.vo.verification.AssertionRecord
 import execution.domain.vo.verification.AssertionStatus
-import execution.port.incoming.TestScenarioExecutor
 import execution.port.outgoing.TestResultPublisher
 import governance.policy.AuditDepth
 import governance.policy.ExecutionPolicy
 import io.github.oshai.kotlinlogging.KotlinLogging
 import ir.TestSpecification
+import stage.input.boundary.TestScenarioExecutor
 import java.time.Clock
 import java.time.Duration
 import java.time.Instant

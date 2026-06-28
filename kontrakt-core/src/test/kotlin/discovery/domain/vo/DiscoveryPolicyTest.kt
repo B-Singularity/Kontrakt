@@ -2,6 +2,7 @@ package discovery.domain.vo
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import stage.input.material.ScanScope
 
 class DiscoveryPolicyTest {
     @Test

@@ -1,8 +1,10 @@
 package metamodel.domain.vo
 
 import governance.budget.DiagnosticBudget
-import metamodel.domain.exception.MetamodelFactContractViolationException
 import metamodel.domain.protocol.MetamodelProtocolOrdering
+import stage.input.diagnostics.MetamodelFactContractViolationException
+import stage.input.material.ArrayComponentShapeHint
+import stage.input.material.TypeShapeSummary
 
 /**
  * Canonical descriptor for one annotation instance.

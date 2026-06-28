@@ -8,14 +8,11 @@ import adapter.junit.config.toExecutionPolicy
 import adapter.junit.config.toReportingDirectives
 import adapter.jvm.DefaultRuntimeFactory
 import adapter.mockito.MockitoEngineAdapter
-import discovery.api.Contract
-import discovery.domain.vo.ScanScope
 import exception.KontraktInternalException
 import execution.adapter.state.ThreadLocalScenarioControl
 import execution.domain.factory.ExecutionEnvironmentFactory
 import execution.domain.vo.result.TestResult
 import execution.domain.vo.result.TestStatus
-import execution.port.incoming.KontraktRuntimeFactory
 import execution.port.outgoing.TestResultPublisher
 import governance.policy.ExecutionPolicy
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -30,6 +27,9 @@ import org.junit.platform.engine.UniqueId
 import org.junit.platform.engine.discovery.ClassSelector
 import org.junit.platform.engine.discovery.PackageSelector
 import reporting.adapter.config.ReportFormat
+import stage.input.boundary.KontraktRuntimeFactory
+import stage.input.contract.Contract
+import stage.input.material.ScanScope
 import java.nio.file.Path
 import java.time.Clock
 

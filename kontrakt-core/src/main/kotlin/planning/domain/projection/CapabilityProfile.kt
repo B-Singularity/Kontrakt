@@ -1,12 +1,12 @@
 package planning.domain.projection
 
-import metamodel.domain.dto.ConstructorCandidateFact
-import metamodel.domain.dto.MemberOrigin
-import metamodel.domain.dto.PropertyFact
-import metamodel.domain.dto.PropertyMutability
-import metamodel.domain.dto.PropertyStorageKind
-import metamodel.domain.dto.VisibilityKind
+import stage.input.material.VisibilityKind
 import planning.domain.exception.ActiveMemberProjectionException
+import stage.input.material.ConstructorCandidateFact
+import stage.input.material.MemberOrigin
+import stage.input.material.PropertyFact
+import stage.input.material.PropertyMutability
+import stage.input.material.PropertyStorageKind
 
 /**
  * Immutable Core-owned capability profile.

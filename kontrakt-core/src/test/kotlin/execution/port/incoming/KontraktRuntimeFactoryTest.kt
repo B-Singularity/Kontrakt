@@ -4,6 +4,8 @@ import execution.domain.aggregate.TestExecution
 import ir.TestSpecification
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import stage.input.boundary.KontraktRuntimeFactory
+import stage.input.boundary.TestScenarioExecutor
 
 interface KontraktRuntimeFactoryContract {
     fun createSut(): KontraktRuntimeFactory

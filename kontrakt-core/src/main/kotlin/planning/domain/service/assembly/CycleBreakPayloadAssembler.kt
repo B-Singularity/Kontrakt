@@ -1,9 +1,9 @@
 package planning.domain.service.assembly
 
-import metamodel.domain.dto.MemberFact
-import metamodel.domain.dto.TypeFactsDTO
 import planning.domain.protocol.BreakpointStage
 import planning.domain.vo.CycleBreakAssembly
+import stage.input.material.MemberFact
+import stage.input.material.TypeFactsDTO
 
 interface CycleBreakPayloadAssembler {
     fun assemble(

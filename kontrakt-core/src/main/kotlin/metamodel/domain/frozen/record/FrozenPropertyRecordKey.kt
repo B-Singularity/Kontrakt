@@ -1,8 +1,8 @@
 package metamodel.domain.frozen.record
 
-import metamodel.domain.exception.MetamodelFactContractViolationException
 import metamodel.domain.protocol.MetamodelProtocolTextGuards
 import metamodel.domain.vo.TypeReference
+import stage.input.diagnostics.MetamodelFactContractViolationException
 
 /**
  * Backend-neutral property identity key.

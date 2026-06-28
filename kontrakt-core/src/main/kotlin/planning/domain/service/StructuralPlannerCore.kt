@@ -1,7 +1,6 @@
 package planning.domain.service
 
 import governance.budget.CostCenter
-import metamodel.domain.dto.MemberFact
 import metamodel.domain.vo.TypeReference
 import metamodel.port.outgoing.NormalizationEngine
 import planning.domain.exception.ActiveCycleWithoutBreakpointException
@@ -34,6 +33,7 @@ import planning.domain.session.IterateMembersFrame
 import planning.domain.session.PlanNodeFrame
 import planning.domain.session.PlannerSession
 import planning.domain.vo.PartitionId
+import stage.input.material.MemberFact
 
 /**
  * Compiler-style structural planner core.

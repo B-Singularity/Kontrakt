@@ -7,8 +7,8 @@ import ir.AttributeOrigin
 import ir.EdgeModel
 import metamodel.domain.model.PropertySource
 import metamodel.domain.vo.AnnotationDescriptor
-import metamodel.domain.vo.TypeKind
 import metamodel.domain.vo.TypeReference
+import stage.input.material.TypeKind
 import java.util.ArrayDeque
 
 /**

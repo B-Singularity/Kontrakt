@@ -1,7 +1,7 @@
 package metamodel.domain.frozen.record
 
-import metamodel.domain.exception.MetamodelFactContractViolationException
 import metamodel.domain.vo.AnnotationDescriptor
+import stage.input.diagnostics.MetamodelFactContractViolationException
 
 /**
  * Frozen annotation record.

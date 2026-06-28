@@ -1,8 +1,8 @@
 package metamodel.domain.frozen.image
 
-import metamodel.domain.exception.FrozenMetamodelSequenceViolationException
 import metamodel.domain.frozen.table.FrozenMetamodelImageTableId
 import metamodel.domain.vo.TypeReference
+import stage.input.diagnostics.FrozenMetamodelSequenceViolationException
 import versioning.coordinate.contract.frozen.image.FrozenMetamodelImageSchemaVersion
 
 /**

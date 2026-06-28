@@ -1,9 +1,5 @@
 package metamodel.domain.frozen.image
 
-import metamodel.domain.dto.RawTypeFactsDTO
-import metamodel.domain.dto.ResolvedTypeShape
-import metamodel.domain.exception.FrozenMetamodelIncompleteTableException
-import metamodel.domain.exception.FrozenMetamodelIntegrityViolationException
 import metamodel.domain.frozen.table.FrozenMetamodelImageTableId
 import metamodel.domain.frozen.table.FrozenRawFactTable
 import metamodel.domain.frozen.table.FrozenTypeCycleIdentityTable
@@ -11,6 +7,10 @@ import metamodel.domain.frozen.table.FrozenTypeReferenceIndex
 import metamodel.domain.frozen.table.FrozenTypeShapeTable
 import metamodel.domain.vo.TypeReference
 import planning.domain.expansion.TypeCycleIdentity
+import stage.input.diagnostics.FrozenMetamodelIncompleteTableException
+import stage.input.diagnostics.FrozenMetamodelIntegrityViolationException
+import stage.input.material.RawTypeFactsDTO
+import stage.input.material.ResolvedTypeShape
 import versioning.coordinate.contract.frozen.image.FrozenMetamodelImageSchemaVersion
 
 /**

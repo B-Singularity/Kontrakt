@@ -1,8 +1,8 @@
 package metamodel.domain.service
 
-import metamodel.domain.exception.MetamodelFactContractViolationException
 import metamodel.domain.vo.TypeShapeRatification
 import metamodel.domain.vo.TypeShapeRatificationFingerprint
+import stage.input.diagnostics.MetamodelFactContractViolationException
 
 /**
  * Scope-level coherence authority.

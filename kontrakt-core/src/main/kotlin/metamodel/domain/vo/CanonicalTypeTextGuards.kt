@@ -1,6 +1,6 @@
 package metamodel.domain.vo
 
-import metamodel.domain.exception.MetamodelFactContractViolationException
+import stage.input.diagnostics.MetamodelFactContractViolationException
 
 /**
  * Low-cost order guards for already-inspected canonical type text snapshots.

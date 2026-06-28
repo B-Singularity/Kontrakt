@@ -1,7 +1,8 @@
 package metamodel.domain.vo
 
-import metamodel.domain.exception.MetamodelFactContractViolationException
-import metamodel.domain.port.outgoing.TypeShapeRatificationVerifier
+import stage.input.boundary.TypeShapeRatificationVerifier
+import stage.input.diagnostics.MetamodelFactContractViolationException
+import stage.input.material.TypeShapeSummary
 
 /**
  * Verified proof that one CanonicalTypeText has been classified into one

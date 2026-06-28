@@ -1,6 +1,6 @@
 package execution.domain.strategy
 
-import discovery.api.DataContract
+import stage.input.contract.DataContract
 import kotlin.reflect.KClass
 
 class ClassDataContractStrategy : ComplianceStrategy {

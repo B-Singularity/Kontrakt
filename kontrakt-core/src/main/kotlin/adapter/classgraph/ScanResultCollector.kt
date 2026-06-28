@@ -1,16 +1,16 @@
 package adapter.classgraph
 
-import discovery.domain.policy.SpecPolicy
-import discovery.domain.policy.SpecValidator
 import io.github.classgraph.ClassInfo
 import io.github.classgraph.ScanResult
 import kontrakt.ir.exception.IrProtocolViolationException
+import stage.input.contract.SpecPolicy
+import stage.input.contract.SpecValidator
 import java.util.TreeSet
 
 /**
  * [Collector & Assembler]
  * Iterates over scan results, applies filters, and assembles the raw components.
- * * Note: Final Determinism (Sorting/Freezing) is delegated to [discovery.domain.vo.ScanIndex.of].
+ * * Note: Final Determinism (Sorting/Freezing) is delegated to [stage.input.material.ScanIndex.of].
  * This class focuses on "Finding" and "Validating".
  */
 internal class ScanResultCollector(

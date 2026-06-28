@@ -1,6 +1,6 @@
 package metamodel.domain.vo
 
-import metamodel.domain.exception.MetamodelFactContractViolationException
+import stage.input.diagnostics.MetamodelFactContractViolationException
 
 /**
  * Immutable canonical type-text inspection policy.

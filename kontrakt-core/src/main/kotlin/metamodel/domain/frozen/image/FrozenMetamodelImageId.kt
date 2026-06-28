@@ -1,7 +1,7 @@
 package metamodel.domain.frozen.image
 
-import metamodel.domain.exception.MetamodelFactContractViolationException
 import metamodel.domain.protocol.MetamodelProtocolTextGuards
+import stage.input.diagnostics.MetamodelFactContractViolationException
 
 /**
  * Diagnostic identity for one frozen metamodel image instance.

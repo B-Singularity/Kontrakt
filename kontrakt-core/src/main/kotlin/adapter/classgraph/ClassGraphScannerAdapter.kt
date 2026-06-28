@@ -1,11 +1,11 @@
 package adapter.classgraph
 
-import discovery.domain.exception.RuntimeIntegrityException
-import discovery.domain.vo.ScanIndex
-import discovery.domain.vo.ScanScope
-import discovery.port.outgoing.ClasspathScanner
 import io.github.classgraph.ClassGraph
 import io.github.classgraph.ScanResult
+import stage.input.boundary.ClasspathScanner
+import stage.input.diagnostics.RuntimeIntegrityException
+import stage.input.material.ScanIndex
+import stage.input.material.ScanScope
 
 class ClassGraphScannerAdapter : ClasspathScanner {
     override fun scan(scope: ScanScope): ScanIndex {

@@ -1,7 +1,7 @@
 package planning.domain.service.derivation
 
-import metamodel.domain.dto.TypeFactsDTO
 import planning.domain.vo.OrderedActiveMembers
+import stage.input.material.TypeFactsDTO
 
 /**
  * Port that ratifies order ordering for active members.

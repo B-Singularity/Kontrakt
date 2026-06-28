@@ -1,12 +1,12 @@
 package planning.domain.projection
 
-import metamodel.domain.dto.DefaultValuePresence
-import metamodel.domain.dto.MemberOrigin
-import metamodel.domain.dto.PropertyMutability
-import metamodel.domain.dto.PropertyStorageKind
-import metamodel.domain.dto.VisibilityKind
-import metamodel.domain.vo.DeclarationOrdinal
+import stage.input.material.VisibilityKind
 import planning.domain.exception.ActiveMemberProjectionException
+import stage.input.material.DeclarationOrdinal
+import stage.input.material.DefaultValuePresence
+import stage.input.material.MemberOrigin
+import stage.input.material.PropertyMutability
+import stage.input.material.PropertyStorageKind
 
 /**
  * Provenance reference for one projected active member.
@@ -55,7 +55,7 @@ sealed interface ProjectionSourceRef {
                 if (constructorSignatureNormalizationVersion < 0L) {
                     throw ActiveMemberProjectionException(
                         "SelectedConstructorParameterRef.constructorSignatureNormalizationVersion must be >= 0: " +
-                            constructorSignatureNormalizationVersion,
+                                constructorSignatureNormalizationVersion,
                     )
                 }
 

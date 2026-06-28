@@ -1,6 +1,5 @@
 package execution.domain.service.generation
 
-import discovery.api.Null
 import execution.domain.vo.context.generation.GenerationContext
 import execution.domain.vo.context.generation.GenerationRequest
 import execution.exception.GenerationFailedException
@@ -12,6 +11,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import stage.input.contract.Null
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneId

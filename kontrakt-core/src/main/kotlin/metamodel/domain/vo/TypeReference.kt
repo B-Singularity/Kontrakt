@@ -1,6 +1,11 @@
 package metamodel.domain.vo
 
-import metamodel.domain.exception.MetamodelFactContractViolationException
+import stage.input.diagnostics.MetamodelFactContractViolationException
+import stage.input.material.OrderedUseSiteAnnotations
+import stage.input.material.TypeCycleKey
+import stage.input.material.TypeIdentityCoherenceProof
+import stage.input.material.TypeNestingDepthLaw
+import stage.input.material.TypeShapeSummary
 
 /**
  * Domain-issued type reference.

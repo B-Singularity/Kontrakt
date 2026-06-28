@@ -4,13 +4,13 @@ import adapter.file.WorkerTraceSinkPool
 import execution.domain.aggregate.TestExecution
 import execution.domain.service.generation.TestInstanceFactory
 import execution.domain.service.orchestration.DefaultScenarioExecutor
-import execution.port.incoming.KontraktRuntimeFactory
-import execution.port.incoming.TestScenarioExecutor
 import execution.port.outgoing.MockingEngine
 import execution.port.outgoing.ScenarioControl
 import execution.port.outgoing.TestResultPublisher
 import governance.policy.ExecutionPolicy
 import ir.TestSpecification
+import stage.input.boundary.KontraktRuntimeFactory
+import stage.input.boundary.TestScenarioExecutor
 import java.time.Clock
 
 /**

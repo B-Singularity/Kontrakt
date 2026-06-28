@@ -1,8 +1,5 @@
 package planning.domain.expansion
 
-import metamodel.domain.dto.RawTypeFactsDTO
-import metamodel.domain.dto.ResolvedTypeShape
-import metamodel.domain.vo.TypeKind
 import metamodel.domain.vo.TypeReference
 import planning.domain.exception.CorruptResolvedTypeShapeException
 import planning.domain.exception.PlanningExpansionException
@@ -17,6 +14,9 @@ import planning.domain.port.outgoing.TypeShapeProvider
 import planning.domain.projection.ActiveMemberOrderer
 import planning.domain.projection.ActiveMemberProjector
 import planning.domain.projection.CapabilityProfile
+import stage.input.material.RawTypeFactsDTO
+import stage.input.material.ResolvedTypeShape
+import stage.input.material.TypeKind
 
 /**
  * Compiler-style type expansion pipeline.
@@ -481,8 +481,8 @@ class TypeExpansionPipeline private constructor(
         ) {
             throw PlanningExpansionException(
                 "TypeCycleIdentityProvider drift detected: " +
-                    "expected=$identityAlgorithmIdSnapshot@$identityAlgorithmVersionSnapshot, " +
-                    "actual=${typeCycleIdentityProvider.identityAlgorithmId}@${typeCycleIdentityProvider.identityAlgorithmVersion}",
+                        "expected=$identityAlgorithmIdSnapshot@$identityAlgorithmVersionSnapshot, " +
+                        "actual=${typeCycleIdentityProvider.identityAlgorithmId}@${typeCycleIdentityProvider.identityAlgorithmVersion}",
             )
         }
     }

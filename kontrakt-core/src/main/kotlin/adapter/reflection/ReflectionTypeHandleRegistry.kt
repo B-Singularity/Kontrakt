@@ -1,7 +1,7 @@
 package adapter.reflection
 
-import metamodel.domain.exception.MetamodelAdapterStateViolationException
 import metamodel.domain.vo.TypeReference
+import stage.input.diagnostics.MetamodelAdapterStateViolationException
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.reflect.KType

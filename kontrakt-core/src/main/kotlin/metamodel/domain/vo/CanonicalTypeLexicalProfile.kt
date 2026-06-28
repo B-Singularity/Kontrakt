@@ -1,6 +1,6 @@
 package metamodel.domain.vo
 
-import metamodel.domain.exception.MetamodelFactContractViolationException
+import stage.input.diagnostics.MetamodelFactContractViolationException
 
 /**
  * Deterministic lexical facts discovered during canonical type-text inspection.

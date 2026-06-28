@@ -1,6 +1,6 @@
 package metamodel.domain.frozen.table
 
-import metamodel.domain.dto.RawTypeFactsDTO
+import stage.input.material.RawTypeFactsDTO
 import versioning.coordinate.contract.frozen.image.FrozenMetamodelImageSchemaVersion
 
 /**

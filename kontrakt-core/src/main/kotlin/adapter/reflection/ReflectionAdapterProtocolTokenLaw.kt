@@ -1,9 +1,9 @@
 package adapter.reflection
 
-import metamodel.domain.exception.MetamodelAdapterAssemblyException
-import metamodel.domain.exception.MetamodelAdapterStateViolationException
-import metamodel.domain.exception.MetamodelFactContractViolationException
 import metamodel.domain.protocol.MetamodelProtocolTextGuards
+import stage.input.diagnostics.MetamodelAdapterAssemblyException
+import stage.input.diagnostics.MetamodelAdapterStateViolationException
+import stage.input.diagnostics.MetamodelFactContractViolationException
 
 /**
  * Reflection-adapter wrapper for metamodel order-token validation.

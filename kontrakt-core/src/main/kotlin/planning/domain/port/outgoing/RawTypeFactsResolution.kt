@@ -1,6 +1,6 @@
 package planning.domain.port.outgoing
 
-import metamodel.domain.dto.RawTypeFactsDTO
+import stage.input.material.RawTypeFactsDTO
 
 /**
  * Session-bound implementation of TypeExpansionWorkMeter.

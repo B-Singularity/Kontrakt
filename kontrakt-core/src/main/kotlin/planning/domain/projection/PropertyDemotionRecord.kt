@@ -1,6 +1,6 @@
 package planning.domain.projection
 
-import metamodel.domain.dto.PropertyFact
+import stage.input.material.PropertyFact
 
 /**
  * Structured deterministic property demotion evidence.

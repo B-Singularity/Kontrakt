@@ -1,10 +1,10 @@
 package metamodel.domain.frozen.table
 
-import metamodel.domain.exception.FrozenMetamodelSequenceIndexOutOfBoundsException
-import metamodel.domain.exception.MetamodelFactContractViolationException
 import metamodel.domain.frozen.image.FrozenMetamodelImageId
 import metamodel.domain.protocol.MetamodelProtocolTextGuards
 import planning.domain.expansion.TypeCycleIdentity
+import stage.input.diagnostics.FrozenMetamodelSequenceIndexOutOfBoundsException
+import stage.input.diagnostics.MetamodelFactContractViolationException
 import versioning.coordinate.contract.frozen.image.FrozenMetamodelImageSchemaVersion
 
 /**

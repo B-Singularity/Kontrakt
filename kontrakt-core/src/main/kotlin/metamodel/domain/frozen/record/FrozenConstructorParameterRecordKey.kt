@@ -1,6 +1,6 @@
 package metamodel.domain.frozen.record
 
-import metamodel.domain.exception.MetamodelFactContractViolationException
+import stage.input.diagnostics.MetamodelFactContractViolationException
 
 /**
  * Backend-neutral constructor-parameter identity key.

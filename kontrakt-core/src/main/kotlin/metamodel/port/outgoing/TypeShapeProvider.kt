@@ -1,7 +1,7 @@
 package planning.domain.port.outgoing
 
-import metamodel.domain.dto.ResolvedTypeShape
 import metamodel.domain.vo.TypeReference
+import stage.input.material.ResolvedTypeShape
 
 /**
  * Outbound type-shape port.

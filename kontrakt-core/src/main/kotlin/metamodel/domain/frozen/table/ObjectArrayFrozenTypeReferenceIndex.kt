@@ -1,11 +1,11 @@
 package metamodel.domain.frozen.table
 
-import metamodel.domain.exception.FrozenMetamodelSequenceIndexOutOfBoundsException
-import metamodel.domain.exception.FrozenMetamodelSequenceViolationException
 import metamodel.domain.frozen.image.FrozenMetamodelImageId
 import metamodel.domain.frozen.order.FrozenTypeReferenceOrder
 import metamodel.domain.frozen.sequence.FrozenSequenceSorter
 import metamodel.domain.vo.TypeReference
+import stage.input.diagnostics.FrozenMetamodelSequenceIndexOutOfBoundsException
+import stage.input.diagnostics.FrozenMetamodelSequenceViolationException
 import versioning.coordinate.contract.frozen.image.FrozenMetamodelImageSchemaVersion
 
 /**

@@ -1,13 +1,13 @@
 package adapter.reflection
 
-import metamodel.domain.dto.ResolvedTypeShape
-import metamodel.domain.exception.MetamodelAdapterStateViolationException
 import metamodel.domain.vo.TypeReference
 import planning.domain.expansion.TypeCycleIdentity
 import planning.domain.port.outgoing.RawTypeFactsProvider
 import planning.domain.port.outgoing.RawTypeFactsResolution
 import planning.domain.port.outgoing.TypeCycleIdentityProvider
 import planning.domain.port.outgoing.TypeShapeProvider
+import stage.input.diagnostics.MetamodelAdapterStateViolationException
+import stage.input.material.ResolvedTypeShape
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.reflect.KType
 

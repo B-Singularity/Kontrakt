@@ -1,11 +1,5 @@
 package discovery.domain.service
 
-import discovery.api.Contract
-import discovery.api.DataContract
-import discovery.api.KontraktTest
-import discovery.api.Stateful
-import discovery.domain.vo.ScanScope
-import discovery.port.outgoing.ClasspathScanner
 import io.mockk.clearMocks
 import io.mockk.coEvery
 import io.mockk.every
@@ -19,6 +13,12 @@ import kotlinx.coroutines.test.runTest
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import stage.input.boundary.ClasspathScanner
+import stage.input.contract.Contract
+import stage.input.contract.DataContract
+import stage.input.contract.KontraktTest
+import stage.input.contract.Stateful
+import stage.input.material.ScanScope
 import java.time.Clock
 
 class TestDiscovererImplTest {
@@ -126,7 +126,12 @@ class TestDiscovererImplTest {
     @Test
     fun `dependency resolution - uses Real strategy if interface has implementation`() =
         runTest(testDispatcher) {
-            coEvery { scanner.findAnnotatedClasses(any(), KontraktTest::class) } returns listOf(ServiceWithInterface::class)
+            coEvery {
+                scanner.findAnnotatedClasses(
+                    any(),
+                    KontraktTest::class
+                )
+            } returns listOf(ServiceWithInterface::class)
             coEvery { scanner.findAnnotatedInterfaces(any(), any()) } returns emptyList()
             coEvery { scanner.findAnnotatedClasses(any(), DataContract::class) } returns emptyList()
 
@@ -227,7 +232,12 @@ class TestDiscovererImplTest {
     fun `discover - handles classes without qualified name (Anonymous-Local classes)`() =
         runTest(testDispatcher) {
             class LocalAnonymousTest
-            coEvery { scanner.findAnnotatedClasses(any(), KontraktTest::class) } returns listOf(LocalAnonymousTest::class)
+            coEvery {
+                scanner.findAnnotatedClasses(
+                    any(),
+                    KontraktTest::class
+                )
+            } returns listOf(LocalAnonymousTest::class)
             coEvery { scanner.findAnnotatedInterfaces(any(), any()) } returns emptyList()
             coEvery { scanner.findAnnotatedClasses(any(), DataContract::class) } returns emptyList()
 
@@ -279,7 +289,12 @@ class TestDiscovererImplTest {
     @Test
     fun `discover - fails when parameter type cannot be determined (Generic Type)`() =
         runTest(testDispatcher) {
-            coEvery { scanner.findAnnotatedClasses(any(), KontraktTest::class) } returns listOf(GenericTestTarget::class)
+            coEvery {
+                scanner.findAnnotatedClasses(
+                    any(),
+                    KontraktTest::class
+                )
+            } returns listOf(GenericTestTarget::class)
             coEvery { scanner.findAnnotatedInterfaces(any(), any()) } returns emptyList()
             coEvery { scanner.findAnnotatedClasses(any(), DataContract::class) } returns emptyList()
 
@@ -292,7 +307,12 @@ class TestDiscovererImplTest {
     @Test
     fun `discover - captures unexpected exceptions thrown by scanner`() =
         runTest(testDispatcher) {
-            coEvery { scanner.findAnnotatedInterfaces(any(), any()) } throws RuntimeException("Unexpected Scanner Crash")
+            coEvery {
+                scanner.findAnnotatedInterfaces(
+                    any(),
+                    any()
+                )
+            } throws RuntimeException("Unexpected Scanner Crash")
 
             val result = discoverer.discover(policy, Contract::class)
 

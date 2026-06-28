@@ -1,8 +1,8 @@
 package metamodel.domain.service
 
-import metamodel.domain.exception.MetamodelFactContractViolationException
-import metamodel.domain.vo.TypeCycleKey
-import metamodel.domain.vo.TypeShapeSummary
+import stage.input.material.TypeShapeSummary
+import stage.input.diagnostics.MetamodelFactContractViolationException
+import stage.input.material.TypeCycleKey
 
 /**
  * Scope-local coherence guard for TypeCycleKey issuance.

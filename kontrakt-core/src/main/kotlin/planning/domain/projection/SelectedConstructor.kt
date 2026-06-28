@@ -1,7 +1,7 @@
 package planning.domain.projection
 
-import metamodel.domain.dto.ConstructorCandidateFact
 import planning.domain.exception.ActiveMemberProjectionException
+import stage.input.material.ConstructorCandidateFact
 
 /**
  * Deterministically selected constructor for one node-expansion episode.
@@ -30,8 +30,8 @@ class SelectedConstructor private constructor(
             if (candidate.parameters.size != metrics.totalParameterCount) {
                 throw ActiveMemberProjectionException(
                     "SelectedConstructor.metrics.totalParameterCount must match candidate.parameters.size: " +
-                        "totalParameterCount=${metrics.totalParameterCount}, " +
-                        "candidateParameterCount=${candidate.parameters.size}",
+                            "totalParameterCount=${metrics.totalParameterCount}, " +
+                            "candidateParameterCount=${candidate.parameters.size}",
                 )
             }
 

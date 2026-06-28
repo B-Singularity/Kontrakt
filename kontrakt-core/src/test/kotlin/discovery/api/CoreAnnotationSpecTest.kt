@@ -3,6 +3,11 @@ package discovery.api
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
+import stage.input.contract.Contract
+import stage.input.contract.DataContract
+import stage.input.contract.KontraktTest
+import stage.input.contract.Stateful
+import stage.input.contract.Test
 import java.util.stream.Stream
 import kotlin.annotation.AnnotationRetention.RUNTIME
 import kotlin.annotation.AnnotationTarget.CLASS

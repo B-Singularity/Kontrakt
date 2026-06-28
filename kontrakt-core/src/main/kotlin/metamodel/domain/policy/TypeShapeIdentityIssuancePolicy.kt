@@ -1,9 +1,9 @@
 package metamodel.domain.policy
 
-import metamodel.domain.exception.MetamodelFactContractViolationException
-import metamodel.domain.port.outgoing.TypeShapeRatificationVerifier
 import metamodel.domain.vo.FingerprintTokenEncoding
 import metamodel.domain.vo.TypeShapeRatificationFingerprint
+import stage.input.boundary.TypeShapeRatificationVerifier
+import stage.input.diagnostics.MetamodelFactContractViolationException
 
 /**
  * Pinned policy for issuing CanonicalTypeId.

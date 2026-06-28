@@ -1,6 +1,7 @@
 package metamodel.domain.vo
 
-import metamodel.domain.exception.MetamodelFactContractViolationException
+import stage.input.diagnostics.MetamodelFactContractViolationException
+import stage.input.material.TypeShapeSummary
 
 /**
  * Canonical rendered type signature.

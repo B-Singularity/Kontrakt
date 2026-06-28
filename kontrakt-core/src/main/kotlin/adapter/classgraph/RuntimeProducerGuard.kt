@@ -1,7 +1,7 @@
 package adapter.classgraph
 
-import discovery.domain.exception.RuntimeIntegrityException
-import discovery.port.outgoing.ClasspathScanner
+import stage.input.boundary.ClasspathScanner
+import stage.input.diagnostics.RuntimeIntegrityException
 import java.util.ServiceConfigurationError
 import java.util.ServiceLoader
 

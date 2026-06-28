@@ -1,13 +1,12 @@
 package execution.domain.service.orchestration
 
-import discovery.api.Test
 import exception.KontraktConfigurationException
 import exception.KontraktInternalException
 import execution.domain.entity.EphemeralTestContext
 import execution.domain.service.generation.FixtureGenerator
-import execution.domain.service.validation.ConstructorComplianceExecutor
-import execution.domain.service.validation.ContractValidator
-import execution.domain.service.validation.DataComplianceExecutor
+import stage.admission.judgment.ConstructorComplianceExecutor
+import stage.admission.judgment.ContractValidator
+import stage.admission.judgment.DataComplianceExecutor
 import execution.domain.vo.context.generation.GenerationContext
 import execution.domain.vo.result.ExecutionResult
 import execution.domain.vo.trace.ExecutionTrace
@@ -15,12 +14,13 @@ import execution.domain.vo.verification.AssertionRecord
 import execution.domain.vo.verification.AssertionStatus
 import execution.domain.vo.verification.SourceLocation
 import execution.domain.vo.verification.StandardAssertion
-import execution.port.incoming.TestScenarioExecutor
 import execution.port.outgoing.MockingEngine
 import execution.port.outgoing.ScenarioTrace
 import io.github.oshai.kotlinlogging.KotlinLogging
 import ir.TestSpecification
 import kotlinx.coroutines.runBlocking
+import stage.input.boundary.TestScenarioExecutor
+import stage.input.contract.Test
 import java.lang.reflect.Method
 import java.time.Clock
 import java.time.Instant

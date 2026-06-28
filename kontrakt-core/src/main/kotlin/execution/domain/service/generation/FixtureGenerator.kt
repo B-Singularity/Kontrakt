@@ -1,8 +1,6 @@
 package execution.domain.service.generation
 
-import discovery.api.NotNull
-import discovery.api.Null
-import execution.domain.service.validation.ContractConfigurationValidator
+import stage.admission.judgment.ContractConfigurationValidator
 import execution.domain.strategy.generation.TimeTypeGenerator
 import execution.domain.vo.context.generation.GenerationContext
 import execution.domain.vo.context.generation.GenerationRequest
@@ -13,6 +11,8 @@ import execution.port.outgoing.MockingContext
 import execution.port.outgoing.MockingEngine
 import execution.port.outgoing.ScenarioTrace
 import io.github.oshai.kotlinlogging.KotlinLogging
+import stage.input.contract.NotNull
+import stage.input.contract.Null
 import java.time.Clock
 import kotlin.random.Random
 import kotlin.reflect.KClass
@@ -330,7 +330,8 @@ class FixtureGenerator(
         }
     }
 
-    private fun findGenerator(request: GenerationRequest): TypeGenerator? = generators.firstOrNull { it.supports(request) }
+    private fun findGenerator(request: GenerationRequest): TypeGenerator? =
+        generators.firstOrNull { it.supports(request) }
 
     /**
      * Performs final integrity checks on the generated result.

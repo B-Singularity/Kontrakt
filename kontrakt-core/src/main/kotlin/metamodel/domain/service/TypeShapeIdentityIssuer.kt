@@ -1,12 +1,12 @@
 package metamodel.domain.service
 
 import metamodel.domain.policy.TypeShapeIdentityIssuancePolicy
-import metamodel.domain.port.outgoing.TypeShapeRatificationVerifier
 import metamodel.domain.vo.CanonicalTypeId
 import metamodel.domain.vo.CanonicalTypeText
 import metamodel.domain.vo.TypeShapeRatification
 import metamodel.domain.vo.TypeShapeRatificationFingerprint
-import metamodel.domain.vo.TypeShapeSummary
+import stage.input.material.TypeShapeSummary
+import stage.input.boundary.TypeShapeRatificationVerifier
 
 /**
  * Domain service that issues CanonicalTypeId through the complete ratification

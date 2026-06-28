@@ -1,8 +1,8 @@
 package planning.domain.vo
 
-import metamodel.domain.dto.MemberFact
-import metamodel.domain.dto.TypeFactsDTO
 import planning.domain.exception.PlanningProtocolIntegrityException
+import stage.input.material.MemberFact
+import stage.input.material.TypeFactsDTO
 
 /**
  * Boundary object representing the order-ratified active member set.

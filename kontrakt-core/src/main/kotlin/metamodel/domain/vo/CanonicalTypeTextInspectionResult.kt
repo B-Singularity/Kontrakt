@@ -1,7 +1,7 @@
 package metamodel.domain.vo
 
-import metamodel.domain.exception.MetamodelFactContractViolationException
 import metamodel.domain.protocol.MetamodelProtocolTextGuards
+import stage.input.diagnostics.MetamodelFactContractViolationException
 
 /**
  * Result of pinned canonical type-text inspection.

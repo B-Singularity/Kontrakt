@@ -1,8 +1,8 @@
 package planning.domain.service
 
-import metamodel.domain.dto.MemberFact
-import metamodel.domain.dto.TypeFactsDTO
 import planning.domain.exception.FaultKind
+import stage.input.material.MemberFact
+import stage.input.material.TypeFactsDTO
 
 /**
  * Resolves semantic fault attribution from domain-visible evidence.

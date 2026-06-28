@@ -1,8 +1,8 @@
 package adapter.reflection
 
 import ir.identity.CanonicalSignature
-import metamodel.domain.exception.MetamodelAdapterStateViolationException
 import metamodel.domain.vo.TypeReference
+import stage.input.diagnostics.MetamodelAdapterStateViolationException
 import java.nio.charset.StandardCharsets
 
 /**

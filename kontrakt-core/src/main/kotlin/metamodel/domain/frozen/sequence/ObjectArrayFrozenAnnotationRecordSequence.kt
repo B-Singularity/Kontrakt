@@ -1,10 +1,10 @@
 package metamodel.domain.frozen.sequence
 
-import metamodel.domain.exception.FrozenMetamodelSequenceIndexOutOfBoundsException
 import metamodel.domain.frozen.image.FrozenMetamodelImageId
 import metamodel.domain.frozen.order.FrozenAnnotationRecordOrder
 import metamodel.domain.frozen.record.FrozenAnnotationRecord
 import metamodel.domain.frozen.table.FrozenMetamodelImageTableId
+import stage.input.diagnostics.FrozenMetamodelSequenceIndexOutOfBoundsException
 
 /**
  * Object-array-backed deterministic annotation record sequence.
