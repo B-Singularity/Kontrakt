@@ -10,21 +10,6 @@
 
 ---
 
-## 📚 Documentation
-
-All detailed documentation for Kontrakt is managed on our **[GitHub Wiki](https://github.com/B-Singularity/Kontrakt/wiki)**.
-
-**Key Pages:**
-* **[[🚀 Quick Start (5-Minute Tutorial)|Quick Start]]**
-* **[[💡 The Philosophy of Kontrakt|Philosophy]]**
-
-## 🚀 Quick Start
-
-
-
-## 🙌 Contributing
-
-Contributions are always welcome! Please read our **[[Contribution Guide]]** on the Wiki to get started.
 
 ## 📝 License
 
