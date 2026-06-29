@@ -1,7 +1,7 @@
 package stage.admission.judgment
 
-import execution.domain.vo.context.generation.GenerationRequest
 import execution.exception.ConflictingAnnotationsException
+import realization.execution.generation.GenerationRequest
 import kotlin.reflect.KClass
 
 /**

@@ -1,6 +1,6 @@
 package adapter.reflection
 
-import ir.identity.CanonicalSignature
+import stage.canonicalization.material.CanonicalSignature
 import stage.canonicalization.material.TypeReference
 import stage.input.diagnostics.MetamodelAdapterStateViolationException
 import java.nio.charset.StandardCharsets

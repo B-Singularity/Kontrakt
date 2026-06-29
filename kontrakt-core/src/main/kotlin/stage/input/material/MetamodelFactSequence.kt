@@ -16,8 +16,8 @@ import java.util.AbstractList
  * - immutable indexed access
  * - explicit duplicate failure where the caller declares a uniqueness key
  *
- * Why not ir.structure.DeterministicList?
- * - ir.structure.DeterministicList has sorted-set semantics.
+ * Why not realization.graph.structure.DeterministicList?
+ * - realization.graph.structure.DeterministicList has sorted-set semantics.
  * - It deduplicates through TreeSet.
  * - Raw metamodel facts must not hide adapter duplication by deduplication.
  *

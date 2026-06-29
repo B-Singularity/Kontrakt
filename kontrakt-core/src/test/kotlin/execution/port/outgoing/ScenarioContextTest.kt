@@ -6,10 +6,11 @@ import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito
+import realization.execution.scenario.ScenarioContext
 import stage.diagnostic.material.KontraktConfigurationException
 
 /**
- * Defines the contract requirements for any [ScenarioContext] implementation.
+ * Defines the contract requirements for any [realization.execution.scenario.ScenarioContext] implementation.
  *
  * This interface utilizes the "Interface-based Testing" pattern (supported by JUnit 5).
  * All test logic is defined in default methods, allowing different adapters (Mockito, Mockk, etc.)

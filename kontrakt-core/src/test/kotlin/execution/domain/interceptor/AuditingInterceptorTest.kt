@@ -1,10 +1,5 @@
 package execution.domain.interceptor
 
-import execution.domain.entity.EphemeralTestContext
-import execution.domain.service.VerdictDecider
-import execution.domain.vo.context.WorkerId
-import execution.port.outgoing.ScenarioInterceptor
-import execution.port.outgoing.TestResultPublisher
 import governance.policy.AuditDepth
 import governance.policy.AuditPolicy
 import governance.policy.LogRetention
@@ -14,6 +9,10 @@ import io.mockk.verify
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import realization.execution.context.EphemeralTestContext
+import realization.execution.context.WorkerId
+import realization.execution.service.VerdictDecider
+import realization.reporting.TestResultPublisher
 import stage.diagnostic.evidence.DesignDecision
 import stage.diagnostic.evidence.ExceptionTrace
 import stage.diagnostic.evidence.ExecutionTrace

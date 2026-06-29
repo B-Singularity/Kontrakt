@@ -1,16 +1,16 @@
 package adapter.mockito
 
-import execution.domain.service.generation.FixtureGenerator
-import execution.domain.vo.context.generation.GenerationRequest
-import execution.port.outgoing.MockingContext
-import execution.port.outgoing.MockingEngine
-import execution.port.outgoing.ScenarioContext
-import execution.port.outgoing.ScenarioControl
 import io.github.oshai.kotlinlogging.KLogger
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.mockito.Mockito
 import org.mockito.invocation.InvocationOnMock
 import org.mockito.stubbing.Answer
+import realization.execution.generation.FixtureGenerator
+import realization.execution.generation.GenerationRequest
+import realization.execution.mocking.MockingContext
+import realization.execution.mocking.MockingEngine
+import realization.execution.scenario.ScenarioContext
+import realization.execution.scenario.ScenarioControl
 import stage.diagnostic.evidence.ExecutionTrace
 import stage.diagnostic.evidence.ScenarioTrace
 import stage.diagnostic.material.KontraktConfigurationException

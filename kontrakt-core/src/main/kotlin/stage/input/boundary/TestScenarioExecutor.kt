@@ -1,6 +1,6 @@
 package stage.input.boundary
 
-import execution.domain.entity.EphemeralTestContext
+import realization.execution.context.EphemeralTestContext
 import stage.publication.material.ExecutionResult
 
 /**

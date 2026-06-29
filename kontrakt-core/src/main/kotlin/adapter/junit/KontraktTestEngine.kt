@@ -9,9 +9,6 @@ import adapter.junit.config.toReportingDirectives
 import adapter.jvm.DefaultRuntimeFactory
 import adapter.mockito.MockitoEngineAdapter
 import exception.KontraktInternalException
-import execution.adapter.state.ThreadLocalScenarioControl
-import execution.domain.factory.ExecutionEnvironmentFactory
-import execution.port.outgoing.TestResultPublisher
 import governance.policy.ExecutionPolicy
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.runBlocking
@@ -24,6 +21,9 @@ import org.junit.platform.engine.TestExecutionResult
 import org.junit.platform.engine.UniqueId
 import org.junit.platform.engine.discovery.ClassSelector
 import org.junit.platform.engine.discovery.PackageSelector
+import realization.execution.context.ThreadLocalScenarioControl
+import realization.execution.factory.ExecutionEnvironmentFactory
+import realization.reporting.TestResultPublisher
 import stage.input.boundary.KontraktRuntimeFactory
 import stage.input.contract.Contract
 import stage.input.material.ScanScope

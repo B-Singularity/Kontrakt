@@ -1,6 +1,6 @@
 package stage.lowering.material
 
-import ir.exception.IrProtocolViolationException
+import realization.graph.IrProtocolViolationException
 import stage.lowering.contract.BreakpointStage
 
 /**

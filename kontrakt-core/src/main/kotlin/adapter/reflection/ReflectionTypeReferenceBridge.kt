@@ -1,7 +1,7 @@
 package adapter.reflection
 
-import metamodel.domain.service.CanonicalTypeReferenceIssuer
-import metamodel.domain.service.CanonicalTypeReferenceMaterial
+import realization.identity.CanonicalTypeReferenceIssuer
+import realization.identity.CanonicalTypeReferenceMaterial
 import stage.canonicalization.material.TypeReference
 import kotlin.reflect.KType
 

@@ -1,10 +1,10 @@
 package kontrakt.ir.spec
 
-import ir.IrLimits
-import ir.exception.IrProtocolViolationException
-import ir.identity.CanonicalIdentifier
-import ir.structure.DeterministicList
-import ir.structure.DeterministicMap
+import realization.graph.IrLimits
+import realization.graph.IrProtocolViolationException
+import realization.graph.structure.DeterministicList
+import realization.graph.structure.DeterministicMap
+import realization.identity.CanonicalIdentifier
 import stage.input.material.SpecKey
 import stage.input.material.TestMode
 import stage.input.material.TypeId

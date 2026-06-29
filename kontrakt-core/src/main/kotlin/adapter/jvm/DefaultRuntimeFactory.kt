@@ -1,14 +1,14 @@
 package adapter.jvm
 
 import adapter.file.WorkerTraceSinkPool
-import execution.domain.aggregate.TestExecution
-import execution.domain.service.generation.TestInstanceFactory
-import execution.domain.service.orchestration.DefaultScenarioExecutor
-import execution.port.outgoing.MockingEngine
-import execution.port.outgoing.ScenarioControl
-import execution.port.outgoing.TestResultPublisher
 import governance.policy.ExecutionPolicy
 import ir.TestSpecification
+import realization.execution.aggregate.TestExecution
+import realization.execution.generation.TestInstanceFactory
+import realization.execution.mocking.MockingEngine
+import realization.execution.orchestration.DefaultScenarioExecutor
+import realization.execution.scenario.ScenarioControl
+import realization.reporting.TestResultPublisher
 import stage.input.boundary.KontraktRuntimeFactory
 import stage.input.boundary.TestScenarioExecutor
 import java.time.Clock

@@ -1,7 +1,6 @@
 package execution.adapter.reporting
 
 import exception.KontraktInternalException
-import execution.port.outgoing.TestResultPublisher
 import io.mockk.confirmVerified
 import io.mockk.every
 import io.mockk.just
@@ -10,6 +9,8 @@ import io.mockk.runs
 import io.mockk.verify
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
+import realization.reporting.BroadcastingResultPublisher
+import realization.reporting.TestResultPublisher
 import stage.publication.material.TestResultEvent
 
 class BroadcastingResultPublisherTest {

@@ -1,8 +1,8 @@
 package stage.input.material
 
-import ir.IrLimits
-import ir.exception.IrProtocolViolationException
-import ir.structure.DeterministicList
+import realization.graph.IrLimits
+import realization.graph.IrProtocolViolationException
+import realization.graph.structure.DeterministicList
 import java.util.Objects
 
 /**

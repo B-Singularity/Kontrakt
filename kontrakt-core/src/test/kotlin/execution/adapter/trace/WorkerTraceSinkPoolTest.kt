@@ -2,7 +2,6 @@ package execution.adapter.trace
 
 import adapter.file.RecyclingFileTraceSink
 import adapter.file.WorkerTraceSinkPool
-import execution.domain.vo.context.WorkerId
 import execution.exception.KontraktLifecycleException
 import io.mockk.Runs
 import io.mockk.every
@@ -16,6 +15,7 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
+import realization.execution.context.WorkerId
 import java.nio.file.Path
 
 class WorkerTraceSinkPoolTest {

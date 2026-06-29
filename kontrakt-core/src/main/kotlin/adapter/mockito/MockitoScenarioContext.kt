@@ -1,8 +1,8 @@
 package adapter.mockito
 
-import execution.port.outgoing.ScenarioContext
-import execution.port.outgoing.StubbingBuilder
 import org.mockito.Mockito
+import realization.execution.scenario.ScenarioContext
+import realization.execution.scenario.StubbingBuilder
 import stage.diagnostic.material.KontraktConfigurationException
 
 class MockitoScenarioContext : ScenarioContext {

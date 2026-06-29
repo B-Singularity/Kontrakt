@@ -1,13 +1,12 @@
 package execution.domain.interceptor
 
-import execution.domain.entity.EphemeralTestContext
-import execution.port.outgoing.ScenarioInterceptor
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
+import realization.execution.context.EphemeralTestContext
 import stage.invariant.judgment.AssertionRecord
 
 /**

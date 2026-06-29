@@ -1,6 +1,6 @@
 package stage.lowering.material
 
-import ir.identity.CanonicalSignature
+import stage.canonicalization.material.CanonicalSignature
 import stage.lowering.diagnostics.PlanningProtocolIntegrityException
 
 /**

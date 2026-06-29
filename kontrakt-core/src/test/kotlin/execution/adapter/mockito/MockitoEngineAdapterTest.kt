@@ -1,9 +1,6 @@
 package execution.adapter.mockito
 
 import adapter.mockito.MockitoEngineAdapter
-import execution.domain.service.generation.FixtureGenerator
-import execution.domain.vo.context.generation.GenerationRequest
-import execution.port.outgoing.MockingContext
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
@@ -15,6 +12,9 @@ import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.invocation.InvocationOnMock
+import realization.execution.generation.FixtureGenerator
+import realization.execution.generation.GenerationRequest
+import realization.execution.mocking.MockingContext
 import stage.diagnostic.evidence.ExecutionTrace
 import stage.diagnostic.evidence.ScenarioTrace
 import stage.diagnostic.material.KontraktConfigurationException

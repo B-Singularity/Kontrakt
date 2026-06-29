@@ -1,7 +1,7 @@
 package stage.admission.judgment
 
 import execution.domain.exception.InvalidAnnotationValueException
-import execution.domain.vo.context.generation.GenerationRequest
+import realization.execution.generation.GenerationRequest
 import stage.input.contract.AssertFalse
 import stage.input.contract.AssertTrue
 import stage.input.contract.DecimalMax

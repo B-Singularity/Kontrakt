@@ -1,6 +1,6 @@
 package execution.port.incoming
 
-import execution.domain.aggregate.TestExecution
+import realization.execution.aggregate.TestExecution
 import ir.TestSpecification
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test

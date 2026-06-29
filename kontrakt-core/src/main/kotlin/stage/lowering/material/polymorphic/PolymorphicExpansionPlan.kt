@@ -2,7 +2,7 @@ package stage.lowering.material.polymorphic
 
 import stage.lowering.diagnostics.TypeExpansionContractViolationException
 import stage.lowering.material.expansion.TypeCycleIdentity
-import planning.domain.expansion.context.TypeExpansionContext
+import realization.planning.expansion.TypeExpansionContext
 
 /**
  * Ratified polymorphic expansion plan for one type-expansion cycle.

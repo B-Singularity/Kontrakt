@@ -1,6 +1,6 @@
 package stage.canonicalization.material
 
-import metamodel.domain.service.TypeShapeCoherenceReceipt
+import realization.identity.TypeShapeCoherenceReceipt
 import stage.input.diagnostics.MetamodelFactContractViolationException
 import stage.input.material.TypeShapeSummary
 

@@ -1,9 +1,9 @@
 package adapter.file
 
 import adapter.json.JsonUtils
-import exception.safety.PayloadSanitizer
 import execution.domain.exception.KontraktLifecycleException
 import io.github.oshai.kotlinlogging.KotlinLogging
+import realization.runtime.diagnostics.sanitization.PayloadSanitizer
 import stage.diagnostic.evidence.TraceEvent
 import stage.diagnostic.evidence.TracePhase
 import stage.diagnostic.evidence.TraceSink

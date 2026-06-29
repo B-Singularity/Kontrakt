@@ -1,7 +1,7 @@
 package stage.input.material
 
-import ir.IrLimits
-import ir.exception.IrProtocolViolationException
+import realization.graph.IrLimits
+import realization.graph.IrProtocolViolationException
 
 /**
  * Protocol-safe type identifier.

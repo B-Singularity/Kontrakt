@@ -1,14 +1,15 @@
 package execution.domain.entity
 
 import exception.KontraktInternalException
-import execution.port.outgoing.MockingEngine
-import execution.port.outgoing.ScenarioControl
 import io.mockk.mockk
 import ir.TestSpecification
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import realization.execution.context.EphemeralTestContext
+import realization.execution.mocking.MockingEngine
+import realization.execution.scenario.ScenarioControl
 import stage.diagnostic.evidence.ScenarioTrace
 
 class EphemeralTestContextTest {

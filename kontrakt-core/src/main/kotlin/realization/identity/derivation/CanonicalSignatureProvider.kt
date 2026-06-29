@@ -1,0 +1,11 @@
+package realization.identity.derivation
+
+import stage.canonicalization.material.CanonicalSignature
+import stage.input.material.TypeFactsDTO
+
+/**
+ * Deterministic signature derivation bound to normalization/version rules.
+ */
+interface CanonicalSignatureProvider {
+    fun deriveSignature(facts: TypeFactsDTO): CanonicalSignature
+}

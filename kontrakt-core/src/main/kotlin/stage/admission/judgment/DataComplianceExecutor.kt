@@ -1,9 +1,9 @@
 package stage.admission.judgment
 
-import common.util.unwrapped
-import execution.domain.entity.EphemeralTestContext
-import execution.domain.service.generation.FixtureGenerator
-import execution.domain.vo.context.generation.GenerationContext
+import realization.execution.context.EphemeralTestContext
+import realization.execution.generation.FixtureGenerator
+import realization.execution.generation.GenerationContext
+import realization.runtime.support.unwrapped
 import stage.invariant.judgment.AssertionRecord
 import stage.invariant.judgment.AssertionStatus
 import stage.invariant.judgment.DataContractRule

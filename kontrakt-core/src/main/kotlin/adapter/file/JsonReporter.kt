@@ -1,7 +1,7 @@
 package adapter.file
 
-import execution.port.outgoing.TestResultPublisher
 import infrastructure.json.toJson
+import realization.reporting.TestResultPublisher
 import stage.diagnostic.material.KontraktException
 import stage.publication.claim.ReportingDirectives
 import stage.publication.material.TestResultEvent

@@ -1,10 +1,10 @@
 package stage.lowering.material
 
-import ir.IrLimits
-import ir.identity.CanonicalIdentifier
-import ir.identity.CanonicalSignature
-import ir.plan.edge.Attribute
-import ir.structure.DeterministicMap
+import realization.graph.IrLimits
+import realization.graph.edge.Attribute
+import realization.graph.structure.DeterministicMap
+import realization.identity.CanonicalIdentifier
+import stage.canonicalization.material.CanonicalSignature
 
 /**
  * Canonical plan node order.

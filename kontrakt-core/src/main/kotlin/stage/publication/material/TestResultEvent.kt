@@ -1,7 +1,7 @@
 package stage.publication.material
 
-import execution.domain.vo.context.WorkerId
 import infrastructure.json.escapeJson
+import realization.execution.context.WorkerId
 
 data class TestResultEvent(
     val runId: String,

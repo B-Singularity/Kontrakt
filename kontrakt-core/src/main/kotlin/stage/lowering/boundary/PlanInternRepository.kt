@@ -1,7 +1,7 @@
 package stage.lowering.boundary
 
-import planning.domain.interner.PlanCacheKey
-import planning.domain.session.PlannerSession
+import realization.identity.interning.PlanCacheKey
+import realization.planning.session.PlannerSession
 import stage.lowering.material.CanonicalPlanNode
 import stage.lowering.material.PartitionId
 import statemachine.transition.diagnostics.L2FaultKind

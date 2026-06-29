@@ -1,15 +1,17 @@
 package execution.domain.service.generation
 
-import execution.domain.vo.context.generation.GenerationContext
-import execution.domain.vo.context.generation.GenerationRequest
 import execution.exception.GenerationFailedException
-import execution.port.outgoing.MockingEngine
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import realization.execution.generation.FixtureGenerator
+import realization.execution.generation.GenerationContext
+import realization.execution.generation.GenerationRequest
+import realization.execution.mocking.MockingContext
+import realization.execution.mocking.MockingEngine
 import stage.diagnostic.evidence.ScenarioTrace
 import stage.input.contract.Null
 import java.time.Clock
@@ -135,7 +137,7 @@ class FixtureGeneratorTest {
         every {
             mockingEngine.createMock(
                 any<kotlin.reflect.KClass<*>>(),
-                any<execution.port.outgoing.MockingContext>(),
+                any<MockingContext>(),
             )
         } throws RuntimeException("Mocking failed")
 

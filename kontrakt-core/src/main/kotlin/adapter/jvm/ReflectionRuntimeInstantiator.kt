@@ -1,8 +1,8 @@
 package adapter.jvm
 
 import execution.domain.exception.RuntimeInstantiationException
-import execution.port.outgoing.RuntimeInstantiator
-import execution.port.outgoing.RuntimeTypeHandle
+import realization.runtime.support.RuntimeInstantiator
+import realization.runtime.support.RuntimeTypeHandle
 import java.lang.reflect.InvocationHandler
 import java.lang.reflect.Method
 import java.lang.reflect.Proxy

@@ -1,6 +1,6 @@
 package adapter.reflection
 
-import ir.identity.CanonicalSignature
+import stage.canonicalization.material.CanonicalSignature
 import stage.canonicalization.material.TypeReference
 
 /**
@@ -12,7 +12,7 @@ import stage.canonicalization.material.TypeReference
  * The current codebase has two signature concepts:
  *
  * - stage.canonicalization.material.CanonicalTypeSignature
- * - ir.identity.CanonicalSignature
+ * - stage.canonicalization.material.CanonicalSignature
  *
  * TypeReference carries the metamodel-domain signature material.
  * TypeCycleIdentity currently requires the IR-layer CanonicalSignature value.

@@ -1,7 +1,7 @@
 package stage.lowering.material
 
-import ir.IrLimits
-import ir.exception.IrProtocolViolationException
+import realization.graph.IrLimits
+import realization.graph.IrProtocolViolationException
 
 /**
  * Raw payload node in the plan order.

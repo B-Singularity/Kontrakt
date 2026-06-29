@@ -3,6 +3,7 @@ package execution.port.outgoing
 import adapter.mockito.MockitoScenarioContext
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import realization.execution.scenario.ScenarioControl
 
 interface ScenarioControlContract {
     fun createSut(): ScenarioControl

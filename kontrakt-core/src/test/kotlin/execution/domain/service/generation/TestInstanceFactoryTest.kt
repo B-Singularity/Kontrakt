@@ -1,10 +1,6 @@
 package execution.domain.service.generation
 
 import exception.KontraktInternalException
-import execution.domain.entity.EphemeralTestContext
-import execution.port.outgoing.MockingContext
-import execution.port.outgoing.MockingEngine
-import execution.port.outgoing.ScenarioControl
 import io.mockk.every
 import io.mockk.mockk
 import ir.TestSpecification
@@ -14,6 +10,11 @@ import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
+import realization.execution.context.EphemeralTestContext
+import realization.execution.generation.TestInstanceFactory
+import realization.execution.mocking.MockingContext
+import realization.execution.mocking.MockingEngine
+import realization.execution.scenario.ScenarioControl
 import stage.diagnostic.material.KontraktConfigurationException
 import stage.input.contract.Test
 import java.time.Clock

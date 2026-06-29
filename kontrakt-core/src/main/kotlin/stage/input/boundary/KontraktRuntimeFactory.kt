@@ -1,6 +1,6 @@
 package stage.input.boundary
 
-import execution.domain.aggregate.TestExecution
+import realization.execution.aggregate.TestExecution
 
 /**
  * [Extension Point] Runtime Factory API

@@ -9,11 +9,6 @@ import adapter.junit.KontraktTestEngine
 import adapter.junit.ReportingInfrastructureFactory
 import adapter.junit.TracingInfrastructureFactory
 import adapter.jvm.DefaultRuntimeFactory
-import execution.adapter.state.ThreadLocalScenarioControl
-import execution.domain.aggregate.TestExecution
-import execution.domain.factory.ExecutionEnvironmentFactory
-import execution.domain.vo.context.ExecutionEnvironment
-import execution.port.outgoing.TestResultPublisher
 import governance.policy.AuditPolicy
 import io.mockk.Runs
 import io.mockk.clearAllMocks
@@ -45,6 +40,11 @@ import org.junit.platform.engine.TestExecutionResult
 import org.junit.platform.engine.UniqueId
 import org.junit.platform.engine.discovery.ClassSelector
 import org.junit.platform.engine.discovery.PackageSelector
+import realization.execution.aggregate.TestExecution
+import realization.execution.context.ExecutionEnvironment
+import realization.execution.context.ThreadLocalScenarioControl
+import realization.execution.factory.ExecutionEnvironmentFactory
+import realization.reporting.TestResultPublisher
 import stage.input.boundary.TestScenarioExecutor
 import stage.input.material.ScanScope
 import stage.publication.material.TestResult

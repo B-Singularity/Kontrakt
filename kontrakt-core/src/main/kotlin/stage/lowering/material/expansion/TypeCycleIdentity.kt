@@ -1,8 +1,8 @@
 package stage.lowering.material.expansion
 
-import ir.identity.CanonicalSignature
-import stage.lowering.diagnostics.TypeCycleIdentityContractViolationException
+import stage.canonicalization.material.CanonicalSignature
 import stage.canonicalization.material.TypeReference
+import stage.lowering.diagnostics.TypeCycleIdentityContractViolationException
 
 /**
  * Minimal identity material for active-cycle detection.

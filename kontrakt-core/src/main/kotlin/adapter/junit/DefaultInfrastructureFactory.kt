@@ -6,9 +6,9 @@ import adapter.console.ConsoleTheme
 import adapter.console.NoColorTheme
 import adapter.console.StandardConsoleLayout
 import adapter.file.WorkerTraceSinkPool
-import execution.adapter.reporting.BroadcastingResultPublisher
-import execution.port.outgoing.TestResultPublisher
 import governance.policy.AuditPolicy
+import realization.reporting.BroadcastingResultPublisher
+import realization.reporting.TestResultPublisher
 import java.nio.file.Path
 
 /**

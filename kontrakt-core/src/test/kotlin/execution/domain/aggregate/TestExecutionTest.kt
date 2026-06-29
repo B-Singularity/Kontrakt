@@ -2,9 +2,6 @@ package execution.domain.aggregate
 
 import adapter.file.WorkerTraceSinkPool
 import exception.KontraktInternalException
-import execution.domain.entity.EphemeralTestContext
-import execution.domain.service.generation.TestInstanceFactory
-import execution.port.outgoing.TestResultPublisher
 import governance.policy.AuditDepth
 import governance.policy.AuditPolicy
 import governance.policy.DeterminismPolicy
@@ -17,6 +14,10 @@ import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import realization.execution.aggregate.TestExecution
+import realization.execution.context.EphemeralTestContext
+import realization.execution.generation.TestInstanceFactory
+import realization.reporting.TestResultPublisher
 import stage.diagnostic.evidence.TraceSink
 import stage.input.boundary.TestScenarioExecutor
 import stage.invariant.judgment.AssertionRecord

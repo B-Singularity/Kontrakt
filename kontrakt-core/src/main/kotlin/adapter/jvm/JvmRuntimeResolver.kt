@@ -1,9 +1,9 @@
 package adapter.jvm
 
-import execution.port.outgoing.RuntimeTypeHandle
-import execution.port.outgoing.RuntimeTypeResolver
-import infrastructure.exception.RegistryException
-import infrastructure.registry.RuntimeHandleRegistry
+import realization.runtime.diagnostics.RegistryException
+import realization.runtime.registry.RuntimeHandleRegistry
+import realization.runtime.support.RuntimeTypeHandle
+import realization.runtime.support.RuntimeTypeResolver
 import stage.canonicalization.material.TypeReference
 import java.lang.reflect.Array
 import java.lang.reflect.GenericArrayType

@@ -1,10 +1,10 @@
 package adapter.reflection
 
-import stage.lowering.boundary.TypeShapeProvider
 import stage.canonicalization.material.TypeReference
 import stage.input.diagnostics.StrictModeViolationException
 import stage.input.material.NullabilityKind
 import stage.input.material.ResolvedTypeShape
+import stage.lowering.boundary.TypeShapeProvider
 import java.math.BigDecimal
 import java.math.BigInteger
 import java.time.Duration
@@ -58,7 +58,7 @@ import kotlin.reflect.typeOf
  * This provider may need child TypeReference values for collection, map, and
  * array shapes. It obtains them through [ReflectionTypeReferenceBridge].
  *
- * The bridge delegates to the metamodel-domain [metamodel.domain.service.CanonicalTypeReferenceIssuer].
+ * The bridge delegates to the metamodel-domain [realization.identity.CanonicalTypeReferenceIssuer].
  * Therefore this provider remains a shape-classification adapter, not a
  * TypeReference issuance authority.
  *

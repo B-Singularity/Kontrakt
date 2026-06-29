@@ -1,6 +1,6 @@
 package adapter.reflection
 
-import metamodel.domain.service.TypeIdentity64Deriver
+import realization.identity.TypeIdentity64Deriver
 import stage.lowering.boundary.RawTypeFactsProvider
 import stage.lowering.boundary.RawTypeFactsResolution
 import stage.canonicalization.material.TypeReference

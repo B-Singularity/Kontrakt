@@ -1,6 +1,6 @@
 package stage.lowering.diagnostics
 
-import exception.safety.PayloadSanitizer
+import realization.runtime.diagnostics.sanitization.PayloadSanitizer
 import stage.diagnostic.material.KontraktException
 
 /**

@@ -1,7 +1,7 @@
 package adapter.file
 
 import execution.domain.exception.KontraktLifecycleException
-import execution.domain.vo.context.WorkerId
+import realization.execution.context.WorkerId
 import stage.diagnostic.evidence.TraceSink
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap

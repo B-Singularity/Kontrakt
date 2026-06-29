@@ -1,6 +1,6 @@
 package adapter.file
 
-import execution.port.outgoing.TestResultPublisher
+import realization.reporting.TestResultPublisher
 import stage.publication.claim.ReportingDirectives
 import stage.publication.material.TestResultEvent
 import java.util.concurrent.ConcurrentLinkedQueue

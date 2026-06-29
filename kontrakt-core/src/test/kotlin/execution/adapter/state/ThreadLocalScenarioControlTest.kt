@@ -1,8 +1,6 @@
 package execution.adapter.state
 
 import exception.KontraktInternalException
-import execution.domain.vo.context.ExecutionEnvironment
-import execution.port.outgoing.ScenarioControl
 import execution.port.outgoing.ScenarioControlContract
 import io.mockk.mockk
 import kotlinx.coroutines.ThreadContextElement
@@ -10,6 +8,9 @@ import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
+import realization.execution.context.ExecutionEnvironment
+import realization.execution.context.ThreadLocalScenarioControl
+import realization.execution.scenario.ScenarioControl
 import kotlin.coroutines.EmptyCoroutineContext
 
 internal class ThreadLocalScenarioControlTest : ScenarioControlContract {

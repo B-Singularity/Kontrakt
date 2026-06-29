@@ -1,6 +1,6 @@
 package stage.lowering.material.expansion
 
-import planning.domain.session.PlannerSession
+import realization.planning.session.PlannerSession
 import stage.canonicalization.material.TypeReference
 
 /**

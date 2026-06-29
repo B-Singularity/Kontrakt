@@ -1,6 +1,6 @@
 package statemachine.transition.material
 
-import planning.domain.interner.PlanCacheKey
+import realization.identity.interning.PlanCacheKey
 import stage.lowering.diagnostics.PlanningProtocolIntegrityException
 import stage.lowering.material.CanonicalPlanNode
 

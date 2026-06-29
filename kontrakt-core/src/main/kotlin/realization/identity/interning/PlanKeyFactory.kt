@@ -1,0 +1,120 @@
+package realization.identity.interning
+
+import governance.budget.CostCenter
+import kontrakt.planning.domain.protocol.HashInputEncodingSpec
+import kontrakt.planning.domain.protocol.PrimitiveHash
+import kontrakt.planning.domain.protocol.SentinelRemapper
+import realization.identity.CanonicalIdentifier
+import realization.planning.session.PlannerSession
+import stage.canonicalization.material.CanonicalSignature
+import stage.lowering.diagnostics.EnvironmentIntegrityException
+import stage.lowering.diagnostics.SentinelIntegrityException
+import stage.lowering.material.PartitionId
+
+/**
+ * Domain service for deterministic plan-cache key issuance.
+ *
+ * Current alignment:
+ * - [PlanCacheKey] carries the full exact-match tuple and route64.
+ * - [PartitionId] remains the domain-level argument.
+ * - lowering to [CanonicalIdentifier] happens only inside this service.
+ */
+class PlanKeyFactory private constructor(
+    private val encodingSpec: HashInputEncodingSpec,
+) {
+    fun issue(
+        partitionId: PartitionId,
+        equalityKey: CanonicalSignature,
+        session: PlannerSession,
+    ): PlanCacheKey {
+        ensureNormalizationVersionMatches(session)
+
+        session.step(CostCenter.PLAN_CACHE_KEY_MATERIALIZE)
+        session.step(CostCenter.CANONICAL_SIGNATURE_MATERIALIZE)
+
+        val versions = session.config.versions
+
+        val route64 =
+            deriveRoute64(
+                partitionId = partitionId,
+                equalityKey = equalityKey,
+                session = session,
+            )
+
+        return PlanCacheKey.issue(
+            workAccountingVersion = versions.workAccountingVersion,
+            normalizationVersion = versions.normalizationSpecVersion,
+            edgeOrderingVersion = versions.edgeOrderingVersion,
+            capabilityProfileVersion = versions.capabilityProfileVersion,
+            entropyVersion = versions.entropyVersion,
+            partitionKey = lowerPartitionId(partitionId),
+            equalityKey = equalityKey,
+            route64 = route64,
+        )
+    }
+
+    private fun deriveRoute64(
+        partitionId: PartitionId,
+        equalityKey: CanonicalSignature,
+        session: PlannerSession,
+    ): Long {
+        val versions = session.config.versions
+
+        val partitionEncoded = encodingSpec.encodeStrict(partitionId.value)
+        val equalityEncoded = wrapLengthPrefix(equalityKey.bytesCopy())
+
+        val payload = ByteArray(partitionEncoded.size + equalityEncoded.size)
+        System.arraycopy(partitionEncoded, 0, payload, 0, partitionEncoded.size)
+        System.arraycopy(equalityEncoded, 0, payload, partitionEncoded.size, equalityEncoded.size)
+
+        var seed = 0L
+        seed = PrimitiveHash.mix64(seed xor versions.workAccountingVersion)
+        seed = PrimitiveHash.mix64(seed xor versions.normalizationSpecVersion)
+        seed = PrimitiveHash.mix64(seed xor versions.edgeOrderingVersion)
+        seed = PrimitiveHash.mix64(seed xor versions.capabilityProfileVersion)
+        seed = PrimitiveHash.mix64(seed xor versions.entropyVersion)
+
+        val raw = PrimitiveHash.hash64(payload, seed)
+        val nonZero = SentinelRemapper.remapNonZero(raw, versions.normalizationSpecVersion)
+        val nonMax = SentinelRemapper.remapNonMax(nonZero, versions.edgeOrderingVersion)
+
+        if (nonMax == 0L || nonMax == -1L) {
+            throw SentinelIntegrityException(
+                "PlanKeyFactory failed to produce a non-reserved route64.",
+            )
+        }
+
+        return nonMax
+    }
+
+    private fun lowerPartitionId(partitionId: PartitionId): CanonicalIdentifier =
+        CanonicalIdentifier.issue(partitionId.value)
+
+    private fun wrapLengthPrefix(bytes: ByteArray): ByteArray {
+        val result = ByteArray(Int.SIZE_BYTES + bytes.size)
+        val len = bytes.size
+
+        result[0] = (len and 0xFF).toByte()
+        result[1] = ((len ushr 8) and 0xFF).toByte()
+        result[2] = ((len ushr 16) and 0xFF).toByte()
+        result[3] = ((len ushr 24) and 0xFF).toByte()
+
+        System.arraycopy(bytes, 0, result, Int.SIZE_BYTES, bytes.size)
+        return result
+    }
+
+    private fun ensureNormalizationVersionMatches(session: PlannerSession) {
+        val sessionVersion = session.config.versions.normalizationSpecVersion
+        if (sessionVersion != encodingSpec.normalizationSpecVersion) {
+            throw EnvironmentIntegrityException(
+                "Normalization version mismatch: session=$sessionVersion, " +
+                        "encodingSpec=${encodingSpec.normalizationSpecVersion}",
+            )
+        }
+    }
+
+    companion object {
+        @JvmStatic
+        fun issue(encodingSpec: HashInputEncodingSpec): PlanKeyFactory = PlanKeyFactory(encodingSpec = encodingSpec)
+    }
+}

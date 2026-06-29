@@ -1,6 +1,6 @@
 package stage.diagnostic.material
 
-import exception.safety.PayloadSanitizer
+import realization.runtime.diagnostics.sanitization.PayloadSanitizer
 
 /**
  * [Base Exception] Root of the Kontrakt framework exception hierarchy.

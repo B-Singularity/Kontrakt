@@ -3,12 +3,12 @@ package execution.adapter.runtime
 import adapter.file.WorkerTraceSinkPool
 import adapter.jvm.DefaultRuntimeFactory
 import execution.port.incoming.KontraktRuntimeFactoryContract
-import execution.port.outgoing.MockingEngine
-import execution.port.outgoing.ScenarioControl
-import execution.port.outgoing.TestResultPublisher
 import governance.policy.ExecutionPolicy
 import io.mockk.mockk
 import ir.TestSpecification
+import realization.execution.mocking.MockingEngine
+import realization.execution.scenario.ScenarioControl
+import realization.reporting.TestResultPublisher
 import stage.input.boundary.KontraktRuntimeFactory
 import stage.input.boundary.TestScenarioExecutor
 import java.time.Clock
