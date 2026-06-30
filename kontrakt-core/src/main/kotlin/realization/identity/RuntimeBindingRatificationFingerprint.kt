@@ -1,4 +1,4 @@
-package metamodel.domain.vo
+package realization.identity
 
 import stage.input.diagnostics.MetamodelFactContractViolationException
 

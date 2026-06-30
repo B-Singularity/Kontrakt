@@ -1,7 +1,7 @@
 package stage.lowering.material.polymorphic
 
-import metamodel.domain.vo.RuntimeBindingRatificationFingerprint
 import metamodel.domain.vo.RuntimeBindingScopeDepth
+import realization.identity.RuntimeBindingRatificationFingerprint
 import stage.lowering.diagnostics.TypeExpansionContractViolationException
 
 /**

@@ -7,26 +7,26 @@
 - [2. Mathematics, Physics, and Engineering](#2-mathematics-physics-and-engineering)
 - [3. Use Mathematics. Do Not Become Mathematics.](#3-use-mathematics-do-not-become-mathematics)
 - [4. Contract](#4-contract)
-- [5. Make Interfaces Great Again](#5-make-interfaces-great-again)
-- [6. Evolution and Contract](#6-evolution-and-contract)
-- [7. Good Machine and Function](#7-good-machine-and-function)
-- [8. Core, Boundary, and the Fucking Bastards Outside](#8-core-boundary-and-the-fucking-bastards-outside)
-- [9. Applying Contract to a Good Machine](#9-applying-contract-to-a-good-machine)
-- [10. What Counts as Contract in the Pipeline](#10-what-counts-as-contract-in-the-pipeline)
-- [11. Contract Presentations in the Pipeline](#11-contract-presentations-in-the-pipeline)
-- [12. Contract and Verification](#12-contract-and-verification)
-- [13. Contract and Implementation](#13-contract-and-implementation)
-- [14. Message, Exposure, and Interaction](#14-message-exposure-and-interaction)
-- [15. Whole Machine](#15-whole-machine)
-- [16. Object Orientation and Inheritance](#16-object-orientation-and-inheritance)
-    - [16.1 How Inheritance Fucked Up Software](#161-how-inheritance-fucked-up-software)
-    - [16.2 Polymorphism, Substitution, Segregation, and Inversion](#162-polymorphism-substitution-segregation-and-inversion)
-    - [16.3 Abstraction](#163-abstraction)
-    - [16.4 The JVM Is What Happens When Implementation Becomes Contract](#164-the-jvm-is-what-happens-when-implementation-becomes-contract)
-    - [16.5 Type Is a Contract Name, Not Contract Authority](#165-type-is-a-contract-name-not-contract-authority)
-    - [16.6 Class Is Where Roles Collapsed](#166-class-is-where-roles-collapsed)
-    - [16.7 Rust Exposes Implementation as Contract](#167-rust-exposes-implementation-as-contract)
-- [17. Still Left](#17-still-left)
+- [5. Purpose](#5-purpose)
+- [6. Make Interfaces Great Again](#6-make-interfaces-great-again)
+- [7. Evolution and Contract](#7-evolution-and-contract)
+- [8. Good Machine and Function](#8-good-machine-and-function)
+- [9. Core, Boundary, and the Fucking Bastards Outside](#9-core-boundary-and-the-fucking-bastards-outside)
+- [10. Applying Contract to a Good Machine](#10-applying-contract-to-a-good-machine)
+- [11. What Counts as Contract in the Pipeline](#11-what-counts-as-contract-in-the-pipeline)
+- [12. Contract Presentations in the Pipeline](#12-contract-presentations-in-the-pipeline)
+- [13. Contract and Verification](#13-contract-and-verification)
+- [14. Contract and Implementation](#14-contract-and-implementation)
+- [15. Message, Exposure, and Interaction](#15-message-exposure-and-interaction)
+- [16. Whole Machine](#16-whole-machine)
+- [17. Object Orientation and Inheritance](#17-object-orientation-and-inheritance)
+    - [17.1 How Inheritance Fucked Up Software](#171-how-inheritance-fucked-up-software)
+    - [17.2 Polymorphism, Substitution, Segregation, and Inversion](#172-polymorphism-substitution-segregation-and-inversion)
+    - [17.3 Abstraction](#173-abstraction)
+    - [17.4 The JVM Is What Happens When Implementation Becomes Contract](#174-the-jvm-is-what-happens-when-implementation-becomes-contract)
+    - [17.5 Type Is a Contract Name, Not Contract Authority](#175-type-is-a-contract-name-not-contract-authority)
+    - [17.6 Class Is Where Roles Collapsed](#176-class-is-where-roles-collapsed)
+    - [17.7 Rust Exposes Implementation as Contract](#177-rust-exposes-implementation-as-contract)
 - [18. Current Working Definition](#18-current-working-definition)
 
 ---
@@ -268,7 +268,74 @@ The compiler should stop the shape before anyone gets clever with it.
 
 ---
 
-## 5. Make Interfaces Great Again
+## 5. Purpose
+
+Machines are built for a purpose.
+
+But that does not mean "purpose" is some magical contract feature the software can just figure out for you.
+
+Purpose comes before the contract. It is the compass. It explains why the designer chose these specific obligations,
+why certain trade-offs are forbidden, and why a machine may prefer one kind of failure, diagnostic, publication rule,
+or governance rule over another.
+
+But the software itself is utterly indifferent to your purpose.
+
+A machine cannot discover your intention. It cannot mathematically prove it. It cannot enforce an abstract human desire.
+Human purposes are too contextual, too fragmented, and too dependent on judgments that live outside the machine. If the
+purpose has not been lowered by the designer into hard, machine-readable obligations, the machine has nothing honest to
+judge.
+
+Aligning the contract to the purpose is the designer's job.
+
+Not the compiler's.
+
+The machine can only judge what has been explicitly declared. If the purpose has not shaped concrete input rules,
+admission rules, lowering obligations, fact laws, invariants, state movement, failure rules, publication discipline,
+diagnostic retention, version coordinates, policy, budget, capacity, or governance, then the machine must not pretend
+that it verified the purpose.
+
+This is where the rot usually starts.
+
+The moment purpose is treated as something the machine can prove by itself, the architecture drifts into bullshit. Type
+theorists will try to encode the purpose into some unreadable formal proposition. Proof-zealots will shrink the real
+machine into a toy small enough to prove. Framework cultists will build proxy layers, observe runtime behavior, and
+call that observation a proof. An AI may generate an interpretation and try to pass it off as authority.
+
+That is proof theater.
+
+Purpose is not a type-level costume. It is not an oracle hiding behind a friendly API. It is not a proxy proof. It is
+not an AI interpretation. And it is absolutely not an excuse to weld the contract to a specific implementation just
+because that implementation happens to work today.
+
+A purpose guides contract selection and arrangement.
+
+The contract must still declare the actual obligations.
+
+A system whose declared purpose includes determinism may choose contracts that forbid backend order from becoming
+semantic order, forbid cache state from changing meaning, require canonical ordering, require exact collision handling,
+require fail-closed judgment, require explicit state movement, and restrict publication to stable declared claims.
+Those are contracts. The purpose itself did not become a proof. It guided which obligations had to be declared.
+
+The same applies to any other purpose. A safety-oriented system, a privacy-oriented system, a low-latency system, a
+regulatory system, or a financial settlement system may arrange different contracts because it is built for a different
+end. The machine does not discover that end. The designer declares obligations that make the end visible to the machine.
+
+So the line is absolute:
+
+```text
+purpose guides contract selection and arrangement
+contract declares obligations
+implementation realizes those obligations
+```
+
+If the purpose has not been lowered into explicitly declared obligations, the machine verifies nothing.
+
+And if the implementation is presented as the proof that the purpose was satisfied, the contract has already been
+swallowed by the implementation.
+
+---
+
+## 6. Make Interfaces Great Again
 
 Software needs a way to present contracts. One important surface is the interface.
 
@@ -343,7 +410,7 @@ Keep the method, but make it stop pretending to be enough. Make interfaces great
 
 ---
 
-## 6. Evolution and Contract
+## 7. Evolution and Contract
 
 Contracts should be stable and immutable. If every small implementation change rewrites the contract, there is no
 contract. There is only noise.
@@ -364,7 +431,7 @@ The version coordinate appears later in the pipeline discussion.
 
 ---
 
-## 7. Good Machine and Function
+## 8. Good Machine and Function
 
 A good machine should ideally behave like a function. Given the same accepted input, it should produce the same accepted
 output. The clean target is still function-like behavior.
@@ -405,7 +472,7 @@ A good machine cannot be a fantasy function. It is a function-like system that a
 
 ---
 
-## 8. Core, Boundary, and the Fucking Bastards Outside
+## 9. Core, Boundary, and the Fucking Bastards Outside
 
 There is one thing worth taking from object-oriented programming: disciplined separation.
 
@@ -499,7 +566,7 @@ contract without judgment, the contract is already infected.
 
 ---
 
-## 9. Applying Contract to a Good Machine
+## 10. Applying Contract to a Good Machine
 
 Now apply the contract definition to this machine.
 
@@ -561,7 +628,7 @@ The shape is still provisional. Each step needs its own explanation.
 
 ---
 
-## 10. What Counts as Contract in the Pipeline
+## 11. What Counts as Contract in the Pipeline
 
 A pipeline does not automatically become a contract. A processing sequence is just a processing sequence until it
 declares an obligation.
@@ -617,14 +684,14 @@ The following section applies this distinction to the contract presentations tha
 
 ---
 
-## 11. Contract Presentations in the Pipeline
+## 12. Contract Presentations in the Pipeline
 
 Calling everything `contract` does not make the machine explicit. It only gives the confusion a respectable name.
 
 This section follows material through the pipeline and separates the obligations that govern it along the way. Those
 obligations belong to one machine, but they do not answer the same question and should not be allowed to blur together.
 
-### 11.1 Fact Contract and Immutable Fact
+### 12.1 Fact Contract and Immutable Fact
 
 An immutable fact needs a careful description.
 
@@ -668,7 +735,7 @@ Immutable Fact is contract-governed factual material.
 
 Keeping those two apart prevents the old object-oriented mixture of rule, data, and behavior from coming back.
 
-### 11.2 Policy, Budget, Capacity, and Governance Contracts
+### 12.2 Policy, Budget, Capacity, and Governance Contracts
 
 A real machine is not an idea floating outside the world. It can bear only so much load before its operation begins to
 degrade or fails altogether.
@@ -743,7 +810,7 @@ valid, and what declared outcome follows when the limit is reached.
 
 A good machine admits it is finite, declares its limits, and operates inside them.
 
-### 11.3 DTO and Raw Presentation
+### 12.3 DTO and Raw Presentation
 
 Something has to arrive at the boundary. Whatever arrives there is not yet a core fact and not a contract rule. It is
 just the form in which the outside world showed up.
@@ -828,7 +895,7 @@ It must not leave authority.
 
 A DTO entering the core as-is means the boundary did no real work.
 
-### 11.4 Guard and Admission Judgment
+### 12.4 Guard and Admission Judgment
 
 Once the boundary has a shape to look at, it has to decide whether the material may continue.
 
@@ -906,7 +973,7 @@ Admission failure is part of the contract.
 The guard may be realized in many ways. The contract does not care. The contract only declares what the boundary must
 judge, which verdicts are legal, and which dispositions may be applied to material that does not continue.
 
-### 11.5 Declared Failure, Admitted Material, and Diagnostic Evidence
+### 12.5 Declared Failure, Admitted Material, and Diagnostic Evidence
 
 Admission has two honest directions.
 
@@ -990,7 +1057,7 @@ The boundary exists for a reason. Outside material must either continue under an
 contract-governed outcome and disposition. It must not become a second pipeline just because a debug path, review path,
 or storage mechanism exists.
 
-### 11.6 Canonicalization Rule
+### 12.6 Canonicalization Rule
 
 Admitted material has passed the boundary. That is all.
 
@@ -1080,7 +1147,7 @@ one declared meaning.
 
 Canonicalization gives declared meaning a deterministic internal handle.
 
-### 11.7 Lowering Obligation
+### 12.7 Lowering Obligation
 
 Canonical representation is not core material yet.
 
@@ -1172,7 +1239,7 @@ Lowering forms the candidate.
 
 It does not promote the candidate into accepted core material.
 
-### 11.8 Invariant Contract
+### 12.8 Invariant Contract
 
 After lowering, the material is inside the core as candidate material.
 
@@ -1350,7 +1417,7 @@ Core-owned candidate form is not truth.
 
 Only material that survives the declared invariant can become accepted core material.
 
-### 11.9 State Contract
+### 12.9 State Contract
 
 `State` is a dangerous word because it arrives with luggage.
 
@@ -1436,7 +1503,7 @@ ignoring the machine, and implementation steps dressing themselves up as contrac
 
 A good machine declares state before movement and uses that declared state to keep movement honest.
 
-### 11.10 State Transition Contract
+### 12.10 State Transition Contract
 
 State already explained the condition that governs movement.
 
@@ -1508,7 +1575,7 @@ stay close, but they do not become one vague validation step.
 A good machine does not mutate itself and then search for a story that makes the mutation legal. It lets the relevant
 judgment produce a declared result, then follows only the movement that the transition contract permits.
 
-### 11.11 Explicit State Machine
+### 12.11 Explicit State Machine
 
 State and transition are enough to form a state machine.
 
@@ -1573,7 +1640,7 @@ The point is not ceremony.
 The point is to keep state and transition from becoming implementation folklore. The explicit state machine names the
 whole state surface so nobody gets to smuggle in extra movement later and call the mess a model.
 
-### 11.12 Publication Judgment
+### 12.12 Publication Judgment
 
 Accepted material is not automatically public material.
 
@@ -1627,7 +1694,7 @@ The point is simple.
 
 The machine may know more than it is allowed to say.
 
-### 11.13 Diagnostic Evidence
+### 12.13 Diagnostic Evidence
 
 A good machine should be able to describe its own condition.
 
@@ -1715,7 +1782,7 @@ A debug-shaped leak is still a leak, even when the leak has a very serious incid
 Diagnostic evidence must also remain interpretable under the contract meaning that produced it. That is why version
 coordinates come next.
 
-### 11.14 Version Coordinate
+### 12.14 Version Coordinate
 
 A version number is not magic dust.
 
@@ -1789,7 +1856,7 @@ facts, manifests, tables, generated images, identifiers, or some uglier machiner
 The point is to stop the machine from confusing stable-looking material with stable meaning, and to keep authority over
 which meanings the machine is still willing to recognize.
 
-### 11.15 Where Preconditions and Postconditions Went
+### 12.15 Where Preconditions and Postconditions Went
 
 Someone familiar with DBC will eventually ask an obvious question:
 
@@ -1853,7 +1920,7 @@ That translation is a view of the pipeline, not its structure. The useful declar
 judgment where the machine needs it. Wrapping the same obligation in another `before` or `after` would only give the
 machine a second place to contradict itself.
 
-### 11.16 Execution Flow, Not Lifecycle Vocabulary
+### 12.16 Execution Flow, Not Lifecycle Vocabulary
 
 This section is not a new contract type.
 
@@ -1907,7 +1974,7 @@ The jungle had its chance.
 
 ---
 
-## 12. Contract and Verification
+## 13. Contract and Verification
 
 If the interface is the contract document, verification is the check that a realization satisfies the declared
 obligations.
@@ -2016,7 +2083,7 @@ the contract document real enough that the compiler can guard implementation aga
 
 ---
 
-## 13. Contract and Implementation
+## 14. Contract and Implementation
 
 Contract and implementation should stay on separate axes.
 
@@ -2043,7 +2110,7 @@ The tool is not the contract. The obligation the tool must satisfy is the contra
 
 ---
 
-## 14. Message, Exposure, and Interaction
+## 15. Message, Exposure, and Interaction
 
 What the user sees and what the system uses to communicate internally should go through contracts.
 
@@ -2065,7 +2132,7 @@ If communication needs an implementation detail to make sense, the design is alr
 
 ---
 
-## 15. Whole Machine
+## 16. Whole Machine
 
 A whole machine is made of pipelines.
 
@@ -2093,9 +2160,9 @@ This needs more work later.
 
 ---
 
-## 16. Object Orientation and Inheritance
+## 17. Object Orientation and Inheritance
 
-### 16.1 How Inheritance Fucked Up Software
+### 17.1 How Inheritance Fucked Up Software
 
 Let's cut the philosophical bullshit.
 
@@ -2209,7 +2276,7 @@ No parent class gets to act like a constitution.
 Hiding a changed obligations inside a child class is not abstraction.
 It is contract fraud with inheritance syntax.
 
-### 16.2 Polymorphism, Substitution, Segregation, and Inversion
+### 17.2 Polymorphism, Substitution, Segregation, and Inversion
 
 Let’s get the physical timeline straight before we look at this mess.
 
@@ -2290,7 +2357,7 @@ They are all orbiting the exact same original sin.
 The contract explicitly carries the obligation. The implementation either satisfies it, or it doesn't. Everything else
 is just academic theater trying to cover up a bad structure.
 
-### 16.3 Abstraction
+### 17.3 Abstraction
 
 Abstraction should have been the only good idea in this mess. At its core, it is just contract work. The problem, as we
 already established, is that software tried to extract these contracts from implicit implementation residue.
@@ -2317,7 +2384,7 @@ generation, ensuring the industry stays completely fucked.
 Abstraction is not the enemy.
 Implicit, inheritance-shaped abstraction is.
 
-### 16.4 The JVM Is What Happens When Implementation Becomes Contract
+### 17.4 The JVM Is What Happens When Implementation Becomes Contract
 
 This is not just a theoretical debate.
 
@@ -2399,7 +2466,7 @@ freedom.
 Keep the contractual rules and the memory structure strictly isolated. Fail to do this, and you will spend decades
 paying the massive engineering cost of trying to escape a structural nightmare you locked yourself into.
 
-### 16.5 Type Is a Contract Name, Not Contract Authority
+### 17.5 Type Is a Contract Name, Not Contract Authority
 
 Type theory is too massive to settle here. I am not writing a thesis on every branch of it, nor am I pretending to pass
 final judgment on the entire field. That would be dishonest and miss the point entirely.
@@ -2468,7 +2535,7 @@ The type carries the name, surface, or static handle.
 Keep those two strictly separated. If you let the type system act as the authority, the old disease of object-oriented
 inheritance will return. It will just have more complicated math to hide behind.
 
-### 16.6 Class Is Where Roles Collapsed
+### 17.6 Class Is Where Roles Collapsed
 
 I respect a class for its exact mechanical purpose—nothing more, nothing less. When you need to organize implementation,
 define the physical shape of an object, or hand the runtime a construction template to instantiate, a class does the
@@ -2527,7 +2594,7 @@ plumbing moved, it was never an authority in the first place. It was merely a by
 A class is allowed to be useful mechanical machinery.
 It is not allowed to be the authority.
 
-### 16.7 Rust Exposes Implementation as Contract
+### 17.7 Rust Exposes Implementation as Contract
 
 This is not a debate about whether Rust is a good or bad language. That is entirely irrelevant. The only architectural
 question that matters is whether the contract and the implementation remain strictly isolated.
@@ -2571,7 +2638,7 @@ Because it made its implementation too public to ever replace.
 
 ---
 
-## 17. Current Working Definition
+## 18. Current Working Definition
 
 For now:
 
