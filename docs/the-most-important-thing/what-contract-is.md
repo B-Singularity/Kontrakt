@@ -185,6 +185,7 @@ The first dimension contains closed contract presentations and required coordina
 ```text
 input contract
 admission contract
+canonicalization contract
 lowering contract
 fact contract
 invariant contract
@@ -208,6 +209,7 @@ It binds a flat list of closed contract presentations and required coordinates f
 interaction manifest
     -> input contract
     -> admission contract
+    -> canonicalization contract
     -> lowering contract
     -> fact contract
     -> invariant contract
@@ -388,6 +390,7 @@ For one method, the operation manifest is still flat:
 submit(...)
     -> input contract
     -> admission contract
+    -> canonicalization contract
     -> lowering contract
     -> fact contract
     -> invariant contract
@@ -1984,7 +1987,8 @@ The important part is not "tests." Tests are only one late way to look at a mach
 The better direction is earlier than that.
 
 First make the contract material rich enough to say what the machine actually promises. The closed contract
-presentations name the obligations: input, admission, lowering, fact, invariant, state, transition, failure,
+presentations name the obligations: input, admission, canonicalization, lowering, fact, invariant, state, transition,
+failure,
 publication,
 diagnostic, policy, budget, capacity, and governance. Required coordinates name the active meaning and binding. The
 explicit state machine manifest names the closed state surface for that interaction. The manifest binds those materials
@@ -2007,6 +2011,7 @@ questions before the machine turns into runtime soup:
 Does the implementation expose the required operation handle?
 Does it accept only the declared input presentation?
 Does it apply the required admission contract?
+Does it apply the required canonicalization contract?
 Does it produce the declared failure outcomes?
 Does it preserve the declared invariant?
 Does it obey the declared state transitions?
@@ -2027,7 +2032,8 @@ realization.
 But once the contract has been made explicit, tests lose one old excuse.
 
 A test is a small verification document. It says, "under this condition, this machine should do this." If the machine
-already declares its input, admission, lowering, invariant, state movement, failure, publication, diagnostic evidence,
+already declares its input, admission, canonicalization, lowering, invariant, state movement, failure, publication,
+diagnostic evidence,
 policy, budget, capacity, and governance, then the test should not invent a private little religion about what the
 machine probably means.
 
