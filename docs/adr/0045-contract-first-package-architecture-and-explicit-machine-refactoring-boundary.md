@@ -2,7 +2,7 @@
 
 ## Status
 
-Draft
+Accepted
 
 ## Date
 
@@ -30,6 +30,7 @@ Draft
 - `docs/design/protocol-owned-metadata-interning.md`
 - `docs/release-readiness-todo.md`
 -
+
 `0045-file-placement-map-relative.phased.statemachine-version-coordinate-contract-subdomains.realization-vocabulary-cleanup.md`
 
 ---
