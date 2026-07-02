@@ -204,29 +204,51 @@ still cleaner than implementation-first packaging, but it is not precise enough 
 The material package must be subdivided only by contract-governed material meaning. It must not be subdivided by
 implementation process names.
 
-Allowed material vocabulary is conservative:
+Allowed material vocabulary is not global. A material package name is valid only when the owning contract or owning
+judgment position makes that material role explicit.
+
+Allowed default stage-local material vocabulary is conservative:
 
 ```text
-presentation
-surface
-carrier
-origin
-provenance
 subject
 declaration
 candidate
 admitted
 deferred
 representative
-reference
-fact
-basis
-transition
-accepted
+representation
+eligible
 claim
-evidence
+public
 disposition
+```
+
+Some material words are valid only under their owning stage or owning axis:
+
+```text
+basis      -> stage.invariant.material.basis only
+immutable  -> fact.material.immutable only
+condition  -> statemachine.state.material.condition only
+move       -> statemachine.transition.material.move only
+evidence   -> stage.<stage>.diagnostics.evidence or diagnostic.retention material only
+retained   -> diagnostic.retention.material.retained only
+discarded  -> diagnostic.retention.material.discarded only
+```
+
+The following names are not valid as generic `stage.*.material` package names:
+
+```text
+fact
+transition
+state
+evidence
+identity
+reference
 availability
+version
+binding
+boundary
+diagnostic
 ```
 
 Risky names are rejected under `stage.*.material` by default:
@@ -516,20 +538,25 @@ Decision: accepted.
 
 ## 5. Decision
 
-Kontrakt adopts a contract-pipeline package architecture, a parallel explicit state-machine contract axis, and a
-compiler/runtime realization mirror.
+Kontrakt adopts a contract-pipeline package architecture, an explicit state-machine axis, a fact authority axis, a
+diagnostic-retention axis, version-coordinate law, governance law, and a compiler/runtime realization mirror.
 
 The current top-level vocabulary is:
 
 ```text
+surface
+interaction
 stage
+fact
 statemachine
+diagnostic
 versioning
 governance
-diagnostic
 realization
 adapter
 ```
+
+There is no top-level `contract` bucket.
 
 For the current single-pipeline core, stage-owned contract domains live under:
 
@@ -548,80 +575,88 @@ invariant
 publication
 ```
 
+`input` is a special stage surface. It owns the input contract and the boundary-facing presentation shapes. It does not
+own `material`, `judgment`, or `boundary` packages.
+
+`boundary` is not a package authority. It is the machine membrane where outside material is inspected, judged, rejected,
+or lowered into material that the core may understand. A boundary may be described in documentation and realized by
+code, but this ADR does not create `boundary`, `stage.<stage>.boundary`, or `boundary.contract` packages.
+
+`normalization` is not a contract stage in this ADR. It is realization machinery for the canonicalization contract
+unless a later contract document promotes it into an explicit closed contract presentation.
+
 The explicit state machine is a separate contract axis. It does not duplicate every stage name. Its package shape is:
 
 ```text
 Kontrakt.statemachine.<manifest|state|transition>.<role>
 ```
 
-Version coordinates are also contract authority. They are separated from `stage` because version meaning is not a
-pipeline processing step, and they are separated from `realization` because version meaning ownership must not be hidden
-inside implementation machinery.
+Fact is also separated from `stage`. A fact is not a gate in the causal pipeline. It is contract-governed immutable
+factual material produced by accepted judgment and later used as authority by other judgments. Its package shape is:
+
+```text
+Kontrakt.fact.<contract|material|diagnostics>
+```
+
+Failure is not a top-level package and not a stage. Failure is a declared outcome of the stage or axis whose judgment
+produced it. Failure vocabulary therefore remains inside the owning contract/judgment/diagnostics package.
+
+Diagnostic evidence is born stage-local. Retained diagnostic evidence crosses a separate diagnostic retention boundary.
+The top-level diagnostic package therefore owns retention, not every diagnostic event:
+
+```text
+Kontrakt.diagnostic.retention.<role>
+```
+
+Version coordinates are contract authority. They are separated from `stage` because version meaning is not a pipeline
+processing step, and they are separated from `realization` because version meaning ownership must not be hidden inside
+implementation machinery.
 
 The versioning package shape is:
 
 ```text
-Kontrakt.versioning.<coordinate|compatibility|validity>.<role>
+Kontrakt.versioning.<coordinate|binding|compatibility>.<role>
 ```
 
-Governance is a contract axis for policy, budget, capacity, capability, and validity:
+Each contract owns its own `meaning` package. Versioning owns the coordinate law for those meanings. The interaction
+manifest binds selected meanings for one interaction; it does not control the meanings.
+
+Governance is a contract axis for policy, budget, capacity, capability, and epoch:
 
 ```text
-Kontrakt.governance.<policy|budget|capacity|capability|validity>.<role>
+Kontrakt.governance.<policy|budget|capacity|capability|epoch>.<role>
 ```
-
-Diagnostics are a contract evidence axis, not logging:
-
-```text
-Kontrakt.diagnostic.<evidence|retention|redaction>.<role>
-```
-
-A substantial stage may contain role packages such as:
-
-```text
-stage.<stage-name>
-├── contract
-├── boundary
-├── material
-├── judgment
-├── diagnostics
-└── publication
-```
-
-Not every stage needs every role.
-
-`machine` is not a package role under `stage`. `state` and `transition` are not ordinary stage packages either. They
-belong under `statemachine` because the explicit state machine is itself a contract axis: state contract, state
-transition contract, and explicit state-machine manifest.
 
 Compiler-related implementation is realization. Realization may be compiler-like and may use existing Kontrakt domain
 vocabulary:
 
 ```text
-realization.metamodel
-realization.normalization
+realization.canonicalization.normalization
 realization.identity
+realization.cache
+realization.metamodel
 realization.graph
-realization.planning
 realization.linking
+realization.planning
 realization.execution
 realization.runtime
-realization.cache
-realization.storage
 realization.reporting
 ```
 
-Realization is the mirror image of contract authority, not a competing authority tree. Each realization domain may
-include `bridge` packages that identify which contract stage or contract axis it realizes.
+Realization is the mirror image of contract authority, not a competing authority tree.
 
-Outside technology belongs under `adapter`.
+Outside technology belongs under `adapter`. External normalization libraries are adapters under their concrete
+technology names, such as `adapter.icu`; internal normalization machinery belongs under
+`realization.canonicalization.normalization`.
 
 The current rule is:
 
 ```text
 contract authority first
-explicit state-machine movement beside it
-version/governance/diagnostic axes beside the stage pipeline
+interface and interaction surfaces beside it
+fact authority beside the pipeline
+explicit state-machine movement beside the pipeline
+version/governance/diagnostic-retention axes beside the pipeline
 compiler/runtime realization behind them
 outside technology behind adapters
 ```
@@ -687,113 +722,127 @@ A top-level `contract` package is not part of the current target architecture.
 
 The reason is boundary clarity. In the current single-pipeline design, contract obligations are owned by stages or by
 explicit cross-cutting contract axes. A top-level `contract` package would easily become a common bucket for
-declarations that actually belong under `stage.<stage>.contract`, `statemachine`, `versioning`, `governance`, or
-`diagnostic`.
+declarations that actually belong under `surface`, `interaction`, `stage.<stage>.contract`, `fact.contract`,
+`statemachine`, `versioning`, `governance`, or `diagnostic.retention`.
 
 A later ADR may introduce a project-wide contract package only if there is a concrete non-stage, non-axis concept that
 cannot honestly belong to any existing authority axis. This ADR does not define such a package.
 
-### 7.2. `stage`
+### 7.2. `surface`
 
-A `stage` package contains the local contract world for one declared judgment position in the logical contract pipeline.
+The `surface` package contains software-visible presentation surfaces. The current accepted surface is
+`surface.interface`.
 
-A stage may own:
+An interface contract is a software-visible contract presentation for interaction. A method remains an operation
+selector and presentation handle. It does not become the whole contract.
+
+### 7.3. `interaction`
+
+The `interaction` package contains the flat interaction manifest.
+
+The manifest binds selected contract meanings and required coordinates for one interaction. It does not own, inherit,
+compose, or control the meanings of those contracts.
+
+Allowed manifest vocabulary includes:
 
 ```text
-contract declarations
-boundary surfaces
-input material
-output material
-candidate material
-admitted material
-judgment result
-failure vocabulary
-diagnostic evidence
-publication eligibility
+contract
+meaning
+flatness
+completeness
+binding
+coordinate
+diagnostics
 ```
 
-A stage does not own the explicit state machine as an internal role package. State-machine material that defines
-condition, transition, terminality, or legality belongs to the parallel `statemachine` axis.
+### 7.4. `stage`
 
-### 7.3. `phase`
+A `stage` package contains the local contract world for one declared position in the logical contract pipeline.
 
-`phase` is not a target package. It is a conceptual name for implementation flow.
+The current accepted stages are:
 
-Discovery, acquisition, normalization, planning, linking, execution, reporting, caching, and runtime orchestration may
-be implementation phases. They are not contract stages unless a later ADR explicitly promotes one into a declared
-contract pipeline of its own.
+```text
+input
+admission
+canonicalization
+lowering
+invariant
+publication
+```
 
-### 7.4. `stage.<stage>.contract`
+A stage is not an arbitrary compiler/runtime phase. Discovery, acquisition, planning, linking, execution, reporting,
+caching, runtime orchestration, and normalization may be implementation phases. They are not contract stages unless a
+later ADR explicitly promotes one into a declared contract pipeline of its own.
+
+### 7.5. `stage.input`
+
+`stage.input` owns the input contract and the boundary-facing presentation shapes.
+
+It may contain:
+
+```text
+contract
+presentation
+```
+
+It must not contain:
+
+```text
+boundary
+material
+judgment
+```
+
+Input is the outside presentation surface of the pipeline. Admission is the first judgment over that presentation.
+
+### 7.6. `boundary`
+
+`boundary` is not a package authority in this ADR.
+
+A boundary is the machine membrane where outside material is inspected, judged, rejected, or lowered into something the
+core is allowed to understand. It is an architectural concept and may be realized by code, but this ADR does not create
+`boundary`, `stage.<stage>.boundary`, or `boundary.contract` packages.
+
+### 7.7. `stage.<stage>.contract`
 
 A stage-local contract package contains obligations for one specific stage.
 
-It is intentionally narrow. Interfaces, immutable declarations, enums, sealed declaration shapes, stable value records,
-and small structural types are allowed. Algorithms are not.
+It is intentionally narrow. Only interface surfaces and data bundles are allowed. A data bundle is a passive grouping of
+declared values; it is not a JVM/Kotlin class category, record requirement, sealed hierarchy requirement, or
+implementation object model. Algorithms are not allowed.
+
+Every contract package may own a `meaning` package. That package represents the contract's own meaning revision. It is
+not controlled by the interaction manifest.
 
 Contract subpackages may use rich obligation vocabulary when it names declared law:
 
 ```text
-presentation
-surface
-carrier
-origin
-provenance
-authority
-admissibility
-ratification
-compatibility
-policy
-capacity
-budget
-equivalence
-distinction
-representation
-representative
-reference
-determinism
-collision
-stability
-backend_erasure
 meaning
-preservation
+presentation
 shape
+requirement
+rejection
+verdict
+disposition
+deferral
+failure
+equivalence
+representative
+source
+drift
+preservation
+candidate
+reference
+authority
 basis
-vacancy
-obstruction
-consistency
-contradiction
+acceptance
 exposure
 claim
 redaction
-concealment
-audience
-denial
-failure
-diagnostic
+stability
 ```
 
-### 7.5. `stage.<stage>.boundary`
-
-A stage-local boundary package contains the surface through which outside material enters that stage.
-
-For early stages, this may include DTO or external input surfaces. For later stages, this is still a boundary: upstream
-output is not trusted as already-accepted material.
-
-Allowed boundary vocabulary includes:
-
-```text
-ingress
-entry
-inspection
-isolation
-airlock
-refinement
-judgment
-exposure
-exit
-```
-
-### 7.6. `stage.<stage>.material`
+### 7.8. `stage.<stage>.material`
 
 A stage-local material package contains contract-governed material owned by that stage.
 
@@ -801,33 +850,22 @@ A material package name must describe what the material is under contract author
 is stored, computed, hashed, sorted, frozen, interned, cached, encoded, addressed, scanned, projected, rendered, or
 written.
 
-Allowed material vocabulary includes:
+`stage.input` has no `material` package.
+
+Allowed stage material vocabulary includes:
 
 ```text
-presentation
-surface
-carrier
-origin
-provenance
-subject
-declaration
-external
-candidate
 admitted
-deferred
-disposition
-representative
-reference
-availability
-fact
+presentation
+representation
+candidate
 basis
-transition
-accepted
+eligible
 claim
-evidence
+public
 ```
 
-The following are not valid material package names by default:
+The following are not valid stage material package names by default:
 
 ```text
 identity
@@ -855,121 +893,131 @@ planner
 executor
 writer
 artifact
+annotation
+metadata
+text
 ```
 
-They may be used under `realization`. They may be used under `stage.*.material` only if a later ADR explicitly proves
-that the name denotes contract-governed material rather than replaceable realization machinery.
+They may be used under `realization` or `adapter`. They may be used under `stage.*.material` only if a later ADR
+explicitly proves that the name denotes contract-governed material rather than replaceable realization machinery or
+outside presentation residue.
 
-### 7.7. `stage.<stage>.judgment`
+### 7.9. `stage.<stage>.judgment`
 
 A stage-local judgment package contains decisions made by that stage under declared law.
 
-Admission judgment, lowering judgment, invariant judgment, and publication judgment should remain separate unless a
-later decision defines a specific top-level package placement for a cross-stage concept.
+Admission judgment, canonicalization judgment, lowering judgment, invariant judgment, and publication judgment remain
+separate.
 
 Allowed judgment vocabulary includes:
 
 ```text
-presence
-shape
-origin
-contamination
-authority
-admission
-rejection
-deferral
-refusal
-disposition
-equivalence
-distinction
-representation
-reference
-collision
-stability
-preservation
-candidate
-obstruction
-invariant
-acceptance
-consistency
-contradiction
-exposure
-claim
-redaction
-concealment
-denial
-failure
+admitted
+rejected
+deferred
+failed
+represented
+distinct
+formed
+accepted
+allowed
+denied
 ```
 
-### 7.8. `stage.<stage>.diagnostics`
+Failure is an outcome under the owning judgment. It is not a stage and not a top-level package.
 
-A stage-local diagnostics package contains bounded evidence, reason, retention, redaction, drift, contamination,
-rejection, deferral, and diagnostic summary material for that stage.
+### 7.10. `stage.<stage>.diagnostics`
 
-Diagnostics explain judgment. They are not authority by themselves.
+A stage-local diagnostics package contains bounded evidence, reason, provenance, drift, rejection, deferral, denial, and
+diagnostic summary material for that stage.
 
-### 7.9. `stage.<stage>.publication`
+Diagnostics explain judgment. They are not authority by themselves. Existence is not retention. Retained evidence
+belongs to `diagnostic.retention` after crossing the diagnostic retention boundary.
 
-A stage-local publication package contains the output presentation that this stage may expose to the next stage.
+### 7.11. `stage.publication`
 
-It is not final public reporting unless the stage is `stage.publication`. Publication is controlled exposure under
-judgment. It is not a dump of internal state.
+The publication stage owns final public claim judgment and public material.
 
-### 7.10. `stage.publication.claim`
-
-The publication stage owns final public claims.
+Publication denial is a judgment result, not publication material.
 
 ```text
-stage.publication.claim.public
-stage.publication.claim.diagnostic
-stage.publication.claim.denial
+stage.publication.material.eligible
+stage.publication.material.claim
+stage.publication.material.public
+stage.publication.judgment.allowed
+stage.publication.judgment.denied
 ```
 
 Reports, files, JSON, console output, and JUnit output are realization or adapter concerns. The contract side speaks in
-claims, exposure, redaction, concealment, denial, and evidence.
+claims, exposure, redaction, denial, and evidence.
 
-### 7.11. `statemachine`
+### 7.12. `fact`
+
+The `fact` package contains fact contract law and immutable factual material.
+
+A fact is not a stage. Material does not pass through a `fact` gate. Fact material is produced by accepted judgment and
+later used as authority by other judgments.
+
+Fact contract vocabulary is deliberately small:
+
+```text
+meaning
+shape
+uniqueness
+```
+
+`fact.contract.identity` is not introduced. Identity derivation, comparison, indexing, and collision handling are
+realization machinery.
+
+`fact.contract.version_binding` is not introduced. Version coordinate law belongs to `versioning`, while each contract
+owns its own `meaning`.
+
+### 7.13. `statemachine`
 
 The `statemachine` package contains the explicit state-machine contract axis.
 
 It owns the state contract, the state transition contract, and the explicit state-machine manifest. It may define
-declared conditions, transition names, initial conditions, terminal conditions, completeness, closure, legality,
-permission, one-way movement, and refusal.
+declared conditions, transition names, initial conditions, terminal conditions, completeness, legality, permission,
+one-way movement, and refusal.
 
 It is not callback flow, interceptor flow, runtime orchestration, or the whole Good Machine. It is contract authority,
 but it is not an ordinary stage in the logical contract pipeline. It is separated because this contract surface runs
 beside the pipeline and governs legal movement.
 
-### 7.12. `versioning`
+### 7.14. `diagnostic`
+
+The top-level `diagnostic` package contains diagnostic retention law/material that is not owned by a single stage.
+
+This ADR defines only:
+
+```text
+diagnostic.retention
+```
+
+Diagnostic evidence is born stage-local. Retained diagnostic evidence crosses the diagnostic retention boundary.
+
+### 7.15. `versioning`
 
 The `versioning` package contains the version-coordinate contract axis.
 
-It owns meaning coordinates, compatibility decisions, and validity rules. It may define which contract meaning was
-active when material, judgment, claim, or diagnostic evidence was produced. It may also define reuse, migration,
-rejudgment, refusal, active, pinned, expired, and revoked judgments.
+It owns coordinate law, binding law, and compatibility law. It may define which contract meaning was active when
+material, judgment, claim, or diagnostic evidence was produced. It may also define reuse, rejudgment, refusal, active,
+pinned, expired, and revoked judgments.
 
 It is not release bookkeeping, build metadata, or implementation migration machinery. Versioning is contract authority
 when meaning can move while material still looks familiar.
 
-`epoch` is not used as a default contract-axis package name because it can become runtime/cache vocabulary. Use
-`validity` unless a later ADR proves that an epoch is contract-coordinate material.
+Versioning does not own each contract's meaning. Each contract owns its own `contract.meaning`. Versioning defines the
+common coordinate law for those meanings.
 
-### 7.13. `governance`
+### 7.16. `governance`
 
-A governance package contains policy, budget, capacity, capability, and validity law.
+A governance package contains policy, budget, capacity, capability, and epoch law.
 
 Governance is resolved law, not arbitrary configuration. Worker pools, lanes, queues, meters, schedulers, telemetry
 stores, and environment probes are realization.
 
-### 7.14. `diagnostic`
-
-The top-level `diagnostic` package contains diagnostic evidence, retention, and redaction law/material that is not owned
-by a single stage.
-
-Diagnostic is not logging. It is the contract evidence plane that lets the machine explain why judgment happened, what
-evidence is retained, what is discarded, and what may be exposed.
-
-### 7.15. `realization`
+### 7.17. `realization`
 
 A realization package contains machinery used to realize contract authority.
 
@@ -979,59 +1027,52 @@ machinery. However, compiler vocabulary is not top-level product authority.
 Realization should keep existing Kontrakt domain language:
 
 ```text
-metamodel
-normalization
+canonicalization
 identity
+cache
+metamodel
 graph
-planning
 linking
+planning
 execution
 runtime
-cache
-storage
 reporting
+```
+
+Normalization is not a top-level realization domain. It is realization machinery under canonicalization:
+
+```text
+realization.canonicalization.normalization
 ```
 
 Generic compiler packages such as `frontend`, `syntax`, `semantic`, `analysis`, `pass`, `backend`, `generation`, or
 `emission` must not replace existing Kontrakt domain vocabulary unless a later compiler-specific ADR deliberately
 introduces that layer.
 
-A realization package may include a `bridge` package that names which contract stage or contract axis it realizes:
-
-```text
-realization.identity.bridge.canonicalization
-realization.planning.bridge.lowering
-realization.planning.bridge.invariant
-realization.execution.bridge.statemachine
-realization.reporting.bridge.publication
-```
-
-A bridge package may contain mapping, assembly, adapter-erasure, and emission boundary code. It must not declare new
-contract authority.
-
-DDD and hexagonal terms may appear in realization when they name concrete machinery, but they do not carry their
-original architectural authority into Kontrakt. `aggregate` may remain as implementation grouping if it does not become
-contract meaning. `port` is not a stable realization package because contract surfaces and adapter boundaries have
-explicit homes. `state` is not a stable execution package because explicit state belongs to `statemachine`.
-
-### 7.16. `adapter`
+### 7.18. `adapter`
 
 An adapter package contains outside-world bindings.
 
-Reflection, KSP, ClassGraph, JUnit, Mockito, file systems, JSON libraries, console output, and platform APIs belong here
-unless their information has been erased and lowered into Kontrakt-owned material.
+Reflection, KSP, ClassGraph, ICU, JUnit, Mockito, file systems, JSON libraries, console output, and platform APIs belong
+here unless their information has been erased and lowered into Kontrakt-owned material.
+
+`adapter.normalization` is not a target package. An external normalization library wrapper should be named by the
+concrete outside technology, such as `adapter.icu`.
 
 ## 8. Package Authority Law
 
 The package tree must obey these rules:
 
 ```text
+surface/interface contract declarations must not depend on realization or adapter packages.
+interaction manifests must not depend on realization or adapter packages.
 stage-local contract domains must not depend on realization architecture.
+fact contract declarations must not depend on realization architecture.
 state-machine contract declarations must not depend on realization architecture or adapters.
 version-coordinate contract declarations must not depend on realization architecture or adapters.
 governance declarations must not depend on realization architecture or adapters.
-diagnostic evidence law must not depend on adapters.
-realization may depend on stage-local domains, state-machine declarations, versioning declarations, governance, and diagnostic law.
+diagnostic retention law must not depend on adapters.
+realization may depend on surface, interaction, stage-local domains, fact, state-machine declarations, versioning declarations, governance, and diagnostic law.
 adapters may feed realization machinery.
 adapters must not become contract authority.
 ```
@@ -1040,6 +1081,7 @@ Consequences:
 
 - `stage.<stage>.contract` must not depend on `realization` or `adapter`;
 - `stage.<stage>.contract` must not contain realization algorithms;
+- `fact.contract` must not contain identity derivation, comparison, indexing, hash, digest, or collision machinery;
 - accepted stage material must not depend on backend handles;
 - stage judgment must not depend on framework callbacks;
 - state-machine law must not depend on adapters;
@@ -1051,32 +1093,49 @@ Consequences:
 
 ## 9. Stage-First Package Law
 
-Pipeline-specific material is stage-first.
+Pipeline-specific authority is stage-first.
 
-The default shape for a substantial stage is:
+The default shape for a substantial judgment stage is:
 
 ```text
 stage.<stage-name>
 ├── contract
-├── boundary
 ├── material
 ├── judgment
-├── diagnostics
-└── publication
+└── diagnostics
 ```
 
 A stage includes only the roles it owns.
+
+`stage.input` is special. It owns only:
+
+```text
+stage.input
+├── contract
+└── presentation
+```
+
+There is no `stage.<stage>.boundary` package in this ADR. Boundary is a machine membrane, not package authority.
+
+There is no `stage.normalization` package. Normalization is realization machinery for canonicalization.
+
+There is no `stage.fact` package. Fact is a separate top-level contract/material axis.
+
+There is no `stage.failure` package. Failure is a declared outcome of the stage or axis whose judgment produced it.
+
+There is no `stage.diagnostic` package. Stage-local diagnostics stay under the producing stage. Retained evidence
+belongs under `diagnostic.retention`.
 
 Role names may repeat under different stages. The repetition is intentional because each stage owns different
 obligations, material, judgments, failures, evidence, and publication surfaces.
 
 Movement law is not removed. It belongs to the parallel `statemachine` axis, not to a `machine` role inside each stage.
 
-Version meaning is not removed either. It belongs to the parallel `versioning` axis, not to stage-local implementation
-material.
+Version meaning is not removed either. Each contract owns its own `meaning`, while common coordinate law belongs to the
+parallel `versioning` axis.
 
-Cross-stage diagnostics are not forced into stage packages. They may belong to the top-level `diagnostic` axis when
-their law is not owned by one stage.
+Cross-stage diagnostics are not forced into stage packages. Retention belongs to the top-level `diagnostic.retention`
+axis.
 
 A cross-stage type must not be created just to avoid repeated package names. If a concept cannot belong to one stage or
 one existing axis, it needs an explicit later decision that explains the new package boundary. The expected default is
@@ -1102,22 +1161,25 @@ If independent pipeline families appear later, the pipeline boundary should be a
 
 ```text
 <new pipeline module>
+├── surface
+├── interaction
 ├── stage
 │   └── <stage-name>
 │       ├── contract
-│       ├── boundary
 │       ├── material
 │       ├── judgment
-│       ├── diagnostics
-│       └── publication
+│       └── diagnostics
+├── fact
 ├── statemachine
 │   ├── manifest
 │   ├── state
 │   └── transition
+├── diagnostic
+│   └── retention
 └── versioning
     ├── coordinate
-    ├── compatibility
-    └── validity
+    ├── binding
+    └── compatibility
 ```
 
 This ADR reserves that direction but does not design those future modules.
@@ -1126,32 +1188,34 @@ This ADR reserves that direction but does not design those future modules.
 
 Stages do not transfer trusted material by direct package dependency.
 
-A stage may finish with accepted output material inside its own contract world. If that result is exposed to another
-stage, it becomes an output presentation at the first stage's publication boundary.
-
-For the receiving stage, that presentation is external material. It is not already-accepted receiving-stage material.
+The boundary is the machine membrane where outside material is inspected, judged, rejected, or lowered. This ADR does
+not model that membrane as a package. The rule still applies to stage movement.
 
 Legal movement:
 
 ```text
-stage.A accepted output
-    -> stage.A publication boundary
-    -> external output presentation
-    -> stage.B boundary
-    -> stage.B guard / admission
-    -> stage.B lowering
-    -> stage.B judgment
-    -> stage.B-owned material
-       or stage.B-declared rejection / failure / deferral
+outside presentation
+    -> input contract shape
+    -> admission judgment
+    -> admitted material
+    -> canonicalization judgment
+    -> canonical representation
+    -> lowering judgment
+    -> lowered candidate
+    -> invariant judgment
+    -> accepted fact material
+       or declared rejection / failure / deferral with diagnostic evidence
+    -> publication judgment
+    -> public claim or publication denial
 ```
 
-Stage A's material identity, judgment status, and state-machine condition do not carry into Stage B. Stage B may record
-provenance or diagnostic reference, but provenance is not acceptance.
+One stage's local material identity, judgment status, and state-machine condition do not automatically carry into
+another stage. A downstream stage may record provenance or diagnostic reference, but provenance is not acceptance.
 
 Forbidden shortcut:
 
 ```text
-stage.A output presentation
+stage.A material
     -> stage.B.material
 ```
 
@@ -1163,8 +1227,6 @@ stage.A
     -> stage.B.material
     -> stage.B.judgment
     -> stage.B.diagnostics
-    -> stage.B.publication
-    -> stage.B.internal
     -> stage.B.helper
     -> stage.B.realization
     -> stage.B.adapter
@@ -1172,8 +1234,8 @@ stage.A
 
 If several stages appear to need the same concept, first check whether they are using the same word for different
 stage-local meanings. The expected default is to keep the concept stage-local. If a genuinely non-stage concept appears,
-its package boundary requires a separate ADR. That decision still does not allow a stage to skip another stage's guard,
-lowering, or judgment.
+its package boundary requires a separate ADR. That decision still does not allow a stage to skip another stage's own
+judgment.
 
 This ADR does not require one Gradle module per stage. The current boundary is package-first and must be enforced by
 architecture tests.
@@ -1183,357 +1245,389 @@ architecture tests.
 Current single-pipeline target:
 
 ```text
-Kontrakt
-
-├── stage
-│   ├── input
-│   │   ├── contract
-│   │   │   ├── presentation
-│   │   │   ├── surface
-│   │   │   ├── carrier
-│   │   │   ├── origin
-│   │   │   ├── provenance
-│   │   │   ├── authority
-│   │   │   ├── unknown
-│   │   │   ├── omission
-│   │   │   ├── unavailable
-│   │   │   ├── malformed
-│   │   │   ├── contamination
-│   │   │   ├── failure
-│   │   │   └── diagnostic
-│   │   ├── boundary
-│   │   │   ├── ingress
-│   │   │   ├── inspection
-│   │   │   ├── isolation
-│   │   │   └── exit
-│   │   ├── material
-│   │   │   ├── presentation
-│   │   │   ├── surface
-│   │   │   ├── carrier
-│   │   │   ├── origin
-│   │   │   ├── subject
-│   │   │   ├── declaration
-│   │   │   └── external
-│   │   ├── judgment
-│   │   │   ├── presence
-│   │   │   ├── shape
-│   │   │   ├── origin
-│   │   │   ├── contamination
-│   │   │   ├── authority
-│   │   │   ├── refusal
-│   │   │   └── failure
-│   │   ├── diagnostics
-│   │   │   ├── evidence
-│   │   │   ├── provenance
-│   │   │   ├── reason
-│   │   │   ├── contamination
-│   │   │   └── retention
-│   │   └── publication
-│   │       ├── presentation
-│   │       ├── candidate
-│   │       └── failure
-│   │
-│   ├── admission
-│   │   ├── contract
-│   │   │   ├── admissibility
-│   │   │   ├── authority
-│   │   │   ├── ratification
-│   │   │   ├── compatibility
-│   │   │   ├── policy
-│   │   │   ├── capacity
-│   │   │   ├── budget
-│   │   │   ├── unknown
-│   │   │   ├── omission
-│   │   │   ├── contamination
-│   │   │   ├── disposition
-│   │   │   ├── failure
-│   │   │   └── diagnostic
-│   │   ├── boundary
-│   │   │   ├── entry
-│   │   │   ├── airlock
-│   │   │   ├── isolation
-│   │   │   └── exit
-│   │   ├── material
-│   │   │   ├── presentation
-│   │   │   ├── candidate
-│   │   │   ├── admitted
-│   │   │   ├── subject
-│   │   │   └── disposition
-│   │   ├── judgment
-│   │   │   ├── admission
-│   │   │   ├── rejection
-│   │   │   ├── deferral
-│   │   │   ├── refusal
-│   │   │   ├── disposition
-│   │   │   └── failure
-│   │   ├── diagnostics
-│   │   │   ├── evidence
-│   │   │   ├── reason
-│   │   │   ├── rejection
-│   │   │   ├── deferral
-│   │   │   ├── failure
-│   │   │   └── retention
-│   │   └── publication
-│   │       ├── admitted
-│   │       ├── disposition
-│   │       └── failure
-│   │
-│   ├── canonicalization
-│   │   ├── contract
-│   │   │   ├── presentation
-│   │   │   ├── equivalence
-│   │   │   ├── distinction
-│   │   │   ├── representation
-│   │   │   ├── representative
-│   │   │   ├── reference
-│   │   │   ├── determinism
-│   │   │   ├── collision
-│   │   │   ├── stability
-│   │   │   ├── backend_erasure
-│   │   │   ├── failure
-│   │   │   └── diagnostic
-│   │   ├── boundary
-│   │   │   ├── entry
-│   │   │   ├── equivalence
-│   │   │   ├── representation
-│   │   │   └── exit
-│   │   ├── material
-│   │   │   ├── presentation
-│   │   │   ├── candidate
-│   │   │   ├── representative
-│   │   │   ├── reference
-│   │   │   ├── subject
-│   │   │   ├── availability
-│   │   │   └── fact
-│   │   ├── judgment
-│   │   │   ├── equivalence
-│   │   │   ├── distinction
-│   │   │   ├── representation
-│   │   │   ├── reference
-│   │   │   ├── collision
-│   │   │   ├── stability
-│   │   │   └── failure
-│   │   ├── diagnostics
-│   │   │   ├── evidence
-│   │   │   ├── reason
-│   │   │   ├── equivalence
-│   │   │   ├── collision
-│   │   │   ├── drift
-│   │   │   └── retention
-│   │   └── publication
-│   │       ├── representative
-│   │       ├── reference
-│   │       └── fact
-│   │
-│   ├── lowering
-│   │   ├── contract
-│   │   │   ├── meaning
-│   │   │   ├── preservation
-│   │   │   ├── reference
-│   │   │   ├── candidate
-│   │   │   ├── shape
-│   │   │   ├── authority
-│   │   │   ├── basis
-│   │   │   ├── vacancy
-│   │   │   ├── obstruction
-│   │   │   ├── failure
-│   │   │   └── diagnostic
-│   │   ├── boundary
-│   │   │   ├── entry
-│   │   │   ├── refinement
-│   │   │   └── exit
-│   │   ├── material
-│   │   │   ├── representative
-│   │   │   ├── reference
-│   │   │   ├── candidate
-│   │   │   ├── subject
-│   │   │   ├── basis
-│   │   │   ├── fact
-│   │   │   ├── transition
-│   │   │   └── claim
-│   │   ├── judgment
-│   │   │   ├── preservation
-│   │   │   ├── reference
-│   │   │   ├── candidate
-│   │   │   ├── shape
-│   │   │   ├── authority
-│   │   │   ├── obstruction
-│   │   │   └── failure
-│   │   ├── diagnostics
-│   │   │   ├── evidence
-│   │   │   ├── reason
-│   │   │   ├── reference
-│   │   │   ├── obstruction
-│   │   │   └── retention
-│   │   └── publication
-│   │       ├── candidate
-│   │       ├── fact
-│   │       ├── transition
-│   │       └── claim
-│   │
-│   ├── invariant
-│   │   ├── contract
-│   │   │   ├── invariant
-│   │   │   ├── basis
-│   │   │   ├── acceptance
-│   │   │   ├── consistency
-│   │   │   ├── contradiction
-│   │   │   ├── preservation
-│   │   │   ├── authority
-│   │   │   ├── failure
-│   │   │   └── diagnostic
-│   │   ├── boundary
-│   │   │   ├── entry
-│   │   │   ├── judgment
-│   │   │   └── exit
-│   │   ├── material
-│   │   │   ├── subject
-│   │   │   ├── basis
-│   │   │   ├── candidate
-│   │   │   ├── accepted
-│   │   │   ├── fact
-│   │   │   ├── transition
-│   │   │   └── claim
-│   │   ├── judgment
-│   │   │   ├── invariant
-│   │   │   ├── acceptance
-│   │   │   ├── consistency
-│   │   │   ├── contradiction
-│   │   │   ├── refusal
-│   │   │   └── failure
-│   │   ├── diagnostics
-│   │   │   ├── evidence
-│   │   │   ├── reason
-│   │   │   ├── contradiction
-│   │   │   ├── refusal
-│   │   │   └── retention
-│   │   └── publication
-│   │       ├── accepted
-│   │       ├── fact
-│   │       ├── transition
-│   │       └── claim
-│   │
-│   └── publication
-│       ├── contract
-│       │   ├── exposure
-│       │   ├── claim
-│       │   ├── presentation
-│       │   ├── redaction
-│       │   ├── concealment
-│       │   ├── compatibility
-│       │   ├── audience
-│       │   ├── denial
-│       │   ├── failure
-│       │   └── diagnostic
-│       ├── boundary
-│       │   ├── entry
-│       │   ├── exposure
-│       │   └── exit
-│       ├── material
-│       │   ├── subject
-│       │   ├── candidate
-│       │   ├── presentation
-│       │   ├── claim
-│       │   └── evidence
-│       ├── judgment
-│       │   ├── exposure
-│       │   ├── claim
-│       │   ├── redaction
-│       │   ├── concealment
-│       │   ├── denial
-│       │   └── failure
-│       ├── diagnostics
-│       │   ├── evidence
-│       │   ├── reason
-│       │   ├── denial
-│       │   ├── redaction
-│       │   └── retention
-│       └── claim
-│           ├── public
-│           ├── diagnostic
-│           └── denial
-│
-├── statemachine
-│   ├── manifest
-│   │   ├── contract
-│   │   ├── material
-│   │   ├── judgment
-│   │   └── diagnostics
-│   ├── state
-│   │   ├── contract
-│   │   ├── material
-│   │   ├── judgment
-│   │   └── diagnostics
-│   └── transition
-│       ├── contract
-│       ├── material
-│       ├── judgment
-│       └── diagnostics
-│
-├── versioning
-│   ├── coordinate
-│   │   ├── contract
-│   │   │   ├── meaning
-│   │   │   ├── binding
-│   │   │   ├── validity
-│   │   │   ├── reuse
-│   │   │   ├── rejudgment
-│   │   │   ├── refusal
-│   │   │   ├── failure
-│   │   │   └── diagnostic
-│   │   ├── material
-│   │   ├── judgment
-│   │   └── diagnostics
-│   ├── compatibility
-│   │   ├── contract
-│   │   ├── material
-│   │   ├── judgment
-│   │   └── diagnostics
-│   └── validity
-│       ├── contract
-│       ├── material
-│       ├── judgment
-│       └── diagnostics
-│
-├── governance
-│   ├── policy
-│   ├── budget
-│   ├── capacity
-│   ├── capability
-│   └── validity
-│
-├── diagnostic
-│   ├── evidence
-│   ├── retention
-│   └── redaction
-│
-├── realization
-│   ├── metamodel
-│   ├── normalization
-│   ├── identity
-│   ├── graph
-│   ├── planning
-│   ├── linking
-│   ├── execution
-│   ├── runtime
-│   ├── cache
-│   ├── storage
-│   └── reporting
-│
-└── adapter
-    ├── reflection
-    ├── ksp
-    ├── classgraph
-    ├── junit
-    ├── mockito
-    ├── jvm
-    ├── normalization
-    ├── file
-    ├── json
-    └── console
+io
+└── kontrakt
+    ├── surface
+    │   └── interface
+    │       ├── contract
+    │       │   ├── meaning
+    │       │   ├── presentation
+    │       │   └── obligation
+    │       ├── operation
+    │       │   ├── selector
+    │       │   └── handle
+    │       └── presentation
+    │           ├── input
+    │           └── output
+    │
+    ├── interaction
+    │   └── manifest
+    │       ├── contract
+    │       │   ├── meaning
+    │       │   ├── flatness
+    │       │   └── completeness
+    │       ├── binding
+    │       │   ├── contract
+    │       │   ├── stage
+    │       │   ├── statemachine
+    │       │   ├── fact
+    │       │   ├── diagnostic
+    │       │   ├── versioning
+    │       │   └── governance
+    │       ├── coordinate
+    │       └── diagnostics
+    │
+    ├── stage
+    │   ├── input
+    │   │   ├── contract
+    │   │   │   ├── meaning
+    │   │   │   ├── shape
+    │   │   │   ├── requirement
+    │   │   │   └── rejection
+    │   │   └── presentation
+    │   │       ├── dto
+    │   │       └── raw
+    │   │
+    │   ├── admission
+    │   │   ├── contract
+    │   │   │   ├── meaning
+    │   │   │   ├── verdict
+    │   │   │   ├── disposition
+    │   │   │   ├── deferral
+    │   │   │   └── failure
+    │   │   ├── material
+    │   │   │   └── admitted
+    │   │   ├── judgment
+    │   │   │   ├── admitted
+    │   │   │   ├── rejected
+    │   │   │   ├── deferred
+    │   │   │   └── failed
+    │   │   └── diagnostics
+    │   │       ├── evidence
+    │   │       └── provenance
+    │   │
+    │   ├── canonicalization
+    │   │   ├── contract
+    │   │   │   ├── meaning
+    │   │   │   ├── equivalence
+    │   │   │   ├── representative
+    │   │   │   ├── source
+    │   │   │   │   └── drift
+    │   │   │   └── failure
+    │   │   ├── material
+    │   │   │   ├── presentation
+    │   │   │   └── representation
+    │   │   ├── judgment
+    │   │   │   ├── represented
+    │   │   │   ├── distinct
+    │   │   │   └── failed
+    │   │   └── diagnostics
+    │   │       ├── evidence
+    │   │       └── provenance
+    │   │
+    │   ├── lowering
+    │   │   ├── contract
+    │   │   │   ├── meaning
+    │   │   │   ├── preservation
+    │   │   │   ├── candidate
+    │   │   │   ├── reference
+    │   │   │   ├── authority
+    │   │   │   └── failure
+    │   │   ├── material
+    │   │   │   └── candidate
+    │   │   ├── judgment
+    │   │   │   ├── formed
+    │   │   │   └── failed
+    │   │   └── diagnostics
+    │   │       ├── evidence
+    │   │       └── provenance
+    │   │
+    │   ├── invariant
+    │   │   ├── contract
+    │   │   │   ├── meaning
+    │   │   │   ├── basis
+    │   │   │   ├── candidate
+    │   │   │   ├── acceptance
+    │   │   │   └── failure
+    │   │   ├── material
+    │   │   │   ├── basis
+    │   │   │   └── candidate
+    │   │   ├── judgment
+    │   │   │   ├── accepted
+    │   │   │   └── failed
+    │   │   └── diagnostics
+    │   │       └── evidence
+    │   │
+    │   └── publication
+    │       ├── contract
+    │       │   ├── meaning
+    │       │   ├── exposure
+    │       │   ├── claim
+    │       │   ├── redaction
+    │       │   └── stability
+    │       ├── material
+    │       │   ├── eligible
+    │       │   ├── claim
+    │       │   └── public
+    │       ├── judgment
+    │       │   ├── allowed
+    │       │   └── denied
+    │       └── diagnostics
+    │           └── evidence
+    │
+    ├── fact
+    │   ├── contract
+    │   │   ├── meaning
+    │   │   ├── shape
+    │   │   └── uniqueness
+    │   ├── material
+    │   │   └── immutable
+    │   └── diagnostics
+    │
+    ├── statemachine
+    │   ├── state
+    │   │   ├── contract
+    │   │   │   ├── meaning
+    │   │   │   ├── condition
+    │   │   │   ├── legality
+    │   │   │   └── completeness
+    │   │   ├── material
+    │   │   │   └── condition
+    │   │   ├── judgment
+    │   │   │   ├── legal
+    │   │   │   └── illegal
+    │   │   └── diagnostics
+    │   │       └── evidence
+    │   │
+    │   ├── transition
+    │   │   ├── contract
+    │   │   │   ├── meaning
+    │   │   │   ├── move
+    │   │   │   ├── permission
+    │   │   │   ├── one_way
+    │   │   │   └── failure
+    │   │   ├── material
+    │   │   │   └── move
+    │   │   ├── judgment
+    │   │   │   ├── allowed
+    │   │   │   └── denied
+    │   │   └── diagnostics
+    │   │       └── evidence
+    │   │
+    │   └── manifest
+    │       ├── contract
+    │       │   ├── meaning
+    │       │   ├── surface
+    │       │   ├── initial
+    │       │   ├── terminal
+    │       │   └── completeness
+    │       ├── material
+    │       │   ├── state_set
+    │       │   └── transition_set
+    │       └── diagnostics
+    │
+    ├── diagnostic
+    │   └── retention
+    │       ├── contract
+    │       │   ├── meaning
+    │       │   ├── evidence
+    │       │   ├── retention
+    │       │   ├── exposure
+    │       │   └── redaction
+    │       ├── material
+    │       │   ├── retained
+    │       │   └── discarded
+    │       ├── judgment
+    │       │   ├── retained
+    │       │   └── discarded
+    │       └── diagnostics
+    │
+    ├── versioning
+    │   ├── coordinate
+    │   │   ├── contract
+    │   │   │   ├── meaning
+    │   │   │   ├── stability
+    │   │   │   └── validity
+    │   │   ├── material
+    │   │   │   ├── subject
+    │   │   │   ├── value
+    │   │   │   └── provenance
+    │   │   ├── judgment
+    │   │   │   ├── valid
+    │   │   │   └── invalid
+    │   │   └── diagnostics
+    │   │
+    │   ├── binding
+    │   │   ├── contract
+    │   │   │   ├── meaning
+    │   │   │   ├── subject
+    │   │   │   └── scope
+    │   │   ├── material
+    │   │   │   ├── bound
+    │   │   │   └── unbound
+    │   │   ├── judgment
+    │   │   └── diagnostics
+    │   │
+    │   └── compatibility
+    │       ├── contract
+    │       │   ├── meaning
+    │       │   ├── reuse
+    │       │   ├── rejudgment
+    │       │   └── refusal
+    │       ├── material
+    │       │   ├── prior
+    │       │   └── current
+    │       ├── judgment
+    │       │   ├── compatible
+    │       │   ├── rejudge
+    │       │   └── refused
+    │       └── diagnostics
+    │
+    ├── governance
+    │   ├── policy
+    │   │   ├── contract
+    │   │   │   ├── meaning
+    │   │   │   ├── criteria
+    │   │   │   ├── activation
+    │   │   │   └── outcome
+    │   │   ├── material
+    │   │   │   ├── profile
+    │   │   │   └── binding
+    │   │   ├── judgment
+    │   │   └── diagnostics
+    │   │
+    │   ├── budget
+    │   │   ├── contract
+    │   │   │   ├── meaning
+    │   │   │   ├── allowance
+    │   │   │   └── exhaustion
+    │   │   ├── material
+    │   │   │   ├── limit
+    │   │   │   └── consumption
+    │   │   ├── judgment
+    │   │   └── diagnostics
+    │   │
+    │   ├── capacity
+    │   │   ├── contract
+    │   │   │   ├── meaning
+    │   │   │   ├── limit
+    │   │   │   └── overflow
+    │   │   ├── material
+    │   │   │   ├── limit
+    │   │   │   └── usage
+    │   │   ├── judgment
+    │   │   └── diagnostics
+    │   │
+    │   ├── capability
+    │   │   ├── contract
+    │   │   │   ├── meaning
+    │   │   │   ├── requirement
+    │   │   │   └── grant
+    │   │   ├── material
+    │   │   │   ├── required
+    │   │   │   └── granted
+    │   │   ├── judgment
+    │   │   └── diagnostics
+    │   │
+    │   └── epoch
+    │       ├── contract
+    │       │   ├── meaning
+    │       │   ├── validity
+    │       │   └── ordering
+    │       ├── material
+    │       │   └── value
+    │       ├── judgment
+    │       └── diagnostics
+    │
+    ├── realization
+    │   ├── canonicalization
+    │   │   └── normalization
+    │   ├── identity
+    │   │   ├── derivation
+    │   │   ├── comparison
+    │   │   ├── index
+    │   │   └── collision
+    │   ├── cache
+    │   │   ├── interner
+    │   │   │   ├── protocol
+    │   │   │   ├── key
+    │   │   │   └── join
+    │   │   ├── tier
+    │   │   │   ├── session
+    │   │   │   ├── process
+    │   │   │   ├── durable
+    │   │   │   └── remote
+    │   │   ├── lifecycle
+    │   │   ├── dispatch
+    │   │   ├── storage
+    │   │   ├── governance
+    │   │   └── diagnostics
+    │   ├── metamodel
+    │   │   ├── provider
+    │   │   ├── ratification
+    │   │   └── frozen
+    │   │       ├── image
+    │   │       ├── order
+    │   │       ├── provider
+    │   │       ├── record
+    │   │       ├── sequence
+    │   │       └── table
+    │   ├── graph
+    │   │   ├── edge
+    │   │   └── structure
+    │   ├── linking
+    │   │   ├── binding
+    │   │   └── bootstrap
+    │   ├── planning
+    │   │   ├── assembly
+    │   │   ├── bootstrap
+    │   │   ├── diagnostics
+    │   │   ├── expansion
+    │   │   ├── projection
+    │   │   ├── seed
+    │   │   ├── selection
+    │   │   │   └── polymorphic
+    │   │   ├── sequence
+    │   │   └── session
+    │   ├── execution
+    │   │   ├── aggregate
+    │   │   ├── context
+    │   │   ├── factory
+    │   │   ├── generation
+    │   │   ├── mocking
+    │   │   ├── orchestration
+    │   │   ├── plan
+    │   │   ├── scenario
+    │   │   ├── service
+    │   │   ├── strategy
+    │   │   ├── verification
+    │   │   └── vm
+    │   ├── runtime
+    │   │   ├── diagnostics
+    │   │   ├── dispatch
+    │   │   ├── orchestration
+    │   │   ├── policy
+    │   │   │   └── internal
+    │   │   ├── registry
+    │   │   ├── support
+    │   │   ├── time
+    │   │   └── worker
+    │   └── reporting
+    │
+    └── adapter
+        ├── inbound
+        │   └── carrier
+        ├── reflection
+        ├── jvm
+        ├── icu
+        ├── classgraph
+        ├── json
+        ├── file
+        ├── console
+        ├── junit
+        │   └── config
+        └── mockito
 ```
-
-The JVM group prefix may change by module policy. The architectural vocabulary must not.
 
 ## 13. Compiler-Related Realization Law
 
@@ -1545,16 +1639,15 @@ should keep existing Kontrakt domain vocabulary and be placed in the realization
 Allowed realization domains:
 
 ```text
-realization.metamodel
-realization.normalization
+realization.canonicalization.normalization
 realization.identity
+realization.cache
+realization.metamodel
 realization.graph
-realization.planning
 realization.linking
+realization.planning
 realization.execution
 realization.runtime
-realization.cache
-realization.storage
 realization.reporting
 ```
 
@@ -1577,80 +1670,76 @@ Compiler-style work may acquire presentations, normalize text, derive identity, 
 validate cache entries, store images/tables/records/sequences, render reports, and export artifacts. Those activities
 remain realization. They do not create contract authority.
 
-### 13.1. Realization metamodel
+### 13.1. Realization canonicalization
 
 ```text
-realization.metamodel
-├── acquisition
-├── fact
-├── erasure
-├── ratification
-└── bridge
-    ├── input
-    ├── admission
-    └── canonicalization
+realization.canonicalization
+└── normalization
 ```
 
-### 13.2. Realization normalization
+Normalization is internal machinery for satisfying the canonicalization contract. An external Unicode/ICU/JVM normalizer
+wrapper belongs under the concrete adapter package, such as `adapter.icu` or `adapter.jvm`.
 
-```text
-realization.normalization
-├── text
-├── identifier
-├── descriptor
-└── bridge
-    ├── input
-    ├── admission
-    └── canonicalization
-```
-
-### 13.3. Realization identity
+### 13.2. Realization identity
 
 ```text
 realization.identity
 ├── derivation
-├── digest
-├── encoding
-├── interning
-├── collision
-└── bridge
-    ├── canonicalization
-    ├── versioning
-    └── diagnostic
+├── comparison
+├── index
+└── collision
 ```
 
-### 13.4. Realization graph
+Identity derivation, comparison, indexing, and collision handling are implementation machinery. Fact contract law speaks
+in uniqueness and referability, not identity implementation.
+
+### 13.3. Realization cache
+
+```text
+realization.cache
+├── interner
+│   ├── protocol
+│   ├── key
+│   └── join
+├── tier
+│   ├── session
+│   ├── process
+│   ├── durable
+│   └── remote
+├── lifecycle
+├── dispatch
+├── storage
+├── governance
+└── diagnostics
+```
+
+Cache is a broad governed realization domain for deterministic reuse and optimization validity. It is not contract
+authority and not a simple memoization folder.
+
+### 13.4. Realization metamodel
+
+```text
+realization.metamodel
+├── provider
+├── ratification
+└── frozen
+    ├── image
+    ├── order
+    ├── provider
+    ├── record
+    ├── sequence
+    └── table
+```
+
+Physical frozen image/table/record/sequence vocabulary remains under realization. It must not move into stage material
+unless a later ADR promotes a concrete material as contract-governed authority.
+
+### 13.5. Realization graph
 
 ```text
 realization.graph
-├── node
 ├── edge
-├── traversal
-├── closure
-└── bridge
-    ├── lowering
-    ├── invariant
-    └── statemachine
-```
-
-### 13.5. Realization planning
-
-```text
-realization.planning
-├── preflight
-├── selection
-├── projection
-├── ordering
-├── expansion
-├── breakpoint
-├── metering
-├── publication
-└── bridge
-    ├── admission
-    ├── lowering
-    ├── invariant
-    ├── governance
-    └── diagnostic
+└── structure
 ```
 
 ### 13.6. Realization linking
@@ -1658,90 +1747,62 @@ realization.planning
 ```text
 realization.linking
 ├── binding
-├── resolution
-├── materialization
-├── verification
-└── bridge
-    ├── lowering
-    ├── invariant
-    ├── statemachine
-    └── governance
+└── bootstrap
 ```
 
-### 13.7. Realization execution
+### 13.7. Realization planning
+
+```text
+realization.planning
+├── assembly
+├── bootstrap
+├── diagnostics
+├── expansion
+├── projection
+├── seed
+├── selection
+│   └── polymorphic
+├── sequence
+└── session
+```
+
+### 13.8. Realization execution
 
 ```text
 realization.execution
-├── vm
+├── aggregate
+├── context
+├── factory
+├── generation
+├── mocking
+├── orchestration
+├── plan
 ├── scenario
-├── generator
+├── service
+├── strategy
 ├── verification
-├── trace
-└── bridge
-    ├── invariant
-    ├── statemachine
-    ├── publication
-    └── diagnostic
+└── vm
 ```
 
-### 13.8. Realization runtime
+### 13.9. Realization runtime
 
 ```text
 realization.runtime
-├── session
-├── scheduler
-├── memory
-├── gate
-├── integrity
-└── bridge
-    ├── governance
-    ├── versioning
-    ├── statemachine
-    └── diagnostic
+├── diagnostics
+├── dispatch
+├── orchestration
+├── policy
+│   └── internal
+├── registry
+├── support
+├── time
+└── worker
 ```
 
-### 13.9. Realization cache
-
-```text
-realization.cache
-├── lookup
-├── admission
-├── retention
-├── eviction
-├── validation
-└── bridge
-    ├── versioning
-    ├── governance
-    ├── lowering
-    └── diagnostic
-```
-
-### 13.10. Realization storage
-
-```text
-realization.storage
-├── image
-├── table
-├── record
-├── sequence
-└── arena
-```
-
-Storage may use physical vocabulary. That vocabulary must not move into `stage.*.material` unless a later ADR promotes
-it as contract-governed material.
-
-### 13.11. Realization reporting
+### 13.10. Realization reporting
 
 ```text
 realization.reporting
-├── renderer
-├── writer
-├── export
-├── redaction
-└── bridge
-    ├── publication
-    ├── diagnostic
-    └── governance
 ```
 
 ## 14. Material Naming Law
@@ -1752,27 +1813,42 @@ hash, encode, address, cache, or publish that material.
 Allowed by default under stage material:
 
 ```text
-presentation
-surface
-carrier
-origin
-provenance
 subject
 declaration
-external
 candidate
 admitted
 deferred
-disposition
 representative
-reference
-availability
-fact
-basis
-transition
-accepted
+representation
+eligible
 claim
-evidence
+public
+disposition
+```
+
+Allowed only under the owning stage or owning axis:
+
+```text
+basis      -> stage.invariant.material.basis only
+immutable  -> fact.material.immutable only
+condition  -> statemachine.state.material.condition only
+move       -> statemachine.transition.material.move only
+evidence   -> stage.<stage>.diagnostics.evidence or diagnostic.retention material only
+retained   -> diagnostic.retention.material.retained only
+discarded  -> diagnostic.retention.material.discarded only
+```
+
+Allowed under top-level fact material:
+
+```text
+immutable
+```
+
+Allowed under top-level diagnostic retention material:
+
+```text
+retained
+discarded
 ```
 
 Require explicit later ADR before use under stage material:
@@ -1803,25 +1879,31 @@ planner
 executor
 writer
 artifact
+annotation
+metadata
+text
 ```
 
 Examples:
 
 ```text
 stage.canonicalization.contract.equivalence              OK
-stage.canonicalization.contract.representation           OK
-stage.canonicalization.contract.collision                OK
-stage.canonicalization.material.representative           OK
-stage.canonicalization.material.reference                OK
-stage.canonicalization.material.availability             OK
-realization.identity.digest                              OK
-realization.storage.frozen.image                         OK
+stage.canonicalization.contract.representative           OK
+stage.canonicalization.contract.source.drift             OK
+stage.canonicalization.material.presentation             OK
+stage.canonicalization.material.representation           OK
+realization.identity.derivation                          OK
+realization.identity.collision                           OK
+realization.metamodel.frozen.image                       OK
+adapter.icu                                              OK
 
-stage.canonicalization.material.identity                 rejected by default
+stage.canonicalization.material.identity                 rejected
 stage.canonicalization.material.hash                     rejected
 stage.canonicalization.material.frozen.image             rejected
+stage.canonicalization.material.presentation.annotation  rejected as package authority
+stage.normalization                                      rejected
+adapter.normalization                                    rejected
 stage.lowering.material.projection                       rejected
-stage.lowering.material.expansion                        rejected
 stage.publication.material.report                        rejected by default
 ```
 
@@ -1902,7 +1984,7 @@ Then rename.
 
 This guide is non-exhaustive. The companion placement map is the executable movement plan.
 
-### 17.1. Discovery
+### 17.1. Discovery and input presentation
 
 Current:
 
@@ -1915,11 +1997,12 @@ discovery.domain
 Target:
 
 ```text
+surface.interface
 stage.input.contract
-stage.input.boundary
-stage.input.material
+stage.input.presentation.dto
+stage.input.presentation.raw
 stage.admission.contract
-stage.admission.material
+stage.admission.material.admitted
 stage.admission.judgment
 stage.admission.diagnostics
 realization.metamodel
@@ -1927,8 +2010,8 @@ adapter.classgraph
 adapter.jvm
 ```
 
-Classpath, annotation, or runtime-surface reading belongs to adapters or realization. Results that become contract
-presentation material belong under the stage that owns their admission and lowering path.
+Classpath, annotation, or runtime-surface reading belongs to adapters or realization. DTO/raw presentation belongs under
+input presentation. Judgment starts at admission.
 
 ### 17.2. Linking
 
@@ -1943,7 +2026,7 @@ Target:
 ```text
 realization.linking
 realization.graph
-stage.lowering.material
+stage.lowering.material.candidate
 stage.lowering.judgment
 stage.admission.judgment
 ```
@@ -1964,19 +2047,20 @@ metamodel.domain.frozen
 Target:
 
 ```text
-stage.input.material
+stage.input.presentation
 stage.canonicalization.material
 stage.lowering.material
 stage.invariant.material
-realization.metamodel
-realization.normalization
+fact.material.immutable
+realization.metamodel.frozen
+realization.canonicalization.normalization
 realization.identity
-realization.storage
 adapter.reflection
+adapter.icu
 ```
 
 Reflection-specific material stays outside authority. Adapter-neutral material may move under the stage that owns its
-ratified meaning. Physical frozen image/table/record/sequence forms belong under realization storage unless later
+ratified meaning. Physical frozen image/table/record/sequence forms belong under realization metamodel unless later
 promoted.
 
 ### 17.4. Planning
@@ -2030,19 +2114,19 @@ realization.runtime
 realization.reporting
 statemachine.transition.contract
 statemachine.transition.judgment
-diagnostic.evidence
+diagnostic.retention
 stage.invariant.judgment
 stage.publication.judgment
-stage.publication.claim
+stage.publication.material.claim
 adapter.junit
 ```
 
 Execution is realization. Result resolution is stage-local judgment. Trace and audit evidence are diagnostics.
 Externally visible reports and results are publication.
 
-`execution.port` is old hexagonal vocabulary and is not a target package. Incoming execution surfaces must move to the
-stage boundary that owns entry. Outgoing reporting surfaces must move to publication, diagnostic, reporting, or adapter
-packages according to what they actually do.
+`execution.port` is old hexagonal vocabulary and is not a target package. Incoming execution surfaces must move to
+surface, adapter, or realization packages according to what they actually do. Outgoing reporting surfaces must move to
+publication, diagnostic, reporting, or adapter packages.
 
 ### 17.6. Runtime and policy
 
@@ -2063,12 +2147,13 @@ realization.cache
 governance.policy
 governance.budget
 governance.capacity
-governance.validity
+governance.capability
+governance.epoch
 statemachine.transition
 ```
 
-Policy resolution belongs to governance when it defines law. Worker backing, storage, lanes, and physical lifecycle
-belong to realization runtime unless promoted to state-machine law.
+Policy law belongs to governance. Worker backing, storage, lanes, and physical lifecycle belong to realization
+runtime/cache unless promoted to state-machine law.
 
 ### 17.7. Reporting
 
@@ -2085,10 +2170,8 @@ trace sinks
 Target:
 
 ```text
-stage.publication.claim
-stage.publication.material
+stage.publication.material.claim
 stage.publication.judgment
-diagnostic.evidence
 diagnostic.retention
 realization.reporting
 adapter.console
@@ -2103,27 +2186,35 @@ A report is publication or diagnostic material derived from accepted judgment/ev
 Forbidden:
 
 ```text
+surface.interface.contract -> realization
+surface.interface.contract -> adapter
+interaction.manifest -> realization
+interaction.manifest -> adapter
 stage.<stage>.contract -> realization
 stage.<stage>.contract -> adapter
+fact.contract -> realization
+fact.contract -> adapter
 statemachine.<manifest|state|transition> -> adapter
-stage.<stage>.material.accepted -> adapter.reflection
-stage.<stage>.material.accepted -> adapter.ksp
+stage.<stage>.material -> adapter.reflection
+stage.<stage>.material -> adapter.icu
 stage.<stage>.judgment -> adapter
 governance -> adapter
-diagnostic.evidence.contract -> adapter
-stage.publication.claim -> adapter
+diagnostic.retention.contract -> adapter
+stage.publication.material.claim -> adapter
 ```
 
 Allowed, subject to narrower package laws:
 
 ```text
+realization -> surface
+realization -> interaction
 realization -> stage
+realization -> fact
 realization -> statemachine
 realization -> versioning
 realization -> governance
 realization -> diagnostic
 adapter -> realization
-adapter -> stage.input.boundary when required to deliver raw external input
 ```
 
 Allowed direction does not mean unrestricted coupling.
@@ -2188,11 +2279,14 @@ Required categories:
 
 2. **stage-local role tests**
 
-   Pipeline-specific contract, material, judgment, diagnostic, and publication types must live under the owning stage.
-   Explicit state-machine types must live under the parallel `statemachine` axis. Version-coordinate types must live
-   under the parallel `versioning` axis. Governance types must live under `governance`. Cross-stage evidence law must
-   live under `diagnostic` when not owned by one stage. Promotion to a top-level package requires a separate reason and
-   should be rare.
+   Pipeline-specific contract, material, judgment, and diagnostic types must live under the owning stage. Explicit
+   state-machine types must live under the parallel `statemachine` axis. Fact types must live under `fact`.
+   Version-coordinate types must live under `versioning`. Governance types must live under `governance`. Retained
+   cross-stage evidence law must live under `diagnostic.retention`. Promotion to a new top-level package requires a
+   separate reason and should be rare.
+
+   `stage.input.material`, `stage.input.judgment`, `stage.<stage>.boundary`, `stage.normalization`, `stage.fact`,
+   `stage.failure`, and `stage.diagnostic` must not be introduced as target packages.
 
    `realization.execution.port` and `realization.execution.state` must not be introduced as stable target packages.
    Existing files with those old names must be split or placed under more precise packages during relocation.
@@ -2201,24 +2295,25 @@ Required categories:
 
    Stage material packages must not introduce risky implementation names by default: `identity`, `frozen`, `image`,
    `table`, `record`, `sequence`, `order`, `schema`, `key`, `handle`, `bytes`, `digest`, `hash`, `intern`, `ordinal`,
-   `route`, `cache`, `scanner`, `reader`, `collector`, `projector`, `planner`, `executor`, `writer`, or `artifact`.
+   `route`, `cache`, `scanner`, `reader`, `collector`, `projector`, `planner`, `executor`, `writer`, `artifact`,
+   `annotation`, `metadata`, or `text`.
 
 4. **inter-stage acquisition tests**
 
    One stage must not import another stage's local role packages as ordinary dependencies. Upstream output is treated as
-   external input by the receiving stage and must pass through the receiving stage's boundary, guard/admission,
-   lowering, and judgment.
+   external presentation by the receiving stage and must pass through the receiving stage's own judgment.
 
 5. **adapter isolation tests**
 
-   Reflection, KSP, ClassGraph, JUnit, Mockito, JSON, file, console, and other platform details must not leak into
+   Reflection, KSP, ClassGraph, ICU, JUnit, Mockito, JSON, file, console, and other platform details must not leak into
    authority packages.
 
 6. **contract package content tests**
 
-   Stage-local contract packages may contain only interfaces, immutable declaration objects, stable value records,
-   enums, sealed declaration shapes, and small structural types. They must not contain discovery, traversal, lowering,
-   planning, execution, caching, publication, reflection, scheduling, I/O, or environment-inspection algorithms.
+   Stage-local contract packages may contain only interface surfaces and data bundles. A data bundle is a passive
+   grouping of declared values; it is not a JVM/Kotlin class category, record requirement, sealed hierarchy requirement,
+   or implementation object model. Contract packages must not contain discovery, traversal, lowering, planning,
+   execution, caching, publication, reflection, scheduling, I/O, or environment-inspection algorithms.
 
 7. **interceptor isolation tests**
 
@@ -2235,8 +2330,8 @@ Required categories:
 
 10. **bridge discipline tests**
 
-Realization bridge packages may map and assemble between implementation and contract surfaces. They must not declare
-contract authority.
+    Realization bridge packages may map and assemble between implementation and contract surfaces. They must not declare
+    contract authority.
 
 ## 22. Compliance Rules
 
@@ -2245,26 +2340,36 @@ A change complies with this ADR only if:
 1. Top-level packages do not create a global contract bucket.
 2. Pipeline-specific domains are stage-first under `stage.<stage-name>`.
 3. `stage` names contract-pipeline gates, not implementation phases.
-4. Stage-local role packages are not collapsed into global buckets for convenience.
-5. Inter-stage movement follows publication-to-boundary acquisition. The receiving stage must guard, lower, and judge
-   external input before downstream-owned material may exist.
-6. A stage does not depend on another stage's local contract, material, judgment, diagnostics, publication, helper,
-   realization, or adapter packages as ordinary peer dependencies.
-7. Stage-local `contract` packages contain only narrow declaration vocabulary and no realization algorithms.
-8. Stage-local `material` packages use contract-governed material names, not implementation or storage names.
-9. Constructor and property machinery inside contract packages is treated as a JVM/Kotlin representation limit, not as
-   contract authority.
-10. Compiler-related implementation stays behind the realization boundary and keeps existing Kontrakt domain vocabulary
+4. `stage.input` contains only input contract and presentation packages.
+5. `boundary` is not introduced as package authority.
+6. `normalization` remains realization machinery under `realization.canonicalization.normalization` unless a later
+   contract document promotes it.
+7. `fact` remains a top-level contract/material axis, not a stage and not a narrow `core` package.
+8. `failure` remains a stage-local or axis-local declared outcome, not a stage and not a top-level axis.
+9. `diagnostic.retention` owns retained evidence law; stage-local diagnostics own evidence at judgment sites.
+10. Stage-local role packages are not collapsed into global buckets for convenience.
+11. Inter-stage movement follows contract-pipeline judgment. A downstream stage must judge presentation before
+    downstream-owned material may exist.
+12. A stage does not depend on another stage's local contract, material, judgment, diagnostics, helper, realization, or
+    adapter packages as ordinary peer dependencies.
+13. Stage-local `contract` packages contain only narrow declaration vocabulary and no realization algorithms.
+14. Stage-local `material` packages use contract-governed material names, not implementation or storage names.
+15. `fact.contract.identity` and `fact.contract.version_binding` are not introduced.
+16. Each contract may own `contract.meaning`; versioning owns coordinate law; interaction manifest binds meanings but
+    does not control them.
+17. Constructor and property machinery inside contract packages is treated as a JVM/Kotlin representation limit, not as
+    contract authority.
+18. Compiler-related implementation stays behind the realization boundary and keeps existing Kontrakt domain vocabulary
     unless changed by a later compiler-specific ADR.
-11. Runtime, planning, graph, metamodel, identity, execution, cache, storage, and reporting machinery remain under
+19. Runtime, planning, graph, metamodel, identity, execution, cache, storage, and reporting machinery remain under
     `realization` unless explicitly promoted by a later ADR.
-12. Adapter-specific code remains under `adapter`.
-13. The first relocation pass does not change behavior.
-14. Interceptor-style flow is not treated as a target package layer.
-15. Interceptor-style files are marked for later removal or replacement.
-16. Architecture tests protect the new dependency direction.
-17. Existing deterministic material, identity, planning, runtime, and publication laws remain intact.
-18. Future multi-pipeline architecture is introduced by module boundary first.
+20. Adapter-specific code remains under `adapter` and is named by outside technology.
+21. The first relocation pass does not change behavior.
+22. Interceptor-style flow is not treated as a target package layer.
+23. Interceptor-style files are marked for later removal or replacement.
+24. Architecture tests protect the new dependency direction.
+25. Existing deterministic material, identity, planning, runtime, and publication laws remain intact.
+26. Future multi-pipeline architecture is introduced by module boundary first.
 
 ## 23. Consequences
 
@@ -2355,22 +2460,38 @@ Current pipeline-specific domains are stage-first.
 
 A stage is a logical contract-pipeline gate, not a compiler/runtime phase.
 
-A stage owns its own local contract, boundary, material, judgment, diagnostics, and publication role packages as needed.
+The current stage set is:
 
-Stage movement is not peer package dependency. One stage may expose an output presentation at its publication boundary.
-The next stage must treat that presentation as external input and run its own boundary, guard/admission, lowering, and
-judgment before creating its own material.
+```text
+input
+admission
+canonicalization
+lowering
+invariant
+publication
+```
 
-This ADR does not create a top-level `contract` package. Contract packages are stage-local unless a later ADR introduces
-a concrete non-stage package boundary.
+`input` owns only its contract and presentation shape. Judgment begins at admission.
+
+`boundary` is a machine membrane, not package authority.
+
+This ADR does not create a top-level `contract` package. Contract packages are stage-local or axis-local unless a later
+ADR introduces a concrete non-stage package boundary.
+
+Fact authority belongs under `fact`, not under `stage` and not under a narrow `core` package.
+
+Failure is a declared outcome of the stage or axis whose judgment produced it. It is not a stage and not a top-level
+package.
 
 State, transition, and explicit manifest authority belong under `statemachine`.
 
-Version-coordinate authority belongs under `versioning`.
+Version-coordinate authority belongs under `versioning`. Each contract owns its own `meaning`; versioning owns common
+coordinate law; interaction manifest binds selected meanings without controlling them.
 
-Policy, budget, capacity, capability, and validity law belong under `governance`.
+Policy, budget, capacity, capability, and epoch law belong under `governance`.
 
-Evidence, retention, and redaction law belong under `diagnostic` when not stage-local.
+Retained diagnostic evidence belongs under `diagnostic.retention`. Stage-local diagnostics explain stage-local
+judgments.
 
 Compiler-style architecture is internal realization machinery. Realization may be compiler-like and should keep existing
 Kontrakt domain vocabulary.
@@ -2378,10 +2499,14 @@ Kontrakt domain vocabulary.
 Planning, linking, execution, runtime, metamodel, normalization, identity, graph, cache, storage, and reporting are
 realization machinery unless explicitly promoted by contract authority or stage-local authority.
 
+Normalization is realization machinery for canonicalization. External normalizer wrappers are adapters named by outside
+technology, such as `adapter.icu`.
+
 Adapters isolate outside technology.
 
-Contract packages are deliberately small. They hold contract-facing interfaces and immutable declaration material, not
-algorithms. Constructors and property machinery that remain there are accepted only as JVM/Kotlin representation limits.
+Contract packages are deliberately small. They hold contract-facing interface surfaces and data bundles, not algorithms.
+Any constructor, property, class, record, enum, sealed-shape, or value-object form that remains in code is only a
+host-language representation detail, not contract authority.
 
 Material packages must not smuggle physical representation or implementation method into authority vocabulary.
 
