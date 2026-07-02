@@ -9,6 +9,7 @@
 - [4. Contract](#4-contract)
 - [5. Purpose](#5-purpose)
 - [6. Make Interfaces Great Again](#6-make-interfaces-great-again)
+    - [6.1 The Surface of an Interface Contract](#61-the-surface-of-an-interface-contract)
 - [7. Evolution and Contract](#7-evolution-and-contract)
 - [8. Good Machine and Function](#8-good-machine-and-function)
 - [9. Core, Boundary, and the Fucking Bastards Outside](#9-core-boundary-and-the-fucking-bastards-outside)
@@ -183,6 +184,7 @@ So contract structure has to stay two-dimensional.
 The first dimension contains closed contract presentations and required coordinates:
 
 ```text
+interface contract and its public surface
 input contract
 admission contract
 canonicalization contract
@@ -207,6 +209,7 @@ It binds a flat list of closed contract presentations and required coordinates f
 
 ```text
 interaction manifest
+    -> interface contract and its public surface
     -> input contract
     -> admission contract
     -> canonicalization contract
@@ -384,10 +387,11 @@ presentation, and the output presentation. It does not tell us what the input mu
 state allows the operation, what fact is produced, what failure is declared, what may be published, what diagnostic
 evidence remains, or which policy, budget, capacity, and governance rules apply.
 
-For one method, the operation manifest is still flat:
+For one method, the interaction manifest is still flat:
 
 ```text
 submit(...)
+    -> interface contract and its public surface
     -> input contract
     -> admission contract
     -> canonicalization contract
@@ -410,6 +414,81 @@ manifest is the contract. The call is just how
 one implementation path may enter the operation.
 
 Keep the method, but make it stop pretending to be enough. Make interfaces great again.
+
+### 6.1 The Surface of an Interface Contract
+
+An interface contract needs a surface.
+
+The surface is the public reliance boundary of that interface contract. It tells the outside user exactly what they are
+allowed to touch: which operation they can select, what input presentation they can hand over, what output claim they
+should expect, and which public failures or limits they can safely rely on.
+
+The surface is not the whole machine. It is the strict part of the interface contract the user is allowed to depend on.
+
+And that distinction matters.
+
+A good machine does not make the user dissect its guts just to use it correctly. You do not need to understand
+combustion timing, fuel injection, or brake hydraulics to drive a car. A smartphone user does not need to learn
+semiconductor physics, file systems, or memory controllers just to make a call.
+
+That is what a surface is for.
+
+It gives the user a stable, usable contract. Press this. Turn this. Submit this. Receive that. Stop here. Retry there.
+The user relies on the promised surface, not on the plumbing hiding behind it.
+
+If the machine forces the user to understand its internal mechanisms just to use it correctly, the surface is garbage.
+
+And there is another failure mode that is worse.
+
+If internal machinery bleeds into the surface, the implementation loses its freedom to move. Imagine a car where the
+public driving contract forces the driver to rely on the exact gearbox mechanism and hydraulic response curve. The
+second the manufacturer tries to replace the transmission or move to an electric drivetrain, the driving contract
+breaks. You permanently destroyed your freedom to replace the backend because you taught the user to rely on your
+plumbing.
+
+Software is exactly the same.
+
+A surface must never expose the current implementation as public meaning. It can expose presentation shapes, operation
+names, public failures, public limits, and public claims. It can say what the user is allowed to rely on. But it must
+absolutely not force the user to rely on whatever temporary machinery happens to realize the contract today.
+
+Spring is a useful warning here.
+
+Its surface looks deceptively simple: slap an annotation on a class, inject a dependency, and let the magic handle the
+request. But the minute you do serious engineering, you are forced to understand the hidden machinery: when the
+framework is speaking for the program, when the program is actually speaking for itself, and which invisible convention
+is quietly deciding the result.
+
+That is not a clean surface. That is internal machinery leaking straight into the user's contract.
+
+The problem is not that Spring uses machinery. Every real machine needs machinery. The problem is that the user is
+forced to reverse-engineer that machinery just to use the surface correctly.
+
+A good machine does not play that game.
+
+The surface declares the public obligation. It does not force the user to learn the implementation.
+
+This is exactly why a naive interface is not enough.
+
+An interface may present a software-visible operation surface. A method may give the user a familiar handle. But the
+surface of the interface contract must still explicitly declare what the user can depend on, without demanding that they
+learn the inside of the machine.
+
+The interaction manifest does not arrive later as another runtime step. It binds the selected interface surface to the
+full contract world: input, admission, canonicalization, lowering, fact, invariant, state, transition, failure,
+publication, diagnostic retention, version coordinate, policy, budget, capacity, and governance.
+
+The user sees the surface.
+
+The verifier sees the manifest.
+
+The implementation realizes the manifest behind the surface.
+
+If the surface leaks implementation, the implementation has stolen contract authority.
+
+If the surface hides a public obligation inside internal machinery, the contract has failed in the other direction.
+
+A good surface lets the user depend on the contract without giving a single fuck about the machinery.
 
 ---
 
@@ -1987,8 +2066,8 @@ The important part is not "tests." Tests are only one late way to look at a mach
 The better direction is earlier than that.
 
 First make the contract material rich enough to say what the machine actually promises. The closed contract
-presentations name the obligations: input, admission, canonicalization, lowering, fact, invariant, state, transition,
-failure,
+presentations name the obligations: interface surface, input, admission, canonicalization, lowering, fact, invariant,
+state, transition, failure,
 publication,
 diagnostic, policy, budget, capacity, and governance. Required coordinates name the active meaning and binding. The
 explicit state machine manifest names the closed state surface for that interaction. The manifest binds those materials
@@ -2008,7 +2087,7 @@ If the implementation claims to realize an interaction, the compiler or verifier
 questions before the machine turns into runtime soup:
 
 ```text
-Does the implementation expose the required operation handle?
+Does the implementation expose the required interface surface and operation handle without leaking implementation machinery?
 Does it accept only the declared input presentation?
 Does it apply the required admission contract?
 Does it apply the required canonicalization contract?
@@ -2054,7 +2133,7 @@ fossil a quality strategy.
 The order should be:
 
 ```text
-closed contract presentations and required coordinates
+interface surface, closed contract presentations, and required coordinates
 -> flat interaction manifest
 -> compiler / verifier / generated checks where possible
 -> tests where needed
@@ -2124,8 +2203,9 @@ If systems interact through implementation details, the contract gets mixed with
 Later, when you want to replace the implementation, you cannot do it freely because other parts of the system have
 learned the implementation instead of the contract.
 
-The user should know the contract. The rest of the system should communicate through contracts. Implementation should
-work behind the contract like a shadow. It can be powerful, complicated, and optimized, but it should not become the
+The user should know the public surface of the contract. The rest of the system should communicate through contracts.
+Implementation should work behind the contract like a shadow. It can be powerful, complicated, and optimized, but it
+should not become the
 surface of interaction.
 
 ```text
@@ -2658,9 +2738,11 @@ And the machine I want is simple in spirit:
 state the contract
 make hidden obligations explicit
 make the interface a real contract document
+make the interface surface a public reliance boundary
 preserve methods as operation handles
+keep implementation machinery out of the surface
 keep contract structure two-dimensional
-bind closed contract presentations and required coordinates through a flat operation manifest
+bind selected interface surfaces, closed contract presentations, and required coordinates through a flat interaction manifest
 treat everything outside the core as untrusted
 adopt external interfaces only after ratifying them against internal contracts
 judge DTOs as outside presentation at the boundary
