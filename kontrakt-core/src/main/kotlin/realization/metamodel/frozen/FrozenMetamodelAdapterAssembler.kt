@@ -1,11 +1,11 @@
 package realization.metamodel.frozen
 
 import realization.metamodel.frozen.provider.FrozenMetamodelProviderBundle
+import stage.admission.diagnostics.evidence.MetamodelAdapterAssemblyException
+import stage.admission.diagnostics.evidence.MetamodelException
 import stage.canonicalization.material.frozen.image.FrozenMetamodelImage
 import stage.canonicalization.material.frozen.image.FrozenMetamodelImageAssembler
 import stage.canonicalization.material.frozen.image.FrozenMetamodelImageAssemblyInput
-import stage.input.diagnostics.MetamodelAdapterAssemblyException
-import stage.input.diagnostics.MetamodelException
 
 /**
  * Frozen metamodel adapter composition root.

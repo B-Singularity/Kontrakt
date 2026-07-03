@@ -1,6 +1,6 @@
 package realization.identity
 
-import stage.input.diagnostics.MetamodelFactContractViolationException
+import stage.admission.diagnostics.evidence.MetamodelFactContractViolationException
 
 /**
  * Ratified fingerprint for a runtime binding decision.

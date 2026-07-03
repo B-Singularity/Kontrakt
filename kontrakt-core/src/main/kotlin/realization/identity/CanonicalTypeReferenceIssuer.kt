@@ -1,15 +1,15 @@
 package realization.identity
 
 import metamodel.domain.port.outgoing.NormalizationEngine
+import stage.admission.diagnostics.evidence.MetamodelFactContractViolationException
 import stage.canonicalization.material.CanonicalTypeSignature
 import stage.canonicalization.material.CanonicalTypeText
 import stage.canonicalization.material.CanonicalTypeTextInspectionPolicy
 import stage.canonicalization.material.TypeReference
 import stage.canonicalization.material.TypeShapeRatificationFingerprint
-import stage.input.diagnostics.MetamodelFactContractViolationException
-import stage.input.material.OrderedUseSiteAnnotations
-import stage.input.material.TypeIdentityCoherenceProof
-import stage.input.material.TypeShapeSummary
+import stage.input.presentation.raw.OrderedUseSiteAnnotations
+import stage.input.presentation.raw.TypeIdentityCoherenceProof
+import stage.input.presentation.raw.TypeShapeSummary
 
 /**
  * Domain service that issues TypeReference from adapter-rendered identity

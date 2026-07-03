@@ -1,8 +1,8 @@
 package stage.canonicalization.material
 
-import stage.input.boundary.TypeShapeRatificationVerifier
-import stage.input.diagnostics.MetamodelFactContractViolationException
-import stage.input.material.TypeShapeSummary
+import migration.quarantine.TypeShapeRatificationVerifier
+import stage.admission.diagnostics.evidence.MetamodelFactContractViolationException
+import stage.input.presentation.raw.TypeShapeSummary
 
 /**
  * Verified proof that one CanonicalTypeText has been classified into one

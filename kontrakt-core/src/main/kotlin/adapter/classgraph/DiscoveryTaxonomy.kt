@@ -1,10 +1,10 @@
 package adapter.classgraph
 
+import stage.admission.diagnostics.evidence.DiscoveryFailedException
+import stage.admission.diagnostics.evidence.DiscoveryViolation
+import stage.admission.diagnostics.evidence.DiscoveryViolation.ViolationKind
+import stage.admission.diagnostics.evidence.RuntimeIntegrityException
 import stage.input.contract.SpecViolationCode
-import stage.input.diagnostics.DiscoveryFailedException
-import stage.input.diagnostics.DiscoveryViolation
-import stage.input.diagnostics.DiscoveryViolation.ViolationKind
-import stage.input.diagnostics.RuntimeIntegrityException
 import java.util.Collections
 
 /**

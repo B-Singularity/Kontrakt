@@ -3,14 +3,14 @@ package adapter.jvm
 import adapter.file.WorkerTraceSinkPool
 import ir.TestSpecification
 import migration.quarantine.ExecutionPolicy
+import migration.quarantine.KontraktRuntimeFactory
+import migration.quarantine.TestScenarioExecutor
 import realization.execution.aggregate.TestExecution
 import realization.execution.generation.TestInstanceFactory
 import realization.execution.mocking.MockingEngine
 import realization.execution.orchestration.DefaultScenarioExecutor
 import realization.execution.scenario.ScenarioControl
 import realization.reporting.TestResultPublisher
-import stage.input.boundary.KontraktRuntimeFactory
-import stage.input.boundary.TestScenarioExecutor
 import java.time.Clock
 
 /**

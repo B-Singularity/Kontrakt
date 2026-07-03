@@ -1,7 +1,7 @@
 package adapter.reflection
 
-import stage.input.diagnostics.MetamodelNormalizationViolationException
-import stage.input.diagnostics.safeDiagnosticValue
+import stage.admission.diagnostics.evidence.MetamodelNormalizationViolationException
+import stage.admission.diagnostics.evidence.safeDiagnosticValue
 
 /**
  * Reflection adapter-local text-surface preflight guard.

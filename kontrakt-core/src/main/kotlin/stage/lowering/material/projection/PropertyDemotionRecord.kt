@@ -1,6 +1,6 @@
 package stage.lowering.material.projection
 
-import stage.input.material.PropertyFact
+import stage.input.presentation.dto.PropertyFact
 
 /**
  * Structured deterministic property demotion evidence.

@@ -1,7 +1,7 @@
 package stage.normalization.material
 
 import governance.budget.material.DiagnosticBudget
-import stage.input.diagnostics.MetamodelFactContractViolationException
+import stage.admission.diagnostics.evidence.MetamodelFactContractViolationException
 
 /**
  * Deterministic annotation argument map.

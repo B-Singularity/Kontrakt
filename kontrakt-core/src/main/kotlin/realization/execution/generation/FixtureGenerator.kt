@@ -1,9 +1,9 @@
 package realization.execution.generation
 
 import io.github.oshai.kotlinlogging.KotlinLogging
+import migration.quarantine.ContractConfigurationValidator
 import realization.execution.mocking.MockingContext
 import realization.execution.mocking.MockingEngine
-import stage.admission.judgment.ContractConfigurationValidator
 import stage.diagnostic.evidence.ScenarioTrace
 import stage.input.contract.NotNull
 import stage.input.contract.Null

@@ -1,6 +1,6 @@
 package stage.canonicalization.material
 
-import stage.input.diagnostics.MetamodelFactContractViolationException
+import stage.admission.diagnostics.evidence.MetamodelFactContractViolationException
 
 /**
  * Deterministic proof token for type-shape ratification.

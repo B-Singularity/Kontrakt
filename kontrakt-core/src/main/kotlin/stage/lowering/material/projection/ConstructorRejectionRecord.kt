@@ -1,9 +1,9 @@
 package stage.lowering.material.projection
 
-import stage.input.material.VisibilityKind
+import stage.input.presentation.raw.DeclarationOrdinal
+import stage.input.presentation.raw.MemberOrigin
+import stage.input.presentation.raw.VisibilityKind
 import stage.lowering.diagnostics.ActiveMemberProjectionException
-import stage.input.material.DeclarationOrdinal
-import stage.input.material.MemberOrigin
 
 /**
  * Structured, deterministically sortable rejection evidence for constructor selection.

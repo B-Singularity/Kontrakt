@@ -1,6 +1,6 @@
 package stage.canonicalization.material.frozen.table
 
-import stage.input.material.ResolvedTypeShape
+import stage.input.presentation.raw.ResolvedTypeShape
 import versioning.coordinate.material.value.FrozenMetamodelImageSchemaVersion
 
 /**

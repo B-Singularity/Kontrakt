@@ -1,9 +1,9 @@
 package stage.canonicalization.contract
 
+import migration.quarantine.TypeShapeRatificationVerifier
+import stage.admission.diagnostics.evidence.MetamodelFactContractViolationException
 import stage.canonicalization.material.FingerprintTokenEncoding
 import stage.canonicalization.material.TypeShapeRatificationFingerprint
-import stage.input.boundary.TypeShapeRatificationVerifier
-import stage.input.diagnostics.MetamodelFactContractViolationException
 
 /**
  * Pinned policy for issuing CanonicalTypeId.

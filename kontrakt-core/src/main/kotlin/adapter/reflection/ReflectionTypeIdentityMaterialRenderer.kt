@@ -1,12 +1,12 @@
 package adapter.reflection
 
+import stage.admission.diagnostics.evidence.StrictModeViolationException
 import stage.canonicalization.material.CanonicalTypeShapeKind
-import stage.input.diagnostics.StrictModeViolationException
-import stage.input.material.ArrayComponentShapeHint
-import stage.input.material.AtomicShapeFamily
-import stage.input.material.OrderedUseSiteAnnotations
-import stage.input.material.TypeNestingDepthLaw
-import stage.input.material.TypeShapeSummary
+import stage.input.presentation.raw.ArrayComponentShapeHint
+import stage.input.presentation.raw.AtomicShapeFamily
+import stage.input.presentation.raw.OrderedUseSiteAnnotations
+import stage.input.presentation.raw.TypeNestingDepthLaw
+import stage.input.presentation.raw.TypeShapeSummary
 import java.math.BigDecimal
 import java.math.BigInteger
 import java.time.Duration

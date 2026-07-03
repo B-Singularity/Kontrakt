@@ -1,9 +1,9 @@
 package realization.planning.assembly
 
+import stage.input.presentation.dto.MemberFact
+import stage.input.presentation.dto.TypeFactsDTO
 import stage.lowering.contract.BreakpointStage
 import stage.lowering.material.CycleBreakAssembly
-import stage.input.material.MemberFact
-import stage.input.material.TypeFactsDTO
 
 interface CycleBreakPayloadAssembler {
     fun assemble(

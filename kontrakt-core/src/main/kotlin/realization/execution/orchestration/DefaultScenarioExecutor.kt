@@ -2,17 +2,17 @@ package realization.execution.orchestration
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.runBlocking
+import migration.quarantine.ConstructorComplianceExecutor
+import migration.quarantine.ContractValidator
+import migration.quarantine.DataComplianceExecutor
+import migration.quarantine.TestScenarioExecutor
 import realization.execution.context.EphemeralTestContext
 import realization.execution.generation.FixtureGenerator
 import realization.execution.generation.GenerationContext
 import realization.execution.mocking.MockingEngine
-import stage.admission.judgment.ConstructorComplianceExecutor
-import stage.admission.judgment.ContractValidator
-import stage.admission.judgment.DataComplianceExecutor
 import stage.diagnostic.evidence.ExecutionTrace
 import stage.diagnostic.evidence.ScenarioTrace
 import stage.diagnostic.material.KontraktConfigurationException
-import stage.input.boundary.TestScenarioExecutor
 import stage.input.contract.Test
 import stage.invariant.judgment.AssertionRecord
 import stage.invariant.judgment.AssertionStatus

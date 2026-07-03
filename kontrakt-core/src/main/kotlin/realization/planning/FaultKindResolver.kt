@@ -1,8 +1,8 @@
 package realization.planning
 
+import stage.input.presentation.dto.MemberFact
+import stage.input.presentation.dto.TypeFactsDTO
 import stage.lowering.diagnostics.FaultKind
-import stage.input.material.MemberFact
-import stage.input.material.TypeFactsDTO
 
 /**
  * Resolves semantic fault attribution from domain-visible evidence.

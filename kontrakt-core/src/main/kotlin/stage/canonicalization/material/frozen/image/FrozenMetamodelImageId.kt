@@ -1,6 +1,6 @@
 package stage.canonicalization.material.frozen.image
 
-import stage.input.diagnostics.MetamodelFactContractViolationException
+import stage.admission.diagnostics.evidence.MetamodelFactContractViolationException
 import stage.normalization.contract.MetamodelProtocolTextGuards
 
 /**

@@ -1,7 +1,7 @@
 package realization.planning.assembly
 
+import stage.input.presentation.dto.TypeFactsDTO
 import stage.lowering.material.PassiveIrAssembly
-import stage.input.material.TypeFactsDTO
 
 /**
  * Outbound port for passive assembly.

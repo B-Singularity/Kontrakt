@@ -1,12 +1,12 @@
 package stage.lowering.material.projection
 
-import stage.input.material.VisibilityKind
+import stage.input.presentation.raw.DeclarationOrdinal
+import stage.input.presentation.raw.DefaultValuePresence
+import stage.input.presentation.raw.MemberOrigin
+import stage.input.presentation.raw.PropertyMutability
+import stage.input.presentation.raw.PropertyStorageKind
+import stage.input.presentation.raw.VisibilityKind
 import stage.lowering.diagnostics.ActiveMemberProjectionException
-import stage.input.material.DeclarationOrdinal
-import stage.input.material.DefaultValuePresence
-import stage.input.material.MemberOrigin
-import stage.input.material.PropertyMutability
-import stage.input.material.PropertyStorageKind
 
 /**
  * Provenance reference for one projected active member.

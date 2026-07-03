@@ -1,7 +1,7 @@
 package stage.canonicalization.material
 
-import stage.input.diagnostics.MetamodelFactContractViolationException
-import stage.input.material.TypeShapeSummary
+import stage.admission.diagnostics.evidence.MetamodelFactContractViolationException
+import stage.input.presentation.raw.TypeShapeSummary
 
 /**
  * Canonical rendered type signature.

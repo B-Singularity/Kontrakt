@@ -1,7 +1,7 @@
 package stage.canonicalization.material.frozen.sequence
 
+import stage.admission.diagnostics.evidence.FrozenMetamodelSequenceViolationException
 import stage.canonicalization.material.frozen.image.FrozenMetamodelImageId
-import stage.input.diagnostics.FrozenMetamodelSequenceViolationException
 
 /**
  * Kontrakt-owned deterministic sorter for frozen object-array sequences.

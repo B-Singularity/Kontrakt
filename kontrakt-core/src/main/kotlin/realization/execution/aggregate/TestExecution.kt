@@ -4,11 +4,11 @@ import adapter.file.WorkerTraceSinkPool
 import io.github.oshai.kotlinlogging.KotlinLogging
 import migration.quarantine.AuditDepth
 import migration.quarantine.ExecutionPolicy
+import migration.quarantine.TestScenarioExecutor
 import realization.execution.context.WorkerId
 import realization.execution.generation.TestInstanceFactory
 import realization.reporting.TestResultPublisher
 import realization.runtime.support.unwrapped
-import stage.input.boundary.TestScenarioExecutor
 import stage.invariant.judgment.AssertionRecord
 import stage.invariant.judgment.AssertionStatus
 import stage.publication.material.TestResult

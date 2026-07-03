@@ -1,8 +1,8 @@
 package adapter.reflection
 
-import stage.input.diagnostics.MetamodelAdapterAssemblyException
-import stage.input.diagnostics.MetamodelAdapterStateViolationException
-import stage.input.diagnostics.MetamodelFactContractViolationException
+import stage.admission.diagnostics.evidence.MetamodelAdapterAssemblyException
+import stage.admission.diagnostics.evidence.MetamodelAdapterStateViolationException
+import stage.admission.diagnostics.evidence.MetamodelFactContractViolationException
 import stage.normalization.contract.MetamodelProtocolTextGuards
 
 /**

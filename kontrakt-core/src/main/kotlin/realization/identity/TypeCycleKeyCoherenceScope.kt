@@ -1,8 +1,8 @@
 package realization.identity
 
-import stage.input.material.TypeShapeSummary
-import stage.input.diagnostics.MetamodelFactContractViolationException
-import stage.input.material.TypeCycleKey
+import stage.admission.diagnostics.evidence.MetamodelFactContractViolationException
+import stage.input.presentation.raw.TypeCycleKey
+import stage.input.presentation.raw.TypeShapeSummary
 
 /**
  * Scope-local coherence guard for TypeCycleKey issuance.

@@ -1,7 +1,7 @@
 package stage.canonicalization.material.frozen.record
 
+import stage.admission.diagnostics.evidence.MetamodelFactContractViolationException
 import stage.canonicalization.material.TypeReference
-import stage.input.diagnostics.MetamodelFactContractViolationException
 import stage.normalization.contract.MetamodelProtocolTextGuards
 
 /**

@@ -10,7 +10,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import stage.input.material.ScanScope
+import stage.input.presentation.raw.ScanScope
 import stage.publication.claim.ReportFormat
 import java.nio.file.Paths
 

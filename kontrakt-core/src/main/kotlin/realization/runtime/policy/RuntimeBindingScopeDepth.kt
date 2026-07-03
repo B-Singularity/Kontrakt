@@ -1,6 +1,6 @@
 package metamodel.domain.vo
 
-import stage.input.diagnostics.MetamodelFactContractViolationException
+import stage.admission.diagnostics.evidence.MetamodelFactContractViolationException
 
 /**
  * Depth of a runtime binding scope.

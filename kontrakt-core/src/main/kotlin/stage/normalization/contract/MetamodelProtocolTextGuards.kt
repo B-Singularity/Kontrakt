@@ -1,6 +1,6 @@
 package stage.normalization.contract
 
-import stage.input.diagnostics.MetamodelFactContractViolationException
+import stage.admission.diagnostics.evidence.MetamodelFactContractViolationException
 
 /**
  * Shared low-level order text guards for metamodel value objects.

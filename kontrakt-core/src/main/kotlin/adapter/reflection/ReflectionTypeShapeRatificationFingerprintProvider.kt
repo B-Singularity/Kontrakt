@@ -1,7 +1,7 @@
 package adapter.reflection
 
 import stage.canonicalization.material.TypeShapeRatificationFingerprint
-import stage.input.material.TypeShapeSummary
+import stage.input.presentation.raw.TypeShapeSummary
 
 /**
  * Reflection-adapter provider for TypeShapeRatificationFingerprint material.

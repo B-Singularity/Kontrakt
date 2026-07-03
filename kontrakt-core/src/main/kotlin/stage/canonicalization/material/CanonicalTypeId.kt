@@ -1,8 +1,8 @@
 package stage.canonicalization.material
 
 import realization.identity.TypeShapeCoherenceReceipt
-import stage.input.diagnostics.MetamodelFactContractViolationException
-import stage.input.material.TypeShapeSummary
+import stage.admission.diagnostics.evidence.MetamodelFactContractViolationException
+import stage.input.presentation.raw.TypeShapeSummary
 
 /**
  * Canonical type identity issued by the metamodel identity boundary.

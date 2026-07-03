@@ -1,7 +1,7 @@
 package adapter.reflection
 
+import stage.admission.diagnostics.evidence.MetamodelAdapterStateViolationException
 import stage.canonicalization.material.TypeReference
-import stage.input.diagnostics.MetamodelAdapterStateViolationException
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.reflect.KType

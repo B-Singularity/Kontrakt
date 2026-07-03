@@ -1,7 +1,7 @@
 package stage.lowering.boundary
 
 import stage.canonicalization.material.TypeReference
-import stage.input.material.ResolvedTypeShape
+import stage.input.presentation.raw.ResolvedTypeShape
 
 /**
  * Outbound type-shape port.

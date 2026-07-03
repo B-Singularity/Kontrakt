@@ -1,6 +1,6 @@
 package realization.identity.derivation
 
-import stage.input.material.MemberOrigin
+import stage.input.presentation.raw.MemberOrigin
 
 /**
  * Deterministic edge-key lowering bound to edgeOrderingVersion.

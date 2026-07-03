@@ -1,12 +1,12 @@
 package realization.metamodel.frozen.provider
 
+import stage.admission.diagnostics.evidence.FrozenMetamodelIncompleteTableException
+import stage.admission.diagnostics.evidence.FrozenMetamodelUnknownTypeReferenceException
 import stage.canonicalization.material.TypeReference
 import stage.canonicalization.material.frozen.image.FrozenMetamodelImage
 import stage.canonicalization.material.frozen.table.FrozenMetamodelImageTableId
 import stage.canonicalization.material.frozen.table.FrozenTypeReferenceIndex
-import stage.input.diagnostics.FrozenMetamodelIncompleteTableException
-import stage.input.diagnostics.FrozenMetamodelUnknownTypeReferenceException
-import stage.input.material.ResolvedTypeShape
+import stage.input.presentation.raw.ResolvedTypeShape
 import stage.lowering.boundary.TypeShapeProvider
 
 /**

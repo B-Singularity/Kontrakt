@@ -12,6 +12,7 @@ import exception.KontraktInternalException
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.runBlocking
 import migration.quarantine.ExecutionPolicy
+import migration.quarantine.KontraktRuntimeFactory
 import org.junit.platform.engine.EngineDiscoveryRequest
 import org.junit.platform.engine.EngineExecutionListener
 import org.junit.platform.engine.ExecutionRequest
@@ -24,9 +25,8 @@ import org.junit.platform.engine.discovery.PackageSelector
 import realization.execution.context.ThreadLocalScenarioControl
 import realization.execution.factory.ExecutionEnvironmentFactory
 import realization.reporting.TestResultPublisher
-import stage.input.boundary.KontraktRuntimeFactory
 import stage.input.contract.Contract
-import stage.input.material.ScanScope
+import stage.input.presentation.raw.ScanScope
 import stage.publication.claim.ReportFormat
 import stage.publication.material.TestResult
 import stage.publication.material.TestStatus

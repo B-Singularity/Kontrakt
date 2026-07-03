@@ -1,7 +1,7 @@
 package realization.planning
 
 import stage.canonicalization.material.TypeReference
-import stage.input.material.TypeKind
+import stage.input.presentation.raw.TypeKind
 import stage.normalization.material.AnnotationDescriptor
 import java.util.ArrayDeque
 

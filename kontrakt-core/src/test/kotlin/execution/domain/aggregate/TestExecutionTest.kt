@@ -10,6 +10,7 @@ import migration.quarantine.AuditDepth
 import migration.quarantine.AuditPolicy
 import migration.quarantine.DeterminismPolicy
 import migration.quarantine.ExecutionPolicy
+import migration.quarantine.TestScenarioExecutor
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.BeforeEach
@@ -19,7 +20,6 @@ import realization.execution.context.EphemeralTestContext
 import realization.execution.generation.TestInstanceFactory
 import realization.reporting.TestResultPublisher
 import stage.diagnostic.evidence.TraceSink
-import stage.input.boundary.TestScenarioExecutor
 import stage.invariant.judgment.AssertionRecord
 import stage.invariant.judgment.AssertionRule
 import stage.invariant.judgment.AssertionStatus

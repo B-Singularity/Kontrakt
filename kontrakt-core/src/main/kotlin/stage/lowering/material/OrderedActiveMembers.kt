@@ -1,8 +1,8 @@
 package stage.lowering.material
 
+import stage.input.presentation.dto.MemberFact
+import stage.input.presentation.dto.TypeFactsDTO
 import stage.lowering.diagnostics.PlanningProtocolIntegrityException
-import stage.input.material.MemberFact
-import stage.input.material.TypeFactsDTO
 
 /**
  * Boundary object representing the order-ratified active member set.

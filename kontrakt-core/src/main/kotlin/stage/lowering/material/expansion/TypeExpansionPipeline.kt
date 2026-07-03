@@ -1,22 +1,22 @@
 package stage.lowering.material.expansion
 
+import stage.canonicalization.material.TypeReference
+import stage.input.presentation.dto.RawTypeFactsDTO
+import stage.input.presentation.raw.ResolvedTypeShape
+import stage.input.presentation.raw.TypeKind
+import stage.lowering.boundary.RawTypeFactsProvider
+import stage.lowering.boundary.RawTypeFactsResolutionKind
+import stage.lowering.boundary.TypeCycleIdentityProvider
+import stage.lowering.boundary.TypeShapeProvider
 import stage.lowering.diagnostics.CorruptResolvedTypeShapeException
 import stage.lowering.diagnostics.PlanningExpansionException
 import stage.lowering.diagnostics.RawTypeFactsSubjectMismatchException
 import stage.lowering.diagnostics.TypeCycleIdentitySubjectMismatchException
 import stage.lowering.diagnostics.TypeShapeSubjectMismatchException
 import stage.lowering.diagnostics.UnsupportedTypeExpansionException
-import stage.lowering.boundary.RawTypeFactsProvider
-import stage.lowering.boundary.RawTypeFactsResolutionKind
-import stage.lowering.boundary.TypeCycleIdentityProvider
-import stage.lowering.boundary.TypeShapeProvider
 import stage.lowering.material.projection.ActiveMemberOrderer
 import stage.lowering.material.projection.ActiveMemberProjector
 import stage.lowering.material.projection.CapabilityProfile
-import stage.canonicalization.material.TypeReference
-import stage.input.material.RawTypeFactsDTO
-import stage.input.material.ResolvedTypeShape
-import stage.input.material.TypeKind
 
 /**
  * Compiler-style type expansion pipeline.

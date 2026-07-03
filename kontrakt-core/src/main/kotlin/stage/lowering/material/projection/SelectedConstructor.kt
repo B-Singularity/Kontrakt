@@ -1,7 +1,7 @@
 package stage.lowering.material.projection
 
+import stage.input.presentation.dto.ConstructorCandidateFact
 import stage.lowering.diagnostics.ActiveMemberProjectionException
-import stage.input.material.ConstructorCandidateFact
 
 /**
  * Deterministically selected constructor for one node-expansion episode.

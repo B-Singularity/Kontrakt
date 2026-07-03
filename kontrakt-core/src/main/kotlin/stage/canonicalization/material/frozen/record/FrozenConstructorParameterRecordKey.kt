@@ -1,6 +1,6 @@
 package stage.canonicalization.material.frozen.record
 
-import stage.input.diagnostics.MetamodelFactContractViolationException
+import stage.admission.diagnostics.evidence.MetamodelFactContractViolationException
 
 /**
  * Backend-neutral constructor-parameter identity key.

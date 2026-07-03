@@ -1,13 +1,13 @@
 package adapter.reflection
 
-import stage.lowering.material.expansion.TypeCycleIdentity
+import stage.admission.diagnostics.evidence.MetamodelAdapterStateViolationException
+import stage.canonicalization.material.TypeReference
+import stage.input.presentation.raw.ResolvedTypeShape
 import stage.lowering.boundary.RawTypeFactsProvider
 import stage.lowering.boundary.RawTypeFactsResolution
 import stage.lowering.boundary.TypeCycleIdentityProvider
 import stage.lowering.boundary.TypeShapeProvider
-import stage.canonicalization.material.TypeReference
-import stage.input.diagnostics.MetamodelAdapterStateViolationException
-import stage.input.material.ResolvedTypeShape
+import stage.lowering.material.expansion.TypeCycleIdentity
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.reflect.KType
 

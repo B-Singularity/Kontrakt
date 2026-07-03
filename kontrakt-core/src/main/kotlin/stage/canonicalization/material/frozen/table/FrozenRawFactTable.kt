@@ -1,6 +1,6 @@
 package stage.canonicalization.material.frozen.table
 
-import stage.input.material.RawTypeFactsDTO
+import stage.input.presentation.dto.RawTypeFactsDTO
 import versioning.coordinate.material.value.FrozenMetamodelImageSchemaVersion
 
 /**

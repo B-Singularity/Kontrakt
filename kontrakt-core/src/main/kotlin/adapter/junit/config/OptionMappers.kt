@@ -6,7 +6,7 @@ import migration.quarantine.DeterminismPolicy
 import migration.quarantine.ExecutionPolicy
 import migration.quarantine.LogRetention
 import migration.quarantine.ResourcePolicy
-import stage.input.material.ScanScope
+import stage.input.presentation.raw.ScanScope
 import stage.publication.claim.ReportingDirectives
 import java.nio.file.Paths
 

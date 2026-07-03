@@ -1,11 +1,11 @@
 package stage.normalization.material
 
 import governance.budget.material.DiagnosticBudget
+import stage.admission.diagnostics.evidence.MetamodelFactContractViolationException
 import stage.canonicalization.material.CanonicalTypeId
 import stage.canonicalization.material.TypeShapeRatificationFingerprint
-import stage.input.diagnostics.MetamodelFactContractViolationException
-import stage.input.material.ArrayComponentShapeHint
-import stage.input.material.TypeShapeSummary
+import stage.input.presentation.raw.ArrayComponentShapeHint
+import stage.input.presentation.raw.TypeShapeSummary
 import stage.normalization.contract.MetamodelProtocolOrdering
 
 /**

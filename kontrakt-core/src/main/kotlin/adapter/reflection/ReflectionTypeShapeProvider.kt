@@ -1,9 +1,9 @@
 package adapter.reflection
 
+import stage.admission.diagnostics.evidence.StrictModeViolationException
 import stage.canonicalization.material.TypeReference
-import stage.input.diagnostics.StrictModeViolationException
-import stage.input.material.NullabilityKind
-import stage.input.material.ResolvedTypeShape
+import stage.input.presentation.raw.NullabilityKind
+import stage.input.presentation.raw.ResolvedTypeShape
 import stage.lowering.boundary.TypeShapeProvider
 import java.math.BigDecimal
 import java.math.BigInteger

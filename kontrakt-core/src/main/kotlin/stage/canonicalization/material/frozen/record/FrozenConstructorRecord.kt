@@ -1,9 +1,9 @@
 package stage.canonicalization.material.frozen.record
 
+import stage.admission.diagnostics.evidence.MetamodelFactContractViolationException
+import stage.canonicalization.material.frozen.FrozenMetadataAvailability
 import stage.canonicalization.material.frozen.sequence.FrozenAnnotationRecordSequence
 import stage.canonicalization.material.frozen.sequence.FrozenConstructorParameterRecordSequence
-import stage.canonicalization.material.frozen.FrozenMetadataAvailability
-import stage.input.diagnostics.MetamodelFactContractViolationException
 
 /**
  * Frozen constructor record.

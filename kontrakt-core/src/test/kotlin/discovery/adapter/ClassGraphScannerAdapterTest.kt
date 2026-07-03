@@ -4,10 +4,10 @@ import adapter.classgraph.ClassGraphScannerAdapter
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestDispatcher
 import kotlinx.coroutines.test.runTest
+import migration.quarantine.ClasspathScanner
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import stage.input.boundary.ClasspathScanner
-import stage.input.material.ScanScope
+import stage.input.presentation.raw.ScanScope
 
 /**
  * [ADR-025] Test Interface Pattern.

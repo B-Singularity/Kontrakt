@@ -10,16 +10,16 @@ import ir.TestSpecification
 import ir.TestSpecification.TestMode
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.runTest
+import migration.quarantine.ClasspathScanner
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import stage.diagnostic.material.KontraktConfigurationException
-import stage.input.boundary.ClasspathScanner
 import stage.input.contract.Contract
 import stage.input.contract.DataContract
 import stage.input.contract.KontraktTest
 import stage.input.contract.Stateful
-import stage.input.material.ScanScope
+import stage.input.presentation.raw.ScanScope
 import java.time.Clock
 
 class TestDiscovererImplTest {

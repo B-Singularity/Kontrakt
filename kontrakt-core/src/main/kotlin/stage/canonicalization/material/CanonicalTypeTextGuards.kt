@@ -1,6 +1,6 @@
 package stage.canonicalization.material
 
-import stage.input.diagnostics.MetamodelFactContractViolationException
+import stage.admission.diagnostics.evidence.MetamodelFactContractViolationException
 
 /**
  * Low-cost order guards for already-inspected canonical type text snapshots.

@@ -1,11 +1,11 @@
 package stage.canonicalization.material
 
-import stage.input.diagnostics.MetamodelFactContractViolationException
-import stage.input.material.OrderedUseSiteAnnotations
-import stage.input.material.TypeCycleKey
-import stage.input.material.TypeIdentityCoherenceProof
-import stage.input.material.TypeNestingDepthLaw
-import stage.input.material.TypeShapeSummary
+import stage.admission.diagnostics.evidence.MetamodelFactContractViolationException
+import stage.input.presentation.raw.OrderedUseSiteAnnotations
+import stage.input.presentation.raw.TypeCycleKey
+import stage.input.presentation.raw.TypeIdentityCoherenceProof
+import stage.input.presentation.raw.TypeNestingDepthLaw
+import stage.input.presentation.raw.TypeShapeSummary
 
 /**
  * Domain-issued type reference.

@@ -2,10 +2,10 @@ package adapter.classgraph
 
 import io.github.classgraph.ClassGraph
 import io.github.classgraph.ScanResult
-import stage.input.boundary.ClasspathScanner
-import stage.input.diagnostics.RuntimeIntegrityException
-import stage.input.material.ScanIndex
-import stage.input.material.ScanScope
+import migration.quarantine.ClasspathScanner
+import stage.admission.diagnostics.evidence.RuntimeIntegrityException
+import stage.input.presentation.raw.ScanIndex
+import stage.input.presentation.raw.ScanScope
 
 class ClassGraphScannerAdapter : ClasspathScanner {
     override fun scan(scope: ScanScope): ScanIndex {

@@ -1,9 +1,9 @@
 package stage.lowering.material.projection
 
-import stage.lowering.diagnostics.ActiveMemberProjectionException
 import stage.canonicalization.material.TypeReference
-import stage.input.material.DeclarationOrdinal
-import stage.input.material.NullabilityKind
+import stage.input.presentation.raw.DeclarationOrdinal
+import stage.input.presentation.raw.NullabilityKind
+import stage.lowering.diagnostics.ActiveMemberProjectionException
 
 /**
  * Planner-facing projected active member.

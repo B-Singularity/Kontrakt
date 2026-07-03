@@ -25,6 +25,7 @@ import io.mockk.verify
 import io.mockk.verifyOrder
 import ir.TestSpecification
 import migration.quarantine.AuditPolicy
+import migration.quarantine.TestScenarioExecutor
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
@@ -45,8 +46,7 @@ import realization.execution.context.ExecutionEnvironment
 import realization.execution.context.ThreadLocalScenarioControl
 import realization.execution.factory.ExecutionEnvironmentFactory
 import realization.reporting.TestResultPublisher
-import stage.input.boundary.TestScenarioExecutor
-import stage.input.material.ScanScope
+import stage.input.presentation.raw.ScanScope
 import stage.publication.material.TestResult
 import stage.publication.material.TestStatus
 import java.time.Duration

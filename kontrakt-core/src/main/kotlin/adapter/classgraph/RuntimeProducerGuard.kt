@@ -1,7 +1,7 @@
 package adapter.classgraph
 
-import stage.input.boundary.ClasspathScanner
-import stage.input.diagnostics.RuntimeIntegrityException
+import migration.quarantine.ClasspathScanner
+import stage.admission.diagnostics.evidence.RuntimeIntegrityException
 import java.util.ServiceConfigurationError
 import java.util.ServiceLoader
 

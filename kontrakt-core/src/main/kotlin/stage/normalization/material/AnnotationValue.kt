@@ -1,9 +1,9 @@
 package stage.normalization.material
 
 import governance.budget.material.DiagnosticBudget
+import stage.admission.diagnostics.evidence.MetamodelFactContractViolationException
 import stage.canonicalization.material.CanonicalTypeId
 import stage.canonicalization.material.CanonicalTypeShapeKind
-import stage.input.diagnostics.MetamodelFactContractViolationException
 import stage.normalization.contract.MetamodelProtocolTextGuards
 import java.util.Collections
 

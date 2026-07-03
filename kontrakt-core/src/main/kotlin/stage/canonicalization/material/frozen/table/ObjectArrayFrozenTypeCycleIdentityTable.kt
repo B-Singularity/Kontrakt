@@ -1,8 +1,8 @@
 package stage.canonicalization.material.frozen.table
 
+import stage.admission.diagnostics.evidence.FrozenMetamodelSequenceIndexOutOfBoundsException
+import stage.admission.diagnostics.evidence.MetamodelFactContractViolationException
 import stage.canonicalization.material.frozen.image.FrozenMetamodelImageId
-import stage.input.diagnostics.FrozenMetamodelSequenceIndexOutOfBoundsException
-import stage.input.diagnostics.MetamodelFactContractViolationException
 import stage.lowering.material.expansion.TypeCycleIdentity
 import stage.normalization.contract.MetamodelProtocolTextGuards
 import versioning.coordinate.material.value.FrozenMetamodelImageSchemaVersion

@@ -1,11 +1,11 @@
 package execution.port.incoming
 
-import realization.execution.aggregate.TestExecution
 import ir.TestSpecification
+import migration.quarantine.KontraktRuntimeFactory
+import migration.quarantine.TestScenarioExecutor
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import stage.input.boundary.KontraktRuntimeFactory
-import stage.input.boundary.TestScenarioExecutor
+import realization.execution.aggregate.TestExecution
 
 interface KontraktRuntimeFactoryContract {
     fun createSut(): KontraktRuntimeFactory

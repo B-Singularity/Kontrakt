@@ -1,8 +1,8 @@
 package stage.canonicalization.material.frozen.image
 
+import stage.admission.diagnostics.evidence.FrozenMetamodelSequenceViolationException
 import stage.canonicalization.material.TypeReference
 import stage.canonicalization.material.frozen.table.FrozenMetamodelImageTableId
-import stage.input.diagnostics.FrozenMetamodelSequenceViolationException
 import versioning.coordinate.material.value.FrozenMetamodelImageSchemaVersion
 
 /**

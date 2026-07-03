@@ -10,7 +10,7 @@ import java.util.TreeSet
 /**
  * [Collector & Assembler]
  * Iterates over scan results, applies filters, and assembles the raw components.
- * * Note: Final Determinism (Sorting/Freezing) is delegated to [stage.input.material.ScanIndex.of].
+ * * Note: Final Determinism (Sorting/Freezing) is delegated to [stage.input.presentation.raw.ScanIndex.of].
  * This class focuses on "Finding" and "Validating".
  */
 internal class ScanResultCollector(

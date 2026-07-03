@@ -1,13 +1,16 @@
 package stage.lowering.material.projection
 
+import stage.input.presentation.dto.ConstructorCandidateFact
+import stage.input.presentation.dto.RawTypeFactsDTO
+import stage.input.presentation.raw.DeclarationOrdinal
+import stage.input.presentation.raw.DefaultValuePresence
+import stage.input.presentation.raw.NullabilityKind
 import stage.lowering.diagnostics.AmbiguousConstructorSelectionException
 import stage.lowering.diagnostics.NoEligibleConstructorSelectionException
-import stage.input.material.ConstructorCandidateFact
-import stage.input.material.DeclarationOrdinal
-import stage.input.material.DefaultValuePresence
-import stage.input.material.NullabilityKind
-import stage.input.material.RawTypeFactsDTO
 import java.lang.Long
+import kotlin.Comparator
+import kotlin.Int
+import kotlin.String
 
 /**
  * Core-owned semantic projector.

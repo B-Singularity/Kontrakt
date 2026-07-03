@@ -1,7 +1,7 @@
 package realization.planning.session
 
+import stage.input.presentation.dto.MemberFact
 import stage.lowering.diagnostics.PlanningProtocolIntegrityException
-import stage.input.material.MemberFact
 import java.util.Arrays
 
 /**

@@ -5,7 +5,7 @@ import governance.budget.contract.CostCenter
 import realization.identity.interning.PlanCacheKey
 import realization.planning.assembly.ChildResultSlice
 import stage.canonicalization.material.CanonicalSignature
-import stage.input.material.MemberFact
+import stage.input.presentation.dto.MemberFact
 import stage.lowering.contract.BreakpointStage
 import stage.lowering.diagnostics.FuelExhaustedException
 import stage.lowering.diagnostics.PlanningProtocolIntegrityException

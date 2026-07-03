@@ -1,10 +1,10 @@
 package stage.canonicalization.material.frozen.sequence
 
-import stage.canonicalization.material.frozen.table.FrozenMetamodelImageTableId
+import stage.admission.diagnostics.evidence.FrozenMetamodelSequenceIndexOutOfBoundsException
 import stage.canonicalization.material.frozen.image.FrozenMetamodelImageId
 import stage.canonicalization.material.frozen.record.FrozenConstructorParameterRecord
 import stage.canonicalization.material.frozen.record.FrozenConstructorRecordKey
-import stage.input.diagnostics.FrozenMetamodelSequenceIndexOutOfBoundsException
+import stage.canonicalization.material.frozen.table.FrozenMetamodelImageTableId
 
 /**
  * Object-array-backed deterministic constructor-parameter sequence.

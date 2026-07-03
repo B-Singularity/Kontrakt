@@ -1,12 +1,12 @@
 package stage.canonicalization.material.frozen.record
 
+import stage.admission.diagnostics.evidence.MetamodelFactContractViolationException
+import stage.canonicalization.material.TypeReference
+import stage.canonicalization.material.frozen.FrozenMetadataAvailability
 import stage.canonicalization.material.frozen.sequence.FrozenAnnotationRecordSequence
 import stage.canonicalization.material.frozen.sequence.FrozenConstructorRecordSequence
 import stage.canonicalization.material.frozen.sequence.FrozenPropertyRecordSequence
-import stage.canonicalization.material.TypeReference
-import stage.canonicalization.material.frozen.FrozenMetadataAvailability
-import stage.input.diagnostics.MetamodelFactContractViolationException
-import stage.input.material.RawTypeFactsDTO
+import stage.input.presentation.dto.RawTypeFactsDTO
 
 /**
  * Frozen adapter-neutral raw fact material for one TypeReference.

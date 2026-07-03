@@ -1,7 +1,7 @@
 package adapter.reflection
 
+import stage.admission.diagnostics.evidence.MetamodelAdapterAssemblyException
 import stage.canonicalization.material.frozen.image.FrozenMetamodelImageId
-import stage.input.diagnostics.MetamodelAdapterAssemblyException
 import versioning.coordinate.material.value.FrozenMetamodelImageSchemaVersion
 import kotlin.reflect.KType
 

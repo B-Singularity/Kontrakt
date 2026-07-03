@@ -1,7 +1,7 @@
 package stage.canonicalization.material.frozen.image
 
+import stage.admission.diagnostics.evidence.FrozenMetamodelIntegrityViolationException
 import stage.canonicalization.diagnostics.provenance.FrozenMetamodelImageDiagnosticHeader
-import stage.input.diagnostics.FrozenMetamodelIntegrityViolationException
 
 /**
  * Adapter/bootstrap return object for one frozen metamodel image.

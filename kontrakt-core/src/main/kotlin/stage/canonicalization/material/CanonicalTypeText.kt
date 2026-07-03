@@ -1,8 +1,8 @@
 package stage.canonicalization.material
 
 import metamodel.domain.port.outgoing.NormalizationEngine
-import stage.input.diagnostics.MetamodelFactContractViolationException
-import stage.input.diagnostics.MetamodelNormalizationViolationException
+import stage.admission.diagnostics.evidence.MetamodelFactContractViolationException
+import stage.admission.diagnostics.evidence.MetamodelNormalizationViolationException
 
 /**
  * Canonical textual material for metamodel type identity.

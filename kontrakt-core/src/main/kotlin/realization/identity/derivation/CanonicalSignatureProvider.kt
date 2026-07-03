@@ -1,7 +1,7 @@
 package realization.identity.derivation
 
 import stage.canonicalization.material.CanonicalSignature
-import stage.input.material.TypeFactsDTO
+import stage.input.presentation.dto.TypeFactsDTO
 
 /**
  * Deterministic signature derivation bound to normalization/version rules.

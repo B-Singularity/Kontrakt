@@ -1,6 +1,6 @@
 package stage.lowering.boundary
 
-import stage.input.material.RawTypeFactsDTO
+import stage.input.presentation.dto.RawTypeFactsDTO
 
 /**
  * Session-bound implementation of TypeExpansionWorkMeter.

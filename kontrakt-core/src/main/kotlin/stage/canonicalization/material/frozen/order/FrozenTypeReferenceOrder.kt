@@ -1,8 +1,8 @@
 package stage.canonicalization.material.frozen.order
 
 import stage.canonicalization.material.TypeReference
-import stage.input.material.ArrayComponentShapeHint
-import stage.input.material.TypeShapeSummary
+import stage.input.presentation.raw.ArrayComponentShapeHint
+import stage.input.presentation.raw.TypeShapeSummary
 import stage.normalization.contract.MetamodelProtocolOrdering
 
 /**

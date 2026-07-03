@@ -18,7 +18,7 @@ import realization.planning.session.IterateMembersFrame
 import realization.planning.session.PlanNodeFrame
 import realization.planning.session.PlannerSession
 import stage.canonicalization.material.TypeReference
-import stage.input.material.MemberFact
+import stage.input.presentation.dto.MemberFact
 import stage.lowering.contract.TraversalDisposition
 import stage.lowering.diagnostics.ActiveCycleWithoutBreakpointException
 import stage.lowering.diagnostics.AmbiguousEdgeKeyException

@@ -1,8 +1,8 @@
 package adapter.reflection
 
-import realization.identity.TypeIdentity64Deriver
 import realization.identity.CanonicalTypeReferenceIssuer
-import stage.input.diagnostics.MetamodelAdapterAssemblyException
+import realization.identity.TypeIdentity64Deriver
+import stage.admission.diagnostics.evidence.MetamodelAdapterAssemblyException
 
 /**
  * Reflection metamodel adapter composition root.
