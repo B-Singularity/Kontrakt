@@ -1,7 +1,7 @@
 package realization.runtime.orchestration
 
 import stage.lowering.diagnostics.PlanningProtocolIntegrityException
-import statemachine.state.material.PlanningRunSuspensionBridgeState
+import statemachine.state.material.condition.PlanningRunSuspensionBridgeState
 
 /**
  * Transition law for the runtime-boundary joined-wait bridge lifecycle.

@@ -1,8 +1,8 @@
 package statemachine.transition.contract
 
 import stage.lowering.diagnostics.PlanningProtocolIntegrityException
-import statemachine.state.material.DeliveryEntryState
-import statemachine.state.material.DispatchLaneState
+import statemachine.state.material.condition.DeliveryEntryState
+import statemachine.state.material.condition.DispatchLaneState
 
 /**
  * Single source of truth for closed top-level lifecycle legality across the dispatch plane.

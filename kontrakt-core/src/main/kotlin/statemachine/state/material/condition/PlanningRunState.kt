@@ -1,4 +1,4 @@
-package statemachine.state.material
+package statemachine.state.material.condition
 
 /**
  * Top-level runtime-boundary orchestration lifecycle for one logical planning run.

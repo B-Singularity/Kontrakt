@@ -10,7 +10,7 @@ import stage.lowering.material.candidate.CanonicalPlanNode
 import stage.lowering.material.candidate.PartitionId
 import stage.lowering.material.candidate.RawCycleBreakPayload
 import stage.lowering.material.candidate.RawPayloadNode
-import statemachine.transition.diagnostics.L2FaultKind
+import statemachine.transition.diagnostics.evidence.L2FaultKind
 
 /**
  * Domain service orchestrating Tier-2 structural interning.

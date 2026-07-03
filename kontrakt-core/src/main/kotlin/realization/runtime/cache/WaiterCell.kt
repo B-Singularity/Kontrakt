@@ -1,7 +1,7 @@
 package realization.runtime.cache
 
 import stage.lowering.diagnostics.PlanningProtocolIntegrityException
-import statemachine.state.material.WaiterState
+import statemachine.state.material.condition.WaiterState
 import statemachine.transition.contract.L2LifecycleLaw
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.VarHandle

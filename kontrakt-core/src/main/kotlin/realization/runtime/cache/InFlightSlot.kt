@@ -1,9 +1,9 @@
 package realization.runtime.cache
 
 import stage.lowering.diagnostics.PlanningProtocolIntegrityException
-import statemachine.state.material.CommitRightState
-import statemachine.state.material.SharedSlotState
-import statemachine.state.material.SpeculativeLeaseState
+import statemachine.state.material.condition.CommitRightState
+import statemachine.state.material.condition.SharedSlotState
+import statemachine.state.material.condition.SpeculativeLeaseState
 import statemachine.transition.contract.L2LifecycleLaw
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.VarHandle

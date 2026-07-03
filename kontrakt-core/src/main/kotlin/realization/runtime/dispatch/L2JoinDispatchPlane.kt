@@ -9,8 +9,8 @@ import realization.runtime.cache.InFlightSlot
 import realization.runtime.cache.WaiterCell
 import realization.runtime.time.MonotonicTimeSource
 import stage.lowering.material.candidate.CanonicalPlanNode
-import statemachine.state.material.DeliveryEntryState
-import statemachine.state.material.DispatchLaneState
+import statemachine.state.material.condition.DeliveryEntryState
+import statemachine.state.material.condition.DispatchLaneState
 import statemachine.transition.contract.DispatchLifecycleLaw
 import java.util.Arrays
 import java.util.IdentityHashMap

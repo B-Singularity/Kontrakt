@@ -11,7 +11,7 @@ import stage.lowering.diagnostics.FuelExhaustedException
 import stage.lowering.diagnostics.PlanningProtocolIntegrityException
 import stage.lowering.diagnostics.PlanningRuntimeInvariantException
 import stage.lowering.material.candidate.OrderedActiveMembers
-import statemachine.transition.material.CommittedPlanNode
+import statemachine.transition.material.move.CommittedPlanNode
 
 /**
  * Aggregate root for the worker-local semantic planning runtime.

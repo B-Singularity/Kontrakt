@@ -1,7 +1,7 @@
 package statemachine.transition.contract
 
 import stage.lowering.diagnostics.PlanningProtocolIntegrityException
-import statemachine.state.material.PlanningRunState
+import statemachine.state.material.condition.PlanningRunState
 
 /**
  * Normative transition law for PlanningRunState.

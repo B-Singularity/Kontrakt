@@ -1,4 +1,4 @@
-package statemachine.transition.diagnostics
+package statemachine.transition.diagnostics.evidence
 
 /**
  * [Policy] Strategies for breaking recursive cycles.

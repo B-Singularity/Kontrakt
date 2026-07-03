@@ -1,4 +1,4 @@
-package statemachine.transition.material
+package statemachine.transition.material.move
 
 import migration.quarantine.ResolvedSessionBudget
 import stage.lowering.diagnostics.CapacityExceededException

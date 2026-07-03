@@ -1,4 +1,4 @@
-package statemachine.transition.diagnostics
+package statemachine.transition.diagnostics.evidence
 
 /**
  * Tier-2 fault categories exposed to the Domain Core.

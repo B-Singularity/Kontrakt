@@ -34,7 +34,7 @@ import stage.lowering.diagnostics.PortContractViolationException
 import stage.lowering.diagnostics.UnsupportedTypeExpansionException
 import stage.lowering.material.candidate.CanonicalPlanNode
 import stage.lowering.material.candidate.PartitionId
-import statemachine.transition.material.CommittedPlanNode
+import statemachine.transition.material.move.CommittedPlanNode
 
 /**
  * Compiler-style structural planner core.

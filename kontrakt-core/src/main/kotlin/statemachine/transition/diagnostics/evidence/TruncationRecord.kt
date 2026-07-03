@@ -1,4 +1,4 @@
-package statemachine.transition.diagnostics
+package statemachine.transition.diagnostics.evidence
 
 import diagnostic.retention.material.retained.TraceEvent
 import diagnostic.retention.material.retained.TracePhase

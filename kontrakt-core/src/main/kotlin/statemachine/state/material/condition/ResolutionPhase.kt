@@ -1,4 +1,4 @@
-package statemachine.state.material
+package statemachine.state.material.condition
 
 import migration.quarantine.BindingStrategy
 import stage.lowering.material.candidate.ResolvedSpec

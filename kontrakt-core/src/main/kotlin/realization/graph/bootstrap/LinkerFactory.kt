@@ -1,9 +1,9 @@
 package realization.graph.bootstrap
 
-import realization.graph.linking.LinkerService
 import realization.graph.binding.RealBindingStrategy
-import statemachine.state.material.IntegrityPhase
-import statemachine.state.material.ResolutionPhase
+import realization.graph.linking.LinkerService
+import statemachine.state.material.condition.IntegrityPhase
+import statemachine.state.material.condition.ResolutionPhase
 
 /**
  * Bootstrap factory for the Linker subsystem.

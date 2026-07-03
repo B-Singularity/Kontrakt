@@ -3,11 +3,11 @@ package realization.runtime.orchestration
 import migration.quarantine.RuntimePolicyEpoch
 import stage.lowering.diagnostics.CapacityExceededException
 import stage.lowering.diagnostics.PlanningProtocolIntegrityException
-import statemachine.state.material.PlanningRunState
+import statemachine.state.material.condition.PlanningRunState
 import statemachine.transition.contract.PlanningRunLifecycleLaw
-import statemachine.transition.material.PlanningResumePoint
-import statemachine.transition.material.PlanningRunEpoch
-import statemachine.transition.material.PlanningRunRemainingBudget
+import statemachine.transition.material.move.PlanningResumePoint
+import statemachine.transition.material.move.PlanningRunEpoch
+import statemachine.transition.material.move.PlanningRunRemainingBudget
 
 /**
  * Runtime-boundary aggregate owning one logical end-to-end planning run.

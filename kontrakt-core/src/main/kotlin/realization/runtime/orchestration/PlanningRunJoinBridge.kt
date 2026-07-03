@@ -1,7 +1,7 @@
 package realization.runtime.orchestration
 
 import migration.quarantine.JoinHandle
-import statemachine.transition.material.PlanningResumePoint
+import statemachine.transition.material.move.PlanningResumePoint
 
 /**
  * Runtime-boundary bridge from adapter-level joined wait to planning-run orchestration.

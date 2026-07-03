@@ -1,4 +1,4 @@
-package statemachine.transition.material
+package statemachine.transition.material.move
 
 /**
  * Immutable restart descriptor for one planning-run suspension site.

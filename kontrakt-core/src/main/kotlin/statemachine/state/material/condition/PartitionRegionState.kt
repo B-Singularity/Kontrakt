@@ -1,4 +1,4 @@
-package statemachine.state.material
+package statemachine.state.material.condition
 
 import stage.lowering.diagnostics.PlanningProtocolIntegrityException
 import kotlin.enums.EnumEntries

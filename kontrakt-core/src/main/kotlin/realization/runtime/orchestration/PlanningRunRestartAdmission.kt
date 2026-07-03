@@ -1,9 +1,9 @@
 package realization.runtime.orchestration
 
 import migration.quarantine.RuntimePolicyEpoch
-import statemachine.transition.material.PlanningResumePoint
-import statemachine.transition.material.PlanningRunEpoch
-import statemachine.transition.material.PlanningRunRemainingBudget
+import statemachine.transition.material.move.PlanningResumePoint
+import statemachine.transition.material.move.PlanningRunEpoch
+import statemachine.transition.material.move.PlanningRunRemainingBudget
 
 /**
  * Runtime-boundary admission result for a lawful fresh-session restart.

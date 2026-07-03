@@ -1,4 +1,4 @@
-package statemachine.transition.material
+package statemachine.transition.material.move
 
 import realization.identity.interning.PlanCacheKey
 import stage.lowering.diagnostics.FaultKind

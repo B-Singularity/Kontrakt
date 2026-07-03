@@ -10,9 +10,9 @@ import realization.runtime.dispatch.L2JoinDispatchPlane
 import realization.runtime.time.MonotonicTimeSource
 import stage.lowering.diagnostics.PlanningProtocolIntegrityException
 import stage.lowering.material.candidate.PartitionId
-import statemachine.state.material.PartitionRegionState
+import statemachine.state.material.condition.PartitionRegionState
 import statemachine.transition.contract.L2LifecycleLaw
-import statemachine.transition.diagnostics.L2FaultKind
+import statemachine.transition.diagnostics.evidence.L2FaultKind
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.LongAdder
 

@@ -1,12 +1,12 @@
 package statemachine.transition.contract
 
 import stage.lowering.diagnostics.PlanningProtocolIntegrityException
-import statemachine.state.material.BuilderHandleState
-import statemachine.state.material.CommitRightState
-import statemachine.state.material.PartitionRegionState
-import statemachine.state.material.SharedSlotState
-import statemachine.state.material.SpeculativeLeaseState
-import statemachine.state.material.WaiterState
+import statemachine.state.material.condition.BuilderHandleState
+import statemachine.state.material.condition.CommitRightState
+import statemachine.state.material.condition.PartitionRegionState
+import statemachine.state.material.condition.SharedSlotState
+import statemachine.state.material.condition.SpeculativeLeaseState
+import statemachine.state.material.condition.WaiterState
 
 /**
  * Single source of truth for closed top-level lifecycle legality across the Planning L2 runtime.

@@ -5,7 +5,7 @@ import migration.quarantine.JoinRegistrationDecision
 import migration.quarantine.JoinResumeSignal
 import migration.quarantine.JoinResumeStep
 import realization.planning.session.PlannerSession
-import statemachine.state.material.PlanningRunSuspensionBridgeState
+import statemachine.state.material.condition.PlanningRunSuspensionBridgeState
 import java.util.concurrent.atomic.AtomicInteger
 
 /**

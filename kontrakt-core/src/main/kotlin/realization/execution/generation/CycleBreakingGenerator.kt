@@ -5,8 +5,8 @@ import execution.domain.exception.RuntimeInstantiationException
 import realization.runtime.support.RuntimeInstantiator
 import realization.runtime.support.RuntimeTypeHandle
 import stage.input.presentation.raw.TypeKind
-import statemachine.transition.diagnostics.TruncationRecord
-import statemachine.transition.diagnostics.TruncationRule
+import statemachine.transition.diagnostics.evidence.TruncationRecord
+import statemachine.transition.diagnostics.evidence.TruncationRule
 
 class CycleBreakingGenerator(
     private val descriptor: TypeDescriptor,

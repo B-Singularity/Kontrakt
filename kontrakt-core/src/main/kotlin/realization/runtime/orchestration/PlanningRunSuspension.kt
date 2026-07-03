@@ -1,7 +1,7 @@
 package realization.runtime.orchestration
 
 import stage.lowering.diagnostics.PlanningProtocolIntegrityException
-import statemachine.transition.material.PlanningResumePoint
+import statemachine.transition.material.move.PlanningResumePoint
 
 /**
  * Immutable-orchestration records for one joined-wait suspension.

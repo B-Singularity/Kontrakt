@@ -7,7 +7,7 @@ import migration.quarantine.JoinRegistrationDecision
 import migration.quarantine.JoinResumeStep
 import realization.planning.assembly.CanonicalPayloadSealer
 import realization.planning.session.PlannerSession
-import statemachine.transition.diagnostics.L2FaultKind
+import statemachine.transition.diagnostics.evidence.L2FaultKind
 
 /**
  * Suspended join episode lifted into domain/service space.

@@ -4,7 +4,7 @@ import realization.identity.interning.PlanCacheKey
 import realization.planning.session.PlannerSession
 import stage.lowering.material.candidate.CanonicalPlanNode
 import stage.lowering.material.candidate.PartitionId
-import statemachine.transition.diagnostics.L2FaultKind
+import statemachine.transition.diagnostics.evidence.L2FaultKind
 
 /**
  * Outbound port for Tier-2 structural interning.
