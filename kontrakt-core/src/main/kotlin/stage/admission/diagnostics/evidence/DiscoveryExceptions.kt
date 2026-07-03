@@ -1,6 +1,6 @@
 package stage.admission.diagnostics.evidence
 
-import stage.diagnostic.material.KontraktException
+import diagnostic.retention.diagnostics.exception.KontraktException
 
 /**
  * [Integrity Violation]

@@ -28,8 +28,8 @@ import realization.reporting.TestResultPublisher
 import stage.input.contract.Contract
 import stage.input.presentation.raw.ScanScope
 import stage.publication.claim.ReportFormat
-import stage.publication.material.TestResult
-import stage.publication.material.TestStatus
+import stage.publication.material.claim.TestResult
+import stage.publication.material.claim.TestStatus
 import java.nio.file.Path
 import java.time.Clock
 

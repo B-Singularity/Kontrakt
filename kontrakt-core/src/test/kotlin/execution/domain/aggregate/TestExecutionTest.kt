@@ -1,6 +1,7 @@
 package execution.domain.aggregate
 
 import adapter.file.WorkerTraceSinkPool
+import diagnostic.retention.material.retained.TraceSink
 import exception.KontraktInternalException
 import io.mockk.every
 import io.mockk.mockk
@@ -19,12 +20,11 @@ import realization.execution.aggregate.TestExecution
 import realization.execution.context.EphemeralTestContext
 import realization.execution.generation.TestInstanceFactory
 import realization.reporting.TestResultPublisher
-import stage.diagnostic.evidence.TraceSink
 import stage.invariant.judgment.AssertionRecord
 import stage.invariant.judgment.AssertionRule
 import stage.invariant.judgment.AssertionStatus
-import stage.publication.material.ExecutionResult
-import stage.publication.material.TestStatus
+import stage.publication.material.claim.ExecutionResult
+import stage.publication.material.claim.TestStatus
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneId

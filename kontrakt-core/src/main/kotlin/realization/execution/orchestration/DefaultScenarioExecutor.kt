@@ -1,5 +1,8 @@
 package realization.execution.orchestration
 
+import diagnostic.retention.diagnostics.exception.KontraktConfigurationException
+import diagnostic.retention.material.retained.ExecutionTrace
+import diagnostic.retention.material.retained.ScenarioTrace
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.runBlocking
 import migration.quarantine.ConstructorComplianceExecutor
@@ -10,15 +13,12 @@ import realization.execution.context.EphemeralTestContext
 import realization.execution.generation.FixtureGenerator
 import realization.execution.generation.GenerationContext
 import realization.execution.mocking.MockingEngine
-import stage.diagnostic.evidence.ExecutionTrace
-import stage.diagnostic.evidence.ScenarioTrace
-import stage.diagnostic.material.KontraktConfigurationException
 import stage.input.contract.Test
 import stage.invariant.judgment.AssertionRecord
 import stage.invariant.judgment.AssertionStatus
 import stage.invariant.judgment.SourceLocation
 import stage.invariant.judgment.StandardAssertion
-import stage.publication.material.ExecutionResult
+import stage.publication.material.claim.ExecutionResult
 import java.lang.reflect.Method
 import java.time.Clock
 import java.time.Instant
@@ -42,7 +42,7 @@ import kotlin.reflect.jvm.kotlinFunction
  * **Core Responsibilities:**
  * 1. **Orchestration:** Dispatches execution to specific strategies (User Scenario, Contract Fuzzing, Data Compliance).
  * 2. **Determinism:** Establishes a controlled environment with a Fixed Clock and Reproducible Seed.
- * 3. **Forensics:** Ensures that all execution arguments—including skipped defaults—are captured in the [stage.diagnostic.evidence.ScenarioTrace].
+ * 3. **Forensics:** Ensures that all execution arguments—including skipped defaults—are captured in the [ScenarioTrace].
  *
  * **Architecture Note (ADR-023):**
  * This executor implements a **Namespaced Auditing Strategy**. It separates the logs of different test modes
@@ -74,7 +74,7 @@ class DefaultScenarioExecutor(
      * 2. Using a locally determined seed (without mutating the immutable spec).
      *
      * @param context The ephemeral context containing the test target and mocking engine.
-     * @return [stage.publication.material.ExecutionResult] containing records, forensic arguments, and the seed used.
+     * @return [ExecutionResult] containing records, forensic arguments, and the seed used.
      */
     override fun executeScenarios(context: EphemeralTestContext): ExecutionResult {
         // [Strategy] Time Determinism
@@ -315,7 +315,7 @@ class DefaultScenarioExecutor(
 
     /**
      * Executes the given [block] while measuring execution time.
-     * GUARANTEES that an [stage.diagnostic.evidence.ExecutionTrace] is recorded to the [context] via `try-finally`,
+     * GUARANTEES that an [ExecutionTrace] is recorded to the [context] via `try-finally`,
      * ensuring observability even if the test method throws an exception.
      */
     private inline fun executeWithRecording(
@@ -334,7 +334,7 @@ class DefaultScenarioExecutor(
     }
 
     /**
-     * Formats and appends an [stage.diagnostic.evidence.ExecutionTrace] event to the scenario trace.
+     * Formats and appends an [ExecutionTrace] event to the scenario trace.
      * The arguments are sorted alphabetically to ensure a deterministic log output.
      */
     private fun recordExecutionTrace(

@@ -1,8 +1,8 @@
 package statemachine.transition.diagnostics
 
+import diagnostic.retention.material.retained.TraceEvent
+import diagnostic.retention.material.retained.TracePhase
 import ir.EdgeModel
-import stage.diagnostic.evidence.TraceEvent
-import stage.diagnostic.evidence.TracePhase
 
 /**
  * [Trace Event] Records a decision made to truncate a recursive cycle.

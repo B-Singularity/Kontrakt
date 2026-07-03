@@ -1,5 +1,7 @@
 package common.util
 
+import diagnostic.retention.diagnostics.exception.ContractViolationException
+import diagnostic.retention.diagnostics.exception.KontraktConfigurationException
 import exception.KontraktInternalException
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
@@ -9,8 +11,6 @@ import realization.runtime.support.analyzeBlame
 import realization.runtime.support.extractSourceLocation
 import realization.runtime.support.sanitizeStackTrace
 import realization.runtime.support.unwrapped
-import stage.diagnostic.material.ContractViolationException
-import stage.diagnostic.material.KontraktConfigurationException
 import stage.invariant.judgment.AssertionRule
 import stage.invariant.judgment.SourceLocation
 import java.lang.reflect.InvocationTargetException

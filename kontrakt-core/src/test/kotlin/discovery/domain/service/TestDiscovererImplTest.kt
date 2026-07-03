@@ -1,5 +1,6 @@
 package discovery.domain.service
 
+import diagnostic.retention.diagnostics.exception.KontraktConfigurationException
 import io.mockk.clearMocks
 import io.mockk.coEvery
 import io.mockk.every
@@ -14,7 +15,6 @@ import migration.quarantine.ClasspathScanner
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import stage.diagnostic.material.KontraktConfigurationException
 import stage.input.contract.Contract
 import stage.input.contract.DataContract
 import stage.input.contract.KontraktTest

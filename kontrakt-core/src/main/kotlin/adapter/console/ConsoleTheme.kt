@@ -1,6 +1,6 @@
 package adapter.console
 
-import stage.publication.material.TestStatus
+import stage.publication.material.claim.TestStatus
 
 /**
  * [Style] Console Theme Strategy

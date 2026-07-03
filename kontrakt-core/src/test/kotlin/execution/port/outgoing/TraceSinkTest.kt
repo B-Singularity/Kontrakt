@@ -1,9 +1,9 @@
 package execution.port.outgoing
 
+import diagnostic.retention.material.retained.TraceEvent
+import diagnostic.retention.material.retained.TraceSink
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import stage.diagnostic.evidence.TraceEvent
-import stage.diagnostic.evidence.TraceSink
 import java.io.File
 
 interface TraceSinkTest {

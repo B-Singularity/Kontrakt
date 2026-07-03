@@ -1,11 +1,11 @@
 package exception
 
+import diagnostic.retention.diagnostics.exception.ContractViolationException
+import diagnostic.retention.diagnostics.exception.KontraktConfigurationException
+import diagnostic.retention.diagnostics.exception.KontraktException
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import stage.diagnostic.material.ContractViolationException
-import stage.diagnostic.material.KontraktConfigurationException
-import stage.diagnostic.material.KontraktException
 import stage.invariant.judgment.AssertionRule
 
 class KontraktExceptionTest {

@@ -1,14 +1,14 @@
 package realization.execution.service
 
-import stage.diagnostic.material.ContractViolationException
+import diagnostic.retention.diagnostics.exception.ContractViolationException
 import stage.invariant.judgment.AssertionRecord
 import stage.invariant.judgment.AssertionStatus
-import stage.publication.material.TestStatus
+import stage.publication.material.claim.TestStatus
 
 /**
  * [Domain Service] Test Verdict Decider.
  *
- * Encapsulates the logic for determining the final outcome ([stage.publication.material.TestStatus]) of a test session.
+ * Encapsulates the logic for determining the final outcome ([TestStatus]) of a test session.
  * This separates the "Decision Policy" from the "Execution & Reporting" mechanism,
  * making the logic easily testable via Unit Tests without mocking infrastructure.
  */
@@ -23,7 +23,7 @@ class VerdictDecider {
      *
      * @param error The exception thrown during execution (if any).
      * @param records The list of assertion records collected during execution.
-     * @return The comprehensive [stage.publication.material.TestStatus].
+     * @return The comprehensive [TestStatus].
      */
     fun decide(
         error: Throwable?,

@@ -1,7 +1,7 @@
 package migration.quarantine
 
 import realization.execution.context.EphemeralTestContext
-import stage.publication.material.ExecutionResult
+import stage.publication.material.claim.ExecutionResult
 
 /**
  * [API] Test Scenario Executor.

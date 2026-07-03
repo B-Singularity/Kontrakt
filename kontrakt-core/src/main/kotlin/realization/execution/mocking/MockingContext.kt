@@ -1,7 +1,7 @@
 package realization.execution.mocking
 
+import diagnostic.retention.material.retained.ScenarioTrace
 import realization.execution.generation.FixtureGenerator
-import stage.diagnostic.evidence.ScenarioTrace
 
 /**
  * [Context Object] Encapsulates the execution context required for mocking operations.

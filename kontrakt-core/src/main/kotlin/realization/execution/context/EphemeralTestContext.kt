@@ -1,8 +1,8 @@
 package realization.execution.context
 
+import diagnostic.retention.material.retained.ScenarioTrace
 import realization.execution.mocking.MockingEngine
 import realization.execution.scenario.ScenarioControl
-import stage.diagnostic.evidence.ScenarioTrace
 import java.lang.reflect.Method
 import kotlin.reflect.KClass
 

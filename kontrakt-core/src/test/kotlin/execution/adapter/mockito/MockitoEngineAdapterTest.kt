@@ -1,6 +1,9 @@
 package execution.adapter.mockito
 
 import adapter.mockito.MockitoEngineAdapter
+import diagnostic.retention.diagnostics.exception.KontraktConfigurationException
+import diagnostic.retention.material.retained.ExecutionTrace
+import diagnostic.retention.material.retained.ScenarioTrace
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
@@ -15,9 +18,6 @@ import org.mockito.invocation.InvocationOnMock
 import realization.execution.generation.FixtureGenerator
 import realization.execution.generation.GenerationRequest
 import realization.execution.mocking.MockingContext
-import stage.diagnostic.evidence.ExecutionTrace
-import stage.diagnostic.evidence.ScenarioTrace
-import stage.diagnostic.material.KontraktConfigurationException
 import java.lang.reflect.Method
 import java.util.Optional
 import kotlin.reflect.jvm.kotlinFunction

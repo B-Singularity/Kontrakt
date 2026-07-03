@@ -1,7 +1,7 @@
 package stage.lowering.diagnostics
 
+import diagnostic.retention.diagnostics.exception.KontraktException
 import realization.planning.projection.ConstructorRejectionRecord
-import stage.diagnostic.material.KontraktException
 
 /**
  * Root exception for Planning Protocol SSOT violations.

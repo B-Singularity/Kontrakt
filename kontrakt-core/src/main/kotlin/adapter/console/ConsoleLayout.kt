@@ -3,8 +3,8 @@ package adapter.console
 import migration.quarantine.AuditDepth
 import migration.quarantine.AuditPolicy
 import migration.quarantine.LogRetention
-import stage.publication.material.TestResultEvent
-import stage.publication.material.TestStatus
+import stage.publication.material.claim.TestResultEvent
+import stage.publication.material.claim.TestStatus
 
 /**
  * [View] Console Layout Strategy

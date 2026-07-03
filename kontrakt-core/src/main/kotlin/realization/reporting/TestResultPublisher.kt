@@ -1,6 +1,6 @@
 package realization.reporting
 
-import stage.publication.material.TestResultEvent
+import stage.publication.material.claim.TestResultEvent
 
 /**
  * [Port] Test Result Publisher

@@ -1,5 +1,6 @@
 package execution.domain.entity
 
+import diagnostic.retention.material.retained.ScenarioTrace
 import exception.KontraktInternalException
 import io.mockk.mockk
 import ir.TestSpecification
@@ -10,7 +11,6 @@ import org.junit.jupiter.api.Test
 import realization.execution.context.EphemeralTestContext
 import realization.execution.mocking.MockingEngine
 import realization.execution.scenario.ScenarioControl
-import stage.diagnostic.evidence.ScenarioTrace
 
 class EphemeralTestContextTest {
     // Mocks for constructor arguments

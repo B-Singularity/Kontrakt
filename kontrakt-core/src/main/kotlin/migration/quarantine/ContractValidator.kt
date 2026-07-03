@@ -1,6 +1,6 @@
 package migration.quarantine
 
-import stage.diagnostic.material.ContractViolationException
+import diagnostic.retention.diagnostics.exception.ContractViolationException
 import stage.input.contract.AssertFalse
 import stage.input.contract.AssertTrue
 import stage.input.contract.DecimalMax

@@ -1,5 +1,6 @@
 package execution.domain.service.generation
 
+import diagnostic.retention.diagnostics.exception.KontraktConfigurationException
 import exception.KontraktInternalException
 import io.mockk.every
 import io.mockk.mockk
@@ -15,7 +16,6 @@ import realization.execution.generation.TestInstanceFactory
 import realization.execution.mocking.MockingContext
 import realization.execution.mocking.MockingEngine
 import realization.execution.scenario.ScenarioControl
-import stage.diagnostic.material.KontraktConfigurationException
 import stage.input.contract.Test
 import java.time.Clock
 import java.time.Instant

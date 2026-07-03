@@ -1,6 +1,6 @@
 package realization.execution.context
 
-import stage.diagnostic.evidence.ExecutionTrace
+import diagnostic.retention.material.retained.ExecutionTrace
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneId

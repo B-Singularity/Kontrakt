@@ -1,5 +1,13 @@
 package execution.domain.interceptor
 
+import diagnostic.retention.material.retained.DesignDecision
+import diagnostic.retention.material.retained.ExceptionTrace
+import diagnostic.retention.material.retained.ExecutionTrace
+import diagnostic.retention.material.retained.ScenarioTrace
+import diagnostic.retention.material.retained.TestVerdict
+import diagnostic.retention.material.retained.TracePhase
+import diagnostic.retention.material.retained.TraceSink
+import diagnostic.retention.material.retained.VerificationTrace
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -13,19 +21,11 @@ import realization.execution.context.EphemeralTestContext
 import realization.execution.context.WorkerId
 import realization.execution.service.VerdictDecider
 import realization.reporting.TestResultPublisher
-import stage.diagnostic.evidence.DesignDecision
-import stage.diagnostic.evidence.ExceptionTrace
-import stage.diagnostic.evidence.ExecutionTrace
-import stage.diagnostic.evidence.ScenarioTrace
-import stage.diagnostic.evidence.TestVerdict
-import stage.diagnostic.evidence.TracePhase
-import stage.diagnostic.evidence.TraceSink
-import stage.diagnostic.evidence.VerificationTrace
 import stage.invariant.judgment.AssertionRecord
 import stage.invariant.judgment.AssertionRule
 import stage.invariant.judgment.AssertionStatus
-import stage.publication.material.TestResultEvent
-import stage.publication.material.TestStatus
+import stage.publication.material.claim.TestResultEvent
+import stage.publication.material.claim.TestStatus
 import java.lang.reflect.Method
 import java.time.Clock
 

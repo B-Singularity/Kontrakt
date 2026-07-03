@@ -1,4 +1,4 @@
-package stage.publication.material
+package stage.publication.material.claim
 
 import stage.invariant.judgment.AssertionRecord
 

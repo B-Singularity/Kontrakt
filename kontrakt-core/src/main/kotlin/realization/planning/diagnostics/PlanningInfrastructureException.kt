@@ -1,6 +1,6 @@
 package realization.planning.diagnostics
 
-import stage.diagnostic.material.KontraktException
+import diagnostic.retention.diagnostics.exception.KontraktException
 
 /**
  * Root for planning infrastructure/runtime conditions.

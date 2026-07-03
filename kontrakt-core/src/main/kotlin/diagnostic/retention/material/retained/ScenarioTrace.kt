@@ -1,4 +1,4 @@
-package stage.diagnostic.evidence
+package diagnostic.retention.material.retained
 
 /**
  * [SPI] Scenario Trace

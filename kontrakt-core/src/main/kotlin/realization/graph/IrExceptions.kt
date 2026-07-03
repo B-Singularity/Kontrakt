@@ -1,6 +1,6 @@
 package realization.graph
 
-import stage.diagnostic.material.KontraktException
+import diagnostic.retention.diagnostics.exception.KontraktException
 
 /**
  * Machine-readable fault taxonomy for routing and observability.

@@ -1,8 +1,8 @@
 package realization.runtime.support
 
-import stage.diagnostic.material.ContractViolationException
-import stage.diagnostic.material.KontraktConfigurationException
-import stage.diagnostic.material.KontraktException
+import diagnostic.retention.diagnostics.exception.ContractViolationException
+import diagnostic.retention.diagnostics.exception.KontraktConfigurationException
+import diagnostic.retention.diagnostics.exception.KontraktException
 import stage.invariant.judgment.SourceLocation
 import java.lang.reflect.InvocationTargetException
 import kotlin.reflect.KClass

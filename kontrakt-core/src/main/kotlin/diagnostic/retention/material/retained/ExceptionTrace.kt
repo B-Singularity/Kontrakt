@@ -1,6 +1,6 @@
-package stage.diagnostic.evidence
+package diagnostic.retention.material.retained
 
-import stage.diagnostic.material.KontraktException
+import diagnostic.retention.diagnostics.exception.KontraktException
 
 data class ExceptionTrace(
     val exception: Throwable,

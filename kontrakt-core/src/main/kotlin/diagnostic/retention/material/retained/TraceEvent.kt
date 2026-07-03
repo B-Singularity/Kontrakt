@@ -1,4 +1,4 @@
-package stage.diagnostic.evidence
+package diagnostic.retention.material.retained
 
 /**
  * [Domain Event] Represents an atomic event captured during test execution.

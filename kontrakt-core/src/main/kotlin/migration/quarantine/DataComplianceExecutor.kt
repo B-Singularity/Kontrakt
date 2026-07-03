@@ -8,7 +8,7 @@ import stage.invariant.judgment.AssertionRecord
 import stage.invariant.judgment.AssertionStatus
 import stage.invariant.judgment.DataContractRule
 import stage.invariant.judgment.SourceLocation
-import stage.publication.material.DataComplianceResult
+import stage.publication.material.claim.DataComplianceResult
 import kotlin.reflect.KFunction
 import kotlin.reflect.full.primaryConstructor
 

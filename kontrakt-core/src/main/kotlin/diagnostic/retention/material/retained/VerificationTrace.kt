@@ -1,4 +1,4 @@
-package stage.diagnostic.evidence
+package diagnostic.retention.material.retained
 
 import stage.invariant.judgment.AssertionRecord
 import stage.invariant.judgment.AssertionStatus

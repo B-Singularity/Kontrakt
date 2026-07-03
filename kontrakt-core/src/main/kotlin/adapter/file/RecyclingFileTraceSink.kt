@@ -1,12 +1,12 @@
 package adapter.file
 
 import adapter.json.JsonUtils
+import diagnostic.retention.material.retained.TraceEvent
+import diagnostic.retention.material.retained.TracePhase
+import diagnostic.retention.material.retained.TraceSink
 import execution.domain.exception.KontraktLifecycleException
 import io.github.oshai.kotlinlogging.KotlinLogging
 import realization.runtime.diagnostics.sanitization.PayloadSanitizer
-import stage.diagnostic.evidence.TraceEvent
-import stage.diagnostic.evidence.TracePhase
-import stage.diagnostic.evidence.TraceSink
 import java.io.RandomAccessFile
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files

@@ -1,5 +1,8 @@
 package adapter.mockito
 
+import diagnostic.retention.diagnostics.exception.KontraktConfigurationException
+import diagnostic.retention.material.retained.ExecutionTrace
+import diagnostic.retention.material.retained.ScenarioTrace
 import io.github.oshai.kotlinlogging.KLogger
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.mockito.Mockito
@@ -11,9 +14,6 @@ import realization.execution.mocking.MockingContext
 import realization.execution.mocking.MockingEngine
 import realization.execution.scenario.ScenarioContext
 import realization.execution.scenario.ScenarioControl
-import stage.diagnostic.evidence.ExecutionTrace
-import stage.diagnostic.evidence.ScenarioTrace
-import stage.diagnostic.material.KontraktConfigurationException
 import java.lang.reflect.InvocationTargetException
 import java.util.Optional
 import java.util.concurrent.ConcurrentHashMap

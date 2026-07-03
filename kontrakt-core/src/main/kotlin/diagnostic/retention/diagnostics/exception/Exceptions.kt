@@ -1,4 +1,4 @@
-package stage.diagnostic.material
+package diagnostic.retention.diagnostics.exception
 
 import realization.runtime.diagnostics.sanitization.PayloadSanitizer
 

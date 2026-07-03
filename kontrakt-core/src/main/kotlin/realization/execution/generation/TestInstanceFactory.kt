@@ -1,12 +1,12 @@
 package realization.execution.generation
 
+import diagnostic.retention.diagnostics.exception.KontraktConfigurationException
+import diagnostic.retention.material.retained.InMemoryScenarioTrace
 import realization.execution.context.EphemeralTestContext
 import realization.execution.mocking.MockingContext
 import realization.execution.mocking.MockingEngine
 import realization.execution.scenario.ScenarioControl
 import realization.runtime.support.unwrapped
-import stage.diagnostic.evidence.InMemoryScenarioTrace
-import stage.diagnostic.material.KontraktConfigurationException
 import stage.input.contract.Test
 import java.time.Clock
 import java.util.UUID
@@ -39,7 +39,7 @@ class TestInstanceFactory(
      * @param spec The test specification defining the target and mocking strategies.
      * @param clock The fixed clock to ensure temporal determinism across the entire test lifecycle.
      * @return A context holding the instantiated target and its dependencies.
-     * @throws stage.diagnostic.material.KontraktConfigurationException If instantiation fails due to config or runtime errors.
+     * @throws KontraktConfigurationException If instantiation fails due to config or runtime errors.
      */
     fun create(
         spec: TestSpecification,

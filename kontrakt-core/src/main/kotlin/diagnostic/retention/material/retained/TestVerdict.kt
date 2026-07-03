@@ -1,6 +1,6 @@
-package stage.diagnostic.evidence
+package diagnostic.retention.material.retained
 
-import stage.publication.material.TestStatus
+import stage.publication.material.claim.TestStatus
 
 data class TestVerdict(
     val status: TestStatus,

@@ -11,8 +11,8 @@ import realization.reporting.TestResultPublisher
 import realization.runtime.support.unwrapped
 import stage.invariant.judgment.AssertionRecord
 import stage.invariant.judgment.AssertionStatus
-import stage.publication.material.TestResult
-import stage.publication.material.TestStatus
+import stage.publication.material.claim.TestResult
+import stage.publication.material.claim.TestStatus
 import java.time.Clock
 import java.time.Duration
 import java.time.Instant
@@ -27,7 +27,7 @@ import kotlin.random.Random
  * 1. **Setup**: Creating the test context and target instance via [TestInstanceFactory].
  * 2. **Pipeline Assembly**: Constructing the Interceptor Chain ([execution.domain.interceptor.ResultResolverInterceptor] -> [execution.domain.interceptor.AuditingInterceptor]).
  * 3. **Execution**: Triggering the chain.
- * 4. **Result Aggregation**: Compiling the final [stage.publication.material.TestResult] for the JUnit Engine.
+ * 4. **Result Aggregation**: Compiling the final [TestResult] for the JUnit Engine.
  */
 class TestExecution(
     private val spec: TestSpecification,

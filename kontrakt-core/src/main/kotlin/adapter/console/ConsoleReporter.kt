@@ -1,8 +1,8 @@
 package adapter.console
 
 import realization.reporting.TestResultPublisher
-import stage.publication.material.TestResultEvent
-import stage.publication.material.TestStatus
+import stage.publication.material.claim.TestResultEvent
+import stage.publication.material.claim.TestStatus
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicInteger
 

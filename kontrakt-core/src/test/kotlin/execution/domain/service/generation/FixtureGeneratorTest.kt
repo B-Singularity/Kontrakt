@@ -1,5 +1,6 @@
 package execution.domain.service.generation
 
+import diagnostic.retention.material.retained.ScenarioTrace
 import execution.exception.GenerationFailedException
 import io.mockk.every
 import io.mockk.mockk
@@ -12,7 +13,6 @@ import realization.execution.generation.GenerationContext
 import realization.execution.generation.GenerationRequest
 import realization.execution.mocking.MockingContext
 import realization.execution.mocking.MockingEngine
-import stage.diagnostic.evidence.ScenarioTrace
 import stage.input.contract.Null
 import java.time.Clock
 import java.time.Instant

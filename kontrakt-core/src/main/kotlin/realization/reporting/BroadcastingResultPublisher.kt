@@ -2,7 +2,7 @@ package realization.reporting
 
 import exception.KontraktInternalException
 import io.github.oshai.kotlinlogging.KotlinLogging
-import stage.publication.material.TestResultEvent
+import stage.publication.material.claim.TestResultEvent
 
 /**
  * [Infrastructure] Broadcasting Publisher

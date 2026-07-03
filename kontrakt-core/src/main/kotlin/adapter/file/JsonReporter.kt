@@ -1,11 +1,11 @@
 package adapter.file
 
+import diagnostic.retention.diagnostics.exception.KontraktException
 import infrastructure.json.toJson
 import realization.reporting.TestResultPublisher
-import stage.diagnostic.material.KontraktException
 import stage.publication.claim.ReportingDirectives
-import stage.publication.material.TestResultEvent
-import stage.publication.material.TestStatus
+import stage.publication.material.claim.TestResultEvent
+import stage.publication.material.claim.TestStatus
 import java.io.BufferedWriter
 import java.nio.file.AtomicMoveNotSupportedException
 import java.nio.file.Files

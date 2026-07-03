@@ -2,7 +2,7 @@ package adapter.file
 
 import realization.reporting.TestResultPublisher
 import stage.publication.claim.ReportingDirectives
-import stage.publication.material.TestResultEvent
+import stage.publication.material.claim.TestResultEvent
 import java.util.concurrent.ConcurrentLinkedQueue
 
 /**

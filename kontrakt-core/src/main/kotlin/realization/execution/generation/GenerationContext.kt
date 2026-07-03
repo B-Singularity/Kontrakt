@@ -1,6 +1,6 @@
 package realization.execution.generation
 
-import stage.diagnostic.evidence.TraceSink
+import diagnostic.retention.material.retained.TraceSink
 import java.time.Clock
 import kotlin.random.Random
 

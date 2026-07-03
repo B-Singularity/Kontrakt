@@ -1,4 +1,4 @@
-package stage.publication.material
+package stage.publication.material.claim
 
 sealed interface TestStatus {
     val isPassed: Boolean

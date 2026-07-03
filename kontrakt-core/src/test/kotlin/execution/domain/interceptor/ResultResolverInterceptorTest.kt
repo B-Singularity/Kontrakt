@@ -1,5 +1,7 @@
 package execution.domain.interceptor
 
+import diagnostic.retention.diagnostics.exception.ContractViolationException
+import diagnostic.retention.diagnostics.exception.KontraktConfigurationException
 import exception.KontraktInternalException
 import io.mockk.every
 import io.mockk.mockk
@@ -12,8 +14,6 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import realization.runtime.support.extractSourceLocation
 import realization.runtime.support.sanitizeStackTrace
-import stage.diagnostic.material.ContractViolationException
-import stage.diagnostic.material.KontraktConfigurationException
 import stage.invariant.judgment.AssertionRecord
 import stage.invariant.judgment.AssertionRule
 import stage.invariant.judgment.AssertionStatus

@@ -1,9 +1,9 @@
 package realization.execution.generation
 
+import diagnostic.retention.material.retained.TracePhase
 import execution.domain.exception.RuntimeInstantiationException
 import realization.runtime.support.RuntimeInstantiator
 import realization.runtime.support.RuntimeTypeHandle
-import stage.diagnostic.evidence.TracePhase
 import stage.input.presentation.raw.TypeKind
 import statemachine.transition.diagnostics.TruncationRecord
 import statemachine.transition.diagnostics.TruncationRule

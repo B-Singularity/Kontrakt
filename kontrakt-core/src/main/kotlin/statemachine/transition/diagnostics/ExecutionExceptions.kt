@@ -1,6 +1,6 @@
 package execution.domain.exception
 
-import stage.diagnostic.material.KontraktException
+import diagnostic.retention.diagnostics.exception.KontraktException
 
 enum class LifecyclePhase { SETUP, EXECUTION, CLEANUP }
 

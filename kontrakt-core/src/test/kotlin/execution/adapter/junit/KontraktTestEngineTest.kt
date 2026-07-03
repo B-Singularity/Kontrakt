@@ -47,8 +47,8 @@ import realization.execution.context.ThreadLocalScenarioControl
 import realization.execution.factory.ExecutionEnvironmentFactory
 import realization.reporting.TestResultPublisher
 import stage.input.presentation.raw.ScanScope
-import stage.publication.material.TestResult
-import stage.publication.material.TestStatus
+import stage.publication.material.claim.TestResult
+import stage.publication.material.claim.TestStatus
 import java.time.Duration
 
 /**

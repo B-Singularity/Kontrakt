@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
 import realization.reporting.BroadcastingResultPublisher
 import realization.reporting.TestResultPublisher
-import stage.publication.material.TestResultEvent
+import stage.publication.material.claim.TestResultEvent
 
 class BroadcastingResultPublisherTest {
     private val publisher1 = mockk<TestResultPublisher>(name = "Publisher1", relaxed = true)

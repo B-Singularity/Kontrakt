@@ -1,4 +1,4 @@
-package stage.publication.material
+package stage.publication.material.claim
 
 import infrastructure.json.escapeJson
 import realization.execution.context.WorkerId

@@ -1,6 +1,6 @@
 package realization.runtime.diagnostics
 
-import stage.diagnostic.material.KontraktException
+import diagnostic.retention.diagnostics.exception.KontraktException
 
 /**
  * Base exception for all infrastructure-related failures.
