@@ -1,6 +1,6 @@
 package stage.canonicalization.material.frozen.table
 
-import stage.lowering.material.expansion.TypeCycleIdentity
+import realization.planning.expansion.TypeCycleIdentity
 import versioning.coordinate.material.value.FrozenMetamodelImageSchemaVersion
 
 /**

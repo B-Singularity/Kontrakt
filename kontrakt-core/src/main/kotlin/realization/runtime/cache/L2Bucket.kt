@@ -1,7 +1,7 @@
 package realization.runtime.cache
 
 import realization.identity.interning.PlanCacheKey
-import stage.lowering.material.CanonicalPlanNode
+import stage.lowering.material.candidate.CanonicalPlanNode
 
 /**
  * Small collision bucket keyed by routeKeyBits at the shard-table level.

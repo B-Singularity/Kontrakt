@@ -1,9 +1,9 @@
 package adapter.reflection
 
+import migration.quarantine.TypeCycleIdentityProvider
 import realization.identity.TypeIdentity64Deriver
+import realization.planning.expansion.TypeCycleIdentity
 import stage.canonicalization.material.representation.TypeReference
-import stage.lowering.boundary.TypeCycleIdentityProvider
-import stage.lowering.material.expansion.TypeCycleIdentity
 
 /**
  * Reflection adapter implementation of TypeCycleIdentityProvider.

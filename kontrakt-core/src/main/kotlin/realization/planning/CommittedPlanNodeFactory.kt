@@ -1,8 +1,8 @@
 package realization.planning
 
 import realization.identity.interning.PlanCacheKey
-import stage.lowering.material.CanonicalPlanNode
-import stage.lowering.material.CycleBreakAssembly
+import stage.lowering.material.candidate.CanonicalPlanNode
+import stage.lowering.material.candidate.CycleBreakAssembly
 import statemachine.transition.material.CommittedPlanNode
 
 /**

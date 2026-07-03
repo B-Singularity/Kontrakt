@@ -1,5 +1,7 @@
 package adapter.reflection
 
+import migration.quarantine.RawTypeFactsResolution
+import realization.planning.expansion.TypeCycleIdentity
 import stage.admission.diagnostics.evidence.MetamodelAdapterAssemblyException
 import stage.admission.diagnostics.evidence.MetamodelException
 import stage.canonicalization.material.frozen.image.FrozenMetamodelImageAssemblyInput
@@ -9,8 +11,6 @@ import stage.canonicalization.material.frozen.image.FrozenTypeCycleIdentityTable
 import stage.canonicalization.material.frozen.image.FrozenTypeShapeTableEntry
 import stage.canonicalization.material.representation.TypeReference
 import stage.input.presentation.raw.ResolvedTypeShape
-import stage.lowering.boundary.RawTypeFactsResolution
-import stage.lowering.material.expansion.TypeCycleIdentity
 import java.util.ArrayDeque
 
 /**

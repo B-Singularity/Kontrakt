@@ -1,6 +1,6 @@
 package realization.runtime.orchestration
 
-import stage.lowering.boundary.JoinHandle
+import migration.quarantine.JoinHandle
 import statemachine.transition.material.PlanningResumePoint
 
 /**

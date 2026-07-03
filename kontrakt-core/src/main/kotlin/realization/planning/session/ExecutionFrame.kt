@@ -3,7 +3,7 @@ package realization.planning.session
 import stage.canonicalization.material.representation.CanonicalSignature
 import stage.canonicalization.material.representation.TypeReference
 import stage.lowering.diagnostics.PlanningProtocolIntegrityException
-import stage.lowering.material.OrderedActiveMembers
+import stage.lowering.material.candidate.OrderedActiveMembers
 
 /**
  * Explicit execution frame for the iterative DFS machine.

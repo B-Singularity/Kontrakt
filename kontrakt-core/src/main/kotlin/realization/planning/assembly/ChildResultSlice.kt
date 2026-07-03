@@ -1,6 +1,6 @@
 package realization.planning.assembly
 
-import stage.lowering.material.CanonicalPlanNode
+import stage.lowering.material.candidate.CanonicalPlanNode
 
 /**
  * Zero-allocation cursor over committed child results.

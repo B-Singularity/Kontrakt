@@ -1,5 +1,6 @@
 package stage.canonicalization.material.frozen.image
 
+import realization.planning.expansion.TypeCycleIdentity
 import stage.admission.diagnostics.evidence.FrozenMetamodelIncompleteTableException
 import stage.admission.diagnostics.evidence.FrozenMetamodelIntegrityViolationException
 import stage.canonicalization.material.frozen.table.FrozenMetamodelImageTableId
@@ -10,7 +11,6 @@ import stage.canonicalization.material.frozen.table.FrozenTypeShapeTable
 import stage.canonicalization.material.representation.TypeReference
 import stage.input.presentation.dto.RawTypeFactsDTO
 import stage.input.presentation.raw.ResolvedTypeShape
-import stage.lowering.material.expansion.TypeCycleIdentity
 import versioning.coordinate.material.value.FrozenMetamodelImageSchemaVersion
 
 /**

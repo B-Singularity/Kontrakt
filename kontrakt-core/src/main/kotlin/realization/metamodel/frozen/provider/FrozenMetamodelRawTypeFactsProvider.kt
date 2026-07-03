@@ -1,13 +1,13 @@
 package realization.metamodel.frozen.provider
 
+import migration.quarantine.RawTypeFactsProvider
+import migration.quarantine.RawTypeFactsResolution
 import stage.admission.diagnostics.evidence.FrozenMetamodelIncompleteTableException
 import stage.admission.diagnostics.evidence.FrozenMetamodelUnknownTypeReferenceException
 import stage.canonicalization.material.frozen.image.FrozenMetamodelImage
 import stage.canonicalization.material.frozen.table.FrozenMetamodelImageTableId
 import stage.canonicalization.material.frozen.table.FrozenTypeReferenceIndex
 import stage.canonicalization.material.representation.TypeReference
-import stage.lowering.boundary.RawTypeFactsProvider
-import stage.lowering.boundary.RawTypeFactsResolution
 
 /**
  * Planning-facing RawTypeFactsProvider backed by FrozenMetamodelImage.

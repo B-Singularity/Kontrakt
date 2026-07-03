@@ -3,7 +3,7 @@ package statemachine.transition.material
 import realization.identity.interning.PlanCacheKey
 import stage.lowering.diagnostics.FaultKind
 import stage.lowering.diagnostics.PlanningProtocolIntegrityException
-import stage.lowering.material.CanonicalPlanNode
+import stage.lowering.material.candidate.CanonicalPlanNode
 
 /**
  * Runtime wrapper around a passive IR node.

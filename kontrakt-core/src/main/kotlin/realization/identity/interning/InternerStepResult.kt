@@ -1,6 +1,6 @@
 package realization.identity.interning
 
-import stage.lowering.material.CanonicalPlanNode
+import stage.lowering.material.candidate.CanonicalPlanNode
 
 /**
  * Domain-level orchestration result returned by PlanInterner.

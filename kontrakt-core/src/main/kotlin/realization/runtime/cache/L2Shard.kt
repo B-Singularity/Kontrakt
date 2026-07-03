@@ -1,18 +1,18 @@
 package realization.runtime.cache
 
 import governance.budget.contract.CostCenter
+import migration.quarantine.BuildHandle
+import migration.quarantine.JoinContinuation
+import migration.quarantine.JoinHandle
+import migration.quarantine.JoinRegistrationDecision
+import migration.quarantine.JoinResumeStep
+import migration.quarantine.PlanInternStep
 import realization.identity.interning.PlanCacheKey
 import realization.planning.session.PlannerSession
 import realization.runtime.dispatch.L2JoinDispatchPlane
 import realization.runtime.time.MonotonicTimeSource
-import stage.lowering.boundary.BuildHandle
-import stage.lowering.boundary.JoinContinuation
-import stage.lowering.boundary.JoinHandle
-import stage.lowering.boundary.JoinRegistrationDecision
-import stage.lowering.boundary.JoinResumeStep
-import stage.lowering.boundary.PlanInternStep
 import stage.lowering.diagnostics.PlanningProtocolIntegrityException
-import stage.lowering.material.CanonicalPlanNode
+import stage.lowering.material.candidate.CanonicalPlanNode
 import statemachine.transition.diagnostics.L2FaultKind
 import java.util.concurrent.CancellationException
 import java.util.concurrent.atomic.AtomicLong

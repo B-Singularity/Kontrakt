@@ -9,7 +9,7 @@ import realization.planning.session.PlannerSession
 import stage.canonicalization.material.representation.CanonicalSignature
 import stage.lowering.diagnostics.EnvironmentIntegrityException
 import stage.lowering.diagnostics.SentinelIntegrityException
-import stage.lowering.material.PartitionId
+import stage.lowering.material.candidate.PartitionId
 
 /**
  * Domain service for deterministic plan-cache key issuance.

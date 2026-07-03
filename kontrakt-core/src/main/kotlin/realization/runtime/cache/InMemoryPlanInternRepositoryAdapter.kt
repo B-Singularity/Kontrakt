@@ -1,6 +1,8 @@
 package realization.runtime.cache
 
 import governance.budget.contract.CostCenter
+import migration.quarantine.PlanInternRepository
+import migration.quarantine.PlanInternStep
 import migration.quarantine.ResolvedDispatchLanePolicy
 import migration.quarantine.ResolvedJoinGovernance
 import migration.quarantine.ResolvedStorageGovernance
@@ -12,10 +14,8 @@ import realization.runtime.dispatch.DeterministicL2JoinDispatchPlane
 import realization.runtime.dispatch.L2JoinDispatchPlane
 import realization.runtime.time.MonotonicTimeSource
 import realization.runtime.time.SystemMonotonicTimeSource
-import stage.lowering.boundary.PlanInternRepository
-import stage.lowering.boundary.PlanInternStep
 import stage.lowering.diagnostics.PlanningProtocolIntegrityException
-import stage.lowering.material.PartitionId
+import stage.lowering.material.candidate.PartitionId
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference

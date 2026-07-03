@@ -12,6 +12,10 @@ import realization.identity.interning.PlanInterner
 import realization.identity.interning.PlanKeyFactory
 import realization.planning.assembly.CycleBreakPayloadAssembler
 import realization.planning.assembly.PassiveIrAssembler
+import realization.planning.expansion.SessionTypeExpansionWorkMeter
+import realization.planning.expansion.TypeExpansionPipeline
+import realization.planning.expansion.TypeExpansionPreflightDecision
+import realization.planning.projection.CapabilityProfile
 import realization.planning.session.AllocateFrame
 import realization.planning.session.ExpandEdgeFrame
 import realization.planning.session.IterateMembersFrame
@@ -28,12 +32,8 @@ import stage.lowering.diagnostics.InvalidCanonicalKeyComponentException
 import stage.lowering.diagnostics.PlanningProtocolIntegrityException
 import stage.lowering.diagnostics.PortContractViolationException
 import stage.lowering.diagnostics.UnsupportedTypeExpansionException
-import stage.lowering.material.CanonicalPlanNode
-import stage.lowering.material.PartitionId
-import stage.lowering.material.expansion.SessionTypeExpansionWorkMeter
-import stage.lowering.material.expansion.TypeExpansionPipeline
-import stage.lowering.material.expansion.TypeExpansionPreflightDecision
-import stage.lowering.material.projection.CapabilityProfile
+import stage.lowering.material.candidate.CanonicalPlanNode
+import stage.lowering.material.candidate.PartitionId
 import statemachine.transition.material.CommittedPlanNode
 
 /**

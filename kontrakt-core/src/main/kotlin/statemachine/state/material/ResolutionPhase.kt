@@ -1,8 +1,8 @@
 package statemachine.state.material
 
-import stage.lowering.boundary.BindingStrategy
-import stage.lowering.material.ResolvedSpec
-import stage.lowering.material.ScenarioRequirements
+import migration.quarantine.BindingStrategy
+import stage.lowering.material.candidate.ResolvedSpec
+import stage.lowering.material.candidate.ScenarioRequirements
 import java.util.SortedSet
 
 /**

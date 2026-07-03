@@ -1,9 +1,9 @@
 package realization.metamodel.frozen.provider
 
+import migration.quarantine.RawTypeFactsProvider
+import migration.quarantine.TypeCycleIdentityProvider
+import migration.quarantine.TypeShapeProvider
 import stage.canonicalization.material.frozen.image.FrozenMetamodelImage
-import stage.lowering.boundary.RawTypeFactsProvider
-import stage.lowering.boundary.TypeCycleIdentityProvider
-import stage.lowering.boundary.TypeShapeProvider
 
 /**
  * Planning-facing provider bundle backed by a FrozenMetamodelImage.

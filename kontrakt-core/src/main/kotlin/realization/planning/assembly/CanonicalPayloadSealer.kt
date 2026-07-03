@@ -1,8 +1,8 @@
 package realization.planning.assembly
 
-import stage.lowering.material.CanonicalPlanNode
-import stage.lowering.material.RawCycleBreakPayload
-import stage.lowering.material.RawPayloadNode
+import stage.lowering.material.candidate.CanonicalPlanNode
+import stage.lowering.material.candidate.RawCycleBreakPayload
+import stage.lowering.material.candidate.RawPayloadNode
 
 /**
  * Adapter-local canonical sealing boundary.

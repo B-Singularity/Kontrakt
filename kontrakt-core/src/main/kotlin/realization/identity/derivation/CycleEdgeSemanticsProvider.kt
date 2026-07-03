@@ -2,7 +2,7 @@ package realization.identity.derivation
 
 import stage.input.presentation.dto.MemberFact
 import stage.input.presentation.dto.TypeFactsDTO
-import stage.lowering.material.ActiveEdgeDescriptor
+import stage.lowering.material.candidate.ActiveEdgeDescriptor
 
 /**
  * Planner-visible edge semantics.

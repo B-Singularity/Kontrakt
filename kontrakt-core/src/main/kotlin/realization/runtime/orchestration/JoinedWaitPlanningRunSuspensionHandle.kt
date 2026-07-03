@@ -1,10 +1,10 @@
 package realization.runtime.orchestration
 
+import migration.quarantine.JoinHandle
+import migration.quarantine.JoinRegistrationDecision
+import migration.quarantine.JoinResumeSignal
+import migration.quarantine.JoinResumeStep
 import realization.planning.session.PlannerSession
-import stage.lowering.boundary.JoinHandle
-import stage.lowering.boundary.JoinRegistrationDecision
-import stage.lowering.boundary.JoinResumeSignal
-import stage.lowering.boundary.JoinResumeStep
 import statemachine.state.material.PlanningRunSuspensionBridgeState
 import java.util.concurrent.atomic.AtomicInteger
 

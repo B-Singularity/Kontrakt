@@ -1,10 +1,10 @@
 package adapter.reflection
 
+import migration.quarantine.TypeShapeProvider
 import stage.admission.diagnostics.evidence.StrictModeViolationException
 import stage.canonicalization.material.representation.TypeReference
 import stage.input.presentation.raw.NullabilityKind
 import stage.input.presentation.raw.ResolvedTypeShape
-import stage.lowering.boundary.TypeShapeProvider
 import java.math.BigDecimal
 import java.math.BigInteger
 import java.time.Duration

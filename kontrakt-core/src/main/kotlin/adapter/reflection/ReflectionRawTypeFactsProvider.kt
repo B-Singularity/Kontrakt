@@ -1,5 +1,7 @@
 package adapter.reflection
 
+import migration.quarantine.RawTypeFactsProvider
+import migration.quarantine.RawTypeFactsResolution
 import realization.identity.TypeIdentity64Deriver
 import stage.admission.diagnostics.evidence.StrictModeViolationException
 import stage.canonicalization.contract.representative.MetamodelProtocolOrdering
@@ -15,8 +17,6 @@ import stage.input.presentation.raw.NullabilityKind
 import stage.input.presentation.raw.PropertyMutability
 import stage.input.presentation.raw.PropertyStorageKind
 import stage.input.presentation.raw.VisibilityKind
-import stage.lowering.boundary.RawTypeFactsProvider
-import stage.lowering.boundary.RawTypeFactsResolution
 import kotlin.reflect.KClass
 import kotlin.reflect.KFunction
 import kotlin.reflect.KMutableProperty1

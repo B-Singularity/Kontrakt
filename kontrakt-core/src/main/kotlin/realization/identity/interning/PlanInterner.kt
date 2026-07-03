@@ -1,15 +1,15 @@
 package realization.identity.interning
 
 import governance.budget.contract.CostCenter
+import migration.quarantine.BuildHandle
+import migration.quarantine.PlanInternRepository
+import migration.quarantine.PlanInternStep
 import realization.planning.assembly.CanonicalPayloadSealer
 import realization.planning.session.PlannerSession
-import stage.lowering.boundary.BuildHandle
-import stage.lowering.boundary.PlanInternRepository
-import stage.lowering.boundary.PlanInternStep
-import stage.lowering.material.CanonicalPlanNode
-import stage.lowering.material.PartitionId
-import stage.lowering.material.RawCycleBreakPayload
-import stage.lowering.material.RawPayloadNode
+import stage.lowering.material.candidate.CanonicalPlanNode
+import stage.lowering.material.candidate.PartitionId
+import stage.lowering.material.candidate.RawCycleBreakPayload
+import stage.lowering.material.candidate.RawPayloadNode
 import statemachine.transition.diagnostics.L2FaultKind
 
 /**

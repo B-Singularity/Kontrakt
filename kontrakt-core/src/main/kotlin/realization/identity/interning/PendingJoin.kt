@@ -1,12 +1,12 @@
 package realization.identity.interning
 
 import governance.budget.contract.CostCenter
+import migration.quarantine.JoinContinuation
+import migration.quarantine.JoinHandle
+import migration.quarantine.JoinRegistrationDecision
+import migration.quarantine.JoinResumeStep
 import realization.planning.assembly.CanonicalPayloadSealer
 import realization.planning.session.PlannerSession
-import stage.lowering.boundary.JoinContinuation
-import stage.lowering.boundary.JoinHandle
-import stage.lowering.boundary.JoinRegistrationDecision
-import stage.lowering.boundary.JoinResumeStep
 import statemachine.transition.diagnostics.L2FaultKind
 
 /**

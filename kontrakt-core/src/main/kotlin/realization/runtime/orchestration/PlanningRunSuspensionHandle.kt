@@ -1,7 +1,7 @@
 package realization.runtime.orchestration
 
+import migration.quarantine.JoinResumeStep
 import realization.planning.session.PlannerSession
-import stage.lowering.boundary.JoinResumeStep
 
 /**
  * Runtime-boundary abstraction for one joined-wait suspension token.

@@ -1,9 +1,9 @@
 package realization.planning.expansion
 
-import stage.lowering.material.polymorphic.ContractVacancyPolicy
-import stage.lowering.material.polymorphic.PolymorphicResolutionMode
-import stage.lowering.material.polymorphic.RuntimeBindingSnapshotId
-import stage.lowering.material.seed.DeterministicSeedSurfaceId
+import realization.planning.seed.DeterministicSeedSurfaceId
+import realization.planning.selection.ContractVacancyPolicy
+import realization.planning.selection.PolymorphicResolutionMode
+import realization.planning.selection.RuntimeBindingSnapshotId
 
 /**
  * Explicit type-expansion context.

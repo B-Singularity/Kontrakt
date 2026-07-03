@@ -1,13 +1,13 @@
 package realization.metamodel.frozen.provider
 
+import migration.quarantine.TypeCycleIdentityProvider
+import realization.planning.expansion.TypeCycleIdentity
 import stage.admission.diagnostics.evidence.FrozenMetamodelIncompleteTableException
 import stage.admission.diagnostics.evidence.FrozenMetamodelUnknownTypeReferenceException
 import stage.canonicalization.material.frozen.image.FrozenMetamodelImage
 import stage.canonicalization.material.frozen.table.FrozenMetamodelImageTableId
 import stage.canonicalization.material.frozen.table.FrozenTypeReferenceIndex
 import stage.canonicalization.material.representation.TypeReference
-import stage.lowering.boundary.TypeCycleIdentityProvider
-import stage.lowering.material.expansion.TypeCycleIdentity
 
 /**
  * Planning-facing TypeCycleIdentityProvider backed by FrozenMetamodelImage.

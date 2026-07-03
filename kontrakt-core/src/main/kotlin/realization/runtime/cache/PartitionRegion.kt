@@ -1,15 +1,15 @@
 package realization.runtime.cache
 
 import governance.budget.contract.CostCenter
+import migration.quarantine.PlanInternStep
 import migration.quarantine.ResolvedJoinGovernance
 import migration.quarantine.ResolvedStorageGovernance
 import realization.identity.interning.PlanCacheKey
 import realization.planning.session.PlannerSession
 import realization.runtime.dispatch.L2JoinDispatchPlane
 import realization.runtime.time.MonotonicTimeSource
-import stage.lowering.boundary.PlanInternStep
 import stage.lowering.diagnostics.PlanningProtocolIntegrityException
-import stage.lowering.material.PartitionId
+import stage.lowering.material.candidate.PartitionId
 import statemachine.state.material.PartitionRegionState
 import statemachine.transition.contract.L2LifecycleLaw
 import statemachine.transition.diagnostics.L2FaultKind

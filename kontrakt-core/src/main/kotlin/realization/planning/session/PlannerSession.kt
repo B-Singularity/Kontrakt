@@ -10,7 +10,7 @@ import stage.lowering.contract.BreakpointStage
 import stage.lowering.diagnostics.FuelExhaustedException
 import stage.lowering.diagnostics.PlanningProtocolIntegrityException
 import stage.lowering.diagnostics.PlanningRuntimeInvariantException
-import stage.lowering.material.OrderedActiveMembers
+import stage.lowering.material.candidate.OrderedActiveMembers
 import statemachine.transition.material.CommittedPlanNode
 
 /**

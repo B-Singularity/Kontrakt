@@ -1,14 +1,14 @@
 package realization.runtime.dispatch
 
+import migration.quarantine.JoinContinuation
+import migration.quarantine.JoinRegistrationDecision
+import migration.quarantine.JoinResumeSignal
 import migration.quarantine.ResolvedDispatchLanePolicy
 import realization.planning.diagnostics.PlanningInfrastructureException
 import realization.runtime.cache.InFlightSlot
 import realization.runtime.cache.WaiterCell
 import realization.runtime.time.MonotonicTimeSource
-import stage.lowering.boundary.JoinContinuation
-import stage.lowering.boundary.JoinRegistrationDecision
-import stage.lowering.boundary.JoinResumeSignal
-import stage.lowering.material.CanonicalPlanNode
+import stage.lowering.material.candidate.CanonicalPlanNode
 import statemachine.state.material.DeliveryEntryState
 import statemachine.state.material.DispatchLaneState
 import statemachine.transition.contract.DispatchLifecycleLaw

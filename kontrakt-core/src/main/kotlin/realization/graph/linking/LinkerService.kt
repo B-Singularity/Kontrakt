@@ -1,7 +1,7 @@
 package realization.graph.linking
 
-import stage.lowering.material.ResolvedSpec
-import stage.lowering.material.ScenarioRequirements
+import stage.lowering.material.candidate.ResolvedSpec
+import stage.lowering.material.candidate.ScenarioRequirements
 import statemachine.state.material.IntegrityPhase
 import statemachine.state.material.ResolutionPhase
 import java.util.SortedSet

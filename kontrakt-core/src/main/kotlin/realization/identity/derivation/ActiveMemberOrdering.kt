@@ -1,7 +1,7 @@
 package realization.identity.derivation
 
 import stage.input.presentation.dto.TypeFactsDTO
-import stage.lowering.material.OrderedActiveMembers
+import stage.lowering.material.candidate.OrderedActiveMembers
 
 /**
  * Port that ratifies order ordering for active members.

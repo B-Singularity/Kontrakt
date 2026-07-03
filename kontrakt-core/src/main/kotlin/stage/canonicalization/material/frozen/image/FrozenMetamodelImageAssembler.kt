@@ -1,5 +1,6 @@
 package stage.canonicalization.material.frozen.image
 
+import realization.planning.expansion.TypeCycleIdentity
 import stage.admission.diagnostics.evidence.FrozenMetamodelIntegrityViolationException
 import stage.admission.diagnostics.evidence.FrozenMetamodelSequenceViolationException
 import stage.canonicalization.material.frozen.table.FrozenMetamodelImageTableId
@@ -11,7 +12,6 @@ import stage.canonicalization.material.frozen.table.ObjectArrayFrozenTypeShapeTa
 import stage.canonicalization.material.representation.TypeReference
 import stage.input.presentation.dto.RawTypeFactsDTO
 import stage.input.presentation.raw.ResolvedTypeShape
-import stage.lowering.material.expansion.TypeCycleIdentity
 
 /**
  * Domain-owned assembler for publishing a FrozenMetamodelImage from
