@@ -2,7 +2,7 @@ package adapter.reflection
 
 import migration.quarantine.RawTypeFactsProvider
 import migration.quarantine.RawTypeFactsResolution
-import realization.identity.TypeIdentity64Deriver
+import realization.identity.derivation.TypeIdentity64Deriver
 import stage.admission.diagnostics.evidence.StrictModeViolationException
 import stage.canonicalization.contract.representative.MetamodelProtocolOrdering
 import stage.canonicalization.material.representation.TypeReference

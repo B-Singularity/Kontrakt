@@ -4,7 +4,7 @@ import realization.graph.IrLimits
 import realization.graph.IrProtocolViolationException
 import realization.graph.structure.DeterministicList
 import realization.graph.structure.DeterministicMap
-import realization.identity.CanonicalIdentifier
+import realization.identity.derivation.CanonicalIdentifier
 import stage.input.presentation.raw.SpecKey
 import stage.input.presentation.raw.TestMode
 import stage.input.presentation.raw.TypeId

@@ -3,7 +3,7 @@ package stage.lowering.material.candidate
 import realization.graph.IrLimits
 import realization.graph.edge.Attribute
 import realization.graph.structure.DeterministicMap
-import realization.identity.CanonicalIdentifier
+import realization.identity.derivation.CanonicalIdentifier
 import stage.canonicalization.material.representation.CanonicalSignature
 
 /**

@@ -1,6 +1,6 @@
 package stage.canonicalization.material.representation
 
-import realization.identity.TypeShapeCoherenceReceipt
+import realization.identity.derivation.TypeShapeCoherenceReceipt
 import stage.admission.diagnostics.evidence.MetamodelFactContractViolationException
 import stage.input.presentation.raw.TypeShapeSummary
 

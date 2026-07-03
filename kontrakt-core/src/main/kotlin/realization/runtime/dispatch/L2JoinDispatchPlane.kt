@@ -4,9 +4,9 @@ import migration.quarantine.JoinContinuation
 import migration.quarantine.JoinRegistrationDecision
 import migration.quarantine.JoinResumeSignal
 import migration.quarantine.ResolvedDispatchLanePolicy
+import realization.cache.interner.join.WaiterCell
+import realization.cache.storage.InFlightSlot
 import realization.planning.diagnostics.PlanningInfrastructureException
-import realization.runtime.cache.InFlightSlot
-import realization.runtime.cache.WaiterCell
 import realization.runtime.time.MonotonicTimeSource
 import stage.lowering.material.candidate.CanonicalPlanNode
 import statemachine.state.material.condition.DeliveryEntryState

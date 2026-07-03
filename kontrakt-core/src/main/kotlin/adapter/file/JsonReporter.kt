@@ -2,7 +2,7 @@ package adapter.file
 
 import diagnostic.retention.diagnostics.exception.KontraktException
 import infrastructure.json.toJson
-import realization.reporting.TestResultPublisher
+import migration.quarantine.TestResultPublisher
 import stage.publication.claim.ReportingDirectives
 import stage.publication.material.claim.TestResultEvent
 import stage.publication.material.claim.TestStatus

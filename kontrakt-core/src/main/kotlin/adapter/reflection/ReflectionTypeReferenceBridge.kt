@@ -1,7 +1,7 @@
 package adapter.reflection
 
-import realization.identity.CanonicalTypeReferenceIssuer
-import realization.identity.CanonicalTypeReferenceMaterial
+import realization.identity.derivation.CanonicalTypeReferenceIssuer
+import realization.identity.derivation.CanonicalTypeReferenceMaterial
 import stage.canonicalization.material.representation.TypeReference
 import kotlin.reflect.KType
 

@@ -7,10 +7,10 @@ import io.mockk.just
 import io.mockk.mockk
 import io.mockk.runs
 import io.mockk.verify
+import migration.quarantine.BroadcastingResultPublisher
+import migration.quarantine.TestResultPublisher
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
-import realization.reporting.BroadcastingResultPublisher
-import realization.reporting.TestResultPublisher
 import stage.publication.material.claim.TestResultEvent
 
 class BroadcastingResultPublisherTest {

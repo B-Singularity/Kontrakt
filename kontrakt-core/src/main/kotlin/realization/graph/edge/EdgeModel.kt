@@ -3,7 +3,7 @@ package realization.graph.edge
 import realization.graph.IrLimits
 import realization.graph.IrProtocolViolationException
 import realization.graph.structure.DeterministicMap
-import realization.identity.CanonicalIdentifier
+import realization.identity.derivation.CanonicalIdentifier
 
 /**
  * Edge kind within a canonical plan graph.

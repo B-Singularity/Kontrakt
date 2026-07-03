@@ -7,10 +7,10 @@ import io.mockk.mockk
 import ir.TestSpecification
 import migration.quarantine.ExecutionPolicy
 import migration.quarantine.KontraktRuntimeFactory
+import migration.quarantine.TestResultPublisher
 import migration.quarantine.TestScenarioExecutor
 import realization.execution.mocking.MockingEngine
 import realization.execution.scenario.ScenarioControl
-import realization.reporting.TestResultPublisher
 import java.time.Clock
 
 class DefaultRuntimeFactoryTest : KontraktRuntimeFactoryContract {

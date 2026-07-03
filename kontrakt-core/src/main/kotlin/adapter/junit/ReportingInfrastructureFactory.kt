@@ -2,7 +2,7 @@ package adapter.junit
 
 import adapter.console.ConsoleReporter
 import migration.quarantine.AuditPolicy
-import realization.reporting.TestResultPublisher
+import migration.quarantine.TestResultPublisher
 
 /**
  * [Testing Seam] Factory interface for Reporting Infrastructure.

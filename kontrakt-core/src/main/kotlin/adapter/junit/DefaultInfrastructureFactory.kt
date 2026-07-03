@@ -7,8 +7,8 @@ import adapter.console.NoColorTheme
 import adapter.console.StandardConsoleLayout
 import adapter.file.WorkerTraceSinkPool
 import migration.quarantine.AuditPolicy
-import realization.reporting.BroadcastingResultPublisher
-import realization.reporting.TestResultPublisher
+import migration.quarantine.BroadcastingResultPublisher
+import migration.quarantine.TestResultPublisher
 import java.nio.file.Path
 
 /**

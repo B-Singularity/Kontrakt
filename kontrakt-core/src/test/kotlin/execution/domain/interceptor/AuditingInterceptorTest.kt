@@ -14,13 +14,13 @@ import io.mockk.verify
 import migration.quarantine.AuditDepth
 import migration.quarantine.AuditPolicy
 import migration.quarantine.LogRetention
+import migration.quarantine.TestResultPublisher
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import realization.execution.context.EphemeralTestContext
 import realization.execution.context.WorkerId
 import realization.execution.service.VerdictDecider
-import realization.reporting.TestResultPublisher
 import stage.invariant.judgment.AssertionRecord
 import stage.invariant.judgment.AssertionRule
 import stage.invariant.judgment.AssertionStatus

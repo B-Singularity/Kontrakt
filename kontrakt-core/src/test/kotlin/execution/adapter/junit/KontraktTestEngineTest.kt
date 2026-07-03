@@ -25,6 +25,7 @@ import io.mockk.verify
 import io.mockk.verifyOrder
 import ir.TestSpecification
 import migration.quarantine.AuditPolicy
+import migration.quarantine.TestResultPublisher
 import migration.quarantine.TestScenarioExecutor
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
@@ -45,7 +46,6 @@ import realization.execution.aggregate.TestExecution
 import realization.execution.context.ExecutionEnvironment
 import realization.execution.context.ThreadLocalScenarioControl
 import realization.execution.factory.ExecutionEnvironmentFactory
-import realization.reporting.TestResultPublisher
 import stage.input.presentation.raw.ScanScope
 import stage.publication.material.claim.TestResult
 import stage.publication.material.claim.TestStatus

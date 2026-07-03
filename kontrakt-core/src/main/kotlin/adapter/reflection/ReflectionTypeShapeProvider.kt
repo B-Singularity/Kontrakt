@@ -58,7 +58,7 @@ import kotlin.reflect.typeOf
  * This provider may need child TypeReference values for collection, map, and
  * array shapes. It obtains them through [ReflectionTypeReferenceBridge].
  *
- * The bridge delegates to the metamodel-domain [realization.identity.CanonicalTypeReferenceIssuer].
+ * The bridge delegates to the metamodel-domain [realization.identity.derivation.CanonicalTypeReferenceIssuer].
  * Therefore this provider remains a shape-classification adapter, not a
  * TypeReference issuance authority.
  *

@@ -1,6 +1,6 @@
 package realization.identity.interning
 
-import realization.identity.CanonicalIdentifier
+import realization.identity.derivation.CanonicalIdentifier
 import stage.canonicalization.material.representation.CanonicalSignature
 import java.util.Objects
 

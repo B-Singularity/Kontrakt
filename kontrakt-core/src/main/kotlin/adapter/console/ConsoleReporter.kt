@@ -1,6 +1,6 @@
 package adapter.console
 
-import realization.reporting.TestResultPublisher
+import migration.quarantine.TestResultPublisher
 import stage.publication.material.claim.TestResultEvent
 import stage.publication.material.claim.TestStatus
 import java.util.concurrent.ConcurrentLinkedQueue

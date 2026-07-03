@@ -1,7 +1,7 @@
 package adapter.reflection
 
-import realization.identity.CanonicalTypeReferenceIssuer
-import realization.identity.TypeIdentity64Deriver
+import realization.identity.derivation.CanonicalTypeReferenceIssuer
+import realization.identity.derivation.TypeIdentity64Deriver
 import stage.admission.diagnostics.evidence.MetamodelAdapterAssemblyException
 
 /**

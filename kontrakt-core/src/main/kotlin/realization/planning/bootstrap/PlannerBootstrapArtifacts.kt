@@ -1,8 +1,8 @@
 package realization.planning.bootstrap
 
+import migration.quarantine.L2GovernanceConfig
+import migration.quarantine.L2StorageGovernanceConfig
 import realization.planning.session.PlannerSessionConfig
-import realization.runtime.cache.L2GovernanceConfig
-import realization.runtime.cache.L2StorageGovernanceConfig
 
 /**
  * Fully assembled session-fixed runtime artifacts derived from one pinned policy snapshot.

@@ -8,11 +8,11 @@ import adapter.file.WorkerTraceSinkPool
 import adapter.junit.DefaultInfrastructureFactory
 import io.mockk.mockk
 import migration.quarantine.AuditPolicy
+import migration.quarantine.BroadcastingResultPublisher
+import migration.quarantine.TestResultPublisher
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.InstanceOfAssertFactories
 import org.junit.jupiter.api.Test
-import realization.reporting.BroadcastingResultPublisher
-import realization.reporting.TestResultPublisher
 import java.nio.file.Paths
 
 class DefaultInfrastructureFactoryTest {

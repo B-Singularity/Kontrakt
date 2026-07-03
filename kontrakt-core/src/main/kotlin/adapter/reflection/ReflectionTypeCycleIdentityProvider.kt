@@ -1,7 +1,7 @@
 package adapter.reflection
 
 import migration.quarantine.TypeCycleIdentityProvider
-import realization.identity.TypeIdentity64Deriver
+import realization.identity.derivation.TypeIdentity64Deriver
 import realization.planning.expansion.TypeCycleIdentity
 import stage.canonicalization.material.representation.TypeReference
 
