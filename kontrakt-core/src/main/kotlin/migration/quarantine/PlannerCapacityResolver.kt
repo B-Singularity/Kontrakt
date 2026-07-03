@@ -1,4 +1,4 @@
-package governance.policy
+package migration.quarantine
 
 /**
  * Deterministic solver that translates resolved numeric budget into concrete L1 caps.

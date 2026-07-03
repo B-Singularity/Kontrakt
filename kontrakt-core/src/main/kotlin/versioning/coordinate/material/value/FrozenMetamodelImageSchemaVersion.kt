@@ -1,4 +1,4 @@
-package versioning.coordinate.contract.frozen.image
+package versioning.coordinate.material.value
 
 import stage.normalization.contract.MetamodelProtocolTextGuards
 

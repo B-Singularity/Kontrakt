@@ -1,11 +1,11 @@
 package realization.planning.bootstrap
 
-import governance.policy.PlannerCapacityResolver
+import migration.quarantine.PlannerCapacityResolver
 import realization.planning.session.PlannerSessionConfig
 import realization.runtime.cache.L2GovernanceConfig
 import realization.runtime.cache.L2StorageGovernanceConfig
 import realization.runtime.policy.RuntimePolicyRegistry
-import versioning.coordinate.contract.planning.PlannerVersionBundle
+import versioning.coordinate.material.value.PlannerVersionBundle
 
 /**
  * Runtime-boundary assembler that:

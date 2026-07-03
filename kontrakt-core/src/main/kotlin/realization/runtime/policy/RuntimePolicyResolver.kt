@@ -1,7 +1,7 @@
 package realization.runtime.policy
 
-import governance.policy.ResolvedRuntimePolicy
-import governance.policy.ResourceProfile
+import migration.quarantine.ResolvedRuntimePolicy
+import migration.quarantine.ResourceProfile
 
 /**
  * Resolves a new immutable runtime policy snapshot from:

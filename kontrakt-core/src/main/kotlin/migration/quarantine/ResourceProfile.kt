@@ -1,4 +1,4 @@
-package governance.policy
+package migration.quarantine
 
 /**
  * High-level external control surface for runtime policy resolution.

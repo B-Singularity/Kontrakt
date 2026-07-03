@@ -3,7 +3,7 @@ package stage.canonicalization.material.frozen.table
 import stage.canonicalization.material.frozen.image.FrozenMetamodelImageId
 import stage.input.diagnostics.FrozenMetamodelSequenceIndexOutOfBoundsException
 import stage.input.material.ResolvedTypeShape
-import versioning.coordinate.contract.frozen.image.FrozenMetamodelImageSchemaVersion
+import versioning.coordinate.material.value.FrozenMetamodelImageSchemaVersion
 
 /**
  * Object-array-backed FrozenTypeShapeTable.

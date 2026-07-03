@@ -1,9 +1,9 @@
 package stage.canonicalization.material.frozen.image
 
-import stage.canonicalization.material.frozen.table.FrozenMetamodelImageTableId
 import stage.canonicalization.material.TypeReference
+import stage.canonicalization.material.frozen.table.FrozenMetamodelImageTableId
 import stage.input.diagnostics.FrozenMetamodelSequenceViolationException
-import versioning.coordinate.contract.frozen.image.FrozenMetamodelImageSchemaVersion
+import versioning.coordinate.material.value.FrozenMetamodelImageSchemaVersion
 
 /**
  * Immutable command object for frozen metamodel image assembly.

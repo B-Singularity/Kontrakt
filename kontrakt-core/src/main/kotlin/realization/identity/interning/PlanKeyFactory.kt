@@ -1,6 +1,6 @@
 package realization.identity.interning
 
-import governance.budget.CostCenter
+import governance.budget.contract.CostCenter
 import kontrakt.planning.domain.protocol.HashInputEncodingSpec
 import kontrakt.planning.domain.protocol.PrimitiveHash
 import kontrakt.planning.domain.protocol.SentinelRemapper

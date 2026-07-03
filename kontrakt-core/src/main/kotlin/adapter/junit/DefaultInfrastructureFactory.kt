@@ -6,7 +6,7 @@ import adapter.console.ConsoleTheme
 import adapter.console.NoColorTheme
 import adapter.console.StandardConsoleLayout
 import adapter.file.WorkerTraceSinkPool
-import governance.policy.AuditPolicy
+import migration.quarantine.AuditPolicy
 import realization.reporting.BroadcastingResultPublisher
 import realization.reporting.TestResultPublisher
 import java.nio.file.Path

@@ -1,7 +1,7 @@
 package stage.canonicalization.material.frozen.table
 
 import stage.input.material.RawTypeFactsDTO
-import versioning.coordinate.contract.frozen.image.FrozenMetamodelImageSchemaVersion
+import versioning.coordinate.material.value.FrozenMetamodelImageSchemaVersion
 
 /**
  * Frozen raw fact table.

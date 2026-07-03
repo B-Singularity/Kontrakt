@@ -1,9 +1,9 @@
 package realization.execution.aggregate
 
 import adapter.file.WorkerTraceSinkPool
-import governance.policy.AuditDepth
-import governance.policy.ExecutionPolicy
 import io.github.oshai.kotlinlogging.KotlinLogging
+import migration.quarantine.AuditDepth
+import migration.quarantine.ExecutionPolicy
 import realization.execution.context.WorkerId
 import realization.execution.generation.TestInstanceFactory
 import realization.reporting.TestResultPublisher

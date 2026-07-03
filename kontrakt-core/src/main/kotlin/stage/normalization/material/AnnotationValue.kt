@@ -1,6 +1,6 @@
 package stage.normalization.material
 
-import governance.budget.DiagnosticBudget
+import governance.budget.material.DiagnosticBudget
 import stage.canonicalization.material.CanonicalTypeId
 import stage.canonicalization.material.CanonicalTypeShapeKind
 import stage.input.diagnostics.MetamodelFactContractViolationException

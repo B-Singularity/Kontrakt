@@ -1,8 +1,8 @@
 package realization.runtime.policy
 
-import governance.policy.PlannerCapacityResolver
-import governance.policy.ResolvedPlannerSessionCaps
-import governance.policy.ResolvedSessionBudget
+import migration.quarantine.PlannerCapacityResolver
+import migration.quarantine.ResolvedPlannerSessionCaps
+import migration.quarantine.ResolvedSessionBudget
 import realization.runtime.policy.interning.ResolvedSizingCalibration
 import stage.lowering.diagnostics.PlanningProtocolIntegrityException
 import kotlin.math.max

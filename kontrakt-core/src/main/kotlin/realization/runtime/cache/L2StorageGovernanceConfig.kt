@@ -1,6 +1,6 @@
 package realization.runtime.cache
 
-import governance.policy.ResolvedStorageGovernance
+import migration.quarantine.ResolvedStorageGovernance
 
 /**
  * Adapter-local immutable bridge for L2 storage governance.

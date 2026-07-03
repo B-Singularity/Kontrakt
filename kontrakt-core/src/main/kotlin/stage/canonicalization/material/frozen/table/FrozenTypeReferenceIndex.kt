@@ -1,8 +1,8 @@
 package stage.canonicalization.material.frozen.table
 
-import stage.canonicalization.material.frozen.table.FrozenTypeReferenceIndex.Companion.MISSING_ORDINAL
 import stage.canonicalization.material.TypeReference
-import versioning.coordinate.contract.frozen.image.FrozenMetamodelImageSchemaVersion
+import stage.canonicalization.material.frozen.table.FrozenTypeReferenceIndex.Companion.MISSING_ORDINAL
+import versioning.coordinate.material.value.FrozenMetamodelImageSchemaVersion
 
 /**
  * Frozen TypeReference index.

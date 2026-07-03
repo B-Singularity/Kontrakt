@@ -1,4 +1,4 @@
-package governance.budget
+package governance.budget.material
 
 /**
  * Small bounded string rendering helper for metamodel diagnostics.

@@ -1,7 +1,7 @@
 package adapter.junit
 
 import adapter.console.ConsoleReporter
-import governance.policy.AuditPolicy
+import migration.quarantine.AuditPolicy
 import realization.reporting.TestResultPublisher
 
 /**

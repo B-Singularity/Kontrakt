@@ -1,4 +1,4 @@
-package versioning.coordinate.contract.seed
+package versioning.coordinate.material.value
 
 import stage.canonicalization.contract.CanonicalTextLaw
 

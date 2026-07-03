@@ -1,6 +1,6 @@
 package statemachine.transition.material
 
-import governance.policy.ResolvedSessionBudget
+import migration.quarantine.ResolvedSessionBudget
 import stage.lowering.diagnostics.CapacityExceededException
 import stage.lowering.diagnostics.PlanningProtocolIntegrityException
 

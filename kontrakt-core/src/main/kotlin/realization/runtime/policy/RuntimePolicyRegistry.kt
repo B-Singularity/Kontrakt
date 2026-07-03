@@ -1,6 +1,6 @@
 package realization.runtime.policy
 
-import governance.policy.RuntimePolicyEpoch
+import migration.quarantine.RuntimePolicyEpoch
 import stage.lowering.diagnostics.PlanningProtocolIntegrityException
 import java.util.concurrent.atomic.AtomicReference
 

@@ -1,11 +1,11 @@
 package stage.canonicalization.material.frozen.table
 
-import stage.lowering.material.expansion.TypeCycleIdentity
 import stage.canonicalization.material.frozen.image.FrozenMetamodelImageId
 import stage.input.diagnostics.FrozenMetamodelSequenceIndexOutOfBoundsException
 import stage.input.diagnostics.MetamodelFactContractViolationException
+import stage.lowering.material.expansion.TypeCycleIdentity
 import stage.normalization.contract.MetamodelProtocolTextGuards
-import versioning.coordinate.contract.frozen.image.FrozenMetamodelImageSchemaVersion
+import versioning.coordinate.material.value.FrozenMetamodelImageSchemaVersion
 
 /**
  * Object-array-backed FrozenTypeCycleIdentityTable.

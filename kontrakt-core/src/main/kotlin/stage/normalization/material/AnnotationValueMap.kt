@@ -1,6 +1,6 @@
 package stage.normalization.material
 
-import governance.budget.DiagnosticBudget
+import governance.budget.material.DiagnosticBudget
 import stage.input.diagnostics.MetamodelFactContractViolationException
 
 /**

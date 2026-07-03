@@ -1,8 +1,8 @@
 package adapter.console
 
-import governance.policy.AuditDepth
-import governance.policy.AuditPolicy
-import governance.policy.LogRetention
+import migration.quarantine.AuditDepth
+import migration.quarantine.AuditPolicy
+import migration.quarantine.LogRetention
 import stage.publication.material.TestResultEvent
 import stage.publication.material.TestStatus
 

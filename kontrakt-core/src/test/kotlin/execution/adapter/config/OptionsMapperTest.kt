@@ -4,8 +4,8 @@ import adapter.junit.config.UserControlOptions
 import adapter.junit.config.toDiscoveryPolicy
 import adapter.junit.config.toExecutionPolicy
 import adapter.junit.config.toReportingDirectives
-import governance.policy.AuditDepth
-import governance.policy.LogRetention
+import migration.quarantine.AuditDepth
+import migration.quarantine.LogRetention
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach

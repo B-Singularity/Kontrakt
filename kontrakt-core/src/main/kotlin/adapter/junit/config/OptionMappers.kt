@@ -1,11 +1,11 @@
 package adapter.junit.config
 
-import governance.policy.AuditDepth
-import governance.policy.AuditPolicy
-import governance.policy.DeterminismPolicy
-import governance.policy.ExecutionPolicy
-import governance.policy.LogRetention
-import governance.policy.ResourcePolicy
+import migration.quarantine.AuditDepth
+import migration.quarantine.AuditPolicy
+import migration.quarantine.DeterminismPolicy
+import migration.quarantine.ExecutionPolicy
+import migration.quarantine.LogRetention
+import migration.quarantine.ResourcePolicy
 import stage.input.material.ScanScope
 import stage.publication.claim.ReportingDirectives
 import java.nio.file.Paths

@@ -1,11 +1,11 @@
 package realization.runtime.cache
 
-import governance.budget.CostCenter
-import governance.policy.ResolvedDispatchLanePolicy
-import governance.policy.ResolvedJoinGovernance
-import governance.policy.ResolvedStorageGovernance
-import governance.policy.adapter.AdapterAdminLifecycleLaw
-import governance.policy.adapter.AdapterAdminState
+import governance.budget.contract.CostCenter
+import migration.quarantine.ResolvedDispatchLanePolicy
+import migration.quarantine.ResolvedJoinGovernance
+import migration.quarantine.ResolvedStorageGovernance
+import realization.cache.lifecycle.AdapterAdminLifecycleLaw
+import realization.cache.lifecycle.AdapterAdminState
 import realization.identity.interning.PlanCacheKey
 import realization.planning.session.PlannerSession
 import realization.runtime.dispatch.DeterministicL2JoinDispatchPlane

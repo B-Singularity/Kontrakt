@@ -1,6 +1,6 @@
 package stage.lowering.material.seed
 
-import versioning.coordinate.contract.seed.SeedVersionTuple
+import versioning.coordinate.material.value.SeedVersionTuple
 
 /**
  * Run-ratified deterministic seed surface.

@@ -1,4 +1,4 @@
-package governance.policy
+package migration.quarantine
 
 /**
  * [Domain Enum] Log Retention Policy

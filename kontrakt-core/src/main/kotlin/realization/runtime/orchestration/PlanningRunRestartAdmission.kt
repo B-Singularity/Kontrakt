@@ -1,6 +1,6 @@
 package realization.runtime.orchestration
 
-import governance.policy.RuntimePolicyEpoch
+import migration.quarantine.RuntimePolicyEpoch
 import statemachine.transition.material.PlanningResumePoint
 import statemachine.transition.material.PlanningRunEpoch
 import statemachine.transition.material.PlanningRunRemainingBudget

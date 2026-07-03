@@ -3,9 +3,9 @@ package execution.adapter.runtime
 import adapter.file.WorkerTraceSinkPool
 import adapter.jvm.DefaultRuntimeFactory
 import execution.port.incoming.KontraktRuntimeFactoryContract
-import governance.policy.ExecutionPolicy
 import io.mockk.mockk
 import ir.TestSpecification
+import migration.quarantine.ExecutionPolicy
 import realization.execution.mocking.MockingEngine
 import realization.execution.scenario.ScenarioControl
 import realization.reporting.TestResultPublisher

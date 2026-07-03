@@ -1,8 +1,8 @@
 package realization.runtime.cache
 
-import governance.budget.CostCenter
-import governance.policy.ResolvedJoinGovernance
-import governance.policy.ResolvedStorageGovernance
+import governance.budget.contract.CostCenter
+import migration.quarantine.ResolvedJoinGovernance
+import migration.quarantine.ResolvedStorageGovernance
 import realization.identity.interning.PlanCacheKey
 import realization.planning.session.PlannerSession
 import realization.runtime.dispatch.L2JoinDispatchPlane

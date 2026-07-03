@@ -1,4 +1,4 @@
-package governance.budget
+package governance.budget.contract
 
 import stage.lowering.diagnostics.PlanningProtocolIntegrityException
 

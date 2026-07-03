@@ -6,8 +6,8 @@ import adapter.console.NoColorTheme
 import adapter.console.StandardConsoleLayout
 import adapter.file.WorkerTraceSinkPool
 import adapter.junit.DefaultInfrastructureFactory
-import governance.policy.AuditPolicy
 import io.mockk.mockk
+import migration.quarantine.AuditPolicy
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.InstanceOfAssertFactories
 import org.junit.jupiter.api.Test

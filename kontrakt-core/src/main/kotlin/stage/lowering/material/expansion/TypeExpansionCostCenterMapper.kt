@@ -1,6 +1,6 @@
 package stage.lowering.material.expansion
 
-import governance.budget.CostCenter
+import governance.budget.contract.CostCenter
 
 /**
  * Single mapping authority from TypeExpansionWorkEvent to CostCenter.

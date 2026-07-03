@@ -1,4 +1,4 @@
-package governance.policy
+package migration.quarantine
 
 import stage.lowering.diagnostics.PlanningProtocolIntegrityException
 

@@ -1,6 +1,6 @@
 package realization.graph.linking
 
-import governance.policy.ExecutionPolicy
+import migration.quarantine.ExecutionPolicy
 import realization.execution.generation.Generator
 
 /**

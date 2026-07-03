@@ -1,6 +1,6 @@
 package realization.runtime.orchestration
 
-import governance.policy.RuntimePolicyEpoch
+import migration.quarantine.RuntimePolicyEpoch
 import stage.lowering.diagnostics.CapacityExceededException
 import stage.lowering.diagnostics.PlanningProtocolIntegrityException
 import statemachine.state.material.PlanningRunState

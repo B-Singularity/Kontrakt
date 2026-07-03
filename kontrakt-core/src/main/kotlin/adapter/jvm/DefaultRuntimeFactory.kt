@@ -1,8 +1,8 @@
 package adapter.jvm
 
 import adapter.file.WorkerTraceSinkPool
-import governance.policy.ExecutionPolicy
 import ir.TestSpecification
+import migration.quarantine.ExecutionPolicy
 import realization.execution.aggregate.TestExecution
 import realization.execution.generation.TestInstanceFactory
 import realization.execution.mocking.MockingEngine

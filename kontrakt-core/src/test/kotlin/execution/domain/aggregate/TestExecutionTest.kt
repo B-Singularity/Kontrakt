@@ -2,14 +2,14 @@ package execution.domain.aggregate
 
 import adapter.file.WorkerTraceSinkPool
 import exception.KontraktInternalException
-import governance.policy.AuditDepth
-import governance.policy.AuditPolicy
-import governance.policy.DeterminismPolicy
-import governance.policy.ExecutionPolicy
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
 import ir.TestSpecification
+import migration.quarantine.AuditDepth
+import migration.quarantine.AuditPolicy
+import migration.quarantine.DeterminismPolicy
+import migration.quarantine.ExecutionPolicy
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.BeforeEach

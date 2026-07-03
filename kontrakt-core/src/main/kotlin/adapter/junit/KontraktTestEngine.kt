@@ -9,9 +9,9 @@ import adapter.junit.config.toReportingDirectives
 import adapter.jvm.DefaultRuntimeFactory
 import adapter.mockito.MockitoEngineAdapter
 import exception.KontraktInternalException
-import governance.policy.ExecutionPolicy
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.runBlocking
+import migration.quarantine.ExecutionPolicy
 import org.junit.platform.engine.EngineDiscoveryRequest
 import org.junit.platform.engine.EngineExecutionListener
 import org.junit.platform.engine.ExecutionRequest

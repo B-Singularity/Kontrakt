@@ -1,6 +1,6 @@
 package realization.identity.interning
 
-import governance.budget.CostCenter
+import governance.budget.contract.CostCenter
 import realization.planning.assembly.CanonicalPayloadSealer
 import realization.planning.session.PlannerSession
 import stage.lowering.boundary.JoinContinuation

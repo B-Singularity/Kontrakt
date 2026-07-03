@@ -1,4 +1,4 @@
-package governance.policy
+package migration.quarantine
 
 /**
  * Top-level immutable runtime-policy snapshot pinned at session start.

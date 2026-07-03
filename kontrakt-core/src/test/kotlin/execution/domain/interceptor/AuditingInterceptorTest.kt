@@ -1,11 +1,11 @@
 package execution.domain.interceptor
 
-import governance.policy.AuditDepth
-import governance.policy.AuditPolicy
-import governance.policy.LogRetention
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
+import migration.quarantine.AuditDepth
+import migration.quarantine.AuditPolicy
+import migration.quarantine.LogRetention
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test

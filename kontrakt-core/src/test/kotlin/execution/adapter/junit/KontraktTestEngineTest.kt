@@ -9,7 +9,6 @@ import adapter.junit.KontraktTestEngine
 import adapter.junit.ReportingInfrastructureFactory
 import adapter.junit.TracingInfrastructureFactory
 import adapter.jvm.DefaultRuntimeFactory
-import governance.policy.AuditPolicy
 import io.mockk.Runs
 import io.mockk.clearAllMocks
 import io.mockk.coEvery
@@ -25,6 +24,7 @@ import io.mockk.unmockkObject
 import io.mockk.verify
 import io.mockk.verifyOrder
 import ir.TestSpecification
+import migration.quarantine.AuditPolicy
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach

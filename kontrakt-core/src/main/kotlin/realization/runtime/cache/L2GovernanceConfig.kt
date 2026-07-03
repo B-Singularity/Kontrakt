@@ -1,6 +1,6 @@
 package realization.runtime.cache
 
-import governance.policy.ResolvedJoinGovernance
+import migration.quarantine.ResolvedJoinGovernance
 
 /**
  * Adapter-local immutable bridge for join/wait governance.

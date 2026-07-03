@@ -1,4 +1,4 @@
-package versioning.coordinate.contract.planning
+package versioning.coordinate.material.value
 
 import stage.lowering.diagnostics.PlanningProtocolIntegrityException
 

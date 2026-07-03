@@ -1,6 +1,6 @@
 package realization.runtime.dispatch
 
-import governance.policy.ResolvedDispatchLanePolicy
+import migration.quarantine.ResolvedDispatchLanePolicy
 import realization.planning.diagnostics.PlanningInfrastructureException
 import realization.runtime.cache.InFlightSlot
 import realization.runtime.cache.WaiterCell

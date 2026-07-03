@@ -1,10 +1,10 @@
 package realization.runtime.policy
 
-import governance.policy.ResolvedJoinGovernance
-import governance.policy.ResolvedRuntimePolicy
-import governance.policy.ResolvedSessionBudget
-import governance.policy.ResolvedStorageGovernance
-import governance.policy.ResourceProfile
+import migration.quarantine.ResolvedJoinGovernance
+import migration.quarantine.ResolvedRuntimePolicy
+import migration.quarantine.ResolvedSessionBudget
+import migration.quarantine.ResolvedStorageGovernance
+import migration.quarantine.ResourceProfile
 
 /**
  * Official v1 bootstrap runtime-policy resolver.

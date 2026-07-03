@@ -4,7 +4,7 @@ import stage.canonicalization.material.frozen.table.FrozenRawFactTable
 import stage.canonicalization.material.frozen.table.FrozenTypeCycleIdentityTable
 import stage.canonicalization.material.frozen.table.FrozenTypeReferenceIndex
 import stage.canonicalization.material.frozen.table.FrozenTypeShapeTable
-import versioning.coordinate.contract.frozen.image.FrozenMetamodelImageSchemaVersion
+import versioning.coordinate.material.value.FrozenMetamodelImageSchemaVersion
 
 /**
  * Immutable adapter-neutral metamodel image.

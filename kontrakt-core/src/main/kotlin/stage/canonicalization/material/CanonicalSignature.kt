@@ -4,7 +4,7 @@ import realization.graph.IrLimits
 import realization.graph.IrProtocolViolationException
 import stage.lowering.diagnostics.CanonicalContractViolationException
 import stage.lowering.diagnostics.CanonicalVersionMismatchException
-import versioning.coordinate.contract.CanonicalVersionTuple
+import versioning.coordinate.material.value.CanonicalVersionTuple
 import java.util.Arrays
 
 /**

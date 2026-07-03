@@ -1,7 +1,7 @@
 package stage.lowering.material.seed
 
 import stage.lowering.diagnostics.TypeExpansionContractViolationException
-import versioning.coordinate.contract.seed.SeedVersionTuple
+import versioning.coordinate.material.value.SeedVersionTuple
 
 /**
  * Proof that a DeterministicSeedSurface tuple was accepted by the run

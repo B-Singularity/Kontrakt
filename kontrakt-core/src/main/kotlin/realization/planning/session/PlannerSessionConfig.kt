@@ -1,9 +1,9 @@
 package realization.planning.session
 
-import governance.policy.ResolvedPlannerSessionCaps
-import governance.policy.ResolvedSessionBudget
+import migration.quarantine.ResolvedPlannerSessionCaps
+import migration.quarantine.ResolvedSessionBudget
 import stage.lowering.diagnostics.PlanningProtocolIntegrityException
-import versioning.coordinate.contract.planning.PlannerVersionBundle
+import versioning.coordinate.material.value.PlannerVersionBundle
 
 /**
  * Lean core runtime configuration for PlannerSession.

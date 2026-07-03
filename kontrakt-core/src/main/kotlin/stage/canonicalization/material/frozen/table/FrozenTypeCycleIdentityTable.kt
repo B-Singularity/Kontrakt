@@ -1,7 +1,7 @@
 package stage.canonicalization.material.frozen.table
 
 import stage.lowering.material.expansion.TypeCycleIdentity
-import versioning.coordinate.contract.frozen.image.FrozenMetamodelImageSchemaVersion
+import versioning.coordinate.material.value.FrozenMetamodelImageSchemaVersion
 
 /**
  * Frozen type cycle-identity table.

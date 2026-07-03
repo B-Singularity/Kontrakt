@@ -1,4 +1,4 @@
-package governance.policy.adapter
+package realization.cache.lifecycle
 
 import stage.lowering.diagnostics.PlanningProtocolIntegrityException
 
