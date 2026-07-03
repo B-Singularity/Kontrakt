@@ -8,7 +8,7 @@ import statemachine.transition.material.PlanningResumePoint
  *
  * Responsibilities:
  * - wrap JoinHandle with a PlanningRunSuspensionHandle
- * - materialize a PlanningRunSuspension record
+ * - materialize a PlanningRunSuspension records
  * - transition the run into SUSPENDED_ON_JOIN
  * - wire adapter-owned readiness into PlanningRunContext.tryMarkReadyToRestart()
  *

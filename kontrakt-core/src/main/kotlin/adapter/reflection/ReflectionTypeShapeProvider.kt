@@ -1,7 +1,7 @@
 package adapter.reflection
 
 import stage.admission.diagnostics.evidence.StrictModeViolationException
-import stage.canonicalization.material.TypeReference
+import stage.canonicalization.material.representation.TypeReference
 import stage.input.presentation.raw.NullabilityKind
 import stage.input.presentation.raw.ResolvedTypeShape
 import stage.lowering.boundary.TypeShapeProvider

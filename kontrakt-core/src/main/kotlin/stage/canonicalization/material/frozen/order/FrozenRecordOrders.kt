@@ -1,16 +1,16 @@
 package stage.canonicalization.material.frozen.order
 
-import stage.canonicalization.material.frozen.record.FrozenAnnotationRecord
-import stage.canonicalization.material.frozen.record.FrozenAnnotationRecordKey
-import stage.canonicalization.material.frozen.record.FrozenConstructorParameterRecord
-import stage.canonicalization.material.frozen.record.FrozenConstructorRecord
-import stage.canonicalization.material.frozen.record.FrozenConstructorRecordKey
-import stage.canonicalization.material.frozen.record.FrozenPropertyRecord
-import stage.canonicalization.material.frozen.record.FrozenPropertyRecordKey
-import stage.normalization.contract.MetamodelProtocolOrdering
+import stage.canonicalization.contract.representative.MetamodelProtocolOrdering
+import stage.canonicalization.material.frozen.records.FrozenAnnotationRecord
+import stage.canonicalization.material.frozen.records.FrozenAnnotationRecordKey
+import stage.canonicalization.material.frozen.records.FrozenConstructorParameterRecord
+import stage.canonicalization.material.frozen.records.FrozenConstructorRecord
+import stage.canonicalization.material.frozen.records.FrozenConstructorRecordKey
+import stage.canonicalization.material.frozen.records.FrozenPropertyRecord
+import stage.canonicalization.material.frozen.records.FrozenPropertyRecordKey
 
 /**
- * Deterministic ordering authorities for Level 1 frozen record sequences.
+ * Deterministic ordering authorities for Level 1 frozen records sequences.
  *
  * These comparators exist only at the frozen sequence publication boundary.
  *
@@ -28,12 +28,12 @@ import stage.normalization.contract.MetamodelProtocolOrdering
  * - TreeSet;
  * - SortedSet;
  * - TreeMap as a duplicate-coalescing structure;
- * - any data structure where comparator equality silently drops a later record.
+ * - any data structure where comparator equality silently drops a later records.
  *
  * Reason:
  *
- * Record comparators intentionally order by frozen record key, not by full
- * record payload. If two records have the same key but different payload, the
+ * Record comparators intentionally order by frozen records key, not by full
+ * records payload. If two records have the same key but different payload, the
  * correct behavior is fail-closed conflict detection, not silent replacement or
  * coalescing.
  *
@@ -50,10 +50,10 @@ import stage.normalization.contract.MetamodelProtocolOrdering
  * ```text
  * safe to merge
  * safe to drop one side
- * same full record payload
+ * same full records payload
  * ```
  *
- * Full payload equality remains the responsibility of each record's equals(...)
+ * Full payload equality remains the responsibility of each records's equals(...)
  * implementation and the sequence builder's conflict policy.
  *
  * Input determinism law:

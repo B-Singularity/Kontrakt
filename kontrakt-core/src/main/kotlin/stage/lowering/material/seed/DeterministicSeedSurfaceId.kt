@@ -1,6 +1,6 @@
 package stage.lowering.material.seed
 
-import stage.canonicalization.contract.CanonicalTextLaw
+import stage.canonicalization.contract.meaning.CanonicalTextLaw
 
 /**
  * Lightweight identifier for a run-ratified DeterministicSeedSurface.

@@ -105,7 +105,7 @@ class MockitoEngineAdapter :
                     return null
                 }
 
-            // Handle Void methods: Just record trace and return null
+            // Handle Void methods: Just records trace and return null
             if (returnType.classifier == Unit::class) {
                 trace.recordCapture(invocation, args, startTime)
                 return null

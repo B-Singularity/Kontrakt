@@ -1,6 +1,6 @@
 package versioning.coordinate.material.value
 
-import stage.canonicalization.contract.CanonicalTextLaw
+import stage.canonicalization.contract.meaning.CanonicalTextLaw
 
 /**
  * Version tuple for deterministic seed materialization.

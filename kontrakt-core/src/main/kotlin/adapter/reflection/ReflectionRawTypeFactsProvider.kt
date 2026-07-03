@@ -2,7 +2,8 @@ package adapter.reflection
 
 import realization.identity.TypeIdentity64Deriver
 import stage.admission.diagnostics.evidence.StrictModeViolationException
-import stage.canonicalization.material.TypeReference
+import stage.canonicalization.contract.representative.MetamodelProtocolOrdering
+import stage.canonicalization.material.representation.TypeReference
 import stage.input.presentation.dto.ConstructorCandidateFact
 import stage.input.presentation.dto.ConstructorParameterFact
 import stage.input.presentation.dto.PropertyFact
@@ -16,7 +17,6 @@ import stage.input.presentation.raw.PropertyStorageKind
 import stage.input.presentation.raw.VisibilityKind
 import stage.lowering.boundary.RawTypeFactsProvider
 import stage.lowering.boundary.RawTypeFactsResolution
-import stage.normalization.contract.MetamodelProtocolOrdering
 import kotlin.reflect.KClass
 import kotlin.reflect.KFunction
 import kotlin.reflect.KMutableProperty1

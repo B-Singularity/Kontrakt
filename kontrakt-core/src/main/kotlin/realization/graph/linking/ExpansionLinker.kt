@@ -18,7 +18,7 @@ import realization.execution.plan.ExecutableMapNode
 import realization.execution.plan.ExecutableNode
 import realization.runtime.support.RuntimeInstantiator
 import realization.runtime.support.RuntimeTypeResolver
-import stage.normalization.material.AnnotationDescriptor
+import stage.canonicalization.material.presentation.AnnotationDescriptor
 
 /**
  * [Domain Service] Expansion Linker.

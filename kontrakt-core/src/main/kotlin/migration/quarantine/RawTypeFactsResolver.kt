@@ -1,6 +1,6 @@
 package metamodel.domain.port.outgoing
 
-import stage.canonicalization.material.TypeReference
+import stage.canonicalization.material.representation.TypeReference
 import stage.input.presentation.dto.RawTypeFactsDTO
 
 /**

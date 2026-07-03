@@ -22,7 +22,7 @@ import stage.canonicalization.material.frozen.image.FrozenMetamodelImageId
  *
  * Algorithm:
  *
- * General key-ordered record sequences use iterative bottom-up merge sort.
+ * General key-ordered records sequences use iterative bottom-up merge sort.
  *
  * Constructor-parameter sequences use compact-index direct placement because
  * they already have a ratified local ordinal:

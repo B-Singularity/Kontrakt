@@ -1,7 +1,7 @@
 package stage.input.presentation.dto
 
 import stage.admission.diagnostics.evidence.MetamodelException
-import stage.canonicalization.material.TypeReference
+import stage.canonicalization.material.representation.TypeReference
 import stage.input.presentation.raw.MemberOrigin
 import java.util.Collections
 

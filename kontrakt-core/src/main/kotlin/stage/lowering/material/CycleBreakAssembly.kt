@@ -1,6 +1,6 @@
 package stage.lowering.material
 
-import stage.canonicalization.material.CanonicalSignature
+import stage.canonicalization.material.representation.CanonicalSignature
 import stage.lowering.contract.BreakpointStage
 import stage.lowering.diagnostics.FaultKind
 import stage.lowering.diagnostics.PlanningProtocolIntegrityException

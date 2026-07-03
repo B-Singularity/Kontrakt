@@ -3,7 +3,7 @@ package realization.graph.linking
 import ir.Attribute
 import realization.execution.generation.Generator
 import realization.execution.plan.ExecutableNode
-import stage.canonicalization.material.TypeReference
+import stage.canonicalization.material.representation.TypeReference
 
 /**
  * [Domain Service] Registry for looking up generators.

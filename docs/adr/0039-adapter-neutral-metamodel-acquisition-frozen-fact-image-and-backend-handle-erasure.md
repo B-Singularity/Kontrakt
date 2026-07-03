@@ -1594,7 +1594,7 @@ class FrozenMetamodelRecordMaterializationException(
     val recordTable: FrozenMetamodelImageTableId,
     val reason: String,
 ) : FrozenMetamodelImageException(
-    "Frozen metamodel record materialization failed: " +
+    "Frozen metamodel records materialization failed: " +
             "image=$imageId, table=$recordTable, " +
             "reference=${reference.renderSummary()}, reason=$reason",
 )
@@ -1643,7 +1643,7 @@ class FrozenMetamodelTypeShapeProvider private constructor(
                 imageId = image.imageId,
                 reference = reference,
                 missingTable = FrozenMetamodelImageTableId.SHAPE_TABLE,
-                reason = "TypeReference exists in type index but has no shape record.",
+                reason = "TypeReference exists in type index but has no shape records.",
             )
     }
 }
@@ -1672,7 +1672,7 @@ class FrozenMetamodelRawTypeFactsProvider private constructor(
                     imageId = image.imageId,
                     reference = reference,
                     missingTable = FrozenMetamodelImageTableId.RAW_FACT_TABLE,
-                    reason = "TypeReference exists in type index but has no raw fact record.",
+                    reason = "TypeReference exists in type index but has no raw fact records.",
                 )
 
         return RawTypeFactsResolution.cacheHit(facts)

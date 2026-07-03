@@ -2,10 +2,10 @@ package stage.input.presentation.dto
 
 import stage.admission.diagnostics.evidence.InvalidTypeFactShapeException
 import stage.admission.diagnostics.evidence.MetamodelFactOwnershipMismatchException
+import stage.canonicalization.contract.representative.MetamodelProtocolOrdering
+import stage.canonicalization.contract.representative.MetamodelProtocolTextGuards
 import stage.input.presentation.raw.MetamodelFactRanks
 import stage.input.presentation.raw.MetamodelFactSequence
-import stage.normalization.contract.MetamodelProtocolOrdering
-import stage.normalization.contract.MetamodelProtocolTextGuards
 
 /**
  * Raw normalized type-facts DTO.

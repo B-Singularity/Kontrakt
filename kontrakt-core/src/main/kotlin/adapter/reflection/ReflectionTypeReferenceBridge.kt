@@ -2,7 +2,7 @@ package adapter.reflection
 
 import realization.identity.CanonicalTypeReferenceIssuer
 import realization.identity.CanonicalTypeReferenceMaterial
-import stage.canonicalization.material.TypeReference
+import stage.canonicalization.material.representation.TypeReference
 import kotlin.reflect.KType
 
 /**

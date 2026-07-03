@@ -2,11 +2,11 @@ package stage.input.presentation.dto
 
 import stage.admission.diagnostics.evidence.InvalidTypeFactShapeException
 import stage.admission.diagnostics.evidence.MetamodelFactOwnershipMismatchException
+import stage.canonicalization.contract.representative.MetamodelProtocolTextGuards
 import stage.input.presentation.raw.DeclarationOrdinal
 import stage.input.presentation.raw.MemberOrigin
 import stage.input.presentation.raw.MetamodelFactSequence
 import stage.input.presentation.raw.VisibilityKind
-import stage.normalization.contract.MetamodelProtocolTextGuards
 
 /**
  * Raw normalized constructor candidate fact.
@@ -19,7 +19,7 @@ import stage.normalization.contract.MetamodelProtocolTextGuards
  * - a selected constructor result;
  * - a capability-demotion result;
  * - a projection result;
- * - a traversal-order record;
+ * - a traversal-order records;
  * - a reflection KFunction wrapper;
  * - or a planning-domain decision object.
  *

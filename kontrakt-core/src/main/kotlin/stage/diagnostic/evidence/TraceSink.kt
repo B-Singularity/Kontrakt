@@ -20,7 +20,7 @@ interface TraceSink : AutoCloseable {
      * Emits a trace event to the underlying stream immediately.
      * This supports the "Streaming WAL" pattern to ensure data safety in case of crashes.
      *
-     * @param event The atomic audit event to record (e.g., ExecutionTrace, VerificationTrace).
+     * @param event The atomic audit event to records (e.g., ExecutionTrace, VerificationTrace).
      */
     fun emit(event: TraceEvent)
 

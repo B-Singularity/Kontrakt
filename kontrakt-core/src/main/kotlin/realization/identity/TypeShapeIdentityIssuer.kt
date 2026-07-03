@@ -1,11 +1,11 @@
 package realization.identity
 
 import migration.quarantine.TypeShapeRatificationVerifier
-import stage.canonicalization.contract.TypeShapeIdentityIssuancePolicy
-import stage.canonicalization.material.CanonicalTypeId
-import stage.canonicalization.material.CanonicalTypeText
-import stage.canonicalization.material.TypeShapeRatification
-import stage.canonicalization.material.TypeShapeRatificationFingerprint
+import stage.canonicalization.contract.meaning.TypeShapeIdentityIssuancePolicy
+import stage.canonicalization.material.representation.CanonicalTypeId
+import stage.canonicalization.material.representation.CanonicalTypeText
+import stage.canonicalization.material.representation.TypeShapeRatification
+import stage.canonicalization.material.representation.TypeShapeRatificationFingerprint
 import stage.input.presentation.raw.TypeShapeSummary
 
 /**

@@ -1,6 +1,6 @@
 package stage.lowering.material.expansion
 
-import stage.canonicalization.material.TypeReference
+import stage.canonicalization.material.representation.TypeReference
 import stage.input.presentation.dto.RawTypeFactsDTO
 import stage.input.presentation.raw.ResolvedTypeShape
 import stage.input.presentation.raw.TypeKind

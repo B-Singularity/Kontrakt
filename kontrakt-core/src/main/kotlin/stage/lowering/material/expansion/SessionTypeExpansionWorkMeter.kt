@@ -1,7 +1,7 @@
 package stage.lowering.material.expansion
 
 import realization.planning.session.PlannerSession
-import stage.canonicalization.material.TypeReference
+import stage.canonicalization.material.representation.TypeReference
 
 /**
  * Session-bound implementation of TypeExpansionWorkMeter.

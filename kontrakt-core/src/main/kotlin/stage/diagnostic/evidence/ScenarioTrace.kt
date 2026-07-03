@@ -44,12 +44,12 @@ interface ScenarioTrace {
      * impacting the throughput of high-frequency generative tests.
      * Implementations should prefer lock-free structures (e.g., ConcurrentLinkedQueue).
      *
-     * @param event The trace event to record.
+     * @param event The trace event to records.
      */
     fun add(event: TraceEvent)
 
     /**
-     * Adds generated arguments to the cumulative record.
+     * Adds generated arguments to the cumulative records.
      * This serves as the "Black Box" data in case of execution crashes.
      *
      * Existing keys will be overwritten, but new keys are appended (cumulative behavior).

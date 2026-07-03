@@ -210,7 +210,7 @@ class MetamodelNormalizationViolationException(
  * - lifecycle violations;
  * - backend-handle reachability leakage;
  * - deterministic sequence violations;
- * - frozen-record materialization failures.
+ * - frozen-records materialization failures.
  *
  * This family is not:
  *
@@ -248,7 +248,7 @@ class FrozenMetamodelUnknownTypeReferenceException(
 
 /**
  * Thrown when a TypeReference exists in the frozen image type index but the
- * requested table has no corresponding record.
+ * requested table has no corresponding records.
  *
  * This means freeze produced an incomplete image.
  */
@@ -305,8 +305,8 @@ class FrozenMetamodelImageLifecycleException(
  * This exists because “not storing KType directly” is insufficient.
  *
  * Examples:
- * - KType field in a frozen record;
- * - KSDeclaration field in a frozen record;
+ * - KType field in a frozen records;
+ * - KSDeclaration field in a frozen records;
  * - lambda/supplier capturing KType;
  * - registry ordinal that can recover KType;
  * - classloader-local lookup key;
@@ -348,7 +348,7 @@ class FrozenMetamodelSequenceViolationException(
 )
 
 /**
- * Thrown when a frozen adapter-neutral record exists but cannot materialize its
+ * Thrown when a frozen adapter-neutral records exists but cannot materialize its
  * planning-facing DTO.
  *
  * This differs from FrozenMetamodelIncompleteTableException:
@@ -365,7 +365,7 @@ class FrozenMetamodelRecordMaterializationException(
     val recordTable: String,
     val reason: String,
 ) : FrozenMetamodelImageException(
-    "Frozen metamodel record materialization failed: " +
+    "Frozen metamodel records materialization failed: " +
             "image=$imageId, table=$recordTable, reference=$referenceSummary, reason=$reason",
 )
 

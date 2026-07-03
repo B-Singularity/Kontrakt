@@ -1,6 +1,6 @@
 package realization.runtime.support
 
-import stage.canonicalization.material.TypeReference
+import stage.canonicalization.material.representation.TypeReference
 
 /**
  * [Port] Resolves an opaque handle for runtime operations.

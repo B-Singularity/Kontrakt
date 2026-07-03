@@ -1,7 +1,7 @@
 package stage.input.presentation.raw
 
 import stage.admission.diagnostics.evidence.MetamodelFactContractViolationException
-import stage.canonicalization.material.CanonicalTypeShapeKind
+import stage.canonicalization.material.representation.CanonicalTypeShapeKind
 
 /**
  * Non-authoritative hint about an array component.

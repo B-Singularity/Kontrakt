@@ -1,8 +1,8 @@
 package stage.lowering.material.polymorphic
 
+import stage.canonicalization.contract.representative.MetamodelProtocolTextGuards
+import stage.canonicalization.material.representation.TypeReference
 import stage.lowering.diagnostics.TypeExpansionContractViolationException
-import stage.canonicalization.material.TypeReference
-import stage.normalization.contract.MetamodelProtocolTextGuards
 
 /**
  * Provider-issued concrete implementation reference.

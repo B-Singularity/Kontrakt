@@ -1,6 +1,6 @@
 package stage.lowering.material.expansion
 
-import stage.canonicalization.material.TypeReference
+import stage.canonicalization.material.representation.TypeReference
 
 /**
  * Per-expansion work-meter bridge.

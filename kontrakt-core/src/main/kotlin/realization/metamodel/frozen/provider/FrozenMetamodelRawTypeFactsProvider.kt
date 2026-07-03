@@ -2,10 +2,10 @@ package realization.metamodel.frozen.provider
 
 import stage.admission.diagnostics.evidence.FrozenMetamodelIncompleteTableException
 import stage.admission.diagnostics.evidence.FrozenMetamodelUnknownTypeReferenceException
-import stage.canonicalization.material.TypeReference
 import stage.canonicalization.material.frozen.image.FrozenMetamodelImage
 import stage.canonicalization.material.frozen.table.FrozenMetamodelImageTableId
 import stage.canonicalization.material.frozen.table.FrozenTypeReferenceIndex
+import stage.canonicalization.material.representation.TypeReference
 import stage.lowering.boundary.RawTypeFactsProvider
 import stage.lowering.boundary.RawTypeFactsResolution
 
@@ -14,7 +14,7 @@ import stage.lowering.boundary.RawTypeFactsResolution
  *
  * This provider must not perform backend discovery.
  *
- * Even if RawTypeFactsDTO is materialized lazily from a frozen raw fact record,
+ * Even if RawTypeFactsDTO is materialized lazily from a frozen raw fact records,
  * the correct accounting category is cacheHit/frozen-hit, not actual backend
  * resolution.
  *
@@ -87,7 +87,7 @@ class FrozenMetamodelRawTypeFactsProvider private constructor(
                 imageId = image.imageId,
                 referenceSummary = reference.renderSummary(),
                 missingTable = FrozenMetamodelImageTableId.RAW_FACT_TABLE.name,
-                reason = "TypeReference exists in type index but has no raw fact record: " +
+                reason = "TypeReference exists in type index but has no raw fact records: " +
                         "frozenOrdinal=$frozenOrdinal.",
             )
 

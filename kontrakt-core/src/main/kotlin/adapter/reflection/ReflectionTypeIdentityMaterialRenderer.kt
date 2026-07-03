@@ -1,7 +1,7 @@
 package adapter.reflection
 
 import stage.admission.diagnostics.evidence.StrictModeViolationException
-import stage.canonicalization.material.CanonicalTypeShapeKind
+import stage.canonicalization.material.representation.CanonicalTypeShapeKind
 import stage.input.presentation.raw.ArrayComponentShapeHint
 import stage.input.presentation.raw.AtomicShapeFamily
 import stage.input.presentation.raw.OrderedUseSiteAnnotations

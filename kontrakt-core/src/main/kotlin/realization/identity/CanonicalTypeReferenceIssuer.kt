@@ -2,11 +2,11 @@ package realization.identity
 
 import metamodel.domain.port.outgoing.NormalizationEngine
 import stage.admission.diagnostics.evidence.MetamodelFactContractViolationException
-import stage.canonicalization.material.CanonicalTypeSignature
-import stage.canonicalization.material.CanonicalTypeText
-import stage.canonicalization.material.CanonicalTypeTextInspectionPolicy
-import stage.canonicalization.material.TypeReference
-import stage.canonicalization.material.TypeShapeRatificationFingerprint
+import stage.canonicalization.material.representation.CanonicalTypeSignature
+import stage.canonicalization.material.representation.CanonicalTypeText
+import stage.canonicalization.material.representation.CanonicalTypeTextInspectionPolicy
+import stage.canonicalization.material.representation.TypeReference
+import stage.canonicalization.material.representation.TypeShapeRatificationFingerprint
 import stage.input.presentation.raw.OrderedUseSiteAnnotations
 import stage.input.presentation.raw.TypeIdentityCoherenceProof
 import stage.input.presentation.raw.TypeShapeSummary

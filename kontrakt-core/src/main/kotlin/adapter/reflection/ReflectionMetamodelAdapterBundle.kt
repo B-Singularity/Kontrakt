@@ -1,7 +1,7 @@
 package adapter.reflection
 
 import stage.admission.diagnostics.evidence.MetamodelAdapterStateViolationException
-import stage.canonicalization.material.TypeReference
+import stage.canonicalization.material.representation.TypeReference
 import stage.input.presentation.raw.ResolvedTypeShape
 import stage.lowering.boundary.RawTypeFactsProvider
 import stage.lowering.boundary.RawTypeFactsResolution

@@ -1,9 +1,9 @@
 package adapter.reflection
 
 import realization.identity.TypeIdentity64Deriver
-import stage.lowering.material.expansion.TypeCycleIdentity
+import stage.canonicalization.material.representation.TypeReference
 import stage.lowering.boundary.TypeCycleIdentityProvider
-import stage.canonicalization.material.TypeReference
+import stage.lowering.material.expansion.TypeCycleIdentity
 
 /**
  * Reflection adapter implementation of TypeCycleIdentityProvider.

@@ -2,10 +2,10 @@ package realization.metamodel.frozen.provider
 
 import stage.admission.diagnostics.evidence.FrozenMetamodelIncompleteTableException
 import stage.admission.diagnostics.evidence.FrozenMetamodelUnknownTypeReferenceException
-import stage.canonicalization.material.TypeReference
 import stage.canonicalization.material.frozen.image.FrozenMetamodelImage
 import stage.canonicalization.material.frozen.table.FrozenMetamodelImageTableId
 import stage.canonicalization.material.frozen.table.FrozenTypeReferenceIndex
+import stage.canonicalization.material.representation.TypeReference
 import stage.lowering.boundary.TypeCycleIdentityProvider
 import stage.lowering.material.expansion.TypeCycleIdentity
 
@@ -94,7 +94,7 @@ class FrozenMetamodelTypeCycleIdentityProvider private constructor(
             imageId = image.imageId,
             referenceSummary = reference.renderSummary(),
             missingTable = FrozenMetamodelImageTableId.CYCLE_IDENTITY_TABLE.name,
-            reason = "TypeReference exists in type index but has no cycle identity record: " +
+            reason = "TypeReference exists in type index but has no cycle identity records: " +
                     "frozenOrdinal=$frozenOrdinal.",
         )
     }

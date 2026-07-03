@@ -1,8 +1,8 @@
 package adapter.reflection
 
 import stage.admission.diagnostics.evidence.MetamodelAdapterStateViolationException
-import stage.canonicalization.material.CanonicalSignature
-import stage.canonicalization.material.TypeReference
+import stage.canonicalization.material.representation.CanonicalSignature
+import stage.canonicalization.material.representation.TypeReference
 import java.nio.charset.StandardCharsets
 
 /**

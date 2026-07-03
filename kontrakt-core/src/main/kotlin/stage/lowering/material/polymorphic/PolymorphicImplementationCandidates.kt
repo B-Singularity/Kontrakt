@@ -1,9 +1,9 @@
 package stage.lowering.material.polymorphic
 
-import stage.canonicalization.material.TypeReference
+import stage.canonicalization.contract.representative.MetamodelProtocolOrdering
+import stage.canonicalization.material.representation.TypeReference
 import stage.lowering.diagnostics.TypeExpansionContractViolationException
 import stage.lowering.material.sequence.ExpansionSequence
-import stage.normalization.contract.MetamodelProtocolOrdering
 
 /**
  * Deterministically ordered implementation candidate set.

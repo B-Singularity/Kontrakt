@@ -1,6 +1,6 @@
 package versioning.coordinate.material.value
 
-import stage.normalization.contract.MetamodelProtocolTextGuards
+import stage.canonicalization.contract.representative.MetamodelProtocolTextGuards
 
 /**
  * Compatibility version for the frozen metamodel image structure.
@@ -11,7 +11,7 @@ import stage.normalization.contract.MetamodelProtocolTextGuards
  * - the frozen type-shape table;
  * - the frozen cycle-identity table;
  * - the frozen raw-fact table;
- * - nested frozen record sequences;
+ * - nested frozen records sequences;
  * - table coverage semantics;
  * - image-local ordinal semantics.
  *

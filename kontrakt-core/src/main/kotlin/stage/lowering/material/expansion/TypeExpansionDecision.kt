@@ -1,6 +1,6 @@
 package stage.lowering.material.expansion
 
-import stage.canonicalization.material.TypeReference
+import stage.canonicalization.material.representation.TypeReference
 
 /**
  * Full expansion decision produced after active-cycle detection reports cycle miss.

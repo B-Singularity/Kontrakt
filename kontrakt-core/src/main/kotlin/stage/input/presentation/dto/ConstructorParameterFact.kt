@@ -1,10 +1,10 @@
 package stage.input.presentation.dto
 
 import stage.admission.diagnostics.evidence.InvalidTypeFactShapeException
-import stage.canonicalization.material.TypeReference
+import stage.canonicalization.contract.representative.MetamodelProtocolTextGuards
+import stage.canonicalization.material.representation.TypeReference
 import stage.input.presentation.raw.DefaultValuePresence
 import stage.input.presentation.raw.NullabilityKind
-import stage.normalization.contract.MetamodelProtocolTextGuards
 
 /**
  * Raw normalized constructor-parameter fact.

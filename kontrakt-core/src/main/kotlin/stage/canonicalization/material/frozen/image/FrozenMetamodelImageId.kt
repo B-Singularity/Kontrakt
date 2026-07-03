@@ -1,7 +1,7 @@
 package stage.canonicalization.material.frozen.image
 
 import stage.admission.diagnostics.evidence.MetamodelFactContractViolationException
-import stage.normalization.contract.MetamodelProtocolTextGuards
+import stage.canonicalization.contract.representative.MetamodelProtocolTextGuards
 
 /**
  * Diagnostic identity for one frozen metamodel image instance.

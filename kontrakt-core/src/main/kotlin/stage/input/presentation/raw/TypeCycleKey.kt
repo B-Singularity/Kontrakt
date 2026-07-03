@@ -1,7 +1,7 @@
 package stage.input.presentation.raw
 
 import stage.admission.diagnostics.evidence.MetamodelFactContractViolationException
-import stage.canonicalization.material.CanonicalTypeTextGuards
+import stage.canonicalization.material.representation.CanonicalTypeTextGuards
 
 /**
  * Cycle-detection structural key.

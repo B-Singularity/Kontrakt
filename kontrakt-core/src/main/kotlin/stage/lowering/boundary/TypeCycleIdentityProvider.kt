@@ -1,7 +1,7 @@
 package stage.lowering.boundary
 
+import stage.canonicalization.material.representation.TypeReference
 import stage.lowering.material.expansion.TypeCycleIdentity
-import stage.canonicalization.material.TypeReference
 
 /**
  * Outbound port for active-cycle identity preflight.

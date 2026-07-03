@@ -102,7 +102,7 @@ class ResultResolverInterceptorTest {
 
     @Test
     fun `intercept - success with traceMode preserves existing Exact locations`() {
-        // Given: TraceMode = true, but record already has Exact location
+        // Given: TraceMode = true, but records already has Exact location
         val sut = ResultResolverInterceptor(spec, traceMode = true)
 
         val exactLocation = SourceLocation.Exact("File.kt", 10, "Class", "Method")

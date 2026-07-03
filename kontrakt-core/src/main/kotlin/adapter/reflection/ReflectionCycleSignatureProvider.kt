@@ -1,7 +1,7 @@
 package adapter.reflection
 
-import stage.canonicalization.material.CanonicalSignature
-import stage.canonicalization.material.TypeReference
+import stage.canonicalization.material.representation.CanonicalSignature
+import stage.canonicalization.material.representation.TypeReference
 
 /**
  * Adapter-side bridge for the exact cycle-signature material required by
@@ -11,8 +11,8 @@ import stage.canonicalization.material.TypeReference
  *
  * The current codebase has two signature concepts:
  *
- * - stage.canonicalization.material.CanonicalTypeSignature
- * - stage.canonicalization.material.CanonicalSignature
+ * - stage.canonicalization.material.representation.CanonicalTypeSignature
+ * - stage.canonicalization.material.representation.CanonicalSignature
  *
  * TypeReference carries the metamodel-domain signature material.
  * TypeCycleIdentity currently requires the IR-layer CanonicalSignature value.

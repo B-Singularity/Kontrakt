@@ -1,10 +1,10 @@
 package stage.input.presentation.raw
 
 import stage.admission.diagnostics.evidence.MetamodelFactContractViolationException
-import stage.canonicalization.material.CanonicalTypeId
-import stage.canonicalization.material.CanonicalTypeShapeKind
-import stage.canonicalization.material.CanonicalTypeSignature
-import stage.canonicalization.material.TypeShapeRatificationFingerprint
+import stage.canonicalization.material.representation.CanonicalTypeId
+import stage.canonicalization.material.representation.CanonicalTypeShapeKind
+import stage.canonicalization.material.representation.CanonicalTypeSignature
+import stage.canonicalization.material.representation.TypeShapeRatificationFingerprint
 
 /**
  * Scope-local proof that a TypeReference identity tuple was assembled by the

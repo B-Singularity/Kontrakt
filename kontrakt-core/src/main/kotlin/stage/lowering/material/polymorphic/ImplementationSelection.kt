@@ -1,7 +1,7 @@
 package stage.lowering.material.polymorphic
 
+import stage.canonicalization.material.representation.TypeReference
 import stage.lowering.diagnostics.TypeExpansionContractViolationException
-import stage.canonicalization.material.TypeReference
 
 /**
  * Final selected implementation for dependency-site / structural-member

@@ -1,6 +1,6 @@
 package stage.lowering.boundary
 
-import stage.canonicalization.material.TypeReference
+import stage.canonicalization.material.representation.TypeReference
 
 /**
  * Outbound raw type-facts port.

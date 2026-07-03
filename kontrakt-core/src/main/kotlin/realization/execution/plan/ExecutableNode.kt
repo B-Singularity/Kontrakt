@@ -2,7 +2,7 @@ package realization.execution.plan
 
 import ir.Attribute
 import realization.execution.generation.Generator
-import stage.canonicalization.material.TypeReference
+import stage.canonicalization.material.representation.TypeReference
 
 /**
  * [Execution Blueprint]

@@ -4,7 +4,7 @@ import stage.lowering.diagnostics.PlanningProtocolIntegrityException
 import statemachine.transition.material.PlanningResumePoint
 
 /**
- * Immutable-orchestration record for one joined-wait suspension.
+ * Immutable-orchestration records for one joined-wait suspension.
  *
  * It binds:
  * - the immutable resume-point descriptor

@@ -1,7 +1,7 @@
 package stage.input.presentation.raw
 
 import stage.admission.diagnostics.evidence.InvalidTypeFactShapeException
-import stage.canonicalization.material.TypeReference
+import stage.canonicalization.material.representation.TypeReference
 
 /**
  * Resolved type-shape descriptor.

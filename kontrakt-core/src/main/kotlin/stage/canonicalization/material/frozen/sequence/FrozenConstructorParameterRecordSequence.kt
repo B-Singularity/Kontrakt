@@ -1,6 +1,6 @@
 package stage.canonicalization.material.frozen.sequence
 
-import stage.canonicalization.material.frozen.record.FrozenConstructorParameterRecord
+import stage.canonicalization.material.frozen.records.FrozenConstructorParameterRecord
 
 /**
  * Deterministic constructor-parameter sequence.

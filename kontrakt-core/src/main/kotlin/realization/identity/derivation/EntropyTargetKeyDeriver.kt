@@ -1,6 +1,6 @@
 package realization.identity.derivation
 
-import stage.canonicalization.material.TypeReference
+import stage.canonicalization.material.representation.TypeReference
 
 /**
  * Deterministic entropy-target ordering key.

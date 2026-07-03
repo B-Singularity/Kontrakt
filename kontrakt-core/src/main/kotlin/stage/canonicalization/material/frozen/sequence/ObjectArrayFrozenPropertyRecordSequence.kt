@@ -1,12 +1,12 @@
 package stage.canonicalization.material.frozen.sequence
 
-import stage.canonicalization.material.frozen.table.FrozenMetamodelImageTableId
 import stage.canonicalization.material.frozen.image.FrozenMetamodelImageId
 import stage.canonicalization.material.frozen.order.FrozenPropertyRecordOrder
-import stage.canonicalization.material.frozen.record.FrozenPropertyRecord
+import stage.canonicalization.material.frozen.records.FrozenPropertyRecord
+import stage.canonicalization.material.frozen.table.FrozenMetamodelImageTableId
 
 /**
- * Object-array-backed deterministic property record sequence.
+ * Object-array-backed deterministic property records sequence.
  *
  * Construction law:
  *
@@ -15,7 +15,7 @@ import stage.canonicalization.material.frozen.record.FrozenPropertyRecord
  * - records are sorted by FrozenPropertyRecordKey;
  * - duplicate property keys fail closed;
  * - comparator equality between distinct records fails closed;
- * - availability is record state, not key material;
+ * - availability is records state, not key material;
  * - same key with conflicting payload fails closed;
  * - sequence storage is immutable after issue(...).
  *
@@ -45,7 +45,7 @@ class ObjectArrayFrozenPropertyRecordSequence private constructor(
     ): FrozenPropertyRecord {
         if (index < 0 || index >= records.size) {
             throw IndexOutOfBoundsException(
-                "Frozen property record sequence index out of bounds: index=$index, size=${records.size}",
+                "Frozen property records sequence index out of bounds: index=$index, size=${records.size}",
             )
         }
 
@@ -91,7 +91,7 @@ class ObjectArrayFrozenPropertyRecordSequence private constructor(
                         record.key.ownerType.renderSummary()
                     },
                     duplicateReason = { previous, current, leftIndex, rightIndex ->
-                        "Duplicate or comparator-equal property record key during Kontrakt-owned merge sort: " +
+                        "Duplicate or comparator-equal property records key during Kontrakt-owned merge sort: " +
                                 "leftIndex=$leftIndex, rightIndex=$rightIndex, " +
                                 "previous=${previous.key.renderSummary()}, " +
                                 "current=${current.key.renderSummary()}"

@@ -1,8 +1,8 @@
 package realization.identity
 
 import stage.admission.diagnostics.evidence.MetamodelFactContractViolationException
-import stage.canonicalization.material.TypeShapeRatification
-import stage.canonicalization.material.TypeShapeRatificationFingerprint
+import stage.canonicalization.material.representation.TypeShapeRatification
+import stage.canonicalization.material.representation.TypeShapeRatificationFingerprint
 
 /**
  * Scope-level coherence authority.

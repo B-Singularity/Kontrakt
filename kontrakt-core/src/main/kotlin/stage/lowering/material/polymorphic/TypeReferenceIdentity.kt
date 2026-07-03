@@ -1,8 +1,8 @@
 package stage.lowering.material.polymorphic
 
+import stage.canonicalization.contract.representative.MetamodelProtocolOrdering
+import stage.canonicalization.material.representation.TypeReference
 import stage.lowering.diagnostics.TypeExpansionContractViolationException
-import stage.canonicalization.material.TypeReference
-import stage.normalization.contract.MetamodelProtocolOrdering
 
 /**
  * Semantic identity helper for TypeReference values inside polymorphic expansion.

@@ -1,14 +1,14 @@
 package stage.input.presentation.dto
 
 import stage.admission.diagnostics.evidence.InvalidTypeFactShapeException
-import stage.canonicalization.material.TypeReference
+import stage.canonicalization.contract.representative.MetamodelProtocolTextGuards
+import stage.canonicalization.material.representation.TypeReference
 import stage.input.presentation.raw.DeclarationOrdinal
 import stage.input.presentation.raw.MemberOrigin
 import stage.input.presentation.raw.NullabilityKind
 import stage.input.presentation.raw.PropertyMutability
 import stage.input.presentation.raw.PropertyStorageKind
 import stage.input.presentation.raw.VisibilityKind
-import stage.normalization.contract.MetamodelProtocolTextGuards
 
 /**
  * Raw normalized property fact.
@@ -18,7 +18,7 @@ import stage.normalization.contract.MetamodelProtocolTextGuards
  * - a projected active member;
  * - a selected property;
  * - a demotion result;
- * - a final traversal-order record;
+ * - a final traversal-order records;
  * - a reflection KProperty wrapper;
  * - a source property node;
  * - or a planning-domain decision object.

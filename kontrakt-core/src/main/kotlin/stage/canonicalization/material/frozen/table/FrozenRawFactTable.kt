@@ -45,11 +45,11 @@ import versioning.coordinate.material.value.FrozenMetamodelImageSchemaVersion
  * Coverage may be:
  *
  * - materialized RawTypeFactsDTO;
- * - a frozen raw fact record;
- * - a deterministic sentinel record such as TRUNCATED;
- * - a deterministic sentinel record such as FILTERED_BY_POLICY;
- * - a deterministic sentinel record such as UNAVAILABLE_FROM_BACKEND;
- * - an ACQUISITION_FAILED diagnostic record.
+ * - a frozen raw fact records;
+ * - a deterministic sentinel records such as TRUNCATED;
+ * - a deterministic sentinel records such as FILTERED_BY_POLICY;
+ * - a deterministic sentinel records such as UNAVAILABLE_FROM_BACKEND;
+ * - an ACQUISITION_FAILED diagnostic records.
  *
  * Missing coverage for an indexed ordinal is an incomplete frozen image and
  * must be rejected before FrozenMetamodelImage publication.

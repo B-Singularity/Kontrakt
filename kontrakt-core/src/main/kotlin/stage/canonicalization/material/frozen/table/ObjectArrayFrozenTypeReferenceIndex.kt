@@ -2,10 +2,10 @@ package stage.canonicalization.material.frozen.table
 
 import stage.admission.diagnostics.evidence.FrozenMetamodelSequenceIndexOutOfBoundsException
 import stage.admission.diagnostics.evidence.FrozenMetamodelSequenceViolationException
-import stage.canonicalization.material.TypeReference
 import stage.canonicalization.material.frozen.image.FrozenMetamodelImageId
 import stage.canonicalization.material.frozen.order.FrozenTypeReferenceOrder
 import stage.canonicalization.material.frozen.sequence.FrozenSequenceSorter
+import stage.canonicalization.material.representation.TypeReference
 import versioning.coordinate.material.value.FrozenMetamodelImageSchemaVersion
 
 /**

@@ -1424,7 +1424,7 @@ class ResolvedMetadataIdentityPolicy private constructor(
      * Per-unit identity fuses.
      *
      * These caps bound one canonical unit so that a single TypeReference, TypeCycleKey,
-     * TypeCycleIdentityPrecheck, TypeShapeSummary, raw fact record, active member key,
+     * TypeCycleIdentityPrecheck, TypeShapeSummary, raw fact records, active member key,
      * local selector tuple, runtime binding snapshot, intern candidate, or future
      * lowered contract fact cannot accidentally absorb an entire graph closure.
      * Ordinary resource profiles should not primarily scale these values.

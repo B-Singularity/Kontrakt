@@ -1,6 +1,6 @@
 package stage.lowering.material.projection
 
-import stage.canonicalization.material.TypeReference
+import stage.canonicalization.material.representation.TypeReference
 import stage.input.presentation.raw.DeclarationOrdinal
 import stage.input.presentation.raw.NullabilityKind
 import stage.lowering.diagnostics.ActiveMemberProjectionException

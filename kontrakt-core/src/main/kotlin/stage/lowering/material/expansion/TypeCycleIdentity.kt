@@ -1,7 +1,7 @@
 package stage.lowering.material.expansion
 
-import stage.canonicalization.material.CanonicalSignature
-import stage.canonicalization.material.TypeReference
+import stage.canonicalization.material.representation.CanonicalSignature
+import stage.canonicalization.material.representation.TypeReference
 import stage.lowering.diagnostics.TypeCycleIdentityContractViolationException
 
 /**

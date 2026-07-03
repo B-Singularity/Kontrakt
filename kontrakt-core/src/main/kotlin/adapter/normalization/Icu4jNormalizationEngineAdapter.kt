@@ -7,10 +7,10 @@ import com.ibm.icu.lang.UCharacterCategory
 import com.ibm.icu.text.Normalizer2
 import com.ibm.icu.util.VersionInfo
 import metamodel.domain.port.outgoing.NormalizationEngine
-import stage.canonicalization.material.CanonicalTypeLexicalProfile
-import stage.canonicalization.material.CanonicalTypeTextInspectionPolicy
-import stage.canonicalization.material.CanonicalTypeTextInspectionResult
-import stage.canonicalization.material.CanonicalTypeTextViolationCode
+import stage.canonicalization.material.representation.CanonicalTypeLexicalProfile
+import stage.canonicalization.material.representation.CanonicalTypeTextInspectionPolicy
+import stage.canonicalization.material.representation.CanonicalTypeTextInspectionResult
+import stage.canonicalization.material.representation.CanonicalTypeTextViolationCode
 
 /**
  * ICU4J-backed implementation of [metamodel.domain.port.outgoing.NormalizationEngine].

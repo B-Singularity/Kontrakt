@@ -3,7 +3,7 @@ package adapter.reflection
 import stage.admission.diagnostics.evidence.MetamodelAdapterAssemblyException
 import stage.admission.diagnostics.evidence.MetamodelAdapterStateViolationException
 import stage.admission.diagnostics.evidence.MetamodelFactContractViolationException
-import stage.normalization.contract.MetamodelProtocolTextGuards
+import stage.canonicalization.contract.representative.MetamodelProtocolTextGuards
 
 /**
  * Reflection-adapter wrapper for metamodel order-token validation.

@@ -1,8 +1,8 @@
 package stage.input.presentation.raw
 
 import stage.admission.diagnostics.evidence.MetamodelFactContractViolationException
-import stage.canonicalization.material.CanonicalExpansionSurface
-import stage.canonicalization.material.CanonicalTypeShapeKind
+import stage.canonicalization.material.representation.CanonicalExpansionSurface
+import stage.canonicalization.material.representation.CanonicalTypeShapeKind
 
 /**
  * Lightweight shape summary attached to canonical type identity surfaces.

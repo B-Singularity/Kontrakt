@@ -4,7 +4,7 @@ import realization.graph.IrLimits
 import realization.graph.edge.Attribute
 import realization.graph.structure.DeterministicMap
 import realization.identity.CanonicalIdentifier
-import stage.canonicalization.material.CanonicalSignature
+import stage.canonicalization.material.representation.CanonicalSignature
 
 /**
  * Canonical plan node order.

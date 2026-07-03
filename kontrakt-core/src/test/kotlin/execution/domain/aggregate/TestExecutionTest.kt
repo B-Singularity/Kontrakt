@@ -277,7 +277,7 @@ class TestExecutionTest {
                 expected = "A",
                 actual = "A",
                 // Note: In EXPLAINABLE mode, the system might capture 'SourceLocation',
-                // causing a mismatch with this default 'NotCaptured' record.
+                // causing a mismatch with this default 'NotCaptured' records.
             )
         val executionResult = ExecutionResult(records = listOf(successRecord), seed = 1234L)
         every { scenarioExecutor.executeScenarios(context) } returns executionResult

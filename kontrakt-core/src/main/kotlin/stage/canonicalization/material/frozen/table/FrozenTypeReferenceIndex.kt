@@ -1,7 +1,7 @@
 package stage.canonicalization.material.frozen.table
 
-import stage.canonicalization.material.TypeReference
 import stage.canonicalization.material.frozen.table.FrozenTypeReferenceIndex.Companion.MISSING_ORDINAL
+import stage.canonicalization.material.representation.TypeReference
 import versioning.coordinate.material.value.FrozenMetamodelImageSchemaVersion
 
 /**

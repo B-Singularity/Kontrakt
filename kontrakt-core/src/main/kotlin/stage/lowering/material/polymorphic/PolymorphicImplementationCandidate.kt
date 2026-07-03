@@ -1,6 +1,6 @@
 package stage.lowering.material.polymorphic
 
-import stage.canonicalization.material.TypeReference
+import stage.canonicalization.material.representation.TypeReference
 
 /**
  * Concrete implementation candidate for one interface / abstract contract.

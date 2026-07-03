@@ -1,6 +1,6 @@
 package metamodel.domain.port.outgoing
 
-import stage.canonicalization.material.PolicyFingerprint
+import stage.canonicalization.material.representation.PolicyFingerprint
 
 /**
  * Outbound port for deriving order-governed policy fingerprints.

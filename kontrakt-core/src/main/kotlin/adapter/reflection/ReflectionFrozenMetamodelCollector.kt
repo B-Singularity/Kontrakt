@@ -2,12 +2,12 @@ package adapter.reflection
 
 import stage.admission.diagnostics.evidence.MetamodelAdapterAssemblyException
 import stage.admission.diagnostics.evidence.MetamodelException
-import stage.canonicalization.material.TypeReference
 import stage.canonicalization.material.frozen.image.FrozenMetamodelImageAssemblyInput
 import stage.canonicalization.material.frozen.image.FrozenMetamodelImageId
 import stage.canonicalization.material.frozen.image.FrozenRawFactTableEntry
 import stage.canonicalization.material.frozen.image.FrozenTypeCycleIdentityTableEntry
 import stage.canonicalization.material.frozen.image.FrozenTypeShapeTableEntry
+import stage.canonicalization.material.representation.TypeReference
 import stage.input.presentation.raw.ResolvedTypeShape
 import stage.lowering.boundary.RawTypeFactsResolution
 import stage.lowering.material.expansion.TypeCycleIdentity

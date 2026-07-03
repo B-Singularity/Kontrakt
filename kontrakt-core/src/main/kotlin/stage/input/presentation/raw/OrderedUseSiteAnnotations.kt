@@ -2,7 +2,7 @@ package stage.input.presentation.raw
 
 import governance.budget.material.DiagnosticBudget
 import stage.admission.diagnostics.evidence.MetamodelFactContractViolationException
-import stage.normalization.material.AnnotationDescriptor
+import stage.canonicalization.material.presentation.AnnotationDescriptor
 
 /**
  * Deterministically ordered use-site annotation collection.

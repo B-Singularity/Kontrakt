@@ -1,10 +1,10 @@
 package stage.lowering.material.polymorphic
 
-import stage.canonicalization.material.CanonicalTypeId
-import stage.canonicalization.material.CanonicalTypeSignature
+import stage.canonicalization.contract.representative.MetamodelProtocolOrdering
+import stage.canonicalization.material.representation.CanonicalTypeId
+import stage.canonicalization.material.representation.CanonicalTypeSignature
 import stage.lowering.diagnostics.TypeExpansionContractViolationException
 import stage.lowering.material.sequence.ExpansionSequence
-import stage.normalization.contract.MetamodelProtocolOrdering
 
 /**
  * Run-ratified immutable host runtime binding snapshot.

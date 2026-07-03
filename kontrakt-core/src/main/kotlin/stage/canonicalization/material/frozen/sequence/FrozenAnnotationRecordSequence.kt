@@ -1,9 +1,9 @@
 package stage.canonicalization.material.frozen.sequence
 
-import stage.canonicalization.material.frozen.record.FrozenAnnotationRecord
+import stage.canonicalization.material.frozen.records.FrozenAnnotationRecord
 
 /**
- * Deterministic annotation record sequence.
+ * Deterministic annotation records sequence.
  *
  * Annotation order must be derived from canonical annotation identity and
  * payload ordering.

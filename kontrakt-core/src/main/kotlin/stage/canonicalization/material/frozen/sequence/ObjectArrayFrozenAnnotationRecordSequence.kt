@@ -3,11 +3,11 @@ package stage.canonicalization.material.frozen.sequence
 import stage.admission.diagnostics.evidence.FrozenMetamodelSequenceIndexOutOfBoundsException
 import stage.canonicalization.material.frozen.image.FrozenMetamodelImageId
 import stage.canonicalization.material.frozen.order.FrozenAnnotationRecordOrder
-import stage.canonicalization.material.frozen.record.FrozenAnnotationRecord
+import stage.canonicalization.material.frozen.records.FrozenAnnotationRecord
 import stage.canonicalization.material.frozen.table.FrozenMetamodelImageTableId
 
 /**
- * Object-array-backed deterministic annotation record sequence.
+ * Object-array-backed deterministic annotation records sequence.
  *
  * This is the Level 1 implementation of FrozenAnnotationRecordSequence.
  *
@@ -159,7 +159,7 @@ class ObjectArrayFrozenAnnotationRecordSequence private constructor(
                         record.key.annotationType.renderSummary()
                     },
                     duplicateReason = { previous, current, leftIndex, rightIndex ->
-                        "Duplicate or comparator-equal annotation record key during Kontrakt-owned merge sort: " +
+                        "Duplicate or comparator-equal annotation records key during Kontrakt-owned merge sort: " +
                                 "leftIndex=$leftIndex, rightIndex=$rightIndex, " +
                                 "previous=${previous.key.renderSummary()}, " +
                                 "current=${current.key.renderSummary()}"

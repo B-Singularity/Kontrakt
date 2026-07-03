@@ -17,7 +17,7 @@ import stage.input.presentation.raw.TypeId
  * - a mutable builder;
  * - an execution result;
  * - a runtime test instance;
- * - a discovery record;
+ * - a discovery records;
  * - or a cache/interner key by itself.
  *
  * Core properties:

@@ -2,13 +2,13 @@ package stage.canonicalization.material.frozen.image
 
 import stage.admission.diagnostics.evidence.FrozenMetamodelIntegrityViolationException
 import stage.admission.diagnostics.evidence.FrozenMetamodelSequenceViolationException
-import stage.canonicalization.material.TypeReference
 import stage.canonicalization.material.frozen.table.FrozenMetamodelImageTableId
 import stage.canonicalization.material.frozen.table.FrozenTypeReferenceIndex
 import stage.canonicalization.material.frozen.table.ObjectArrayFrozenRawFactTable
 import stage.canonicalization.material.frozen.table.ObjectArrayFrozenTypeCycleIdentityTable
 import stage.canonicalization.material.frozen.table.ObjectArrayFrozenTypeReferenceIndex
 import stage.canonicalization.material.frozen.table.ObjectArrayFrozenTypeShapeTable
+import stage.canonicalization.material.representation.TypeReference
 import stage.input.presentation.dto.RawTypeFactsDTO
 import stage.input.presentation.raw.ResolvedTypeShape
 import stage.lowering.material.expansion.TypeCycleIdentity
@@ -500,7 +500,7 @@ internal class FrozenTypeCycleIdentityTableEntry private constructor(
  *
  * This entry currently carries materialized RawTypeFactsDTO.
  *
- * If the acquisition path produces FrozenRawFactRecord, that record must be
+ * If the acquisition path produces FrozenRawFactRecord, that records must be
  * materialized through its frozen adapter-neutral materialization path before
  * entering this DTO-backed table, or this entry type must be revised to carry
  * FrozenRawFactRecord explicitly.

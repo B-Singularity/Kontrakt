@@ -4,7 +4,7 @@ import realization.runtime.diagnostics.RegistryException
 import realization.runtime.registry.RuntimeHandleRegistry
 import realization.runtime.support.RuntimeTypeHandle
 import realization.runtime.support.RuntimeTypeResolver
-import stage.canonicalization.material.TypeReference
+import stage.canonicalization.material.representation.TypeReference
 import java.lang.reflect.Array
 import java.lang.reflect.GenericArrayType
 import java.lang.reflect.ParameterizedType

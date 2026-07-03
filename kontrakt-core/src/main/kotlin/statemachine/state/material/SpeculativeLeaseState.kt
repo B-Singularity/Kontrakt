@@ -7,7 +7,7 @@ import kotlin.enums.EnumEntries
  * Closed top-level lifecycle vocabulary for slot-owned speculative leases.
  *
  * Important semantic note:
- * - Lease absence is represented by absence of a lease object/record,
+ * - Lease absence is represented by absence of a lease object/records,
  *   not by an extra top-level state.
  *
  * Constitutional meaning:

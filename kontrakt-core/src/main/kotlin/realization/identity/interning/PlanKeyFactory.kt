@@ -6,7 +6,7 @@ import kontrakt.planning.domain.protocol.PrimitiveHash
 import kontrakt.planning.domain.protocol.SentinelRemapper
 import realization.identity.CanonicalIdentifier
 import realization.planning.session.PlannerSession
-import stage.canonicalization.material.CanonicalSignature
+import stage.canonicalization.material.representation.CanonicalSignature
 import stage.lowering.diagnostics.EnvironmentIntegrityException
 import stage.lowering.diagnostics.SentinelIntegrityException
 import stage.lowering.material.PartitionId

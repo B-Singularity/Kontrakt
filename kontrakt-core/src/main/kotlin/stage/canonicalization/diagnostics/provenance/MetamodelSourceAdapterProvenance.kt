@@ -1,6 +1,6 @@
 package stage.canonicalization.diagnostics.provenance
 
-import stage.normalization.contract.MetamodelProtocolTextGuards
+import stage.canonicalization.contract.representative.MetamodelProtocolTextGuards
 
 /**
  * Diagnostic provenance for the source adapter that produced a

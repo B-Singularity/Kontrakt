@@ -2,10 +2,10 @@ package realization.metamodel.frozen.provider
 
 import stage.admission.diagnostics.evidence.FrozenMetamodelIncompleteTableException
 import stage.admission.diagnostics.evidence.FrozenMetamodelUnknownTypeReferenceException
-import stage.canonicalization.material.TypeReference
 import stage.canonicalization.material.frozen.image.FrozenMetamodelImage
 import stage.canonicalization.material.frozen.table.FrozenMetamodelImageTableId
 import stage.canonicalization.material.frozen.table.FrozenTypeReferenceIndex
+import stage.canonicalization.material.representation.TypeReference
 import stage.input.presentation.raw.ResolvedTypeShape
 import stage.lowering.boundary.TypeShapeProvider
 
@@ -77,7 +77,7 @@ class FrozenMetamodelTypeShapeProvider private constructor(
             imageId = image.imageId,
             referenceSummary = reference.renderSummary(),
             missingTable = FrozenMetamodelImageTableId.SHAPE_TABLE.name,
-            reason = "TypeReference exists in type index but has no shape record: " +
+            reason = "TypeReference exists in type index but has no shape records: " +
                     "frozenOrdinal=$frozenOrdinal.",
         )
     }

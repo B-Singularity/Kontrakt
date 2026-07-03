@@ -2,8 +2,8 @@ package stage.canonicalization.material.frozen.sequence
 
 import stage.admission.diagnostics.evidence.FrozenMetamodelSequenceIndexOutOfBoundsException
 import stage.canonicalization.material.frozen.image.FrozenMetamodelImageId
-import stage.canonicalization.material.frozen.record.FrozenConstructorParameterRecord
-import stage.canonicalization.material.frozen.record.FrozenConstructorRecordKey
+import stage.canonicalization.material.frozen.records.FrozenConstructorParameterRecord
+import stage.canonicalization.material.frozen.records.FrozenConstructorRecordKey
 import stage.canonicalization.material.frozen.table.FrozenMetamodelImageTableId
 
 /**
@@ -45,7 +45,7 @@ import stage.canonicalization.material.frozen.table.FrozenMetamodelImageTableId
  * The protocol index is already the destination address:
  *
  * ```text
- * destination[record.key.parameterIndex] = record
+ * destination[records.key.parameterIndex] = records
  * ```
  *
  * This gives deterministic O(N) publication and validates duplicate, missing,
@@ -56,7 +56,7 @@ import stage.canonicalization.material.frozen.table.FrozenMetamodelImageTableId
  * This sequence allocates placement storage from records.size, not from the
  * maximum observed parameterIndex.
  *
- * Therefore a polluted record with parameterIndex=999999 and records.size=2 is
+ * Therefore a polluted records with parameterIndex=999999 and records.size=2 is
  * rejected as out-of-range instead of inflating the destination array.
  *
  * A maliciously or accidentally huge records array must be rejected by the

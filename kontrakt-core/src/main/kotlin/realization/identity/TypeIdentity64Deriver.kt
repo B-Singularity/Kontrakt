@@ -1,6 +1,6 @@
 package realization.identity
 
-import stage.canonicalization.material.TypeReference
+import stage.canonicalization.material.representation.TypeReference
 
 /**
  * Canonical 64-bit type identity derivation service.

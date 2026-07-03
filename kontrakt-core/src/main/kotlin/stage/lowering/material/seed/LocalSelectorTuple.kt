@@ -1,8 +1,8 @@
 package stage.lowering.material.seed
 
-import stage.canonicalization.material.TypeReference
+import stage.canonicalization.contract.representative.MetamodelProtocolTextGuards
+import stage.canonicalization.material.representation.TypeReference
 import stage.lowering.diagnostics.TypeExpansionContractViolationException
-import stage.normalization.contract.MetamodelProtocolTextGuards
 
 /**
  * Local HID selector tuple.

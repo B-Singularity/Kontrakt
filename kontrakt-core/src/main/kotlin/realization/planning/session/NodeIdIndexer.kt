@@ -92,7 +92,7 @@ internal class NodeIdIndexer private constructor(
     /**
      * Primitive undo log.
      *
-     * Each record occupies 6 ints (= 24 bytes), aligned with the L1 byte ledger:
+     * Each records occupies 6 ints (= 24 bytes), aligned with the L1 byte ledger:
      * - op
      * - slot
      * - oldHead
@@ -461,7 +461,7 @@ internal class NodeIdIndexer private constructor(
     private fun startSlot(identityBits: Long): Int = PrimitiveHash.mix64(identityBits).toInt() and mask
 
     /**
-     * Ensures that one additional undo record fits.
+     * Ensures that one additional undo records fits.
      */
     private fun ensureUndoCapacity() {
         if (undoLogPtr + UNDO_RECORD_WIDTH > undoLog.size) {

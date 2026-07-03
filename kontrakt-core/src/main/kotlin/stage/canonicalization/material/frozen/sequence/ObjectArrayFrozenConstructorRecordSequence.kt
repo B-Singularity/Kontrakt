@@ -3,11 +3,11 @@ package stage.canonicalization.material.frozen.sequence
 import stage.admission.diagnostics.evidence.FrozenMetamodelSequenceIndexOutOfBoundsException
 import stage.canonicalization.material.frozen.image.FrozenMetamodelImageId
 import stage.canonicalization.material.frozen.order.FrozenConstructorRecordOrder
-import stage.canonicalization.material.frozen.record.FrozenConstructorRecord
+import stage.canonicalization.material.frozen.records.FrozenConstructorRecord
 import stage.canonicalization.material.frozen.table.FrozenMetamodelImageTableId
 
 /**
- * Object-array-backed deterministic constructor record sequence.
+ * Object-array-backed deterministic constructor records sequence.
  *
  * This is the Level 1 implementation of FrozenConstructorRecordSequence.
  *
@@ -95,7 +95,7 @@ import stage.canonicalization.material.frozen.table.FrozenMetamodelImageTableId
  * The sorter defensively copies the input array but does not deep-copy records.
  *
  * FrozenConstructorRecord instances must already be immutable frozen material.
- * If a record can mutate after issue(...), the broken boundary is the record
+ * If a records can mutate after issue(...), the broken boundary is the records
  * factory or acquisition assembler, not this sequence.
  *
  * Capacity law:
@@ -213,7 +213,7 @@ class ObjectArrayFrozenConstructorRecordSequence private constructor(
                         record.key.ownerType.renderSummary()
                     },
                     duplicateReason = { previous, current, leftIndex, rightIndex ->
-                        "Duplicate or comparator-equal constructor record key during Kontrakt-owned merge sort: " +
+                        "Duplicate or comparator-equal constructor records key during Kontrakt-owned merge sort: " +
                                 "leftIndex=$leftIndex, rightIndex=$rightIndex, " +
                                 "previous=${previous.key.renderSummary()}, " +
                                 "current=${current.key.renderSummary()}"

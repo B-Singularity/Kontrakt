@@ -1,7 +1,7 @@
 package realization.runtime.registry
 
 import realization.runtime.diagnostics.RegistryException
-import stage.canonicalization.material.TypeReference
+import stage.canonicalization.material.representation.TypeReference
 import java.lang.reflect.Type
 import java.util.concurrent.ConcurrentHashMap
 

@@ -1,6 +1,6 @@
 package realization.identity.derivation
 
-import stage.canonicalization.material.CanonicalSignature
+import stage.canonicalization.material.representation.CanonicalSignature
 import stage.input.presentation.dto.TypeFactsDTO
 
 /**

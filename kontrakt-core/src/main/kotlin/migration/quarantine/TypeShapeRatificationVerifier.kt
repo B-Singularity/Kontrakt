@@ -1,9 +1,9 @@
 package migration.quarantine
 
-import stage.canonicalization.material.CanonicalTypeText
-import stage.canonicalization.material.FingerprintTokenEncoding
-import stage.canonicalization.material.TypeShapeRatificationFingerprint
-import stage.canonicalization.material.TypeShapeRatificationVerification
+import stage.canonicalization.material.representation.CanonicalTypeText
+import stage.canonicalization.material.representation.FingerprintTokenEncoding
+import stage.canonicalization.material.representation.TypeShapeRatificationFingerprint
+import stage.canonicalization.material.representation.TypeShapeRatificationVerification
 import stage.input.presentation.raw.TypeShapeSummary
 
 /**
