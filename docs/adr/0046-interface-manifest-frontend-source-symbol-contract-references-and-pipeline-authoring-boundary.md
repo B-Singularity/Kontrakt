@@ -89,7 +89,7 @@ Machine sympathy belongs to the backend. The user-facing surface declares meanin
 
 ## 4. Alternatives
 
-### 4.1. Handwritten host interface plus top-level Kotlin `InteractionManifest`
+### 4.1. Handwritten host interface plus top-level Kotlin InteractionManifest
 
 ```kotlin
 interface CalculateContract {
@@ -130,7 +130,7 @@ interface CalculateContract {
     fun calculate(input: CalculateInput): CalculateOutput
 
     val calculateManifest: InteractionManifest
-        get() = InteractionManifest(...)
+        get() = InteractionManifest()
 }
 ```
 
@@ -511,7 +511,7 @@ Rejected because identity becomes lookup-rule dependent.
 
 ```kotlin
 fun calculate(input: CalculateInput): CalculateOutput {
-    pipeline { ... }
+    pipeline { }
 }
 ```
 
