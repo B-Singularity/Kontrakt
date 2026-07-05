@@ -44,8 +44,8 @@ The immediate order is therefore:
 
 ```text
 Contract Frontend v1
--> Lowered Contract Fact v1
 -> Canonical Contract Material v1
+-> Lowering / Lowered Contract Fact v1
 -> Minimal Judgment / Verifier Path
 -> Contract-theory audit of existing files
 -> Legacy quarantine breakdown

@@ -466,6 +466,30 @@ forced to reverse-engineer that machinery just to use the surface correctly.
 
 A good machine does not play that game.
 
+This is also where hexagonal architecture meets the same wall.
+
+Hexagonal architecture wants the core protected from outside technology. That instinct is useful. The problem appears
+when the outside technology is not a small tool, but a platform.
+
+Put Spring inside the core, and the core starts speaking through Spring. The operation is no longer only the operation
+you declared. It becomes the operation as shaped by Spring's runtime machinery. The contract meaning has been handed to
+an outside machine.
+
+Push Spring out to an adapter, and the core stays cleaner. But Spring stops being the platform it was designed to be.
+Its strongest force now sits at the edge, away from the place where the system's main obligations are supposed to be
+declared.
+
+That is the dilemma.
+
+Hexagonal architecture does not remove it. It names the place where it hurts.
+
+A port can separate code. It cannot, by itself, purify authority. If the platform decides the meaning, the core is
+contaminated. If the platform is kept away from meaning, the platform becomes outer machinery.
+
+Kontrakt takes the harder line. The contract must not be donated to the platform, and the platform must not be smuggled
+into the contract just because it is convenient. The machine may use outside machinery behind a boundary, but the
+declared obligation must be lowered into contract-owned material before that machinery gets to act.
+
 The surface declares the public obligation. It does not force the user to learn the implementation.
 
 This is exactly why a naive interface is not enough.
