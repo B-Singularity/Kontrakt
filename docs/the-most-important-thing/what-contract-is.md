@@ -2210,8 +2210,17 @@ report it.
 
 The contract must not name the mechanism. The contract must name the obligation.
 
-As long as the declared obligation is preserved, the implementation should be replaceable. If replacing the mechanism
-changes the contract, the mechanism leaked into the contract. At that point, the design has debt, not architecture.
+That rule reaches all the way down to the language.
+
+What Contract Is is the contract discipline. Kontrakt is one machine built from that discipline. The current Kontrakt
+implementation uses Kotlin/JVM as its host target. That is not a sacred fact.
+
+Kotlin/JVM is not the contract. It is the current way this machine runs.
+
+Another implementation may replace it only by carrying the same contract. Not the same classes. Not the same runtime
+habits. The same contract.
+
+If changing the host changes the meaning, the host was carrying authority.
 
 Implementation machinery belongs outside the contract document.
 
