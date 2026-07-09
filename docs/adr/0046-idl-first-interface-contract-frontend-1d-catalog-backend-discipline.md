@@ -242,11 +242,22 @@ The frontend shape is:
 ```text
 interface contract
     operation handle
-        explicit contract-axis binding
-        explicit state-machine-axis binding
+        flat operation manifest
+            flow
+            movement
+            bounds
+            diagnostics
 ```
 
-The operation handle, contract axis, and state-machine axis are authored together in `.kontrakt` source.
+The method gives the handle. The bound presentations are the contract body of that operation.
+
+The manifest is a slot board. The slot names on the left are IDL keywords, not user-defined labels. The author supplies
+material on the right. This keeps the contract shape visible without asking the user to invent the shape again.
+
+The four regions are there for visibility, like areas on a game board. They have no contract meaning of their own. They
+do not create parent contracts, nested structure, processing order, or shared authority. Kontrakt still lowers each
+bound
+presentation into its own material.
 
 ---
 
@@ -284,15 +295,20 @@ state-machine pipeline:
 The user-facing interface contract declares the contract axis and the state-machine axis. Kontrakt is free to build the
 implementation axis behind them.
 
+At the authoring surface, the manifest may be grouped for readability. `Flow` carries the material path. `Movement`
+carries the state surface. `Bounds` carries the contract world and its limits. `Diagnostics` carries explanation and
+retention. These names do not create another axis, and `bounds` is not an operation stage.
+
 The stage names used in the contract axis are contract vocabulary, not a physical schedule. A backend may use any
 equivalent structure as long as the declared obligation remains intact.
 
-If a contract position or movement position has no additional user-defined condition, that absence must be declared.
+If a slot is left empty at the authoring surface, Kontrakt must fill it with the declared default for that slot before
+lowering. The user may omit ceremony; the compiler may not leave absence implicit.
 
 ```text
-invariant NoAdditionalInvariant
-state Stateless
-transition NoTransition
+invariant    NoAdditionalInvariant
+state        Stateless
+transitions  none
 ```
 
 Declared absence is contract material. Hidden absence is not.
@@ -371,6 +387,10 @@ Governance Contract:
 The catalog is not an authoring syntax decision. It names the obligation kinds that Kontrakt must recognize across
 frontend, resolution, lowering, verification, and backend projection.
 
+The catalog remains flat. A user-facing manifest may group these presentations as `flow`, `movement`, `bounds`, and
+`diagnostics`, but those groups only help the author read the operation. They do not compose, inherit, or own the
+presentations inside them.
+
 ---
 
 
@@ -379,32 +399,66 @@ frontend, resolution, lowering, verification, and backend projection.
 
 ## 11. Illustrative Interface Shape
 
-A v1 `.kontrakt` interface contract may show the contract axis and state-machine axis like this:
+A v1 `.kontrakt` interface contract may group an operation manifest like this:
 
 ```text
 interface CalculateContract {
-    operation calculate(input: CalculateInput): CalculateOutput {
-        contractPipeline {
-            input CalculateInput
-            admission XGreaterThanOne
-            canonicalization DefaultPrimitiveCanonicalization
-            lowering CalculateLowering
-            invariant NoAdditionalInvariant
-            publication ResultGreaterThanInput
-            diagnostic CalculateDiagnostics
-            governance DefaultGovernance
-        }
+    operation calculate(input: CalculateInput): CalculateOutput
 
-        stateMachinePipeline {
-            state Stateless
-            transition NoTransition
-        }
+    manifest {
+        flow:
+            input          CalculateInput
+            admission      XGreaterThanOne
+            canonical      DefaultPrimitiveCanonicalization
+            lowering       CalculateLowering
+            fact           CalculateFact
+            invariant      NoAdditionalInvariant
+            publication    ResultGreaterThanInput
+
+        failure:
+            CalculateFailure
+
+        movement:
+            state          Stateless
+            transitions    none
+            machine        StatelessMachineManifest
+
+        bounds:
+            version        CalculateContractVersion
+            policy         DefaultPolicy
+            budget         DefaultBudget
+            capacity       DefaultCapacity
+            governance     DefaultGovernance
+
+        diagnostics:
+            evidence       CalculateDiagnostics
+            retention      DefaultDiagnosticRetention
     }
 }
 ```
 
-This sketch shows only the interface contract surface and its axis binding. The one-dimensional presentation form
-remains open.
+This sketch shows the interface contract surface and the operation manifest. The left side is the fixed slot vocabulary;
+the right side is the material bound to each slot. `flow` is shown as ordered slots, not as transition arrows.
+
+Movement is different. A real state move may be written as an arrow because the arrow is the declared transition itself.
+For example:
+
+```text
+movement:
+    state          OrderState
+
+    transitions:
+        Draft --submit--> Submitted
+        Submitted --cancel--> Cancelled
+
+    machine        OrderStateMachine
+```
+
+If no movement is written, the compiler lowers the default no-movement material. The source may stay small; the
+canonical material must stay explicit.
+
+The four regions are not final syntax and do not change the one-dimensional catalog. The bound presentations remain
+separate after resolution.
 
 Kontrakt compiles the interface contract into a host interface and lowers resolved contract material into canonical
 form.
