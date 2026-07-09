@@ -110,27 +110,82 @@ Kontrakt.
 
 ### 5.1. Input Contract
 
-Input is controlled entry.
+Input is controlled entry through a slot-bound JVM declaration source.
 
-It declares the presentation shape that may appear at an operation boundary. It does not decide truth. It only gives the
-boundary something finite enough to judge.
+A Kotlin or Java declaration is not an input contract by itself. Binding it to the `input` slot only selects a source
+candidate. Kontrakt must ratify that candidate under the input source profile before any input material exists.
 
-Kontrakt lowers input source into stable boundary material: the input surface, its named parts, explicit absence, and
-the coordinates needed to explain where the presented material came from.
+For V1, the accepted input source profile is deliberately narrow: Kotlin data classes, Kotlin final classes whose input
+parts are primary-constructor `val` properties, and Java records. The source of an input part is the closed declaration
+surface: Kotlin primary-constructor `val` properties or Java record components. Their declared order becomes the input
+part order.
 
-A backend may generate readers for that shape. The generated reader does not decide what input means.
+Kontrakt does not construct input. A primary constructor or record constructor is declaration coordinate, not runtime
+authority. Constructor execution, `init` blocks, secondary constructors, default-argument execution, factories,
+builders, setters, body properties, delegated properties, custom getters, open or inherited properties, JavaBean
+conventions, serializer behavior, framework binding, object identity, `equals`, and `hashCode` are not input contract
+material.
+
+Accessor methods may be used only as read mechanisms for parts already ratified from the declaration source. A Kotlin
+property getter generated for a primary-constructor `val`, or a Java record component accessor, may realize capture. A
+getter-discovered property does not create an input part.
+
+Input formation captures runtime values from the ratified parts into formed boundary material. This capture is a
+stability boundary, not a canonical image and not core material. Mutable JVM objects, mutable containers, and mutable
+referenced objects are not trusted as input material unless Kontrakt snapshots the accepted boundary values. V1 may
+accept ordered lists only by snapshotting elements in declared order. Unordered sets and maps remain outside the V1
+input
+source profile until a later canonical ordering law exists.
+
+If the declaration cannot be ratified, the contract source is rejected. If runtime material cannot be captured from the
+ratified parts without ambiguity, the machine stops with declared input failure before admission begins.
+
+Spring, Jackson, Bean Validation, JavaBean DTOs, framework request objects, and other compatibility surfaces are adapter
+machinery. They may deliver or project material into a strict JVM input source. They do not define input meaning.
 
 ### 5.2. Admission Contract
 
-Admission is the airlock judgment.
+Admission is the continuation judgment over formed input.
 
-It decides whether boundary material may continue. It is deliberately narrower than the domain. A machine may reject,
-wait, or fail at the boundary without pretending it has solved the whole problem.
+Admission does not make input. It may read formed input material, but it must not discover parts, parse outside
+material,
+coerce values, construct input, resolve absence, or decide what the input is.
 
-Kontrakt must lower admission into declared judgment material. V1 should keep this surface small: the judgment must be
-inspectable, governed, and unable to hide an arbitrary host program.
+A Kotlin or Java declaration is not an admission contract by itself. Binding it to the `admission` slot only selects a
+source candidate. Kontrakt accepts that candidate only when the Kotlin/JVM or Java/JVM frontend can lower its source
+body
+into finite admission judgment material.
 
-A backend may realize admission as a gate. The gate is wrong if it disagrees with the lowered admission material.
+For V1, Kotlin may carry admission through a source-visible top-level function, object function, or companion object
+function. Java may carry admission through a source-visible static method on a final class. The function or method is
+not
+executed as contract authority. The generated Kontrakt gate may execute the lowered judgment.
+
+Java lambdas, Kotlin lambdas, method references, `Predicate`, `Function`, functional-interface instances, and
+bytecode-only methods are not admission sources in V1. They are runtime function objects or implementation carriers, and
+they can capture state or depend on language/runtime lowering profiles.
+
+Admission is compiled against the ratified input part table of the selected operation. Every read must resolve to a
+ratified input part. Kotlin primary-constructor property access and Java record component access are allowed only in
+that
+sense. JavaBean getter discovery and arbitrary method calls are not admission material.
+
+V1 admission lowers finite boolean judgment material. It may use ratified input part reads, literals, primitive
+comparisons, primitive equality, enum equality, null checks, bounded boolean combinations, and primitive integral bit
+operations. Kotlin bit-operation functions are accepted only when the frontend lowers them as primitive integer bit
+operations, not as arbitrary method calls.
+
+A V1 boolean admission maps `true` to admitted and `false` to rejected. Deferred or capacity-shaped outcomes must come
+from an explicit capacity, budget, policy, or later admission-result profile; they must not be hidden inside a user
+method body.
+
+Admission must not depend on constructors, service calls, IO, time, randomness, global state, mutable state, object
+identity, user-defined equality, exception control flow, framework validators, reflection-discovered behavior, loops, or
+recursion.
+
+If the admission source cannot be lowered into finite judgment material, the contract source is rejected. If formed
+input fails the lowered judgment, admission returns the declared rejection result. A backend may realize admission as a
+gate. The gate is wrong if it disagrees with the lowered admission material.
 
 ### 5.3. Canonicalization Contract
 
