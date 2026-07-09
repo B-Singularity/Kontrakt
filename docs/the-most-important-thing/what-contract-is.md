@@ -69,6 +69,18 @@ The good machine I am describing is not meant to be a universal machine for ever
 In this document, a good machine means a machine that actually works in reality, knows its limits, prepares for them,
 fulfills its declared purpose, and makes the conditions that govern its behavior explicit.
 
+This is not only a software idea.
+
+`Good machine` names the engineering shape I want to preserve. It gathers the features serious machines already need:
+controlled entry, declared refusal, stable internal material, legal movement, known limits, honest failure, bounded
+evidence, and replaceable machinery.
+
+A factory, refinery, aircraft, reactor, medical device, or software system may realize those features differently. The
+shape is still the same. The machine must not let outside material define its inside, must not move without permission,
+must not discover its limits only after damage, and must not explain failure by folklore.
+
+Software is no exception. It only became unusually good at hiding these obligations inside code.
+
 Most serious architecture already moves in this direction. Real systems already depend on contract-shaped structure;
 they just leave too much of it implicit.
 
