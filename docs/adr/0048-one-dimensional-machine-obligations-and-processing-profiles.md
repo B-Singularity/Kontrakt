@@ -14,6 +14,7 @@ Draft
 - ADR-0047: One-Dimensional Contract Presentations, Pipeline-Slot Selection, and Backend Realization Boundary
 - ADR-0046: IDL-First Interface Contract Frontend and Generated Host Interface Boundary
 - ADR-0045: Contract-First Package Architecture and Explicit Machine Refactoring Boundary
+- ADR-0043: Contract Graph Canonicalization, Sealed Structural References, and Incremental Identity Derivation
 - ADR-0041: Stable Metadata Identity, BLAKE3, HID, and Protocol-Owned Interning
 - ADR-0040: Deterministic Frozen Acquisition Pipeline, Explicit Readiness, and Memory-Disciplined Publication
 - ADR-0039: Adapter-Neutral Metamodel Acquisition, Frozen Fact Image, and Backend-Handle Erasure
@@ -95,11 +96,17 @@ material Kontrakt must own after lowering, and the line after which backend mach
 The common authority path is:
 
 ```text
-slot-selected source
--> acquisition under the slot role
--> lowering into Kontrakt-owned material
+slot-selected source coordinate
+-> existing adapter-neutral frozen acquisition
+-> FrozenMetamodelImage
+-> role-specific planning and adapter-erased lowering
+-> ratified Kontrakt-owned contract material
 -> backend realization behind that material
 ```
+
+A role does not own a duplicate acquisition engine or frozen image. Frozen acquisition establishes operation-neutral
+source facts. Role-specific planning decides which facts matter for the selected obligation. Lowering and ratification
+turn that decision into contract authority.
 
 This is not a runtime schedule. It is the path by which meaning stops belonging to the carrier and starts belonging to
 Kontrakt.
@@ -110,82 +117,316 @@ Kontrakt.
 
 ### 5.1. Input Contract
 
-Input is controlled entry through a slot-bound JVM declaration source.
+Input is the boundary presentation contract.
 
-A Kotlin or Java declaration is not an input contract by itself. Binding it to the `input` slot only selects a source
-candidate. Kontrakt must ratify that candidate under the input source profile before any input material exists.
+It declares which outside presentation may appear for an operation, which distinctions the boundary must preserve, and
+which values later contracts may judge. It does not declare that outside material is true. Admission still decides
+whether presented material may continue. Canonicalization still decides stable representation. Lowering and invariant
+still decide what the core may believe.
 
-For V1, the accepted input source profile is deliberately narrow: Kotlin data classes, Kotlin final classes whose input
-parts are primary-constructor `val` properties, and Java records. The source of an input part is the closed declaration
-surface: Kotlin primary-constructor `val` properties or Java record components. Their declared order becomes the input
-part order.
+A DTO or other host object therefore has no contract authority. It is only one way outside material may arrive.
 
-Kontrakt does not construct input. A primary constructor or record constructor is declaration coordinate, not runtime
-authority. Constructor execution, `init` blocks, secondary constructors, default-argument execution, factories,
-builders, setters, body properties, delegated properties, custom getters, open or inherited properties, JavaBean
-conventions, serializer behavior, framework binding, object identity, `equals`, and `hashCode` are not input contract
-material.
+Input does not introduce a second acquisition pipeline, a second frozen image, a second planning engine, or a mandatory
+runtime material layer. It enters the machinery already established by ADR-0039, ADR-0040, and ADR-0043 on two separate
+timelines.
 
-Accessor methods may be used only as read mechanisms for parts already ratified from the declaration source. A Kotlin
-property getter generated for a primary-constructor `val`, or a Java record component accessor, may realize capture. A
-getter-discovered property does not create an input part.
+At contract-definition time, the path is:
 
-Input formation captures runtime values from the ratified parts into formed boundary material. This capture is a
-stability boundary, not a canonical image and not core material. Mutable JVM objects, mutable containers, and mutable
-referenced objects are not trusted as input material unless Kontrakt snapshots the accepted boundary values. V1 may
-accept ordered lists only by snapshotting elements in declared order. Unordered sets and maps remain outside the V1
-input
-source profile until a later canonical ordering law exists.
+```text
+slot-selected input root coordinate
+-> existing adapter-neutral metamodel acquisition
+-> FrozenMetamodelImage
+-> planning-facing frozen providers
+-> input-specific projection and source-profile judgment inside planning
+-> adapter-erased lowered input fact
+-> ratified contract graph unit
+-> published contract material and generated boundary realization
+```
 
-If the declaration cannot be ratified, the contract source is rejected. If runtime material cannot be captured from the
-ratified parts without ambiguity, the machine stops with declared input failure before admission begins.
+`FrozenMetamodelImage` remains the operation-neutral authority for source and metamodel facts. Input planning does not
+re-open reflection, KSP, bytecode, source AST, PSI, or backend-local handles. It decides, for the selected operation,
+which
+frozen facts form the Input presentation and how those facts must be interpreted under the Input role.
 
-Spring, Jackson, Bean Validation, JavaBean DTOs, framework request objects, and other compatibility surfaces are adapter
-machinery. They may deliver or project material into a strict JVM input source. They do not define input meaning.
+Frozen acquisition and planning remain separate passes. Input does not merge them and does not create another
+`TypeReference` closure frontier, cycle-identity acquisition path, raw-fact image, graph engine, readiness bridge,
+budget
+ledger, or frozen publication protocol. Existing planning mechanics may be reused, but Input owns its own projection
+law.
+Generation-oriented constructor selection, property eligibility, active-member projection, polymorphic expansion, and
+cycle truncation do not become Input semantics merely because those mechanisms already exist.
+
+The operation-specific result is lowered through the existing contract graph protocol. A source declaration, DTO object,
+backend handle, or planning node cannot become Input identity directly. Input meaning becomes authoritative only after
+it
+has been lowered into ratified Kontrakt-owned contract material. The resolved Input presentation is therefore the
+logical
+operation-specific planning and lowering result; it is not another frozen metamodel image.
+
+At invocation time, the path is shorter:
+
+```text
+outside carrier instance
+-> generated boundary reader or static gate
+-> optional realization-local capture
+-> Admission
+```
+
+The generated boundary realization may read an immutable carrier directly or may create a transient snapshot when
+mutation, lazy access, or framework lifecycle makes direct reading unsafe. That capture may be fused, specialized, or
+omitted. It is not a new contract stage, a frozen image, a graph unit, or a mandatory `FormedBoundaryMaterial` domain
+type. Runtime invocation must not repeat metamodel acquisition, source resolution, planning, graph ratification,
+canonical identity derivation, or contract publication.
+
+The V1 admissibility law is:
+
+```text
+Input may accept any presentation that can be resolved into explicit, finite, inspectable, loss-accounted,
+root-owned boundary material without importing hidden behavior, pointer topology, external authority,
+or another contract role.
+```
+
+The authoring law is:
+
+```text
+Repeat no fact whose contract interpretation is already unique.
+Require every choice whose contract interpretation is not unique.
+```
+
+This law is how the Input API carries the discipline of *What Contract Is*. Kontrakt must not force users to restate a
+closed product shape that the selected source already determines uniquely. It must also refuse to make a silent semantic
+choice merely because a host language or framework has a convenient convention.
+
+Three forms of hidden meaning are rejected.
+
+**Hidden authority** exists when implementation structure decides contract meaning. Inheritance, override dispatch,
+constructor execution, getter algorithms, framework annotations, serializer conventions, collection implementations,
+`equals`, `hashCode`, and proxy behavior cannot become Input authority.
+
+**Hidden choice** exists when one host form admits more than one contract interpretation. `Set`, `Map`, nullable fields,
+default arguments, sealed hierarchies, external scalar types, and lossy serializer products require an explicit semantic
+choice whenever their contract meaning is not already unique.
+
+**Hidden movement** exists when observing the alleged input performs behavior or depends on time. Callbacks, lazy
+loading,
+live streams, futures, suppliers, services, capabilities, and resource handles are not Input material.
+
+An input implementation is acceptable only when it satisfies the conditions below.
+
+**Root selection and explicit resolution.** The operation manifest selects the root input through the `input` slot. The
+authoring surface may name only that root, but planning must resolve the complete operation-specific Input presentation
+from `FrozenMetamodelImage` before runtime realization is generated. Every visible part, variant, collection shape,
+generic argument, presence distinction, source coordinate, explicit semantic choice, and resolution failure belongs to
+the lowered Input material. Authoring may be compact. Contract material may not be implicit.
+
+**Existing-machine integration.** Input source resolution consumes planning-facing providers backed by
+`FrozenMetamodelImage`. It must not perform backend lookup or maintain an Input-owned metamodel cache, closure table,
+cycle table, raw-fact table, frozen image, or planning session. Missing frozen coverage is a frozen-acquisition or image
+integrity problem; disagreement about which covered facts belong to Input is an Input planning or lowering problem.
+
+**Declared observation surface.** Kontrakt must know what the generated boundary realization may observe before an
+invocation begins. The declaration graph must be finite and inspectable. Runtime collection cardinality may vary, but
+capacity and budget must bound access. Runtime property discovery, dynamic reachability, and accidental members do not
+extend the contract surface.
+
+**Presentation-only authority.** Input may declare names, part shapes, value kinds, absence, multiplicity, finite
+variants,
+collection presentation, symbolic references, and coordinates. It must not decide validity, canonical identity, core
+meaning, state legality, publication permission, policy selection, or movement. Those authorities belong to other slots.
+
+**Unique interpretation may be resolved.** Kontrakt may resolve a source fact automatically only when the Input
+interpretation is singular under the selected profile. Primitive and scalar values, enums as scalar choices, closed
+products, finite nested products, closed generic products, and ordered sequences are examples when all subordinate
+material also resolves. Automatic resolution removes repeated authoring; it does not make the host declaration contract
+authority.
+
+**Semantic choice must be declared.** When a host form can carry more than one contract meaning, Kontrakt must not
+choose
+silently. The user must select the intended Input interpretation through an explicit contract surface. ADR-0048 does not
+fix the final syntax, but the choice must be visible in authored material, preserved in the resolved Input graph, and
+included in contract identity where it changes meaning.
+
+**Distinction preservation.** A directly ratifiable carrier must preserve every distinction the declared presentation
+may
+need. Missing, present-null, present-value, empty, duplicate, order, discriminator, and numeric precision are distinct
+when the contract says they are distinct. Input realization must not pretend to preserve information that a serializer,
+container, default expression, or framework binder has already erased. When an earlier carrier has removed a required
+distinction, the adapter must supply a less lossy presentation such as raw bytes, a token stream, an entry sequence, a
+presence bitmap, or an explicit discriminator.
+
+**Stable boundary access.** External carrier lifecycle must not influence later judgment. Generated machinery may read a
+stable immutable carrier directly. A mutable, lazy, proxied, or framework-owned carrier requires adapter projection or a
+transient snapshot before its values are used by Admission. That snapshot is realization-local; the Input Contract owns
+the declared values and distinctions, not a particular snapshot object or storage layout.
+
+**Root ownership.** Input does not inherit or recursively compose contracts. A nested declaration or generic argument
+may
+describe the shape of a root part, but it does not introduce independent admission, lowering, invariant, publication,
+governance, lifecycle, or movement authority. Kontrakt expands such declarations into one root-owned Input presentation.
+This is material expansion, not contract composition.
+
+**Declared material traversal.** Input may follow declared, finite, acyclic material paths such as
+`order.customer.address.city`. That is ordinary product expansion. Input must not discover meaning from aliasing, shared
+object identity, cycles, runtime reachability, reference equality, or pointer topology. Planning may later process
+references and cycles inside Kontrakt-owned material under its own rules; the Input boundary does not import the host
+object graph as law.
+
+**Constructor and accessor boundary.** Constructor shape may provide declaration coordinates. Constructor execution,
+factory execution, builder execution, initialization logic, and default argument evaluation do not define Input meaning.
+Accessors may read already-ratified parts, but accessor discovery and arbitrary getter behavior do not define the part
+table.
+
+**Generic closure.** Every generic argument in the resolved graph must itself resolve as Input material. The outer
+carrier
+may describe structure, but its arguments cannot remain raw, wildcarded, star-projected, platform-erased, or otherwise
+open. A reusable generic declaration is a source template until the selected operation closes every argument.
+
+**Ordered multiplicity.** `List<T>` and array-like declarations may resolve automatically as ordered multiplicity when
+`T` resolves and the carrier can provide stable ordered access. Collection nesting contributes to declaration depth;
+runtime element count belongs to capacity and budget. The concrete collection implementation contributes no contract
+meaning.
+
+**Set acknowledgment.** `Set<T>` may be used only when authored contract material explicitly accepts unordered
+multiplicity and acknowledges that duplicate evidence may already have been removed by the carrier. Kontrakt does not
+adopt the carrier's equality, hashing, or iteration behavior as contract law. If duplicate evidence or contract-owned
+equality matters, the boundary must present an ordered element sequence instead.
+
+**Map acknowledgment.** `Map<K, V>` may be used only when authored contract material explicitly accepts a
+carrier-collapsed
+key-value presentation and acknowledges that duplicate-key evidence and original entry order may be unavailable. If key
+collapse, duplicate selection, or entry order remains contract-relevant, the boundary must present an entry sequence.
+
+**Closed choice acknowledgment.** A finite variant presentation is valid Input material, but a host inheritance relation
+does not automatically become that presentation. An enum may resolve directly as a finite scalar choice. A
+source-visible
+sealed hierarchy may carry a tagged choice only after authored contract material explicitly selects that interpretation,
+closes the variant set, declares the relevant discriminator law, and defines the handling of an unknown variant.
+Planning
+then flattens every accepted variant into root-owned material and removes ancestry from contract authority. Open
+polymorphic hierarchies and runtime subtype discovery do not satisfy the V1 Input condition.
+
+**Absence and default acknowledgment.** A nullable host part does not by itself decide whether absence and present-null
+are
+the same presentation. When that distinction matters, the contract must declare it and the carrier must preserve it. A
+host-language constructor default or serializer default is not a contract default. Default meaning enters Input only
+through explicit contract material; otherwise defaulting remains adapter convenience and cannot change contract
+identity.
+
+**External scalar acknowledgment.** A foreign scalar type may carry Input data when its boundary representation is
+explicit. Host-specific equality, scale, timezone, locale, normalization, parsing, or rounding rules are not inherited.
+When those rules affect meaning, the contract must declare the chosen representation or an adapter must project the
+value
+into declared scalar material.
+
+**References as values.** Input may carry declared references such as identifiers, tokens, paths, URIs, parent
+coordinates, callback coordinates, and resource coordinates. These are values. A live object reference, callback target,
+service object, file handle, session object, or capability does not become Input material merely because it is carried
+in
+a field.
+
+**Explicit graph and tree presentation.** Tree and graph-shaped Input may be represented through nodes, edges,
+identifiers,
+parent coordinates, and other finite rows. V1 does not accept recursive or shared-reference JVM object graphs as direct
+Input sources. Graph identity, reachability, parent validity, cycle absence, and accepted core shape belong to
+canonicalization, lowering, and invariant.
+
+**Opaque material boundary.** Opaque data may be Input material when its presentation is still declared: bounded bytes,
+bounded text, tokens, coordinates, or a foreign payload with an explicit content kind and size boundary. An arbitrary
+live JVM object is not opaque data. Keeping such an object for later execution would preserve external lifecycle and
+capability inside the pipeline.
+
+The V1 user-facing policy has four classes.
+
+| Authoring class                                 | V1 treatment                                                    | Examples                                                                                                                                                                                           | Contract effect                                                                        |
+|-------------------------------------------------|-----------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------|
+| Uniquely interpretable data                     | Resolve automatically                                           | Scalar, enum, closed product, finite nested product, closed generic, `List<T>`, stable array                                                                                                       | Kontrakt records the unique root-owned presentation without redundant authoring        |
+| Semantically ambiguous data                     | Require explicit Input choice                                   | `Set<T>`, `Map<K, V>`, sealed hierarchy as tagged choice, nullable absence semantics, host default, external scalar semantics, accepted information loss                                           | The chosen meaning becomes visible authored material and part of the resolved contract |
+| Implementation-shaped carrier                   | Require adapter projection or an explicit compatibility profile | Mutable JavaBean, inherited DTO, framework DTO, serializer product, proxy, entity, custom getter, delegated property, third-party object, dynamic JSON object, recursive or shared-reference graph | Host conventions are removed before Input meaning is ratified                          |
+| Behavior, capability, movement, or role leakage | Reject from Input                                               | Callback, lambda, validator, service, repository, clock, executor, transaction, resource handle, stream, future, core fact, state, backend handle                                                  | The material belongs to another role or is not contract data                           |
+
+For the JVM V1 zero-adapter source profile, Kotlin data classes, Kotlin final classes whose ratified parts are
+primary-constructor `val` properties, and Java 17+ records may satisfy the direct-source conditions. Kotlin part order
+is
+the declared primary-constructor property order. Java part order is record-component order.
+
+A source-visible sealed hierarchy is not part of the automatic zero-adapter interpretation merely because it is sealed.
+It may become a direct carrier after the authored Input contract explicitly selects the closed-choice interpretation and
+all variants resolve under the same source profile.
+
+These declarations are source conveniences, not contract authority. Equivalent presentation material may later come from
+another language, schema compiler, serialization system, or generated frontend without changing the Input Contract.
+
+Inherited carrier shape, JavaBean discovery, mutable framework objects, proxy objects, custom getter surfaces, delegated
+properties, third-party objects, recursive graphs, and dynamically typed containers remain usable through adapter
+projection or a separately declared compatibility profile. The adapter must project them into a source shape whose
+operation-specific Input meaning can be resolved and lowered through the same frozen-image and planning path. The rule
+is
+not to reject ordinary host objects. The rule is to stop ordinary implementation structure from becoming contract law.
+
+Callbacks, capabilities, live resources, and asynchronous control surfaces are not rescued by calling them opaque. If an
+operation needs to refer to one, Input may carry an explicit identifier, token, coordinate, source text, byte sequence,
+or other declared data representation. Execution and resource ownership remain outside the Input Contract.
+
+If the source cannot be resolved under these laws, or if a required semantic choice is absent, the contract source is
+rejected during planning or lowering. If the ratified Input contract exists but invocation-time boundary access cannot
+make the declared values available within presence, capacity, budget, and stability conditions, the machine stops with
+declared Input failure before Admission begins.
 
 ### 5.2. Admission Contract
 
-Admission is the continuation judgment over formed input.
+Admission is the continuation judgment over values made available under the ratified Input Contract.
 
-Admission does not make input. It may read formed input material, but it must not discover parts, parse outside
-material,
-coerce values, construct input, resolve absence, or decide what the input is.
+It asks whether those boundary values may continue through this operation. Whether generated machinery reads them
+directly from a stable carrier or from a transient realization-local capture is not Admission meaning. Admission depends
+on Input, but it must not create Input. A source that has to parse, coerce, discover, or construct the material it
+judges
+is in the wrong slot.
 
-A Kotlin or Java declaration is not an admission contract by itself. Binding it to the `admission` slot only selects a
-source candidate. Kontrakt accepts that candidate only when the Kotlin/JVM or Java/JVM frontend can lower its source
-body
-into finite admission judgment material.
+An admission implementation is acceptable only when it satisfies the admission conditions below.
 
-For V1, Kotlin may carry admission through a source-visible top-level function, object function, or companion object
-function. Java may carry admission through a source-visible static method on a final class. The function or method is
-not
-executed as contract authority. The generated Kontrakt gate may execute the lowered judgment.
+**Slot selection condition.** The operation manifest selects a judgment source through the `admission` slot. The
+selected
+source is only a candidate until Kontrakt lowers it into finite judgment material.
 
-Java lambdas, Kotlin lambdas, method references, `Predicate`, `Function`, functional-interface instances, and
-bytecode-only methods are not admission sources in V1. They are runtime function objects or implementation carriers, and
-they can capture state or depend on language/runtime lowering profiles.
+**Input dependency condition.** Admission is compiled against the ratified Input part table of the same operation. Every
+read must resolve to material declared by that table or explicitly declared boundary context.
 
-Admission is compiled against the ratified input part table of the selected operation. Every read must resolve to a
-ratified input part. Kotlin primary-constructor property access and Java record component access are allowed only in
-that
-sense. JavaBean getter discovery and arbitrary method calls are not admission material.
+**Finite judgment condition.** V1 admission lowers to bounded boolean judgment material. Primitive comparison, primitive
+equality, enum checks, null checks, boolean composition, and primitive integral bit operations are allowed when every
+operand is material made available under the ratified Input Contract or a literal.
 
-V1 admission lowers finite boolean judgment material. It may use ratified input part reads, literals, primitive
-comparisons, primitive equality, enum equality, null checks, bounded boolean combinations, and primitive integral bit
-operations. Kotlin bit-operation functions are accepted only when the frontend lowers them as primitive integer bit
-operations, not as arbitrary method calls.
+**No executable authority condition.** A user function or method may carry the source text. It is not executed as the
+contract authority. The generated Kontrakt gate may run only after the frontend has lowered the source into judgment
+material.
+
+**Source visibility condition.** The frontend must see enough source to reject unsupported constructs before runtime. A
+method that can only be found and invoked from bytecode is implementation machinery.
+
+For the JVM V1 implementation profile, the following declarations may satisfy these conditions:
+
+```text
+Kotlin source-visible top-level function
+Kotlin source-visible object or companion object function
+Java source-visible static method on a final class
+```
+
+They are implementation choices, not contracts. They are chosen because Kotlin and Java users can write them naturally
+while Kontrakt can still read the source body instead of trusting a runtime function object.
+
+Java record component access and Kotlin primary-constructor property access are valid only as reads of already ratified
+input parts. Kotlin bit-operation functions are valid only when the frontend lowers them as primitive integer
+operations.
+
+Java lambdas, Kotlin lambdas, method references, `Predicate`, `Function`, and functional-interface instances remain
+outside the V1 admission profile. They are runtime objects with capture and dispatch behavior, not named source bodies
+selected by the slot.
 
 A V1 boolean admission maps `true` to admitted and `false` to rejected. Deferred or capacity-shaped outcomes must come
-from an explicit capacity, budget, policy, or later admission-result profile; they must not be hidden inside a user
-method body.
+from an explicit capacity, budget, policy, or later admission-result profile.
 
-Admission must not depend on constructors, service calls, IO, time, randomness, global state, mutable state, object
-identity, user-defined equality, exception control flow, framework validators, reflection-discovered behavior, loops, or
-recursion.
-
-If the admission source cannot be lowered into finite judgment material, the contract source is rejected. If formed
-input fails the lowered judgment, admission returns the declared rejection result. A backend may realize admission as a
-gate. The gate is wrong if it disagrees with the lowered admission material.
+If the admission source cannot be lowered into finite judgment material, the contract source is rejected. If Input
+material fails the lowered judgment, Admission returns the declared rejection result. A backend may realize Admission as
+a gate. The gate is wrong if it disagrees with the lowered admission material.
 
 ### 5.3. Canonicalization Contract
 
