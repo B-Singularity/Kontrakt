@@ -39,8 +39,8 @@ role.
 
 The remaining problem is processing.
 
-The first four flow roles all operate before accepted core fact exists, but they do not perform the same judgment.
-`Input` establishes judgeable immutable boundary presentation. `Admission` decides continuation over that same
+The four contract roles addressed here all operate before accepted core fact exists, but they do not perform the same
+judgment. `Input` establishes judgeable immutable boundary presentation. `Admission` decides continuation over that same
 presentation. `Canonicalization` governs stable representative authority. `Lowering` governs the core-readable material
 that may be handed toward Fact formation. Treating them as one generic validation or conversion stage would erase their
 separate authority and would force expensive or invalid material farther into the machine than necessary.
@@ -62,15 +62,17 @@ Input and Admission are the one direct contract adjacency in this ADR. Input est
 Admission judges, so no user implementation transformation exists between them. After Admission, implementation regions
 produce the candidates judged by Canonicalization and Lowering.
 
-This ADR defines the processing profiles for those four flow contracts, their relationship to the implementation and
-state axes, and their handoff to core acceptance.
+This ADR defines the processing profiles for those four contracts, their relationship to the implementation and state
+axes, and their handoff to core acceptance.
 
 Fact, Invariant, and Publication are defined separately by ADR-0049. Fact is not a stage placed before Invariant. An
 implementation produces a Fact candidate, and successful Invariant judgment grants that candidate Fact authority before
 Publication may use it.
 
-Failure and diagnostics, movement, and bounds remain separate category concerns. This ADR names their interaction points
-but does not define their complete processing profiles.
+The manifest labels `failure`, `movement`, `bounds`, and `diagnostics` exist only in authored source layout and
+disappear before contract resolution. The individual contracts selected by the slots written beneath those labels retain
+their own contract kinds and independent authority. This ADR names relevant interaction points but does not define those
+contracts' complete processing profiles.
 
 ---
 
@@ -86,7 +88,7 @@ JVM languages also encourage implementation pipelines to be expressed through ob
 callback invocation, and intermediate carrier objects. Kontrakt must accept those forms as implementation frontends
 without mistaking them for contract stages, state authority, or an optimal physical machine.
 
-Kontrakt therefore needs a flow that can:
+Kontrakt therefore needs processing that can:
 
 - accept ordinary external contract evidence;
 - require explicitly formed immutable Input presentation before Admission;
@@ -127,7 +129,7 @@ contract authority and does not by itself perform a legal state transition.
 
 Existing frozen acquisition, planning, graph lowering, identity derivation, and ContractImage publication must be
 reused.
-The flow roles must not create parallel metamodel or planning machines.
+These four contract roles must not create parallel metamodel or planning machines.
 
 A backend may fuse or specialize Kontrakt-owned verification and state machinery, but fusion must not merge declared
 contract authority or state meaning.
@@ -213,10 +215,9 @@ state label changed
     != contract judgment succeeded
 ```
 
-The exact state and transition sets are deferred to the Movement category ADR. This ADR requires every contract judgment
-and implementation handoff to occur under that explicit state machine; neither contract order nor callback completion
-may
-implicitly create movement.
+The exact state and transition sets are deferred to the ADRs that define the State Contract, State Transition Contract,
+and Explicit State Machine Manifest. This ADR requires every contract judgment and implementation handoff to occur under
+that explicit state machine; neither contract order nor callback completion may implicitly create movement.
 
 ### 4.4. Common Definition-Time Authority Path
 
@@ -254,7 +255,7 @@ and result ownership, failure attribution, and state movement must remain explic
 
 ---
 
-## 5. Flow Processing Profiles
+## 5. Contract Processing Profiles
 
 ### 5.1. Input Contract
 
@@ -627,74 +628,279 @@ Contract.
 
 It asks whether those same boundary values may continue through this operation. There is no user implementation
 transformation between Input and Admission. Admission depends on Input, but it must not create, copy, snapshot, parse,
-coerce, discover, or otherwise reconstruct Input material. A source that has to perform such work before it can judge is
-in the wrong slot.
+coerce, normalize, discover, or otherwise reconstruct Input material. A source that has to perform such work before it
+can judge is in the wrong slot.
+
+Admission follows the same authority law as Input:
+
+```text
+ordinary Java or Kotlin declaration
+-> selected by an interface-operation contract slot
+-> acquired by the matching host-language frontend
+-> rejected or refined under one deterministic law
+-> lowered into implementation-erased Kontrakt material
+-> ratified as Admission authority
+```
+
+The user does not author Kontrakt IR, generated coordinate objects, expression nodes, evaluator instructions, handlers,
+adapters, or runtime assembly. Java and Kotlin are frontend languages. Their declarations are external evidence, not the
+final contract representation.
 
 An Admission source is ratifiable only when it satisfies the admission conditions below.
 
-**Slot selection condition.** The operation manifest selects a judgment source through the `admission` slot. The
-selected
-source is only a candidate until Kontrakt lowers it into finite judgment material.
-
-**Input dependency condition.** Admission is compiled against the ratified Input part table of the same operation. Every
-read must resolve to material declared by that table or explicitly declared boundary context.
-
-**Carrier and judgment separation condition.** A V1 direct Input DTO is an inert immutable presentation carrier. Except
-for compiler-generated carrier machinery and inert canonical formation, it must not declare executable behavior.
-User-declared validation, normalization, derived access, judgment, helper methods, custom getters, delegated properties,
-`init` behavior, compact-constructor behavior, or semantic secondary constructors disqualify the type from the direct
-Input source profile.
-
-Admission belongs to the operation slot, not to the carrier type. A method such as `isValid`, `validate`,
-`isAdmissible`, or `canProceed` does not become Admission authority because it is declared on the same host type, and V1
-does not silently ignore that co-location while continuing to treat the type as a direct Input DTO. The same immutable
-presentation may participate in different operations with different Admission laws; therefore no carrier-wide method may
-own continuation judgment.
-
-The frontend distinguishes unavoidable host-generated carrier machinery from user-declared behavior. Kotlin-generated
-property accessors, `componentN`, `copy`, `equals`, `hashCode`, and `toString`, and Java record accessors, `equals`,
-`hashCode`, and `toString`, are implementation artifacts and are erased from contract authority. A Kotlin primary
-constructor or Java canonical record constructor is admissible only as inert formation that receives and stores the
-already-declared coordinates. It must not perform validation, normalization, default substitution, capability access,
-lazy execution, or lifecycle-dependent observation.
-
-**Finite judgment condition.** V1 admission lowers to bounded boolean judgment material. Primitive comparison, primitive
-equality, enum checks, null checks, boolean composition, and primitive integral bit operations are allowed when every
-operand is material made available under the ratified Input Contract or a literal.
-
-**No executable authority condition.** A user function or method may carry the source text. It is not executed as the
-contract authority. The generated Kontrakt gate may run only after the frontend has lowered the source into judgment
-material.
-
-**Source visibility condition.** The frontend must see enough source to reject unsupported constructs before runtime. A
-method that can only be found and invoked from bytecode is implementation machinery.
-
-For the JVM V1 implementation profile, the following declarations may satisfy these conditions:
+**Manifest-slot selection condition.** Under the interface shape fixed by ADR-0046, the operation manifest binds only a
+contract declaration to the Admission position:
 
 ```text
-Kotlin source-visible top-level function
-Kotlin source-visible function in a dedicated object that is not the Input carrier
-Java source-visible static method on a dedicated final judgment holder
+manifest {
+    flow:
+        input      CalculateInput
+        admission  XGreaterThanOne
+}
 ```
 
-They are frontend authoring choices, not contracts. They are chosen because Kotlin and Java users can write them
-naturally while Kontrakt can still read the source body instead of trusting a runtime function object. The Admission
-source may be located near the carrier in the project, but it must remain a separate declaration and authority surface.
+The manifest headings `flow`, `failure`, `movement`, `bounds`, and `diagnostics` exist only in source layout to help the
+author locate slots. They introduce no contract material, identity, authority, ownership, hierarchy, composition,
+ordering, namespace, processing boundary, or lowering unit, and they disappear before contract resolution. Each slot is
+resolved independently according to its own contract kind; no contract meaning is derived from textual co-location under
+a heading.
 
-Java record component access and Kotlin primary-constructor property access are valid only as reads of already ratified
-input parts. Kotlin bit-operation functions are valid only when the frontend lowers them as primitive integer
-operations.
+The `admission` slot grants the Admission role to the named source declaration for that operation. The declaration does
+not possess Admission authority because of its class name, method name, package, file, annotation, parameter type,
+inheritance relation, runtime type, or placement beneath the `flow` heading. The slot also does not bind an
+implementation
+handler, evaluator, adapter, factory, or instance.
 
-Java lambdas, Kotlin lambdas, method references, `Predicate`, `Function`, and functional-interface instances remain
-outside the V1 admission profile. They are runtime objects with capture and dispatch behavior, not named source bodies
-selected by the slot.
+The manifest may use an imported simple name, but definition-time resolution must end at one exact class or object
+symbol. A file, package, naming convention, parameter type, annotation scan, assignable-type search, service registry,
+or runtime lookup must not create or complete the binding.
 
-A V1 boolean admission maps `true` to admitted and `false` to rejected. Deferred or capacity-shaped outcomes must come
-from an explicit capacity, budget, policy, or later admission-result profile.
+**Independent declaration condition.** One selectable class or object names one flat Admission Contract. A selected type
+must not act as a container of multiple independently selectable Admission contracts. Multiple clauses, intermediate
+expressions, immutable constants, and private helper operations may participate in the one root judgment, but they do
+not become nested contracts, member contracts, inherited contracts, or independently selectable Admission identities.
 
-If the admission source cannot be lowered into finite judgment material, the contract source is rejected. If Input
-material fails the lowered judgment, Admission returns the declared rejection result. A backend may realize Admission as
-a gate. The gate is wrong if it disagrees with the lowered admission material.
+Multiple independent Admission declarations may coexist in one source file because a file is only a source-organization
+unit. When several operations use the same Admission law, each operation explicitly binds the same declaration in its
+own `admission` slot. The lowered material may be structurally shared, but operation-slot binding, state participation,
+rejection, failure, and diagnostic attribution remain operation-specific.
+
+Admission inheritance, marker-interface membership, override, virtual specialization, member selection from a common
+holder, and type-hierarchy reuse are prohibited. Shared meaning is reused by selecting the same flat declaration, not by
+deriving another Admission type.
+
+**Input dependency condition.** Admission is compiled against the ratified Input material of the same operation. Every
+runtime operand must resolve to a coordinate, nested part, finite alternative, collection element, or other value
+already
+made available by that Input Contract. Policy, Governance, Capacity, Budget, environment, and implementation objects do
+not become implicit Admission operands. Those contracts may select the active contract world or stop under their own
+authority, but Admission does not inspect them as undeclared runtime data.
+
+A literal or constant may participate only when the frontend can ratify its complete value and semantic type at
+definition time. A `val` or `final` field is not sufficient when its value depends on initializer execution, external
+state, class loading, framework injection, or another runtime capability.
+
+**Carrier and judgment separation condition.** A V1 direct Input DTO remains an inert immutable presentation carrier.
+Except for compiler-generated carrier machinery and inert formation, it must not declare validation, normalization,
+derived access, Admission judgment, custom getter behavior, delegated access, semantic constructor behavior, or helper
+methods. Admission is declared in its own selected class or object.
+
+The same immutable Input presentation may participate in different operations with different Admission laws. Therefore
+a carrier-wide `isValid`, `validate`, `isAdmissible`, or `canProceed` method cannot own continuation judgment. Kotlin-
+generated accessors, `componentN`, `copy`, `equals`, `hashCode`, and `toString`, and Java record accessors, `equals`,
+`hashCode`, and `toString`, remain host artifacts and are erased from Input and Admission authority.
+
+**Host declaration profile.** The JVM V1 frontend accepts a dedicated source-visible Kotlin `object`, a dedicated closed
+Kotlin class with no runtime instance state, or a dedicated Java final class with no runtime instance state. The
+selected
+declaration must expose exactly one eligible root judgment that consumes the selected Input presentation and yields a
+Boolean continuation result. The root member name is a frontend convention, not contract identity; uniqueness and the
+operation-slot binding determine the root.
+
+The declaration may contain statically ratifiable immutable constants, immutable local bindings, and private
+source-visible helper operations. A helper is accepted only when its complete body is available, its call graph is
+closed and acyclic, it cannot dispatch virtually, and the frontend can inline or otherwise refine all of its meaning
+into
+the same flat Admission material. A helper is source decomposition, not a second contract. Constructor parameters,
+injected dependencies, mutable fields, delegated state, runtime initialization, and captured application objects are
+prohibited.
+
+For example, the following is ordinary Kotlin source. It imports no Kontrakt API and constructs no Kontrakt expression
+node:
+
+```kotlin
+package example.calculate
+
+data class CalculateInput(
+    val x: Int,
+    val limit: Int,
+    val flags: Int,
+)
+
+object XGreaterThanOne {
+    private const val MINIMUM: Int = 1
+    private const val REQUIRED_FLAGS: Int = 0b0011
+
+    fun admit(input: CalculateInput): Boolean {
+        val requiredFlagsPresent =
+            (input.flags and REQUIRED_FLAGS) == REQUIRED_FLAGS
+
+        return input.x > MINIMUM &&
+                input.x <= input.limit &&
+                requiredFlagsPresent
+    }
+}
+```
+
+The Kotlin frontend does not ratify the singleton object, function invocation, local-variable layout, property accessor,
+or JVM bit-operation call. It refines the selected source into bound Input coordinates, canonical literals, typed value
+operations, judgment relations, composition, and evaluation law. A Java declaration with equivalent value semantics
+must lower to equivalent Kontrakt material.
+
+**Full supported judgment-surface condition.** Admission is not defined by a small closed list of primitive predicates.
+V1 must accept the full legitimate continuation-judgment surface of the supported JVM presentation profile whenever the
+frontend can reduce it to finite, total, deterministic material over ratified Input values and statically ratifiable
+literals.
+
+The required semantic surface includes at least:
+
+- Boolean values, negation, conjunction, disjunction, exclusive-or, implication, equivalence, and finite conditional
+  judgment;
+- signed and unsigned integral arithmetic, comparison, equality, range relations, conversions, and primitive integral
+  bit operations with explicit width, signedness, overflow, narrowing, and shift laws;
+- floating-point classification, ordering, and equality under an explicit IEEE, total-order, or raw-bit law, including
+  explicit treatment of NaN and signed zero;
+- finite-alternative and enum relations lowered to ratified alternative identities rather than runtime enum-object
+  identity;
+- explicit null, absence, presence, and value relations without silently collapsing distinctions preserved by Input;
+- character, string, pattern, and binary relations under an explicit unit, normalization, case, locale, charset, and
+  pattern-semantics profile where those distinctions matter;
+- nested closed-product reads and structural relations over ratified parts without invoking user-defined `equals`,
+  `hashCode`, or `compareTo` implementations;
+- fixed-index and bounded relations over arrays and binary material with explicit index-definedness;
+- size, membership, equality, ordering where declared, bounded quantification, and bounded aggregation over ratified
+  arrays, sequences, sets, and maps; and
+- relations over supported JVM value profiles such as large numbers, identifiers, and temporal values when Kontrakt owns
+  a complete versioned semantic profile for the selected type.
+
+This catalog describes semantic coverage, not permission to execute arbitrary JVM code. A Java or Kotlin expression is
+accepted because the frontend knows its complete contract meaning and can erase the host operation, not because the JVM
+can execute it.
+
+**Ordinary-expression condition.** The frontend may accept ordinary host-language literals, direct Input part access,
+immutable local bindings, arithmetic expressions, comparisons, Boolean expressions, bit expressions, exhaustive
+`if`/`when`/`switch` forms, and other finite expressions whose meaning can be completely refined.
+
+An expression may derive a temporary value solely for the Admission judgment. That does not grant Canonicalization or
+Lowering authority and must not publish a transformed presentation. Parsing, coercion, normalization, default
+substitution, representation repair, and production of a replacement value remain outside Admission unless an earlier
+contract has already established the interpreted value as Input material.
+
+**Known-operation refinement condition.** A source-level operation call is accepted only under one of two laws.
+
+First, a private non-overridable helper inside the selected declaration may be accepted when its entire acyclic body is
+refined into the root judgment as described above. Second, a Java or Kotlin standard-library surface may be accepted
+when
+the selected frontend owns a stable, versioned semantic profile for that exact operation. For example,
+`String.startsWith`, `List.all`, or a finite numeric operation may serve as source syntax only when the host call is
+removed and replaced by backend-independent prefix, bounded-quantifier, or numeric material.
+
+Unknown calls, user-defined receiver methods, custom predicates, user-defined equality or ordering, extension functions
+whose bodies are unavailable, method references, virtual calls, framework callbacks, and library operations without a
+complete Kontrakt semantic profile are rejected. Method purity is not assumed from naming, annotations, finality, or a
+Boolean return type.
+
+**Bounded collection and binder condition.** Collection judgment is part of Admission when the Input Contract and the
+active Capacity or Budget material close the required access bound. The frontend may refine source forms such as
+`all`, `any`, `none`, `count`, finite membership, bounded sum, bounded minimum, and bounded maximum into explicit binder
+and aggregation material.
+
+A Kotlin or Java lambda used syntactically inside such a recognized bounded operation is not preserved as a runtime
+function object. It is accepted only when it does not escape, its captures are limited to ratified Input coordinates or
+statically ratifiable constants, and its body independently satisfies the Admission source law. The frontend lowers it
+to an explicit finite binder. A lambda, `Predicate`, `Function`, method reference, or functional-interface instance used
+as a stored runtime value, dynamically supplied callback, or dispatch surface is rejected.
+
+Iteration order, duplicate treatment, element equality, null-element treatment, and cardinality bounds must be ratified
+where they can affect judgment or evidence. A mutable-backed read-only view, live collection, runtime-discovered
+container, or collection without the required bound cannot become Admission material merely because a host library can
+iterate it.
+
+**Totality and termination condition.** Every accepted Admission judgment must be total for every presentation admitted
+by the selected Input Contract and must terminate under a definition-time-known bound. Division by zero, invalid shifts,
+invalid indices, narrowing loss, exact-arithmetic overflow, malformed patterns, unsupported encodings, and similar
+undefined or exceptional paths must be ruled out by static proof, represented by an explicit total relation, or
+rejected.
+A JVM exception must never become an implicit Admission refusal.
+
+Finite iteration over contract-bounded material is allowed. Arbitrary `while` or `do-while` loops, runtime-dependent
+unbounded loops, recursion, cyclic helper calls, blocking operations, waiting, synchronization, and termination that
+relies on application behavior are prohibited in V1. The semantic judgment surface may be rich; the machine must still
+know before publication that every invocation completes under the declared bounds.
+
+**No hidden observation condition.** Admission may not observe or invoke repositories, services, clocks, randomness,
+environment variables, system properties, files, networks, transactions, threads, executors, locks, mutable globals,
+framework context, dependency-injected objects, lazy values, delegated properties, proxies, reflection, runtime class
+inspection, object identity, resource handles, streams, futures, or other capabilities. If such information is required,
+it must first become explicit immutable presentation under the authority of the appropriate contract boundary.
+
+Exception-driven choice, catch-based validation, runtime type discovery, inheritance-dependent behavior, and callback
+completion are also rejected. They hide judgment, movement, or implementation authority behind host execution.
+
+**Deterministic refinement condition.** Definition-time processing must perform the following work before Admission can
+receive authority:
+
+```text
+resolve the exact class or object named by the operation's `admission` slot, which is written beneath the `flow` source-layout label
+-> identify the unique eligible root judgment
+-> close and validate all accepted helper and binder bodies
+-> bind every value read to ratified Input material or a canonical literal
+-> resolve every host expression to a versioned Kontrakt semantic operation
+-> validate type, null, numeric, ordering, collection, totality, and bound laws
+-> erase class, object, method, getter, lambda, iterator, and library-call mechanics
+-> canonicalize judgment structure, literals, source coordinates, and evaluation law
+-> derive stable Admission material identity
+-> ratify and publish the material in the ContractImage
+-> generate the deterministic Admission evaluator
+```
+
+Contract identity must change when a frontend profile, numeric law, string law, collection law, evaluation law, or any
+other semantic refinement changes contract meaning. Source formatting, local variable names, equivalent host syntax, and
+backend instruction choice must not change identity when they lower to the same material.
+
+**Deterministic evaluation condition.** At invocation time, the generated evaluator reads only the already-formed
+immutable Input presentation through fixed ratified coordinates. Runtime symbol lookup, reflection, property discovery,
+method dispatch, callback construction, literal parsing, operator selection, and failure-policy selection are forbidden.
+
+Boolean composition and bounded quantification must have a fixed evaluation law. V1 preserves a deterministic declared
+or canonical order wherever order can affect first decisive judgment, diagnostic evidence, budget consumption, or
+failure attribution. A backend may fuse branches, use primitive comparisons and bit instructions, specialize bounded
+loops, vectorize, or return allocation-free outcome codes only when the observable admitted or rejected result and its
+contract-owned attribution remain identical.
+
+The determinism law is:
+
+```text
+same ratified ContractImage
++ same immutable Input presentation
++ same declared cross-contract world
+= same Admission outcome and the same contract-owned attribution
+```
+
+**Result condition.** The logical V1 result is admitted or rejected. A source Boolean `true` maps to admitted and
+`false`
+maps to rejected only after the complete expression has been refined and ratified. The canonical material must preserve
+enough judgment structure and source coordination for deterministic Failure and Diagnostic contracts to attribute the
+rejection without executing the source method.
+
+Deferred, capacity-shaped, policy-shaped, or governance-shaped outcomes remain owned by their respective contracts. An
+early stop supplied by another contract must retain that contract's result and must not be converted into Admission
+rejection.
+
+If the source cannot be completely refined under these laws, the contract definition is rejected before ContractImage
+publication. If a ratified Input presentation fails the generated judgment, Admission produces the declared rejection
+result. The generated evaluator is implementation-axis machinery and is wrong if it disagrees with the ratified
+Admission material.
 
 ### 5.3. Canonicalization Contract
 
@@ -759,7 +965,7 @@ candidates from the implementation pipeline.
 
 ### 6.2. Earliest Authoritative Rejection
 
-Each flow contract stops only the material it has authority to judge.
+Each of these contracts stops only the material it has authority to judge.
 
 Input stops material that cannot be formed as the declared immutable boundary presentation. Admission stops formed
 material that may not continue. Canonicalization refuses a submitted candidate that cannot receive stable representative
@@ -848,10 +1054,11 @@ the Publication contract that governs outward claims derived from Fact material.
 
 This ADR does not decide the final host-facing syntax for Input, Admission, Canonicalization, or Lowering bodies.
 
-It does not define the complete state and transition sets of the three-axis flow machine. State-machine manifests,
+It does not define the complete state and transition sets of the three-axis operation machine. State-machine manifests,
 cross-contract movement, diagnostic evidence production, retention, failure representation, policy reaction, Budget,
-Capacity, Version, and Governance are category-level decisions and must be designed across the complete operation rather
-than independently inside one processing profile.
+Capacity, Version, and Governance are operation-wide contract decisions and must be designed across the complete
+operation rather than independently inside one processing profile. Their placement beneath source-layout headings does
+not create categories, containers, ownership, or shared authority.
 
 It does not define a projection callback SPI. Mutable and framework-owned objects must be converted before Input through
 an explicit adapter or presentation-formation operation, but the final adapter, factory, builder, or generated formation
