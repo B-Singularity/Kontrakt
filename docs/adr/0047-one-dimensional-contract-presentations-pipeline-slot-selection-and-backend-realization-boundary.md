@@ -31,7 +31,12 @@ ADR-0046 also records the first one-dimensional catalog. It does not decide how 
 authored, acquired, or lowered. This ADR starts there.
 
 The operation is the surface handle. It is not itself the pipeline. For each operation, the manifest exposes the places
-where contract material belongs. Those places are slots.
+where operation-local contract material belongs. Those places are slots.
+
+A single `.kontrakt` interface may declare a closed set of operation pipelines that enter the same core. `Policy`,
+`Governance`, `Budget`, and `Capacity` are not repeated as operation slots. They are bound once at the enclosing
+interface scope because they coordinate decisions and finite resources shared among those operations. Their declarations
+may contain machine-wide limits together with explicit operation allocations or run-grant profiles.
 
 This matters because Kontrakt has two bad roads in front of it.
 
@@ -47,10 +52,10 @@ once a role is known. Shape cannot choose the role.
 
 The missing mark is already present.
 
-A slot marks the role. Material is input because it enters the input slot. Material is publication because it is judged
-at
-the publication slot. State movement belongs to the state-machine axis because the manifest says so, not because a host
-method changed a field.
+An operation slot marks an operation-local role. Material is input because it enters the input slot. Material is
+publication because it is judged at the publication slot. State movement belongs to the state-machine axis because the
+manifest says so, not because a host method changed a field. The enclosing interface binding marks the machine scope of
+`Policy`, `Governance`, `Budget`, and `Capacity`.
 
 The mark is the slot, not the user's type.
 
@@ -80,7 +85,8 @@ Kontrakt needs an explicit mark, but the mark must belong to the declared contra
 
 ## 3. Decision Drivers
 
-A one-dimensional role must come from the contract manifest, not from incidental host form.
+A one-dimensional role must come from an explicit operation slot or, for machine-wide `Policy`, `Governance`,
+`Budget`, and `Capacity`, from an explicit enclosing interface binding—not from incidental host form.
 
 User-owned source should stay user-owned. Kontrakt may acquire from it, but the user should not have to reshape the
 system around Kontrakt types.
@@ -133,8 +139,10 @@ Decision: rejected.
 
 ### 4.6. Pipeline-slot selection
 
-The operation manifest already has the right mark. A slot says what role the material plays. After that, Kontrakt may
-acquire, check, lower, or reject the material under that role.
+The operation manifest already has the right mark for operation-local roles. A slot says what role the material plays.
+The enclosing interface scope is the right mark for `Policy`, `Governance`, `Budget`, and `Capacity`, whose authority
+must coordinate the closed operation set rather than be repeated inside each operation. After either explicit binding,
+Kontrakt may acquire, check, lower, or reject the material under that role and scope.
 
 Decision: accepted.
 
@@ -142,22 +150,26 @@ Decision: accepted.
 
 ## 5. Decision
 
-Kontrakt will use pipeline-slot selection for one-dimensional contract presentations.
+Kontrakt will use pipeline-slot selection for operation-local one-dimensional contract presentations and explicit
+interface-scope binding for machine-wide `Policy`, `Governance`, `Budget`, and `Capacity`.
 
-The interface manifest names operation handles. For each operation, the manifest binds contract slots. A slot is the
-selection point for a one-dimensional role.
+The interface manifest names a closed set of operation handles. For each operation, the manifest binds operation-local
+contract slots. A slot is the selection point for an operation-local one-dimensional role. The enclosing interface binds
+`Policy`, `Governance`, `Budget`, and `Capacity` once for that closed operation set.
 
 A presentation is not selected because a host class has an annotation, a marker interface, an inheritance edge, a
-mapping
-entry, or a lucky shape. It is selected because the operation manifest places material in a declared slot.
+mapping entry, or a lucky shape. Operation-local material is selected because the operation manifest places it in a
+declared slot. Machine-wide control and resource material is selected because the enclosing interface places it in the
+corresponding explicit binding.
 
-Kontrakt acquires only material selected by declared slots or by slot-owned references. Unreferenced user material is
-ignored.
+Kontrakt acquires only material selected by declared operation slots, interface-scope bindings, or references owned by
+those selections. Unreferenced user material is ignored.
 
 This ADR does not decide the final user API for getting host material into a slot. That may later be done with generated
 helpers, generated adapters, host declaration surfaces, compiler-plugin airlocks, or another ratified frontend. The law
 is
-unchanged: the slot gives the role; lowering gives the material; backend machinery realizes it.
+unchanged: the operation slot or enclosing interface binding gives the role and scope; lowering gives the material;
+backend machinery realizes it.
 
 ---
 
@@ -165,13 +177,19 @@ unchanged: the slot gives the role; lowering gives the material; backend machine
 
 A pipeline slot is a declared position in an operation's contract axis or state-machine axis.
 
-It is not a runtime scheduling statement. It is a role statement.
+It is not a runtime scheduling statement. It is an operation-local role statement. `Policy`, `Governance`, `Budget`,
+and `Capacity` are machine-scope roles selected by the enclosing interface binding, not pipeline slots and not internal
+implementation-stage annotations.
 
 Input is not input because a DTO says so. Publication is not publication because a response object says so. A transition
 is not a transition because a method rewrites a status field.
 
-The operation gives the boundary. The slot gives the role. The source gives candidate material. Lowering gives Kontrakt
-material.
+The operation gives its external boundary. The operation slot gives the operation-local role. The enclosing interface
+gives the shared machine scope. The source gives candidate material. Lowering gives Kontrakt material.
+
+Several operation pipelines under one enclosing interface may enter the same core. Internal core functions, stages, or
+call graphs do not open another IDL operation or create another slot board. They remain replaceable implementation under
+the machine-wide contracts fixed for the selected operation run.
 
 ---
 
@@ -240,9 +258,14 @@ The user type is not the mark. The airlock is machinery. The lowered material is
 
 ## 11. Common Processing Model
 
-Each one-dimensional presentation follows the same authority path: a declared slot selects source material or declared
-absence; Kontrakt acquires it under the slot role, resolves it, closes explicit absence and defaults, lowers it into
-canonical material, and realizes it through generated or static machinery when needed.
+Each operation-local one-dimensional presentation follows the same authority path: a declared slot selects source
+material or declared absence; Kontrakt acquires it under the slot role, resolves it, closes explicit absence and
+defaults, lowers it into canonical material, and realizes it through generated or static machinery when needed.
+
+`Policy`, `Governance`, `Budget`, and `Capacity` follow the same authority boundary from source to Kontrakt-owned
+material, but their selection point is the enclosing interface binding. Their declarations may express machine-wide
+laws and limits together with explicit operation allocations or run-grant profiles. They do not acquire authority from
+operation-manifest repetition or implementation-stage placement.
 
 This is not a physical runtime schedule. It is the path by which authority leaves source form and becomes Kontrakt-owned
 material.
@@ -253,7 +276,9 @@ A backend may realize the path differently when the same contract is preserved.
 
 ## 12. One-Dimensional Presentations
 
-ADR-0046 already decides the Interface Surface Contract. The remaining presentations use the slot law defined here.
+ADR-0046 already decides the Interface Surface Contract. Operation-local presentations use the slot law defined here.
+`Policy`, `Governance`, `Budget`, and `Capacity` remain part of the same flat one-dimensional catalog, but use the
+enclosing interface binding because their scope crosses the interface's closed operation set.
 
 ### 12.1. Input Contract
 
@@ -334,22 +359,26 @@ tag convenience.
 
 ### 12.15. Policy Contract
 
-Policy declares which judgment criteria are active under a machine context. It is not an implementation option bag.
+Policy declares the allocation, priority, borrowing, reclaim, and stop-reaction criteria active across the enclosing
+machine's closed operation set. It is not an implementation option bag and is not attached to internal functions or
+stages.
 
 ### 12.16. Budget Contract
 
-Budget declares finite consumable allowance. It is not an incidental timeout or loop counter.
+Budget declares finite consumable allowance for the machine and explicit operation or run-grant profiles within that
+allowance. It is not an incidental timeout, loop counter, or limit attached to the current implementation decomposition.
 
 ### 12.17. Capacity Contract
 
-Capacity declares what a machine, surface, stage, queue, or storage region is allowed to admit, hold, process, or
-publish.
-It is not merely a buffer size.
+Capacity declares the finite resource walls of the machine and the explicit operation allocations that must remain
+inside those walls. It may govern queues, storage regions, concurrency, resident material, or another stable
+machine-visible resource dimension. It is not merely a buffer size and is not owned by an implementation stage.
 
 ### 12.18. Governance Contract
 
-Governance declares which contract set, policy set, version, capacity, budget, and manifest binding is valid. It is the
-rule for which law book the machine is reading.
+Governance declares which contract set, policy set, version, capacity, budget, enclosing interface binding, and closed
+operation set is valid. It is the rule for which law book the machine is reading and which machine world is fixed for a
+selected operation run.
 
 ---
 
@@ -367,22 +396,28 @@ mechanism.
 
 ## 14. Consequences
 
-One-dimensional contract selection becomes pipeline-centered.
+One-dimensional contract selection becomes explicit-scope-centered. Operation-local roles remain pipeline-slot
+selected, while `Policy`, `Governance`, `Budget`, and `Capacity` are selected once by the enclosing interface scope.
 
 Kontrakt does not need to mark every user type, scan every data shape, or maintain a sidecar mirror for every contract
 body. The declared slot gives the role. Source material enters under that role. Lowering turns it into flat canonical
 material. Backend machinery stays replaceable.
 
-The operation surface becomes readable as a contract machine. The reader can see what is present, what is absent by
-declaration, and what may be replaced without pretending that a class body is the contract.
+The interface surface becomes readable as a contract machine. The reader can see the shared resource and control world,
+the closed operation set, each operation's local contract and movement slots, what is absent by declaration, and what
+may
+be replaced without pretending that a class body is the contract.
 
 This gives responsibility a place. A design question becomes a slot question before it becomes a code question.
 
-That also makes authoring less empty. The author does not start from a blank implementation. The manifest shows the
-places that need material. Filling them, or explicitly leaving them empty, produces the contract machine.
+That also makes authoring less empty. The author does not start from a blank implementation. Each operation manifest
+shows the local places that need material, while the enclosing interface shows the shared `Policy`, `Governance`,
+`Budget`, and `Capacity` bindings. Filling those positions, or explicitly leaving permitted operation slots empty,
+produces the contract machine.
 
 Kontrakt remains an adapter and compiler-grade realization layer around the user's system. Removing it removes what it
 adds. It should not erase the user's own contract source.
 
-This keeps ADR-0046's interface decision intact while giving the remaining one-dimensional presentations a practical
-selection law.
+This keeps ADR-0046's interface decision intact while giving operation-local presentations a practical slot-selection
+law and machine-wide `Policy`, `Governance`, `Budget`, and `Capacity` an explicit interface-scope binding law. Several
+operation pipelines may enter the same core without turning internal implementation work into nested IDL operations.

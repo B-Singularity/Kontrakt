@@ -35,11 +35,12 @@ consequences.
 The key correction is this:
 
 ```text
-Interface = operation handle + manifest binding
+Interface = shared machine bindings + operation handles + manifest bindings
 ```
 
-A method alone is only an operation handle. An interface becomes a Kontrakt interface when its operations are bound to
-explicit pipeline manifests.
+A method alone is only an operation handle. An interface becomes a Kontrakt interface when it declares a closed set of
+operations, binds each operation to an explicit pipeline manifest, and binds the shared `Policy`, `Governance`,
+`Budget`, and `Capacity` contracts once at the enclosing interface scope.
 
 This ADR decides how that interface is authored, how host-language code receives a usable interface, and where authority
 moves after lowering.
@@ -69,8 +70,8 @@ that gives final authority to Kontrakt material.
 
 ## 3. Decision Drivers
 
-The frontend must keep the contract interface, the contract axis, and the explicit movement axis visible in one authored
-surface.
+The frontend must keep the contract interface, its shared `Policy`, `Governance`, `Budget`, and `Capacity` bindings,
+the contract axis of each operation, and the explicit movement axis visible in one authored surface.
 
 The generated host interface must remain ordinary JVM/Kotlin code. It exists for implementation and calling, not for
 contract authority.
@@ -166,10 +167,12 @@ A `.kontrakt` interface contract is source material. It is not a mirror of a han
 Kontrakt compiles that source into a plain host-language interface. Implementations realize the generated interface. The
 generated interface is a build artifact, not contract authority, and users must not hand-edit it.
 
-The IDL declares interface operations and binds each operation to an explicit contract axis and an explicit
-state-machine movement axis. One-dimensional contract presentations are named as closed obligation kinds by this ADR,
-but their final authoring form remains unresolved. The implementation axis is produced behind that surface and carries
-no authority.
+The IDL declares a closed set of interface operations and binds each operation to an explicit contract axis and an
+explicit state-machine movement axis. The enclosing interface binds `Policy`, `Governance`, `Budget`, and `Capacity`
+once because those contracts coordinate the finite resources and decisions shared among its operations. They are not
+repeated inside each operation manifest. One-dimensional contract presentations are named as closed obligation kinds by
+this ADR, but their final authoring form remains unresolved. The implementation axis is produced behind that surface and
+carries no authority.
 
 References in the IDL are compile-time source symbols, not host-runtime handles or lookup names.
 
@@ -241,6 +244,11 @@ The frontend shape is:
 
 ```text
 interface contract
+    policy
+    governance
+    budget
+    capacity
+
     operation handle
         flat operation manifest
             flow
@@ -249,10 +257,14 @@ interface contract
             diagnostics
 ```
 
-The method gives the handle. The bound presentations are the contract body of that operation.
+The interface bindings declare the shared machine world. The method gives the handle. The presentations bound inside
+the manifest are the operation-local contract body.
 
-The manifest is a slot board. The slot names on the left are IDL keywords, not user-defined labels. The author supplies
-material on the right. This keeps the contract shape visible without asking the user to invent the shape again.
+The operation manifest is a slot board. The slot names on the left are IDL keywords, not user-defined labels. The author
+supplies material on the right. This keeps the operation shape visible without asking the user to invent the shape
+again. `Policy`, `Governance`, `Budget`, and `Capacity` are not operation-manifest slots. They are bound once for the
+interface's closed operation set, and their declarations may express machine-wide limits together with explicit
+operation allocations or run-grant profiles.
 
 The four regions are there for visibility, like areas on a game board. They have no contract meaning of their own. They
 do not create parent contracts, nested structure, processing order, or shared authority. Kontrakt still lowers each
@@ -295,9 +307,10 @@ state-machine pipeline:
 The user-facing interface contract declares the contract axis and the state-machine axis. Kontrakt is free to build the
 implementation axis behind them.
 
-At the authoring surface, the manifest may be grouped for readability. `Flow` carries the material path. `Movement`
-carries the state surface. `Bounds` carries the contract world and its limits. `Diagnostics` carries explanation and
-retention. These names do not create another axis, and `bounds` is not an operation stage.
+At the authoring surface, the operation manifest may be grouped for readability. `Flow` carries the material path.
+`Movement` carries the state surface. `Bounds` carries the operation's version coordinate. `Diagnostics` carries
+explanation and retention. These names do not create another axis, and `bounds` is not an operation stage. The shared
+`Policy`, `Governance`, `Budget`, and `Capacity` bindings remain at the enclosing interface scope.
 
 The stage names used in the contract axis are contract vocabulary, not a physical schedule. A backend may use any
 equivalent structure as long as the declared obligation remains intact.
@@ -320,7 +333,8 @@ Declared absence is contract material. Hidden absence is not.
 This ADR does not decide the final authoring form for one-dimensional contract presentations.
 
 Authoring syntax comes later. First, Kontrakt names the closed obligation kinds an interface contract can bind. A
-one-dimensional presentation declares one obligation kind before an operation binds it.
+one-dimensional presentation declares one obligation kind before the enclosing interface or an operation manifest binds
+it according to that obligation's scope.
 
 The initial catalog is:
 
@@ -372,24 +386,25 @@ Version Coordinate:
     declares which contract meaning governed a judgment, material, claim, or evidence
 
 Policy Contract:
-    declares which judgment criteria are active under a machine context
+    declares allocation, priority, and reaction criteria across a machine's closed operation set
 
 Budget Contract:
-    declares finite consumable allowance for a run, operation, stage, or diagnostic path
+    declares machine-wide consumable allowance and explicit operation or run-grant profiles
 
 Capacity Contract:
-    declares the admissible limit of a machine, surface, stage, queue, or storage region
+    declares machine-wide finite resource walls and explicit operation allocations inside those walls
 
 Governance Contract:
-    declares which contract set, policy set, version, capacity, budget, and manifest binding is valid
+    declares which contract set, policy set, version, capacity, budget, interface binding, and operation set is valid
 ```
 
 The catalog is not an authoring syntax decision. It names the obligation kinds that Kontrakt must recognize across
 frontend, resolution, lowering, verification, and backend projection.
 
-The catalog remains flat. A user-facing manifest may group these presentations as `flow`, `movement`, `bounds`, and
-`diagnostics`, but those groups only help the author read the operation. They do not compose, inherit, or own the
-presentations inside them.
+The catalog remains flat. A user-facing operation manifest may group operation-local presentations as `flow`,
+`movement`, `bounds`, and `diagnostics`, but those groups only help the author read the operation. They do not compose,
+inherit, or own the presentations inside them. `Policy`, `Governance`, `Budget`, and `Capacity` remain independent
+one-dimensional contracts bound once at the enclosing interface scope for the closed operation set.
 
 ---
 
@@ -403,6 +418,11 @@ A v1 `.kontrakt` interface contract may group an operation manifest like this:
 
 ```text
 interface CalculateContract {
+    policy        DefaultPolicy
+    governance    DefaultGovernance
+    budget        DefaultBudget
+    capacity      DefaultCapacity
+
     operation calculate(input: CalculateInput): CalculateOutput
 
     manifest {
@@ -425,10 +445,6 @@ interface CalculateContract {
 
         bounds:
             version        CalculateContractVersion
-            policy         DefaultPolicy
-            budget         DefaultBudget
-            capacity       DefaultCapacity
-            governance     DefaultGovernance
 
         diagnostics:
             evidence       CalculateDiagnostics
@@ -437,8 +453,10 @@ interface CalculateContract {
 }
 ```
 
-This sketch shows the interface contract surface and the operation manifest. The left side is the fixed slot vocabulary;
-the right side is the material bound to each slot. `flow` is shown as ordered slots, not as transition arrows.
+This sketch shows the interface contract surface, its four shared machine bindings, and the operation manifest. Inside
+the manifest, the left side is the fixed operation-slot vocabulary and the right side is the material bound to each
+slot. `flow` is shown as ordered slots, not as transition arrows. The interface-level bindings apply to the declared
+operation set and are not inherited operation slots.
 
 Movement is different. A real state move may be written as an arrow because the arrow is the declared transition itself.
 For example:
@@ -457,8 +475,9 @@ movement:
 If no movement is written, the compiler lowers the default no-movement material. The source may stay small; the
 canonical material must stay explicit.
 
-The four regions are not final syntax and do not change the one-dimensional catalog. The bound presentations remain
-separate after resolution.
+The four manifest regions are not final syntax and do not change the one-dimensional catalog. The bound presentations
+remain separate after resolution. The interface-level `Policy`, `Governance`, `Budget`, and `Capacity` contracts also
+remain separate material even though they are bound once for the shared machine scope.
 
 Kontrakt compiles the interface contract into a host interface and lowers resolved contract material into canonical
 form.
@@ -469,7 +488,8 @@ form.
 
 The v1 parser covers only the IDL interface contract subset.
 
-It reads interface shape, operation shape, axis entries, source references, and source locations.
+It reads interface shape, shared `Policy`, `Governance`, `Budget`, and `Capacity` references, operation shape, axis
+entries, source references, and source locations.
 
 The parser stops before the deeper languages: predicate bodies, host expressions, policy, state-machine detail,
 one-dimensional authoring, composition, and editor tooling.
@@ -492,7 +512,11 @@ handwritten host interfaces, because this model has no handwritten host interfac
 
 ## 14. Consequences
 
-The accepted frontend makes the interface contract explicit. Operation handles stay with their contract and movement
-bindings. Handwritten host-interface drift and host-runtime identity are rejected. The custom syntax stays narrow. The
+The accepted frontend makes the interface contract explicit. One interface may declare a closed set of operation
+pipelines that enter the same core, while `Policy`, `Governance`, `Budget`, and `Capacity` are bound once at that
+machine
+scope to coordinate their shared finite resources. Operation handles stay with their operation-local contract and
+movement bindings. Internal core functions, stages, and call graphs remain implementation and do not create nested IDL
+operations. Handwritten host-interface drift and host-runtime identity are rejected. The custom syntax stays narrow. The
 one-dimensional catalog is recorded without freezing its authoring syntax. The implementation axis remains replaceable
 backend work owned by Kontrakt.
