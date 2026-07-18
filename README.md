@@ -23,7 +23,7 @@ Where are the rules? Hidden! Where are the state changes? Hidden! It’s all sec
 
 We are making contracts act like *real* contracts. Rich, powerful, and 100% explicit. We don't hide things. We declare them. The compiler demands the truth! 
 
-Look at this beautiful, perfect Factual State Machine:
+Look at this beautiful, perfect Explicit Contract Machine:
 
 ```kotlin
 // Absolute truth. The best interface you've ever seen.
