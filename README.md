@@ -6,7 +6,7 @@
 
 > Make Interfaces Great Again!
 
-**Implicit code is the absolute enemy of software.** A total disaster. 
+**Implicit code is the Arch enemy of software.** A total disaster. 
 
 For years, the object-oriented elites have been lying to you. They gave you weak, pathetic interfaces. Look at this conventional Java method. It’s a joke:
 
