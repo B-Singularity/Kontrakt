@@ -117,6 +117,4 @@ Fill the IDL. Equip the contract. Build real machines.
 **Let Contracts Be Contracts.**  
 **Make Interfaces Great Again!**
 
-***
 
-[See the Design](docs/README.md) · [Read What Contract Is](docs/the-most-important-thing/what-contract-is.md)
