@@ -100,6 +100,18 @@ You don't study memory layouts or cache lines. You just declare what the machine
 
 ---
 
+## We Build Real Machines, Not Fairytales.
+
+The academic elites love to talk about perfect, ideal software. But those don't exist! In the real world, things fail. You run out of memory. The network breaks. Total disaster.
+
+Kontrakt does not build fairytales. We build *real* machines for the *real* world. 
+
+A real machine knows its limits. It has a budget. It has capacity. And when it hits a wall, it doesn't just crash in the dark—it explicitly admits failure! It tells you exactly what went wrong. No silent corruption. No partial updates. 
+
+We accept reality. We deal with it. And we build machines that actually work beautifully under pressure.
+
+---
+
 ## Contracts Live Forever. Backends Evolve.
 
 We completely separated the contract from the implementation. Total separation! 
@@ -116,5 +128,3 @@ Fill the IDL. Equip the contract. Build real machines.
 
 **Let Contracts Be Contracts.**  
 **Make Interfaces Great Again!**
-
-
