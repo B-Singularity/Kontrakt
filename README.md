@@ -83,18 +83,30 @@ You fill the slots. Your system gets stronger. Simple. Powerful. Genius!
 
 ---
 
-## SOTA Quality for Everyone. Automatically.
+## You Don't Study Quantum Mechanics to Use a Smartphone.
 
-You want State-of-the-Art (SOTA) quality? You got it. 
+Do you need to study quantum mechanics to use a smartphone? Of course not! That would be ridiculous. You just use it. Kontrakt is exactly the same.
 
-With Kontrakt, you should not need 10 years of compiler, testing, and low-level performance experience to build a serious machine. You declare the explicit contract. Kontrakt does ALL the hard work:
+With Kontrakt, you should not need 10 years of compiler, testing, and low-level performance experience to build a serious machine. You don't need to learn our internal compiler pipelines, cache strategies, or state-machine theories. 
+
+You just fill the slots and explicitly declare the contract. Kontrakt does ALL the hard work:
 
 * **Need Validators?** Kontrakt generates them!
 * **Need Property-Based Tests & Fixtures?** Kontrakt generates them!
 * **Need State Machine Guards & Failure Attribution?** Kontrakt handles it!
-* **Need Low-Level Performance & Cache Optimization?** Kontrakt does it automatically!
+* **Need Low-Level Performance?** Kontrakt does it automatically!
 
-You don't study memory layouts or cache lines. You declare the meaning, and Kontrakt enforces the truth.
+You don't study memory layouts or cache lines. You just declare what the machine must do, and Kontrakt delivers State-of-the-Art (SOTA) quality automatically. 
+
+---
+
+## Contracts Live Forever. Backends Evolve.
+
+We completely separated the contract from the implementation. Total separation! 
+
+Why is this huge? Because your contract never gets old. In five years, when new hardware and new SOTA optimizations arrive, you don't rewrite your system. Your contract stays exactly the same. Kontrakt simply generates a better, faster backend for that era. 
+
+Your software evolves automatically without touching the meaning. Unbelievable future-proofing! A fantastic deal.
 
 ---
 
