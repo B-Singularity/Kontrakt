@@ -6,7 +6,9 @@
 
 > Make Interfaces Great Again!
 
-**Implicit code is the arch-enemy of software.** A total disaster. 
+**Kontrakt is a compiler that turns explicit machine contracts into validated, tested, and optimized software.**
+
+Implicit code is the absolute enemy of software. A total disaster! 
 
 For years, the object-oriented elites have been lying to you. They gave you weak, pathetic interfaces. Look at this conventional Java method. It’s a joke:
 
@@ -62,12 +64,47 @@ interface AccountService {
 }
 ```
 
-No more guessing. No more implicit garbage. We are bringing order back to the core. 
+**That is the contract. Kontrakt generates the machinery behind it.**
 
-**Let Contracts be Contracts.**
+---
+
+## The Equipment Screen for Your Software
+
+Think of the Kontrakt IDL as an Equipment Screen for your system. 
+
+You don't need to guess anymore. You just equip your loadout! Every slot you fill instantly powers up your machine:
+
+* **Equip Admission?** Boom! Instant boundary security.
+* **Equip Invariant?** Boom! The machine must preserve the law.
+* **Equip State & Transition?** Boom! Only declared movement is allowed.
+* **Equip Budget & Capacity?** Boom! The machine knows its true limits.
+
+You fill the slots. Your system gets stronger. Simple. Powerful. Genius!
+
+---
+
+## SOTA Quality for Everyone. Automatically.
+
+You want State-of-the-Art (SOTA) quality? You got it. 
+
+With Kontrakt, you should not need 10 years of compiler, testing, and low-level performance experience to build a serious machine. You declare the explicit contract. Kontrakt does ALL the hard work:
+
+* **Need Validators?** Kontrakt generates them!
+* **Need Property-Based Tests & Fixtures?** Kontrakt generates them!
+* **Need State Machine Guards & Failure Attribution?** Kontrakt handles it!
+* **Need Low-Level Performance & Cache Optimization?** Kontrakt does it automatically!
+
+You don't study memory layouts or cache lines. You declare the meaning, and Kontrakt enforces the truth.
+
+---
+
+No more guessing. No more hidden garbage. 
+
+Fill the IDL. Equip the contract. Build real machines.
+
+**Let Contracts Be Contracts.**  
 **Make Interfaces Great Again!**
 
+***
 
-## License
-
-Kontrakt is licensed under the **Apache License 2.0**. See the [LICENSE](LICENSE) file for details.
+[See the Design](docs/README.md) · [Read What Contract Is](docs/the-most-important-thing/what-contract-is.md)
