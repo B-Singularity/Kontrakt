@@ -143,11 +143,12 @@ repeat that law. When an internally formed Change Proposal may affect that scope
 complete hypothetical resulting Fact world before any part of the proposal receives authority.
 
 The user must not declare, receive, or inspect Change Proposal, current-versus-proposed wrappers, overlay views, Fact
-population containers, or backend storage coordinates. A direct Invariant declaration names only already bound Facts and
-one total deterministic Boolean relation. A population Invariant declaration names only its Fact kinds, direct factual
-scope and value projections, and the terminal relation required by one closed compiler-recognized law family. Neither
-form may grant information its factual meaning, invent how Facts change, inspect operation behavior, acquire or traverse
-Fact populations, query hidden state, or use runtime references as authority.
+population containers, or backend storage coordinates. A direct Invariant declaration names one Fact kind and one total
+deterministic Boolean relation over that Fact's factual coordinates. A population Invariant declaration names only its
+participating Fact kinds, direct factual scope and value projections, and the closed standing condition required by one
+compiler-recognized law family. Neither form may grant information its factual meaning, invent how Facts change, inspect
+operation behavior, acquire or traverse Fact populations, query hidden state, or use runtime object relations as
+authority.
 
 State and Transition must remain separate from Fact and Invariant. They judge whether State movement declared in the
 same Change Proposal is legal, while Invariant judges Fact Integrity under that proposal. Neither may substitute for the
@@ -221,9 +222,9 @@ Fact vocabulary membership declares which Fact kinds may be established in that 
 Transition, Lowering, or Publication universal participation authority. Each such contract still owns the explicit Fact
 bindings through which its declared roles may participate. Each Invariant declaration instead fixes its own factual
 scope
-through direct Fact parameters or through the source Fact kinds and factual projections required by one closed
-population
-law family. Kontrakt applies that standing law automatically to every establishment that may affect that scope.
+through one direct Fact parameter or through the participating Fact kinds and factual projections required by one closed
+population law family. Kontrakt applies that standing law automatically to every establishment that may affect that
+scope.
 
 The Invariant Contract declares a standing law over the established Fact world within that resolved factual scope. The
 user writes direct coordinate projections and Boolean relations against ordinary Fact carriers and does not observe a
@@ -318,8 +319,13 @@ not Fact sameness and does not imply automatic replacement: two Facts that diffe
 different Facts, but a resulting Fact world may not contain both when they collide on a declared unique tuple.
 
 Currentness, general cardinality, supersession, grouping, or continuity are not implicit properties of every Fact; when
-required, they belong to the applicable Invariant, Change, Transition, or Reference binding. The declared Fact surface
-exposes the factual coordinates to which another contract may bind, but it does not list every Invariant that may apply.
+required, they belong to the applicable Invariant, Change, or Transition declaration. Facts do not reference other
+Facts.
+A factual coordinate such as `accountId` is factual material only. The same coordinate value appearing in another Fact
+does not create an object relation, lookup obligation, existence obligation, graph edge, or automatic cross-Fact
+binding.
+The declared Fact surface exposes factual coordinates that another contract may explicitly use as operands, but it does
+not list every Invariant that may apply.
 The interface-level Invariant carrier declares those standing laws separately, and each referenced Invariant declaration
 fixes its own factual scope. The declared Fact surface does not define Operation-specific change meaning. The selected
 Operation's explicit bindings declare what Fact changes its Change Proposal carries. Fact is not universally an entity,
@@ -426,15 +432,15 @@ layouts without changing its meaning.
 
 ### 5.2. Invariant Contract
 
-Invariant is a standing Fact Integrity law over the established Fact world.
+Invariant is the standing integrity law of established canonical factual material.
 
-Fact declares what immutable information may hold authority inside the core. Invariant declares what must remain true
-among that information whenever a Fact world is authoritative. It is not an Operation postcondition, an Admission rule,
-a constructor guard, a callback validator, or a rule for how one Operation computes its result. Operation-specific
-obligations are already expressed by the complete operation contract pipeline. Invariant owns only the remaining
-standing
-integrity of established Facts after the more specific Fact, Reference, State, Transition, Policy, Budget, Capacity,
-Governance, and Publication authorities retain their own questions.
+Fact declares what immutable information may hold authority inside the core. Invariant declares what must remain true of
+that information whenever the Fact world is authoritative. It is not an Operation postcondition, an Admission rule, a
+constructor guard, a callback validator, or a rule for how one Operation computes or forms its result.
+Operation-specific
+obligations remain in the complete operation contract pipeline. Invariant owns only the remaining standing integrity of
+established Facts after Fact sameness and declared uniqueness, State and Transition movement, Policy, Budget, Capacity,
+Governance, Publication, and operation-specific formation retain their own questions.
 
 Facts and Invariants share the enclosing interface's explicit core scope:
 
@@ -460,8 +466,12 @@ The catalog is an uninstantiable type-signature declaration that lists exact Inv
 ```kotlin
 class AccountInvariants private constructor(
     nonNegativeBalance: NonNegativeBalance,
-    withdrawalAccountTenant: WithdrawalAccountTenant,
-    activeLeaseLimit: ActiveLeaseLimit,
+    validPeriod: ValidPeriod,
+    settlementCurrencyCoherence: SettlementCurrencyCoherence,
+    settlementBalance: SettlementBalance,
+    reservationNonOverlap: ReservationNonOverlap,
+    dependencyAcyclicity: DependencyAcyclicity,
+    historicalMonotonicity: HistoricalMonotonicity,
 )
 ```
 
@@ -473,19 +483,20 @@ collection. An equivalent restricted Java declaration may provide the same type-
 Each referenced symbol declares one named Invariant under one of two closed frontend profiles:
 
 ```text
-direct relation:
-    a total Boolean relation over one Fact or an explicitly bound fixed tuple of Facts
+direct Fact law:
+    a total Boolean relation over exactly one Fact's factual coordinates
 
 population law family:
-    a closed structural declaration of Fact kinds, factual scope projections,
-    factual value projections, and the terminal relation owned by that family
+    a closed structural declaration over a bounded population owned by the same Contract Core,
+    using exact participating Fact kinds, direct factual projections, and one declared standing condition
 ```
 
-These profiles preserve ordinary Java and Kotlin authoring without turning Invariant into an open validator API or a new
-mathematical expression language. The source classes and methods are frontend evidence only. Kontrakt must completely
-resolve and lower their admitted material and erase their host execution mechanics before ContractImage publication.
+These profiles preserve ordinary Java and Kotlin authoring without turning Invariant into an open validator API, an
+object-relation model, or a new mathematical expression language. The source classes and methods are frontend evidence
+only. Kontrakt must completely resolve and lower their admitted material and erase their host execution mechanics before
+ContractImage publication.
 
-A direct relation declaration uses an ordinary restricted Boolean root:
+A direct Fact law uses an ordinary restricted Boolean root:
 
 ```kotlin
 class NonNegativeBalance private constructor() {
@@ -497,44 +508,47 @@ class NonNegativeBalance private constructor() {
 }
 ```
 
-This declaration means that every participating `Balance` must satisfy the stated coordinate relation. The source body
-contains no population acquisition, lookup, grouping, iteration, or reduction. It states only what must be true of the
-Fact presented to the law.
+This declaration means that every established `Balance` in the law's factual scope must satisfy the stated coordinate
+relation. The source body contains no population acquisition, lookup, grouping, iteration, or reduction. It states only
+what must be true of one Fact.
 
-A fixed cross-Fact relation uses ordinary Fact parameters only when another explicit contract has already bound the
-exact
-finite tuple:
+The direct profile covers the standing internal integrity of one Fact, including:
 
-```kotlin
-class WithdrawalAccountTenant private constructor() {
-
-    fun preserved(
-        withdrawal: WithdrawalRecorded,
-        account: AccountOpened,
-    ): Boolean =
-        withdrawal.tenantId == account.tenantId
-}
+```text
+value-domain and range law
+coordinate ordering and bounded comparison
+exact arithmetic coherence among explicit coordinates
+conditional presence and absence
+finite-alternative compatibility
+flag and bit compatibility
+declared length, count, digest, or checksum coherence when those values are themselves explicit factual material
 ```
 
-The parameters do not mean a Cartesian product and do not instruct Kontrakt to search for a matching `AccountOpened`.
-Reference or another explicit relation authority must already determine which Facts participate. If no explicit binding
-produces one finite tuple, a multi-Fact direct declaration is rejected rather than assigned an inferred join law.
+A derived coordinate should not be added merely to create an Invariant. When one authoritative factual coordinate is
+sufficient, duplicating a calculable value creates unnecessary material and an unnecessary law. Invariant preserves
+explicit factual meaning that must exist; it does not justify redundant representation.
 
-Reference existence is therefore not restated as an Invariant. Reference owns the source coordinate, target Fact kind,
-target coordinate, required or optional presence, and target multiplicity. A required target missing from the complete
-resulting Fact world is a Reference refusal. Invariant may judge an additional relation among successfully bound Facts,
-but it does not receive a nullable target, perform lookup, or repeat the existence obligation.
+A direct Invariant receives exactly one Fact. Multiple Fact parameters are not interpreted as a Cartesian product, an
+operation tuple, an object relation, or an instruction to find matching Facts. A relation that exists only while one
+Operation admits input, forms a result, or proposes Fact changes belongs to that Operation's existing contracts. A
+standing relation across a variable Fact world belongs to a closed population law family. Kontrakt rejects an arbitrary
+multi-Fact Boolean method rather than inventing a join, reference, pairing, or hidden binding rule.
 
-Declared uniqueness is also not restated as an Invariant. Fact owns the coordinate tuples declared unique for its Fact
-kind. Reference may rely on that declared uniqueness when one target must be bound. Invariant neither discovers nor
-rechecks uniqueness. Declared uniqueness forbids conflicting coexistence; it does not silently grant supersession,
-replacement, or currentness change.
+Facts do not reference other Facts. Shared coordinate names, shared coordinate types, and equal coordinate values create
+no implicit relation. A population Invariant may explicitly declare factual projections by which participating Facts are
+grouped, compared, ordered, aggregated, or interpreted as edges, but that declaration does not turn Facts into objects
+or
+references. Backend lookup and indexing remain implementation.
 
-Direct relation bodies may use ordinary Kotlin or Java syntax only when the frontend can completely refine the body into
+Declared uniqueness is not restated as an Invariant. Fact owns the coordinate tuples declared unique for its Fact kind.
+Invariant neither discovers nor rechecks that law. Declared uniqueness forbids conflicting coexistence; it does not
+silently grant supersession, replacement, currentness change, or a reference relation.
+
+Direct Fact bodies may use ordinary Kotlin or Java syntax only when the frontend can completely refine the body into
 total, deterministic Kontrakt-owned relation material. The admitted surface includes:
 
 ```text
-direct coordinate access on declared Fact parameters
+direct coordinate access on the declared Fact parameter
 literals and ratified constants
 immutable local bindings derived only from admitted operands
 canonical equality and inequality
@@ -545,74 +559,106 @@ exhaustive if / when / switch judgment
 explicit presence, absence, and finite-alternative judgment
 ```
 
-A direct relation body may not acquire another Fact, traverse a relation, call a repository or service, or receive a
-Fact population. Whether Java or Kotlin syntax can execute is irrelevant; only the closed relation completely lowered
-from that syntax is authoritative.
+A direct body may not acquire another Fact, traverse a relation, call a repository or service, or receive a Fact
+population. Whether Java or Kotlin syntax can execute is irrelevant; only the closed relation completely lowered from
+that syntax is authoritative.
 
-Some standing Fact laws range over a variable population rather than one Fact or one already bound finite tuple. These
-remain Invariants when their truth is determined solely by a bounded Fact population owned by the same explicit Contract
-Core. They do not include rows held only by an external database, repository results, another service's data, or any
-population that Kontrakt does not own and cannot completely judge under the applicable scope, version, governance, and
-Capacity contracts.
+Some standing laws range over a variable population rather than one Fact. These remain Invariants only when their truth
+is determined solely by a bounded Fact population owned and completely judgeable by the same explicit Contract Core.
+They do not include rows held only by an external database, repository results, another service's data, or any
+population
+that Kontrakt does not own under the applicable scope, version, governance, and Capacity contracts.
 
 The population law families in scope are:
 
 ```text
 group coherence and non-unique functional dependency
-general cardinality not already owned by Fact uniqueness or Reference multiplicity
-aggregate and conservation relations
-global ordering
+general cardinality not already owned by Fact-declared uniqueness
+aggregate and conservation relations, within one Fact kind or across several Fact kinds
+population ordering
 global non-overlap and interval exclusion
-continuity and declared gap law
+continuity and declared gaplessness
+mutual exclusion and coexistence law
+coverage and completeness, within one Fact kind or across several Fact kinds
+partition completeness, exclusivity, and disjointness
 topology, acyclicity, reachability, and rootedness
-coverage and completeness
-partition and disjointness
+explicit historical coherence and monotonic factual law
 ```
+
+These families cover the remaining standing Fact-world integrity:
+
+```text
+group coherence:
+    Facts sharing declared grouping coordinates must preserve declared coordinate coherence
+
+general cardinality:
+    a bounded factual group must contain an allowed number of Facts
+
+aggregate and conservation:
+    declared factual contributions must satisfy an exact aggregate relation
+
+ordering, non-overlap, and continuity:
+    declared positions or intervals must preserve the selected population structure
+
+mutual exclusion:
+    declared factual conditions may not coexist within one declared scope
+
+coverage and partition:
+    declared populations must cover, classify, or divide the required factual domain without forbidden omission or overlap
+
+topology:
+    factual edge coordinates must preserve the declared acyclic, reachable, or rooted structure
+
+explicit historical law:
+    Facts that explicitly carry historical coordinates must preserve declared coherence or monotonicity
+```
+
+Hidden previous objects, repository history, or an implicit before-and-after pair are not historical Facts. Machine
+movement belongs to State and Transition. Historical Invariant applies only when the relevant historical material is
+itself explicit established Fact material.
 
 A population law is not authored by passing `Set<Fact>`, `List<Fact>`, `Sequence<Fact>`, `Stream<Fact>`, or another
 population container to user code. The user must not write `all`, `any`, `count`, `sumOf`, `groupBy`, `fold`, sorting,
-pairwise traversal, graph walk, recursion, or another evaluation algorithm. Those operations would state how the law is
+pairwise traversal, graph walk, recursion, or another evaluation algorithm. Those operations state how the law is
 computed rather than only what the law requires.
 
 Instead, every population family is a closed compiler-recognized declaration schema. The schema exposes only the
 contract information required by that family:
 
 ```text
-source Fact kind or kinds:
-    which established Facts participate
+participating Fact kind or kinds:
+    which established factual materials belong to the law
 
-scope projection, where applicable:
+scope or grouping projection, where applicable:
     which direct factual coordinates place Facts in the same judgment scope
 
-value projection, where applicable:
-    which direct factual coordinates contribute the value judged by the law
+value, position, interval, edge, category, or historical projection, where applicable:
+    which direct factual coordinates provide the meaning judged by the family
 
-terminal relation:
-    which Boolean relation must hold over the family-defined semantic operands
+family condition:
+    which cardinality, equality, aggregate, ordering, exclusion, continuity, coverage,
+    partition, topology, or historical relation must remain true
 ```
 
-For example, a cardinality law needs one source Fact kind, an optional direct grouping projection, and a Boolean
-relation
-over semantic cardinality. An aggregate law needs its source Fact kinds, direct grouping and contribution projections,
-and a Boolean relation over the resulting semantic aggregate and any explicitly bound comparison Fact. A non-overlap law
-needs its source Fact kind and direct scope, start, and end projections. An acyclicity law needs the Fact kind that
-carries
-an edge and direct node and parent projections. The user declares only those factual projections and final relations.
-Kontrakt owns population acquisition, grouping, pairing, aggregation, ordering, reachability, and evaluation planning.
+The user declares only exact Fact kinds, direct factual projections, constants, and terminal conditions admitted by that
+family. Kontrakt owns population acquisition, grouping, comparison, aggregation, ordering, interval evaluation,
+reachability, and evaluation planning.
 
-A projection such as `lease.tenantId`, `allocation.amount`, `reservation.startEpochMillis`, or `relation.parentId` is
-not a
-search algorithm. It directly names factual material already present on one Fact. A family-defined operand such as
-cardinality or aggregate total is not a user-maintained counter, running total, cache, or backend object. It is semantic
-judgment material produced by the canonical family law and may be realized by any correct backend strategy.
+A projection such as `entry.settlementId`, `allocation.amount`, `reservation.startEpochMillis`, or
+`dependency.parentId` directly names factual material already present on one Fact. It is not a search algorithm or an
+object link. A family-defined operand such as cardinality or aggregate total is not a user-maintained counter, running
+total, cache, or backend object. It is semantic judgment material defined by the canonical family law and may be
+realized
+by any correct backend strategy.
 
 The exact Java and Kotlin token spelling of every population-family schema is deferred, but the authoring boundary is
-fixed here. A valid surface must use ordinary named Java or Kotlin declarations; must make the family and every required
-projection explicit; must contain no Fact population, traversal, callback, or hidden lookup; and must be completely
-lowerable into closed canonical Invariant material. The compiler may not infer a family from arbitrary user behavior or
-accept a general predicate as a substitute.
+fixed here. A valid surface must use ordinary named Java or Kotlin declarations; must make the family, participating
+Fact
+kinds, and every required factual projection explicit; must contain no Fact population, traversal, callback, or hidden
+lookup; and must be completely lowerable into closed canonical Invariant material. The compiler may not infer a family
+from arbitrary user behavior or accept a general predicate as a substitute.
 
-Every direct relation and population-family declaration must be total, deterministic, and terminating under declared
+Every direct Fact law and population-family declaration must be total, deterministic, and terminating under declared
 bounds. Host overflow, exception, `NaN`, locale, timezone, comparator behavior, collection implementation, or
 unspecified
 iteration order may not decide Invariant meaning. When numeric or aggregate totality cannot be proved or fixed by an
@@ -627,7 +673,7 @@ State, Transition, Policy, Budget, Capacity, Governance, Publication, or Diagnos
 external database rows, repository, service, network, file, clock, randomness, environment, thread, lock, or transaction state
 reflection, runtime class discovery, proxy behavior, object identity, custom equals, hashCode, compareTo, or Comparator
 Fact mutation, repair, normalization, parsing, replacement, removal, currentness change, or State movement
-hidden navigation through object graphs or undeclared relations
+Fact-to-Fact object references, hidden navigation, implicit joins, or undeclared factual grouping
 instance state, mutable globals, initialization behavior, inheritance, override dispatch, or interface-provided behavior
 Fact population parameters, collection operations, streams, sequences, loops, recursion, callbacks, lambdas, method references,
 escaping closures, exception-driven choice, or arbitrary user method calls
@@ -638,15 +684,14 @@ The user does not declare or observe a Change Proposal. The user declares a law 
 an
 Operation's complete contract pipeline causes Kontrakt to form one Change Proposal internally, Kontrakt computes the
 whole hypothetical resulting Fact world as though every declared Fact change had succeeded. It never exposes a partially
-applied world to Invariant. It then determines the affected Invariants from their resolved Fact kinds, binding
-relations,
-scopes, and coordinate dependencies and judges those laws automatically.
+applied world to Invariant. It then determines the affected Invariants from their resolved Fact kinds, factual scopes,
+family classifications, and coordinate dependencies and judges those laws automatically.
 
 ```text
 current established Fact world
 + complete internally formed Change Proposal
     -> hypothetical resulting Fact world
-    -> applicable Fact uniqueness and Reference judgments
+    -> applicable Fact-owned uniqueness judgments
     -> affected interface-level Invariant laws
         -> all preserved
             -> continue toward indivisible establishment
@@ -667,13 +712,13 @@ At definition time, Kontrakt must:
 ```text
 resolve the exact interface-level Invariant catalog symbol
 resolve every exact Invariant declaration symbol listed by that catalog
-classify each declaration under one closed direct or population-family profile
+classify each declaration under one closed direct-Fact or population-family profile
 resolve every participating Fact kind against the interface-level Fact vocabulary
-resolve every fixed-tuple binding required by a direct cross-Fact relation
-refine every admitted coordinate projection, semantic operand, and terminal Boolean relation
-reject population containers, traversal, unknown behavior, hidden observation, partiality, nondeterminism, and unbounded work
+refine every admitted factual projection, family operand, constant, and terminal condition
+reject arbitrary multi-Fact methods, population containers, traversal, unknown behavior, hidden observation,
+partiality, nondeterminism, and unbounded work
 lower each declaration into canonical Invariant material
-derive stable Fact-kind, binding, scope, and coordinate dependency indexes
+derive stable Fact-kind, factual-scope, family, and coordinate dependency indexes
 publish the resulting laws in ContractImage-visible form
 ```
 
@@ -683,8 +728,7 @@ From the same canonical Invariant material, Kontrakt owns and may optimize:
 affected-law selection
 hypothetical resulting-world plans
 population acquisition inside the owned core scope
-fixed-tuple binding plans
-grouping, pairing, aggregation, ordering, interval, and graph evaluation
+grouping, comparison, aggregation, ordering, interval, and graph evaluation
 specialized runtime gates and primitive indexes
 full evaluation, incremental evaluation, or static discharge
 constant folding and shared coordinate reads
@@ -754,12 +798,11 @@ canonical Fact vocabulary and the canonical factual material of its members rema
 Fact and Invariant must not collapse into one role.
 
 Fact declares the information that exists, including any Fact-owned uniqueness tuple. Invariant declares the remaining
-standing integrity law over the established Fact world within the direct or closed population scope resolved from its
-own
-declaration. Facts and Invariants are both declared once at the enclosing interface's explicit core scope. A Fact may
-exist without a particular Invariant, and one Invariant may judge direct relations or population laws across several
+standing integrity law over the established Fact world within the direct-Fact or closed population scope resolved from
+its own declaration. Facts and Invariants are both declared once at the enclosing interface's explicit core scope. A
 Fact
-kinds without taking ownership of Fact sameness, declared uniqueness, Reference existence, or movement.
+may exist without a particular Invariant, and one population Invariant may judge laws across several Fact kinds without
+taking ownership of Fact sameness, declared uniqueness, operation-specific formation, or movement.
 
 Invariant success does not create Fact meaning, define Fact-change meaning, grant Fact authority, or authorize State
 movement by itself. Invariant refusal means that the proposal would break the selected law and therefore blocks the
@@ -853,23 +896,23 @@ successful indivisible Lowering.
 Contract Core membership does not grant universal participation authority to a Fact.
 
 Every Operation, State or Transition judgment, Lowering judgment, and Publication judgment must explicitly bind the
-factual roles that may participate in it. Each Invariant instead declares its complete factual scope through a direct
-Fact
-tuple or through the Fact kinds and direct factual projections of one closed population law family. An established Fact
-may participate only through an applicable Operation or judgment binding, or through that resolved Invariant scope. A
-Fact outside the declared scope carries no authority to participate, even when it exists in the same Contract Core or
-appears relevant to the work being performed.
+factual roles that may participate in it. Each Invariant instead declares its complete factual scope through one direct
+Fact kind or through the participating
+Fact kinds and direct factual projections of one closed population law family. An established Fact may participate only
+through an applicable Operation or judgment binding, or through that resolved Invariant scope. A Fact outside the
+declared scope carries no authority to participate, even when it exists in the same Contract Core or appears relevant to
+the work being performed.
 
 A Fact binding declares participation authority, not ownership of the Fact and not general access to the Contract Core.
 It does not transfer Fact authority out of the core and does not authorize the bound Fact to participate in another
 Operation, judgment, movement, scope, version, governance world, or outward claim.
 
-Each Invariant may judge only the Fact kinds, bindings, scopes, coordinates, and family relations resolved from its own
+Each Invariant may judge only the Fact kinds, factual scopes, coordinates, and family conditions resolved from its own
 declaration. The user declares no proposal binding and receives no Fact population. Kontrakt supplies the complete
 hypothetical resulting Fact world internally and may not enlarge the Invariant's factual scope merely because another
 Fact
-appears relevant. Invariant may not obtain additional factual authority by following undeclared relations, querying an
-external population, or treating apparent relevance as permission.
+appears relevant. Equal coordinate values, matching names, matching types, or apparent domain relevance create no
+implicit relation, grouping, or participation authority.
 
 Fact leakage occurs when an established Fact participates in an Operation, judgment, movement, or Publication without
 an applicable explicit binding, when its participation exceeds the role, scope, version, governance, or purpose declared
@@ -928,13 +971,13 @@ declaration must satisfy one closed direct or population-family profile. Package
 literals, runtime collections, and computed discovery are not Fact or Invariant membership authority.
 
 It does not freeze the final Java and Kotlin token spelling or the complete V1 catalog of population-family schemas.
-It does fix their authoring boundary: direct laws use restricted Boolean relations over one Fact or an explicitly bound
-fixed tuple; population laws expose only their participating Fact kinds, direct factual scope and value projections, and
-family-defined terminal relation. No Invariant declaration receives a Fact population or contains traversal, collection
-reduction, callback, lambda, hidden lookup, mutation, proposal access, operation-specific material, or backend
-evaluation
-state. The compiler must recognize a closed declaration family and may not infer contract meaning from arbitrary user
-behavior.
+It does fix their authoring boundary: direct laws use restricted Boolean relations over exactly one Fact; population
+laws
+expose only their participating Fact kinds, direct factual projections, constants, and family-defined standing
+condition.
+No Invariant declaration receives a Fact population or contains traversal, collection reduction, callback, lambda,
+hidden lookup, mutation, proposal access, operation-specific material, or backend evaluation state. The compiler must
+recognize a closed declaration family and may not infer contract meaning from arbitrary user behavior.
 
 This ADR does not define the complete authoring surface by which the enclosing machine contract and its operation flows
 declare required existing Fact dependencies, possible Operation Result Material, Change Proposals, their declared Fact
@@ -975,9 +1018,10 @@ Change Proposal, and the proposed Facts receive authority only when every requir
 judgment over that same proposal succeeds and the proposal is successfully lowered as one indivisible change.
 
 Invariant has one visible Fact Integrity judgment role without becoming the source of Fact meaning, Fact-owned
-uniqueness, Reference existence, Fact-change meaning, Operation behavior, or State movement. The user declares either a
-direct relation over one Fact or an explicitly bound fixed tuple, or the projections and terminal relation of one closed
-population law family. The user never receives a Fact population and never declares or observes the Change Proposal.
+uniqueness, Fact-change meaning, Operation behavior, or State movement. The user declares either a direct relation over
+exactly one Fact or the participating Fact kinds, direct factual projections, constants, and standing condition of one
+closed population law family. The user never receives a Fact population and never declares or observes the Change
+Proposal.
 Kontrakt applies every affected interface-level Invariant automatically to the complete hypothetical resulting Fact
 world.
 State and Transition judge legal movement separately over the same internal Change Proposal. Publication
