@@ -333,6 +333,15 @@ A host frontend may use primitives, strings, enums, arrays under an immutable pr
 classes, or Java records as declaration evidence when their complete visible shape can be refined. Kontrakt does not
 require `CoreInt`, `KontraktText`, or a user-authored Value Object merely because information exists inside the core.
 
+A domain-named host declaration remains frontend evidence. Kontrakt does not carry a Kotlin data class, Java record, or
+another domain object into the Contract Core as the Fact itself. Resolution and Lowering retain domain-neutral canonical
+contract IR: the resolved Fact kind symbol, canonical coordinate declarations, value sorts, factual distinctions,
+applicable contract-world material, and source coordinates required for attribution. Source names may remain as resolved
+symbols, but host constructors, methods, receivers, object identity, and class layout do not survive as Fact authority.
+A backend may realize the lowered material through generated classes, primitive arrays, packed bytes, tables, or another
+deterministic layout. Those realizations are implementation and may not replace the canonical Fact material from which
+they were generated.
+
 The Fact vocabulary for an enclosing interface is also authored through a restricted host declaration rather than a
 package selector, class literal collection, or new IDL body language. A Kotlin frontend may express the declaration as
 an
@@ -430,10 +439,11 @@ layouts without changing its meaning.
 
 ### 5.2. Invariant Contract
 
-Invariant is the standing internal integrity law of one established Fact.
+Invariant is the standing internal integrity law of one exact Fact kind.
 
-Fact declares what immutable information may hold authority inside the core. Invariant declares what every established
-Fact of one exact declared kind must satisfy solely from that Fact's complete canonical factual material. It is not an
+Fact declares what immutable information may hold authority inside the core. Invariant declares what one complete
+canonical candidate for one exact declared Fact kind must satisfy before that material may receive Fact authority. An
+established Fact is therefore material that has already satisfied every applicable Invariant. Invariant is not an
 Operation postcondition, an Admission rule, a constructor guard, a callback validator, or a rule for how one Operation
 computes or forms its result. Operation-specific obligations remain in the complete operation contract pipeline.
 Invariant owns only the remaining intra-Fact integrity after Fact sameness and declared uniqueness, State and Transition
@@ -456,8 +466,8 @@ interface AccountService {
 `invariants AccountInvariants` names one restricted Kotlin or Java source catalog. It is declared once for the core and
 is
 not repeated or selected inside an Operation manifest. An Operation does not own an Invariant and cannot bypass one by
-omitting a slot. Whenever proposed material for an Invariant's declared Fact kind may receive Fact authority, Kontrakt
-applies that law automatically.
+omitting a slot. Whenever complete canonical candidate material for an Invariant's declared Fact kind may receive Fact
+authority, Kontrakt applies that law automatically.
 
 The catalog is an uninstantiable type-signature declaration that lists exact Invariant declaration symbols:
 
@@ -483,7 +493,23 @@ and whose admitted operands come only from that Fact's complete canonical factua
 
 The source class and method are frontend evidence only. Kontrakt must completely resolve and lower the admitted relation
 and erase its host execution mechanics before ContractImage publication. The class is not an object-oriented contract,
-the method is not runtime authority, and the Fact parameter is not an object reference.
+the method is not runtime authority, and the Fact parameter is not an object reference. The parameter type resolves one
+Fact kind symbol; field access resolves canonical coordinate operands; and the admitted Boolean body lowers to
+domain-neutral Invariant relation IR. Kontrakt does not retain a domain-specific validator class or invoke the
+source method as the contract at runtime.
+
+The canonical ContractImage may therefore retain IR equivalent to:
+
+```text
+subject Fact kind symbol
+canonical coordinate operands
+lowered total Boolean relation
+authorized constants and value sorts
+source coordinates for attribution
+```
+
+It does not retain the host class as the Fact, the method receiver as judgment authority, or a domain-specific compiler
+node whose behavior owns the law.
 
 A direct Fact law uses an ordinary restricted Boolean root:
 
@@ -497,11 +523,11 @@ class NonNegativeBalance private constructor() {
 }
 ```
 
-This declaration means that every established `Balance` must satisfy the stated coordinate relation. The source body
-states only what must be true of one complete Fact. It performs no lookup, population acquisition, grouping, iteration,
-reduction, navigation, or movement.
+This declaration means that complete canonical material proposed as `Balance` may receive Fact authority only when the
+stated coordinate relation is preserved. The source body states only what must be true of one complete Fact. It performs
+no lookup, population acquisition, grouping, iteration, reduction, navigation, formation, or movement.
 
-The Invariant Contract provides the following intra-Fact integrity functions:
+The Invariant Contract provides only the following intra-Fact integrity functions:
 
 ```text
 value-domain integrity:
@@ -524,9 +550,6 @@ finite-alternative coherence:
 
 flag and bit compatibility:
     explicit factual flags or bits contained by the same Fact must satisfy required, forbidden, and mutually exclusive combinations
-
-explicit local summary coherence, where admitted:
-    a declared length, member count, digest, or checksum may be related only to complete finite material explicitly contained by the same Fact
 ```
 
 Examples include:
@@ -554,6 +577,27 @@ A derived coordinate should not be added merely to create an Invariant. When one
 sufficient, duplicating a calculable value creates unnecessary material and an unnecessary law. Invariant preserves
 explicit factual meaning that must exist; it does not justify redundant representation.
 
+Aggregate is not an Invariant operation. A Fact may contain explicit scalar coordinates whose domain meaning is an
+aggregate, total, count, balance, or other summary. Invariant may compare those already formed coordinates under
+arithmetic coherence because they are part of the one complete canonical Fact. It may not derive them by acquiring,
+collecting, traversing, filtering, grouping, counting, summing, reducing, or otherwise interpreting nested, external, or
+separately established material. Invariant does not establish that an aggregate coordinate was calculated correctly from
+source entries. The calculation belongs to replaceable realization, and any contractually meaningful relation between
+explicit operation material and the produced outcome must have an explicit owner elsewhere in the operation pipeline.
+This ADR creates no Result Contract and assigns no such obligation automatically.
+
+When an authored Fact declaration independently includes scalar coordinates with aggregate meaning, those
+coordinates lower as ordinary canonical coordinates of that resolved Fact kind. Any applicable arithmetic law lowers as
+a domain-neutral relation over those coordinate operands. The canonical IR does not retain a domain object, a summary
+object, or an aggregate-specific contract node. It retains only the resolved Fact-kind symbol, the admitted canonical
+coordinate operands, and the lowered relation.
+
+Kontrakt must not synthesize a summary Fact kind, an aggregate-specific Fact declaration, a domain-specific aggregate
+validator, or another Fact kind merely to expose calculated values to Invariant judgment. When the authored Fact
+vocabulary does not independently declare those values as factual material, calculated totals remain Operation Result
+Material, processing IR, or backend implementation material according to their actual role and receive no Fact
+authority.
+
 An Invariant receives exactly one Fact. Kontrakt rejects all of the following rather than inventing missing contract
 material:
 
@@ -573,30 +617,28 @@ judgment.
 
 Accordingly, Invariant does not provide standing laws over several separately established Facts. It does not count,
 aggregate, conserve, order, compare intervals, enforce continuity, judge coexistence, establish coverage, partition a
-population, or derive historical monotonicity across Facts. When such a rule is specific to one Operation or machine
-movement, it belongs to that Operation's Admission, Lowering, Change, State, or Transition contracts. When an aggregate,
-summary, previous value, resulting value, or other relation is itself authoritative factual meaning, it must be explicit
-material contained by one Fact before a local Invariant may judge the coordinates of that Fact.
-
-For example, a finalized settlement may explicitly contain both authoritative totals:
-
-```kotlin
-class BalancedSettlement private constructor() {
-
-    fun preserved(
-        settlement: SettlementFinalized,
-    ): Boolean =
-        settlement.debitTotalMinor == settlement.creditTotalMinor
-}
-```
-
-Invariant does not acquire the entries, calculate either total, or determine how the settlement was finalized. Those
-questions belong to the Operation contract and its replaceable realization. The Invariant judges only the complete
-canonical factual material of the proposed `SettlementFinalized` Fact.
+population, or derive historical monotonicity across Facts. Removing such a law from Invariant does not assign it
+automatically to Admission, Lowering, Change, State, Transition, Publication, or any other contract role. When a domain
+requires such an obligation, its explicit subject, material, scope, and owning contract must be determined separately.
+This ADR decides only that an implicit cross-Fact judgment is not Invariant.
 
 Declared uniqueness is not restated as an Invariant. Fact owns the coordinate tuples declared unique for its Fact kind.
 Invariant neither discovers nor rechecks that law. Declared uniqueness forbids conflicting coexistence; it does not
 silently grant supersession, replacement, currentness change, or a relation between Facts.
+
+The decisive test is simple:
+
+```text
+Can this law be judged completely from one complete canonical candidate Fact
+without observing another Fact, Operation Input, Operation Result Material,
+State, history, collection, repository, or external source?
+
+yes:
+    it may be an Invariant
+
+no:
+    it is not an Invariant
+```
 
 Invariant bodies may use ordinary Kotlin or Java syntax only when the frontend can completely refine the body into
 total,
@@ -612,7 +654,6 @@ Boolean conjunction, disjunction, and negation
 bit relations over explicit factual bit coordinates
 exhaustive if / when / switch judgment
 explicit presence, absence, and finite-alternative judgment
-compiler-recognized local length, count, digest, or checksum relations only over complete finite material contained by the same Fact
 ```
 
 Whether Java or Kotlin syntax can execute is irrelevant; only the closed relation completely lowered from that syntax is
@@ -620,8 +661,8 @@ authoritative. The source may not call arbitrary user behavior merely because th
 
 Every Invariant declaration must be total, deterministic, and terminating. Host overflow, exception, `NaN`, locale,
 timezone, comparator behavior, collection implementation, object identity, or unspecified evaluation behavior may not
-decide Invariant meaning. When numeric or local-summary totality cannot be proved or fixed by an explicit Kontrakt
-semantic profile, the source is rejected rather than interpreted through accidental JVM behavior.
+decide Invariant meaning. When numeric totality cannot be proved or fixed by an explicit Kontrakt semantic profile, the
+source is rejected rather than interpreted through accidental JVM behavior.
 
 The Invariant source may not observe or perform any of the following:
 
@@ -687,7 +728,7 @@ resolve every exact Invariant declaration symbol listed by that catalog
 resolve exactly one direct Fact parameter against the interface-level Fact vocabulary
 refine the complete admitted Boolean relation over that Fact's canonical factual coordinates
 reject additional Fact parameters, Fact containers, hidden Fact acquisition, unknown behavior, partiality,
-nondeterminism, recursion, unbounded work, and unsupported local-summary operations
+nondeterminism, recursion, unbounded work, aggregation, collection traversal, and unsupported operations
 lower each declaration into canonical Fact-local Invariant material
 derive stable Fact-kind and coordinate dependency indexes
 publish the resulting laws in ContractImage-visible form
@@ -1000,14 +1041,16 @@ inside the Contract Core. Operation Result Material remains machine-internal mat
 Publication produces a distinct outward presentation carrying only its declared external authority.
 
 Primitive and ordinary closed immutable host types may serve as frontend evidence when they preserve the required
-information. Fact sameness is determined by the resolved Fact kind and complete canonical factual material, not by
-hidden
-identity, object allocation, `equals`, or `hashCode`. Repeated establishment of identical canonical material does not
-add
-another Fact or implicit multiplicity. The core therefore has set-like Fact semantics without requiring a set-shaped
-backend. Meaningful count or occurrence remains explicit factual material rather than an effect of repeated delivery,
-construction, or storage. Core richness comes from explicit Facts, Operation Result Material, laws, judgments, states,
-and transitions—not from behavior-bearing classes or semantically authoritative Value Objects.
+information. Resolution and Lowering replace those host declarations with domain-neutral canonical Fact, coordinate, and
+Invariant relation IR before ContractImage publication. Domain names may remain as resolved symbols and source
+coordinates, but host classes and domain-specific validator objects do not become Contract Core material. Fact sameness
+is determined by the resolved Fact kind and complete canonical factual material, not by hidden identity, object
+allocation, `equals`, or `hashCode`. Repeated establishment of identical canonical material does not add another Fact or
+implicit multiplicity. The core therefore has set-like Fact semantics without requiring a set-shaped backend. Meaningful
+count or occurrence remains explicit factual material rather than an effect of repeated delivery, construction, or
+storage. Core richness comes from explicit Facts, Operation Result Material, laws, judgments, states, and
+transitions—not
+from behavior-bearing classes or semantically authoritative Value Objects.
 
 Internal Fact carriers do not need to appear in Input or public output contracts. External users may receive Publication
 presentations while established Facts and their authority remain inside the Contract Core and core factual
