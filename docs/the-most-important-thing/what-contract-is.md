@@ -197,7 +197,7 @@ The first dimension contains closed contract presentations and required coordina
 
 ```text
 interface contract and its public surface
-input contract
+input presentation contract
 admission contract
 canonicalization contract
 lowering contract
@@ -208,6 +208,7 @@ state transition contract
 explicit state machine manifest
 failure contract
 publication contract
+output presentation contract
 diagnostic evidence / retention contract
 version coordinate
 policy / budget / capacity / governance contract
@@ -219,10 +220,15 @@ nobody knows what is actually required.
 
 It binds a flat list of closed contract presentations and required coordinates for one interaction.
 
+Fact and Invariant do not become private laws recreated by each interaction. Fact declares the factual vocabulary that
+may stand inside the core. Invariant declares a standing integrity law attached to one factual kind. An interaction may
+bring material to those laws, but it does not privately redefine them. The interaction manifest still names both because
+it lists every contract authority that governs the interaction, not only the declarations written again inside it.
+
 ```text
 interaction manifest
     -> interface contract and its public surface
-    -> input contract
+    -> input presentation contract
     -> admission contract
     -> canonicalization contract
     -> lowering contract
@@ -233,6 +239,7 @@ interaction manifest
     -> explicit state machine manifest
     -> failure contract
     -> publication contract
+    -> output presentation contract
     -> diagnostic evidence / retention contract
     -> version coordinate
     -> policy / budget / capacity / governance contract
@@ -307,8 +314,9 @@ Aligning the contract to the purpose is the designer's job.
 Not the compiler's.
 
 The machine can only judge what has been explicitly declared. If the purpose has not shaped concrete input rules,
-admission rules, lowering obligations, fact laws, invariants, state movement, failure rules, publication discipline,
-diagnostic retention, version coordinates, policy, budget, capacity, or governance, then the machine must not pretend
+admission rules, lowering obligations, fact laws, invariants, state movement, failure rules, publication authority,
+outward presentation, diagnostic retention, version coordinates, policy, budget, capacity, or governance, then the
+machine must not pretend
 that it verified the purpose.
 
 This is where the rot usually starts.
@@ -375,9 +383,9 @@ interface OrderPort {
 }
 ```
 
-The shape is useful. It gives the operation name, input presentation, output presentation, and a familiar surface for
-implementation. Remove that and the system becomes annoying to use. Nobody wants a contract theory that makes ordinary
-use harder than the problem it was meant to solve.
+The shape is useful. It gives the operation name, an ordinary input-to-result surface, and a familiar handle for use.
+Remove that and the system becomes annoying to use. Nobody wants a contract theory that makes ordinary use harder than
+the problem it was meant to solve.
 
 So the method remains.
 
@@ -391,20 +399,20 @@ They are not contract meaning.
 
 ```text
 Method:
-    the operation selector and presentation handle of an interface contract.
+    an operation handle at an interface surface.
 ```
 
-A method signature is only the weakest shell of an operation contract. It tells us the operation name, the input
-presentation, and the output presentation. It does not tell us what the input must satisfy, what admission means, which
-state allows the operation, what fact is produced, what failure is declared, what may be published, what diagnostic
-evidence remains, or which policy, budget, capacity, and governance rules apply.
+A method signature is only the weakest shell of an operation contract. It may show an operation name and an ordinary
+input-to-result surface. It does not by itself declare the boundary Input Presentation, the factual authority of the
+input or result, the Invariant judgment that lets a Fact stand, the authority to publish, the outward Output
+Presentation, the declared failures, or the policy, budget, capacity, and governance rules that apply.
 
 For one method, the interaction manifest is still flat:
 
 ```text
 submit(...)
     -> interface contract and its public surface
-    -> input contract
+    -> input presentation contract
     -> admission contract
     -> canonicalization contract
     -> lowering contract
@@ -415,10 +423,14 @@ submit(...)
     -> explicit state machine manifest
     -> failure contract
     -> publication contract
+    -> output presentation contract
     -> diagnostic evidence / retention contract
     -> version coordinate
     -> policy / budget / capacity / governance contract
 ```
+
+Fact and Invariant remain standing core laws. The operation may consume or produce material governed by them, but the
+operation does not create private factual kinds or private integrity laws for itself.
 
 Methods should not become another genealogy. Method inheritance must not become contract meaning, overloads must not
 become contract reuse, and default methods must not become hidden contract behavior. The method is the handle. The
@@ -432,8 +444,9 @@ Keep the method, but make it stop pretending to be enough. Make interfaces great
 An interface contract needs a surface.
 
 The surface is the public reliance boundary of that interface contract. It tells the outside user exactly what they are
-allowed to touch: which operation they can select, what input presentation they can hand over, what output claim they
-should expect, and which public failures or limits they can safely rely on.
+allowed to touch: which operation they can select, what Input Presentation they can hand over, what public claim they
+may expect, through which Output Presentation that claim may appear, and which public failures or limits they can safely
+rely on.
 
 The surface is not the whole machine. It is the strict part of the interface contract the user is allowed to depend on.
 
@@ -511,8 +524,11 @@ surface of the interface contract must still explicitly declare what the user ca
 learn the inside of the machine.
 
 The interaction manifest does not arrive later as another runtime step. It binds the selected interface surface to the
-full contract world: input, admission, canonicalization, lowering, fact, invariant, state, transition, failure,
-publication, diagnostic retention, version coordinate, policy, budget, capacity, and governance.
+interaction-specific contract world: Input Presentation, admission, canonicalization, lowering, Fact, Invariant, state,
+transition, failure, Publication, Output Presentation, diagnostic retention, version coordinate, policy, budget,
+capacity, and governance. Fact and Invariant remain standing laws of the enclosing core; naming them here means that
+they
+govern the interaction, not that the interaction redeclares them.
 
 The user sees the surface.
 
@@ -682,6 +698,63 @@ Judge it. Reject it if it fails. Lower it if it passes. Adopt it only if it is c
 If the core accepts outside material as-is, the boundary is fake. If the core accepts external interfaces as its own
 contract without judgment, the contract is already infected.
 
+The fucking bastards do not only try to break into the core.
+They also wait outside, hoping you are stupid enough to bleed internal truth.
+
+Imagine the core holds an established Fact. It carries the exact meaning the machine needs: internal identifiers,
+provenance, internal relations, scope, version, governance markers. Then some lazy programmer decides the "efficient"
+thing to do is just hand that entire Fact to the outside world. No separate publication claim. No closed presentation.
+Just dump the Fact into the response and go home early.
+
+Congratulations. You just blew the doors off the vault.
+
+An attacker is sitting there scraping your internal identifiers. They correlate facts you never meant to connect. They
+infer hidden relations, replay stale material, exploit version drift, and mine every internal coordinate for data the
+public contract never promised.
+
+Ordinary users are just as destructive, but by accident. They instantly start depending on whatever garbage they can
+see. An internal coordinate becomes their public dependency. A provenance marker becomes their business signal. A
+temporary relation becomes their hardcoded ID. A version tag becomes something their client branches on.
+
+The minute you try to change the core, you break them. You are now permanently paralyzed by people who were never
+supposed to depend on your internal factual shape in the first place.
+
+The thieves did not break into the vault.
+You dragged the fucking vault outside and opened it for them.
+
+An established Fact is not an output presentation. Internal truth is not automatically a public claim. Just because the
+machine is allowed to know something does not mean the outside world gets to see it, depend on it, stash it, replay it,
+or throw it back at you as authority.
+
+The rule is absolutely not:
+
+```text
+The core knows this Fact, so just return the damn thing.
+```
+
+The rule is:
+
+```text
+The core may form only the outward claim that Publication explicitly authorizes,
+and that claim may appear only through its declared Output Presentation.
+```
+
+Publication decides what factual meaning gets to cross the line. Output Presentation declares the exact, closed outward
+shell that carries it. Everything else stays locked inside.
+
+And if an exposed Fact somehow comes back from the outside? It is outside material again. Period. Prior exposure does
+not grant it core authority. It does not bypass the airlock, and it sure as hell doesn't prove its own innocence just
+because the machine published something similar yesterday.
+
+For now:
+
+```text
+Never use outside material directly inside the core.
+Never expose an established Fact directly outside the core.
+Never import an external contract as a core contract without ratification.
+Never treat internal factual meaning as public meaning without Publication.
+```
+
 ---
 
 ## 10. Applying Contract to a Good Machine
@@ -704,8 +777,8 @@ pipeline:
 ```
 
 From a purely functional view, we may care only about stable input and stable output. The middle can be ignored. A real
-machine does not get to skip the middle. The middle is where admission, rejection, lowering, state, failure, evidence,
-and publication actually happen.
+machine does not get to skip the middle. The middle is where admission, rejection, factual establishment, movement,
+failure, evidence, Publication, and outward presentation actually happen.
 
 A good machine should not hide causal flow inside nested calls, closures, lazy thunks, higher-order function tricks, or
 callback-shaped control. Those forms may be fine for some formal model. They are not the machine I want.
@@ -716,30 +789,40 @@ leave from anywhere, you do not have a pipeline. You have a mess.
 A rough contract pipeline looks like this:
 
 ```text
-input
--> DTO / raw presentation
--> boundary
--> guard / admission judgment
--> declared failure or admitted material
--> normalization / canonicalization
--> lowering
--> core
--> candidate fact / candidate transition
--> invariant / state judgment
--> accepted immutable fact or declared failure
--> publication judgment
--> public claim or publication denial
+Input Presentation
+-> Admission
+-> admitted material or declared stop
+-> Canonicalization
+-> Lowering
+-> candidate input Fact
+-> applicable Invariant judgment
+-> established input Fact
+-> Operation
+-> candidate result Fact
+-> applicable Invariant judgment
+-> applicable State and Transition judgment
+-> established result Fact and Operation success
+   or declared Operation failure
+-> Publication
+-> authorized public claim or declared publication stop
+-> Output Presentation
 
 diagnostic evidence:
     may be offered at declared judgment stages
     retained only through the diagnostic retention boundary
 ```
 
+Producing result material does not complete an Operation.
+
+If the declared result must stand as Fact, the Operation succeeds only after every applicable judgment succeeds. If
+establishment fails, the Operation has failed to produce its contractual result. There is no successful result waiting
+outside the judgment and no public claim waiting behind a failed Fact.
+
 Policy, budget, capacity, and governance are not one naive stage at the end. They cut across the whole flow:
 
 ```text
 policy / budget / capacity / governance:
-    applies across boundary, admission, execution, failure, publication, and diagnostic
+    applies across boundary, admission, execution, failure, publication, presentation, and diagnostic
 ```
 
 The shape is still provisional. Each step needs its own explanation.
@@ -798,6 +881,10 @@ Contract and implementation stay on different axes. The contract names the oblig
 As long as the obligation survives, the realization may change. If changing the realization also changes the contract,
 the mechanism has leaked into authority.
 
+Presentation needs the same discipline. Input Presentation and Output Presentation may be contract material when they
+declare a closed reliance shape. That still gives them no factual, judgment, movement, or publication authority. They
+declare what may be presented, not what the machine must believe or say.
+
 The following section applies this distinction to the contract presentations that appear in the pipeline.
 
 ---
@@ -826,32 +913,47 @@ Immutable Fact:
     the immutable factual material that exists under that fact contract
 ```
 
-Think of a constraint contract that says an amount must not exceed a limit. The immutable fact says what the amount is.
-Think of a state transition contract that says which move is legal. The immutable fact provides the factual material
-that transition judgment may inspect. Think of a publication contract that says what public claim may be formed. The
-immutable fact provides the factual material that publication judgment may inspect.
+Think of an Invariant that says an amount must not be negative. The immutable Fact says what the amount is. Think of a
+Transition that says which move is legal. The immutable Fact provides factual material that movement judgment may use.
+Think of Publication that says what outward claim may be formed. The immutable Fact provides the factual meaning that
+may justify that claim.
 
-The fact stays dumb in this model. It must not decide, validate itself, carry the rule, or hide behavior through
-methods,
-callbacks, proxies, inherited behavior, or framework bullshit.
+The Fact stays dumb in this model.
 
-It is factual material governed by contract: fixed, referable, comparable, and usable by later contract reasoning.
+Dumb means dumb all the way down.
 
-The fact contract defines the laws for that material: shape, identity, version, reference, and immutability. It may also
-define that invalid factual material is not allowed to exist inside the core.
+A Fact has no behavior of any kind. It does not interpret, compare, select, validate, judge, move, diagnose, or publish
+itself. It does not carry convenience behavior disguised as harmless help. It is only complete immutable factual
+material.
 
-Constructors, factories, builders, guard functions, validation algorithms, storage layout, and object lifecycle tricks
-belong outside this contract. Those are realization mechanisms.
+The Fact Contract defines the factual kind, the complete canonical factual values that belong to that kind, the
+applicable contract world, immutability, and Fact sameness. Invalid candidate material may be refused factual authority,
+but the Fact does not perform that refusal itself.
 
-The contract says what kind of factual material the core may treat as fact. How the machine prevents invalid material
-from being born is implementation.
+The sameness law is direct:
+
+```text
+same Fact kind
++ same complete canonical factual values
++ same applicable contract world
+= same Fact
+```
+
+A repeated occurrence does not create another Fact.
+
+A different reference does not create another Fact.
+
+A different place of storage does not create another Fact.
+
+No act of production, representation, storage, reference, or occurrence grants factual authority or creates a separate
+factual identity. A Fact has no identity outside its complete factual meaning under the applicable contract world.
 
 ```text
 Fact Contract is contract.
 Immutable Fact is contract-governed factual material.
 ```
 
-Keeping those two apart prevents the old object-oriented mixture of rule, data, and behavior from coming back.
+Keeping those two apart prevents the old mixture of rule, data, identity, and behavior from coming back.
 
 ### 12.2 Policy, Budget, Capacity, and Governance Contracts
 
@@ -928,7 +1030,7 @@ valid, and what declared outcome follows when the limit is reached.
 
 A good machine admits it is finite, declares its limits, and operates inside them.
 
-### 12.3 DTO and Raw Presentation
+### 12.3 Input Presentation, DTO, and Raw Material
 
 Something has to arrive at the boundary. Whatever arrives there is not yet a core fact and not a contract rule. It is
 just the form in which the outside world showed up.
@@ -946,8 +1048,8 @@ The DTO gives the boundary something finite, named, and inspectable to judge. It
 not material allowed to live inside the core.
 
 ```text
-Input Contract:
-    the contract that declares what presentation shape may appear at the boundary
+Input Presentation Contract:
+    the contract that declares the closed presentation shape that may appear at the boundary
 
 DTO / Raw Presentation:
     the boundary-facing data shape presented for judgment
@@ -1359,49 +1461,19 @@ It does not promote the candidate into accepted core material.
 
 ### 12.8 Invariant Contract
 
-After lowering, the material is inside the core as candidate material.
+After lowering, the core may have one complete candidate Fact.
 
-It has crossed the boundary. It has a canonical handle. It has been shaped by core laws. The outside junk has been cut
-away.
+The candidate may be canonical. It may be complete. It may be readable under core meaning.
 
-Still, truth has not happened.
+Still, Fact authority has not happened.
 
-Lowering only says that the core can form this candidate without changing declared meaning. Invariant asks the next
-question: may the core accept this candidate under the law attached to this pipeline?
-
-That judgment needs a basis.
-
-```text
-Accepted Core Basis:
-    accepted core material named by the pipeline as the basis for judgment, including declared contract facts, accepted
-    immutable facts, derived core facts, and current core state
-```
-
-Do not call the whole thing history.
-
-Some of it may come from earlier accepted machine judgment. Some of it may have been declared up front by the contract
-author: state definitions, transition laws, identity laws, shape laws, reference laws, publication rules, and other core
-facts. Calling all of that history makes the model narrower than the machine.
-
-The candidate does not walk into an empty room. The pipeline has already named the core basis that matters for this
-judgment. The invariant does not go hunting through the machine.
-
-The candidate may be well-shaped.
-
-The candidate may be readable.
-
-The candidate may have a valid canonical handle.
-
-That still does not mean the core may accept it.
-
-The question is whether accepting the candidate would make the core lie under the invariant attached to this pipeline.
-
-That is invariant work.
+Lowering says the candidate can be formed without changing declared meaning. Invariant asks the next question: may this
+complete candidate stand as Fact under the integrity law attached to its factual kind?
 
 ```text
 Invariant Contract:
-    the contract that judges whether lowered candidate material may be accepted as core material under a pipeline-bound
-    acceptance law
+    a standing internal integrity law attached to exactly one Fact kind, judging one complete candidate Fact before
+    factual authority is granted
 ```
 
 Do not confuse this with the old object-oriented class invariant.
@@ -1410,130 +1482,64 @@ That model ties invariant to a mutable object. The object mutates itself, breaks
 and tries to repair the mess before anyone looks. State, validation, mutation, and behavior sit in the same object and
 pretend the result is discipline.
 
-This machine uses invariant differently.
+This machine uses Invariant differently.
 
-Invariant is the core's acceptance judgment. A candidate comes in. The pipeline supplies the binding and basis. The
-acceptance law says whether the candidate may stand. If the law does not hold, the candidate is not accepted. If it
-holds, the machine may accept the candidate as core material.
+Invariant stands with one factual kind. It is not recreated by each interaction and it is not selected as a private law
+for one path. Whenever a complete candidate of that Fact kind seeks factual authority, every applicable Invariant of
+that kind speaks.
 
 ```text
-candidate fact
-    -> invariant judgment
-    -> accepted immutable fact
-       or declared failure
-
-candidate transition
-    -> invariant / state judgment
-    -> accepted transition
-       or declared failure
+complete candidate Fact
+    -> every applicable Invariant of that Fact kind
+    -> established Fact
+       or declared refusal
 ```
 
-The declaration must be precise enough to keep invariant from turning into a vague validator, but not so bloated that it
-becomes a runtime object garden.
-
-Use the smallest coordinates that keep the judgment honest:
+The basis is deliberately small.
 
 ```text
-invariant:
-    the declared invariant being applied
-
-binding:
-    the pipeline position where the invariant is attached
-
-basis:
-    the accepted core material named by the pipeline as the basis of judgment
-
-candidate:
-    the lowered candidate being judged for acceptance
-
-acceptance law:
-    what must be true for the candidate to be accepted under this invariant
-
-failure:
-    the declared result when the acceptance law does not hold
+Invariant basis:
+    the complete canonical factual values of exactly one candidate Fact
 ```
 
 That is enough.
 
-`Invariant` is the contract identity. Do not split it into a separate authority object. The declared invariant is the
-authority.
+Invariant does not obtain authority from another Fact, a population of Facts, history, a repository, current State, a
+proposed Transition, Publication, or outside presentation. If a law needs those things, it is not a local integrity law
+of one Fact. It belongs to another declared judgment surface.
 
-`Binding` is just the place where the invariant sits in the contract pipeline. In the normal case, that place is already
-obvious:
+This is why Invariant, State, and Transition stay separate.
 
 ```text
-lowering
--> invariant
--> accepted core material
+Invariant:
+    whether one complete candidate Fact may stand
+
+State:
+    the declared condition governing the next legal move
+
+Transition:
+    whether a declared move may occur
 ```
 
-That position tells the machine which candidate is being judged and which core basis may be used. Do not invent a
-separate scope model to repeat what the pipeline already says. If the pipeline makes the attachment clear, the binding
-is
-already clear.
-
-`Basis` is not a little object graph built for the invariant.
-
-Do not make one.
-
-The basis is the accepted core material named by the pipeline for this judgment. The contract does not care whether a
-real machine stores that material in objects, tables, arrays, files, generated code, or some ugly metal box under the
-floor. That is not the contract.
-
-The contract says only this: the candidate is judged under the basis named by this pipeline, and the judgment must not
-drag the whole machine into the room.
-
-`Candidate` is the lowered candidate material under judgment. It should not become a nested object bundle just because
-somebody wants the model to look important.
-
-`Acceptance law` is the declared law that decides whether the lowered candidate may be accepted under this invariant.
-
-It is not a relationship graph.
-
-It is not a hidden query plan.
-
-It is not a runtime object that carries old material around.
-
-The contract names what must be true for acceptance. It does not prescribe how a realization finds, stores, addresses,
-or
-evaluates the material needed to decide that truth.
-
-Presentation shape was handled before this. Core formation was handled by lowering. The acceptance law only says whether
-this candidate may be accepted without making the core lie.
-
-`Failure` folds together the contradiction and the declared result. If the acceptance law does not hold, the machine
-needs a declared failure law: reject the candidate, deny the transition, stop the path, or produce another declared
-result. Diagnostic evidence is not owned here; it belongs to diagnostic retention policy. The invariant may point to
-that
-policy, but it should not grow its own evidence object pile.
-
-These coordinates are not runtime objects the machine must allocate per candidate.
-
-They are contract coordinates.
-
-The contract does not prescribe how a machine stores, addresses, evaluates, or optimizes these coordinates. That belongs
-to realization. If the contract description turns into a graph of runtime objects, the design has already gone sideways.
-
-Fact and invariant must stay separate.
-
-The fact is material.
-
-The invariant is the acceptance law over candidate material under a named core basis.
-
-Mix them and the old object soup returns: data carrying rules, methods hiding validation, mutation pretending to be
-state, and behavior sneaking into identity. That road is already full of wreckage.
-
-A candidate fact can pass lowering and still fail invariant.
-
-A candidate transition can be well-shaped and still be illegal.
-
-A candidate publication can be available and still be forbidden.
+A candidate Fact can pass Lowering and still fail Invariant.
 
 Clean shape is not truth.
 
-Core-owned candidate form is not truth.
+Canonical candidate form is not factual authority.
 
-Only material that survives the declared invariant can become accepted core material.
+Only material that survives every applicable Invariant may become established Fact.
+
+When an Operation declares a Fact as its result, Invariant refusal means the Operation has failed to produce its
+contractual result. Result material may have appeared, but the declared result does not exist under contract authority.
+
+Fact and Invariant must stay separate.
+
+The Fact is material.
+
+The Invariant is the standing integrity law that decides whether candidate material of that factual kind may stand.
+
+Mix them and the old object soup returns: data carrying rules, behavior hiding judgment, mutation pretending to be
+state, and implementation accidents sneaking into factual identity.
 
 ### 12.9 State Contract
 
@@ -1760,59 +1766,110 @@ whole state surface so nobody gets to smuggle in extra movement later and call t
 
 ### 12.12 Publication Judgment
 
-Accepted material is not automatically public material.
+Established Fact is not automatically public claim.
 
-That sentence is dull. Good. A machine that forgets it starts leaking internal truth as public claim.
+That sentence is dull. Good. A machine that forgets it starts leaking internal truth as public authority.
 
-An accepted immutable fact says the core may stand on that material. It does not say the outside world may see it, rely
-on it, or receive it in some public shape. Core truth and public claim are different surfaces.
-
-Publication is the point where the machine speaks outward.
+An established Fact says the core may stand on that factual material. It does not say the outside world may see it, rely
+on it, or receive it in some outward shape. Core truth, outward claim authority, and outward presentation are different
+contracts.
 
 ```text
 Publication Judgment:
-    the contract judgment that decides whether a public claim may be formed from accepted material, what that claim is
-    allowed to say, and which stable public meaning governs it
+    the contract judgment that decides whether an established Fact may support an outward claim, what factual meaning
+    that claim may assert, and which stable public meaning governs it
 ```
 
 The important word is `claim`.
 
-Publication does not mean the accepted fact walks outside wearing a public hat. The public claim may have its own public
-shape. That shape is not the core fact.
+Publication does not send Fact outside. Established Fact and factual authority remain inside the core. Publication gives
+positive outward authority only to the exact factual meaning that a declared public claim is allowed to assert.
 
-Publication is not the machine dumping whatever it has. A published result is the machine saying something to an outside
-surface under contract authority. If the contract has not allowed that outward claim, then the machine has not
-published. It has leaked.
+A Fact can be true in the core and still be forbidden in public.
 
-A fact can be true in the core and still be forbidden in public.
+That is not contradiction. That is boundary discipline. The core may know more than it is allowed to say.
 
-That is not contradiction. That is boundary discipline. The core may need material that the outside surface must not
-receive. The outside may need a shape that the core should never treat as its own material. Publication judgment
-protects
-that crossing.
+Publication must therefore name its established factual basis, the exact meaning that may be claimed, the finite public
+conditions under which that claim applies, the stable public meaning that governs it, and the declared stop when no
+outward claim is authorized. Silence is not a publication rule.
 
-The judgment has to name the accepted material it is speaking from, the public surface it is speaking to, the claim
-shape
-it wants to expose, and the public meaning under which the claim is allowed. If publication is denied, the denial must
-also be declared. Silence is not a publication rule.
+Publication does not own the outward shape in which the claim appears. It does not own the mechanism that carries the
+claim or the mechanism that emits it. Those things do not grant publication authority.
+
+This separation matters because the shape may exist while publication is forbidden. The machine may be capable of
+carrying a value while lacking authority to say it. Capability is not permission.
 
 Stable public meaning matters because a published claim must not quietly change after it leaves. If the public meaning
 changes later, the old claim does not improve itself in the dark. The machine needs a new public meaning, a new claim,
 or a later version coordinate. It does not get to pretend the old publication was always saying the new thing.
 
 Diagnostic evidence is not publication just because somebody can read it. Evidence may explain why publication was
-allowed or denied. It may be retained for diagnosis. But unless the publication judgment allows it to become an outward
-claim, it stays evidence. A debug-shaped leak is still a leak.
+allowed or denied. It may be retained for diagnosis. But unless Publication allows it to become an outward claim, it
+stays evidence. A debug-shaped leak is still a leak.
 
-Publication judgment also keeps the pipeline honest. A value returned, written, emitted, or displayed by implementation
-machinery has no publication authority by itself. The authority is the declared judgment that this public claim may be
-formed from accepted material under this public meaning.
+Three failures must not be confused.
+
+```text
+incoherent Publication declaration:
+    the contract does not form a valid Publication judgment
+
+valid Publication with no authorized claim:
+    declared publication stop
+
+failure to carry an already authorized claim:
+    failure outside Publication judgment
+```
 
 The point is simple.
 
 The machine may know more than it is allowed to say.
 
-### 12.13 Diagnostic Evidence
+### 12.13 Output Presentation Contract
+
+An authorized public claim still needs a declared outward shape.
+
+That shape is not Publication.
+
+```text
+Output Presentation Contract:
+    the contract that declares the closed outward shape through which an authorized public claim may appear
+```
+
+Output Presentation declares outward coordinates, value distinctions, required presence, explicit absence, finite
+alternatives, outward structural bounds, and the versioned shape in which a claim may be understood.
+
+It does not decide whether publication is permitted. It does not establish Fact, select factual basis, judge business
+meaning, move State, retain diagnostics, or authorize itself.
+
+The distinction is direct:
+
+```text
+Publication:
+    whether and what may be claimed
+
+Output Presentation:
+    in what closed outward shape the authorized claim may appear
+```
+
+An outward shape may exist without any authority to form a public claim through it.
+
+Constructing, carrying, observing, or emitting a shape does not create that authority. Output Presentation declares the
+shape that an authorized claim must respect. Publication remains the judgment that gives the claim permission and
+factual basis.
+
+Input Presentation and Output Presentation are mirrors, but not reverse calculations.
+
+```text
+Input Presentation:
+    makes outside material finite and judgeable
+
+Output Presentation:
+    makes an authorized claim finite and outwardly legible
+```
+
+Neither presentation grants the judgment authority that surrounds it.
+
+### 12.14 Diagnostic Evidence
 
 A good machine should be able to describe its own condition.
 
@@ -1894,13 +1951,14 @@ Otherwise it is just observation wearing a contract hat.
 
 Retained diagnostic evidence is still not publication.
 
-If retained evidence needs to leave the machine, it must pass publication judgment as its own public diagnostic claim.
-A debug-shaped leak is still a leak, even when the leak has a very serious incident number attached to it.
+If retained evidence needs to leave the machine, it must pass Publication as its own public diagnostic claim and then
+appear through a declared Output Presentation. Output Presentation does not make the evidence public by itself. A
+debug-shaped leak is still a leak, even when the leak has a very serious incident number attached to it.
 
 Diagnostic evidence must also remain interpretable under the contract meaning that produced it. That is why version
 coordinates come next.
 
-### 12.14 Version Coordinate
+### 12.15 Version Coordinate
 
 A version number is not magic dust.
 
@@ -1955,8 +2013,11 @@ Invariant needs the coordinate because accepted material must remember the meani
 acceptance law changes later, the old material does not automatically become accepted under the new law just because the
 machine likes continuity.
 
-Publication needs the coordinate because a public claim is not just a shape leaving the machine. It is a claim under a
-public meaning. If that public meaning changes, the old claim does not quietly grow a new soul.
+Publication needs the coordinate because a public claim stands under a public meaning. If that public meaning changes,
+the old claim does not quietly grow a new soul.
+
+Output Presentation needs the coordinate when outward shape meaning can change while familiar coordinates remain. The
+same-looking shape must not silently acquire a different public interpretation.
 
 Diagnostic evidence needs the coordinate because explanation rots when meaning moves. A retained reason, rule name,
 state label, transition name, or publication denial can be read honestly only under the meaning that made it true.
@@ -1974,7 +2035,7 @@ facts, manifests, tables, generated images, identifiers, or some uglier machiner
 The point is to stop the machine from confusing stable-looking material with stable meaning, and to keep authority over
 which meanings the machine is still willing to recognize.
 
-### 12.15 Where Preconditions and Postconditions Went
+### 12.16 Where Preconditions and Postconditions Went
 
 Someone familiar with DBC will eventually ask an obvious question:
 
@@ -1996,14 +2057,16 @@ judgment result
 -> material for the next judgment
 ```
 
-Take admission. Raw presentation, active policy, budget, and capacity may all matter before admission can produce
+Take admission. Input Presentation, active policy, budget, and capacity may all matter before admission can produce
 admitted material. From the narrow view of that judgment, they resemble preconditions, and admitted material resembles
 a postcondition.
 
 Move one step forward and the labels shift. Admitted material is now something canonicalization or lowering receives.
 The former postcondition has become part of the next judgment's starting material. A lowered candidate then reaches
-invariant judgment. An accepted fact may later reach state movement or publication judgment. The words `pre` and `post`
-keep moving because the machine keeps moving.
+Invariant judgment. An established Fact may become the input of an Operation. Candidate result material may then need
+Invariant and movement judgment before the Operation has produced its declared result. Only an established result may
+reach Publication, and only an authorized public claim may appear through Output Presentation. The words `pre` and
+`post` keep moving because the machine keeps moving.
 
 That moving viewpoint is exactly why those words are too relative to organize the contract pipeline. A good machine
 needs each obligation where it has authority. The entrance question belongs to admission. Whether candidate material may
@@ -2017,6 +2080,10 @@ again.
 Worse, declaring separate pipeline preconditions and postconditions would repeat obligations already declared where
 they belong. Now the machine has two descriptions of the same law. Sooner or later they disagree, and somebody gets the
 excellent job of deciding which lie is official.
+
+Producing result material is not a postcondition proving that an Operation succeeded. Where the declared result must
+stand as Fact, Invariant and movement judgments belong to completion of the Operation itself. Failure of those judgments
+means the declared result was not produced.
 
 Preconditions and postconditions may still be useful inside a realization or a narrow proof. They simply add no new
 authority to the contract pipeline.
@@ -2038,7 +2105,18 @@ That translation is a view of the pipeline, not its structure. The useful declar
 judgment where the machine needs it. Wrapping the same obligation in another `before` or `after` would only give the
 machine a second place to contradict itself.
 
-### 12.16 Execution Flow, Not Lifecycle Vocabulary
+```text
+Fact establishment
+    != Publication
+
+Publication
+    != Output Presentation
+
+Output Presentation
+    != outward delivery
+```
+
+### 12.17 Execution Flow, Not Lifecycle Vocabulary
 
 This section is not a new contract type.
 
@@ -2102,10 +2180,9 @@ The important part is not "tests." Tests are only one late way to look at a mach
 The better direction is earlier than that.
 
 First make the contract material rich enough to say what the machine actually promises. The closed contract
-presentations name the obligations: interface surface, input, admission, canonicalization, lowering, fact, invariant,
-state, transition, failure,
-publication,
-diagnostic, policy, budget, capacity, and governance. Required coordinates name the active meaning and binding. The
+presentations name the obligations: interface surface, Input Presentation, admission, canonicalization, lowering,
+Fact, Invariant, State, Transition, failure, Publication, Output Presentation, diagnostic, policy, budget, capacity, and
+governance. Required coordinates name the active meaning and binding. The
 explicit state machine manifest names the closed state surface for that interaction. The manifest binds those materials
 to one interaction without inheritance, composition, or hidden ancestry.
 
@@ -2128,9 +2205,11 @@ Does it accept only the declared input presentation?
 Does it apply the required admission contract?
 Does it apply the required canonicalization contract?
 Does it produce the declared failure outcomes?
-Does it preserve the declared invariant?
-Does it obey the declared state transitions?
-Does it publish only what the publication contract allows?
+Does candidate factual material receive authority only through the declared Fact and Invariant laws?
+Does the Operation complete only after its declared result survives every applicable judgment?
+Does it obey the declared State and Transition laws?
+Does it publish only what Publication allows?
+Does every authorized public claim close against its declared Output Presentation?
 Does it stay under the active policy, budget, capacity, and governance contracts?
 Does it produce the diagnostic evidence the contract requires?
 ```
@@ -2147,16 +2226,17 @@ realization.
 But once the contract has been made explicit, tests lose one old excuse.
 
 A test is a small verification document. It says, "under this condition, this machine should do this." If the machine
-already declares its input, admission, canonicalization, lowering, invariant, state movement, failure, publication,
-diagnostic evidence,
-policy, budget, capacity, and governance, then the test should not invent a private little religion about what the
+already declares its Input Presentation, admission, canonicalization, lowering, Fact establishment, Invariant, State
+movement, Operation completion, failure, Publication, Output Presentation, diagnostic evidence, policy, budget,
+capacity, and governance, then the test should not invent a private little religion about what the
 machine probably means.
 
 It should verify the declared contract surface.
 
 That changes the target. A test over one declared judgment surface is not a ritual around a method body. It is a check
-of that surface: admission, canonicalization, lowering, invariant judgment, transition, publication, or diagnostic
-retention. A test over the airlock from presented input to admission result is a boundary test. A test over a small
+of that surface: admission, canonicalization, lowering, Fact establishment, Invariant judgment, Transition, Operation
+completion, Publication, Output Presentation closure, or diagnostic retention. A test over the airlock from presented
+input to admission result is a boundary test. A test over a small
 logical pipeline from declared input to declared result is already an integration test for that pipeline.
 
 The labels are not the important part.
@@ -2236,6 +2316,26 @@ If changing the host changes the meaning, the host was carrying authority.
 
 Implementation machinery belongs outside the contract document.
 
+The authority lines are equally strict:
+
+```text
+producing material
+    != establishing Fact
+
+producing result material
+    != completing an Operation
+
+forming an outward shape
+    != authorizing a public claim
+
+carrying an authorized claim
+    != defining its public meaning
+```
+
+Representation may carry material. It does not grant factual authority. Operation grants declared result authority only
+on successful completion. Publication grants outward claim authority. Output Presentation grants outward shape, not
+permission to claim.
+
 The tool is not the contract. The obligation the tool must satisfy is the contract.
 
 ---
@@ -2258,6 +2358,10 @@ user sees contract
 system communicates through contract
 implementation realizes contract behind the surface
 ```
+
+An interaction may expose only an authorized public claim, and that claim must appear through a declared Output
+Presentation. Neither internal Fact shape nor an incidental outward representation becomes public contract merely
+because someone can observe it.
 
 If communication needs an implementation detail to make sense, the design is already leaking.
 
@@ -2283,9 +2387,18 @@ For now:
 contract pipeline:
     logical, causal, downstream
 
+established input Fact
+    -> Operation
+    -> established result Fact or declared Operation failure
+    -> Publication
+    -> Output Presentation
+
 implementation:
     physical coordination behind the contract
 ```
+
+Invariant is not a generic machine-wide validator inside that flow. It is the standing integrity law of one exact Fact
+kind, applied whenever candidate material of that kind seeks factual authority.
 
 This needs more work later.
 
@@ -2788,18 +2901,26 @@ preserve methods as operation handles
 keep implementation machinery out of the surface
 keep contract structure two-dimensional
 bind selected interface surfaces, closed contract presentations, and required coordinates through a flat interaction manifest
+keep Fact and Invariant as standing core laws that still govern each interaction rather than private interaction clauses
 treat everything outside the core as untrusted
 adopt external interfaces only after ratifying them against internal contracts
-judge DTOs as outside presentation at the boundary
-admit only what passes admission
+judge Input Presentation as outside material at the boundary
+admit only what passes Admission
 canonicalize declared-equivalent admitted material into the system's stable internal standard before identity becomes authoritative
-lower canonical representation into core-owned candidate material
-accept candidates only under pipeline-bound invariants and their declared acceptance laws
-produce contract-governed immutable facts
-treat state as explicitly declared contract material for governing the legality of the next machine move
-allow only declared transitions
+lower canonical representation into complete candidate factual material
+treat Fact as pure immutable factual material with no behavior
+treat the same complete factual meaning under the same contract world as the same Fact
+attach each Invariant to exactly one Fact kind
+judge one complete candidate Fact before factual authority is granted
+establish Operation input as Fact before the Operation may rely on it
+complete an Operation only when its declared result survives every applicable judgment
+treat establishment refusal as failure to produce the contractual result
+treat State as explicitly declared contract material for governing the legality of the next machine move
+allow only declared Transitions
 reject through declared failures
-publish only accepted results
+grant outward claim authority only through Publication
+separate Publication authority from Output Presentation shape
+carry authorized claims only through a declared closed Output Presentation
 declare failure instead of hiding it
 declare policy, budget, capacity, and governance instead of hiding them
 verify realization against the declared contract
@@ -2807,5 +2928,3 @@ keep implementation out of the contract
 ```
 
 The current direction is this.
-
-Still left.
