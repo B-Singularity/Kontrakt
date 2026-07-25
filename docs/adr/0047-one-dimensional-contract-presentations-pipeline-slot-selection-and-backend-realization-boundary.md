@@ -11,7 +11,7 @@ Accepted
 ## Related
 
 - `docs/the-most-important-thing/what-contract-is.md`
-- ADR-0046: IDL-First Interface Contract Frontend and Generated Host Interface Boundary
+- ADR-0046: IDL-First Interface Contract Frontend and Retained Generated Host Interface and Realization Port Boundary
 - ADR-0045: Contract-First Package Architecture and Explicit Machine Refactoring Boundary
 - ADR-0043: Contract Graph Canonicalization, Sealed Structural References, and Incremental Identity Derivation
 - ADR-0041: Stable Metadata Identity, BLAKE3, HID, and Protocol-Owned Interning
@@ -29,6 +29,10 @@ manifest, but the generated interface is only a build artifact. It is not the co
 
 ADR-0046 also records the first one-dimensional catalog. It does not decide how those presentations are selected,
 authored, acquired, or lowered. This ADR starts there.
+
+ADR-0046 now fixes one narrow authoring exception within that catalog. Lowering and Publication retain manifest slots,
+but their exact coordinate relations are authored directly in the same operation scope as declarations parallel to the
+manifest. Their physical realization remains behind generated plain host-language ports.
 
 The operation is the surface handle. It is not itself the pipeline. For each operation, the manifest exposes the places
 where operation-local contract material belongs. Those places are slots.
@@ -52,21 +56,25 @@ once a role is known. Shape cannot choose the role.
 
 The missing mark is already present.
 
-An operation slot marks an operation-local role. Material is input because it enters the input slot. Material is
-publication because it is judged at the publication slot. State movement belongs to the state-machine axis because the
-manifest says so, not because a host method changed a field. The enclosing interface binding marks the machine scope of
-`Policy`, `Governance`, `Budget`, and `Capacity`.
+An operation slot marks an operation-local role. Material is input because it enters the input slot. Publication is
+selected because the manifest binds the publication slot, while its operation-local sibling declaration states the
+exact permitted source-to-target coordinate relation. Lowering follows the same split between slot selection and
+relation declaration. State movement belongs to the state-machine axis because the manifest says so, not because a host
+method changed a field. The enclosing interface binding marks the machine scope of `Policy`, `Governance`, `Budget`, and
+`Capacity`.
 
 The mark is the slot, not the user's type.
 
 This gives a practical authoring shape without turning Kontrakt into a pile of annotations or a second wiring language.
 The manifest shows the operation and the empty places around it. The author fills those places, or explicitly leaves
-them
-empty. A contract can be replaced at a slot. Responsibility stays visible.
+them empty. For Lowering and Publication, the selected handle resolves to an operation-local sibling declaration whose
+body states only the exact permitted coordinate relation. A contract can be replaced at a slot. Responsibility stays
+visible.
 
 Kontrakt can then remain around the user's system as an adapter and compiler-grade realization layer. If Kontrakt is
-removed, its checks, generated gates, deterministic backend paths, diagnostics, and optimizations disappear. The user's
-own contract source should not have to be rewritten out of Kontrakt's shape.
+removed, its checks, generated gates, deterministic backend paths, diagnostics, and optimizations disappear. Retained
+plain host-language realization ports and their user implementations may remain as ordinary adapters. The user's own
+contract source should not have to be rewritten out of Kontrakt's shape.
 
 ---
 
@@ -98,7 +106,8 @@ the meaning.
 
 Boilerplate removal is valuable only after that boundary is clear.
 
-V1 should decide the selection law, not the whole user API.
+V1 should decide the selection law, not the whole user API. The exception fixed here is the operation-local IDL
+relation body and required generated realization-port boundary for Lowering and Publication.
 
 ---
 
@@ -107,9 +116,11 @@ V1 should decide the selection law, not the whole user API.
 ### 4.1. `.kontrakt` syntax for every one-dimensional body
 
 This keeps the source under one language, but it makes users learn a new surface for every small piece of contract data.
-Most one-dimensional bodies do not need that much ceremony.
+Most one-dimensional bodies do not need that much ceremony. Lowering and Publication are the narrow exception: their
+exact coordinate relations belong in the operation's `.kontrakt` source because those relations bind the operation
+boundary itself.
 
-Decision: rejected as the only model.
+Decision: rejected as the only model; accepted only for the Lowering and Publication coordinate-relation bodies.
 
 ### 4.2. Host annotations or marker interfaces
 
@@ -140,9 +151,12 @@ Decision: rejected.
 ### 4.6. Pipeline-slot selection
 
 The operation manifest already has the right mark for operation-local roles. A slot says what role the material plays.
-The enclosing interface scope is the right mark for `Policy`, `Governance`, `Budget`, and `Capacity`, whose authority
-must coordinate the closed operation set rather than be repeated inside each operation. After either explicit binding,
-Kontrakt may acquire, check, lower, or reject the material under that role and scope.
+For Lowering and Publication, the selected handle resolves to an operation-local sibling declaration that states the
+exact permitted coordinate relation without turning that relation into implementation. The enclosing interface scope is
+the right mark for `Policy`, `Governance`, `Budget`, and `Capacity`, whose authority must coordinate the closed
+operation
+set rather than be repeated inside each operation. After either explicit binding, Kontrakt may acquire, check, lower, or
+reject the material under that role and scope.
 
 Decision: accepted.
 
@@ -154,8 +168,10 @@ Kontrakt will use pipeline-slot selection for operation-local one-dimensional co
 interface-scope binding for machine-wide `Policy`, `Governance`, `Budget`, and `Capacity`.
 
 The interface manifest names a closed set of operation handles. For each operation, the manifest binds operation-local
-contract slots. A slot is the selection point for an operation-local one-dimensional role. The enclosing interface binds
-`Policy`, `Governance`, `Budget`, and `Capacity` once for that closed operation set.
+contract slots. A slot is the selection point for an operation-local one-dimensional role. Lowering and Publication keep
+those slots, but each selected handle must resolve to a declaration authored beside the manifest inside the same
+operation. The enclosing interface binds `Policy`, `Governance`, `Budget`, and `Capacity` once for that closed operation
+set.
 
 A presentation is not selected because a host class has an annotation, a marker interface, an inheritance edge, a
 mapping entry, or a lucky shape. Operation-local material is selected because the operation manifest places it in a
@@ -165,11 +181,50 @@ corresponding explicit binding.
 Kontrakt acquires only material selected by declared operation slots, interface-scope bindings, or references owned by
 those selections. Unreferenced user material is ignored.
 
-This ADR does not decide the final user API for getting host material into a slot. That may later be done with generated
-helpers, generated adapters, host declaration surfaces, compiler-plugin airlocks, or another ratified frontend. The law
-is
-unchanged: the operation slot or enclosing interface binding gives the role and scope; lowering gives the material;
-backend machinery realizes it.
+For Lowering and Publication, the operation-local declaration body contains only exact source-to-target coordinate
+bindings. It does not contain conversion code, constructors, callbacks, lookup, branching, expressions, implicit
+same-name matching, or backend behavior.
+
+The standing `facts` and `invariants` declarations remain at the enclosing interface scope. This ADR changes only
+Lowering and Publication by placing their relation bodies beside the operation manifest inside the same operation.
+
+```text
+interface CalculateContract {
+    policy        DefaultPolicy
+    governance    DefaultGovernance
+    budget        DefaultBudget
+    capacity      DefaultCapacity
+    facts         CalculateFacts
+    invariants    CalculateInvariants
+
+    operation calculate(input: CalculateInput): CalculateOutput {
+        manifest {
+            flow:
+                lowering       CalculateLowering
+                publication    CalculatePublication
+        }
+
+        lowering CalculateLowering {
+            input.value -> calculation.value
+        }
+
+        publication CalculatePublication {
+            calculation.result -> output.result
+        }
+    }
+}
+```
+
+Every selected Lowering and Publication declaration produces a required plain host-language realization port. Exactly
+one implementation is supplied during machine assembly. Same-type copying, catalog lookup, naming convention, and
+backend support do not silently close that port. The generated source is a retained build artifact and may remain as an
+ordinary adapter boundary if Kontrakt is removed.
+
+This ADR does not decide the final user API for the remaining one-dimensional bodies. That may later be done with
+generated helpers, host declaration surfaces, compiler-plugin airlocks, or another ratified frontend. The law is
+unchanged: the operation slot or enclosing interface binding gives the role and scope; resolved contract material gives
+the authority; backend machinery realizes it. Lowering and Publication use the explicit IDL relation and generated
+realization-port boundary fixed here.
 
 ---
 
@@ -182,9 +237,11 @@ and `Capacity` are machine-scope roles selected by the enclosing interface bindi
 implementation-stage annotations.
 
 Input is not input because a DTO says so. Publication is not publication because a response object says so. A transition
-is not a transition because a method rewrites a status field.
+is not a transition because a method rewrites a status field. A Lowering or Publication relation is not selected because
+an implementation method happens to convert matching types.
 
-The operation gives its external boundary. The operation slot gives the operation-local role. The enclosing interface
+The operation gives its external boundary. The operation slot gives the operation-local role. For Lowering and
+Publication, the operation-local sibling declaration gives the permitted coordinate relation. The enclosing interface
 gives the shared machine scope. The source gives candidate material. Lowering gives Kontrakt material.
 
 Several operation pipelines under one enclosing interface may enter the same core. Internal core functions, stages, or
@@ -195,8 +252,9 @@ the machine-wide contracts fixed for the selected operation run.
 
 ## 7. Source Carrier Law
 
-One-dimensional bodies are not required to use `.kontrakt` syntax in V1. That does not turn them into arbitrary host
-code.
+One-dimensional bodies are not required to use `.kontrakt` syntax in V1. The exact coordinate-relation bodies of
+Lowering and Publication are the only exception decided here: they are authored directly in the operation's `.kontrakt`
+scope. That does not turn the remaining bodies into arbitrary host code.
 
 A contract source may be carried by a host language, but it must arrive as material the contract machine can read. It
 may
@@ -233,8 +291,18 @@ The contract-bearing result is the lowered material that Kontrakt owns.
 
 Kontrakt may remove boilerplate only after role selection and lowering are controlled.
 
-After that, the backend may do its job. It may generate code, specialize paths, cache compiler material, arrange memory,
-precompute stable data, and choose a faster physical layout.
+For every selected Lowering and Publication declaration, Kontrakt generates a plain host-language realization port from
+the resolved coordinate relation. The port is implementation ABI, not contract authority. Exactly one supplied
+implementation must be closed into the machine assembly. The compiler must not choose an implementation implicitly from
+coordinate names, equal host types, a conversion catalog, classpath contents, or backend convention.
+
+The generated port source is a retained build artifact. Its user implementation may use ordinary reusable libraries,
+but the library does not select itself and does not become contract authority. Removing Kontrakt may leave the retained
+port and implementation as an ordinary adapter boundary.
+
+After explicit binding, the backend may do its job. It may generate code, specialize paths, cache compiler material,
+arrange memory, precompute stable data, devirtualize or inline the supplied implementation, erase intermediate port
+objects, and choose a faster physical layout.
 
 That is machinery. It is allowed to change when the contract material does not change.
 
@@ -249,8 +317,10 @@ The slot gives the role. A host boundary airlock may make the host compiler acce
 Kotlin/JVM is nominal. It will not accept every structurally suitable object just because a Kontrakt slot could read it.
 If Kontrakt wants less user boilerplate, it needs generated boundary machinery or a compiler-backed form.
 
-V1 may use explicit helpers or adapters. A later compiler plugin may verify call sites and lower direct host calls. This
-ADR does not choose that API.
+V1 may use explicit helpers or adapters. Lowering and Publication use the required generated realization ports fixed by
+this ADR; the remaining airlock API stays unresolved. A later compiler plugin may verify call sites and lower direct
+host
+calls.
 
 The user type is not the mark. The airlock is machinery. The lowered material is the contract-bearing result.
 
@@ -261,6 +331,10 @@ The user type is not the mark. The airlock is machinery. The lowered material is
 Each operation-local one-dimensional presentation follows the same authority path: a declared slot selects source
 material or declared absence; Kontrakt acquires it under the slot role, resolves it, closes explicit absence and
 defaults, lowers it into canonical material, and realizes it through generated or static machinery when needed.
+
+Lowering and Publication refine that common path without replacing it. Their manifest slots select the roles, their
+operation-local sibling declarations provide the exact coordinate relations, compiler lowering preserves those
+relations as contract material, and generated retained ports carry the explicitly supplied physical realizations.
 
 `Policy`, `Governance`, `Budget`, and `Capacity` follow the same authority boundary from source to Kontrakt-owned
 material, but their selection point is the enclosing interface binding. Their declarations may express machine-wide
@@ -302,8 +376,14 @@ representative, tolerated source drift, and failure when a stable representation
 
 ### 12.4. Lowering Contract
 
-Lowering declares how canonical representation becomes core-readable machine material. It is not a helper conversion. It
-is the point where external presentation stops being raw.
+Lowering declares which canonical boundary coordinates may form which operation-input Fact coordinates. The exact
+source-to-target bindings are authored in an operation-local declaration parallel to the manifest. They are permission
+and factual dependency, not assignment, parsing, construction, lookup, business computation, or implementation.
+
+Every selected Lowering declaration generates a required retained plain host-language realization port. Exactly one user
+implementation realizes the declared bindings. The implementation may use reusable libraries, but neither a library nor
+a matching host-type pair is selected implicitly. The generated pipeline owns invocation order, candidate formation,
+failure routing, and the later judgment boundary.
 
 ### 12.5. Fact Contract
 
@@ -339,8 +419,15 @@ declared failure law.
 
 ### 12.11. Publication Contract
 
-Publication declares whether accepted material may leave the machine as a public claim. Serialization may realize that
-claim; it does not decide the claim.
+Publication declares which explicitly permitted internal coordinates may form which outward-presentation coordinates
+after publication authority allows the claim. The exact source-to-target bindings are authored in an operation-local
+declaration parallel to the manifest. They do not themselves authorize disclosure and do not contain serialization or
+business logic.
+
+Every selected Publication declaration generates a required retained plain host-language realization port. Exactly one
+user implementation realizes the declared outward representation. The generated pipeline owns publication judgment,
+source eligibility, invocation order, failure routing, and final output-presentation assembly. Serialization libraries
+may assist the implementation; they do not decide the claim or close the port implicitly.
 
 ### 12.12. Diagnostic Evidence Contract
 
@@ -384,8 +471,9 @@ selected operation run.
 
 ## 13. Unresolved
 
-This ADR does not decide final authoring syntax for one-dimensional bodies, the final host user API, the predicate
-language, the source carrier set for every presentation, or compiler-plugin airlock mechanics.
+Except for the operation-local coordinate-relation bodies and required generated realization ports of Lowering and
+Publication, this ADR does not decide final authoring syntax for one-dimensional bodies, the final host user API, the
+predicate language, the source carrier set for every presentation, or compiler-plugin airlock mechanics.
 
 Structural checking may be used inside a slot, but structure is not the selection law.
 
@@ -400,8 +488,9 @@ One-dimensional contract selection becomes explicit-scope-centered. Operation-lo
 selected, while `Policy`, `Governance`, `Budget`, and `Capacity` are selected once by the enclosing interface scope.
 
 Kontrakt does not need to mark every user type, scan every data shape, or maintain a sidecar mirror for every contract
-body. The declared slot gives the role. Source material enters under that role. Lowering turns it into flat canonical
-material. Backend machinery stays replaceable.
+body. The declared slot gives the role. Lowering and Publication add their exact operation-local coordinate relations
+beside the manifest. Source material enters under that role. Lowering turns it into flat canonical material. Generated
+realization ports keep physical implementation explicit and replaceable.
 
 The interface surface becomes readable as a contract machine. The reader can see the shared resource and control world,
 the closed operation set, each operation's local contract and movement slots, what is absent by declaration, and what
@@ -412,12 +501,16 @@ This gives responsibility a place. A design question becomes a slot question bef
 
 That also makes authoring less empty. The author does not start from a blank implementation. Each operation manifest
 shows the local places that need material, while the enclosing interface shows the shared `Policy`, `Governance`,
-`Budget`, and `Capacity` bindings. Filling those positions, or explicitly leaving permitted operation slots empty,
-produces the contract machine.
+`Budget`, and `Capacity` bindings. Lowering and Publication place their exact relation bodies beside the manifest and
+leave their physical realization behind generated ports. Filling those positions, or explicitly leaving permitted
+operation slots empty, produces the contract machine.
 
-Kontrakt remains an adapter and compiler-grade realization layer around the user's system. Removing it removes what it
-adds. It should not erase the user's own contract source.
+Kontrakt remains an adapter and compiler-grade realization layer around the user's system. Removing it removes its
+validation, generated pipeline assembly, diagnostics, and contract-aware optimization. Retained Lowering and Publication
+ports and their implementations may remain as ordinary adapters. It should not erase the user's own contract source.
 
 This keeps ADR-0046's interface decision intact while giving operation-local presentations a practical slot-selection
-law and machine-wide `Policy`, `Governance`, `Budget`, and `Capacity` an explicit interface-scope binding law. Several
-operation pipelines may enter the same core without turning internal implementation work into nested IDL operations.
+law and machine-wide `Policy`, `Governance`, `Budget`, and `Capacity` an explicit interface-scope binding law. Lowering
+and Publication now add explicit operation-local relation declarations and retained generated realization-port
+boundaries without turning their implementations into contract authority. Several operation pipelines may enter the
+same core without turning internal implementation work into nested IDL operations.
