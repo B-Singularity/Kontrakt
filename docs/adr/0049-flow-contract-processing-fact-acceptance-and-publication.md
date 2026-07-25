@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted
+Draft
 
 ## Date
 
@@ -13,7 +13,7 @@ Accepted
 - `docs/what-contract-is.md`
 - ADR-0048: Flow Contract Processing — Boundary Refinement and Core Entry
 - ADR-0047: One-Dimensional Contract Presentations, Pipeline-Slot Selection, and Backend Realization Boundary
-- ADR-0046: IDL-First Interface Contract Frontend and Generated Host Interface Boundary
+- ADR-0046: IDL-First Interface Contract Frontend and Retained Generated Host Interface and Realization Port Boundary
 - ADR-0045: Contract-First Package Architecture and Explicit Machine Refactoring Boundary
 - ADR-0043: Contract Graph Canonicalization, Sealed Structural References, and Incremental Identity Derivation
 - ADR-0041: Stable Metadata Identity, BLAKE3, HID, and Protocol-Owned Interning
@@ -190,8 +190,11 @@ Publication must be an explicit judgment. Immutability and internal availability
 
 Established Facts and Fact authority do not leave the Contract Core. Every Fact coordinate is non-public by default.
 Publication may grant outward claim authority only from the one established Fact kind named by the Operation return and
-only through a complete positive coordinate whitelist. A coordinate omitted from that whitelist has no publication
-path. Publication does not own the outward presentation shape and does not construct, serialize, or emit a carrier.
+only through exact positive source-to-target coordinate relations declared beside the operation manifest. A source
+coordinate omitted from those relations has no publication path. The relation owns permission and factual dependency,
+not physical representation formation. Every selected Publication therefore produces one required retained plain
+host-language realization port, and exactly one implementation must be bound during machine assembly. Publication does
+not own the outward presentation shape, and the supplied implementation does not own Publication authority.
 
 Output Presentation must be a separate explicit contract role. It declares the closed external shape in which an
 authorized public claim may appear. It owns public coordinate names, public value shapes, explicit absence, and finite
@@ -201,17 +204,22 @@ The interface contract separates five surfaces: the manifest-selected external I
 Operation parameter whose resolved kind must hold established input Fact authority before invocation, the ordinary
 Operation return whose resolved kind must be established as the successful result Fact before contractual completion,
 the
-selected Publication Contract that grants outward claim authority, and the selected Output Presentation Contract that
-declares the external shape. The user implementation exposes no candidate, proposal, established-Fact wrapper, or
-Kontrakt orchestration. It remains the same ordinary Java or Kotlin implementation when Kontrakt is removed. Kontrakt
-governs the invocation outside that implementation and treats returned result material as proposed Fact material until
-every applicable Fact, Invariant, State, and Transition judgment succeeds and the complete change is established.
+operation-local Publication relation selected by the manifest, and the selected Output Presentation Contract that
+declares the external shape. The user Operation implementation exposes no candidate, proposal, established-Fact wrapper,
+or Kontrakt orchestration. It remains the same ordinary Java or Kotlin implementation when Kontrakt is removed. The
+generated Publication port and its ordinary adapter may remain as retained host-language compatibility artifacts.
+Kontrakt governs the invocation and Publication orchestration outside those implementations and treats returned result
+material as proposed Fact material until every applicable Fact, Invariant, State, and Transition judgment succeeds and
+the complete change is established.
 
 External publication must expose only material formed under the selected Output Presentation Contract, not the internal
 Fact carrier, canonical Fact IR, Change Proposal, Operation Result Material, or backend representation.
 
-A backend may optimize Fact storage, Invariant evaluation, movement checks, Output Presentation materialization, and
-emission, but it may not change factual meaning, judgment law, state movement, publication permission, or outward shape.
+A backend may optimize Fact storage, Invariant evaluation, movement checks, the closed Publication realization
+binding, Output Presentation assembly, and emission, but it may not change factual meaning, judgment law, state
+movement,
+publication permission, declared coordinate dependency, or outward shape. It may devirtualize, inline, specialize, or
+erase the retained port only where equivalent behavior is proven; otherwise the explicit port call remains.
 
 ---
 
@@ -252,11 +260,13 @@ ordinary implementation result material
 one established Operation return Fact in the selected Publication context
     -> finite Publication applicability judgment
         -> declared publication stop when no outward claim is authorized
-        -> statically closed Fact-coordinate whitelist when publication is authorized
-    -> authorized public claim
+        -> operation-local positive source-to-target coordinate relations when publication is authorized
+    -> generated retained Publication realization port
+    -> exactly one explicitly bound realization
+    -> authorized target-coordinate material
     -> selected Output Presentation Contract
-    -> canonical outward presentation
-    -> replaceable backend materialization and emission
+    -> generated canonical outward presentation assembly
+    -> replaceable backend encoding and emission
 ```
 
 The declared Fact surface provides the immutable information definition used by the core. It does not describe one
@@ -304,18 +314,20 @@ rule: no declared part becomes authoritative unless every required judgment succ
 The Publication Contract is the outward-claim authority. Established Facts and Fact authority do not leave the Contract
 Core. Declared Operation Result Material is machine-internal material outside Fact authority and is never Publication
 source authority. The selected Operation's contractual return is the Fact kind declared by its return surface only after
-the returned result material has been established. Publication receives that established return Fact through operation
-context,
-decides whether one of its finite declared public-claim alternatives is applicable, and grants authority only to the
-factual meaning admitted by its exact positive coordinate whitelist.
+the returned result material has been established. The operation manifest selects one Publication handle, while one
+sibling `publication` declaration inside the same operation states the exact positive source-to-target coordinate
+relations. Publication receives the established return Fact through operation context, decides whether one of its finite
+declared public-claim alternatives is applicable, and grants authority only to the factual meaning admitted by those
+relations.
 
-The Output Presentation Contract is the outward-shape authority. It is selected separately after Publication and
-declares
-the closed external coordinates, value shapes, absence, and finite alternatives that may carry the authorized claim. It
-is not Fact, does not retain Fact authority, and does not decide Publication permission. Publication authority and
-Output
-Presentation shape meet through resolved claim bindings, while carrier construction and emission remain backend
-realization.
+The Output Presentation Contract is the outward-shape authority. It is selected separately and declares the closed
+external coordinates, value shapes, absence, and finite alternatives that may carry the authorized claim. It is not
+Fact,
+does not retain Fact authority, and does not decide Publication permission. The compiler resolves the Publication
+relations against that shape, generates one retained plain host-language realization port, and requires exactly one
+implementation during machine assembly. The implementation performs physical representation formation only. The
+generated machine owns applicability judgment, coordinate authority, target completeness, Output Presentation assembly,
+failure routing, and the handoff to backend encoding and emission.
 
 This ADR therefore extends the one-dimensional catalog with `Output Presentation Contract`. The new role is required
 because the ordinary Operation return is the internal result surface governed as Fact under Kontrakt rather than the
@@ -334,7 +346,8 @@ Change Proposal is formed internally by Kontrakt when returned result material, 
 Invariant declares what every established Fact of one declared kind must satisfy; Kontrakt applies that law automatically to every proposed Fact of that kind.
 State and Transition declare whether the same proposal's State movement is legal.
 Successful establishment grants Fact authority and completes the Operation only after every required judgment succeeds; refusal means Operation failure.
-Publication grants outward claim authority to an exact non-public-by-default whitelist of the established Operation return Fact without transferring Fact authority out of the core.
+Publication grants outward claim authority through exact non-public-by-default source-to-target coordinate relations from the established Operation return Fact without transferring Fact authority out of the core.
+The generated Publication port realizes those declared relations physically without owning their authority.
 Output Presentation declares the closed external shape that may carry the authorized public claim without deciding Publication permission.
 ```
 
@@ -453,16 +466,26 @@ interface AccountService {
     facts AccountFacts
     invariants AccountInvariants
 
-    operation deposit(input: DepositOperationInput): DepositRecorded
+    operation deposit(input: DepositOperationInput): DepositRecorded {
+        manifest {
+            flow:
+                input          DepositInputPresentation
+                admission      DepositAdmission
+                canonical      DepositCanonicalization
+                lowering       DepositLowering
+                publication    DepositPublication
+                presentation   DepositOutputPresentation
+        }
 
-    manifest {
-        flow:
-            input          DepositInputPresentation
-            admission      DepositAdmission
-            canonical      DepositCanonicalization
-            lowering       DepositLowering
-            publication    DepositPublication
-            presentation   DepositOutputPresentation
+        lowering DepositLowering {
+            presented.accountId    -> input.accountId
+            presented.amountMinor  -> input.amountMinor
+        }
+
+        publication DepositPublication {
+            result.depositId    -> output.depositId
+            result.amountMinor  -> output.amountMinor
+        }
     }
 }
 ```
@@ -544,16 +567,26 @@ interface AccountService {
     facts AccountFacts
     invariants AccountInvariants
 
-    operation deposit(input: DepositOperationInput): DepositRecorded
+    operation deposit(input: DepositOperationInput): DepositRecorded {
+        manifest {
+            flow:
+                input          DepositInputPresentation
+                admission      DepositAdmission
+                canonical      DepositCanonicalization
+                lowering       DepositLowering
+                publication    DepositPublication
+                presentation   DepositOutputPresentation
+        }
 
-    manifest {
-        flow:
-            input          DepositInputPresentation
-            admission      DepositAdmission
-            canonical      DepositCanonicalization
-            lowering       DepositLowering
-            publication    DepositPublication
-            presentation   DepositOutputPresentation
+        lowering DepositLowering {
+            presented.accountId    -> input.accountId
+            presented.amountMinor  -> input.amountMinor
+        }
+
+        publication DepositPublication {
+            result.depositId    -> output.depositId
+            result.amountMinor  -> output.amountMinor
+        }
     }
 }
 ```
@@ -874,7 +907,14 @@ Operation return
     -> ordinary host result whose resolved kind becomes established Fact only on successful contractual completion
 
 manifest publication slot
-    -> outward-claim authority over the established Operation return Fact
+    -> selects one operation-local Publication handle
+
+operation-local sibling publication declaration
+    -> exact positive source-to-target coordinate relations
+       from the established Operation return Fact
+
+generated retained Publication realization port
+    -> replaceable physical formation of the declared target-coordinate material
 
 manifest presentation slot
     -> closed Output Presentation shape for the authorized claim
@@ -891,29 +931,55 @@ complete change is established. Operation Result Material remains machine-intern
 authority.
 
 One `publication` slot selects one complete Publication Contract. The slot is not divided into separate source,
-exposure,
-mapper, serializer, or emitter slots. Its source Fact kind is resolved from the Operation return declaration, and its
-public target coordinates are resolved against the separately selected Output Presentation Contract. The user does not
-repeat either type inside the manifest. Publication owns the exact positive Fact-to-public-claim bindings, finite
-applicability bindings where required, finite alternative and absence claim bindings, and declared publication stops. It
-does not own the Output Presentation shape or the physical construction of that shape.
+exposure, serializer, or emitter slots. One sibling `publication` declaration inside the same operation owns the exact
+positive source-to-target coordinate relations. Its source Fact kind is resolved from the Operation return declaration,
+and its target coordinates are resolved against the separately selected Output Presentation Contract. The user does not
+repeat either type inside the manifest. Publication also owns finite applicability bindings where required, finite
+alternative and absence claim bindings, and declared publication stops. It does not own the Output Presentation shape.
+Every selected Publication generates one required retained plain host-language realization port, and exactly one
+implementation must be supplied during machine assembly.
 
-The coordinate whitelist is positive authority, not a list of fields to hide. Only an explicitly bound Fact coordinate
-may justify one public claim coordinate declared by the selected Output Presentation. A Fact coordinate omitted from the
-Publication Contract is not conditionally hidden; it has no publication authority and no generated egress path. Adding a
-new Fact coordinate does not change an existing public claim until the applicable Publication Contract is explicitly
-edited.
+The operation-local shape is:
 
-Publication applicability and claim binding are distinct:
+```text
+operation deposit(input: DepositOperationInput): DepositRecorded {
+    manifest {
+        flow:
+            publication    DepositPublication
+            presentation   DepositOutputPresentation
+    }
+
+    publication DepositPublication {
+        result.depositId    -> output.depositId
+        result.amountMinor  -> output.amountMinor
+    }
+}
+```
+
+The `manifest` and `publication` declarations are siblings inside the operation. The manifest selects the handle. The
+sibling body declares the exact coordinate authority relation. It does not implement that relation.
+
+The relation body is positive authority, not a list of fields to hide and not an executable mapper. Only an explicitly
+bound Fact coordinate may justify one target coordinate declared by the selected Output Presentation. A Fact coordinate
+omitted from the Publication Contract is not conditionally hidden; it has no publication authority and no egress path.
+Adding a new Fact coordinate does not change an existing public claim until the applicable Publication relation is
+explicitly edited. Equal names, equal host types, catalog availability, serializer compatibility, and backend support do
+not create an implicit relation or close the required realization port.
+
+Publication applicability, coordinate authority, and physical realization are distinct:
 
 ```text
 applicability:
     whether this already-declared public-claim alternative is authorized
     for finite machine material judged elsewhere
 
-claim binding:
-    which exact established Fact coordinate justifies
-    which exact coordinate of the selected Output Presentation
+coordinate relation:
+    which exact established Fact coordinate is the permitted factual basis
+    for which exact coordinate of the selected Output Presentation
+
+realization:
+    how one explicitly bound Publication adapter physically forms
+    the declared target-coordinate material
 ```
 
 Applicability may bind only to finite machine material already declared and judged elsewhere. Publication may not
@@ -922,28 +988,32 @@ an arbitrary exposure predicate, inspect hidden State, query Policy or Governanc
 perform repository lookup, or infer public meaning. No Fact coordinate becomes public merely because an applicability
 alternative is selected.
 
-Claim binding is not a fallible runtime mapping algorithm. During Publication and Output Presentation resolution,
-Kontrakt must reject a contract whose target coordinate is unbound, whose source or target coordinate cannot be
-resolved,
-whose binding is ambiguous or duplicated, whose factual distinctions are incompatible, whose alternative or absence
-binding is not total, or whose representation conversion is not explicitly admitted. These are structurally
-inadmissible contracts, not runtime Publication refusals. A valid canonical Publication IR therefore contains only
-resolved deterministic claim bindings.
+The coordinate relation is not assignment, a cast, a parser, a constructor call, or a fallible runtime mapping
+algorithm. It declares permitted factual basis and target dependency. During Publication and Output Presentation
+resolution, Kontrakt must reject a contract whose target coordinate is unbound, whose source or target coordinate cannot
+be resolved, whose relation is ambiguous or duplicated, whose factual distinctions are incompatible, whose alternative
+or absence relation is not total, or whose source and target sorts cannot be exposed through one valid generated port
+ABI. These are structurally inadmissible contracts, not runtime Publication refusals. A valid canonical Publication IR
+therefore contains only resolved deterministic authority relations. Missing, duplicate, or ABI-incompatible supplied
+implementations are machine-assembly failures, not Publication stops.
 
 A runtime publication stop means that no declared public-claim alternative is authorized for the already-established
-machine alternative. It is not a mapping failure. Output carrier allocation, encoding, buffering, transport, or I/O
-failure is likewise not Publication judgment; it belongs to replaceable realization and retains separate failure and
-diagnostic attribution.
+machine alternative. It is not a realization failure. A declared refusal from the bound Publication implementation,
+undeclared exception, Output Presentation assembly defect, encoding, buffering, transport, or I/O failure is likewise
+not Publication judgment; each retains separate realization, failure, and diagnostic attribution.
 
 Kontrakt lowers a valid Publication declaration into domain-neutral canonical material such as the resolved Operation
-return Fact kind, exact claim bindings to the selected Output Presentation coordinates, finite applicability and
-alternative bindings, explicit absence claim material, declared publication stops, applicable scope and version, and
-source coordinates required for attribution. Source classes, Fact objects, property references, mapper methods,
-serializers, and generated carrier layouts do not survive as Publication authority.
+return Fact kind, exact source-to-target authority relations, finite applicability and alternative bindings, explicit
+absence claim material, declared publication stops, applicable scope and version, generated port ABI identity, and
+source coordinates required for attribution. Source classes, Fact objects, property references, adapter methods,
+serializers, and generated carrier layouts do not survive as Publication authority. The explicitly bound implementation
+identity belongs to closed machine realization, not to Publication contract meaning.
 
-Publication produces authorized public claim material, not an outward carrier. That authorized claim proceeds to the
-separately selected Output Presentation Contract. Established Fact never becomes outward material, and Publication does
-not construct the host presentation object.
+Publication authorizes exact target-coordinate material under its declared relations. After applicability succeeds,
+the generated machine invokes the exactly bound Publication realization through the retained port, accepts only the
+declared target-coordinate material, and assembles the separately selected Output Presentation. Established Fact never
+becomes outward material. The adapter does not receive Fact authority, decide applicability, enlarge the source set,
+authorize another target, or own the resulting Output Presentation contract.
 
 Diagnostic material remains internal and is never a direct Publication source. When an outward diagnostic or failure
 claim is required, its public factual basis must be part of the established Operation return Fact, must receive explicit
@@ -1040,10 +1110,13 @@ outward bounds, public version material, and source coordinates required for att
 arguments, getters, record mechanics, serializers, annotations, reflection, object identity, and class layout do not
 survive as Output Presentation authority.
 
-After Publication has authorized one public claim, the Output Presentation Contract determines the canonical outward
-shape that carries it. A backend may then generate or reuse a Kotlin data class, Java record, primitive layout, packed
-bytes, schema carrier, or another deterministic representation and may serialize, buffer, return, or transmit it. Those
-mechanisms realize the presentation; they do not define its shape or authorize the claim.
+After Publication has authorized one public claim, the generated machine invokes the exactly bound Publication
+realization, verifies that only declared target-coordinate material was formed, and assembles the canonical outward
+shape
+defined by the Output Presentation Contract. A backend may then encode, buffer, return, or transmit a Kotlin data class,
+Java record, primitive layout, packed bytes, schema carrier, or another deterministic representation. Those mechanisms
+realize transport and storage; they do not define the shape, authorize the claim, or replace the explicit Publication
+port binding.
 
 A published Output Presentation carries only its declared external meaning. If it later enters the machine, it is
 external
@@ -1102,8 +1175,12 @@ Operation return:
     under Kontrakt, its resolved kind is the established output Fact of successful contractual completion
 
 Publication:
-    outward-claim authority granted only to explicitly bound meaning
+    outward-claim authority granted through exact source-to-target coordinate relations
     from that established return Fact
+
+Publication realization port:
+    retained plain host-language implementation boundary that physically forms
+    only the declared target-coordinate material
 
 Output Presentation:
     closed external shape that may carry the authorized public claim
@@ -1125,17 +1202,23 @@ outward contract claim, that information must first belong to the exact establis
 return. A temporary value, backend handle, cache key, serialization hint, or implementation-only calculation is not
 promoted to Fact merely to make it publishable.
 
-The manifest selects Publication and Output Presentation separately:
+The operation keeps Publication selection, Publication relation, and Output Presentation shape separate:
 
 ```text
-publication
-    -> exact positive Fact-to-public-claim authority
+manifest publication slot
+    -> selects one Publication handle
 
-presentation
-    -> exact closed outward shape
+sibling publication declaration
+    -> exact positive source-to-target coordinate authority
+
+manifest presentation slot
+    -> selects one exact closed outward shape
+
+generated Publication port
+    -> realizes only the declared target-coordinate material
 ```
 
-Publication's claim bindings form a closed positive whitelist against the selected Output Presentation:
+The Publication relation forms a closed positive whitelist against the selected Output Presentation:
 
 ```text
 explicitly bound established Fact coordinate
@@ -1146,9 +1229,12 @@ unbound Fact coordinate
 ```
 
 Publication does not expose the Fact, join several Facts, combine source roots, traverse a Fact population, calculate an
-aggregate, inspect Operation implementation, or derive business meaning. Output Presentation does not perform those
-operations either. When a required outward claim needs calculated factual meaning, the Operation must establish that
-meaning in its declared return Fact before Publication.
+aggregate, inspect Operation implementation, or derive business meaning. The supplied Publication implementation is
+restricted by the same authority boundary: it receives only the declared source material required by its generated port,
+forms only declared target-coordinate material, and may not acquire another Fact, perform repository or environment
+lookup, inspect State or Policy, or introduce business meaning. Output Presentation does not perform those operations
+either. When a required outward claim needs calculated factual meaning, the Operation must establish that meaning in its
+declared return Fact before Publication.
 
 The Output Presentation is neither the established Fact nor its carrier and carries no Fact authority. Internal digest,
 provenance, relation, scope, version, backend layout, and diagnostic evidence remain absent unless their exact Fact
@@ -1177,13 +1263,14 @@ Only when every required judgment succeeds may the whole proposal be established
 Diagnostic evidence may explain Fact formation, Invariant refusal, movement refusal, or a declared runtime publication
 stop, but evidence does not create or override any of those roles.
 
-A malformed Publication claim binding or an incompatible Output Presentation is not a runtime refusal. Missing,
-ambiguous, duplicated, incompatible, or incomplete bindings and unclosed presentation coordinates are compiler rejection
-and must never reach an executable egress path. A declared publication stop instead means that no public-claim
-alternative
-is authorized for the established operation outcome or other finite machine material to which Publication applicability
-is bound. Backend materialization, encoding, allocation, transport, and I/O failures remain realization failures rather
-than Publication or Output Presentation judgment.
+A malformed Publication relation or an incompatible Output Presentation is not a runtime refusal. Missing, ambiguous,
+duplicated, incompatible, or incomplete relations and unclosed presentation coordinates are compiler rejection and must
+never reach an executable egress path. A missing, duplicate, or ABI-incompatible Publication implementation is a
+machine-assembly failure. A declared publication stop instead means that no public-claim alternative is authorized for
+the established operation outcome or other finite machine material to which Publication applicability is bound.
+Publication adapter refusal, undeclared adapter exception, Output Presentation assembly, encoding, allocation,
+transport,
+and I/O failures remain realization failures rather than Publication or Output Presentation judgment.
 
 Retention decides what diagnostic material may survive. Retained diagnostic material is never a direct Publication
 source. When an outward diagnostic or failure claim is required, its public factual basis must first belong to the
@@ -1229,11 +1316,13 @@ Contract Core membership does not grant universal participation authority to a F
 Every Operation, State or Transition judgment, and Lowering judgment must explicitly bind the factual roles that may
 participate in it. Each Invariant instead declares exactly one Fact kind through one direct Fact parameter. Publication
 receives exactly the established Fact kind declared by the selected Operation return and grants outward authority only
-to
-the coordinates named by its positive whitelist. Output Presentation separately declares the target outward coordinates.
-An established Fact may participate only through an applicable Operation or judgment binding, as the sole Fact judged by
-an Invariant declared for its exact kind, or as that one explicit Publication source. A Fact of another kind carries no
-authority to participate, even when it exists in the same Contract Core or appears relevant to the work being performed.
+through the source-to-target coordinate relations declared in the operation-local Publication body. Output Presentation
+separately declares the target outward coordinates. The generated port implementation receives only the source material
+admitted by those relations and gains no broader Fact participation authority. An established Fact may participate only
+through an applicable Operation or judgment binding, as the sole Fact judged by an Invariant declared for its exact
+kind,
+or as that one explicit Publication source. A Fact of another kind carries no authority to participate, even when it
+exists in the same Contract Core or appears relevant to the work being performed.
 
 A Fact binding declares participation authority, not ownership of the Fact and not general access to the Contract Core.
 It does not transfer Fact authority out of the core and does not authorize the bound Fact to participate in another
@@ -1247,10 +1336,11 @@ types, or apparent domain relevance create no implicit relation, grouping, or pa
 
 Fact leakage occurs when an established Fact participates in an Operation, judgment, movement, or Publication without
 an applicable explicit binding, when its participation exceeds the role, scope, version, governance, or purpose declared
-by that binding, when an established Fact or its Fact authority leaves the Contract Core, when an unlisted Fact
-coordinate reaches an Output Presentation, when a public coordinate appears outside the selected Output Presentation
-shape, or when Fact-derived meaning becomes outward material without both an applicable Publication Contract and a
-selected Output Presentation Contract.
+by that binding, when an established Fact or its Fact authority leaves the Contract Core, when a source coordinate not
+named by the Publication relation reaches an Output Presentation, when a public coordinate appears outside the selected
+Output Presentation shape, when a Publication implementation reads or forms undeclared material, or when Fact-derived
+meaning becomes outward material without both an applicable Publication Contract and a selected Output Presentation
+Contract.
 
 The mechanism by which an implementation locates, presents, isolates, or optimizes access to bound Facts is outside this
 decision.
@@ -1269,34 +1359,45 @@ become an authorized public claim. It does not release the Fact, its carrier, ca
 Operation Result Material. Output Presentation is the only role in this ADR that declares the closed external shape in
 which that authorized claim may appear. Neither role substitutes for the other.
 
-Fact egress is closed by default. Publication grants positive authority only to the exact source Fact coordinates named
-in its resolved claim bindings. All unbound coordinates remain non-public regardless of matching names, compatible host
-types, serializer behavior, reflection reachability, or backend convenience. Output Presentation grants no additional
-Fact authority; it only declares the external coordinates and alternatives available to carry an already-authorized
-claim.
+Fact egress is closed by default. Publication grants positive authority only through the exact source-to-target
+coordinate relations declared in its operation-local body. All unbound source coordinates remain non-public regardless
+of matching names, compatible host types, catalog availability, serializer behavior, reflection reachability, or backend
+convenience. Every selected Publication generates one required retained realization port, but that port grants no
+additional Fact authority. Output Presentation likewise grants no additional Fact authority; it only declares the
+external coordinates and alternatives available to carry an already-authorized claim.
 
-One operation manifest therefore selects two distinct outward roles:
+One operation therefore keeps three distinct outward surfaces:
 
 ```text
-publication
-    -> outward claim authority, finite applicability, exact positive claim bindings,
+manifest publication slot
+    -> selects outward claim authority and finite applicability
+
+sibling publication declaration
+    -> exact positive source-to-target coordinate relations
        and declared publication stops
 
-presentation
+manifest presentation slot
     -> closed outward coordinates, value shapes, explicit absence,
        finite alternatives, bounds, and public version material
 ```
 
-Publication does not execute an arbitrary guard, discover sensitive material, inspect hidden State, query Policy,
-combine Facts, or infer external purpose. Output Presentation does not calculate business meaning, select source Facts,
-or authorize disclosure. The user declares both roles; Kontrakt validates and lowers them under separate authority.
+The compiler additionally generates one retained Publication realization port from the resolved relation. That generated
+port is implementation ABI, not a fourth contract role and not contract authority.
 
-Malformed claim bindings, unclosed presentation coordinates, incompatible distinctions, and incomplete finite
-alternatives are structurally inadmissible and must be rejected before ContractImage publication. Runtime Publication
-judgment selects only among valid declared applicability alternatives and may produce an explicit publication stop when
-no outward claim is authorized. After authorization, the Output Presentation contract fixes the canonical outward shape.
-Backend carrier construction, encoding, buffering, and emission then realize that shape without acquiring Publication or
-Output Presentation authority.
+Publication does not execute an arbitrary guard, discover sensitive material, inspect hidden State, query Policy,
+combine Facts, or infer external purpose. Its supplied realization may only perform the physical representation
+formation admitted by the generated port and declared coordinate relation. Output Presentation does not calculate
+business meaning, select source Facts, or authorize disclosure. The user declares the Publication relation and Output
+Presentation shape; Kontrakt validates and lowers them under separate authority and closes exactly one implementation
+binding for the generated Publication port.
+
+Malformed coordinate relations, unclosed presentation coordinates, incompatible distinctions, and incomplete finite
+alternatives are structurally inadmissible and must be rejected before ContractImage publication. Missing, duplicate, or
+ABI-incompatible Publication implementations are rejected during machine assembly. Runtime Publication judgment selects
+only among valid declared applicability alternatives and may produce an explicit publication stop when no outward claim
+is authorized. After authorization, the generated machine invokes the exactly bound Publication realization, verifies
+declared target coverage, and assembles the canonical outward shape fixed by the Output Presentation Contract. Backend
+encoding, buffering, and emission then realize transport without acquiring Publication or Output Presentation authority.
 
 Authority to produce one Output Presentation does not authorize disclosure through another presentation, Operation
 Result Material, Change Proposal, Diagnostic, Failure, Evidence, Retention record, movement record, or other contract
@@ -1310,40 +1411,43 @@ external material again. Prior publication grants no Fact authority on re-entry 
 Canonicalization, Lowering, or any applicable judgment.
 
 Bound Fact Authority governs which established Facts may participate inside an Operation or judgment. Fact Egress
-Authority governs which exact coordinates of the established Operation return may support one declared public claim.
-Output Presentation governs the external shape that may carry that claim. None of those authorities implies another.
+Authority governs which exact source-to-target relations of the established Operation return may support one declared
+public claim. The generated Publication port realizes only those relations physically. Output Presentation governs the
+external shape that may carry that claim. None of those authorities implies another.
 
-The mechanism by which an implementation prevents direct Fact escape or realizes an authorized Output Presentation is
-outside this decision.
+The generated port ABI, explicit implementation binding, target-coverage gate, and retained generated source are fixed
+here. Backend-specific encoding, transport, and storage mechanics remain outside this decision.
 
 ## 7. Deferred Decisions
 
-This ADR does not decide the final token spelling or host-language authoring body for individual Fact surfaces,
-Publication claim bindings, or Output Presentation declarations. It does decide the IDL role structure: `facts` and
-`invariants` remain interface-scoped declarations; the Operation parameter and return remain ordinary host-language
-surfaces whose resolved kinds participate as the established input Fact and successful output Fact under Kontrakt; a
-bare
-operation manifest selects the external `input`, the outward `publication`, and the following `presentation` role
-without
-introducing `fact`, `invariant`, or `result` slots. Candidate and established authority remain internal contract-machine
-states and do not appear as user-visible types.
+This ADR does not decide the final host-language authoring body for individual Fact surfaces or every admitted Output
+Presentation shape. It does decide the IDL role structure: `facts` and `invariants` remain interface-scoped
+declarations;
+the Operation parameter and return remain ordinary host-language surfaces whose resolved kinds participate as the
+established input Fact and successful output Fact under Kontrakt; the operation manifest selects the external `input`,
+the outward `publication`, and the following `presentation` role without introducing `fact`, `invariant`, or `result`
+slots; and one sibling `publication` declaration inside the same operation owns the exact positive source-to-target
+coordinate relations. Candidate and established authority remain internal contract-machine states and do not appear as
+user-visible types.
 
-One `publication` slot selects one complete outward-claim contract containing exact positive claim bindings from the
-established Operation return Fact, finite applicability bindings where required, finite alternative and absence claim
-bindings, and declared publication stops. One separate `presentation` slot selects one complete Output Presentation
-Contract containing the closed external coordinates, value shapes, explicit absence, finite alternatives, outward
-bounds,
-and public version material. Publication does not own that shape, and Output Presentation does not grant Publication
-authority.
+One `publication` slot selects one complete outward-claim contract. Its sibling operation-local `publication` body
+contains the exact positive source-to-target coordinate relations from the established Operation return Fact, finite
+applicability bindings where required, finite alternative and absence claim bindings, and declared publication stops.
+One separate `presentation` slot selects one complete Output Presentation Contract containing the closed external
+coordinates, value shapes, explicit absence, finite alternatives, outward bounds, and public version material.
+Publication does not own that shape, and Output Presentation does not grant Publication authority. Every selected
+Publication generates one required retained realization port and requires exactly one implementation binding during
+machine assembly.
 
-This ADR also decides that Operation Result Material is not Publication source authority, malformed claim bindings and
-unclosed Output Presentation shapes are compile-time rejection, and backend materialization and emission remain
-implementation. The interface references one named, restricted Kotlin or Java source declaration through `facts`; that
-declaration names exact Fact surface types and is completely lowered away. The same interface references one named,
-restricted, uninstantiable Kotlin or Java catalog through `invariants`; that catalog names exact Invariant declaration
-types and is completely lowered away. Each referenced Invariant declaration must contain one restricted Boolean law over
-exactly one Fact kind declared by the same Fact vocabulary. Package membership, classpath scanning, class literals,
-runtime collections, and computed discovery are not Fact or Invariant membership authority.
+This ADR also decides that Operation Result Material is not Publication source authority, malformed coordinate
+relations and unclosed Output Presentation shapes are compile-time rejection, missing or duplicate Publication
+implementations are machine-assembly rejection, and backend encoding and emission remain implementation. The interface
+references one named, restricted Kotlin or Java source declaration through `facts`; that declaration names exact Fact
+surface types and is completely lowered away. The same interface references one named, restricted, uninstantiable Kotlin
+or Java catalog through `invariants`; that catalog names exact Invariant declaration types and is completely lowered
+away. Each referenced Invariant declaration must contain one restricted Boolean law over exactly one Fact kind declared
+by the same Fact vocabulary. Package membership, classpath scanning, class literals, runtime collections, and computed
+discovery are not Fact or Invariant membership authority.
 
 It does not freeze the final Java and Kotlin token spelling or every admitted expression in the direct Invariant Boolean
 body. It does fix the authoring boundary: one exact Fact parameter, one total deterministic Boolean judgment, and
@@ -1353,14 +1457,22 @@ Fact collection, population, history, graph, proposal, operation-specific materi
 mutation, or backend evaluation state. The compiler may not infer cross-Fact contract meaning from shared coordinates or
 arbitrary user behavior.
 
-This ADR does not define the final source-carrier API for Publication claim bindings. It does define the V1 Output
-Presentation source boundary: one operation-specific `presentation` slot selects one ordinary closed immutable Kotlin or
-Java shape declaration, and only its admitted constructor coordinates, record components, explicit absence, and finite
-alternatives enter canonical Output Presentation material. Publication authoring must declare finite immutable authority
-bindings and may not be a mapper, constructor procedure, callback, lambda, repository lookup, State lookup, Policy
-lookup,
-serializer, or emitter. Output Presentation authoring may not decide source authority, claim permission, or business
-calculation. Kontrakt must fully resolve and erase both source forms before ContractImage publication.
+This ADR does not freeze the exact generated Publication port method decomposition, result carrier, declared
+realization-refusal encoding, or machine-assembly factory API. It does fix their authority boundary: the port is
+generated
+only from the resolved operation-local coordinate relations, its source is restricted to declared Operation return Fact
+coordinates, its result is restricted to declared Output Presentation target-coordinate material, exactly one
+implementation is bound, and the generated source is retained as an ordinary host-language build artifact.
+
+The V1 Output Presentation source boundary remains separate: one operation-specific `presentation` slot selects one
+ordinary closed immutable Kotlin or Java shape declaration, and only its admitted constructor coordinates, record
+components, explicit absence, and finite alternatives enter canonical Output Presentation material. Publication
+authoring may not contain executable mapping, constructor procedure, callback, lambda, repository lookup, State lookup,
+Policy lookup, serializer, or emitter. The supplied Publication implementation may perform only physical representation
+formation through the generated port and may not decide source authority, claim permission, target participation, or
+business calculation. Output Presentation authoring may not decide those matters either. Kontrakt must fully resolve the
+contract declarations before ContractImage publication and close the realization binding before executable machine
+publication.
 
 This ADR does not define the complete authoring surface by which the enclosing machine contract and its operation flows
 declare required existing Fact dependencies, declared Operation Result Material, Change Proposals, additional Fact
@@ -1374,9 +1486,10 @@ movement refusal, publication stop, or presentation realization. Those movement 
 complete operation flow, failure, diagnostic, and Version material together with the enclosing machine-wide Policy,
 Governance, Budget, and Capacity contracts.
 
-It also does not define final persistence layout, cache layout, core Fact storage, Output Presentation carrier layout,
-public serialization schema implementation, or emitter implementation. Those are replaceable realizations behind the
-contract boundaries fixed here.
+It also does not define final persistence layout, cache layout, core Fact storage, backend-specific Output Presentation
+carrier layout, public serialization schema implementation, or emitter implementation. Those remain replaceable
+realizations behind the declared Publication relation, generated port boundary, and Output Presentation contract fixed
+here.
 
 ---
 
@@ -1384,9 +1497,9 @@ contract boundaries fixed here.
 
 The core is now defined as an explicit Fact machine rather than an object graph or execution container that discovers
 knowledge through implementation behavior. One enclosing interface may expose several operation pipelines without
-dividing that core. Each operation retains its own controlled inbound Boundary, Publication authority, and Output
-Presentation boundary,
-while machine-wide Policy, Governance, Budget, and Capacity coordinate the finite resources shared among all of them.
+dividing that core. Each operation retains its own controlled inbound Boundary, operation-local Publication relation,
+and Output Presentation boundary, while machine-wide Policy, Governance, Budget, and Capacity coordinate the finite
+resources shared among all of them.
 
 Each enclosing interface names its core Fact vocabulary once through `facts` and its standing Fact laws once through
 `invariants`. The referenced restricted host catalogs list the exact Fact surface symbols and exact Invariant
@@ -1413,14 +1526,16 @@ relation over exactly one Fact and never receives another Fact, a Fact collectio
 applies every interface-level Invariant declared for each proposed Fact's exact kind automatically before that Fact may
 receive authority. State and Transition judge legal movement separately over the same internal Change Proposal.
 Publication remains the sole outward-claim authority rather than an automatic side effect of immutability, return
-production, persistence, diagnostics, failure, retention, movement, or serialization. Output Presentation remains the
+production, persistence, diagnostics, failure, retention, movement, or serialization. Its operation-local relation
+grants
+that authority only through exact positive source-to-target coordinate bindings. Output Presentation remains the
 separate outward-shape authority rather than a hidden part of Publication or a serializer schema. Established Facts and
 Fact authority remain inside the Contract Core. Operation Result Material remains machine-internal material outside Fact
 authority and outside Publication source authority. The ordinary implementation return becomes the successful
-contractual
-Operation result only after its resolved Fact kind and every associated change hold established authority. Publication
-then authorizes only the exact factual meanings named by its positive whitelist, and the selected Output Presentation
-declares the distinct external shape that may carry them.
+contractual Operation result only after its resolved Fact kind and every associated change hold established authority.
+Every selected Publication then generates one required retained plain host-language port, exactly one supplied adapter
+physically realizes the declared target-coordinate material, and the selected Output Presentation declares the distinct
+external shape that the generated machine assembles.
 
 Primitive and ordinary closed immutable host types may serve as frontend evidence when they preserve the required
 information. Resolution and Lowering replace those host declarations with domain-neutral canonical Fact, coordinate, and
@@ -1437,16 +1552,17 @@ from behavior-bearing classes or semantically authoritative Value Objects.
 Internal Fact authority does not appear in Input or Output Presentations. The interface contract distinguishes the
 manifest-selected external Input Presentation, the ordinary Operation parameter whose resolved kind is established as
 input Fact before invocation, the ordinary Operation return whose resolved kind is established as output Fact before
-successful completion, the selected Publication Contract, and the selected Output Presentation Contract. The same Java
-or
-Kotlin interface and implementation remain usable without Kontrakt, in which case their inputs and returns carry no
-Fact,
-Invariant, movement, Publication, or Presentation authority beyond ordinary host-language behavior. External users
-receive
-only material formed under the selected Output Presentation from factual meanings explicitly authorized by Publication,
-while established Facts and their authority remain inside the Contract Core and core factual representation remains
-replaceable. A published presentation that returns to the machine is external material again and receives no implicit
-Fact authority from its origin.
+successful completion, the manifest-selected Publication handle, its sibling operation-local relation body, the retained
+generated Publication port, and the selected Output Presentation Contract. The same Java or Kotlin Operation interface
+and implementation remain usable without Kontrakt. The retained Publication port and its ordinary adapter may also
+remain
+as a direct compatibility boundary, but none of those host artifacts then carries Fact, Invariant, movement,
+Publication,
+or Presentation authority beyond ordinary host-language behavior. External users receive only material formed under the
+selected Output Presentation from factual meanings explicitly authorized by Publication, while established Facts and
+their authority remain inside the Contract Core and core factual representation remains replaceable. A published
+presentation that returns to the machine is external material again and receives no implicit Fact authority from its
+origin.
 
 The split between ADR-0048 and ADR-0049 keeps optimization honest. The selected operation's Boundary rejects malformed
 or inadmissible material before core work is paid. Lowering crosses that Boundary only after the proposed input Fact
@@ -1461,7 +1577,11 @@ internal
 Change Proposal that binds the proposed result Fact, any additional Fact changes, and State movement to be judged
 together. Invariant evaluates Fact Integrity, while State and Transition independently judge movement legality over that
 same proposal. Only the whole accepted change is established, at which point the contractual Operation completes
-successfully with its declared result as established Fact. Any refusal means Operation failure. Publication begins only
-from that established result and then applies its finite applicability judgment and statically closed positive claim
-bindings. The selected Output Presentation then fixes the canonical outward shape. Backend materialization and emission
-cost is paid only after an outward claim is authorized and the presentation shape is closed.
+successfully with
+its declared result as established Fact. Any refusal means Operation failure. Publication begins only from that
+established result and then applies its finite applicability judgment and statically closed source-to-target authority
+relations. The generated machine invokes the exactly bound Publication adapter through the retained port, verifies
+target
+coverage, and assembles the selected Output Presentation. Backend encoding and emission cost is paid only after an
+outward claim is authorized, the realization succeeds, and the presentation shape is closed. A backend may devirtualize,
+inline, specialize, or erase the port only where equivalent behavior is proven; otherwise the explicit call remains.
