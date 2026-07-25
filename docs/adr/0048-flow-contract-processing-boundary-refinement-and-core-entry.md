@@ -11,9 +11,9 @@ Accepted
 ## Related
 
 - `docs/what-contract-is.md`
-- ADR-0049: Flow Contract Processing — Fact Acceptance and Publication
+- ADR-0049: Flow Contract Processing — Fact, Invariant, Publication, and Output Presentation
 - ADR-0047: One-Dimensional Contract Presentations, Pipeline-Slot Selection, and Backend Realization Boundary
-- ADR-0046: IDL-First Interface Contract Frontend and Generated Host Interface Boundary
+- ADR-0046: IDL-First Interface Contract Frontend and Retained Generated Host Interface and Realization Port Boundary
 - ADR-0045: Contract-First Package Architecture and Explicit Machine Refactoring Boundary
 - ADR-0043: Contract Graph Canonicalization, Sealed Structural References, and Incremental Identity Derivation
 - ADR-0041: Stable Metadata Identity, BLAKE3, HID, and Protocol-Owned Interning
@@ -32,21 +32,27 @@ does not own contract meaning.
 
 ADR-0047 fixes the selection boundary after that.
 
-The operation manifest selects one-dimensional roles through explicit slots. A source does not declare itself to be
-`Input`, `Admission`, `Canonicalization`, `Lowering`, or `Fact`. The operation supplies the boundary, and the slot
-supplies the role.
+The operation manifest selects operation-local one-dimensional roles through explicit slots. A source does not declare
+itself to be `Input`, `Admission`, `Canonicalization`, or `Lowering`. The operation supplies the boundary, and the slot
+supplies the role. Lowering is one of the two V1 coordinate-relation exceptions fixed by ADR-0046 and ADR-0047: its
+manifest slot selects the role, while one sibling `lowering` declaration inside the same operation states the exact
+source-to-target relations.
 
 A single `.kontrakt` interface scope may declare a closed set of operations that enter the same machine. `Policy`,
-`Governance`, `Budget`, and `Capacity` are bound once at that enclosing scope because they coordinate decisions and
-finite resources shared among those operations. They are not repeated as operation-manifest slots. Each operation
-manifest continues to declare its own flow, failure, movement, version, and diagnostics.
+`Governance`, `Budget`, `Capacity`, `facts`, and `invariants` are bound once at that enclosing scope. The resource
+contracts coordinate decisions and finite resources shared among those operations. `facts` declares the closed Fact
+vocabulary of the core, and `invariants` declares its standing Fact laws. None is repeated as an operation-manifest
+slot. Each operation manifest continues to declare its own flow, failure, movement, version, and diagnostics.
 
 The remaining problem is processing.
 
 The four contract roles addressed here form the inbound airlock of the machine. `Input` establishes judgeable immutable
 boundary presentation. `Admission` decides whether that presentation may continue. `Canonicalization` optionally
 produces its stable representative under a selected equivalence law. `Lowering` removes external-presentation authority
-and forms the explicit immutable Fact material that may enter the core.
+and forms complete candidate material for the ordinary Operation parameter types. The corresponding Fact kinds come
+from the enclosing interface's `facts` declaration, and their standing laws come from `invariants`. Only after the
+applicable judgments and legal movement succeed does the generated machine establish input Fact authority and invoke
+the ordinary user Operation.
 
 The core is not another application layer and is not a graph of domain objects. It is the isolated space of the machine
 in which untrusted external representation no longer exists. Everything the core may know must be present as explicit
@@ -66,8 +72,10 @@ The contract pipeline defines authority and judgment. The implementation pipelin
 performs
 work behind declared boundaries. The state pipeline declares when each judgment, realization, refusal, seal, and handoff
 is legally available. JVM objects, interfaces, callbacks, and intermediate allocations are frontend and implementation
-mechanisms; they are not the authority model of the machine. Slot-selected Lowering is not an opaque user implementation
-region: it is immutable frontend source that Kontrakt must refine, erase, and realize itself.
+mechanisms; they are not the authority model of the machine. Slot-selected Lowering consists of explicit immutable IDL
+relation material plus one replaceable realization behind a generated plain host-language port. The relation owns the
+permission and dependency. The supplied implementation owns physical formation only and must never become contract
+authority.
 
 Input and Admission are a direct contract adjacency in this ADR. Input establishes the immutable presentation that
 Admission judges, so no user implementation transformation exists between them. Input enters the declared external
@@ -75,27 +83,30 @@ boundary, not the core. Kontrakt neither owns the surrounding user system nor ob
 have occurred before the Input presentation was formed; the submitted presentation is the raw Input material of this
 flow.
 
-The `canonical` slot is optional in V1. When it is selected, Admission and Canonicalization have no user-supplied
+The `canonicalization` slot is optional in V1. When it is selected, Admission and Canonicalization have no user-supplied
 transformation region: a Kontrakt-owned realization applies the selected Canonicalization law to the same
 contract-visible presentation and produces its stable representative. When it is omitted, Kontrakt inserts no semantic
 Canonicalization Contract, no `ExactCanonicalization`, and no user callback, proxy, or interceptor. The admitted Input
 presentation passes unchanged to the selected Lowering formation.
 
-In both branches, Lowering is declared through immutable one-to-one coordinate bindings. The target coordinates belong
-to the Fact Contract selected for the same flow. The Kontrakt compiler resolves the permitted meaning-preserving type
-refinements, derives one semantic Lowering plan, and a backend generates the automatic realization. No user mapper,
-callback, proxy, independently authored lowering implementation, or mandatory Kontrakt-specific scalar wrapper exists
-between the external presentation and the core Fact boundary.
+In both branches, Lowering is declared through immutable one-to-one coordinate bindings authored in one operation-local
+`lowering` body beside the operation manifest. Each target address begins with an Operation parameter slot and continues
+to one coordinate of that parameter's declared Fact kind. The compiler derives one semantic `LoweringPlan`, generates a
+retained plain host-language realization port, and requires exactly one implementation during machine assembly. It does
+not silently close that port through equal names, equal host types, catalog lookup, or backend convention. The generated
+pipeline invokes the supplied realization, forms complete candidate material, applies the standing judgments selected by
+the resolved Fact kind and movement world, and grants input Fact authority only after those obligations succeed.
 
 This ADR defines the processing profiles for those four contracts, their relationship to the implementation and state
 axes, and the handoff from untrusted external presentation to explicit immutable core information.
 
-ADR-0049 defines Fact, Invariant, and Publication. Fact is not merely the result of an implementation operation and is
-not a candidate waiting for Invariant to make it true. Fact is the immutable information available to the explicit core
-machine. Core realization may consume boundary Facts together with existing Facts and other explicit contract material
-to produce declared immutable Operation Result Material. When the selected operation binds a Fact Contract for that
-result, the same material enters the Fact Candidate path and may receive Fact authority only after applicable Invariant
-judgment and legal State Transition. Publication governs the outward claim.
+ADR-0049 defines Fact, Invariant, Publication, and Output Presentation. Fact is not merely the result of an
+implementation operation and is not a host wrapper added by Lowering. The manifest-selected Input Presentation does not
+enter the user Operation directly. Lowering forms ordinary host material for the Operation parameter types, and
+Kontrakt applies the interface-level Invariants and applicable movement judgments before that material receives input
+Fact authority. The implementation still receives ordinary Java or Kotlin values. Core realization may produce declared
+Operation Result Material and an ordinary Operation return, while ADR-0049 governs result establishment, outward claim
+authority, and the separate outward presentation.
 
 The manifest labels `failure`, `movement`, `bounds`, and `diagnostics` exist only in authored source layout and
 disappear before contract resolution. The individual contracts selected by the slots written beneath those labels retain
@@ -131,17 +142,20 @@ Kontrakt therefore needs processing that can:
 - preserve a strict boundary between boundary formation, continuation judgment, optional same-shape representative
   production, immutable Lowering formation, core Fact availability, Invariant judgment, state movement, Operation Result
   Material production, and Publication;
-- permit Lowering authors to declare only finite immutable one-to-one bindings from selected Input coordinates to the
-  coordinates of the selected Fact Contract, with no same-name inference, mapper function, callback, DI surface, state
-  lookup, business algorithm, or executable implementation;
+- permit Lowering authors to declare only finite immutable one-to-one bindings from selected Input coordinates to
+  coordinates addressed through the selected Operation parameter slots, with no same-name inference, expression,
+  callback, lookup, business algorithm, or executable implementation inside the IDL relation body;
+- generate one retained plain host-language Lowering realization port from that relation and require exactly one
+  explicitly supplied implementation, without silently selecting same-type copying, a conversion catalog entry, a
+  naming convention, or backend behavior;
 - allow ordinary primitive and closed immutable host types to nominate Fact coordinates when they already express the
   required information, without manufacturing Kontrakt-specific core wrappers or a rich object model;
-- derive the required meaning-preserving type refinement, generated mapping, Fact sealing, verification, generated
-  tests, diagnostic attribution, cache dependency, and backend optimization from that one ratified Lowering declaration
-  instead of requiring duplicate handwritten boilerplate; and
-- optimize Kontrakt-owned verification, canonical representative production, Lowering realization, testing, planning,
-  state enforcement, diagnostics, caching, and physical layout without rewriting unrelated user-supplied implementation
-  code in V1.
+- derive source-read closure, target coverage, port ABI, candidate sealing, judgment handoff, verification, generated
+  tests, diagnostic attribution, cache dependency, and backend optimization from the ratified relation and explicit
+  realization binding without treating implementation code as contract authority; and
+- optimize Kontrakt-owned verification, canonical representative production, Lowering orchestration, testing, planning,
+  state enforcement, diagnostics, caching, and physical layout, while optimizing the supplied Lowering implementation
+  only where equivalent behavior is proven and otherwise preserving the explicit port call.
 
 The result must be usable as software and still satisfy the discipline of *What Contract Is*.
 
@@ -152,8 +166,9 @@ The machine must reject as early as possible without moving a later contract's j
 A source declaration may nominate external contract evidence, but only ratified Kontrakt-owned material may receive
 contract authority.
 
-A user must not be required to declare the same contract twice. A supported host contract must be refined by one
-deterministic frontend law or rejected.
+A user must not be required to declare the same contract twice. The operation-local IDL relation is the one Lowering
+contract source. The generated port implementation is a replaceable realization of that declared relation, not a second
+contract declaration.
 
 The core must not read external DTOs, mutable objects, lazy values, proxies, framework contexts, repositories,
 callbacks,
@@ -171,17 +186,18 @@ object instances do not own factual meaning.
 
 Input presentation must be explicit and immutable before it reaches Admission. Runtime snapshot timing, lazy
 materialization, proxy activation, and framework lifecycle must not become hidden Input meaning. Lowering must likewise
-be declared only through immutable finite material. The author explicitly binds each selected Fact coordinate to exactly
-one selected Input coordinate, even when their names happen to match, while Kontrakt resolves the unique supported
-type-refinement profile and generates the mapping realization.
+be declared only through immutable finite relation material. The author explicitly binds each target Operation-parameter
+Fact coordinate to exactly one selected Input coordinate, even when their names happen to match.
 
 The selected source and target types may be identical. Lowering does not require a new target type, a new object, or a
-Kontrakt-specific scalar wrapper. A type change is justified only when it preserves already-declared meaning while
-removing external representation authority and forming the representation required by the Fact surface.
+Kontrakt-specific scalar wrapper. Equal host types do not close the realization port implicitly. When the types differ,
+the supplied realization performs the declared representation formation explicitly; the compiler does not infer a
+conversion merely from the type pair.
 
-No user mapper implementation may become the authority that defines Fact formation. The generated mapping must stop at
-sealed immutable Fact material and must not execute core computation, derive a Result, judge an Invariant, perform a
-State Transition, or publish an outward presentation.
+A supplied Lowering implementation may not become the authority that defines the relation, target participation, factual
+meaning, or establishment. The generated port exposes only the declared realization boundary. The generated machine owns
+stage order, candidate completeness, applicable Invariant and movement judgment, establishment, refusal routing, and the
+handoff to the user Operation.
 
 Input refusal, Admission rejection, selected Canonicalization refusal, Budget or Capacity stop during selected canonical
 production, and Lowering refusal must remain distinguishable because they report different failed obligations. A flow
@@ -199,17 +215,19 @@ contract authority, factual meaning, or state meaning.
 V1 must not optimize, rewrite, fuse, devirtualize, or remove allocations inside unrelated user-supplied implementation
 code. Such implementation remains an opaque realization region whose legal inputs, visible Facts, possible declared
 Operation Result Material surfaces,
-failure surface, and state participation are governed by explicit contracts. Slot-selected Admission,
-Canonicalization, and Lowering declarations are different: they are restricted immutable frontend source evidence that
-Kontrakt must either refine completely and erase or reject before ContractImage publication. Kontrakt owns the generated
-evaluators, canonical producers, and Lowering realizations derived from that material.
+failure surface, and state participation are governed by explicit contracts. Slot-selected Admission and
+Canonicalization declarations remain restricted immutable frontend source evidence that Kontrakt must refine completely
+and erase or reject before ContractImage publication. Lowering relation material is likewise fully ratified, but its
+physical representation formation is supplied through one generated port. Kontrakt may inspect, devirtualize, inline,
+specialize, or erase that port only where the closed binding and implementation body permit a proven equivalent path;
+otherwise the explicit call remains.
 
-Kontrakt-owned validation, deterministic planning, automatic mapping generation, automatic test generation and
+Kontrakt-owned validation, deterministic planning, generated port and assembly production, automatic test generation and
 execution, state enforcement, diagnostics, cache planning, frozen material, and generated gates remain optimization
-targets and must be implemented to a state-of-the-art performance standard. A rich contract declaration must remove
-boilerplate and expose enough whole-pipeline knowledge for mechanically sympathetic specialization, pass fusion,
-allocation control, structural reuse, and deterministic caching. Any optimization that changes declared meaning or
-weakens determinism is invalid.
+targets and must be implemented to a state-of-the-art performance standard. A rich contract declaration and closed
+realization binding expose enough whole-pipeline knowledge for mechanically sympathetic specialization, pass fusion,
+allocation control, structural reuse, and deterministic caching. Any optimization that changes declared meaning,
+observes undeclared implementation state, or weakens determinism is invalid.
 
 ## 4. Decision
 
@@ -225,7 +243,8 @@ Input
 -> Lowering
 ```
 
-When `canonical` is omitted, the contract-axis handoff is directly from Admission to Lowering. This ordering expresses
+When `canonicalization` is omitted, the contract-axis handoff is directly from Admission to Lowering. This ordering
+expresses
 authority handoff. It is not a complete execution pipeline and does not imply that one contract performs the
 implementation work needed to reach the next contract.
 
@@ -250,12 +269,15 @@ representative law to that same contract-visible shape and produces Kontrakt-own
 there is no semantic representative-production boundary and the admitted presentation remains the source material for
 Lowering.
 
-Lowering declares how that boundary presentation forms the immutable Fact surface selected for the same flow. It does
-not define an Operation Start object, a backend layout, a domain object graph, or a Result. The Kontrakt compiler
-derives
-the semantic plan and a backend generates the one-to-one mapping realization. Fact formation is complete only when the
-material is sealed and external authority has been erased. The state axis governs the legal moment at which that sealed
-material becomes available to the core.
+Lowering declares how that boundary presentation may form the ordinary Operation parameter material addressed by its
+one-to-one relation body. Each parameter type resolves to one Fact kind from the enclosing interface's `facts`
+declaration. Lowering does not define an independent Operation Start object, a backend layout, a domain object graph, or
+a Result. The compiler derives the semantic plan and generated port ABI, and exactly one supplied realization forms
+complete candidate material. Fact formation is complete only after the generated machine has verified candidate
+completeness, applied the applicable interface-level Invariants and movement judgments, established input Fact
+authority,
+and erased external authority. The state axis governs the legal moment at which that established material becomes
+available to the user Operation.
 
 A successful judgment, production, or seal grants only the declared authority. It does not retroactively turn source
 syntax, generated machinery, host objects, or backend storage into contract authority.
@@ -272,18 +294,24 @@ Admission -> Canonicalization, when selected:
     Kontrakt-owned generated realization applies the selected representative law
 
 Admission -> Lowering realization, when Canonicalization is omitted:
-    admitted Input is supplied unchanged to a Kontrakt-generated fixed formation plan
+    admitted Input coordinates are supplied unchanged through the generated Lowering port
 
 Canonicalization -> Lowering realization, when selected:
-    the stable same-shape representative is supplied to the same kind of generated formation plan
+    stable same-shape representative coordinates are supplied through the same generated port
 
-Lowering:
-    a generated one-to-one realization forms and seals the selected boundary Fact material
+Lowering realization:
+    exactly one explicitly bound implementation forms complete candidate Operation-parameter material
+
+Generated judgment and establishment path:
+    verifies target completion and declared relation coverage
+    applies every applicable interface-level Invariant and movement judgment
+    establishes input Fact authority
+    invokes the ordinary user Operation
 
 Core realization:
-    consumes explicit Facts and other declared immutable contract material
+    consumes established input Facts and other explicitly bound contract material
     performs replaceable implementation work
-    produces declared immutable Operation Result Material
+    produces its ordinary declared result
 ```
 
 When Canonicalization is selected, a Kontrakt backend generates its realization because the ratified representative law
@@ -292,10 +320,11 @@ canonical law or its canonical byte protocol. When Canonicalization is omitted, 
 generated; the admitted Input is simply the source material of Lowering.
 
 In both branches, the selected Lowering declaration contains immutable explicit one-to-one coordinate bindings only.
-The bindings do not rely on matching names and contain no conversion implementation. The Kontrakt compiler resolves the
-unique supported meaning-preserving refinement from each bound source sort to its target Fact sort, derives the fixed
-`LoweringPlan`, and the selected backend generates the mapping that forms and seals the declared Fact material. This
-generated mapping is boundary implementation, not contract authority and not core computation.
+The bindings do not rely on matching names and contain no conversion implementation. The compiler resolves the exact
+source and target coordinates, derives the fixed `LoweringPlan`, generates one retained plain host-language realization
+port, and closes exactly one supplied implementation into the machine assembly. The implementation may use ordinary
+reusable libraries, but no library, equal type pair, naming rule, classpath discovery, or backend convention selects
+itself. The relation remains contract authority; the implementation remains replaceable boundary machinery.
 
 The internal realization that later consumes Facts may be one function, many functions, an object graph, an AOT plan, or
 another replaceable implementation. Its structure is not the Fact Contract and is not defined by this ADR.
@@ -303,8 +332,8 @@ another replaceable implementation. Its structure is not the Fact Contract and i
 ### 4.3. State Pipeline
 
 The state pipeline runs in parallel with both other axes. It declares when Input formation, Admission judgment,
-Canonicalization, Lowering formation, core-entry handoff, implementation execution, Operation Result Material
-availability, Fact-authority availability, refusal, and Publication are legal.
+Canonicalization, Lowering realization, candidate completion, input Fact establishment, Operation invocation, ordinary
+result availability, result Fact establishment, refusal, and Publication are legal.
 
 ```text
 implementation completed
@@ -323,13 +352,16 @@ that explicit state machine; neither contract order nor callback completion may 
 
 ### 4.4. Complete Flow Model
 
-The four profiles in this ADR end at core entry. They do not define the internal implementation graph and do not require
-an Operation Start DTO.
+The four profiles in this ADR end at established input Fact authority and the legal invocation of the ordinary user
+Operation. They do not define the internal implementation graph and do not require an Operation Start DTO, candidate
+wrapper, or established-Fact wrapper.
 
 One interface scope may contain several operation pipelines. Each operation has its own external boundary flow, while
 Policy, Governance, Budget, and Capacity coordinate the finite resources and decisions shared by the closed operation
-set. Successful Lowering from any of those operation pipelines hands explicit immutable Fact material into the same
-core. The core is not divided merely because the machine exposes several operation handles.
+set. The enclosing `facts` declaration names the closed Fact vocabulary once, and `invariants` names the standing laws
+once. Operation manifests do not repeat either declaration. Successful Lowering from any operation establishes only the
+input Facts explicitly addressed through that Operation's parameter slots; it does not divide the shared core or grant
+universal Fact participation.
 
 The inbound airlock is:
 
@@ -340,25 +372,29 @@ Boundary Input
     -> Input judgment
     -> Admission judgment
     -> optional Canonicalization
-    -> Lowering
-    -> sealed boundary Fact material
-    -> legal core-entry handoff
+    -> operation-local Lowering relation
+    -> generated retained Lowering port
+    -> exactly one supplied realization
+    -> complete candidate Operation input material
+    -> every applicable interface-level Invariant judgment
+    -> every applicable movement judgment
+    -> established input Fact authority
+    -> ordinary user Operation invocation
 ```
 
 The explicit core machine is:
 
 ```text
-Boundary Facts from the selected operation
-+ existing Facts
+Established input Facts for the selected Operation
++ other explicitly bound existing Facts
 + machine-wide Policy, Governance, Budget, and Capacity material
 + explicit Version and State material
-    -> replaceable core realization
-    -> declared immutable Operation Result Material
-       -> when a Fact Contract is selected for that result:
-          Fact Candidate
-          -> applicable Invariant judgment
-          -> legal State Transition
-          -> Fact authority
+    -> ordinary replaceable user Operation
+    -> ordinary declared result material
+    -> proposed result Fact of the Operation return kind
+    -> every applicable interface-level Invariant judgment
+    -> every applicable State / Transition judgment
+    -> established Operation return Fact
 ```
 
 At operation start, Governance resolves the active contract world, Policy supplies the allocation and reaction law,
@@ -367,76 +403,80 @@ The resulting material is fixed for that run before core work depends on it. Cor
 resources, but it does not define their limits, redistribute them by hidden implementation structure, or create a new
 contract pipeline for each internal step.
 
-The core does not know the external Input declaration, transport names, serializers, canonicalizer source,
-Lowering declaration, source-coordinate bindings, mutable carriers, or framework lifecycle. It receives only explicit
-immutable information and explicit laws.
+The user Operation does not know the external Input declaration, transport names, serializers, canonicalizer source,
+Lowering relation, source-coordinate bindings, generated port metadata, mutable carriers, or framework lifecycle. It
+receives ordinary Java or Kotlin parameter values whose Fact authority has already been established outside their host
+representation.
 
-Fact is not restricted to the output of core realization. Boundary Facts are formed by the inbound airlock. Existing
-Facts may already be available in the current core world. Policy, Version, Governance, and other contract material may
-also be presented explicitly where their own contracts require it. Core realization operates over that visible material.
+Fact is not restricted to the output of core realization. Boundary input Facts are established by the inbound airlock.
+Existing Facts may already be available in the current core world and may participate only through explicit bindings.
+Policy, Version, Governance, and other contract material may also be presented explicitly where their own contracts
+require it.
 
-Core realization produces declared immutable Operation Result Material. Result Material names what the operation has
-produced; it is not a competing material kind beside Fact. When the selected operation binds a Fact Contract for that
-result, the same material enters the Fact Candidate path. Applicable Invariant judgment may test its declared relations,
-and a legal State Transition governs whether it receives Fact authority and becomes available for later core use.
-Invariant does not manufacture Fact meaning, and the implementation does not obtain authority merely by returning an
-object. Without a selected Fact path, the material remains declared Operation Result Material and may proceed only
-through the contracts explicitly selected for it.
+The ordinary user Operation returns its declared host result without invoking Kontrakt. That returned material is not
+successful contractual output merely because a method returned an object. Kontrakt treats it as proposed material for
+the Fact kind resolved from the Operation return. Every applicable interface-level Invariant and movement obligation
+must succeed before the result receives established Fact authority and the contractual Operation completes.
 
-The outbound boundary is:
+The outbound boundary is defined by ADR-0049:
 
 ```text
-material explicitly selected by the Publication Contract
-    -> Publication judgment
-    -> permitted external presentation
-       or declared publication stop
+established Operation return Fact
+    -> Publication judgment and explicit claim relation
+    -> permitted outward claim or declared publication stop
+    -> declared outward presentation and replaceable realization
 ```
 
-The selected publication source may be declared Operation Result Material, including that same material after it has
-acquired Fact authority, or another explicit Fact. Publication does not infer its source from a runtime type.
+Publication does not infer its source from runtime type, Operation Result Material, serializer availability, or carrier
+shape.
 
 A concrete flow may therefore be:
 
 ```text
-WithdrawInput
+WithdrawInputPresentation
     -> Admission
     -> optional Canonicalization
-    -> Lowering
-    -> WithdrawalRequest Fact
+    -> WithdrawLowering relation
+    -> WithdrawLoweringPort implementation
+    -> WithdrawalRequest candidate
+    -> WithdrawalRequest Invariant
+    -> established WithdrawalRequest Fact
+    -> ordinary withdraw Operation
 
-Core machine sees:
-    WithdrawalRequest Fact
-    AccountBalance Fact
+The Operation also sees, through explicit participation:
+    established AccountBalance Fact
     WithdrawalPolicy material
 
-Core realization produces:
-    WithdrawalCompletion Result Material
-
-Fact Contract, when selected:
-    gives the same material the AccountBalanceChanged Fact Candidate role
+The Operation returns:
+    WithdrawalRecorded candidate
 
 Invariant:
-    judges declared relations over the visible Facts and the Fact Candidate when selected
+    judges the complete WithdrawalRecorded candidate under the standing law for that exact Fact kind
 
 State / Transition:
-    governs legal movement and whether that material receives Fact authority
+    governs the movement bound to the same proposed result
+
+Successful establishment:
+    grants WithdrawalRecorded Fact authority
+    completes the contractual Operation
 
 Publication:
-    judges the explicitly selected source and produces the permitted withdrawal result presentation
+    judges the established Operation return Fact and the explicitly declared outward claim
 ```
 
-`amount text -> bounded decimal amount Fact coordinate` may belong to Lowering when the Input Contract already declares
-the decimal meaning. `current balance - amount -> new balance` belongs to core realization. `new balance satisfies the
-declared minimum and conservation laws` belongs to Invariant. `the new balance information becomes available in the
-next legal machine condition` belongs to State and Transition. `the permitted external response contains the withdrawn
-amount and remaining balance` belongs to Publication.
+`amount text -> command.amountMinor` may belong to Lowering when the Input Contract already declares the amount meaning.
+`current balance - requested amount -> recorded remaining balance` belongs to the user Operation. `recorded remaining
+balance is non-negative` may belong to the standing Invariant for `WithdrawalRecorded` when that law is complete from
+that one candidate Fact. Legal account movement belongs to State and Transition. The permitted external response
+belongs to Publication and the outward presentation boundary.
 
-Contracts may exist without an Operation implementation. An interface operation handle selects and coordinates one
-external contract flow inside the enclosing machine scope; it does not become the source of Fact authority and does not
-prescribe the shape of the internal implementation graph. Internal core work may be split, fused, or reordered behind
-its declared obligations without becoming another IDL operation or recursively opening another contract pipeline. A new
-operation is required only when the machine intentionally declares another external operation boundary, not merely
-because an implementation contains another function or stage.
+Contracts may exist without an executable Operation implementation, but executable machine publication requires every
+required generated port and Operation realization to be closed exactly once. An interface operation handle selects and
+coordinates one external contract flow inside the enclosing machine scope; it does not become the source of Fact
+authority and does not prescribe the shape of the internal implementation graph. Internal core work may be split,
+fused, or reordered behind its declared obligations without becoming another IDL operation or recursively opening
+another contract pipeline. A new operation is required only when the machine intentionally declares another external
+operation boundary, not merely because an implementation contains another function or stage.
 
 ### 4.5. Common Definition-Time Authority Path
 
@@ -450,7 +490,7 @@ slot-selected source coordinate
 -> ratified Kontrakt-owned contract material
 -> ContractImage-visible material
 -> compiler-derived semantic plan
--> generated realization behind that material
+-> generated realization or explicitly bound generated-port realization behind that material
 ```
 
 A role does not own a duplicate acquisition engine, closure frontier, cycle table, frozen image, planning lifecycle,
@@ -470,9 +510,11 @@ Each successful judgment narrows or authorizes material before the next implemen
 allocation, normalization, lowering, or global coherence cost.
 
 This authority path is not a mandatory physical runtime schedule. Kontrakt-owned reads, gates, canonical producers,
-Lowering realizations, Fact seals, and state checks may be specialized or fused where equivalent. Unrelated
-user-supplied implementation code remains outside that V1 optimization authority, and factual meaning, refusal
-attribution, core-entry handoff, and state movement must remain explicit.
+Lowering orchestration, candidate-completion checks, establishment, and state checks may be specialized or fused where
+equivalent. The exactly bound Lowering realization may be optimized only where analysis proves an equivalent result;
+otherwise its explicit generated-port call remains. Unrelated user-supplied implementation code remains outside that V1
+optimization authority, and factual meaning, refusal attribution, core-entry handoff, and state movement must remain
+explicit.
 
 ---
 
@@ -482,16 +524,22 @@ attribution, core-entry handoff, and state movement must remain explicit.
 
 Input is the boundary presentation contract.
 
-It declares which outside presentation may appear for a flow, which distinctions the boundary must preserve, and
-which values later contracts may judge. It does not place that outside material inside the core. Admission still decides
+It declares which outside presentation may appear for a flow, which distinctions the boundary must preserve, and which
+values later contracts may judge. It does not place that outside material inside the core. Admission still decides
 whether presented material may continue. Canonicalization produces stable representation only when the flow selects that
-contract. Lowering decides which immutable information may cross the airlock as the boundary Fact material selected for
-the same flow. After legal handoff, the core may use that Fact without observing the external presentation.
+contract. Lowering declares which directly named Input coordinates may form the candidate Fact coordinates addressed
+through the selected Operation parameter slots. After the applicable standing judgments and legal handoff establish that
+material, the user Operation may consume the same ordinary host values without observing the external presentation.
 
-A host declaration may already state an explicit external contract. A `Set`, nullable type, sealed hierarchy, or
-default argument is not silent merely because it belongs to Kotlin or Java. But neither the declaration nor an object
-instance receives Kontrakt authority directly. The declaration nominates external contract evidence that Kontrakt must
-refine and ratify; the object is only one way material may arrive.
+A host declaration may already state an explicit external contract. Primitive values, strings, enums, nullability, and
+approved closed immutable scalar types do not become silent merely because Kotlin or Java carries them. But neither the
+declaration nor an object instance receives Kontrakt authority directly. The declaration nominates external contract
+evidence that Kontrakt must refine and ratify; the object is only one way material may arrive.
+
+V1 deliberately keeps that presentation flat. The selected Input presentation exposes one finite set of directly named
+coordinates. A user-owned nested carrier, embedded Value Object, inherited part, interface-typed part, sealed hierarchy,
+recursive type, collection object graph, or shared-reference graph does not become a second contract inside Input. Such
+outside material must be flattened by an explicit replaceable adapter before it reaches the Kontrakt boundary.
 
 Input does not introduce a second acquisition pipeline, a second frozen image, a second planning engine, or a mandatory
 runtime material layer. It enters the machinery already established by ADR-0039, ADR-0040, and ADR-0043 on two separate
@@ -500,11 +548,11 @@ timelines.
 At contract-definition time, the path is:
 
 ```text
-slot-selected input root coordinate
+slot-selected flat Input declaration
 -> existing adapter-neutral metamodel acquisition
 -> FrozenMetamodelImage
 -> planning-facing frozen providers
--> input-specific projection and source-profile judgment inside planning
+-> direct-coordinate projection and source-profile judgment inside planning
 -> adapter-erased lowered Input material
 -> ratified contract graph unit
 -> ContractImage-visible Input material and generated boundary realization
@@ -512,28 +560,26 @@ slot-selected input root coordinate
 
 `FrozenMetamodelImage` remains the operation-neutral authority for source and metamodel facts. Input planning does not
 re-open reflection, KSP, bytecode, source AST, PSI, or backend-local handles. It decides, for the selected operation,
-which
-frozen facts form the Input presentation and how those facts must be interpreted under the Input role.
+which frozen declaration and direct member facts form the Input presentation and how those facts must be interpreted
+under the Input role.
 
 Frozen acquisition and planning remain separate passes. Input does not merge them and does not create another
 `TypeReference` closure frontier, cycle-identity acquisition path, raw-fact image, graph engine, readiness bridge,
 budget
 ledger, or frozen publication protocol. Existing planning mechanics may be reused, but Input owns its own projection
 law.
-Generation-oriented constructor selection, property eligibility, active-member projection, polymorphic expansion, and
-cycle truncation do not become Input semantics merely because those mechanisms already exist.
+Generation-oriented constructor selection, polymorphic expansion, recursive member traversal, collection expansion, and
+cycle truncation do not become Input semantics merely because those mechanisms already exist elsewhere.
 
 The operation-specific result is lowered through the existing contract graph protocol. A source declaration, DTO object,
 backend handle, or planning node cannot become Input identity directly. Input meaning becomes authoritative only after
-it
-has been lowered into ratified Kontrakt-owned contract material. The resolved Input presentation is therefore the
-logical
-operation-specific planning and lowering result; it is not another frozen metamodel image.
+it has been lowered into ratified Kontrakt-owned contract material. The resolved Input presentation is therefore the
+logical operation-specific planning and lowering result; it is not another frozen metamodel image.
 
 At invocation time, the path is shorter:
 
 ```text
-already-formed immutable Input presentation
+already-formed flat immutable Input presentation
 -> generated boundary reader or static gate
    -> declared presentation formed -> Admission
    -> declared presentation refused -> declared Input stop
@@ -541,18 +587,15 @@ already-formed immutable Input presentation
 ```
 
 The Input boundary accepts only explicitly declared immutable presentation material. A mutable object, lazy value,
-proxy,
-framework-bound object, live collection view, or lifecycle-dependent carrier is not an Input presentation. It must be
-transformed into an immutable presentation before it reaches the Input boundary, or the direct source profile must
-reject
-it.
+proxy, framework-bound object, live collection view, nested carrier graph, or lifecycle-dependent carrier is not an
+Input
+presentation. It must be transformed into one flat immutable presentation before it reaches the Input boundary, or the
+direct source profile must reject it.
 
-That transformation may be handwritten or generated, but it is an explicit adapter or presentation-formation
-operation outside the Input runtime boundary. The generated boundary realization must not choose a capture moment,
-invoke
-lazy behavior, snapshot mutable state, or derive stable meaning from a live carrier. It reads and verifies
-already-formed
-immutable presentation material.
+That transformation may be handwritten or generated, but it is an explicit adapter or presentation-formation operation
+outside the Input runtime boundary. The generated boundary realization must not choose a capture moment, invoke lazy
+behavior, snapshot mutable state, traverse an outside object graph, or derive stable meaning from a live carrier. It
+reads and verifies already-formed immutable presentation material.
 
 The immutable presentation is not a second frozen image, contract graph unit, or mandatory universal
 `FormedBoundaryMaterial` domain type. Runtime invocation must not repeat metamodel acquisition, source resolution,
@@ -561,23 +604,24 @@ planning, graph ratification, canonical identity derivation, or contract publica
 The V1 admissibility law is:
 
 ```text
-Input may accept an external presentation contract only when it can be deterministically refined into explicit, finite,
-inspectable, loss-accounted, root-owned, transitively immutable boundary material without allowing external
-implementation mechanics, pointer topology, hidden movement, or another contract role to survive refinement.
+Input may accept an external presentation contract only when it can be deterministically refined into one explicit,
+finite, inspectable, loss-accounted, flat set of directly named immutable coordinates without allowing external
+implementation mechanics, nested contract composition, pointer topology, hidden movement, or another contract role to
+survive refinement.
 ```
 
 The authoring law is:
 
 ```text
-Do not make the user declare the same contract twice.
-Treat the host declaration as explicit external contract evidence.
-Refine it through one deterministic Kontrakt law or reject it.
+Do not make the user declare the same flat presentation twice.
+Treat the selected host declaration as external contract evidence.
+Refine its direct coordinates through one deterministic Kontrakt law or reject it.
 ```
 
-This law is how the Input API carries the discipline of *What Contract Is*. Kontrakt must not force users to restate an
-external contract they already selected through a host declaration. For each supported external contract, the selected
-frontend must provide one deterministic refinement law, remove external implementation mechanics from the result, and
-reject the source or require projection when no safe refinement exists.
+This law is how the Input API carries the discipline of *What Contract Is*. Kontrakt must not force users to restate a
+flat external presentation they already selected through a host declaration. For each supported direct coordinate sort,
+the selected frontend must provide one deterministic refinement law, remove external implementation mechanics from the
+result, and reject the source or require an adapter when no safe refinement exists.
 
 Three forms of hidden meaning are rejected.
 
@@ -586,12 +630,11 @@ host source may contain inheritance, override dispatch, constructor execution, g
 serializer conventions, collection implementations, `equals`, `hashCode`, or proxy behavior, but those mechanics cannot
 survive refinement as Input authority.
 
-**Hidden choice** exists when the same explicitly declared external contract admits more than one Kontrakt refinement
-and the machine silently selects one. `Set`, `Map`, nullable fields, default arguments, sealed hierarchies, and external
-scalar types are not hidden merely because they are host forms; their declarations are already external contract
-choices.
-V1 must refine each supported form through one fixed law. If no safe unique refinement exists, the source is rejected or
-projected rather than asking the user to restate the same contract.
+**Hidden choice** exists when the same selected declaration admits more than one Kontrakt interpretation and the machine
+silently chooses one. A direct nullable coordinate, enum, approved scalar, or bounded opaque leaf may be accepted only
+through one fixed frontend profile. A user-owned nested type, collection carrier, sealed hierarchy, generic object
+structure, or interface-based part is not guessed into a flat Input law. It is rejected or flattened by an explicit
+adapter before Input.
 
 **Hidden movement** exists when observing the alleged input performs behavior or depends on time. Callbacks, lazy
 loading,
@@ -605,243 +648,115 @@ available. Admission begins only after Input formation succeeds.
 
 An Input source candidate is ratifiable only when it satisfies the conditions below.
 
-**Root selection and explicit resolution.** The operation manifest selects the root input through the `input` slot. The
-authoring surface may name only that root, but planning must resolve the complete operation-specific Input presentation
-from `FrozenMetamodelImage` before runtime realization is generated. Every visible part, variant, collection shape,
-generic argument, presence distinction, source coordinate, external-contract refinement decision, and resolution failure
-belongs to the lowered Input material. Authoring may be compact. Contract material may not be implicit.
+**Root selection and exact coordinate closure.** The operation manifest selects one Input declaration through the
+`input` slot. Planning must resolve the complete operation-specific presentation from `FrozenMetamodelImage` before
+runtime realization is generated. The lowered Input material contains the exact declaration identity, direct coordinate
+set, coordinate order, coordinate sorts, presence distinctions, approved scalar-profile decisions, bounds, and every
+resolution failure. No nested member path, inherited member, runtime subtype, accidental getter, or dynamically
+discovered coordinate may extend that surface.
 
 **Existing-machine integration.** Input source resolution consumes planning-facing providers backed by
 `FrozenMetamodelImage`. It must not perform backend lookup or maintain an Input-owned metamodel cache, closure table,
 cycle table, raw-fact table, frozen image, or planning session. Missing frozen coverage is a frozen-acquisition or image
-integrity problem; disagreement about which covered facts belong to Input is an Input planning or lowering problem.
+integrity problem; disagreement about which covered direct members belong to Input is an Input planning or lowering
+problem.
 
-**Declared observation surface.** Kontrakt must know what the generated boundary realization may observe before an
-invocation begins. The declaration graph must be finite and inspectable. Runtime collection cardinality may vary, but
-capacity and budget must bound access. Runtime property discovery, dynamic reachability, and accidental members do not
-extend the contract surface.
+**Declared observation surface.** Kontrakt must know every coordinate the generated boundary realization may observe
+before an invocation begins. The coordinate set is finite, flat, directly named, and inspectable. Runtime property
+discovery, dynamic reachability, nested traversal, and accidental members do not extend the contract surface.
 
-**Presentation-only authority.** Input may declare names, part shapes, value kinds, absence, multiplicity, finite
-variants,
-collection presentation, symbolic references, and coordinates. It must not decide validity, canonical identity, core
-meaning, state legality, publication permission, policy selection, or movement. Those authorities belong to other slots.
+**Presentation-only authority.** Input may declare coordinate names, direct sorts, presence, finite scalar choices,
+approved opaque scalar profiles, declared references represented as values, and bounds. It must not decide validity,
+canonical identity, core meaning, state legality, publication permission, policy selection, or movement. Those
+authorities belong to other contracts.
 
-**Declared external contracts are refined, not restated.** Kontrakt may refine a supported host declaration
-automatically when the selected frontend defines one deterministic mapping from its external contract to Input
-obligations. Primitive and scalar values, enums, closed products, finite nested products, closed generic products,
-ordered sequences, set membership, map association, nullable presentation, and source-visible sealed alternatives may
-all be refined when their subordinate material closes under the same law. Automatic refinement removes repeated
-authoring; it does not grant the host declaration or its implementation Kontrakt authority.
+**Supported direct-coordinate condition.** A direct coordinate may use a primitive, `String`, a closed enum, or an
+explicitly approved closed immutable scalar profile such as a pinned UUID, decimal, date, instant, bounded text, bounded
+bytes, token, identifier, path, or URI presentation. Approval belongs to the frontend profile, not to a familiar host
+type name. Host methods, object identity, equality, hashing, locale, timezone, scale, parsing, normalization, and
+serialization behavior do not become Input law.
 
-**Refinement must be deterministic.** The user does not repeat a host contract in Kontrakt vocabulary. For every
-supported external source contract, the selected frontend must define one canonical refinement law. When a source form
-cannot be refined without inventing meaning, preserving external implementation authority, or losing a required
-distinction, Kontrakt rejects the source or requires adapter projection. The refinement result must be visible in the
-resolved Input material and included in contract identity where it changes meaning.
+**Flatness condition.** A direct coordinate may not expose a user-owned product, entity, Value Object, record, data
+class,
+interface, abstract class, sealed hierarchy, array, ordinary `List`, `Set`, `Map`, recursive node, shared-reference
+graph,
+or dynamically typed container as further Input structure. V1 does not recursively compose another contract through a
+coordinate type. An outside payload with that shape must be flattened into directly named coordinates or converted into
+one explicitly approved bounded opaque leaf before submission.
 
-**Distinction preservation.** A directly ratifiable carrier must preserve every distinction the declared presentation
-may
-need. Missing, present-null, present-value, empty, duplicate, order, discriminator, and numeric precision are distinct
-when the contract says they are distinct. Input realization must not pretend to preserve information that a serializer,
-container, default expression, or framework binder has already erased. When an earlier carrier has removed a required
-distinction, the adapter must supply a less lossy presentation such as raw bytes, a token stream, an entry sequence, a
-presence bitmap, or an explicit discriminator.
+**Explicit immutable boundary access.** Runtime Input formation must observe only the selected carrier's already-formed
+direct values. It must not execute custom getters, delegated properties, lazy initializers, serializers, callbacks,
+constructor defaults, object traversal, collection iteration, repository reads, environment access, or framework
+lifecycle hooks. A read that can perform work or change with time is not a boundary coordinate read.
 
-**Explicit immutable boundary access.** External carrier lifecycle must not influence later judgment. Admission may
-observe only an explicitly formed, transitively immutable Input presentation. Mutable, lazy, proxied, framework-owned,
-live-view, or lifecycle-dependent carriers must be converted before the Input boundary through an explicit adapter or
-presentation-formation operation. Input runtime machinery must not snapshot them, select a capture time, or execute
-behavior in order to manufacture stability.
+**Source carrier and contract separation.** A Kotlin data class, a final Kotlin class with primary-constructor `val`
+properties, or a Java record may carry the flat presentation. Kontrakt retains only the resolved direct coordinate
+names,
+sorts, presence, declaration order, approved scalar profiles, and bounds. Constructors, generated `copy`, `componentN`,
+`equals`, `hashCode`, `toString`, accessors, class ancestry, annotations, and object identity remain implementation
+artifacts.
 
-**Input-owned refusal boundary.** Input may refuse an invocation only when the declared boundary presentation cannot be
-formed: required material is unavailable, the carrier is structurally incompatible, a declared encoding is malformed, a
-ratified alternative cannot be identified, a required distinction is unavailable, or stable observation cannot be
-established. Input must not refuse a presentation merely because Admission, Canonicalization, Lowering, or Invariant
-will
-later reject it. A successful Input formation is therefore the precondition for Admission; an Input refusal produces no
-Admission candidate and stops the operation before Admission begins.
+**Interface and inheritance boundary.** A user-defined interface, inherited carrier shape, interface-typed coordinate,
+override relation, default method, or runtime implementation relationship contributes no Input material. A final carrier
+may implement an unrelated interface only when every Input coordinate is independently declared on the selected flat
+carrier and the interface relation is completely erased from authority.
 
-**Delegated early-stop attribution.** Capacity, Budget, Policy, Governance, or another ratified gate may be executed
-while
-the boundary reader is still acquiring material. Early execution does not transfer authority to Input. The stop retains
-the declared result and diagnostic attribution of the contract that supplied the gate and must not be converted into
-Input failure or repeated by a later stage.
+**Nullability and default refinement.** A nullable direct coordinate explicitly allows a value or `null`. Kontrakt does
+not invent an absent-versus-present-null distinction the source does not carry. A host or serializer default does not
+become Input authority; only the value actually present at the boundary is observed. If omission or default application
+must itself be judged, the flat presentation must carry that distinction as another direct coordinate.
 
-**Root ownership.** Input does not inherit or recursively compose contracts. A nested declaration or generic argument
-may
-describe the shape of a root part, but it does not introduce independent admission, lowering, invariant, publication,
-governance, lifecycle, or movement authority. Kontrakt expands such declarations into one root-owned Input presentation.
-This is material expansion, not contract composition.
-
-**Declared material traversal.** Input may follow declared, finite, acyclic material paths such as
-`order.customer.address.city`. That is ordinary product expansion. Input must not discover meaning from aliasing, shared
-object identity, cycles, runtime reachability, reference equality, or pointer topology. Planning may later process
-references and cycles inside Kontrakt-owned material under its own rules; the Input boundary does not import the host
-object graph as law.
-
-**Constructor and accessor boundary.** Constructor shape may provide declaration coordinates. Constructor execution,
-factory execution, builder execution, initialization logic, and default argument evaluation do not define Input meaning.
-Accessors may read already-ratified parts, but accessor discovery and arbitrary getter behavior do not define the part
-table.
-
-**Host declaration co-location boundary.** Kotlin data classes and Java records necessarily co-locate record-like
-coordinate declarations with host constructor syntax. V1 accepts that source co-location instead of requiring the user
-to
-declare the same presentation again through a generated or parallel Kontrakt type. The frontend reads
-primary-constructor
-`val` properties or record components as explicit external shape evidence and separates them during lowering. Coordinate
-names, declared kinds, presence, supported refinement decisions, and declaration order may enter Input material. JVM
-`<init>`, allocation, field writes, compact or secondary constructor execution, `init` blocks, default-expression
-execution, generated `copy`, `componentN`, `equals`, `hashCode`, and `toString` methods, accessor methods, class
-ancestry,
-and object identity remain implementation artifacts and do not enter ratified contract material. Source co-location is
-allowed. Authority co-location is not.
-
-**Interface implementation boundary.** A user-defined interface, an interface-typed part, or a runtime implementation
-relationship does not provide Input authority. V1 must not derive Input parts or meaning through interface ancestry,
-runtime implementation discovery, default methods, override dispatch, or implementation-provided access behavior. A
-final closed declaration may still be ratified when it independently satisfies the direct-source and transitive
-immutability conditions; any interface relation is erased and contributes no Input material. Recognized standard
-collection interfaces may nominate external shape semantics only through dedicated deterministic refinement profiles.
-Their runtime implementations do not prove immutable Input presentation and contribute no contract meaning. Any other
-interface-based source requires an already-formed immutable presentation supplied through an explicit formation boundary
-or is rejected.
-
-**Generic closure.** Every generic argument in the resolved graph must itself resolve as Input material. The outer
-carrier
-may describe structure, but its arguments cannot remain raw, wildcarded, star-projected, platform-erased, or otherwise
-open. A reusable generic declaration is a source template until the selected operation closes every argument.
-
-**Ordered multiplicity.** `List<T>` and array-like declarations may nominate ordered multiplicity when `T` resolves.
-That declaration-level refinement does not prove runtime immutability. Ordinary Kotlin or Java lists may be backed by
-mutable storage, and arrays are mutable. Direct Input therefore requires a supported immutable sequence presentation or
-an explicitly formed immutable presentation that preserves order and ownership. Collection nesting contributes to
-declaration depth; runtime element count belongs to Capacity and Budget. The concrete collection implementation
-contributes no contract meaning.
-
-**Set refinement.** `Set<T>` is an explicit external contract choice. Under the JVM V1 profile, Kontrakt refines the
-declaration as membership presentation of `T`: repeated occurrence and sequence position are not observable at this
-boundary. The ordinary runtime `Set` implementation is not direct Input authority and does not prove immutable
-ownership.
-A supported immutable membership presentation or explicit immutable formation must supply the runtime material.
-Kontrakt does not adopt host equality, hashing, iteration, or storage mechanics as its own law. If the operation's Input
-obligations require repeated occurrences or order, `Set<T>` cannot realize them and a loss-preserving presentation is
-required.
-
-**Map refinement.** `Map<K, V>` is an explicit external contract choice. Under the JVM V1 profile, Kontrakt refines the
-declaration as a key-value association presentation in which each represented key has one represented value. Duplicate-
-key occurrence and original entry order are not observable at this boundary. The ordinary runtime `Map` implementation
-is not direct Input authority and does not prove immutable ownership. A supported immutable association presentation or
-explicit immutable formation must supply the runtime material. Kontrakt does not adopt host equality, hashing,
-comparator, iteration, or storage mechanics. If the operation's Input obligations require duplicate-key evidence or
-entry
-order, `Map<K, V>` cannot realize them and an entry sequence presentation is required.
-
-**Closed-choice refinement.** An enum or source-visible sealed hierarchy is an explicit external finite-choice
-contract. Under the JVM V1 profile, Kontrakt may refine it automatically when the complete alternative set and every
-variant payload are visible and resolvable. The ratified Input material owns the explicit alternative set,
-frontend-fixed
-discriminator coordinates, and unknown-variant failure; ancestry is erased from contract authority. Adding or removing a
-variant changes the source candidate and contract identity and therefore requires compatibility and version judgment. It
-must never mutate an active contract silently. Open polymorphic hierarchies and runtime subtype discovery do not satisfy
-the V1 Input condition.
-
-**Nullability and default refinement.** A nullable host part is an explicit external contract allowing a value or
-`null`. Kontrakt refines it automatically to that presentation and does not invent an absent-versus-present-null
-distinction that the source does not carry. If the operation requires that distinction, the source cannot realize the
-Input obligation and a less-lossy carrier or adapter is required. A host-language or serializer default is also an
-explicit external carrier contract, but V1 refines only the value that reaches the boundary. Construction-time or
-serialization-time default execution does not become Input authority. If omission or default application itself must be
-judged, the carrier must preserve that event explicitly.
-
-**External scalar refinement.** A foreign scalar type is an explicit external contract candidate. For every supported
-foreign scalar, the selected frontend profile must define one canonical mapping into declared Input scalar material.
-Host-specific equality, scale, timezone, locale, normalization, parsing, or rounding mechanics do not survive merely
-because the host type provides them. If the profile cannot erase those mechanics while preserving the Input obligation,
-the source is rejected or an adapter projects it into supported scalar material. The user does not restate the same
-scalar contract in Kontrakt vocabulary.
-
-**References as values.** Input may carry declared references such as identifiers, tokens, paths, URIs, parent
-coordinates, callback coordinates, and resource coordinates. These are values. A live object reference, callback target,
-service object, file handle, session object, or capability does not become Input material merely because it is carried
-in
-a field.
-
-**Explicit graph and tree presentation.** Tree and graph-shaped Input may be represented through nodes, edges,
-identifiers,
-parent coordinates, and other finite rows. V1 does not accept recursive or shared-reference JVM object graphs as direct
-Input sources. Graph identity, reachability, parent validity, cycle absence, and accepted core shape belong to
-canonicalization, lowering, and invariant.
-
-**Opaque material boundary.** Opaque data may be Input material when its presentation is still declared: bounded bytes,
-bounded text, tokens, coordinates, or a foreign payload with an explicit content kind and size boundary. An arbitrary
-live JVM object is not opaque data. Keeping such an object for later execution would preserve external lifecycle and
-capability inside the pipeline.
+**References and opaque values.** Input may carry identifiers, tokens, paths, URIs, source text, bounded bytes, and
+other
+declared values. A live object reference, callback target, service, repository, file handle, session, transaction,
+executor, clock, or capability does not become Input material merely because a field can hold it.
 
 The V1 user-facing policy has four classes.
 
-| Authoring class                                                                                                            | V1 treatment                                                                         | Examples                                                                                                                                                                                                                                                                                         | Contract effect                                                                                                                                                                                                         |
-|----------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Direct immutable presentation                                                                                              | Refine and ratify directly when the complete visible graph is transitively immutable | Scalar, enum, transitively immutable Kotlin data class or Java record, closed immutable product, finite immutable nested product, generated Input presentation, supported immutable sequence, membership, or association presentation                                                            | The declaration supplies explicit external contract evidence and the runtime value already satisfies the immutable Input boundary; no duplicate presentation declaration is required                                    |
-| Refinable declaration without direct immutable runtime proof, or a declaration that cannot preserve a required distinction | Require explicit immutable presentation formation or reject the source               | Ordinary `List<T>`, `Set<T>`, `Map<K, V>`, array, mutable-backed read-only view, Java record or Kotlin data class containing mutable parts, lossy serializer product, nullable carrier when absence must remain distinct, unsupported scalar semantics, open generic or hierarchy                | Kontrakt may refine declaration meaning, but it does not snapshot runtime state or invent missing meaning; an explicit adapter or generated formation surface supplies immutable material that satisfies the obligation |
-| Implementation-shaped carrier                                                                                              | Require explicit adapter or presentation formation before Input                      | Mutable JavaBean, inherited DTO, user-defined interface root or interface-typed part, runtime implementation-discovered source, framework DTO, serializer object, proxy, entity, custom getter, delegated property, third-party object, dynamic JSON object, recursive or shared-reference graph | Host conventions, lifecycle, and implementation relationships are removed before the Input boundary                                                                                                                     |
-| Behavior, capability, movement, or role leakage                                                                            | Reject from Input                                                                    | Callback, lambda, validator, service, repository, clock, executor, transaction, resource handle, stream, future, core fact, state, backend handle                                                                                                                                                | The material belongs to another role or is not contract data                                                                                                                                                            |
+| Authoring class                                 | V1 treatment                                                                         | Examples                                                                                                                                                           | Contract effect                                                                                                                                                            |
+|-------------------------------------------------|--------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Direct flat immutable presentation              | Refine and ratify directly when every coordinate is direct, immutable, and supported | Primitive and `String` coordinates, closed enums, approved closed immutable scalar leaves, flat Kotlin data class, flat final Kotlin carrier, flat Java record     | The selected declaration supplies external contract evidence and the runtime value already satisfies the Input boundary; no duplicate presentation declaration is required |
+| Outside structured presentation                 | Require explicit flattening or presentation formation before Input                   | Nested DTO, embedded Value Object, inherited product, sealed hierarchy, array, ordinary `List`, `Set`, or `Map`, recursive tree, graph, dynamic JSON object        | An adapter removes outside structure and produces the declared flat Input coordinates; Kontrakt does not recursively adopt the outside contract                            |
+| Implementation-shaped carrier                   | Require explicit adapter or reject the source                                        | Mutable JavaBean, framework DTO, proxy, entity, custom getter, delegated property, interface root, runtime-discovered implementation, third-party lifecycle object | Host conventions, capture timing, lifecycle, and implementation relationships are removed before the Input boundary                                                        |
+| Behavior, capability, movement, or role leakage | Reject from Input                                                                    | Callback, lambda, validator, service, repository, clock, executor, transaction, resource handle, stream, future, core Fact authority, State, backend handle        | The material belongs to another role or is not contract data                                                                                                               |
 
-For the JVM V1 zero-adapter source profile, Kontrakt uses the host declaration itself as source evidence rather than
-requiring a second generated presentation declaration. A Kotlin data class, a Kotlin final class whose ratified parts
-are
-primary-constructor `val` properties, or a Java 17+ record may satisfy the direct-source conditions only when the entire
-visible part graph is transitively immutable. `data class`, `val`, `final`, and `record` are evidence about declaration
-shape; none proves deep immutability by itself. Ordinary `List`, `Set`, `Map`, arrays, mutable nested objects, custom
-getters, delegated properties, proxies, and live views disqualify direct runtime presentation unless the selected
-frontend recognizes a concrete immutable external contract with a fixed refinement profile.
+For the JVM V1 zero-adapter source profile, Kontrakt uses the selected host declaration itself as source evidence rather
+than requiring a second generated presentation declaration. A Kotlin data class, a final Kotlin class whose selected
+coordinates are primary-constructor `val` properties, or a Java 17+ record may satisfy the direct-source conditions only
+when it is flat and every direct coordinate uses a supported immutable sort. `data class`, `val`, `final`, and `record`
+are shape evidence; none grants authority by itself.
 
-The frontend does not admit the host class or constructor as a contract unit. It interprets primary-constructor `val`
-declarations and record components as a record-like external presentation surface. Contract lowering retains only the
-resolved coordinates, declared kinds, presence, declaration order, supported refinement decisions, and immutable-closure
-obligations. Constructor execution and generated class machinery remain on the implementation axis and are erased from
-contract authority. The same host declaration may therefore supply source evidence and a JVM construction surface
-without
-mixing their authority in the ratified machine.
+The frontend does not admit the host class or constructor as a contract unit. It interprets selected
+primary-constructor `val` declarations and record components as one flat external presentation surface. Contract
+lowering retains only direct coordinates, declared sorts, presence, declaration order, approved profile decisions, and
+bounds. Constructor execution and generated class machinery remain on the implementation axis and are erased from
+contract authority.
 
-Kotlin part order is the declared primary-constructor property order. Java part order is record-component order. A
-declaration does not lose eligibility merely because it implements an interface, but no part or meaning may be obtained
-from that interface relationship. A root declared as a user-defined interface, or a part whose Input surface depends on
-interface dispatch, does not satisfy the zero-adapter profile.
+Kotlin coordinate order is the selected primary-constructor property order. Java coordinate order is record-component
+order. A root declared as a user-defined interface, a coordinate whose Input meaning depends on interface dispatch, or a
+carrier whose visible Input surface requires nested traversal does not satisfy the zero-adapter profile.
 
-A source-visible sealed hierarchy may participate in the zero-adapter profile when the selected frontend can close the
-complete alternative set and every payload from frozen source facts. It is refined automatically under the fixed
-closed-choice law above; the user does not restate the hierarchy in Kontrakt vocabulary. The explicit finite alternative
-set becomes Input material, while Kotlin or Java ancestry does not.
+These declarations are source conveniences, not contract authority. Equivalent flat presentation material may later
+come from another language, schema compiler, serialization system, or generated frontend without changing the Input
+Contract.
 
-These declarations are source conveniences, not contract authority. Equivalent presentation material may later come from
-another language, schema compiler, serialization system, or generated frontend without changing the Input Contract.
+Nested payloads, inherited carriers, framework objects, collection-shaped payloads, proxy objects, third-party objects,
+recursive graphs, and dynamically typed containers may remain in the application outside Kontrakt. Before invocation
+they must be converted through an explicit replaceable adapter or presentation-formation surface into the same flat
+immutable Input material resolved and lowered through the frozen-image and planning path. Kontrakt V1 does not accept
+those live objects and snapshot, flatten, or traverse them at the boundary.
 
-Inherited carrier shape, JavaBean discovery, mutable framework objects, proxy objects, custom getter surfaces, delegated
-properties, third-party objects, recursive graphs, and dynamically typed containers may remain in the application
-outside
-Kontrakt. Before invocation they must be converted through an explicit adapter or presentation-formation surface into
-immutable Input material whose operation-specific meaning was resolved and lowered through the same frozen-image and
-planning path.
-Kontrakt V1 does not accept those live objects and snapshot them at the boundary. The rule is not to forbid ordinary
-host
-objects. The rule is to stop ordinary implementation structure and capture timing from becoming contract law.
+If the source cannot be resolved under these laws, or if no safe deterministic direct-coordinate refinement exists, the
+contract source is rejected during planning or lowering. No ratified Input material, ContractImage-visible Input
+authority, or runtime boundary realization is produced for that source.
 
-Callbacks, capabilities, live resources, and asynchronous control surfaces are not rescued by calling them opaque. If an
-operation needs to refer to one, Input may carry an explicit identifier, token, coordinate, source text, byte sequence,
-or other declared data representation. Execution and resource ownership remain outside the Input Contract.
-
-If the source cannot be resolved under these laws, or if no safe deterministic refinement exists, the contract source
-is rejected during planning or lowering. No ratified Input graph, ContractImage-visible Input authority, or runtime
-boundary realization is produced for that source.
-
-If a ratified Input contract exists but the supplied immutable presentation cannot satisfy the declared boundary
+If a ratified Input contract exists but the supplied flat immutable presentation cannot satisfy the declared boundary
 because required material is unavailable, structurally incompatible, malformed under the declared representation, or
 missing a required distinction, the machine produces the declared Input failure before Admission begins. A mutable,
-lazy, proxied, or lifecycle-dependent object is not repaired at this point; it was not a legal direct Input
-presentation.
-A Capacity, Budget, Policy, Governance, or other cross-cutting gate may also stop execution during boundary access, but
-that result remains owned by the supplying contract and is not Input failure.
+lazy, proxied, nested, collection-backed, or lifecycle-dependent object is not repaired at this point; it was not a
+legal
+direct Input presentation. A Capacity, Budget, Policy, Governance, or other cross-cutting gate may also stop execution
+during boundary access, but that result remains owned by the supplying contract and is not Input failure.
 
 ### 5.2. Admission Contract
 
@@ -911,12 +826,12 @@ Admission inheritance, marker-interface membership, override, virtual specializa
 holder, and type-hierarchy reuse are prohibited. Shared meaning is reused by selecting the same flat declaration, not by
 deriving another Admission type.
 
-**Input dependency condition.** Admission is compiled against the ratified Input material of the same operation. Every
-runtime operand must resolve to a coordinate, nested part, finite alternative, collection element, or other value
-already
-made available by that Input Contract. Policy, Governance, Capacity, Budget, environment, and implementation objects do
-not become implicit Admission operands. Those contracts may select the active contract world or stop under their own
-authority, but Admission does not inspect them as undeclared runtime data.
+**Input dependency condition.** Admission is compiled against the ratified flat Input material of the same operation.
+Every runtime operand must resolve to one directly named Input coordinate, a value exposed by an approved direct scalar
+profile, or a statically ratifiable literal. Admission does not traverse a nested carrier, collection object graph,
+interface relation, runtime subtype, or outside reference graph. Policy, Governance, Capacity, Budget, environment, and
+implementation objects do not become implicit Admission operands. Those contracts may select the active contract world
+or stop under their own authority, but Admission does not inspect them as undeclared runtime data.
 
 A literal or constant may participate only when the frontend can ratify its complete value and semantic type at
 definition time. A `val` or `final` field is not sufficient when its value depends on initializer execution, external
@@ -997,11 +912,10 @@ The required semantic surface includes at least:
 - explicit null, absence, presence, and value relations without silently collapsing distinctions preserved by Input;
 - character, string, pattern, and binary relations under an explicit unit, normalization, case, locale, charset, and
   pattern-semantics profile where those distinctions matter;
-- nested closed-product reads and structural relations over ratified parts without invoking user-defined `equals`,
+- direct-coordinate relations over the flat ratified Input presentation without invoking user-defined `equals`,
   `hashCode`, or `compareTo` implementations;
-- fixed-index and bounded relations over arrays and binary material with explicit index-definedness;
-- size, membership, equality, ordering where declared, bounded quantification, and bounded aggregation over ratified
-  arrays, sequences, sets, and maps; and
+- fixed-index and bounded relations inside approved text, binary, identifier, numeric, or temporal scalar profiles with
+  explicit index and definedness laws; and
 - relations over supported JVM value profiles such as large numbers, identifiers, and temporal values when Kontrakt owns
   a complete versioned semantic profile for the selected type.
 
@@ -1024,29 +938,23 @@ First, a private non-overridable helper inside the selected declaration may be a
 refined into the root judgment as described above. Second, a Java or Kotlin standard-library surface may be accepted
 when
 the selected frontend owns a stable, versioned semantic profile for that exact operation. For example,
-`String.startsWith`, `List.all`, or a finite numeric operation may serve as source syntax only when the host call is
-removed and replaced by backend-independent prefix, bounded-quantifier, or numeric material.
+`String.startsWith` or a finite numeric operation may serve as source syntax only when the host call is removed and
+replaced by backend-independent prefix or numeric material.
 
 Unknown calls, user-defined receiver methods, custom predicates, user-defined equality or ordering, extension functions
 whose bodies are unavailable, method references, virtual calls, framework callbacks, and library operations without a
 complete Kontrakt semantic profile are rejected. Method purity is not assumed from naming, annotations, finality, or a
 Boolean return type.
 
-**Bounded collection and binder condition.** Collection judgment is part of Admission when the Input Contract and the
-active Capacity or Budget material close the required access bound. The frontend may refine source forms such as
-`all`, `any`, `none`, `count`, finite membership, bounded sum, bounded minimum, and bounded maximum into explicit binder
-and aggregation material.
+**Bounded direct-value operation condition.** Admission may inspect the internal units of an approved direct scalar or
+opaque-leaf profile only when the Input Contract and active Capacity or Budget material close the required access bound
+and Kontrakt owns the complete semantic operation. Examples include bounded text prefix, bounded binary index, numeric
+classification, or another fixed profile operation.
 
-A Kotlin or Java lambda used syntactically inside such a recognized bounded operation is not preserved as a runtime
-function object. It is accepted only when it does not escape, its captures are limited to ratified Input coordinates or
-statically ratifiable constants, and its body independently satisfies the Admission source law. The frontend lowers it
-to an explicit finite binder. A lambda, `Predicate`, `Function`, method reference, or functional-interface instance used
-as a stored runtime value, dynamically supplied callback, or dispatch surface is rejected.
-
-Iteration order, duplicate treatment, element equality, null-element treatment, and cardinality bounds must be ratified
-where they can affect judgment or evidence. A mutable-backed read-only view, live collection, runtime-discovered
-container, or collection without the required bound cannot become Admission material merely because a host library can
-iterate it.
+A Kotlin or Java lambda, `Predicate`, `Function`, method reference, or functional-interface instance is not Admission
+material. V1 does not use such a value to traverse user-owned collections or nested Input structure. A recognized
+frontend operation must lower directly to finite Kontrakt judgment material; no runtime function object, iterator,
+callback, or external carrier traversal survives.
 
 **Totality and termination condition.** Every accepted Admission judgment must be total for every presentation admitted
 by the selected Input Contract and must terminate under a definition-time-known bound. Division by zero, invalid shifts,
@@ -1055,10 +963,12 @@ undefined or exceptional paths must be ruled out by static proof, represented by
 rejected.
 A JVM exception must never become an implicit Admission refusal.
 
-Finite iteration over contract-bounded material is allowed. Arbitrary `while` or `do-while` loops, runtime-dependent
-unbounded loops, recursion, cyclic helper calls, blocking operations, waiting, synchronization, and termination that
-relies on application behavior are prohibited in V1. The semantic judgment surface may be rich; the machine must still
-know before publication that every invocation completes under the declared bounds.
+Finite processing internal to an approved direct scalar or opaque-leaf profile is allowed only under its ratified
+bound. Arbitrary `while` or `do-while` loops, runtime-dependent unbounded loops, recursion, user-owned carrier
+traversal,
+cyclic helper calls, blocking operations, waiting, synchronization, and termination that relies on application behavior
+are prohibited in V1. The semantic judgment surface may be rich; the machine must still know before publication that
+every invocation completes under the declared bounds.
 
 **No hidden observation condition.** Admission may not observe or invoke repositories, services, clocks, randomness,
 environment variables, system properties, files, networks, transactions, threads, executors, locks, mutable globals,
@@ -1078,7 +988,7 @@ resolve the exact class or object named by the operation's `admission` slot, whi
 -> close and validate all accepted helper and binder bodies
 -> bind every value read to ratified Input material or a canonical literal
 -> resolve every host expression to a versioned Kontrakt semantic operation
--> validate type, null, numeric, ordering, collection, totality, and bound laws
+-> validate type, null, numeric, ordering, approved scalar-profile, totality, and bound laws
 -> erase class, object, method, getter, lambda, iterator, and library-call mechanics
 -> canonicalize judgment structure, literals, source coordinates, and evaluation law
 -> derive stable Admission material identity
@@ -1086,18 +996,21 @@ resolve the exact class or object named by the operation's `admission` slot, whi
 -> generate the deterministic Admission evaluator
 ```
 
-Contract identity must change when a frontend profile, numeric law, string law, collection law, evaluation law, or any
-other semantic refinement changes contract meaning. Source formatting, local variable names, equivalent host syntax, and
+Contract identity must change when a frontend profile, numeric law, string law, approved scalar-profile law,
+evaluation law, or any other semantic refinement changes contract meaning. Source formatting, local variable names,
+equivalent host syntax, and
 backend instruction choice must not change identity when they lower to the same material.
 
 **Deterministic evaluation condition.** At invocation time, the generated evaluator reads only the already-formed
 immutable Input presentation through fixed ratified coordinates. Runtime symbol lookup, reflection, property discovery,
 method dispatch, callback construction, literal parsing, operator selection, and failure-policy selection are forbidden.
 
-Boolean composition and bounded quantification must have a fixed evaluation law. V1 preserves a deterministic declared
+Boolean composition and any bounded direct-value inspection must have a fixed evaluation law. V1 preserves a
+deterministic declared
 or canonical order wherever order can affect first decisive judgment, diagnostic evidence, budget consumption, or
 failure attribution. A backend may fuse branches, use primitive comparisons and bit instructions, specialize bounded
-loops, vectorize, or return allocation-free outcome codes only when the observable admitted or rejected result and its
+profile operations, vectorize, or return allocation-free outcome codes only when the observable admitted or rejected
+result and its
 contract-owned attribution remain identical.
 
 The determinism law is:
@@ -1132,7 +1045,8 @@ Kontrakt does not ask how the submitted Input was produced, whether another syst
 whether the submitted presentation was considered canonical outside this operation. Those matters do not exist inside
 the Kontrakt contract world. The submitted presentation is the raw Input material observed by this operation.
 
-When the `canonical` slot is selected, its law receives the same immutable contract-visible presentation after Admission
+When the `canonicalization` slot is selected, its law receives the same immutable contract-visible presentation after
+Admission
 and deterministically produces the one representative permitted by that law. Successful production grants stable
 representative authority immediately. There is no user-authored post-canonical validation contract. If a successful
 Kontrakt realization produces noncanonical material, Kontrakt is defective.
@@ -1152,12 +1066,13 @@ names as irrelevant. It does not add, remove, rename, retype, parse, flatten, pr
 contract-visible coordinates. Those are shape-changing obligations and belong to Lowering or another explicit
 transformation boundary.
 
-**Optional slot and selected-source condition.** The authored `canonical` slot may be omitted in V1. Omission means that
+**Optional slot and selected-source condition.** The authored `canonicalization` slot may be omitted in V1. Omission
+means that
 this operation declares no semantic Canonicalization Contract. Kontrakt does not insert `ExactCanonicalization`, infer
 an
 identity representative law, invoke a user canonicalizer, or create a proxy, interceptor, callback, or hidden
 implementation stage. After Admission, the same submitted Input presentation is supplied unchanged to the selected
-Lowering formation, its compiler-derived plan, and its backend-generated realization.
+Lowering relation, its compiler-derived plan, and the explicitly bound realization behind the generated port.
 
 Deterministic encoding of Kontrakt-owned material remains mandatory, but that protocol is not an implicit
 Canonicalization Contract. Fixed scalar encodings, coordinate order, presence markers, framing, schema identity, and
@@ -1165,7 +1080,8 @@ version material may still be required for identity, ordering, hashing, caching,
 determine how existing material is represented inside Kontrakt; they do not collapse semantic distinctions or produce a
 new representative value.
 
-When authored, the independently resolved `canonical` slot names exactly one Kotlin or Java symbol as external source
+When authored, the independently resolved `canonicalization` slot names exactly one Kotlin or Java symbol as external
+source
 evidence for one flat Canonicalization Contract. A source-layout label such as `flow` grants no meaning. The selected
 symbol, file, package, method name, annotation, type relation, and source location do not own Canonicalization
 authority.
@@ -1179,21 +1095,21 @@ Direct law selection:
     select one complete Kontrakt-provided built-in Canonicalization symbol
 
 Coordinate-law type declaration:
-    select one inert Java or Kotlin signature declaration whose coordinate names bind every
-    selected Input coordinate and whose coordinate types are exact Kontrakt-owned nominal
-    canonical type symbols or finite shape-directed generic type signatures
+    select one inert Java or Kotlin signature declaration whose parameter names bind every
+    directly named Input coordinate and whose parameter types are exact Kontrakt-owned nominal
+    canonical type symbols
 ```
 
 When present, the manifest names one declaration only:
 
 ```text
-canonical      UnicodeNfcCaseFoldCanonicalization
+canonicalization  UnicodeNfcCaseFoldCanonicalization
 ```
 
 or:
 
 ```text
-canonical      CustomerCanonicalization
+canonicalization  CustomerCanonicalization
 ```
 
 When absent, the manifest simply continues from Admission to Lowering:
@@ -1290,7 +1206,6 @@ The binding law is:
 selected Input coordinate name
 + selected Input coordinate sort
 + one exact Kontrakt-owned nominal canonical type symbol
-+ compatible shape-directed generic type arguments where the Input shape requires them
 = one coordinate law inside one flat Canonicalization Contract
 ```
 
@@ -1321,14 +1236,10 @@ compilable Kotlin declaration:
 class ExactText private constructor()
 class UnicodeNfcCaseFold private constructor()
 class AsciiUppercase private constructor()
-class ByCanonicalElementBytes private constructor()
-class CanonicalSet<Order, Element> private constructor()
-
 data class CustomerInput(
     val customerId: String,
     val name: String,
     val regionCode: String,
-    val tags: Set<String>,
 )
 
 // User-authored source declaration. It is never instantiated.
@@ -1336,10 +1247,6 @@ class CustomerCanonicalization private constructor(
     customerId: ExactText,
     name: UnicodeNfcCaseFold,
     regionCode: AsciiUppercase,
-    tags: CanonicalSet<
-            ByCanonicalElementBytes,
-            UnicodeNfcCaseFold,
-            >,
 )
 ```
 
@@ -1350,12 +1257,11 @@ Only their names and exact nominal types are declaration evidence. The frontend 
 class, inaccessible constructor, parameter symbols, generic signatures, and every referenced host type before authority
 begins.
 
-A shape-directed generic type signature follows the already-ratified Input shape. A set signature may name an order type
-and an element-law type; a map signature may name key, value, entry-order, and duplicate-key types; a nested record
-signature may carry nominal coordinate-law types for that finite nested shape. These signatures do not create values,
-runtime descriptors, nested Canonicalization Contracts, parent-child authority, inheritance, or recursive contract
-composition. They are finite source signatures from which Kontrakt ratifies one flat Canonicalization Contract for the
-selected operation.
+The coordinate-law signature follows the already-ratified flat Input presentation. Each constructor parameter binds
+one directly named Input coordinate to one exact nominal canonical type. The signature does not create values, runtime
+descriptors, nested Canonicalization Contracts, parent-child authority, inheritance, recursive contract composition, or
+a second presentation shape. It is finite source evidence from which Kontrakt ratifies one flat Canonicalization
+Contract for the selected operation.
 
 V1 rejects declaration properties, `val` or `var` law bindings, enum law categories, enum constants, law singleton
 objects, public constructors, factory calls, arbitrary generic types, executable initializers, methods, callbacks,
@@ -1377,12 +1283,12 @@ specified outside executable host code. For every public canonical type, the Kon
 documentation must state at least:
 
 ```text
-supported Input sort and structural position
+supported Input sort and direct-coordinate position
 preserved and collapsed distinctions
 unique representative law
 semantic profile and version
 null, absence, finite-alternative, ordering, and duplicate behavior where applicable
-work, depth, cardinality, expansion, and output bounds
+work, source-size, expansion, and output bounds
 canonical byte law and protocol version
 refusal domain and cross-contract stop attribution
 normative examples and conformance-vector reference
@@ -1450,9 +1356,7 @@ floating-point bit and NaN law
 Boolean and finite-alternative encoding
 character encoding and Unicode version
 length framing for variable material
-sequence order
-set, bag, and map ordering and duplicate law
-nested depth and framing
+approved bounded leaf framing and ordering where applicable
 ```
 
 The final criterion for canonical equality, ordering, structural interning, and identity is the exact canonical material
@@ -1487,13 +1391,13 @@ The complete semantic definitions, host-operation recognition used by compiler i
 and generated evaluators remain compiler protocol. They are not exposed as user IR, runtime registries, expression
 nodes,
 or generated coordinate APIs. The public surface exposes only complete built-in Canonicalization symbols, opaque nominal
-canonical type names, finite shape-directed generic type signatures, precise definition-time diagnostics, and the API
+canonical type names, precise definition-time diagnostics, and the API
 specification and user documentation that explain each type.
 
 **Canonical-type applicability condition.** Rich canonical behavior is admitted through exact nominal type symbols
 rather
-than executable source expressions or runtime law values. Every nominal type symbol or shape-directed generic signature
-must resolve to enough ratified material for Kontrakt to determine, before publication:
+than executable source expressions or runtime law values. Every nominal type symbol must resolve to enough ratified
+material for Kontrakt to determine, before publication:
 
 ```text
 supported input sort and structural position
@@ -1501,7 +1405,7 @@ preserved and collapsed distinctions
 unique representative law
 null, absence, finite-alternative, and duplicate behavior
 numeric, floating-point, Unicode, temporal, binary, or collection semantics where applicable
-work, depth, cardinality, expansion, and output bounds
+work, source-size, expansion, and output bounds
 canonical byte schema and protocol version
 refusal domain and contract-owned attribution
 normative conformance material
@@ -1512,7 +1416,8 @@ The frontend rejects:
 ```text
 unknown, application-defined, aliased, imitated, dynamically registered, or incompletely specified canonical type symbols
 missing, duplicate, renamed, unknown, or sort-incompatible coordinate bindings
-law values, enum constants, singleton instances, constructor calls, factories, methods, callbacks, lambdas, helper execution, control flow, or transformation bodies
+law values, enum constants, singleton instances, constructor calls, factories, methods, callbacks, lambdas, helper
+execution, control flow, or transformation bodies
 user-defined equals, hashCode, compareTo, comparator, predicate, or ordering execution
 virtual dispatch, inheritance-dependent behavior, interface-based role acquisition, or runtime subtype selection
 mutable or captured state, runtime initialization, lazy or delegated observation
@@ -1529,28 +1434,17 @@ familiar type name, or a compatible generic signature. If every referenced nomin
 Kontrakt-owned law material and represented as one ratified flat contract, the definition is rejected.
 
 **Finite-work condition.** Canonicalization is a producer contract, but it is not permission for unbounded labor. Every
-accepted law must establish finite source size, nesting depth, collection cardinality, intermediate storage, output
-size,
-and work bounds before ContractImage publication. General imperative iteration and recursive object-graph traversal are
-prohibited. Bounded element-wise representative production, ordering, duplicate handling, and aggregation are accepted
-only over material whose bounds
-and traversal semantics have already been ratified.
+accepted law must establish finite source size, intermediate storage, output size, expansion, and work bounds before
+ContractImage publication. General imperative iteration over undeclared structure and recursive object-graph traversal
+are prohibited. Bounded processing inside an approved opaque leaf profile is accepted only when its size and traversal
+semantics have already been ratified.
 
-For nested unordered material, Kontrakt must not use JVM object references, `hashCode`, host set order, or an unbounded
-structural comparison. A valid implementation may:
-
-```text
-produce canonical bytes for each bounded child
-produce a domain-separated BLAKE3 HID from those bytes
-order children by HID
-resolve HID ties by canonical length and exact canonical-byte comparison
-apply the declared set or bag duplicate law
-emit the bounded canonical collection bytes
-```
-
-This is an implementation strategy, not user-visible contract syntax. Maximum source bytes, output bytes, cardinality,
-depth, comparison work, and intermediate memory must be supplied by the selected Capacity and Budget world. Exceeding
-those walls produces the owning Capacity or Budget result, not a generic Canonicalization failure.
+For an approved bounded opaque leaf whose own canonical law includes unordered elements, Kontrakt must not use JVM
+object references, `hashCode`, host iteration order, or an unbounded structural comparison. Any element ordering,
+duplicate handling, byte production, comparison work, and intermediate memory remain fixed by that leaf profile and the
+selected Capacity and Budget world. This is an implementation strategy inside one approved direct-coordinate sort, not
+permission to traverse a user-owned nested Input structure. Exceeding those walls produces the owning Capacity or Budget
+result, not a generic Canonicalization failure.
 
 **Unicode and adversarial-text condition.** Unicode normalization and case operations must use pinned tables and a
 versioned, table-driven, environment-independent algorithm. Kontrakt must not implement authoritative normalization with
@@ -1605,11 +1499,11 @@ resolve the exact slot-selected built-in symbol or coordinate-law declaration
 -> determine direct-law or coordinate-law nominal-type source form
 -> verify one flat selectable contract and an uninstantiable signature declaration when applicable
 -> bind every declared parameter name to exactly one ratified Input coordinate
--> verify complete coordinate coverage, declared order, sort compatibility, and nested-shape agreement
--> resolve every exact nominal canonical type and shape-directed generic type signature to pinned semantic material
+-> verify complete direct-coordinate coverage, declared order, and sort compatibility
+-> resolve every exact nominal canonical type to pinned semantic material
 -> reject law values, constructors, factories, execution, environment, dispatch, state, effect, imitation, and dynamic-registration paths
 -> ratify preserved and collapsed distinctions for every coordinate and the complete presentation
--> prove declared work, depth, cardinality, expansion, intermediate-storage, and output bounds
+-> prove declared work, source-size, expansion, intermediate-storage, and output bounds
 -> derive the canonical byte schema and protocol version
 -> derive stable contract identity and ContractImage material
 -> generate the deterministic canonicalizer and byte emitter
@@ -1629,7 +1523,7 @@ semantic profile version
 source presentation identity
 preserved and collapsed distinctions
 coordinate-law bindings, representative laws, and their versions
-Unicode, temporal, decimal, floating, and collection laws where applicable
+Unicode, temporal, decimal, floating, and approved opaque-leaf laws where applicable
 canonicalizable domain and refusal law
 work and output bound law
 canonical byte protocol version and schema identity
@@ -1659,146 +1553,177 @@ attribution, work walls, and state-visible behavior remain identical.
 
 ### 5.4. Lowering Contract
 
-Lowering is the final contract boundary of the inbound airlock. It re-forms admitted external presentation as explicit
-immutable Fact material that the core may use without knowing or trusting the external world.
+Lowering is the final representation boundary of the inbound airlock. It re-forms admitted external presentation as
+complete candidate material for the ordinary host types declared by the selected Operation parameters.
 
 ```text
 external presentation authority
--> one-to-one meaning-preserving refinement
--> sealed Fact material
--> core-entry handoff
+-> explicit one-to-one source-to-parameter-Fact relation
+-> exactly one supplied realization behind a generated port
+-> complete candidate Operation input material
+-> applicable Invariant and movement judgment
+-> established input Fact authority
+-> ordinary user Operation invocation
 ```
 
 Input, Admission, and selected Canonicalization operate over the contract-visible boundary presentation. Admission may
 permit that presentation to continue, and Canonicalization may select its stable same-shape representative, but neither
-action ends external-presentation authority. Successful Lowering removes that authority and completes the immutable
-information surface selected by the flow's Fact Contract.
+action ends external-presentation authority. Lowering ends that authority only when its declared relation has been
+realized, the candidate material is complete, and every applicable standing judgment and legal movement has succeeded.
 
-Lowering does not execute core computation, create a rich domain object model, derive a business Result, judge an
-Invariant, perform a State Transition, or publish an outward presentation. Those are separate obligations or
-implementation regions.
+Lowering does not execute core computation, create a rich domain object model, derive a business Result, decide an
+Invariant, perform a State Transition, or publish an outward presentation. The supplied realization forms candidate
+representation only. The generated machine owns judgment, establishment, stage order, refusal routing, and the handoff
+to the user Operation.
 
-Lowering is not an arbitrary mapper and is not a judgment over material constructed by user-supplied transformation
-code. The Lowering Contract declares the complete immutable formation obligation. The Kontrakt compiler derives one
-semantic `LoweringPlan`, and a backend generates the one-to-one mapping realization from that plan. The user does not
-implement the same translation a second time.
+Lowering is not an arbitrary mapper. The IDL relation declares the complete permitted source-to-target dependency. The
+compiler derives one semantic `LoweringPlan` and one retained plain host-language realization port. Exactly one
+implementation is supplied during machine assembly. That implementation may realize representation formation, but it
+does not own the relation, Fact meaning, target participation, establishment, or pipeline authority.
 
-#### 5.4.1. Boundary Source and Core Fact Target
+#### 5.4.1. Boundary Source and Operation Input Fact Target
 
-The Lowering Contract and its generated boundary realization are the only Lowering components allowed to know both the
-selected boundary presentation and the Fact surface selected for the same flow.
+The Lowering Contract and its generated realization port are the only Lowering surfaces allowed to know both the
+selected boundary presentation coordinates and the Operation parameter coordinates formed from them.
 
 ```text
+interface scope:
+    one closed `facts` vocabulary
+    one standing `invariants` declaration
+
 boundary side:
     selected Input presentation
     optional same-shape canonical representative
 
 Lowering Contract:
-    immutable explicit one-to-one source-to-Fact binding obligation
+    immutable explicit one-to-one source-to-Operation-parameter-Fact relation
 
-compiler/backend boundary implementation:
-    derived LoweringPlan
-    generated one-to-one mapping realization
-    Fact-material seal
+generated implementation boundary:
+    retained plain host-language realization port
+    exactly one explicitly supplied implementation
+    compiler-derived LoweringPlan
+    candidate-material completion and declared failure surface
 
-core side:
-    declared immutable Fact surface
-    sealed Fact material only
+judgment and core-entry side:
+    applicable interface-level Invariant judgment
+    applicable movement judgment
+    established input Fact authority
+    ordinary user Operation parameter values
 ```
 
 The selected Input schema remains the source schema even when Canonicalization is present because Canonicalization does
 not change contract-visible coordinates. The selected representative values become the source values supplied to
 Lowering. When Canonicalization is absent, the admitted Input values are supplied unchanged.
 
-Lowering does not introduce an independent `CoreMaterial`, `OperationStart`, `LoweringTarget`, or candidate schema. Its
-target is the Fact surface independently selected by the flow's `fact` slot. The Fact Contract declares the information
-that may exist in the core; the Lowering Contract declares how this external presentation may form that information.
+Lowering does not introduce an independent `CoreMaterial`, `OperationStart`, `LoweringTarget`, or user-visible candidate
+schema. Its targets are coordinates addressed through the ordinary parameter slots already declared by the selected
+Operation. Each parameter type must resolve to one Fact kind declared through the enclosing interface's `facts`
+vocabulary. The operation manifest does not repeat that vocabulary, and it has no `fact` or `invariant` slot.
 
-The Fact surface must not name, import, embed, extend, or retain a reference to the Input declaration, source DTO,
+The target Fact surface must not name, import, embed, extend, or retain a reference to the Input declaration, source
+DTO,
 transport protocol, host object, Lowering declaration, framework context, adapter type, or source-coordinate handle. It
 must be intelligible solely through its own Fact coordinates, sorts, presence, alternatives, relations, ordering,
 bounds, schema, and version material.
 
-The Lowering declaration may name both sides because it belongs to the airlock boundary. Its generated realization may
-physically read the source and write a staging region because it is boundary implementation. Once sealed and handed into
-the core, source type names, source coordinate names, getters, constructors, collection implementations, object
-identity,
-runtime references, and mapping machinery have no factual authority.
+The Lowering declaration may name both sides because it belongs to the operation boundary. Its generated port exposes
+only the declared realization surface. A supplied implementation may physically read the declared source values and
+construct the ordinary target material, but source type names, getters, constructors, collection implementations, object
+identity, runtime references, and realization machinery have no factual authority. The generated port source is a
+retained build artifact and may remain as an ordinary adapter boundary if Kontrakt is removed.
 
-#### 5.4.2. Immutable Authoring Surface
+#### 5.4.2. Immutable IDL Relation and Explicit Realization Boundary
 
-*What Contract Is* requires the Lowering Contract to contain immutable data only. It contains no translation
+*What Contract Is* requires the Lowering Contract itself to contain immutable data only. It contains no translation
 implementation and no business algorithm.
 
-The user declares the inert immutable Fact surface separately under the Fact role. The user then authors one
-host-language Lowering declaration whose only meaning is the explicit one-to-one relation between the selected Input
-coordinates and those Fact coordinates. The operation IDL does not contain mapping syntax. Its `lowering` slot names the
-selected Lowering declaration, and its `fact` slot independently names the target Fact declaration.
-
-The selected Lowering declaration may carry only a finite set of explicit coordinate pairs:
+The enclosing interface declares `facts` and `invariants` once. The operation manifest selects one Lowering handle, and
+one sibling `lowering` declaration inside the same operation states the exact coordinate relations:
 
 ```text
-one exact selected Input coordinate reference for each binding
-one exact selected Fact coordinate reference for each binding
+interface DepositContract {
+    policy        DepositPolicy
+    governance    DepositGovernance
+    budget        DepositBudget
+    capacity      DepositCapacity
+    facts         DepositFacts
+    invariants    DepositInvariants
+
+    operation deposit(command: DepositCommand): DepositRecorded {
+        manifest {
+            flow:
+                input             DepositInput
+                admission         DepositAdmission
+                canonicalization  DepositCanonicalization
+                lowering          DepositLowering
+        }
+
+        lowering DepositLowering {
+            accountIdText -> command.accountId
+            amountText    -> command.amountMinor
+        }
+    }
+}
 ```
 
-The selected Input and Fact surfaces are resolved from the flow context. They are not repeated as executable mapping
-content inside the Lowering declaration.
+`facts` and `invariants` remain at interface scope. Inside the operation, `manifest` and `lowering` are parallel sibling
+declarations. Publication uses the same operation-local sibling placement under ADR-0049, but its outward processing is
+outside this ADR.
+
+The Lowering body may carry only a finite set of exact coordinate pairs:
+
+```text
+one exact selected Input coordinate for each binding
+one exact Operation parameter slot plus target Fact coordinate for each binding
+```
+
+The selected Input surface and Operation signature supply the two resolved sides. The relation body does not repeat
+carrier declarations and does not contain executable conversion code.
 
 Every binding is explicit. Equal spelling does not create a relation, and different spelling does not prevent one.
-`input.account` and `fact.account` remain unrelated until the selected Lowering declaration binds them. This preserves
-the independent language of the external presentation and the core's factual information.
+`accountIdText` and `command.accountId` remain unrelated until the operation-local Lowering declaration binds them. This
+preserves the independent language of the external presentation, the Operation surface, and the core Fact vocabulary.
 
 The binding cardinality is fixed in V1:
 
 ```text
 one selected Input coordinate
--> one selected Fact coordinate
+-> one Operation-parameter Fact coordinate
 ```
 
 One Input coordinate must not form multiple contract-visible Fact coordinates. Multiple Input coordinates must not be
-combined to form one Fact coordinate. Such `1:N` and `N:1` derivations introduce cross-coordinate meaning and belong to
-core computation. A backend may still split, pack, flatten, or combine physical storage behind the same ratified
-one-to-one contract relation; physical layout does not change mapping cardinality.
+combined to form one target coordinate. Such `1:N` and `N:1` derivations introduce cross-coordinate meaning and belong
+to core computation. A backend may still split, pack, flatten, or combine physical storage behind the same ratified
+one-to-one relation; physical layout does not change mapping cardinality.
 
-The selected source and target sorts may be identical. When an ordinary primitive, string, enum, or other closed
-immutable type already expresses the required Fact coordinate, Kontrakt does not require a second wrapper type or a
-Kontrakt-specific core representation. The host declaration is frontend evidence; ratified Fact material is the
-authority; backend storage remains replaceable.
+The selected source and target sorts may be identical. Equal types do not authorize implicit copying and do not remove
+the port. The selected source and target sorts may also differ. In either case, the generated port reflects the declared
+source and target surface, and the explicitly supplied implementation performs the physical representation formation.
+The compiler does not infer a conversion from the raw host-type pair, select a catalog entry, or authorize backend
+convention as hidden meaning.
 
-The selected source and target sorts may also differ. Kontrakt may refine an external presentation sort into a Fact sort
-only when one complete, deterministic, versioned, meaning-preserving refinement profile is defined for that exact
-source-target pair. The user declares neither the conversion algorithm nor a formation-law symbol. The absence of a
-supported profile rejects the binding. More than one applicable profile is ambiguous and also rejects the binding.
+The `->` relation is not assignment, a cast, a parser, a constructor call, or an implementation. It declares that the
+source coordinate is the permitted factual basis for the target coordinate. The realization behind the generated port
+must preserve the already-declared source and target meaning.
 
-A type change is not required merely because material crosses into the core. If the admitted or canonical presentation
-already has the exact information and immutable form declared by the Fact Contract, Lowering may be a logical authority
-handoff with no new user-visible type, no new object, and no physical copy.
-
-This ADR deliberately does not freeze the exact Java or Kotlin token spelling of the immutable coordinate-binding
-carrier. Whatever host-language syntax is selected must contain only the explicit source-target relations above, must be
-selectable by its class or object symbol from the IDL `lowering` slot, and must be completely acquired and erased before
-ContractImage authority begins. It must not require a mapping body in IDL, a generated coordinate API as authority, a
-user-written mapper, callback, constructor procedure, or target class created only for Lowering.
-
-The frontend rejects every executable surface, including:
+The relation body rejects every executable surface, including:
 
 ```text
-T -> U transformation methods
-method bodies, custom getters, init blocks, factories, or constructor procedures
-callbacks, lambdas, predicates, comparators, or user-defined equality
-control flow, loops, recursion, pattern-matching implementations, or rewrite functions
+transformation methods or constructor procedures
+method bodies, callbacks, lambdas, predicates, comparators, or user-defined equality
+control flow, loops, recursion, pattern matching, or rewrite expressions
 repository, service, framework context, state store, filesystem, network, process, clock, or randomness access
-runtime registry lookup, reflection, dynamic dispatch, dependency injection, or class initialization
-host-library parsing, normalization, serialization, or conversion calls
+runtime registry lookup, reflection, dependency injection, classpath discovery, or class initialization
+host-library calls, normalization, serialization, parsing, or conversion code
 mutable, lazy, delegated, captured, global, or thread-local state
-core computation, Operation Result Material derivation, or Publication
+core computation, Operation Result Material derivation, Invariant judgment, State movement, or Publication
 ```
 
-A `pure` user function is still prohibited. Referential transparency does not make implementation code a declaration of
-which external coordinate corresponds to which Fact coordinate, whether the selected source and target sorts preserve
-the same meaning, which bounds hold, or which refusal belongs to the contract. Permitting the function would restore
-implementation as contract authority and would make the airlock's final formation step an opaque call.
+Those prohibitions apply to the contract body. Physical conversion belongs only behind the generated port. The supplied
+implementation may use ordinary reusable libraries, but it must be deterministic for the declared input domain, use
+only the source material exposed by the port, return only the declared target candidate or declared Lowering failure,
+and perform no repository lookup, environmental resolution, business calculation, State movement, Invariant judgment,
+or Publication. A library assists implementation; it does not select itself and does not become contract authority.
 
 #### 5.4.3. Core Fact Surface
 
@@ -1838,7 +1763,8 @@ replaceable behind the ratified surface.
 #### 5.4.4. Representation Refinement, Not Core Computation
 
 Lowering changes representation and authority domain without deriving new cross-coordinate business meaning. At the
-contract-visible boundary, V1 forms each Fact coordinate from exactly one explicitly bound Input coordinate.
+contract-visible boundary, V1 forms each Operation-parameter Fact coordinate from exactly one explicitly bound Input
+coordinate.
 
 Permitted one-to-one refinement families include:
 
@@ -1852,21 +1778,21 @@ nullable or optional presentation
 closed external alternative
     -> one explicit finite-alternative Fact coordinate
 
-immutable sequence, set, bag, or map presentation
-    -> one bounded immutable Fact collection coordinate under the same declared collection meaning
+approved bounded opaque leaf presentation
+    -> one immutable Fact coordinate under the same declared leaf meaning
 
-nested source coordinate path
-    -> one explicitly bound Fact coordinate
+direct selected Input coordinate
+    -> one explicitly addressed Operation-parameter Fact coordinate
 
 declared external identifier or reference presentation
     -> one Fact representation of that same declared identifier or reference meaning
 ```
 
-A refinement may decode, parse, range-check, copy, freeze, replace host collection mechanics, make an already-declared
-presence distinction explicit, or select a fixed internal representation. Those actions remain Lowering only when the
-Input Contract already declares the meaning being represented and the source-target profile preserves that meaning. A
-generic text coordinate does not become a date, account identity, money, or another business concept merely because a
-parser can produce such a value.
+The supplied realization may decode, parse, range-check, copy, freeze an approved bounded leaf, make an
+already-declared presence distinction explicit, or select a fixed internal representation. Those actions remain
+Lowering only when the Input Contract already declares the meaning being represented and the target Fact kind preserves
+that meaning. A generic text coordinate does not become a date, account identity, money, or another business concept
+merely because an implementation or library can parse it.
 
 The following cardinalities are prohibited in V1:
 
@@ -1882,8 +1808,7 @@ Lowering relations.
 Lowering must not create a new business proposition, consult mutable current machine state, execute core computation,
 produce Operation Result Material, decide whether movement is legal, evaluate an Invariant, select a Transition, grant
 Publication authority, apply business policy, infer missing material, combine coordinates, or split one coordinate into
-several
-contract-visible meanings. The following are not Lowering:
+several contract-visible meanings. The following are not Lowering:
 
 ```text
 birth date -> current age
@@ -1900,15 +1825,17 @@ Result -> outward presentation
 The distinction is:
 
 ```text
-Lowering:
-    one boundary coordinate -> one immutable Fact coordinate of the same declared meaning
+Lowering Contract:
+    one boundary coordinate -> one Operation-parameter Fact coordinate of the same declared meaning
+
+Lowering realization:
+    explicitly performs the permitted representation formation behind the generated port
 
 core realization:
-    combines, separates, and computes over explicit Facts and other declared immutable material
+    combines, separates, and computes over established Facts and other declared immutable material
 
 Invariant:
-    judges declared laws and relations over explicit Facts and declared Operation Result Material selected for a Fact
-    path
+    judges one complete candidate Fact under the standing interface-level law for its exact kind
 
 State and Transition:
     govern legal movement and the availability of material in a machine condition
@@ -1917,119 +1844,139 @@ Publication:
     governs the permitted outward claim
 ```
 
-Lowering must be total over each declared one-to-one refinement domain using only the bound admitted or canonical source
-coordinate and explicit Budget, Capacity, Version, and Governance material where those contracts lawfully supply a gate.
-If a Fact coordinate requires information not present in its one bound source coordinate, it cannot be formed by
-Lowering. Kontrakt does not prescribe or observe what occurred before Input, and the generated Lowering realization does
-not enrich itself through hidden lookup.
+A conforming Lowering realization must be deterministic over its declared source domain and return either complete
+candidate material or one declared Lowering failure. The generated machine supplies only the declared source
+coordinates. Budget, Capacity, Version, Governance, and other cross-cutting gates remain outside the implementation and
+retain their own authority and attribution.
 
-A declared reference may cross Lowering only as one explicit source coordinate refined into one explicit Fact coordinate
-of the same declared reference meaning. Resolution against another coordinate, a mutable registry, or current core state
-belongs to core realization or a later judgment and must not be disguised as formation.
+A declared reference may cross Lowering only as one explicit source coordinate refined into one explicit target
+coordinate of the same declared reference meaning. Resolution against another coordinate, a mutable registry, or current
+core state belongs to core realization or a later judgment and must not be disguised as formation.
 
-#### 5.4.5. Definition-Time Refinement and LoweringPlan
+#### 5.4.5. Definition-Time Resolution and LoweringPlan
 
-The selected `lowering` slot names exactly one immutable Java or Kotlin Lowering declaration for the flow. The IDL
-selects that declaration by symbol only; it contains no mapping body. The slot grants the role, and the selected class
-or
-object symbol remains an acquisition coordinate only. The exact host-language carrier syntax remains deferred, but it
-must express explicit one-to-one coordinate bindings and must not introduce an independent target schema or executable
-mapper.
+The selected `lowering` slot names exactly one operation-local sibling Lowering declaration. The IDL body contains the
+exact one-to-one coordinate relations. The slot grants the role; the sibling declaration supplies the immutable
+contract material. Neither selects or contains the implementation.
 
-Before ContractImage publication, the frontend/compiler must resolve and ratify at least:
+Before ContractImage publication and executable machine closure, the frontend/compiler and linker must resolve and
+ratify at least:
 
 ```text
 the flow-selected Input schema
 the selected Canonicalization law, when present
-the selected Fact Contract and its coordinate surface
-every explicit Input-coordinate to Fact-coordinate binding
-one source coordinate and one target coordinate for every binding
-explicit binding even when source and target names are equal
-source-sort and Fact-sort compatibility
-one unique supported meaning-preserving type-refinement profile for each binding
-Fact-coordinate completeness and uniqueness
+the enclosing interface's Fact vocabulary and standing Invariants
+the selected Operation signature and every target parameter slot
+the resolved Fact kind of every target Operation parameter
+every explicit Input-coordinate to Operation-parameter-Fact-coordinate binding
+one source coordinate and one target address for every binding
+explicit binding even when source and target names or host types are equal
+source-sort and target-sort structural compatibility
+target-coordinate completeness and uniqueness
 Input source-coordinate uniqueness across bindings
+the generated plain host-language realization-port ABI
+exactly one implementation binding for that port
 finite depth, cardinality, intermediate storage, output, and work bounds
 applicable schema, Version, and Governance material
-refusal and cross-contract stop attribution
+declared failure and cross-contract stop attribution
 ```
 
-Every selected Fact coordinate formed by this airlock must be formed exactly once under one complete flat Lowering
-Contract, and every Input coordinate may appear in at most one binding. An Input coordinate may remain unused; that does
-not implicitly create a binding or require the core Fact surface to expose external material it does not need. Silent
-target defaults, fallback constructors, same-name auto-mapping, structural guessing, package scanning, annotations,
-assignability, inheritance, and discovery from implementation shape are prohibited.
+Every target coordinate formed by this airlock must be formed exactly once under one complete flat Lowering Contract,
+and
+every Input coordinate may appear in at most one binding. An Input coordinate may remain unused; that does not
+implicitly create a binding or require the Operation parameter Fact surface to expose external material it does not
+need. Silent target defaults, fallback constructors, same-name auto-mapping, same-type auto-copying, catalog selection,
+structural guessing, package scanning, annotations, assignability, inheritance, and discovery from implementation shape
+are prohibited.
 
 The frontend must reject missing or duplicate target formation, reused source coordinates, unknown source or target
-coordinates, `1:N` or `N:1` relations, incompatible sorts, absent or ambiguous type-refinement profiles, hidden absence,
-recursive host-object traversal, unbounded collection work, environment-dependent meaning, mapping syntax placed in the
-IDL, and any executable member in the selected declaration or Fact surface.
+coordinates, `1:N` or `N:1` relations, structurally incompatible sorts, hidden absence, recursive host-object traversal,
+unbounded collection work, environment-dependent contract meaning, executable material inside the relation body, or a
+target type absent from the enclosing interface's Fact vocabulary. Missing or duplicate realization implementations,
+port ABI mismatch, or unresolved assembly bindings are link-time definition failures, not runtime Lowering refusals.
 
-The accepted declaration is lowered into one flat, immutable, adapter-erased Lowering Contract material. The Lowering
-Contract identity includes the source-presentation schema identity, optional Canonicalization law identity, target Fact
-Contract identity, the canonicalized explicit one-to-one binding set, resolved type-refinement profile identities and
-versions, bounds, refusal law, and relevant flow-world coordinates. The authoring declaration is then erased. This is
-the identity of the contract definition, not an identity imposed on every Fact value.
+The accepted IDL declaration is lowered into one flat, immutable, adapter-erased Lowering Contract material. The
+Lowering Contract identity includes the source-presentation schema identity, optional Canonicalization law identity,
+selected Operation identity, target parameter slots and Fact-kind identities, the canonicalized explicit one-to-one
+binding set, bounds, refusal law, and relevant flow-world coordinates. The supplied implementation identity is not part
+of contract meaning; it belongs to executable machine assembly and must conform to the generated port.
 
 From that ratified material, the compiler derives one immutable semantic `LoweringPlan`. The plan closes the exact
-source read set, Fact write set, type-refinement dependencies, traversal structure, bound propagation, refusal branches,
-seal requirements, cache dependencies, and backend layout requirements that are legitimately implied by the contract.
-The plan does not acquire contract authority of its own; it is a compiler-owned implementation artifact derived from the
-ratified obligation.
+source read set, target write set, port ABI and invocation set, candidate-completion checks, declared failure branches,
+Invariant and movement handoff, establishment requirements, cache dependencies, and backend layout requirements that
+are legitimately implied by the contract. The plan does not own conversion semantics and does not acquire contract
+authority. It is a compiler-owned implementation artifact derived from the ratified obligation.
 
-#### 5.4.6. Generated One-to-One Mapping and Fact Seal
+#### 5.4.6. Generated Realization Port, Explicit Binding, and Fact Establishment
 
-A backend generates the complete Lowering realization from the ratified `LoweringPlan`. Runtime performs no user mapper
-invocation, reflection, symbol lookup, coordinate-name search, type-refinement registry lookup, DI resolution, callback
-dispatch, or host operation interpretation.
+The compiler generates one plain host-language Lowering realization port from the ratified `LoweringPlan`. It does not
+silently generate or select the complete conversion implementation. Exactly one implementation is supplied during
+machine assembly.
 
-The generated realization is airlock implementation. It may read the submitted Input presentation or selected canonical
-representative and may construct temporary Fact staging material, but it is not core computation and holds no contract
-authority. The core may observe only sealed Fact material after the legal handoff.
+The generated port source is a retained build artifact. It may be committed, inspected, implemented, and called as
+ordinary Kotlin or Java code. It contains no contract authority and no Kontrakt-specific Fact wrapper. If Kontrakt is
+removed, the retained port and its implementation may remain as ordinary adapter code, while automatic contract
+validation, judgment orchestration, establishment, diagnostics, generated tests, and optimization disappear.
 
-The generated realization may use temporary mutable builders, scratch buffers, offset tables, sorting workspaces, or
-staged regions. Those objects belong exclusively to implementation. They hold no factual authority and must never be
-exposed to the core.
+After assembly is closed, runtime performs no classpath scan, reflection, symbol lookup, coordinate-name search,
+type-pair catalog lookup, service discovery, DI resolution, or implementation selection. The generated execution path
+uses the one closed implementation reference or an equivalent direct backend binding.
 
-Fact formation is complete only after the material is sealed. The seal requires that:
+The supplied realization receives only the source values admitted by the declared relation and returns complete
+candidate material for the declared Operation parameter surface or one declared Lowering failure. It does not receive a
+repository, service, state store, framework context, runtime registry, Fact population, Invariant callback, Publication
+callback, or arbitrary machine context.
+
+Candidate formation is not Fact establishment. The generated pipeline must then verify that:
 
 ```text
-every declared target Fact coordinate is complete exactly once
-the material conforms to the selected Fact Contract
-every coordinate was formed from its one explicitly bound Input coordinate
-every source-target pair used its one ratified meaning-preserving type-refinement profile
-the Fact material is immutable and no mutable external alias remains
+every declared target coordinate is complete exactly once
+the returned material conforms to the resolved Operation parameter type and Fact kind
+every target coordinate is justified by its one explicitly bound Input coordinate
+the material is immutable and no mutable external alias remains
 presence, alternatives, relations, and ordering are explicit where the Fact surface declares them
-applicable schema, Version, and Governance material is bound
-all declared bounds and cross-cutting gates have succeeded
-no back-reference to the external presentation or generated staging machinery remains
+applicable schema, Version, Governance, Budget, and Capacity gates have succeeded under their own authority
+every interface-level Invariant applicable to the candidate Fact kind holds
+every applicable movement judgment succeeds
+no back-reference to the external presentation or realization machinery remains
 ```
 
-Allocation or builder completion alone does not create the seal. A partially filled target, mutable staging object, host
-wrapper, source-backed view, or generated mapper object is implementation material and cannot enter the core as Fact.
+Only after those obligations succeed does the generated machine establish input Fact authority and invoke the user
+Operation with the same ordinary host value. Allocation, constructor completion, port return, or builder completion
+alone does not create Fact authority.
 
-Because the compiler owns the complete plan, the backend may derive mechanically sympathetic realizations including:
+The supplied implementation may use temporary mutable builders, scratch buffers, ordinary parsing libraries, offset
+tables, sorting workspaces, or staged regions. Those objects belong exclusively to implementation. They hold no factual
+authority and must never be exposed as established Facts.
+
+The compiler owns the complete relation and closed call plan, so the backend may derive mechanically sympathetic
+realizations where equivalence is proven, including:
 
 ```text
-Canonicalization-Lowering pass fusion
+devirtualization of the exactly bound port implementation
+inlining or specialization of a statically analyzable realization
+port-object erasure after closed linking
+Canonicalization-Lowering orchestration fusion
 intermediate presentation elimination
 dead source-coordinate read elimination
-direct source access and direct Fact-region writes
+direct source access and direct candidate-region writes
 exact buffer and region sizing
 single-allocation or bounded-allocation formation
 primitive and finite-alternative specialization
 packed relation and presence layouts
-stable ordering and type-refinement specialization
 structural cache keys from the exact declared read set
-partial Fact-material reuse under the same schema, law, and version world
-AOT-generated formation and seal code
+AOT-generated invocation, completion, judgment, and establishment paths
 ```
 
-The same ratified material also supplies automatic verification and test generation: target-totality checks,
-source-target compatibility checks, one-to-one binding checks, type-refinement conformance vectors, refusal-path tests,
-determinism tests, backend-equivalence tests, boundary-value tests, and regression tests for generated artifacts.
-Generated mapping, verification, tests, diagnostics, and optimization are different artifacts derived from one
-obligation; none becomes an independent source of meaning.
+When implementation behavior cannot be proven safe for a transformation, the backend preserves the explicit port call.
+Optimization authority does not permit guessing, replacing the supplied implementation with a catalog entry, or changing
+the declared relation.
+
+The same ratified relation and closed implementation binding may supply automatic verification and test generation:
+target-totality checks, source-target structural compatibility checks, one-to-one binding checks, deterministic replay,
+declared refusal-path tests, backend-equivalence tests, boundary-value tests, and regression tests for generated
+artifacts. Generated tests improve assurance; they do not turn implementation into contract authority or prove arbitrary
+business semantics that the relation does not declare.
 
 The determinism law is:
 
@@ -2037,96 +1984,108 @@ The determinism law is:
 same ratified ContractImage
 + same immutable admitted Input presentation
 + same selected canonical representative, when present
++ same closed Lowering realization binding
 + same declared Budget, Capacity, Version, and Governance world
 = same Lowering outcome
-+ same sealed Fact material
++ same complete candidate material
++ same judgment and establishment outcome
 + same contract-owned refusal or stop attribution
 ```
 
-The generated realization may be fused with upstream Kontrakt-owned canonical production or with the first core read
-only
-when the same logical Lowering boundary, explicit one-to-one relations, outcome, immutable Fact material, attribution,
-and state-visible handoff remain explicit. Physical fusion must not allow the core to observe external presentation or
-allow implementation staging to acquire factual authority. Kontrakt V1 does not rewrite or optimize arbitrary core
-implementation code.
+A conforming realization must satisfy that law. Undeclared environment, time, randomness, mutable global state, or
+acquisition-order dependence is an implementation defect.
+
+The explicit port invocation may be fused with upstream Kontrakt-owned canonical production or downstream candidate
+completion only when the same logical Lowering boundary, explicit one-to-one relations, outcome, attribution, standing
+judgments, establishment point, and state-visible handoff remain explicit. Physical fusion must not allow the user
+Operation to observe external presentation or allow implementation staging to acquire factual authority.
 
 #### 5.4.7. Refusal and Defect Boundary
 
-Lowering refuses when the declared Fact material cannot be formed and sealed. Representative cases include:
+Lowering refuses when the declared candidate material cannot be formed and established under the selected relation.
+Representative cases include:
 
 ```text
 required bound source material is absent
-no unique supported meaning-preserving type refinement exists for the bound source-target sorts
+the supplied realization returns one declared Lowering refusal
+the returned target material is incomplete or structurally incompatible
 a source or target coordinate is missing, duplicated, or reused illegally
-an alternative cannot be represented by the selected Fact surface
+an alternative cannot be represented by the resolved Operation parameter Fact surface
 an explicitly declared one-coordinate reference representation cannot be formed
-Fact-coordinate completeness cannot be achieved
+candidate-coordinate completeness cannot be achieved
 a depth, cardinality, output, or work bound is exceeded
-applicable schema, Version, or Governance material is incompatible
+applicable schema, Version, Governance, Budget, or Capacity material stops the passage under its own authority
+an applicable Invariant or movement judgment refuses establishment
 ```
 
-A Budget or Capacity wall retains the result and diagnostic authority of the supplying contract. It is not rewritten as
-a Lowering refusal. A backend that produces material inconsistent with the ratified Lowering law is defective; user
-source is not blamed for an implementation error in compiler-generated machinery.
+A missing implementation, duplicate implementation, ABI mismatch, or unresolved binding is a definition or link failure
+and prevents executable machine publication. It is not a runtime Lowering refusal.
 
-Lowering refusal, core implementation failure, Invariant refusal, and Publication refusal are distinct:
+A Budget or Capacity wall retains the result and diagnostic authority of the supplying contract. It is not rewritten as
+a Lowering refusal. A supplied implementation that throws an undeclared exception, reads hidden environment, performs
+business computation, returns material inconsistent with the relation, or violates determinism is defective. Contract
+source is not blamed for an implementation defect, and the defect does not become a declared Lowering refusal
+automatically.
+
+Lowering refusal, user Operation failure, Invariant refusal, and Publication refusal are distinct:
 
 ```text
 Lowering refusal:
-    no formation-valid sealed boundary Fact exists
+    no complete and establishable input Fact material exists
 
-core implementation failure:
-    required Facts exist,
-    but the replaceable realization does not produce its declared Operation Result Material
+user Operation failure:
+    established input Facts exist,
+    but the replaceable implementation does not complete with its declared result
 
 Invariant refusal:
-    declared Operation Result Material exists and has entered a selected Fact Candidate path,
-    but a selected law does not hold
+    complete candidate Fact material exists,
+    but a standing law for that exact Fact kind does not hold
 
 Publication refusal:
-    core material exists,
+    the Operation result Fact exists,
     but the declared outward claim is not permitted
 ```
 
 #### 5.4.8. Core Entry Handoff
 
-Successful Lowering yields immutable, formation-valid, contract-governed Fact material. The core receives only that
-sealed information under the legal core-entry movement. It does not receive the Input object, canonical presentation
-object, Lowering declaration, source-to-target binding table, `LoweringPlan`, generated mapper, staging object, or
-host-language execution context.
+The supplied Lowering realization yields complete candidate material in the ordinary host types declared by the
+Operation parameters. The generated machine applies candidate completion, the interface-level Invariants for each exact
+Fact kind, and every applicable movement judgment. Successful Lowering ends only when those obligations succeed and the
+candidate receives established input Fact authority.
+
+The user Operation then receives the same ordinary Java or Kotlin values it would receive without Kontrakt. It does not
+receive the Input presentation, canonical presentation object, Lowering declaration, source-to-target relation table,
+`LoweringPlan`, generated port metadata, candidate wrapper, established-Fact wrapper, staging object, or host-language
+execution context.
 
 ```text
 external presentation authority:
     ended
 
-boundary Fact material:
-    formed and sealed
+candidate Operation input material:
+    complete under the declared relation
 
-core visibility:
-    granted only by the legal handoff
+standing judgment:
+    every applicable Invariant and movement obligation succeeded
 
-core computation:
-    not implied by Lowering
+input Fact authority:
+    established outside the host value representation
 
-Result:
-    not yet produced
+user Operation invocation:
+    ordinary parameter values only
 
-new Fact material:
-    not yet produced
-
-publication authority:
-    not yet granted
+Result and Publication:
+    not yet established or authorized
 ```
 
-The core may now use that boundary Fact together with other explicit Facts and applicable Policy, Budget, Capacity,
-Version, Governance, and State material. How replaceable implementation derives declared Operation Result Material from
-that explicit material is outside this Lowering Contract. Whether the produced material later enters a selected Fact
-Candidate path and receives Fact authority is also outside Lowering.
+The Operation may now use those established input Facts together with other explicitly bound Facts and applicable
+Policy, Budget, Capacity, Version, Governance, and State material. How replaceable implementation derives its ordinary
+result is outside this Lowering Contract. The implementation does not invoke Lowering, Invariant, establishment,
+Publication, or Output Presentation machinery itself.
 
-ADR-0049 begins from Fact as explicit core information. It defines the Fact role, Invariant judgment over explicit
-material, the relationship between Operation Result Material and Fact authority, and Publication. It must not reopen the
-external presentation, repeat Lowering, or derive authority from the erased source declaration or generated mapping
-implementation.
+ADR-0049 defines the standing Fact and Invariant law applied at this handoff, the establishment of the ordinary
+Operation return as the successful result Fact, Publication, and Output Presentation. It must not reopen the external
+presentation, repeat Lowering, or derive authority from the erased IDL relation or supplied realization implementation.
 
 ## 6. Cross-Profile Boundaries
 
@@ -2154,10 +2113,10 @@ Input and Admission are directly adjacent because Admission judges the immutable
 an intervening user transformation. When Canonicalization is selected, Admission and Canonicalization likewise have no
 user-supplied transformation region: a Kontrakt-owned realization applies the selected representative law to that same
 contract-visible shape. When Canonicalization is omitted, Admission hands the same presentation directly to Lowering
-without an inserted contract, callback, proxy, or interceptor. Lowering then uses immutable explicit one-to-one
-coordinate bindings, compiler-resolved meaning-preserving type refinements, a derived `LoweringPlan`, and a
-backend-generated realization to seal the selected boundary Fact material. No user mapper region exists inside the
-airlock.
+without an inserted contract, callback, proxy, or interceptor. Lowering then uses the operation-local immutable
+one-to-one relation, a derived `LoweringPlan`, one retained generated port, and exactly one explicitly bound realization
+to form candidate Operation input material. The generated machine—not the realization implementation—owns completion,
+standing judgment, establishment, and the legal handoff to the user Operation.
 
 ### 6.2. Earliest Authoritative Rejection
 
@@ -2167,8 +2126,8 @@ Input stops material that cannot be formed as the declared immutable boundary pr
 material that may not continue. When selected, Canonicalization refuses admitted material only when its law cannot
 produce one unique bounded representative within its declared domain. A Budget or Capacity wall crossed during selected
 canonical production retains the supplying contract's result. When Canonicalization is omitted, no Canonicalization
-refusal is possible. Lowering refuses when its immutable declaration and permitted source material cannot form and seal
-the selected boundary Fact material.
+refusal is possible. Lowering refuses when its immutable relation, permitted source material, explicitly bound
+realization, and applicable standing judgments cannot form and establish the selected Operation input Fact material.
 
 A condition must have one owning contract. Executing the same condition in multiple stages is not defensive safety; it
 is duplicate authority and duplicate cost.
@@ -2193,8 +2152,7 @@ reject it.
 ### 6.4. Optional Canonical Production and Core Fact Entry Authority
 
 When Canonicalization is selected, its production is owned by Kontrakt because the representative law fully determines
-its permitted result. Fact-forming shape or type refinement remains outside Canonicalization and is declared by
-Lowering.
+its permitted result. Fact-forming representation remains outside Canonicalization and is declared by Lowering.
 
 ```text
 selected Canonicalization:
@@ -2202,32 +2160,36 @@ selected Canonicalization:
     -> Kontrakt-generated Canonicalization realization
     -> stable same-shape representative
     -> exact canonical bytes
-    -> compiler-derived LoweringPlan
-    -> backend-generated one-to-one mapping realization
-    -> immutable boundary Fact formation
-    -> Fact-material seal
-    -> legal core-entry handoff
+    -> operation-local Lowering relation
+    -> generated retained Lowering port
+    -> exactly one supplied realization
+    -> complete candidate Operation input material
+    -> applicable Invariant and movement judgment
+    -> established input Fact authority
+    -> ordinary user Operation invocation
 
 omitted Canonicalization:
     admitted presentation
-    -> compiler-derived LoweringPlan
-    -> backend-generated one-to-one mapping realization
-    -> immutable boundary Fact formation
-    -> Fact-material seal
-    -> legal core-entry handoff
+    -> operation-local Lowering relation
+    -> generated retained Lowering port
+    -> exactly one supplied realization
+    -> complete candidate Operation input material
+    -> applicable Invariant and movement judgment
+    -> established input Fact authority
+    -> ordinary user Operation invocation
 ```
 
 In the selected branch, Canonicalization owns representative meaning and grants authority to the result produced by its
 generated realization. In the omitted branch, no semantic representative authority is granted and the admitted Input
-remains the Lowering source. Neither branch permits an arbitrary user canonicalizer, mapper, callback, proxy,
-interceptor, DI object, or transformation function inside the airlock.
+remains the Lowering source. Neither branch permits an arbitrary user canonicalizer, proxy, interceptor, or hidden
+transformation stage.
 
-Lowering owns the explicit one-to-one source-to-Fact binding obligation and the Fact seal in both branches. Its
-host-language authoring declaration is immutable data only, while the IDL selects that declaration by symbol and
-contains no mapping body. The compiler resolves each supported source-target type refinement, derives the semantic plan,
-and the backend-generated mapping is implementation machinery. That machinery is wrong if it introduces undeclared
-meaning, observes hidden state, preserves external authority, performs core computation, or produces Fact material that
-disagrees with the ratified Lowering and Fact contracts.
+Lowering owns the explicit one-to-one source-to-Operation-parameter-Fact relation in both branches. Its IDL body is
+immutable contract material authored beside the operation manifest. The generated port and exactly one supplied
+implementation form candidate representation. The implementation is wrong if it introduces undeclared meaning, observes
+hidden state, performs business computation, judges an Invariant, moves State, publishes material, or returns candidate
+material that disagrees with the ratified relation and target Fact surface. The generated machine owns completion,
+judgment, establishment, and Operation invocation.
 
 ### 6.5. Cross-Cutting Gates
 
@@ -2250,96 +2212,101 @@ not make the implementation function, stage, or call graph the scope or owner of
 ### 6.6. V1 Implementation Optimization Boundary
 
 Kontrakt V1 does not optimize, rewrite, fuse, devirtualize, or otherwise reinterpret arbitrary user-supplied core
-implementation code. That implementation remains a replaceable realization region. Kontrakt governs which Facts may be
-visible, which declared Operation Result Material may be produced, whether a selected Fact path may grant Fact
-authority,
-which failures are declared, and which state movements and Publication judgments are legal, but it does not make
-implementation classes, functions, dispatch, allocations,
-effects, or object layout contract authority.
+implementation code. That implementation remains a replaceable realization region. Kontrakt governs which established
+input Facts may be visible, whether the ordinary Operation return becomes the successful result Fact, which failures are
+declared, and which state movements and Publication judgments are legal, but it does not make implementation classes,
+functions, dispatch, allocations, effects, or object layout contract authority.
 
-Slot-selected Admission, selected Canonicalization, and Lowering declarations are restricted frontend sources, not
-opaque implementation callbacks. Admission may use a finite judgment-expression source. Selected Canonicalization uses
-either one closed built-in law symbol or one uninstantiable coordinate-to-nominal-type signature declaration. Lowering
-uses only a finite immutable host-language declaration of explicit one-to-one Input-to-Fact coordinate bindings. The
-Fact surface is declared independently. Machine-scope Policy, Governance, Budget, and Capacity, together with
-Version where applicable, remain separate contract material. The IDL only selects the Lowering declaration; it contains
-no binding body.
+Slot-selected Admission and selected Canonicalization remain restricted frontend sources, not opaque implementation
+callbacks. Admission may use a finite judgment-expression source. Selected Canonicalization uses either one closed
+built-in law symbol or one uninstantiable coordinate-to-nominal-type signature declaration.
 
-Kontrakt resolves the unique supported meaning-preserving source-target type refinement for each binding, erases the
-source forms completely before publication, then owns and optimizes the generated evaluator, canonicalizer, canonical
-byte emitter, compiler-derived `LoweringPlan`, mapping realization, Fact seal, generated verification and tests, cache
-plan, and associated deterministic state machinery. Canonicalization omission generates no replacement canonicalizer or
-runtime interception point.
+Lowering has two deliberately separated surfaces. Its operation-local sibling IDL body contains only finite immutable
+one-to-one Input-to-Operation-parameter-Fact relations. Its generated retained port carries one explicitly supplied
+physical realization. The relation is completely resolved and erased into canonical contract material. The
+implementation remains replaceable and acquires no authority.
 
-V1 optimization is concentrated on machinery Kontrakt owns: contract acquisition, deterministic planning, automatic
-mapping generation, frozen material, generated verification gates, state enforcement, automatic test generation and
-execution, diagnostics, structural cache planning, and publication control. These facilities remove mapping,
-validation, test, diagnostic, and control boilerplate that users would otherwise build repeatedly. Because all of them
-are derived from the same rich contract material, Kontrakt can perform whole-pipeline optimization that an opaque mapper
-or ordinary validation framework cannot safely perform. They are the SOTA-grade optimization target of V1.
+Kontrakt owns and optimizes the generated evaluator, canonicalizer, canonical byte emitter, relation plan, port ABI,
+assembly binding, candidate-completion checks, standing-judgment dispatch, establishment path, generated verification
+and tests, cache plan, and associated deterministic state machinery. Canonicalization omission generates no replacement
+canonicalizer or runtime interception point.
 
-Optimization of arbitrary core implementation requires different authority and analysis over effects, aliasing, escape,
-ownership, identity observability, concurrency, and representation. It is deferred to a later version and must not
-expand the V1 runtime or contract surface. If introduced later, its implementation plan must remain derived and
-replaceable; it must not become Fact or contract authority.
+Because the Lowering implementation is exactly bound behind a generated port, Kontrakt may devirtualize, inline,
+specialize, fuse around, or erase that port only when analysis proves behavior equivalent under the ratified relation
+and
+declared deterministic world. If that proof is unavailable, the explicit call remains. Kontrakt never substitutes a
+same-type copy, catalog entry, naming convention, or backend conversion for the supplied implementation.
+
+V1 optimization is concentrated on machinery Kontrakt owns and closed realization boundaries it can prove safe:
+contract acquisition, deterministic planning, frozen material, generated verification gates, state enforcement,
+automatic test generation and execution, diagnostics, structural cache planning, port linking, and publication control.
+These facilities remove validation, test, diagnostic, control, and assembly boilerplate while preserving the user's
+explicit adapter implementation. Any broader optimization of arbitrary core implementation requires separate authority
+and analysis over effects, aliasing, escape, ownership, identity observability, concurrency, and representation.
 
 ### 6.7. Handoff to the Explicit Core
 
-Successful Lowering means that every explicit one-to-one binding and its ratified meaning-preserving type refinement has
-been realized through the compiler-derived plan and backend-generated mapping, the selected boundary Fact material has
-been completed and sealed, and external-presentation authority has ended.
+Successful Lowering means that every explicit one-to-one relation has been realized through the exactly bound generated
+port implementation, the candidate Operation input material is complete, every applicable interface-level Invariant and
+movement judgment has succeeded, input Fact authority has been established, and external-presentation authority has
+ended.
 
-The legal core-entry handoff makes that immutable information available to the explicit core machine. It does not select
-or invoke one mandatory Operation object, does not require an Operation Start DTO, and does not imply that declared
-Operation Result Material has already been produced or that Fact authority has been granted.
+The legal core-entry handoff invokes the ordinary user Operation with its declared parameter values under established
+input Fact authority. It does not require an Operation Start DTO, candidate wrapper, established-Fact wrapper, or
+Kontrakt-specific parameter type. The implementation receives no Input presentation, Lowering relation table, generated
+port metadata, `LoweringPlan`, or judgment machinery.
 
-The core thereafter operates only over explicit Facts and other declared immutable contract material under the
-machine-wide Policy, Governance, Budget, and Capacity material fixed for the selected operation run. Internal functions
-or stages remain replaceable implementation and do not open another airlock or contract pipeline. ADR-0049 defines the
-Fact role, Invariant judgment, the relationship between Operation Result Material and Fact authority, legal availability
-of material that has acquired Fact authority, and Publication. ADR-0049 must not reopen the erased Input or Lowering
-declaration as sources of core meaning.
+The core thereafter operates only over explicitly bound established Facts and other declared immutable contract material
+under the machine-wide Policy, Governance, Budget, and Capacity material fixed for the selected operation run. Internal
+functions or stages remain replaceable implementation and do not open another airlock or contract pipeline. ADR-0049
+defines result Fact establishment, standing Invariant application, legal availability, Publication, and Output
+Presentation. It must not reopen the erased Input or Lowering relation as sources of core meaning.
 
 ## 7. Deferred Decisions
 
-This ADR does not freeze the final token spelling, exact public canonical type names, shape-directed generic type names,
-or the exact Java or Kotlin carrier syntax for host-facing Input, Admission, Canonicalization, Lowering, or Fact
-declarations.
+This ADR does not freeze the final token spelling, exact public canonical type names, or the exact Java or Kotlin
+carrier syntax for host-facing Input, Admission, or Canonicalization declarations. Lowering
+relation placement and `source -> parameter.coordinate` authoring are fixed here; the exact generated port ABI and
+assembly API remain deferred below.
 
-It does fix the Canonicalization authoring boundary: V1 may omit the `canonical` slot, select one complete flat built-in
+It does fix the Canonicalization authoring boundary: V1 may omit the `canonicalization` slot, select one complete flat
+built-in
 symbol, or select one uninstantiable Java/Kotlin coordinate-law signature declaration. Omission declares no semantic
 Canonicalization Contract and causes no implicit `ExactCanonicalization`, user callback, proxy, interceptor, or
 generated replacement stage. A selected declaration must cover every selected Input coordinate exactly once by
-parameter name and an applicable exact Kontrakt-owned nominal canonical type, including finite shape-directed generic
-type arguments where required. V1 exposes no canonical-law values, enums, singleton objects, constructors, factories,
+parameter name and an applicable exact Kontrakt-owned nominal canonical type, without any shape-directed generic or
+nested-signature inference. V1 exposes no canonical-law values, enums, singleton objects, constructors, factories,
 application-defined canonical types, user-authored canonical output presentation, transformation method, `T -> T`
 canonicalizer, or shape mapping. Each public canonical type must be accompanied by API specification and user
 documentation derived from the same versioned law material.
 
-It also fixes the Lowering authoring boundary. The `lowering` slot selects one immutable Java or Kotlin declaration by
-class or object symbol. The IDL contains no mapping body. The selected declaration explicitly binds every target Fact
-coordinate formed by the inbound airlock to exactly one selected Input coordinate, even when their names are equal.
-Each Input coordinate may appear in at most one binding. V1 permits no `1:N` or `N:1` contract-visible relation and no
-same-name inference.
+It also fixes the Lowering authoring boundary. The operation manifest's `lowering` slot selects one exact handle. One
+sibling `lowering` declaration inside the same operation contains the complete finite `source -> parameter.coordinate`
+relation body. `facts` and `invariants` remain enclosing-interface declarations and are not repeated in the manifest or
+the Lowering body. Every target coordinate formed by the inbound airlock is bound to exactly one selected Input
+coordinate, even when names or host types are equal. Each Input coordinate may appear in at most one binding. V1 permits
+no `1:N` or `N:1` contract-visible relation and no same-name inference.
 
-The compiler resolves one unique supported meaning-preserving type-refinement profile from each bound source sort to its
-target Fact sort; the user does not author or select conversion code or formation-law symbols. The source and target
-sorts may be equal, and no new user-visible type or Kontrakt-specific wrapper is required merely because material enters
-the core. Lowering introduces no independent core target schema, Operation Start schema, rich domain object model, or
-Result schema.
+Every selected Lowering declaration generates one required retained plain host-language realization port. Exactly one
+implementation is supplied during machine assembly. Equal source and target types, a conversion catalog, a naming
+convention, classpath contents, or backend support do not close the port implicitly. The implementation may use ordinary
+libraries to realize the declared representation formation, but it may not perform repository lookup, environmental
+resolution, business computation, Invariant judgment, State movement, or Publication.
 
-V1 exposes no user mapper, `T -> U` function, callback, lambda, strategy object, constructor procedure, runtime plugin,
-DI surface, repository access, state lookup, application-defined formation law, executable target type, core
-computation, Operation Result Material production, or source-backed Fact view. The exact host-language carrier syntax
-remains a frontend decision, but the declaration must be finite, immutable, fully ratifiable, and completely erasable
-before ContractImage
-publication. From the ratified material, the compiler must derive the complete semantic `LoweringPlan`, and the selected
-backend must generate the mapping realization. V1 does not permit a user-authored runtime mapper as an alternative
-execution path.
+The exact generated port method decomposition, result carrier, declared-failure encoding, and assembly API remain
+backend/API decisions. Whatever form is selected must expose only the declared source material and target candidate
+surface, preserve the one-to-one relation, permit exact implementation binding without runtime discovery, and remain
+ordinary retained Java or Kotlin source.
 
-This ADR does not define the complete authoring surface by which a core pipeline declares all Fact dependencies, Result
-surfaces, or the implementation realization between them. It fixes only the inbound airlock and the fact that the core
-may depend on explicit immutable information rather than hidden object state.
+The compiler derives the semantic `LoweringPlan`, port ABI, source-read closure, target-completion checks, judgment and
+establishment handoff, verification, tests, diagnostics, cache plan, and optimization opportunities. It does not infer
+or own the supplied conversion implementation. A backend may inline or erase the closed port only when equivalent
+behavior is proven; otherwise the explicit implementation call remains.
+
+This ADR does not define the complete authoring surface for additional Fact participation, Operation Result Material,
+result-side Change formation, Publication, or Output Presentation. It fixes the inbound airlock, the ordinary Operation
+parameter handoff, and the fact that the core may depend on explicitly established immutable information rather than
+hidden object state.
 
 It does not define the complete state and transition sets of the three-axis machine. State-machine manifests,
 cross-contract movement, diagnostic evidence production, retention, failure representation, and Version remain
@@ -2351,17 +2318,18 @@ ADR. They are not operation-manifest slots and do not acquire authority from imp
 
 It does not define a projection callback SPI. Mutable and framework-owned objects must be converted before Input through
 an explicit adapter or presentation-formation operation, but the final adapter, factory, builder, or generated formation
-surface and compatibility profiles remain frontend decisions. Direct transitively immutable Kotlin data classes and Java
-records require no second presentation declaration.
+surface and compatibility profiles remain frontend decisions. Direct flat immutable Kotlin data classes and Java records
+require no second presentation declaration.
 
 It does not select the final internal IR classes or backend data structures. Those implementations must realize the
 authority and handoff fixed here without becoming new sources of meaning.
 
 Allocation elimination, callback removal, cross-region fusion, and optimization of arbitrary unrelated core code are
-intentionally outside V1. Kontrakt may optimize the compiler-derived `LoweringPlan`, generated mapping, Fact seal, cache
-plan, and backend layout because their complete meaning is derived from ratified contract material. A later version may
-investigate an implementation IR or restricted frontend for core realization, but that work requires separate
-authority, analysis, and ADRs.
+intentionally outside V1. Kontrakt may optimize the compiler-derived `LoweringPlan`, generated port call path,
+candidate-completion and establishment machinery, cache plan, and backend layout because their meaning is derived from
+ratified contract material. It may optimize the supplied realization body only where analysis proves an equivalent
+result. A later version may investigate a broader implementation IR or restricted frontend for core realization, but
+that work requires separate authority, analysis, and ADRs.
 
 ## 8. Consequences
 
@@ -2370,37 +2338,39 @@ contract pipeline declares material and judgment, the implementation pipeline re
 replaceable work, and the state pipeline permits legal movement and availability. None can impersonate another.
 
 Input accepts explicitly formed immutable presentation material. Kontrakt does not repair mutable, lazy, proxied, or
-framework-owned objects by taking a runtime snapshot. A transitively immutable Kotlin data class or Java record may
-serve directly as both host source evidence and runtime presentation without a duplicate declaration. Its record-like
-shape is refined into contract material, while constructor execution and generated class machinery remain implementation
+framework-owned objects by taking a runtime snapshot. A flat immutable Kotlin data class or Java record may serve
+directly as both host source evidence and runtime presentation without a duplicate declaration. Its directly named
+coordinate shape is refined into contract material, while constructor execution and generated class machinery remain
+implementation
 artifacts. Other ordinary Kotlin and Java carriers require explicit presentation formation before the Input boundary.
 
 Input and Admission share one immutable presentation and require no user transformation between them. Kontrakt treats
 that submitted presentation as the flow's raw Input and makes no claim about values or processing that may have existed
 before submission. After Admission, a selected Canonicalization law produces the stable representative and canonical
-bytes. If the `canonical` slot is omitted, no semantic canonicalization occurs and the admitted presentation is supplied
+bytes. If the `canonicalization` slot is omitted, no semantic canonicalization occurs and the admitted presentation is
+supplied
 unchanged to Lowering.
 
-In both branches, the selected immutable host-language Lowering declaration provides explicit one-to-one
-Input-to-Fact coordinate bindings. The compiler resolves the unique supported meaning-preserving type refinement for
-each binding and derives one semantic `LoweringPlan`; the backend generates the mapping and Fact seal. Equal coordinate
-names create no implicit binding. No user transformation call, mapper, callback, proxy, independently authored lowering
-implementation, mandatory core DTO, or Kontrakt-specific scalar wrapper exists.
+In both branches, one operation-local sibling Lowering declaration provides explicit one-to-one
+Input-to-Operation-parameter-Fact coordinate bindings. The compiler derives one semantic `LoweringPlan` and one retained
+plain host-language port; exactly one implementation is supplied explicitly. Equal coordinate names or equal host types
+create no implicit binding or copy. Catalog lookup, naming convention, and backend support do not close the port. The
+generated machine owns candidate completion, standing judgment, establishment, and Operation invocation.
 
 Invalid or unratifiable material stops before later work pays its cost. Input formation failure does not reach
 Admission. Admission rejection reaches neither selected canonical production nor Lowering realization. When
 Canonicalization is selected, its refusal or an attributed Budget or Capacity stop during canonical production does not
-enter Lowering. When it is omitted, an admitted presentation proceeds directly to the generated Lowering realization.
-Lowering refusal means that no formation-valid sealed boundary Fact exists.
+enter Lowering. When it is omitted, an admitted presentation proceeds directly to the explicitly bound Lowering
+realization behind the generated port. Lowering refusal means that no complete candidate input Fact can be established
+for the selected Operation.
 
-Successful Lowering does not hand material to one mandatory Operation object. It completes the selected operation's
-inbound airlock. An enclosing interface may expose several operation pipelines, but their successful Lowering handoffs
-enter the same explicit core under the shared machine-wide Policy, Governance, Budget, and Capacity contracts. The core
-sees immutable Fact information and no external presentation. Core realization may use those Facts with existing Facts
-and other explicit contract material to produce declared immutable Operation Result Material. When a Fact Contract is
-selected for that result, the same material may enter the Fact Candidate path and receive Fact authority only after the
-applicable Invariant and legal State Transition. Its internal functions, objects, stages, and call graph remain
-implementation and do not become nested IDL operations.
+Successful Lowering completes the selected operation's inbound airlock and invokes the ordinary user Operation with
+established input Fact authority attached outside the host value representation. An enclosing interface may expose
+several operation pipelines, but their successful Lowering handoffs enter the same explicit core under the shared
+machine-wide Policy, Governance, Budget, and Capacity contracts. The implementation sees ordinary Java or Kotlin
+parameters and no external presentation, candidate wrapper, established-Fact wrapper, or Kontrakt orchestration. Result
+Fact establishment, movement, Publication, and Output Presentation remain outside this ADR. Internal functions, objects,
+stages, and call graph remain implementation and do not become nested IDL operations.
 
 Fact richness no longer depends on a rich object model. Ordinary primitives and finite immutable products may nominate
 Fact coordinates when they preserve the required information. The Fact Contract, not a class constructor, method,
@@ -2412,10 +2382,12 @@ each name. The frontend resolves exact symbols, erases the host signature, and g
 flat versioned law material.
 
 V1 leaves arbitrary core implementation opaque and does not optimize its callbacks, allocations, dispatch, control
-flow, or effects. Lowering declarations are not part of that opaque region: they contain no implementation. Kontrakt
-owns the compiler plan and generated airlock realization and may optimize them without changing the ratified Fact
-material. This removes handwritten mapper boilerplate while enabling pass fusion, direct layout generation, structural
-caching, allocation control, and other SOTA-grade specialization.
+flow, or effects. The Lowering relation body contains no implementation, while its generated port closes exactly one
+explicitly supplied realization. Kontrakt owns the relation plan, port ABI, assembly, candidate-completion checks,
+judgment handoff, and establishment machinery. It may devirtualize, inline, specialize, or erase the supplied port only
+when equivalence is proven; otherwise the ordinary adapter call remains. This preserves implementation replaceability
+and Kontrakt removal while still enabling pass fusion, direct layout generation, structural caching, allocation control,
+and other SOTA-grade specialization.
 
 Kontrakt also derives verification, automatic tests, diagnostics, deterministic planning, state enforcement, frozen
 material, generated gates, caching, and publication control from the same explicit contract source. The existing frozen
