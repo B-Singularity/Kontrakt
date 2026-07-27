@@ -29,11 +29,15 @@ an established Operation result to outward presentation.
 
 The movement axis remains open.
 
-A State is not another value carried through the factual pipeline. It declares the machine condition under which the
-next
-move is legal or illegal. A Transition does not judge factual integrity. It permits one declared move between two flat
-conditions after the contract result on which that move depends already exists. The explicit State Machine names the
-whole movement surface so that no implementation path may invent another condition or movement later.
+Kontrakt treats software as a machine that performs real work through an explicit pipeline rather than hiding the
+whole process behind one function. A State declares an actual condition that the machine can occupy while that work
+proceeds. `Open`, `Frozen`, `Waiting`, `Running`, `Success`, `Failed`, and `Closed` may all be States when the condition
+changes which declared movement is legal next.
+
+A State is not merely another factual value carried through the pipeline. A Transition does not judge factual integrity.
+It permits one declared move between two machine conditions after the contract result on which that move depends already
+exists. The explicit State Machine names the whole movement surface so that no implementation path may invent another
+condition or movement later.
 
 These contracts do not need operation-local IDL bodies. Lowering and Publication received that narrow exception because
 they declare exact coordinate relations across two different surfaces. State material declares a finite vocabulary and
@@ -75,11 +79,13 @@ be replaced without changing the contract.
 
 ## 3. Decision Drivers
 
-State must remain a small movement vocabulary rather than a copy of every value, clause, implementation phase, or
-observed condition in the system.
+State must remain a finite vocabulary of actual machine conditions rather than a copy of every value, clause, or
+observed detail in the system.
 
-A label becomes State only when it changes which next move is legal. Information that explains a run but does not alter
-movement belongs elsewhere.
+A declared condition belongs to the State vocabulary when the machine can actually occupy it and it changes which next
+movement is legal. A pipeline position, field value, or implementation phase does not become State merely because the
+implementation passes through or stores it. Information that explains a run but does not alter movement belongs
+elsewhere.
 
 Transitions must be explicit, one-way, and closed. No move may arise from host behavior, inheritance, structural
 similarity, object mutation, or backend convention.
@@ -93,7 +99,8 @@ same internal change outcome.
 Backend realization may change representation, storage, lookup, dispatch, and commit strategy. It may not change the
 State vocabulary, legal movement relation, initial condition, terminal conditions, or judgment result.
 
-V1 must stay narrow enough to compile into a closed table. Each selected State Machine governs one flat State surface.
+V1 must stay narrow enough to compile into a closed table. Each stateful Operation selects exactly one State Machine.
+That machine governs one flat State surface, and exactly one State of that surface is established at a time.
 Multiple-surface composition and cross-surface coordination are not admitted by this ADR.
 
 ---
@@ -129,8 +136,9 @@ State Contract
 An implementation may request movement. A backend may observe and physically realize movement. Neither may decide that
 an undeclared move is legal or establish State authority through another path.
 
-V1 admits either one explicit State Machine or an explicit Stateless declaration for an operation. One State Machine
-contains one flat State surface. A future extension may define several coordinated surfaces, but V1 does not infer or
+V1 admits either one explicit State Machine or an explicit Stateless declaration for an operation. Each stateful
+Operation selects exactly one State Machine. That machine contains one flat State surface, and exactly one State of that
+surface is established at a time. A future extension may define several coordinated surfaces, but V1 does not infer or
 compose them.
 
 ---
@@ -205,24 +213,33 @@ Assembly is not a fourth semantic axis. It owns ordering and linkage, not contra
 
 ### 6.1. Meaning
 
-State is explicitly declared contract material for machine-move legality.
+State is explicitly declared contract material for an actual condition that the machine can occupy.
 
-A State is not every possible combination of values. It is not an object snapshot, a carried functional value, a field
-named `status`, or a stage name copied from the implementation. A label belongs to the State vocabulary only when it
-changes the legality of the next move on the selected surface.
+The established State tells where the machine currently is on one movement surface and determines which declared
+movement may legally occur next. Conditions such as `Open`, `Frozen`, `Waiting`, `Running`, `Success`, `Failed`, and
+`Closed` are valid States when the machine can actually be in those conditions and their legal next movements differ.
 
-Material may help explain why a State holds without becoming State itself. Input, canonical material, proposed Facts,
-established Facts, Failures, and diagnostics keep their own authority.
+A State is not every possible combination of values. An object snapshot, a carried functional value, a field named
+`status`, or an implementation stage does not become State by itself. It may physically represent or help establish a
+State only when it resolves to a declared machine condition under the selected State Machine.
+
+A pipeline exposes the real intermediate work of the machine. A condition reached during that pipeline may be State, but
+only when the machine can actually occupy it and it governs what may happen next. Input, canonical material, proposed
+Facts, established Facts, Failures, and diagnostics otherwise keep their own authority.
 
 ### 6.2. Closed and Flat Vocabulary
 
-A State Contract declares a finite set of directly named conditions. The vocabulary is closed before execution.
+A State Contract declares a finite set of directly named conditions. Each declared State name is unique within the
+selected State Machine, and the vocabulary is closed before execution.
 
 State inheritance, nested State trees, recursive composition, open subtype discovery, and structural State inference are
 forbidden. A parent label cannot lend movement meaning to a child label. Similar names do not create a relation.
 
-The canonical identity of a State comes from the selected State Contract and its declared symbol. Host enum ordinal,
-object identity, allocation history, package placement, and backend code do not participate.
+Within one selected State Machine and applicable contract world, the resolved State name is the nominal contract
+material
+that distinguishes one declared State from another. Host enum ordinal, object identity, allocation history, package
+placement, and backend code do not participate. Changing a declared State name changes the State vocabulary; whether a
+Version contract admits that change as a compatible rename is deferred.
 
 ### 6.3. State Source Material
 
@@ -232,21 +249,25 @@ State symbols and any finite attribute required by the machine declaration.
 The source carrier contains no movement method, transition predicate, lookup, mutable current-State field, callback, or
 backend encoding. Convenience behavior is not contract material.
 
-Kontrakt lowers the source into canonical State identities and discards the carrier shape.
+Kontrakt lowers the source into canonical State entries distinguished by their resolved names and discards the carrier
+shape.
 
 ### 6.4. State and Fact
 
-Fact answers what explicit immutable information exists for the core. State answers what movement is legal now.
+Fact answers what explicit immutable information is true for the machine. State answers which declared condition the
+machine currently occupies and therefore what movement is legal now.
 
-A Fact does not secretly carry State authority, and a State label does not own factual meaning. State judgment may
-depend
-on an already declared contract result, but the dependency must be explicit and may not be inferred from object shape or
-stored values.
+The same physical system may have both factual material and State, but their authority remains separate. A Fact does not
+secretly carry State authority, and a State label does not own factual payload. State judgment may depend on an already
+declared contract result, but the dependency must be explicit and may not be inferred from object shape or stored
+values.
 
 ### 6.5. Established State
 
+Exactly one State of the selected surface is established at a time.
+
 A current physical value is not established State merely because a backend can read it. It receives authority only as a
-realization of one canonical State identity under the selected machine.
+realization of one canonical State entry under the selected machine.
 
 A backend representation that cannot be resolved to exactly one declared State is invalid. Unknown, ambiguous, or
 out-of-world values are realization failures, not new States.
@@ -265,15 +286,16 @@ The move exists only because the contract declared it before execution.
 
 ### 7.2. Transition Material
 
-Each Transition has one stable identity, one source State, one target State, and one declared enabling outcome or
-movement request kind where such a distinction is required.
+Each Transition declares one source State and one target State. Multiple Transitions may share the same source State,
+the same target State, or both.
 
-The enabling outcome must already belong to another declared contract result. Transition does not compute Admission,
-Invariant, Policy, Failure, or Operation results. It only refuses to move without the exact result on which the declared
-move depends.
+Where shared endpoints represent different movements, an explicit enabling outcome or movement request kind must
+distinguish them. The enabling outcome must already belong to another declared contract result. Transition does not
+compute Admission, Invariant, Policy, Failure, or Operation results. It only refuses to move without the exact result on
+which the declared move depends.
 
-A target State alone is insufficient. The source, target, and move identity must all resolve inside the selected State
-Machine.
+A target State alone is insufficient. The source and target must resolve inside the selected State Machine, and one
+established State with one movement proposal must not leave more than one conflicting Transition enabled.
 
 ### 7.3. Closed Transition Relation
 
@@ -322,7 +344,8 @@ terminal State, and fixes the complete movement relation.
 
 ### 8.2. One Surface
 
-One explicit State Machine governs one flat State surface.
+Each stateful Operation selects exactly one explicit State Machine. That machine governs one flat State surface, and
+exactly one State of that surface is established at a time.
 
 V1 does not combine several independent movement authorities into a Cartesian-product State vocabulary. It also does not
 compose several State Machines or infer cross-surface coordination. An operation requiring those semantics is outside
@@ -337,13 +360,15 @@ coordination is backend design unless it is exposed as user contract authority.
 A stateful machine declares exactly one initial State. The initial State is not inferred from enum order, constructor
 default, zero value, first observation, or storage initialization.
 
-The initial State defines where movement on the surface begins. It does not assert that an Operation has succeeded or
-that any Fact has been established.
+The initial State declares the actual condition occupied when movement on that machine surface begins. It does not
+assert
+that an Operation has succeeded or that any Fact has been established.
 
 ### 8.4. Terminal States
 
 A terminal State has no outgoing Transition inside the selected surface. Terminal does not mean successful, accepted,
-failed, or public. It means only that movement on that surface has ended.
+failed, or public. It means only that movement on that surface has ended. A State named `Success` is therefore not
+terminal when another declared movement, such as publication or archival, remains legal from it.
 
 Every declared terminal State must be terminal in the canonical Transition relation. A State with an outgoing move may
 not be marked terminal, and an unreachable terminal label does not close the machine.
@@ -354,6 +379,7 @@ Once a terminal State is established, no physical mechanism may establish a late
 
 Kontrakt rejects a machine when:
 
+- a State name is duplicated within the selected machine;
 - a Transition refers to an undeclared State;
 - the initial State is absent or duplicated;
 - a declared terminal State has an outgoing Transition;
@@ -415,7 +441,7 @@ manifest slot does.
 ### 9.3. Canonical Lowering
 
 Kontrakt resolves the three selected declarations together. It verifies their symbol closure, removes host-language
-shape, assigns canonical identities, and produces one deterministic machine image.
+shape, forms canonical State and Transition entries, and produces one deterministic machine image.
 
 Conceptually:
 
@@ -549,6 +575,10 @@ Verification uses the canonical reference machine. Optimized realization must re
 ---
 
 ## 13. Complete Movement Model
+
+The contract pipeline exposes the machine's real intermediate work. The State-Machine Axis does not duplicate that
+pipeline. It tracks the actual condition occupied by the machine and judges the next declared movement where State is
+applicable.
 
 For a stateful operation, the conceptual path is:
 
