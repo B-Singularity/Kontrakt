@@ -39,6 +39,11 @@ It permits one declared move between two machine conditions after the contract r
 exists. The explicit State Machine names the whole movement surface so that no implementation path may invent another
 condition or movement later.
 
+The primary purpose of this material is not to inspect an already hidden implementation State after the fact. It makes
+the machine's established condition explicit and controls every authoritative change of that condition. Definition-time
+validation, generated tests, diagnostics, visualization, and optimization are derived capabilities of that explicit
+State authority.
+
 These contracts do not need operation-local IDL bodies. Lowering and Publication received that narrow exception because
 they declare exact coordinate relations across two different surfaces. State material declares a finite vocabulary and
 finite relations inside one movement surface. It remains ordinary one-dimensional source material: the operation
@@ -63,9 +68,14 @@ happened to leave behind.
 Without an explicit State Transition Contract, a stored-value rewrite or completed method can be mistaken for permission
 to move. Successful execution begins to stand in for legal movement.
 
-Without an explicit State Machine Manifest, the State and Transition declarations remain a loose collection. Initial and
-terminal conditions may be inferred, undeclared moves may appear in callbacks, and the complete movement surface can no
-longer be verified before execution.
+Without an explicit State Machine Manifest, State and Transition remain separate declarations without one authority
+boundary. Nothing then establishes which States and Transitions form this machine, which State is current, or which
+movement law governs its change. That authority falls back to an Operation, backend, callback, or storage convention.
+
+If State exists only as data that implementation code may rewrite, explicit declaration is only documentation. The
+state-machine axis must represent the established State as contract authority and require every authoritative change to
+pass through a declared Transition. Otherwise Kontrakt may validate movement while the implementation still controls the
+machine.
 
 The state-machine axis must also stay separate from the other two axes. An Operation implementation may produce ordinary
 result material, and an Invariant may judge the integrity of proposed Facts, but neither may decide which machine move
@@ -81,6 +91,9 @@ be replaced without changing the contract.
 
 State must remain a finite vocabulary of actual machine conditions rather than a copy of every value, clause, or
 observed detail in the system.
+
+Explicit State representation and movement control are primary. Verification, testing, diagnostics, visualization, and
+optimization are consequences of a machine whose State vocabulary and movement authority are already closed.
 
 A declared condition belongs to the State vocabulary when the machine can actually occupy it and it changes which next
 movement is legal. A pipeline position, field value, or implementation phase does not become State merely because the
@@ -124,7 +137,10 @@ absence, and simple closed attributes only. Methods, callbacks, inheritance, run
 implementation control flow are rejected.
 
 Kontrakt resolves the selected symbols, removes host-language shape, and produces one canonical State Machine. That
-canonical material owns movement legality.
+canonical material owns the machine's established State and legal movement.
+
+The State-Machine Axis uses that material to represent the machine's established condition and control every
+authoritative movement. It is not a passive verifier placed behind implementation-owned State changes.
 
 ```text
 State Contract
@@ -136,10 +152,11 @@ State Contract
 An implementation may request movement. A backend may observe and physically realize movement. Neither may decide that
 an undeclared move is legal or establish State authority through another path.
 
-V1 admits either one explicit State Machine or an explicit Stateless declaration for an operation. Each stateful
-Operation selects exactly one State Machine. That machine contains one flat State surface, and exactly one State of that
-surface is established at a time. A future extension may define several coordinated surfaces, but V1 does not infer or
-compose them.
+V1 admits either one explicit State Machine or explicit absence in all three movement slots. Each stateful Operation
+selects exactly one State Machine. That machine contains one flat State surface, and exactly one State of that surface
+is
+established at a time. A future extension may define several coordinated surfaces, but V1 does not infer or compose
+them.
 
 ---
 
@@ -147,11 +164,17 @@ compose them.
 
 ### 5.1. Axis Authority
 
-The state-machine axis answers one question:
+The state-machine axis answers two connected questions:
 
 ```text
-Under the currently established State, which declared move may occur next?
+Which declared State is currently established?
+
+Under that established State, which declared move may occur next,
+and which target State may become established?
 ```
+
+It therefore owns explicit State representation and movement control. It does not merely analyze or verify State changes
+already decided by implementation code.
 
 It does not decide whether external material is admitted, whether proposed Fact material satisfies an Invariant, whether
 a Failure is public, or whether an established Fact may be published. Those decisions remain with their own contracts.
@@ -266,6 +289,10 @@ values.
 
 Exactly one State of the selected surface is established at a time.
 
+That established State is the machine's explicit current condition, not a diagnostic reconstruction of implementation
+data. Every movement judgment begins from it, and only a permitted Transition whose physical realization succeeds may
+replace it with another State.
+
 A current physical value is not established State merely because a backend can read it. It receives authority only as a
 realization of one canonical State entry under the selected machine.
 
@@ -336,11 +363,17 @@ move authoritative.
 
 ### 8.1. Purpose
 
-The explicit State Machine Manifest closes one State surface. It does not become a workflow engine or a parent contract
+The explicit State Machine Manifest defines one complete State surface. It does not become a workflow engine or a parent
+contract
 above State and Transition.
 
-The manifest binds the selected State Contract and State Transition Contract, names the initial State, names every
-terminal State, and fixes the complete movement relation.
+A State Contract declares the conditions a machine may occupy, and a State Transition Contract declares permitted moves.
+Neither alone establishes the authority that owns one machine's current State and controls its change. The manifest
+binds
+them under one explicit machine name, fixes the initial and terminal conditions, and defines the complete movement law.
+
+The resulting canonical State Machine is therefore the authority for established State and legal movement. Graph
+validation follows from that complete authority; it is not the reason for creating the machine.
 
 ### 8.2. One Surface
 
@@ -375,7 +408,7 @@ not be marked terminal, and an unreachable terminal label does not close the mac
 
 Once a terminal State is established, no physical mechanism may establish a later movement on the same surface.
 
-### 8.5. Closure Validation
+### 8.5. Machine Definition Validation
 
 Kontrakt rejects a machine when:
 
@@ -391,19 +424,19 @@ Kontrakt rejects a machine when:
 
 These are definition-time contract failures. They do not become runtime movement refusals.
 
-### 8.6. Stateless Machine
+### 8.6. Explicit Movement Absence
 
 An operation with no movement surface declares that absence explicitly.
 
 ```text
 movement:
-    state          Stateless
+    state          none
     transitions    none
-    machine        StatelessMachine
+    machine        none
 ```
 
-Stateless is canonical contract material, not omission. It declares that the operation has no State vocabulary, no
-Transition relation, and no movement establishment.
+The three `none` values are canonical explicit absence. They declare that the operation has no State vocabulary, no
+Transition relation, and no State Machine authority.
 
 ---
 
@@ -440,7 +473,7 @@ manifest slot does.
 
 ### 9.3. Canonical Lowering
 
-Kontrakt resolves the three selected declarations together. It verifies their symbol closure, removes host-language
+Kontrakt resolves the three selected declarations together. It verifies their symbol consistency, removes host-language
 shape, forms canonical State and Transition entries, and produces one deterministic machine image.
 
 Conceptually:
@@ -453,13 +486,14 @@ Transition source
     -> canonical Transition table
 
 Machine source
-    -> canonical initial, terminal, and closure material
+    -> canonical initial, terminal, and machine-definition material
 
 all three
     -> Canonical State Machine
 ```
 
-The canonical material, not the source carrier, becomes the authority used by verification and execution.
+The canonical material, not the source carrier, becomes the authority used to represent and control State during
+execution. Verification, generated testing, diagnostics, visualization, and optimization consume that same authority.
 
 ---
 
@@ -594,8 +628,8 @@ operation manifest selects State, Transition, and Machine declarations
 -> target State is established with the rest of the declared change outcome
 ```
 
-For a Stateless operation, the movement path is explicitly absent and no State observation, Transition judgment, or
-movement establishment occurs.
+When all three movement slots are `none`, the movement path is explicitly absent and no State observation, Transition
+judgment, or movement establishment occurs.
 
 ---
 
@@ -624,11 +658,17 @@ State, State Transition, and Explicit State Machine Manifest now have the same V
 ordinary one-dimensional presentations. The interface IDL selects their handles; immutable host declarations carry
 candidate material; Kontrakt lowers that material into its own machine form.
 
-The state-machine axis is independent from the interface and contract axes without becoming a workflow engine. Operation
-execution, Fact Integrity, and movement legality remain separate authorities joined only by generated assembly.
+The state-machine axis is independent from the interface and contract axes without becoming a workflow engine. It is an
+active authority for State representation and movement control, not an analysis-only model. Operation execution, Fact
+Integrity, and movement legality remain separate authorities joined only by generated assembly.
 
-The machine can reject malformed movement surfaces before execution, generate a reference Transition judge, verify an
-optimized backend against that judge, and attribute runtime movement refusal without reading implementation behavior.
+Kontrakt can represent the machine's established State explicitly and require every authoritative change to proceed
+through one declared Transition. Implementation code may propose work or perform physical realization, but it does not
+privately own current State or invent another change path.
+
+Because that authority is explicit and closed, the machine can also reject malformed movement surfaces before execution,
+generate a reference Transition judge, verify an optimized backend against that judge, and attribute runtime movement
+refusal without reading implementation behavior.
 
 The V1 restriction to one flat State surface prevents hidden composition and product-state explosion. Systems requiring
 several coordinated movement authorities must wait for an explicit coordination contract rather than smuggling that
