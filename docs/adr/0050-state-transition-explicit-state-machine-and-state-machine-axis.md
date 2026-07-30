@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed
+Accepted
 
 ## Date
 
@@ -52,7 +52,7 @@ Interaction Manifest
     and required coordinates governing that interaction
 ```
 
-The Operation is not the Contract Pipeline. It is not a parent contract that owns Input, Admission, Fact, Invariant,
+The Operation is not the Contract Pipeline. It is not an enclosing contract that owns Input, Admission, Fact, Invariant,
 State, Transition, or Publication. The Interaction Manifest binds those independent contract presentations flatly for
 one selected interaction.
 
@@ -111,9 +111,14 @@ but Transition does not recreate that result or hide it inside a generic Boolean
 The Explicit State Machine Manifest closes the State vocabulary and Transition relation so that no Operation body,
 callback, backend, storage value, or generated path may invent another State or movement later.
 
-This ADR decides that contract authority only. It does not decide the public Kotlin or Java authoring API, storage or
-observation of the current establishment condition, recovery, synchronization, atomic commit, or backend realization.
-Those decisions follow after the contract model is reviewed.
+This ADR also fixes the V1 Kotlin declaration API for this axis. One selected Machine declaration is the explicit flat
+manifest root. State handles, Transition handles, the `States` membership section, and the `Transitions` membership
+section appear directly in that one manifest level. No declaration inside the Machine may contain another contract
+declaration. This limited flat manifest is admitted because the State-Machine Axis is independent from the Contract
+Pipeline and Implementation Pipeline; it is not permission for recursive contract composition elsewhere.
+
+Storage or observation of the current establishment condition, recovery, synchronization, atomic commit, and backend
+realization remain deferred.
 
 ---
 
@@ -259,6 +264,15 @@ exists at a movement judgment boundary: either `Unestablished` or `Established(S
 interaction either selects one Transition on that surface or declares explicit State-Machine absence. Coordination among
 independent State surfaces requires a later explicit coordination contract.
 
+The V1 host declaration must expose that flatness directly. The selected Machine declaration is the one manifest root.
+Its State handles, Transition handles, `States` section, and `Transitions` section are all direct entries of the same
+flat
+manifest. No second manifest depth, State grouping tree, Transition grouping tree, nested Machine, generic role wrapper,
+marker interface, annotation, or inheritance relation is admitted.
+
+`Unestablished` must not be user-defined. Kontrakt supplies one exact source-only intrinsic symbol, and the compiler
+recognizes it by resolved symbol identity rather than spelling, package scanning, or structural similarity.
+
 Backend representation, current-establishment-condition acquisition, persistence, synchronization, recovery, and
 commit strategy are not contract semantics and remain deferred.
 
@@ -330,6 +344,7 @@ The canonical State Machine contains:
 
 ```text
 one Machine identity
+one flat Machine manifest
 one closed State vocabulary
 one closed one-way Transition relation
 one explicit establishment-condition domain
@@ -339,6 +354,12 @@ Operation-to-Transition selection material from Interaction Manifests
 movement-legality law
 current-establishment-condition judgment law
 ```
+
+The flat source manifest is erased during lowering, but it is the complete V1 authoring boundary for this axis. It has
+one
+Machine declaration and one direct manifest level containing State handles, Transition handles, one `States` membership
+section, and one `Transitions` membership section. The compiler does not discover participation from arbitrary contained
+declarations; only the two explicit membership sections close the vocabulary and relation.
 
 A State corresponding to a Contract Pipeline position is not inferred. It is legal only if it has an independent machine
 meaning and changes the legal outgoing Transition relation.
@@ -608,29 +629,77 @@ test as every other candidate State.
 
 ### 6.2. Closed and Flat Vocabulary
 
-A State Contract declares a finite set of directly named conditions. Each State is unique within the selected Machine,
-and the vocabulary is closed before movement judgment.
+A State Contract declares a finite set of directly named conditions inside one selected flat Machine manifest. Each
+State
+handle is a direct manifest entry of that Machine, is selected exactly once by the manifest's `States` section, and is
+unique within that Machine authority.
 
-State inheritance, nested State trees, recursive composition, open subtype discovery, and structural State inference are
-forbidden. Similar names do not create shared meaning or movement.
+The Machine manifest permits exactly one declaration depth below the Machine declaration. A State handle may not contain
+another contract declaration. State grouping trees, recursive composition, inheritance, open subtype discovery, and
+structural State inference are forbidden.
+
+This flat containment is not object composition or an inheritance relation. It is the maximum manifest shape admitted
+for
+the independent State-Machine Axis. The same permission does not extend to Input Presentation, Fact, State payload,
+another
+Machine, or arbitrary user-defined contract composition.
 
 Host enum ordinal, object identity, allocation history, package placement, source-file name, and backend representation
 do
 not participate in State meaning.
 
-### 6.3. State Contract Material
+### 6.3. V1 State Authoring Material
+
+A State handle is an uninstantiable direct entry of the selected Machine manifest.
 
 A State declaration carries only the nominal material needed to identify one machine condition. It contains no factual
 payload, movement method, transition predicate, mutable current-State field, callback, lookup, validation rule, or
 backend encoding.
-
-The exact Kotlin, Java, or IDL authoring surface is deferred. Any later authoring model must preserve the following law:
 
 ```text
 State source material
     names one exact declared machine condition
     and carries no behavior or implementation authority
 ```
+
+```kotlin
+class OrderMachine private constructor(
+    states: States,
+    transitions: Transitions,
+) {
+    class Draft private constructor()
+    class Submitted private constructor()
+    class Closed private constructor()
+
+    class States private constructor(
+        draft: Draft,
+        submitted: Submitted,
+        closed: Closed,
+    )
+
+    class Transitions private constructor()
+}
+```
+
+The `States` declaration is a flat membership carrier. Each constructor coordinate selects one exact State handle
+already
+declared directly in the same Machine manifest. It does not create another namespace, hierarchy, runtime collection, or
+contract layer.
+
+The compiler accepts a selected State handle only when:
+
+- it is declared directly in the selected Machine manifest;
+- it is selected exactly once by that Machine's `States` section;
+- it has a private constructor with no coordinates;
+- it declares no methods, properties, initialization, inheritance, interfaces, annotations carrying authority, type
+  parameters, or further declarations.
+
+A direct declaration that is not selected by `States` is not a State merely because it has the same shape. Selection,
+not
+shape, grants participation.
+
+The exact constructor objects are never created. Parameter names and source order are source attribution only. Lowering
+retains the resolved Machine identity and exact State-handle identity, then removes the host declaration shape.
 
 ### 6.4. State and Fact
 
@@ -739,7 +808,7 @@ The target always establishes one exact declared State. `Unestablished` is never
 A field rewrite, successful judgment, completed method, callback, exception, log marker, pipeline advance, or
 implementation step does not create a Transition.
 
-### 7.2. Transition Material
+### 7.2. Transition Material and V1 Authoring
 
 Each Transition has one unique contract handle, one source establishment condition, and one exact target State.
 
@@ -750,6 +819,68 @@ Transition handle
         or Established(Source State)
     target State
 ```
+
+The V1 Kotlin authoring form is one uninstantiable Transition handle declared directly in the same flat Machine
+manifest.
+Its private constructor has exactly two fixed coordinates, `source` and `target`.
+
+```kotlin
+import io.kontrakt.contract.machine.Unestablished
+
+class OrderMachine private constructor(
+    states: States,
+    transitions: Transitions,
+) {
+    class Draft private constructor()
+    class Submitted private constructor()
+
+    class EstablishDraft private constructor(
+        source: Unestablished,
+        target: Draft,
+    )
+
+    class SubmitDraft private constructor(
+        source: Draft,
+        target: Submitted,
+    )
+
+    class States private constructor(
+        draft: Draft,
+        submitted: Submitted,
+    )
+
+    class Transitions private constructor(
+        establishDraft: EstablishDraft,
+        submitDraft: SubmitDraft,
+    )
+}
+```
+
+`Unestablished` is supplied by Kontrakt. The user does not declare or redefine it. The compiler recognizes the exact
+resolved intrinsic symbol. A user type with the same simple name, constructor shape, or package-relative location has no
+`Unestablished` authority.
+
+`Unestablished` is accepted only as a Transition's `source` coordinate. It is rejected as a State membership entry,
+Transition target, Fact field, Input coordinate, Publication coordinate, Operation parameter, or arbitrary runtime
+material.
+
+For an ordinary Transition, `source` and `target` resolve to exact State handles selected by the same Machine's `States`
+section. For a first Transition, `source` resolves to Kontrakt's intrinsic `Unestablished`, and `target` resolves to one
+State handle selected by that same `States` section.
+
+The `Transitions` declaration is the flat membership carrier for the closed relation. Each constructor coordinate
+selects
+one exact Transition handle already declared directly in the same Machine manifest. It does not contain Transition
+declarations, create another namespace, or authorize a second manifest depth.
+
+The compiler accepts a Transition handle only when:
+
+- it is declared directly in the selected Machine manifest;
+- it is selected exactly once by that Machine's `Transitions` section;
+- it has a private constructor with exactly `source` and `target` coordinates;
+- its source and target resolve under the laws above;
+- it declares no methods, properties, initialization, inheritance, interfaces, executable guards, callbacks, type
+  parameters, or further declarations.
 
 The handle allows an Interaction Manifest to select the exact movement without repeating its endpoints. It is not a
 business cause, event history, implementation command, Operation result, or generic continuation token.
@@ -829,14 +960,109 @@ independent of the declared Transition source and target.
 
 ### 8.1. Purpose
 
-The Explicit State Machine Manifest names one complete flat movement surface. It does not become the Contract Pipeline,
-a workflow engine, or a parent contract above State and Transition.
+The Explicit State Machine Manifest names and closes one complete flat movement surface. It does not become the Contract
+Pipeline, a workflow engine, or an enclosing contract above State and Transition.
 
-State declarations name the conditions the Machine may occupy. Transition declarations name the permitted one-way moves.
-The Machine Manifest closes those declarations under one exact authority so that no interaction or implementation path
-may reconstruct or extend the movement surface later.
+The Machine declaration is not a name-only wrapper. It is the single V1 authoring root for this independent axis. State
+handles, Transition handles, the `States` membership section, and the `Transitions` membership section are declared in
+one
+direct flat manifest level under that Machine declaration.
 
-### 8.2. One Surface
+State handles name the conditions the Machine may occupy. Transition handles name the permitted one-way moves. The
+`States` and `Transitions` sections close participation. The Machine Manifest establishes the resulting vocabulary and
+relation under one exact authority so that no interaction or implementation path may reconstruct or extend the movement
+surface later.
+
+### 8.2. V1 Flat Machine Authoring
+
+The V1 Kotlin declaration is:
+
+```kotlin
+package example.order.contract
+
+import io.kontrakt.contract.machine.Unestablished
+
+class OrderMachine private constructor(
+    states: States,
+    transitions: Transitions,
+) {
+    class Draft private constructor()
+    class Submitted private constructor()
+    class Closed private constructor()
+
+    class EstablishDraft private constructor(
+        source: Unestablished,
+        target: Draft,
+    )
+
+    class SubmitDraft private constructor(
+        source: Draft,
+        target: Submitted,
+    )
+
+    class CloseSubmitted private constructor(
+        source: Submitted,
+        target: Closed,
+    )
+
+    class States private constructor(
+        draft: Draft,
+        submitted: Submitted,
+        closed: Closed,
+    )
+
+    class Transitions private constructor(
+        establishDraft: EstablishDraft,
+        submitDraft: SubmitDraft,
+        closeSubmitted: CloseSubmitted,
+    )
+}
+```
+
+The Machine primary constructor has exactly the two fixed manifest coordinates `states` and `transitions`, resolving to
+the direct declarations `States` and `Transitions` in the same Machine manifest. These names and coordinates are part of
+the V1 compiler-recognized authoring grammar; they are not naming conventions discovered through scanning.
+
+All other contract declarations in this Machine manifest appear at the same direct level. No direct entry may contain
+another contract declaration. In particular, the following are rejected:
+
+- State declarations inside `States`;
+- Transition declarations inside `Transitions`;
+- another Machine declaration inside the Machine;
+- nested State grouping or Transition grouping;
+- user-defined manifest wrappers;
+- generic role wrappers;
+- inheritance, marker interfaces, or annotations used to identify manifest roles.
+
+The manifest is flat, not recursively composed. Kotlin lexical containment is used only to give one explicit Machine
+scope and one canonical naming surface. It does not establish object ownership, runtime composition, superclass or
+subtype
+relations, or behavior delegation.
+
+### 8.3. Why the Flat Manifest Is Admitted
+
+Kontrakt otherwise forbids recursive contract composition. The flat Machine manifest is a narrow exception in shape, not
+an exception in authority.
+
+The State-Machine Axis is independent from the Contract Pipeline and Implementation Pipeline. It requires one closed
+surface that states which conditions and movements belong to the same machine authority. One flat manifest level
+provides
+that closure without allowing arbitrary nested contracts.
+
+The admitted shape is therefore exactly:
+
+```text
+Machine manifest
+    direct State handles
+    direct Transition handles
+    one direct States membership section
+    one direct Transitions membership section
+```
+
+Nothing below those direct entries may declare another contract. Nothing in this decision authorizes nested Input
+Presentations, nested Fact carriers, Machine composition, State payload composition, or another recursive manifest.
+
+### 8.4. One Surface
 
 Each selected Machine governs one flat State surface, and exactly one explicit current establishment condition exists at
 a movement judgment boundary: `Unestablished` or `Established(State)` for one State of that surface.
@@ -852,19 +1078,19 @@ Transitions on the same Machine surface. An Operation that carries no State move
 rather
 than remaining attached to the Machine through a separate permission rule.
 
-### 8.3. No Global Initial-State Default
+### 8.5. No Global Initial-State Default
 
 The Machine Manifest does not declare or infer one global initial State.
 
-The first State is selected by the exact Transition chosen for the interaction. Such a Transition declares
-`Unestablished` as its source establishment condition and one exact declared State as its target.
+The first State is selected by the exact Transition chosen for the interaction. Such a Transition declares Kontrakt's
+intrinsic `Unestablished` as its source establishment condition and one exact declared State as its target.
 
 ```text
 CreateDraft
-    selects UnestablishedToDraft
+    selects OrderMachine.EstablishDraft
 
 ImportExisting
-    selects UnestablishedToActive
+    selects another exact Unestablished-sourced Transition
 ```
 
 Both paths may exist when their Operations select exact, distinct Transitions. The backend does not choose between them.
@@ -875,7 +1101,7 @@ have no initial-State authority.
 An ordinary Transition whose source is `Established(State)` is illegal while the current establishment condition is
 `Unestablished`. Conversely, a Transition sourced from `Unestablished` is illegal after any State has been established.
 
-### 8.4. Derived Sink Topology
+### 8.6. Derived Sink Topology
 
 The Machine Manifest does not author terminal States.
 
@@ -888,14 +1114,22 @@ sink State
 
 This set is topological information. It does not mean success, failure, acceptance, publication, or intended completion.
 
-### 8.5. Machine Definition Validation
+### 8.7. Machine Definition Validation
 
 Kontrakt rejects a Machine Contract when:
 
+- the selected Machine declaration does not have exactly the fixed `states: States` and `transitions: Transitions`
+  manifest coordinates;
+- `States` or `Transitions` is absent, duplicated, outside the same flat Machine manifest, or contains further contract
+  declarations;
+- a State or Transition selected by a membership section is not declared directly in the same Machine manifest;
+- a State or Transition handle contains another contract declaration;
+- a direct manifest declaration is selected more than once for the same role;
 - a State symbol is ambiguous within the selected Machine;
 - a Transition handle is duplicated;
-- a Transition refers to a State outside the selected Machine;
+- a Transition refers to a State outside the selected Machine's `States` membership;
 - a Transition targets `Unestablished`;
+- a user-defined symbol is substituted for Kontrakt's exact `Unestablished` intrinsic;
 - two declarations alias the same source-condition-to-target move;
 - the established-State relation contains a cycle or backward return within the same movement surface;
 - an Interaction Manifest selects a Transition outside the selected Machine;
@@ -906,7 +1140,7 @@ Kontrakt rejects a Machine Contract when:
 
 These are definition-time contract failures. They are not runtime State-Machine movement refusals.
 
-### 8.6. Explicit State-Machine Participation and Absence
+### 8.8. Explicit State-Machine Participation and Absence
 
 State-Machine participation is explicit for every interaction.
 
@@ -949,14 +1183,18 @@ explicit State-Machine absence
 The manifest does not declare State or Transition bodies. It does not repeat Transition endpoints. It does not hide
 Transition selection in Input values, method names, return types, exceptions, or implementation branches.
 
+The selected Transition handle resolves to one exact direct Transition declaration in the selected Machine manifest. A
+qualified form such as `OrderMachine.SubmitDraft` illustrates the semantic handle; the final textual IDL qualification
+syntax remains an Interface-frontend decision.
+
 The same Operation handle must not resolve to different hidden State-Machine contracts through overload, receiver type,
 object subtype, runtime registration, or backend choice.
 
-### 9.2. Public Authoring Shape Deferred
+### 9.2. V1 Kotlin Source Grammar
 
-This ADR does not select the final Kotlin, Java, or IDL authoring API.
+The V1 Kotlin authoring surface is the flat Machine manifest fixed by this ADR.
 
-The later authoring design must preserve these semantic requirements:
+It preserves these semantic requirements:
 
 ```text
 State
@@ -978,13 +1216,130 @@ Interaction Manifest
     or explicit State-Machine absence
 ```
 
-No proposed syntax in earlier drafts is retained as a decision by this ADR.
+```kotlin
+package example.order.contract
 
-### 9.3. Source Declaration Law
+import io.kontrakt.contract.machine.Unestablished
 
-Any accepted frontend must remain declaration-only contract material.
+class OrderMachine private constructor(
+    states: States,
+    transitions: Transitions,
+) {
+    class Draft private constructor()
+    class Submitted private constructor()
+    class Closed private constructor()
 
-It must not obtain authority from:
+    class EstablishDraft private constructor(
+        source: Unestablished,
+        target: Draft,
+    )
+
+    class SubmitDraft private constructor(
+        source: Draft,
+        target: Submitted,
+    )
+
+    class CloseSubmitted private constructor(
+        source: Submitted,
+        target: Closed,
+    )
+
+    class States private constructor(
+        draft: Draft,
+        submitted: Submitted,
+        closed: Closed,
+    )
+
+    class Transitions private constructor(
+        establishDraft: EstablishDraft,
+        submitDraft: SubmitDraft,
+        closeSubmitted: CloseSubmitted,
+    )
+}
+```
+
+This is declaration-only source material. The constructors are never invoked. The classes do not become runtime State or
+Transition objects. Kotlin containment, constructor coordinates, and source names are frontend evidence from which the
+compiler forms canonical material.
+
+The exact fixed grammar is:
+
+```text
+selected Machine declaration
+    private primary constructor
+        states: States
+        transitions: Transitions
+
+same flat manifest level
+    zero or more State handles
+    zero or more Transition handles
+    exactly one States membership section
+    exactly one Transitions membership section
+
+State handle
+    private zero-coordinate constructor
+    no body authority
+
+Transition handle
+    private constructor
+        source: Unestablished or one selected State handle
+        target: one selected State handle
+    no body authority
+
+States
+    flat coordinates selecting State handles from the same manifest
+
+Transitions
+    flat coordinates selecting Transition handles from the same manifest
+```
+
+Source ordering does not determine canonical membership or movement order. Coordinate names inside `States` and
+`Transitions` are retained for source attribution and diagnostics, while exact resolved type symbols determine the
+selected handles. The fixed Machine, `source`, and `target` coordinates are compiler grammar, not runtime parameters.
+
+### 9.3. Kontrakt-Owned `Unestablished`
+
+Kontrakt supplies the exact intrinsic source symbol used by first Transitions.
+
+```kotlin
+import io.kontrakt.contract.machine.Unestablished
+```
+
+The user references that symbol but does not declare, implement, extend, instantiate, or redefine it. The compiler
+checks
+resolved symbol identity. A same-named user class, type alias resolving elsewhere, structurally identical declaration,
+or
+package-scanned candidate is rejected.
+
+`Unestablished` participates only as the `source` coordinate of a Transition handle. It is not a State handle,
+membership
+entry, target, nullable sentinel, storage result, runtime value, or default.
+
+### 9.4. Flat Manifest Law
+
+The Machine manifest has one permitted declaration depth. Every State handle, Transition handle, `States`, and
+`Transitions` appears directly in that level. No one of those entries may contain another contract declaration.
+
+This document uses `direct manifest entry`, `flat entry`, and `same manifest level`. It does not model these
+declarations
+as hierarchy nodes, object components, or an inheritance tree.
+
+The compiler rejects:
+
+- `States` containing State declarations;
+- `Transitions` containing Transition declarations;
+- a State containing another declaration;
+- a Transition containing another declaration;
+- a Machine containing another Machine;
+- user-defined nested grouping sections;
+- recursive contract composition through any manifest entry.
+
+### 9.5. Source Declaration Law
+
+The accepted frontend remains finite, immutable, and directly inspectable from exact resolved symbols and constructor
+coordinates.
+
+It obtains no authority from:
 
 - executable bodies;
 - runtime instances;
@@ -997,34 +1352,44 @@ It must not obtain authority from:
 - reflection order;
 - runtime registries;
 - storage layout;
-- hidden defaults.
+- hidden defaults;
+- generic role wrappers or user-defined manifest wrappers.
 
-The frontend may carry exact names, an explicit `Unestablished` source marker or exact source-State reference, one exact
-target-State reference, exact Machine and Transition selection, explicit State-Machine absence, and other closed
-coordinates required by the selected authoring model.
+The frontend may carry exact names, Kontrakt's exact `Unestablished` intrinsic or one exact source-State reference, one
+exact target-State reference, exact Machine and Transition selection, explicit State-Machine absence, and the other
+closed
+coordinates required by the fixed authoring model.
 
-### 9.4. Canonical Contract Material
+A source file is only an organization unit. Moving another class into the file or package does not add it to the
+Machine.
+Only exact selection through the Machine's `States` and `Transitions` membership sections grants participation.
 
-Whatever source form is later selected, lowering must remove host-language shape and retain only canonical contract
-material.
+### 9.6. Canonical Contract Material
+
+Lowering removes the host declaration shape and retains only canonical contract material.
 
 Conceptually:
 
 ```text
-State declarations
+flat Machine source manifest
+    -> exact Machine identity
+
+States membership
     -> closed canonical State vocabulary
 
-Transition declarations
+Transition handle declarations
++ Transitions membership
     -> unique handle / source establishment condition / target-State relation
-
-Machine declaration
-    -> exact Machine identity and closed membership
 
 Interaction Manifest binding
     -> exact Operation participation
     -> exact Machine and Transition selection
     -> or explicit State-Machine absence
 ```
+
+Lowering erases declaration classes, inaccessible constructors, Kotlin containment, parameter objects, source order, and
+JVM signatures. The resulting canonical Machine image, not the Kotlin API shape, becomes authority for verification,
+generated testing, diagnostics, visualization, optimization, and backend realization.
 
 This section defines the semantic result of lowering. It does not decide backend representation or runtime ABI.
 
@@ -1146,6 +1511,10 @@ This ADR decides:
 - the meaning of State as declared source-condition material for selected-movement legality;
 - the meaning of Transition as one explicit source-establishment-condition-to-target-State permission;
 - the meaning of one flat Explicit State Machine Manifest;
+- the V1 Kotlin flat Machine-manifest authoring API;
+- the direct `States` and `Transitions` membership sections;
+- Kontrakt ownership of the exact source-only `Unestablished` intrinsic;
+- the prohibition on any manifest depth below the Machine's one flat declaration level;
 - the separation of Interface Contract, Operation, and Interaction Manifest;
 - the State-Machine Axis as an independent selected-movement stop authority;
 - the separation of State-Machine movement refusal from Admission and other contract refusals;
@@ -1168,7 +1537,8 @@ This ADR does not decide:
 - whether a backend uses memory, database rows, WAL, CAS, transactions, actors, generated tables, or remote
   coordination;
 - the realization ABI;
-- the public user API.
+- a Java mirror of the V1 Kotlin declaration grammar;
+- the final textual IDL qualification syntax for selecting a Machine and Transition handle.
 
 None of those mechanisms may later redefine State, `Unestablished`, Transition, Machine membership, Transition
 applicability, or refusal attribution. Missing, unavailable, corrupt, or inconsistent implementation material may not be
@@ -1297,11 +1667,10 @@ Budget, Capacity, Governance, or semantic Completion Contract.
 
 It also defers:
 
-- the final Kotlin, Java, and IDL user authoring API;
-- the exact spelling of Machine-and-Transition selection or State-Machine absence in an Interaction Manifest;
+- a Java mirror of the fixed V1 Kotlin flat Machine-manifest API;
+- the exact textual IDL qualification syntax for Machine-and-Transition selection or State-Machine absence;
 - whether Interface Contract V1 permits more than one independent Machine surface and, if so, how that coordination is
   made explicit without recursive composition;
-- the exact public authoring syntax for an `Unestablished` Transition source and its generated host representation;
 - the physical protocol that positively distinguishes `Unestablished` from unavailable, corrupt, inconsistent, or
   missing realization material;
 - the exact declared dependency relation between prior contract results and a selected Transition;
@@ -1313,19 +1682,20 @@ It also defers:
 - governed retry, restart, repetition, and epoch models;
 - public presentation of State-Machine movement refusal.
 
-These omissions do not reopen the authority law decided here. State and Transition remain independent contract
-presentations that together determine selected-movement legality. `Unestablished` remains an explicit origin source
-condition rather than a State, null, missing value, or backend default. Admission, Policy, Budget, Capacity, Governance,
-Invariant, and Publication retain separate judgment authority. Operation remains a selectable handle, and the
-Interaction
-Manifest remains the flat binding surface.
+These omissions do not reopen the authority or V1 Kotlin authoring law decided here. State and Transition remain
+independent contract presentations declared as direct entries of one flat Machine manifest. `States` and `Transitions`
+close participation without creating another manifest depth. `Unestablished` remains Kontrakt-owned explicit origin
+source material rather than a State, null, missing value, user declaration, or backend default. Admission, Policy,
+Budget,
+Capacity, Governance, Invariant, and Publication retain separate judgment authority. Operation remains a selectable
+handle, and the Interaction Manifest remains the flat binding surface.
 
 ---
 
 ## 15. Consequences
 
-State, State Transition, and Explicit State Machine Manifest now have a contract-level V1 model without returning
-authority to runtime objects, pipeline progress, or generic validation.
+State, State Transition, and Explicit State Machine Manifest now have a contract-level V1 model and a fixed Kotlin
+declaration surface without returning authority to runtime objects, pipeline progress, or generic validation.
 
 Interface Contract, Operation, and Interaction Manifest remain distinct. The Interface presents the public reliance
 surface. The Operation identifies the selected interaction. The Interaction Manifest binds the exact closed contract
@@ -1359,7 +1729,15 @@ Transitions,
 but no hidden rule may select one. Once established, the same Machine occurrence cannot return to `Unestablished`.
 Terminal State is not authored either; zero-outgoing States are derived sink topology without semantic completion.
 
-The public authoring API and backend realization are intentionally not decided. Reviewing this contract model comes
-first. A later backend may derive guards, indexes, tables, bitsets, or specialized branches from the closed Transition
-relation, but that derived material may not become a second permission source. Later syntax, generation, storage,
-synchronization, recovery, and optimization must preserve this authority without adding a second source of truth.
+The V1 Kotlin authoring API is now fixed as one flat Machine manifest. State handles, Transition handles, `States`, and
+`Transitions` are direct entries at the same manifest level; no deeper contract declaration is admitted. The Machine is
+therefore not a name-only wrapper. It is the explicit source boundary that closes one State vocabulary and one
+Transition
+relation for the independent State-Machine Axis.
+
+Users reference Kontrakt's exact `Unestablished` intrinsic only as the source of a first Transition. They do not declare
+or
+redefine it. The compiler resolves symbol identity, validates the flat manifest, lowers it into one canonical Machine
+image, and may generate guards, indexes, tables, bitsets, tests, diagnostics, or specialized branches. That derived
+material may not become a second permission source. Storage, synchronization, recovery, and optimization must preserve
+this authority without adding another source of truth.
