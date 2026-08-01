@@ -41,7 +41,7 @@ Policy, Budget, Capacity, and Governance belong in contract theory for this reas
 
 ```text
 Policy
-    declares how the machine should respond to an established situation
+    selects the prepared response contract that applies to an established situation
 
 Budget
     declares finite consumable allowance
@@ -99,8 +99,9 @@ The common point is not denial, permission, or selection by itself.
 
 The common point is this:
 
-> The machine meets an established situation, and a rule prepared in advance declares the response that belongs to that
-> situation.
+> The machine meets an established situation, and a rule prepared in advance selects the response contract that applies
+> to
+> that situation.
 
 Without this boundary, Policy becomes another name for every Boolean condition in the system. Budget and Capacity become
 Policy limits. Governance becomes a registry that both chooses and runs rules. Objectives, safety laws, and
@@ -114,21 +115,21 @@ Kontrakt requires a smaller meaning.
 
 Policy must cover more than prohibition.
 
-A machine often has several responses that are all possible in the broad physical or technical sense. The correct
-response depends on the situation and on what the machine is trying to preserve or improve.
+The same machine can meet different situations while remaining in the same machine state. Each situation may require a
+different prepared response contract.
 
 A Policy must therefore express a stable relation between:
 
 ```text
 an established situation
 and
-one declared response judgment
+one declared response contract
 ```
 
-The response may say that a proposed action is permitted, that one operating mode should be used, that work should be
-delayed, that output should be reduced, or that one path should be preferred.
+The selected contract may permit a proposed action, use one operating mode, delay work, reduce output, or prefer one
+path.
 
-The response is still only a judgment. Policy does not perform the action.
+The selection is still only a judgment. Policy does not perform the action or decide whether state movement is legal.
 
 Policy must remain finite enough to inspect, validate, compare, test, and lower. Arbitrary executable code would make
 the implementation the only readable source of meaning.
@@ -144,7 +145,7 @@ Determinism remains mandatory.
 ```text
 same Policy
 same established situation
-same declared response material
+same declared response-contract material
 same contract world
     -> same Policy Judgment
 ```
@@ -481,11 +482,13 @@ Across these fields, Policy has the same basic place.
 ```text
 A situation is established.
 
-The machine identifies the declared Policy that applies.
+Governance has already established the active Policy world.
 
-The Policy relates that situation to one response judgment.
+The Policy selects the declared response contract that applies to the situation.
 
-The machine realizes the response through separate implementation.
+If that response requires movement, the State Machine judges whether the movement is legal.
+
+Implementation realizes the authoritative results.
 ```
 
 The criteria differ by field.
@@ -521,7 +524,8 @@ routing
 
 Those criteria help design the Policy. They are not the Policy by themselves.
 
-A Policy is the declared relation that says how the machine should respond when the relevant situation is established.
+A Policy is the declared law that selects which prepared response contract applies when the relevant situation is
+established.
 
 ---
 
@@ -536,7 +540,7 @@ limits, and respond without pretending that unlimited work is possible.
 
 ```text
 Policy
-    relates an established situation to a declared response judgment
+    selects the prepared response contract that applies to an established situation
 
 Budget
     limits finite consumption
@@ -555,23 +559,28 @@ refuse a proposal. Each result must remain explicit and attributable to the cont
 
 ### 5.2. Policy Contract Meaning
 
-A Policy Contract declares how the machine should respond when one declared situation is established.
+A Policy Contract declares which prepared response contract applies when one declared situation is established.
 
 ```text
 Policy Contract:
     the contract that relates one established situation
-    to one declared Policy Judgment
+    to one declared response contract
 ```
 
 A shorter statement is:
 
-> Policy is a declared response law for an established situation.
+> Policy is the declared law for selecting a response contract from an established situation.
+
+The selection is a contract judgment. It is not the physical act that carries out the response.
 
 Policy does not discover the situation. It consumes material that has already been resolved and established for the
 judgment.
 
-Policy does not perform the response. It establishes a judgment that implementation may realize after all applicable
-contract authorities allow continuation.
+Policy may read the current machine state when that state is presented as one declared part of the situation. Reading
+the state does not give Policy authority over state meaning or state movement.
+
+Policy does not perform the response. It selects the response contract that applies. Implementation may realize that
+contract only after all applicable contract authorities allow continuation.
 
 Policy is not merely a goal or a list of criteria.
 
@@ -583,44 +592,40 @@ Criteria
     identify what matters when the situation is judged
 
 Policy
-    declares the response that belongs to the situation
+    selects the prepared response contract that applies to the situation
 ```
 
 ### 5.3. Policy Judgment Forms
 
-Different policies may produce different forms of response judgment.
+The general Policy judgment selects one exact declared response contract.
+
+```text
+Established Situation
+    -> Selected Response Contract
+```
+
+The selected contract is not a physical act. Selecting `ReducedOperation` does not reduce power. Selecting
+`LowLatencyRoute` does not install a route. Selecting `PreserveCall` does not rewrite compiler output.
+
+A smaller Policy surface may judge one proposed response contract instead of selecting from a closed set.
 
 ```text
 Permission
-    a proposed response may continue
+    the proposed response contract may apply
 
 Refusal
-    a proposed response must not continue
-
-Preference
-    one declared response should be favored over another
-
-Direction
-    one declared response should guide the machine
-
-Prescription
-    one declared response is required by the Policy
+    the proposed response contract must not apply
 ```
 
-These are judgments, not physical acts.
-
-A `ReduceOutput` judgment does not itself change power. A `PreferRouteA` judgment does not install a route. A
-`PreserveCall` judgment does not rewrite compiler output.
-
-This ADR does not yet accept every form into Kontrakt V1. It records the general family so that Policy is not reduced to
-access control or safety refusal.
+Preference or prescription may be added later, but they are not required to define Policy. The general meaning remains
+the same: Policy connects an established situation to the response contract prepared for that situation.
 
 ### 5.4. V1 Candidate Boundary
 
 The conservative V1 candidate is:
 
 ```text
-one exact proposed response
+one exact proposed response contract
 + one established situation
 + one exact Policy
 + one applicable contract world
@@ -628,8 +633,8 @@ one exact proposed response
     or Refuse
 ```
 
-Under this form, another contract surface presents one proposed response. Policy judges whether that response matches
-the established situation.
+Under this form, another contract surface presents one proposed response contract. Policy judges whether that contract
+matches the established situation.
 
 Policy does not search an open set, run an optimizer, schedule work, or execute the result.
 
@@ -686,48 +691,72 @@ route conditions selected for one routing decision
 operating mode and machine-condition facts
 ```
 
+The current machine state may appear as one declared situation coordinate.
+
+```text
+operatingState = Running
+```
+
+Policy may use that value together with temperature, load, demand, or other established material. It may not inspect the
+State Machine, derive legal target states, read hidden transition history, or decide whether movement is legal.
+
+```text
+Policy
+    uses current state as part of the situation
+
+State Machine
+    owns state meaning and judges movement
+```
+
+When the current state alone fixes the only legal result, Policy has no separate decision to make. Policy belongs where
+the same state can meet different situations and those situations require different prepared response contracts.
+
 Policy must not directly read a clock, environment variable, file, network service, sensor, repository, registry, random
 generator, mutable singleton, or backend object.
 
 Such information must first cross its proper boundary and become explicit material. If the required situation cannot be
 established, Policy judgment cannot be formed.
 
-### 6.2. Declared Response Material
+### 6.2. Declared Response Contracts
 
-A Policy requires a declared response surface.
+A Policy requires a declared response-contract surface.
 
-The smallest form is one exact proposed response.
-
-```text
-Proposed Response:
-    one named response presented for Policy judgment
-```
-
-A broader form may declare a finite response vocabulary.
+The smallest form is one exact proposed response contract.
 
 ```text
-Declared Responses:
-    the closed responses that one Policy may judge
+Proposed Response Contract:
+    one named response contract presented for Policy judgment
 ```
 
-Responses must be named and finite. Policy may not discover them by scanning implementations, loading plugins, calling a
-callback, querying a service, or inspecting arbitrary host types.
+A broader form may declare a finite set of prepared response contracts.
 
-The response surface does not mean that Policy performs the response. It only gives the judgment a closed and
+```text
+Declared Response Contracts:
+    the closed response contracts that one Policy may select
+```
+
+Response contracts must be named, finite, and already declared. Policy may not create a new contract, discover one by
+scanning implementations, load one from a plugin, call a callback, query a service, or inspect arbitrary host types.
+
+Policy may select only within the active contract world. It may not replace that world, select another Policy, or
+rewrite a response contract.
+
+The response-contract surface does not mean that Policy performs the response. It only gives the judgment a closed and
 inspectable meaning.
 
-### 6.3. Response Law
+### 6.3. Selection Law
 
 A Policy is prepared before the particular interaction.
 
-It declares how relevant situations relate to responses. It does not invent a new rule while judging one instance.
+It declares which prepared response contract applies to each relevant situation. It does not invent a new contract or a
+new rule while judging one instance.
 
 ```text
 same Policy
 same established situation
-same declared response material
+same declared response-contract material
 same contract world
-    -> same Policy Judgment
+    -> same selected response contract
 ```
 
 The law must be finite, named, inspectable, and explicitly bound.
@@ -779,7 +808,7 @@ Governance
     establishes the active Policy world
 
 Policy
-    judges one situation under that world
+    selects one response contract inside that world
 ```
 
 A configuration file or deployment value may help realize Governance. It does not become contract authority merely by
@@ -801,30 +830,39 @@ increase comfort
 The purpose does not automatically determine one Policy. Different policies can pursue the same purpose with different
 trade-offs.
 
-Kontrakt does not infer Policy from a score function, optimizer, or learned model. The active response law must be
+Kontrakt does not infer Policy from a score function, optimizer, or learned model. The active selection law must be
 explicit.
 
 ### 6.7. Policy and Fixed Laws
 
 Policy cannot weaken a result that another contract has already made final.
 
-If a response is impossible, unlawful, outside the available allowance, outside the admissible wall, or illegal from the
-current machine condition, Policy cannot make it valid.
+If a response contract is impossible, unlawful, outside the available allowance, outside the admissible wall, or
+requires movement that is illegal from the current machine state, Policy cannot make it valid.
 
-Policy serves the part of machine operation where the established situation still admits a meaningful response decision.
+Policy may read the current state as part of the situation, but it does not decide which state movements are legal. That
+judgment remains with the State Machine.
 
-This gives a simple test:
+Policy serves the part of machine operation where the same current state can meet different situations and those
+situations can call for different prepared response contracts.
 
-> When a stronger law has already fixed the only legal result, Policy must not recreate that result as an operating
-> choice.
+This gives two simple tests:
+
+> If current state and selected movement alone decide legality, the question belongs to the State Machine.
+
+> When a stronger law has already fixed the only legal result, Policy must not recreate that result as a Policy
+> selection.
 
 ### 6.8. Policy and Implementation
 
-Policy judgment and implementation are separate.
+Policy selection and implementation are separate.
 
 ```text
 Policy
-    establishes the Policy Judgment
+    selects the response contract that applies
+
+State Machine
+    judges any movement required by that response contract
 
 Implementation
     performs, skips, routes, stores, publishes, or actuates accordingly
@@ -836,7 +874,7 @@ adapters. None owns Policy meaning.
 Replacing those mechanisms must not change the judgment for the same canonical material.
 
 A scheduler, optimizer, router, controller, strategy object, callback, plugin, service, or command handler may realize a
-Policy. It may not become the source of Policy meaning.
+selected response contract. It may not become the source of Policy meaning.
 
 ### 6.9. More Than One Policy
 
@@ -878,7 +916,7 @@ The identity must distinguish at least:
 ```text
 Policy kind
 area of application
-response-law material
+selection-law material
 combination material
 applicable contract world
 ```
@@ -899,7 +937,7 @@ One Policy judgment requires explicit material.
 ```text
 Policy handle
 established situation
-proposed response or declared response vocabulary
+proposed response contract or declared response-contract set
 applicable contract world
 ```
 
@@ -911,7 +949,13 @@ The later Failure Contract will decide how that condition is classified.
 
 The result must be typed as Policy judgment, not returned as an unnamed Boolean.
 
-The final result family remains open. A conservative candidate is:
+The general result identifies one exact selected response contract.
+
+```text
+PolicySelectedResponseContract
+```
+
+A conservative V1 surface may instead judge one proposed response contract.
 
 ```text
 PolicyPermitted
@@ -919,25 +963,17 @@ PolicyPermitted
 PolicyRefused
 ```
 
-A broader future family may include:
-
-```text
-PolicyPreference
-PolicyDirection
-PolicyPrescription
-```
-
-The result must retain enough identity to show which Policy and contract world produced it. Diagnostic text is not the
-identity.
+The result must retain enough identity to show which Policy, situation material, response contract, and contract world
+produced it. Diagnostic text is not the identity.
 
 ### 7.3. Meaning of Permission and Refusal
 
 ```text
 PolicyPermitted
-    means only that Policy did not stop the proposed response
+    means only that the proposed response contract may apply under the Policy
 
 PolicyRefused
-    means Policy stopped the proposed response under its declared law
+    means the proposed response contract must not apply under the Policy
 ```
 
 Permission does not prove that the whole interaction must continue. The machine must preserve which authority stopped
@@ -950,7 +986,7 @@ Policy judgment must be repeatable from its canonical inputs.
 ```text
 same canonical Policy
 same canonical situation
-same canonical response material
+same canonical response-contract material
 same canonical contract world
     -> same canonical Policy Judgment
 ```
@@ -1017,7 +1053,7 @@ How is one Policy named?
 
 How is its situation surface declared?
 
-How is one proposed response or finite response vocabulary declared?
+How is one proposed response contract or finite response-contract set declared?
 
 Which restricted relation vocabulary is permitted?
 
@@ -1042,11 +1078,11 @@ because a realistic machine must work within finite conditions.
 
 The four remain independent contracts.
 
-Policy is a declared response law for an established situation.
+Policy selects the prepared response contract that applies to an established situation.
 
 Safety and authorization are special Policy uses, not the general definition.
 
-Policy consumes explicit situation and response material.
+Policy consumes explicit situation and response-contract material.
 
 Policy judgment and implementation remain separate.
 
@@ -1111,7 +1147,7 @@ Applicability is finite and unambiguous.
 
 Situation coordinates resolve exactly.
 
-Response handles resolve exactly.
+Response-contract handles resolve exactly.
 
 The relation uses only the admitted vocabulary.
 
@@ -1148,11 +1184,11 @@ These are backend forms. If their result differs from canonical Policy material,
 The following questions remain open for the next revision of this ADR.
 
 ```text
-Does Kontrakt V1 accept only one proposed response -> Permit or Refuse?
+Does Kontrakt V1 accept only one proposed response contract -> Permit or Refuse?
 
-Does V1 support a finite response vocabulary?
+Does V1 support a finite response-contract set and direct selection?
 
-Are preference, direction, and prescription distinct Policy kinds?
+Does a later version need preference or prescription beyond exact contract selection?
 
 How is situation material selected from Facts and interaction coordinates?
 
@@ -1198,7 +1234,7 @@ keeps its response inside the world it can actually sustain.
 
 The Policy authoring surface cannot be copied from ordinary Java or Kotlin strategy patterns.
 
-A small and clear response vocabulary must be designed. This is more work than accepting callbacks or arbitrary
+A small and clear response-contract set must be designed. This is more work than accepting callbacks or arbitrary
 predicates.
 
 The general definition is broader than the likely V1 implementation, so the ADR must keep contract meaning separate from
