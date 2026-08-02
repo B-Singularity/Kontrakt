@@ -165,6 +165,9 @@ The names differ across fields. One field may say `operating rule`, another may 
 > What situations does the system meet, what matters in those situations, and what response has been prepared for each
 > one?
 
+These examples show places where a finite Policy decision may exist. They do not mean that every decision system in the
+field is Policy or that Kontrakt V1 can express the whole field.
+
 ### 4.1. Nuclear Operation
 
 A nuclear plant must value reactor stability, cooling margin, equipment condition, radiation control, grid demand, and
@@ -333,8 +336,8 @@ the two.
 
 ### 4.7. Spacecraft Operation
 
-A spacecraft must balance mission value, power, thermal condition, communication windows, storage, fault risk, and the
-chance to complete later work.
+A spacecraft must protect mission value while working within power, thermal, communication, storage, and fault limits.
+Inside those limits, it may use prepared operating responses for known classes of situation.
 
 It may meet situations such as:
 
@@ -350,11 +353,13 @@ a short observation window opens
 one planned activity takes longer than expected
 ```
 
-The Policy may delay a low-priority task, protect power for communication, enter a safe operating mode, use the
-observation window, or cancel work that threatens later mission goals.
+A finite Policy may delay optional work, protect power for communication, enter a prepared safe operating mode, use a
+declared observation window, or refuse optional work that would threaten later mission goals.
 
 The spacecraft does not invent these responses from nothing. The mission prepares the relation between known situations
-and acceptable responses before launch, then the onboard system applies it when the situation is established.
+and acceptable responses before launch, then the onboard system applies it when the situation is established. Open-ended
+planning, rebuilding an existing schedule, activity search, and resource optimization are separate problems and are not
+promised by this Policy Contract.
 
 ### 4.8. Irrigation and Agricultural Control
 
@@ -382,8 +387,9 @@ The pump does not define that Policy. It only carries out the declared response.
 
 ### 4.9. Compiler Optimization
 
-A compiler must preserve program meaning while balancing execution speed, generated code size, compile time, target
-machine behavior, and information from previous runs.
+A compiler must preserve program meaning. After that fixed law is protected, it may use prepared Policy responses for
+finite compile situations involving execution speed, generated code size, compile time, target-machine conditions, and
+information from previous runs.
 
 It may meet situations such as:
 
@@ -399,10 +405,12 @@ the target machine has a useful instruction for one pattern
 profile data shows that one branch is rarely taken
 ```
 
-The Policy may inline a call, keep the call, apply a transformation, skip it, or use a cheaper analysis path.
+A finite Policy may select or judge a prepared response such as `InlineCall`, `PreserveCall`, `ApplyTransformation`,
+`SkipTransformation`, or `UseCheaperAnalysis`.
 
 The compiler backend performs the transformation. Policy declares how the compiler should respond to the established
-compile situation after correctness has already been protected.
+compile situation after correctness has already been protected. A full cost model, candidate search, weighted score, or
+learned inlining decision is not made Policy merely because it affects the compiler.
 
 ### 4.10. Network Routing
 
@@ -516,13 +524,20 @@ spacecraft operation
     mission value, power, heat, communication, fault risk
 
 compiler optimization
-    correctness, speed, code size, compile time
+    execution speed, code size, compile time
 
 routing
     reachability, delay, cost, stability, trust
 ```
 
 Those criteria help design the Policy. They are not the Policy by themselves.
+
+They matter only after fixed laws have removed invalid response contracts. Correctness, legal limits, physical
+impossibility, and required safety walls are not criteria that Policy may balance against speed, cost, output, or
+comfort.
+
+These examples cover only finite situation-based response decisions inside those fields. They do not claim that every
+optimizer, planner, scheduler, continuous control system, cost model, or learned decision system is a Policy Contract.
 
 A Policy is the declared law that selects which prepared response contract applies when the relevant situation is
 established.
@@ -571,10 +586,18 @@ A shorter statement is:
 
 > Policy is the declared law for selecting a response contract from an established situation.
 
+This decision replaces the earlier temporary description of Policy as the activation of judgment criteria. Policy does
+not change the judgment law of another contract. It selects one declared response contract inside the active contract
+world.
+
 The selection is a contract judgment. It is not the physical act that carries out the response.
 
 Policy does not discover the situation. It consumes material that has already been resolved and established for the
 judgment.
+
+Policy declares which established contract material may participate in that situation. It names the contract material
+and, where necessary to remove ambiguity, the contract result that establishes it. It does not name the backend,
+profiler, collector, storage mechanism, or runtime object that realizes that contract result.
 
 Policy may read the current machine state when that state is presented as one declared part of the situation. Reading
 the state does not give Policy authority over state meaning or state movement.
@@ -617,8 +640,8 @@ Refusal
     the proposed response contract must not apply
 ```
 
-Preference or prescription may be added later, but they are not required to define Policy. The general meaning remains
-the same: Policy connects an established situation to the response contract prepared for that situation.
+This ADR does not define preference, ranking, scoring, or prescription as Policy judgment forms. Policy connects an
+established situation to one exact response contract prepared for that situation.
 
 ### 5.4. V1 Candidate Boundary
 
@@ -637,6 +660,24 @@ Under this form, another contract surface presents one proposed response contrac
 matches the established situation.
 
 Policy does not search an open set, run an optimizer, schedule work, or execute the result.
+
+V1 does not claim to express:
+
+```text
+continuous optimization
+
+weighted score calculation
+
+open-ended candidate search
+
+automatic planning or rebuilding a schedule
+
+learned response ranking
+
+arbitrary cost models
+
+a response-contract set created during judgment
+```
 
 This form fits the current Interaction Manifest and keeps lowering finite. It remains a candidate, not the final V1
 decision.
@@ -669,8 +710,8 @@ perform accounting, measure the machine, discover resources, or activate its own
 
 A Policy judges one established situation.
 
-The situation is a finite set of resolved contract coordinates and established Fact material selected for that judgment.
-It is not a mutable context object.
+The situation is a finite set of resolved contract coordinates, established contract judgments, and established Fact
+material selected for that judgment. It is not a mutable context object.
 
 ```text
 Established Situation:
@@ -680,16 +721,39 @@ Established Situation:
 Examples include:
 
 ```text
-compiler call-site shape and profile class
+compiler call-site shape and established call-frequency profile
 
-current inventory position and review point
+current inventory position and established Budget result
 
 patient history selected for one treatment decision
 
-route conditions selected for one routing decision
+route conditions and established Capacity result
 
-operating mode and machine-condition facts
+operating mode, current State, and machine-condition Facts
 ```
+
+Situation material may come from any declared contract surface that publishes a result suitable for later judgment. It
+may also include profile material produced by an ordinary Operation from an explicit finite Fact input and established
+through the normal contract pipeline.
+
+Policy must bind each situation coordinate to contract material, not to the machinery that happens to produce it.
+
+```text
+Allowed
+    CallFrequencyProfile established by a declared Operation result
+    RemainingAllowance established by Budget
+    CurrentState established by the State Machine
+
+Forbidden
+    JfrProfiler.hotness
+    RingBuffer.currentSize
+    BudgetCounterImpl.remaining
+    StateBackend.privateFlag
+```
+
+A Fact kind alone is not sufficient when more than one contract result could establish materially different Facts of
+that kind. The binding must remain exact enough to identify the contract law that gives the material its meaning. The
+final source syntax and canonical binding material remain deferred.
 
 The current machine state may appear as one declared situation coordinate.
 
@@ -712,10 +776,11 @@ When the current state alone fixes the only legal result, Policy has no separate
 the same state can meet different situations and those situations require different prepared response contracts.
 
 Policy must not directly read a clock, environment variable, file, network service, sensor, repository, registry, random
-generator, mutable singleton, or backend object.
+generator, mutable singleton, profiler, collector, counter, cache, or backend object.
 
-Such information must first cross its proper boundary and become explicit material. If the required situation cannot be
-established, Policy judgment cannot be formed.
+Such information must first cross its proper boundary and become explicit material under declared contract authority. A
+backend may observe, count, store, or reduce information only as a realization of those declared contracts. If the
+required situation cannot be established, Policy judgment cannot be formed.
 
 ### 6.2. Declared Response Contracts
 
@@ -744,6 +809,10 @@ rewrite a response contract.
 The response-contract surface does not mean that Policy performs the response. It only gives the judgment a closed and
 inspectable meaning.
 
+A response contract must describe a real prepared machine response. It must not be a name wrapped around one result from
+a scoring scheme or optimizer. If response contracts multiply only to encode changing weights, score ranges, or
+calculated combinations, the model is hiding an optimization function and is outside this Policy Contract.
+
 ### 6.3. Selection Law
 
 A Policy is prepared before the particular interaction.
@@ -768,10 +837,42 @@ exact coordinate equality
 finite membership
 required or forbidden marker
 closed Boolean relation
-finite threshold taken from declared material
-explicit preference relation
+one declared situation coordinate compared with one declared bound
 explicit default or explicit absence
 ```
+
+A situation coordinate must describe the established world. It must not already rank, score, or choose response
+contracts.
+
+```text
+Situation material
+    currentLoad = High
+    callFrequencyClass = Hot
+    estimatedCodeGrowth = Large
+    queueLength = 120
+
+Not situation material
+    inlineScore = 82
+    bestResponse = Inline
+    optimizerRecommendation = PreserveCall
+    weightedUtility = 0.73
+```
+
+A threshold may compare one declared situation coordinate with one declared bound. It may not hide a formula that
+combines several criteria, assigns weights, ranks response contracts, calls an optimizer, or uses a learned
+recommendation.
+
+Computing a value before Policy judgment does not make it neutral. If changing the Policy purpose or the importance
+given to its criteria changes that value, the value contains Policy judgment and may not be presented as situation
+material.
+
+Two tests keep the boundary clear:
+
+> If a value says what the established world is like without judging response contracts, it may be situation material.
+
+> If a value says which response contract is better, preferred, or already selected, it belongs to Policy and must not
+> be
+> hidden as situation material.
 
 The final V1 vocabulary remains open. Arbitrary methods, loops, callbacks, host-language control flow, reflection,
 repository access, and user-defined evaluators are not Policy material.
@@ -814,7 +915,21 @@ Policy
 A configuration file or deployment value may help realize Governance. It does not become contract authority merely by
 containing a Policy name.
 
+Governance may not obtain its authority from the Policy that it activates. Policy may not select, validate, or create
+the Governance that makes it active.
+
+```text
+Forbidden cycle
+    Governance activates Policy
+    Policy declares that Governance valid
+```
+
+The complete Governance law remains deferred, but authority may not be created by such a cycle.
+
 ### 6.6. Policy and Purpose
+
+Purpose guides every contract. Policy gives purpose one explicit operating form when different established situations
+can call for different response contracts that remain allowed.
 
 A purpose explains why a Policy was designed.
 
@@ -827,11 +942,15 @@ preserve water
 increase comfort
 ```
 
-The purpose does not automatically determine one Policy. Different policies can pursue the same purpose with different
-trade-offs.
+The purpose does not automatically determine one Policy. Different Policies can pursue the same purpose while giving
+different importance to the allowed criteria.
 
-Kontrakt does not infer Policy from a score function, optimizer, or learned model. The active selection law must be
-explicit.
+That balance must already be visible in the explicit selection law. Policy judgment may not calculate a hidden score or
+ask an optimizer which response contract is best.
+
+Kontrakt does not infer Policy from a score function, optimizer, or learned model. A score or recommendation that
+already ranks response contracts may not enter as if it were neutral situation material. The active selection law must
+be explicit.
 
 ### 6.7. Policy and Fixed Laws
 
@@ -873,8 +992,28 @@ adapters. None owns Policy meaning.
 
 Replacing those mechanisms must not change the judgment for the same canonical material.
 
-A scheduler, optimizer, router, controller, strategy object, callback, plugin, service, or command handler may realize a
-selected response contract. It may not become the source of Policy meaning.
+A scheduler, optimizer, router, controller, strategy object, callback, plugin, service, or command handler may propose
+or realize work around a selected response contract. A profiler or collector may realize declared observation and
+material-establishment contracts. None may become the source of Policy meaning.
+
+Policy may name the established material it requires and the contract result that gives that material meaning. It may
+not name the backend producer that collects, stores, calculates, or publishes the material.
+
+```text
+Policy
+    consumes an established Profile Fact
+    bound to the contract result that establishes it
+
+Compiler and backend
+    derive probes, counters, bounded storage, aggregation,
+    and access machinery from the complete contract graph
+```
+
+Replacing instrumentation with sampling, one bounded storage layout with another, or one generated evaluator with
+another must not require a Policy change when the same canonical material is established.
+
+A full optimizer, planner, scheduler, or continuous control system is not converted into Policy by giving its output a
+response name. Only an explicit finite situation-to-response law is Policy material under this ADR.
 
 ### 6.9. More Than One Policy
 
@@ -936,7 +1075,7 @@ One Policy judgment requires explicit material.
 
 ```text
 Policy handle
-established situation
+established situation with exact contract-material bindings
 proposed response contract or declared response-contract set
 applicable contract world
 ```
@@ -1053,6 +1192,12 @@ How is one Policy named?
 
 How is its situation surface declared?
 
+How does each situation coordinate bind to exact established contract material?
+
+When is Fact kind identity sufficient, and when must the establishing contract result also be identified?
+
+How is backend producer identity excluded from that binding?
+
 How is one proposed response contract or finite response-contract set declared?
 
 Which restricted relation vocabulary is permitted?
@@ -1084,6 +1229,10 @@ Safety and authorization are special Policy uses, not the general definition.
 
 Policy consumes explicit situation and response-contract material.
 
+Policy names contract material and its establishing contract law, never the backend producer that realizes it.
+
+Observed or profiled information may participate only after existing contract machinery establishes it as explicit material.
+
 Policy judgment and implementation remain separate.
 
 Policy does not activate itself.
@@ -1111,8 +1260,6 @@ Policy relation vocabulary
 
 V1 result family beyond the conservative candidate
 
-whether V1 supports preference, direction, or prescription
-
 how several Policies are combined
 
 Policy canonical identity bytes
@@ -1124,6 +1271,8 @@ Diagnostic evidence and retention
 Version qualification
 
 runtime enforcement mechanism
+
+exact source-binding syntax between one Policy situation coordinate and its establishing contract result
 ```
 
 ### 9.3. No Hardware or Backend Authority
@@ -1131,8 +1280,8 @@ runtime enforcement mechanism
 Physical capability, scheduler behavior, resource discovery, optimizer implementation, storage layout, cache state,
 thread count, and deployment configuration do not define Policy.
 
-They may produce explicit material or realize a Policy judgment. If replacing them changes Policy meaning for the same
-canonical inputs, the boundary has failed.
+They may realize the production of explicit material under declared contract authority or realize a Policy judgment. If
+replacing them changes Policy meaning for the same canonical inputs, the boundary has failed.
 
 ---
 
@@ -1147,9 +1296,22 @@ Applicability is finite and unambiguous.
 
 Situation coordinates resolve exactly.
 
+Every situation coordinate resolves to exact established contract material.
+
+No backend producer, profiler, collector, storage type, counter, or runtime object participates in that binding.
+
+When one Fact kind can be established by more than one materially different contract result, the source binding is not
+ambiguous.
+
 Response-contract handles resolve exactly.
 
 The relation uses only the admitted vocabulary.
+
+Situation material does not contain a hidden ranking, score, optimizer recommendation, or selected response contract.
+
+Every response contract is a prepared machine response, not a named score point or optimizer result.
+
+Every threshold compares one declared situation coordinate with one declared bound.
 
 No executable host behavior participates.
 
@@ -1188,9 +1350,9 @@ Does Kontrakt V1 accept only one proposed response contract -> Permit or Refuse?
 
 Does V1 support a finite response-contract set and direct selection?
 
-Does a later version need preference or prescription beyond exact contract selection?
+How is situation material selected from Facts, prior contract judgments, and interaction coordinates?
 
-How is situation material selected from Facts and interaction coordinates?
+What exact canonical material binds one situation coordinate to its establishing contract result?
 
 Can a Policy consume prior Budget or Capacity judgments?
 
@@ -1219,8 +1381,9 @@ Budget, Capacity, and Governance require their own complete sections before ADR-
 
 ### Positive
 
-Policy receives a general meaning that covers real machine operation, optimization, routing, treatment, replenishment,
-traffic control, energy management, building operation, spacecraft operation, irrigation, and other decision systems.
+Policy receives a general meaning that covers finite situation-based response decisions inside machine operation,
+routing, treatment, replenishment, traffic control, energy management, building operation, compiler work, spacecraft
+operation, irrigation, and other decision systems.
 
 The definition is not limited to safety or refusal.
 
@@ -1238,13 +1401,15 @@ A small and clear response-contract set must be designed. This is more work than
 predicates.
 
 The general definition is broader than the likely V1 implementation, so the ADR must keep contract meaning separate from
-initial realization.
+initial realization. Continuous optimization, open-ended planning, rebuilding an existing schedule, and ranking produced
+by a learned model remain outside the current V1 boundary.
 
 Goals, learned models, optimizers, and heuristics cannot silently own Policy authority. Systems that depend on them will
 need an explicit boundary before their results become contract material.
 
 ### Neutral
 
-This ADR does not prohibit runtime strategies, schedulers, optimizers, rule engines, controllers, or decision tables.
+This ADR does not prohibit runtime strategies, schedulers, optimizers, rule engines, controllers, profilers, collectors,
+or decision tables.
 
-It prevents those mechanisms from becoming the source of Policy meaning.
+It prevents those mechanisms from becoming the source of Policy meaning or from appearing as Policy evidence bindings.
