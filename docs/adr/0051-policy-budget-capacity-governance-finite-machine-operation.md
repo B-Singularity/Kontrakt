@@ -6,7 +6,7 @@ Proposed
 
 ## Date
 
-2026-08-01
+2026-08-03
 
 ## Related
 
@@ -58,8 +58,10 @@ These contracts describe a machine that understands its limits and can act withi
 They are grouped because they serve that common purpose. They do not form one master contract, and none may absorb the
 others.
 
-This ADR records the shared reason for the group and begins the Policy Contract. Budget, Capacity, and Governance remain
-independent contracts. Their complete material and judgment laws will be added after the Policy boundary is settled.
+This ADR records the shared reason for the group and establishes the current Policy and Budget foundations. Budget,
+Capacity, and Governance remain independent contracts. This revision decides the basic Budget meaning, explicit
+allocation law, accounting position, quantity boundary, and separation from Capacity. Capacity and Governance remain
+next. Policy will return after their material, judgment, and authority laws are fixed.
 
 ---
 
@@ -152,6 +154,23 @@ same contract world
 
 A response that changes because of thread timing, file order, remote availability, hidden mutable state, or random model
 output has not been fully presented to the contract machine.
+
+Budget must describe the finite resource obligation of the user's machine, not merely the resources used internally by
+Kontrakt.
+
+The user's project is itself a machine. It may declare a Budget over the whole system, one Operation, one run, one
+session, or another explicit machine boundary. Kontrakt must then measure, account, judge, and control that Budget
+through a suitable realization.
+
+Budget must be explicit. Kontrakt may derive an internal allocation plan inside a declared allowance, but it may not
+invent, enlarge, or silently activate a Budget that the contract did not declare.
+
+The limit is contract. Clocks, counters, allocators, process isolation, compiler instrumentation, generated checkpoints,
+schedulers, and operating-system controls are realization.
+
+Budget must not be defined by algorithmic complexity, backend loop count, hash probes, graph visits, compiler passes, or
+another implementation-specific work unit. Such material may remain realization fuel. It becomes user Budget charge
+material only when the contract world itself declares the counted event or quantity.
 
 ---
 
@@ -558,7 +577,7 @@ Policy
     selects the prepared response contract that applies to an established situation
 
 Budget
-    limits finite consumption
+    declares explicit finite allowance allocated before governed consumption
 
 Capacity
     limits what the machine may admit
@@ -571,6 +590,10 @@ The group is not limited to refusal.
 
 A machine may reduce output, delay optional work, use another route, preserve a call, change an operating mode, or
 refuse a proposal. Each result must remain explicit and attributable to the contract that owns it.
+
+Budget is not merely a post-execution threshold. The applicable allowance must be explicitly declared and established
+before governed work may consume it. Kontrakt may partition that allowance among generated machinery, runtime services,
+diagnostics, caches, and user execution, but only inside the declared total and under an explicit allocation law.
 
 ### 5.2. Policy Contract Meaning
 
@@ -595,9 +618,20 @@ The selection is a contract judgment. It is not the physical act that carries ou
 Policy does not discover the situation. It consumes material that has already been resolved and established for the
 judgment.
 
+A Policy situation is one declared finite projection of the established contract world. Any material established under
+an explicit Contract may participate. No contract kind is privileged merely because it represents business work,
+pipeline processing, machine state, judgment, limit, failure, publication, or another part of machine operation.
+
 Policy declares which established contract material may participate in that situation. It names the contract material
 and, where necessary to remove ambiguity, the contract result that establishes it. It does not name the backend,
 profiler, collector, storage mechanism, or runtime object that realizes that contract result.
+
+Established contract material becomes evidence for one Policy judgment through this declared relation. Evidence is not a
+separate material hierarchy and does not acquire authority over the contract that established the material.
+
+Policy receives situation material as immutable input. It may compare, match, and use that material to select a response
+contract. It may not modify, replace, reclassify, reinterpret, or republish that material under the authority of the
+Contract that established it.
 
 Policy may read the current machine state when that state is presented as one declared part of the situation. Reading
 the state does not give Policy authority over state meaning or state movement.
@@ -682,78 +716,817 @@ a response-contract set created during judgment
 This form fits the current Interaction Manifest and keeps lowering finite. It remains a candidate, not the final V1
 decision.
 
-### 5.5. Budget, Capacity, and Governance Scope in This Draft
+### 5.5. Budget Foundation and Deferred Capacity and Governance Scope
 
-This draft does not decide the complete Budget, Capacity, or Governance contracts.
-
-It retains only their place beside Policy.
+This revision decides the basic Budget Contract.
 
 ```text
 Budget
-    states whether declared allowance remains
-
-Capacity
-    states whether the proposed load stays inside the declared wall
-
-Governance
-    establishes which Policy and related contract material are valid
+    declares explicit finite consumable allowance
+    allocated to one declared machine boundary
+    before governed work may consume it
 ```
 
-Policy may use their already established results only if the final contract model declares that relation. Policy may not
-perform accounting, measure the machine, discover resources, or activate its own world.
+The Budget belongs to the user's machine. It may apply to the whole project, one Operation, one run, one session, or
+another declared subject. It is not limited to Kontrakt's compiler or runtime machinery.
+
+Kontrakt owns the realization work needed to enforce the declaration.
+
+```text
+User
+    declares the subject, quantity, boundary, allowance, and required guarantee
+
+Kontrakt
+    establishes the Budget position
+    derives any internal allocation
+    measures or establishes charge material
+    performs accounting
+    produces Budget judgment
+    realizes enforcement
+```
+
+The user does not place `consume`, `remaining`, `checkpoint`, allocator, scheduler, or process-control calls inside the
+Operation implementation merely to make Budget work.
+
+Budget is explicit. Kontrakt must not infer that a machine has a Budget merely because resources are finite or
+measurable. A selected Budget slot must declare one exact Budget or explicit absence. The final absence syntax remains
+deferred.
+
+This revision does not create separate `Deadline`, `Windowed`, `Aggregate`, `CurrentHeld`, `Concurrent`, or
+`GrowthBound`
+families.
+
+```text
+elapsed-time deadline
+    quantity + boundary + allowance
+
+fixed or rolling window
+    renewal law
+
+parent and child allowance
+    allocation and composition law
+
+current held amount and concurrent count
+    Capacity quantity
+
+growth refusal
+    Capacity admission judgment
+```
+
+Reservation remains a possible protocol extension because `reserve -> commit or release` changes accounting position
+before consumption. Its V1 inclusion remains deferred.
+
+Capacity and Governance remain independent contracts.
+
+```text
+Capacity
+    declares the admissible machine wall and owns its judgment law
+
+Governance
+    establishes the valid contract world and owns its activation law
+```
+
+Policy may use only the material that Budget, Capacity, and Governance explicitly establish and only when the Policy
+situation declares that relation. Policy may not perform accounting, measure the machine, discover resources, allocate
+allowance, or activate its own world.
+
+The next design sequence is Capacity and Governance. Policy will return after their material, judgment, and authority
+laws are fixed.
 
 ---
 
-## 6. Policy Contract
+## 6. Budget Contract
 
-### 6.1. Established Situation
+### 6.1. Budget Meaning
+
+A Budget Contract declares explicit finite consumable allowance allocated to one declared machine boundary before
+governed work may consume the quantity.
+
+```text
+Budget Contract:
+    the contract that establishes
+    how much of one declared quantity
+    one declared machine boundary may consume
+```
+
+The user's project is itself a machine. Budget therefore describes the finite resource obligation of that machine, not
+merely the resources consumed internally by Kontrakt.
+
+A Budget may apply to:
+
+```text
+the whole user system
+
+one interface machine
+
+one Operation execution
+
+one run
+
+one session
+
+one declared child machine boundary
+```
+
+The subject must be explicit. Package placement, thread ownership, call-stack position, process identity, classloader,
+current worker, or backend registration must not silently decide the subject.
+
+Budget is not algorithmic complexity.
+
+```text
+Not Budget Contract material
+    O(n)
+    O(n log n)
+    loop iteration count
+    hash probe count
+    graph visit count
+    compiler pass count
+    machine instruction count
+```
+
+Those describe or meter a realization. They do not declare the user's machine obligation merely because they are finite.
+
+Budget may count a declared machine event only when the event itself belongs to the contract world and has the same
+meaning across admissible realizations.
+
+```text
+Allowed candidate
+    one declared RetryAttempt
+
+Forbidden as user Budget
+    one backend loop iteration
+```
+
+### 6.2. Explicit Allocation Before Consumption
+
+Budget is based on explicit allocation.
+
+```text
+Explicit Budget Declaration
+    ->
+Established Budget Position
+    ->
+Governed Work May Consume
+```
+
+The applicable allowance must be established before governed work begins. Budget is not created after execution by
+observing what the implementation happened to consume.
+
+No Budget is implicit.
+
+Kontrakt may support an explicitly selected named mode or an explicitly delegated automatic resolution surface in a
+later authoring model. Such a surface must still resolve to exact canonical Budget material before authority begins. A
+backend must not inspect the host and silently create, enlarge, or replace a Budget.
+
+Contract allocation and physical reservation are different.
+
+```text
+Contract allocation
+    establishes the allowance position
+    that the machine is permitted to consume
+
+Physical reservation
+    secures physical resources
+    through one realization mechanism
+```
+
+Every Budget requires contract allocation. Physical reservation is a realization technique that may be used when the
+resource and backend permit it.
+
+A time allowance can be allocated before execution even though time itself is not stored in advance. A memory
+realization may reserve an arena, process limit, region, or another bounded resource before execution. The difference
+does not change Budget meaning.
+
+If the required enforcement cannot be realized for the selected backend, Kontrakt must reject that realization or report
+the unsupported guarantee. It must not weaken the Budget to fit the backend.
+
+### 6.3. Canonical Budget Material
+
+One Budget requires at least the following canonical material:
+
+```text
+Budget identity
+
+subject
+
+boundary
+
+quantity and unit
+
+allowance
+
+allocation law
+
+accounting law
+
+renewal law
+
+attribution law
+
+required enforcement level
+
+applicable contract world
+```
+
+The fields answer different questions.
+
+```text
+subject
+    whose Budget is this?
+
+boundary
+    when does governed accounting begin and end?
+
+quantity and unit
+    what is consumed and in what unit?
+
+allowance
+    how much may be consumed?
+
+allocation law
+    where does the allowance come from,
+    who owns it,
+    and may it be partitioned or returned?
+
+accounting law
+    how does one established charge change the Budget position?
+
+renewal law
+    when and how does a new allowance become available?
+
+attribution law
+    which child work, generated machinery,
+    runtime work, and external work belong to this Budget?
+
+required enforcement level
+    what control must the realization provide?
+
+applicable contract world
+    under which declared world does this Budget have authority?
+```
+
+These coordinates must not be replaced by a collection of named Budget families. A deadline, time window, parent quota,
+or current occupancy does not become a new family merely because the same fields take different values.
+
+The exact authoring syntax and canonical identity bytes remain deferred.
+
+### 6.4. Budget Quantity Sources
+
+Budget charge material may come from two sources.
+
+```text
+Kontrakt-measured physical quantity
+
+Contract-established declared quantity
+```
+
+A physical quantity is admissible only when Kontrakt can define its subject, boundary, unit, attribution, accounting,
+and enforcement meaning without requiring user implementation code to carry Budget control flow.
+
+A declared quantity is admissible only when the contract world itself establishes the event or amount. The user may
+declare a finite Budget over retries, requests, publications, cases, monetary amounts, or another explicit quantity when
+one unit has a stable contract meaning.
+
+```text
+Declared quantity
+    RetryAttempt
+    ExternalRequest
+    PublishedFact
+    VerificationCase
+    PaymentAmount
+
+Not declared quantity
+    internal loop
+    optimizer visit
+    private cache access
+    hidden repository call
+```
+
+A generic `step` is not automatically Budget material.
+
+A step may become charge material only when the contract declares exactly what one step means. Kontrakt's existing
+physical or semantic planner steps remain realization fuel unless a separate user-machine contract explicitly gives an
+event that meaning.
+
+### 6.5. Time Quantity
+
+Actual elapsed time is a valid Budget quantity.
+
+```text
+subject
+    one declared machine boundary
+
+boundary
+    explicit start
+    -> explicit end
+
+quantity
+    elapsed time
+
+allowance
+    declared duration
+```
+
+For example:
+
+```text
+one Operation execution
+from Admission establishment
+through terminal result establishment
+may consume at most 100 ms of elapsed time
+```
+
+`Deadline` is not a separate accounting family. It is an elapsed-time quantity with an explicit boundary and allowance.
+
+Different time boundaries remain different Budget declarations.
+
+```text
+queue wait
+
+one execution attempt
+
+all retries of one Operation
+
+no-progress interval
+
+whole machine run
+```
+
+The final V1 time catalog remains to be closed. This ADR establishes actual elapsed time as required Budget material and
+does not yet decide whether processor time, no-progress time, or another time quantity belongs in V1.
+
+Physical observations may differ across executions because the environment differs. Determinism means that the clock
+source, boundary, attribution, unit conversion, accounting law, and judgment are fixed by explicit material.
+
+```text
+same established elapsed-time charge
+same established Budget position
+same contract world
+    -> same Budget judgment
+```
+
+### 6.6. Memory Quantity
+
+Actual memory use may be declared, but `memory` alone is not a complete quantity.
+
+The declaration must distinguish the accounting meaning.
+
+```text
+cumulative allocated bytes
+    bytes allocated during one declared boundary
+    and added to a consumable Budget position
+
+current live bytes
+    bytes currently held at one position
+
+peak live bytes
+    maximum current live bytes observed during one boundary
+
+retained bytes
+    bytes still held after a declared boundary
+```
+
+Cumulative allocated bytes have Budget form because they accumulate as consumption over the boundary.
+
+Current live, peak live, and retained bytes have Capacity form because they describe what the machine holds or may hold
+at one position. Their complete law remains deferred to Capacity.
+
+A whole-system memory declaration must account for the whole declared subject.
+
+```text
+whole user system
+    includes user implementation
+    Kontrakt runtime machinery
+    generated guards and adapters
+    cache
+    diagnostics
+    declared child work
+```
+
+A declaration may define a narrower subject, but it must not call itself a whole-system limit while silently excluding
+Kontrakt or generated machinery.
+
+The backend may realize the memory obligation through a bounded arena, controlled allocator, generated layout, isolated
+process, operating-system limit, static reservation, or another mechanism. Those mechanisms are implementation.
+
+### 6.7. Accounting and Renewal
+
+The basic Budget accounting relation is cumulative consumption.
+
+```text
+Established Budget Position
++ Established Charge
+    ->
+Next Budget Position
+
+or
+
+Would Exceed Budget
+```
+
+The exact remaining amount need not be a public user-facing result. The canonical Budget position must nevertheless
+retain enough material for the next judgment to be deterministic.
+
+Accounting law and renewal law are separate.
+
+```text
+accounting law
+    how charge changes the current position
+
+renewal law
+    when a new allowance position is established
+```
+
+Possible renewal values may include:
+
+```text
+one shot
+
+per execution
+
+per run
+
+per session
+
+fixed window
+
+rolling window
+
+periodic refill
+
+no renewal
+```
+
+`Windowed` is not a separate Budget family. It is one renewal law.
+
+This ADR does not yet admit arbitrary user-defined refill algorithms. Renewal must remain finite, explicit, inspectable,
+and lowerable.
+
+### 6.8. Allocation and Composition
+
+A Budget may be allocated from a larger Budget.
+
+This is not merely attribution. Allocation changes who may consume which part of an already finite allowance.
+
+```text
+Project Budget
+    ->
+Operation Budget
+    +
+Kontrakt Runtime Budget
+    +
+Cache Budget
+    +
+Diagnostic Budget
+    +
+Unallocated Headroom
+```
+
+Allocation must preserve allowance.
+
+```text
+sum of active child allocations
++ unallocated parent allowance
+    <= parent allowance
+```
+
+The compiler may derive an internal allocation plan from the complete contract graph, selected backend, environment
+material, and workload evidence. It may not exceed or silently redefine the declared parent allowance.
+
+Allocation law must make at least the following explicit:
+
+```text
+allocation source
+
+owner of the allocated allowance
+
+partition rule
+
+whether unused allowance returns
+
+when it returns
+
+whether borrowing is permitted
+
+whether child consumption also changes the parent position
+
+how double counting is prevented
+```
+
+A whole-system Budget gives Kontrakt authority to allocate inside the declared total. It does not give Kontrakt
+authority to invent a larger total.
+
+The internal allocation plan is realization material derived under Budget authority. The declared total, subject,
+quantity, boundary, and allocation law remain contract material.
+
+### 6.9. Reservation as a Possible Accounting Extension
+
+Reservation is not merely a future admission time.
+
+A reservation changes the available position before final consumption.
+
+```text
+Available
+    -> Reserved
+    -> Consumed
+
+or
+
+Available
+    -> Reserved
+    -> Released
+```
+
+This is a real accounting extension because `reserve`, `commit`, and `release` have different effects.
+
+Reservation is not established as a separate Budget family. It is a possible extension to the accounting protocol.
+
+This ADR does not yet decide whether V1 requires reservation. The decision must be based on concrete Budget and Capacity
+cases that cannot be represented safely by direct allocation and consumption.
+
+### 6.10. Budget Judgment
+
+Budget judgment must be typed.
+
+The basic judgment form is:
+
+```text
+Established Budget Position
++ Established Charge
++ Applicable Contract World
+    ->
+BudgetWithinAllowance
+    + Next Budget Position
+
+or
+
+BudgetWouldExceed
+```
+
+`BudgetWithinAllowance` does not perform the work. It means only that the established charge may be accepted under the
+current Budget position.
+
+`BudgetWouldExceed` belongs to Budget. It must not be reported as Capacity refusal, State refusal, Invariant violation,
+or an unnamed runtime exception.
+
+Policy may select a prepared response contract after reading the Budget judgment. Policy may not reverse the Budget
+result or manufacture new allowance.
+
+The exact Failure and Diagnostic mapping remains deferred.
+
+### 6.11. Budget and Implementation
+
+The user declares the machine limit. Kontrakt owns the machinery that realizes it.
+
+```text
+Forbidden user obligation
+    budget.consume()
+    budget.remaining()
+    budget.checkpoint()
+    budget.isExhausted()
+```
+
+Such calls make Budget meaning depend on where implementation chose to report work.
+
+Kontrakt may realize Budget through:
+
+```text
+generated accounting
+
+compiler instrumentation
+
+controlled allocation
+
+static reservation
+
+adapter-owned I/O accounting
+
+scheduler boundary
+
+isolated process
+
+operating-system containment
+
+post-execution measurement when that is the declared guarantee
+```
+
+A realization must declare the guarantee it can provide. Pre-execution refusal, hard during-execution stop, cooperative
+stop, and post-execution judgment are not interchangeable.
+
+If the declared Budget requires hard control and the selected realization cannot provide it, that realization is
+inadmissible.
+
+Opaque user code does not weaken the contract. It may require analysis, instrumentation, containment, a different
+backend, or rejection.
+
+### 6.12. Budget and Capacity
+
+Budget and Capacity remain separate.
+
+```text
+Budget
+    finite allowance consumed across a declared boundary
+
+Capacity
+    finite amount the machine may currently hold, admit, or keep active
+```
+
+Examples:
+
+```text
+total allocated bytes during one Operation
+    Budget
+
+live bytes currently held
+    Capacity
+
+requests accepted during one hour
+    Budget
+
+requests active at the same time
+    Capacity
+
+bytes written during one run
+    Budget
+
+temporary bytes currently retained
+    Capacity
+```
+
+Current-held amount, concurrent count, and growth refusal are not separate Capacity families. They are Capacity
+quantities and the Capacity admission judgment.
+
+The complete Capacity position, acquisition, release, reservation, and admission laws remain deferred.
+
+### 6.13. Budget Determinism
+
+Budget authority must be repeatable from canonical material.
+
+```text
+same Budget
+same established Budget position
+same established charge
+same applicable contract world
+    -> same Budget judgment
+```
+
+A physical measurement backend may observe different charge values in different executions. It must not change what is
+measured, where the boundary lies, whose consumption is counted, how units are converted, or how judgment is produced.
+
+Hidden environment values, thread timing, classpath order, callback order, allocator identity, or backend-private
+counters must not redefine Budget material.
+
+### 6.14. V1 Budget Boundary
+
+V1 must provide an explicit user-facing Budget surface. Budget must not be an implicit runtime mode.
+
+The required V1 foundation is:
+
+```text
+one explicit Budget or explicit absence
+
+explicit subject
+
+explicit boundary
+
+explicit quantity and unit
+
+explicit allowance allocated before governed work
+
+deterministic accounting position and judgment
+
+explicit renewal law
+
+explicit attribution law
+
+explicit required enforcement level
+
+whole-system allocation support when the declared subject is the whole user system
+```
+
+V1 must support actual elapsed-time Budget.
+
+V1 must support an actual memory Budget form whose quantity and accounting law are exact. Cumulative allocated bytes are
+the current Budget candidate; live and retained memory belong to the Capacity decision that follows.
+
+V1 may support contract-established declared charge kinds. A generic implementation step counter is not sufficient.
+
+The inclusion of processor time, I/O bytes, monetary quantities, domain-specific charge kinds, reservation, and
+additional physical quantities remains deferred until their measurement, attribution, accounting, and enforcement laws
+are closed.
+
+---
+
+## 7. Policy Contract
+
+### 7.1. Established Situation
 
 A Policy judges one established situation.
 
-The situation is a finite set of resolved contract coordinates, established contract judgments, and established Fact
-material selected for that judgment. It is not a mutable context object.
+A situation is one declared finite projection of the established contract world. The established contract world is the
+material and judgments established under explicit Contract authority. It is not a mutable context object, a registry, or
+an implicit population that Policy may scan.
 
 ```text
 Established Situation:
-    the closed material presented to one Policy judgment
+    one closed finite projection
+    of established contract material
+    presented to one Policy judgment
 ```
+
+Any explicit Contract may establish material that participates in a Policy situation. This includes presentation and
+boundary material, admission and refusal judgments, reference and resolution results, canonicalization and lowering
+results, Facts and Operation results, Invariant judgments, State and Transition material, Policy judgments, Budget and
+Capacity results, Governance and Version material, Failure and Publication judgments, and Diagnostic material when that
+material is explicitly established.
+
+This does not give every Contract the same obligation. It gives material established by every Contract the same
+eligibility to participate in Policy when the relation is explicitly declared. Business work is not privileged over
+pipeline processing. Pipeline processing is not privileged over machine state, limits, failures, publication, or any
+other contract authority.
 
 Examples include:
 
 ```text
 compiler call-site shape and established call-frequency profile
 
-current inventory position and established Budget result
+current inventory position and material established by Budget
 
-patient history selected for one treatment decision
+patient history and Admission judgment selected for one treatment decision
 
-route conditions and established Capacity result
+route conditions and material established by Capacity
 
-operating mode, current State, and machine-condition Facts
+operating mode, current State, Invariant judgment, and machine-condition Facts
+
+Publication judgment and the established Operation result to which it applies
 ```
 
-Situation material may come from any declared contract surface that publishes a result suitable for later judgment. It
+Situation material may come from any declared contract surface that establishes a result suitable for later judgment. It
 may also include profile material produced by an ordinary Operation from an explicit finite Fact input and established
 through the normal contract pipeline.
 
-Policy must bind each situation coordinate to contract material, not to the machinery that happens to produce it.
+Established material is not inherently owned by Policy and is not inherently Policy evidence. It becomes evidence for
+one Policy judgment only through a declared situation binding.
+
+```text
+Established Contract Material
+    +
+Declared relation to one Policy judgment
+        ->
+Policy Evidence
+```
+
+This evidence role does not change the material's meaning, owner, identity, or authority. The same established material
+may serve as evidence for Policy, Publication, diagnostics, verification, or another declared judgment without becoming
+a new kind of material.
+
+Policy must bind each situation coordinate to exact contract material, not to the machinery that happens to produce it.
 
 ```text
 Allowed
-    CallFrequencyProfile established by a declared Operation result
-    RemainingAllowance established by Budget
+    Result Fact established by a declared Operation result
+    Admission judgment established by Admission
+    canonical result established by Canonicalization
+    Invariant judgment established by Invariant
     CurrentState established by the State Machine
+    material established by Budget
+    material established by Capacity
+    Publication judgment established by Publication
 
 Forbidden
     JfrProfiler.hotness
     RingBuffer.currentSize
     BudgetCounterImpl.remaining
+    CapacityBackend.privateHeadroom
     StateBackend.privateFlag
 ```
+
+The allowed Budget and Capacity forms do not assume their final result shapes. The exact material remains owned by the
+Budget and Capacity contracts that will be decided next.
 
 A Fact kind alone is not sufficient when more than one contract result could establish materially different Facts of
 that kind. The binding must remain exact enough to identify the contract law that gives the material its meaning. The
 final source syntax and canonical binding material remain deferred.
+
+Policy receives established material as immutable input.
+
+```text
+Policy may
+    read
+    compare
+    match
+    use as situation material
+
+Policy may not
+    modify
+    replace
+    reclassify
+    reinterpret
+    invalidate
+    republish under the original Contract authority
+```
+
+Policy produces only its own Policy judgment. It cannot write another Contract's result surface.
 
 The current machine state may appear as one declared situation coordinate.
 
@@ -782,7 +1555,7 @@ Such information must first cross its proper boundary and become explicit materi
 backend may observe, count, store, or reduce information only as a realization of those declared contracts. If the
 required situation cannot be established, Policy judgment cannot be formed.
 
-### 6.2. Declared Response Contracts
+### 7.2. Declared Response Contracts
 
 A Policy requires a declared response-contract surface.
 
@@ -813,7 +1586,7 @@ A response contract must describe a real prepared machine response. It must not 
 a scoring scheme or optimizer. If response contracts multiply only to encode changing weights, score ranges, or
 calculated combinations, the model is hiding an optimization function and is outside this Policy Contract.
 
-### 6.3. Selection Law
+### 7.3. Selection Law
 
 A Policy is prepared before the particular interaction.
 
@@ -877,7 +1650,7 @@ Two tests keep the boundary clear:
 The final V1 vocabulary remains open. Arbitrary methods, loops, callbacks, host-language control flow, reflection,
 repository access, and user-defined evaluators are not Policy material.
 
-### 6.4. Applicability
+### 7.4. Applicability
 
 A Policy must have a declared area in which it applies.
 
@@ -897,7 +1670,7 @@ NotApplicable
 
 The exact representation of absence remains open. Hidden fallback is rejected.
 
-### 6.5. Governance and Active Policy
+### 7.5. Governance and Active Policy
 
 A Policy does not make itself active.
 
@@ -926,7 +1699,7 @@ Forbidden cycle
 
 The complete Governance law remains deferred, but authority may not be created by such a cycle.
 
-### 6.6. Policy and Purpose
+### 7.6. Policy and Purpose
 
 Purpose guides every contract. Policy gives purpose one explicit operating form when different established situations
 can call for different response contracts that remain allowed.
@@ -952,27 +1725,44 @@ Kontrakt does not infer Policy from a score function, optimizer, or learned mode
 already ranks response contracts may not enter as if it were neutral situation material. The active selection law must
 be explicit.
 
-### 6.7. Policy and Fixed Laws
+### 7.7. Policy and Fixed Laws
 
-Policy cannot weaken a result that another contract has already made final.
+Every established contract material has equal eligibility to participate in a Policy situation. That does not give
+Policy shared authority over the Contract that established it.
+
+Policy cannot weaken, reverse, erase, or rewrite a result that another Contract has already made final.
 
 If a response contract is impossible, unlawful, outside the available allowance, outside the admissible wall, or
 requires movement that is illegal from the current machine state, Policy cannot make it valid.
 
+Policy may read an Invariant violation and select a response to that violation. It may not reclassify the violation as
+satisfaction. Policy may read a Capacity or Budget result and select a response to it. It may not replace that result
+with one produced under Policy authority.
+
+```text
+Allowed
+    Invariant Violated
+        -> select one declared refusal or recovery response contract
+
+Forbidden
+    Invariant Violated
+        -> treat the Invariant as Satisfied
+```
+
 Policy may read the current state as part of the situation, but it does not decide which state movements are legal. That
 judgment remains with the State Machine.
 
-Policy serves the part of machine operation where the same current state can meet different situations and those
-situations can call for different prepared response contracts.
+Policy serves the part of machine operation where the same established contract world can admit more than one prepared
+response contract and the declared situation selects which one applies.
 
 This gives two simple tests:
 
-> If current state and selected movement alone decide legality, the question belongs to the State Machine.
+> Policy may respond to established contract material. It may not redefine that material.
 
 > When a stronger law has already fixed the only legal result, Policy must not recreate that result as a Policy
 > selection.
 
-### 6.8. Policy and Implementation
+### 7.8. Policy and Implementation
 
 Policy selection and implementation are separate.
 
@@ -1015,7 +1805,7 @@ another must not require a Policy change when the same canonical material is est
 A full optimizer, planner, scheduler, or continuous control system is not converted into Policy by giving its output a
 response name. Only an explicit finite situation-to-response law is Policy material under this ADR.
 
-### 6.9. More Than One Policy
+### 7.9. More Than One Policy
 
 More than one Policy may appear relevant to one situation. Their relation cannot be guessed.
 
@@ -1036,7 +1826,7 @@ priority convention, last-write-wins, newest-version-wins, and callback order ma
 
 The V1 law remains open.
 
-### 6.10. No Hidden Override
+### 7.10. No Hidden Override
 
 A Policy judgment may not be overridden by debug mode, administrator identity, exception handling, environment variable,
 or runtime flag unless the contract explicitly declares such a relation.
@@ -1046,7 +1836,7 @@ This ADR does not admit that relation in V1.
 An implementation escape hatch is not Policy material. If it changes the contract result, implementation has acquired
 contract authority.
 
-### 6.11. Policy Identity
+### 7.11. Policy Identity
 
 A Policy requires canonical identity.
 
@@ -1067,9 +1857,9 @@ The exact identity material remains deferred until the authoring and lowering su
 
 ---
 
-## 7. Policy Judgment
+## 8. Policy Judgment
 
-### 7.1. Inputs
+### 8.1. Inputs
 
 One Policy judgment requires explicit material.
 
@@ -1084,7 +1874,7 @@ If any required material is absent, unresolved, corrupt, or unavailable, the mac
 
 The later Failure Contract will decide how that condition is classified.
 
-### 7.2. Result
+### 8.2. Result
 
 The result must be typed as Policy judgment, not returned as an unnamed Boolean.
 
@@ -1105,7 +1895,7 @@ PolicyRefused
 The result must retain enough identity to show which Policy, situation material, response contract, and contract world
 produced it. Diagnostic text is not the identity.
 
-### 7.3. Meaning of Permission and Refusal
+### 8.3. Meaning of Permission and Refusal
 
 ```text
 PolicyPermitted
@@ -1118,7 +1908,7 @@ PolicyRefused
 Permission does not prove that the whole interaction must continue. The machine must preserve which authority stopped
 the interaction.
 
-### 7.4. Determinism
+### 8.4. Determinism
 
 Policy judgment must be repeatable from its canonical inputs.
 
@@ -1137,31 +1927,78 @@ Probabilistic Policy is outside V1.
 
 ---
 
-## 8. Authoring and Processing Boundary
+## 9. Authoring and Processing Boundary
 
-This draft does not fix the Java or Kotlin Policy authoring API.
+This draft does not fix the Java or Kotlin Budget or Policy authoring API.
 
-The authoring surface must follow ADR-0047.
+Both authoring surfaces must follow ADR-0047.
 
 ```text
 Host declaration
     carries finite source material
 
 Resolution
-    identifies exact Policy symbols and referenced coordinates
+    identifies exact Budget, Policy, subject, quantity,
+    situation, response-contract, and referenced coordinates
 
 Validation
-    rejects unsupported shape, behavior, and ambiguity
+    rejects unsupported shape, behavior, ambiguity,
+    hidden allocation, and unsupported guarantees
 
 Canonicalization
     removes host-language and source-order authority
 
 Lowering
-    produces machine-usable Policy material
+    produces machine-usable Budget and Policy material
 
 Backend
-    realizes the judgment without owning its meaning
+    realizes measurement, accounting, judgment,
+    enforcement, and response without owning meaning
 ```
+
+Budget authoring must allow the user to declare at least:
+
+```text
+one exact Budget or explicit absence
+
+subject
+
+boundary
+
+quantity and unit
+
+allowance
+
+allocation source and composition law where applicable
+
+renewal law
+
+attribution law
+
+required enforcement level
+```
+
+The following forms are rejected as Budget authority:
+
+```text
+BudgetContext passed into the Operation
+
+consume() calls placed by user code
+
+remaining() queries
+
+user-written checkpoints
+
+backend loop count presented as machine Budget
+
+algorithmic complexity declaration
+
+runtime configuration silently activated as Budget
+
+environment-derived allowance with no explicit Budget declaration
+```
+
+Those forms may appear inside one realization. They may not define the user's Budget Contract.
 
 The following forms are rejected as Policy authority:
 
@@ -1185,7 +2022,37 @@ arbitrary expression evaluator supplied by the user
 
 They may be implementation techniques outside the contract surface. They may not define Policy meaning.
 
-The final API must answer:
+The final Budget API must answer:
+
+```text
+How is one Budget named?
+
+How is the whole user system or one smaller subject selected?
+
+How are start and end boundaries declared?
+
+Which physical quantities belong to V1?
+
+How is one contract-established charge kind declared?
+
+How is actual elapsed time represented?
+
+Which exact memory quantity is Budget and which belongs to Capacity?
+
+How is a parent allowance allocated to child subjects?
+
+How are unused allowance, return, borrowing, and double counting represented?
+
+How is renewal declared without creating separate Budget families?
+
+How is required enforcement declared?
+
+How is explicit Budget absence represented?
+
+How does validation reject a realization that cannot provide the required guarantee?
+```
+
+The final Policy API must answer:
 
 ```text
 How is one Policy named?
@@ -1194,9 +2061,17 @@ How is its situation surface declared?
 
 How does each situation coordinate bind to exact established contract material?
 
-When is Fact kind identity sufficient, and when must the establishing contract result also be identified?
+How can every Contract expose result material suitable for later judgment without creating an implicit global context?
+
+When is material-kind identity sufficient, and when must the establishing contract result also be identified?
+
+How is the evidence relation between established material and one Policy judgment represented?
 
 How is backend producer identity excluded from that binding?
+
+How does the authoring and canonical model make every situation coordinate read-only to Policy?
+
+How does validation prevent Policy from constructing, replacing, reclassifying, or republishing another Contract's result?
 
 How is one proposed response contract or finite response-contract set declared?
 
@@ -1211,9 +2086,9 @@ How does the Interaction Manifest select Policy participation or absence?
 
 ---
 
-## 9. Contract and Implementation Boundary
+## 10. Contract and Implementation Boundary
 
-### 9.1. Decisions Made Here
+### 10.1. Decisions Made Here
 
 This draft decides:
 
@@ -1225,11 +2100,61 @@ The four remain independent contracts.
 
 Policy selects the prepared response contract that applies to an established situation.
 
-Safety and authorization are special Policy uses, not the general definition.
+Budget declares explicit finite consumable allowance allocated to one declared machine boundary before governed work may
+consume it.
 
-Policy consumes explicit situation and response-contract material.
+Budget describes the finite resource obligation of the user's machine, not merely the resources used internally by
+Kontrakt.
+
+No Budget is implicit.
+
+The user declares the limit. Kontrakt owns measurement, accounting, judgment, allocation realization, and enforcement.
+
+Budget does not require BudgetContext, consume(), remaining(), or checkpoint() calls inside user Operation code.
+
+Actual elapsed time is valid Budget quantity material.
+
+Actual memory use is valid only after the exact accounting meaning is declared.
+
+Cumulative allocated bytes have Budget form.
+
+Current live, peak live, and retained bytes have Capacity form.
+
+A generic implementation step is not user Budget.
+
+A declared machine event may become Budget charge material when one unit has stable contract meaning across admissible
+realizations.
+
+Deadline is elapsed-time quantity plus boundary and allowance, not a separate family.
+
+Fixed and rolling windows are renewal laws, not separate families.
+
+Parent and child allowance require an explicit allocation and composition law.
+
+Allocation must preserve the declared parent allowance and prevent double counting.
+
+A whole-system Budget includes Kontrakt runtime and generated machinery unless a narrower subject is explicitly declared.
+
+Reservation is a possible accounting protocol extension, not a separate Budget family.
+
+BudgetWithinAllowance and BudgetWouldExceed are Budget judgments.
+
+Budget refusal must not be collapsed into Capacity refusal, State refusal, Invariant violation, or an unnamed runtime
+exception.
+
+Policy consumes one declared finite projection of the established contract world and explicit response-contract material.
+
+Material established by every explicit Contract has equal eligibility to participate in a Policy situation. No contract kind
+is privileged merely because it represents business work, pipeline processing, state, judgment, limit, failure, or
+publication.
+
+Established contract material becomes Policy evidence through a declared relation to one Policy judgment. Evidence is a
+role in that relation, not a separate material hierarchy or authority.
 
 Policy names contract material and its establishing contract law, never the backend producer that realizes it.
+
+Policy receives situation material as immutable input and cannot construct, replace, reclassify, reinterpret, invalidate,
+or republish another Contract's result under that Contract's authority.
 
 Observed or profiled information may participate only after existing contract machinery establishes it as explicit material.
 
@@ -1239,30 +2164,47 @@ Policy does not activate itself.
 
 Policy cannot weaken another contract's final refusal.
 
-Ordinary software Policy systems are examples and warnings,
-not the source of the general definition.
+Ordinary software Policy and Budget systems are examples and warnings,
+not the source of the general definitions.
 ```
 
-### 9.2. Decisions Not Made Here
+### 10.2. Decisions Not Made Here
 
 This draft does not decide:
 
 ```text
-Budget material and accounting law
+the final Budget Java or Kotlin authoring API
 
-Capacity material and admissibility law
+the final V1 physical quantity catalog beyond elapsed time
+and the current cumulative allocated-byte candidate
 
-Governance authoring and activation law
+whether processor time, I/O bytes, monetary quantities,
+or other physical quantities belong in V1
+
+the exact clock, allocation, instrumentation,
+or containment backend
+
+the exact enforcement-level result family
+
+whether V1 requires reservation
+
+the complete child-allocation, unused-return,
+borrowing, and reclamation vocabulary
+
+Capacity material, judgment, acquisition, release,
+reservation, and admissibility law
+
+Governance material, authoring, and activation law
 
 Policy Java or Kotlin API
 
 Policy relation vocabulary
 
-V1 result family beyond the conservative candidate
+V1 Policy result family beyond the conservative candidate
 
 how several Policies are combined
 
-Policy canonical identity bytes
+Budget and Policy canonical identity bytes
 
 Failure mapping
 
@@ -1270,24 +2212,71 @@ Diagnostic evidence and retention
 
 Version qualification
 
-runtime enforcement mechanism
-
 exact source-binding syntax between one Policy situation coordinate and its establishing contract result
 ```
 
-### 9.3. No Hardware or Backend Authority
+### 10.3. No Hardware or Backend Authority
 
 Physical capability, scheduler behavior, resource discovery, optimizer implementation, storage layout, cache state,
-thread count, and deployment configuration do not define Policy.
+thread count, allocator, clock implementation, and deployment configuration do not define Policy or Budget meaning.
 
-They may realize the production of explicit material under declared contract authority or realize a Policy judgment. If
-replacing them changes Policy meaning for the same canonical inputs, the boundary has failed.
+Actual elapsed time and actual memory may be Budget quantities. The hardware, clock, allocator, process boundary,
+operating system, instrumentation, or generated machinery used to observe and control them remain realization.
+
+They may establish explicit charge material under declared Budget authority, produce situation material under another
+declared Contract, or realize a Policy judgment. Replacing them must not change what the contract means for the same
+canonical material.
+
+If a replacement cannot provide the declared Budget guarantee, the replacement is inadmissible. The Budget is not
+weakened to preserve backend compatibility.
 
 ---
 
-## 10. Determinism and Verification
+## 11. Determinism and Verification
 
-Kontrakt must be able to verify at least the following before Policy material becomes authoritative.
+Kontrakt must be able to verify at least the following before Budget material becomes authoritative.
+
+```text
+Budget identity is unique in its declared scope.
+
+One exact Budget or explicit absence is selected.
+
+Subject and boundary resolve exactly.
+
+Quantity and unit are exact.
+
+Allowance is explicit and valid for the quantity.
+
+No environment observation silently creates or enlarges the Budget.
+
+Allocation source and owner resolve exactly.
+
+Child allocations cannot exceed the parent allowance.
+
+Unused allowance, return, and borrowing are explicit when present.
+
+Parent and child accounting cannot count one charge twice.
+
+Whole-system Budget attribution includes Kontrakt runtime and generated machinery unless a narrower subject is explicit.
+
+Time Budget boundaries and clock semantics are exact.
+
+Memory Budget declares the exact accounting meaning and does not hide Capacity material as Budget.
+
+Contract-established charge kinds have stable declared meaning.
+
+No backend loop, compiler step, cache access, or private counter acquires user-Budget authority.
+
+Accounting and renewal laws are finite and lowerable.
+
+Required enforcement is supported by the selected realization.
+
+Budget judgment is typed and preserves the next canonical position.
+
+The lowered accounting and enforcement plan is equivalent to canonical Budget material.
+```
+
+Kontrakt must also be able to verify at least the following before Policy material becomes authoritative.
 
 ```text
 Policy identity is unique in its declared scope.
@@ -1296,11 +2285,19 @@ Applicability is finite and unambiguous.
 
 Situation coordinates resolve exactly.
 
+The situation is a closed finite projection and does not scan an implicit population of Facts, judgments, or runtime
+objects.
+
 Every situation coordinate resolves to exact established contract material.
+
+Every situation coordinate is read-only to Policy.
+
+Policy output can contain only Policy judgment material and cannot construct, replace, reclassify, reinterpret, invalidate,
+or republish another Contract's result.
 
 No backend producer, profiler, collector, storage type, counter, or runtime object participates in that binding.
 
-When one Fact kind can be established by more than one materially different contract result, the source binding is not
+When one material kind can be established by more than one materially different contract result, the source binding is not
 ambiguous.
 
 Response-contract handles resolve exactly.
@@ -1324,37 +2321,106 @@ Policy does not claim authority owned by another contract.
 The lowered evaluator is equivalent to canonical Policy material.
 ```
 
-Verification should support generated fixtures and property-based tests over the closed material. When the Policy
-vocabulary permits complete enumeration at practical size, the compiler may generate full decision-table tests.
+Verification should support generated fixtures and property-based tests over the closed material.
+
+Budget verification should include at least:
+
+```text
+exact-boundary charge
+
+zero charge
+
+charge exactly equal to allowance
+
+charge that would exceed by the smallest unit
+
+renewal boundary
+
+parent and child allocation conservation
+
+unused allowance return
+
+whole-system attribution
+
+clean failure when the required enforcement is unavailable
+```
+
+When the Policy vocabulary permits complete enumeration at practical size, the compiler may generate full decision-table
+tests.
 
 Optimization is allowed only after meaning is preserved.
 
 ```text
-canonical decision table
-specialized branches
-bit masks
-precomputed indexes
-compiled predicates
+Budget
+    precomputed allocation plan
+    static reservation
+    specialized accounting
+    fused measurement boundary
+    generated limit checks
+
+Policy
+    canonical decision table
+    specialized branches
+    bit masks
+    precomputed indexes
+    compiled predicates
 ```
 
-These are backend forms. If their result differs from canonical Policy material, the backend is wrong.
+These are backend forms. If their result differs from canonical Budget or Policy material, the backend is wrong.
 
 ---
 
-## 11. Deferred Decisions
+## 12. Deferred Decisions
 
-The following questions remain open for the next revision of this ADR.
+The following Budget questions remain open for the next revision of this ADR.
+
+```text
+What exact source syntax declares one Budget and explicit Budget absence?
+
+Which exact memory quantity belongs in V1 Budget?
+
+Which live-memory and retained-memory quantities belong in Capacity?
+
+Does V1 include processor time?
+
+Does V1 include read and written bytes?
+
+How are contract-established charge kinds declared without becoming arbitrary user counters?
+
+What exact allocation vocabulary is sufficient for parent and child Budgets?
+
+When does unused allowance return?
+
+Is borrowing admitted in V1?
+
+Does V1 require reserve -> commit or release?
+
+What exact enforcement levels are admitted?
+
+How does a backend prove that it can provide the required enforcement?
+
+Which Budget judgments and positions may participate in later Policy situations?
+
+How are Budget identity bytes represented without making measurement machinery authoritative?
+```
+
+The following Policy questions remain open.
 
 ```text
 Does Kontrakt V1 accept only one proposed response contract -> Permit or Refuse?
 
 Does V1 support a finite response-contract set and direct selection?
 
-How is situation material selected from Facts, prior contract judgments, and interaction coordinates?
+How is one finite Policy situation projected from the established contract world without creating an implicit
+population or mutable context?
 
 What exact canonical material binds one situation coordinate to its establishing contract result?
 
-Can a Policy consume prior Budget or Capacity judgments?
+Which Budget and Capacity results are suitable for later Policy situations?
+
+How is the evidence relation between established contract material and one Policy judgment represented?
+
+How is the read-only boundary enforced in the Policy authoring model, canonical material, and lowering?
 
 How is explicit Policy absence represented?
 
@@ -1373,13 +2439,50 @@ Where is Policy declared: interface scope, contract scope, or another flat manif
 How does Governance establish Policy before Version is fully decided?
 ```
 
-Budget, Capacity, and Governance require their own complete sections before ADR-0051 can become Accepted.
+The next design sequence is Capacity and Governance. Their complete material, judgment, and authority laws must be
+decided before Policy can close its references to them and before ADR-0051 can become Accepted.
+
+Budget may return during that sequence where Capacity acquisition, release, reservation, or Governance activation
+requires one exact shared law. The basic Budget meaning, explicit allocation requirement, accounting position, and
+implementation boundary are decided here.
 
 ---
 
-## 12. Consequences
+## 13. Consequences
 
 ### Positive
+
+Budget becomes a real user-machine contract rather than a Kontrakt runtime setting.
+
+A user can treat the whole project, one Operation, one run, or another declared boundary as a finite machine and declare
+the allowance that machine may consume.
+
+The declaration remains small.
+
+```text
+User
+    declares the limit and boundary
+
+Kontrakt
+    allocates, measures, accounts, judges, and enforces
+```
+
+Actual elapsed time and actual memory use can be represented without making clocks, allocators, schedulers, or operating
+systems contract authority.
+
+Budget no longer depends on where user implementation calls `consume` or `checkpoint`.
+
+Deadline, window, aggregate quota, and current occupancy are not multiplied into overlapping families. Their differences
+remain in quantity, boundary, allocation, renewal, attribution, and Capacity law.
+
+A whole-system Budget can give Kontrakt one explicit total from which it derives internal allocation for runtime
+machinery, generated code, caches, diagnostics, and user execution.
+
+Parent and child Budgets preserve the declared total instead of copying the same allowance into every worker or
+Operation.
+
+Budget exhaustion remains attributable to Budget rather than being collapsed into Capacity, State, Invariant, or a
+generic runtime exception.
 
 Policy receives a general meaning that covers finite situation-based response decisions inside machine operation,
 routing, treatment, replenishment, traffic control, energy management, building operation, compiler work, spacecraft
@@ -1390,26 +2493,53 @@ The definition is not limited to safety or refusal.
 The machine can declare how it should respond before the situation occurs, while implementation remains free to realize
 the result through suitable machinery.
 
+The established contract world becomes the complete declared source from which Policy situations are projected. Business
+results, pipeline judgments, machine state, limits, failures, publication, and other contract material remain equally
+available without surrendering their separate authority.
+
 The reason for Policy, Budget, Capacity, and Governance becomes explicit. A realistic machine accepts its limits and
 keeps its response inside the world it can actually sustain.
 
 ### Negative
+
+Kontrakt must own or control enough of the execution boundary to provide the declared Budget guarantee.
+
+Actual time and memory support require exact boundary, attribution, measurement, and enforcement laws. A single
+ambiguous
+`time` or `memory` field is not sufficient.
+
+Opaque user code may require compiler analysis, instrumentation, controlled allocation, process isolation,
+operating-system containment, another backend, or rejection.
+
+Whole-system Budget accounting must include Kontrakt runtime and generated machinery. Internal cost cannot be hidden
+outside the user's declared system merely because Kontrakt produced it.
+
+Parent and child allocation introduce conservation, return, borrowing, and double-counting problems that must be
+verified.
+
+The final V1 quantity catalog must remain small enough to implement honestly. Adding a measurable quantity without
+stable attribution or enforcement would create false guarantees.
 
 The Policy authoring surface cannot be copied from ordinary Java or Kotlin strategy patterns.
 
 A small and clear response-contract set must be designed. This is more work than accepting callbacks or arbitrary
 predicates.
 
-The general definition is broader than the likely V1 implementation, so the ADR must keep contract meaning separate from
-initial realization. Continuous optimization, open-ended planning, rebuilding an existing schedule, and ranking produced
-by a learned model remain outside the current V1 boundary.
+The general Policy definition is broader than the likely V1 implementation, so the ADR must keep contract meaning
+separate from initial realization. Continuous optimization, open-ended planning, rebuilding an existing schedule, and
+ranking produced by a learned model remain outside the current V1 boundary.
 
 Goals, learned models, optimizers, and heuristics cannot silently own Policy authority. Systems that depend on them will
 need an explicit boundary before their results become contract material.
 
 ### Neutral
 
-This ADR does not prohibit runtime strategies, schedulers, optimizers, rule engines, controllers, profilers, collectors,
-or decision tables.
+This ADR does not prohibit clocks, allocators, arenas, schedulers, process isolation, operating-system quotas, compiler
+instrumentation, generated checkpoints, runtime counters, strategies, optimizers, rule engines, controllers, profilers,
+collectors, or decision tables.
 
-It prevents those mechanisms from becoming the source of Policy meaning or from appearing as Policy evidence bindings.
+It prevents those mechanisms from becoming the source of Budget or Policy meaning.
+
+Kontrakt may optimize allocation and enforcement aggressively after canonical Budget meaning is preserved.
+
+Reservation remains open. Capacity and Governance remain to be completed before this ADR becomes Accepted.
