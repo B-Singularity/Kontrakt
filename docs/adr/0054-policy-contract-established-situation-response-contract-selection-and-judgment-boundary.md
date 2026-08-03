@@ -26,33 +26,27 @@ Proposed
 
 ## 1. Context
 
-A real machine is finite.
+One machine may meet different established situations while remaining the same machine and while all fixed laws remain
+unchanged.
 
-It cannot accept every load, spend without limit, keep every result, or use every rule at once. It works in a changing
-world with limited time, material, energy, memory, attention, and authority.
+A compiler may preserve one call and specialize another. A router may keep one path and prefer another. A physical
+machine may continue ordinary operation, reduce output, delay optional work, or enter a prepared conservative mode.
+These responses are not created by the situation itself. They must already exist as declared response contracts.
 
-A good machine does not pretend that these limits do not exist. It knows the conditions under which it can operate,
-keeps its work inside declared limits, and changes its response when the situation changes.
-
-This is true for software as well as physical machinery.
-
-A software machine may have enough raw computing power to continue and still need to delay work, choose a cheaper path,
-reduce its activity, refuse a request, or use another operating rule. If those decisions remain hidden inside ordinary
-code, the real machine law is scattered across branches, callbacks, configuration, and runtime objects.
-
-Policy belongs in contract theory for this reason.
+If the relation between situation and response remains hidden inside branches, callbacks, strategy objects,
+configuration, or runtime lookup, the machine has no explicit Policy authority that Kontrakt can inspect or verify.
 
 ```text
 Policy
     selects the prepared response contract that applies to an established situation
 ```
 
-Policy describes a machine that can meet different established situations and select a response prepared before the
-particular interaction. It remains independent from Budget, Capacity, and Governance.
+Policy does not own Budget accounting, Capacity admission, Governance activation, State movement, or execution of the
+selected response. It reads only declared established material and produces its own selection judgment.
 
-This ADR establishes the Policy meaning, situation boundary, response-contract surface, selection law, judgment, and
-separation from implementation. Budget is decided in ADR-0051. Capacity and Governance remain separate contracts in
-ADR-0052 and ADR-0053.
+This ADR establishes Policy meaning, situation material, response-contract selection, applicability, judgment, and the
+separation between canonical Policy material and its realization. Budget is decided in ADR-0051. Capacity and Governance
+remain separate contracts in ADR-0052 and ADR-0053.
 
 ---
 
@@ -539,37 +533,7 @@ established.
 
 ## 5. Decision
 
-### 5.1. Finite-Machine Operating Contracts
-
-Policy, Budget, Capacity, and Governance are retained as independent contracts.
-
-They belong in contract theory because a realistic machine must understand the world in which it operates, accept its
-limits, and respond without pretending that unlimited work is possible.
-
-```text
-Policy
-    selects the prepared response contract that applies to an established situation
-
-Budget
-    declares explicit finite allowance allocated before governed consumption
-
-Capacity
-    limits what the machine may admit
-
-Governance
-    establishes the valid contract world
-```
-
-The group is not limited to refusal.
-
-A machine may reduce output, delay optional work, use another route, preserve a call, change an operating mode, or
-refuse a proposal. Each result must remain explicit and attributable to the contract that owns it.
-
-Budget is not merely a post-execution threshold. The applicable allowance must be explicitly declared and established
-before governed work may consume it. Kontrakt may partition that allowance among generated machinery, runtime services,
-diagnostics, caches, and user execution, but only inside the declared total and under an explicit allocation law.
-
-### 5.2. Policy Contract Meaning
+### 5.1. Policy Contract Meaning
 
 A Policy Contract declares which prepared response contract applies when one declared situation is established.
 
@@ -626,7 +590,7 @@ Policy
     selects the prepared response contract that applies to the situation
 ```
 
-### 5.3. Policy Judgment Forms
+### 5.2. Policy Judgment Forms
 
 The general Policy judgment selects one exact declared response contract.
 
@@ -651,7 +615,7 @@ Refusal
 This ADR does not define preference, ranking, scoring, or prescription as Policy judgment forms. Policy connects an
 established situation to one exact response contract prepared for that situation.
 
-### 5.4. V1 Candidate Boundary
+### 5.3. V1 Candidate Boundary
 
 The conservative V1 candidate is:
 
@@ -690,29 +654,20 @@ a response-contract set created during judgment
 This form fits the current Interaction Manifest and keeps lowering finite. It remains a candidate, not the final V1
 decision.
 
-### 5.5. Relation to Budget, Capacity, and Governance
+### 5.4. Relation to Other Contract Authorities
 
-Policy may use explicitly established contract material only when the Policy situation declares that relation. When that
-material comes from Budget, Capacity, or Governance, Policy may use only what those contracts explicitly establish.
-Policy may not perform accounting, measure the machine, discover resources, allocate allowance, judge Capacity, or
-activate a contract world.
+Policy may use explicitly established contract material only when the Policy situation declares that relation.
 
-```text
-Budget
-    owns finite consumable allowance and Budget judgment
+When situation material originates from Budget, Capacity, Governance, State, Invariant, Admission, Publication, Failure,
+or another explicit Contract, Policy receives only the result material that contract established. It does not acquire
+the originating contract's judgment or mutation authority.
 
-Capacity
-    owns the admissible machine wall and Capacity judgment
+Policy therefore may not account consumption, admit growth, activate a contract world, move State, rejudge an Invariant,
+republish a Fact, or execute the selected response.
 
-Governance
-    establishes the valid contract world and owns activation law
-
-Policy
-    selects one response contract inside the established world
-```
-
-Policy cannot close its final references to Capacity and Governance until ADR-0052 and ADR-0053 fix their material,
-judgment, and authority laws.
+The exact Capacity and Governance materials available to Policy remain dependent on ADR-0052 and ADR-0053. ADR-0051
+already owns Budget meaning and Budget judgment; this ADR owns only the later use of an established Budget result as
+declared Policy situation material.
 
 ---
 
@@ -1230,29 +1185,15 @@ Probabilistic Policy is outside V1.
 
 This draft does not fix the Java or Kotlin Policy authoring API.
 
-The later authoring surface must follow ADR-0047.
+ADR-0047 remains the later authoring constraint. This ADR fixes only what such an authoring surface must eventually
+carry:
+one exact Policy identity, one finite situation projection, exact bindings to established contract results, declared
+response-contract material, applicability, and a closed selection law.
 
-```text
-Host declaration
-    carries finite source material
-
-Resolution
-    identifies exact Policy, situation, response-contract,
-    and referenced coordinates
-
-Validation
-    rejects unsupported shape, behavior, ambiguity,
-    hidden judgment, and undeclared fallback
-
-Canonicalization
-    removes host-language and source-order authority
-
-Lowering
-    produces machine-usable Policy material
-
-Backend
-    realizes judgment and response without owning meaning
-```
+Resolution must remove ambiguous references. Validation must reject behavior, hidden fallback, and undeclared situation
+inputs. Canonicalization and lowering must preserve the Policy relation without retaining host-language, source-order,
+or backend authority. A backend may evaluate the lowered relation and realize an allowed response, but it does not
+define the Policy.
 
 The following forms are rejected as Policy authority:
 
@@ -1371,7 +1312,7 @@ Version qualification
 
 exact source-binding syntax between one Policy situation coordinate and its establishing contract result
 
-Capacity material, judgment, acquisition, release, reservation, and admissibility law
+the Capacity contract material and admission law reserved to ADR-0052
 
 Governance material, authoring, and activation law
 ```
@@ -1381,8 +1322,8 @@ Governance material, authoring, and activation law
 Physical capability, scheduler behavior, resource discovery, optimizer implementation, storage layout, cache state,
 thread count, allocator, clock implementation, and deployment configuration do not define Policy meaning.
 
-They may produce situation material under another declared Contract or realize a Policy judgment. Replacing them must
-not change what the contract means for the same canonical material.
+They may produce situation material under another declared Contract or realize a Policy judgment. A replacement
+realization must preserve the Policy judgment for the same canonical Policy material.
 
 A generated branch, decision table, mask, specialized evaluator, adapter, strategy, optimizer, controller, profiler, or
 collector may realize declared Policy material. None may become the source of Policy meaning.
@@ -1436,12 +1377,12 @@ Policy does not claim authority owned by another contract.
 The lowered evaluator is equivalent to canonical Policy material.
 ```
 
-Verification should support generated fixtures and property-based tests over the closed material.
+Closed Policy material should permit compiler-generated fixtures and property-based judgment checks.
 
 When the Policy vocabulary permits complete enumeration at practical size, the compiler may generate full decision-table
 tests.
 
-Optimization is allowed only after meaning is preserved.
+Policy optimization is admissible only when the canonical judgment remains unchanged.
 
 ```text
 Policy
