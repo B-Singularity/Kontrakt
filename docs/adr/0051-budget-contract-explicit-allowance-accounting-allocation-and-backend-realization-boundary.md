@@ -1,4 +1,4 @@
-# ADR-0051: Budget Contract, Explicit Allowance, Accounting, Allocation, and Backend Realization Boundary
+# ADR-0051: Budget Contract, Explicit Allowance, Accounting, Fixed Contract Distribution, and Backend Realization Boundary
 
 ## Status
 
@@ -21,348 +21,262 @@ Proposed
 - ADR-0047: One-Dimensional Contract Presentations, Pipeline-Slot Selection, and Backend Realization Boundary
 - ADR-0046: IDL-First Interface Contract Frontend and Retained Generated Host Interface and Realization Port Boundary
 - ADR-0045: Contract-First Package Architecture and Explicit Machine Refactoring Boundary
+- ADR-0041: Stable Metadata Identity, BLAKE3, HID, and Protocol-Owned Interning
+- ADR-0040: Deterministic Frozen Acquisition Pipeline, Explicit Readiness, and Memory-Disciplined Publication
+- ADR-0032: Capacity Law, Resource Policy Resolution, Identity Hierarchy, and Zero-Residue Semantics
+- `docs/design/planner-budget-resolution-and-worker-lifecycle.md`
+- `docs/design/l1-planner-session-primitive-data-structures.md`
 
 ---
 
 ## 1. Context
 
-A real machine cannot spend without limit.
+A real machine works within finite conditions. Time, memory, and other machine resources cannot be consumed without
+limit. When those limits exist only in configuration, counters, timeout code, allocators, or scheduler settings, the
+implementation may protect itself, but the user's machine has not declared what it is allowed to consume.
 
-Its work consumes finite time, memory, energy, bandwidth, material, and other quantities. A machine that does not
-declare those limits leaves its actual operating boundary inside configuration, counters, schedulers, allocators,
-timeout code, and other realization mechanisms.
-
-Budget belongs in contract theory because the finite allowance is part of what the machine is allowed to do, not merely
-a backend setting used to protect one implementation.
+Budget makes that allowance explicit.
 
 ```text
 Budget
-    declares finite consumable allowance
+    declares how much of one machine-resource quantity
+    one declared subject may consume
+    inside one declared boundary
 ```
 
-A Budget identifies the governed subject, the counted quantity, the applicable boundary, the allowance established
-before consumption, and the judgment produced when charge material is applied.
+Budget belongs to the user's machine. It does not describe the internal compilation or verification fuel used by
+Kontrakt. The selected backend realizes the contract only when it can observe the declared quantity, connect the
+resulting charge to one resolved Budget position, and provide the required allowance-limit guarantee.
 
-Budget remains independent from Capacity, Governance, and Policy. Capacity decides what may be admitted or held,
-Governance establishes the applicable contract world, and Policy selects a prepared response contract. This ADR decides
-only Budget.
+Budget remains separate from Capacity, Governance, and Policy.
 
-This ADR establishes Budget meaning, explicit allocation, accounting position, quantity boundaries, judgment, required
-guarantee, and the separation between canonical Budget material and backend realization.
+```text
+Budget
+    cumulative allowance across a boundary
+
+Capacity
+    amount currently held, admitted, or active
+
+Governance
+    applicable contract world
+
+Policy
+    prepared response selected from established material
+```
+
+The contract states the limit. The machinery used to observe, account, and enforce it remains implementation.
 
 ---
 
 ## 2. Problem
 
-A software limit is often represented only by a configuration value, runtime counter, callback, scheduler setting,
-allocator choice, timeout, operating-system control, or user-written `consume` call. Those mechanisms may enforce one
-implementation, but they do not by themselves explain whose allowance exists, when it begins, what quantity it limits,
-how consumption is attributed, how the position changes, or what guarantee the machine owes.
+A numeric limit is incomplete when it does not state:
 
-Budget must describe the finite resource obligation of the user's machine, not merely the resources used internally by
-Kontrakt.
+- what subject it governs,
+- which quantity and unit it counts,
+- where accounting begins and ends,
+- how charge changes the position,
+- when allowance renews,
+- and what must happen when the limit is reached.
 
-The user's project is itself a machine. It may declare a Budget over the whole system, one Operation, one run, one
-session, or another explicit machine boundary. Kontrakt must then measure, account, judge, and control that Budget
-through a suitable realization.
+The same number can mean different obligations. One hundred milliseconds for one Operation execution is not the same as
+one hundred milliseconds for a run, a session, or a rolling window. Four gigabytes allocated across a run is not current
+live memory. A timeout does not by itself explain whether late results may still establish State movement or
+Publication.
 
-Budget must be explicit. Kontrakt may derive an internal allocation plan inside a declared allowance, but it may not
-invent, enlarge, or silently activate a Budget that the contract did not declare.
+Budget must therefore be explicit before governed work begins. Runtime observation may support a later revision, but it
+must not create, enlarge, redistribute, or replace an active Budget.
 
-The limit is contract. Clocks, counters, allocators, process isolation, compiler instrumentation, generated checkpoints,
-schedulers, and operating-system controls are realization.
+The current JVM backend also has real limits. It can strongly control Kontrakt-controlled pipeline boundaries and reject
+later contract-visible consequences, but it cannot always stop arbitrary user implementation code at the exact physical
+instant a limit is reached. This ADR does not hide that difference. It defines the contract guarantee separately from
+the mechanism used to realize it.
 
-Budget must not be defined by algorithmic complexity, backend loop count, hash probes, graph visits, compiler passes, or
-another implementation-specific work unit. Such material may remain realization fuel. It becomes user Budget charge
-material only when the contract world itself declares the counted event or quantity.
+A cluster-wide total cannot be established by merging local counters after execution. A distributed Budget requires one
+authoritative distributed position. Until such a backend exists, the declaration is unsupported rather than
+approximately enforced.
+
+A countable value does not become Budget merely because software can observe it. Budget is limited to declared
+machine-resource consumption.
 
 ---
 
 ## 3. Decision
 
-### 3.1. Budget Foundation and Separate Contract Scope
+### 3.1. Foundation
 
-This revision decides the basic Budget Contract.
-
-```text
-Budget
-    declares explicit finite consumable allowance
-    allocated to one declared machine boundary
-    before governed work may consume it
-```
-
-The Budget belongs to the user's machine. It may apply to the whole project, one Operation, one run, one session, or
-another declared subject. It is not limited to Kontrakt's compiler or runtime machinery.
-
-Kontrakt owns the realization work needed to enforce the declaration.
-
-```text
-User contract
-    establishes the subject, quantity, boundary, allowance, and required guarantee
-
-Kontrakt realization
-    establishes the Budget position
-    derives any permitted internal allocation
-    measures or establishes charge material
-    performs accounting
-    produces Budget judgment
-    realizes the required guarantee
-```
-
-This decision does not define the later Java or Kotlin authoring surface. It defines the contract material that any
-later authoring surface must be able to present.
-
-Budget is explicit. Kontrakt must not infer that a machine has a Budget merely because resources are finite or
-measurable. A selected Budget slot must establish one exact Budget or explicit absence. The final absence syntax remains
-deferred.
-
-This revision does not create separate `Deadline`, `Windowed`, `Aggregate`, `CurrentHeld`, `Concurrent`, or
-`GrowthBound`
-families.
-
-```text
-elapsed-time limit
-    quantity + boundary + allowance
-
-fixed or rolling window
-    renewal law
-
-parent and child allowance
-    allocation and composition law
-
-current held amount and concurrent count
-    Capacity quantity
-
-growth refusal
-    Capacity admission judgment
-```
-
-Reservation remains a possible protocol extension because `reserve -> commit or release` changes accounting position
-before consumption. Its V1 inclusion remains deferred.
-
-Capacity, Governance, and Policy remain independent contracts. This ADR does not define their material or judgment laws.
-
----
-
-## 4. Budget Contract
-
-### 4.1. Budget Meaning
-
-A Budget Contract declares explicit finite consumable allowance allocated to one declared machine boundary before
-governed work may consume the quantity.
-
-```text
-Budget Contract:
-    the contract that establishes
-    how much of one declared quantity
-    one declared machine boundary may consume
-```
-
-The user's project is itself a machine. Budget therefore describes the finite resource obligation of that machine, not
-merely the resources consumed internally by Kontrakt.
-
-A Budget may apply to:
-
-```text
-the whole user system
-
-one interface machine
-
-one Operation execution
-
-one run
-
-one session
-
-one declared child machine boundary
-```
-
-The subject must be explicit. Package placement, thread ownership, call-stack position, process identity, classloader,
-current worker, or backend registration must not silently decide the subject.
-
-Budget is not algorithmic complexity.
-
-```text
-Not Budget Contract material
-    O(n)
-    O(n log n)
-    loop iteration count
-    hash probe count
-    graph visit count
-    compiler pass count
-    machine instruction count
-```
-
-Those describe or meter a realization. They do not declare the user's machine obligation merely because they are finite.
-
-Budget may count a declared machine event only when the event itself belongs to the contract world and has the same
-meaning across admissible realizations.
-
-```text
-Allowed candidate
-    one declared RetryAttempt
-
-Forbidden as user Budget
-    one backend loop iteration
-```
-
-### 4.2. Explicit Allocation Before Consumption
-
-Budget is based on explicit allocation.
+A Budget Contract establishes finite consumable allowance before governed work may consume it.
 
 ```text
 Explicit Budget Declaration
     ->
 Established Budget Position
     ->
-Governed Work May Consume
+Governed Consumption and Judgment
 ```
 
-The applicable allowance must be established before governed work begins. Budget is not created after execution by
-observing what the implementation happened to consume.
-
-No Budget is implicit.
-
-Kontrakt may support an explicitly selected named mode or an explicitly delegated automatic resolution surface in a
-later authoring model. Such a surface must still resolve to exact canonical Budget material before authority begins. A
-backend must not inspect the host and silently create, enlarge, or replace a Budget.
-
-Contract allocation and physical reservation are different.
+The user declares Budget meaning. Kontrakt resolves, validates, canonicalizes, lowers, and realizes that meaning.
 
 ```text
-Contract allocation
-    establishes the allowance position
-    that the machine is permitted to consume
+User authoring
+    presents finite contract material
 
-Physical reservation
-    secures physical resources
-    through one realization mechanism
+Canonical Budget Contract
+    owns Budget meaning and judgment law
+
+Backend
+    observes charge
+    maintains the position
+    performs judgment
+    realizes the declared guarantee
 ```
 
-Every Budget requires contract allocation. Physical reservation is a realization technique that may be used when the
-resource and backend permit it.
+No Budget is inferred from host limits, deployment shape, current heap size, worker count, or runtime configuration. A
+selected Budget slot establishes one exact Budget or explicit absence.
 
-A time allowance can be allocated before execution even though time itself is not stored in advance. A memory
-realization may reserve an arena, process limit, region, or another bounded resource before execution. The difference
-does not change Budget meaning.
+An active Budget remains unchanged for its governed boundary. A different allowance, renewal, distribution, or guarantee
+requires new explicit material and Governance activation.
 
-If the required enforcement cannot be realized for the selected backend, Kontrakt must reject that realization or report
-the unsupported guarantee. It must not weaken the Budget to fit the backend.
+### 3.2. V1 Decisions
 
-### 4.3. Canonical Budget Material
+V1 closes the following choices:
 
-One Budget requires at least the following canonical material:
+1. Actual elapsed time is required Budget quantity material.
+2. The allowance-limit guarantee uses the vocabulary defined in Section 4.10.
+3. Distribution divides one total allowance into fixed limits for explicitly declared contracts before the governed
+   boundary begins.
+4. Those limits remain unchanged for the active boundary. A different distribution requires new Budget material and
+   Governance activation.
+5. One Operation-scope Budget position continues across every covered one-dimensional contract boundary. Internal stages
+   do not receive copied or renewed positions.
+6. A backend that cannot provide the declared quantity meaning and guarantee rejects the realization. It does not weaken
+   the contract.
+
+This ADR does not define the Java or Kotlin source syntax.
+
+---
+
+## 4. Budget Contract
+
+### 4.1. Meaning and Scope
+
+A Budget Contract declares how much of one machine-resource quantity one subject may consume inside one boundary.
+
+The subject may be the whole declared machine, one interface machine, one Operation execution, one run, one session, or
+another explicit contract boundary. Thread ownership, call-stack position, process identity, package placement, or
+current worker must not silently choose the subject.
+
+A whole-machine Budget includes user implementation, Kontrakt runtime work, generated machinery, and other consumption
+inside the declared authoritative boundary. A narrower subject is valid when it is explicit.
+
+The current JVM backend admits only a boundary for which one Kontrakt runtime and JVM can maintain the authoritative
+position. It does not infer one enforceable total across several JVMs or servers.
+
+Budget does not own domain limits. Payment amount, inventory, account balance, or another business value remains with
+the contract that defines its meaning. Maintained aggregates and profiling statistics also remain outside Budget
+authority.
+
+A countable event is not automatically a resource quantity. Operation entry, retry, Publication item, verification case,
+loop iteration, hash probe, or compiler pass does not become user Budget material merely because software can count it.
+
+### 4.2. Establishment and Position Lifetime
+
+The complete active Budget is established before governed work begins.
 
 ```text
 Budget identity
-
 subject
-
 boundary
-
 quantity and unit
-
 allowance
-
-allocation law
-
+distribution or explicit no distribution
 accounting law
-
 renewal law
-
-attribution law
-
-required guarantee
-
+allowance-limit guarantee
 applicable contract world
 ```
 
-The fields answer different questions.
+These coordinates remain fixed for the boundary. Profiling or environment changes do not modify them.
+
+The Budget position follows the declared boundary, not the internal implementation pipeline. When one Operation-scope
+Budget covers several one-dimensional contract boundaries, all covered work consults and updates the same position.
+Moving to the next boundary does not reset, copy, or renew it.
+
+A narrower Budget exists only when it is separately declared with its own subject and boundary.
+
+### 4.3. Canonical Material
+
+Each coordinate answers one question.
 
 ```text
 subject
-    whose Budget is this?
+    whose consumption is governed?
 
 boundary
-    when does governed accounting begin and end?
+    when does accounting begin and end?
 
 quantity and unit
-    what is consumed and in what unit?
+    what is consumed and how is it measured?
 
 allowance
     how much may be consumed?
 
-allocation law
-    where does the allowance come from,
-    who owns it,
-    and may it be partitioned or returned?
+distribution
+    how is one total divided into fixed limits for declared contracts?
 
 accounting law
-    how does one established charge change the Budget position?
+    how does established charge change the position?
 
 renewal law
-    when and how does a new allowance become available?
+    when is a new position established?
 
-attribution law
-    which child work, generated machinery,
-    runtime work, and external work belong to this Budget?
-
-required guarantee
-    what must every admissible realization guarantee?
+allowance-limit guarantee
+    what result must the machine guarantee at the limit?
 
 applicable contract world
-    under which declared world does this Budget have authority?
+    under which world does this Budget have authority?
 ```
 
-These are contract coordinates. They define Budget meaning and required results. They do not prescribe the clock,
-allocator, counter, scheduler, isolation boundary, or other machinery used to realize them.
+A boundary may have one terminal condition or several. When several are declared, the first condition that becomes
+established ends the boundary. This general law is sufficient for normal completion and deadline expiration; it does not
+create a separate timeout family.
 
-These coordinates must not be replaced by a collection of named Budget families. A deadline, time window, parent quota,
-or current occupancy does not become a new family merely because the same fields take different values.
+The contract does not prescribe how a backend observes, connects, stores, or enforces charge. Those choices remain
+realization.
 
-The exact authoring syntax and canonical identity bytes remain deferred.
+### 4.4. Quantity and Backend Admissibility
 
-### 4.4. Budget Quantity Sources
+A Budget quantity must represent finite machine-resource consumption. The selected backend must be able to:
 
-Budget charge material may come from two sources.
+1. identify the exact quantity and boundary,
+2. observe every governed charge without hidden loss or duplication,
+3. connect each charge to one resolved Budget position,
+4. maintain one authoritative position under concurrency,
+5. and provide the declared guarantee.
 
-```text
-Kontrakt-measured physical quantity
+A measurement API alone does not prove these conditions.
 
-Contract-established declared quantity
-```
+The current V1 position is:
 
-A physical quantity is admissible only when Kontrakt can define its subject, boundary, unit, attribution, accounting,
-and enforcement meaning without requiring user implementation code to carry Budget control flow.
+| Quantity                   | JVM V1 status | Reason                                                                                                                                                                 |
+|----------------------------|---------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Actual elapsed time        | Required      | Kontrakt can establish the governed start, terminal conditions, and contract-progress result.                                                                          |
+| Cumulative allocated bytes | Conditional   | The backend must prove complete observation and exact connection for the declared subject. This ADR does not assume that ordinary JVM allocation satisfies that proof. |
+| Processor execution time   | Deferred      | Observation and safe exact enforcement are not closed for V1.                                                                                                          |
+| Read or written bytes      | Deferred      | Support requires one complete declared I/O boundary.                                                                                                                   |
+| Multi-runtime total        | Unsupported   | Local positions do not create one authoritative distributed position.                                                                                                  |
 
-A declared quantity is admissible only when the contract world itself establishes the event or amount. The user may
-declare a finite Budget over retries, requests, publications, cases, monetary amounts, or another explicit quantity when
-one unit has a stable contract meaning.
+The backend proof belongs to implementation admissibility, not to canonical Budget material. This ADR deliberately does
+not define support by naming particular storage structures, allocation APIs, or generated artifacts. Any mechanism is
+acceptable only if it proves the declared meaning and guarantee.
 
-```text
-Declared quantity
-    RetryAttempt
-    ExternalRequest
-    PublishedFact
-    VerificationCase
-    PaymentAmount
-
-Not declared quantity
-    internal loop
-    optimizer visit
-    private cache access
-    hidden repository call
-```
-
-A generic `step` is not automatically Budget material.
-
-A step may become charge material only when the contract declares exactly what one step means. Kontrakt's existing
-physical or semantic planner steps remain realization fuel unless a separate user-machine contract explicitly gives an
-event that meaning.
+One-dimensional contracts provide explicit boundaries and result coordinates that let the generated implementation place
+checks without guessing contract meaning. Backend profiling may use those coordinates, but profiling does not create
+Budget authority or alter an active position.
 
 ### 4.5. Time Quantity
 
-Actual elapsed time is a valid Budget quantity.
+Actual elapsed time is valid Budget material.
 
 ```text
 subject
@@ -370,7 +284,8 @@ subject
 
 boundary
     explicit start
-    -> explicit end
+    one or more terminal conditions
+    first established terminal condition ends the boundary
 
 quantity
     elapsed time
@@ -379,234 +294,122 @@ allowance
     declared duration
 ```
 
-For example:
+Example:
 
 ```text
 one Operation execution
-from Admission establishment
-through terminal result establishment
-may consume at most 100 ms of elapsed time
+    begins when execution is admitted
+    ends when normal completion or the deadline is established first
+    may consume at most 100 ms of elapsed time
 ```
 
-`Deadline` is not a separate accounting family. It is an elapsed-time quantity with an explicit boundary and allowance.
+A deadline is not a separate Budget or accounting family. It is one terminal condition derived from the elapsed-time
+allowance.
 
-Different time boundaries remain different Budget declarations.
+When the deadline is established first, the expired execution loses authority to enter later Kontrakt-controlled
+boundaries or establish a successful result, State movement, or Publication. A late return through a familiar interface
+does not restore that authority.
 
-```text
-queue wait
+Physical execution stopping is separate. The JVM backend may request cancellation or interruption, and a stronger
+backend may terminate an isolated execution. Those mechanisms realize stronger guarantees but do not change Budget
+meaning.
 
-one execution attempt
+Timeout affects only its declared boundary. It must not replace identity, ordering, structural boundedness, cache
+correctness, restart limits, or another contract's result.
 
-all retries of one Operation
-
-no-progress interval
-
-whole machine run
-```
-
-The final V1 time catalog remains to be closed. This ADR establishes actual elapsed time as required Budget material and
-does not yet decide whether processor time, no-progress time, or another time quantity belongs in V1.
-
-Physical observations may differ across executions because the environment differs. Determinism means that the clock
-source, boundary, attribution, unit conversion, accounting law, and judgment are fixed by explicit material.
-
-```text
-same established elapsed-time charge
-same established Budget position
-same contract world
-    -> same Budget judgment
-```
+Processor time, no-progress time, and other time meanings remain deferred.
 
 ### 4.6. Memory Quantity
 
-Actual memory use may be declared, but `memory` alone is not a complete quantity.
-
-The declaration must distinguish the accounting meaning.
+`Memory` is not one complete quantity.
 
 ```text
 cumulative allocated bytes
-    bytes allocated during one declared boundary
-    and added to a consumable Budget position
+    consumption accumulated across a boundary
+    Budget form
 
 current live bytes
-    bytes currently held at one position
-
 peak live bytes
-    maximum current live bytes observed during one boundary
-
 retained bytes
-    bytes still held after a declared boundary
+    amount held or retained at a position
+    Capacity form
 ```
 
-Cumulative allocated bytes have Budget form because they accumulate as consumption over the boundary.
+Cumulative allocated bytes may be admitted only when the selected backend proves complete accounting for the declared
+subject. The current JVM backend must not claim this guarantee from an approximate heap metric or partial
+instrumentation. If complete accounting cannot be shown, the declaration is unsupported.
 
-Current live, peak live, and retained bytes have Capacity form because they describe what the machine holds or may hold
-at one position. Their complete law remains deferred to Capacity.
+A whole-machine memory Budget must include all governed consumption inside its declared authoritative boundary. It must
+not exclude Kontrakt or generated work while retaining the whole-machine label.
 
-A whole-system memory declaration must account for the whole declared subject.
-
-```text
-whole user system
-    includes user implementation
-    Kontrakt runtime machinery
-    generated guards and adapters
-    cache
-    diagnostics
-    declared child work
-```
-
-A declaration may define a narrower subject, but it must not call itself a whole-system limit while silently excluding
-Kontrakt or generated machinery.
-
-The backend may realize the memory obligation through a bounded arena, controlled allocator, generated layout, isolated
-process, operating-system limit, static reservation, or another mechanism. Those mechanisms are implementation.
+Concrete allocation, layout, containment, and physical-cap strategies remain implementation. Their names and tuning
+values are not required authoring fields.
 
 ### 4.7. Accounting and Renewal
 
-The basic Budget accounting relation is cumulative consumption.
+The basic relation is cumulative consumption.
 
 ```text
 Established Budget Position
 + Established Charge
-    ->
-Next Budget Position
+    -> BudgetWithinAllowance + Next Budget Position
 
 or
 
-Would Exceed Budget
-```
-
-The exact remaining amount need not be a public user-facing result. The canonical Budget position must nevertheless
-retain enough material for the next judgment to be deterministic.
-
-Accounting law and renewal law are separate.
-
-```text
-accounting law
-    how charge changes the current position
-
-renewal law
-    when a new allowance position is established
-```
-
-Possible renewal values may include:
-
-```text
-one shot
-
-per execution
-
-per run
-
-per session
-
-fixed window
-
-rolling window
-
-periodic refill
-
-no renewal
-```
-
-`Windowed` is not a separate Budget family. It is one renewal law.
-
-This ADR does not yet admit arbitrary user-defined refill algorithms. Renewal must remain finite, explicit, inspectable,
-and lowerable.
-
-### 4.8. Allocation and Composition
-
-A Budget may be allocated from a larger Budget.
-
-This is not merely attribution. Allocation changes who may consume which part of an already finite allowance.
-
-```text
-Project Budget
-    ->
-Operation Budget
-    +
-Kontrakt Runtime Budget
-    +
-Cache Budget
-    +
-Diagnostic Budget
-    +
-Unallocated Headroom
-```
-
-Allocation must preserve allowance.
-
-```text
-sum of active child allocations
-+ unallocated parent allowance
-    <= parent allowance
-```
-
-The compiler may derive an internal allocation plan from the complete contract graph, selected backend, environment
-material, and workload evidence. It may not exceed or silently redefine the declared parent allowance.
-
-Allocation law must make at least the following explicit:
-
-```text
-allocation source
-
-owner of the allocated allowance
-
-partition rule
-
-whether unused allowance returns
-
-when it returns
-
-whether borrowing is permitted
-
-whether child consumption also changes the parent position
-
-how double counting is prevented
-```
-
-A whole-system Budget gives Kontrakt authority to allocate inside the declared total. It does not give Kontrakt
-authority to invent a larger total.
-
-The internal allocation plan is realization material derived under Budget authority. The declared total, subject,
-quantity, boundary, and allocation law remain contract material.
-
-### 4.9. Reservation as a Possible Accounting Extension
-
-Reservation is not merely a future admission time.
-
-A reservation changes the available position before final consumption.
-
-```text
-Available
-    -> Reserved
-    -> Consumed
-
-or
-
-Available
-    -> Reserved
-    -> Released
-```
-
-This is a real accounting extension because `reserve`, `commit`, and `release` have different effects.
-
-Reservation is not established as a separate Budget family. It is a possible extension to the accounting protocol.
-
-This ADR does not yet decide whether V1 requires reservation. The decision must be based on concrete Budget and Capacity
-cases that cannot be represented safely by direct allocation and consumption.
-
-### 4.10. Budget Judgment
-
-Budget judgment must be typed.
-
-The basic judgment form is:
-
-```text
 Established Budget Position
 + Established Charge
-+ Applicable Contract World
-    ->
+    -> BudgetWouldExceed
+```
+
+A charge may be known before consumption, established during consumption, or established at a later controlled boundary.
+The timing does not create a new accounting family. It determines which guarantee the backend can provide.
+
+Different quantities retain separate positions. Elapsed time must not stand in for bytes, current occupancy, structural
+limits, or semantic work.
+
+Renewal is separate from accounting. V1 permits finite lowerable renewal such as one execution, one run, one session, a
+fixed window, a rolling window, periodic refill, one shot, or no renewal. Arbitrary user algorithms are not admitted.
+
+### 4.8. Fixed Distribution Across Declared Contracts
+
+One established total may be divided into fixed limits for explicitly declared contracts before the governed boundary
+begins.
+
+Example:
+
+```text
+total allowance
+    4 GiB for one run
+
+target limits
+    Payment Operation Contract: 1 GiB
+    Search Operation Contract: 2 GiB
+    Diagnostic Publication Contract: 256 MiB
+
+unassigned remainder
+    768 MiB
+```
+
+Every target limit shares the total's quantity, unit, accounting law, boundary, renewal, and applicable contract world.
+The following conservation law is mandatory.
+
+```text
+sum of target limits
++ unassigned remainder
+    = established total allowance
+```
+
+A limit belongs to a declared contract, not to an implementation unit. Parallel execution does not copy it. A
+per-execution allowance is a separate Budget unless one explicit total accounting law preserves a shared position.
+
+The limits and remainder stay unchanged for the active boundary. A different distribution requires new Budget material
+and Governance activation for later boundaries.
+
+### 4.9. Budget Judgment
+
+Budget judgment is typed.
+
+```text
 BudgetWithinAllowance
     + Next Budget Position
 
@@ -615,496 +418,290 @@ or
 BudgetWouldExceed
 ```
 
-`BudgetWithinAllowance` does not perform the work. It means only that the established charge may be accepted under the
-current Budget position.
-
-`BudgetWouldExceed` belongs to Budget. It must not be reported as Capacity refusal, State refusal, Invariant violation,
+`BudgetWithinAllowance` permits no work by itself. It states only that the established charge remains within allowance.
+`BudgetWouldExceed` belongs to Budget and must not be reported as Capacity refusal, State refusal, Invariant violation,
 or an unnamed runtime exception.
 
-Policy may select a prepared response contract after reading the Budget judgment. Policy may not reverse the Budget
-result or manufacture new allowance.
+Policy may select a prepared response after reading the judgment. It may not reverse the result or create new allowance.
+Diagnostic and Failure mapping remain separate decisions.
 
-The exact Failure and Diagnostic mapping remains deferred.
+### 4.10. V1 Allowance-Limit Guarantees
 
-### 4.11. Budget and Implementation
+`Allowance-limit guarantee` is the canonical coordinate that states the required enforcement strength. V1 closes the
+following vocabulary.
 
-The user declares the machine limit. Kontrakt owns the machinery that realizes it.
+#### Charge Refusal
 
-```text
-Forbidden user obligation
-    budget.consume()
-    budget.remaining()
-    budget.checkpoint()
-    budget.isExhausted()
-```
+When the backend knows that a prospective charge would exceed allowance, it refuses the charge before it becomes
+established.
 
-Such calls make Budget meaning depend on where implementation chose to report work.
+#### Contract-Progress Cutoff
 
-Kontrakt may realize Budget through:
+Once the Budget boundary ends or an over-limit result is established, the affected execution cannot enter later
+Kontrakt-controlled boundaries or establish successful contract-visible consequences.
 
-```text
-generated accounting
+#### Cooperative Cancellation
 
-compiler instrumentation
+The backend provides Contract-Progress Cutoff and also requests that the running work stop through the supported
+cooperative mechanism. Physical termination is not guaranteed.
 
-controlled allocation
+#### Isolated Termination
 
-static reservation
+The backend provides Contract-Progress Cutoff and terminates an execution unit that the selected realization can safely
+isolate and stop.
 
-adapter-owned I/O accounting
+A declaration may require the compatible terms needed for its quantity and boundary. A backend must reject unsupported
+strength rather than substitute a weaker one.
 
-scheduler boundary
+Observation after execution is not a separate guarantee term. If the backend can only report usage after
+contract-visible consequences have already become authoritative, the material is profiling or verification rather than a
+V1 enforcing Budget. If a late observation still causes Contract-Progress Cutoff before later consequences, the declared
+guarantee remains Contract-Progress Cutoff.
 
-isolated process
+### 4.11. Budget and Capacity
 
-operating-system containment
-
-post-execution measurement when that is the declared guarantee
-```
-
-A realization must declare the guarantee it can provide. Pre-execution refusal, hard during-execution stop, cooperative
-stop, and post-execution judgment are not interchangeable.
-
-If the declared Budget requires hard control and the selected realization cannot provide it, that realization is
-inadmissible.
-
-Opaque user code does not weaken the contract. It may require analysis, instrumentation, containment, a different
-backend, or rejection.
-
-### 4.12. Budget and Capacity
-
-Budget and Capacity remain separate.
+Budget and Capacity answer different questions.
 
 ```text
 Budget
-    finite allowance consumed across a declared boundary
+    how much has been consumed across the governed boundary?
 
 Capacity
-    finite amount the machine may currently hold, admit, or keep active
+    how much may be held, admitted, or active now?
 ```
 
-Examples:
+One backend control point may consult both. Capacity may refuse current admission; Budget may refuse a prospective
+charge or cut off later contract progress. Their positions and judgments remain separate.
 
-```text
-total allocated bytes during one Operation
-    Budget
+Repeated checks at one-dimensional contract boundaries do not create new Budget positions. They consult the position
+owned by the declared Budget boundary.
 
-live bytes currently held
-    Capacity
+The complete Capacity law is decided in ADR-0052.
 
-requests accepted during one hour
-    Budget
+### 4.12. V1 Boundary
 
-requests active at the same time
-    Capacity
+V1 requires:
 
-bytes written during one run
-    Budget
+- one explicit Budget or explicit absence,
+- exact subject, boundary, quantity, unit, and allowance,
+- explicit renewal and guarantee,
+- one authoritative position for the governed boundary,
+- fixed-limit distribution or explicit no distribution,
+- and backend rejection when observation, accounting, or guarantee is unsupported.
 
-temporary bytes currently retained
-    Capacity
-```
+V1 supports actual elapsed-time Budget and the first-established-terminal-condition boundary law.
 
-Current-held amount, concurrent count, and growth refusal are not separate Capacity families. They are Capacity
-quantities and the Capacity admission judgment.
+Cumulative allocated bytes retain valid Budget shape but remain conditional on backend proof. Current live, peak live,
+and retained bytes belong to Capacity. Processor time, I/O bytes, and distributed totals remain outside V1.
 
-The complete Capacity position, acquisition, release, reservation, and admission laws remain deferred.
-
-### 4.13. Budget Determinism
-
-Budget authority must be repeatable from canonical material.
-
-```text
-same Budget
-same established Budget position
-same established charge
-same applicable contract world
-    -> same Budget judgment
-```
-
-A physical measurement backend may observe different charge values in different executions. It must not change what is
-measured, where the boundary lies, whose consumption is counted, how units are converted, or how judgment is produced.
-
-Hidden environment values, thread timing, classpath order, callback order, allocator identity, or backend-private
-counters must not redefine Budget material.
-
-### 4.14. V1 Budget Boundary
-
-V1 must require explicit Budget authoring. Budget must not be an implicit runtime mode. The exact authoring surface
-remains deferred.
-
-The required V1 foundation is:
-
-```text
-one explicit Budget or explicit absence
-
-explicit subject
-
-explicit boundary
-
-explicit quantity and unit
-
-explicit allowance allocated before governed work
-
-deterministic accounting position and judgment
-
-explicit renewal law
-
-explicit attribution law
-
-explicit required guarantee
-
-whole-system allocation support when the declared subject is the whole user system
-```
-
-V1 must support actual elapsed-time Budget.
-
-V1 must support an actual memory Budget form whose quantity and accounting law are exact. Cumulative allocated bytes are
-the current Budget candidate; live and retained memory belong to the Capacity decision that follows.
-
-V1 may support contract-established declared charge kinds. A generic implementation step counter is not sufficient.
-
-The inclusion of processor time, I/O bytes, monetary quantities, domain-specific charge kinds, reservation, and
-additional physical quantities remains deferred until their measurement, attribution, accounting, and enforcement laws
-are closed.
+Event counts and implementation work units remain outside the runtime Budget catalog.
 
 ---
 
 ## 5. Authoring and Processing Boundary
 
-This draft does not fix the Java or Kotlin Budget authoring API.
-
-The later authoring surface must follow ADR-0047.
-
-```text
-Host declaration
-    carries finite source material
-
-Resolution
-    identifies exact Budget, subject, quantity,
-    boundary, allowance, and referenced coordinates
-
-Validation
-    rejects unsupported shape, behavior, ambiguity,
-    hidden allocation, and unsupported guarantees
-
-Canonicalization
-    removes host-language and source-order authority
-
-Lowering
-    produces machine-usable Budget material
-
-Backend
-    realizes measurement, accounting, judgment,
-    allocation, and enforcement without owning meaning
-```
-
-Any later Budget authoring surface must be able to carry at least:
+This ADR defines meaning, not Java or Kotlin syntax. The later authoring surface follows ADR-0047 and carries only
+finite contract data.
 
 ```text
-one exact Budget or explicit absence
-
-subject
-
-boundary
-
-quantity and unit
-
-allowance
-
-allocation source and composition law where applicable
-
-renewal law
-
-attribution law
-
-required guarantee
+Source declaration
+    -> Resolution
+    -> Validation
+    -> Canonicalization
+    -> Lowering
+    -> Backend realization
 ```
 
-The following forms are rejected as Budget authority:
+The source must be able to present the subject, boundary, quantity, allowance, distribution choice, renewal, and
+required guarantee. Canonical identity, applicable contract world, and lowerable accounting material may be completed by
+the compiler.
+
+User code must not define Budget through reporting calls, callbacks, environment reads, or implementation tuning. Such
+machinery may exist behind the lowered boundary but cannot own Budget meaning.
+
+The following examples describe meaning only.
+
+### 5.1. Elapsed-Time Example
 
 ```text
-BudgetContext passed into the Operation
+Budget
+    subject:
+        one Search Operation execution
 
-consume() calls placed by user code
+    boundary:
+        begins when execution is admitted
+        ends when normal completion or the deadline is established first
 
-remaining() queries
+    quantity:
+        elapsed time
 
-user-written checkpoints
+    allowance:
+        100 ms
 
-backend loop count presented as machine Budget
+    renewal:
+        one new allowance for each admitted execution
 
-algorithmic complexity declaration
+    distribution:
+        none
 
-runtime configuration silently activated as Budget
-
-environment-derived allowance with no explicit Budget declaration
+    required guarantee:
+        Contract-Progress Cutoff
+        Cooperative Cancellation
 ```
 
-Those forms may appear inside one realization. They may not define the user's Budget Contract.
-
-A later Budget authoring design must answer:
+### 5.2. Fixed-Distribution Example
 
 ```text
-How is one Budget named?
+Budget
+    subject:
+        one system run
 
-How is the whole user system or one smaller subject selected?
+    quantity:
+        cumulative allocated bytes
 
-How are start and end boundaries declared?
+    allowance:
+        4 GiB
 
-Which physical quantities belong to V1?
-
-How is one contract-established charge kind declared?
-
-How is actual elapsed time represented?
-
-Which exact memory quantity is Budget and which belongs to Capacity?
-
-How is a parent allowance allocated to child subjects?
-
-How are unused allowance, return, borrowing, and double counting represented?
-
-How is renewal declared without creating separate Budget families?
-
-How is the required guarantee declared?
-
-How is explicit Budget absence represented?
-
-How does validation reject a realization that cannot provide the required guarantee?
+    distribution:
+        Payment Operation Contract limit: 1 GiB
+        Search Operation Contract limit: 2 GiB
+        Diagnostic Publication Contract limit: 256 MiB
+        unassigned remainder: 768 MiB
 ```
+
+This example does not claim that the current JVM backend already supports that memory quantity. Backend admissibility is
+a separate validation result.
+
+The final authoring design must still choose naming, absence syntax, source references, and error presentation without
+exposing backend shape.
 
 ---
 
 ## 6. Contract and Implementation Boundary
 
-### 6.1. Decisions Made Here
+### 6.1. Contract Authority
 
-This draft decides:
-
-```text
-Budget belongs in contract theory because a realistic machine must work within finite conditions.
-
-Budget remains independent from Policy, Capacity, and Governance.
-
-Budget declares explicit finite consumable allowance allocated to one declared machine boundary before governed work may
-consume it.
-
-Budget describes the finite resource obligation of the user's machine, not merely the resources used internally by
-Kontrakt.
-
-No Budget is implicit.
-
-The user declares the limit. Kontrakt owns measurement, accounting, judgment, allocation realization, and enforcement.
-
-Budget does not require BudgetContext, consume(), remaining(), or checkpoint() calls inside user Operation code.
-
-Actual elapsed time is valid Budget quantity material.
-
-Actual memory use is valid only after the exact accounting meaning is declared.
-
-Cumulative allocated bytes have Budget form.
-
-Current live, peak live, and retained bytes have Capacity form.
-
-A generic implementation step is not user Budget.
-
-A declared machine event may become Budget charge material when one unit has stable contract meaning across admissible
-realizations.
-
-Deadline is elapsed-time quantity plus boundary and allowance, not a separate family.
-
-Fixed and rolling windows are renewal laws, not separate families.
-
-Parent and child allowance require an explicit allocation and composition law.
-
-Allocation must preserve the declared parent allowance and prevent double counting.
-
-A whole-system Budget includes Kontrakt runtime and generated machinery unless a narrower subject is explicitly declared.
-
-Reservation is a possible accounting protocol extension, not a separate Budget family.
-
-BudgetWithinAllowance and BudgetWouldExceed are Budget judgments.
-
-Budget refusal must not be collapsed into Capacity refusal, State refusal, Invariant violation, or an unnamed runtime
-exception.
-
-Ordinary software Budget systems are examples and warnings, not the source of the general definition.
-```
-
-### 6.2. Decisions Not Made Here
-
-This draft does not decide:
+The contract owns:
 
 ```text
-the final Budget Java or Kotlin authoring surface
-
-the final V1 physical quantity catalog beyond elapsed time
-and the current cumulative allocated-byte candidate
-
-whether processor time, I/O bytes, monetary quantities,
-or other physical quantities belong in V1
-
-the exact clock, allocation, instrumentation,
-or containment backend
-
-the exact required-guarantee vocabulary
-
-whether V1 requires reservation
-
-the complete child-allocation, unused-return,
-borrowing, and reclamation vocabulary
-
-Capacity material, judgment, acquisition, release,
-reservation, and admissibility law
-
-Budget canonical identity bytes
-
-Failure mapping
-
-Diagnostic evidence and retention
-
-Version qualification
+subject
+boundary
+quantity and unit
+allowance
+fixed distribution or no distribution
+accounting law
+renewal law
+allowance-limit guarantee
+applicable contract world
+Budget judgment
 ```
 
-### 6.3. No Hardware or Backend Authority
+It does not own the mechanisms used to observe, store, schedule, or enforce the Budget.
 
-Physical capability, scheduler behavior, resource discovery, storage layout, cache state, thread count, allocator, clock
-implementation, and deployment configuration do not define Budget meaning.
+The backend may replace any realization mechanism only when the replacement preserves the same canonical meaning and
+contract-visible result. An unsupported quantity or guarantee makes the realization inadmissible; the Budget is not
+weakened for compatibility.
 
-Actual elapsed time and actual memory may be Budget quantities. The hardware, clock, allocator, process boundary,
-operating system, instrumentation, or generated machinery used to observe and control them remain realization.
+### 6.2. One-Dimensional Pipeline Control
 
-They may establish explicit charge material under declared Budget authority. Replacing them must not change what the
-contract means for the same canonical material.
+Each selected one-dimensional contract lowers to a Kontrakt-controlled implementation boundary. The backend may
+therefore place Budget and Capacity checks along the generated pipeline without adding new contract authority.
 
-If a replacement cannot provide the declared Budget guarantee, the replacement is inadmissible. The Budget is not
-weakened to preserve backend compatibility.
+```text
+enter one-dimensional boundary
+    -> consult Capacity when applicable
+    -> consult the existing Budget position
+    -> perform permitted realization
+    -> confirm that the result still has authority
+    -> enter the next boundary
+```
+
+The same Operation-scope Budget position continues across the covered boundaries. The checks do not create stage-local
+Budgets.
+
+The user implementation body is less controllable than the generated boundary around it. A JVM backend may be unable to
+stop arbitrary code immediately, but it can still expire that execution's contract authority, reject late results, block
+later State movement, and refuse successful Publication. This is the implementation meaning of Contract-Progress Cutoff.
+
+### 6.3. Backend Capability and Fail-Closed Admission
+
+For each supported quantity, the backend must provide a capability proof that covers observation, exact connection to
+the resolved position, concurrency, arithmetic, and the declared guarantee.
+
+The proof fails when charge may be lost or duplicated, one authoritative position cannot be maintained, unit conversion
+is inexact, arithmetic overflows, the minimal realization cannot fit, or the required guarantee is unavailable.
+
+Unsupported declarations fail during validation or lowering. They must not silently become advisory limits.
+
+### 6.4. Implementation Considerations — Deterministic Realization
+
+Determinism is a Kontrakt implementation law. It is not Budget meaning, a canonical coordinate, or a user option.
+
+For one implementation version, the same canonical Budget material, pinned implementation inputs, established charges,
+and terminal-condition material must produce the same plan, authoritative position, judgment, and contract-visible
+result.
+
+A backend may partition accounting or use specialized machinery for performance. Worker assignment, callback order,
+partition choice, and reconciliation order must not change the final Budget result for the same established material.
+
+Implementation inputs needed for feasibility are resolved before the governed boundary begins. Runtime conditions and
+telemetry must not silently re-solve an active Budget.
+
+Elapsed-time observations may differ because the physical environment differs. The backend must still preserve the
+declared clock requirement, boundary law, guarantee, and result for the material that becomes established.
+
+Optimization is allowed only after these conditions hold.
 
 ---
 
-## 7. Determinism and Verification
+## 7. Verification
 
-Kontrakt must be able to verify at least the following before Budget material becomes authoritative.
+Contract verification must establish that the Budget is complete, finite, and lowerable. Subject, boundary, quantity,
+unit, allowance, renewal, guarantee, and applicable world must resolve exactly. Distribution must either be absent or
+satisfy the V1 fixed-distribution law.
 
-```text
-Budget identity is unique in its declared scope.
+The verifier must reject business values, event counts, implementation work units, hidden allowance establishment,
+stage-local Budget copies, and unsupported distributed totals.
 
-One exact Budget or explicit absence is selected.
+The accounting law must preserve one continuous position for the declared boundary. Tests must cover zero charge, exact
+allowance, the smallest over-limit charge, renewal, concurrent charge, and arithmetic failure.
 
-Subject and boundary resolve exactly.
-
-Quantity and unit are exact.
-
-Allowance is explicit and valid for the quantity.
-
-No environment observation silently creates or enlarges the Budget.
-
-Allocation source and owner resolve exactly.
-
-Child allocations cannot exceed the parent allowance.
-
-Unused allowance, return, and borrowing are explicit when present.
-
-Parent and child accounting cannot count one charge twice.
-
-Whole-system Budget attribution includes Kontrakt runtime and generated machinery unless a narrower subject is explicit.
-
-Time Budget boundaries and clock semantics are exact.
-
-Memory Budget declares the exact accounting meaning and does not hide Capacity material as Budget.
-
-Contract-established charge kinds have stable declared meaning.
-
-No backend loop, compiler step, cache access, or private counter acquires user-Budget authority.
-
-Accounting and renewal laws are finite and lowerable.
-
-Required enforcement is supported by the selected realization.
-
-Budget judgment is typed and preserves the next canonical position.
-
-The lowered accounting and enforcement plan is equivalent to canonical Budget material.
-```
-
-Verification should support generated fixtures and property-based tests over the closed material.
-
-Budget verification should include at least:
+Time tests must cover both terminal orders:
 
 ```text
-exact-boundary charge
+normal completion established first
+    -> normal boundary result
 
-zero charge
-
-charge exactly equal to allowance
-
-charge that would exceed by the smallest unit
-
-renewal boundary
-
-parent and child allocation conservation
-
-unused allowance return
-
-whole-system attribution
-
-clean failure when the required enforcement is unavailable
+deadline established first
+    -> Contract-Progress Cutoff
+    -> late success, State movement, and Publication rejected
 ```
 
-Optimization is allowed only after meaning is preserved.
+Distribution tests must prove conservation and unchanged target limits throughout the active boundary.
 
-```text
-Budget
-    precomputed allocation plan
-    static reservation
-    specialized accounting
-    fused measurement boundary
-    generated limit checks
-```
+Backend conformance is verified separately. It must show that lowering preserves canonical meaning, the quantity
+capability proof is valid, unsupported strength fails closed, and optimization does not change the result.
 
-These are backend forms. If their result differs from canonical Budget material, the backend is wrong.
+Generated fixtures and property-based tests should exercise the closed contract material and the implementation
+boundary.
 
 ---
 
 ## 8. Deferred Decisions
 
-The following Budget questions remain open for the next revision of this ADR.
+The following remain open:
 
-```text
-What exact source syntax declares one Budget and explicit Budget absence?
+- final Java or Kotlin Budget syntax and explicit absence syntax,
+- canonical identity bytes,
+- exact JVM support proof for cumulative allocated bytes,
+- processor-time and I/O-byte quantities,
+- authoritative multi-runtime accounting,
+- profiling Publication shape,
+- Diagnostic linkage,
+- Failure mapping,
+- and Version qualification.
 
-Which exact memory quantity belongs in V1 Budget?
-
-Which live-memory and retained-memory quantities belong in Capacity?
-
-Does V1 include processor time?
-
-Does V1 include read and written bytes?
-
-How are contract-established charge kinds declared without becoming arbitrary user counters?
-
-What exact allocation vocabulary is sufficient for parent and child Budgets?
-
-When does unused allowance return?
-
-Is borrowing admitted in V1?
-
-Does V1 require reserve -> commit or release?
-
-What exact required guarantees are admitted?
-
-How does a backend prove that it can provide the required guarantee?
-
-Which Budget judgments and positions may participate in later Policy situations?
-
-How are Budget identity bytes represented without making measurement machinery authoritative?
-```
-
-Capacity is decided separately in ADR-0052. Governance is decided separately in ADR-0053. Policy is decided separately
-in ADR-0054.
-
-Budget may return where Capacity acquisition, release, reservation, or Governance activation requires one exact shared
-law. The basic Budget meaning, explicit allocation requirement, accounting position, and implementation boundary are
-decided here.
+Capacity is decided in ADR-0052. Governance and Policy are decided in ADR-0053 and ADR-0054.
 
 ---
 
@@ -1112,69 +709,34 @@ decided here.
 
 ### Positive
 
-Budget becomes a real user-machine contract rather than a Kontrakt runtime setting.
+Budget becomes an explicit user-machine contract rather than a runtime setting. The declaration stays independent from
+measurement and enforcement machinery.
 
-A user can treat the whole project, one Operation, one run, or another declared boundary as a finite machine and declare
-the allowance that machine may consume.
+Elapsed-time Budget can provide a strong contract result even when the JVM cannot physically stop arbitrary code: an
+expired execution cannot establish later contract-visible consequences.
 
-The declaration remains small.
+Budget and Capacity can be combined at Kontrakt-controlled boundaries. Capacity controls current admission or holding;
+Budget controls cumulative consumption and later authority.
 
-```text
-User
-    declares the limit and boundary
+One Operation-scope Budget remains continuous across the one-dimensional pipeline. Fixed distribution preserves one
+total without copying allowance into stages, workers, or concurrent executions.
 
-Kontrakt
-    allocates, measures, accounts, judges, and enforces
-```
-
-Actual elapsed time and actual memory use can be represented without making clocks, allocators, schedulers, or operating
-systems contract authority.
-
-Budget no longer depends on where user implementation calls `consume` or `checkpoint`.
-
-Deadline, window, aggregate quota, and current occupancy are not multiplied into overlapping families. Their differences
-remain in quantity, boundary, allocation, renewal, attribution, and Capacity law.
-
-A whole-system Budget can give Kontrakt one explicit total from which it derives internal allocation for runtime
-machinery, generated code, caches, diagnostics, and user execution.
-
-Parent and child Budgets preserve the declared total instead of copying the same allowance into every worker or
-Operation.
-
-Budget exhaustion remains attributable to Budget rather than being collapsed into Capacity, State, Invariant, or a
-generic runtime exception.
-
-The reason for Budget becomes explicit. A realistic machine accepts its limits and keeps its work inside the allowance
-it can actually sustain.
+V1 now has a closed guarantee vocabulary and a finite distribution law.
 
 ### Negative
 
-Kontrakt must own or control enough of the execution boundary to provide the declared Budget guarantee.
+The backend must own enough of the execution boundary to prove the declared quantity and guarantee. Opaque user code,
+partial JVM metrics, native work, external systems, or several runtimes may make a declaration unsupported.
 
-Actual time and memory support require exact boundary, attribution, measurement, and enforcement laws. A single
-ambiguous
-`time` or `memory` field is not sufficient.
+Cumulative allocated-byte support requires a stronger proof than the existence of a JVM metric.
 
-Opaque user code may require compiler analysis, instrumentation, controlled allocation, process isolation,
-operating-system containment, another backend, or rejection.
-
-Whole-system Budget accounting must include Kontrakt runtime and generated machinery. Internal cost cannot be hidden
-outside the user's declared system merely because Kontrakt produced it.
-
-Parent and child allocation introduce conservation, return, borrowing, and double-counting problems that must be
-verified.
-
-The final V1 quantity catalog must remain small enough to implement honestly. Adding a measurable quantity without
-stable attribution or enforcement would create false guarantees.
+A whole-machine Budget must include Kontrakt and generated work inside the declared boundary. Internal cost cannot be
+hidden outside the total.
 
 ### Neutral
 
-This ADR does not prohibit clocks, allocators, arenas, schedulers, process isolation, operating-system quotas, compiler
-instrumentation, generated checkpoints, or runtime counters.
+This ADR does not prohibit implementation mechanisms needed to observe or enforce Budget. It prevents them from becoming
+the source of Budget meaning.
 
-It prevents those mechanisms from becoming the source of Budget meaning.
-
-Kontrakt may optimize allocation and enforcement aggressively after canonical Budget meaning is preserved.
-
-Reservation remains open. Capacity remains to be completed before all shared acquisition and reservation questions can
-be closed.
+Profiling may support later Budget revision, but it does not modify an active Budget. Publication, Diagnostic, and
+Failure remain separate authorities.
