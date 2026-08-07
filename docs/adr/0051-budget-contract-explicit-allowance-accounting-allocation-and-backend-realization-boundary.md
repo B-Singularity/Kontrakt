@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed
+Accepted
 
 ## Date
 
@@ -122,7 +122,8 @@ compilation error.
 Invalid or unrealizable Budget material fails during compilation. Runtime execution has one Budget failure result:
 `Budget Stop`.
 
-This ADR defines meaning. It does not define the Java or Kotlin authoring syntax.
+This ADR also fixes the V1 Kotlin Budget authoring form and enclosing-interface binding law in Section 5. Java parity,
+explicit Budget-absence spelling, and backend API details remain deferred.
 
 ---
 
@@ -130,7 +131,11 @@ This ADR defines meaning. It does not define the Java or Kotlin authoring syntax
 
 ### 4.1. Meaning and Scope
 
-A Budget governs one application of one exact contract subject.
+In V1, one Budget declaration belongs to exactly one enclosing Interface. Its subjects may refer only to exact
+Interactions and exact one-dimensional Contracts established within that Interface. Budget authority does not cross
+Interface boundaries.
+
+Within that Interface, a Budget governs one application of one exact contract subject.
 
 ```text
 Interaction Budget
@@ -159,11 +164,14 @@ The canonical V1 Budget material is:
 Budget identity
 exact subject
 quantity
-allowance
+allowance magnitude
+allowance unit
 applicable contract world
 ```
 
-The exact subject fixes the measurement boundary. Each quantity profile fixes its unit and measurement meaning.
+The exact subject fixes the measurement boundary. The quantity fixes what is limited. Magnitude and unit together
+establish the allowance. Different source units that denote the same exact quantity lower to the same canonical
+allowance.
 
 Within one active contract world, the following key must be unique:
 
@@ -209,11 +217,92 @@ declared result or Budget Stop established
 Backend function entry, return, callback placement, allocation scope, or generated stage boundaries do not define these
 limits.
 
-### 4.4. Relative Elapsed Time
+### 4.4. Allowance Magnitude and Units
+
+A Budget allowance is an exact non-negative magnitude expressed in one exact unit. Zero is valid and means that the
+subject may consume none of that quantity. Absence of a Budget is different: it means that Budget does not limit that
+`(subject, quantity)` pair.
+
+V1 accepts finite integer, decimal, and scientific-notation magnitudes such as `0`, `1.5`, and `1e-12`. Negative values,
+`NaN`, infinity, runtime-computed values, and values whose exact meaning cannot be established at definition time are
+invalid. The compiler uses the existing deterministic exact-number canonicalization rules; Budget does not introduce
+floating-point contract authority.
+
+Kontrakt provides units as exact nominal library symbols. Unit names do not encode the magnitude, and users do not
+define Budget units by convention, inheritance, or string parsing.
+
+For time, the V1 JVM frontend provides SI-prefixed second units from nanoseconds upward:
+
+```text
+Nanoseconds
+Microseconds
+Milliseconds
+Centiseconds
+Deciseconds
+Seconds
+Decaseconds
+Hectoseconds
+Kiloseconds
+Megaseconds
+Gigaseconds
+Teraseconds
+Petaseconds
+Exaseconds
+Zettaseconds
+Yottaseconds
+Ronnaseconds
+Quettaseconds
+```
+
+`Nanoseconds` is the smallest V1 authoring unit. This does not promise nanosecond measurement resolution or nanosecond
+stop latency. A selected backend must still prove that it can preserve the declared allowance; otherwise compilation
+fails under Section 4.8.
+
+Smaller SI time units remain valid future extensions of the unit vocabulary:
+
+```text
+Picoseconds
+Femtoseconds
+Attoseconds
+Zeptoseconds
+Yoctoseconds
+Rontoseconds
+Quectoseconds
+```
+
+They are not exposed by the V1 JVM frontend. They may be introduced when a backend can preserve their `Relative Elapsed
+Time` contract meaning.
+
+Exact-duration units used in science, engineering, industry, economics, and ordinary life are also provided when their
+duration is fixed, including:
+
+```text
+Minutes
+Hours
+Days
+Weeks
+Fortnights
+JulianYears
+JulianCenturies
+```
+
+Calendar and economic periods may exist in the wider Kontrakt unit vocabulary, for example `CalendarMonths`,
+`CalendarQuarters`, `CalendarYears`, and `BusinessDays`. They are contextual periods rather than fixed elapsed durations
+and are not valid units for `Relative Elapsed Time`. A contract that uses them must establish the calendar or
+business-calendar authority separately.
+
+For memory, Kontrakt provides both decimal SI byte units and IEC binary byte units. Decimal units extend from `Bytes`
+through
+`Quettabytes`; binary units extend from `Kibibytes` through `Quebibytes`. The two families remain distinct.
+
+### 4.5. Relative Elapsed Time
 
 `Relative Elapsed Time` is the actual time that passes between the subject boundaries. It includes execution, waiting,
 scheduling delay, garbage-collection pause, and backend work inside the boundary. The cause of elapsed time may appear
 in diagnostics, but it does not change the Budget quantity.
+
+Only exact-duration units from Section 4.4 may express this allowance. Absolute timestamps and contextual calendar or
+business periods are not `Relative Elapsed Time`.
 
 The allowance is an inclusive maximum.
 
@@ -228,9 +317,7 @@ allowance reached before the subject result is established
 A result established exactly at the allowance remains valid. Once the allowance has been reached without a result, no
 further contract progress is permitted.
 
-Absolute calendar time is not Budget. A business rule tied to a date or timestamp belongs to another contract authority.
-
-### 4.5. Memory Use
+### 4.6. Memory Use
 
 `Memory Use` is the memory consumed by one application of the exact subject between its Budget boundaries. Its allowance
 is an inclusive maximum, under the same law as `Relative Elapsed Time`.
@@ -244,10 +331,10 @@ allowance reached before the subject result is established
 ```
 
 An Interaction may declare an overall memory Budget, and any one-dimensional Contract may declare its own memory Budget.
-The same independence, uniqueness, simultaneous-failure, and derived-bound rules in Section 4.6 apply without a separate
+The same independence, uniqueness, simultaneous-failure, and derived-bound rules in Section 4.7 apply without a separate
 accounting or distribution law. Current machine availability remains Capacity.
 
-### 4.6. Interaction and One-Dimensional Budgets
+### 4.7. Interaction and One-Dimensional Budgets
 
 Interaction and one-dimensional Budgets judge their own exact subjects independently.
 
@@ -277,7 +364,7 @@ If the same established observation violates an Interaction Budget and a one-dim
 `Budget Stop`
 results are retained. Kontrakt does not select a representative failure or hide one contract behind the other.
 
-### 4.7. Compilation Failure
+### 4.8. Compilation Failure
 
 Budget errors that can be established from contract and backend capability material are compilation errors.
 
@@ -294,7 +381,7 @@ required correction. It does not produce an executable artifact or lower the dec
 V1 therefore has no runtime `Budget Refusal`. A Budget that cannot become an executable obligation is rejected before
 execution.
 
-### 4.8. Budget Stop
+### 4.9. Budget Stop
 
 `Budget Stop` is established when a compiled Budget reaches its allowance before the subject establishes its required
 result. The same law applies to every Budget quantity; only the observed quantity and unit differ.
@@ -313,7 +400,7 @@ attributed to that Budget.
 An Interaction `Budget Stop` ends the whole current data flow. It does not terminate the server, process, or later data
 flows. Retry, resubmission, routing, and recovery remain infrastructure decisions.
 
-### 4.9. Diagnostic Evidence
+### 4.10. Diagnostic Evidence
 
 A stopped Interaction must preserve enough evidence to show:
 
@@ -328,7 +415,7 @@ one-dimensional Contracts not entered
 Earlier completed contract results remain historical facts of that data flow. They are not published as a partial
 successful result. Diagnostic Evidence may explain how far the pipeline progressed and why it stopped.
 
-### 4.10. Budget and Capacity
+### 4.11. Budget and Capacity
 
 Budget and Capacity answer different questions.
 
@@ -346,13 +433,14 @@ result.
 
 The complete Capacity law is decided in ADR-0052.
 
-### 4.11. V1 Boundary
+### 4.12. V1 Boundary
 
 V1 requires:
 
-- one exact Interaction or one-dimensional Contract subject,
+- one Budget declaration bound to exactly one enclosing Interface,
+- one exact Interaction or one-dimensional Contract subject established within that Interface,
 - `Relative Elapsed Time` or `Memory Use`,
-- one finite inclusive allowance,
+- one finite non-negative exact magnitude and one exact unit forming an inclusive allowance,
 - one applicable contract world,
 - unique authority for each `(subject, quantity)` pair,
 - compilation failure for invalid or unsupported material,
@@ -363,85 +451,196 @@ subjects are not part of V1 Budget material.
 
 ---
 
-## 5. Authoring and Processing Boundary
+## 5. V1 User Authoring API and Processing Boundary
 
-This ADR defines meaning, not Java or Kotlin syntax. The later authoring surface follows ADR-0047 and carries only
-finite contract data.
-
-```text
-Source declaration
-    -> Resolution
-    -> Validation
-    -> Canonicalization
-    -> Lowering
-    -> Backend realization
-```
-
-The source presents the exact subject, quantity, and allowance. Canonical identity and applicable contract-world
-material may be completed by the compiler from already declared authority.
-
-User code does not define Budget through reporting calls, callbacks, environment reads, runtime registration, scheduler
-settings, or backend tuning.
-
-The following examples describe meaning only.
-
-### 5.1. Interaction Example
+In V1, Budget is selected exactly once by one enclosing interface, following ADR-0047. The interface binding gives one
+exact host declaration the Budget role for that Interface only. The selected Budget cannot govern subjects from another
+Interface.
 
 ```text
-Budget
-    subject:
-        Calculate Interaction
+interface CalculateContract {
+    budget CalculateBudget
 
-    quantity:
-        Relative Elapsed Time
-
-    allowance:
-        100 ms
+    ...
+}
 ```
 
-### 5.2. One-Dimensional Example
+`CalculateBudget` is resolved as one exact source symbol. The binding does not select a Budget by annotation, package,
+class name, inheritance, structural similarity, runtime lookup, or registration.
+
+### 5.1. Kotlin Budget Declaration
+
+The selected V1 Kotlin source is one uninstantiable class. Each member declaration establishes one exact Budget entry
+directly inside that class.
+
+```kotlin
+package example.calculate.contract
+
+import io.kontrakt.contract.budget.Mebibytes
+import io.kontrakt.contract.budget.MemoryUse
+import io.kontrakt.contract.budget.Milliseconds
+import io.kontrakt.contract.budget.RelativeElapsedTime
+
+class CalculateBudget private constructor() {
+
+    fun interactionElapsed(
+        subject: CalculateInteraction,
+        quantity: RelativeElapsedTime,
+    ): Milliseconds =
+        Milliseconds(100)
+
+    fun interactionMemory(
+        subject: CalculateInteraction,
+        quantity: MemoryUse,
+    ): Mebibytes =
+        Mebibytes(4_096)
+
+    fun canonicalizationElapsed(
+        subject: CalculateCanonicalization,
+        quantity: RelativeElapsedTime,
+    ): Milliseconds =
+        Milliseconds(10)
+
+    fun canonicalizationMemory(
+        subject: CalculateCanonicalization,
+        quantity: MemoryUse,
+    ): Mebibytes =
+        Mebibytes(256)
+}
+```
+
+`CalculateInteraction` denotes the exact frontend subject handle for the `calculate` Interaction selected from the same
+interface contract. `CalculateCanonicalization` denotes the exact selected one-dimensional Contract. These subject
+symbols are resolved at definition time; their simple names, package placement, runtime instances, and inheritance do
+not create subject identity.
+
+The `CalculateBudget` class is not instantiated. Its member functions are not runtime Budget callbacks and are never
+invoked to obtain contract values. They are a restricted source carrier that Kontrakt must completely refine and erase
+before canonical Budget authority begins.
+
+One declaration carries exactly four Budget coordinates:
 
 ```text
-Budget
-    subject:
-        CalculateCanonicalization
+subject parameter exact type
+    -> exact subject
 
-    quantity:
-        Relative Elapsed Time
+quantity parameter exact type
+    -> exact quantity
 
-    allowance:
-        10 ms
+return exact unit type
+    -> allowance unit
+
+one typed unit literal in the expression body
+    -> allowance magnitude
 ```
 
-### 5.3. Memory Example
+The function name is only a source declaration handle for reading and diagnostics. It does not encode the subject,
+quantity, unit, magnitude, boundary, or Budget identity. Renaming the function without changing its four resolved
+coordinates does not change canonical Budget meaning.
+
+### 5.2. Typed Allowance Literal
+
+The expression body is not a general Budget expression language. V1 accepts exactly one Kontrakt-owned typed allowance
+literal whose unit agrees with the declared return type.
+
+```kotlin
+Milliseconds(100)
+Mebibytes(256)
+Seconds(1.5)
+Microseconds(2.5e3)
+```
+
+The frontend reads the numeric source literal under the exact-number law in Section 4.4. It does not obtain authority by
+executing a constructor, evaluating a JVM floating-point result, or observing a runtime object.
+
+The following are rejected:
+
+```kotlin
+Milliseconds(BASE)
+Milliseconds(50 + 50)
+Milliseconds(readLimit())
+Milliseconds(-1)
+```
+
+A property, default argument, annotation argument, parameter-name encoding such as `allowance_100`, or a predeclared
+numeric type such as `Milliseconds100` does not establish an allowance.
+
+The unit is an exact Kontrakt-owned nominal symbol. The magnitude is the exact non-negative numeric material inside the
+typed allowance literal. No string parsing or naming convention is used to recover either coordinate.
+
+### 5.3. Flat Declaration Law
+
+One `CalculateBudget` declaration contains its Budget entries directly. V1 does not create one class per limit and then
+repeat those classes through a second membership declaration.
+
+The selected Budget source therefore has one level:
 
 ```text
-Budget
-    subject:
-        Calculate Interaction
-
-    quantity:
-        Memory Use
-
-    allowance:
-        4 GiB
-
-Budget
-    subject:
-        CalculateCanonicalization
-
-    quantity:
-        Memory Use
-
-    allowance:
-        256 MiB
+CalculateBudget
+    interaction elapsed entry
+    interaction memory entry
+    canonicalization elapsed entry
+    canonicalization memory entry
 ```
 
-The Interaction declaration is optional. When both declarations exist, they are judged under the same law as the time
-Budgets in Sections 5.1 and 5.2.
+A Budget declaration contains no nested Budget, nested limit class, user-defined membership wrapper, inherited Budget,
+or recursive contract composition.
 
-The final authoring design must still choose naming, explicit absence syntax, source references, numeric literal form,
-and error presentation without exposing backend shape.
+Each entry must declare exactly the fixed `subject` and `quantity` coordinates. The subject type must resolve to one
+exact Interaction or one exact one-dimensional Contract governed by the same enclosing interface. The quantity type must
+resolve to one V1 Budget quantity. The return type and typed literal must resolve to one compatible exact unit.
+
+One exact `(subject, quantity)` pair may appear only once, regardless of member name.
+
+### 5.4. Prohibited Authoring Authority
+
+V1 Budget authoring obtains no contract meaning from:
+
+```text
+val or var declarations
+property initializers
+annotations
+default parameters
+overload resolution
+function-name conventions
+parameter-name value encoding
+numeric-per-value unit types
+inheritance or subtype discovery
+nested limit declarations
+runtime instances
+callbacks or lambdas
+environment reads
+runtime registration
+reflection order
+package scanning
+backend configuration
+```
+
+The selected class may contain no other executable Budget language. In particular, branching, loops, arithmetic
+expressions, helper calls, lookup, mutable state, and arbitrary constructor or factory expressions are rejected from the
+Budget definition path.
+
+### 5.5. Refinement and Erasure
+
+The host declaration is source evidence, not final authority.
+
+```text
+interface-scope Budget binding
+    -> exact Budget source symbol
+    -> exact member declarations
+    -> exact subject / quantity / magnitude / unit material
+    -> validation
+    -> canonical Budget Contract
+    -> backend capability proof
+    -> lowered enforcement
+```
+
+After refinement, Kontrakt erases the selected class, private constructor, member names, parameter objects, host
+function signatures, typed-literal call shape, and runtime unit objects. Canonical identity and applicable
+contract-world material are completed from already established authority.
+
+User code does not implement Budget through reporting calls, callbacks, environment reads, scheduler settings, or
+backend tuning. Physical observation and stop machinery remain backend realization under Section 6.
 
 ---
 
@@ -465,7 +664,9 @@ later contract-visible consequences.
 ### 6.3. Backend Capability and Fail-Closed Compilation
 
 Backend capability validation must prove the declared boundaries, quantity observation, exact subject attribution, and
-`Budget Stop`. Failure is handled by the compilation rule in Section 4.7.
+`Budget Stop`. The presence of a unit in the V1 authoring vocabulary does not itself prove that every allowance
+expressed in that unit is realizable. A nanosecond declaration may still fail compilation when the selected JVM backend
+cannot preserve its measurement and stop obligations. Failure is handled by the compilation rule in Section 4.8.
 
 ### 6.4. Deterministic Realization
 
@@ -482,10 +683,18 @@ Optimization is allowed only after these conditions hold.
 ## 7. Verification
 
 Contract verification must establish that the Budget is complete, finite, unique, and lowerable. The exact subject,
-quantity, allowance, and applicable world must resolve without ambiguity.
+quantity, allowance magnitude, allowance unit, and applicable world must resolve without ambiguity. Equivalent
+exact-unit presentations must canonicalize to the same allowance.
 
-The verifier must reject duplicate `(subject, quantity)` authority, implementation-lifecycle subjects, hidden allowance
-establishment, unsupported backend capability, and values that belong to Capacity or another contract.
+The verifier must reject duplicate `(subject, quantity)` authority, subjects outside the enclosing Interface,
+implementation-lifecycle subjects, hidden allowance establishment, unsupported backend capability, and values that
+belong to Capacity or another contract.
+
+Authoring verification must also establish that the enclosing interface selects one exact Budget source, the selected
+Kotlin class is uninstantiable, each Budget entry declares exactly `subject` and `quantity`, the subject and quantity
+resolve to permitted exact symbols, the return type is a compatible exact unit, and the body contains exactly one
+matching typed allowance literal. Properties, annotations, default parameters, overload-based meaning, name-encoded
+values, nested limit declarations, arbitrary expressions, and runtime value acquisition must be rejected.
 
 Elapsed-time tests must cover:
 
@@ -497,6 +706,10 @@ result exactly at allowance
 Budget Stop when allowance is reached first
 simultaneous Interaction and one-dimensional Budget Stops
 ```
+
+Elapsed-time unit tests must cover the V1 SI-prefixed second family from `Nanoseconds` upward, fixed exact-duration
+units, equivalent-unit canonicalization, zero allowance, decimal and scientific magnitudes, rejection of sub-nanosecond
+units by the V1 JVM frontend, and rejection of contextual calendar or business periods for `Relative Elapsed Time`.
 
 Memory tests must cover Interaction and one-dimensional boundaries, exact allowance, `Budget Stop`, simultaneous
 Interaction and one-dimensional stops, and compilation failure when the quantity cannot be preserved.
@@ -514,7 +727,8 @@ Generated fixtures and property-based tests should exercise the closed contract 
 
 The following remain open:
 
-- final Java or Kotlin Budget syntax and explicit absence syntax,
+- Java parity and explicit Budget-absence syntax,
+- exact public spelling and generation of Interaction subject handles,
 - canonical identity bytes,
 - additional machine-resource quantity profiles,
 - exact JVM realization proof for `Memory Use`,
@@ -539,7 +753,8 @@ Compile-time rejection prevents contradictory or unrealizable Budget declaration
 runtime overrun has one explicit result, exact attribution, and complete pipeline diagnostics.
 
 The user contract remains independent from clock, allocation instrumentation, cancellation, scheduler, process, and
-retry mechanisms.
+retry mechanisms. The V1 Kotlin surface expresses each Budget entry once inside one selected flat declaration without
+annotation authority, value-name parsing, per-limit wrapper classes, or a second membership structure.
 
 ### Negative
 
