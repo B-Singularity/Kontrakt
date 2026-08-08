@@ -12,7 +12,7 @@ Accepted
 
 - `docs/the-most-important-thing/what-contract-is.md`
 - `docs/todo/kontrakt-verifier-implementation-plan.md`
-- ADR-0054: Policy Contract, Established Situation, Response-Contract Selection, and Judgment Boundary
+- ADR-0055: Policy Contract, Established Situation, Response-Contract Selection, and Judgment Boundary
 - ADR-0053: Governance and Contract World Activation
 - ADR-0052: Capacity Contract and Admission Boundary
 - ADR-0050: State, State Transition, Explicit State Machine Manifest, and the State-Machine Axis
@@ -738,7 +738,7 @@ The following remain open:
 - Failure mapping,
 - and Version qualification.
 
-Capacity is decided in ADR-0052. Governance and Policy are decided in ADR-0053 and ADR-0054.
+Capacity is decided in ADR-0052. Governance and Policy are decided in ADR-0053 and ADR-0055.
 
 ---
 

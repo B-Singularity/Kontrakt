@@ -1,4 +1,4 @@
-# ADR-0054: Policy Contract, Established Situation, Response-Contract Selection, and Judgment Boundary
+# ADR-0055: Policy Contract, Established Situation, Response-Contract Selection, and Judgment Boundary
 
 ## Status
 

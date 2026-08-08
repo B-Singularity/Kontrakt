@@ -12,7 +12,7 @@ Accepted
 
 - `docs/the-most-important-thing/what-contract-is.md`
 - `docs/todo/kontrakt-verifier-implementation-plan.md`
-- ADR-0054: Policy Contract, Established Situation, Response-Contract Selection, and Judgment Boundary
+- ADR-0055: Policy Contract, Established Situation, Response-Contract Selection, and Judgment Boundary
 - ADR-0053: Governance and Contract World Activation
 - ADR-0051: Budget Contract, Explicit Allowance, Contract-Scoped Resource Limits, and Backend Realization Boundary
 - ADR-0050: State, State Transition, Explicit State Machine Manifest, and the State-Machine Axis
