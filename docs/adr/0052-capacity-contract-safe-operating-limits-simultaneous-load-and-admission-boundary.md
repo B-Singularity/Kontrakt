@@ -1,4 +1,4 @@
-# ADR-0052: Capacity Contract, Safe Operating Limits, Simultaneous Load, and Admission Boundary
+# ADR-0052: Capacity Contract, Explicit Safe Operating Memory Limits, and Realization Boundary
 
 ## Status
 
@@ -6,7 +6,7 @@ Proposed
 
 ## Date
 
-2026-08-07
+2026-08-08
 
 ## Related
 
@@ -29,59 +29,29 @@ Proposed
 
 ## 1. Context
 
-A real machine has a safe operating range. Electrical, thermal, mechanical, and storage systems fail when the load they
-must bear exceeds what they were built to sustain. Software is not exempt from that engineering fact. Too many admitted
-operations, too much resident material, or excessive memory pressure can make an otherwise valid machine stop making
-useful progress or fail outright.
+A real machine has an operating range. Software is no exception: memory is finite, and a machine that keeps accepting
+more resident load eventually loses the ability to operate correctly.
 
-Capacity makes that operating limit part of the user's machine contract.
+Capacity makes that safety boundary explicit. It does not describe how much work an application may cumulatively
+consume. That is Budget. Capacity states how much governed load may be borne at the same time.
 
-```text
-Capacity
-    declares how much simultaneous load
-    one governed part of the machine may safely bear
-```
-
-The limit is not defined by a thread pool, queue size, heap flag, semaphore, allocator, or scheduler setting. Those may
-be used to realize the contract, but they do not decide what the user's machine is allowed to carry.
-
-Capacity is not only protection against hostile traffic. A valid request burst, pathological input, internal material
-explosion, or implementation defect can create the same unsafe load. The cause does not change the operating wall.
-
-Budget and Capacity may govern the same machine-resource quantity because they ask different questions.
-
-```text
-Budget
-    how much one contract application may consume
-    during that application
-
-Capacity
-    how much load the governed machine boundary
-    may bear at one time
-```
-
-This distinction is especially important for memory. One application may have a memory Budget while the enclosing
-Interface has a separate limit on simultaneous memory load. Neither declaration replaces the other.
+In V1, the contract-visible Capacity quantity is Memory Occupancy. Kontrakt already realizes much of its core through
+bounded, pre-resolved memory structures, so that memory can be planned and controlled without making physical layout
+part of the contract.
 
 ---
 
 ## 2. Problem
 
-A finite machine can fail even when every individual contract application is valid and stays inside its own Budget.
-Several applications may overlap, internal contract material may grow unexpectedly, or the combined load of otherwise
-acceptable work may exceed what the machine can safely sustain.
+Software engineering has to acknowledge limits before failure exposes them. Memory pressure may come from normal load,
+pathological input, an internal expansion, or deliberate exhaustion. The cause does not change the engineering problem:
+additional resident load can push the machine beyond a safe operating line.
 
-Implementation limits do not solve the contract problem. A worker count, executor queue, JVM heap threshold, callback
-depth, graph traversal depth, or allocator policy describes one realization. If one of those mechanisms is replaced, the
-Capacity meaning of the user's machine must remain unchanged.
+That line must not be hidden in heap settings or implementation defaults. At the same time, Kontrakt must not promise
+control over memory it does not own. V1 leaves the user's realization body opaque and does not rewrite or optimize it,
+so V1 Capacity cannot claim to govern arbitrary memory retained by that implementation.
 
-Capacity also cannot be reduced to a final invariant such as `current <= limit`. For a practical machine, discovering an
-unsafe load only after the machine has accepted or established it may be too late. The contract must govern load growth
-at the point where the machine takes responsibility for additional load.
-
-At the same time, Capacity must not absorb limits already owned by another contract. Domain cardinality remains an
-Invariant when the cardinality is a law of the factual world. Diagnostic retention remains a Retention concern. Budget
-continues to own per-application consumable allowance.
+Capacity therefore needs an explicit contract limit and an equally explicit enforcement boundary.
 
 ---
 
@@ -89,306 +59,187 @@ continues to own per-application consumable allowance.
 
 ### 3.1. Foundation
 
-A Capacity Contract establishes a finite safe operating limit before Kontrakt produces an executable realization.
+A Capacity Contract establishes the maximum Memory Occupancy that a governed contract boundary may bear at one time.
 
 ```text
 Explicit Capacity Declaration
     -> Resolution and Validation
     -> Canonical Capacity Contract
-    -> Lowered Admission and Growth Control
+    -> Backend Capacity Realization
 ```
 
-No Capacity is inferred from host resources, deployment configuration, runtime telemetry, or backend defaults. Absence
-of a Capacity declaration means that Capacity places no limit on that exact subject and load dimension.
+Capacity is optional. No limit is inferred from available heap, deployment size, profiling data, or backend defaults.
+Absence means that no Capacity law governs that exact subject.
 
-Capacity judges simultaneous load. A governed boundary must not accept or establish additional load when doing so would
-place the boundary beyond its declared Capacity.
+The limit is inclusive. A governed boundary may remain at its declared Capacity but must not establish additional
+Kontrakt-controlled memory that would take it beyond that wall.
 
-This law applies at external admission and inside the machine. Capacity is therefore not a request-gateway feature. It
-continues to apply wherever contract-governed load can grow.
+### 3.2. V1 Enforcement Boundary
 
-### 3.2. V1 Decisions
+V1 Capacity governs only memory whose lifetime and growth Kontrakt directly owns or can control while realizing the
+selected contract boundary.
 
-V1 recognizes three Capacity concerns:
+The user's realization body is outside that authority in V1. Kontrakt does not embed Capacity machinery in user code,
+and an Operation Capacity does not imply that arbitrary implementation memory is governed.
 
-```text
-Memory
-In-Flight Contract Applications
-Established Contract Material Population
-```
+A later realization profile may extend coverage only when Kontrakt actually takes responsibility for transforming or
+controlling that realization. That extension belongs to V2 realization work and does not alter the V1 guarantee.
 
-Memory uses the same exact machine-resource and unit vocabulary already established for Budget. Capacity changes the
-question from one application's resource use to the amount simultaneously borne by the governed boundary.
+### 3.3. No Implementation-Stage Allocation
 
-An in-flight application is an application for which the machine has accepted contract responsibility and which has not
-yet reached a terminal contract result. Whether the realization is running, waiting, suspended, multiplexed, or assigned
-to a particular thread does not change that status.
+Capacity is attached to logical contract subjects, not to the physical pipeline that happens to realize them.
 
-Established contract material may also be bounded when its population is itself machine load and no other contract
-already owns that boundedness. This permits Capacity to stop internal material explosion without turning implementation
-objects into contract subjects.
-
-Interface-wide Capacity and narrower Capacity declarations may coexist. They are independent operating walls; one does
-not distribute, lend, or transfer Capacity to another.
-
-The exact runtime result spelling for a refused Capacity growth is not fixed by this draft. The semantic requirement is
-that the over-capacity load is not established as successful contract progress.
+A backend may change its execution decomposition without receiving separate contractual memory quotas. Memory used by
+Kontrakt-owned processing is attributed to the logical subject whose contract work caused that occupancy. Internal stage
+boundaries remain replaceable implementation structure.
 
 ---
 
 ## 4. Capacity Contract
 
-### 4.1. Meaning and Scope
+### 4.1. Declaration Scope and Subject
 
-One Capacity declaration belongs to exactly one enclosing Interface. It may establish limits for that Interface and for
-exact contract subjects declared within it.
+A V1 Capacity declaration belongs to exactly one enclosing Interface. ADR-0047 already establishes that Capacity is
+selected once by that Interface rather than through an operation-local pipeline slot.
 
-Capacity authority does not cross Interface boundaries in V1.
+Within that declaration, the governed subject may be the Interface itself or an exact contract subject inside it when a
+narrower memory wall is required. Such a narrower wall does not become an implementation-stage budget and does not
+change who owns the enclosing Capacity declaration.
 
-The enclosing Interface is itself a valid Capacity boundary because it is the explicit machine scope that contains the
-closed operation set and its shared contract world. This allows a machine-wide wall to coexist with narrower walls.
+Cross-Interface Capacity authority is not permitted in V1.
 
-Examples include:
+### 4.2. Memory Occupancy
+
+V1 defines Capacity over Memory Occupancy.
+
+Memory Occupancy is the amount of memory currently borne by a governed subject under Kontrakt's V1 enforcement coverage.
+It is not cumulative allocation. Memory that was allocated and later ceased to belong to that governed occupancy no
+longer contributes to Capacity, even though the same allocation may already have contributed to a Memory Use Budget.
+
+This distinction is fundamental:
 
 ```text
-Interface
-    simultaneous Memory <= machine limit
-    In-Flight Interaction population <= machine limit
+Memory Use Budget
+    cumulative allocation charge across one application boundary
 
-exact Interaction
-    In-Flight application population <= operation limit
-
-exact one-dimensional Contract
-    In-Flight application population <= contract-position limit
-
-exact contract material kind
-    established population <= material limit
+Memory Capacity
+    current governed memory occupancy at one time
 ```
 
-A thread, worker, process, executor, callback, call stack, queue node, traversal node, or backend task is not a Capacity
-subject merely because the implementation can count it.
+Capacity does not derive memory meaning from JVM object or garbage-collector representation. V1 instead relies on
+regions whose extent and lifetime the selected backend can govern strongly enough to preserve the declared wall.
 
-### 4.2. Safe Operating Limit
+### 4.3. Growth Judgment
 
-Capacity is inclusive.
-
-```text
-simultaneous load <= capacity
-    admissible
-
-simultaneous load > capacity
-    not admissible
-```
-
-Zero Capacity is valid. It means that no load of that declared kind may be established while the Capacity applies.
-Absence is different: the subject and load dimension are not Capacity-governed.
-
-Capacity does not promise that the machine will always operate at the declared maximum. A backend or environment may
-refuse work earlier for reasons outside the user's Capacity Contract. It may not admit work beyond the declared wall and
-still claim to preserve that Capacity.
-
-### 4.3. Load Growth and Admission
-
-Capacity judgment occurs whenever new governed load would become the machine's responsibility.
-
-The general law is:
+Capacity is judged when Kontrakt-controlled memory attributed to a governed subject would increase.
 
 ```text
-established simultaneous load
-    + proposed additional load
+current governed occupancy
+    + proposed governed growth
     <= declared capacity
 ```
 
-When the additional amount is known before establishment, the backend must judge the increase before admitting it. When
-exact physical growth cannot be known in advance, the selected backend must preserve the same operating wall using a
-supported observation and control boundary. A backend that cannot preserve the declared Capacity must reject the
-contract during compilation rather than silently weaken the limit.
+Where the backend knows the physical growth before establishment, the judgment occurs before that growth is committed.
+Where a bounded Kontrakt-owned structure grows according to a resolved capacity schedule, its required high-water memory
+must remain within the applicable Capacity before the new region becomes usable.
 
-Capacity admission is therefore broader than accepting an external request. Establishing another in-flight contract
-application or additional governed core material is also Capacity growth.
+V1 does not define a user-visible shared-pool protocol. A backend may use one internally if it preserves the same
+Capacity judgment without becoming contract authority.
 
-The Capacity Contract does not require a user-visible reservation, commit, borrow, return, or release protocol. Such
-mechanisms may exist in a realization. Contract Capacity becomes available again when the governed simultaneous load no
-longer exists under its contract-defined lifetime.
+### 4.4. Attribution
 
-### 4.4. Memory
+Memory is charged to the logical contract subject that currently owns responsibility for the Kontrakt-controlled region.
+Attribution follows contract responsibility rather than the implementation stage that allocated the bytes.
 
-Memory is a machine-resource quantity shared with Budget. Capacity applies it to simultaneous machine load rather than
-to the allowance of one application.
+A temporary region used only while realizing one exact Operation may therefore be attributed to that Operation. Memory
+owned by the enclosing Interface across Operations is attributed to the Interface. A backend-shared structure that is
+not owned by one contract subject remains backend realization memory and must not be duplicated across several user
+Capacity accounts merely to make accounting convenient.
 
-For example:
+Attribution must be fixed by the selected realization before runtime enforcement begins. Runtime scheduler choice,
+allocation order, cache placement, or garbage collection may not redefine which contract subject owns a region.
 
-```text
-Interaction Budget
-    Memory <= 512 MiB during one application
+### 4.5. Interface and Narrower Walls
 
-Interface Capacity
-    simultaneous Memory <= 2 GiB
-```
+An Interface Capacity and a narrower Capacity inside that Interface may coexist. Each applicable wall is judged on its
+own governed occupancy.
 
-A single application may satisfy its Budget while several overlapping applications together approach the Interface
-Capacity. Conversely, a machine may have ample aggregate Capacity while one application exceeds its own Budget. The two
-judgments are independent.
+A narrower declaration is not a slice reserved from the Interface wall. V1 does not create a parent pool, borrow unused
+space, or redistribute unused Capacity between subjects. If both laws apply, both must remain satisfied.
 
-Capacity does not define memory through JVM heap layout, object size, allocation site, garbage-collector region,
-off-heap mechanism, or another backend representation. The canonical contract owns the quantity and limit; the backend
-must prove that it can attribute and control the required simultaneous memory load closely enough to preserve the
-contract.
+This preserves replaceability: improving an implementation may reduce actual occupancy without rewriting the contract,
+and changing an internal stage layout does not require reallocating contractual memory between stages.
 
-### 4.5. In-Flight Contract Applications
+### 4.6. Capacity Limit
 
-An application becomes in flight when Capacity admission succeeds and the machine accepts responsibility for carrying
-that contract application. It stops being in flight when the application reaches its terminal contract result.
+A declared Capacity is a maximum permitted by the contract, not a promise that every environment can provide that much
+usable memory. A backend or deployment may reject a realization that cannot safely provide the requested wall.
 
-For an Interaction, this lifetime covers the accepted contract passage rather than a physical thread lifetime. Work may
-wait, suspend, resume, move between workers, or use a different execution strategy without leaving the in-flight
-population.
+Zero is valid and prevents any governed Memory Occupancy from becoming established for that subject. Negative limits are
+invalid. Absence means that Capacity does not govern the subject.
 
-An Interface may limit the aggregate in-flight Interaction population of its closed operation set. An exact Interaction
-may declare a narrower limit for applications of that Interaction. An exact one-dimensional Contract may also be bounded
-when its simultaneous application population is itself a meaningful machine load.
+### 4.7. Capacity and Budget
 
-These walls are cumulative constraints, not allocations from a shared pool. If both an Interface limit and an exact
-Interaction limit apply, both must be satisfied.
+Budget and Capacity may refer to memory while preserving different laws.
 
-The exact ordering discipline for competing admissions under concurrent execution is deferred to a separate machine
-concurrency ADR after the one-dimensional contract set is complete. That later realization must preserve Kontrakt's
-determinism; backend scheduling or race outcomes do not become Capacity authority.
+Memory Use Budget counts the allocation charge attributable to one contract application across its boundary. Releasing
+or collecting previously allocated memory does not erase that charge. Capacity instead observes the memory currently
+borne by its governed subject.
 
-### 4.6. Established Contract Material Population
+The two laws are therefore independent. A run may remain under its Memory Use Budget while current occupancy reaches a
+Capacity wall, and it may allocate substantial memory over time while keeping simultaneous occupancy low enough to
+remain inside Capacity.
 
-Contract material can overload a machine even when the number of admitted Interactions remains small. One valid
-Interaction may cause a large amount of core material to become established. Capacity may therefore bound the
-simultaneous population of an exact contract material kind when that population represents machine load.
+### 4.8. Capacity and Invariant
 
-This is not a domain cardinality rule.
+Capacity does not define whether established Facts or relations are true. A cardinality rule belongs to Invariant when
+crossing the number makes the factual world invalid.
 
-```text
-Invariant
-    asks whether the factual world itself satisfies a declared relation
+V1 does not introduce an `Established Contract Material Population` Capacity quantity. If a large amount of contract
+material threatens the machine because of the memory it occupies, Memory Occupancy is the Capacity concern. This avoids
+turning domain cardinality or backend representation counts into a second resource vocabulary.
 
-Capacity
-    asks whether this machine may safely bear more established material now
-```
+### 4.9. External Load and Infrastructure
 
-A domain may legitimately contain more Facts than one machine realization can safely hold at once. Capacity limits the
-machine's operating envelope without declaring those additional Facts false.
+Capacity does not claim authority over traffic that has not entered Kontrakt's controllable machine boundary. Traffic
+pressure rejected before contract processing remains a responsibility of the surrounding infrastructure.
 
-Capacity does not duplicate another contract's boundedness. Diagnostic Evidence retention remains governed by the
-Diagnostic Retention Contract. State rules remain with the State-Machine Contract. Material-population Capacity is used
-only where the boundedness is a machine-load concern not already owned elsewhere.
+Likewise, V1 does not define an `In-Flight Contract Application Population` Capacity quantity. Execution counts are not
+used as proxies for memory pressure. If a later execution model establishes an independent contract-native population,
+its Capacity meaning must be decided separately rather than inferred from the backend.
 
-### 4.7. Internal Machine Protection
+### 4.10. Canonical Material
 
-Capacity remains active after external admission. A machine must be able to stop unsafe internal growth before that
-growth turns into later successful contract progress.
+The canonical V1 Capacity material records the identity of the Capacity declaration, its exact governed subject, Memory
+Occupancy as the quantity, the capacity magnitude and unit, and the applicable contract world.
 
-This applies regardless of whether the pressure comes from hostile input, a valid but extreme case, unexpected fan-out,
-or a defect in the realization. Capacity judges the resulting load, not the cause of the load.
+Within one active contract world, the same exact Capacity subject may have only one Memory Occupancy authority.
+Contradictory duplicate declarations fail compilation.
 
-Algorithm-specific quantities do not become Capacity merely because they can grow. Recursion depth, graph-search depth,
-callback count, queue length, planner node count, and similar implementation structures remain realization concerns
-unless a separate contract has independently established them as contract material.
-
-### 4.8. Canonical Material and Uniqueness
-
-The canonical V1 Capacity material contains the information required to identify one operating wall:
-
-```text
-Capacity identity
-governed subject
-load dimension
-capacity magnitude
-capacity unit or count unit
-applicable contract world
-```
-
-Where a population limit refers to an exact contract kind, that kind is part of the resolved load dimension rather than
-a name recovered from source convention.
-
-Within one active contract world, one exact Capacity wall may have only one authority. A duplicate declaration for the
-same governed subject and resolved load dimension is a compilation error.
-
-The exact canonical identity bytes and final public names of the V1 load dimensions remain deferred.
-
-### 4.9. Capacity and Budget
-
-Budget and Capacity judge independent obligations.
-
-The decisive distinction is not the resource kind but the form of the question.
-
-```text
-Budget
-    one contract application
-    over its contract boundary
-    against its finite allowance
-
-Capacity
-    one governed machine boundary
-    at the same time
-    against its safe operating limit
-```
-
-This allows the same Memory quantity to participate in both contracts without merging them.
-
-The distinction also explains why some failure modes require both. Capacity can limit how many applications remain in
-flight, while an elapsed-time Budget can prevent one accepted application from occupying that Capacity indefinitely.
-Neither law can replace the other.
-
-### 4.10. Capacity and Invariant
-
-Invariant owns truth about established Facts and their declared relations. Capacity owns the machine's ability to bear
-additional simultaneous load.
-
-A cardinality rule is therefore an Invariant when exceeding it makes the factual world invalid. It is Capacity when the
-world may remain valid but this machine must refuse further establishment to stay inside its safe operating envelope.
-
-The same numeric bound must not be declared under both contracts merely to obtain duplicate enforcement.
-
-### 4.11. Capacity, Governance, and Policy
-
-Governance determines the applicable contract world in which a Capacity declaration is valid. Capacity does not choose
-or activate that world.
-
-Policy may later use an established Capacity situation when the Policy Contract explicitly relates to it. Policy does
-not measure load, create Capacity, discover available resources, or change the declared limit.
-
-### 4.12. Compilation Failure and Runtime Boundary
-
-Compilation fails when Capacity material is ambiguous, contradictory, refers outside its permitted Interface scope, or
-cannot be preserved by the selected backend.
-
-A runtime attempt to exceed Capacity does not establish the proposed load as successful contract progress. If the
-attempt arises inside an already admitted Interaction, completed earlier contract results remain what they already are,
-but the over-capacity growth cannot be treated as a successful continuation.
-
-The exact runtime result type, diagnostic linkage, and mapping to the wider Failure model remain deferred.
+The canonical contract contains no physical memory-layout or capacity-scheduling detail from the backend.
 
 ---
 
-## 5. V1 User Authoring API and Processing Boundary
+## 5. V1 User Authoring and Processing Boundary
 
-ADR-0047 already fixes the Capacity selection point: one explicit Capacity source is bound at the enclosing Interface
-scope. Capacity is not repeated as an operation-local pipeline slot.
+Capacity is selected once from the enclosing Interface surface and lowered into canonical material before backend
+realization.
 
 ```text
-interface manifest
-    -> exact Capacity source binding
-    -> Capacity source evidence
+interface Capacity binding
+    -> restricted source evidence
     -> resolution and validation
     -> canonical Capacity material
-    -> backend capability proof
-    -> lowered admission and growth control
+    -> backend realization check
+    -> enforcement over Kontrakt-owned memory
 ```
 
-The selected host declaration is source evidence, not a runtime Capacity controller. Contract authority must come from
-explicit subject, load dimension, exact limit, unit, and applicable-world material rather than from executable
-callbacks, runtime discovery, or backend configuration.
+The host declaration is evidence only. Method execution, singleton identity, annotations, naming conventions, or hidden
+runtime lookup cannot become Capacity authority.
 
-The final V1 Kotlin declaration shape is not fixed by this draft. It will be designed after the subject and load model
-is accepted. That API must preserve the same frontend rules already established for other one-dimensional contracts: no
-annotation authority, identifier parsing, hidden defaults, inheritance-based discovery, runtime singleton identity, or
-arbitrary executable control flow.
+The final Kotlin authoring form remains deferred. The public V1 specification must state that a Capacity associated with
+an Operation or another exact subject governs only the Kontrakt-owned memory coverage defined by V1. It must not imply
+that arbitrary memory allocated or retained by the user's realization body is measured or limited.
 
 ---
 
@@ -396,90 +247,83 @@ arbitrary executable control flow.
 
 ### 6.1. Contract Authority
 
-The safe operating wall, governed subject, load dimension, limit, and applicable contract world are Capacity authority.
-The mechanism used to observe and preserve them is not.
+The contract owns the governed subject and Memory Occupancy limit. The backend owns measurement, memory-region design,
+preallocation, growth control, and physical enforcement.
 
-A backend may use counters, permits, atomic state, schedulers, allocation instrumentation, admission structures, or
-other machinery. Replacing that machinery must not change the canonical Capacity or its contract-visible judgment.
+Changing an arena into primitive arrays, changing a table capacity schedule, or fusing several implementation stages
+must not change the canonical Capacity law.
 
-### 6.2. Physical Resource Realization
+### 6.2. Kontrakt-Owned Memory
 
-A physical resource does not become contract authority merely because a Capacity uses a physical quantity. Memory is an
-explicit machine-resource quantity in the contract; JVM heap layout and allocator behavior are not.
+Kontrakt may use bounded memory structures whose maximum physical extent is resolved before they become part of a
+realization. V1 may use those physical facts to prove that a Capacity can be preserved, but they remain implementation
+facts rather than user contract material.
 
-The selected backend must state what guarantee it can preserve. If the requested wall cannot be observed or controlled
-with sufficient strength, compilation fails. Capacity does not convert an unsupported strong guarantee into a best-
-effort warning.
+When several such regions are attributable to one governed subject, their applicable high-water occupancy is combined
+for Capacity enforcement. The calculation must avoid double-counting shared storage and must include transient overlap
+when a growth or replacement operation temporarily requires both old and new regions to coexist.
 
-### 6.3. Admission and Growth Control
+### 6.3. Realization Feasibility
 
-The realization must place control where additional governed load can become established. External entry is one such
-boundary, but internal contract growth is equally subject to Capacity.
+The backend must reject a realization when its Kontrakt-owned memory plan cannot preserve a declared Capacity. This can
+be decided before runtime when resolved table sizes, slabs, arenas, or other bounded regions already prove that the wall
+would be crossed.
 
-Backend decomposition may fuse or split physical execution stages. Those choices do not move the logical Capacity wall
-or turn implementation lifecycle events into contract subjects.
+The same check must not be extended to arbitrary user implementation memory in V1. Lack of authority over that memory is
+a declared product boundary, not a reason to approximate it or silently weaken the Capacity contract.
 
-### 6.4. Deterministic Realization
+Across several Interfaces, a backend may sum compatible declared maxima and its own bounded shared regions when doing so
+provides a valid physical feasibility bound. That derived total is a realization calculation, not a new global Capacity
+Contract. Shared memory must be accounted for once, and JVM or environment headroom that Kontrakt does not own remains
+an environment requirement rather than user Capacity material.
 
-Determinism remains a Kontrakt implementation law rather than a user Capacity option.
+### 6.4. Runtime Enforcement
 
-For the same canonical Capacity, established machine load, and ordered contract inputs, the Capacity judgment must
-produce the same contract-visible result. Thread scheduling, lock acquisition, atomic-operation races, worker
-completion, or container iteration order may not become semantic authority.
+Runtime enforcement applies only where the selected backend can observe and control Kontrakt-owned growth strongly
+enough to keep the wall intact. A Capacity violation prevents the new governed memory from becoming successful
+contract-machine progress.
 
-The general concurrency and ordering model needed to preserve this law across simultaneous admissions is deferred to a
-separate ADR after the one-dimensional contract set is complete.
+The exact failure result and Diagnostic mapping remain deferred. Earlier established results are not retroactively
+invalidated merely because later growth is refused.
+
+### 6.5. Deterministic Realization
+
+Determinism remains a Kontrakt implementation law rather than a Capacity option. The same canonical Capacity, governed
+occupancy, and ordered contract input must produce the same contract-visible judgment.
+
+Backend race order may not become Capacity authority. The general multi-threaded execution and ordering law will be
+specified separately after the one-dimensional contract set is complete.
 
 ---
 
 ## 7. Verification
 
-Contract verification must establish that every Capacity declaration resolves to one exact governed subject, one exact
-load dimension, one finite non-negative limit, a compatible exact unit, and one applicable contract world. Duplicate
-authority and cross-Interface references must fail compilation.
+Verification must prove that each Capacity declaration resolves to one exact permitted subject, a finite non-negative
+Memory Occupancy limit, a valid memory unit, and one applicable contract world. Duplicate authority and forbidden
+cross-Interface references fail compilation.
 
-Verification must distinguish machine-load Capacity from neighboring contracts. Tests should prove that per-application
-consumption remains Budget, factual truth remains Invariant, and Diagnostic retention remains Retention.
+Boundary tests must cover zero Capacity, exact-limit occupancy, attempted growth past the wall, coexistence of Interface
+and narrower walls, and removal of occupancy when contract responsibility for a governed Kontrakt-owned region ends.
 
-Memory verification must cover zero Capacity, exact-limit admission, attempted growth beyond the limit, coexistence of
-Interface and narrower limits, and backend rejection when the required simultaneous-memory guarantee cannot be
-preserved.
+Memory tests must keep cumulative Memory Use Budget separate from simultaneous Capacity. Backend tests must prove that
+resolved bounded regions include transient high-water requirements and shared memory is not charged twice.
 
-In-flight application tests must cover entry into the governed population, waiting or suspension without release,
-terminal completion, Interface-wide and exact-subject walls, and refusal of additional load when any applicable wall
-would be exceeded.
-
-Established-material tests must cover internal growth from an already admitted Interaction, exact material-kind
-attribution, release when the material no longer belongs to the governed simultaneous load, and rejection of accidental
-overlap with another contract's boundedness.
-
-Failure tests must prove that over-capacity load is never published as successful progress, earlier completed contract
-material is not rewritten, and unsupported backend realization fails closed.
-
-Backend conformance must prove that optimization and execution decomposition do not change the Capacity judgment. Full
-multi-threaded contention and deterministic winner-order testing is deferred to the dedicated concurrency ADR.
+V1 conformance must also prove the negative boundary: arbitrary user realization memory is not reported as governed
+Capacity, and user code requires no embedded Capacity machinery.
 
 ---
 
 ## 8. Deferred Decisions
 
-The following remain open:
+The final Kotlin Capacity authoring shape, exact over-capacity result, Diagnostic mapping, canonical identity bytes, and
+explicit absence syntax remain open.
 
-- final V1 Kotlin Capacity authoring form,
-- exact public names for the V1 load dimensions,
-- the final set of contract material kinds that may carry population Capacity,
-- exact runtime over-capacity result spelling,
-- Diagnostic linkage,
-- Failure mapping,
-- canonical identity bytes,
-- exact JVM realization proof for simultaneous Memory,
-- release accounting details for backend-managed physical resources,
-- realization across several runtimes,
-- explicit Capacity-absence syntax,
-- and the deterministic multi-threaded admission and ordering model.
+V2 will revisit the enforcement boundary when Kontrakt begins to optimize or otherwise govern user realization. Only at
+that point may a stronger profile include realization memory in Operation-level Capacity accounting.
 
-The general multi-threaded execution law will be decided in a separate ADR after the one-dimensional contracts are
-complete. Governance and Policy remain in ADR-0053 and ADR-0054.
+Storage Occupancy remains a possible future Capacity quantity if Kontrakt later defines contract-owned retained storage
+independently of database rows, files, or other backend representations. Multi-threaded execution and deterministic
+admission ordering remain subjects of a separate ADR.
 
 ---
 
@@ -487,27 +331,24 @@ complete. Governance and Policy remain in ADR-0053 and ADR-0054.
 
 ### Positive
 
-Capacity becomes an explicit safe operating envelope for the user's machine rather than a collection of backend tuning
-values. The same law protects against hostile load, ordinary overload, pathological inputs, and unsafe internal growth.
+Capacity becomes a small and enforceable V1 contract instead of a collection of implementation limits. Memory pressure
+from Kontrakt-owned processing can be bounded without promoting execution structure into contract vocabulary.
 
-Interface-wide walls protect the closed operation set as one machine while exact Interaction, one-dimensional, and
-material limits can protect narrower pressure points. Memory and application population can be governed without making
-threads, queues, executors, or allocator structures part of the contract.
+The design matches Kontrakt's current implementation direction. Bounded tables and storage regions may be used to prove
+physical feasibility, while their binary layouts and capacity schedules remain replaceable backend choices.
 
-Budget and Capacity remain orthogonal. One limits what an application may consume; the other limits what the machine may
-bear simultaneously. Their combination provides stronger protection than either contract alone.
+The V1 guarantee also stays honest. Kontrakt governs the memory it controls and does not claim that an opaque user
+realization is covered before the compiler owns that realization.
 
 ### Negative
 
-The backend must control enough of external admission and internal growth to preserve the declared operating wall.
-Opaque user code, native work, external systems, or weak resource attribution may make some Capacity declarations
-unrealizable.
+Operation-level Capacity in V1 does not bound arbitrary memory used inside the user's implementation body. A user who
+needs an end-to-end realization memory guarantee must wait for a backend profile that actually controls that code.
 
-Population Capacity requires precise contract lifetimes. Physical execution may be concurrent even though backend race
-order is forbidden from becoming contract authority, so the later concurrency ADR must provide a deterministic
-realization model.
+Strong Capacity enforcement also requires explicit attribution and bounded memory planning inside Kontrakt. Shared and
+transient regions must be modeled carefully enough that the physical high-water calculation remains safe.
 
 ### Neutral
 
-Capacity does not decide business truth, scheduling strategy, retry policy, diagnostic retention, or which contract
-world is active. Those meanings remain with their existing contracts or backend realization boundaries.
+Capacity does not absorb traffic control, domain truth, scheduling, diagnostics, or contract-world selection. Those
+responsibilities remain outside this contract.
