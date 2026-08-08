@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed
+Accepted
 
 ## Date
 
@@ -102,9 +102,9 @@ boundaries remain replaceable implementation structure.
 A V1 Capacity declaration belongs to exactly one enclosing Interface. ADR-0047 already establishes that Capacity is
 selected once by that Interface rather than through an operation-local pipeline slot.
 
-Within that declaration, the governed subject may be the Interface itself or an exact contract subject inside it when a
-narrower memory wall is required. Such a narrower wall does not become an implementation-stage budget and does not
-change who owns the enclosing Capacity declaration.
+Each Capacity entry names its governed subject explicitly. The subject may be that Interface, an exact Interaction in
+it, or an exact one-dimensional Contract established inside the same Interface. The enclosing Capacity selection does
+not supply an omitted subject and is not used to infer one.
 
 Cross-Interface Capacity authority is not permitted in V1.
 
@@ -159,13 +159,13 @@ Capacity accounts merely to make accounting convenient.
 Attribution must be fixed by the selected realization before runtime enforcement begins. Runtime scheduler choice,
 allocation order, cache placement, or garbage collection may not redefine which contract subject owns a region.
 
-### 4.5. Interface and Narrower Walls
+### 4.5. Interface and Subject-Specific Walls
 
-An Interface Capacity and a narrower Capacity inside that Interface may coexist. Each applicable wall is judged on its
-own governed occupancy.
+An Interface Capacity and a Capacity for a more specific subject inside that Interface may coexist. Each applicable wall
+is judged on its own governed occupancy.
 
-A narrower declaration is not a slice reserved from the Interface wall. V1 does not create a parent pool, borrow unused
-space, or redistribute unused Capacity between subjects. If both laws apply, both must remain satisfied.
+A subject-specific declaration is not a slice reserved from the Interface wall. V1 does not create a parent pool or
+redistribute unused Capacity between subjects. If both laws apply, both must remain satisfied.
 
 This preserves replaceability: improving an implementation may reduce actual occupancy without rewriting the contract,
 and changing an internal stage layout does not require reallocating contractual memory between stages.
@@ -222,8 +222,7 @@ The canonical contract contains no physical memory-layout or capacity-scheduling
 
 ## 5. V1 User Authoring and Processing Boundary
 
-Capacity is selected once from the enclosing Interface surface and lowered into canonical material before backend
-realization.
+The V1 frontend lowers the selected Capacity declaration into canonical material before backend realization.
 
 ```text
 interface Capacity binding
@@ -234,12 +233,66 @@ interface Capacity binding
     -> enforcement over Kontrakt-owned memory
 ```
 
-The host declaration is evidence only. Method execution, singleton identity, annotations, naming conventions, or hidden
-runtime lookup cannot become Capacity authority.
+The Interface-level selection names the Capacity declaration set. It does not provide the subject of an individual
+Capacity entry.
 
-The final Kotlin authoring form remains deferred. The public V1 specification must state that a Capacity associated with
-an Operation or another exact subject governs only the Kontrakt-owned memory coverage defined by V1. It must not imply
-that arbitrary memory allocated or retained by the user's realization body is measured or limited.
+```text
+interface CalculateContract {
+    budget CalculateBudget
+    capacity CalculateCapacity
+
+    operation calculate(input: CalculateInput): CalculateOutput
+}
+```
+
+Budget and Capacity are selected independently. The Budget line is shown only to make the enclosing Interface surface
+complete; its contract law remains in ADR-0051.
+
+The V1 Kotlin presentation is a named, non-instantiable declaration class. Each permitted method states one exact
+subject type and `MemoryOccupancy`, returns one approved memory unit, and constructs that unit from one exact literal
+magnitude.
+
+```kotlin
+class CalculateCapacity private constructor() {
+
+    fun interfaceMemory(
+        subject: CalculateContract,
+        quantity: MemoryOccupancy,
+    ): Mebibytes =
+        Mebibytes(2_048)
+
+    fun calculateMemory(
+        subject: CalculateInteraction,
+        quantity: MemoryOccupancy,
+    ): Mebibytes =
+        Mebibytes(512)
+
+    fun canonicalizationMemory(
+        subject: CalculateCanonicalization,
+        quantity: MemoryOccupancy,
+    ): Mebibytes =
+        Mebibytes(128)
+}
+```
+
+The method name does not own Capacity meaning. Renaming `interfaceMemory` or `calculateMemory` without changing the
+resolved subject, quantity, unit, or magnitude leaves the canonical Capacity unchanged. Parameter names likewise carry
+no authority. The frontend reads the exact parameter and return types and the literal unit construction, then lowers
+that source evidence into canonical material. These methods are not runtime callbacks and are not invoked to determine a
+limit.
+
+The generated `CalculateContract` host interface may be used as the explicit Interface subject because its name is
+frontend reference material for the authoritative IDL Interface from which it was generated. This does not make the
+generated interface a second source of contract meaning. Interaction and one-dimensional subject types are interpreted
+through the same frontend resolution rule.
+
+Capacity authoring does not admit alternate forms whose meaning comes from host execution or structure. An annotation,
+inherited role, runtime object, constructor state, property, callback, control-flow branch, runtime lookup, or hidden
+default cannot establish a wall, and the magnitude cannot be computed from environment state or user code. These forms
+are rejected for the same reason they are rejected from other one-dimensional Contract presentations: contract authority
+must remain in explicit source material that the frontend can resolve and lower without executing it.
+
+This authoring surface does not enlarge the V1 enforcement boundary established in Section 3.2.
 
 ---
 
@@ -298,12 +351,14 @@ specified separately after the one-dimensional contract set is complete.
 
 ## 7. Verification
 
-Verification must prove that each Capacity declaration resolves to one exact permitted subject, a finite non-negative
-Memory Occupancy limit, a valid memory unit, and one applicable contract world. Duplicate authority and forbidden
-cross-Interface references fail compilation.
+Verification must prove that each Capacity declaration resolves its explicitly named subject to one exact permitted
+Interface, Interaction, or one-dimensional Contract in the enclosing Interface, together with a finite non-negative
+Memory Occupancy limit, a valid memory unit, and one applicable contract world. Omitted subjects, duplicate authority,
+and forbidden cross-Interface references fail compilation.
 
 Boundary tests must cover zero Capacity, exact-limit occupancy, attempted growth past the wall, coexistence of Interface
-and narrower walls, and removal of occupancy when contract responsibility for a governed Kontrakt-owned region ends.
+and subject-specific walls, and removal of occupancy when contract responsibility for a governed Kontrakt-owned region
+ends.
 
 Memory tests must keep cumulative Memory Use Budget separate from simultaneous Capacity. Backend tests must prove that
 resolved bounded regions include transient high-water requirements and shared memory is not charged twice.
@@ -315,8 +370,7 @@ Capacity, and user code requires no embedded Capacity machinery.
 
 ## 8. Deferred Decisions
 
-The final Kotlin Capacity authoring shape, exact over-capacity result, Diagnostic mapping, canonical identity bytes, and
-explicit absence syntax remain open.
+The exact over-capacity result, Diagnostic mapping, canonical identity bytes, and explicit absence syntax remain open.
 
 V2 will revisit the enforcement boundary when Kontrakt begins to optimize or otherwise govern user realization. Only at
 that point may a stronger profile include realization memory in Operation-level Capacity accounting.
