@@ -1,4 +1,4 @@
-# ADR-0053: Version Contract, Sovereign Meaning Identity, Version Claims, and Authority Boundary
+# ADR-0053: Version Contract, Sovereign Contract Revision History, and Realization Boundary
 
 ## Status
 
@@ -22,6 +22,7 @@ Proposed
 - ADR-0047: One-Dimensional Contract Presentations, Pipeline-Slot Selection, and Backend Realization Boundary
 - ADR-0046: IDL-First Interface Contract Frontend and Retained Generated Host Interface and Realization Port Boundary
 - ADR-0045: Contract-First Package Architecture and Explicit Machine Refactoring Boundary
+- ADR-0043: Contract Graph Canonicalization, Sealed Structural References, and Incremental Identity Derivation
 - ADR-0041: Stable Metadata Identity, BLAKE3, HID, and Protocol-Owned Interning
 - ADR-0040: Deterministic Frozen Acquisition Pipeline, Explicit Readiness, and Memory-Disciplined Publication
 
@@ -29,328 +30,360 @@ Proposed
 
 ## 1. Context
 
-A contract may remain present while its meaning changes over time. An Input Presentation can change what it accepts. A
-Lowering Contract can establish different Facts from the same presented material. An Invariant can judge an established
-Fact differently. Publication can change which claim may leave the machine.
+Version is a common engineering device for preserving continuity while an engineered product is revised. Materials,
+interfaces, dimensions, control laws, manufacturing limits, or other defining details may change between revisions
+without requiring the design authority to pretend that nothing changed. Each revision can remain identifiable as part of
+the same product history until the responsible authority decides that the change establishes a different product
+instead.
 
-Those changes cannot be left to deployment order, adapter behavior, schema naming, or the newest executable artifact.
-Material established under an earlier meaning must not silently acquire the authority of a later meaning merely because
-the current machine can read it.
+A Contract needs the same distinction, but with stronger authority semantics. A one-dimensional Contract may be revised
+while remaining under the same sovereign Contract Authority. The meaning established at each Version is different when
+the Contract has been modified, yet the revision remains part of the explicit history of that authority because the
+author declared that continuity.
 
-Version makes the identity of contract meaning explicit.
-
-A Version does not tell the machine whether two meanings are compatible. It identifies the exact meaning whose authority
-is being claimed. The Contract that owns that meaning retains the authority to recognize its own Version. External
-material may present a Version claim, but the claim does not grant authority by itself.
-
-This makes Version a sovereignty boundary rather than a release label.
+This is different from inheritance or type inclusion. Those mechanisms can place different meanings under one structural
+or set relation and then treat the relation itself as evidence of sameness or substitutability. Version does not combine
+meanings in that way. It records that one Contract Authority has been explicitly revised and keeps each revision visible
+as its own complete authoritative meaning.
 
 ---
 
 ## 2. Problem
 
-Software uses version labels at many layers, from released artifacts and protocols to stored schemas and deployed
-software. Those values may be useful operationally, but none of them can define the authority of a Kontrakt Contract.
-Changing a compiler, library, deployment, or backend must not silently change which contract meaning governs existing
-material.
+A Contract that changes without an explicit Version boundary can silently overwrite its own history. Material
+established under an earlier meaning may then be interpreted as though the current meaning had always governed it, even
+when the Contract was different at the time that material was judged or published.
 
-The opposite problem is equally serious. If old material carries no exact meaning identity, a newer Contract may read
-that material as though it had been established under the newer law. The values may have the same physical shape while
-the judgment that made them valid has changed.
+The opposite error is to treat every modification as a new unrelated Contract. That destroys the continuity that Version
+exists to express and makes it impossible for the Contract to state that an earlier and later meaning belong to the same
+sovereign history.
 
-A Version must therefore identify contract meaning without absorbing the separate questions that follow from a mismatch.
-Whether an earlier Version may still participate, whether material must be judged again, whether a replacement path is
-available, and what response should follow are different authorities. Version must expose the identity difference
-without deciding those questions itself.
-
----
-
-## 3. Decision
-
-### 3.1. Foundation
-
-Version is the sovereign identity of contract meaning.
-
-```text
-Exact Contract Authority
-    + Exact Version Identity
-    -> Version-Qualified Contract Meaning
-```
-
-The Version belongs to the Contract whose meaning it identifies. It does not obtain authority from a deployment,
-compiler, adapter, registry, transport header, package version, or runtime object.
-
-A Version claim carried into a Contract says which meaning is being claimed for the material. The receiving Contract
-compares that claim with its own authoritative Version identity. The claim is evidence presented to the Contract; it is
-not an instruction that changes the Contract's authority.
-
-### 3.2. Identity Only
-
-Version answers one question:
-
-```text
-Under exactly which Contract meaning was this material,
-judgment, evidence, or claim established?
-```
-
-Version does not answer what a difference between two identities permits or what should happen next. It also does not
-decide which version-qualified Contracts may govern one application together.
-
-Those decisions remain outside Version. Governance decides applicability of contract authorities and Policy selects a
-response from already established situations. If material must be transformed or judged again, the Contract responsible
-for that transformation or judgment retains that authority.
-
-### 3.3. No Global Version Authority
-
-V1 does not treat one Interface release number as a substitute for the Version identity of every Contract inside that
-Interface.
-
-Each exact Contract authority owns the identity of its own meaning. A change to one Contract does not force unrelated
-Contracts to acquire a new Version merely to keep a shared release number synchronized.
-
-One Contract's Version cannot grant, replace, or imply the Version authority of another Contract. A later Governance ADR
-may establish that several version-qualified Contracts are applicable together, but that relationship does not collapse
-their individual identities into one global Version.
-
-### 3.4. No Ordering Semantics
-
-Version identity does not imply that one meaning is newer, greater, safer, preferred, or compatible with another.
-
-A source spelling such as `V1` or `V2` may be convenient for users, but Kontrakt does not derive an ordering law from
-that spelling. Major, minor, patch, date, sequence, or lexical structure has no contract authority unless another
-Contract explicitly defines a relation that uses it.
-
-For Version itself, equality is the required relation.
-
-### 3.5. Meaning Change and Version Reuse
-
-A Contract may keep the same Version while its realization changes, provided the contract-visible meaning remains the
-same. Replacing a cache, changing a memory layout, fusing implementation stages, changing generated code, or selecting a
-different backend does not require a new Version when the Contract still establishes the same meaning.
-
-A contract-visible meaning change must not reuse the same sovereign Version identity. Reusing one Version identity for
-two different meanings would make previously established material ambiguous and would allow a later machine to claim an
-authority that did not exist when the material was produced.
-
-Version therefore follows contract meaning rather than implementation history.
+Kontrakt must therefore preserve two facts at once: each Version has its own complete meaning, and several Versions may
+belong to one continuing Contract Authority when the author explicitly declares that relationship. Version must express
+that continuity without becoming inheritance, compatibility analysis, migration logic, or a release label for the
+enclosing Interface.
 
 ---
 
-## 4. Version Contract
+## 3. Contract Decision
 
-### 4.1. Sovereign Contract Identity
+### 3.1. Contract Authority and Version
 
-A Version is meaningful only together with the exact Contract authority that owns it.
+A Contract Authority is the continuing sovereign authority of one explicitly declared Contract. It answers which
+Contract owns the right to establish and revise the meaning being governed.
 
-```text
-CalculateLowering + V3
-```
-
-and
+A Version Identity identifies one explicit revision of that authority's meaning. Version therefore acts as a coordinate
+in the Contract's sovereign history rather than as a second Contract name or a global software release number.
 
 ```text
-CalculateInvariant + V3
+Contract Authority
+    + Version Identity
+    -> one Versioned Contract Meaning
 ```
 
-are different version-qualified authorities even when the source spelling of the Version is the same. `V3` alone does
-not identify a Contract meaning.
+`Sovereign` means that continuity belongs to the Contract declaration itself. A compiler release, generated artifact,
+runtime type, deployment label, or external carrier may represent that continuity, but none may decide that two meanings
+belong to the same Contract Authority or split one authority into another on the user's behalf.
 
-This prevents a shared version token from becoming a hidden global namespace. The authoritative identity is the exact
-Contract together with its exact Version.
+### 3.2. Complete Meaning at Each Version
 
-### 4.2. Presented Version Claim
-
-Material that crosses a version-sensitive contract boundary may carry a Version claim showing the meaning under which it
-was established.
-
-The claim remains declarative. It cannot change the Version owned by the receiving Contract and cannot force that
-Contract to accept the material.
+Each Version establishes the complete authoritative meaning of the Contract at that Version. A later Version may change
+part or all of that meaning, but it does not inherit the earlier meaning, override a parent Contract, or become a
+subtype of a previous revision.
 
 ```text
-presented material claims Contract@V2
+Contract Authority: CalculateInvariant
 
-receiving Contract owns Contract@V2
-    -> Version identity agrees
+V1
+    complete contract definition at V1
 
-receiving Contract owns Contract@V3
-    -> Version identity differs
+V2
+    complete contract definition at V2
 ```
 
-Exact agreement establishes only that the material presents the same sovereign meaning identity. The receiving Contract
-must still perform its own substantive judgment. Version agreement does not make an invalid Input admissible, satisfy an
-Invariant, establish a State transition, or authorize Publication.
+The contract definitions at `V1` and `V2` may differ because the Contract was modified. Version does not hide that
+difference. It records the modification while preserving the sovereignty of `CalculateInvariant` across those revisions.
 
-### 4.3. Version Difference
+The Contract Authority is not a larger Contract formed by combining the definitions at `V1` and `V2`, a common body
+shared by them, or a set that contains their meanings. Its continuity carries no inherited obligation from one Version
+to another.
 
-A Version difference is an established identity difference, not a compatibility judgment.
+### 3.3. Explicit Revision Ownership
 
-When the presented Version and the receiving Contract's authoritative Version differ, Version does not silently
-reinterpret the material and does not infer a failure policy. It preserves the exact identities involved so that the
-authority responsible for applicability or response can act on that established situation.
+The author must explicitly assign a Version Identity to every executable one-dimensional Contract meaning. There is no
+implicit `V1`, compiler-generated Version, inherited Version, or default supplied by the enclosing Interface.
 
-This prevents an old judgment from becoming a new judgment merely because its values can still be decoded.
-
-### 4.4. No Implicit Compatibility
-
-Version contains no backward-compatibility, forward-compatibility, range, substitution, or migration law.
-
-A different Version may later be accepted by an explicit Governance relation. A Policy may select a response to an
-established mismatch. A Lowering, replacement, or other responsible Contract may establish new material from earlier
-material. None of those permissions are implied by Version identity itself.
-
-The absence of an explicit compatibility authority therefore cannot be replaced by version-name comparison, numeric
-ordering, latest-version preference, or backend convention.
-
-### 4.5. Authority of Established Material
-
-When material, a judgment, diagnostic evidence, or a published claim must retain the meaning under which it was
-established, its Version coordinate must remain attached to that authority-bearing record or be recoverable from
-canonical material without ambiguity.
-
-The backend may encode that coordinate compactly, but it may not discard it and later reconstruct meaning from whichever
-Contract happens to be current.
-
-The exact retention requirements differ by Contract role. Version defines the identity law; the Contract that produces
-or consumes the material defines where that identity must be carried.
-
-### 4.6. Relation to Contract World
-
-Version does not create a Contract World and does not select one.
-
-A Contract World may contain several independently version-qualified Contract authorities. Governance decides whether
-those authorities are applicable together for one machine application. Version contributes exact sovereign identities to
-that decision and nothing more.
-
-This keeps Version independent from deployment rollout and avoids turning one global version number into a second
-Interface manifest.
-
-### 4.7. Canonical Material
-
-The canonical Version material is deliberately small. It contains the exact Contract authority and the exact Version
-identity owned by that Contract.
+When the author modifies a Contract and intends that modification to remain part of the same Contract Authority, the new
+meaning is established under a different Version Identity of that authority. The earlier Version remains unchanged.
 
 ```text
-exact Contract authority
-exact Version identity
+V1
+    authoritative contract definition at V1
+
+V2
+    authoritative contract definition at V2
 ```
 
-A transport spelling, source declaration name, numeric representation, package location, generated host type, registry
-entry, or backend integer ID is not canonical Version authority by itself. Those forms may carry or reference the
-canonical identity after resolution.
+Reusing `V1` for the later contract definition would erase the declared history and is therefore contradictory. A
+Version Identity, once attached to one authoritative meaning of its Contract Authority, must not later denote another
+meaning.
 
-Within one resolved Contract definition, the same exact Contract authority cannot own two different authoritative
-Versions at the same time. If several Versions of one logical Contract are retained for coexistence, each must resolve
-as a distinct version-qualified authority rather than as ambiguous current meaning.
+### 3.4. Continuing an Authority or Declaring a New Contract
+
+The author decides whether a modification continues an existing Contract Authority or establishes a different Contract.
+Kontrakt does not infer that choice from structural similarity, the size of the change, host-language names, or shared
+implementation material.
+
+This decision must be made before Version authoring is reduced to an API operation. When a Contract is modified, the
+author must deliberately judge whether the modification still belongs to the sovereign history of that Contract or
+whether it establishes another Contract Authority. Assigning a new Version is the explicit declaration of the first
+choice; declaring another Contract Authority is the explicit declaration of the second.
+
+The distinction has no mechanical threshold. A substantial revision may remain part of one Contract Authority, while a
+small textual or structural change may accompany the decision to establish another Contract. The author owns that
+semantic boundary, and the authoring API must expose the choice rather than make it implicitly.
+
+### 3.5. Version Relation
+
+Version comparison is defined only inside one Contract Authority.
+
+```text
+same Contract Authority
++ same Version Identity
+    -> Version Agreement
+
+same Contract Authority
++ different Version Identity
+    -> Version Difference
+
+different Contract Authority
+    -> no Version relation
+```
+
+Agreement identifies the same revision position of the same sovereign Contract. Difference establishes only that the
+Contract Authority has distinct declared revisions. Neither result states whether the revisions are compatible,
+substitutable, migratable, newer, preferred, or acceptable for a particular application.
+
+A Version token therefore has no global meaning by itself. The same spelling may be used independently by different
+Contract Authorities without creating a relationship between them.
+
+### 3.6. Historical Stability and Authority Boundary
+
+A later Version does not rewrite or invalidate the meaning of an earlier Version. Historical material may remain
+attributable to the revision under which it was established even when new work uses a later one.
+
+Version Identity is opaque. A spelling such as `V2`, `2026`, or `Stable` does not by itself establish chronology,
+compatibility, deprecation, or preference. The Contract's revision history exists because the author explicitly declared
+those Versions under one Authority, not because Kontrakt interprets their names.
+
+Version stops at sovereign revision identity. Governance determines which versioned Contract Authorities are applicable
+in a Contract World. Policy chooses responses to established situations, and any transformation between revisions
+remains with the Contract that owns that transformation.
+
+---
+
+## 4. Kontrakt Realization
+
+This section defines how Kontrakt realizes the Version Contract. The material and mechanisms below preserve the laws in
+Section 3; they do not become an independent source of Contract or Version authority.
+
+### 4.1. Canonical Versioned Contract Meaning
+
+Kontrakt resolves the complete authoritative material of one Contract at one Version into canonical form. This canonical
+material represents the Versioned Contract Meaning that the user declared.
+
+It contains the contract coordinates and laws that belong to that Versioned meaning. It excludes host-language carrier
+names, generated artifacts, deployment state, Governance applicability, and backend layout because those mechanisms do
+not define what the Contract means.
+
+Kontrakt may derive an implementation identity from the canonical material so that one Versioned meaning can be
+compared, retained, and referenced efficiently. ADR-0041 provides the canonical identity and HID machinery for that
+realization. The derived identity is not the Contract Authority and does not create the Version relationship.
+
+### 4.2. Canonical Authority-Version Binding
+
+Kontrakt realizes the user's declaration by binding one Contract Authority and one Version Identity to the canonical
+meaning established for that revision.
+
+```text
+(Contract Authority, Version Identity)
+    -> one Canonical Versioned Contract Meaning
+```
+
+If retained historical material proves that the same Authority and Version were previously bound to a different
+canonical meaning, Kontrakt can reject the contradiction. The check enforces the history declared by the user; it does
+not decide whether two differently written meanings are mathematically equivalent.
+
+Canonical identity machinery may accelerate this comparison, but fingerprints and interned identifiers remain physical
+representations. They do not define sovereign continuity and cannot decide that a modification should become a new
+Version or a new Contract Authority.
+
+### 4.3. Authoring and Compilation Lifecycle
+
+Version authority is authored first and realized second.
+
+```text
+AUTHORING
+
+explicit Contract Authority
+    + explicit Version Identity
+    + complete Contract meaning
+
+        ↓
+
+COMPILATION
+
+resolve the declared authority and Version
+    ↓
+lower the Versioned meaning to canonical material
+    ↓
+derive implementation identity where needed
+    ↓
+establish the canonical Authority-Version binding
+    ↓
+preserve that exact revision in resolved Interface bindings
+```
+
+The compiler does not inspect the new meaning and decide whether it is a revision or a different Contract. That decision
+must already be present in the author's declaration before realization begins.
+
+### 4.4. Interface Resolution
+
+The Interface manifest selects one-dimensional Contracts according to ADR-0046 and ADR-0047. Resolution must preserve
+the Contract Authority and the exact Version selected for executable use.
+
+The Interface does not become a second owner of Version history. It assembles already declared contract authority rather
+than reassigning Version identities. The exact source syntax for selecting one revision or exposing several revisions is
+deferred, but every binding used by the backend must resolve to one explicit Versioned Contract meaning before
+execution.
+
+Whether several revisions may coexist in one executable, how one becomes applicable, and how an application is pinned to
+a particular Contract World belong to Governance rather than Version.
+
+### 4.5. Provenance Realization
+
+Kontrakt must keep Version provenance recoverable wherever later authoritative interpretation depends on knowing which
+revision established material, evidence, or a judgment. This requirement does not imply a Version wrapper on every host
+value.
+
+A backend may retain provenance in an enclosing canonical record, publication material, execution context, or another
+compact representation when the exact Contract Authority and Version remain recoverable without inference. Material that
+leaves such a context and is expected to be interpreted later under its original authority must retain a resolvable link
+to that provenance.
+
+External request fields, persisted records, or protocol headers may present Version claims. Such claims are evidence
+until resolved against the Contract Authority and Version material recognized by Kontrakt.
+
+### 4.6. Runtime Resolution
+
+At runtime, the backend may resolve a presented claim or retained provenance against the exact Contract Authority and
+Version required by later processing.
+
+Physical realization may use generated constants, canonical tables, interned integers, HIDs, or specialized branches.
+Changing those mechanisms must not change whether two references resolve to the same Authority and Version.
+
+Unknown or ambiguous material cannot be silently mapped to a current or preferred revision. Version realization may
+establish agreement, difference, absence of a Version relation, or failed resolution. The authority responsible for the
+next judgment decides what that result means for execution.
+
+### 4.7. Historical Verification
+
+When previous Authority-Version bindings are retained or supplied, Kontrakt may compare them with a new compilation to
+detect accidental reuse of one Version Identity for a different canonical meaning. Without historical material, V1 does
+not claim knowledge of declarations that the machine has never retained or received.
+
+Canonical identity stability is an implementation obligation. Unchanged canonical material must not acquire a different
+physical identity merely because compiler internals changed. Such a defect must be corrected in the realization rather
+than hidden by forcing the user to declare a new Version.
 
 ---
 
 ## 5. V1 User Authoring and Processing Boundary
 
-The V1 frontend must make both coordinates of Version authority explicit: the exact Contract whose meaning is being
-identified and the exact Version identity assigned to that Contract.
+V1 requires an explicit user-authored Contract Authority and Version Identity for every executable one-dimensional
+Contract meaning. The exact Kotlin, Java, or `.kontrakt` syntax remains open, but omission is illegal and no frontend
+may synthesize continuity or Version on the user's behalf.
 
-```text
-restricted Version source evidence
-    -> exact Contract resolution
-    -> exact Version identity resolution
-    -> validation
-    -> canonical Version material
-    -> use by version-sensitive contract processing
-```
+The authoring model must express the semantic decision established in Section 3.4 directly: revise an existing Contract
+Authority under a new Version, or declare a different Contract Authority. That choice must not be encoded through
+inheritance, type inclusion, runtime registration, reflection, or similarity analysis.
 
-The exact Interface placement and selection form for Version is intentionally deferred in this draft. Whatever source
-form is selected, enclosure must not supply an omitted Contract subject and must not create a global Interface Version.
-Every Version entry must identify its exact Contract authority explicitly.
+Version material must remain declarative and statically resolvable. Arbitrary code cannot compute the Version relation
+at runtime, and host-language names cannot acquire authority merely because the backend can observe them.
 
-The source form must remain declarative. Host-language mechanisms that acquire meaning through execution, inheritance,
-metadata discovery, runtime lookup, or hidden defaults cannot establish Version authority. A Version value also cannot
-be computed by arbitrary user code or recovered from a naming convention.
-
-The exact Kotlin and Java authoring syntax is deferred with that placement decision. The syntax must express only the
-two canonical coordinates required here and must follow the same restricted frontend discipline used by the other
-Contract presentations. The compiler must be able to resolve and erase the host source form without executing it.
-
-Source names may be used for reading and diagnostics, but a name such as `V2`, `2026`, or `Stable` acquires no ordering,
-compatibility, migration, or policy meaning from its spelling.
+The Interface author does not repeat Version information that already belongs to the selected contract declaration. If
+future syntax exposes several revisions for one Authority, each executable choice must still resolve to one explicit
+Versioned Contract meaning before backend use.
 
 ---
 
 ## 6. Contract and Implementation Boundary
 
-### 6.1. Contract Authority
+The Version Contract owns the continuity of one Contract Authority across explicitly declared revisions, the immutable
+meaning assigned to each Version, and the distinction between Version Agreement, Version Difference, and absence of a
+Version relation.
 
-The exact Contract and exact Version identity are contract authority. Operational version labels attached to builds,
-compilers, deployments, storage revisions, schemas, or transport carriers are not substitutes for that authority.
+Kontrakt realizes those laws by canonicalizing Versioned meanings, deriving efficient physical identities, preserving
+Authority-Version bindings, carrying provenance, and resolving claims. These mechanisms may be replaced without changing
+the Version Contract.
 
-An implementation may carry the canonical Version through an integer, hash, interned ID, table index, generated
-constant, or other compact representation. Replacing that representation must not change which Contract meaning the
-Version identifies.
+No realization mechanism may decide that two Contracts share an Authority, split one Authority into another, invent a
+Version, or reinterpret the user's declared history. Likewise, Version realization must not turn revision identity into
+compatibility, Contract World applicability, migration, or response policy merely because the backend has enough data to
+perform those computations.
 
-### 6.2. External Carriers
-
-A protocol field, persisted record, request header, or adapter may carry a Version claim into Kontrakt. That carrier is
-transport evidence only. The frontend and runtime realization must resolve it to exact contract-owned Version material
-before it can participate in contract judgment.
-
-Unknown, malformed, or ambiguous carrier values cannot be silently mapped to the current Version. The exact failure and
-response path remain outside Version and will be assigned to the responsible Governance, Policy, Diagnostic, or boundary
-contract.
-
-### 6.3. Realization Changes
-
-A backend optimization does not create a new Contract Version when contract-visible meaning is preserved. Conversely, a
-backend or deployment cannot keep an old Version identity while deliberately changing the meaning that the Contract
-establishes.
-
-Version therefore protects the replaceability boundary in both directions: implementation change alone does not force
-contract evolution, and implementation choice cannot disguise contract evolution.
-
-### 6.4. Deterministic Resolution
-
-Deterministic resolution remains a Kontrakt implementation law rather than Version material. The same resolved Contract
-and Version source evidence must produce the same canonical Version identity.
-
-Runtime discovery order, registration order, classpath order, or deployment timing may not decide which Version a
-Contract owns.
+Deterministic resolution remains an implementation law. The same authored Authority, Version, and Contract meaning must
+produce the same canonical realization independent of classpath order, registration order, discovery timing, or backend
+layout.
 
 ---
 
 ## 7. Verification
 
-Verification must establish that every Version entry resolves to one exact Contract authority and one exact Version
-identity without ambiguity. The Version must belong to that Contract rather than to a runtime object, implementation
-stage, backend artifact, or unrelated Interface.
+### 7.1. Contract Verification
 
-The verifier must reject duplicate or contradictory current Version authority for the same exact Contract definition. It
-must also reject source forms whose meaning depends on ordering, numeric comparison, implicit latest-version choice,
-runtime computation, or hidden defaults.
+Compilation must reject executable one-dimensional Contract material with no explicit Version, an unresolved Version, or
+a Version whose authority depends on hidden defaults or runtime computation.
 
-Version-boundary tests must prove that exact identity agreement is preserved, a mismatch remains an explicit mismatch,
-and neither case performs the substantive judgment of the receiving Contract. A mismatch must not be silently accepted,
-rewritten to the current Version, or treated as compatible merely because the physical data shape is readable.
+Verification must preserve the user's declared boundary between revision and replacement. A new Version under an
+existing Contract Authority is treated as a revision of that authority; a separately declared Authority has no Version
+relation to it merely because the two meanings resemble each other.
 
-Where canonical material retains Version provenance, tests must prove that serialization, caching, lowering,
-publication, and backend replacement do not erase or substitute that identity. Compact backend encodings must round-trip
-to the same exact Contract and Version coordinates.
+Version relation tests must prove that agreement requires the same Contract Authority and Version Identity, that a
+different Version under the same Authority yields Version Difference, and that different Authorities do not participate
+in one Version comparison.
 
-Cross-build detection of accidental Version reuse for changed contract meaning may require retained historical canonical
-material or an external publication discipline. The exact mechanism is deferred; the semantic rule against reuse is not.
+Historical provenance tests must show that material remains attributable to the Version under which it was established
+even when later code contains another revision of the same Contract Authority.
+
+### 7.2. Realization Verification
+
+The verifier must derive canonical material for each resolved Versioned Contract meaning and establish the corresponding
+Authority-Version binding. A conflicting binding fails when the historical comparison material needed to prove the
+conflict is available.
+
+Canonical comparison must use the complete authoritative material of the selected Version and exclude host carrier
+names, Interface assembly, Governance applicability, and backend realization. Fingerprints may accelerate equality
+checks, but physical hash behavior cannot override canonical identity.
+
+Backend conformance must prove that compact encodings round-trip to the same Contract Authority, Version Identity, and
+canonical meaning and that provenance survives every supported path that promises later authoritative interpretation.
 
 ---
 
 ## 8. Deferred Decisions
 
-The exact Kotlin and Java authoring syntax remains to be completed after the semantic model is accepted. That work must
-also decide explicit absence, canonical identity bytes, and which Contract roles are required to retain Version
-material.
+The Kotlin, Java, and `.kontrakt` syntax for declaring a Contract Authority and its Versions remains open. The same work
+must decide how an author naturally expresses a revision of an existing Authority versus the declaration of a new
+Authority without introducing a separate user-managed stable identifier.
 
-ADR-0054 will define how version-qualified Contract authorities form an applicable Contract World and how that world is
-fixed for one application. ADR-0055 will define responses to already established situations. Compatibility, rejudgment,
-replacement, migration, and fallback are therefore not added to Version merely to anticipate those later contracts.
+ADR-0054 will define how versioned Contract Authorities participate in Contract Worlds, including coexistence,
+selection, activation, and application lifetime. ADR-0055 will define responses to established situations.
+Compatibility, fallback, rejudgment, and migration therefore remain outside Version.
 
-The transport representation of Version claims and any retained history used to detect cross-build identity reuse also
-remain separate decisions. Diagnostic, Failure, and Publication integration will be specified by their own authority
-boundaries.
+The external transport spelling of Version claims, publication format for historical bindings, and exact retention rules
+for each authority-bearing material kind remain integration decisions. Any such mechanism must preserve the revision
+history fixed here without turning Version into a wrapper attached indiscriminately to every value.
 
 ---
 
@@ -358,26 +391,27 @@ boundaries.
 
 ### Positive
 
-Version becomes a small contract with one clear purpose. Every participating Contract can retain control over the exact
-meaning it recognizes without delegating that authority to deployment, schema, adapter, or compiler conventions.
+Version gives a Contract an explicit sovereign history without pretending that different revisions have the same
+meaning. The author can preserve continuity when a Contract is revised or deliberately end that continuity by declaring
+a new Contract Authority.
 
-Old material cannot silently become valid under a new meaning. At the same time, Version does not overreach into
-compatibility or migration, so Governance, Policy, Lowering, Invariant, Publication, and other Contracts can keep their
-own judgment authority.
+Each Version remains complete and immutable, so historical material can be attributed to the exact meaning that governed
+it. The model avoids inheritance and type-set interpretation because no Version receives meaning from another and the
+Contract Authority is not a supertype or shared contract body.
 
-Independent Contract Versions also avoid unnecessary global churn. A change to one Contract does not require unrelated
-Contracts to change identity when their meaning is unchanged.
+Kontrakt can realize revision identity through existing canonical identity machinery while keeping authorship in the
+Contract. Backend storage, hashing, lookup, and provenance strategies remain replaceable.
 
 ### Negative
 
-Version provenance must remain available wherever later processing depends on the meaning under which material was
-established. That adds canonical material and verification work compared with systems that simply assume the newest
-schema or implementation is authoritative.
+Every executable one-dimensional Contract meaning requires explicit Version authoring, and the user must decide when a
+modification continues an existing Authority or begins another one. Kontrakt deliberately refuses to infer that semantic
+choice from similarity.
 
-A Version mismatch is intentionally not self-resolving. Systems that need coexistence, compatibility, rejudgment, or
-migration require the later Governance and Policy contracts or another explicit responsible Contract.
+Cross-build drift detection requires previous Authority-Version binding material to be retained or supplied. Kontrakt
+cannot verify history that is unavailable to it.
 
 ### Neutral
 
-Version does not turn release order, deployment preference, compatibility handling, transformation, or response
-selection into identity authority. Those capabilities may exist elsewhere without becoming part of Version.
+Version records one Contract Authority's explicit revision history. Governance decides where particular revisions apply,
+Policy decides responses to established situations, and transformation remains with the Contract that owns it.
