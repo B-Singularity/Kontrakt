@@ -89,8 +89,9 @@ meaning declared by any Manifest changes Governance meaning and therefore requir
 A Manifest is Governance-owned canonical material representing one operating mode. It is not an independent Contract
 Authority and has no independent Version.
 
-Each Manifest has a user-authored nominal identity. The identity carries no built-in order or preference, and Kontrakt
-does not derive behavior from its spelling.
+Each Manifest has a user-authored nominal identity local to its owning Governance. The same Manifest name used by
+another Interface has no shared identity or implied relation. A Manifest identity carries no built-in order or
+preference, and Kontrakt does not derive behavior from its spelling.
 
 Each Manifest is a self-contained logical Contract World. It does not inherit from another Manifest, override another
 Manifest, or use another Manifest as a fallback.
@@ -280,7 +281,7 @@ an explicit selection is established.
 The mechanism that supplies the selection is not Contract authority. Governance consumes the explicit Manifest identity
 carried by whatever integration provides the selection.
 
-The exact user-facing vocabulary, selection syntax, and transport API are deferred to the user API design.
+The exact selection syntax, control API, and transport mechanism are deferred to later user API work.
 
 ### 3.7. Pipeline Application Boundary
 
@@ -371,9 +372,10 @@ Manifests take the place of that single arrangement. There is no base arrangemen
 
 The Interface operation surface remains outside Governance and is authored once.
 
-The exact `.kontrakt` grammar is deferred to the user API design. That work will also decide how mode identities are
-declared and how selections are supplied. The resulting syntax must preserve the semantic boundary between the Interface
-and its Governance, and between a Manifest and the Contracts it binds.
+The exact `.kontrakt` grammar is deferred to later IDL work. That work will decide the source spelling and qualification
+of Interface-local Manifest identities and how their bindings are written. Selection and control syntax remain separate
+deferred work. The resulting syntax must preserve the semantic boundary between the Interface and its Governance, and
+between a Manifest and the Contracts it binds.
 
 Contract references remain compile-time source symbols that resolve to exact Contract Authorities. Runtime discovery
 mechanisms do not become binding authority.
@@ -397,9 +399,10 @@ Manifest selection is exact.
 An input that does not resolve to a Manifest declared by the target Governance cannot establish a Contract World.
 Kontrakt does not silently choose a nearby name or substitute another Manifest.
 
-User-facing handling of mode names, including any closed vocabulary used to prevent authoring mistakes, is part of the
-later user API design. The semantic requirement here is only that a successful selection resolve to one exact Manifest
-of the intended Interface Governance.
+The Manifest set declared by one Governance is the closed set of valid Manifest identities for that Interface. Reusing
+the same spelling in another Interface does not create a shared mode identity. The exact source or runtime
+representation of those identities is deferred; a successful selection must resolve to one exact Manifest of the
+intended Interface Governance.
 
 ---
 
@@ -453,7 +456,6 @@ only supplies the Contract World under which each corresponding Contract pipelin
 The following remain open:
 
 - exact `.kontrakt` grammar for optional Governance and named Manifests,
-- user-facing mode identity and closed-vocabulary design,
 - CLI and runtime APIs for selecting a Manifest for a particular Interface,
 - diagnostics for invalid or unavailable selections,
 - whole-machine and cross-pipeline collaboration, including concurrent or distributed realization,
