@@ -1,4 +1,4 @@
-# ADR-0054: Governance Contract, Named Interface Manifests, Explicit Contract World Selection, and Activation Boundary
+# ADR-0054: Governance Contract, Explicit Operating Modes, Named Interface Manifests, and Selection Boundary
 
 ## Status
 
@@ -27,49 +27,43 @@ Proposed
 
 ## 1. Context
 
-One Interface may need to operate under several explicit Contract configurations without becoming several different
-Interfaces.
+A machine often needs more than one operating mode while remaining the same machine.
 
-Normal operation, emergency operation, compatibility operation, or another user-defined operating arrangement may keep
-the same public Interface and operation set while changing the Contracts bound to those operations.
+The same Interface may run normally, under emergency restrictions, or in a compatibility mode without changing its
+public operation surface. What changes is the Contract arrangement governing those operations.
 
-Duplicating the Interface for each arrangement would split one Interface Authority merely because its operating Contract
-World changed.
-
-Governance gives that variation one explicit place.
+Governance makes these operating modes explicit. Each named Manifest represents one mode and carries the exact Contract
+bindings for that mode.
 
 ```text
 Interface Authority
     -> Governance Contract
-        -> named Manifest
-        -> named Manifest
-        -> named Manifest
+        -> Manifest Normal
+        -> Manifest Emergency
+        -> Manifest Legacy
 ```
 
-Each Manifest presents one complete Contract binding arrangement for the same Interface. Governance does not decide
-which arrangement is desirable. It establishes the arrangement named by explicit selection.
+Selecting a Manifest establishes the Contract World for that operating mode. Governance does not decide which mode is
+desirable; it accepts an explicit selection and establishes what that selection names.
 
 ---
 
 ## 2. Problem
 
-ADR-0046 gave one Interface an explicit manifest binding. That is sufficient when one Contract arrangement governs every
-use of the Interface.
+ADR-0046 gave one Interface a single manifest binding, which effectively gives that Interface one operating mode.
 
-It is insufficient when the same Interface must support several declared operating arrangements.
+A machine with several modes needs several Contract arrangements without duplicating the Interface or moving the choice
+into hidden configuration and runtime code. The Interface must remain one authority while the governing arrangement
+changes explicitly.
 
-Without Governance, users must either duplicate the Interface, rewrite its bindings between environments, or move the
-choice into configuration and runtime code. The first destroys Interface continuity. The others hide Contract World
-selection outside Contract authority.
+Version cannot own that choice. ADR-0053 identifies an established meaning of each sovereign Contract Authority, but it
+does not decide which established Contracts govern together.
 
-Version does not solve this problem. ADR-0053 lets every sovereign Contract Authority identify its own established
-meaning, but it does not say which established Contracts form the active Contract World.
+Policy also begins after a Contract World is already established. It may choose a prepared response for an established
+situation, but it does not choose the machine's operating mode.
 
-Policy does not solve it either. Policy selects a prepared response for an established situation inside an already
-applicable Contract World. It does not establish that world.
-
-Governance therefore needs a narrow responsibility: present the valid named Contract arrangements of one Interface and
-establish one of them from explicit selection.
+Governance fills only this gap: it declares the available modes of one Interface as named Manifests and establishes the
+Manifest selected explicitly.
 
 ---
 
@@ -77,39 +71,30 @@ establish one of them from explicit selection.
 
 ### 3.1. Governance Authority
 
-Governance is an independently versioned user-sovereign Contract Authority.
+Governance is an independently versioned user-sovereign Contract Authority for the operating modes of one Interface.
 
-A Governance Contract belongs to one Interface Authority and declares the named Manifests under which that Interface may
-operate.
+Its Manifests define the modes that may govern that Interface. An exact Manifest selection establishes the corresponding
+Contract World.
 
 ```text
 Governance
-    -> declared Manifest set
-    -> explicit Manifest selection
+    -> declared Manifests
+    -> explicit selection
     -> active Contract World
 ```
 
-Governance does not infer operating conditions, rank Manifests, choose a preferred Manifest, or execute the Contracts
-inside one.
+Governance does not interpret operating conditions or decide which mode should be chosen. It also does not execute the
+Contracts contained by the selected Manifest.
 
 Its Version follows ADR-0053. Changing Governance meaning requires a new Governance Version.
 
 ### 3.2. Manifest
 
-A Manifest is Governance-owned canonical material. It is not an independent Contract Authority and has no independent
-Version.
+A Manifest is Governance-owned canonical material representing one operating mode. It is not an independent Contract
+Authority and has no independent Version.
 
-Each Manifest has one user-authored nominal identity.
-
-```text
-Normal
-Emergency
-Legacy
-Blue
-```
-
-The spelling carries no built-in priority, safety level, environment meaning, chronology, or fallback behavior.
-`Normal` is not automatically preferred and `Emergency` is not automatically exceptional.
+Each Manifest has one user-authored nominal identity. Names such as `Normal`, `Emergency`, `Legacy`, or `Blue` carry no
+built-in priority, ordering, or behavior. Kontrakt does not infer semantics from the spelling.
 
 A Manifest contains the same Contract bindings that the Interface IDL previously carried as one manifest arrangement.
 Governance does not introduce a second configuration language around those bindings.
@@ -162,17 +147,16 @@ Interface PaymentContract
         Manifest Legacy
 ```
 
-If an operating arrangement requires a different public operation surface or a different Interface responsibility, it is
-not another Manifest of the same Interface. It requires another Interface Authority.
+If an operating mode requires a different public operation surface or a different Interface responsibility, it is not
+another Manifest of the same Interface. It requires another Interface Authority.
 
-Manifest variation changes the Contract World, not the identity of the Interface surface.
+Changing the selected Manifest changes the operating Contract World, not the identity of the Interface surface.
 
 ### 3.4. Contract Binding
 
 A Manifest binds established Contract material through the existing Interface Contract vocabulary.
 
-It may select different Contracts for different operating arrangements, but it does not redefine the meaning owned by
-those Contracts.
+Different modes may bind different Contracts, but a Manifest does not redefine the meaning owned by those Contracts.
 
 Conceptually:
 
@@ -216,7 +200,7 @@ admission wall, Machine owns legal State movement, and each other Contract keeps
 
 ### 3.5. Explicit Selection
 
-Governance receives an explicit Manifest Identity as selection material.
+An operating mode becomes active only through an explicit Manifest Identity supplied to Governance.
 
 ```text
 selected Manifest Identity
@@ -225,31 +209,18 @@ selected Manifest Identity
     -> active Contract World
 ```
 
-The source of that selection is not Governance authority. A CLI, runtime control surface, operator action, external
-control plane, or another realization may provide the input.
+The selection may arrive through a CLI, runtime control surface, operator action, control plane, or another realization.
+Those mechanisms carry the choice but do not own Governance meaning.
 
-Conceptually:
+For example, `--manifest Normal` and a runtime request to `select Emergency` both reduce to the same Contract-level
+material: an exact Manifest Identity.
 
-```text
---manifest Normal
-```
-
-and:
-
-```text
-select Emergency
-```
-
-present the same Contract-level fact to Governance: an exact Manifest Identity was selected.
-
-Kontrakt must not derive the selection from a Manifest name, environment name, registration order, discovery order,
-runtime telemetry, or hidden default.
-
-If selection is required and no exact Manifest Identity is supplied, Governance does not guess one.
+Kontrakt does not derive the active mode from naming, declaration order, discovery order, runtime telemetry, environment
+inspection, or a hidden default. If a selection is required and none is supplied, Governance does not guess.
 
 ### 3.6. Runtime Reselection
 
-A later explicit selection may request another declared Manifest.
+A machine may change operating mode at runtime through another explicit Manifest selection.
 
 ```text
 Normal
@@ -257,27 +228,19 @@ Normal
     -> Emergency
 ```
 
-Governance does not decide when that request should be made. A monitoring system, operator, Policy result, control
-plane, or other external mechanism may cause the request, but the trigger source does not become Governance meaning.
+The event or system that causes this request stays outside Governance. Monitoring, Policy, an operator, or a control
+plane may decide that another mode should be requested, but Governance receives only the resulting Manifest Identity.
 
-The trigger must be reduced to explicit Manifest selection before Governance consumes it.
-
-Automatic conditions such as the following are therefore not Governance declarations:
-
-```text
-if load is high -> Emergency
-if latency rises -> Degraded
-if client is old -> Legacy
-```
-
-The logic that decides to request another Manifest belongs outside Governance.
+Conditions such as `high load -> Emergency` are therefore not Governance declarations. The condition is evaluated
+elsewhere and reduced to an explicit selection before Governance consumes it.
 
 This ADR does not yet define restrictions between one active Manifest and another.
 
 ### 3.7. Contract World
 
-For Governance, a Contract World is the exact established Contract arrangement represented by one selected Manifest of
-one Governance Version.
+Operating mode is the user-facing idea. Contract World is its exact Contract meaning.
+
+One selected Manifest of one Governance Version establishes one Contract World from its resolved bindings.
 
 ```text
 Interface Authority
@@ -287,33 +250,28 @@ Interface Authority
     -> one active Contract World
 ```
 
-The Contract World is not a runtime object, registry entry, configuration file, or deployment name. Those may realize or
-carry the selection, but they do not own its meaning.
+A runtime object, registry entry, configuration file, or deployment name may carry or realize that selection, but it
+does not own the Contract World.
 
-Two Manifests may bind some of the same Contract Versions. They remain different named Contract Worlds when their
-Manifest Identities differ.
+Two Manifests remain distinct modes even when some bound Contract Versions are shared.
 
 ### 3.8. Separation from Policy
 
-Governance establishes which Contract World is in force.
+Governance establishes the machine's operating mode by establishing the Contract World named by a Manifest.
 
-Policy operates inside an already established Contract World and selects a prepared response Contract for an established
-situation.
+Policy operates inside that already-established world. Its response selection does not change the active Manifest.
 
 ```text
 Governance
     explicit Manifest selection
-    -> active Contract World
+    -> operating Contract World
 
 Policy
     established situation inside that world
     -> prepared response Contract
 ```
 
-Governance contains no situation-matching algorithm. Policy does not replace the active Manifest merely because it
-selects a different response.
-
-The exact Policy model remains ADR-0055.
+Governance therefore contains no situation-matching algorithm. The exact Policy model remains ADR-0055.
 
 ---
 
@@ -387,7 +345,8 @@ resolved Contract material establish the same Contract World regardless of disco
 
 ## 6. Contract and Implementation Boundary
 
-Governance owns named Manifest meaning and explicit Contract World establishment.
+Governance owns the machine's declared operating modes as named Manifests and establishes the selected mode as a
+Contract World.
 
 It does not own the mechanism that supplies selection input. CLI parsing, runtime menus, operator consoles, remote
 control planes, configuration transport, monitoring, event delivery, and generated selectors are replaceable realization
@@ -424,27 +383,24 @@ Policy or external trigger can request another Manifest.
 
 ### Positive
 
-One Interface Authority can support several explicit operating Contract Worlds without duplicating its public surface or
-moving Contract selection into hidden configuration.
+One Interface Authority can expose several explicit operating modes without duplicating its public surface or hiding the
+mode choice in configuration code.
 
-Named Manifests keep each operating arrangement inspectable and versioned through one Governance Authority while reusing
-the existing Interface Contract binding vocabulary.
-
-Explicit selection prevents environment guesses, implicit defaults, and runtime heuristics from becoming Contract
-authority. CLI and runtime control mechanisms remain replaceable.
+Each Manifest keeps one mode's Contract arrangement inspectable while reusing the existing Interface Contract binding
+vocabulary. Because activation requires an exact selection, CLI and runtime control mechanisms remain replaceable
+carriers rather than Contract authority.
 
 ### Negative
 
-Interfaces that need several operating Contract Worlds must author and maintain each Manifest explicitly. Changing a
-Manifest binding changes Governance meaning and therefore requires a new Governance Version.
+Interfaces that need several operating modes must author and maintain each Manifest explicitly. Changing a Manifest
+binding changes Governance meaning and therefore requires a new Governance Version.
 
 Runtime reselection introduces a later activation-boundary decision that must be completed before unrestricted switching
 between Manifests can be guaranteed.
 
 ### Neutral
 
-Governance does not decide which operating mode is desirable. It exposes declared Manifests and establishes the one
-named by explicit selection.
+Governance makes operating modes explicit but does not decide when one mode is preferable to another.
 
 Policy, Version compatibility, trigger logic, monitoring, deployment control, and backend dispatch remain separate
 responsibilities unless a later ADR explicitly assigns a narrower part of them to Governance.
