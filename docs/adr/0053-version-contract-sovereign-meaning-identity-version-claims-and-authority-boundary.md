@@ -12,8 +12,8 @@ Accepted
 
 - `docs/the-most-important-thing/what-contract-is.md`
 - `docs/todo/kontrakt-verifier-implementation-plan.md`
-- ADR-0055: Policy Contract, Established Situation, Response-Contract Selection, and Judgment Boundary
-- ADR-0054: Governance, Contract World Applicability, and Activation Boundary
+- ADR-0054: Policy Contract, Explicit Operating Policies, Self-Contained Contract Worlds, and Interface Binding Boundary
+- ADR-0056: Governance Contract, Policy-World Control, Whole-Machine Coordination, and Selection Boundary
 - ADR-0052: Capacity Contract, Explicit Safe Operating Memory Limits, and Realization Boundary
 - ADR-0051: Budget Contract, Explicit Allowance, Contract-Scoped Resource Limits, and Backend Realization Boundary
 - ADR-0050: State, State Transition, Explicit State Machine Manifest, and the State-Machine Axis
@@ -21,7 +21,7 @@ Accepted
 - ADR-0048: Flow Contract Processing — Boundary Refinement and Core Entry
 - ADR-0047: One-Dimensional Contract Presentations, Pipeline-Slot Selection, and Backend Realization Boundary
 - ADR-0046: IDL-First Interface Contract Frontend and Retained Generated Host Interface and Realization Port Boundary
-- ADR-0045: Contract-First Package Architecture and Explicit Machine Refactoring Boundary
+- ADR-0045: Contract Pipeline Package Architecture, Explicit State-Machine Axis, and Compiler Realization Mirror
 - ADR-0043: Contract Graph Canonicalization, Sealed Structural References, and Incremental Identity Derivation
 - ADR-0041: Stable Metadata Identity, BLAKE3, HID, and Protocol-Owned Interning
 - ADR-0040: Deterministic Frozen Acquisition Pipeline, Explicit Readiness, and Memory-Disciplined Publication

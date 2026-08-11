@@ -1,4 +1,4 @@
-# ADR-0055: Governance Contract, Policy-World Control, Whole-Machine Coordination, and Selection Boundary
+# ADR-0056: Governance Contract, Policy-World Control, Whole-Machine Coordination, and Selection Boundary
 
 ## Status
 
@@ -21,7 +21,7 @@ Proposed
 - ADR-0048: Flow Contract Processing — Boundary Refinement and Core Entry
 - ADR-0047: One-Dimensional Contract Presentations, Pipeline-Slot Selection, and Backend Realization Boundary
 - ADR-0046: IDL-First Interface Contract Frontend and Retained Generated Host Interface and Realization Port Boundary
-- ADR-0045: Contract-First Package Architecture and Explicit Machine Refactoring Boundary
+- ADR-0045: Contract Pipeline Package Architecture, Explicit State-Machine Axis, and Compiler Realization Mirror
 
 ---
 
@@ -702,7 +702,7 @@ Governance is no longer complete enough to remain Accepted. Whole Machine scope,
 concurrency semantics must be designed before the Contract can close.
 
 Several earlier ADRs and `What Contract Is` passages still describe Governance as an operation-level refusal authority
-or as the owner of Manifest worlds. Those references must be reconciled after ADR-0054 and ADR-0055 settle.
+or as the owner of Manifest worlds. Those references must be reconciled after ADR-0054 and ADR-0056 settle.
 
 The eventual Governance implementation will be more demanding than a simple atomic selected-Manifest field because the
 Contract meaning may span several Interface worlds and concurrent flows.

@@ -14,7 +14,7 @@ Accepted
 - ADR-0048: Flow Contract Processing — Boundary Refinement and Core Entry
 - ADR-0047: One-Dimensional Contract Presentations, Pipeline-Slot Selection, and Backend Realization Boundary
 - ADR-0046: IDL-First Interface Contract Frontend and Retained Generated Host Interface and Realization Port Boundary
-- ADR-0045: Contract-First Package Architecture and Explicit Machine Refactoring Boundary
+- ADR-0045: Contract Pipeline Package Architecture, Explicit State-Machine Axis, and Compiler Realization Mirror
 - ADR-0043: Contract Graph Canonicalization, Sealed Structural References, and Incremental Identity Derivation
 - ADR-0041: Stable Metadata Identity, BLAKE3, HID, and Protocol-Owned Interning
 - ADR-0040: Deterministic Frozen Acquisition Pipeline, Explicit Readiness, and Memory-Disciplined Publication
@@ -26,10 +26,9 @@ Accepted
 ADR-0048 defines the inbound airlock.
 
 Input establishes judgeable boundary presentation. Admission decides whether that material may continue.
-Canonicalization optionally establishes a stable representative. Lowering is the authorized passage across the
-Boundary by which admitted material is established as explicit immutable Fact inside the contract core. It begins only
-after the proposed factual meaning is explicit. It completes only after the selected Fact declaration and every
-applicable
+Canonicalization optionally establishes a stable representative. Lowering is the authorized passage across the Boundary
+by which admitted material is established as explicit immutable Fact inside the contract core. It begins only after the
+proposed factual meaning is explicit. It completes only after the selected Fact declaration and every applicable
 Invariant and movement obligation have been satisfied. A refused Lowering places nothing in the core.
 
 The Boundary is not merely a line. It is the controlled passage in which external or otherwise non-factual material may
@@ -39,14 +38,12 @@ same contract decision.
 
 A Fact is not limited to a final domain value. It is an immutable proposition upon which the machine may rely under
 declared factual values, provenance, scope, and version. It carries no hidden object or occurrence identity. Boundary
-material may therefore be lowered into a Fact that
-a request, claim, measurement, or observation occurred without granting the claimed content a stronger factual meaning
-than the contract declares.
+material may therefore be lowered into a Fact that a request, claim, measurement, or observation occurred without
+granting the claimed content a stronger factual meaning than the contract declares.
 
 The manifest-selected Input Presentation does not enter the user Operation directly. Lowering forms ordinary host
 material for the Operation parameter's declared type. Kontrakt judges that material under the corresponding Fact kind
-and
-every applicable Invariant before invoking the implementation. Only established input Fact authority may cross the
+and every applicable Invariant before invoking the implementation. Only established input Fact authority may cross the
 contract-machine boundary into the Operation call. The implementation still receives the same ordinary Java or Kotlin
 parameter it would receive without Kontrakt; Fact authority is not represented by a wrapper, marker, proposal type, or
 behavior added to that host value. The Operation may consume other established Facts only through explicit Fact
@@ -55,24 +52,19 @@ participation bindings. Contract Core membership does not make a Fact available 
 The user implementation remains an ordinary host-language implementation. It accepts its declared input and returns its
 declared result without calling Kontrakt, forming a Change Proposal, establishing a Fact, invoking an Invariant, or
 performing Publication. Core realization may calculate transient implementation values and may produce declared
-immutable
-Operation Result Material, but neither becomes core material merely by existing. The Operation return declaration names
-one Fact kind from the enclosing interface's Fact vocabulary. After the implementation returns ordinary result material,
-Kontrakt judges that material outside the implementation as proposed material for the declared result Fact kind. When
-the
-return or another factual change participates in one machine change, Kontrakt forms one Change Proposal internally. The
-proposal binds the proposed return Fact, any additional declared Fact changes, and any State movement that must be
-judged
-and established together. It is not Fact. Every applicable interface-level Invariant judges each proposed Fact of its
-declared kind solely from that Fact's complete canonical factual material, while State and Transition independently
-judge
-the same proposal's movement. Only a proposal that satisfies every required obligation may be established as one
-indivisible change. Only then does the contractual Operation complete successfully with its declared result as
-established
-Fact. If any required judgment refuses, the Operation fails, no successful result crosses the Operation boundary, and no
-Publication begins. Candidate and established are internal contract-machine authority states applied to ordinary host
-material, not different user-visible types. No material becomes a member of the Contract Core except as established
-Fact.
+immutable Operation Result Material, but neither becomes core material merely by existing. The Operation return
+declaration names one Fact kind from the enclosing interface's Fact vocabulary. After the implementation returns
+ordinary result material, Kontrakt judges that material outside the implementation as proposed material for the declared
+result Fact kind. When the return or another factual change participates in one machine change, Kontrakt forms one
+Change Proposal internally. The proposal binds the proposed return Fact, any additional declared Fact changes, and any
+State movement that must be judged and established together. It is not Fact. Every applicable interface-level Invariant
+judges each proposed Fact of its declared kind solely from that Fact's complete canonical factual material, while State
+and Transition independently judge the same proposal's movement. Only a proposal that satisfies every required
+obligation may be established as one indivisible change. Only then does the contractual Operation complete successfully
+with its declared result as established Fact. If any required judgment refuses, the Operation fails, no successful
+result crosses the Operation boundary, and no Publication begins. Candidate and established are internal
+contract-machine authority states applied to ordinary host material, not different user-visible types. No material
+becomes a member of the Contract Core except as established Fact.
 
 Classes, records, rows, object graphs, repositories, callbacks, and backend layouts may carry or realize information,
 but they do not own factual meaning.
@@ -123,9 +115,9 @@ constructors, validators, services, persistence hooks, operation implementations
 distinguish information, operation-specific change meaning, and the standing law that every authoritative Fact of one
 declared kind must satisfy.
 
-Without a separate Publication contract, internal Fact material or Fact-derived meaning can leak outward merely
-because an implementation result is easy to return or serialize. That would couple external users to core representation
-and would collapse internal knowledge into public claim.
+Without a separate Publication contract, internal Fact material or Fact-derived meaning can leak outward merely because
+an implementation result is easy to return or serialize. That would couple external users to core representation and
+would collapse internal knowledge into public claim.
 
 Without a separate Output Presentation contract, the external claim shape is easily hidden inside a Publication mapper,
 host constructor, generated return carrier, serializer schema, or transport format. The machine could then know that an
@@ -146,8 +138,7 @@ Everything the contract core contains as material must be available as explicit 
 manifest-selected Input Presentation is admitted, canonicalized where required, lowered into ordinary host material for
 the Operation parameter type, and judged as the corresponding input Fact before the implementation is invoked. The same
 host parameter remains an ordinary Java or Kotlin value; established Fact authority is a contract-machine decision, not
-a
-wrapper or user-visible subtype. An Operation may consume other established Facts only through separate explicit Fact
+a wrapper or user-visible subtype. An Operation may consume other established Facts only through separate explicit Fact
 participation bindings. Core membership does not grant universal Fact access, and no Operation or judgment may use an
 established Fact outside its declared binding.
 
@@ -157,8 +148,7 @@ information. Kontrakt must not require a proprietary wrapper merely to make a va
 The Fact kinds admitted to an enclosing interface's explicit core must be declared through exact source-symbol
 references. Package membership, directory placement, classpath discovery, reflection scanning, or a runtime collection
 may not grant Fact eligibility. Adding a neighboring immutable and behaviorless class must not change the Fact
-vocabulary
-unless an explicit named declaration is edited.
+vocabulary unless an explicit named declaration is edited.
 
 A named data-only host declaration may group those exact Fact surface references once for the enclosing interface. The
 host declaration is frontend evidence only. It is not Fact, a runtime collection, or core material, and its class
@@ -171,9 +161,9 @@ history may not create another factual distinction. Host-language equality and h
 does not consult user-defined equality or hashing when determining Fact sameness. They may neither create a factual
 distinction between identical canonical material nor erase a factual distinction between different canonical material.
 
-Invariant must be declared once at the enclosing interface's explicit core scope beside the Fact vocabulary. It
-protects Fact Integrity by declaring a standing law over one exact Fact kind. An Operation does not select, own, or
-repeat that law. When an internally formed Change Proposal contains proposed material for that Fact kind, Kontrakt must
+Invariant must be declared once at the enclosing interface's explicit core scope beside the Fact vocabulary. It protects
+Fact Integrity by declaring a standing law over one exact Fact kind. An Operation does not select, own, or repeat that
+law. When an internally formed Change Proposal contains proposed material for that Fact kind, Kontrakt must
 automatically judge each proposed Fact before any part of the proposal receives authority.
 
 The user must not declare, receive, or inspect Change Proposal, current-versus-proposed wrappers, overlay views, Fact
@@ -203,8 +193,7 @@ external alternatives. It does not decide whether a claim is authorized and does
 The interface contract separates five surfaces: the manifest-selected external Input Presentation, the ordinary
 Operation parameter whose resolved kind must hold established input Fact authority before invocation, the ordinary
 Operation return whose resolved kind must be established as the successful result Fact before contractual completion,
-the
-operation-local Publication relation selected by the manifest, and the selected Output Presentation Contract that
+the operation-local Publication relation selected by the manifest, and the selected Output Presentation Contract that
 declares the external shape. The user Operation implementation exposes no candidate, proposal, established-Fact wrapper,
 or Kontrakt orchestration. It remains the same ordinary Java or Kotlin implementation when Kontrakt is removed. The
 generated Publication port and its ordinary adapter may remain as retained host-language compatibility artifacts.
@@ -215,9 +204,8 @@ the complete change is established.
 External publication must expose only material formed under the selected Output Presentation Contract, not the internal
 Fact carrier, canonical Fact IR, Change Proposal, Operation Result Material, or backend representation.
 
-A backend may optimize Fact storage, Invariant evaluation, movement checks, the closed Publication realization
-binding, Output Presentation assembly, and emission, but it may not change factual meaning, judgment law, state
-movement,
+A backend may optimize Fact storage, Invariant evaluation, movement checks, the closed Publication realization binding,
+Output Presentation assembly, and emission, but it may not change factual meaning, judgment law, state movement,
 publication permission, declared coordinate dependency, or outward shape. It may devirtualize, inline, specialize, or
 erase the retained port only where equivalent behavior is proven; otherwise the explicit port call remains.
 
@@ -270,26 +258,24 @@ one established Operation return Fact in the selected Publication context
 ```
 
 The declared Fact surface provides the immutable information definition used by the core. It does not describe one
-implementation object, does not require that the information was produced by an Operation, and does not require a
-second user-authored Fact Contract, identity declaration, equality function, or hash function. Its factual meaning may
-include declared provenance, so the Fact that a source made a claim, submitted a request, reported a measurement, or
-produced an observation does not make the claim's content a stronger Fact than the declaration permits.
+implementation object, does not require that the information was produced by an Operation, and does not require a second
+user-authored Fact Contract, identity declaration, equality function, or hash function. Its factual meaning may include
+declared provenance, so the Fact that a source made a claim, submitted a request, reported a measurement, or produced an
+observation does not make the claim's content a stronger Fact than the declaration permits.
 
 The enclosing interface binds one named Fact vocabulary declaration and one named Invariant declaration carrier at
 interface scope. The Fact vocabulary declaration is authored through a restricted Kotlin or Java frontend law: a named,
 uninstantiable type-signature declaration lists exact Fact surface type references, and the interface IDL references
-only
-that declaration symbol through `facts`. The Invariant carrier is also a named, uninstantiable Kotlin or Java
-type-signature
-declaration. It lists exact Invariant declaration symbols, and the interface IDL references only that carrier symbol
-through `invariants`. Facts and Invariants are declared once for the explicit core and are not repeated inside each
-Operation manifest.
+only that declaration symbol through `facts`. The Invariant carrier is also a named, uninstantiable Kotlin or Java
+type-signature declaration. It lists exact Invariant declaration symbols, and the interface IDL references only that
+carrier symbol through `invariants`. Facts and Invariants are declared once for the explicit core and are not repeated
+inside each Operation manifest.
 
 Fact vocabulary membership declares which Fact kinds may be established in that core. It does not grant every Operation,
 Transition, Lowering, or Publication universal participation authority. Each such contract still owns the explicit Fact
 bindings through which its declared roles may participate. Each Invariant declaration instead fixes one exact Fact kind
-through one direct Fact parameter. Kontrakt applies
-that standing law automatically to every proposed establishment of that Fact kind.
+through one direct Fact parameter. Kontrakt applies that standing law automatically to every proposed establishment of
+that Fact kind.
 
 The Invariant Contract declares a standing law over one established Fact kind. The user writes one total Boolean
 relation against one ordinary Fact carrier and does not observe a Change Proposal, another Fact, or a Fact collection.
@@ -302,14 +288,13 @@ information.
 The State and Transition axis governs legal movement and availability. It judges any State movement bound to the same
 Change Proposal under authority separate from Invariant. Before successful Lowering, the proposal's proposed Fact
 changes are not Facts and its proposed movement has not occurred. If any required Invariant or State / Transition
-judgment refuses the proposal, Lowering is refused and no part
-of that proposal is established.
+judgment refuses the proposal, Lowering is refused and no part of that proposal is established.
 
 A Change Proposal is explicit Operation-produced judgment material held at the Boundary of Fact authority, not a new
 contract authority and not core material. The selected Operation's declared bindings must already state the Fact changes
 and any State movement that the proposal carries. The proposal may not invent change meaning through callbacks, hidden
-mutation, runtime discovery, or Invariant evaluation. Indivisible successful Lowering is a contract-observation
-rule: no declared part becomes authoritative unless every required judgment succeeds.
+mutation, runtime discovery, or Invariant evaluation. Indivisible successful Lowering is a contract-observation rule: no
+declared part becomes authoritative unless every required judgment succeeds.
 
 The Publication Contract is the outward-claim authority. Established Facts and Fact authority do not leave the Contract
 Core. Declared Operation Result Material is machine-internal material outside Fact authority and is never Publication
@@ -322,8 +307,7 @@ relations.
 
 The Output Presentation Contract is the outward-shape authority. It is selected separately and declares the closed
 external coordinates, value shapes, absence, and finite alternatives that may carry the authorized claim. It is not
-Fact,
-does not retain Fact authority, and does not decide Publication permission. The compiler resolves the Publication
+Fact, does not retain Fact authority, and does not decide Publication permission. The compiler resolves the Publication
 relations against that shape, generates one retained plain host-language realization port, and requires exactly one
 implementation during machine assembly. The implementation performs physical representation formation only. The
 generated machine owns applicability judgment, coordinate authority, target completeness, Output Presentation assembly,
@@ -394,27 +378,23 @@ Boundary presentation does not create a separate kind of Fact and does not enter
 canonicalized. At the Boundary, its proposed factual meaning must be explicit. Successful Lowering establishes that
 meaning as immutable Fact under the selected Fact declaration and every applicable Invariant and movement obligation. A
 refused Lowering places nothing in the core. Physical bootstrap, restoration, storage, or backend loading may realize
-how
-a Fact is present, but those mechanisms do not create another contract category or own factual meaning.
+how a Fact is present, but those mechanisms do not create another contract category or own factual meaning.
 
 A declared Fact surface provides the coordinates, sorts, distinctions, bounds, provenance, scope, version meaning, and
 other factual values required by that information. It does not require a separate user-authored Fact Contract body. A
-Fact
-declaration may also state which factual coordinate tuples must be unique within that Fact kind. Declared uniqueness is
-not Fact sameness and does not imply automatic replacement: two Facts that differ in any canonical factual value remain
-different Facts, but a resulting Fact world may not contain both when they collide on a declared unique tuple.
+Fact declaration may also state which factual coordinate tuples must be unique within that Fact kind. Declared
+uniqueness is not Fact sameness and does not imply automatic replacement: two Facts that differ in any canonical factual
+value remain different Facts, but a resulting Fact world may not contain both when they collide on a declared unique
+tuple.
 
 Currentness, cardinality across separately established Facts, supersession, grouping, continuity, history, and topology
 are not implicit properties of every Fact and are not synthesized by Invariant. When such meaning is required, it must
-be
-expressed by the applicable Operation, Change, State, or Transition contract, or as explicit factual material wholly
-contained by one Fact. Facts do not reference other Facts.
-A factual coordinate such as `accountId` is factual material only. The same coordinate value appearing in another Fact
-does not create an object relation, lookup obligation, existence obligation, graph edge, or automatic cross-Fact
-binding.
-The declared Fact surface exposes factual coordinates that another contract may explicitly use as operands, but it does
-not list every Invariant that may apply.
-The interface-level Invariant carrier declares those standing laws separately, and each referenced Invariant declaration
+be expressed by the applicable Operation, Change, State, or Transition contract, or as explicit factual material wholly
+contained by one Fact. Facts do not reference other Facts. A factual coordinate such as `accountId` is factual material
+only. The same coordinate value appearing in another Fact does not create an object relation, lookup obligation,
+existence obligation, graph edge, or automatic cross-Fact binding. The declared Fact surface exposes factual coordinates
+that another contract may explicitly use as operands, but it does not list every Invariant that may apply. The
+interface-level Invariant carrier declares those standing laws separately, and each referenced Invariant declaration
 fixes its own factual scope. The declared Fact surface does not define Operation-specific change meaning. The selected
 Operation's explicit bindings declare what Fact changes its Change Proposal carries. Fact is not universally an entity,
 event, identifier, persisted record, or state snapshot.
@@ -434,8 +414,7 @@ they were generated.
 
 The Fact vocabulary for an enclosing interface is also authored through a restricted host declaration rather than a
 package selector, class literal collection, or new IDL body language. A Kotlin frontend may express the declaration as
-an
-uninstantiable type signature:
+an uninstantiable type signature:
 
 ```kotlin
 class AccountFacts private constructor(
@@ -450,8 +429,7 @@ class AccountFacts private constructor(
 
 The constructor is never invoked and the class is not the contract. Its parameter type positions provide exact source
 symbols for the Fact surface declarations. Parameter names, source order, constructor identity, allocation, generated
-JVM
-shape, and host class identity carry no contract meaning. Resolution and Lowering retain only an order-independent,
+JVM shape, and host class identity carry no contract meaning. Resolution and Lowering retain only an order-independent,
 duplicate-free canonical Fact vocabulary. An equivalent restricted Java frontend may provide the same declaration
 material.
 
@@ -493,9 +471,8 @@ interface AccountService {
 `facts AccountFacts` declares the Fact vocabulary eligible for establishment in that interface's explicit core.
 `invariants AccountInvariants` declares the standing Fact laws that govern that same core. Neither declaration is an
 Operation participation list. Every Operation remains limited by its own explicit Fact bindings, while each Invariant is
-limited to the one exact
-Fact kind resolved from its direct Fact parameter and is applied automatically when that Fact kind is proposed for
-establishment.
+limited to the one exact Fact kind resolved from its direct Fact parameter and is applied automatically when that Fact
+kind is proposed for establishment.
 
 Host constructors, methods, custom equality, custom hashing, inheritance, object identity, allocation, and storage
 layout do not enter Fact authority. Two established Facts are the same Fact when their resolved Fact kind and complete
@@ -533,8 +510,7 @@ Kontrakt may derive internal digests, HIDs, intern keys, routing keys, or storag
 comparison, interning, indexing, routing, deduplication, or lookup. These are material-derived representation keys, not
 logical identifiers assigned to Facts. Digest or key equality establishes at most a candidate match. Fact sameness is
 established only by exact equality of the resolved Fact kind and complete canonical factual material under the
-applicable
-contract world. A collision must never merge different Facts.
+applicable contract world. A collision must never merge different Facts.
 
 For Fact authority, the core therefore has set-like semantics:
 
@@ -592,10 +568,9 @@ interface AccountService {
 ```
 
 `invariants AccountInvariants` names one restricted Kotlin or Java source catalog. It is declared once for the core and
-is
-not repeated or selected inside an Operation manifest. An Operation does not own an Invariant and cannot bypass one by
-omitting a slot. Whenever complete canonical candidate material for an Invariant's declared Fact kind may receive Fact
-authority, Kontrakt applies that law automatically.
+is not repeated or selected inside an Operation manifest. An Operation does not own an Invariant and cannot bypass one
+by omitting a slot. Whenever complete canonical candidate material for an Invariant's declared Fact kind may receive
+Fact authority, Kontrakt applies that law automatically.
 
 The catalog is an uninstantiable type-signature declaration that lists exact Invariant declaration symbols:
 
@@ -623,8 +598,8 @@ The source class and method are frontend evidence only. Kontrakt must completely
 and erase its host execution mechanics before ContractImage publication. The class is not an object-oriented contract,
 the method is not runtime authority, and the Fact parameter is not an object reference. The parameter type resolves one
 Fact kind symbol; field access resolves canonical coordinate operands; and the admitted Boolean body lowers to
-domain-neutral Invariant relation IR. Kontrakt does not retain a domain-specific validator class or invoke the
-source method as the contract at runtime.
+domain-neutral Invariant relation IR. Kontrakt does not retain a domain-specific validator class or invoke the source
+method as the contract at runtime.
 
 The canonical ContractImage may therefore retain IR equivalent to:
 
@@ -714,9 +689,9 @@ source entries. The calculation belongs to replaceable realization, and any cont
 explicit operation material and the produced outcome must have an explicit owner elsewhere in the operation pipeline.
 This ADR creates no Result Contract and assigns no such obligation automatically.
 
-When an authored Fact declaration independently includes scalar coordinates with aggregate meaning, those
-coordinates lower as ordinary canonical coordinates of that resolved Fact kind. Any applicable arithmetic law lowers as
-a domain-neutral relation over those coordinate operands. The canonical IR does not retain a domain object, a summary
+When an authored Fact declaration independently includes scalar coordinates with aggregate meaning, those coordinates
+lower as ordinary canonical coordinates of that resolved Fact kind. Any applicable arithmetic law lowers as a
+domain-neutral relation over those coordinate operands. The canonical IR does not retain a domain object, a summary
 object, or an aggregate-specific contract node. It retains only the resolved Fact-kind symbol, the admitted canonical
 coordinate operands, and the lowered relation.
 
@@ -769,8 +744,7 @@ no:
 ```
 
 Invariant bodies may use ordinary Kotlin or Java syntax only when the frontend can completely refine the body into
-total,
-deterministic Kontrakt-owned relation material. The admitted surface includes:
+total, deterministic Kontrakt-owned relation material. The admitted surface includes:
 
 ```text
 direct coordinate access on the declared Fact parameter
@@ -809,11 +783,9 @@ backend index, cache, counter, accumulator, delta, incremental-maintenance state
 ```
 
 The user does not declare or observe a Change Proposal. When an Operation's complete contract pipeline causes Kontrakt
-to
-form one Change Proposal internally, Kontrakt resolves every proposed Fact independently under its declared Fact kind
-and
-canonical factual material. For each proposed Fact, Kontrakt selects every interface-level Invariant declared for that
-exact Fact kind and judges those laws before Fact authority is granted.
+to form one Change Proposal internally, Kontrakt resolves every proposed Fact independently under its declared Fact kind
+and canonical factual material. For each proposed Fact, Kontrakt selects every interface-level Invariant declared for
+that exact Fact kind and judges those laws before Fact authority is granted.
 
 ```text
 one complete internally formed Change Proposal
@@ -831,22 +803,18 @@ one complete internally formed Change Proposal
 
 The diagram names judgment dependencies, not a required execution order. A backend may fuse, reorder, specialize, or
 statically discharge judgments only when the same Fact-local law, same proposal-level atomicity, same refusal
-attribution,
-and deterministic outcome remain unchanged.
+attribution, and deterministic outcome remain unchanged.
 
 Invariant does not define how Facts change, inspect whether an Operation used the correct algorithm, compare
-independently
-established Facts, or repair a refused Fact. It returns only the standing-law judgment over one proposed Fact. State and
-Transition independently judge movement legality over the same internal proposal. Neither authority substitutes for the
-other.
+independently established Facts, or repair a refused Fact. It returns only the standing-law judgment over one proposed
+Fact. State and Transition independently judge movement legality over the same internal proposal. Neither authority
+substitutes for the other.
 
 Contract cycles are not Invariant violations. Recursive contract composition and cyclic contract dependency are
 structurally inadmissible and must be rejected by compiler validation before Lowering. A cyclic State Machine Manifest
-is
-likewise rejected by its own structural validation under the one-way movement law. Kontrakt does not admit a cycle and
-then ask an Invariant to detect it. Factual coordinates such as `fromId` and `toId` do not cause Kontrakt to construct
-an
-implicit graph from separately established Facts.
+is likewise rejected by its own structural validation under the one-way movement law. Kontrakt does not admit a cycle
+and then ask an Invariant to detect it. Factual coordinates such as `fromId` and `toId` do not cause Kontrakt to
+construct an implicit graph from separately established Facts.
 
 At definition time, Kontrakt must:
 
@@ -877,10 +845,8 @@ deterministic backend-specific realization
 ```
 
 No collection scan, group index, aggregate counter, interval structure, history traversal, or graph algorithm is
-required
-or authorized by the Invariant Contract defined here. Any backend machinery used for Fact storage or Fact-owned
-uniqueness
-remains implementation of those separate concerns and may not enlarge Invariant meaning.
+required or authorized by the Invariant Contract defined here. Any backend machinery used for Fact storage or Fact-owned
+uniqueness remains implementation of those separate concerns and may not enlarge Invariant meaning.
 
 Invariant is not a validator drawer and not a constructor guard. Its outcome is visible to the machine and attributable
 to the named standing law that produced it, but the source catalog, declaration classes, host methods, and generated JVM
@@ -921,10 +887,8 @@ manifest presentation slot
 ```
 
 The manifest does not repeat `facts` or `invariants`. Those declarations belong once at the enclosing interface scope.
-It
-does not introduce a `result` slot either. The Operation return type is already the ordinary declared result surface.
-The
-user implementation returns that result exactly as an ordinary Java or Kotlin implementation would and contains no
+It does not introduce a `result` slot either. The Operation return type is already the ordinary declared result surface.
+The user implementation returns that result exactly as an ordinary Java or Kotlin implementation would and contains no
 Kontrakt orchestration. Kontrakt judges the returned material outside the implementation; the contractual Operation does
 not complete successfully until every applicable Fact, Invariant, State, and Transition judgment succeeds and the
 complete change is established. Operation Result Material remains machine-internal and is not Publication source
@@ -983,10 +947,9 @@ realization:
 ```
 
 Applicability may bind only to finite machine material already declared and judged elsewhere. Publication may not
-execute
-an arbitrary exposure predicate, inspect hidden State, query Policy or Governance through a callback, discover Facts,
-perform repository lookup, or infer public meaning. No Fact coordinate becomes public merely because an applicability
-alternative is selected.
+execute an arbitrary exposure predicate, inspect hidden State, query Policy or Governance through a callback, discover
+Facts, perform repository lookup, or infer public meaning. No Fact coordinate becomes public merely because an
+applicability alternative is selected.
 
 The coordinate relation is not assignment, a cast, a parser, a constructor call, or a fallible runtime mapping
 algorithm. It declares permitted factual basis and target dependency. During Publication and Output Presentation
@@ -1009,11 +972,11 @@ source coordinates required for attribution. Source classes, Fact objects, prope
 serializers, and generated carrier layouts do not survive as Publication authority. The explicitly bound implementation
 identity belongs to closed machine realization, not to Publication contract meaning.
 
-Publication authorizes exact target-coordinate material under its declared relations. After applicability succeeds,
-the generated machine invokes the exactly bound Publication realization through the retained port, accepts only the
-declared target-coordinate material, and assembles the separately selected Output Presentation. Established Fact never
-becomes outward material. The adapter does not receive Fact authority, decide applicability, enlarge the source set,
-authorize another target, or own the resulting Output Presentation contract.
+Publication authorizes exact target-coordinate material under its declared relations. After applicability succeeds, the
+generated machine invokes the exactly bound Publication realization through the retained port, accepts only the declared
+target-coordinate material, and assembles the separately selected Output Presentation. Established Fact never becomes
+outward material. The adapter does not receive Fact authority, decide applicability, enlarge the source set, authorize
+another target, or own the resulting Output Presentation contract.
 
 Diagnostic material remains internal and is never a direct Publication source. When an outward diagnostic or failure
 claim is required, its public factual basis must be part of the established Operation return Fact, must receive explicit
@@ -1104,25 +1067,21 @@ Publication target coordinate must exist in the selected presentation. Finite al
 compatible. Failure to close these materials is compiler rejection before ContractImage publication.
 
 Kontrakt lowers the selected declaration into domain-neutral canonical material such as the resolved presentation
-symbol,
-canonical public coordinates, value sorts and distinctions, required and absent coordinates, finite alternatives,
-outward bounds, public version material, and source coordinates required for attribution. Host constructors, default
-arguments, getters, record mechanics, serializers, annotations, reflection, object identity, and class layout do not
-survive as Output Presentation authority.
+symbol, canonical public coordinates, value sorts and distinctions, required and absent coordinates, finite
+alternatives, outward bounds, public version material, and source coordinates required for attribution. Host
+constructors, default arguments, getters, record mechanics, serializers, annotations, reflection, object identity, and
+class layout do not survive as Output Presentation authority.
 
 After Publication has authorized one public claim, the generated machine invokes the exactly bound Publication
 realization, verifies that only declared target-coordinate material was formed, and assembles the canonical outward
-shape
-defined by the Output Presentation Contract. A backend may then encode, buffer, return, or transmit a Kotlin data class,
-Java record, primitive layout, packed bytes, schema carrier, or another deterministic representation. Those mechanisms
-realize transport and storage; they do not define the shape, authorize the claim, or replace the explicit Publication
-port binding.
+shape defined by the Output Presentation Contract. A backend may then encode, buffer, return, or transmit a Kotlin data
+class, Java record, primitive layout, packed bytes, schema carrier, or another deterministic representation. Those
+mechanisms realize transport and storage; they do not define the shape, authorize the claim, or replace the explicit
+Publication port binding.
 
 A published Output Presentation carries only its declared external meaning. If it later enters the machine, it is
-external
-material again and must be selected as Input Presentation and pass Admission, optional Canonicalization, Lowering, and
-all
-applicable judgment. Prior Publication grants no Fact authority on re-entry.
+external material again and must be selected as Input Presentation and pass Admission, optional Canonicalization,
+Lowering, and all applicable judgment. Prior Publication grants no Fact authority on re-entry.
 
 ---
 
@@ -1139,11 +1098,10 @@ explicit coordinates.
 Changing carrier, allocation strategy, field layout, packing, or backend language does not change the Fact when the
 declared information and distinctions remain identical.
 
-The same separation applies to the named Fact vocabulary declaration. A host declaration such as `AccountFacts` is
-only a source coordinate from which exact Fact surface symbols are acquired. It is not a behavior-bearing aggregate, a
+The same separation applies to the named Fact vocabulary declaration. A host declaration such as `AccountFacts` is only
+a source coordinate from which exact Fact surface symbols are acquired. It is not a behavior-bearing aggregate, a
 runtime set, a Fact carrier, or the authority that makes its member types factual. After resolution and Lowering, only
-the
-canonical Fact vocabulary and the canonical factual material of its members remain authoritative.
+the canonical Fact vocabulary and the canonical factual material of its members remain authoritative.
 
 ### 6.2. Fact and Invariant
 
@@ -1152,14 +1110,13 @@ Fact and Invariant must not collapse into one role.
 Fact declares the information that exists, including any Fact-owned uniqueness tuple. Invariant declares the remaining
 standing internal integrity law over one exact Fact kind resolved from its own direct Fact parameter. Facts and
 Invariants are both declared once at the enclosing interface's explicit core scope. A Fact may exist without a
-particular
-Invariant, and no Invariant takes ownership of Fact sameness, declared uniqueness, operation-specific formation, or
-movement.
+particular Invariant, and no Invariant takes ownership of Fact sameness, declared uniqueness, operation-specific
+formation, or movement.
 
 Invariant success does not create Fact meaning, define Fact-change meaning, grant Fact authority, or authorize State
 movement by itself. Invariant refusal means that the proposal would break the selected law and therefore blocks the
-whole
-proposal from establishment under that law. It does not authorize the machine to mutate, repair, or hide information.
+whole proposal from establishment under that law. It does not authorize the machine to mutate, repair, or hide
+information.
 
 ### 6.3. Fact, Operation Return, Publication, and Output Presentation
 
@@ -1191,10 +1148,9 @@ calling Kontrakt or handling a proposal, candidate wrapper, established-Fact wra
 Kontrakt governs the invocation outside that implementation. After the ordinary result is returned, Kontrakt may combine
 its proposed factual meaning with declared Operation Result Material, additional Fact changes, and State movement in one
 internally formed Change Proposal. The returned result does not complete the contractual Operation before every
-applicable
-Invariant and State / Transition obligation succeeds and the whole change is established as one indivisible decision. If
-any required judgment refuses, the Operation fails and the returned material is neither a successful result Fact nor a
-Publication source.
+applicable Invariant and State / Transition obligation succeeds and the whole change is established as one indivisible
+decision. If any required judgment refuses, the Operation fails and the returned material is neither a successful result
+Fact nor a Publication source.
 
 Operation Result Material is never an alternative Publication source. It remains machine-internal even when its shape is
 convenient for serialization or resembles the selected Output Presentation. If information is intended to support an
@@ -1248,11 +1204,9 @@ Fact is information. State is the explicit machine condition governing what move
 declared movement between conditions.
 
 A state label does not own Fact meaning, and a Fact does not secretly carry lifecycle state. One Change Proposal may
-bind
-both declared Fact changes and State movement that must succeed or fail together. Before establishment, the proposed
-Fact
-changes are not Facts and the proposed movement has not occurred. No second host type is required merely to represent
-that difference.
+bind both declared Fact changes and State movement that must succeed or fail together. Before establishment, the
+proposed Fact changes are not Facts and the proposed movement has not occurred. No second host type is required merely
+to represent that difference.
 
 Invariant and State / Transition judge the same Change Proposal under separate authority. Invariant judges Fact
 Integrity. State and Transition judge movement legality. Neither consumes, replaces, or controls the other's judgment.
@@ -1269,15 +1223,13 @@ never reach an executable egress path. A missing, duplicate, or ABI-incompatible
 machine-assembly failure. A declared publication stop instead means that no public-claim alternative is authorized for
 the established operation outcome or other finite machine material to which Publication applicability is bound.
 Publication adapter refusal, undeclared adapter exception, Output Presentation assembly, encoding, allocation,
-transport,
-and I/O failures remain realization failures rather than Publication or Output Presentation judgment.
+transport, and I/O failures remain realization failures rather than Publication or Output Presentation judgment.
 
 Retention decides what diagnostic material may survive. Retained diagnostic material is never a direct Publication
 source. When an outward diagnostic or failure claim is required, its public factual basis must first belong to the
 Operation's established Fact result and must be positively whitelisted by the selected Publication Contract. Failure,
 evidence, retention, movement, and any other contract role may not become an undeclared Fact-egress path. Those
-contracts
-remain distinct from Publication even when one runtime path realizes them together.
+contracts remain distinct from Publication even when one runtime path realizes them together.
 
 ### 6.6. Handoff from ADR-0048
 
@@ -1290,24 +1242,21 @@ Policy, Governance, Budget, and Capacity contracts govern the selected operation
 The Boundary is the controlled passage, not merely a line. Material may be inspected, admitted, canonicalized, bound,
 judged, or refused there, but it carries no Fact authority there. Lowering is the authorized crossing from that Boundary
 into the contract core. It completes only after the selected Fact declaration and every applicable Invariant and
-movement
-obligation have been satisfied. Any defect that should have been stopped by Input, Admission, Canonicalization, or
-factual-meaning binding remains a defect at the inbound Boundary; Invariant is not a catch-all validator for malformed
-external presentation or failed conversion.
+movement obligation have been satisfied. Any defect that should have been stopped by Input, Admission, Canonicalization,
+or factual-meaning binding remains a defect at the inbound Boundary; Invariant is not a catch-all validator for
+malformed external presentation or failed conversion.
 
 The core does not receive the Input object, Canonicalization source, Lowering declaration, mapping table, staging
-object,
-or external framework context. It receives only established immutable Fact meaning produced by successful Lowering and
-judgment. The ordinary host value passed to the Operation parameter is the realization of the established input Fact
-kind
-declared by that parameter under the selected contract world. Without Kontrakt it remains only the same ordinary host
-value; no wrapper, marker, or behavior is added to preserve Fact authority. The Operation may consume other established
-Facts only through separate explicit participation bindings. Internal realization may be divided or fused freely behind
-those obligations, but the user implementation remains ordinary and does not create nested operation manifests or invoke
-Publication, Output Presentation, Lowering, Invariant, or establishment machinery between implementation steps. When the
-ordinary implementation result or other declared changes require factual or State judgment, Kontrakt forms the Change
-Proposal outside the implementation. That proposal remains outside Fact authority and must satisfy every required
-judgment before indivisible establishment and successful Operation completion.
+object, or external framework context. It receives only established immutable Fact meaning produced by successful
+Lowering and judgment. The ordinary host value passed to the Operation parameter is the realization of the established
+input Fact kind declared by that parameter under the selected contract world. Without Kontrakt it remains only the same
+ordinary host value; no wrapper, marker, or behavior is added to preserve Fact authority. The Operation may consume
+other established Facts only through separate explicit participation bindings. Internal realization may be divided or
+fused freely behind those obligations, but the user implementation remains ordinary and does not create nested operation
+manifests or invoke Publication, Output Presentation, Lowering, Invariant, or establishment machinery between
+implementation steps. When the ordinary implementation result or other declared changes require factual or State
+judgment, Kontrakt forms the Change Proposal outside the implementation. That proposal remains outside Fact authority
+and must satisfy every required judgment before indivisible establishment and successful Operation completion.
 
 ### 6.7. Bound Fact Authority
 
@@ -1320,23 +1269,21 @@ through the source-to-target coordinate relations declared in the operation-loca
 separately declares the target outward coordinates. The generated port implementation receives only the source material
 admitted by those relations and gains no broader Fact participation authority. An established Fact may participate only
 through an applicable Operation or judgment binding, as the sole Fact judged by an Invariant declared for its exact
-kind,
-or as that one explicit Publication source. A Fact of another kind carries no authority to participate, even when it
-exists in the same Contract Core or appears relevant to the work being performed.
+kind, or as that one explicit Publication source. A Fact of another kind carries no authority to participate, even when
+it exists in the same Contract Core or appears relevant to the work being performed.
 
 A Fact binding declares participation authority, not ownership of the Fact and not general access to the Contract Core.
 It does not transfer Fact authority out of the core and does not authorize the bound Fact to participate in another
 Operation, judgment, movement, scope, version, governance world, or outward claim.
 
-Each Invariant may judge only the one Fact kind and factual coordinates resolved from its own direct Fact parameter.
-The user declares no proposal binding and receives no other Fact or Fact collection. Kontrakt may not enlarge the
+Each Invariant may judge only the one Fact kind and factual coordinates resolved from its own direct Fact parameter. The
+user declares no proposal binding and receives no other Fact or Fact collection. Kontrakt may not enlarge the
 Invariant's factual scope merely because another Fact appears relevant. Equal coordinate values, matching names,
-matching
-types, or apparent domain relevance create no implicit relation, grouping, or participation authority.
+matching types, or apparent domain relevance create no implicit relation, grouping, or participation authority.
 
-Fact leakage occurs when an established Fact participates in an Operation, judgment, movement, or Publication without
-an applicable explicit binding, when its participation exceeds the role, scope, version, governance, or purpose declared
-by that binding, when an established Fact or its Fact authority leaves the Contract Core, when a source coordinate not
+Fact leakage occurs when an established Fact participates in an Operation, judgment, movement, or Publication without an
+applicable explicit binding, when its participation exceeds the role, scope, version, governance, or purpose declared by
+that binding, when an established Fact or its Fact authority leaves the Contract Core, when a source coordinate not
 named by the Publication relation reaches an Output Presentation, when a public coordinate appears outside the selected
 Output Presentation shape, when a Publication implementation reads or forms undeclared material, or when Fact-derived
 meaning becomes outward material without both an applicable Publication Contract and a selected Output Presentation
@@ -1351,8 +1298,8 @@ Established Facts and Fact authority do not leave the Contract Core.
 
 An Operation may produce declared immutable Operation Result Material during realization. That material remains outside
 Fact authority and is not outward material or Publication source authority. It may contribute to the internal Change
-Proposal by which the ordinary Operation return is judged under its resolved
-Fact kind, but it cannot bypass establishment.
+Proposal by which the ordinary Operation return is judged under its resolved Fact kind, but it cannot bypass
+establishment.
 
 Publication is the only contract authority by which selected meaning from the established Operation return Fact may
 become an authorized public claim. It does not release the Fact, its carrier, canonical Fact IR, Change Proposal, or
@@ -1402,9 +1349,8 @@ encoding, buffering, and emission then realize transport without acquiring Publi
 Authority to produce one Output Presentation does not authorize disclosure through another presentation, Operation
 Result Material, Change Proposal, Diagnostic, Failure, Evidence, Retention record, movement record, or other contract
 role. Internal digest, provenance, relation, scope, version, or other factual distinctions may appear only when their
-exact
-Fact coordinates receive explicit Publication authority and the selected Output Presentation declares compatible public
-coordinates.
+exact Fact coordinates receive explicit Publication authority and the selected Output Presentation declares compatible
+public coordinates.
 
 A published Output Presentation carries only its declared external meaning. If it later returns to the machine, it is
 external material again. Prior publication grants no Fact authority on re-entry and does not bypass Input, Admission,
@@ -1422,10 +1368,10 @@ here. Backend-specific encoding, transport, and storage mechanics remain outside
 
 This ADR does not decide the final host-language authoring body for individual Fact surfaces or every admitted Output
 Presentation shape. It does decide the IDL role structure: `facts` and `invariants` remain interface-scoped
-declarations;
-the Operation parameter and return remain ordinary host-language surfaces whose resolved kinds participate as the
-established input Fact and successful output Fact under Kontrakt; the operation manifest selects the external `input`,
-the outward `publication`, and the following `presentation` role without introducing `fact`, `invariant`, or `result`
+declarations; the Operation parameter and return remain ordinary host-language surfaces whose resolved kinds participate
+as the established input Fact and successful output Fact under Kontrakt; the operation manifest selects the external
+`input`, the outward `publication`, and the following `presentation` role without introducing `fact`, `invariant`, or
+`result`
 slots; and one sibling `publication` declaration inside the same operation owns the exact positive source-to-target
 coordinate relations. Candidate and established authority remain internal contract-machine states and do not appear as
 user-visible types.
@@ -1439,30 +1385,28 @@ Publication does not own that shape, and Output Presentation does not grant Publ
 Publication generates one required retained realization port and requires exactly one implementation binding during
 machine assembly.
 
-This ADR also decides that Operation Result Material is not Publication source authority, malformed coordinate
-relations and unclosed Output Presentation shapes are compile-time rejection, missing or duplicate Publication
-implementations are machine-assembly rejection, and backend encoding and emission remain implementation. The interface
-references one named, restricted Kotlin or Java source declaration through `facts`; that declaration names exact Fact
-surface types and is completely lowered away. The same interface references one named, restricted, uninstantiable Kotlin
-or Java catalog through `invariants`; that catalog names exact Invariant declaration types and is completely lowered
-away. Each referenced Invariant declaration must contain one restricted Boolean law over exactly one Fact kind declared
-by the same Fact vocabulary. Package membership, classpath scanning, class literals, runtime collections, and computed
-discovery are not Fact or Invariant membership authority.
+This ADR also decides that Operation Result Material is not Publication source authority, malformed coordinate relations
+and unclosed Output Presentation shapes are compile-time rejection, missing or duplicate Publication implementations are
+machine-assembly rejection, and backend encoding and emission remain implementation. The interface references one named,
+restricted Kotlin or Java source declaration through `facts`; that declaration names exact Fact surface types and is
+completely lowered away. The same interface references one named, restricted, uninstantiable Kotlin or Java catalog
+through `invariants`; that catalog names exact Invariant declaration types and is completely lowered away. Each
+referenced Invariant declaration must contain one restricted Boolean law over exactly one Fact kind declared by the same
+Fact vocabulary. Package membership, classpath scanning, class literals, runtime collections, and computed discovery are
+not Fact or Invariant membership authority.
 
 It does not freeze the final Java and Kotlin token spelling or every admitted expression in the direct Invariant Boolean
 body. It does fix the authoring boundary: one exact Fact parameter, one total deterministic Boolean judgment, and
-operands
-derived only from that Fact's complete canonical factual material. No Invariant declaration receives another Fact, a
-Fact collection, population, history, graph, proposal, operation-specific material, callback, lambda, hidden lookup,
-mutation, or backend evaluation state. The compiler may not infer cross-Fact contract meaning from shared coordinates or
-arbitrary user behavior.
+operands derived only from that Fact's complete canonical factual material. No Invariant declaration receives another
+Fact, a Fact collection, population, history, graph, proposal, operation-specific material, callback, lambda, hidden
+lookup, mutation, or backend evaluation state. The compiler may not infer cross-Fact contract meaning from shared
+coordinates or arbitrary user behavior.
 
 This ADR does not freeze the exact generated Publication port method decomposition, result carrier, declared
 realization-refusal encoding, or machine-assembly factory API. It does fix their authority boundary: the port is
-generated
-only from the resolved operation-local coordinate relations, its source is restricted to declared Operation return Fact
-coordinates, its result is restricted to declared Output Presentation target-coordinate material, exactly one
-implementation is bound, and the generated source is retained as an ordinary host-language build artifact.
+generated only from the resolved operation-local coordinate relations, its source is restricted to declared Operation
+return Fact coordinates, its result is restricted to declared Output Presentation target-coordinate material, exactly
+one implementation is bound, and the generated source is retained as an ordinary host-language build artifact.
 
 The V1 Output Presentation source boundary remains separate: one operation-specific `presentation` slot selects one
 ordinary closed immutable Kotlin or Java shape declaration, and only its admitted constructor coordinates, record
@@ -1503,32 +1447,29 @@ resources shared among all of them.
 
 Each enclosing interface names its core Fact vocabulary once through `facts` and its standing Fact laws once through
 `invariants`. The referenced restricted host catalogs list the exact Fact surface symbols and exact Invariant
-declaration
-symbols in one place and disappear after canonical Lowering. Operation manifests do not repeat either declaration,
-package placement cannot add a Fact or Invariant implicitly, and vocabulary membership does not grant an Operation or
-judgment undeclared participation authority.
+declaration symbols in one place and disappear after canonical Lowering. Operation manifests do not repeat either
+declaration, package placement cannot add a Fact or Invariant implicitly, and vocabulary membership does not grant an
+Operation or judgment undeclared participation authority.
 
 Fact is explicit immutable information holding authority inside the core, not the ordinary host object that carries an
 Operation parameter or return, an Input Presentation, an Output Presentation, a Change Proposal awaiting judgment, a
 Value Object, a persistence row, or a backend layout. Successful Lowering and establishment are the authorized passage
-by
-which Boundary material receives input Fact authority before implementation invocation. A refused passage places nothing
-in the core and the implementation is not invoked with that material. Existing Facts are already present in the core and
-may participate only through an explicit Fact participation binding. Declared Operation Result Material and ordinary
-implementation return material may contribute to a factual change only through one internally formed Change Proposal,
-and the proposed Facts receive authority only when every required Invariant and State / Transition judgment over that
-same proposal succeeds and the change is established as one indivisible decision. Refusal means Operation failure.
+by which Boundary material receives input Fact authority before implementation invocation. A refused passage places
+nothing in the core and the implementation is not invoked with that material. Existing Facts are already present in the
+core and may participate only through an explicit Fact participation binding. Declared Operation Result Material and
+ordinary implementation return material may contribute to a factual change only through one internally formed Change
+Proposal, and the proposed Facts receive authority only when every required Invariant and State / Transition judgment
+over that same proposal succeeds and the change is established as one indivisible decision. Refusal means Operation
+failure.
 
 Invariant has one visible Fact Integrity judgment role without becoming the source of Fact meaning, Fact-owned
 uniqueness, Fact-change meaning, Operation behavior, or State movement. The user declares one total deterministic
-Boolean
-relation over exactly one Fact and never receives another Fact, a Fact collection, or the Change Proposal. Kontrakt
-applies every interface-level Invariant declared for each proposed Fact's exact kind automatically before that Fact may
-receive authority. State and Transition judge legal movement separately over the same internal Change Proposal.
+Boolean relation over exactly one Fact and never receives another Fact, a Fact collection, or the Change Proposal.
+Kontrakt applies every interface-level Invariant declared for each proposed Fact's exact kind automatically before that
+Fact may receive authority. State and Transition judge legal movement separately over the same internal Change Proposal.
 Publication remains the sole outward-claim authority rather than an automatic side effect of immutability, return
 production, persistence, diagnostics, failure, retention, movement, or serialization. Its operation-local relation
-grants
-that authority only through exact positive source-to-target coordinate bindings. Output Presentation remains the
+grants that authority only through exact positive source-to-target coordinate bindings. Output Presentation remains the
 separate outward-shape authority rather than a hidden part of Publication or a serializer schema. Established Facts and
 Fact authority remain inside the Contract Core. Operation Result Material remains machine-internal material outside Fact
 authority and outside Publication source authority. The ordinary implementation return becomes the successful
@@ -1546,8 +1487,7 @@ allocation, `equals`, or `hashCode`. Repeated establishment of identical canonic
 implicit multiplicity. The core therefore has set-like Fact semantics without requiring a set-shaped backend. Meaningful
 count or occurrence remains explicit factual material rather than an effect of repeated delivery, construction, or
 storage. Core richness comes from explicit Facts, Operation Result Material, laws, judgments, states, and
-transitions—not
-from behavior-bearing classes or semantically authoritative Value Objects.
+transitions—not from behavior-bearing classes or semantically authoritative Value Objects.
 
 Internal Fact authority does not appear in Input or Output Presentations. The interface contract distinguishes the
 manifest-selected external Input Presentation, the ordinary Operation parameter whose resolved kind is established as
@@ -1555,33 +1495,28 @@ input Fact before invocation, the ordinary Operation return whose resolved kind 
 successful completion, the manifest-selected Publication handle, its sibling operation-local relation body, the retained
 generated Publication port, and the selected Output Presentation Contract. The same Java or Kotlin Operation interface
 and implementation remain usable without Kontrakt. The retained Publication port and its ordinary adapter may also
-remain
-as a direct compatibility boundary, but none of those host artifacts then carries Fact, Invariant, movement,
-Publication,
-or Presentation authority beyond ordinary host-language behavior. External users receive only material formed under the
-selected Output Presentation from factual meanings explicitly authorized by Publication, while established Facts and
-their authority remain inside the Contract Core and core factual representation remains replaceable. A published
-presentation that returns to the machine is external material again and receives no implicit Fact authority from its
-origin.
+remain as a direct compatibility boundary, but none of those host artifacts then carries Fact, Invariant, movement,
+Publication, or Presentation authority beyond ordinary host-language behavior. External users receive only material
+formed under the selected Output Presentation from factual meanings explicitly authorized by Publication, while
+established Facts and their authority remain inside the Contract Core and core factual representation remains
+replaceable. A published presentation that returns to the machine is external material again and receives no implicit
+Fact authority from its origin.
 
 The split between ADR-0048 and ADR-0049 keeps optimization honest. The selected operation's Boundary rejects malformed
 or inadmissible material before core work is paid. Lowering crosses that Boundary only after the proposed input Fact
 meaning and selected Fact declaration have been resolved; every applicable Invariant and movement obligation is then
 satisfied before the ordinary host value is passed to the user implementation with established input Fact authority. A
 refused passage places nothing in the core and does not invoke the implementation. The user implementation itself
-remains
-ordinary Java or Kotlin code and may consume other established Facts only through explicit Fact participation bindings
-under the machine-wide contracts fixed for that run. Internal functions and stages remain implementation rather than
-nested operation pipelines. After the implementation returns its ordinary declared result, Kontrakt may form one
-internal
-Change Proposal that binds the proposed result Fact, any additional Fact changes, and State movement to be judged
-together. Invariant evaluates Fact Integrity, while State and Transition independently judge movement legality over that
-same proposal. Only the whole accepted change is established, at which point the contractual Operation completes
-successfully with
-its declared result as established Fact. Any refusal means Operation failure. Publication begins only from that
-established result and then applies its finite applicability judgment and statically closed source-to-target authority
-relations. The generated machine invokes the exactly bound Publication adapter through the retained port, verifies
-target
-coverage, and assembles the selected Output Presentation. Backend encoding and emission cost is paid only after an
-outward claim is authorized, the realization succeeds, and the presentation shape is closed. A backend may devirtualize,
-inline, specialize, or erase the port only where equivalent behavior is proven; otherwise the explicit call remains.
+remains ordinary Java or Kotlin code and may consume other established Facts only through explicit Fact participation
+bindings under the machine-wide contracts fixed for that run. Internal functions and stages remain implementation rather
+than nested operation pipelines. After the implementation returns its ordinary declared result, Kontrakt may form one
+internal Change Proposal that binds the proposed result Fact, any additional Fact changes, and State movement to be
+judged together. Invariant evaluates Fact Integrity, while State and Transition independently judge movement legality
+over that same proposal. Only the whole accepted change is established, at which point the contractual Operation
+completes successfully with its declared result as established Fact. Any refusal means Operation failure. Publication
+begins only from that established result and then applies its finite applicability judgment and statically closed
+source-to-target authority relations. The generated machine invokes the exactly bound Publication adapter through the
+retained port, verifies target coverage, and assembles the selected Output Presentation. Backend encoding and emission
+cost is paid only after an outward claim is authorized, the realization succeeds, and the presentation shape is closed.
+A backend may devirtualize, inline, specialize, or erase the port only where equivalent behavior is proven; otherwise
+the explicit call remains.
