@@ -12,6 +12,7 @@ Proposed
 
 - `docs/the-most-important-thing/what-contract-is.md`
 - `docs/todo/kontrakt-verifier-implementation-plan.md`
+- ADR-0055: Whole Machine, Pipeline Composition, and Contract Concurrency
 - ADR-0054: Policy Contract, Explicit Operating Modes, Self-Contained Contract Worlds, and Interface Binding Boundary
 - ADR-0053: Version Contract, Sovereign Contract Revision History, and Realization Boundary
 - ADR-0052: Capacity Contract, Explicit Safe Operating Memory Limits, and Realization Boundary
@@ -27,8 +28,7 @@ Proposed
 
 ## 1. Context
 
-ADR-0054 separates the declaration of one operating Contract World from the authority that controls which world governs
-the machine.
+ADR-0054 separates the declaration of one operating Contract World from the authority that controls which world governs.
 
 A Policy declares one self-contained operating world for one Interface.
 
@@ -40,39 +40,40 @@ Policy Emergency
     -> Contract World Emergency
 ```
 
-Those worlds can exist as explicit Contract meaning without deciding when either world should govern.
+Those worlds can exist as explicit Contract meaning without deciding which one applies to a governed scope.
 
-Governance owns that larger control problem.
+Governance owns that applicability problem.
 
 ```text
-Declared Policy Worlds
+Declared governed alternatives
         ↓
 Governance
         ↓
-Governing Policy-World arrangement
+one explicit Governance binding
         ↓
-new Contract pipeline flows
+governed scope
 ```
 
-This is broader than the earlier ADR-0054 model. That design treated Governance as an Interface-local owner of named
-Manifests and as a selector that simply received one explicit Manifest identity. The Manifest meaning now belongs to
-Policy, and the final scope of Governance must be able to grow beyond one Interface.
+Policy World control is the current concrete use of Governance, but Governance is not defined as a Policy-only
+mechanism. Its general responsibility is to establish which already-declared governed alternative applies to an explicit
+scope. Governance never defines the alternative it selects.
 
-A real machine may coordinate several Interfaces. A change in operating condition may require different Policy worlds to
-govern different parts of that machine together. World changes may also race with new pipeline flows or with other
-Governance changes.
+The earlier ADR-0054 model placed Governance inside one Interface, so its scope was implicitly the enclosing Interface.
+That assumption no longer holds once Governance may govern a larger machine scope. Scope must therefore become explicit
+Contract meaning rather than being inferred from source nesting.
 
-Those questions are governance questions because they concern how the machine is ruled as a whole, not what one Policy
-world contains.
+ADR-0055 also closes the relevant Whole Machine flow law. Contract pipelines remain independent and one-way. One
+admitted Input establishes one flow, that flow is not rewritten by later external material, and each Contract boundary
+judges only its own declared obligations. Whole Machine composition introduces no Contract-level waiting, joining, or
+synchronization mechanism.
 
-This ADR establishes that separation and the minimum Governance authority. The complete Whole Machine and concurrency
-law remains open, so this ADR stays Proposed.
+This ADR establishes the minimum Governance authority needed above that flow model.
 
 ---
 
 ## 2. Problem
 
-Once several Policy worlds exist, the machine needs authority over their governing status.
+Once more than one governed alternative exists, the machine needs explicit authority over which alternative applies.
 
 A Policy cannot solve that problem itself without becoming recursive.
 
@@ -82,12 +83,8 @@ Policy Normal
     Policy Normal or Policy Emergency governs
 ```
 
-If a Policy selected another Policy, the selected world's meaning and the selection law would collapse into the same
-authority. Policy would stop being one self-contained operating world and become a controller over worlds.
-
-Ordinary runtime configuration is also insufficient. An environment variable, CLI option, feature flag, service lookup,
-deployment setting, or operator action may carry a control request, but those mechanisms do not by themselves explain
-which world is authoritative or how a change relates to flows already in progress.
+Likewise, an environment variable, CLI option, feature flag, service lookup, deployment setting, operator action, or
+runtime object may carry a Governance request, but none becomes Contract Authority merely by carrying that request.
 
 The earlier Governance design solved only the smallest case:
 
@@ -97,33 +94,27 @@ one Interface
     -> one active Contract World
 ```
 
-That was useful, but it made several assumptions that no longer hold.
+ADR-0054 moved world declaration to Policy. ADR-0055 then made Whole Machine composition explicit without turning
+independent Contract pipelines into one communicating runtime graph. Governance therefore does not need to coordinate
+pipeline execution. It needs to establish applicability above those independent flows.
 
-It made Governance own the world declarations themselves. ADR-0054 now assigns that responsibility to Policy.
-
-It also fixed Governance scope to one Interface and deliberately kept trigger logic outside Governance. That is too
-narrow if Governance is the Contract that represents actual machine rule and coordinated operating response.
-
-Whole Machine control may need to establish a coordinated arrangement such as:
+That requires more than Selection alone. Governance must make explicit:
 
 ```text
-Payment
-    -> Policy Emergency
-
-Inventory
-    -> Policy Restricted
-
-Shipping
-    -> Policy Normal
+Decision Authority   who may establish the Governance decision
+Scope                what the decision governs
+Selection            which declared alternative applies
+Binding              that the selection applies to that scope
+Replacement          how an existing binding is explicitly replaced
 ```
 
-The exact law for forming and changing such an arrangement is not yet decided. It depends on later Whole Machine and
-concurrency work. What can be decided now is the authority boundary.
+Validity, singularity, and non-propagation follow as structural laws around those responsibilities.
 
-> Governance is the Contract Authority that controls which declared Policy worlds govern a machine scope and how that
-> governing arrangement changes.
+> Governance is the Contract Authority that establishes which already-declared governed alternative applies to an
+> explicit scope under an explicit decision authority.
 
-Governance does not define those Policy worlds. It governs them.
+Policy World control is one governed subject. Governance does not define Policy contents, calculate machine conditions,
+move State, or implement the mechanism that carries or applies the decision.
 
 ---
 
@@ -136,29 +127,33 @@ Policy
     declares one operating Contract World
 
 Governance
-    controls governing status across declared Policy worlds
+    establishes whether that declared world applies to a governed scope
 ```
 
-Governance must also remain separate from the laws inside those worlds. It may establish that one Policy world governs
-an Interface, but it cannot change the Admission, Budget, Capacity, Machine, Invariant, Publication, or other Contract
+Governance must also remain separate from the laws inside a selected world. It may establish that one Policy world
+applies, but it cannot change the Admission, Budget, Capacity, State Machine, Invariant, Publication, or other Contract
 meaning declared by that Policy.
 
-The final Governance scope must not be hard-coded to one Interface. A useful machine may coordinate several Interfaces,
-and the governing arrangement may need to change across them together.
+Governance scope cannot be derived from source nesting, runtime topology, request contents, implementation identity, or
+backend discovery. If Governance scope is Contract meaning, its identity must be explicit.
 
-At the same time, this ADR must not invent a Whole Machine ontology merely for symmetry. The exact Whole Machine
-identity, collaboration law, distributed boundary, and concurrency semantics remain later work.
+Different Governance scopes have no implicit hierarchy, inheritance, propagation, or override relation. If a selection
+in one scope constrains what may be selected in another scope, that relation must be owned by an explicit Whole Machine
+Contract obligation outside Governance.
 
-A pipeline flow still needs a stable Contract World. Once a flow begins under one established world, a later Governance
-change must not silently rewrite the meaning of that already-running flow.
+A pipeline flow still needs one stable applicable Contract World. A Governance binding may be replaced for later use,
+but an already-established flow keeps the binding under which it began.
+
+Governance must remain separate from the State-Machine axis. Governance changes which declared Contract authority
+applies; it does not establish a State or execute a Transition. The State Machine establishes and moves machine State
+within the applicable Contract World; it does not choose that world.
 
 Governance must not derive authority from backend mechanisms. Lock order, CAS order, scheduler order, process topology,
-service discovery, leader election implementation, configuration storage, and runtime object identity are realization
-concerns unless a later Contract explicitly gives one of their results meaning.
+service discovery, configuration storage, runtime object identity, and similar realization details cannot decide
+Governance meaning.
 
-Determinism remains mandatory. The same canonical Governance meaning and the same explicit governing basis must not
-produce a different authoritative arrangement because of file order, thread timing, hash iteration, or backend
-representation.
+Determinism remains mandatory. The same canonical Governance material must establish the same authoritative binding
+regardless of source acquisition order, thread timing, hash iteration, or backend representation.
 
 ---
 
@@ -166,69 +161,45 @@ representation.
 
 ### 4.1. Governance Authority
 
-Governance is a user-sovereign Contract Authority over governing Policy-world arrangements.
+Governance is a user-sovereign Contract Authority over applicability of already-declared governed alternatives.
 
-Its smallest responsibility is:
-
-```text
-Declared Policy Worlds
-    -> Governance
-    -> Governing Policy-World arrangement
-```
-
-A governing arrangement identifies which already-declared Policy world governs each scope participating in that
-Governance decision.
-
-Governance does not create a Policy, edit a Policy, inherit from a Policy, or substitute individual Contract bindings
-inside one Policy world.
-
-If a required operating world does not exist as declared Policy material, Governance cannot invent it at runtime.
-
-### 4.2. Policy-World Control
-
-Governance controls worlds that Policy has already defined.
+Its minimum structure is:
 
 ```text
-Policy
-    defines World A
-
-Policy
-    defines World B
-
-Governance
-    establishes which world governs
+Decision Authority
+        +
+Explicit Scope
+        +
+Declared Alternatives
+        +
+Explicit Selection
+        ↓
+Governance Binding
 ```
 
-The former Governance-owned Manifest layer is removed. Governance refers to Policy identities and their resolved
-Contract Worlds directly.
+Governance does not create, edit, inherit, synthesize, or partially override the alternative it selects.
 
-A Policy name carries no hidden activation meaning. Names such as `Normal`, `Emergency`, or `Default` do not cause
-Governance to prefer or automatically establish that Policy.
+Policy Worlds are the present primary governed alternatives. Governance is not semantically limited to Policy, but any
+additional governed subject must itself be an explicitly declared Contract alternative. Governance cannot manufacture a
+new subject merely because a backend can switch it.
 
-Likewise, declaration order, newest Version, filesystem order, registry order, or source proximity cannot determine
-governing status.
+### 4.2. Decision Authority
 
-### 4.3. Governance Does Not Redefine a Contract World
+A Governance decision must have an explicit Contract-authoritative basis.
 
-A Governance decision may change which world governs. It may not rewrite the world it selects.
+Governance does not decide who is authoritative by inspecting runtime identity, process ownership, deployment location,
+request origin, operator UI, service registry, or similar implementation facts.
 
-```text
-Allowed
-    governing Policy changes from Normal to Emergency
+The exact frontend representation of Decision Authority remains deferred, but one established Governance binding must be
+attributable to an explicitly declared decision authority.
 
-Not allowed
-    keep Policy Normal identity
-    but silently replace its Budget or Machine binding
-```
+Decision Authority does not mean that Governance calculates whether a machine condition is true. A monitor, operator,
+another Contract result, or another machine may provide explicit material. Governance receives that material through its
+declared boundary; it does not infer authority from the mechanism that produced it.
 
-A different world must already be represented by a different Policy definition or by a new Version of the relevant
-authority under ADR-0053.
+### 4.3. Governance Scope
 
-Governance therefore cannot act as an override layer over Policy.
-
-### 4.4. Governance Scope
-
-The final governed scope is not fixed to one Interface by this ADR.
+Every Governance binding has an explicit governed scope.
 
 The earlier rule:
 
@@ -238,138 +209,140 @@ Governance selection scope = exactly one Interface
 
 is withdrawn.
 
-One-Interface Governance remains a valid small case, but Governance must be capable of a later Whole Machine model in
-which several Interface Policy worlds are controlled together.
+One Interface remains a valid possible scope, but source containment no longer defines the semantic scope. A Governance
+declaration nested inside an Interface, if such syntax is retained for authoring convenience, cannot make that Interface
+the governed scope merely by nesting.
 
-Conceptually:
+The exact allowed scope kinds and their frontend identities remain deferred.
+
+Scope identity must not be inferred from request contents, runtime topology, implementation ownership, process
+placement, or current machine conditions.
+
+### 4.4. Selection
+
+Governance selects only among already-declared governed alternatives.
+
+For Policy World control:
 
 ```text
-Governed machine scope
-    Interface A -> Policy A2
-    Interface B -> Policy B1
-    Interface C -> Policy C4
+Policy
+    defines World A
+
+Policy
+    defines World B
+
+Governance
+    selects A or B for one explicit scope
 ```
 
-This ADR does not yet define `Whole Machine` as a new standalone Contract type, nor does it decide how machine
-membership is authored. Those questions are deferred.
+A Policy name carries no hidden preference or activation meaning. Names such as `Normal`, `Emergency`, or `Default`,
+declaration order, newest Version, filesystem order, registry order, or source proximity cannot choose the selection.
 
-The decision here is only that Governance authority is not semantically limited to one Interface.
+Unknown or unresolved alternatives cannot be selected by fallback or inference.
 
-### 4.5. Governing Arrangement
+### 4.5. Binding
 
-A Governance result establishes a governing arrangement from declared Policy worlds.
-
-For a one-Interface case:
+Selection alone is not enough. Governance establishes a binding between one exact scope and one exact selected
+alternative.
 
 ```text
-Payment
-    -> Policy Emergency
+Scope S
++
+Selection A
+    ↓
+Binding(S, A)
 ```
 
-For a later multi-Interface case:
+Binding is an applicability relation, not machine movement. It does not establish a State and it is not a State
+Transition.
+
+For a Contract pipeline flow, the applicable Governance binding must already be established when that flow begins. The
+flow keeps that binding through its one-way Contract processing.
 
 ```text
-Payment
-    -> Policy Emergency
-
-Inventory
-    -> Policy Restricted
-
-Shipping
-    -> Policy Normal
-```
-
-The exact canonical structure of a multi-Interface arrangement remains open.
-
-A governing arrangement is not itself a replacement Contract World that merges all participating Interface worlds into
-one recursive mega-Contract. Each Policy continues to own the Contract World of its Interface.
-
-Governance owns the relation that says which of those worlds govern together.
-
-### 4.6. Establishment and Change
-
-Governance must make governing status explicit.
-
-When Governance participates, the machine may not infer the governing Policy from its name, count, source order,
-currently loaded implementation, environment label, or last successful flow.
-
-The final form of Governance may receive an explicit control request, judge established machine conditions, or use
-another explicitly declared control basis. This ADR does not yet choose that law.
-
-The earlier rule that Governance must remain a deliberately dumb selector and that all trigger logic must always stay
-outside Governance is therefore withdrawn.
-
-What remains mandatory is the authority boundary:
-
-```text
-observation / operator action / controller result
-    does not become Governance authority by itself
-
-Governance Contract
-    owns the declared law by which governing status is established or changed
-```
-
-If external machinery supplies input to Governance, that input must cross an explicit boundary before it can affect
-Contract authority.
-
-### 4.7. One Pipeline Flow, One Contract World
-
-A Contract pipeline flow is governed by the Contract World established for it when the flow begins.
-
-That world remains the world of the flow until the flow reaches its declared end.
-
-```text
-Flow A begins under Policy Normal
-    Input
-      -> ...
-      -> Output
-
-Governance establishes Policy Emergency for later flows
-
+Binding(S, Normal)
+        ↓
+Flow A begins
+        ↓
 Flow A remains under Normal
-
-Flow B begins under Emergency
-    Input
-      -> ...
-      -> Output
 ```
 
-A Governance change does not rewrite a flow already in progress.
+A later Governance decision cannot rewrite that already-established flow.
 
-This preserves one coherent contract meaning from Input through Output and prevents a single flow from crossing between
-worlds merely because control changed while it was running.
+### 4.6. Replacement
 
-### 4.8. Concurrent Flow Start and Governance Change
-
-The semantic rule is that each flow has one exact governing world.
-
-This ADR does not decide the physical or concurrency protocol that determines which world a flow receives when flow
-start races with a Governance change.
+An established Governance binding may be replaced only by another explicit Governance decision for the same governed
+scope.
 
 ```text
-Governance change
-        ||
-new flow start
+Binding(S, Normal)
+        ↓
+new explicit Governance decision
+        ↓
+Binding(S, Emergency)
 ```
 
-Locking, CAS, epochs, transactions, actor order, message order, scheduler order, or another realization strategy must
-not become hidden Contract meaning.
+Replacement changes applicability for subsequent governed use. It is not a transition of machine State and does not
+mutate the Policy World that was previously selected.
 
-The later concurrency ADR must define the deterministic Contract boundary required to establish one exact result without
-tying that meaning to one backend mechanism.
+Already-established flows keep the binding under which they began. New flows use the binding applicable when they begin.
 
-### 4.9. Runtime Re-Governance
+No threshold crossing, configuration write, runtime restart, newest-loaded value, or backend winner may silently replace
+a Governance binding.
 
-Governance may change the governing arrangement while the system is running.
+### 4.7. Validity and Singularity
 
-That change is not a mutation of Policy meaning. It is a new Governance establishment over already-declared Policy
-worlds.
+An established Governance result must resolve exactly.
 
-The reason for the change may come from operator control, automation, machine conditions, another Contract result, or
-later Whole Machine logic. Which of those forms become direct Governance input remains open.
+For one governed scope at one applicable boundary:
 
-No implementation may silently change the governing arrangement merely because a threshold was crossed or a
-configuration value changed unless the declared Governance law gives that event authority through an explicit boundary.
+```text
+missing binding      -> invalid
+one exact binding    -> valid
+ambiguous bindings   -> invalid
+```
+
+The selected alternative must exist, the scope must resolve explicitly, and the decision authority must be attributable.
+Governance may not repair missing or ambiguous material through a hidden default, fallback, precedence rule, or runtime
+arrival order.
+
+### 4.8. No Implicit Scope Propagation
+
+Governance scopes are independent unless an explicit Contract says otherwise.
+
+```text
+Scope A -> Policy Emergency
+
+Scope B -> ?
+```
+
+The selection for Scope A does not imply, inherit, propagate, override, or constrain the selection for Scope B merely
+because the scopes are structurally related, overlap, or belong to one Whole Machine. Structural containment does not
+make a binding for one scope applicable to another scope. Governance applicability is exact to the declared Scope
+identity.
+
+If a valid selection in Scope A requires, forbids, or constrains a selection in Scope B, that cross-scope relation must
+be declared as an explicit Whole Machine Contract obligation outside Governance. Governance consumes the resulting
+explicit Contract meaning; it does not invent a transitive propagation law.
+
+### 4.9. Governance Does Not Judge Machine Conditions
+
+Governance is not an arbitrary controller language.
+
+It does not calculate conditions such as:
+
+```text
+failure count > N
+latency > threshold
+load > limit
+network is degraded
+state is unsafe
+```
+
+Those judgments belong to the Contract Authority or external mechanism that owns their meaning. Governance may receive
+an explicit result or control request and apply its declared selection law.
+
+The earlier possibility that Governance itself might judge established machine conditions is withdrawn.
 
 ### 4.10. Separation from Policy
 
@@ -380,19 +353,40 @@ Policy
     owns one operating world's complete Contract arrangement
 
 Governance
-    owns which declared operating world or coordinated arrangement governs
+    owns whether a declared governed alternative applies to an explicit scope
 ```
 
-Policy does not activate itself.
+Policy does not select itself.
 
-Governance does not define the contents of a Policy world.
+Governance does not define or partially rewrite Policy contents.
 
-A change in Policy meaning is a Policy revision. A change in which Policy governs is a Governance event or judgment
-under the later completed Governance law.
+A change in Policy meaning is a Policy revision. A change in applicable Policy World is a Governance replacement.
 
-### 4.11. Governance Is Not an Operation-Level Judgment Slot
+### 4.11. Separation from the State-Machine Axis
 
-Governance is not another ordinary pipeline judge beside Admission, Budget, Capacity, Invariant, Machine, or
+Governance and the State Machine are independent Contract axes.
+
+```text
+Governance
+    establishes which Contract World applies
+
+State Machine
+    establishes current State
+    and legal Transitions within that world
+```
+
+Governance does not set the current State, execute a Transition, or use State-machine movement as an implicit side
+effect of selection.
+
+The State Machine does not automatically select or replace Governance because a particular State was established.
+
+If State-related meaning must affect Governance, or Governance-selected meaning must constrain later State-machine
+judgment, that relation must cross an explicit Contract boundary and remain owned by the appropriate Contract
+Authorities. Neither axis acquires the other's authority by implication.
+
+### 4.12. Governance Is Not an Operation-Level Judgment Slot
+
+Governance is not another ordinary pipeline judge beside Admission, Budget, Capacity, Invariant, State Machine, or
 Publication.
 
 The older conceptual form:
@@ -402,58 +396,55 @@ Governance admits the contract world
     -> Permit / Refuse continuation
 ```
 
-is too small and is withdrawn.
+is withdrawn.
 
-Governance establishes the world under which pipeline judgments have meaning. It therefore sits at a control boundary
-around pipeline flows rather than acting as one more local condition inside each flow.
+Governance establishes applicability before the governed flow uses the selected Contract World. A flow may fail to be
+established because required Governance material is invalid, but Governance is not a generic per-operation
+`canContinue` Boolean.
 
-A pipeline may fail because no governing world can be established or because Governance control is invalid, but that
-does not turn Governance into a generic `canContinue` Boolean.
+Earlier ADRs that still present Governance as an ordinary per-interaction refusal authority require reconciliation.
 
-Earlier ADRs that still present Governance as an ordinary per-interaction refusal authority require later
-reconciliation.
+### 4.13. Governance Version
 
-### 4.12. Governance Version
+Governance is version-sensitive under ADR-0053 because Decision Authority, Scope law, Selection law, Binding law, and
+Replacement law are Contract meaning.
 
-Governance is version-sensitive under ADR-0053 because its own control law is Contract meaning.
-
-A Governance Version does not own the Versions of the Policies it may govern.
+A Governance Version does not own the Versions of the governed alternatives.
 
 ```text
 Governance / G2
 
 Payment.Policy.Normal / N4
 Payment.Policy.Emergency / E7
-Inventory.Policy.Restricted / R3
 ```
 
-The Policy Versions identify the worlds. The Governance Version identifies the Governance law that controls their
-governing status.
+The Policy Versions identify the Policy Worlds. The Governance Version identifies the law by which one declared
+alternative becomes applicable to one governed scope.
 
-Changing a Policy does not automatically revise Governance. Changing Governance control meaning does not rewrite Policy
-history.
+Changing a Policy does not automatically revise Governance. Changing Governance meaning does not rewrite Policy history.
 
-The exact canonical Governance definition cannot close until the Governance input basis, Whole Machine scope, and
-coordination law are finalized.
+The exact canonical Governance definition cannot close until the frontend forms of Decision Authority, governed Scope,
+and Replacement are finalized.
 
 ---
 
 ## 5. Frontend and Resolution
 
-### 5.1. Policy References
+### 5.1. Governed Alternative References
 
-Governance refers to declared Policy Authorities, not to former Manifest identities.
+Governance refers to declared Contract Authorities. For current Policy World control, it refers to declared Policy
+Authorities and their resolved Contract Worlds.
 
-Those references must resolve exactly within their Interface authority and Version context.
+Those references must resolve exactly within their authority and Version context.
 
-A runtime string, configuration key, enum ordinal, object reference, generated class, or service-registry entry cannot
-become the identity of a Policy merely because Governance realization uses it.
+A runtime string, configuration key, enum ordinal, object reference, generated class, service-registry entry, or source
+nesting cannot become Contract identity merely because one Governance realization uses it.
 
 The exact `.kontrakt` syntax for Governance is deferred.
 
-### 5.2. No Governance-Owned World Declaration
+### 5.2. No Governance-Owned Alternative Declaration
 
-Governance source must not contain a hidden duplicate of Policy world bindings.
+Governance source must not contain a hidden duplicate of the Contract meaning it governs.
 
 Conceptually wrong:
 
@@ -467,7 +458,7 @@ governance Main {
 }
 ```
 
-The world must already exist as Policy:
+The Policy World must already exist as Policy:
 
 ```text
 policy Emergency {
@@ -479,20 +470,33 @@ governance Main {
 }
 ```
 
-The exact Governance control law remains open, but world definition does not move back into Governance.
+The same law applies to any future governed subject: Governance selects declared alternatives; it does not define them.
 
-### 5.3. Canonical Governance Material
+### 5.3. Scope Is Not Source Containment
+
+The earlier Interface-local Governance syntax cannot remain a semantic shortcut for scope.
+
+If Governance syntax is physically nested inside an Interface, Core, or Whole Machine declaration, that containment may
+be authoring structure only. The governed Scope must still be explicit Contract material.
+
+This prevents source layout from acquiring Governance Authority and allows the same Governance model to apply beyond one
+Interface without hidden scope inference.
+
+### 5.4. Canonical Governance Material
 
 Canonical Governance material must eventually preserve at least:
 
 - Governance Authority identity;
 - Governance Version;
-- the governed scope;
-- exact Policy references that may participate;
-- the declared basis for establishing or changing governing status;
-- and the exact resulting governing arrangement semantics.
+- declared Decision Authority material;
+- exact governed Scope identity;
+- exact governed alternatives;
+- Selection law;
+- Binding law;
+- Replacement law;
+- and the structural validity and singularity requirements.
 
-The last three items are not fully specified by this ADR because Whole Machine and control-law design are incomplete.
+The exact byte-level identity and frontend forms remain deferred.
 
 Backend representation remains replaceable after canonical meaning is fixed.
 
@@ -500,30 +504,39 @@ Backend representation remains replaceable after canonical meaning is fixed.
 
 ## 6. Verification
 
-The final Governance verifier must be able to prove that every Policy reference resolves exactly and that Governance
-cannot construct or modify Policy world contents.
+The final Governance verifier must be able to prove that every governed alternative resolves exactly and that Governance
+cannot construct or modify the contents of that alternative.
 
-It must reject implicit world choice based on declaration order, newest-Version assumptions, name conventions, host
-object identity, backend registry order, or configuration discovery.
+It must verify that every Governance binding has one explicit Scope and one attributable Decision Authority.
 
-For every established pipeline flow, one exact governing Contract World must be attributable. A flow may not silently
-combine parts of two Policy worlds because Governance changed during execution.
+It must reject:
 
-When several Interfaces later participate in one governed machine scope, the compiler must verify the declared
-coordination relation without inventing a compatibility matrix or hidden priority scheme.
+- implicit scope inferred from source nesting, request contents, runtime topology, or implementation identity;
+- implicit selection based on declaration order, newest-Version assumptions, names, backend registry order, or
+  discovery;
+- missing, unknown, or ambiguous governed alternatives;
+- multiple authoritative bindings for the same governed scope at the same applicable boundary;
+- hidden fallback or precedence rules;
+- implicit propagation, inheritance, containment, overlap, or override from one Governance scope to another;
+- Governance rules that attempt to establish State or execute State Transitions;
+- State-Machine rules that implicitly select or replace Governance;
+- and replacement of an already-established flow's binding after that flow begins.
 
-The same canonical Governance inputs and Contract material must produce the same authoritative governing arrangement
-regardless of source acquisition order or backend representation.
+If a relation between two Governance scopes is required, the compiler must verify the explicit Whole Machine Contract
+that owns that relation rather than inventing a Governance compatibility or propagation matrix.
 
-Complete verification requirements for concurrent changes, simultaneous control requests, Whole Machine membership, and
-distributed realization remain deferred because their semantic laws are not yet closed.
+The same canonical Governance material must produce the same authoritative binding regardless of source acquisition
+order or backend representation.
+
+Physical races, synchronization, storage, transport, and distributed realization remain implementation concerns. Their
+realization must preserve the verified Governance meaning but does not extend this Contract Authority.
 
 ---
 
 ## 7. Contract and Implementation Boundary
 
-Governance owns governing status and its declared control law. It does not own the physical mechanism that observes,
-stores, transports, synchronizes, or applies that status.
+Governance owns Decision Authority, Scope, Selection, Binding, and Replacement meaning. It does not own the physical
+mechanism that observes, stores, transports, synchronizes, or applies that meaning.
 
 Possible realization mechanisms include:
 
@@ -540,49 +553,41 @@ replicated state machines
 configuration stores
 ```
 
-None is Governance authority merely because one backend uses it.
+None becomes Governance Authority merely because one backend uses it.
 
-Likewise, an operator UI, CLI, deployment controller, scheduler, monitor, or automation system may request a governance
-change. The request mechanism is not the Governance Contract.
+Likewise, an operator UI, CLI, deployment controller, scheduler, monitor, automation system, or another machine may
+supply Governance input. The carrier or producer is not Governance Authority unless the Contract explicitly gives its
+material that role.
 
-If future Governance uses established machine conditions to decide an operating response, the observation mechanism that
-produced those conditions still does not become Governance authority.
+Governance does not own monitoring, threshold evaluation, health calculation, retry, failover, circuit breaking,
+scheduling, load balancing, or recovery mechanisms. Those concerns may produce explicit material that later enters
+Governance, but their implementation does not become Governance law.
 
-The backend may specialize Policy-world lookup, precompute coordinated arrangements, use compact canonical identities,
-or optimize the change path. Those optimizations must preserve the same canonical Governance meaning.
+The backend may specialize lookup, precompute bindings, use compact canonical identities, or optimize replacement. Those
+optimizations must preserve the same canonical Governance meaning.
 
 ---
 
 ## 8. Relationship to Whole Machine and Concurrency
 
-Governance is the first current Contract whose natural authority may extend across several Interface worlds.
+ADR-0055 establishes the relevant Whole Machine flow boundary.
 
-That exposes work intentionally deferred by the earlier single-Interface design.
+Independent Contract pipelines flow one way. One admitted Input establishes one flow. That flow is not altered by later
+external material, and Whole Machine composition adds no Contract-level waiting, joining, buffering, or synchronization
+mechanism.
 
-The later Whole Machine and concurrency work must decide at least:
+Governance therefore does not coordinate pipeline execution. It establishes which declared Contract authority applies to
+an explicit scope before a governed flow uses that authority.
 
-```text
-what constitutes one governed machine scope
+Several Governance scopes may belong to one Whole Machine, but no scope automatically controls another. Cross-scope
+selection requirements, if any, must be expressed by explicit Whole Machine Contract obligations outside Governance.
 
-how several Interfaces participate in that scope
+A Governance replacement and a new flow may be concurrent in one realization. The Contract rule is only that the flow
+begins under one exact established binding and keeps it. Locking, CAS, epochs, transactions, message order, scheduler
+order, distributed consensus, or another mechanism used to preserve that rule belongs to implementation.
 
-whether a Governance change may establish several Policy worlds as one coordinated result
-
-what material can justify or request that change
-
-how simultaneous Governance changes are resolved
-
-how a flow start is ordered against a Governance change at the Contract level
-
-how already-running flows preserve their original worlds
-
-how local and distributed realization preserve the same meaning
-```
-
-This ADR does not solve those problems by inventing lock, epoch, scheduler, or network semantics.
-
-It establishes that they belong on the Governance side of the architecture rather than being hidden inside Policy or
-implementation.
+Distributed realization may make Governance difficult to implement, but those threats and their responses are not new
+Governance obligations.
 
 ---
 
@@ -594,32 +599,33 @@ This ADR decides:
 
 - Governance and Policy are separate Contract Authorities.
 - Policy declares one self-contained operating Contract World.
-- Governance controls which declared Policy worlds govern a machine scope.
-- Governance no longer owns a semantic Manifest entity.
-- Governance does not redefine Policy world contents.
-- Governance is not semantically restricted to exactly one Interface.
-- one pipeline flow keeps one exact Contract World from its start through its declared end;
-- later Governance change does not rewrite an already-running flow;
+- Governance is not defined as a Policy-only mechanism; it governs applicability of already-declared alternatives.
+- Policy Worlds are the current primary governed alternatives.
+- Governance owns five contract responsibilities: Decision Authority, Scope, Selection, Binding, and Replacement.
+- Governance does not define or partially override the contents of a governed alternative.
+- governed Scope is explicit Contract material and is not inferred from source nesting or runtime facts.
+- Governance scopes have no implicit hierarchy, inheritance, containment, overlap, propagation, or override relation.
+- cross-scope constraints belong to explicit Whole Machine Contract obligations outside Governance.
+- an established Governance result must resolve to one exact binding for its governed scope.
+- Governance does not judge machine conditions; it consumes explicit Governance input.
+- Governance and the State-Machine axis are separate authorities.
+- one pipeline flow keeps the exact Governance binding under which it begins;
+- later Governance replacement does not rewrite an already-established flow;
 - Governance is not an ordinary per-operation `Permit`/`Refuse` judgment slot;
-- implementation mechanisms cannot own governing status merely because they store or transport it;
-- Governance has its own Version when its control law becomes authoritative.
+- implementation mechanisms cannot own Governance meaning merely because they carry or apply it;
+- Governance is version-sensitive under ADR-0053.
 
 ### 9.2. Decisions Not Made Here
 
 This ADR does not yet decide:
 
-- the exact Whole Machine ontology or authoring surface;
-- the exact governed-scope identity;
-- whether Governance control is expressed primarily as explicit command, situation-based law, another declared control
-  basis, or a constrained combination;
-- the exact Governance judgment/result types;
-- how several Interface Policy worlds are established atomically or otherwise coordinated;
-- how simultaneous Governance requests are ordered contractually;
-- the exact concurrency law between Governance change and flow start;
-- the public control API;
-- distributed Governance realization;
+- the exact set of allowed governed Scope kinds;
+- the exact frontend representation of Decision Authority;
+- whether multiple declared authorities may be required to establish one Governance decision;
+- the exact canonical syntax for Selection, Binding, and Replacement;
+- the public Governance control API;
 - failure and diagnostic presentation;
-- canonical identity bytes beyond ADR-0053 authority and Version requirements.
+- or canonical identity bytes beyond ADR-0053 authority and Version requirements.
 
 These questions must be settled before this ADR becomes Accepted.
 
@@ -646,8 +652,8 @@ latest-loaded configuration
 
 A backend may use such mechanisms only to realize a separately declared deterministic Contract law.
 
-The final Governance model must provide enough canonical material to identify one exact governing result for the
-relevant scope.
+The Governance model must provide enough canonical material to identify one exact Decision Authority, Scope, Selection,
+Binding, and Replacement result where each is applicable.
 
 Where the Contract theory intentionally permits several equivalent physical realizations, that freedom belongs to
 implementation rather than to ambiguous Governance meaning.
@@ -658,24 +664,21 @@ implementation rather than to ambiguous Governance meaning.
 
 The following Governance questions remain open:
 
-1. What exact Contract material defines one governed Whole Machine scope?
-2. How are Interface Authorities enrolled in that scope without making runtime topology authoritative?
-3. What is the smallest Governance input: an explicit requested Policy arrangement, established machine conditions, or
-   another closed control form?
-4. When Governance may judge an appropriate response from machine conditions, what finite law is expressive enough
-   without becoming an arbitrary controller language?
-5. How is a multi-Interface Policy-world arrangement represented canonically?
-6. What is the Contract-level rule when a Governance change races with a new flow start?
-7. How are simultaneous Governance changes resolved without giving authority to scheduler or lock order?
-8. How are partial failure and distributed realization handled without allowing one machine part to silently enter an
-   undeclared world?
-9. How is static operation represented when no dynamic Governance participates?
-10. What exact frontend and control APIs expose Governance while keeping transport and implementation outside Contract
-    authority?
+1. Which exact Contract scope kinds may be governed: Interface, Core, Whole Machine, Flow, or another explicitly defined
+   scope?
+2. What canonical material identifies one governed Scope without relying on source containment or runtime topology?
+3. What exact Contract material identifies Decision Authority?
+4. Can one Governance decision require concurrence from more than one declared Decision Authority, and if so, what is
+   the finite canonical form?
+5. What exact frontend form declares Selection, Binding, and Replacement without duplicating governed Contract contents?
+6. What failure and Diagnostic Evidence are established when Governance material is missing, unknown, unauthorized, or
+   ambiguous?
+7. What public control API exposes Governance while keeping transport and realization outside Contract Authority?
+8. What canonical identity material is required beyond ADR-0053 Version identity?
 
-The existence of these open questions is intentional. The previous Interface-local Manifest selector looked complete
-only because it excluded the larger governance problem. This ADR keeps that larger problem visible instead of hiding it
-in implementation.
+Whole Machine execution coordination, pipeline waiting, distributed synchronization, retry, failover, and runtime
+replacement mechanisms are not deferred Governance semantics. They are realization concerns governed by ADR-0055's
+Contract boundary and later backend implementation design.
 
 ---
 
@@ -683,36 +686,42 @@ in implementation.
 
 ### Positive
 
-Policy and Governance now match their distinct machine responsibilities.
+Policy and Governance retain distinct responsibilities.
 
-Policy declares an operating world. Governance governs which declared worlds are in force and how that rule changes
-across the machine.
+Policy declares an operating Contract World. Governance establishes whether an already-declared alternative applies to
+an explicit scope under an explicit Decision Authority.
 
-The model can grow toward Whole Machine control without turning Policy into a recursive selector or duplicating Policy
-bindings inside Governance.
+Governance now has enough structure to describe ordinary machine rule without becoming a general controller: Decision
+Authority, Scope, Selection, Binding, and Replacement are explicit, while condition calculation and realization remain
+outside.
 
-One pipeline flow retains one coherent Contract World even when the machine is re-governed while that flow is running.
+Scope is no longer accidentally tied to Interface source nesting. This allows Governance to remain valid for larger
+machine scopes without making source layout authoritative.
 
-The design also keeps concurrency and distributed control honest. Their realization may be difficult, but the difficulty
-is no longer hidden behind an Interface-local selector that pretends machine governance is only a configuration lookup.
+Cross-scope behavior cannot leak in through implicit hierarchy or propagation. Any required relation between scopes must
+become explicit Whole Machine Contract meaning.
+
+The State-Machine axis remains independent. Governance changes applicability; State Machine changes machine State.
+
+One pipeline flow retains one coherent Governance binding even if that binding is replaced for later flows.
 
 ### Negative
 
-Governance is no longer complete enough to remain Accepted. Whole Machine scope, control input, coordination, and
-concurrency semantics must be designed before the Contract can close.
+Governance remains Proposed because the exact allowed Scope kinds, Decision Authority representation, frontend syntax,
+and canonical Replacement material are still open.
 
-Several earlier ADRs and `What Contract Is` passages still describe Governance as an operation-level refusal authority
-or as the owner of Manifest worlds. Those references must be reconciled after ADR-0054 and ADR-0056 settle.
+Several earlier ADRs and `What Contract Is` passages still describe Governance as an operation-level refusal authority,
+as the owner of Manifest worlds, or as an Interface-local selector. Those references require reconciliation after
+ADR-0056 settles.
 
-The eventual Governance implementation will be more demanding than a simple atomic selected-Manifest field because the
-Contract meaning may span several Interface worlds and concurrent flows.
+The frontend can no longer rely on Interface nesting alone to define Governance scope.
 
 ### Neutral
 
 This ADR does not require a distributed system, control plane, leader election protocol, transaction manager, actor
-system, or any particular synchronization primitive.
+system, monitor, or any particular synchronization primitive.
 
-It also does not require automatic mode switching. Manual control, static establishment, or later automatic Governance
-may all be realizable forms if their Contract meaning is explicit.
+It also does not require automatic mode switching or machine-condition calculation inside Governance.
 
-The key decision is narrower: world definition belongs to Policy; machine rule over those worlds belongs to Governance.
+Policy World control remains the current primary use, but the Governance definition is intentionally broader: it governs
+applicability of explicitly declared alternatives without owning their contents.
