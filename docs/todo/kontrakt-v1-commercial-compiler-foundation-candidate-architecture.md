@@ -14,6 +14,22 @@ The main requirement is stronger than ordinary compiler modularity:
 > Source syntax, compiler scheduling, caches, JVM layout, generated artifacts, and optimization machinery must never
 > become contract meaning.
 
+### Compiler-internal constitutional rule
+
+Kontrakt compiler internals must follow the same separation used by the contract model itself.
+
+- **P0 — Explicit subsystem authority:** every compiler subsystem owns a narrow, declared semantic responsibility.
+- **P0 — Mechanism is replaceable:** threads, queues, caches, storage layout, host objects, libraries, and emission
+  mechanisms cannot define compiler meaning.
+- **P0 — Deterministic phase law:** the same explicit compiler inputs must establish the same semantic outputs
+  regardless of scheduling, allocation, cache state, or discovery order.
+- **P0 — Explicit phase boundaries:** data crossing a compiler phase is validated material, not an implicit
+  shared-object graph.
+- **P0 — Optimization cannot weaken authority:** a transform may change realization shape only when contract-observable
+  meaning is preserved.
+- **P0 — Cache and artifact non-authority:** persisted material is reusable evidence or realization state; it never
+  becomes semantic truth merely because it was stored.
+
 ---
 
 ## 1. Current Kontrakt Baseline
@@ -258,6 +274,23 @@ A single universal IR should be avoided. Modern production compilers preserve ab
 - **POST — Whole-program realization optimization:** only after user-realization optimization is admitted by later
   contract decisions.
 
+## 6.1 Whole-Machine and cross-pipeline composition seam
+
+The exact contract semantics belong to ADR-0055, but V1 compiler structure should not make single-pipeline execution the
+only representable shape.
+
+- **P0 — Composition IR seam:** reserve target-neutral representation for declared relations between
+  Interface/Interaction flows.
+- **P0 — Dependency without transport:** causal dependency, required establishment, ordering, and coexistence must not
+  be encoded as RPC, queue, thread, process, or message-broker mechanics.
+- **P0 — Fan-out/fan-in representability:** the IR must be able to represent one established result feeding multiple
+  flows and multiple established results being required by another flow.
+- **P0 — World provenance across flows:** collaborating material retains exact Contract/Policy/Version provenance.
+- **P1 — Composition verifier:** reject missing, circular, ambiguous, or impossible dependencies according to the final
+  ADR-0055 laws.
+- **P2 — Distributed realization lowering:** monolith, multi-threaded, multi-process, and distributed backends remain
+  alternative realizations of the same composition meaning where the contract does not distinguish them.
+
 ---
 
 # 7. Pass, Analysis, and Rewrite Infrastructure
@@ -286,6 +319,8 @@ A single universal IR should be avoided. Modern production compilers preserve ab
 - **P0 — Rewrite API:** transforms use one controlled mutation/replacement mechanism.
 - **P0 — Rewrite preconditions:** pattern applicability is explicit.
 - **P0 — Meaning-preservation declaration:** optimization rewrites must declare what observable meaning they preserve.
+- **P0 — Contract Preservation Invariant:** every semantics-affecting transform must identify the Contract obligations
+  that must remain unchanged across the transform.
 - **P1 — Pattern registry:** deterministic registration and priority.
 - **P1 — Conversion target:** define legal/illegal operations for progressive lowering.
 - **P1 — Type/value conversion:** target conversion cannot smuggle target layout into semantic types.
@@ -299,6 +334,11 @@ A single universal IR should be avoided. Modern production compilers preserve ab
 # 8. IR Verification and Translation Validation
 
 - **P0 — Verify on phase boundaries:** malformed IR never silently reaches the next compiler layer.
+- **P0 — Contract adherence check:** before optimized/lowered material is published, verify that every source semantic
+  obligation still has an equivalent or stronger realization obligation and that no optimizer-created path can bypass
+  it.
+- **P0 — Pass preservation gate:** a pass that cannot establish its declared Contract Preservation Invariant must fail
+  compilation or be rejected from the production pipeline.
 - **P1 — `verify-each` debug mode:** run verifier after every transformation pass.
 - **P1 — Pre/post lowering checks:** verify that every required semantic obligation has a target realization.
 - **P1 — Capability verification:** backend cannot claim a guarantee it cannot realize.
@@ -308,6 +348,8 @@ A single universal IR should be avoided. Modern production compilers preserve ab
   behavior.
 - **P1 — Translation-validation hook:** transformations may be validated independently of the optimizer that produced
   them.
+- **P1 — Arithmetic and failure-semantics checks:** overflow, narrowing, exceptional paths, evaluation boundaries, and
+  failure attribution must be included where a target transform can change observable behavior.
 - **P2 — Transform proof/evidence channel:** allow future formal or solver-backed validation without redesigning the
   pass API.
 - **POST — Fully formally verified optimizer:** outside V1.
@@ -553,6 +595,22 @@ Only Kontrakt-owned generated machinery is in V1 scope.
 
 Opcode selection belongs at the end of JVM lowering. Opcode names must never appear in Contract IR or semantic lowering.
 
+## 15.5 Realization environment boundary
+
+The compiler must not pretend that arbitrary OS or hardware failures are controllable contract semantics. Environmental
+guarantees cross an explicit backend capability boundary instead.
+
+- **P0 — Explicit environmental inputs:** time, locale, filesystem state, host capabilities, and similar facts influence
+  generated behavior only when admitted as explicit contract/realization inputs.
+- **P0 — Capability-based realization:** the backend states which environmental guarantees it can observe, isolate, or
+  enforce; unsupported required guarantees fail closed.
+- **P0 — No physical-effect authority in semantic IR:** OOM, scheduler behavior, disk failure, RPC, and OS mechanisms do
+  not become Contract Authority merely because the JVM realization encounters them.
+- **P1 — Controlled effect adapters:** where Kontrakt owns an effect boundary, generated adapters provide explicit
+  failure attribution and deterministic contract-visible outcomes.
+- **P2 — Stronger sandbox/isolation backends:** process, container, or hardware isolation may be added as realizations
+  without changing semantic IR.
+
 ---
 
 # 16. Generated API, ABI, and Compatibility
@@ -742,6 +800,13 @@ Full IDE tooling can remain post-V1, but source and semantic infrastructure must
 - **P1 — Crash isolation in daemon mode.**
 - **P1 — stale cache corruption detection.**
 - **P1 — checksum/digest verification for persistent artifacts.**
+- **P0 — Cache trust boundary:** a cache hit may reuse computation but must never bypass schema, identity, dependency,
+  or IR verification required for a clean computation.
+- **P1 — Content/input binding:** persistent entries bind canonical input/dependency fingerprints to the stored result
+  so unrelated or stale material cannot be accepted under another key.
+- **P2 — Authenticated remote cache/provenance:** signatures or authenticated transport are required only when the
+  deployment threat model treats the cache producer/store as an untrusted security boundary; they are not Contract
+  Authority.
 - **P1 — fuzz all binary readers.**
 - **P2 — sandbox external tools if future frontends invoke them.**
 
@@ -762,6 +827,22 @@ Kontrakt has several different kinds of versioning. They must remain separate.
 - **P1 — Explicit compatibility matrix between these versions.**
 - **P1 — deterministic migration or explicit invalidation; never guessed compatibility.**
 - **P1 — golden vectors for every stable binary/canonical protocol.**
+
+## 24.1 Contract data evolution boundary
+
+Contract Version does not imply compatibility and must not automatically synthesize data migration. V1 should
+nevertheless reserve a clean boundary for explicit future migration laws.
+
+- **P0 — Version is identity, not migration:** no compatibility, upgrade, downgrade, or fallback is inferred from
+  Version names or order.
+- **P1 — Explicit migration seam:** if a later Contract Authority defines migration, the compiler can lower a declared
+  source-version → target-version transformation without changing either version's meaning.
+- **P1 — Migration provenance:** migrated material records exact source authority/version, migration law
+  identity/version, and target authority/version.
+- **P1 — Migration verification:** generated bridges are checked like other lowering transformations and cannot bypass
+  Input, Admission, Invariant, or Publication laws.
+- **P2 — Generated schema bridges:** automatic code generation is allowed only from explicit migration material;
+  canonicalization alone must not invent compatibility.
 
 ---
 
@@ -947,14 +1028,18 @@ the strongest candidates for mandatory inclusion:
 25. Layered compiler QA: unit, regression, UI, end-to-end, performance.
 26. Parser/IR/pass/backend fuzzing.
 27. Translation-validation/differential-testing seam.
-28. Contract-derived PBT and fixture engine.
-29. Generated enforcement/reference differential verification.
-30. API/ABI compatibility checks for generated JVM surfaces.
-31. Persistent schema versioning for IR/cache/artifact formats.
-32. Daemon/repeated-run isolation and leak testing.
-33. Clean/single-thread/parallel/repeated-build determinism matrix.
-34. Stable canonical protocols with golden vectors.
-35. Explicit compiler resource budgets and bounded failure behavior.
+28. Contract Preservation Invariant and pass-level contract-adherence gates.
+29. Whole-Machine/cross-pipeline composition IR seam independent of transport/runtime topology.
+30. Cache trust boundary where persistence can never bypass clean semantic verification.
+31. Realization-environment capability boundary rather than implicit OS/hardware semantics.
+32. Contract-derived PBT and fixture engine.
+33. Generated enforcement/reference differential verification.
+34. API/ABI compatibility checks for generated JVM surfaces.
+35. Persistent schema versioning for IR/cache/artifact formats.
+36. Daemon/repeated-run isolation and leak testing.
+37. Clean/single-thread/parallel/repeated-build determinism matrix.
+38. Stable canonical protocols with golden vectors.
+39. Explicit compiler resource budgets and bounded failure behavior.
 
 ---
 
