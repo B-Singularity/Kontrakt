@@ -76,6 +76,14 @@ Software often communicates failure indirectly.
 A function throws. A worker disappears. A value is absent. A Transition does not occur. An output is never emitted.
 Someone outside the failed authority then interprets the observed behavior and assigns meaning to it.
 
+Exceptions make this problem easy to mistake for explicit failure. A `throw` statement explicitly invokes a
+host-language control-transfer mechanism, but the occurrence of that mechanism does not by itself state which machine
+obligation failed. Applications often compensate by giving exception subclasses domain-like names and reconstructing
+their meaning elsewhere.
+
+The result is an implementation vocabulary acting as a failure vocabulary. Changing the exception hierarchy, propagation
+mechanism, or handler structure can then disturb meaning that should have existed before any of those choices.
+
 That approach confuses mechanism with Contract.
 
 ```text
@@ -443,6 +451,22 @@ Output Presentation
 The Failure Contract therefore does not own stack traces, human-readable messages, external status codes, or API payload
 shape.
 
+A stack trace answers how execution reached a point in one realization. It is not a semantic summary of the Failure.
+Shortening a trace to a few frames does not change that distinction.
+
+Because Failure already retains exact attribution, tooling can present a compact semantic view first.
+
+```text
+Failure Summary
+    origin
+    establishing authority
+    failed obligation or realization boundary
+    applicable Contract context
+    stopped scope
+```
+
+Diagnostic Evidence may then be opened when the user needs the observations behind that result.
+
 It also does not decide retention. Diagnostic Retention governs whether permitted evidence remains after the relevant
 processing ends.
 
@@ -517,10 +541,22 @@ Failure response remains separate from the failure result.
 
 Programming languages provide a smaller but useful precedent for explicit failure channels.
 
-Some languages expose ordinary recoverable errors as values or typed result alternatives. Others distinguish those paths
-from unrecoverable program termination.
+Some languages expose ordinary recoverable errors as values or typed result alternatives. Others use exceptions to move
+control away from the point that encountered a problem.
 
-Kontrakt does not adopt any of those language mechanisms as Contract meaning.
+An exception can be explicit as language syntax while still leaving machine Failure meaning implicit. The thrown type
+describes a host-language object and participates in that language's propagation rules. It does not inherently establish
+which Contract obligation, State-Machine movement, or realization boundary failed.
+
+Object-oriented applications often bridge this gap with custom exception hierarchies. Framework code then catches those
+types centrally and maps them into an application error identity, outward response, or diagnostic treatment.
+Interception can perform the same reconstruction without changing the underlying problem.
+
+That technique is useful when the software has no separate Failure authority. Once the Failure meaning already exists as
+Contract material, an exception hierarchy is no longer required to serve as its semantic catalog. A framework may still
+use exceptions or interception as realization machinery, but neither structure owns the Failure.
+
+Kontrakt therefore does not adopt a host-language mechanism as Contract meaning.
 
 ```text
 Result type
@@ -532,10 +568,8 @@ panic
 
 are realization choices.
 
-Their useful lesson is narrower: software can expose unsuccessful outcomes explicitly rather than force callers to infer
-them from hidden control flow.
-
-The Failure Contract applies that lesson at the Contract Machine level without binding the Contract to a host language.
+The useful lesson from programming languages is narrow: unsuccessful outcomes can be carried explicitly. Kontrakt moves
+that explicitness above the host language so that the Failure survives replacement of the mechanism that carries it.
 
 ---
 
@@ -586,10 +620,12 @@ No canonical Failure identity may depend on backend accident.
 
 Host-language exceptions do not define Failure identities.
 
-Transport status values do not define them either.
+Changing an exception superclass or replacing exception propagation with another control mechanism must not change the
+established Failure.
 
-The same prohibition applies to process exit codes, operating-system errors, database driver errors, queue error codes,
-and similar implementation surfaces.
+Transport status values do not define Failure identities either. Process exits, operating-system errors, driver errors,
+and queue responses remain implementation surfaces unless an independent Contract gives some observed fact its own
+authority.
 
 A backend may map those signals into the realization logic that establishes or carries a canonical Failure Result.
 
@@ -615,10 +651,29 @@ Failure does not acquire the judgment authority of the Contract or State Machine
 
 A backend chooses how Failure is represented and transported internally.
 
-One backend may use generated branches and primitive identifiers. Another may use a typed result object. A boundary
-adapter may temporarily map a Failure to a host-language exception where an external API requires that mechanism.
+The compiler already knows the exact point at which a Contract or State-Machine judgment can establish Failure. It may
+therefore lower that path directly instead of recreating the Failure meaning later from a propagated runtime signal.
 
-Those choices are not the Contract.
+A backend can assign canonical Failure identities ahead of execution and carry only the compact identity needed by the
+active path. Several Failure edges may share one generated exit when their later treatment is identical. A richer object
+can be materialized only at a boundary that actually requires it.
+
+Conceptually:
+
+```text
+exact unsuccessful judgment
+    -> canonical Failure identity
+    -> direct Failure continuation
+    -> materialize richer representation only when required
+```
+
+A typed result object is another valid realization. An adapter may map the same Failure to a host-language exception
+where an external API requires that mechanism.
+
+This separation also avoids making ordinary exception machinery mandatory for every Contract Failure. On a backend where
+throwing an exception involves object construction, stack information, and non-local handler dispatch, a direct Failure
+path may be substantially cheaper. That optimization is a consequence of separating meaning from mechanism; performance
+is not the reason the Failure Contract exists.
 
 The backend also owns physical detection mechanisms used to determine that realization can no longer continue. Resource
 probes, transport failures, storage responses, process supervision, and execution monitoring are realization machinery.
