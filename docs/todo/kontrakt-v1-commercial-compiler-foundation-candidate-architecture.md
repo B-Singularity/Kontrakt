@@ -1,4 +1,4 @@
-# Kontrakt V1 — Candidate Commercial Compiler Foundation
+# Kontrakt V1 — Candidate SOTA Commercial Compiler Foundation
 
 ## Status
 
@@ -29,6 +29,30 @@ Kontrakt compiler internals must follow the same separation used by the contract
   meaning is preserved.
 - **P0 — Cache and artifact non-authority:** persisted material is reusable evidence or realization state; it never
   becomes semantic truth merely because it was stored.
+
+### Obligation, evidence, and realization law
+
+Every compiler-internal design must be described in three separate layers:
+
+```text
+explicit obligation
+    -> required evidence / verification
+    -> replaceable realization
+```
+
+- **P0 — Obligation first:** define what the compiler must preserve, establish, reject, bound, or publish before
+  choosing a mechanism.
+- **P0 — Evidence is not authority:** a verifier, translation validator, differential test, solver, golden vector, or
+  proof object establishes confidence or correctness evidence; it does not become semantic authority.
+- **P0 — Realization is replaceable:** dense tables, primitive slabs, persistent structures, MVCC-like storage,
+  copy-on-write, arenas, locks, CAS, Class-File APIs, or other mechanisms may implement an obligation but must not
+  define it.
+- **P0 — Realistic guarantee:** Kontrakt must state only guarantees it can actually establish within its owned boundary.
+  Unsupported environmental or backend guarantees fail closed rather than becoming aspirational semantics.
+- **P0 — Determinism belongs to meaning:** deterministic semantic output is required; a particular thread schedule,
+  memory layout, merge algorithm, or storage mechanism is not.
+
+This rule applies to the compiler itself exactly as Contract Authority separation applies to compiled machines.
 
 ---
 
@@ -256,6 +280,16 @@ A single universal IR should be avoided. Modern production compilers preserve ab
 - **P2 — IR snapshots:** snapshot before/after selected transformations for diagnostics and debugging.
 - **P2 — Semantic equivalence metadata:** reserve a way to state what meaning a transform claims to preserve.
 
+- **P0 — Semantic identity / physical address separation:** stable Contract or IR identity must remain distinct from
+  local table position, local ordinal, arena offset, JVM object reference, and memory address.
+- **P0 — Dense-addressability capability:** published hot-path IR must permit deterministic bounded addressing without
+  requiring its semantic model to be expressed as object-pointer graphs.
+- **P1 — Dense published substrate:** hot published representations should be lowerable to local ordinals,
+  ordinal-indexed tables, SoA/primitive columns, compact stable-identity references, and backend-erased records where
+  profiling justifies them.
+- **P1 — Local ordinal law:** a dense ordinal is valid only inside the frozen/published generation that defines it and
+  must never replace canonical semantic identity.
+
 ---
 
 # 6. Contract Linking and Separate Compilation
@@ -329,6 +363,14 @@ only representable shape.
 - **P2 — Cost-aware rewrite selection:** reserve deterministic cost models.
 - **POST — Equality saturation:** possible later optimizer; do not make V1 dependent on e-graphs.
 
+- **P0 — Pass-specific preservation obligation:** each semantics-affecting pass must state exactly which observable
+  Contract properties it preserves; one generic notion of "equivalence" is not sufficient for all passes.
+- **P0 — Preservation evidence boundary:** the pass contract and the mechanism used to validate it remain separate.
+  Static checking, translation validation, differential execution, exhaustive finite checking, solver-backed reasoning,
+  fuzzing, or golden vectors may be selected according to the obligation.
+- **P0 — No false proof claim:** testing or fuzzing evidence must never be represented as a mathematical proof, and an
+  unprovable property must not be silently assumed.
+
 ---
 
 # 8. IR Verification and Translation Validation
@@ -356,6 +398,39 @@ only representable shape.
 
 Recent compiler-testing research strongly supports combining transformation-targeted fuzzing with translation
 validation. Kontrakt should preserve the structural seam even if V1 uses simpler validators.
+
+## 8.1 Pass-specific preservation evidence
+
+Different transformations preserve different kinds of meaning. The framework should allow each pass family to declare
+the appropriate obligation and evidence rather than forcing every transform through one universal proof system.
+
+Examples:
+
+```text
+canonical transformation
+    -> canonical-equivalence verification
+
+semantic lowering
+    -> declared-obligation preservation
+
+static gate specialization
+    -> differential verification against reference judgment
+
+dead-path elimination
+    -> proof or validation that the removed path is contract-unobservable
+
+JVM numeric lowering
+    -> overflow, narrowing, exceptional-path, and failure-semantics preservation
+
+physical layout transformation
+    -> lookup/result equivalence
+
+parallel execution
+    -> deterministic publication equivalence
+```
+
+The required result is fail-closed preservation of Contract meaning. The chosen validation technology remains
+replaceable compiler implementation.
 
 ---
 
@@ -429,6 +504,24 @@ This is a first-class Kontrakt requirement, not release polish.
 - **P1 — Single-thread vs parallel-build semantic/artifact equivalence test.**
 - **P2 — Diverse build verification in release infrastructure.**
 
+## 10.3 Published semantic generation law
+
+- **P0 — Immutable publication:** once semantic compiler material is sealed and published, later passes must not mutate
+  that published authority in place.
+- **P0 — Private construction is allowed:** a pass may use bounded private mutable builders, arenas, or temporary
+  structures while constructing candidate output.
+- **P0 — Candidate-before-authority:** candidate material becomes visible only after validation, required preservation
+  checks, canonicalization, deterministic merge, seal, and publication.
+- **P0 — Generation identity is not semantic identity:** multiple physical generations may carry the same semantic
+  meaning, and a generation identifier must not become Contract identity.
+- **P0 — Schedule-independent publication:** concurrent candidate construction may vary physically, but publication must
+  not depend on worker, queue, or completion order.
+- **P1 — Replaceable persistence model:** copy-on-write, persistent structures, generation images, delta logs, epoch
+  publication, or MVCC-like storage remain implementation choices behind this law.
+
+V1 should establish this publication contract without defining MVCC, copy-on-write, or any other storage strategy as
+compiler semantics.
+
 ---
 
 # 11. Deterministic Parallel Compilation
@@ -445,6 +538,13 @@ This is a first-class Kontrakt requirement, not release polish.
 - **P1 — Parallel stress tests with randomized scheduling.**
 - **P1 — Repeat-build race detector corpus.**
 - **P2 — Work stealing only behind deterministic publication boundaries.**
+
+- **P0 — Published-state mutation prohibition:** concurrent work may construct private candidate state but must not
+  mutate already-published semantic IR or canonical images.
+- **P0 — Deterministic commit boundary:** concurrent candidate results enter published compiler state only through a
+  validated deterministic merge/seal boundary.
+- **P0 — Concurrency mechanism non-authority:** MVCC, epochs, locks, lock-free structures, work stealing, or persistent
+  collections are realization options and cannot define semantic ordering.
 
 ---
 
@@ -531,6 +631,11 @@ Kontrakt already has stronger resource discipline than many compilers. Preserve 
 - **P1 — Daemon leak tests.**
 - **P1 — ClassLoader and generated-artifact lifetime tests.**
 - **P2 — Off-heap/slab realization only after profiling proves value.**
+
+- **P0 — Semantic identity never equals storage identity:** HID, canonical identity, and stable protocol identity must
+  remain separate from dense ordinal, slab offset, array index, object address, and cache location.
+- **P1 — Published hot-data lowering:** after semantic material is sealed, high-frequency compiler data should be
+  eligible for dense ordinal/table/SoA lowering without changing the semantic model.
 
 ---
 
@@ -1041,6 +1146,11 @@ the strongest candidates for mandatory inclusion:
 38. Stable canonical protocols with golden vectors.
 39. Explicit compiler resource budgets and bounded failure behavior.
 
+40. Semantic identity / physical address separation across every IR and cache boundary.
+41. Immutable published semantic generations with candidate-build → verify → canonical merge → seal → publish
+    discipline.
+42. Pass-specific preservation obligations with replaceable verification evidence mechanisms.
+
 ---
 
 # 28. Strong V1 Skeletons, Full Implementation Later
@@ -1088,6 +1198,12 @@ The following should preferably have a clean structural seam in V1 without forci
 - premature SSA/native backend for arbitrary user realization code.
 - importing MLIR/LLVM/Graal concepts merely because they are fashionable; every imported structure must serve Kontrakt's
   contract and determinism laws.
+- Treating dense ordinals, BLAKE3 HID, SoA tables, slabs, arenas, MVCC, copy-on-write, epochs, locks, CAS, or any other
+  current mechanism as Contract meaning rather than replaceable realization.
+- Using local ordinals, table positions, generation IDs, cache addresses, or physical storage identity as stable
+  semantic identity.
+- Requiring one universal proof technology for every transformation instead of declaring pass-specific preservation
+  obligations and appropriate evidence.
 
 ---
 
