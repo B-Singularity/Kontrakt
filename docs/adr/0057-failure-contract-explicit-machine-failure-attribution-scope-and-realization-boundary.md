@@ -29,129 +29,91 @@ Proposed
 
 ## 1. Context
 
-Failure is part of a real machine.
+Failure is unavoidable in a real machine, so a Contract Machine must be able to state failure as explicitly as it states
+the obligations that were meant to succeed. If failure meaning has to be recovered from implementation behavior, the
+mechanism of failure has already become part of the Contract.
 
-A machine that can refuse input, exhaust an allowance, reject a State movement, or fail to realize an established
-Contract meaning must not leave those endings to be inferred from an exception, missing output, process exit, or another
-implementation accident.
-
-`What Contract Is` therefore requires declared failure. ADR-0046 later included Failure in the closed Contract
-vocabulary as the Contract that declares contract-governed stop results.
-
-The Contract model has since become more precise.
-
-ADR-0045 separates the Contract Pipeline, the State-Machine Pipeline, and the Implementation Pipeline. ADR-0050 gives
-State and Transition an independent movement authority. ADR-0055 preserves independent Contract flows when several Cores
-participate in a Whole Machine. ADR-0056 further distinguishes a valid Governance judgment from failure of a backend to
-realize that judgment.
-
-Failure can therefore arise at three different authority boundaries without those boundaries becoming the same thing.
+`What Contract Is` introduced declared failure for this reason, and ADR-0046 carried it into the Contract vocabulary.
+Later work refined the machine boundaries enough to show that Failure is broader than an ordinary Contract-Pipeline
+result. A Contract judgment can fail, a State-Machine judgment can fail, and an already-established meaning can fail
+during realization.
 
 ```text
 Contract obligation cannot be satisfied
     -> Contract Failure
 
-State-Machine movement cannot be established
+State-Machine result cannot be established
     -> State-Machine Failure
 
-already-established Contract meaning cannot be realized correctly
+established machine meaning cannot be realized correctly
     -> Realization Failure
 ```
 
-These are not three unrelated error systems. They are three origins of machine failure.
+These failures arise from different authorities, but they express the same machine-level fact: required meaning could
+not continue as required.
 
-The earlier treatment of Failure as an ordinary one-dimensional pipeline slot is no longer sufficient. Failure is
-encountered by the Contract axis, the State-Machine axis, and the realization boundary. At the same time, creating three
-independent Failure Contracts would fragment one machine property into unrelated vocabularies.
-
-ADR-0057 therefore treats Failure as one Contract kind whose authority is to make machine failure explicit without
-taking judgment authority away from the part of the machine that actually failed.
+That makes the earlier placement of Failure as an ordinary one-dimensional pipeline slot too narrow. ADR-0057 therefore
+treats Failure as one Contract kind that crosses the relevant authority boundaries while preserving the authority that
+actually established each failure.
 
 ---
 
 ## 2. Problem
 
-Software often communicates failure indirectly.
+Software commonly leaves Failure meaning implicit behind control flow.
 
-A function throws. A worker disappears. A value is absent. A Transition does not occur. An output is never emitted.
-Someone outside the failed authority then interprets the observed behavior and assigns meaning to it.
+An exception exposes an unsuccessful path, but it does not state the exact machine Failure. The failed obligation and
+the authority that owned it still have to be recovered from implementation context.
 
-Exceptions make this problem easy to mistake for explicit failure. A `throw` statement explicitly invokes a
-host-language control-transfer mechanism, but the occurrence of that mechanism does not by itself state which machine
-obligation failed. Applications often compensate by giving exception subclasses domain-like names and reconstructing
-their meaning elsewhere.
+A stack trace does not solve that problem. It may expose thousands of frames while still leaving the developer to infer
+which machine obligation actually failed. More execution history is not a clearer Failure statement, and capturing that
+call history also adds work to the failure path.
 
-The result is an implementation vocabulary acting as a failure vocabulary. Changing the exception hierarchy, propagation
-mechanism, or handler structure can then disturb meaning that should have existed before any of those choices.
+Applications often compensate by giving exception hierarchies domain-like names and interpreting them through
+centralized interception. In failure handling, AOP becomes a workaround for meaning that was never explicit at the
+failure boundary. This repeats the same implementation-leakage problem seen when proxy structure is allowed to stand in
+for Contract meaning.
 
-That approach confuses mechanism with Contract.
-
-```text
-implementation phenomenon
-        ↓
-external interpretation
-        ↓
-assumed failure meaning
-```
-
-Kontrakt requires the opposite direction.
+Kontrakt does not need that reconstruction because the failing authority already knows what it was judging or realizing.
 
 ```text
-authoritative failure condition
+authoritative unsuccessful result
         ↓
-explicit Failure meaning
+explicit Failure
         ↓
 replaceable realization
 ```
 
-Making Failure explicit still leaves several problems.
+Making Failure explicit must not transfer judgment authority into Failure itself. Admission still decides Admission. The
+State Machine still decides legal movement. Realization remains responsible only for whether already-established meaning
+can be carried out correctly.
 
-The authority that discovers an unsatisfied Admission obligation must remain Admission. A Failure Contract must not
-re-run that Admission judgment.
+The resulting Failure must also remain local to the boundary that actually failed. A larger scope fails only when its
+own required meaning can no longer be satisfied.
 
-The same rule applies to State movement. Transition legality belongs to the State-Machine axis rather than to Failure.
-
-Realization creates a different problem. Contract meaning may already be valid while the backend is unable to carry it
-out. Reporting that condition as a Contract Failure would falsely attribute an implementation inability to the user's
-Contract.
-
-Failure scope also matters. A failed component does not automatically mean that its larger machine has failed. A failed
-network stream need not invalidate its connection. One failed build task can prevent dependent work while independent
-work remains meaningful. Failure therefore needs an exact boundary rather than an assumption that every failure is
-global.
-
-A final problem appears when the machine cannot determine the outcome. A remote effect may have happened even though its
-acknowledgement was lost. Calling that condition Failure would claim knowledge the machine does not have.
-
-The Failure Contract must express these distinctions without becoming a recovery engine, diagnostic system, exception
-hierarchy, or runtime lifecycle manager.
+The same discipline applies when the outcome cannot be known. An indeterminate result cannot be called Failure merely
+because the local execution needs a terminal branch.
 
 ---
 
 ## 3. Decision Drivers
 
-Failure must remain explicit even when its realization changes.
+Failure must remain explicit regardless of how the backend realizes it. Its meaning therefore has to exist before any
+implementation mechanism is chosen.
 
-The authority that owns the failed requirement must retain that judgment. Failure may preserve and expose the result,
-but it cannot reinterpret another Contract or State-Machine law.
+The authority that owns an obligation must also own the judgment that it was not satisfied. Failure records that
+unsuccessful result without judging the obligation again.
 
-A Failure Result needs enough information to identify where the failure belongs. It must not depend on stack shape,
-thread identity, transport status, or another backend artifact to recover that meaning later.
+A Failure must identify the exact authority and meaning that failed. This attribution cannot depend on later inspection
+of implementation behavior.
 
-Failure is local before it is global. A higher-level failure exists only when a requirement at that higher boundary is
-also no longer satisfied.
+Failure belongs to the scope in which it is established. Another scope has its own Failure only when its own required
+meaning can no longer be satisfied.
 
-Cause and failure are different. The reason something failed may be useful evidence, but it does not replace the
-contractual statement of what failed.
+The cause of a Failure does not define the Failure itself, and the response that follows it is governed separately.
 
-Response is also separate. Restarting a worker or moving a machine into a safe State happens because of a failure; those
-actions are not the Failure itself.
-
-Kontrakt must not promise an explicit final result after the physical means required to produce that result have ceased
-to exist.
-
-Determinism applies wherever Failure remains under software control. The same authoritative material cannot become a
-different Failure merely because a different worker, arrival order, or runtime representation was used.
+Finally, Failure can be established only while the machine still has enough authority and machinery to state that
+result. Where that remains possible, the same authoritative conditions must establish the same Failure.
 
 ---
 
@@ -161,87 +123,60 @@ different Failure merely because a different worker, arrival order, or runtime r
 
 Kontrakt has one Failure Contract kind.
 
-Contract Failure, State-Machine Failure, and Realization Failure are not independent Contract types. They identify where
-one Failure originates.
+Contract Failure, State-Machine Failure, and Realization Failure identify the authority boundary from which Failure
+originates. They do not create three unrelated Failure systems.
 
-The Failure Contract does not become a superior authority over the Contracts or State Machines from which failures
-arise.
-
-Its responsibility begins after the relevant authority has established the fact that its required progression cannot
-continue, or at a realization boundary where the backend can still establish that an already-authorized meaning cannot
-be realized correctly.
-
-The Failure Contract owns the explicit meaning of that ending.
+Failure does not judge another authority again. It receives an unsuccessful authoritative result and establishes the
+explicit machine result that corresponds to it.
 
 ```text
 source authority
-    establishes its own unsuccessful judgment
+    establishes its own unsuccessful result
 
-Failure Contract
-    establishes the explicit Failure Result
-    without changing that judgment
+Failure
+    preserves that result as explicit machine meaning
 ```
 
-A Failure Result must not be synthesized from the mere observation that execution stopped.
+A stopped execution is not enough by itself. Failure exists only when an authority can establish what failed.
 
 ### 4.2. Meaning of Failure
 
-Failure means that a required machine obligation or an already-authorized machine action cannot continue as required at
-an exact authority boundary.
+Failure exists only in relation to required machine meaning. A machine cannot fail in the abstract; an authority must
+first require a specific meaning.
 
-Failure is therefore relational. Something specific had to be required before its failure can have meaning.
+Failure is established when that authority can no longer establish the required meaning as required.
 
 ```text
-required obligation or authorized action
+required meaning
         ↓
-cannot continue as required
+not established as required
         ↓
 Failure
 ```
 
-The Failure Contract does not define a machine as failed merely because an unusual event occurred.
+Complete loss is not required. A machine may still produce a result and nevertheless fail when that result falls outside
+the meaning permitted by the owning authority.
 
-A Fault may exist without causing Failure. An internal error may be contained. A temporary disturbance may leave every
-required obligation satisfied.
-
-Failure begins only where a required meaning is no longer established.
+Reliability and safety engineering use the same boundary: an internal fault is not yet a failure when the required
+function remains available. Kontrakt applies that principle to machine meaning. An implementation disturbance therefore
+remains an implementation fact until it prevents an authoritative requirement from being satisfied.
 
 ### 4.3. Contract Failure
 
 A Contract Failure originates when a Contract Authority establishes that one of its required obligations is not
 satisfied.
 
-The owning Contract remains the judge.
+The owning Contract remains the judge. If Admission determines that required material is absent, Failure preserves that
+Admission result rather than performing another Admission judgment.
 
-```text
-Admission
-    judges Admission
-
-Budget
-    judges Budget
-
-Invariant
-    judges Invariant
-```
-
-Failure does not repeat those judgments.
-
-If Admission determines that required material is absent, the Failure Result is attributed to that Admission judgment.
-If Budget determines that the applicable allowance has been exhausted, the Failure Result belongs to that Budget
-application.
-
-A Contract Failure stops the Contract progression that requires the failed obligation.
-
-This does not make every other flow fail. ADR-0055 continues to govern the independence of admitted flows.
+The Contract progression that depended on the failed obligation cannot continue. Another admitted flow remains governed
+by its own Contracts.
 
 ### 4.4. State-Machine Failure
 
-A State-Machine Failure originates in the State-Machine axis.
+A State-Machine Failure originates when the State-Machine axis cannot establish its required result.
 
-A requested movement may be refused because the declared source condition does not permit the selected Transition. The
-machine may also be unable to establish one unambiguous current State under the applicable State-Machine law.
-
-Those failures remain State-Machine failures because the failed meaning concerns legal movement or State establishment.
+A refused Transition is therefore a State-Machine Failure because the failed meaning concerns legal movement.
 
 ```text
 established State
@@ -255,97 +190,70 @@ movement refused
 State-Machine Failure
 ```
 
-The refusal does not invent a new State.
+The refusal does not create a replacement State. The established State remains authoritative until a valid Transition
+changes it.
 
-The previously established State remains authoritative unless another valid Transition establishes a replacement.
-
-A physical inability to perform a movement that the State-Machine Contract already authorized is not a State-Machine
-Failure. It belongs to Realization Failure.
+If the State-Machine judgment succeeds but the backend cannot carry out the authorized movement, the failure belongs to
+realization instead.
 
 ### 4.5. Realization Failure
 
-A Realization Failure exists when Contract or State-Machine meaning has already been established but Kontrakt or its
-backend cannot correctly realize that meaning.
+A Realization Failure exists when authoritative machine meaning has already been established but the backend cannot
+realize it correctly.
 
 ```text
-authoritative Contract result
+authoritative machine meaning
         ↓
 backend realization
         ↓
-required realization cannot be completed correctly
+required realization cannot complete correctly
         ↓
 Realization Failure
 ```
 
-This boundary prevents implementation inability from being rewritten as Contract meaning.
+This prevents implementation inability from being rewritten as a Contract judgment.
 
-If Governance establishes that an Emergency Policy World must apply and the backend cannot publish that World correctly,
-the Governance decision remains valid. The failure belongs to realization.
+If Governance establishes that an Emergency Policy World must apply and the backend cannot realize that binding, the
+Governance decision remains authoritative. The Failure belongs to realization.
 
-If Publication authorizes a claim but the backend cannot carry the already-authorized claim through its required
-realization boundary, Publication has not retroactively refused the claim.
+The backend may not substitute a different semantic result simply because that result is easier to realize.
 
-A backend may not select another semantically different result merely because that result is easier to realize.
+### 4.6. Failure Mode
 
-### 4.6. Failure Mode Is Not Failure Cause
+Once Failure is established, the owning authority may distinguish the way in which its required meaning was not
+established. That distinction is the Failure Mode.
 
-Failure needs to preserve how a required function failed when that distinction is part of the authoritative result.
+Kontrakt does not impose a universal mode taxonomy. If an Admission Contract distinguishes missing required material
+from a present value that fails its condition, that distinction already belongs to Admission and Failure preserves it.
 
-A required input may be missing. A declared condition may instead be present and unsatisfied. A movement can be refused
-without any material being absent. An authorized realization may begin correctly and later become impossible.
+Engineering failure analysis separates mode from cause because they answer different questions. The mode states how the
+required function failed, while the cause explains why it happened. A backend fault may therefore explain a Realization
+Failure without becoming its identity.
 
-Those are different Failure modes when the owning authority distinguishes them.
-
-Kontrakt does not impose one universal engineering taxonomy on every Contract.
-
-An exact judgment coordinate may already carry the complete mode distinction. When it does, the Failure Contract must
-not require the user to declare the same distinction again under another name.
-
-A Failure cause is different.
-
-The exhausted operating-system resource that caused a backend write to fail may help explain a Realization Failure, but
-that resource event is not the contractual identity of the failed realization. Such explanatory material belongs to
-Diagnostic Evidence unless another Contract independently gives it authority.
-
-The same separation applies to Failure effect. A local Failure may later cause a larger machine requirement to fail, but
-the later Failure is established at the later boundary rather than copied from the first one.
+The effect of a Failure is separate again. If another authority later loses its own required meaning because of that
+effect, it establishes a new Failure of its own.
 
 ### 4.7. Exact Attribution
 
 Every Failure Result has an exact origin.
 
-Attribution identifies the authority that established the unsuccessful result and the obligation or realization boundary
-that could not continue.
-
-Where Contract World or Version changes the meaning of that authority, the applicable identities are retained as part of
-the Failure attribution.
-
-Attribution must survive lowering and backend replacement. It cannot be reconstructed from a stack trace, object
-identity, package name, or physical worker.
-
-Conceptually:
+Attribution identifies the authority that established the unsuccessful result and the boundary that could not continue.
+Contract context is retained when it changes that meaning.
 
 ```text
 Failure Result
     origin
-    exact authority coordinate
-    exact failed obligation or realization boundary
-    applicable Contract identity when required
+    exact authority
+    failed meaning
+    applicable Contract context
+    stopped scope
 ```
 
-The canonical representation is deferred, but loss of this information is not permitted.
+The canonical representation is deferred, but backend evidence cannot replace this attribution.
 
-### 4.8. Failure Scope, Containment, and Propagation
+### 4.8. Scope and Containment
 
-Failure applies first to the exact progression that depended on the failed requirement.
-
-A Contract Failure inside one admitted flow terminates that flow's contractual continuation. It does not reach sideways
-into another admitted flow.
-
-A State-Machine Failure terminates the requested movement. It does not make unrelated Operations invalid.
-
-A Realization Failure invalidates the realization that required the failed boundary. Whether a larger machine has also
-failed depends on the Contracts of that larger boundary.
+A Failure belongs to the authority and scope in which it is established.
 
 ```text
 local Failure
@@ -353,457 +261,242 @@ local Failure
 higher-scope Failure
 ```
 
-A higher scope fails only when its own required function can no longer be satisfied.
+This follows the containment principle used in high-reliability engineering: a local failure does not become system
+failure while the larger required function remains satisfied.
 
-This rule makes containment explicit. Redundancy, alternate physical paths, replicated workers, or another backend
-strategy may prevent a local implementation failure from becoming a higher-level Failure. Those mechanisms do not erase
-the local Failure that occurred.
+Another authority therefore does not inherit Failure. If it is active and later cannot satisfy its own required meaning,
+it establishes a new Failure at its own boundary.
 
-Propagation is therefore not an automatic chain of copied Failure flags.
-
-Each boundary establishes its own Failure when its own obligation is no longer satisfied.
+A boundary that is never entered has no Failure merely because earlier work ended.
 
 ### 4.9. Failure Is Not an Indeterminate Outcome
 
-Failure requires enough authority to establish that the required progression did not succeed as required.
+Failure requires enough authority to know that the required result did not occur as required.
 
-Some distributed realizations cannot establish that fact.
-
-A request may have produced an irreversible remote effect immediately before communication was lost. The caller may know
-that it no longer has a usable result while still being unable to know whether the effect occurred.
+Distributed realization can lose that knowledge. A remote effect may have happened even when its acknowledgement is no
+longer available.
 
 ```text
-effect definitely did not occur
-    -> may establish Failure
+outcome is known to have failed
+    -> Failure may be established
 
-effect may or may not have occurred
+outcome cannot be known
     -> Indeterminate Outcome
 ```
 
-Kontrakt must not convert uncertainty into Failure merely to obtain a binary result.
+Kontrakt must not manufacture certainty to force a binary result.
 
-The exact Contract authority and canonical representation for an Indeterminate Outcome are deferred. ADR-0057 decides
-only that established Failure and unknown outcome are semantically different.
+The authority and canonical form of an Indeterminate Outcome are deferred. This ADR decides only that it is not Failure.
 
 ### 4.10. Failure Does Not Own Recovery
 
-Failure declares the failed machine result. It does not own the mechanism chosen afterward.
+Failure states the unsuccessful machine result. It does not decide what happens afterward.
 
-A retry does not alter the Failure that caused the first attempt to stop. A replacement worker does not make the earlier
-Realization Failure disappear.
+A retry does not rewrite the earlier Failure. If a Contract-visible response follows, the Contract that owns that
+response must authorize it.
 
-Likewise, moving equipment into a safe condition is a response to Failure rather than the definition of Failure. In
-Kontrakt, an explicit machine-State response must still satisfy the State-Machine Contract that governs that movement.
+Backend recovery remains implementation when it has no independent Contract meaning.
 
-Governance may establish another Policy World only when its own Decision Law authorizes that change. Failure cannot
-silently change Governance meaning.
+### 4.11. Physical Authority Limit
 
-Automatic restart, backoff, failover, replay, rollback, and compensation remain backend concerns unless another explicit
-Contract gives some resulting behavior independent Contract meaning.
+Failure can be established only while enough machinery remains to establish it.
 
-### 4.11. Failure Has a Physical Authority Limit
-
-A running machine can establish Failure only while sufficient machinery remains available to establish it.
-
-The process may disappear before it can produce a final result. Power may be lost. The physical execution substrate may
-cease to exist.
-
-The destroyed execution does not perform one last Failure judgment.
+If the execution substrate disappears before a final result exists, the destroyed execution does not perform one last
+Failure judgment.
 
 ```text
-software still has authority and machinery
-    -> explicit Failure may be established
+software can still establish the result
+    -> explicit Failure may be produced
 
-machinery required to establish the result no longer exists
+the required machinery no longer exists
     -> no fictional final Failure
 ```
 
-Contracts may require durable material to have been established before such a loss. A later execution may inspect that
-material under its own Contracts.
+A later execution may reason from durable material that survived the loss, but that later reasoning belongs to the later
+execution.
 
-Those are obligations of living executions on either side of the physical loss. They are not a final action attributed
-to an execution that no longer exists.
+### 4.12. Failure and Diagnostic Meaning
 
-### 4.12. Failure, Diagnostic Evidence, Publication, and Output Presentation
+Failure says what failed. Diagnostic Evidence explains the established result.
 
-Failure establishes the authoritative unsuccessful result.
+That distinction changes how failure should be presented. A stack trace is execution evidence, so shortening it does not
+produce a semantic Failure summary.
 
-Diagnostic Evidence explains or supports that result without becoming its authority.
-
-Publication decides whether a Failure or a fact derived from it may become an outward claim.
-
-Output Presentation declares the outward shape through which an authorized claim appears.
-
-```text
-Failure
-    what failed and where
-
-Diagnostic Evidence
-    evidence that explains the established result
-
-Publication
-    whether an outward claim is authorized
-
-Output Presentation
-    the shape of that authorized claim
-```
-
-The Failure Contract therefore does not own stack traces, human-readable messages, external status codes, or API payload
-shape.
-
-A stack trace answers how execution reached a point in one realization. It is not a semantic summary of the Failure.
-Shortening a trace to a few frames does not change that distinction.
-
-Because Failure already retains exact attribution, tooling can present a compact semantic view first.
+Because Failure already carries exact attribution, tooling can show the machine meaning first.
 
 ```text
 Failure Summary
     origin
-    establishing authority
-    failed obligation or realization boundary
-    applicable Contract context
+    authority
+    failed meaning
+    Contract context
     stopped scope
 ```
 
-Diagnostic Evidence may then be opened when the user needs the observations behind that result.
+Diagnostic Evidence can remain behind that summary until it is actually needed.
 
-It also does not decide retention. Diagnostic Retention governs whether permitted evidence remains after the relevant
-processing ends.
-
----
-
-## 5. Engineering Model
-
-### 5.1. Reliability and Aerospace Engineering
-
-Reliability engineering distinguishes the failed function from the reason that initiated the failure and from the effect
-seen by a larger system.
-
-This distinction is useful to Kontrakt because a backend resource fault can cause a Realization Failure without becoming
-the identity of that Failure.
-
-Failure analysis also examines the level at which an effect becomes visible. A local equipment failure may be contained
-while the mission-level function remains available.
-
-ADR-0057 adopts that boundary principle rather than importing a hardware failure taxonomy.
-
-The exact requirement that stopped remains authoritative. A larger failure must be established separately when the
-larger machine can no longer fulfill its own purpose.
-
-### 5.2. Nuclear and Industrial Safety Engineering
-
-Safety-critical engineering cannot assume that one component failure is identical to failure of the protected system.
-
-The system may contain that failure and preserve its safety function.
-
-A safe shutdown is also not the same event as the failure that required it. One is the unsuccessful condition; the other
-is a controlled machine response.
-
-Kontrakt follows the same separation.
-
-```text
-Failure
-    establishes what could not continue
-
-State Machine or other explicit Contract
-    establishes the permitted response
-```
-
-A backend may realize the response through hardware, process control, or distributed coordination. Those mechanisms do
-not change which authority owns the response meaning.
-
-### 5.3. Network and Distributed Systems
-
-Network protocols provide a useful example of Failure scope.
-
-A failure confined to one logical stream does not necessarily invalidate the whole connection. A transport failure also
-has different authority from an application-level refusal.
-
-Distributed execution adds another distinction. Loss of a response does not prove that the remote effect failed.
-
-ADR-0057 therefore treats both Failure scope and outcome certainty as semantic concerns rather than as properties to be
-guessed from a connection closing.
-
-### 5.4. Build and Infrastructure Systems
-
-Build systems routinely distinguish a failed unit of work from the larger build.
-
-Dependent work may become impossible while unrelated work can remain valid. Infrastructure systems likewise separate a
-container failure from the policy that decides whether the container is restarted.
-
-These systems demonstrate two boundaries used by ADR-0057.
-
-Failure propagation follows actual dependency rather than physical proximity.
-
-Failure response remains separate from the failure result.
-
-### 5.5. Programming Languages
-
-Programming languages provide a smaller but useful precedent for explicit failure channels.
-
-Some languages expose ordinary recoverable errors as values or typed result alternatives. Others use exceptions to move
-control away from the point that encountered a problem.
-
-An exception can be explicit as language syntax while still leaving machine Failure meaning implicit. The thrown type
-describes a host-language object and participates in that language's propagation rules. It does not inherently establish
-which Contract obligation, State-Machine movement, or realization boundary failed.
-
-Object-oriented applications often bridge this gap with custom exception hierarchies. Framework code then catches those
-types centrally and maps them into an application error identity, outward response, or diagnostic treatment.
-Interception can perform the same reconstruction without changing the underlying problem.
-
-That technique is useful when the software has no separate Failure authority. Once the Failure meaning already exists as
-Contract material, an exception hierarchy is no longer required to serve as its semantic catalog. A framework may still
-use exceptions or interception as realization machinery, but neither structure owns the Failure.
-
-Kontrakt therefore does not adopt a host-language mechanism as Contract meaning.
-
-```text
-Result type
-error value
-error union
-exception
-panic
-```
-
-are realization choices.
-
-The useful lesson from programming languages is narrow: unsuccessful outcomes can be carried explicitly. Kontrakt moves
-that explicitness above the host language so that the Failure survives replacement of the mechanism that carries it.
+Publication still decides whether Failure may become an outward claim, while Output Presentation defines the shape of
+that claim. Retention remains separate.
 
 ---
 
-## 6. Frontend and Canonical Failure Material
+## 5. Frontend and Canonical Failure Material
 
-### 6.1. Authoring Location Is Not Decided Here
+### 5.1. Authoring Location Is Deferred
 
-ADR-0057 decides the semantic authority of Failure before deciding its user API.
+ADR-0057 decides Failure authority before its user API.
 
-Failure is one Contract kind, but this does not imply one project-global source declaration.
+One Failure Contract kind does not imply one project-global declaration, and it does not require every Interface to
+repeat the same binding.
 
-It also does not imply that every Interface must repeat the same Failure binding.
+The frontend may eventually use explicit Failure declarations or derive identity from an unsuccessful judgment. This ADR
+does not choose between those forms.
 
-The frontend must eventually express enough material to make all required Failure distinctions explicit without turning
-filesystem location, Interface nesting, package structure, or generated code into Failure authority.
+Filesystem placement cannot become Failure authority.
 
-The following remain candidates for later frontend work:
+### 5.2. Canonical Material
 
-```text
-explicit named Failure declarations
+Canonical Failure material must preserve the origin and exact authority of the result.
 
-Failure identities derived from exact unsuccessful judgment coordinates
+A meaningful distinction already owned by the source authority must survive canonicalization without being redeclared as
+a parallel Failure taxonomy.
 
-a shared Failure declaration referenced by several Contract surfaces
+Scope must identify the progression that can no longer continue. Contract context participates only where it changes the
+meaning.
 
-compiler-established intrinsic Failure structure with user-declared modes
-```
+Backend behavior cannot participate in canonical Failure identity.
 
-This ADR chooses none of them.
+### 5.3. Backend Error Vocabulary Is Not Contract Authority
 
-### 6.2. Canonical Material Requirements
+A host-language exception does not define Failure.
 
-The canonical Failure representation must preserve the distinction between the three Failure origins.
+Replacing exception-based control flow with another realization must leave Failure meaning unchanged.
 
-It must identify the exact authority position to which the Failure belongs.
-
-If the owning authority defines several semantically distinct unsuccessful outcomes, the canonical form must preserve
-that distinction without requiring a redundant second taxonomy.
-
-Scope must be sufficient to determine which contractual progression can no longer continue.
-
-Contract World and Version participate when they are necessary to identify the meaning of the failed Contract
-application.
-
-No canonical Failure identity may depend on backend accident.
-
-### 6.3. No Backend Error Vocabulary as Contract Authority
-
-Host-language exceptions do not define Failure identities.
-
-Changing an exception superclass or replacing exception propagation with another control mechanism must not change the
-established Failure.
-
-Transport status values do not define Failure identities either. Process exits, operating-system errors, driver errors,
-and queue responses remain implementation surfaces unless an independent Contract gives some observed fact its own
-authority.
-
-A backend may map those signals into the realization logic that establishes or carries a canonical Failure Result.
-
-The mapping remains replaceable.
+A backend error signal may help establish a Realization Failure, but the signal itself does not become the Contract
+identity.
 
 ---
 
-## 7. Contract and Implementation Boundary
+## 6. Contract and Implementation Boundary
 
-### 7.1. Contract Meaning
+### 6.1. Contract Meaning
 
-The Failure Contract owns the fact that an unsuccessful machine result is explicit.
+The Failure Contract makes an unsuccessful machine result explicit while preserving its origin and scope.
 
-It owns the distinction between Contract Failure, State-Machine Failure, and Realization Failure.
+It does not take over the judgment that produced that result.
 
-It preserves exact attribution and local scope.
+It also refuses to represent an unknown outcome as definite Failure.
 
-It also prevents uncertain outcome from being mislabeled as established Failure.
+### 6.2. Realization
 
-Failure does not acquire the judgment authority of the Contract or State Machine that produced the unsuccessful result.
+Kontrakt's backend already knows where Contract Failure can arise because each 1D Contract produces its own unsuccessful
+judgment.
 
-### 7.2. Realization
+The mirrored realization plan provides the same advantage for implementation failure. A backend node already knows which
+Contract meaning it is realizing, so a Realization Failure does not need to be reconstructed from a later exception
+path.
 
-A backend chooses how Failure is represented and transported internally.
-
-The compiler already knows the exact point at which a Contract or State-Machine judgment can establish Failure. It may
-therefore lower that path directly instead of recreating the Failure meaning later from a propagated runtime signal.
-
-A backend can assign canonical Failure identities ahead of execution and carry only the compact identity needed by the
-active path. Several Failure edges may share one generated exit when their later treatment is identical. A richer object
-can be materialized only at a boundary that actually requires it.
-
-Conceptually:
+That knowledge gives the compiler a direct Failure lowering path.
 
 ```text
 exact unsuccessful judgment
     -> canonical Failure identity
     -> direct Failure continuation
-    -> materialize richer representation only when required
+    -> richer material only when required
 ```
 
-A typed result object is another valid realization. An adapter may map the same Failure to a host-language exception
-where an external API requires that mechanism.
+The runtime representation therefore does not need to be a Failure object. A compact identity can remain sufficient
+until a boundary requires richer material.
 
-This separation also avoids making ordinary exception machinery mandatory for every Contract Failure. On a backend where
-throwing an exception involves object construction, stack information, and non-local handler dispatch, a direct Failure
-path may be substantially cheaper. That optimization is a consequence of separating meaning from mechanism; performance
-is not the reason the Failure Contract exists.
+An adapter can still translate the Failure into an exception when an external API requires one.
 
-The backend also owns physical detection mechanisms used to determine that realization can no longer continue. Resource
-probes, transport failures, storage responses, process supervision, and execution monitoring are realization machinery.
+This separation also permits a cheaper realization than ordinary exception machinery when the backend can use direct
+control flow instead. That is a consequence of explicit Failure meaning, not the reason Failure exists.
 
-Where that machinery can still establish a Realization Failure, it must map the event to the canonical Failure meaning
-without inventing a different Contract result.
+Realization itself may still fail. When the backend can establish that fact, the resulting Failure must remain
+attributed to the Contract meaning that was being realized.
 
-### 7.3. Recovery Mechanisms
+### 6.3. Recovery
 
-Retry and restart remain outside Failure authority.
+Recovery remains outside Failure authority.
 
-So do physical failover, replay, compensation, rollback, circuit breaking, worker replacement, and process
-reconstruction.
+If recovery starts a new Contract interaction, that interaction begins under its own applicable Contracts. Later success
+does not rewrite the earlier Failure.
 
-If one of those mechanisms produces a new Contract interaction, that interaction begins under its own applicable
-Contracts.
+### 6.4. Diagnostics
 
-A Failure Result from the earlier interaction is not rewritten simply because later recovery succeeds.
+Diagnostic machinery may observe Failure without defining it.
 
-### 7.4. Diagnostics and Operational Observation
-
-Logs and traces may observe a Failure.
-
-They are not the Failure.
-
-Stack frames, host exceptions, node identities, timestamps, journal positions, and runtime metrics may become Diagnostic
-Evidence when permitted.
-
-Failure identity must remain valid if every one of those mechanisms is replaced.
+A stack trace can become Diagnostic Evidence when useful, but Failure identity must remain complete without it.
 
 ---
 
-## 8. Verification and Determinism
+## 7. Verification and Determinism
 
-The compiler must reject a Failure declaration that depends on runtime object identity, physical execution order, or
-another backend-only coordinate for its Contract meaning.
+The compiler must reject Failure meaning that depends on backend-only coordinates.
 
-An exact Failure identity cannot name an authority that does not exist in the selected Contract World.
+A Failure identity must resolve to an authority that exists in the selected Contract World. Ambiguous attribution is
+invalid rather than resolved by implementation order.
 
-Failure attribution must resolve to one exact source authority. Ambiguous attribution is not repaired by selecting the
-first candidate encountered during compilation or execution.
+A Realization Failure cannot be rewritten as a Contract Failure for presentation convenience.
 
-The backend must preserve the established Failure origin. A Realization Failure cannot be rewritten as an Admission,
-Budget, State-Machine, Governance, or Publication Failure because such a label would be more convenient for an external
-API.
+Implementation topology cannot widen Failure scope.
 
-Failure scope cannot expand from implementation topology alone.
+The same authoritative material reaching the same unsuccessful judgment must establish the same contract-visible
+Failure.
 
-If two independent Contract flows are running and one fails, scheduler placement or shared worker ownership does not
-make the other flow contractually failed.
+Verification cannot require a destroyed execution to produce a final Failure, and it cannot turn an indeterminate
+outcome into certainty.
 
-When the same canonical material reaches the same authoritative unsuccessful judgment, the contract-visible Failure
-Result must remain the same regardless of thread timing or acquisition order.
-
-Verification cannot require an execution that has physically ceased to produce a final Failure Result.
-
-It also cannot convert an indeterminate remote outcome into definite Failure merely because the backend needs a terminal
-local branch.
-
-An invalid Failure definition is rejected during compilation or Contract resolution. That rejection is not itself a
-runtime Failure Result of the machine being defined.
+A compile-time rejection of an invalid Failure definition is not a runtime Failure Result of the machine being defined.
 
 ---
 
-## 9. Deferred Decisions
+## 8. Deferred Decisions
 
 The following questions remain open:
 
-1. What exact source form declares Failure and where that declaration is bound without creating a project-global
-   authority or repetitive Interface boilerplate?
-2. Does every user-visible Failure receive an explicit name, or can exact unsuccessful judgment coordinates provide
-   canonical Failure identity directly?
-3. Which Failure distinctions require explicit mode material beyond the owning judgment coordinate?
-4. What exact canonical Scope material is needed for Contract, State-Machine, and Realization Failure?
-5. What Contract authority owns an Indeterminate Outcome, and how is that result represented without pretending it is
-   either success or Failure?
-6. Which Failure material may Publication authorize for external use, and which parts remain internal attribution?
-7. What Diagnostic Evidence may be attached to each Failure origin without making evidence authoritative?
-8. What Retention rules apply to Failure-related evidence after the originating processing has ended?
-9. What finite material may a backend use to establish Realization Failure without exposing host exceptions or runtime
-   infrastructure as Contract Authority?
-10. Which passages in `What Contract Is`, ADR-0046, ADR-0047, ADR-0049, and ADR-0050 must be revised after this model is
-    accepted, especially earlier language that treats Failure as an ordinary one-dimensional pipeline slot or describes
-    declared failure only from the Admission perspective?
+1. What source form declares Failure without creating redundant Interface boilerplate?
+2. Which unsuccessful distinctions need explicit Failure material beyond the owning judgment coordinate?
+3. What canonical material is required to represent Failure scope?
+4. What authority owns an Indeterminate Outcome?
+5. How may Publication and Diagnostic Contracts consume Failure without acquiring its authority?
+6. What backend material is sufficient to establish Realization Failure without promoting implementation errors into
+   Contract meaning?
+7. Which earlier ADRs must change once this model is accepted?
 
-These questions do not reopen the distinction between failure meaning and implementation mechanism.
+These questions do not reopen the separation between Failure meaning and realization mechanism.
 
 ---
 
-## 10. Consequences
+## 9. Consequences
 
 ### Positive
 
-Failure becomes an explicit machine result rather than an inference drawn from backend behavior.
+Failure becomes explicit machine meaning rather than an inference from backend behavior.
 
-Contract, State-Machine, and Realization failures retain their own authority boundaries while sharing one Failure
-Contract vocabulary.
+Its origin remains attributable after lowering, while local failure stays local until another boundary establishes a
+larger Failure.
 
-A failure remains attributable after lowering because its identity no longer depends on the mechanism that carried it.
+Diagnostic tooling can present semantic Failure before runtime evidence.
 
-Local failure does not silently become whole-machine failure. Larger scopes fail only when their own required meaning
-can no longer be established.
-
-Diagnostic Evidence can explain a failure without becoming the source of its authority.
-
-Recovery mechanisms remain replaceable because Failure does not prescribe retry, restart, failover, rollback, or another
-backend response.
-
-The model can represent the difference between established Failure and an outcome that cannot be known.
+Because the compiler already knows Failure meaning, unsuccessful paths can be lowered without mandatory exception
+machinery.
 
 ### Negative
 
-Failure is no longer a simple ordinary slot in the one-dimensional Contract Pipeline catalog. ADRs and planning
-documents that assume that placement must be revised.
+Failure no longer fits the earlier model of an ordinary one-dimensional Contract-Pipeline slot, so documents that assume
+that placement must be revised.
 
-The frontend cannot be finalized until Failure naming, binding, and canonical identity are decided.
+The frontend cannot be finalized until the authoring form is decided.
 
-Realization Failure requires a disciplined mapping from backend events into contract-visible meaning without promoting
-backend error vocabularies into Contract Authority.
-
-Distributed execution exposes cases where the machine cannot honestly produce either success or Failure. That requires a
-separate treatment of indeterminate outcomes.
+Distributed realization also needs a separate treatment for outcomes that cannot honestly be classified as success or
+Failure.
 
 ### Neutral
 
-Failure being one Contract kind does not require one global declaration.
+One Failure Contract kind does not imply one global source declaration.
 
-This ADR does not determine how failures appear to external callers.
+This ADR does not prescribe how external callers receive Failure.
 
-It does not prescribe an exception model, result type, process supervision strategy, or transport protocol.
-
-The existing backend may already contain useful failure-detection mechanisms. Their continued use depends on whether
-they can realize this Contract without owning its meaning.
+Existing backend mechanisms remain valid only when they realize this Contract without owning its meaning.
