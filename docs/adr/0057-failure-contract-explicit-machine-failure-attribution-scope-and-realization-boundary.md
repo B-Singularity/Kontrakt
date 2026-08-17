@@ -113,16 +113,15 @@ Failure must remain local to the source and machine boundary in which it is esta
 scope system over the Contract Pipeline, State-Machine axis, or Implementation Pipeline, and another boundary does not
 inherit the Failure merely because its later processing depends on earlier work.
 
-Failure is ordinary Contract Machine flow. Within a governed Contract or State-Machine judgment boundary, discovering
-one Failure does not abandon other authoritative judgments that are still valid and reachable without requiring failed
-meaning. The governed boundary completes those judgments, preserves every established judgment result, and only then
-decides whether normal processing may proceed. If one or more Failures were established, the next normal 1D processing
-is not entered.
+Failure is ordinary Contract Machine flow. Within a Contract or State-Machine judgment boundary, discovering one Failure
+does not abandon other authoritative judgments that are still valid and reachable without requiring failed meaning. The
+boundary completes those judgments, preserves every established judgment result, and only then decides whether normal
+processing may proceed. If one or more Failures were established, the next normal 1D processing is not entered.
 
 This rule follows Contract Authority rather than implementation location. A Budget, Capacity, Admission, Invariant, or
-other governed judgment remains subject to this rule even when Kontrakt backend code performs the physical evaluation.
-It does not require unrelated compiler machinery or arbitrary realization work to continue merely to collect more
-implementation failures.
+other Contract-visible judgment remains subject to this rule even when Kontrakt backend code performs the physical
+evaluation. It does not require unrelated compiler machinery or arbitrary realization work to continue merely to collect
+more implementation failures.
 
 Failure does not require termination of a thread, worker, process, coroutine, or another realization resource. Cause,
 Diagnostic Evidence, recovery, and later effects remain separate authorities. A crash is also separate because abrupt
@@ -159,7 +158,7 @@ do not create three unrelated Failure systems.
 
 Failure does not judge another authority again. Contract and State-Machine sources provide their own unsuccessful
 judgments, while a realization source establishes that the required realization of already-established meaning did not
-complete. Failure preserves the resulting unsuccessful machine meaning.
+complete. Failure preserves the exact failure meaning established by that source.
 
 ```text
 exact source
@@ -203,41 +202,50 @@ backend must preserve the following obligations whenever Failure applies.
 
 #### 4.3.1. Establishment
 
-When an authority establishes that its required meaning was not satisfied, Failure must be established explicitly.
+When a Contract or State-Machine authority establishes that its required meaning was not satisfied, Failure must be
+established explicitly.
 
 An authoritative unsuccessful judgment cannot disappear into a log entry, exception path, sentinel value, `null`,
 backend status, or another implementation behavior without remaining explicit Failure meaning.
 
-The establishment of one Failure does not by itself complete the current governed judgment boundary. Boundary completion
-follows the governed judgment-completion law below.
+When a realization point establishes that the required realization of already-established machine meaning did not
+complete, Realization Failure must likewise be established explicitly. The realization does not rejudge the established
+Contract or State-Machine meaning.
 
-#### 4.3.2. Exactness and Judgment Cardinality
+The establishment of one Contract or State-Machine Failure does not by itself complete the current judgment boundary.
+Boundary completion follows the Boundary Judgment Completion law below.
 
-Failure preserves the exact unsuccessful judgment established by its source.
+#### 4.3.2. Exactness and Failure Cardinality
 
-Each authoritative unsuccessful judgment establishes exactly one semantic Failure. Multiple distinct authoritative
-unsuccessful judgments remain distinct Failures, including when they are established within the same governed judgment
-boundary.
+Failure preserves the exact failure meaning established by its source.
 
-Failure does not create a second taxonomy, combine distinct unsuccessful judgments into a vague error bucket, or split
-one unsuccessful judgment into Failure-owned subcategories.
+For a Contract or State-Machine source, that failure meaning is the exact unsuccessful judgment established by the
+owning authority. Each such authoritative unsuccessful judgment establishes exactly one semantic Failure.
 
-The owning authority determines each judgment. Failure preserves the identity and cardinality of the judgments that were
-actually established.
+For a Realization source, that failure meaning is the exact required realization established not to have completed. Each
+exact required realization established not to have completed establishes exactly one semantic Failure.
 
-#### 4.3.3. Governed Boundary Judgment Completion
+Multiple distinct failure meanings remain distinct Failures, including when multiple unsuccessful Contract or
+State-Machine judgments are established within the same judgment boundary.
 
-A governed Contract or State-Machine judgment boundary must complete every authoritative judgment that is declared for
-that boundary and remains valid and reachable without requiring meaning that has already failed.
+Failure does not create a second taxonomy, combine distinct failure meanings into a vague error bucket, or split one
+source-established failure meaning into Failure-owned subcategories.
+
+The source determines the failure meaning. Failure preserves its identity and cardinality exactly.
+
+#### 4.3.3. Boundary Judgment Completion
+
+A Contract or State-Machine judgment boundary must complete every authoritative judgment that is declared for that
+boundary and remains valid and reachable without requiring meaning that has already failed.
 
 The rule follows authority, not execution location. A judgment does not become Kontrakt-internal merely because
 generated or backend code evaluates it. Budget, Capacity, Admission, Invariant, Policy-controlled judgment, and other
-Contract-visible judgments remain governed machine judgments.
+Contract-visible judgments remain Contract Machine judgments.
 
 Discovering one Failure cannot suppress another such judgment merely because the first Failure was discovered earlier.
 
 ```text
-current governed judgment boundary
+current judgment boundary
     ↓
 complete every valid and reachable authoritative judgment
     ↓
@@ -255,19 +263,20 @@ deterministically fix all established Failures
 Judgments that require failed meaning and therefore are not reachable are not executed and do not produce speculative
 Failures.
 
-The complete membership and canonical order of the Failures established in the governed boundary must not depend on
-discovery order, worker completion order, parallel scheduling, or another implementation accident.
+The complete membership and canonical order of the Failures established in the boundary must not depend on discovery
+order, worker completion order, parallel scheduling, or another implementation accident.
 
-Where governed judgments share accounting, admission, or another ordering-sensitive resource, the semantic evaluation
-order must come from the canonical governed plan rather than runtime scheduling. Where judgments are independent, a
-backend may evaluate them in parallel only if the same complete result set and canonical order are preserved.
+Where Contract or State-Machine judgments share accounting, admission, or another ordering-sensitive resource, the
+semantic evaluation order must come from the canonical machine plan rather than runtime scheduling. Where judgments are
+independent, a backend may evaluate them in parallel only if the same complete result set and canonical order are
+preserved.
 
-The Failures established in one governed boundary do not form a new aggregate Failure identity. Every Failure retains
-its own source, subject, unsuccessful judgment, applicable context, and boundary.
+The Failures established in one judgment boundary do not form a new aggregate Failure identity. Every Failure retains
+its own source, subject, failure meaning, applicable context, and boundary.
 
 This law does not require Kontrakt's own compiler/backend machinery to continue unrelated internal work after an
 internal implementation failure, and it does not require arbitrary realization operations to continue after Realization
-Failure. Those are implementation execution questions outside the governed judgment set.
+Failure. Those are implementation execution questions outside the Contract and State-Machine judgment set.
 
 #### 4.3.4. Finality
 
@@ -297,24 +306,23 @@ Failure belongs to the source and boundary in which it is established.
 Another authority does not inherit that Failure. It establishes its own Failure only if it independently establishes
 that its own required meaning was not satisfied.
 
-The current governed judgment boundary still completes the judgments required by the Governed Governed Boundary Judgment
-Completion law. After that boundary is complete, no later declared processing whose validity depends on the failed
-boundary may be entered while that processing remains under Kontrakt control.
+The current judgment boundary still completes the judgments required by the Boundary Judgment Completion law. After that
+boundary is complete, no later declared processing whose validity depends on the failed boundary may be entered while
+that processing remains under Kontrakt control.
 
 For a 1D Contract boundary with one or more established Failures, the next normal 1D processing is therefore not
-entered; the machine moves into internal Failure processing after the current governed boundary has completed its
-remaining valid and reachable judgments.
+entered; the machine moves into internal Failure processing after the current boundary has completed its remaining valid
+and reachable judgments.
 
 #### 4.3.7. Boundary Completion
 
-A governed judgment boundary completes successfully only when its required judgments complete without establishing
-Failure.
+A judgment boundary completes successfully only when its required judgments complete without establishing Failure.
 
-If one or more Failures are established after every judgment required by the Governed Governed Boundary Judgment
-Completion law has completed, the governed boundary completes unsuccessfully with those exact Failures preserved.
+If one or more Failures are established after every judgment required by the Boundary Judgment Completion law has
+completed, the boundary completes unsuccessfully with those exact Failures preserved.
 
 ```text
-governed judgment boundary
+judgment boundary
     ↓
 required judgments completed
     ├─ no Failure
@@ -339,9 +347,9 @@ satisfied.
 The owning Contract remains the judge. If Admission determines that required material is absent, Failure preserves that
 Admission result rather than performing another Admission judgment.
 
-The Governed Governed Boundary Judgment Completion and Containment laws apply at this Contract boundary. Other valid and
-reachable governed judgments in the same boundary still complete, while another admitted flow remains governed by its
-own Contracts.
+The Boundary Judgment Completion and Containment laws apply at this Contract boundary. Other valid and reachable
+Contract judgments in the same boundary still complete, while another admitted flow remains subject to its own
+Contracts.
 
 ### 4.5. State-Machine Failure
 
@@ -394,50 +402,54 @@ returned material under its own law. A later rejection is that authority's Failu
 later found to be its cause. Realization Failure is reserved for the case in which the required realization itself did
 not complete at its realization boundary.
 
-The Governed Governed Boundary Judgment Completion law does not require other arbitrary realization operations to
-continue after this Failure. Any ordering or independence among realization operations belongs to realization design,
-not to Failure judgment collection.
+The Boundary Judgment Completion law does not require other arbitrary realization operations to continue after this
+Failure. Any ordering or independence among realization operations belongs to realization design, not to Failure
+judgment collection.
 
-### 4.7. Failure Kind Belongs to the Owning Authority
+### 4.7. Failure Meaning Belongs to Its Source
 
-A richer Contract may distinguish several unsuccessful meanings for the same authority. Those distinctions belong to the
-authority that owns the requirement, not to Failure.
+A source may establish more than one distinct failure meaning under its own law. For a Contract or State-Machine source,
+those distinctions belong to the authority that owns the requirement, not to Failure.
 
 If Admission distinguishes missing required material from a value that violates its condition, Admission owns that
-distinction. Failure preserves the exact unsuccessful judgment that Admission established.
+distinction. Failure preserves the exact unsuccessful Admission judgment rather than performing Admission again.
 
-The same rule applies outside the Contract Pipeline. State-Machine Failure preserves the unsuccessful State-Machine
-judgment, while Realization Failure remains tied to the exact realization boundary whose required realization did not
-complete.
+The same rule applies outside the Contract Pipeline. State-Machine Failure preserves the exact unsuccessful
+State-Machine judgment, while Realization Failure preserves the exact required realization established not to have
+completed.
 
-The Exactness and Judgment Cardinality law therefore preserves those distinctions exactly as the owning authority
-established them. Failure neither replaces them with Failure-owned categories nor collapses them into a broader error
-bucket.
+The Exactness and Failure Cardinality law therefore preserves those source-owned meanings exactly as they were
+established. Failure neither replaces them with Failure-owned categories nor collapses them into a broader error bucket.
 
 ### 4.8. Exact Attribution
 
-Every Failure Result must preserve enough meaning to identify the failure without reconstructing it from backend
-evidence.
+Every Failure must preserve enough meaning to identify the failure without reconstructing it from backend evidence.
 
 The semantic material is currently:
 
 ```text
-Failure Result
+Failure
     source
     subject
-    unsuccessful judgment
+    failure meaning
     applicable context
     boundary
 ```
 
 `source` identifies the exact Contract or State-Machine authority, or the exact realization point, that established the
-unsuccessful result. `subject` identifies what that result was about.
+Failure.
 
-The `unsuccessful judgment` is the semantic identity of the unsuccessful result. It does not contain the runtime value,
-physical cause, stack history, or other material used to explain why that result occurred. Such material belongs to
-Diagnostic Evidence.
+`subject` identifies the exact machine subject to which the failed requirement belongs. For a Realization Failure, this
+includes the established machine meaning whose realization was required.
 
-`applicable context` retains only the Contract material required to interpret the Failure correctly.
+`failure meaning` identifies the exact unsuccessful machine meaning established by the source. For Contract and
+State-Machine sources, it is the exact unsuccessful judgment. For a Realization source, it is the exact required
+realization established not to have completed.
+
+`failure meaning` does not contain the runtime value, physical cause, stack history, backend exception, or other
+material used to explain why the failure occurred. Such material belongs to Diagnostic Evidence.
+
+`applicable context` retains only the Contract material required to interpret the Failure exactly.
 
 `boundary` identifies the already-established machine boundary in which the Failure exists. Failure does not define its
 own parallel scope hierarchy.
@@ -470,14 +482,14 @@ boundary that is never entered has no Failure merely because earlier work ended.
 
 ### 4.10. Failure Processing Is Normal Machine Flow
 
-Failure is an ordinary unsuccessful completion path of the governed machine boundary in which it is established.
+Failure is an ordinary unsuccessful completion path of the machine boundary in which it is established.
 
 For Contract and State-Machine judgment boundaries, the first established Failure does not immediately end the current
-governed boundary. The machine first completes every other authoritative judgment that remains valid and reachable
-without requiring failed meaning, and preserves every result that those judgments establish.
+boundary. The machine first completes every other authoritative judgment that remains valid and reachable without
+requiring failed meaning, and preserves every result that those judgments establish.
 
 ```text
-current governed judgment boundary
+current judgment boundary
     ↓
 complete all valid and reachable authoritative judgments
     ↓
@@ -510,20 +522,19 @@ any Failure established?
 A judgment that requires meaning already established as failed is not reachable and is not executed merely to
 manufacture another Failure.
 
-For a 1D Contract Failure, this means the current governed 1D boundary completes all remaining valid and reachable
-judgments before the Contract Pipeline decides whether to enter the next declared 1D processing. Budget and Capacity
-follow this rule even though their physical evaluation is performed by Kontrakt-owned machinery, because their judgments
-remain Contract-visible machine meaning.
+For a 1D Contract Failure, this means the current 1D boundary completes all remaining valid and reachable judgments
+before the Contract Pipeline decides whether to enter the next declared 1D processing. Budget and Capacity follow this
+rule even though their physical evaluation is performed by Kontrakt-owned machinery, because their judgments remain
+Contract-visible machine meaning.
 
 Realization Failure does not impose the same collect-all rule on arbitrary implementation work. Once required
 realization does not complete, later processing that depends on that realization is not entered; whether unrelated
 realization work continues is a backend or realization-design decision.
 
-Internal Failure processing carries every Failure established in the completed governed boundary without retrying the
-failed obligations or resuming normal processing that required the boundary to succeed.
+Internal Failure processing carries every Failure established in the completed boundary without retrying the failed
+obligations or resuming normal processing that required the boundary to succeed.
 
-This processing path realizes the Governed Governed Boundary Judgment Completion and Containment laws; it is not Failure
-propagation.
+This processing path realizes the Boundary Judgment Completion and Containment laws; it is not Failure propagation.
 
 ### 4.11. Failure Does Not Terminate Realization Resources
 
@@ -563,8 +574,8 @@ before the result can be established
 Crash
 ```
 
-Crash is not another Failure origin and is not a Failure Result variant. The crashed execution must not fabricate
-semantic certainty after the machinery required to establish that certainty is gone.
+Crash is not another Failure origin and is not a Failure variant. The crashed execution must not fabricate semantic
+certainty after the machinery required to establish that certainty is gone.
 
 A backend may establish a Realization Failure and then terminate or discard an unsafe realization resource. In that case
 the Failure already exists; the later termination is an implementation response, not a second Failure.
@@ -626,13 +637,14 @@ material that survived the loss, but that later reasoning belongs to the later e
 
 ### 4.16. Failure, Diagnostic, and Publication Meaning
 
-Failure says what failed. Diagnostic Evidence explains the established result.
+Failure states the exact failure meaning established by its source. Diagnostic Evidence explains that established
+Failure.
 
 That distinction changes how failure should be presented to developers and operators. A stack trace is execution
 evidence, so shortening it does not produce a semantic Failure summary.
 
-Because Failure already preserves its source, subject, unsuccessful judgment, applicable context, and boundary, tooling
-can identify the machine failure first instead of asking the developer to reconstruct it from execution history.
+Because Failure already preserves its source, subject, failure meaning, applicable context, and boundary, tooling can
+identify the machine failure first instead of asking the developer to reconstruct it from execution history.
 
 The actual value that violated a requirement, a backend error, a physical cause, crash material, and stack history
 remain Diagnostic Evidence. They can explain a Failure or an execution loss without becoming part of Failure semantic
@@ -681,9 +693,9 @@ rather than becoming Failure declarations. When users must declare which failure
 that declaration belongs to Publication rather than to Failure.
 
 ```text
-explicit required meaning
+explicit machine meaning / exact realization point
         ↓
-exact unsuccessful result
+source establishes exact failure meaning
         ↓
 intrinsic Failure
 ```
@@ -695,9 +707,10 @@ rather than manually repeated in a second declaration.
 
 Canonical Failure material must preserve the meaning defined by exact attribution.
 
-The source's unsuccessful judgment must survive canonicalization without being redeclared as a parallel Failure
-taxonomy. The judgment coordinate identifies the semantic unsuccessful result only; runtime values and causes remain
-Diagnostic Evidence.
+The source's failure meaning must survive canonicalization without being redeclared as a parallel Failure taxonomy. For
+Contract and State-Machine sources, this preserves the exact unsuccessful judgment. For a Realization source, it
+preserves the exact required realization established not to have completed. Runtime values and causes remain Diagnostic
+Evidence.
 
 `origin` is derived from `source` at the semantic level. If an opaque physical source identity requires a separate
 origin tag for efficient realization, the tag must remain derived and consistent with that source.
@@ -752,15 +765,14 @@ established Contract meaning a realization point is realizing, so a Realization 
 reconstructed from a later exception path.
 
 That knowledge gives the compiler a direct Failure-processing path without making any specific IR shape Contract
-Authority. For governed Contract and State-Machine judgment boundaries, lowering must preserve Governed Boundary
-Judgment Completion: establishing one Failure cannot short-circuit another valid and reachable authoritative judgment in
-the same governed boundary.
+Authority. For Contract and State-Machine judgment boundaries, lowering must preserve Boundary Judgment Completion:
+establishing one Failure cannot short-circuit another valid and reachable authoritative judgment in the same boundary.
 
 ```text
-canonical IR material for governed boundary judgments
+canonical IR material for boundary judgments
     -> establish exact judgment results
     -> deterministically retain every established Failure
-    -> governed boundary completion
+    -> boundary completion
     -> internal Failure processing when any Failure exists
     -> Diagnostic Evidence only when required
 ```
@@ -815,23 +827,23 @@ IR architecture are established.
 
 Any such design must preserve the following properties.
 
-Failure meaning, Governed Boundary Judgment Completion, and Failure-processing semantics must remain lowerable into
-deterministic immutable compiler products. The implementation cannot require mutable runtime registries, allocation
-identity, discovery order, or worker arrival order to establish semantic Failure identity or to decide which governed
-authoritative judgments are completed.
+Failure meaning, Boundary Judgment Completion, and Failure-processing semantics must remain lowerable into deterministic
+immutable compiler products. The implementation cannot require mutable runtime registries, allocation identity,
+discovery order, or worker arrival order to establish semantic Failure identity or to decide which Contract or
+State-Machine authoritative judgments are completed.
 
-For governed Contract and State-Machine judgments, a backend optimization may eliminate only judgments proven
-unreachable or semantically unnecessary under the declared machine structure. It cannot introduce fail-fast behavior
-that suppresses another valid and reachable authoritative judgment or changes which Failures are established.
+For Contract and State-Machine judgments, a backend optimization may eliminate only judgments proven unreachable or
+semantically unnecessary under the declared machine structure. It cannot introduce fail-fast behavior that suppresses
+another valid and reachable authoritative judgment or changes which Failures are established.
 
 Kontrakt's own compiler/backend machinery may fail fast when an internal implementation failure makes further internal
-work invalid or unnecessary and no additional governed judgment is required to be established. That internal fail-fast
-behavior is an implementation policy, not Failure Contract semantics.
+work invalid or unnecessary and no additional Contract or State-Machine judgment is required to be established. That
+internal fail-fast behavior is an implementation policy, not Failure Contract semantics.
 
-Internal fail-fast must itself be deterministic where its result is observable, and it must never suppress a governed
-Contract or State-Machine judgment merely because that judgment happens to be physically evaluated by Kontrakt code. If
-ordering-sensitive governed judgments such as Budget or Capacity share accounting or admission state, their semantic
-order comes from the canonical governed plan rather than thread or worker scheduling.
+Internal fail-fast must itself be deterministic where its result is observable, and it must never suppress a Contract or
+State-Machine judgment merely because that judgment happens to be physically evaluated by Kontrakt code. If
+ordering-sensitive Contract judgments such as Budget or Capacity share accounting or admission state, their semantic
+order comes from the canonical machine plan rather than thread or worker scheduling.
 
 Failure processing must expose the semantic dependencies required to determine a Failure site. Hidden implementation
 dependencies cannot participate in Failure meaning. This allows later incremental compilation to invalidate and
@@ -860,31 +872,32 @@ require a change to Failure meaning.
 
 Failure processing is deterministic.
 
-Verification must enforce the Failure Contract obligations as well as the physical lowering. An authoritative
-unsuccessful judgment represented by canonical compiler material must not disappear without Failure.
+Verification must enforce the Failure Contract obligations as well as the physical lowering. Failure meaning represented
+by authoritative or canonical machine material must not disappear without Failure.
 
-The compiler and backend must preserve the owning authority's judgment cardinality. Distinct authoritative unsuccessful
-judgments cannot be collapsed into one Failure identity, and one authoritative unsuccessful judgment cannot be split
-into several Failure-owned semantic identities.
+The compiler and backend must preserve source-established Failure cardinality. Distinct authoritative unsuccessful
+Contract or State-Machine judgments cannot be collapsed into one Failure identity, and one such judgment cannot be split
+into several Failure-owned semantic identities. Distinct required realizations established not to have completed
+likewise remain distinct Realization Failures.
 
-Within one governed Contract or State-Machine judgment boundary, every authoritative judgment that remains valid and
-reachable without requiring failed meaning must be completed and its established result preserved. A backend cannot use
-the first discovered Failure, worker completion order, or another scheduling event to suppress such a judgment.
+Within one Contract or State-Machine judgment boundary, every authoritative judgment that remains valid and reachable
+without requiring failed meaning must be completed and its established result preserved. A backend cannot use the first
+discovered Failure, worker completion order, or another scheduling event to suppress such a judgment.
 
-The membership and canonical order of all Failures established in that governed boundary must therefore be
-deterministic. Parallel execution may change when an independent judgment finishes, but it cannot change which required
-governed judgments are completed or which Failures are established. Ordering-sensitive governed judgments must follow
-their canonical semantic order.
+The membership and canonical order of all Failures established in that boundary must therefore be deterministic.
+Parallel execution may change when an independent judgment finishes, but it cannot change which required Contract or
+State-Machine judgments are completed or which Failures are established. Ordering-sensitive judgments must follow their
+canonical semantic order.
 
 This requirement does not force Kontrakt's unrelated internal compiler/backend work to collect every possible
 implementation failure. Internal machinery may fail fast under the backend architecture constraints above, provided that
-doing so cannot change any governed Contract or State-Machine result that the machine is required to establish.
+doing so cannot change any Contract or State-Machine result that the machine is required to establish.
 
 Once established, a Failure cannot be rewritten as Success, erased by later recovery, or reassigned to another source.
 Every valid representation and handoff that carries the Failure must preserve its exact semantic meaning.
 
 For the same authoritative Contract, State-Machine, realization, and applicable context material, every valid compiler
-execution must produce the same complete governed judgment results, the same Failure membership and canonical order, and
+execution must produce the same complete required judgment results, the same Failure membership and canonical order, and
 the same subsequent-processing semantics. Compilation order, parallel scheduling, worker arrival order, memory address,
 hash-table iteration, runtime registration order, and cache population order cannot participate in that result.
 
@@ -895,7 +908,7 @@ Failure. Incremental compilation is an implementation optimization, not a second
 The compiler must reject Failure meaning that depends on backend-only coordinates.
 
 A Failure source must resolve to the exact Contract or State-Machine authority, or to the exact realization point, from
-which the unsuccessful result was established. Ambiguous attribution is invalid rather than resolved by implementation
+which the failure meaning was established. Ambiguous attribution is invalid rather than resolved by implementation
 order.
 
 `origin` cannot vary independently from `source`. Any physical origin tag must agree with the source from which it is
@@ -910,8 +923,8 @@ A Realization Failure cannot be rewritten as a Contract Failure for presentation
 Implementation topology cannot move a Failure to a different machine boundary, and Failure semantics cannot require
 termination of a thread, worker, process, coroutine, or other realization resource.
 
-The same source, subject, unsuccessful judgment, applicable context, and boundary must establish the same
-contract-visible Failure regardless of the Diagnostic Evidence later attached to it.
+The same source, subject, failure meaning, applicable context, and boundary must establish the same contract-visible
+Failure regardless of the Diagnostic Evidence later attached to it.
 
 Failure-related compiler products must be able to expose the dependencies that determine them. Future incremental
 invalidation must be able to distinguish changed authoritative inputs from unrelated material rather than treating
@@ -938,7 +951,7 @@ Any outward failure claim must be authorized by Publication. Failure itself cann
 because the failed meaning is important to an external consumer.
 
 Because Failure is intrinsic and derived, a compile-time rejection of invalid Contract material is not a runtime Failure
-Result of the machine being defined.
+of the machine being defined.
 
 ---
 
@@ -946,7 +959,7 @@ Result of the machine being defined.
 
 The following questions remain open:
 
-1. What canonical representation should encode `source`, `subject`, `unsuccessful judgment`, `applicable context`, and
+1. What canonical representation should encode `source`, `subject`, `failure meaning`, `applicable context`, and
    `boundary` without retaining derivable material redundantly?
 2. How should canonical Failure material represent the existing boundary of each source axis without creating a new
    shared boundary ontology?
@@ -973,10 +986,10 @@ and incrementally extensible.
 
 Failure becomes explicit machine meaning rather than an inference from backend behavior.
 
-The Failure Contract now has explicit obligations: authoritative non-satisfaction must establish Failure; the owning
-judgment's exact meaning and cardinality are preserved; every valid and reachable governed judgment in the current
-Contract or State-Machine boundary is completed and its result preserved; established Failure is final; and every valid
-processing path or lowering must preserve that meaning.
+The Failure Contract now has explicit obligations: source-established failure meaning must become explicit Failure; its
+exact meaning and cardinality are preserved; every valid and reachable authoritative judgment in the current Contract or
+State-Machine boundary is completed and its result preserved; established Failure is final; and every valid processing
+path or lowering must preserve that meaning.
 
 Its exact source remains attributable after lowering, while its origin can be derived without becoming a second semantic
 coordinate. Local failure stays local until another boundary establishes its own Failure.
