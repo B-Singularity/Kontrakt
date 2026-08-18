@@ -61,13 +61,14 @@ external result. Authorization is also distinct from the physical act that follo
 separation without importing any particular industry's release procedure into the Contract.
 
 ADR-0049 introduced Publication as the outward-claim authority and correctly separated it from Output Presentation. It
-also made internal Fact material non-public by default. At that stage, however, Publication was modeled narrowly around
-one successful Operation return Fact and exact coordinate relations from that Fact into one selected Output
-Presentation.
+also made internal Fact material non-public by default. A successfully completed Operation establishes its declared
+result as an immutable Fact inside the Core, and that Fact remains a natural source of successful outward meaning.
+ADR-0049 nevertheless modeled Publication too narrowly around that one source and exact coordinate transfer into one
+selected Output Presentation.
 
-Later Contract work widened the machine model beyond Operation return Facts, especially through the State-Machine axis
-and Failure semantics. ADR-0057 also established that an internal Failure may remain internal or may support a different
-outward failure meaning appropriate to an external consumer.
+Later Contract work widened the machine model beyond successful Operation result Facts, especially through the
+State-Machine axis and Failure semantics. ADR-0057 also established that an internal Failure may remain internal or may
+support a different outward failure meaning appropriate to an external consumer.
 
 ```text
 internal Failure
@@ -80,12 +81,12 @@ internal Failure
     -> outward meaning
 ```
 
-Publication therefore cannot remain a special path for exposing coordinates of one return Fact. It is the Contract
-authority over outward Contract meaning.
+Publication therefore cannot remain a special path for copying coordinates from one return Fact. It is the Contract
+authority over outward Contract meaning at the boundary between the Core and Output Presentation.
 
-That authority begins only from Contract meaning already established by the authority that owns it. Publication does not
-repeat the judgment that established that meaning. Its question is narrower: what exact outward meaning, if any, is
-authorized from that Contract meaning at this outward boundary?
+That authority begins only from explicitly declared Contract material already established inside the machine.
+Publication may interpret the immutable values of that material when outward meaning requires abstraction, reduction, or
+selective disclosure, but it does not repeat or revise the Core judgment that made the source authoritative.
 
 External effects remain outside that question. Any physical effect on an external system belongs to realization outside
 the core. Such machinery may carry an already-authorized outward meaning, but it cannot create or revise Publication
@@ -114,69 +115,76 @@ implementation can expose X
 must instead be:
 
 ```text
-Contract authority establishes Contract meaning
+Core establishes authoritative Contract material
         ↓
-Publication establishes exact outward authority
+Publication establishes outward meaning
         ↓
 Output Presentation defines the closed outward shape
         ↓
 replaceable realization carries that shape outside
 ```
 
-The earlier Fact-only Publication model also leaves valid machine outcomes outside the model. A Failure may need an
-outward failure meaning even though Failure is not an Operation return Fact. Several distinct Failures may support one
-outward meaning without becoming one aggregate Failure. Contract meaning may also contain more detail than the outward
-Contract should expose.
+The earlier Fact-only model is also too narrow. Successful Operation results are immutable Facts inside the Core, but
+Failure and other established Contract meaning may also need an outward interpretation. At the same time, the Core may
+hold more detail than an external consumer is authorized or required to receive.
 
-Publication must therefore judge outward meaning from Contract meaning already authoritative inside the machine. It must
-do so without becoming a second acceptance gate. Whether that Contract meaning should stand as authoritative has already
-been decided elsewhere.
+Publication therefore needs enough authority to interpret explicitly declared Core material without becoming a second
+Core judgment system. If a result Fact contains detailed coordinates, Publication may use the exact coordinates named by
+its Contract to form a reduced or abstract outward meaning. It must not search the Core for undeclared material, change
+the Fact, rewrite Failure, or establish new internal truth.
+
+The outward relation must also be coherent before execution. If the authored Publication Contract can require
+incompatible outward meaning under the same permitted basis, runtime Publication must not invent priority, first-match,
+or conflict-resolution state. The invalidity belongs to the Contract definition and must be rejected by compilation or
+verification.
 
 The same separation matters at the physical boundary. An external acknowledgement or side effect cannot make an
 unauthorized meaning valid after the fact, while failure of later transmission cannot retroactively turn a successful
 Publication judgment into a different judgment.
 
-Publication must also avoid deriving authority from unfinished processing. This is not a new completeness test owned by
-Publication. Material that has not yet been established by its owning authority is not Contract meaning on which
-Publication may depend.
-
-Kontrakt must make outward authority explicit before external implementation can act on it.
+Kontrakt must therefore make the exact outward dependency, outward interpretation, and boundary explicit while leaving
+physical realization replaceable.
 
 ---
 
 ## 3. Decision Drivers
 
-Publication must remain Contract meaning rather than implementation behavior. The outward boundary mirrors the inbound
-boundary: external implementation can carry material, but it cannot determine Contract authority.
+Publication must remain Contract meaning rather than implementation behavior. External implementation can carry
+material, but it cannot determine outward Contract authority.
 
 Contract meaning is non-public by default. Internal authority and outward authority are different relations, so
-successful processing or physical observability cannot silently bridge them.
+successful processing, physical observability, or serializer reachability cannot silently bridge them.
 
-Publication begins from Contract meaning already established by its owning authority and cannot reopen that judgment.
+Every Publication judgment must declare the exact Contract material on which it depends. Core membership, apparent
+relevance, matching names, and implementation access create no implicit Publication basis.
 
-The Publication relation may expose an outward meaning that differs from the Contract meaning on which it depends. That
-relation must be declared as Contract meaning rather than hidden in adapter or serializer behavior.
+Publication must be able to use declared coordinates of immutable Core Facts and other explicitly declared established
+Contract meaning, including Failure, without changing any of them.
 
-Outward authority is exact rather than global. The same Contract meaning may support one outward meaning at one boundary
-and no outward meaning at another.
+Publication may establish outward meaning at a different level of detail from its basis. Information reduction,
+abstraction, and selective disclosure belong to Publication when they change what the machine means outwardly rather
+than merely how that meaning is represented.
 
-Publication judgment must remain inside the Contract world already fixed by the authorities that own its selection and
-binding.
+Outward authority is exact rather than global. The same Core meaning may support one outward meaning at one boundary and
+no outward meaning at another.
 
-Several Contract meanings may participate in one Publication judgment without losing their individual identities. The
-resulting outward meaning must follow declared Contract relations rather than runtime discovery order.
+Governance selects and binds the Policy World, while Policy defines the Contract composition of that World. Publication
+performs its outward judgment inside the already-bound World; it does not choose the World or replace its binding.
 
 Publication and Output Presentation remain separate. Publication owns outward meaning; Output Presentation owns the
 closed outward shape. Physical interaction with the outside world belongs to realization.
 
+Malformed or contradictory Publication declarations are Contract-definition errors. Runtime order, arbitrary callback
+behavior, or external consumer choice cannot repair a Contract whose outward law is incoherent.
+
 An unsuccessful required Publication judgment is ordinary Failure under ADR-0057, so Publication needs no parallel
 result family for that case.
 
-Determinism remains mandatory. Equivalent authoritative material must establish the same Publication meaning across
-valid compiler execution modes.
+Determinism remains mandatory. Equivalent authoritative basis material must establish the same Publication meaning
+across valid compiler execution modes.
 
-The model must remain independent of the concrete frontend and backend so that the future IR does not inherit
-backend-specific structure.
+The semantic model must remain independent of the concrete frontend and backend so that future canonical forms can
+represent Publication without inheriting JVM, adapter, transport, or external-system structure.
 
 ---
 
@@ -184,25 +192,23 @@ backend-specific structure.
 
 ### 4.1. Publication Is the Outward Meaning Authority
 
-Publication is the Contract authority that determines whether and what Contract meaning may cross the Contract Machine's
-outward boundary as authoritative outward meaning.
+Publication is the Contract authority that determines what authoritative outward meaning the Contract Machine may
+establish from declared Core meaning at an exact outward boundary.
 
 ```text
-Contract meaning
+Core Contract meaning
         ↓
 Publication judgment
         ↓
 authorized outward meaning
 ```
 
-That judgment applies declared Publication law to Contract meaning. It may preserve the source meaning or establish a
-different outward meaning without creating internal Contract meaning owned by another authority.
+Inside the already-bound Policy World, that judgment applies the declared Publication law. Publication is not the
+physical act that carries material outside the Core; the term names semantic authority at the outward boundary, not an
+emission mechanism.
 
-Publication is not the physical act that carries material outside the core. The term `Publication` names a Contract
-authority, not an emission mechanism.
-
-The formal concept is `outward meaning`, not only an outward `claim`. A Core output may carry authoritative intent as
-well as descriptive meaning without making its external realization part of the Contract.
+The formal concept is `outward meaning`, not only an outward `claim`. A Core result may support authoritative outward
+intent as well as descriptive meaning without making its external realization part of the Contract.
 
 ### 4.2. Contract Meaning Is Non-Public by Default
 
@@ -211,59 +217,63 @@ No Contract meaning receives outward authority merely by existing.
 Neither internal authority nor physical availability implies Publication. Contract meaning therefore remains non-public
 unless the bound Publication Contract establishes outward meaning from it.
 
-Implementation reachability cannot create outward meaning where the bound Publication Contract establishes none.
+Where the bound Publication Contract establishes no outward meaning, none exists merely because implementation could
+expose the source. This absence does not create another runtime result.
 
-### 4.3. Publication Begins From Contract Meaning
+### 4.3. Publication Basis Is Explicit and Core-Internal
 
-Publication is not restricted to one Operation return Fact.
+Publication may depend only on exact Contract material that has already been established inside the machine and is
+explicitly named by the Publication Contract.
 
-A Publication Contract may depend only on exact Contract meaning already established by the authority that owns that
-meaning. Publication uses that meaning without reopening the judgment that produced it.
+A successfully completed Operation result is an immutable Fact inside the Core. Publication may bind that Fact and the
+exact coordinates whose values participate in the outward judgment. Other established Contract meaning, including an
+established Failure, may participate only when the Publication Contract names it explicitly.
 
 ```text
-owning authority
-    -> establishes Contract meaning
+Operation result Fact
+    declared coordinate A
+    declared coordinate B
+
+other declared Contract meaning
         ↓
-Publication
-    -> judges only the outward relation
+Publication judgment
 ```
 
-Publication therefore does not decide whether a candidate should be accepted as core truth. Invariant retains that
-authority, while every other Contract meaning remains owned by the authority that established it.
+Material elsewhere in the Core does not participate merely because it exists or appears relevant. Publication may not
+scan the Core, follow undeclared relations, or acquire additional basis through implementation access.
 
-Material that is still provisional, unresolved, or merely observed by implementation is not Contract meaning available
-to Publication. The frontend and verifier must preserve that boundary rather than making Publication perform a second
-validity check at runtime.
+The declaration therefore owns the dependency. The backend only realizes access to material that already has Publication
+participation authority.
 
-### 4.4. Publication May Establish Different Outward Meaning
+### 4.4. Publication May Interpret Declared Values Into Different Outward Meaning
 
-Publication is not limited to exposing Contract meaning unchanged.
-
-The Publication Contract may declare that exact Contract meaning supports a different exact outward meaning.
+Publication is not limited to exposing declared Core meaning unchanged. It may use the values of its explicitly bound
+Fact coordinates and other declared Contract meaning to establish the outward meaning required at the boundary.
 
 ```text
-Contract meaning A
-        ↓
-Publication
-        ↓
-outward meaning B
-```
-
-For example:
-
-```text
-CapacityFailure
+Core Fact
+    temperature = 92
         ↓
 Publication
         ↓
-TemporarilyUnavailable
+outward meaning
+    Warning
 ```
 
-The outward meaning does not rename or rewrite the Contract meaning on which Publication depends. An internal Failure
-therefore remains the same Failure after Publication establishes a consumer-facing meaning from it.
+`Warning` need not become a new Core Fact merely because an external consumer requires that classification. The Core
+Fact remains `temperature = 92`; Publication establishes only the outward interpretation.
 
-This authority is deliberately narrow. Publication may establish the declared outward meaning at a different level from
-its source, but it may not infer new internal Contract meaning that belongs to another authority.
+The same rule permits selective disclosure and reduction of detail. A detailed Operation result may support a smaller
+outward meaning, and an internal Failure may support a consumer-facing failure meaning without exposing its internal
+identity or all of its material.
+
+This authority does not permit Publication to establish new internal truth, redo Invariant, Admission, Lowering, or
+State-Machine judgment, or mutate the source material. Fact immutability and Failure finality remain unchanged across
+the Publication boundary.
+
+Publication criteria are therefore declarative outward law over the exact basis named by the Contract. Arbitrary user
+callbacks, external lookup, hidden implementation state, or host-language control flow cannot become Publication
+authority.
 
 ### 4.5. Publication Is Positive and Boundary-Exact Authority
 
@@ -309,31 +319,39 @@ outward failure meaning is required, Publication determines that external meanin
 A normal host return path cannot bypass Publication merely because the implementation treats it as success, and an
 exception path cannot create a separate implicit publication channel for failure.
 
-### 4.7. Several Contract Meanings May Support One Publication Judgment
+### 4.7. Several Declared Basis Items May Support One Publication Judgment
 
-One Publication judgment may depend on several Contract meanings.
+One Publication judgment may depend on several explicitly declared pieces of established Contract material when the
+outward meaning genuinely depends on all of them.
 
 ```text
-Failure A
-Failure B
-Failure C
+declared Core meaning A
+exact Fact coordinate B
+exact Fact coordinate C
         ↓
 Publication
         ↓
-TemporarilyUnavailable
+one outward meaning X
 ```
 
-This does not create a new Failure identity. Each Failure remains distinct under ADR-0057. Publication evaluates the
-declared outward relation using those meanings as its basis and establishes only the outward meaning owned by that
-judgment.
+Participation in one outward judgment does not merge the source meanings or transfer their internal authority. Distinct
+Facts remain distinct Facts, and distinct Failures remain distinct Failures under ADR-0057.
 
-### 4.8. Publication Does Not Require Whole Machine Termination
+Runtime arrival order cannot decide which basis items participate. The declaration fixes that dependency before
+execution.
 
-A Publication judgment becomes reachable only after the Contract meaning on which it depends has been established.
-Unrelated later processing does not block that judgment merely because the Whole Machine has not terminated.
+### 4.8. Publication Follows Core Establishment
 
-Publication does not turn missing Contract meaning into a semantic placeholder. The exact interaction between active
-processing boundary completion and Publication sites remains subject to later Whole-Machine and frontend refinement.
+Publication does not create the Core material on which it depends. Its declared basis must already have been established
+by the Contract or State-Machine authority that owns that meaning, or established as Failure under ADR-0057 where
+Failure is the declared basis.
+
+Provisional, unresolved, merely observed, or implementation-local material is not a valid Publication source.
+Publication does not turn missing basis material into a placeholder or manufacture a substitute result.
+
+The exact scheduling relation between active processing boundary completion and every future Publication site remains a
+Whole-Machine concern. This ADR requires only that a Publication judgment never precede establishment of its own
+declared basis.
 
 ### 4.9. Established Publication Is Non-Retroactive
 
@@ -353,20 +371,28 @@ adapter placement cannot invent Publication scope.
 
 ### 4.11. Publication and Output Presentation Are Separate
 
-Publication owns outward meaning. Output Presentation owns outward shape.
+Publication owns what the machine means outwardly. Output Presentation owns the closed external form available to carry
+that already-authorized meaning.
 
 ```text
+immutable Core material
+        ↓
 Publication
-    -> authorized outward meaning
-
+        ↓
+authorized outward meaning
+        ↓
 Output Presentation
-    -> closed outward shape for that meaning
+        ↓
+closed outward form
 ```
 
-A presentation shape may exist without granting Publication authority, and Publication does not acquire authority from
-the fact that some representation is easy to produce.
+If Publication reduces a detailed internal Fact to `Warning`, the decision to omit the hidden internal detail has
+already occurred semantically. Output Presentation does not rediscover that detail and choose to hide it; it presents
+`Warning`
+through the closed shape defined by its own Contract.
 
-The next ADR finalizes the closure rules between an authorized outward meaning and its selected Output Presentation.
+A presentation shape may exist without granting Publication authority, and representation convenience cannot widen the
+meaning Publication authorized. The next ADR finalizes the closure rules between these two Contracts.
 
 ### 4.12. Publication and Diagnostic Meaning Are Separate
 
@@ -391,13 +417,16 @@ Contract Machine
     -> external system
 ```
 
-An external side effect is not Publication Contract meaning. The external mechanism may realize a published meaning, but
-changing that mechanism does not change the Publication Contract when the same outward meaning remains in force.
+An external side effect is not Publication Contract meaning. Once outward meaning has been established and presented,
+the receiving system decides what action to take under its own authority. It may retry, actuate, store, compensate,
+notify, or do nothing without changing what Kontrakt published.
 
-The external system is not trusted as Contract Authority. Its acknowledgement or physical side effect cannot
-retroactively establish, cancel, or rewrite Publication.
+That external freedom does not let a consumer repair ambiguous Contract meaning. The Contract Machine must establish a
+coherent outward meaning before the external boundary; the receiver is responsible for action, not for choosing which of
+contradictory publications should count.
 
-If material from the external system must later matter to the Contract Machine, it must enter again through an explicit
+An external acknowledgement or physical side effect cannot retroactively establish, cancel, or rewrite Publication. If
+material from the external system must later matter to the Contract Machine, it must enter again through an explicit
 inbound Contract boundary.
 
 ### 4.14. Inbound and Outbound Authority Are Symmetric
@@ -407,7 +436,8 @@ Kontrakt applies the same authority discipline in both directions.
 ```text
 outside -> core
     external representation has no Contract authority
-    Input processing establishes internal meaning
+    Input boundary begins declared inward processing
+    owning authorities establish internal meaning
 
 core -> outside
     external realization has no Contract authority
@@ -418,16 +448,19 @@ This symmetry keeps adapters replaceable and prevents external system vocabulary
 
 ### 4.15. Publication Judges Within the Bound Policy World
 
-Governance selects and binds the Policy World, and Policy defines its Contract composition. Publication begins after
-that choice: it evaluates the bound Publication Contract against authoritative Contract meaning produced within the
-machine.
+Governance selects and binds the Policy World. Policy defines the Contract composition of that World, including the
+Publication Contract that participates in it.
 
-The Publication judgment may evaluate declared criteria over those meanings when they determine outward meaning. It may
-not use such criteria to choose another Policy World or alter the binding that placed the Publication Contract in force.
+Publication does not select the World or decide which Publication Contract should replace the bound one. Once the World
+is bound, Publication applies that Contract to its own explicitly declared Core basis.
+
+Criteria inside the Publication Contract may interpret declared Fact values or other declared Contract meaning only for
+outward judgment. Criteria that choose a Policy World or alter its binding belong to Governance and Policy instead.
 
 ### 4.16. Unsuccessful Required Publication Is Failure
 
-Publication does not define a separate denial or stop result family.
+Publication does not define a separate denial or stop result family. Mere absence of outward meaning is not itself a
+Failure.
 
 Where bound Contract obligations require an outward meaning and the Publication judgment establishes that the
 requirement was not satisfied, ADR-0057 governs the resulting Contract Failure. Publication does not create a parallel
@@ -445,37 +478,40 @@ than a revision of the Publication judgment.
 
 Unlike Failure, Publication is not intrinsic meaning that can always be derived from another authority.
 
-The existence of internal meaning does not determine whether it may leave the Contract Machine or what outward meaning
-should be established from it. Those are application-specific Contract choices, so Publication requires explicit
-authoring.
+The existence of internal meaning does not determine whether it may leave the Contract Machine, which parts of an
+immutable Fact may participate, or what outward interpretation should be established from them. Those are
+application-specific Contract choices, so Publication requires explicit authoring.
 
-The frontend must let the user declare that relation without requiring the implementation mechanism that realizes it.
-The exact IDL placement and reusable declaration form remain open until the semantic model is complete.
+Every Publication declaration must name its exact basis. When a Fact participates, the declaration must name the exact
+coordinates whose values may influence the outward judgment; naming the Fact does not silently authorize every field.
+Undeclared Contract meaning and undeclared Fact coordinates have no Publication participation authority.
 
-A declaration should reference authoritative material already known to the compiler rather than forcing users to repeat
-it for backend convenience.
+The frontend must express that dependency and the outward law without requiring the implementation mechanism that
+realizes it. The exact IDL placement and surface syntax remain open until the semantic model is complete.
 
 ### 5.2. Canonical Publication Material
 
-Canonical Publication material must preserve enough information to reproduce the exact outward judgment without relying
-on backend behavior.
+Any canonical form of Publication must preserve every semantic distinction needed to reproduce the declared outward
+judgment.
 
-At minimum, the semantic model must preserve:
+At minimum, it must preserve:
 
 ```text
 exact Publication declaration
-exact Contract meaning or exact set of Contract meanings
+exact declared Contract-meaning basis
+exact declared Fact-coordinate basis where applicable
+exact declarative outward criteria
 exact authorized outward meaning
 exact outward boundary
 ```
 
-These requirements do not prescribe a physical record layout. The backend may represent them through canonical
-references or another deterministic compact form as long as no semantic distinction disappears.
+This is a semantic preservation requirement, not a record-layout decision. The compiler may choose references, tables,
+indexes, or another deterministic representation, but no physical form may widen the declared basis or erase a
+distinction that can change outward meaning.
 
-Static Publication declaration material and invocation-specific Publication judgment material should remain separable
-where the compiler architecture permits it. The compiler must preserve the binding dependency that made the exact
-Publication declaration part of the selected Policy World without turning that dependency into a Publication-owned
-context object. Reuse is valid only while semantic identity and dependencies remain exact.
+Publication does not own a universal `applicable context` object. Governance, Policy, Version, State, Failure, and other
+authorities retain their own meaning; Publication preserves only the dependencies that its own declared judgment
+actually uses.
 
 ### 5.3. Backend Vocabulary Is Not Publication Authority
 
@@ -490,24 +526,25 @@ not change the Contract when the same semantic relation remains valid.
 
 ### 6.1. Contract Meaning and Representation
 
-The Publication Contract establishes exact outward authority from Contract meaning. Here, Contract meaning is meaning
-established under Contract authority, not its compiler or runtime representation.
+Fact objects, Failure carriers, canonical tables, runtime records, generated classes, HIDs, and backend handles may
+represent material used by Publication. None of those representations is Publication meaning by itself.
 
-Publication does not establish the Contract meaning on which it depends. The owning authority establishes that meaning
-first, while presentation and physical execution follow Publication under their own boundaries.
+The Contract owns the declared basis and outward relation. A backend is free to change how those semantics are
+represented as long as the same Publication law remains recoverable.
 
 ### 6.2. Realization
 
-A backend realizes an already-established Publication law.
+A backend realizes an already-declared Publication law.
 
-It may lower Publication into any deterministic mechanism that preserves the same judgment. A valid backend may also
-eliminate a runtime Publication object entirely.
+It may lower declarative criteria and source access into any deterministic mechanism that preserves the same judgment. A
+valid backend may fuse checks, precompute relations, specialize value tests, or eliminate a runtime Publication object
+entirely. These choices are implementation.
 
 Publication is not modeled as a host-language call wrapper with pre/post checks, whether implemented through proxies or
-interception. Such machinery cannot define Contract authority.
+interception. Arbitrary user behavior cannot become hidden Publication authority merely because a backend can invoke it.
 
-Physical realization cannot acquire hidden Contract meaning or consult external implementation to decide what should be
-public. The semantic judgment must already be determined by canonical Contract material.
+Physical realization may read only the material admitted by the declared Publication basis and cannot consult external
+systems or undeclared machine state to decide what should be public.
 
 ### 6.3. Output Presentation Realization
 
@@ -558,17 +595,37 @@ results, but the Publication Contract must remain unchanged across backend choic
 
 ## 7. Verification, Determinism, and Incremental Extensibility
 
-The compiler must resolve every Contract meaning referenced by Publication and every target to an exact declared outward
-meaning. Implementation-only coordinates cannot substitute for either side of that relation.
+The compiler or verifier must resolve every Contract meaning and Fact coordinate named by Publication to exact declared
+Contract material. Implementation-only values cannot substitute for a missing source, and an undeclared coordinate
+cannot become relevant because a backend can reach it.
 
-Publication declarations that depend on provisional or unresolved material are invalid. This is a compile-time authority
-error where the relation is statically knowable, not a reason to add a runtime validation phase to Publication.
+Publication declarations that depend on provisional, unresolved, or unauthorized material are invalid before machine
+execution. The same rule applies when a declaration attempts to establish internal Contract truth rather than outward
+meaning.
 
-Where several Contract meanings participate in one judgment, the dependency relation must be explicit. Parallel
-execution may change when those meanings become physically available, but it cannot change which meanings participate.
+The compiler must also reject a Publication Contract whose declared relations are internally contradictory. If the
+Contract permits one basis under which two declarations require outward meanings that are explicitly incompatible under
+the outward Contract structure, the machine is not allowed to defer that contradiction to runtime.
 
-Once the authoritative basis and exact Publication relation are the same, every valid compiler and backend execution
-must establish the same Publication result.
+```text
+one permitted declared basis
+    -> outward requirement A
+    -> incompatible outward requirement B
+
+    = invalid Publication Contract
+```
+
+Publication itself does not collect prior results into runtime conflict state and does not choose a winner. Declaration
+order, first-match behavior, priority by execution order, worker arrival, hash iteration, or adapter preference have no
+Contract authority. The compiler may not infer incompatibility from names such as `Allowed` and `Forbidden`; the
+relevant distinction must be present in declared Contract structure.
+
+How a compiler proves overlap or contradiction is implementation. A backend or verifier may use any sound technique
+appropriate to the eventual declaration language, but the Contract law remains the same: malformed outward authority is
+rejected before it becomes machine behavior.
+
+Once the exact declared basis and Publication relation are the same, every valid compiler and backend execution must
+establish the same result.
 
 ```text
 clean full compilation
@@ -581,53 +638,50 @@ parallel execution
 
 remain semantically equivalent for Publication.
 
-When more than one declared Publication relation can be satisfied at one outward boundary, runtime ordering has no
-Publication authority. Declaration order therefore cannot silently become first-match semantics.
+Future incremental invalidation must follow the exact declared dependencies. Adding an unrelated Fact coordinate or
+other Core meaning cannot change an existing Publication judgment until the Publication Contract itself acquires a
+dependency on that material.
 
-Future incremental invalidation must follow the canonical dependencies that determine Publication. A change outside
-those dependencies cannot alter Publication semantic identity by itself.
+Persisted Publication IR, solver products, generated code, caches, and indexes remain implementation material. Their
+storage or cache versions are separate from Contract Version.
 
-Persisted Publication IR and generated artifacts remain implementation material. Their storage schema or cache version
-is separate from Contract Version.
-
-Malformed Publication declarations are compile-time invalidity. Runtime Failure is reserved for unsuccessful machine
-judgments and realizations established during actual Contract Machine processing under ADR-0057.
+Malformed Publication declarations are compile-time invalidity. Runtime Failure remains reserved for unsuccessful
+machine judgments and realizations established during actual Contract Machine processing under ADR-0057.
 
 ---
 
 ## 8. Deferred Decisions
 
-Further work remains in the canonical frontend model. The exact declaration form must preserve Publication judgment
-without turning it into a general-purpose rule language. Its ownership within the IDL also remains to be decided after
-the semantic model is stable.
+The exact Publication authoring syntax remains open. The frontend must be able to name exact Core basis material, exact
+Fact coordinates, declarative value-sensitive outward criteria, outward meaning, and outward boundary without becoming a
+general-purpose host-language rule system.
 
-The semantic boundary of Publication criteria remains open. The language must be expressive enough to judge declared
-relations over Contract meaning without reintroducing algorithmic host-language control flow as Contract authority.
-
-The semantics of simultaneous Publication relations remain open. ADR-0058 does not yet decide whether multiple results
-may coexist or require an explicit combining law, and it does not assign semantic priority between them.
+The representation of multiple compatible outward meanings remains open. This ADR decides that contradictory outward
+requirements are invalid and that runtime priority is not a repair mechanism, but it does not yet decide whether several
+compatible outward meanings are represented as separate Publication judgments, one structured outward meaning, or
+another closed form. That question must be resolved together with the outward model rather than by implementation order.
 
 The distinction between permission to establish outward meaning and an obligation to establish it also remains open.
 Failure already governs an unsuccessful required Contract judgment, but the frontend model need not introduce separate
 Publication categories before that distinction proves necessary.
 
-The relation between Publication sites and active processing boundary completion needs additional Whole-Machine work,
-particularly for long-running or independently publishable processing. ADR-0058 establishes that Publication can depend
-only on Contract meaning already established by its owning authority; it does not yet choose the compiler structure that
-makes every valid publication site reachable.
+The exact relation between Publication sites and active processing boundary completion needs additional Whole-Machine
+work. This ADR establishes only that every declared Publication basis must already be authoritative before the outward
+judgment that depends on it.
 
-Output Presentation still owns the next unresolved boundary. The following ADR must determine how an authorized outward
-meaning closes over a presentation without moving structural representation back into Publication.
+Output Presentation owns the next unresolved boundary. The following ADR must determine how an authorized outward
+meaning closes over a presentation without moving semantic interpretation back into representation.
 
 Diagnostic Evidence / Retention may later introduce explicit outward use of selected evidence. That work must preserve
 the rule that evidence is not public merely because it exists or is retained.
 
-The redesigned frontend and IR must eventually choose a concrete representation for Publication and its dependencies.
-Once that work begins, ADR-0049 and older documents must be revised where they still assume the
-Operation-return-Fact-only Publication model.
+The redesigned frontend and IR must eventually choose concrete representations for Publication and its exact
+dependencies. Once that work begins, ADR-0049 and older documents must be revised where they still restrict Publication
+to the Operation-return-Fact-only model, direct source-to-target coordinate transfer, Publication-owned runtime stops,
+or other assumptions superseded here.
 
-These deferred decisions do not reopen Publication's separation from Contract acceptance, Output Presentation, or
-external realization.
+These deferred decisions do not reopen Publication's separation from Core establishment, Output Presentation, compiler
+validation, or external realization.
 
 ---
 
@@ -635,34 +689,33 @@ external realization.
 
 ### Positive
 
-Publication is no longer tied to the shape of one Operation return Fact, so the future frontend can model outward
-authority directly instead of reconstructing it from carrier structure.
+Publication can use successful Operation result Facts without forcing outward-only classifications back into the Core.
+An immutable Fact remains the internal truth while Publication may expose a reduced, abstract, or selectively disclosed
+meaning for the external boundary.
 
-Keeping prior Contract establishment outside Publication prevents the new Contract from duplicating Invariant or the
-State-Machine axis. The same separation also allows Failure to remain intact when a different consumer-facing meaning is
-published from it.
+Failure also remains intact. Outward failure vocabulary can differ from internal Failure meaning without creating an
+aggregate Failure, rewriting failure identity, or turning diagnostic evidence into public authority.
 
-External adapters remain replaceable because the semantic handoff is complete before their implementation begins. This
-gives the later Output Presentation and backend work a stable boundary.
+Exact declared basis prevents accidental disclosure. Adding a field, Fact, State meaning, or other Core material does
+not silently change an existing outward Contract.
 
-The resulting canonical dependencies can be reused by incremental compilation without granting authority to cache or
-execution state.
+Contract coherence is checked before execution rather than delegated to runtime Publication or an external consumer.
+This preserves deterministic semantics while leaving the compiler free to choose the verification technique.
 
 ### Negative
 
-ADR-0049 is now too narrow where it treats one Operation return Fact as the sole basis for Publication and binds
-Publication closely to Output Presentation coordinates. Those parts must be revised after ADR-0058 is accepted.
+The Publication declaration language must be rich enough to express value-sensitive outward interpretation while still
+remaining closed, declarative, and statically verifiable. This is more demanding than the earlier direct coordinate
+relation model.
 
-The more general Publication model requires a new canonical frontend representation before the redesigned IR can be
-finalized.
+ADR-0049 is now too narrow where it treats the successful Operation return Fact as the only Publication basis, forbids
+broader explicit Contract meaning participation, couples Publication closely to target presentation coordinates, or
+introduces Publication-specific runtime stop behavior. Those parts require revision after ADR-0058 is accepted.
 
-Long-running and independently publishable machine work still requires a precise relation between active processing
-boundary completion and Publication reachability.
+The compiler must detect malformed dependencies and contradictory outward relations without turning its chosen analysis
+algorithm into Contract meaning.
 
 ### Neutral
 
-Publication remains user-authored Contract meaning because outward authority cannot generally be derived from internal
-meaning alone.
-
-This ADR fixes the Publication boundary while leaving the remaining contracts and compiler representation to their
-owning work.
+Publication remains user-authored because outward authority cannot be inferred from Core truth alone. Output
+Presentation remains a separate Contract, and adapters remain replaceable realization outside both authorities.
