@@ -84,9 +84,10 @@ internal Failure
 Publication therefore cannot remain a special path for copying coordinates from one return Fact. It is the Contract
 authority over outward Contract meaning at the boundary between the Core and Output Presentation.
 
-That authority begins only from explicitly declared Contract material already established inside the machine.
-Publication may interpret the immutable values of that material when outward meaning requires abstraction, reduction, or
-selective disclosure, but it does not repeat or revise the Core judgment that made the source authoritative.
+That authority begins only from explicitly declared Contract material already established inside the machine. The Core
+is sealed from outward visibility by default, while Publication may interpret immutable declared basis material to
+establish a reduced, abstract, or selectively disclosed outward meaning. It does not repeat or revise the Core judgment
+that made the source authoritative.
 
 External effects remain outside that question. Any physical effect on an external system belongs to realization outside
 the core. Such machinery may carry an already-authorized outward meaning, but it cannot create or revise Publication
@@ -130,7 +131,8 @@ hold more detail than an external consumer is authorized or required to receive.
 
 Publication therefore needs enough authority to interpret explicitly declared Core material without becoming a second
 Core judgment system. If a result Fact contains detailed coordinates, Publication may use the exact coordinates named by
-its Contract to form a reduced or abstract outward meaning. It must not search the Core for undeclared material, change
+its Contract to form a reduced or abstract outward meaning. Those coordinates remain non-public unless the Publication
+Contract explicitly selects them into the outward meaning. It must not search the Core for undeclared material, change
 the Fact, rewrite Failure, or establish new internal truth.
 
 The outward relation must also be coherent before execution. If the authored Publication Contract can require
@@ -152,11 +154,11 @@ physical realization replaceable.
 Publication must remain Contract meaning rather than implementation behavior. External implementation can carry
 material, but it cannot determine outward Contract authority.
 
-Contract meaning is non-public by default. Internal authority and outward authority are different relations, so
-successful processing, physical observability, or serializer reachability cannot silently bridge them.
+The Core must remain sealed by default so implementation reachability or internal authority cannot silently become
+outward authority.
 
-Every Publication judgment must declare the exact Contract material on which it depends. Core membership, apparent
-relevance, matching names, and implementation access create no implicit Publication basis.
+Every Publication judgment must declare the exact Contract material on which it depends, and any Core material that is
+to cross the boundary must be positively selected into the resulting outward meaning.
 
 Publication must be able to use declared coordinates of immutable Core Facts and other explicitly declared established
 Contract meaning, including Failure, without changing any of them.
@@ -210,40 +212,34 @@ emission mechanism.
 The formal concept is `outward meaning`, not only an outward `claim`. A Core result may support authoritative outward
 intent as well as descriptive meaning without making its external realization part of the Contract.
 
-### 4.2. Contract Meaning Is Non-Public by Default
+### 4.2. The Core Is Sealed and Non-Public by Default
 
-No Contract meaning receives outward authority merely by existing.
+No Contract meaning receives outward authority merely by existing. The Core is sealed from outward visibility unless a
+bound Publication Contract positively establishes outward meaning.
 
-Neither internal authority nor physical availability implies Publication. Contract meaning therefore remains non-public
-unless the bound Publication Contract establishes outward meaning from it.
+Neither internal authority, physical availability, nor Publication-basis participation implies disclosure. Material that
+is not explicitly selected into outward meaning remains inside the Core even when Publication is authorized to read it
+for judgment.
 
-Where the bound Publication Contract establishes no outward meaning, none exists merely because implementation could
-expose the source. This absence does not create another runtime result.
+Publication therefore does not require an exhaustive negative list of hidden material. Absence of positive outward
+authority is sufficient: anything not explicitly established as outward meaning remains sealed.
 
-### 4.3. Publication Basis Is Explicit and Core-Internal
+### 4.3. Publication Basis Is Explicit and Does Not Grant Disclosure
 
 Publication may depend only on exact Contract material that has already been established inside the machine and is
 explicitly named by the Publication Contract.
 
-A successfully completed Operation result is an immutable Fact inside the Core. Publication may bind that Fact and the
-exact coordinates whose values participate in the outward judgment. Other established Contract meaning, including an
-established Failure, may participate only when the Publication Contract names it explicitly.
+A successfully completed Operation result is already an immutable Fact inside the Core. Publication may name the exact
+coordinates of that declared result whose values participate in the outward judgment. Other established Contract
+meaning, including an established Failure, may participate only when the Publication Contract names it explicitly.
 
-```text
-Operation result Fact
-    declared coordinate A
-    declared coordinate B
+Naming material as Publication basis grants judgment dependency, not outward visibility. A basis coordinate remains
+sealed unless the Publication Contract explicitly selects that material into the authorized outward meaning. Material
+elsewhere in the Core does not participate merely because it exists or appears relevant.
 
-other declared Contract meaning
-        ↓
-Publication judgment
-```
-
-Material elsewhere in the Core does not participate merely because it exists or appears relevant. Publication may not
-scan the Core, follow undeclared relations, or acquire additional basis through implementation access.
-
-The declaration therefore owns the dependency. The backend only realizes access to material that already has Publication
-participation authority.
+Publication may not scan the Core, follow undeclared relations, or acquire additional basis through implementation
+access. The declaration therefore owns both the dependency and any disclosure from that dependency. The backend only
+realizes access and outward transfer already authorized by the Contract.
 
 ### 4.4. Publication May Interpret Declared Values Into Different Outward Meaning
 
@@ -275,9 +271,9 @@ Publication criteria are therefore declarative outward law over the exact basis 
 callbacks, external lookup, hidden implementation state, or host-language control flow cannot become Publication
 authority.
 
-### 4.5. Publication Is Positive and Boundary-Exact Authority
+### 4.5. Publication Authority Is Exact to the Outward Boundary
 
-Publication is explicit positive authority at an exact outward boundary.
+Publication authority is established for an exact outward boundary.
 
 The same Contract meaning can have different outward relations at different declared boundaries. Neither structural
 similarity nor shared implementation makes those relations interchangeable.
@@ -293,7 +289,8 @@ Contract meaning X
 ```
 
 A Publication relation is therefore not a global `public` flag on Contract meaning. Adding internal meaning cannot
-silently widen an existing outward Contract.
+silently widen an existing outward Contract, and disclosure authorized at one outward boundary does not authorize the
+same material at another.
 
 ### 4.6. Success and Failure Use the Same Publication Authority
 
@@ -340,18 +337,16 @@ Facts remain distinct Facts, and distinct Failures remain distinct Failures unde
 Runtime arrival order cannot decide which basis items participate. The declaration fixes that dependency before
 execution.
 
-### 4.8. Publication Follows Core Establishment
+### 4.8. Publication Uses Already-Established Basis
 
-Publication does not create the Core material on which it depends. Its declared basis must already have been established
-by the Contract or State-Machine authority that owns that meaning, or established as Failure under ADR-0057 where
-Failure is the declared basis.
+Publication may use only declared basis that has already been established by the authority that owns that meaning. If
+the basis is Failure, it must already be established under ADR-0057.
 
-Provisional, unresolved, merely observed, or implementation-local material is not a valid Publication source.
-Publication does not turn missing basis material into a placeholder or manufacture a substitute result.
+Material that has not become authoritative Contract meaning is not Publication basis. Publication cannot create missing
+basis material or replace it with another result.
 
-The exact scheduling relation between active processing boundary completion and every future Publication site remains a
-Whole-Machine concern. This ADR requires only that a Publication judgment never precede establishment of its own
-declared basis.
+This ADR does not define the exact processing order around Publication. It requires only that the declared basis already
+exists before the Publication judgment that uses it.
 
 ### 4.9. Established Publication Is Non-Retroactive
 
@@ -386,13 +381,15 @@ Output Presentation
 closed outward form
 ```
 
-If Publication reduces a detailed internal Fact to `Warning`, the decision to omit the hidden internal detail has
-already occurred semantically. Output Presentation does not rediscover that detail and choose to hide it; it presents
-`Warning`
-through the closed shape defined by its own Contract.
+If Publication reduces a detailed internal Fact to `Warning`, every Core detail not selected into that outward meaning
+remains sealed before Output Presentation begins. Output Presentation does not rediscover Core detail and choose whether
+to hide or expose it; it presents only the outward meaning already established by Publication through the closed shape
+defined by its own Contract.
 
-A presentation shape may exist without granting Publication authority, and representation convenience cannot widen the
-meaning Publication authorized. The next ADR finalizes the closure rules between these two Contracts.
+Output Presentation therefore cannot independently reference, obtain, or expose Core material merely because that
+material existed in Publication basis. A presentation shape may exist without granting Publication authority, and
+representation convenience cannot widen the meaning Publication authorized. The next ADR finalizes the closure rules
+between these two Contracts.
 
 ### 4.12. Publication and Diagnostic Meaning Are Separate
 
@@ -482,9 +479,10 @@ The existence of internal meaning does not determine whether it may leave the Co
 immutable Fact may participate, or what outward interpretation should be established from them. Those are
 application-specific Contract choices, so Publication requires explicit authoring.
 
-Every Publication declaration must name its exact basis. When a Fact participates, the declaration must name the exact
-coordinates whose values may influence the outward judgment; naming the Fact does not silently authorize every field.
-Undeclared Contract meaning and undeclared Fact coordinates have no Publication participation authority.
+Every Publication declaration must name its exact basis. When the Operation result Fact participates, the declaration
+must name the exact result coordinates whose values may influence the outward judgment. The declaration must also
+express any exact source-to-outward selection required by its outward meaning. Undeclared Contract meaning and
+undeclared Fact coordinates have no Publication participation authority.
 
 The frontend must express that dependency and the outward law without requiring the implementation mechanism that
 realizes it. The exact IDL placement and surface syntax remain open until the semantic model is complete.
@@ -501,6 +499,7 @@ exact Publication declaration
 exact declared Contract-meaning basis
 exact declared Fact-coordinate basis where applicable
 exact declarative outward criteria
+exact outward selection from declared basis where applicable
 exact authorized outward meaning
 exact outward boundary
 ```
@@ -544,7 +543,9 @@ Publication is not modeled as a host-language call wrapper with pre/post checks,
 interception. Arbitrary user behavior cannot become hidden Publication authority merely because a backend can invoke it.
 
 Physical realization may read only the material admitted by the declared Publication basis and cannot consult external
-systems or undeclared machine state to decide what should be public.
+systems or undeclared machine state to decide what should be outward. Basis access does not authorize realization to
+carry that material across the boundary; only the exact outward meaning established by Publication may proceed to Output
+Presentation.
 
 ### 6.3. Output Presentation Realization
 
@@ -597,7 +598,8 @@ results, but the Publication Contract must remain unchanged across backend choic
 
 The compiler or verifier must resolve every Contract meaning and Fact coordinate named by Publication to exact declared
 Contract material. Implementation-only values cannot substitute for a missing source, and an undeclared coordinate
-cannot become relevant because a backend can reach it.
+cannot become relevant because a backend can reach it. It must also reject any outward relation whose source-to-outward
+selection is not explicitly authorized by the authored Publication Contract.
 
 Publication declarations that depend on provisional, unresolved, or unauthorized material are invalid before machine
 execution. The same rule applies when a declaration attempts to establish internal Contract truth rather than outward
@@ -653,8 +655,9 @@ machine judgments and realizations established during actual Contract Machine pr
 ## 8. Deferred Decisions
 
 The exact Publication authoring syntax remains open. The frontend must be able to name exact Core basis material, exact
-Fact coordinates, declarative value-sensitive outward criteria, outward meaning, and outward boundary without becoming a
-general-purpose host-language rule system.
+Fact coordinates, declarative value-sensitive outward criteria, any exact selection of basis material that enters the
+outward meaning, the outward meaning itself, and the outward boundary without becoming a general-purpose host-language
+rule system.
 
 The representation of multiple compatible outward meanings remains open. This ADR decides that contradictory outward
 requirements are invalid and that runtime priority is not a repair mechanism, but it does not yet decide whether several
@@ -696,8 +699,9 @@ meaning for the external boundary.
 Failure also remains intact. Outward failure vocabulary can differ from internal Failure meaning without creating an
 aggregate Failure, rewriting failure identity, or turning diagnostic evidence into public authority.
 
-Exact declared basis prevents accidental disclosure. Adding a field, Fact, State meaning, or other Core material does
-not silently change an existing outward Contract.
+Sealed-by-default outward authority prevents accidental disclosure. Adding new Core material does not silently widen an
+existing outward Contract, while Publication can still use explicitly declared internal detail to produce a smaller or
+more suitable outward meaning.
 
 Contract coherence is checked before execution rather than delegated to runtime Publication or an external consumer.
 This preserves deterministic semantics while leaving the compiler free to choose the verification technique.
