@@ -98,6 +98,16 @@ serializers, proxies, generated accessors, and framework conventions may observe
 while Core code may expose getters or similar access paths simply to share material internally. Language-level
 accessibility therefore cannot determine public Contract authority.
 
+Accessors extend the same confusion from observation into mutation. Framework binding, deserialization, generated
+mutators, or other reachable implementation paths may invoke setters or equivalent mutation hooks even when the Core
+material was intended to remain behind a language-level boundary. Conversely, internal collaboration or framework
+integration often causes getters, setters, or similar methods to be opened merely so implementation can proceed, making
+their lexical accessibility a poor statement of either outward authority or authority to change Core meaning. Replacing
+a raw setter with a behaviorally named object method can constrain the mutation, but it still leaves a mutable object
+identity owning semantic change. For Contract material, a different required value is a newly established value; whether
+a backend realizes that difference through allocation, storage reuse, or an in-place physical write is an implementation
+decision rather than semantic mutation authority.
+
 ```text
 implementation can expose X
     -> X becomes public
