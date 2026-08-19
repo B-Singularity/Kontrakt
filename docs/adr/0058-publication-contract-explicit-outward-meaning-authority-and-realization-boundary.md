@@ -90,6 +90,14 @@ A host-language return value may be serializable, a Failure carrier may be reach
 internal value, or an adapter may be able to send it. None of those implementation facts grants public Contract
 authority.
 
+Host-language access modifiers do not solve this boundary. `private`, `protected`, and `public` are useful for
+controlling which implementation units may directly access a program element, but software often makes them carry a
+second duty:
+deciding whether information is allowed to cross a Contract boundary. Those duties do not stay aligned. Reflection,
+serializers, proxies, generated accessors, and framework conventions may observe material that is lexically hidden,
+while Core code may expose getters or similar access paths simply to share material internally. Language-level
+accessibility therefore cannot determine public Contract authority.
+
 ```text
 implementation can expose X
     -> X becomes public
