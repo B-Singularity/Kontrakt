@@ -470,8 +470,8 @@ class name, inheritance, structural similarity, runtime lookup, or registration.
 
 ### 5.1. Kotlin Budget Declaration
 
-The selected V1 Kotlin source is one uninstantiable class. Each member declaration establishes one exact Budget entry
-directly inside that class.
+The selected V1 Kotlin source is one uninstantiable class. Each direct nested entry class declares one exact Budget
+entry inside that selected Budget source.
 
 ```kotlin
 package example.calculate.contract
@@ -483,29 +483,29 @@ import io.kontrakt.contract.budget.RelativeElapsedTime
 
 class CalculateBudget private constructor() {
 
-    fun interactionElapsed(
+    class InteractionElapsed private constructor(
         subject: CalculateInteraction,
         quantity: RelativeElapsedTime,
-    ): Milliseconds =
-        Milliseconds(100)
+        allowance: Milliseconds = Milliseconds(100),
+    )
 
-    fun interactionMemory(
+    class InteractionMemory private constructor(
         subject: CalculateInteraction,
         quantity: MemoryUse,
-    ): Mebibytes =
-        Mebibytes(4_096)
+        allowance: Mebibytes = Mebibytes(4_096),
+    )
 
-    fun canonicalizationElapsed(
+    class CanonicalizationElapsed private constructor(
         subject: CalculateCanonicalization,
         quantity: RelativeElapsedTime,
-    ): Milliseconds =
-        Milliseconds(10)
+        allowance: Milliseconds = Milliseconds(10),
+    )
 
-    fun canonicalizationMemory(
+    class CanonicalizationMemory private constructor(
         subject: CalculateCanonicalization,
         quantity: MemoryUse,
-    ): Mebibytes =
-        Mebibytes(256)
+        allowance: Mebibytes = Mebibytes(256),
+    )
 }
 ```
 
@@ -514,99 +514,116 @@ interface contract. `CalculateCanonicalization` denotes the exact selected one-d
 symbols are resolved at definition time; their simple names, package placement, runtime instances, and inheritance do
 not create subject identity.
 
-The `CalculateBudget` class is not instantiated. Its member functions are not runtime Budget callbacks and are never
-invoked to obtain contract values. They are a restricted source carrier that Kontrakt must completely refine and erase
-before canonical Budget authority begins.
+Neither `CalculateBudget` nor its entry classes are instantiated to obtain contract values. The entry constructor
+parameters are not properties, and the `allowance` default expression is not runtime defaulting or Budget storage. These
+host declarations are restricted source carriers that Kontrakt must completely refine and erase before canonical Budget
+authority begins.
 
-One declaration carries exactly four Budget coordinates:
+One direct entry declaration carries exactly four Budget coordinates:
 
 ```text
-subject parameter exact type
+subject constructor-parameter exact type
     -> exact subject
 
-quantity parameter exact type
+quantity constructor-parameter exact type
     -> exact quantity
 
-return exact unit type
+allowance constructor-parameter exact type
     -> allowance unit
 
-one typed unit literal in the expression body
+numeric source literal inside the allowance default expression
     -> allowance magnitude
 ```
 
-The function name is only a source declaration handle for reading and diagnostics. It does not encode the subject,
-quantity, unit, magnitude, boundary, or Budget identity. Renaming the function without changing its four resolved
+The direct nested entry class is a nominal source declaration handle. Its name does not encode the subject, quantity,
+unit, magnitude, boundary, or canonical Budget identity. Renaming the entry without changing its four resolved
 coordinates does not change canonical Budget meaning.
+
+Because an entry is a genuine source symbol, another contract frontend may refer to that exact entry when its own scope
+and binding law permits the reference. Definition-time resolution must still end at canonical Budget material; the host
+class name does not become final Budget identity or survive as contract authority.
 
 ### 5.2. Typed Allowance Literal
 
-The expression body is not a general Budget expression language. V1 accepts exactly one Kontrakt-owned typed allowance
-literal whose unit agrees with the declared return type.
+The `allowance` coordinate is not a general default-parameter language. Each Budget entry declares exactly one
+non-property `allowance` constructor parameter whose exact Kontrakt-owned unit type is paired with exactly one matching
+typed default expression containing the Budget magnitude.
 
 ```kotlin
-Milliseconds(100)
-Mebibytes(256)
-Seconds(1.5)
-Microseconds(2.5e3)
+val allowance: Milliseconds = Milliseconds(100)
+val allowance: Mebibytes = Mebibytes(256)
+val allowance: Seconds = Seconds(1.5)
+val allowance: Microseconds = Microseconds(2.5e3)
 ```
 
-The frontend reads the numeric source literal under the exact-number law in Section 4.4. It does not obtain authority by
-executing a constructor, evaluating a JVM floating-point result, or observing a runtime object.
+The frontend reads the exact parameter type and numeric source literal under the exact-number law in Section 4.4. It
+does not obtain authority by invoking the entry constructor, applying Kotlin default-argument semantics, executing a
+unit constructor, or evaluating a JVM floating-point result.
 
 The following are rejected:
 
 ```kotlin
-Milliseconds(BASE)
-Milliseconds(50 + 50)
-Milliseconds(readLimit())
-Milliseconds(-1)
+val allowance: Milliseconds = Milliseconds(BASE)
+val allowance: Milliseconds = Milliseconds(50 + 50)
+val allowance: Milliseconds = Milliseconds(readLimit())
+val allowance: Milliseconds = Milliseconds(-1)
+val allowance: Milliseconds = Seconds(1)
+val allowance: Milliseconds = Milliseconds(100)
 ```
 
-A property, default argument, annotation argument, parameter-name encoding such as `allowance_100`, or a predeclared
-numeric type such as `Milliseconds100` does not establish an allowance.
+A missing allowance expression, a default expression on another coordinate, a property initializer, annotation argument,
+parameter-name encoding such as `allowance_100`, or a predeclared numeric type such as `Milliseconds100` does not
+establish an allowance.
 
-The unit is an exact Kontrakt-owned nominal symbol. The magnitude is the exact non-negative numeric material inside the
-typed allowance literal. No string parsing or naming convention is used to recover either coordinate.
+The unit is the exact Kontrakt-owned nominal symbol named by the `allowance` parameter type. The magnitude is the exact
+non-negative numeric material inside the matching typed default expression. No runtime defaulting, string parsing,
+naming convention, or property identity is used to recover either coordinate.
 
 ### 5.3. Flat Declaration Law
 
-One `CalculateBudget` declaration contains its Budget entries directly. V1 does not create one class per limit and then
-repeat those classes through a second membership declaration.
+One `CalculateBudget` declaration contains its Budget entries as direct nominal nested classes. Those entry classes form
+one flat manifest level; V1 does not repeat them through a second membership declaration.
 
-The selected Budget source therefore has one level:
+The selected Budget source therefore has one level of entries:
 
 ```text
 CalculateBudget
-    interaction elapsed entry
-    interaction memory entry
-    canonicalization elapsed entry
-    canonicalization memory entry
+    InteractionElapsed
+    InteractionMemory
+    CanonicalizationElapsed
+    CanonicalizationMemory
 ```
 
-A Budget declaration contains no nested Budget, nested limit class, user-defined membership wrapper, inherited Budget,
-or recursive contract composition.
+The outer `CalculateBudget` is the only Budget declaration selected by the enclosing Interface. A direct entry class is
+one row of that Budget declaration, not a nested Budget or an independently selectable one-dimensional Contract. An
+entry cannot contain another Budget entry. User-defined membership wrappers, inherited Budgets, and recursive contract
+composition are not admitted.
 
-Each entry must declare exactly the fixed `subject` and `quantity` coordinates. The subject type must resolve to one
-exact Interaction or one exact one-dimensional Contract governed by the same enclosing interface. The quantity type must
-resolve to one V1 Budget quantity. The return type and typed literal must resolve to one compatible exact unit.
+Each entry constructor must declare exactly the fixed `subject`, `quantity`, and `allowance` coordinates as non-property
+parameters. The subject type must resolve to one exact Interaction or one exact one-dimensional Contract governed by the
+same enclosing interface. The quantity type must resolve to one V1 Budget quantity. The `allowance` parameter must use
+one exact Kontrakt-owned unit type and one valid typed default expression under Section 5.2. No other constructor
+parameter or default expression is admitted.
 
-One exact `(subject, quantity)` pair may appear only once, regardless of member name.
+One exact `(subject, quantity)` pair may appear only once, regardless of entry class name.
 
 ### 5.4. Prohibited Authoring Authority
 
 V1 Budget authoring obtains no contract meaning from:
 
 ```text
-val or var declarations
-property initializers
+val or var constructor properties
+properties or field initializers
+non-entry members inside the selected Budget source
 annotations
-default parameters
+default expressions except the required allowance typed literal
+functions or executable Budget members
 overload resolution
-function-name conventions
+entry-name conventions
 parameter-name value encoding
 numeric-per-value unit types
 inheritance or subtype discovery
-nested limit declarations
+entry nesting beyond the one direct manifest level
 runtime instances
 callbacks or lambdas
 environment reads
@@ -616,9 +633,10 @@ package scanning
 backend configuration
 ```
 
-The selected class may contain no other executable Budget language. In particular, branching, loops, arithmetic
-expressions, helper calls, lookup, mutable state, and arbitrary constructor or factory expressions are rejected from the
-Budget definition path.
+The selected Budget class contains only direct Budget entry declarations, and those entries contain only the required
+constructor declaration. In particular, branching, loops, helper calls, lookup, mutable state, and arbitrary expressions
+are rejected from the Budget definition path. The only admitted default expression is the exact typed allowance literal
+defined in Section 5.2.
 
 ### 5.5. Refinement and Erasure
 
@@ -627,7 +645,7 @@ The host declaration is source evidence, not final authority.
 ```text
 interface-scope Budget binding
     -> exact Budget source symbol
-    -> exact member declarations
+    -> exact direct entry source symbols
     -> exact subject / quantity / magnitude / unit material
     -> validation
     -> canonical Budget Contract
@@ -635,8 +653,9 @@ interface-scope Budget binding
     -> lowered enforcement
 ```
 
-After refinement, Kontrakt erases the selected class, private constructor, member names, parameter objects, host
-function signatures, typed-literal call shape, and runtime unit objects. Canonical identity and applicable
+Definition-time references to an exact Budget entry must resolve before host material is erased. After refinement,
+Kontrakt erases the selected class, direct entry class names, private constructors, constructor parameters,
+default-argument mechanics, typed-literal call shape, and runtime unit objects. Canonical identity and applicable
 contract-world material are completed from already established authority.
 
 User code does not implement Budget through reporting calls, callbacks, environment reads, scheduler settings, or
@@ -691,10 +710,12 @@ implementation-lifecycle subjects, hidden allowance establishment, unsupported b
 belong to Capacity or another contract.
 
 Authoring verification must also establish that the enclosing interface selects one exact Budget source, the selected
-Kotlin class is uninstantiable, each Budget entry declares exactly `subject` and `quantity`, the subject and quantity
-resolve to permitted exact symbols, the return type is a compatible exact unit, and the body contains exactly one
-matching typed allowance literal. Properties, annotations, default parameters, overload-based meaning, name-encoded
-values, nested limit declarations, arbitrary expressions, and runtime value acquisition must be rejected.
+Kotlin class is uninstantiable and contains only direct uninstantiable Budget entry classes. Each entry constructor must
+declare exactly the non-property `subject`, `quantity`, and `allowance` parameters. The subject and quantity types must
+resolve to permitted exact symbols. The allowance type must resolve to one permitted exact unit symbol and must carry
+exactly one matching typed default expression containing the exact non-negative magnitude. Constructor properties,
+additional parameters, properties or fields, functions, annotations, other default expressions, overload-based meaning,
+name-encoded values, deeper entry nesting, arbitrary expressions, and runtime value acquisition must be rejected.
 
 Elapsed-time tests must cover:
 
@@ -753,8 +774,10 @@ Compile-time rejection prevents contradictory or unrealizable Budget declaration
 runtime overrun has one explicit result, exact attribution, and complete pipeline diagnostics.
 
 The user contract remains independent from clock, allocation instrumentation, cancellation, scheduler, process, and
-retry mechanisms. The V1 Kotlin surface expresses each Budget entry once inside one selected flat declaration without
-annotation authority, value-name parsing, per-limit wrapper classes, or a second membership structure.
+retry mechanisms. The V1 Kotlin surface expresses each Budget entry once as a direct nominal row inside one selected
+Budget declaration, without executable Budget methods, annotation authority, value-name parsing, or a second membership
+structure. Exact entries remain referable as source symbols while canonical Budget identity stays independent from host
+class names.
 
 ### Negative
 
