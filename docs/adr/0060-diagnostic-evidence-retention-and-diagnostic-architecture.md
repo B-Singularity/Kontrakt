@@ -281,6 +281,17 @@ source relationships, semantic subjects, causal relations, fix data, and reprodu
 so the compiler can support CLI, IDE, CI, machine-readable output, localization if it is ever added, and testing without
 making English text a protocol.
 
+The default explanation must speak in the user's Contract vocabulary rather than expose the vocabulary of compiler
+implementation. A verifier may internally reason about canonical ordinals, graph nodes, solver clauses, lowered gates,
+or pass-local analysis objects. Those objects can remain available for compiler engineering, but the ordinary diagnostic
+projects the relevant result back to the declared Contract subjects and rules that the user can inspect and change.
+Richness therefore means semantic precision, not an internal-state dump.
+
+This projection is itself a correctness boundary. The renderer cannot invent a friendly story that is merely plausible.
+The explanation must be derivable from structured semantic subjects, source provenance, and the exact compiler judgment
+that established the diagnostic. The compiler can change wording while the relation from internal evidence to the
+user-visible Contract explanation remains deterministic and testable.
+
 Compiler diagnostic generation must participate in the same determinism rules as compilation. Worker count, scheduling,
 hash-table iteration, cache hit order, object address, and wall-clock completion order cannot decide which diagnostics
 exist or how independent diagnostics are ordered.
@@ -296,6 +307,18 @@ source diagnostics. If it cannot prove or validate that preservation, the transf
 Deep diagnostics have a cost. The architecture must support cheap always-available anchors and selectively acquired rich
 material. Costly tracing, full dumps, detailed optimizer histories, and verifier proof objects should be available when
 they justify their cost rather than silently becoming mandatory hot-path work.
+
+The cost boundary must not weaken a required diagnostic guarantee. A Diagnostic Evidence Contract fixes the material
+that must exist for the selected world and occurrence. Above that guaranteed core, the user or compiler operator may
+select a deeper diagnostic profile that enables more expensive explanation, tracing, reproduction, or backend
+observation. A smaller profile may reduce optional work, but it cannot change Contract validity, erase an established
+Failure, or turn required evidence into sampled best-effort data.
+
+The compiler and generated runtime should therefore optimize diagnostic work as aggressively as they optimize other
+non-semantic work. They should retain compact identities, reuse existing analysis, intern repeated context, delay human
+formatting, and materialize expensive evidence only when the selected diagnostic depth or an exact trigger requires it.
+The user-visible explanation can remain rich because semantic compression is not the same thing as permanently retaining
+every internal object that helped produce it.
 
 The diagnostic mechanism itself cannot be assumed correct. Source mappings, evidence capture, retention, rendering,
 incremental reuse, and backend correlation require independent verification and regression testing. A system that
@@ -832,6 +855,29 @@ become the Contract definition.
 The same applies to generated numeric IDs, table offsets, event classes, or storage handles. Canonical Contract identity
 must survive if V2 changes the generated API or another backend uses a different representation.
 
+### 6.11. Diagnostic Depth Is Configurable above the Guaranteed Evidence Core
+
+A user needs control over how much diagnostic work the generated system performs, but one control cannot mean both
+Contract guarantee and operational verbosity.
+
+If richer evidence is part of accountable machine behavior, the user declares that material through Diagnostic Evidence
+and, where applicable, selects it through the existing Policy World. The compiler resolves and lowers that obligation
+before execution. A runtime setting cannot weaken it after the governed boundary begins.
+
+Additional investigation is different. The user may choose an operational diagnostic profile that enables deeper JVM,
+operating-system, hardware, trace, reproducer, or recent-history capture without changing the Contract. The exact API
+and profile names remain open, but the semantic split is fixed: required evidence is a Contract choice; optional
+diagnostic depth is an implementation choice.
+
+A profile should describe meaningful capture behavior rather than expose a numeric verbosity scale whose cost and
+semantics change between backends. One backend may obtain a stack cheaply while another cannot provide one at all. The
+common configuration therefore names the diagnostic intent and lets backend capability resolution determine which
+optional enrichments can realize it. Backend-specific overrides can exist outside Contract identity.
+
+The lowest supported operational profile still preserves stable correlation to the authoritative occurrence. Higher
+profiles may retain more context or activate targeted observation. None may replace the declared evidence shape with a
+weaker partial occurrence.
+
 ---
 
 ## 7. Kontrakt Compiler Diagnostic Architecture
@@ -892,6 +938,22 @@ be present for every diagnostic, and their absence does not change the diagnosti
 
 This structure allows a CLI renderer to produce a compact explanation while an IDE uses exact ranges and a CI system
 uses stable codes from the same occurrence.
+
+The structured record is not a serialized dump of the compiler's private model. Internal evidence can name a canonical
+definition, a conflict set, an analysis fact, or a lowered artifact through compact references, but the ordinary
+user-facing explanation projects those references back into the vocabulary of the declared Contract Machine. A user who
+wrote an Output and a Publication should read about that Output and Publication, not about a frozen table ordinal or a
+subset-check implementation class.
+
+This gives compiler diagnostics two distinct views over one occurrence. The engineering view can expose pass identity,
+query dependency, raw conflict material, and backend state when compiler developers need them. The user view answers a
+different question: which Contract was involved, what that Contract required, what the compiler established, why the two
+are incompatible or noteworthy, and which declaration the user can inspect. Both views originate from the same
+structured diagnostic product, so readability does not require reconstructing semantics from strings.
+
+Severity and source location remain part of the compiler diagnostic envelope rather than the explanation itself.
+Severity tells tooling how the compiler classifies the issue. Source anchors tell the user where to start looking.
+Neither field substitutes for the semantic evidence that explains why the diagnostic exists.
 
 ### 7.4. SourceManager and Provenance Are Mandatory Compiler Infrastructure
 
@@ -1141,6 +1203,16 @@ protocol. Machine-readable consumers receive structured codes and ranges directl
 Changing colors, wording, wrapping, excerpt size, or terminal capabilities does not change the compiler diagnostic
 identity.
 
+The default renderer performs semantic compression. It selects the smallest user-visible Contract cause that still
+explains the compiler judgment, then presents related declarations only when they change what the user must understand.
+An internal verifier can traverse a much larger dependency graph without forcing that graph into the terminal output.
+When several internal facts support one explanation, the renderer names the Contract rule and the declarations that make
+the rule fail rather than narrating the compiler's search procedure.
+
+This is not lossy with respect to the diagnostic truth. Deeper compiler modes can follow artifact handles back to the
+conflict set, analysis result, pass decision, or reproducer when an engineer needs the internal account. Ordinary users
+receive the Contract-level explanation because that is the language in which they can correct the source.
+
 ### 7.21. IDE and CI Output Share the Same Source Diagnostic Product
 
 Kontrakt should not implement one diagnostic logic for CLI and another for IDE.
@@ -1255,6 +1327,34 @@ an explicit session or revision relation.
 
 This is the compiler-side analogue of Retention separation: physical longevity of a daemon object does not define the
 availability or validity of a diagnostic product.
+
+### 7.30. Compiler Diagnostic Work Is Lazy, Bounded, and Selectively Enriched
+
+A commercial compiler cannot pay the maximum diagnostic cost on every successful query or every rejected source form.
+Kontrakt therefore keeps the persistent diagnostic core small and treats expensive explanation as material that can be
+produced from that core when needed.
+
+The cheap path records compact identities for the diagnostic definition, semantic subject, source provenance, causal
+root, and dependencies that are already available from compiler analysis. Repeated Version, Policy World, source-file,
+or canonical-definition context should be referenced through interned or frozen material rather than copied into every
+occurrence. Human sentences, large source excerpts, complete IR histories, solver proofs, and stack traces do not belong
+in hot semantic objects merely because a later renderer might want them.
+
+When a diagnostic is actually published, the engine can enrich it according to the consumer and selected mode. A normal
+user build performs the semantic projection needed for a precise actionable explanation. An explain build can spend more
+time reducing a conflict set or reporting optimization blockers. A compiler-engineering run can request pass-local IR,
+query traces, cache decisions, or a reproducer. Work that is not requested and is not needed to satisfy a correctness
+obligation should not be materialized.
+
+The compiler may also stop enrichment when additional detail no longer improves the explanation. A globally minimal
+conflict core is unnecessary if a deterministic small core already points to the two declarations the user must change.
+A full before-and-after IR dump is unnecessary if a compact transformation record answers why an optimization was
+missed. This is diagnostic profitability engineering: after correctness and provenance are secured, the compiler spends
+additional work only where the extra diagnostic value justifies the cost.
+
+Lazy enrichment must not make diagnostics nondeterministic. The same requested diagnostic mode over the same
+authoritative inputs produces the same semantic diagnostic product even if caches or worker schedules change the
+physical work needed to obtain it.
 
 ---
 
@@ -1515,6 +1615,30 @@ A backend adapter should preserve such source-supplied validity instead of conve
 assigning false precision. The common Kontrakt Contract does not need one global confidence scale to follow this rule.
 It only needs to avoid destroying the semantics of the backend evidence it chooses to expose to diagnostic tooling.
 
+### 8.22. Operational Diagnostic Depth Is Explicit and Aggressively Selective
+
+The generated system should keep the normal hot path close to the cost of the machine without rich operational
+diagnostics. Contract-required evidence is planned separately and remains guaranteed. Everything beyond that core is a
+candidate for selective acquisition.
+
+An operational profile can keep cheap correlation anchors continuously while delaying expensive material until a known
+trigger occurs. The trigger may be an established Failure, a selected realization anomaly, an operator request, or a
+backend condition whose diagnostic semantics are explicitly defined by that backend. Once triggered, capture can narrow
+to the affected Contract authority, realization region, or bounded time window instead of tracing the whole process.
+
+This approach is deliberately asymmetric. Normal successful traffic should not pay for full stacks, object snapshots,
+large trace histories, or hardware counters that no investigation is using. When the machine reaches an occurrence that
+justifies deeper investigation, the backend may temporarily increase detail and preserve the relevant recent context.
+The increased depth remains bounded by explicit resource and retention policy.
+
+Sampling and throttling are allowed only in the optional operational plane. They must expose their own loss when that
+loss matters to interpretation. A sampling decision cannot erase an occurrence whose Diagnostic Evidence Contract
+requires material, and a throttle cannot merge distinct required occurrences into one representative record.
+
+The user API may offer named operational profiles and targeted overrides. Those controls select cost and investigation
+depth; they do not form a hidden fourth Contract axis. If the user needs a diagnostic guarantee to differ by Policy
+World, that difference belongs in the Contract selection described in Section 6 rather than an operational switch.
+
 ---
 
 ## 9. Compiler Pipeline Integration
@@ -1682,6 +1806,40 @@ extra diagnostic tracing instead of having to retain every internal compiler eve
 V2 incremental and parallel compilation must preserve this property at externally observable compiler boundaries. Cache
 state may change physical work, not diagnostic meaning.
 
+### 9.13. Diagnostic Planning Separates Guarantee from Cost
+
+Diagnostic planning follows the same separation that an optimizer uses between legality and profitability. The compiler
+first determines what evidence or provenance must be preserved for correctness. Only after that boundary is satisfied
+may it decide whether additional diagnostic acquisition is worth its compilation or runtime cost.
+
+```text
+semantic occurrence
+    ↓
+required diagnostic guarantee
+    ↓
+minimal evidence / provenance plan
+    ↓
+optional enrichment requested?
+    ├─ no -> structured occurrence
+    ↓
+cost and capability decision
+    ├─ skip unavailable or unjustified enrichment
+    └─ acquire selected rich material
+    ↓
+retention / presentation
+```
+
+The evidence realization plan generated by lowering therefore does not need to allocate the richest representation in
+advance. It can encode the guaranteed capture operations and compact correlation points while leaving optional backend
+attachments behind conditional or on-demand paths. Compiler diagnostics use the same principle with source and semantic
+references: preserve enough to explain correctly, then materialize expensive human or engineering detail when a consumer
+actually requests it.
+
+This separation keeps diagnostic optimization subordinate to correctness. A cost model can refuse an optional full dump.
+It cannot decide that required evidence is too expensive after the compiler has already accepted the Contract. If the
+backend cannot realize the guaranteed diagnostic plan within supported resources, compilation fails at the capability
+boundary instead of silently degrading the obligation.
+
 ---
 
 ## 10. V1 Architecture
@@ -1802,6 +1960,35 @@ paths. Runtime tests verify that required evidence is not dropped by the backend
 
 These tests are part of the commercial compiler foundation rather than polish to be added after feature completion.
 
+### 10.12. V1 Stores Compact Diagnostic Relations and Renders Rich Contract Explanations
+
+V1 should not encode the full terminal explanation in every parser node, canonical definition, or lower-IR object. The
+compiler stores compact references to the semantic subject, source anchors, diagnostic definition, and causal material
+that already exist in the compilation. Repeated context is interned where practical.
+
+The user renderer resolves those references back to the declared Contract vocabulary. It names the Contract that was
+written, states the requirement that applies, contrasts it with the material the compiler established, and points to the
+source declarations that the user can inspect. Compiler implementation names remain available only in explicit
+engineering modes or internal-error reports where they are actually useful.
+
+This lets V1 deliver rich diagnostics without making rich strings or large evidence graphs part of every compiler hot
+path. It also gives V2 a stable structured base for localization, IDE projection, persistent caching, and richer
+explanation search.
+
+### 10.13. V1 Exposes Diagnostic Depth without Making It Semantic Ambiguity
+
+V1 should expose an explicit diagnostic-depth control for compiler investigation and generated-system operational
+diagnostics. The exact names can be finalized with the frontend, but the modes must have defined behavior rather than
+mean "print more stuff."
+
+The normal mode favors precise Contract-language explanations and low overhead. A deeper mode may ask the compiler for
+conflict reduction, optimizer decisions, source-to-IR provenance, or reproducer material. Generated systems may likewise
+activate richer backend observation around selected occurrences. Required Contract Evidence remains outside these
+optional depth controls.
+
+The first implementation can support only a small number of profiles. The architecture must already prevent a backend
+from interpreting a lower profile as permission to sample or drop declared Contract Evidence.
+
 ---
 
 ## 11. V2 Extension Path
@@ -1912,6 +2099,16 @@ The user chooses the depth appropriate to the question without changing Contract
 Generated systems can use a similar layered model for operational diagnostics. Contract-required evidence remains
 outside that optional cost decision because its cost is already part of realizing the declared Contract.
 
+The compiler cost model can consider the price of explanation itself. Conflict-core reduction, source reconstruction, IR
+snapshotting, proof production, renderer work, and persistent cache traffic can have very different costs. A diagnostic
+planner can choose the cheapest material that satisfies the requested explanation quality, then stop when further detail
+would not change the actionable result.
+
+Runtime profiles can evolve in the same direction. A target may use anomaly-triggered depth, bounded recent-history
+freeze, differential comparison, or backend-native sampling for optional evidence while retaining the same Contract
+correlation anchors. These strategies remain interchangeable realization choices unless a future Contract explicitly
+requires one of them.
+
 ---
 
 ## 12. Verification and Quality Requirements
@@ -2017,6 +2214,11 @@ Compiler benchmarks should measure diagnostic-heavy invalid builds separately fr
 conflict explanation, rendering, and machine-output serialization need their own profiles. Generated runtime benchmarks
 should compare Contract Evidence capture against the same path with no evidence declaration so the marginal cost is
 visible.
+
+Tests should also compare supported diagnostic-depth profiles. Lower optional depth must reduce or bound the expected
+work without changing Contract validity, required evidence, stable compiler error identity, or the semantic explanation
+of the root cause. A deeper profile can add internal evidence and investigation artifacts; it cannot reveal that the
+normal profile had reported a different Contract reason.
 
 This makes diagnostic performance an engineered property rather than an anecdote.
 
@@ -2212,6 +2414,14 @@ The compiler gets a commercial-grade architecture in which diagnostics are struc
 provenance. That supports CLI, IDE, CI, machine output, optimizer explanation, incremental compilation, parallel work,
 and crash reproduction without creating separate error systems for each consumer.
 
+User-facing diagnostics can remain rich without exposing compiler internals. The compiler projects structured evidence
+back into the vocabulary of the declared Contract Machine, so source locations and severity guide attention while the
+actual explanation speaks in terms the user can change.
+
+Diagnostic cost becomes an explicit engineering dimension. Compact references and lazy enrichment let normal compiler
+and runtime paths remain small, while named deeper modes can spend additional work on the exact investigation that needs
+it. Required Contract Evidence stays outside that optional trade-off.
+
 Optimization remains free to change implementation shape because diagnosability is expressed as a preservation
 obligation over meaning and provenance rather than as a requirement to keep particular JVM frames or IR nodes alive.
 
@@ -2231,6 +2441,10 @@ stronger Contract.
 
 The compiler must build source provenance, structured diagnostics, deterministic merge, and preservation rules earlier
 than a simple string-based implementation would require.
+
+The compiler also needs a diagnostic planning boundary instead of a single global verbosity switch. Keeping user-facing
+semantic projection, internal engineering evidence, and generated-system operational depth coherent adds design work to
+frontend, pass, cache, backend, and tooling APIs.
 
 Transform passes carry more obligations because source and diagnostic provenance can be invalidated even when semantic
 IR remains legal. This adds verifier and testing work to optimization engineering.
