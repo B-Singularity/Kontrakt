@@ -405,9 +405,238 @@ canonical structure, but that compression must occur only after their semantic d
 
 ---
 
-## 5. Contract Decision — Diagnostic Evidence
+## 5. Diagnostic Contract Obligations Extracted from the Inventory
 
-### 5.1. Diagnostic Evidence Is a Contract over Explanation Material
+The inventory above is deliberately broader than this Contract. It records characteristics, engineering distinctions,
+and implementation techniques that are useful during design. They do not become Contract coordinates merely because a
+compiler, operating system, monitoring system, or engineered system benefits from them.
+
+This section extracts the obligations that remain when implementation form is removed. These obligations are normative
+for the Diagnostic Contract. The detailed decisions that follow refine them without requiring every inventory item to
+become part of canonical Diagnostic meaning.
+
+### 5.1. Diagnostic Does Not Own the Meaning It Explains
+
+A Diagnostic must not become the authority that establishes the judgment, Failure, State-Machine decision, or
+Realization result that it explains. The owning authority establishes that meaning first. Diagnostic material may
+describe, support, or investigate it without replacing that authority.
+
+The absence, loss, or failure of Diagnostic material therefore cannot erase or rewrite an already-established source
+result. A Diagnostic subsystem may itself fail, but that failure is distinct from the result it was attempting to
+explain.
+
+### 5.2. Diagnostic Must Preserve Its Exact Subject and Semantic Origin
+
+A Diagnostic must remain related to the exact subject and occurrence that it explains. It must also preserve enough
+provenance to identify where the diagnostic meaning originated.
+
+This obligation does not require a source file, line number, stack frame, or any particular frontend representation.
+Those are possible realizations of provenance. Contract meaning requires the semantic relation, not one tool-specific
+coordinate system.
+
+### 5.3. Diagnostic Must Preserve the Basis of Its Account
+
+A Diagnostic must preserve the material that justifies its diagnostic account. Where the account depends on a required
+meaning, established material, observed material, missing material, conflicting material, or another declared relation,
+those roles must remain distinguishable enough to explain the result correctly.
+
+A Diagnostic must not reduce an explainable judgment to an opaque code when the applicable Diagnostic Contract requires
+the basis needed to understand that judgment.
+
+### 5.4. Different Evidential and Causal Roles Must Remain Distinct
+
+Diagnostic material with different semantic roles must not be silently collapsed into one undifferentiated value.
+Established semantic material is not the same as observed realization material. A cause is not a Failure mode, an
+effect, or a consequence. Temporal precedence is not causality. A current observation is not historical evidence merely
+because it concerns the same subject.
+
+The Contract does not require every engineering distinction to become a universal field. It requires those distinctions
+to remain intact whenever collapsing them would change what the Diagnostic claims.
+
+### 5.5. Diagnostic Claims Must Remain within Their Applicability
+
+A Diagnostic must not generalize evidence beyond the conditions under which that evidence is meaningful. Applicable
+Version, Policy World, State, operating condition, assumption, reference, measurement condition, or other relevant
+context must remain related to the diagnostic account when interpretation depends on it.
+
+Where the source authority already owns applicable context, the Diagnostic refers to that meaning rather than redefining
+or duplicating it as a competing authority.
+
+### 5.6. Diagnostic Must Not Claim More Certainty than Its Basis Supports
+
+A Diagnostic must not present uncertain, approximate, invalid, unavailable, or weakly attributable material as stronger
+knowledge than its source supports. Known uncertainty and limits of attribution must remain visible in the diagnostic
+meaning when they affect interpretation.
+
+When the available material cannot support a conclusion, the Diagnostic may remain explicitly unknown or abstain from
+attribution. It must not manufacture a definite cause to complete a preferred presentation shape.
+
+### 5.7. Diagnostic Availability Must Not Imply Universal Coverage
+
+The existence of Diagnostic machinery must not imply that every possible Failure or condition is detectable or
+diagnosable. A Diagnostic guarantee extends only across the domain for which the applicable Contract can actually
+establish the promised material.
+
+In particular, strong diagnostic coverage over Contract judgments does not imply equivalent coverage over user
+realization, operating-system behavior, hardware behavior, or other boundaries that Kontrakt does not fully own.
+
+### 5.8. Detection and Attribution Strength Must Remain Distinct
+
+Knowing that a problem or abnormal condition exists is not the same as identifying its exact source. A Diagnostic must
+not claim finer isolation or specificity than its evidence supports.
+
+When several causes remain plausible, the Diagnostic may preserve alternatives, a common-cause relation, or an
+unresolved attribution. It must not convert diagnostic convenience into false semantic precision.
+
+### 5.9. Known Incompleteness Must Remain Visible
+
+The presence of some Diagnostic Evidence does not imply that the evidence is complete. Known loss, partial capture,
+overflow, truncation, unavailable material, or other incompleteness must not be represented as a complete account when
+that distinction matters to interpretation.
+
+A stronger declared evidence obligation cannot be satisfied by silently weakening it to whatever material happened to
+remain available.
+
+### 5.10. Diagnostic Must Preserve Temporal Fidelity
+
+A Diagnostic must preserve the temporal meaning of its material. Occurrence, observation, capture, and later
+availability may happen at different times. A value reconstructed or read later must not be represented as though it
+were frozen at the original occurrence.
+
+Current state, occurrence-time evidence, and later reconstruction may all be useful, but the Diagnostic must preserve
+their different temporal status.
+
+### 5.11. Diagnostic Material Must Preserve Integrity and Origin
+
+Diagnostic material must not be silently altered, mixed with another occurrence, or detached from its claimed origin in
+a way that changes its meaning. Retention, transport, rendering, and backend conversion must preserve the identity and
+semantic relation required to interpret the material.
+
+This obligation defines semantic integrity. It does not require one storage format, cryptographic mechanism, or
+transport protocol.
+
+### 5.12. Evidence, Explanation, and Guidance Are Different Responsibilities
+
+Evidence states diagnostic material. Explanation turns that material into an account that a consumer can understand.
+Guidance suggests what the consumer may do next. These responsibilities must not be collapsed.
+
+Explanation may derive from Evidence but cannot invent new authoritative facts. Guidance may recommend a correction but
+cannot present that recommendation as though the Contract had already established it as the only valid action.
+
+### 5.13. Diagnostic Explanation Must Be Expressible in the Subject's Meaning Vocabulary
+
+A Diagnostic must remain explainable in the vocabulary of the meaning it diagnoses rather than requiring the consumer to
+understand the diagnostic implementation's internal representation.
+
+For Kontrakt Contract material, that means explanation can refer to declared Contract subjects, authorities, worlds,
+States, Failures, Publications, Outputs, and other established machine meanings. Compiler ordinals, internal nodes,
+lowered gates, stack frames, and backend object identities may support an engineering view without becoming the required
+user explanation.
+
+### 5.14. Required Diagnostic Material Must Be Sufficient and Relevant
+
+A required Diagnostic account must contain enough material to understand the subject and the applicable diagnostic
+judgment. At the same time, the Contract must not make unrelated material mandatory merely because it may occasionally
+be useful during investigation.
+
+Diagnostic richness is therefore not measured by raw volume. The obligation is sufficient relevant material, not maximal
+capture.
+
+### 5.15. Required Diagnostic Material and Optional Enrichment Must Remain Distinct
+
+Material required by the Diagnostic Contract and additional investigative material are different obligations. Optional
+depth may add broader history, backend observations, traces, snapshots, or other enrichment, but it cannot redefine the
+guaranteed diagnostic core.
+
+A configuration that lowers optional diagnostic depth may reduce cost. It cannot remove material that the applicable
+Contract declares required.
+
+### 5.16. Diagnostic Cost Control Must Not Weaken Required Guarantees
+
+Diagnostic work may be bounded, selective, delayed, deduplicated, sampled, or otherwise optimized where the applicable
+obligation permits it. Cost control cannot silently convert required evidence into best-effort evidence.
+
+The Contract defines the guarantee before an implementation chooses how cheaply to realize it. Concrete capture
+thresholds, sampling algorithms, buffering, lazy materialization, and profitability decisions belong to the compiler or
+generated-system architecture.
+
+### 5.17. Diagnostic Must Not Interfere with Source Semantics
+
+The presence, absence, configured depth, capture strategy, or internal failure of Diagnostic machinery must not change
+the meaning of the Contract judgment or State-Machine result it observes. Diagnostic work must not create a second
+execution semantics for the machine merely to make investigation easier.
+
+Where observation has unavoidable realization cost or perturbation, that limitation belongs to the Diagnostic capability
+and realization guarantee rather than being hidden as though observation were free.
+
+### 5.18. Diagnostic Mechanism Failure Is a Separate Condition
+
+A Diagnostic mechanism can fail, lose material, become unavailable, or provide weaker evidence than intended. Such a
+condition must remain distinguishable from the original judgment or Failure being diagnosed.
+
+Diagnostic self-checking, regression testing, proof testing, and mechanism health are realization and assurance
+techniques. Their Contract consequence is that a broken Diagnostic path cannot masquerade as evidence that the diagnosed
+condition did not occur.
+
+### 5.19. Diagnosis Is Distinct from Detection, Prognosis, Alert, and Recovery
+
+This ADR does not make Diagnostic the authority for every activity surrounding a problem. Detection of an abnormal
+condition, explanation of an established result, prediction of future state, decision to alert a human, recovery action,
+and maintenance action are different responsibilities.
+
+A later ADR may connect those responsibilities, but Diagnostic must not acquire their authority merely because
+diagnostic information is useful to them.
+
+### 5.20. Diagnostic Meaning Is Independent of Representation and Transport
+
+Human text, IDE annotations, structured records, machine protocols, localization, storage formats, and external
+transports may represent the same Diagnostic meaning. None of those representations becomes the Contract merely by
+carrying it.
+
+A representation may expose more or less optional material according to its purpose, but it must not silently change the
+identity or required meaning of the Diagnostic occurrence it represents.
+
+### 5.21. Diagnostic Existence Does Not Grant Disclosure Authority
+
+Internal Diagnostic Evidence may exist without authority to expose it outside the Contract Machine. Availability to a
+diagnostic subsystem, operator, debugger, or backend does not itself authorize Publication or Output.
+
+Any outward exposure remains subject to the existing Publication and Output contracts. Diagnostic does not create a
+parallel export boundary.
+
+### 5.22. Establishment, Availability, Retention, Persistence, and Archival Are Distinct
+
+A Diagnostic occurrence may have been established even when its material is no longer available. Retention controls how
+long established material remains available. Persistence concerns survival across a stronger lifecycle boundary such as
+restart. Archival is a separate long-term preservation responsibility.
+
+Deletion, expiry, or eviction therefore does not rewrite the historical semantic fact that the Diagnostic occurrence was
+established, and long storage does not make retained material more authoritative than it originally was.
+
+### 5.23. Diagnostic Meaning Must Remain Stable across Version and Representation Change
+
+A Diagnostic definition and occurrence must remain interpretable against the Contract definition and Version to which
+they apply. A renderer, backend, storage schema, or diagnostic implementation may evolve without silently changing an
+already-established Diagnostic meaning.
+
+Where a Contract change changes the meaning or applicability of a Diagnostic definition, that change must be handled as
+Contract evolution rather than hidden behind a stable message string or implementation identifier.
+
+### 5.24. Required Diagnostic Meaning Must Be Deterministic and Auditable
+
+For the same authoritative occurrence and the same applicable Contract material, required Diagnostic meaning must not
+depend on nondeterministic renderer order, thread scheduling, incidental object identity, or whichever diagnostic
+consumer happens to observe it first.
+
+The relation from subject and basis to the required diagnostic account must remain inspectable enough to verify why that
+account belongs to the occurrence. Reproducer files, replay tools, test harnesses, and proof artifacts may strengthen
+this property, but no particular mechanism is part of the Contract definition.
+
+---
+
+## 6. Contract Decision — Diagnostic Evidence
+
+### 6.1. Diagnostic Evidence Is a Contract over Explanation Material
 
 Diagnostic Evidence is Contract meaning about the material that a machine must be able to establish as evidence for an
 exact diagnosable occurrence.
@@ -435,7 +664,7 @@ stronger than a log. Giving it authority over the source judgment would recreate
 Evidence therefore has a narrow authority: the truth of the declared diagnostic material and its relation to the exact
 source occurrence.
 
-### 5.2. Evidence Is Not Failure Meaning
+### 6.2. Evidence Is Not Failure Meaning
 
 ADR-0057 remains authoritative over Failure.
 
@@ -453,7 +682,7 @@ The diagnostic layer therefore cannot be used to shrink Failure into a code plus
 to successful Results and State-Machine judgments. Material essential to their semantic meaning stays with the owning
 Contract.
 
-### 5.3. Evidence Is Not Limited to Failure
+### 6.3. Evidence Is Not Limited to Failure
 
 Diagnostic Evidence may be declared for an established judgment that is useful to explain even when no Failure exists.
 
@@ -467,7 +696,7 @@ audit, and controlled explanation of successful machine behavior without inventi
 V1 may support a narrower set of diagnosable sources than the theory permits. That limitation belongs to frontend and
 backend capability, not to the definition of Diagnostic Evidence.
 
-### 5.4. Definition and Occurrence Are Different
+### 6.4. Definition and Occurrence Are Different
 
 A Diagnostic Evidence definition is static Contract material. It identifies the diagnosable source and the material that
 an occurrence must establish.
@@ -492,7 +721,7 @@ buffer or the sequence number chosen by a storage backend.
 Frontend shorthand may eventually allow concise selection, but canonical lowering must resolve that shorthand to exact
 sources before it becomes authority. No runtime wildcard may decide which judgment an evidence record belongs to.
 
-### 5.5. Evidence Material Comes from Declared Sources
+### 6.5. Evidence Material Comes from Declared Sources
 
 A Diagnostic Evidence definition may select only material that the exact source can establish or expose to diagnostic
 lowering.
@@ -509,7 +738,7 @@ Diagnostic Evidence declaration asks for it.
 A future frontend may offer broad authoring conveniences. Canonical material still contains the exact source and exact
 selected coordinates. The machine never performs dynamic discovery of diagnostic fields.
 
-### 5.6. Evidence Selection Is Closed
+### 6.6. Evidence Selection Is Closed
 
 A Diagnostic Evidence definition declares a closed set of evidence coordinates.
 
@@ -525,7 +754,7 @@ The closed shape also lets the compiler reason about cost before realization. A 
 sort and source relation. That can participate in allocation, retention, publication, and backend-capability planning
 without inspecting runtime logger configuration.
 
-### 5.7. Evidence Preserves Exact Names and Meanings
+### 6.7. Evidence Preserves Exact Names and Meanings
 
 Diagnostic Evidence does not rename source coordinates or derive new factual values through arbitrary expressions.
 
@@ -540,7 +769,7 @@ at an owning authority that can establish it. Otherwise the subtraction belongs 
 This follows the same discipline as Output strict projection: a later boundary may present established meaning but may
 not quietly create new factual authority.
 
-### 5.8. Evidence Is Frozen to the Occurrence It Explains
+### 6.8. Evidence Is Frozen to the Occurrence It Explains
 
 Material that claims to describe a judgment occurrence is frozen to that occurrence.
 
@@ -566,7 +795,7 @@ If the same physical value is already frozen in Failure or Result material, the 
 that material rather than create a second semantic copy. A realization may physically duplicate bytes for storage, but
 that duplication does not create another coordinate identity.
 
-### 5.9. Occurrence Time and Observation Time Are Not Automatically the Same
+### 6.9. Occurrence Time and Observation Time Are Not Automatically the Same
 
 Diagnostic systems frequently observe an event after the event occurred. Hardware may report a corrected error later. A
 trace collector may timestamp receipt after the producer timestamp. A buffered runtime event may be drained by another
@@ -579,7 +808,7 @@ operational metadata without becoming that Contract time.
 Where both are available, tooling may preserve both so investigators can reason about latency and ordering. Their
 presence is a diagnostic capability, not a universal identity rule.
 
-### 5.10. Provenance Is Part of the Evidence Relation
+### 6.10. Provenance Is Part of the Evidence Relation
 
 An evidence occurrence must retain enough canonical provenance to identify the exact source definition and source result
 occurrence it explains.
@@ -595,7 +824,7 @@ physical encoding remains a backend decision.
 This distinction allows V1 to use compact tables and V2 to use content-addressed or persistent identity without changing
 what the evidence means.
 
-### 5.11. Contract Evidence Is All-or-Nothing with Respect to Its Declared Shape
+### 6.11. Contract Evidence Is All-or-Nothing with Respect to Its Declared Shape
 
 A Diagnostic Evidence occurrence is established only when its required coordinates have been established according to
 the definition.
@@ -608,7 +837,7 @@ This rule prevents a storage or tracing failure from silently weakening the Cont
 state that some frames were unavailable or some events were lost. That is useful operational evidence, but it is not a
 complete occurrence of a stricter Contract Evidence definition.
 
-### 5.12. Failure to Establish Evidence Does Not Rewrite the Source Result
+### 6.12. Failure to Establish Evidence Does Not Rewrite the Source Result
 
 A source Result or Failure remains established even if a later diagnostic obligation cannot be completed.
 
@@ -632,7 +861,7 @@ If abrupt realization loss prevents the evidence obligation from being judged at
 secondary Failure merely to explain the missing diagnostic material. ADR-0057's rule about unknowable results still
 applies.
 
-### 5.13. Later Unreached Processing Remains Execution Evidence
+### 6.13. Later Unreached Processing Remains Execution Evidence
 
 ADR-0057 already rejects semantic outcomes such as `Skipped`, `Blocked`, or `NotEvaluated` for processing that was never
 reached because an earlier Failure made it unreachable.
@@ -644,7 +873,7 @@ execution evidence or an explanation graph. It does not establish a synthetic re
 The distinction is especially important for compiler and Whole-Machine diagnostics. A causal path can explain why a node
 has no result without pretending that the node ran.
 
-### 5.14. Explanation and Remediation Are Not Evidence
+### 6.14. Explanation and Remediation Are Not Evidence
 
 A diagnostic can contain more than evidence without giving every part the same authority.
 
@@ -657,7 +886,7 @@ suggested edit is correct. An automatic fix therefore needs its own compiler-sid
 The Contract Diagnostic Evidence model does not acquire a `hint` or `fix-it` semantic field merely because compiler UIs
 need those concepts.
 
-### 5.15. Diagnostic Evidence Is Selective, Not Universal
+### 6.15. Diagnostic Evidence Is Selective, Not Universal
 
 Kontrakt does not require every declared judgment to retain a full diagnostic record.
 
@@ -673,9 +902,9 @@ It also creates a clean V2 path for richer capture without turning V1 into an al
 
 ---
 
-## 6. Contract Decision — Retention
+## 7. Contract Decision — Retention
 
-### 6.1. Retention Governs Availability, Not Semantic Existence
+### 7.1. Retention Governs Availability, Not Semantic Existence
 
 Retention is separate from Diagnostic Evidence because it answers a different question.
 
@@ -695,7 +924,7 @@ remaining in a cache or file after the guaranteed boundary do not extend the Con
 
 This separates historical semantic truth from storage lifetime.
 
-### 6.2. Retention Does Not Create Evidence
+### 7.2. Retention Does Not Create Evidence
 
 A Retention declaration cannot cause an evidence occurrence to exist when the corresponding Diagnostic Evidence was not
 established.
@@ -706,7 +935,7 @@ own authority has already been established.
 The compiler must therefore resolve Retention against an exact retainable source. A storage implementation cannot define
 a new retention subject merely because it can write arbitrary objects.
 
-### 6.3. Retention Guarantees Must Be Realizable Before They Are Promised
+### 7.3. Retention Guarantees Must Be Realizable Before They Are Promised
 
 A Contract retention guarantee is stronger than best-effort logging.
 
@@ -717,7 +946,7 @@ stays in a ring buffer`.
 This is the same fail-closed capability boundary used elsewhere in Kontrakt. The frontend declares semantic intent. The
 backend states what it can realize. Capability matching decides whether the combination is valid.
 
-### 6.4. Retention Duration and Storage Capacity Are Different Responsibilities
+### 7.4. Retention Duration and Storage Capacity Are Different Responsibilities
 
 Retention describes how long or through which Contract lifecycle boundary evidence must remain available. The amount of
 physical storage required to honor that promise belongs to resource planning and Capacity.
@@ -730,7 +959,7 @@ Likewise, a count limit is not automatically a retention semantic. If the produc
 `the latest N occurrences`, that is a separate meaning that should be designed explicitly rather than inferred from
 storage implementation.
 
-### 6.5. Expiry and Eviction Must Not Be Confused
+### 7.5. Expiry and Eviction Must Not Be Confused
 
 Expiry is the end of a declared availability obligation.
 
@@ -745,7 +974,7 @@ This distinction matters because mature diagnostic systems often use bounded sto
 mechanisms are suitable for optional operational evidence. They are not sufficient by themselves to prove Contract
 retention.
 
-### 6.6. Retention Does Not Imply Persistence Across Restart
+### 7.6. Retention Does Not Imply Persistence Across Restart
 
 Retention across a logical boundary and durability across physical failure are not synonyms.
 
@@ -757,7 +986,7 @@ This ADR therefore does not infer persistence from words such as `store`, `recor
 restart-stable or failure-domain-stable retention, the backend must state the persistence mechanism and capability
 separately.
 
-### 6.7. Retention Storage Is Not Publication
+### 7.7. Retention Storage Is Not Publication
 
 Evidence can be retained internally without being authorized for an outside consumer.
 
@@ -780,7 +1009,7 @@ ADR-0058 does not yet define the final Diagnostic Evidence publication source gr
 retention provides internal availability only. A debug endpoint must not bypass Publication by exposing a storage record
 directly.
 
-### 6.8. Retention and Confidentiality Are Related but Not the Same Contract
+### 7.8. Retention and Confidentiality Are Related but Not the Same Contract
 
 Retained diagnostics can be more sensitive than ordinary Output because they may contain fault-time values that were
 never intended for external use.
@@ -793,7 +1022,7 @@ A backend may encrypt storage or restrict operator access as an implementation c
 separate confidentiality authority if machine-level guarantees are required. Those controls do not alter the meaning of
 the retained evidence.
 
-### 6.9. V1 Retention Must Stay within Closed Lifecycle Semantics
+### 7.9. V1 Retention Must Stay within Closed Lifecycle Semantics
 
 The current Scope and Lifecycle model is not yet complete enough to promise every possible retention boundary.
 
@@ -807,9 +1036,9 @@ be part of Retention identity.
 
 ---
 
-## 7. User Diagnostic API and Frontend
+## 8. User Diagnostic API and Frontend
 
-### 7.1. The User Declares Accountability, Not Logging Behavior
+### 8.1. The User Declares Accountability, Not Logging Behavior
 
 The user-facing Diagnostic API exists to declare which machine occurrences require additional accountable material.
 
@@ -834,7 +1063,7 @@ Retention:
 
 The frontend may later provide more ergonomic authoring. Resolution must lower it to the same exact canonical relation.
 
-### 7.2. Diagnostic Source Selection Resolves Before Runtime
+### 8.2. Diagnostic Source Selection Resolves Before Runtime
 
 A Diagnostic Evidence declaration cannot wait until runtime to decide which authority it refers to.
 
@@ -845,7 +1074,7 @@ sources. Declaration order and runtime registration do not affect the result.
 This avoids a diagnostic version of dynamic AOP matching where a new class or implementation method silently starts
 producing Contract Evidence because it happens to match a pattern.
 
-### 7.3. The Frontend Selects Existing Diagnostic Material
+### 8.3. The Frontend Selects Existing Diagnostic Material
 
 The user may select only material the owning source declares as available for diagnostic use.
 
@@ -859,7 +1088,7 @@ The exact declaration mechanism for source-owned diagnostic coordinates remains 
 after the semantic model is accepted. The canonical rule is already fixed: the source relationship is explicit and
 finite.
 
-### 7.4. No Executable Diagnostic Callback Enters Contract Meaning
+### 8.4. No Executable Diagnostic Callback Enters Contract Meaning
 
 The frontend must reject executable diagnostic callbacks as Contract material.
 
@@ -869,7 +1098,7 @@ and runtime object shape. It would also make cost and determinism impossible to 
 Generated code may call backend-owned capture primitives chosen by the compiler. That is realization of a static
 evidence obligation, not user-supplied diagnostic control flow.
 
-### 7.5. Human Message Text Is Not Contract Identity
+### 8.5. Human Message Text Is Not Contract Identity
 
 The Contract declaration should not require a human error message to serve as semantic identity.
 
@@ -879,7 +1108,7 @@ wording.
 
 This leaves room for multiple renderers and later localization while preserving one Contract meaning.
 
-### 7.6. Severity Is Not a Universal Diagnostic Contract Coordinate
+### 8.6. Severity Is Not a Universal Diagnostic Contract Coordinate
 
 Many engineering systems classify events by severity, but those scales mean different things in different authorities. A
 compiler warning severity, a spacecraft event severity, a hardware correctable-error class, and an application business
@@ -889,7 +1118,7 @@ ADR-0060 therefore does not add a universal Contract `severity`. If a particular
 machine meaning, that domain can own it. Compiler diagnostics and backend operational events may use their own severity
 models without leaking them into Diagnostic Evidence.
 
-### 7.7. Policy Worlds May Select Different Diagnostic Contracts
+### 8.7. Policy Worlds May Select Different Diagnostic Contracts
 
 Diagnostic Evidence remains a Contract and therefore participates in existing Policy composition rather than inventing a
 runtime enable flag as semantic authority.
@@ -901,7 +1130,7 @@ inside an active boundary.
 Backend operational tracing may still be enabled dynamically because it is not Contract authority. The two controls must
 not share one switch whose meaning changes depending on which consumer reads it.
 
-### 7.8. Versioning Applies to Evidence Definitions
+### 8.8. Versioning Applies to Evidence Definitions
 
 Changing the diagnosable source or closed evidence material changes the Diagnostic Evidence Contract definition.
 
@@ -911,7 +1140,7 @@ the same. The occurrence remains bound to the canonical definition applicable wh
 This is important for long-lived retention. Storage schemas may evolve, but semantic decoding must preserve the Version
 relation rather than applying the latest frontend declaration retrospectively.
 
-### 7.9. Publication and Output Remain Explicit
+### 8.9. Publication and Output Remain Explicit
 
 A user may want internal evidence for engineering and a smaller external error response for service consumers. Those are
 not contradictory requirements.
@@ -922,7 +1151,7 @@ through an administrative endpoint and call that equivalent to Publication.
 
 This preserves least disclosure without adding a diagnostic-specific transformation language.
 
-### 7.10. Generated Host APIs Are Artifacts
+### 8.10. Generated Host APIs Are Artifacts
 
 If Kontrakt generates Kotlin or Java accessors for retained evidence, those accessors are host artifacts. They do not
 become the Contract definition.
@@ -930,7 +1159,7 @@ become the Contract definition.
 The same applies to generated numeric IDs, table offsets, event classes, or storage handles. Canonical Contract identity
 must survive if V2 changes the generated API or another backend uses a different representation.
 
-### 7.11. Diagnostic Depth Is Configurable above the Guaranteed Evidence Core
+### 8.11. Diagnostic Depth Is Configurable above the Guaranteed Evidence Core
 
 A user needs control over how much diagnostic work the generated system performs, but one control cannot mean both
 Contract guarantee and operational verbosity.
@@ -955,9 +1184,9 @@ weaker partial occurrence.
 
 ---
 
-## 8. Interaction with Existing Contracts
+## 9. Interaction with Existing Contracts
 
-### 8.1. Failure
+### 9.1. Failure
 
 Failure remains the authoritative unsuccessful machine result. Diagnostic Evidence cannot redefine its source, failed
 meaning, applicable context, or boundary.
@@ -965,14 +1194,14 @@ meaning, applicable context, or boundary.
 A diagnostic failure is separate from the original Failure when an evidence obligation itself cannot be satisfied.
 Unreachable later processing remains unexecuted rather than receiving synthetic failure-like statuses.
 
-### 8.2. Publication
+### 9.2. Publication
 
 Diagnostic material remains internal unless Publication explicitly grants outward authority to the applicable evidence
 source.
 
 Internal availability, retention, operator access, or debugger visibility does not imply Publication.
 
-### 8.3. Output
+### 9.3. Output
 
 Once Diagnostic Evidence is publication-authorized, Output can expose only a strict projection of that authorized
 material according to ADR-0059.
@@ -980,7 +1209,7 @@ material according to ADR-0059.
 Output does not rename, redact, derive, or format new diagnostic facts. Consumer-specific transformation remains outside
 the Core unless later Contract work explicitly adds another authority.
 
-### 8.4. Policy and Governance
+### 9.4. Policy and Governance
 
 Policy may select different Diagnostic Evidence and Retention Contracts in different Policy Worlds because it already
 selects combinations of one-dimensional Contracts.
@@ -988,14 +1217,14 @@ selects combinations of one-dimensional Contracts.
 Governance selects the applicable world. It does not dynamically edit an evidence definition inside a governed scope.
 Operational tracing controls remain implementation controls unless represented through existing Contract selection.
 
-### 8.5. Version
+### 9.5. Version
 
 Evidence definition identity is Version-sensitive like other one-dimensional Contracts.
 
 Retained occurrences decode against the definition that was applicable when they were established. A new compiler or
 runtime cannot reinterpret historical evidence through a later Version.
 
-### 8.6. Budget and Capacity
+### 9.6. Budget and Capacity
 
 Required evidence capture consumes resources. Where Kontrakt owns the relevant resource region, Budget and Capacity
 planning account for that realization cost.
@@ -1006,7 +1235,7 @@ physical realization that must satisfy those Contracts.
 Optional operational diagnostics may have separate deployment budgets. Their exhaustion cannot silently remove required
 Contract Evidence.
 
-### 8.7. Whole Machine
+### 9.7. Whole Machine
 
 Cross-Core diagnostic correlation may help reconstruct a system-level incident, but it does not create a hidden shared
 Core or new causal Contract.
@@ -1016,7 +1245,7 @@ without becoming Whole-Machine semantic communication.
 
 ---
 
-## 9. V1 Boundary
+## 10. V1 Boundary
 
 V1 must represent Diagnostic Evidence definitions as explicit Contract material and keep definition identity separate
 from runtime occurrence. It may support only the diagnosable sources that the current canonical IR and backend can
@@ -1029,9 +1258,9 @@ APIs outside Contract authority.
 V1 Retention remains limited to lifecycle semantics that are already explicit. Stronger persistence guarantees are not
 inferred from JVM process lifetime, file storage, or an operational collector.
 
-## 10. Verification Requirements
+## 11. Verification Requirements
 
-### 10.1. Definition Verification
+### 11.1. Definition Verification
 
 A Diagnostic Evidence definition must resolve to an exact source, a closed diagnosable material set, and the applicable
 Version and Policy World. Hidden implementation state or executable callbacks cannot complete the definition.
@@ -1039,54 +1268,54 @@ Version and Policy World. Hidden implementation state or executable callbacks ca
 Retention is checked only after its evidence source is valid. An unsupported lifecycle boundary or backend capability
 does not imply a weaker guarantee.
 
-### 10.2. Occurrence Conformance
+### 11.2. Occurrence Conformance
 
 An implementation that claims to establish Contract Evidence must be checkable against the canonical definition. The
 exact physical representation may vary, but the decoded occurrence must refer to the exact source occurrence and contain
 the complete declared material.
 
-## 11. Open Decisions
+## 12. Open Decisions
 
-### 11.1. Exact `.kontrakt` Diagnostic Evidence Syntax
+### 12.1. Exact `.kontrakt` Diagnostic Evidence Syntax
 
 The semantic model is decided before frontend convenience. The final spelling must not introduce executable diagnostic
 callbacks or make human message text part of Contract identity.
 
-### 11.2. Final V1 Diagnosable Source Set
+### 12.2. Final V1 Diagnosable Source Set
 
 Diagnostic Evidence is not limited to Failure in the theory. V1 may expose only source categories whose evidence can be
 resolved and lowered deterministically with the current IR.
 
-### 11.3. Source-Owned Additional Diagnostic Observation Syntax
+### 12.3. Source-Owned Additional Diagnostic Observation Syntax
 
 Any additional diagnosable observation must remain finite, declarative, and owned by its source authority.
 
-### 11.4. Retention Lifecycle Vocabulary
+### 12.4. Retention Lifecycle Vocabulary
 
 The exact lifecycle vocabulary waits for the remaining Scope and Lifecycle work. JVM process lifetime is not inferred as
 a Contract scope.
 
-### 11.5. Persistence across Restart and Stronger Failure Domains
+### 12.5. Persistence across Restart and Stronger Failure Domains
 
 Persistence across process restart, machine restart, power loss, host loss, or distributed failure requires explicit
 lifecycle and backend capability semantics.
 
-### 11.6. Diagnostic Evidence Publication Selector Refinement
+### 12.6. Diagnostic Evidence Publication Selector Refinement
 
 Diagnostic Evidence cannot become outward authority merely because it is retained or internally available. The exact
 Publication selector extension remains to be designed against ADR-0058.
 
-### 11.7. Generic Severity, Confidence, Coverage, and Partial-Evidence Taxonomies
+### 12.7. Generic Severity, Confidence, Coverage, and Partial-Evidence Taxonomies
 
 No universal Contract taxonomy is introduced merely because particular compilers, safety systems, hardware formats, or
 observability systems use such concepts.
 
-### 11.8. Generic Redaction or Diagnostic Transformation Authority
+### 12.8. Generic Redaction or Diagnostic Transformation Authority
 
 Strict projection and source minimization remain the current Contract tools. A stronger transformation or
 confidentiality authority is not defined here.
 
-## 12. Consequences
+## 13. Consequences
 
 ### Positive
 
