@@ -531,6 +531,10 @@ A Diagnostic must preserve the material that justifies its diagnostic account. W
 meaning, established material, observed material, missing material, conflicting material, or another declared relation,
 those roles must remain distinguishable enough to explain the result correctly.
 
+When one diagnostic account depends on combining multiple evidence sources, the relation or rule that makes the
+combination support that account is part of the diagnostic basis. Mere correlation between records does not by itself
+justify a stronger combined conclusion.
+
 A Diagnostic must not reduce an explainable judgment to an opaque code when the applicable Diagnostic Contract requires
 the basis needed to understand that judgment.
 
@@ -563,6 +567,10 @@ or duplicating it as a competing authority.
 A Diagnostic must not present uncertain, approximate, invalid, unavailable, or weakly attributable material as stronger
 knowledge than its source supports. Known uncertainty and limits of attribution must remain visible in the diagnostic
 meaning when they affect interpretation.
+
+A known limitation or systematic bias introduced by the observation or interpretation method must constrain the strength
+of any claim derived from that material. A precise-looking observation does not remove a known bias in how the material
+was obtained.
 
 When the available material cannot support a conclusion, the Diagnostic may remain explicitly unknown or abstain from
 attribution. It must not manufacture a definite cause to complete a preferred presentation shape.
@@ -598,6 +606,11 @@ remain available.
 A Diagnostic must preserve the temporal meaning of its material. Occurrence, observation, capture, and later
 availability may happen at different times. A value reconstructed or read later must not be represented as though it
 were frozen at the original occurrence.
+
+When a diagnostic account uses a historical sequence rather than one point observation, the relevant sequence must
+remain bounded and explicitly related to the occurrence or semantic boundary it explains. Historical context may enrich
+that account, but it cannot retroactively complete authoritative meaning that was not established by the owning source
+authority.
 
 Current state, occurrence-time evidence, and later reconstruction may all be useful, but the Diagnostic must preserve
 their different temporal status.
@@ -751,6 +764,73 @@ processing from being entered.
 It must not establish `Skipped`, `Blocked`, `NotEvaluated`, or another semantic result for processing that never
 occurred. Such non-reachability belongs to execution evidence or explanation and does not create a result owned by the
 unreached Contract boundary.
+
+### 5.27. Absence of Observation Is Not Evidence of Absence without a Qualified Observation Boundary
+
+A Diagnostic must not treat failure to observe material as proof that the material did not exist or that the diagnosed
+condition did not occur. An observational absence can support a negative diagnostic claim only when the applicable
+observation scope, capability, and boundary make that absence meaningful.
+
+This is different from missing required semantic material. An observation may be absent because the observation
+mechanism had a blind spot, lost material, was disabled, sampled the subject incompletely, or observed the wrong
+boundary. When the Diagnostic cannot establish that the absence is qualified, it must preserve the result as unknown or
+unsupported rather than promote the absence into a stronger negative claim.
+
+### Inventory-to-Obligation Traceability (Non-Normative)
+
+This table is an audit aid for maintaining the relation between the deliberation inventory and the normative obligations
+above. It does not make a `D` code part of Diagnostic Contract identity and does not require every inventory
+characteristic to become an independent Contract coordinate.
+
+`Direct` means the inventory characteristic remains substantially present in the obligation. `Translated` means only the
+Contract-level principle is retained after implementation or engineering form is removed. `Implementation support` means
+the item helps realize or verify the obligation in ADR-0061 or ADR-0062 but is not itself adopted as Contract meaning.
+
+| Obligation | Direct                                         | Translated                                                             | Implementation support                                                                 |
+|------------|------------------------------------------------|------------------------------------------------------------------------|----------------------------------------------------------------------------------------|
+| 5.1        | `D003`, `D014`, `D015`, `D119`                 | —                                                                      | —                                                                                      |
+| 5.2        | `D004`                                         | `D002`, `D012`, `D166`                                                 | `D009`, `D010`, `D011`                                                                 |
+| 5.3        | `D016`, `D017`, `D020`, `D021`, `D022`, `D024` | `D158`, `D160`, `D161`                                                 | —                                                                                      |
+| 5.4        | `D018`, `D059`                                 | `D019`, `D023`, `D025`, `D026`, `D175`, `D180`, `D181`, `D185`         | `D031`                                                                                 |
+| 5.5        | `D028`                                         | `D027`, `D029`, `D030`, `D032`, `D154`, `D157`                         | —                                                                                      |
+| 5.6        | `D037`, `D040`, `D065`                         | `D035`, `D036`, `D038`, `D039`, `D145`, `D155`, `D156`, `D167`, `D173` | `D033`                                                                                 |
+| 5.7        | —                                              | `D041`, `D042`, `D046`, `D047`, `D151`, `D177`                         | —                                                                                      |
+| 5.8        | —                                              | `D043`, `D044`, `D045`, `D048`, `D050`, `D076`, `D153`, `D162`         | `D049`, `D077`                                                                         |
+| 5.9        | `D060`, `D061`                                 | `D062`, `D064`                                                         | `D063`                                                                                 |
+| 5.10       | `D067`, `D068`, `D069`, `D070`                 | `D051`, `D053`, `D055`, `D056`, `D058`, `D066`, `D163`                 | `D052`, `D054`, `D057`                                                                 |
+| 5.11       | `D071`                                         | `D034`, `D072`, `D182`                                                 | `D176`                                                                                 |
+| 5.12       | `D073`                                         | `D079`, `D081`                                                         | `D082`, `D083`                                                                         |
+| 5.13       | —                                              | `D074`, `D089`                                                         | `D075`, `D084`                                                                         |
+| 5.14       | `D078`, `D080`, `D142`, `D143`                 | `D105`                                                                 | —                                                                                      |
+| 5.15       | `D091`, `D092`, `D146`                         | `D094`                                                                 | `D152`, `D168`                                                                         |
+| 5.16       | `D147`                                         | `D103`                                                                 | `D093`, `D095`, `D096`, `D097`, `D098`, `D099`, `D101`, `D102`, `D148`, `D170`, `D184` |
+| 5.17       | `D120`                                         | `D104`                                                                 | —                                                                                      |
+| 5.18       | —                                              | `D116`, `D118`                                                         | `D117`, `D149`, `D178`                                                                 |
+| 5.19       | `D121`, `D122`, `D123`, `D124`, `D125`         | —                                                                      | `D106`, `D107`, `D108`                                                                 |
+| 5.20       | `D086`, `D139`                                 | `D087`, `D090`, `D141`                                                 | `D085`, `D088`                                                                         |
+| 5.21       | `D138`                                         | `D136`, `D137`                                                         | —                                                                                      |
+| 5.22       | `D130`, `D131`, `D133`                         | `D132`, `D134`, `D135`                                                 | —                                                                                      |
+| 5.23       | `D126`, `D150`                                 | `D001`, `D127`, `D140`                                                 | `D013`                                                                                 |
+| 5.24       | `D109`, `D114`, `D115`, `D144`                 | `D110`                                                                 | `D111`, `D112`, `D179`, `D183`                                                         |
+| 5.25       | `D001`, `D002`                                 | —                                                                      | —                                                                                      |
+| 5.26       | `D113`                                         | —                                                                      | —                                                                                      |
+| 5.27       | `D164`                                         | —                                                                      | —                                                                                      |
+
+The following inventory items intentionally have no independent Section 5 obligation. Their omission is not an uncovered
+Contract requirement.
+
+| Inventory      | Disposition                                                                                                                                                                                              |
+|----------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `D005`         | Severity remains an authority-specific treatment concept; Section 8.6 explicitly rejects a universal Diagnostic severity coordinate.                                                                     |
+| `D006`         | Criticality belongs to the authority that owns the underlying condition or consequence rather than to Diagnostic itself.                                                                                 |
+| `D007`, `D008` | Classification and priority are compiler or runtime diagnostic-management concerns.                                                                                                                      |
+| `D100`         | Full-stack extensibility is a realization architecture property.                                                                                                                                         |
+| `D128`, `D129` | In-service feedback and unintended-behavior investigation belong to broader assurance, lifecycle, or engineering processes.                                                                              |
+| `D159`         | Evidence-source diversity is a diagnostic assurance technique; the Contract consequence is already bounded by evidence honesty and mechanism independence rather than a universal diversity requirement. |
+| `D165`         | Semantic event construction is a compiler or runtime analysis technique.                                                                                                                                 |
+| `D169`         | Coverage, timeliness, granularity, flexibility, and cost remain separate concerns across 5.6, 5.7, 5.10, and 5.16; the inventory's quality-vector form is not adopted as a Contract coordinate.          |
+| `D171`, `D172` | Stable observation boundaries and comparative diagnosis are compiler or runtime diagnostic techniques.                                                                                                   |
+| `D174`         | Correctness versus implementation-quality degradation is a compiler diagnostic classification concern.                                                                                                   |
 
 ---
 
