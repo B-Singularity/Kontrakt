@@ -732,6 +732,26 @@ The relation from subject and basis to the required diagnostic account must rema
 account belongs to the occurrence. Reproducer files, replay tools, test harnesses, and proof artifacts may strengthen
 this property, but no particular mechanism is part of the Contract definition.
 
+### 5.25. Diagnostic Definition and Diagnostic Occurrence Are Distinct
+
+A Diagnostic definition and a Diagnostic occurrence are different Contract meanings. A definition states the reusable
+diagnostic obligation or diagnostic meaning that can apply to matching machine occurrences. An occurrence is one
+concrete establishment of that definition for one exact source result or other exact diagnosable occurrence.
+
+Multiple occurrences may therefore belong to the same definition without becoming one occurrence, and changes to storage
+identity, rendering, or backend sequence numbers must not redefine either identity. The distinction does not require any
+particular runtime object or storage representation.
+
+### 5.26. Unreached Processing Must Not Become a Synthetic Semantic Result
+
+Diagnostic material may explain that later processing was not reached because an earlier established result made that
+processing unreachable. It may identify the last reached boundary or the dependency relation that prevented later
+processing from being entered.
+
+It must not establish `Skipped`, `Blocked`, `NotEvaluated`, or another semantic result for processing that never
+occurred. Such non-reachability belongs to execution evidence or explanation and does not create a result owned by the
+unreached Contract boundary.
+
 ---
 
 ## 6. Contract Decision — Diagnostic Evidence
