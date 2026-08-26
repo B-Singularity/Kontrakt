@@ -506,6 +506,13 @@ This section extracts the obligations that remain when implementation form is re
 for the Diagnostic Contract. The detailed decisions that follow refine them without requiring every inventory item to
 become part of canonical Diagnostic meaning.
 
+Throughout this section, obligations to preserve, relate, retain, or verify Diagnostic material describe semantic
+obligations inside the Diagnostic authority. They do not grant a consumer access to internal Contract, compiler,
+realization, provenance, context, or identity material. Any outward Diagnostic representation remains limited by the
+existing Publication and Output contracts. Material that is not authorized for outward exposure may be omitted or
+projected away, provided that the material that is exposed is not falsified, re-attributed, or made stronger by that
+omission.
+
 ### 5.1. Diagnostic Does Not Own the Meaning It Explains
 
 A Diagnostic must not become the authority that establishes the judgment, Failure, State-Machine decision, or
@@ -519,7 +526,8 @@ explain.
 ### 5.2. Diagnostic Must Preserve Its Exact Subject and Semantic Origin
 
 A Diagnostic must remain related to the exact subject and occurrence that it explains. It must also preserve enough
-provenance to identify where the diagnostic meaning originated.
+semantic provenance within Diagnostic authority to distinguish where the diagnostic meaning originated. Preserving that
+relation does not require exposing internal origin coordinates.
 
 This obligation does not require a source file, line number, stack frame, or any particular frontend representation.
 Those are possible realizations of provenance. Contract meaning requires the semantic relation, not one tool-specific
@@ -527,9 +535,10 @@ coordinate system.
 
 ### 5.3. Diagnostic Must Preserve the Basis of Its Account
 
-A Diagnostic must preserve the material that justifies its diagnostic account. Where the account depends on a required
-meaning, established material, observed material, missing material, conflicting material, or another declared relation,
-those roles must remain distinguishable enough to explain the result correctly.
+A Diagnostic must preserve the material or exact relation that justifies its diagnostic account. Where the account
+depends on a required meaning, established material, observed material, missing material, conflicting material, or
+another declared relation, those roles must remain distinguishable enough to explain the result correctly. The basis
+need not be copied into every representation when an exact internal relation preserves it.
 
 When one diagnostic account depends on combining multiple evidence sources, the relation or rule that makes the
 combination support that account is part of the diagnostic basis. Mere correlation between records does not by itself
@@ -557,10 +566,13 @@ to remain intact whenever collapsing them would change what the Diagnostic claim
 
 A Diagnostic must not generalize evidence beyond the conditions under which that evidence is meaningful. Applicable
 Version, Policy World, State, operating condition, assumption, reference, measurement condition, or other relevant
-context must remain related to the diagnostic account when interpretation depends on it.
+context must remain related to the diagnostic account when interpretation depends on it. That relation may be preserved
+by exact internal identity or reference; it does not require embedding or exposing the underlying context in each
+Diagnostic representation.
 
 Where the source authority already owns applicable context, the Diagnostic refers to that meaning rather than redefining
-or duplicating it as a competing authority.
+or duplicating it as a competing authority. Referring to that context does not authorize Diagnostic to disclose it
+independently.
 
 ### 5.6. Diagnostic Must Not Claim More Certainty than Its Basis Supports
 
@@ -594,9 +606,11 @@ unresolved attribution. It must not convert diagnostic convenience into false se
 
 ### 5.9. Known Incompleteness Must Remain Visible
 
-The presence of some Diagnostic Evidence does not imply that the evidence is complete. Known loss, partial capture,
-overflow, truncation, unavailable material, or other incompleteness must not be represented as a complete account when
-that distinction matters to interpretation.
+The presence of some Diagnostic Evidence does not imply that the evidence is complete relative to the applicable
+Diagnostic obligation. Known loss, partial capture, overflow, truncation, unavailable material, or other incompleteness
+within that obligation must not be represented as a complete account when that distinction matters to interpretation.
+Material intentionally omitted because it is outside a consumer's disclosure authority is not Diagnostic loss and must
+not be revealed indirectly through completeness metadata.
 
 A stronger declared evidence obligation cannot be satisfied by silently weakening it to whatever material happened to
 remain available.
@@ -618,8 +632,12 @@ their different temporal status.
 ### 5.11. Diagnostic Material Must Preserve Integrity and Origin
 
 Diagnostic material must not be silently altered, mixed with another occurrence, or detached from its claimed origin in
-a way that changes its meaning. Retention, transport, rendering, and backend conversion must preserve the identity and
-semantic relation required to interpret the material.
+a way that changes its meaning. Retention, authorized transport, rendering, and backend conversion must preserve the
+identity and semantic relation required to interpret the material they carry.
+
+Preserving integrity and origin does not require disclosing origin material. Internal identities, provenance, applicable
+context, and other core relations may remain hidden from an outward representation. An authorized projection may omit
+them so long as it does not misrepresent the identity, origin, or semantic relation of the material it does expose.
 
 This obligation defines semantic integrity. It does not require one storage format, cryptographic mechanism, or
 transport protocol.
@@ -637,16 +655,17 @@ cannot present that recommendation as though the Contract had already establishe
 A Diagnostic must remain explainable in the vocabulary of the meaning it diagnoses rather than requiring the consumer to
 understand the diagnostic implementation's internal representation.
 
-For Kontrakt Contract material, that means explanation can refer to declared Contract subjects, authorities, worlds,
-States, Failures, Publications, Outputs, and other established machine meanings. Compiler ordinals, internal nodes,
-lowered gates, stack frames, and backend object identities may support an engineering view without becoming the required
-user explanation.
+For Kontrakt Contract material, that means explanation can use established machine meanings that are applicable to the
+diagnostic account and authorized for the intended consumer. Compiler ordinals, internal nodes, lowered gates, stack
+frames, and backend object identities may support an authorized engineering view without becoming the required user
+explanation or a parallel route for exposing internal structure.
 
 ### 5.14. Required Diagnostic Material Must Be Sufficient and Relevant
 
 A required Diagnostic account must contain enough material to understand the subject and the applicable diagnostic
 judgment. At the same time, the Contract must not make unrelated material mandatory merely because it may occasionally
-be useful during investigation.
+be useful during investigation. This sufficiency requirement applies to the Diagnostic account itself and does not
+require every consumer or outward representation to receive all material that supports it.
 
 Diagnostic richness is therefore not measured by raw volume. The obligation is sufficient relevant material, not maximal
 capture.
@@ -654,8 +673,8 @@ capture.
 ### 5.15. Required Diagnostic Material and Optional Enrichment Must Remain Distinct
 
 Material required by the Diagnostic Contract and additional investigative material are different obligations. Optional
-depth may add broader history, backend observations, traces, snapshots, or other enrichment, but it cannot redefine the
-guaranteed diagnostic core.
+depth may add broader history, backend observations, traces, snapshots, or other enrichment within Diagnostic authority,
+but it cannot redefine the guaranteed diagnostic core or expand disclosure authority.
 
 Authoritative Contract or State-Machine meaning, and the required Diagnostic Evidence needed to account for that
 meaning, must not depend on adaptive diagnostic acquisition performed after the source judgment. Adaptive acquisition
@@ -679,8 +698,8 @@ The presence, absence, configured depth, capture strategy, or internal failure o
 the meaning of the Contract judgment or State-Machine result it observes. Diagnostic work must not create a second
 execution semantics for the machine merely to make investigation easier.
 
-Where observation has unavoidable realization cost or perturbation, that limitation belongs to the Diagnostic capability
-and realization guarantee rather than being hidden as though observation were free.
+Where observation has unavoidable realization cost or perturbation, that limitation must be accounted for in the
+Diagnostic capability and realization guarantee rather than ignored as though observation were free.
 
 ### 5.18. Diagnostic Mechanism Failure Is a Separate Condition
 
@@ -706,16 +725,19 @@ Human text, IDE annotations, structured records, machine protocols, localization
 transports may represent the same Diagnostic meaning. None of those representations becomes the Contract merely by
 carrying it.
 
-A representation may expose more or less optional material according to its purpose, but it must not silently change the
+A representation may carry a different authorized subset of optional material according to its purpose, but
+representation choice does not grant authority to expose additional internal material. It must not silently change the
 identity or required meaning of the Diagnostic occurrence it represents.
 
 ### 5.21. Diagnostic Existence Does Not Grant Disclosure Authority
 
 Internal Diagnostic Evidence may exist without authority to expose it outside the Contract Machine. Availability to a
-diagnostic subsystem, operator, debugger, or backend does not itself authorize Publication or Output.
+diagnostic subsystem, operator, debugger, backend, or retained store does not itself authorize Publication, Output, or
+onward disclosure.
 
-Any outward exposure remains subject to the existing Publication and Output contracts. Diagnostic does not create a
-parallel export boundary.
+Any outward exposure remains subject to the existing Publication and Output contracts. Transforming, summarizing,
+explaining, or enriching internal Diagnostic material does not create new disclosure authority, and Diagnostic does not
+create a parallel export boundary.
 
 ### 5.22. Establishment, Availability, Retention, Persistence, and Archival Are Distinct
 
@@ -724,7 +746,8 @@ long established material remains available. Persistence concerns survival acros
 restart. Archival is a separate long-term preservation responsibility.
 
 Deletion, expiry, or eviction therefore does not rewrite the historical semantic fact that the Diagnostic occurrence was
-established, and long storage does not make retained material more authoritative than it originally was.
+established, and long storage does not make retained material more authoritative than it originally was. Retention,
+persistence, or archival also does not grant broader access or disclosure authority.
 
 ### 5.23. Diagnostic Meaning Must Remain Stable across Version and Representation Change
 
@@ -741,9 +764,10 @@ For the same authoritative occurrence and the same applicable Contract material,
 depend on nondeterministic renderer order, thread scheduling, incidental object identity, or whichever diagnostic
 consumer happens to observe it first.
 
-The relation from subject and basis to the required diagnostic account must remain inspectable enough to verify why that
-account belongs to the occurrence. Reproducer files, replay tools, test harnesses, and proof artifacts may strengthen
-this property, but no particular mechanism is part of the Contract definition.
+The relation from subject and basis to the required diagnostic account must remain inspectable enough within Diagnostic
+processing or verification to establish why that account belongs to the occurrence. This inspectability is not an
+outward disclosure requirement. Reproducer files, replay tools, test harnesses, and proof artifacts may strengthen this
+property, but no particular mechanism is part of the Contract definition.
 
 ### 5.25. Diagnostic Definition and Diagnostic Occurrence Are Distinct
 
@@ -758,8 +782,8 @@ particular runtime object or storage representation.
 ### 5.26. Unreached Processing Must Not Become a Synthetic Semantic Result
 
 Diagnostic material may explain that later processing was not reached because an earlier established result made that
-processing unreachable. It may identify the last reached boundary or the dependency relation that prevented later
-processing from being entered.
+processing unreachable. It may preserve the last reached boundary or the dependency relation needed for that account;
+any outward explanation remains limited to the authorized projection of that material.
 
 It must not establish `Skipped`, `Blocked`, `NotEvaluated`, or another semantic result for processing that never
 occurred. Such non-reachability belongs to execution evidence or explanation and does not create a result owned by the
@@ -773,8 +797,9 @@ observation scope, capability, and boundary make that absence meaningful.
 
 This is different from missing required semantic material. An observation may be absent because the observation
 mechanism had a blind spot, lost material, was disabled, sampled the subject incompletely, or observed the wrong
-boundary. When the Diagnostic cannot establish that the absence is qualified, it must preserve the result as unknown or
-unsupported rather than promote the absence into a stronger negative claim.
+boundary. The qualification must be established within Diagnostic authority, but its internal mechanism need not be
+disclosed to every consumer. When the Diagnostic cannot establish that the absence is qualified, it must preserve the
+result as unknown or unsupported rather than promote the absence into a stronger negative claim.
 
 ### Inventory-to-Obligation Traceability (Non-Normative)
 
