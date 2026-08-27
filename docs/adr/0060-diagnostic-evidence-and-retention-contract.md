@@ -861,13 +861,14 @@ Contract requirement.
 
 ## 6. Contract Decision — Diagnostic Evidence
 
-### 6.1. Diagnostic Evidence Is a Contract over Explanation Material
+### 6.1. Diagnostic Evidence Is a Contract over Evidence Establishment
 
-Diagnostic Evidence is Contract meaning about the material that a machine must be able to establish as evidence for an
-exact diagnosable occurrence.
+Diagnostic Evidence is Contract meaning about evidence material that a machine must be able to establish for an exact
+diagnosable occurrence.
 
-It does not repeat the judgment. It states which supporting material belongs to the diagnostic account of that judgment
-when the evidence obligation applies.
+It does not repeat the source judgment. It states which supporting material belongs to the diagnostic account of that
+judgment when the evidence obligation applies, and which exact source relation makes that material evidence for the
+occurrence.
 
 ```text
 exact machine judgment
@@ -877,17 +878,18 @@ Diagnostic Evidence definition
     identifies allowed supporting material
         ↓
 Diagnostic Evidence occurrence
-    freezes the material for this exact occurrence
+    establishes and freezes that material
+    for this exact occurrence
 ```
 
-The evidence occurrence is authoritative only about its own diagnostic statement. It can authoritatively state that a
-declared value was the value captured from an exact source for this occurrence. It cannot reinterpret the original
-judgment or replace the authority that established it.
+The evidence occurrence has authority only over its own evidence establishment and relation. It may state that declared
+material was established from an exact source for this occurrence. It cannot reinterpret the original judgment, complete
+missing source meaning, or replace the authority that established the source result.
 
 This distinction is important. Calling evidence entirely non-authoritative would make declared Contract Evidence no
-stronger than a log. Giving it authority over the source judgment would recreate the Failure problem. Diagnostic
-Evidence therefore has a narrow authority: the truth of the declared diagnostic material and its relation to the exact
-source occurrence.
+stronger than a log. Giving it authority over the source judgment would recreate the authority problem that ADR-0057
+avoids. Diagnostic Evidence therefore has narrow authority over evidence establishment and the declared relation between
+that evidence and the exact source occurrence.
 
 ### 6.2. Evidence Is Not Failure Meaning
 
@@ -899,9 +901,9 @@ make Failure depend on a retained diagnostic record.
 
 Consider a stock obligation that establishes `RequiredStockUnavailable`. If requested quantity is part of the Failure's
 applicable context because the Failure cannot be interpreted without it, that value remains Failure meaning. If an
-additional observed inventory sample is useful only to explain how the source judged the obligation, that sample may be
-Diagnostic Evidence instead. The ownership is decided by whether the material is required to state the Failure itself,
-not by whether an operator would like to see it.
+additional inventory observation was captured under a declared diagnostic relation and is useful only to investigate the
+judgment, that observation may be Diagnostic Evidence instead. The ownership is decided by whether the material is
+required to state the Failure itself, not by whether an operator would like to see it.
 
 The diagnostic layer therefore cannot be used to shrink Failure into a code plus an evidence bag. The same rule applies
 to successful Results and State-Machine judgments. Material essential to their semantic meaning stays with the owning
@@ -911,7 +913,7 @@ Contract.
 
 Diagnostic Evidence may be declared for an established judgment that is useful to explain even when no Failure exists.
 
-A compiler or operator may need to know why a particular policy branch was selected, why a transition was accepted, or
+A compiler or operator may need to know why a particular policy selection applied, why a transition was accepted, or
 which canonical values caused an invariant to pass. This does not require every judgment to emit evidence. It only means
 that the Diagnostic Evidence Contract is not defined as a Failure attachment.
 
@@ -924,10 +926,10 @@ backend capability, not to the definition of Diagnostic Evidence.
 ### 6.4. Definition and Occurrence Are Different
 
 A Diagnostic Evidence definition is static Contract material. It identifies the diagnosable source and the material that
-an occurrence must establish.
+an occurrence may establish under that definition.
 
-A Diagnostic Evidence occurrence belongs to one concrete machine occurrence. It contains or references the frozen values
-established for that occurrence and is tied to the exact source result it explains.
+A Diagnostic Evidence occurrence belongs to one concrete machine occurrence. It contains or references the frozen
+material actually established for that occurrence and is tied to the exact source result it explains.
 
 ```text
 Diagnostic Evidence Definition
@@ -937,7 +939,7 @@ Diagnostic Evidence Definition
 Diagnostic Evidence Occurrence
     definition identity
     source-result occurrence identity
-    frozen selected material
+    frozen established material
 ```
 
 The definition must not depend on runtime object identity. The occurrence must not depend on the address of an evidence
@@ -948,51 +950,70 @@ sources before it becomes authority. No runtime wildcard may decide which judgme
 
 ### 6.5. Evidence Material Comes from Declared Sources
 
-A Diagnostic Evidence definition may select only material that the exact source can establish or expose to diagnostic
-lowering.
+A Diagnostic Evidence definition may select only material that an exact declared source can establish or make available
+to diagnostic lowering under an explicit relation.
 
-That material may already exist as a result coordinate, a Failure context coordinate, a canonical judgment input, or a
-declared observation produced while the source judges its obligation. The evidence layer cannot call arbitrary user code
-to manufacture a value after the fact. It cannot inspect a private field, walk an object graph, invoke a callback, or
-infer a value from a stack frame and then claim Contract authority for it.
+Material already established by another Contract authority remains that authority's material. A result coordinate, a
+Failure context coordinate, a canonical judgment input, or State-Machine material does not acquire new meaning merely
+because Diagnostic Evidence selects it.
+
+A declared observation may also be eligible when the applicable realization can capture it under the declared diagnostic
+relation. Such an observation is evidence that the observation material was captured as declared. It does not thereby
+become a Contract fact, source result, or judgment, and any interpretation that derives a stronger claim remains
+separate from the observation itself.
+
+```text
+established Contract or State-Machine material
+    ≠
+observed realization material
+    ≠
+interpretation of observation
+    ≠
+Diagnostic statement
+```
+
+The evidence layer cannot call arbitrary user code to manufacture a value after the fact. It cannot inspect a private
+field, walk an object graph, invoke a callback, or infer a value from a stack frame and then claim Contract authority
+for it.
 
 The owning source therefore needs a finite diagnostic surface. This does not require every internal intermediate value
-to become a public Contract coordinate. It requires the compiler to know which material may legally be selected when a
-Diagnostic Evidence declaration asks for it.
+to become a public Contract coordinate, nor does internal diagnostic availability grant outward disclosure authority. It
+requires the compiler to know which material may legally be selected when a Diagnostic Evidence declaration asks for it.
 
-A future frontend may offer broad authoring conveniences. Canonical material still contains the exact source and exact
-selected coordinates. The machine never performs dynamic discovery of diagnostic fields.
+A future frontend may offer broad authoring conveniences. Canonical material still resolves them to exact sources and
+exact selected material. The machine never performs dynamic discovery of diagnostic fields.
 
 ### 6.6. Evidence Selection Is Closed
 
-A Diagnostic Evidence definition declares a closed set of evidence coordinates.
+A Diagnostic Evidence definition declares a closed set of evidence coordinates or declared observation material.
 
 Runtime processing cannot append an undeclared debug field because it looks useful. A backend cannot silently add a
 stack trace to the Contract occurrence. An adapter cannot inject environment variables or raw payload bytes into the
-same Contract Evidence object.
+same Contract Evidence occurrence.
 
 This law serves two purposes. It makes the evidence guarantee finite, and it limits accidental retention of sensitive
 material. Rich implementation diagnostics may carry more information in their own records, but they remain a different
-plane.
+plane and do not expand the Contract Evidence definition or its disclosure authority.
 
-The closed shape also lets the compiler reason about cost before realization. A required evidence coordinate has a known
-sort and source relation. That can participate in allocation, retention, publication, and backend-capability planning
-without inspecting runtime logger configuration.
+The closed shape also lets the compiler reason about cost before realization. Required evidence has a known source
+relation and representation obligation. That can participate in allocation, retention, publication, and
+backend-capability planning without inspecting runtime logger configuration.
 
 ### 6.7. Evidence Preserves Exact Names and Meanings
 
-Diagnostic Evidence does not rename source coordinates or derive new factual values through arbitrary expressions.
+Diagnostic Evidence does not rename selected Contract coordinates or derive new factual values through arbitrary
+expressions.
 
-When evidence selects an existing Contract coordinate, its canonical meaning is the source coordinate's meaning. A
+When evidence selects existing Contract material, its canonical meaning remains the meaning owned by that source. A
 renderer may display a friendly label later. A backend may encode the value differently. Neither changes the evidence
-identity.
+identity or creates a new semantic coordinate.
 
 A derived explanation such as `remaining = allowance - consumed` is not automatically Diagnostic Evidence merely because
 the operands are evidence. If the machine needs `remaining` as authoritative evidence, that meaning must already exist
 at an owning authority that can establish it. Otherwise the subtraction belongs to an explanation or presentation tool.
 
-This follows the same discipline as Output strict projection: a later boundary may present established meaning but may
-not quietly create new factual authority.
+This follows the same discipline as Output strict projection: a later diagnostic or presentation boundary may use
+established meaning but may not quietly create new factual authority.
 
 ### 6.8. Evidence Is Frozen to the Occurrence It Explains
 
@@ -1014,9 +1035,9 @@ later value = 7
 
 This is the diagnostic counterpart of ADR-0057's frozen Failure context. The two freezes serve different authorities.
 Failure context freezes the material needed to interpret Failure. Diagnostic Evidence freezes the declared supporting
-material for the evidence occurrence.
+material established for the evidence occurrence.
 
-If the same physical value is already frozen in Failure or Result material, the diagnostic definition should reference
+If the same semantic material is already frozen in Failure or Result material, the diagnostic definition should refer to
 that material rather than create a second semantic copy. A realization may physically duplicate bytes for storage, but
 that duplication does not create another coordinate identity.
 
@@ -1031,60 +1052,81 @@ must come from an existing declared time authority. Backend observation or colle
 operational metadata without becoming that Contract time.
 
 Where both are available, tooling may preserve both so investigators can reason about latency and ordering. Their
-presence is a diagnostic capability, not a universal identity rule.
+presence is a diagnostic capability, not a universal identity rule or an outward disclosure requirement.
 
 ### 6.10. Provenance Is Part of the Evidence Relation
 
-An evidence occurrence must retain enough canonical provenance to identify the exact source definition and source result
-occurrence it explains.
+An evidence occurrence must preserve enough semantic relation to identify internally the exact source definition and
+source-result occurrence it explains.
 
-The provenance is semantic, not a JVM stack. It survives backend replacement because it refers to Contract authorities,
-Version-sensitive canonical definitions, selected World where applicable, and stable occurrence correlation owned by
-Kontrakt rather than by a particular logging facility.
+The required relation is semantic, not a JVM stack or recursive provenance chain. It refers to stable canonical
+identities and only the applicable Contract material needed to keep the evidence relation exact. Source mapping,
+transformation history, and other compiler-specific provenance remain compiler diagnostic concerns unless separately
+required by the applicable diagnostic definition.
 
-Source provenance does not imply that every diagnostic record repeats all of the source's context bytes. A compact
-identity may resolve to immutable canonical material already known by the machine. The logical relation is required; the
-physical encoding remains a backend decision.
+Preserving this relation does not require each evidence occurrence to embed the source's context or expose internal
+identities, canonical structure, selected World, Governance binding, or other core material. Compact references may
+resolve to immutable material already known by the machine. Preservation of origin does not grant publication or Output
+authority.
 
 This distinction allows V1 to use compact tables and V2 to use content-addressed or persistent identity without changing
-what the evidence means.
+what the evidence means or creating a pointer-rich diagnostic object graph.
 
-### 6.11. Contract Evidence Is All-or-Nothing with Respect to Its Declared Shape
+### 6.11. Established Evidence Material Is Not Erased by an Unsatisfied Evidence Obligation
 
-A Diagnostic Evidence occurrence is established only when its required coordinates have been established according to
-the definition.
+A Diagnostic Evidence definition has a closed declared shape, but establishment of one declared material item does not
+become semantically false merely because another required item could not be established.
 
-The Contract does not invent `PartialEvidence`, `TruncatedEvidence`, or `MaybeEvidence` as universal semantic states. If
-the definition explicitly contains optional or absent coordinates through existing Contract absence law, that is part of
-the closed shape. An unexpected capture failure is different.
+Each declared item establishes only when its own required source relation and material are established. The applicable
+Diagnostic Evidence obligation is satisfied only when every required item in its definition has been established. An
+unexpected capture failure therefore cannot be presented as satisfaction of a stricter evidence guarantee, but it also
+does not erase material that was in fact established.
 
-This rule prevents a storage or tracing failure from silently weakening the Contract. A backend-specific dump may still
-state that some frames were unavailable or some events were lost. That is useful operational evidence, but it is not a
-complete occurrence of a stricter Contract Evidence definition.
+```text
+required evidence = A, B, C
 
-### 6.12. Failure to Establish Evidence Does Not Rewrite the Source Result
+A established
+B established
+C not established
 
-A source Result or Failure remains established even if a later diagnostic obligation cannot be completed.
+→ A remains established
+→ B remains established
+→ the required A+B+C obligation is not satisfied
+```
 
-If the Diagnostic Evidence Contract itself has an applicable required obligation and the machine retains enough
-authority to judge that obligation, inability to establish the required evidence may establish a separate Failure owned
-by that diagnostic obligation. It does not replace, merge with, or retroactively invalidate the original source result.
+The Contract does not invent `PartialEvidence`, `TruncatedEvidence`, or `MaybeEvidence` as universal semantic results.
+Optional or explicitly absent material uses the existing Contract law that owns that meaning. Operational tooling may
+report loss, truncation, or incomplete capture as diagnostic metadata, but such metadata must not turn an unsatisfied
+required obligation into a satisfied one.
+
+### 6.12. Failure to Establish Required Evidence Does Not Rewrite the Source Result or Recurse Automatically
+
+A source Result or Failure remains established even if an applicable Diagnostic Evidence obligation is not satisfied.
+
+If the Diagnostic Evidence obligation itself is an applicable Contract obligation and its owning authority can determine
+that required evidence was not established, that unsatisfied obligation may establish its own Failure under ADR-0057. It
+does not replace, merge with, or retroactively invalidate the original source result.
 
 ```text
 source Failure A is established
         ↓
-Diagnostic Evidence obligation for A is evaluated
+Diagnostic Evidence obligation for A is judged
         ↓
-evidence cannot be established
+required evidence is not established
         ↓
-possible Failure of the evidence obligation
+possible Failure of that evidence obligation
 
 Failure A remains Failure A
 ```
 
+That diagnostic Failure does not by itself create another Diagnostic Evidence obligation. Diagnostic processing must not
+form an automatic recursive chain in which failure to diagnose a diagnostic failure requires another diagnostic failure
+to be diagnosed. Any further diagnostic obligation must have an independently declared, non-recursive source relation
+and remain subject to the same closed selection laws.
+
 If abrupt realization loss prevents the evidence obligation from being judged at all, the machine must not invent a
-secondary Failure merely to explain the missing diagnostic material. ADR-0057's rule about unknowable results still
-applies.
+secondary Failure merely to explain missing diagnostic material. ADR-0057's rule for processing that was never reached
+or never judged still applies.
 
 ### 6.13. Later Unreached Processing Remains Execution Evidence
 
@@ -1092,17 +1134,19 @@ ADR-0057 already rejects semantic outcomes such as `Skipped`, `Blocked`, or `Not
 reached because an earlier Failure made it unreachable.
 
 Diagnostic tooling may still explain the dependency relation. It may state that a particular source Failure prevented a
-later dependent boundary from being entered, or show the last reachable machine boundary. That statement belongs to
-execution evidence or an explanation graph. It does not establish a synthetic result for the unexecuted Contract.
+later dependent boundary from being entered, or identify the last reachable machine boundary when that relation is
+available. That statement belongs to execution evidence or explanation. It does not establish a synthetic result for the
+unexecuted Contract or require disclosure of internal execution structure beyond the applicable Publication and Output
+authority.
 
-The distinction is especially important for compiler and Whole-Machine diagnostics. A causal path can explain why a node
-has no result without pretending that the node ran.
+The distinction is especially important for compiler and Whole-Machine diagnostics. A causal relation can explain why a
+subject has no later result without pretending that the subject ran.
 
 ### 6.14. Explanation and Remediation Are Not Evidence
 
 A diagnostic can contain more than evidence without giving every part the same authority.
 
-A human explanation may summarize several evidence coordinates. A note may add context from another declaration. A help
+A human explanation may summarize several evidence items. A note may add context from another declaration. A help
 message may suggest a change. A compiler fix may propose an edit. Those are tool products derived from the diagnostic
 record.
 
@@ -1110,6 +1154,10 @@ The underlying Evidence remains the material that was actually established. A su
 suggested edit is correct. An automatic fix therefore needs its own compiler-side applicability and validation rules.
 The Contract Diagnostic Evidence model does not acquire a `hint` or `fix-it` semantic field merely because compiler UIs
 need those concepts.
+
+Derived explanation or remediation also does not gain authority to expose internal material that the underlying evidence
+could not lawfully disclose. Explanation may reduce or re-express authorized meaning; it cannot become a disclosure
+bypass.
 
 ### 6.15. Diagnostic Evidence Is Selective, Not Universal
 
@@ -1119,8 +1167,13 @@ Some judgments may already be sufficiently explained by their Result or Failure 
 retaining additional evidence would dominate runtime cost. A machine designer declares Diagnostic Evidence where
 accountability requires more than the source result already provides.
 
+Once a required Diagnostic Evidence obligation applies, implementation cost cannot silently weaken that obligation.
+Selective declaration controls where the guarantee exists; it does not make an applicable required guarantee optional at
+runtime.
+
 The compiler may still generate its own source diagnostics or optional runtime instrumentation for undeclared cases.
-Those facilities cannot be promoted to Contract guarantee after deployment by configuration alone.
+Those facilities cannot be promoted to Contract guarantee after deployment by configuration alone and cannot expand the
+material authorized for outward disclosure.
 
 Selective declaration keeps diagnostic cost visible and makes retained sensitive material reviewable before execution.
 It also creates a clean V2 path for richer capture without turning V1 into an always-on flight recorder.

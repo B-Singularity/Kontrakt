@@ -142,9 +142,13 @@ Governance Scope cannot be derived from source nesting, runtime topology, reques
 backend discovery. If Scope is Contract meaning, its identity must be explicit.
 
 A Governance decision must have an explicit Decision Basis and an explicit Decision Law. The Basis contains the request
-and situational Contract material presented to that decision. The Decision Law is user-declared Contract meaning that
-judges that material and determines the declared Governance response. Governance does not infer hidden machine
-conditions or obtain them through runtime lookup.
+and situational material presented to that decision. Material already established by another Contract Authority or by
+the State-Machine axis remains owned by that authority; Governance may reference that established meaning but does not
+re-establish it merely because the material participates in a Governance decision. Realization-originated material may
+participate only through an explicit declared boundary whose meaning is fixed independently of the Selection being
+decided. The Decision Law is user-declared Contract meaning that judges the declared Basis and determines the declared
+Governance response. Governance does not infer hidden machine conditions, inspect another authority's internal
+representation, or obtain undeclared material through runtime lookup.
 
 Contract judgment and realization judgment are separate. The Governance Contract decides which Policy World should
 govern under the explicit request and situation. Kontrakt and its backend separately decide how to realize that
@@ -235,12 +239,13 @@ established; Governance cannot dynamically choose the law that governs itself.
 
 ### 4.3. Decision Basis
 
-A Governance decision judges explicit Contract material presented at its decision boundary.
+A Governance decision judges explicit material presented at its decision boundary.
 
-Decision Basis contains the material needed by that decision. It may contain an explicit Governance request, explicit
-situational material, or both. These are not fixed Governance ontology categories such as `Authorization`, `Readiness`,
-or `Inhibition`; they are ordinary explicit Contract material whose coordinates and meaning are declared for the
-machine.
+Decision Basis contains the material needed by that decision. It may contain an explicit Governance request, material
+already established by another Contract Authority or by the State-Machine axis, realization-originated material that
+arrives through an explicit declared boundary, or a declared combination of those sources. These are not fixed
+Governance ontology categories such as `Authorization`, `Readiness`, or `Inhibition`; they remain material whose
+coordinates and meaning are owned by their declaring or establishing authorities.
 
 Conceptually:
 
@@ -249,13 +254,26 @@ request
     EmergencyRequested
 
 situation
-    temperature
-    coolingAvailable
-    maintenanceActive
+    ThermalCritical
+    CoolingUnavailable
+    MaintenanceActive
 ```
 
-Governance does not discover hidden conditions through callbacks, service lookup, sensors, thread state, backend
-objects, or other runtime observation. Material that matters to Governance must cross the Contract boundary explicitly.
+The names above stand for declared Governance inputs, not for sensors, callbacks, logs, or backend probes. Governance
+does not discover hidden conditions through callbacks, service lookup, sensors, thread state, backend objects, or other
+runtime observation. Material that matters to Governance must cross an explicit Contract boundary before the Decision
+Law uses it.
+
+When another authority has already established material, Governance references that established material and its exact
+semantic relation. It does not recompute the source judgment, copy its authority into Governance, or inspect arbitrary
+internal fields merely because those fields are available to one implementation. A source cannot become an open object
+graph for Governance conditions; the material used by the Decision Law must be explicitly declared as part of the
+Decision Basis.
+
+Realization may observe or measure machine conditions, but raw observation does not become Governance Authority by
+proximity. If realization-originated information participates in a Governance decision, the material and the boundary by
+which it becomes eligible for that decision must be explicit, stable, and independently established before the Selection
+it helps determine. The exact admissible realization-originated material remains deferred.
 
 One Governance decision has one fixed Decision Basis. The complete material for that decision is fixed at its explicit
 decision boundary. Material established after that boundary does not extend, replace, or alter the Basis of the already-
@@ -285,13 +303,16 @@ Governance Decision Law
 Selection Emergency
 ```
 
-The Decision Law may express finite, explicit, deterministic, and lowerable conditions over declared Governance
-material. A situation condition may therefore be genuine Governance Contract meaning when the user declares that
-condition as part of how the machine responds.
+The Decision Law may express finite, explicit, deterministic, and lowerable conditions over the material declared in
+Decision Basis. It may relate material established by several owning authorities, but those source meanings remain owned
+by their original authorities; the Decision Law establishes only the Governance response. A situation condition may
+therefore be genuine Governance Contract meaning when the user declares that relation as part of how the machine
+responds.
 
 The Decision Law is not a general controller programming surface. It cannot contain arbitrary user algorithms,
-callbacks, hidden runtime queries, implementation lookup, scheduler-dependent observation, or backend control flow. The
-exact finite condition language and frontend form remain deferred.
+callbacks, hidden runtime queries, implementation lookup, scheduler-dependent observation, backend control flow, or
+undeclared inspection of source internals. It also cannot read additional material that was not declared in the fixed
+Decision Basis for that decision. The exact finite condition language and frontend form remain deferred.
 
 A Decision Law must not delegate the same decision back into the Policy World whose applicability it is deciding. A
 Contract whose authority exists only after one Selection becomes applicable cannot establish the prerequisite judgment
@@ -475,7 +496,8 @@ Every established Governance Binding must be exactly attributable to the canonic
 it. At minimum, attribution must preserve:
 
 - Governance identity and Version;
-- the fixed Decision Basis;
+- the fixed Decision Basis, including the exact owning authority and semantic coordinate relation for each referenced
+  source item;
 - exact Scope;
 - exact Selection;
 - any applied Decision Arbitration result; and
@@ -541,6 +563,11 @@ The exact Whole Machine Scope authoring form and canonical representation of a m
 
 Policy owns the contents of a Contract World. Governance owns whether one declared World applies to an exact Scope.
 
+When material established by a 1D Contract participates in Decision Basis, Governance consumes that established meaning
+through its declared relation. It does not rerun the 1D judgment, reinterpret the source's obligation, or acquire the
+source Contract's authority. The same established material may be used by other compiler or machine responsibilities
+without being duplicated into Governance meaning.
+
 A World change changes the 1D Contracts applicable to contract processing established after that change. Governance does
 not perform a second compatibility, migration, or reconciliation judgment.
 
@@ -571,9 +598,10 @@ Selection, Arbitration, Binding, Replacement, or Withdrawal.
 The State Machine does not automatically select, replace, withdraw, or arbitrate Governance because a particular State
 was established.
 
-If State-related meaning must affect Governance, or Governance-selected meaning must constrain later State-machine
-judgment, that relation must cross an explicit Contract boundary and remain owned by the appropriate Contract
-Authorities.
+If State-related meaning must affect Governance, Governance may use only explicitly established State-Machine material
+that crosses the declared Decision Basis boundary. It does not reconstruct State from execution history, events, or
+backend observation. If Governance-selected meaning must constrain later State-Machine judgment, that relation likewise
+must cross an explicit Contract boundary and remain owned by the appropriate Contract Authorities.
 
 ### 4.17. Governance Is Not an Operation-Level Judgment Slot
 
@@ -679,6 +707,7 @@ Canonical Governance material must eventually preserve at least:
 
 - Governance identity and Version;
 - Decision Basis material and boundary law;
+- the exact declared source authority and semantic coordinate relation for each Decision Basis item;
 - Decision Law;
 - exact governed Scope identity;
 - exact selectable Policy World references;
@@ -689,6 +718,8 @@ Canonical Governance material must eventually preserve at least:
 - Withdrawal law;
 - the one-decision fixed Decision Basis boundary law;
 - the prohibition on using a Selection-dependent Contract to establish that same Selection;
+- the prohibition on arbitrary source introspection, hidden source lookup, or recomputation of another authority's
+  judgment inside Governance;
 - the non-retroactive Binding continuity law;
 - the one-applicable-Binding law for each exact Contract application;
 - the one-scope complete-decision law for indivisible multi-part Governance meaning;
@@ -715,10 +746,17 @@ It must reject:
   discovery;
 - missing, unknown, or ambiguous Policy World references;
 - missing or incomplete Decision Basis material required by the declared Decision Law;
+- Decision Basis references to undeclared source coordinates, arbitrary source internals, or material whose owning
+  authority cannot be resolved exactly;
+- attempts to recompute or re-establish another Contract or State-Machine judgment inside Governance instead of
+  referencing the already-established source material;
+- realization observation used as Governance Authority without an explicit declared material boundary that is
+  independently established before the Selection it helps determine;
 - attempts to extend, replace, or alter the fixed Decision Basis of an already-established Governance decision with
   material established after its decision boundary;
 - Decision Laws that use arbitrary user algorithms, callbacks, hidden runtime queries, implementation lookup, backend
-  control flow, or physical race order instead of finite explicit lowerable conditions over declared Contract material;
+  control flow, physical race order, or undeclared source inspection instead of finite explicit lowerable conditions
+  over the fixed declared Decision Basis;
 - prerequisite material whose authority exists only after the same Selection that the material is used to establish;
 - competing valid decisions without explicit deterministic Arbitration;
 - more than one applicable Binding for one exact Contract application;
@@ -790,18 +828,22 @@ configuration stores
 None becomes Governance Authority merely because one backend uses it.
 
 Likewise, an operator UI, CLI, deployment controller, scheduler, monitor, automation system, or another machine may
-supply Governance input. The carrier or producer does not become Governance Authority; any meaning it contributes must
-arrive as explicit Contract material consumed by Decision Basis.
+supply material toward Governance. The carrier or producer does not become Governance Authority. Material used in
+Decision Basis must cross an explicit declared boundary, preserve the authority that owns its meaning, and be fixed
+independently of the Selection it helps determine.
 
 Governance does not own the mechanisms that acquire observations, poll sensors, calculate backend health, prepare
 images, coordinate runtime participants, retry, fail over, schedule work, balance load, or recover execution. If a
-machine situation is Contract meaning, the user declares the relevant Governance material and Decision Law; how
-realization obtains and faithfully supplies that material remains outside Governance Contract Authority. Backend
-preparation and publication readiness are realization conditions even when they determine when an already-established
-decision can be applied.
+machine situation is established by another Contract Authority or by the State-Machine axis, Governance may reference
+that established material without duplicating the underlying judgment. If realization-originated information is needed,
+realization must provide it through the explicit material boundary required by Decision Basis rather than exposing raw
+observation or backend state as Governance Authority. How realization obtains and faithfully supplies that material
+remains outside Governance Contract Authority. Backend preparation and publication readiness are realization conditions
+even when they determine when an already-established decision can be applied.
 
 Approval workflow, operator screens, interlock hardware, audit stores, clocks, and timeout mechanisms are likewise not
-Governance Authority. Governance uses only the explicit Contract material that crosses its boundary.
+Governance Authority. Governance uses only material explicitly admitted by Decision Basis and crossing its declared
+boundary.
 
 The backend may specialize Policy-World lookup, precompute Bindings, use compact canonical identities, or optimize
 Replacement. It may also retain the resolved Binding in internal execution or cooperation context so that participating
@@ -918,8 +960,12 @@ This ADR decides the following boundary:
 - Governance itself is the Contract Authority for Governance decisions and cannot dynamically govern Governance.
 - Governance has eight responsibilities: Decision Basis, Decision Law, Scope, Selection, Decision Arbitration, Binding,
   Replacement, and Withdrawal.
-- Decision Basis contains explicit request and situational Contract material; Decision Law is the user-declared finite,
-  deterministic, lowerable law that judges that material and determines the Governance response.
+- Decision Basis contains explicit declared material. Material already established by another Contract Authority or the
+  State-Machine axis remains owned by that authority, and realization-originated material may participate only through
+  an explicit declared boundary. Governance does not rediscover, recompute, or introspect source meaning merely to use
+  it as Decision Basis.
+- Decision Law is the user-declared finite, deterministic, lowerable law that judges the fixed declared Basis and
+  determines the Governance response.
 - Governance Contract judgment is separate from backend realization judgment; realization readiness cannot select a
   different Policy World or alter the declared Governance response.
 - Scope is explicit Contract material; structural containment creates neither Scope nor precedence.
@@ -939,7 +985,8 @@ This ADR does not yet decide:
 
 - the exact set of allowed governed Scope kinds and how applicability is derived for each kind without introducing
   user-managed Binding or execution material;
-- the exact frontend representation of Decision Basis and the finite lowerable Governance Decision Law;
+- the exact set of admissible Decision Basis source kinds, the stable semantic coordinates each source may expose to
+  Governance, and the frontend representation of those references and the finite lowerable Governance Decision Law;
 - the exact canonical syntax for Selection, Decision Arbitration, Binding, Replacement, and Withdrawal;
 - the exact Whole Machine Scope authoring and canonical representation for one indivisible multi-part Governance
   decision;
@@ -974,7 +1021,8 @@ latest-loaded configuration
 
 A backend may use such mechanisms only to realize a separately declared deterministic Contract law.
 
-The Governance model must provide enough canonical material to identify one exact Decision Basis, Scope, Selection,
+The Governance model must provide enough canonical material to identify one exact Decision Basis, including the exact
+source authority and semantic coordinate relation of every referenced Basis item, and one exact Scope, Selection,
 Decision Arbitration result, Binding, Replacement, and Withdrawal result where each is applicable.
 
 Where the Contract theory intentionally permits several equivalent physical realizations, that freedom belongs to
@@ -987,8 +1035,9 @@ The following Governance questions remain open:
 1. Which exact Contract Scope kinds may be governed: Interface, Core, Whole Machine, Flow, or another explicitly defined
    Scope, and how is applicability derived for each allowed kind without exposing internal Binding continuity to users?
 2. What canonical material identifies one governed Scope without relying on source containment or runtime topology?
-3. What exact frontend material declares Decision Basis and the finite, explicit, deterministic, lowerable Decision Law
-   without introducing a general-purpose controller programming language?
+3. Which exact established source kinds and semantic coordinates may participate in Decision Basis, how are those
+   references declared without exposing arbitrary source internals, and what finite, explicit, deterministic, lowerable
+   Decision Law can judge them without introducing a general-purpose controller programming language?
 4. What finite Decision Arbitration forms are permitted: conflict rejection, explicit precedence, or another closed law?
 5. What exact frontend form declares Selection, Binding, Replacement, and Withdrawal without duplicating Policy
    contents?
@@ -1020,8 +1069,10 @@ Policy and Governance retain distinct responsibilities. Policy declares operatin
 establishes which declared World applies to an explicit Scope.
 
 Governance has enough structure to express practical situational response without becoming a general controller.
-Explicit request and situation material are judged by a user-declared finite Decision Law, competing decisions require
-explicit Arbitration, and established Bindings cannot silently appear, expire, or change through backend accidents.
+Decision Basis can reuse explicitly established machine material without transferring the source authority into
+Governance or requiring Governance to rediscover the same condition. The user-declared finite Decision Law judges only
+that fixed declared Basis, competing decisions require explicit Arbitration, and established Bindings cannot silently
+appear, expire, or change through backend accidents.
 
 Scope is no longer tied to Interface source nesting. Larger Scopes can be considered without creating hierarchy,
 inheritance, or implicit propagation between Governance Scopes.
@@ -1036,8 +1087,9 @@ The State-Machine axis remains independent, and Whole Machine execution coordina
 
 ### Negative
 
-Governance remains Proposed because the exact allowed Scope kinds, Decision Basis and Decision Law frontend forms,
-permitted Arbitration laws, frontend syntax, and canonical Binding/Replacement/Withdrawal material are still open.
+Governance remains Proposed because the exact allowed Scope kinds, admissible Decision Basis source kinds and semantic
+coordinates, Decision Basis and Decision Law frontend forms, permitted Arbitration laws, frontend syntax, and canonical
+Binding/Replacement/Withdrawal material are still open.
 
 Several earlier ADRs and `What Contract Is` passages still describe Governance as an operation-level refusal authority,
 as the owner of Manifest Worlds, or as an Interface-local selector. Those references require reconciliation after
@@ -1051,6 +1103,6 @@ This ADR does not require a distributed system, control plane, leader election p
 system, monitor, or any particular synchronization primitive.
 
 It does not require Governance to discover machine conditions or implement an automatic controller. Situational material
-that has Contract meaning must be explicit, while observation and acquisition mechanisms remain replaceable realization.
-Governance itself remains the authority that judges that material under the declared Decision Law and establishes
-Policy-World applicability.
+used by Governance must be explicit and must preserve the authority that established its meaning, while observation and
+acquisition mechanisms remain replaceable realization. Governance itself remains the authority that judges the fixed
+declared Decision Basis under the declared Decision Law and establishes Policy-World applicability.
