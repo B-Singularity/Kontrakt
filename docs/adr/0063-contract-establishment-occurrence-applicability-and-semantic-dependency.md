@@ -29,45 +29,39 @@ Proposed
 
 ## 1. Context
 
-Kontrakt already uses establishment throughout the Contract Machine.
+Kontrakt already relies on establishment across the Contract Machine.
 
-Input can establish judgeable boundary presentation. Canonicalization can establish a stable representative. Lowering
-can form material that is still only a candidate for later authority. Fact authority appears only after the obligations
-required for factual establishment have succeeded. State and Transition establish machine condition and legal movement
-under their own authority. Failure, Governance, Publication, and Output also establish results that later machine
-responsibilities may need to use.
+Different authorities establish different meanings, and later responsibilities may depend on those results. The common
+problem is that a result can be authoritative for its source occurrence without being applicable everywhere else.
 
-These cases share one problem.
+The existing Contracts already expose this distinction. A lowered candidate does not become Fact until the required
+judgments succeed, and later processing does not rewrite meaning that was already established under an earlier
+occurrence.
 
-A result may be correct for the authority that produced it without being usable everywhere else. Another Contract may
-need that result as basis, but the later Contract must not take ownership of the earlier meaning. A later Version or
-Governance decision may change what is applicable next without rewriting what happened before. Diagnostic Evidence may
-explain an earlier result without reconstructing that result from logs or later observation.
+The same law is needed by Governance and Diagnostic. Governance may use material established by another authority
+without taking ownership of that material. Diagnostic may explain an earlier result without reconstructing the source
+meaning from later observation.
 
-The existing ADRs already contain local versions of these laws.
+Without one common law, each Contract would need its own meaning for establishment, applicability, and later use. That
+would make cross-Contract reasoning inconsistent and would let implementation details leak back into semantics.
 
-A lowered candidate is not automatically Fact. A refused Change Proposal establishes no partial Fact or movement. A
-Failure is not rewritten by retry. Old material does not silently gain new Version meaning. An Output result is not
-rewritten by later transport. Diagnostic Evidence does not become the authority that produced the source result.
-
-These are not separate accidents. They are consequences of one missing common law.
-
-Kontrakt therefore needs a shared meaning for:
+This ADR defines the common relation between:
 
 ```text
 Definition
+    ↓
 Occurrence
-Judgment
+    ↓
+Judgment where required
+    ↓
 Establishment
+    ↓
 Established Material
-Applicability
-Semantic Dependency
-Non-Retroactivity
+    ↓
+later applicable use
 ```
 
-This ADR defines that common law.
-
-It does not replace the Contracts that own the actual results.
+The individual Contracts still own the meaning of their own results.
 
 ---
 
@@ -75,256 +69,174 @@ It does not replace the Contracts that own the actual results.
 
 A Contract Definition declares a responsibility. It does not represent one application of that responsibility.
 
-A value may exist before the machine is allowed to rely on it. A condition may be observed before any Contract has
-judged what that condition means. A candidate may be complete in memory while still lacking the authority needed by the
-next Contract. A previous result may remain stored after it stops being applicable to a later occurrence.
+Material may also exist before it has authority. A value can be observed, computed, or stored without being established
+under any Contract. Even an established result may later become inapplicable to another occurrence while remaining the
+valid result of its original occurrence.
 
-If these states are collapsed, implementation starts deciding meaning.
+If these distinctions collapse, implementation state starts deciding Contract meaning.
 
-The following must not become equivalent:
+The machine therefore needs common answers to four questions:
 
-```text
-defined
-observed
-computed
-available
-established
-applicable
-retained
-published
-```
+1. What is one exact application of a Contract Definition?
+2. When does material gain the authority owned by that Contract?
+3. When may another occurrence use previously established material as basis?
+4. What remains true when later machine state changes?
 
-The same separation is needed between Contract authorities.
+The answer must work across the 1D Contract pipeline, the State-Machine axis, Governance, Failure, Publication, Output,
+and Diagnostic.
 
-Suppose one authority establishes material `M` and a second authority uses `M` to establish `N`.
-
-The correct relation is:
-
-```text
-Authority A
-    establishes M
-
-Authority B
-    uses M as declared basis
-    establishes N
-```
-
-It is not:
-
-```text
-Authority B reads M
-    therefore B owns M
-```
-
-The machine also needs a precise rule for incomplete basis. If one result requires several established inputs, a subset
-must not silently create a weaker authoritative result. The owning Contract may define another complete case, but
-absence of required material cannot invent one.
-
-The same issue appears across scope. Several local results do not automatically establish a Whole-Machine result. A
-higher-scope authority must own the higher-scope judgment.
-
-This ADR must solve these problems without introducing runtime lifecycle, object lifetime, storage lifetime, compiler
-cache validity, or distributed commit mechanisms into Contract semantics.
+It must also remain independent from compiler caches, runtime objects, and physical scheduling.
 
 ---
 
 ## 3. Decision Drivers
 
-Establishment must express semantic authority rather than implementation completion.
+The common law must preserve source authority after results cross Contract boundaries.
 
-The authority that owns a meaning must remain identifiable after other Contracts consume its result.
+It must distinguish a Definition from each occurrence of that Definition.
 
-Definition and occurrence must remain distinct. Equal material from separate occurrences must not merge those
-occurrences.
+Basis material must remain separate from the result established from that basis.
 
-The basis used by a judgment must remain separate from the result established by that judgment.
-
-An established result may be usable by several later responsibilities without transferring its source authority.
-
-Applicability must be exact enough to prevent old or unrelated material from being reused under the wrong Contract
-meaning.
-
-The machine must not require one universal context record containing every possible Contract coordinate.
+Applicability must prevent material from being reused under the wrong Contract meaning.
 
 Incomplete required basis must not create partial authority.
 
-Observed or inferred material must not become authoritative merely because nothing currently contradicts it.
+Later occurrences must not rewrite earlier establishments.
 
-Later machine changes must not rewrite earlier establishments.
+Observation and storage must remain outside establishment unless a Contract explicitly gives them semantic meaning.
 
-Physical scheduling must not decide semantic order.
+The law must remain small enough that each Contract can keep its own result shape and context.
 
-Retention and persistence must remain separate from establishment.
-
-Publication must remain the only authority for outward exposure.
-
-The common law must support a future incremental compiler without defining Contract semantics in terms of queries,
-caches, dependency graphs, epochs, or snapshots.
+Compiler mechanisms may represent these relations, but they must not define them.
 
 ---
 
 ## 4. Decision
 
-### 4.1. Definition and Occurrence Are Different
+### 4.1. Definition and Occurrence
 
 A **Contract Definition** declares one Contract responsibility.
 
-A **Contract Occurrence** is one exact application of that responsibility to a semantic situation governed by that
-definition.
+A **Contract Occurrence** is one exact application of that responsibility to a semantic situation governed by the
+Definition.
 
 ```text
 Contract Definition
         ↓
-zero or more Contract Occurrences
+one or more distinct Occurrences
 ```
 
-One Definition may be used many times.
+Two occurrences can establish equal material without becoming the same occurrence.
 
-Two occurrences may produce equal material and still remain different occurrences.
+Occurrence is semantic. It is not defined by a runtime call, object identity, timestamp, thread, or generated
+identifier.
 
-```text
-Occurrence A
-    -> M
-
-Occurrence B
-    -> M
-```
-
-This does not make `A` and `B` the same occurrence.
-
-Occurrence is semantic. It is not defined by a method call, thread, object, callback, timestamp, UUID, or stack frame.
-
-This ADR does not require one universal occurrence identifier in the user API or canonical representation. A realization
-only needs to preserve occurrence distinction where later Contract meaning depends on it.
+No universal occurrence object is required. A realization only needs to preserve the distinction where later Contract
+meaning depends on it.
 
 ---
 
-### 4.2. Judgment and Establishment Are Different
+### 4.2. Judgment and Establishment
 
 A **Judgment** is an authoritative evaluation owned by a Contract or State-Machine responsibility.
 
-An **Establishment** is the boundary at which source-specific meaning becomes authoritative for one occurrence.
+**Establishment** is the boundary at which source-specific meaning becomes authoritative for one occurrence.
 
 ```text
-basis
+required basis
     ↓
 owning judgment where required
     ↓
 establishment
     ↓
-authoritative result
+authoritative material
 ```
 
-Not every establishment needs another local predicate.
+A Contract can depend on judgments owned by other authorities without transferring ownership of its own result.
 
-Fact establishment is the main example. Invariant and State-Machine authorities may perform the judgments required for
-one proposal, while Fact remains the authority for the factual meaning established when those requirements succeed.
-
-The existence of required judgments does not make those judgments the owner of the result they permit.
+Fact is the main example. Invariant and State-Machine judgments may be required before a proposed Fact gains authority,
+but those judgments do not become the source of Fact meaning.
 
 ---
 
-### 4.3. Establishment Grants Authority
+### 4.3. Candidate Material Has No Authority by Itself
 
-Establishment occurs only when the owning responsibility's declared requirements for that result are complete.
-
-Material does not gain authority merely because an implementation has produced it.
+Material does not become authoritative merely because an implementation has produced a complete candidate.
 
 ```text
-candidate exists
+candidate
     !=
-result established
+established result
 ```
 
-The following may realize or carry established meaning, but none defines establishment:
+Lowering can form candidate Fact material before Fact is established. The same distinction applies whenever a later
+authority must still decide whether produced material may receive its meaning.
 
-```text
-object construction
-method return
-callback completion
-field mutation
-message arrival
-storage
-serialization
-cache insertion
-```
+Being unrefuted is also insufficient. A candidate does not gain authority because current analysis has found no
+contradiction.
 
-The backend may change any of these mechanisms while preserving the same Contract meaning.
+Establishment occurs only when the requirements owned by the relevant semantic boundary are satisfied.
 
 ---
 
 ### 4.4. Established Material Keeps Its Source Authority
 
-**Established Material** is the common term in this ADR for source-specific meaning that has received authority.
+**Established Material** is the common term used here for source-specific meaning that has received authority.
 
-It is not a new universal Contract type.
+It is not a universal Contract type.
 
-A Fact remains Fact. A State remains State. A Failure remains Failure. A Governance Binding remains Governance material.
-Publication and Output keep their own result kinds.
+A Fact remains Fact. A Failure remains Failure. A Governance Binding keeps Governance meaning. Other Contracts keep
+their own result kinds.
 
-The authority that owns that meaning remains its source.
-
-A later Contract may use the material as basis and establish a new result of its own.
+When another authority uses established material, the source meaning remains owned by its original authority.
 
 ```text
 Authority A
     establishes M
 
 Authority B
-    uses M
-    applies B's law
+    uses M as basis
     establishes N
 ```
 
-Authority B does not acquire authority over `M`.
+B may establish its own conclusion from `M`. It may not claim that A established B's conclusion or rewrite what A
+established.
 
-It must not rewrite what A established or claim that A established a meaning that belonged to B.
+This rule also applies when the consumer is a verifier, Diagnostic, test synthesis, or optimization subsystem.
 
 ---
 
-### 4.5. Basis and Result Remain Separate
+### 4.5. Basis and Result Are Different
 
-Material used by a judgment is not the judgment's result.
+Material used by a judgment is not the result of that judgment.
+
+An authority may establish a new conclusion from source material only through its own declared law.
+
+For example:
 
 ```text
-basis
-    !=
-judgment result
+A establishes:
+    temperature = 110
+
+B declares:
+    temperature > 100 -> unsafe
+
+B establishes:
+    unsafe
 ```
 
-For example, an observed quantity does not decide whether a Budget was exceeded. A State value does not decide whether
-Governance should select one Policy World. A Failure does not decide whether its material may be published.
+The new meaning belongs to B. A still owns only the temperature result.
 
-The authority that owns the later question applies its own law.
-
-This preserves the difference between source material and the conclusion drawn from it.
-
-A later authority may establish a stronger conclusion when its own declared law permits that conclusion. It must still
-attribute the source material honestly.
+This prevents a later consumer from strengthening the source meaning retroactively.
 
 ---
 
 ### 4.6. Observation Does Not Establish Contract Meaning
 
-Observation alone does not grant Contract authority.
+Observed material has no Contract authority merely because it is visible to the machine.
 
-The machine may observe:
-
-```text
-filesystem state
-OS metrics
-hardware signals
-runtime values
-trace events
-external messages
-```
-
-Those observations may become useful basis.
-
-They do not become Contract meaning until an authority that is allowed to establish the required meaning judges or
-qualifies them under declared law.
-
-Conceptually:
+If realization-originated information is allowed to affect a Contract judgment, a declared authority must qualify the
+meaning needed by the dependent Contract.
 
 ```text
 observation
@@ -334,89 +246,58 @@ declared qualification or judgment
 established semantic material
 ```
 
-This ADR does not create one universal Observation Contract and does not decide which future Contract owns every
-possible realization-originated qualification.
-
-It only forbids raw observation from acquiring authority by itself.
+The exact qualifying authority depends on the Contract being designed. This ADR only establishes that raw observation
+cannot become authority by itself.
 
 ---
 
-### 4.7. Candidate Meaning Is Not Established Meaning
+### 4.7. Applicable Context Is Source-Specific
 
-A candidate may be well-formed and still lack authority.
+Every occurrence is interpreted under the Contract material that is actually relevant to that occurrence.
 
-Lowering may form candidate material. A Change Proposal may contain complete proposed Fact changes. Governance
-realization may compute a possible selection. An optimizer may produce a transformed representation.
+**Applicable Context** contains only the coordinates needed to interpret the occurrence honestly.
 
-None becomes authoritative merely because it exists.
+For one authority that may include Version. Another may also depend on Governance or State.
 
-The following are also insufficient:
+There is no universal nullable context record.
 
-```text
-not yet disproved
-likely valid
-consistent with current observations
-accepted by one implementation path
-```
-
-Establishment requires the owning semantic boundary to be satisfied.
-
-Absence of contradiction is not establishment.
+Any coordinate required by the owning law must be fixed for the occurrence before its result is established. The
+physical mechanism used to preserve that fixed meaning remains an implementation choice.
 
 ---
 
-### 4.8. Applicable Context Belongs to the Occurrence
+### 4.8. Establishment and Applicability Are Different
 
-Every occurrence is interpreted under the Contract material actually applicable to that occurrence.
+Establishment makes material authoritative for its source occurrence.
 
-**Applicable Context** means only the Contract coordinates needed to interpret that occurrence honestly.
+It does not make the material valid basis for every later occurrence.
 
-It is source-specific.
-
-One occurrence may need Version and Governance Binding. Another may also depend on State. A third may not need either.
-
-This ADR does not create a universal nullable context structure.
-
-All coordinates required to interpret an occurrence must be fixed for that occurrence before its result is established.
-
-`Fixed` is a semantic rule. It does not require a memory copy, database snapshot, lock, epoch object, or transaction.
-
----
-
-### 4.9. Establishment and Applicability Are Separate
-
-An established result is authoritative for its source occurrence.
-
-That does not make it valid basis for every later occurrence.
-
-```text
-established
-    !=
-universally applicable
-```
-
-Applicability is a relation between established material and the dependent occurrence that wants to use it.
+**Applicability** is the relation that decides whether established material may be used by a dependent occurrence under
+the Contract meaning that governs that later occurrence.
 
 ```text
 Established M
         +
 Dependent Occurrence O
-        +
-Applicable Contract meaning
         ↓
-M may be used as basis for O
+M is applicable to O
+        ↓
+O may use M as basis
 ```
 
-The same established material may therefore be applicable to one later occurrence and not another.
+The same material can therefore be applicable to one occurrence and not another.
 
-Applicability must not be reduced to a permanent Boolean stored on the source material.
+Applicability is not a permanent Boolean property of the source result.
 
 ---
 
-### 4.10. Semantic Dependency Is Explicit
+### 4.9. Semantic Dependency
 
-A **Semantic Dependency** exists when one occurrence requires meaning established by another authority as declared
+A **Semantic Dependency** exists when one occurrence declares established meaning from another authority as part of its
 basis.
+
+A dependent occurrence may rely on that material only when the source meaning has been established and is applicable to
+the dependent occurrence.
 
 ```text
 Occurrence A
@@ -426,86 +307,47 @@ Occurrence B
     requires M
 ```
 
-The dependent occurrence may use `M` only when the required source meaning has been established and is applicable to B.
+Physical availability does not satisfy this relation.
 
-Physical availability is not enough.
-
-```text
-M exists in memory
-    !=
-B may rely on M
-```
-
-The dependency does not transfer ownership. B owns only the result that B establishes.
+The dependency also does not transfer authority. B owns only the result established by B.
 
 ---
 
-### 4.11. Required Basis Must Be Complete
+### 4.10. Required Basis and Establishment Are Complete
 
-The owning Contract decides what basis is required for one occurrence.
+The owning Contract decides which basis is required for an occurrence.
 
-If that law requires a complete set, a subset cannot silently establish a weaker result.
+If the law requires several parts, all required parts must be satisfied before the result receives authority.
 
 ```text
 required:
     A + B + C
 
-present:
+available:
     A + B
 
 result:
-    no partial authority
+    not established
 ```
 
-The owning Contract may declare several complete alternatives. That is different from treating an incomplete case as
-partially valid.
+A Contract may define another complete alternative. It may not silently weaken an incomplete case.
 
-Missing basis does not automatically establish `false`, `Unknown`, `Failure`, or another synthetic result.
+The same rule applies when several independent judgments must agree on one coordinated change. Physical work may
+complete in pieces, but authority belongs only to the complete semantic result.
 
-Such a result exists only when an authority that owns that meaning establishes it.
+Missing basis does not create a synthetic result. Failure or another meaning exists only when the authority that owns
+that meaning establishes it.
 
 ---
 
-### 4.12. Coordinated Establishment Is Indivisible
+### 4.11. Higher-Scope Meaning Requires Its Own Authority
 
-One declared result may depend on several independently judged parts.
-
-The machine may process those parts separately, but authority belongs only to the complete result defined by the owning
-law.
-
-```text
-all required parts satisfied
-    -> establishment
-
-required part missing or refused
-    -> no partial establishment
-```
-
-This generalizes the existing Change Proposal rule. If a required Invariant or State-Machine judgment refuses the
-proposal, no proposed Fact change or movement receives partial authority.
-
-The same law can support a Governance Binding that must be complete across several selected parts.
-
-The physical mechanism used to coordinate that work remains realization.
-
----
-
-### 4.13. Higher-Scope Meaning Needs a Higher-Scope Authority
-
-Several established local results do not automatically establish an enclosing result.
+Established local results do not automatically create a higher-scope result.
 
 ```text
 A establishes MA
 B establishes MB
 
-MA + MB
-    !=
-higher-scope meaning
-```
-
-If a higher-scope meaning depends on both, an authority that owns that meaning must apply its own composition law.
-
-```text
 MA + MB
     ↓
 higher-scope owning judgment
@@ -513,60 +355,44 @@ higher-scope owning judgment
 MC established
 ```
 
-This keeps local authority intact and prevents Whole-Machine meaning from appearing through implicit aggregation.
+The local results become basis for the higher-scope authority.
 
-It also preserves Governance scope. Several selected local materials may become basis for one encompassing Governance
-decision, but they do not create that decision by themselves.
-
----
-
-### 4.14. One Established Result May Have Many Consumers
-
-Established material may be used by several later responsibilities.
-
-```text
-Established M
-    ├── Governance
-    ├── Verification
-    ├── Test Synthesis
-    ├── Diagnostic
-    └── Optimization
-```
-
-The number of consumers does not create more source authority.
-
-Each consumer may establish only the product owned by its own responsibility.
-
-This allows shared semantic analysis without turning one subsystem into the authority for another.
+This prevents implicit Whole-Machine aggregation and gives Governance a clear way to combine material from several
+source authorities without taking ownership of the source meanings.
 
 ---
 
-### 4.15. Non-Establishment Has No Implicit Meaning
+### 4.12. One Source Result May Have Many Consumers
 
-If an occurrence does not establish a result, the machine must not invent one simply to fill the pipeline.
+One established result may be used by several independent responsibilities.
 
-A later position that is never reached does not establish:
+The source authority remains singular even when Governance, verification, test synthesis, Diagnostic, and optimization
+all depend on the same meaning.
 
-```text
-Skipped
-Blocked
-NotEvaluated
-Deferred
-```
+Each consumer owns only the result produced by its own responsibility.
 
-It was not reached.
-
-A required result that was not established does not automatically mean `false`.
-
-A Failure exists only when Failure law causes the applicable authority to establish one.
-
-Diagnostic Evidence may later explain why a position was not reached. That explanation is not a synthetic source result.
+This allows shared analysis without creating an authority chain between subsystems.
 
 ---
 
-### 4.16. Later Occurrences Do Not Rewrite Earlier Establishments
+### 4.13. Non-Establishment Has No Implicit Meaning
 
-Once an occurrence establishes meaning, later occurrences cannot change what that earlier occurrence meant.
+If an occurrence does not establish a result, the machine does not invent another result simply to fill the pipeline.
+
+A later position that is never reached has no separate `Skipped` or `Blocked` semantic result unless an authority
+explicitly owns such meaning.
+
+Likewise, failure to establish one result does not by itself establish Failure.
+
+This keeps non-establishment distinct from every declared result kind.
+
+---
+
+### 4.14. Later Occurrences Do Not Rewrite Earlier Establishments
+
+An established result keeps the meaning and applicable context of its own occurrence.
+
+A later occurrence may establish new material for later use, but it does not mutate the earlier result.
 
 ```text
 Occurrence O1
@@ -580,151 +406,59 @@ Occurrence O2
     establishes M2
 ```
 
-`M2` does not rewrite `M1`.
+`M2` may replace what is applicable next where an owning Contract allows that relation. It does not change what `O1`
+established.
 
-This applies across the existing machine:
-
-- a retry does not rewrite an earlier Failure;
-- a later Governance Binding does not rewrite an earlier governed occurrence;
-- a later Version does not silently give old material new meaning;
-- later transport behavior does not rewrite an established Output result.
-
-The old result may stop being applicable to later occurrences. It does not stop being the result that was established
-for its own occurrence.
+This is the common law behind retry, Version succession, Governance rebinding, and later Output transport.
 
 ---
 
-### 4.17. Succession Is Not Mutation
+### 4.15. Source Context Must Remain Honest
 
-Some Contracts define replacement, withdrawal, compatibility, or later selection.
+Later explanation or reconstruction must preserve the source relation of an earlier establishment.
 
-Those meanings remain owned by their own ADRs.
-
-This ADR defines only the common rule:
-
-> A later establishment may become applicable to later occurrences under an owning law, but it does not mutate an
-> earlier establishment.
-
-There is no universal `current`, `latest`, or `superseded` result in this ADR.
-
-Such a relation needs an exact subject and an authority that owns the succession meaning.
-
----
-
-### 4.18. Equal Results Do Not Merge Occurrences
-
-Two occurrences may establish equal semantic material.
-
-They still remain separate occurrences where the machine needs to distinguish them.
-
-This matters for retry, Governance rebinding, State movement, diagnostic correlation, and test reproduction.
-
-It does not mean every result identity must include occurrence identity.
-
-Fact identity remains governed by the Fact Contract. Repeated establishment of identical canonical Fact material does
-not create artificial Fact multiplicity merely because processing occurred more than once.
-
-Result equality and occurrence distinction are separate relations.
-
----
-
-### 4.19. Earlier Context Must Remain Honest
-
-Material used to explain an occurrence later must not change the context under which the source result was established.
-
-A later observation may help diagnosis. A later reconstruction may help investigation.
-
-Neither may be presented as material that belonged to the earlier occurrence unless the source authority established
-that relation.
+Material from another occurrence must not be presented as though it belonged to the original source occurrence.
 
 ```text
-Occurrence O
-    Basis B1
-    Context C1
-    -> M
-
-later
-    Basis B2
-    Context C2
+result from A
+context from B
+    !=
+one source establishment
 ```
 
-The machine must not describe `M` as though `B2` or `C2` had been the basis of O.
+A later authority may explicitly establish a new conclusion from both. It must not rewrite the earlier source record to
+create that conclusion.
 
-This preserves the same temporal honesty required by Failure context and Version meaning.
+This rule also preserves temporal fidelity for Diagnostic Evidence.
 
 ---
 
-### 4.20. Source Relations Must Remain Intact
+### 4.16. Establishment Is Separate from Availability and Retention
 
-A consumer must preserve enough source relation to interpret established material correctly.
+Establishment concerns semantic authority.
 
-The machine must not combine unrelated material and present the combination as one coherent source occurrence.
+Availability concerns whether material can currently be obtained. Retention concerns whether it remains preserved after
+the point where it could otherwise be discarded.
 
-For example:
+These relations do not redefine one another.
 
-```text
-result from occurrence A
-context from occurrence B
-Version from occurrence C
-```
+An established result does not become unestablished when stored material is removed. Retaining material longer also does
+not increase its authority.
 
-must not be presented as one establishment unless an authority explicitly establishes a new meaning from those
-materials.
-
-Physical deduplication is allowed.
-
-Shared bytes or shared storage do not imply shared occurrence or shared applicability.
+Persistence and archival policy remain outside this ADR.
 
 ---
 
-### 4.21. Establishment Is Separate from Availability and Retention
+### 4.17. Establishment Does Not Grant Outward Authority
 
-Establishment answers whether meaning became authoritative.
+Internal authority is not Publication authority.
 
-Availability answers whether a consumer can currently obtain the material.
+An established result may remain entirely inside the Contract Machine.
 
-Retention answers whether the material remains preserved after a boundary that could otherwise discard it.
+Publication decides which established meaning may leave the Core. Output determines the outward result shape where an
+Output Contract applies.
 
-These are different responsibilities.
-
-```text
-established
-    !=
-available now
-
-established
-    !=
-retained
-
-established
-    !=
-persisted
-```
-
-Removing stored material does not rewrite the earlier establishment.
-
-Keeping material for a long time does not increase its authority.
-
-Retention duration and physical persistence remain outside this ADR.
-
----
-
-### 4.22. Establishment Does Not Grant Outward Authority
-
-Internal authority is not publication authority.
-
-```text
-established
-    !=
-public
-```
-
-An established Fact, Failure, Governance Binding, or Diagnostic result may remain internal.
-
-Publication decides what may receive outward authority. Output decides the outward shape where an Output Presentation
-applies.
-
-Storage, inspection, debugging, or internal reuse does not bypass those Contracts.
+Internal storage or Diagnostic access cannot bypass those boundaries.
 
 ---
 
@@ -732,121 +466,52 @@ Storage, inspection, debugging, or internal reuse does not bypass those Contract
 
 The Contract Pipeline and State-Machine axis remain separate authorities.
 
-A Contract judgment does not establish State movement merely because the same interaction depends on both.
-
-A legal State movement does not establish another Contract's result.
-
-Where one change requires both axes, their judgments become basis for the complete establishment owned by that change.
-
-This preserves the current Change Proposal model:
+Where one change depends on both axes, their independent judgments may become basis for one coordinated establishment.
 
 ```text
 proposed Fact change
 +
 proposed State movement
         ↓
-independent Invariant judgment
-+
-independent State / Transition judgment
+required Contract and State judgments
         ↓
 complete accepted proposal
         ↓
-Fact authority and legal movement established together
+Fact authority and legal movement established
 ```
 
-The separate judgments remain attributable to their own authorities.
+No judgment acquires another authority's meaning merely because both were required for the same proposal.
 
 ---
 
-## 6. Relation to the One-Dimensional Pipeline
+## 6. Relation to the Contract Pipeline
 
-This ADR does not redefine the 1D Contracts. It provides their shared establishment law.
+The common law applies to the existing pipeline without redefining each Contract.
 
-### 6.1. Input
+| Authority            | Establishment relation                                                                                                                                                 |
+|----------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Input                | Outside material gains Input meaning only at the Input boundary owned by the selected Contract.                                                                        |
+| Admission            | Admission establishes its continuation judgment, not Fact authority.                                                                                                   |
+| Canonicalization     | Canonicalization establishes the representative owned by its equivalence law.                                                                                          |
+| Lowering             | Lowering may establish its declared relation and produce candidate core material; that candidate is not yet Fact.                                                      |
+| Fact / Invariant     | Invariant owns integrity judgment. Fact owns factual authority after all required judgments for the proposal succeed.                                                  |
+| Budget / Capacity    | Each Contract owns its resource judgment. Another authority may use the result only through declared dependency and applicability.                                     |
+| Policy / Governance  | Governance may use established source material as Decision Basis, while Governance alone owns the Binding it establishes.                                              |
+| Failure              | Failure exists only when Failure law establishes it. Later processing does not rewrite its source occurrence.                                                          |
+| Publication / Output | Publication grants outward authorization for established source meaning. Output establishes the outward shape without taking ownership of the internal source meaning. |
 
-Outside material does not have Input authority merely because it reached an adapter.
-
-Input owns the boundary presentation established under the selected Input Contract.
-
-### 6.2. Admission
-
-Admission owns the decision that allows or refuses continuation.
-
-A successful Admission result may become basis for later processing. It does not establish Fact authority.
-
-### 6.3. Canonicalization
-
-Canonicalization owns the stable representative required by its equivalence law.
-
-A normalized host value is not authoritative merely because normalization code returned.
-
-### 6.4. Lowering
-
-Lowering owns the declared relation from canonical boundary material toward core-readable candidate material.
-
-A completed candidate is still not Fact unless the required factual and movement obligations succeed.
-
-### 6.5. Fact and Invariant
-
-Invariant owns Fact Integrity judgment.
-
-Fact owns factual authority.
-
-Invariant success may be required for Fact establishment, but Invariant does not become the source of Fact meaning.
-
-The same rule applies when State and Transition judgments are required for one Change Proposal.
-
-### 6.6. Budget and Capacity
-
-Budget and Capacity keep the resource meaning each Contract owns.
-
-Another Contract may use their established results only through declared dependency and applicable context.
-
-Physical resource observations do not transfer that authority.
-
-### 6.7. Policy and Governance
-
-Policy defines its Contract World. Governance decides which declared arrangement governs under Governance law.
-
-Governance may use applicable established material from other authorities as Decision Basis. It does not take ownership
-of those source results.
-
-Where one Binding requires several basis elements, Governance cannot gain partial authority from an incomplete set.
-
-The exact rules for Decision Basis, Selection, Scope, Binding, replacement, withdrawal, and Governance Failure remain in
-ADR-0056.
-
-### 6.8. Failure
-
-ADR-0057 continues to own Failure meaning.
-
-This ADR generalizes only the shared laws around establishment.
-
-A Failure does not arise merely because later processing could not continue. It is established only where the applicable
-authority determines the failed meaning defined by Failure law.
-
-Once established, its source meaning and applicable context are not rewritten later.
-
-### 6.9. Publication and Output
-
-Publication consumes already-authoritative source material and establishes outward authorization under Publication law.
-
-It does not become the source authority for Fact or Failure meaning.
-
-Output consumes Publication-authorized material and establishes the outward result owned by Output Presentation.
-
-Later transport or consumer behavior does not rewrite that result.
+The detailed laws of each row remain in the owning ADR.
 
 ---
 
 ## 7. Diagnostic Relation
 
-Diagnostic design depends on this ADR rather than redefining its common terms.
+Diagnostic relies on this ADR for source occurrence, establishment, applicability, and non-retroactivity.
 
-A Diagnostic Evidence occurrence may refer to an exact source occurrence and may use established source material. It can
-also include qualified observed material where the Diagnostic Contract permits it.
+A Diagnostic occurrence may refer to established source material and may also use qualified observation where Diagnostic
+law allows it.
 
-Diagnostic then establishes only its own explanatory meaning.
+It establishes only Diagnostic meaning.
 
 ```text
 Source authority
@@ -859,11 +524,10 @@ Diagnostic
 
 `E` does not replace `M`.
 
-A later observation must remain distinguishable from occurrence-time source material.
+Later observation must remain distinguishable from material that belonged to the source occurrence. Retention of
+Diagnostic material also has no effect on whether the source result was established.
 
-Retention of Diagnostic Evidence does not determine whether the source result was established.
-
-ADR-0060 continues to own what Diagnostic Evidence may establish and what Retention requires.
+ADR-0060 owns the exact Diagnostic Evidence and Retention rules built on these common relations.
 
 ---
 
@@ -871,18 +535,7 @@ ADR-0060 continues to own what Diagnostic Evidence may establish and what Retent
 
 Establishment follows semantic prerequisites rather than incidental scheduling.
 
-Changing the following must not change the required Contract meaning:
-
-```text
-worker count
-thread schedule
-completion order
-object allocation
-cache state
-hash iteration order
-```
-
-A worker finishing first does not gain semantic priority merely because it finished first.
+A different worker schedule must not change which meaning becomes authoritative when the same Contract basis applies.
 
 ```text
 physical completion order
@@ -890,11 +543,9 @@ physical completion order
 semantic establishment order
 ```
 
-If ordering itself is part of Contract meaning, the authority that owns that order must declare it.
+If order itself carries Contract meaning, the authority that owns that order must declare it.
 
-This ADR does not prescribe locks, transactions, CAS, MVCC, RCU, consensus, or scheduler behavior.
-
-Those mechanisms may realize the same semantic law.
+Locks, transactions, epochs, and other coordination mechanisms remain realization choices.
 
 ---
 
@@ -902,456 +553,220 @@ Those mechanisms may realize the same semantic law.
 
 Version remains owned by ADR-0053.
 
-This ADR requires only one common rule:
+An established result keeps the Version meaning that applied to its occurrence.
 
-> Established material remains the material established under the Contract meaning applicable to its occurrence.
+A later Version may change what material is applicable next, but it does not reinterpret the earlier establishment.
 
-A later Version does not silently reinterpret old material.
-
-Reuse under another Version requires the compatibility or new judgment required by the owning Contracts.
-
-Stable representation does not imply stable applicability.
-
-```text
-same bytes
-    !=
-same Contract meaning
-```
+Stable bytes or host representation therefore do not prove that old material remains semantically applicable.
 
 ---
 
-## 10. No Universal Semantic Lifetime
+## 10. Semantic Lifetime
 
-This ADR does not introduce a mandatory `SemanticLifetime` object.
+This ADR does not introduce a separate `SemanticLifetime` object.
 
-The required meaning is already expressed by:
+The required semantic relation is already expressed by establishment, applicability, and any succession law owned by
+another Contract.
 
-```text
-establishment
-+
-applicability
-+
-source-specific succession law
-```
+Material may remain historically established after it stops being applicable to later occurrences.
 
-Material may remain historically established while no longer being applicable to a later occurrence.
-
-That relation is different from memory lifetime, cache lifetime, session lifetime, retention duration, or storage
-persistence.
+Memory lifetime and retention duration remain separate concerns.
 
 ---
 
-## 11. Realization Boundary
+## 11. Realization and Canonical Representation
 
-The implementation may represent these laws through any structure that preserves them.
+The compiler must preserve the semantic distinctions defined here, but this ADR does not prescribe one physical layout.
 
-Possible realization mechanisms include immutable records, tables, compact IDs, snapshots, query results, caches, or
-generated code.
+Where the meaning requires it, compiler-owned material must be able to preserve the Definition, source authority,
+applicable context, and semantic dependency. Occurrence distinction must also remain available where later meaning
+depends on it.
 
-None becomes Contract authority.
+These relations do not need one universal record or graph.
 
-In particular, this ADR does not define Contract occurrence or establishment through:
+Runtime object identity is not semantic identity. Source position is not semantic identity. A cache entry is not
+Contract authority.
 
-```text
-runtime object identity
-thread identity
-compiler query invocation
-cache generation
-database transaction
-filesystem record
-epoch
-snapshot object
-```
-
-Those mechanisms remain replaceable.
+The physical representation may change as long as the Contract meaning remains unchanged.
 
 ---
 
-## 12. Canonical Representation Requirements
+## 12. V1 Compiler Requirements
 
-This ADR does not decide the final Semantic IR or Canonical IR layout.
+V1 must establish enough structure that V2 can reuse these semantics without another rewrite.
 
-The compiler must nevertheless preserve enough semantic information to represent, where required:
+Resolved Contract Definitions need stable compiler-owned identity.
 
-```text
-Definition identity
-source authority
-Occurrence distinction
-source-specific established result
-Applicable Context relation
-Semantic Dependency
-non-retroactive succession
-```
+A dependency on another authority's established material must survive lowering as an explicit semantic relation rather
+than hidden execution order.
 
-These meanings do not have to live in one record.
+Candidate construction must remain separate from immutable published compiler products.
 
-The compiler must not create one universal nullable context object merely because several Contracts use context.
+Source provenance must remain separate from semantic identity so that Diagnostic and tooling can move independently from
+Contract meaning.
 
-It must not create one universal history or provenance graph merely because several relations can be drawn as edges.
+Verifier, PBT, Diagnostic, and optimization should be able to reuse shared analysis while retaining the exact source
+authority.
 
-Representation should stay specific to the meaning being represented.
+These are compiler requirements derived from the Contract law. They do not add new Contract semantics.
 
 ---
 
-## 13. V1 Compiler Requirements
+## 13. V2 Compiler Consequences
 
-V1 does not need the full incremental architecture planned for V2.
+V2 may use query systems, incremental invalidation, persistent caches, summaries, and immutable compiler generations to
+implement these relations efficiently.
 
-It must establish boundaries that V2 can extend without replacing the semantic model.
-
-### 13.1. Stable Definition Identity
-
-Resolved Contract Definitions need compiler-owned semantic identity.
-
-Host object identity, source traversal order, and backend handles must not own that identity.
-
-### 13.2. Source Authority Must Be Preserved
-
-Compiler products derived from established meaning must keep the exact source authority relation.
-
-Verifier, PBT, Diagnostic, Governance analysis, and Optimization must not reconstruct ownership from implementation
-shape.
-
-### 13.3. Semantic Dependency Must Have an Explicit Seam
-
-When one judgment depends on another authority's established material, that relation must survive lowering into
-compiler-owned material.
-
-V1 may use a simple representation.
-
-The dependency must not exist only as callback order, global lookup, mutable singleton state, or execution order.
-
-### 13.4. Candidate and Published Compiler Products Stay Separate
-
-Compiler construction may use mutable builders or private workspaces.
-
-Published semantic products must be complete and immutable.
-
-This compiler publication boundary realizes the semantic model but is not itself Contract establishment.
-
-### 13.5. Shared Analysis Must Be Possible
-
-Verifier, PBT, Diagnostic, and Optimization should be able to reuse one derived analysis result when they rely on the
-same semantic source.
-
-Each subsystem still owns its own product.
-
-### 13.6. Provenance Must Not Be Semantic Identity
-
-Source position, semantic identity, and occurrence relation must remain separable.
-
-Moving source without changing Contract meaning must not create a different semantic result merely because the line
-number changed.
-
----
-
-## 14. V2 Compiler Consequences
-
-The laws in this ADR should remain usable by the future V2 compiler without making compiler mechanisms part of Contract
-semantics.
-
-### 14.1. Contract Occurrence Is Not a Compiler Query
-
-V2 may use demand-driven semantic queries.
-
-A query invocation is a compiler computation.
-
-A Contract Occurrence is semantic.
+Those compiler concepts remain separate from Contract semantics.
 
 ```text
 Contract Occurrence
     !=
 Compiler Query Invocation
-```
 
-Several queries may analyze one occurrence, while one query over a Definition may describe material that has many later
-occurrences.
-
-### 14.2. Semantic Dependency Is Not Query Dependency
-
-A Contract may declare that one occurrence depends on established material from another authority.
-
-The compiler may need several internal queries to compute that relation.
-
-```text
 Semantic Dependency
     !=
-Compiler Query Dependency
+Query Dependency
+
+Contract Applicability
+    !=
+Cache Validity
 ```
 
-The semantic relation may guide the compiler graph. The compiler graph does not define the semantic relation.
+The separation allows the compiler to reuse unchanged semantic material while invalidating only the analyses whose
+dependent context changed.
 
-### 14.3. Establishment Is Not Cache Validity
+It also allows one source meaning to feed verification, test synthesis, Diagnostic, and optimization without recomputing
+ownership.
 
-A cached compiler result may have been valid for an earlier compiler revision and still be unusable now.
+Higher-scope establishment leaves room for summary-driven Whole-Machine analysis because a unit summary can be basis
+without becoming Whole-Machine authority.
 
-That is a compiler reuse decision.
+Candidate separation also leaves room for independent preservation checks before transformed compiler material is
+published.
 
-It does not change what a Contract occurrence established.
-
-Likewise, a cache hit does not prove Contract applicability.
-
-### 14.4. Applicability Enables Precise Reuse
-
-V2 may separately detect that semantic meaning stayed unchanged while source provenance or a dependent context changed.
-
-This allows fine-grained invalidation without rewriting the earlier establishment.
-
-The compiler may stop reuse where applicability changed while retaining the stable source meaning that did not change.
-
-### 14.5. Shared Source Meaning Supports Several Product Subsystems
-
-The same semantic source may feed:
-
-```text
-Verifier
-PBT and Fixture generation
-Diagnostic
-Governance analysis
-Optimization
-Backend planning
-```
-
-without being recomputed as several different truths.
-
-V2 should therefore support reusable immutable analysis products with exact source ownership.
-
-### 14.6. Higher-Scope Establishment Supports Summary-Driven Compilation
-
-A compiler summary may preserve selected established facts about one unit.
-
-Whole-Machine analysis may use that summary as basis.
-
-The summary does not establish Whole-Machine meaning by itself.
-
-A Whole-Machine-owned analysis or judgment must still establish the higher-scope result.
-
-This leaves room for Thin-style summary indexes and lazy materialization.
-
-### 14.7. Candidate Separation Leaves Room for Independent Validation
-
-V2 may use a pipeline such as:
-
-```text
-transform
-    ↓
-candidate target representation
-    ↓
-preservation check
-    ↓
-published compiler product
-```
-
-The preservation check may use IR verification, differential execution, translation validation, or another method.
-
-These are compiler realization choices.
-
-They do not redefine Contract establishment.
-
-### 14.8. Non-Retroactivity Supports Immutable Compiler Generations
-
-A long-lived compiler may hold several immutable generations.
-
-A newer generation can replace the view used by later compiler work without mutating the earlier generation.
-
-MVCC, RCU, generation pinning, and reclamation remain implementation options.
+The exact V2 mechanisms remain in the V2 architecture document.
 
 ---
 
-## 15. Product-Subsystem Boundary
+## 14. Product-Subsystem Boundary
 
-Verifier, PBT, Diagnostic, and Optimization all consume semantic material but own different products.
+Product subsystems consume Contract meaning without becoming its source authority.
 
-### Verifier
+The Verifier checks whether declared meaning or lowering is valid.
 
-The Verifier checks Contract validity or realization preservation.
+PBT and fixture generation derive cases from Contract meaning.
 
-Its proof or verification product is not the Contract result being checked.
+Diagnostic explains an exact source occurrence.
 
-### PBT, Fixture, and Unit-Test Synthesis
+Optimization changes realization while preserving meaning.
 
-Test synthesis derives test objectives from Contract meaning.
-
-A generated test does not establish the Contract it tests.
-
-A passing test does not become source Contract authority.
-
-### Diagnostic
-
-Diagnostic explains a source occurrence.
-
-It does not reconstruct source authority from logs or observations.
-
-### Optimization
-
-Optimization transforms realization while preserving Contract meaning.
-
-The optimized representation does not gain independent Contract authority.
-
-This separation allows all four subsystems to reuse shared analysis without creating an authority chain.
+Each subsystem owns its own product. None may replace the source Contract result it consumes.
 
 ---
 
-## 16. Frontend Boundary
+## 15. Frontend Boundary
 
-This ADR does not introduce a required user-facing `establish` statement.
-
-It also does not require users to author universal occurrence objects, history objects, or context wrappers.
+No user-facing `establish` statement is introduced by this ADR.
 
 Users continue to declare the Contracts that own actual meaning.
 
-The compiler derives the common establishment relations after resolution from the selected Contract definitions and
-their explicit bindings.
+The compiler derives establishment relations after resolution from those definitions and their explicit bindings.
 
-Compiler query keys, epochs, cache keys, runtime IDs, and backend representations must not appear as user-facing
-establishment authority.
+Compiler query keys, runtime IDs, cache keys, and backend handles must not become user-facing authority.
 
 ---
 
-## 17. Consequences
+## 16. Consequences
 
-### 17.1. Common Meaning Replaces Repeated Local Definitions
+Failure, Governance, Diagnostic, Publication, and later Contracts can rely on one shared establishment law while keeping
+their own result semantics.
 
-Failure, Governance, Diagnostic, Publication, and later Contracts can rely on one shared meaning of establishment and
-applicability.
+Governance can use source-owned material directly as Decision Basis without making Diagnostic an intermediate authority.
 
-They no longer need to redefine what it means for source material to have authority.
+Diagnostic can focus on the evidence and explanation it owns because source occurrence and source authority are already
+defined above it.
 
-Their ADRs still own the meaning of their own results.
+The compiler gains a stable semantic seam for shared analysis and incremental reuse without making those mechanisms part
+of Contract Theory.
 
-### 17.2. Failure Keeps Its Local Meaning
-
-ADR-0057 still decides when a Failure exists and what it means.
-
-This ADR only explains why an established Failure is not rewritten later and why non-establishment does not
-automatically create Failure.
-
-### 17.3. Governance Can Use Source-Owned Material Directly
-
-Governance may define its Decision Basis in terms of applicable material established by other authorities.
-
-It does not need Diagnostic to become an intermediate authority.
-
-Governance still owns the rules that decide which basis is admissible and which Binding is established.
-
-### 17.4. Diagnostic Becomes Simpler
-
-ADR-0060 can treat source occurrence, source authority, establishment, applicability, and non-retroactivity as existing
-common law.
-
-Diagnostic can focus on the explanation it establishes and the Retention obligations that apply to it.
-
-### 17.5. V2 Gains a Stable Semantic Seam
-
-The compiler can assign stable representation to Definitions, dependency relations, and derived results without
-confusing them with runtime occurrence objects.
-
-This supports incremental reuse, shared analysis, immutable snapshots, and parallel compilation while preserving
-semantic boundaries.
+The main cost is that lowering and verification must preserve source authority and applicability explicitly enough for
+later consumers to use them correctly.
 
 ---
 
-## 18. Rejected Directions
+## 17. Rejected Directions
 
-### 18.1. Establishment as Runtime Object Creation
+### 17.1. Implementation Completion as Establishment
 
-Rejected because object construction is replaceable implementation.
+Object construction, method return, and similar implementation events are rejected as the definition of establishment
+because the same Contract meaning can be realized without them.
 
-The same Contract meaning may be realized without creating the same object shape.
+Observation is rejected for the same reason. Visibility alone does not grant semantic authority.
 
-### 18.2. Establishment as Successful Method Return
+### 17.2. Universal Context or Occurrence Objects
 
-Rejected because a method return says only that an implementation action completed.
+A universal context record is rejected because different authorities need different coordinates.
 
-The owning Contract may still require another judgment before authority exists.
+A universal occurrence identifier is also rejected because semantic distinction does not require one prescribed runtime
+representation.
 
-### 18.3. Establishment as Observation
+### 17.3. Automatic Derived Meaning
 
-Rejected because observed behavior does not become Contract authority by being visible.
+Local results do not automatically establish higher-scope meaning.
 
-Observation must remain qualified until an owning authority establishes the meaning required by a later Contract.
+Missing basis also does not automatically create `Unknown` or Failure.
 
-### 18.4. One Universal Context Record
+The authority that owns the derived meaning must establish it.
 
-Rejected because different Contracts require different context.
+### 17.4. Compiler Validity as Contract Meaning
 
-A large nullable record would hide absence and couple unrelated authorities.
+Compiler cache validity and query state are rejected as definitions of Contract applicability.
 
-### 18.5. One Universal Occurrence Identifier
+They may implement reuse decisions, but they do not decide semantic authority.
 
-Rejected because occurrence distinction is semantic while UUIDs, counters, timestamps, and runtime handles are
-realization choices.
+### 17.5. Universal Lifetime or Graph
 
-### 18.6. Automatic Higher-Scope Aggregation
+A universal semantic lifetime is unnecessary because establishment and applicability already express the needed
+relation.
 
-Rejected because several valid local results do not define the meaning of their combination.
-
-A higher-scope authority must own that judgment.
-
-### 18.7. Missing Material as Automatic `Unknown` or Failure
-
-Rejected because non-establishment does not own another result kind.
-
-The authority for the later result must decide what, if anything, is established.
-
-### 18.8. Compiler Cache Validity as Contract Applicability
-
-Rejected because cache reuse is a compiler optimization.
-
-Contract applicability is semantic.
-
-### 18.9. Universal Semantic Lifetime
-
-Rejected because establishment and applicability already express the required semantic relation.
-
-Object lifetime, cache lifetime, persistence, and Retention remain separate concerns.
-
-### 18.10. Universal Establishment Graph
-
-Rejected because Definition, dependency, occurrence, source relation, and control flow are different meanings.
-
-The compiler may use specialized representations for each.
+A universal establishment graph is also rejected because source relation, semantic dependency, control flow, and
+compiler dependency are different structures.
 
 ---
 
-## 19. Verification Requirements
+## 18. Verification Requirements
 
-The verifier must reject a Contract world or lowering that permits a dependent judgment to claim source-established
-basis when the required source authority or applicability relation cannot be resolved.
+The verifier must reject a representation that allows a dependent judgment to claim established basis without resolving
+the required source authority and applicability.
 
-It must reject a complete-result claim when the owning law requires basis that is not complete.
+It must reject partial authority where the owning law requires complete basis.
 
-It must preserve source authority across composition.
+Composition must preserve the source authority of every input result.
 
-Where one result is required to be established indivisibly, no valid lowering may expose a partial authoritative state.
+A later Version or Governance decision must not make an earlier occurrence appear to have been established under later
+meaning.
 
-Version or Governance change must not make a previous occurrence appear to have been established under later meaning.
+Diagnostic projection must preserve the distinction between source material and later observation.
 
-Diagnostic projection must not substitute later observation for occurrence-time source material without preserving the
-distinction.
-
-Backend-specific representation must not become the only place from which these semantic relations can be reconstructed.
+Lowering must not rely on backend-specific shape as the only source from which these semantic relations can be
+reconstructed.
 
 ---
 
-## 20. Implementation Note
+## 19. Implementation Note
 
 This ADR intentionally leaves physical realization open.
 
-V1 may use direct immutable structures and explicit tables.
+V1 may use direct immutable structures. V2 may use more advanced compiler infrastructure.
 
-V2 may add query engines, dependency tracking, persistent caches, summary indexes, parallel evaluation, or immutable
-compiler generations.
-
-Those mechanisms are acceptable only when removing or replacing them leaves the Contract meaning defined here unchanged.
-
-The governing test remains:
+The boundary remains:
 
 ```text
-If the mechanism changes,
-does the declared Contract meaning change?
+If replacing the mechanism changes
+the declared Contract meaning,
+the missing rule belongs in Contract semantics.
+
+If the meaning stays the same,
+the mechanism belongs to realization.
 ```
-
-If the answer is no, the mechanism belongs to realization.
-
-If the answer is yes, the Contract law must be explicit before the compiler is allowed to rely on it.
