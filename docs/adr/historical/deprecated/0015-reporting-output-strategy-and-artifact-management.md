@@ -1,6 +1,6 @@
 # ADR 015: Reporting Output Strategy & Artifact Management
 
-* **Status:** Accepted
+* **Status:** Deprecated
 * **Date:** 2025-12-31
 * **Context:** Kontrakt v3.0 Reporting Context
 * **Relies on:** [ADR-014] Asynchronous Event-Driven Reporting Architecture

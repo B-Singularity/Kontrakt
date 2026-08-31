@@ -1,6 +1,6 @@
 # ADR-012: Adoption of Test-Scoped Dependency Caching
 
-* **Status:** Accepted
+* **Status:** Deprecated
 * **Date:** 2025-12-28
 
 ## 1. Context

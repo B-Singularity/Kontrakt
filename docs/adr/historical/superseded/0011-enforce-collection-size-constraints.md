@@ -1,13 +1,12 @@
 # 11. Enforce Collection Size Constraints
 
-* **Status:** Accepted
+* **Status:** Superseded
 * **Date:** 2025-12-21
 
 ## Context
 
-The current execution engine processes collections in test scenarios without any boundaries.
-If a test definition includes a large dataset or an infinite generator, it causes high memory consumption and
-unpredictable execution times.
+The current execution engine processes collections in test scenarios without any boundaries. If a test definition
+includes a large dataset or an infinite generator, it causes high memory consumption and unpredictable execution times.
 There is no safeguard to prevent the framework runner from crashing due to `OutOfMemoryError` when handling excessive
 elements.
 

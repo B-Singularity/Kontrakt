@@ -1,6 +1,6 @@
 # ADR-020: Centralized Execution and Result Resolution Strategy
 
-* **Status:** Accepted
+* **Status:** Superseded
 * **Date:** 2026-01-08
 * **Context:** Execution Engine & Error Handling
 * **Relies on:** [ADR-019] Interceptor Pattern

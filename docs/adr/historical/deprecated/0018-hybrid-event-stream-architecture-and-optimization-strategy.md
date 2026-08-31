@@ -1,6 +1,6 @@
 # ADR 018: Hybrid Event-Stream Architecture & Optimization Strategy
 
-* **Status:** Accepted
+* **Status:** Deprecated
 * **Date:** 2026-01-03
 * **Context:** Kontrakt v3.1 Execution Engine & Reporting Layer
 * **Relies on:** [ADR-014] Asynchronous Reporting, [ADR-017] Worker-Based Journaling

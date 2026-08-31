@@ -1,6 +1,6 @@
 # ADR 016: Test Synthesis Audit & User Control Surface
 
-* **Status:** Accepted
+* **Status:** Deprecated
 * **Date:** 2025-12-31
 * **Context:** Kontrakt v3.1 Execution Engine & Reporting Interface
 * **Relies on:** [ADR-015] Reporting Output Strategy
@@ -8,8 +8,8 @@
 ## Context
 
 The **Kontrakt** framework utilizes "Generative Testing" (Auto-Fixtures, Dynamic Mocking), which involves complex
-internal logic often perceived as "Black Box Magic" by developers.
-When a test behaves unexpectedly (or passes suspiciously), developers struggle to understand:
+internal logic often perceived as "Black Box Magic" by developers. When a test behaves unexpectedly (or passes
+suspiciously), developers struggle to understand:
 
 1. **Why** a specific strategy (Mock vs Real) was chosen.
 2. **What** data was actually generated for the inputs.
@@ -35,7 +35,7 @@ lifecycle.
 | **🎯 Targeting**    | **`--tests <Pattern>`** | Runs only specific classes or methods matching the pattern (Wildcard supported).                                   | Run `All` discovered tests          |
 |                     |                         | *Example:* `--tests "com.shop.*Order*"`                                                                            |                                     |
 |                     | **`--package <Name>`**  | Scopes scanning to a specific package for faster feedback.                                                         | Root package scan                   |
-| **🗄️ Artifacts**   | **`--archive`**         | Enables **History Mode**. Saves the report with a timestamp (`history/report-{time}.html`) instead of overwriting. | `Overwrite` (`index.html` only)     |
+| **🗄️ Artifacts**    | **`--archive`**         | Enables **History Mode**. Saves the report with a timestamp (`history/report-{time}.html`) instead of overwriting. | `Overwrite` (`index.html` only)     |
 |                     |                         | *Use Case:* CI/CD pipelines, keeping debugging logs.                                                               |                                     |
 | **📢 Verbosity**    | **`--verbose` / `-v`**  | **Console Detail Level.** Shows detailed success logs in the console.                                              | `Normal` (Smart Summary & Failures) |
 |                     | **`--quiet` / `-q`**    | **Minimal Mode.** Shows only failure summaries and final stats.                                                    |                                     |
@@ -43,8 +43,8 @@ lifecycle.
 
 ### 2. Audit Structure (Trace Mode UX)
 
-When `--trace` is active, the report MUST be organized into three cognitive phases to match the developer's mental
-model (BDD Style):
+When `--trace` is active, the report MUST be organized into three cognitive phases to match the developer's mental model
+(BDD Style):
 
 * **🧠 DESIGN (Given):** Explains *why* the environment was built this way.
     * *Contents:* Strategy selection, Mocking decisions, Fixture generation details.
@@ -67,8 +67,8 @@ To maintain readability in Trace Mode:
 
 ### Positive
 
-* **Unified UX:** Users have a consistent set of tools to Control (Targeting), Observe (Tracing), and Preserve (
-  Archiving) their tests.
+* **Unified UX:** Users have a consistent set of tools to Control (Targeting), Observe (Tracing), and Preserve
+  (Archiving) their tests.
 * **Trust & Transparency:** Eliminates the "Magic" fear by providing a clear Audit Trail of how the test was
   synthesized.
 * **Reproducibility:** Explicit Seed control allows exact replay of edge cases found during generative testing.

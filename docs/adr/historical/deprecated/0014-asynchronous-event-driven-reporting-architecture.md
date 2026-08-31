@@ -1,6 +1,6 @@
 # ADR 014: Asynchronous Event-Driven Reporting Architecture
 
-* **Status:** Accepted
+* **Status:** Deprecated
 * **Date:** 2025-12-30
 * **Context:** Kontrakt v3.0 Execution Engine, Reporting Context
 
@@ -9,9 +9,9 @@
 The **Execution Context** in Kontrakt v3.0 is designed as a high-throughput generative simulation engine. It generates
 fixtures and executes tests rapidly within strictly isolated `EphemeralContexts`.
 
-Currently, or in a traditional synchronous model, the execution engine waits for the reporting layer to process
-results (e.g., printing to Console, writing to XML/JSON, updating IDE UI) before moving to the next test or cleaning up
-the current context.
+Currently, or in a traditional synchronous model, the execution engine waits for the reporting layer to process results
+(e.g., printing to Console, writing to XML/JSON, updating IDE UI) before moving to the next test or cleaning up the
+current context.
 
 **The Problem:**
 

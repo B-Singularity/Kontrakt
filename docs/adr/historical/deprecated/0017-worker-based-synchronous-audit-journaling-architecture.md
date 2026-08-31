@@ -1,6 +1,6 @@
 # ADR 017: Worker-Based Synchronous Audit Journaling Architecture
 
-* **Status:** Accepted
+* **Status:** Deprecated
 * **Date:** 2026-01-02
 * **Context:** Kontrakt v3.0 Execution Safety & Audit System
 * **Relies on:** [ADR-015] Reporting Output Strategy, [ADR-016] User Control Surface
@@ -91,8 +91,8 @@ mechanism.
     * **Crash Safety:** If the JVM crashes here, the file remains in this state, effectively serving as a Black Box.
 
 3. **Return (End Session):**
-    * **On Success:** The recorder is simply returned to the pool. The content will be overwritten by the next test (
-      Clean Workspace).
+    * **On Success:** The recorder is simply returned to the pool. The content will be overwritten by the next test
+      (Clean Workspace).
     * **On Failure:** The current content of the worker log is **copied (archived)** to a permanent file (e.g.,
       `failures/FAIL_TestName_Timestamp.log`) before returning the recorder to the pool.
 
@@ -131,7 +131,7 @@ the test suite.
 ### Positive
 
 * **Crash Safety:** Guarantees forensic data availability even in the event of a catastrophic JVM crash.
-* **Resource Efficiency:** Fixed number of file handles (O(N) where N = CPU Cores), regardless of running millions of
+* **Resource Efficiency:** Fixed number of file handles (O (N) where N = CPU Cores), regardless of running millions of
   tests.
 * **High Performance:** Zero overhead for file creation/deletion during runtime; Zero lock contention between workers.
 
@@ -146,9 +146,9 @@ the test suite.
 
 * **Core Classes:** `TraceRecorderPool`, `RecyclingJournalRecorder`.
 * **Data Format**: We use NDJSON (Newline Delimited JSON) format. Since each line is a valid JSON object, the log
-  remains parseable even if the process crashes mid-write (fixing the "Broken JSON Array" issue).
-  Serialization: To minimize external dependencies and maximize throughput, we use Manual String Templates instead of
-  heavy reflection-based libraries (Jackson/Gson).
+  remains parseable even if the process crashes mid-write (fixing the "Broken JSON Array" issue). Serialization: To
+  minimize external dependencies and maximize throughput, we use Manual String Templates instead of heavy
+  reflection-based libraries (Jackson/Gson).
 * **Artifact Location:**
     * Active Worker Logs: `build/reports/kontrakt/logs/workers/`
     * Archived Failures: `build/reports/kontrakt/logs/failures/`

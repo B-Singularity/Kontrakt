@@ -2,13 +2,13 @@
 
 ## Status
 
-Accepted
+Migration Pending
 
 ## Context
 
 The "Kontrakt" framework is approaching its **v1.0 Official Release**. The current dependency on JUnit 5 limits the
-framework's potential for high-performance optimizations (v2.0+) and fails to provide a premium Developer Experience (
-DX).
+framework's potential for high-performance optimizations (v2.0+) and fails to provide a premium Developer Experience
+(DX).
 
 To achieve the goal of "replacing JUnit," reliance on workaround solutions (like console scraping via TeamCity messages)
 is insufficient. We require a robust, first-class integration that treats Kontrakt as a native citizen of the IDE.
@@ -28,8 +28,8 @@ The architecture consists of four distinct components:
 2. **Standalone Console Runner (The Engine Driver):**
     * A pure JVM application that acts as the headless execution entry point.
     * Responsible for **Automated Custom Test Setup** and invoking the `TestScenarioExecutor`.
-    * Designed to be invoked programmatically by the IntelliJ Plugin or Gradle, exposing structured execution events (
-      IPC) rather than simple text logs.
+    * Designed to be invoked programmatically by the IntelliJ Plugin or Gradle, exposing structured execution events
+      (IPC) rather than simple text logs.
 
 3. **Gradle Plugin (The Build Integrator):**
     * Provides a custom task (`:kontraktTest`) to replace the standard `:test` task.
@@ -58,8 +58,8 @@ The architecture consists of four distinct components:
 
 ### Negative
 
-* **High Development Complexity:** Requires deep knowledge of the IntelliJ Platform SDK and Program Structure
-  Interface (PSI).
+* **High Development Complexity:** Requires deep knowledge of the IntelliJ Platform SDK and Program Structure Interface
+  (PSI).
 * **Development Time:** Implementation time is significantly higher compared to simple console output solutions.
 
 ## Implementation Strategy

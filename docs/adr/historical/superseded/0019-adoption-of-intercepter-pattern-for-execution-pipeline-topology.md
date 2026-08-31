@@ -1,6 +1,6 @@
 # [ADR-019] Adoption of Interceptor Pattern for Execution Pipeline Topology
 
-* **Status:** Accepted
+* **Status:** Superseded
 * **Date:** 2026-01-05
 * **Context:** Execution Engine / Cross-cutting Concerns
 
@@ -46,8 +46,8 @@ The primary driver for this decision is the complexity of code generation using 
 * **Interceptor Approach (The "Flat List"):**
     * The pipeline is constructed as a collection: `listOf(Audit, Retry, Metrics)`.
     * **KSP Impact:** The processor simply needs to identify all implementations of `ScenarioInterceptor` and generate a
-      single line of code to add them to a list. This reduces the complexity of the code generator from **O(N) recursive
-      complexity** to **O(1) collection gathering**.
+      single line of code to add them to a list. This reduces the complexity of the code generator from **O (N)
+      recursive complexity** to **O (1) collection gathering**.
 
 ### 3.2. Coupling and Interfaces
 
@@ -73,8 +73,8 @@ The primary driver for this decision is the complexity of code generation using 
   layer.
 * **Plugin Architecture:** This structure lays the foundation for a 3rd-party plugin system, where external developers
   can inject custom logic without modifying the core executor.
-* **Separation of Concerns:** Infrastructure logic (Chain management) is completely separated from Business logic (
-  Interceptor implementation).
+* **Separation of Concerns:** Infrastructure logic (Chain management) is completely separated from Business logic
+  (Interceptor implementation).
 
 ### Negative Consequences (Cons)
 
@@ -82,7 +82,7 @@ The primary driver for this decision is the complexity of code generation using 
   `RealInterceptorChain`) before writing the actual logic.
 * **Stack Trace Depth:** Similar to decorators, interceptors add depth to the call stack, which can make debugging
   slightly more involved (though this is mitigated by clear class naming).
-* **Cognitive Load:** Developers must understand the "Chain.proceed()" concept, which is slightly more abstract than
+* **Cognitive Load:** Developers must understand the "Chain.proceed ()" concept, which is slightly more abstract than
   direct method delegation.
 
 ## 5. Implementation Strategy
