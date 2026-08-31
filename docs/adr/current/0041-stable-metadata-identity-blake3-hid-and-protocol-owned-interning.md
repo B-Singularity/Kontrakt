@@ -21,12 +21,12 @@ Proposed
 - ADR-0038: Interface Contract Polymorphic Expansion and Non-Composite Type Expansion Completion
 - ADR-0039: Adapter-Neutral Metamodel Acquisition, Frozen Fact Image, and Backend-Handle Erasure
 - ADR-0040: Deterministic Frozen Acquisition Pipeline, Explicit Readiness, and Memory-Disciplined Publication
-- `docs/constitution/compiler-core-protocols.md`
+- `../../constitution/compiler-core-protocols.md`
 - `docs/design/canonical-ir-stage-and-lowering-protocol.md`
-- `docs/design/deterministic-active-member-projection-and-ordering-protocol.md`
-- `docs/design/l1-planner-session-primitive-data-structures.md`
-- `docs/design/l2-plan-interner-partitioned-tier2-with-governance.md`
-- `docs/design/planner-budget-resolution-and-worker-lifecycle.md`
+- `../../design/deterministic-active-member-projection-and-ordering-protocol.md`
+- `../../design/l1-planner-session-primitive-data-structures.md`
+- `../../design/l2-plan-interner-partitioned-tier2-with-governance.md`
+- `../../design/planner-budget-resolution-and-worker-lifecycle.md`
 
 ---
 
@@ -162,15 +162,9 @@ Examples include:
 
 These values are not equivalent.
 
-Some are authoritative semantic equality material.
-Some are normalized facts.
-Some are routing hints.
-Some are image-local addresses.
-Some are diagnostic ids.
-Some are operational generation markers.
-Some are cache keys.
-Some are entropy derivation inputs.
-Some are merely implementation conveniences.
+Some are authoritative semantic equality material. Some are normalized facts. Some are routing hints. Some are
+image-local addresses. Some are diagnostic ids. Some are operational generation markers. Some are cache keys. Some are
+entropy derivation inputs. Some are merely implementation conveniences.
 
 If these axes are collapsed, Kontrakt loses compiler-grade determinism.
 
@@ -192,8 +186,7 @@ It MUST NOT define:
 
 Reason:
 
-`hashCode()` is not a versioned protocol surface.
-It is also not a collision-verified equality authority.
+`hashCode()` is not a versioned protocol surface. It is also not a collision-verified equality authority.
 
 ### 2.2. Backend identity is not Kontrakt identity
 
@@ -335,8 +328,7 @@ ADR-0041 therefore must define:
 ADR-0041 owns metadata identity authority.
 
 Generic primitive substrate lifecycle, slab ownership, reader epoch reclamation, and asynchronous ownership boundaries
-are
-governed by ADR-0042 and are referenced by ADR-0041 only where they affect metadata identity publication.
+are governed by ADR-0042 and are referenced by ADR-0041 only where they affect metadata identity publication.
 
 Kontrakt will introduce a **Stable Metadata Identity Substrate**.
 
@@ -374,8 +366,7 @@ This ADR defines:
 - integration boundary with ADR-0043 for structural/contextual contract graph identity.
 
 This ADR does not define the full contract graph ontology, contract fact taxonomy, software-contract state machine
-model,
-DTO/boundary contract model, governance contract vocabulary, or incremental contract-query dependency model.
+model, DTO/boundary contract model, governance contract vocabulary, or incremental contract-query dependency model.
 
 Those surfaces are intentionally left to the forthcoming top-level contract definition document and ADR-0043.
 
@@ -609,8 +600,7 @@ the appropriate seal boundary.
 ### 5.0. Contract Meaning and Canonicalization
 
 In ADR-0041, contract meaning means the obligations, choices, relationships, constraints, and verification-relevant
-facts
-that Kontrakt must preserve when it lowers an interface contract into a canonical verification structure.
+facts that Kontrakt must preserve when it lowers an interface contract into a canonical verification structure.
 
 This is not raw metadata shape.
 
@@ -766,8 +756,7 @@ Canonical material MUST NOT include:
 Canonicality is Kontrakt's standardization status for contract meaning.
 
 A value is canonical because Kontrakt has selected it as the one standard representative for the contract meaning owned
-by
-an identity domain.
+by an identity domain.
 
 It is not canonical merely because it is:
 
@@ -856,8 +845,7 @@ It represents future contract material only after the top-level contract documen
 frontend syntax boundary, lowering law, version bundle, canonical fields, and verification payload.
 
 Until that ratification exists, ADR-0041 does not define which contract facts exist, how annotations lower into them,
-how
-DSL clauses lower into them, how compiler metadata lowers into them, or how default/effective value semantics work.
+how DSL clauses lower into them, how compiler metadata lowers into them, or how default/effective value semantics work.
 
 `AnnotationDescriptor` is not canonical material by itself.
 
@@ -969,8 +957,7 @@ Once ratified, any such references MUST obey ADR-0041's identity substrate rules
 - references must use ratified identity material, sealed stable intern ids, or SCC-governed temporary references.
 
 Until the contract model is ratified, this section is a reserved boundary and does not define a concrete
-lowered-contract
-reference schema.
+lowered-contract reference schema.
 
 ### 5.1.7. Contract Syntax Dependency SCC Law
 
@@ -986,8 +973,7 @@ Once ratified, any cyclic lowered-contract identity graph MUST use ADR-0041's de
 Planning cycle truncation MUST NOT be used as a contract-fact identity cycle breaker.
 
 Unrecognized annotations, incidental meta-annotations, diagnostic source metadata, and backend-only annotation graphs
-MUST
-NOT be recursively followed merely because they exist.
+MUST NOT be recursively followed merely because they exist.
 
 Until the contract model is ratified, this section is a reserved integration point and does not define contract syntax
 SCC semantics.
@@ -2189,9 +2175,8 @@ maxTotalInternCandidateCanonicalBytes
 ``````
 
 Identity domains used for route keys, planning cache keys, canonical plan-node summaries, frozen image content
-summaries,
-replay manifests, or local frozen table membership MUST NOT be included in the shared metadata interner formula merely
-because they have HID domains elsewhere in ADR-0041.
+summaries, replay manifests, or local frozen table membership MUST NOT be included in the shared metadata interner
+formula merely because they have HID domains elsewhere in ADR-0041.
 
 If a future ADR moves any of those domains into the shared metadata interner scope, that ADR MUST amend this formula,
 add count and byte budget fields, and add cap-boundary golden vectors.
@@ -2300,8 +2285,7 @@ In v1, `AUTO` is intentionally conservative and MUST resolve to the deterministi
 In v2, `AUTO` MAY become a deterministic aggregate-budget solver.
 
 The solver exists to choose an appropriate total capacity envelope for local development, large cloud runners, MSA-scale
-module graphs, deep-learning-assisted environments, and other large software settings without compromising
-determinism.
+module graphs, deep-learning-assisted environments, and other large software settings without compromising determinism.
 
 The solver may scale aggregate budgets such as:
 
@@ -2581,8 +2565,7 @@ It MUST NOT be supplied by:
 If `WIRE_TYPE_SCC_LOCAL_REF` appears when `HEADER_FLAG_SCC_SEAL_PAYLOAD` is not set, decoding MUST fail closed.
 
 If `HEADER_FLAG_SCC_SEAL_PAYLOAD` is set for an identity domain or schema that does not ratify SCC sealing, decoding
-MUST
-fail closed.
+MUST fail closed.
 
 ### 8.4. String Encoding
 
@@ -2734,8 +2717,7 @@ The following are forbidden in ordinary unordered-collection sorting:
 
 A released implementation MUST provide golden vectors or tests proving that shuffled unordered inputs produce the same
 encoded bytes without relying on backend iteration order, platform collection order, object identity, hash table order,
-or
-recursive graph traversal timing.
+or recursive graph traversal timing.
 
 ### 8.5.2. Tie-Group Primitive Clustering and Projection Escalation Law
 
@@ -2764,8 +2746,7 @@ sortKeyLength
 or an equivalent primitive range representation.
 
 A compliant implementation SHOULD use in-place clustering, two-pointer range scanning, or index-array partitioning
-inside
-the already admitted primitive scratchpad.
+inside the already admitted primitive scratchpad.
 
 It MUST NOT create unbounded heap allocation churn while extracting tie groups.
 
@@ -2870,8 +2851,7 @@ An exact clone group is a tie group whose members have byte-identical canonical 
 An exact clone group MUST NOT trigger all-to-all pairwise canonical byte comparison.
 
 A compliant implementation MUST classify exact clone groups by a bounded adjacent exact scan after deterministic
-ordering
-or within a bounded cold exact sort path.
+ordering or within a bounded cold exact sort path.
 
 For exact byte-identical elements:
 
@@ -3109,8 +3089,7 @@ bounded canonical byte prelude
 ``````
 
 If full `HID128` is already available for an element before collection ordering, the ordinary bounded sort key SHOULD
-include
-it unless the owning domain documents a stronger deterministic alternative.
+include it unless the owning domain documents a stronger deterministic alternative.
 
 If full `HID128` is not yet available, the domain MUST define which deterministic projection levels are available and
 which budgeted escalation path is used.
@@ -3122,8 +3101,7 @@ Adapter-level abuse throttling may reject or defer external requests before ADR-
 material MUST be ordered by deterministic protocol material only.
 
 If a domain wants a keyed deterministic projection, the key MUST be protocol-ratified, versioned, included in the
-relevant
-version-axis material, and stable for the same admitted semantic material.
+relevant version-axis material, and stable for the same admitted semantic material.
 
 It MUST NOT be live randomness.
 
@@ -3565,8 +3543,8 @@ Mandatory header constants and validation rules for `canonicalEncodingVersion32 
 Offset constraints:
 
 - `fieldTableOffset32` MUST be greater than or equal to `64`;
-- `fieldTableLength32` MUST be large enough to contain exactly `fieldCount16` field table entries under the active
-  field table layout;
+- `fieldTableLength32` MUST be large enough to contain exactly `fieldCount16` field table entries under the active field
+  table layout;
 - `payloadOffset32` MUST be greater than or equal to `fieldTableOffset32 + fieldTableLength32`;
 - `payloadOffset32 + payloadLength32` MUST NOT overflow;
 - `payloadOffset32 + payloadLength32` MUST be less than or equal to the envelope byte length;
@@ -3581,8 +3559,7 @@ It is not an intern-table probe group.
 It is not allowed to contain backend provenance as semantic identity material.
 
 Domain-specific payload needs MUST be handled by field tables, field tags, domain schema versions, compatibility
-matrices,
-or payload fields.
+matrices, or payload fields.
 
 They MUST NOT change the common header layout selected by `canonicalEncodingVersion32 = 1`.
 
@@ -3827,8 +3804,7 @@ The payload MUST NOT include axes that affect only:
 - or non-semantic debug labels.
 
 If a diagnostic or reporting version changes semantic diagnostic evidence bytes that are part of identity material, it
-is
-no longer diagnostic-only and MUST be represented by a ratified version axis with an explicit physical-width suffix.
+is no longer diagnostic-only and MUST be represented by a ratified version axis with an explicit physical-width suffix.
 
 #### 8.9.3.3. Axis Encoding and Registry Law
 
@@ -4013,8 +3989,7 @@ External payload slice overlap MUST be validated in linear time.
 A canonical encoding MUST NOT require the decoder to sort arbitrary slice intervals to prove non-overlap.
 
 For fields whose external payload slices must not overlap, field table entries or their external-payload slice
-descriptors
-MUST be encoded in physical payload order.
+descriptors MUST be encoded in physical payload order.
 
 The required linear validation is:
 
@@ -4081,8 +4056,7 @@ checked Long arithmetic
 
 Integer overflow, negative payload-relative offset, negative length, out-of-payload range, header overlap, field-table
 overlap, malformed field-table length, ambiguous offset base, non-linear overlap requirement, or malformed physical
-slice
-order MUST fail closed.
+slice order MUST fail closed.
 
 ### 8.10.1.1. Decoder Cursor Progress and Zero-Displacement Law
 
@@ -4236,8 +4210,7 @@ Short-inline field payload encoding MUST preserve:
 - and canonical ordering.
 
 If short-inline encoding is not ratified by the active `canonicalEncodingPolicyVersion32`, variable payloads MUST use
-the
-ordinary external payload layout or another ratified bounded layout.
+the ordinary external payload layout or another ratified bounded layout.
 
 The resolved metadata identity policy MUST define, or map to semantically equivalent fields:
 
@@ -4532,8 +4505,7 @@ The implementation MAY choose scalar, table-driven, or vectorized validation as 
 - the same byte sequence produces the same accept/reject result on every supported platform;
 - malformed input fails closed;
 - validation does not depend on locale, JVM default charset, platform decoder replacement behavior, or normalization
-  side
-  effects;
+  side effects;
 - validation remains bounded by resolved byte caps;
 - and benchmark evidence exists for any hot-path acceleration claim.
 
@@ -4600,9 +4572,8 @@ bit      14  : critical field flag
 bit      15  : hot field flag
 ``````
 
-The exact layout is not constitutional.
-The constitutional rule is that tag decoding must be mechanically predictable and must not require semantic string
-dispatch on the hot path.
+The exact layout is not constitutional. The constitutional rule is that tag decoding must be mechanically predictable
+and must not require semantic string dispatch on the hot path.
 
 ### 8.12.1. Tag Decode Benchmark Evidence Law
 
@@ -4647,8 +4618,8 @@ external artifact compression -> future ADR / artifact format concern
 
 Reason:
 
-Canonical metadata identity is read repeatedly by interners, frozen indexes, and planning/L2 routing surfaces.
-The hot path should prefer predictable fixed-width reads over compact but branch-heavy decoding.
+Canonical metadata identity is read repeatedly by interners, frozen indexes, and planning/L2 routing surfaces. The hot
+path should prefer predictable fixed-width reads over compact but branch-heavy decoding.
 
 ### 8.14. Schema-Aware Stripping Law
 
@@ -4791,8 +4762,7 @@ Reason:
 Order-sensitive compression, hidden observation state, and current-run adaptation are poison for deterministic identity.
 
 Changing hidden observation state MUST NOT change canonical bytes, HID derivation, collision verification, stable intern
-id
-assignment, canonical ordering, or semantic equality.
+id assignment, canonical ordering, or semantic equality.
 
 ### 8.16. Bit-Packed Field Law
 
@@ -5217,8 +5187,7 @@ Rules:
 - `HID64` is never semantic equality authority;
 - `HID128` is never semantic equality authority by itself;
 - `HID256` is still not semantic equality authority by itself unless a later ADR explicitly ratifies digest-only
-  equality
-  for a non-semantic surface;
+  equality for a non-semantic surface;
 - route64 may be derived from HID material but remains routing-only;
 - width truncation must be deterministic and version-bound;
 - width split into primitive words MUST be defined by the active suite law.
@@ -5345,8 +5314,7 @@ For ADR-0041, a seal or materialization boundary MUST occur only after:
 - canonical bytes are immutable for that identity unit;
 - resolved policy budgets have admitted the unit;
 - and no future field, child, SCC member, or unordered collection element can change the canonical bytes without
-  creating a
-  new identity unit or a new publication epoch.
+  creating a new identity unit or a new publication epoch.
 
 The lawful shape is:
 
@@ -5381,8 +5349,7 @@ Non-cryptographic hashes such as Murmur3 or xxHash MAY be used only as explicitl
 already-ratified or already-verified material.
 
 `already-verified material` means material that has passed the owning domain's equality verification path for the
-current
-operation and cannot change semantic equality if the hint collides.
+current operation and cannot change semantic equality if the hint collides.
 
 Non-cryptographic hashes MUST NOT become:
 
@@ -5547,8 +5514,7 @@ The illustrative `HashedIdentityDescriptor` interface shape is a cold API, diagn
 It is not the required physical representation for intern-table, route-table, or probe hot paths.
 
 Hot-path HID material MUST be represented by fixed-width primitive words, not by `ByteArray` object references and not
-by
-interface-dispatched descriptor objects.
+by interface-dispatched descriptor objects.
 
 A hot intern-table or route-table implementation MUST NOT require ordinary probes to call:
 
@@ -5626,8 +5592,7 @@ Version mismatch is:
 A version mismatch is a deterministic classification boundary.
 
 It is not an invitation to allocate exceptions, diagnostic strings, cache records, log events, or cold report material
-on
-the ordinary hot path.
+on the ordinary hot path.
 
 The ordinary HID comparison path MUST classify version mismatch using fixed-width primitive fields and return a bounded
 classification value such as:
@@ -5660,8 +5625,7 @@ hot version mismatch
 Structured diagnostics MAY be emitted later through a cold, budgeted diagnostic path.
 
 That diagnostic path MUST be sanitized, metered by `maxDiagnosticEvidenceBytes`, and separated from ordinary
-intern-table
-probe execution.
+intern-table probe execution.
 
 Repeated version mismatch from a stale or malicious adapter MUST be contained by bounded counters, admission policy,
 compatibility classification, or adapter quarantine.
@@ -5815,8 +5779,7 @@ Parent-dependent HID derivation intentionally creates an invalidation boundary.
 If parent semantic identity participates in a child HID, then a parent identity change MAY change the child HID.
 
 A compliant implementation MUST NOT keep using an old child HID after a parent identity change merely because the
-child's
-own canonical bytes are unchanged.
+child's own canonical bytes are unchanged.
 
 However, Kontrakt may avoid unnecessary re-encoding of parent-independent child material.
 
@@ -5896,14 +5859,14 @@ but it MUST NOT remove:
 - or golden-vector equivalence.
 
 A future L2 or incremental-query layer MAY memoize parent-independent child material, but it MUST key that memoization
-by
-all version axes that can change the child canonical bytes or child-local derivation input.
+by all version axes that can change the child canonical bytes or child-local derivation input.
 
-A parent identity change may still require O(number of affected parent-dependent children) projection updates.
+A parent identity change may still require O (number of affected parent-dependent children) projection updates.
 
-ADR-0041 does not promise O(1) invalidation for an entire subtree.
+ADR-0041 does not promise O (1) invalidation for an entire subtree.
 
-It permits O(1)-per-child re-derivation when sealed parent-independent child material is already available and verified.
+It permits O (1)-per-child re-derivation when sealed parent-independent child material is already available and
+verified.
 
 Any broader incremental cutoff belongs to the future query/incremental work and must preserve this ADR's identity law.
 
@@ -6511,8 +6474,7 @@ Therefore this ADR defines a logical cache-line grouping law rather than a stric
 Heap primitive arrays are the portable v1 baseline.
 
 Off-heap, direct-memory, generated, or otherwise explicitly aligned probe groups are optional advanced physical
-backends,
-not mandatory v1 compliance requirements.
+backends, not mandatory v1 compliance requirements.
 
 A release claiming exact 64-byte physical alignment MUST prove that claim with layout documentation and benchmark
 evidence for the target runtime.
@@ -6536,8 +6498,7 @@ Preferred layouts:
 JVM heap primitive arrays do not by themselves prove physical cache-line alignment.
 
 A `LongArray`, `IntArray`, or `ByteArray` may have an object header, runtime-specific base offset, compressed-oops
-layout,
-alignment padding, and GC relocation behavior.
+layout, alignment padding, and GC relocation behavior.
 
 Therefore, a JVM heap-array implementation MUST treat 64-byte grouping as a logical probe grouping objective, not as a
 guaranteed physical cache-line alignment claim.
@@ -6688,8 +6649,7 @@ It MUST NOT partially mix backend semantics inside an admitted identity scope.
 
 Every compact intern-table entry SHOULD store an inline verification prefix derived from canonical bytes.
 
-The prefix is not semantic equality authority.
-It is a cache-local rejection accelerator.
+The prefix is not semantic equality authority. It is a cache-local rejection accelerator.
 
 A compliant implementation MAY use:
 
@@ -6725,8 +6685,8 @@ memory-latency amplification.
 
 Interning scope selection is a memory-locality decision as well as a semantic boundary decision.
 
-Too narrow a scope duplicates identity material.
-Too broad a scope produces oversized intern tables, poor locality, and harder lifecycle control.
+Too narrow a scope duplicates identity material. Too broad a scope produces oversized intern tables, poor locality, and
+harder lifecycle control.
 
 Therefore each interner scope MUST declare:
 
@@ -6775,8 +6735,7 @@ ADR-0042 owns:
 - and backend-specific benchmark gates.
 
 A compliant backend MAY use open addressing, grouped probing, Robin-Hood-style displacement, generated frozen indexes,
-or
-another ratified physical strategy.
+or another ratified physical strategy.
 
 Regardless of strategy, the admitted scope MUST satisfy the resolved ADR-0041 probe budget before stable intern ids
 become planning-visible.
@@ -7070,8 +7029,7 @@ sum(logicalTableCapacitySlotsByIdentityDomain[*])
 ``````
 
 A candidate insert MUST be rejected before publication if accepting it would violate the same integer
-cross-multiplication
-law used for admission-time feasibility:
+cross-multiplication law used for admission-time feasibility:
 
 ``````text
 nextCandidateCountByIdentityDomain =
@@ -7413,8 +7371,7 @@ Routing material is not equality authority.
 `routePrefix`, `route64`, HID prefix material, verifier-prefix material, and local shape summaries MAY route candidates.
 
 They MUST NOT replace canonical byte encoding, collision verification, deterministic stable id assignment, table
-coverage
-validation, or publication integrity validation.
+coverage validation, or publication integrity validation.
 
 The route map MUST be resolved before the route epoch admits candidates.
 
@@ -7721,8 +7678,7 @@ The implementation MUST NOT block a worker indefinitely.
 Circular backpressure MUST be broken by deterministic self-drain before cross-owner assistance or terminal retry.
 
 When an engine lane enters a route-drain safe point, it MUST first drain its own inbound routing inbox and
-routing-control
-queue up to the resolved step budget before waiting on another owner lane's progress.
+routing-control queue up to the resolved step budget before waiting on another owner lane's progress.
 
 The self-drain phase is lawful because the lane processes state that it already owns.
 
@@ -8127,8 +8083,7 @@ It SHOULD include only deterministic summary evidence such as:
 - and the selected deterministic outcome.
 
 It MUST NOT include unbounded edge lists, object graph dumps, backend handles, source traversal order, callback order,
-or
-worker scheduling traces.
+or worker scheduling traces.
 
 ADR-0043 owns the full contract-graph invalidation law, dependency-edge semantics, repeated traversal pressure policy,
 and structural/contextual graph identity model.
@@ -8188,8 +8143,7 @@ It may represent:
 - or table-level proof material amortized through a deterministic layout calibration.
 
 Backend-specific storage offsets, base addresses, object headers, pointer widths, cache-line alignment, stride,
-cache-line
-touch count, and cache-miss behavior belong to ADR-0042 substrate profiles.
+cache-line touch count, and cache-miss behavior belong to ADR-0042 substrate profiles.
 
 They are not ADR-0041 semantic identity material.
 
@@ -8554,8 +8508,7 @@ publish replacement solely because ordinary capacity increased
 ``````
 
 This prohibition exists because the interner has a resolved candidate cap, resolved byte envelope, resolved probe
-budget,
-and resolved publication boundary before the scope is admitted.
+budget, and resolved publication boundary before the scope is admitted.
 
 Blind doubling is an amortized general-purpose collection heuristic.
 
@@ -8583,12 +8536,10 @@ This is especially true for heap-backed JVM profiles, where GC timing, heap comp
 return are not deterministic protocol events.
 
 A transient reserve may be reused across sequential resize / rebuild / reindex / migration events only after the
-selected
-ADR-0042 backend profile proves one of the following:
+selected ADR-0042 backend profile proves one of the following:
 
 - the bytes are still reserved inside the same pre-admitted arena and are immediately reusable by deterministic
-  pointer /
-  offset reset;
+  pointer / offset reset;
 - the backend uses explicit off-heap/native/`MemorySegment` lifetime control and has completed the required release /
   close / ownership handoff proof;
 - the backend's allocator profile guarantees deterministic reuse of the retired region within the same scope;
@@ -8613,8 +8564,7 @@ A released profile SHOULD prefer zero-resize admission when the resolved candida
 feasible.
 
 The capacity solver MAY choose initial logical capacity large enough to satisfy the resolved candidate cap and
-load-factor
-law before ordinary insertion begins.
+load-factor law before ordinary insertion begins.
 
 If a profile intentionally starts below the cap to reduce initial footprint, it MUST declare:
 
@@ -8714,8 +8664,8 @@ The implementation MUST NOT:
 SCC sealing does not bypass interner collision budgets.
 
 If SCC members, SCC-local references, or SCC seal payload candidates enter an intern table and share the same HID,
-route,
-or compact descriptor group, they count against `maxHotCollisionCandidates` and `maxExactVerificationBytesPerProbe`.
+route, or compact descriptor group, they count against `maxHotCollisionCandidates` and
+`maxExactVerificationBytesPerProbe`.
 
 SCC-local temporary references MAY be used before final seal only under the SCC laws in Section 13.30.
 
@@ -8828,8 +8778,7 @@ maxTransientRebuildBytes <= transientRebuildBytesCap
 ``````
 
 If `maxResizeCountPerScope` or `maxRebuildCountPerScope` is exhausted before the scope can satisfy table feasibility,
-the
-implementation MUST fail the scope closed before stable id publication.
+the implementation MUST fail the scope closed before stable id publication.
 
 Resize / rebuild MAY change:
 
@@ -9103,8 +9052,7 @@ A backend profile must document at least:
 - and benchmark / golden-vector evidence.
 
 A backend that cannot prove compliance with the resolved ADR-0041 probe budget MUST fail backend profile admission
-before
-identity scope admission or fall back to a compliant profile.
+before identity scope admission or fall back to a compliant profile.
 
 It MUST NOT weaken the ADR-0041 budget after candidates have been admitted.
 
@@ -9362,11 +9310,9 @@ Allowed small-inline modes:
 - `SEGREGATED_INLINE_TABLE`: inline candidates and external-slab candidates are stored or scanned through separate
   primitive tables / lanes;
 - `PRECLASSIFIED_TWO_PASS`: candidates are preclassified into inline and external-slab ranges before the hot
-  verification
-  loop;
+  verification loop;
 - `MEASURED_MIXED`: a mixed inline/external layout is allowed only with benchmark evidence proving that the branch is
-  not
-  a throughput regression for the target workload and runtime.
+  not a throughput regression for the target workload and runtime.
 
 `MEASURED_MIXED` is never the default high-performance mode.
 
@@ -9448,12 +9394,10 @@ A release claiming small-inline acceleration MUST publish:
 Segregating inline candidates from external-slab candidates is a physical table-layout decision.
 
 It MUST NOT silently multiply routing-buffer dimensions, owner inbox dimensions, staged-byte budgets, or
-batch-fragmentation
-surfaces.
+batch-fragmentation surfaces.
 
 A profile using `SEGREGATED_INLINE_TABLE` with owner-lane routing MUST choose one of the following transport shapes
-before
-scope admission:
+before scope admission:
 
 ``````text
 ROUTE_NEUTRAL_TRANSPORT
@@ -9535,8 +9479,7 @@ A two-pass profile MUST fail profile admission or fall back to `DISABLED`, `SEGR
 ##### 13.18.2.1. Chunked Preclassification Locality Law
 
 A `PRECLASSIFIED_TWO_PASS` implementation SHOULD process candidates in bounded cache-local chunks when the full
-candidate
-set may exceed the selected backend's verified cache-local working-set envelope.
+candidate set may exceed the selected backend's verified cache-local working-set envelope.
 
 The preferred physical shape is:
 
@@ -9616,8 +9559,7 @@ Failure of a physical inline optimization gate is not semantic inequality.
 It is a backend/profile admission failure or a physical-optimization fallback decision.
 
 It MUST NOT alter canonical bytes, HID derivation, collision verification, stable intern id assignment, semantic
-equality,
-or publication order.
+equality, or publication order.
 
 ### 13.19. Verified Canonical Bytes Handle Law
 
@@ -9743,8 +9685,7 @@ semantic equality for material that remains accepted.
 Quarantine of a worker lane or acquisition boundary is a scoped containment outcome.
 
 It MUST release lane-local scratch, reader leases, staging slabs, owner inbox material, routed-batch buffers,
-route-drain
-control records, and temporary collision descriptors according to ADR-0042 lifecycle rules.
+route-drain control records, and temporary collision descriptors according to ADR-0042 lifecycle rules.
 
 It MUST NOT permanently remove the physical worker or engine lane from future unrelated scopes unless a resolved runtime
 policy explicitly opens a broader circuit for the remainder of the run.
@@ -9868,8 +9809,7 @@ apply admission throttling, source quarantine, or request-level rejection before
 Such adapter-level throttling MUST NOT change canonical identity material for admitted scopes.
 
 BLAKE3/HID collision resistance reduces ordinary collision probability, but ADR-0041 still treats collision overflow as
-a
-bounded diagnosable condition rather than as an impossible event.
+a bounded diagnosable condition rather than as an impossible event.
 
 #### 13.21.5. Quarantine-Aware Routing and Backpressure Law
 
@@ -9936,8 +9876,7 @@ scope:
 
 A stronger-width identity suite is lawful only when it is selected by resolved policy before scope admission and before
 any planning-visible material, provisional handle, stable id, frozen image material, report/replay identity, or
-persistent
-artifact identity exists for that scope.
+persistent artifact identity exists for that scope.
 
 A stronger-width suite selected in this way is not a runtime fallback.
 
@@ -10402,8 +10341,8 @@ These bootstrap values are not a universal released-profile law.
 They are a conservative profile for early implementation, small manual metadata graphs, and deterministic test coverage.
 
 Released profiles MAY define larger SCC caps for declared source classes such as generated schema models, ORM/entity
-models, interface protocol graphs, GraphQL schemas, protobuf/thrift-like schema graphs, or other adapter-owned
-metadata families.
+models, interface protocol graphs, GraphQL schemas, protobuf/thrift-like schema graphs, or other adapter-owned metadata
+families.
 
 A larger SCC profile is lawful only if it is selected before SCC construction by resolved policy material such as:
 
@@ -10418,8 +10357,7 @@ A larger SCC profile is lawful only if it is selected before SCC construction by
 It MUST NOT be selected after observing that a concrete SCC exceeded a smaller cap.
 
 It MUST NOT be selected by retrying with larger caps after failure unless the caller-owned orchestration boundary opens
-a
-separately admitted scope with a new resolved memory envelope and a new publication boundary.
+a separately admitted scope with a new resolved memory envelope and a new publication boundary.
 
 If any SCC cap is exceeded under the resolved profile, the SCC MUST fail closed before stable ids are published, unless
 the caller-owned orchestration boundary has already admitted a different scope/profile that owns the transition.
@@ -10546,8 +10484,7 @@ Collapse is not allowed merely because two verifier prefixes, HIDs, display name
 
 If `SYMMETRIC_SCC_REJECTED` is selected, the diagnostic MUST be bounded and MUST identify only deterministic summary
 material such as SCC profile id, member count, equivalence-class count, and the first ratified ordering key that failed
-to
-separate the class.
+to separate the class.
 
 The diagnostic MUST NOT dump unbounded graph material or backend object handles.
 
@@ -10621,8 +10558,7 @@ It only changes how quickly invalid SCCs are rejected.
 A cyclic SCC SHOULD NOT perform expensive final materialization before deterministic sizing evidence exists.
 
 For SCCs whose member count, reference count, projected canonical bytes, sort scratch demand, or encoded payload shape
-can
-approach resolved caps, a compliant implementation MUST use a two-phase seal plan or a documented equivalent.
+can approach resolved caps, a compliant implementation MUST use a two-phase seal plan or a documented equivalent.
 
 Required two-phase shape:
 
@@ -10878,8 +10814,7 @@ size-only canonicalization reads source object
 Varint and length-prefix fields are especially sensitive.
 
 If a numeric value, length, count, or tag-width-driving value is encoded as varint or any future variable-width form,
-the
-materialization pass MUST use the exact value and exact width determined from the snapshot / memoized IR.
+the materialization pass MUST use the exact value and exact width determined from the snapshot / memoized IR.
 
 It MUST NOT recompute the value from mutable source state.
 
@@ -10928,8 +10863,7 @@ A chunk cursor mismatch is a protocol implementation fault for the current SCC s
 It MUST fail the whole SCC seal closed before stable id publication.
 
 The implementation MUST NOT repair a chunk mismatch by shifting later chunks, widening a chunk, padding unratified
-bytes,
-or rerunning the chunk with different source values.
+bytes, or rerunning the chunk with different source values.
 
 Chunking changes physical locality and failure timing only.
 
@@ -11216,8 +11150,7 @@ localStableInternId32
 ``````
 
 when table-level proof supplies scope/domain/protocol material, or a resolved primitive carrier profile when proof must
-be
-carried with the reference.
+be carried with the reference.
 
 The old logical proof tuple:
 
@@ -11768,8 +11701,7 @@ of the following remain true:
 - `route64` remains routing-only;
 - exact PlanCacheKey verification follows every route candidate;
 - and the route derivation is not reused as metadata identity, query fingerprint, persistent identity, or stable intern
-  id
-  assignment authority.
+  id assignment authority.
 
 A future BLAKE3-derived PlanCacheKey route projection requires a separate PlanCacheKey canonical-material amendment,
 route-derivation version, golden vectors, and migration boundary.
@@ -11886,8 +11818,7 @@ A canonical-byte payload exceeding its resolved per-unit domain cap must fail cl
 publication into a hot identity table.
 
 An acquisition/image scope exceeding its aggregate canonical-byte budget must fail closed before publication, but it
-MUST
-NOT justify inflating per-unit identity fuses unless a separate policy ratifies that override.
+MUST NOT justify inflating per-unit identity fuses unless a separate policy ratifies that override.
 
 ---
 
@@ -11994,8 +11925,7 @@ ADR-0041 does not ratify concrete contract syntax lowering APIs.
 
 Future surfaces may include contract syntax lowerers, lowered contract material, backend parity vectors, effective-value
 models, dependency graphs, and diagnostics, but their concrete names and fields belong to the top-level contract
-document
-first.
+document first.
 
 This ADR only reserves the identity-substrate integration point for future ratified contract material.
 
@@ -12010,8 +11940,7 @@ contract.semantic identity domain activation gate
 ``````
 
 Once ratified elsewhere, those surfaces must obey ADR-0041's canonical byte encoding, BLAKE3/HID, collision
-verification,
-protocol-owned interning, deterministic publication, and physical optimization laws.
+verification, protocol-owned interning, deterministic publication, and physical optimization laws.
 
 ### 20.2. BLAKE3 / HID
 
@@ -12093,9 +12022,8 @@ metamodel.domain.identity.BoundedColdCollisionStructure
 metamodel.domain.identity.ColdCollisionBudget
 ``````
 
-These names are illustrative.
-The architectural requirement is that decoder and interner physical layout become explicit design surfaces rather than
-incidental implementation details.
+These names are illustrative. The architectural requirement is that decoder and interner physical layout become explicit
+design surfaces rather than incidental implementation details.
 
 ### 20.8. Version and Policy Surfaces
 
@@ -12449,8 +12377,7 @@ A compliant implementation MUST satisfy:
     assignment, query-key equality, or PlanCacheKey equality.
 100. Ordinary resource profiles scale aggregate budgets and counts before they scale per-unit identity fuses.
 101. `maxCanonicalBytesPerTypeReference` remains a TypeReference-local identity fuse and must not be used to admit
-     raw-fact,
-     lowered-contract, diagnostic, or graph-closure payloads.
+     raw-fact, lowered-contract, diagnostic, or graph-closure payloads.
 102. Per-unit fuse changes are not user configuration knobs and require a versioned protocol-ratified domain exception,
      golden vectors, diagnostics, and benchmark evidence.
 103. Annotation descriptors, annotation backend handles, annotation DTO shapes, and annotation source spellings are not
@@ -12458,25 +12385,20 @@ A compliant implementation MUST satisfy:
 104. `LOWERED_CONTRACT_FACT_IDENTITY` is a reserved identity domain until the top-level contract document ratifies the
      contract fact vocabulary and lowering law.
 105. ADR-0041 does not define annotation semantics, DSL semantics, compiler-metadata semantics, generated-index
-     semantics,
-     default/effective value semantics, or lowered-contract-fact bit layout.
+     semantics, default/effective value semantics, or lowered-contract-fact bit layout.
 106. Future ratified lowered contract material must obey ADR-0041 canonical byte encoding, HID derivation, collision
      verification, protocol-owned interning, deterministic publication, and physical optimization laws.
 107. No frontend syntax object may become canonical identity material merely because a future section title is reserved
      for it.
 108. Contract syntax SCC sealing remains reserved until the top-level contract document ratifies the contract fact
-     dependency
-     model; once ratified, it must be deterministic, bounded, and atomic.
+     dependency model; once ratified, it must be deterministic, bounded, and atomic.
 109. Contract syntax cap violations fail closed before stable lowered-contract-fact identity publication once the
-     lowered
-     contract-fact identity domain becomes active.
+     lowered contract-fact identity domain becomes active.
 110. Bit-packed lowered-contract-fact hot layouts are reserved until the contract fact taxonomy, value model, target
-     model,
-     defaulting law, and compatibility matrix are ratified.
+     model, defaulting law, and compatibility matrix are ratified.
 111. ADR-0041 does not expose arbitrary user-authored numeric cap editing as an ordinary configuration surface.
 112. Concrete numeric metadata identity caps are resolved policy outputs produced by a deterministic capacity solver or
-     an
-     equivalent released bootstrap table.
+     an equivalent released bootstrap table.
 113. Count caps, aggregate byte budgets, table budgets, and per-unit identity fuses must satisfy explicit feasibility
      relationships before scope admission.
 114. `maxTotalTypeReferenceCanonicalBytes` must be feasible with `maxTypeReferenceCount`,
@@ -12499,15 +12421,13 @@ A compliant implementation MUST satisfy:
 124. Hot route/probe paths must use seal-time deterministic projections rather than repeatedly rehashing full canonical
      material.
 125. Non-cryptographic hashes are permitted only as non-semantic physical hints over already-ratified or
-     already-verified
-     material.
+     already-verified material.
 126. Existing Planning L2 `route64` derivation is not silently replaced by ADR-0041; any migration to BLAKE3-derived
      route projection requires versioning, golden vectors, and exact PlanCacheKey verification.
 127. Fail-closed collision handling means semantic non-publication, scope rejection, quarantine, or a ratified bounded
      cold path; it does not require ordinary process-wide hard termination.
 128. SCC seal implementations must meter member count, intra-reference count, byte totals, and schema/version
-     compatibility
-     early enough to abort deterministically before stable id publication.
+     compatibility early enough to abort deterministically before stable id publication.
 129. JVM heap primitive arrays are the portable v1 layout baseline; exact 64-byte physical alignment claims require
      separate evidence and are not assumed for ordinary heap objects.
 130. Aggregate byte budgets should be tightened by deterministic target-average sizing relationships, not merely by the
@@ -12548,13 +12468,11 @@ A compliant implementation MUST satisfy:
 150. Zero-copy slice views derived from staging slabs do not cross frozen, planning, interner, report, public DTO, or
      persistent publication boundaries.
 151. Payload material that survives the seal boundary is copied, compacted, or migrated into a sealed artifact-owned
-     slab
-     or verified canonical byte handle.
+     slab or verified canonical byte handle.
 
 152. Tie-breaker exhaustion does not publish partially ordered material.
 153. If ordinary sort tie-break budgets are exhausted, the encoder either enters a ratified bounded cold exact sort path
-     before
-     publication or fails the current identity scope closed.
+     before publication or fails the current identity scope closed.
 154. Bounded cold exact sort paths remain inside canonicalization and complete exact deterministic ordering before
      publication.
 155. Quarantined or partially sorted material is never visible to planning, providers, `PlanCacheKey`,
@@ -12564,13 +12482,11 @@ A compliant implementation MUST satisfy:
 158. Concurrent canonical sorts consume resolved aggregate and per-lane scratch budgets, not live heap availability.
 159. Duplicate canonical map keys are detected in a dedicated deterministic phase.
 160. Duplicate key detection is not an incidental side effect of sorting comparators, platform hash tables, worker
-     races,
-     lane merge races, or diagnostic formatting.
+     races, lane merge races, or diagnostic formatting.
 
 161. Tie groups are represented by primitive scratchpad ranges, not heap object bucket graphs.
 162. Tie-group extraction uses in-place clustering, two-pointer range scanning, or index-array partitioning inside
-     admitted
-     primitive scratchpads.
+     admitted primitive scratchpads.
 163. Projection escalation is permitted only inside tie groups and is selected by domain/schema/version/resolved policy
      before canonicalization begins.
 164. Bounded cold exact sort paths operate only on tie groups unless the entire collection is one tie group.
@@ -12582,14 +12498,12 @@ A compliant implementation MUST satisfy:
 169. Canonical object encoding means protocol-record encoding, not JVM object graph serialization.
 170. Object fields that enter canonical bytes are owned by the active identity domain schema.
 171. Object encoding does not discover fields through reflection, JVM declaration order, Kotlin data-class component
-     order,
-     Java serialization, Jackson, kotlinx serialization, backend descriptor traversal, or framework serializer order.
+     order, Java serialization, Jackson, kotlinx serialization, backend descriptor traversal, or framework serializer
+     order.
 172. Object encoding is bounded by deterministic object nesting, field-count, reference-count, encoded-byte,
-     encoder-frame,
-     and decoder-frame limits.
+     encoder-frame, and decoder-frame limits.
 173. Canonical object references use sealed stable intern ids, verified canonical identity handles, domain-ratified
-     local
-     selector material, SCC-local references inside SCC seal payloads, or bounded embedded messages.
+     local selector material, SCC-local references inside SCC seal payloads, or bounded embedded messages.
 174. Canonical object encoding never recursively inlines arbitrary reachable JVM object graphs.
 175. Duplicate non-repeated field tags fail closed.
 176. Repeated fields declare ordered/unordered and duplicate-preserving/duplicate-rejecting/duplicate-collapsing policy.
@@ -12608,8 +12522,7 @@ A compliant implementation MUST satisfy:
 185. Duplicate version-bundle axis ids fail closed.
 186. Unknown required version-bundle axis ids fail closed.
 187. Unknown optional version-bundle axis ids are skippable only when the active compatibility matrix ratifies the axis
-     as
-     skippable and non-critical.
+     as skippable and non-critical.
 188. `capabilityProfileVersion`, `entropyVersion`, `resourcePolicySchemaVersion`, `compatibilityMatrixVersion`, and
      `canonicalEncodingPolicyVersion` are explicit global version axes when they affect canonical identity behavior.
 189. Version-bundle fingerprint derivation uses a domain-separated BLAKE3 context distinct from HID derivation.
@@ -12639,8 +12552,8 @@ A compliant implementation MUST satisfy:
 206. Canonical sort keys do not include per-process random seeds, per-scope random seeds, runtime entropy, time, thread
      ids, worker ids, heap addresses, or ASLR-dependent values.
 207. Randomized hashing may be used only for non-authoritative route/probe structures and never for canonical ordering.
-208. HashDoS defense for canonical sorting uses deterministic projection escalation, bounded exact tie-break,
-     duplicate policies, bounded cold exact sort, and fail-closed budgets.
+208. HashDoS defense for canonical sorting uses deterministic projection escalation, bounded exact tie-break, duplicate
+     policies, bounded cold exact sort, and fail-closed budgets.
 209. Capacity solver arithmetic for identity budgets is fixed-point or checked integer arithmetic, not floating-point.
 210. Capacity solver safety multipliers are explicit numerator/denominator policy values when fractional scaling is
      used.
@@ -12652,8 +12565,7 @@ A compliant implementation MUST satisfy:
 214. JVM heap primitive arrays are logical grouping baselines and do not prove physical 64-byte alignment.
 215. Exact cache-line alignment claims require off-heap, MemorySegment, generated layout, or runtime-specific evidence.
 216. Nested unordered collection sorting consumes sealed child canonical material or verified child handles, not
-     recursive
-     comparator traversal.
+     recursive comparator traversal.
 217. Published sealed slabs are immutable and are not compacted in place.
 218. Background defragmentation does not rewrite published canonical byte offsets or stable handles.
 219. Long-running memory reclamation uses scope teardown, image-epoch retirement, whole-slab reclamation, or rebuild /
@@ -12669,21 +12581,18 @@ A compliant implementation MUST satisfy:
 225. SCC sealing uses deterministic preflight and budget reservation when SCC size, references, projected bytes, sort
      scratch, or payload shape can approach resolved caps.
 226. Size-only SCC canonicalization does not publish canonical bytes, HIDs, interner candidates, stable ids, frozen
-     rows,
-     planning providers, or report manifests.
+     rows, planning providers, or report manifests.
 227. SCC budget reservation succeeds before member publication, interner candidate publication, stable id assignment,
      frozen image publication, planning visibility, or report manifest publication.
 228. SCC preflight and reservation do not change canonical bytes, HID derivation, collision verification, stable intern
-     id
-     assignment, or semantic equality for accepted SCCs.
+     id assignment, or semantic equality for accepted SCCs.
 
 229. External field payload slice offsets are payload-relative, not envelope-absolute.
 230. `fieldTableOffset32` and `payloadOffset32` are envelope-absolute offsets from the first byte of
      `CanonicalEnvelopeHeader`.
 231. Payload-relative offset `0` means the first byte of the declared payload region.
 232. External payload slices that require non-overlap are encoded in physical payload order or use a ratified
-     linear-time
-     non-overlap proof.
+     linear-time non-overlap proof.
 233. Ordinary decoders do not sort arbitrary slice intervals to prove non-overlap under adversarial input.
 234. Repeated-field and variable-payload decoder loops prove strict cursor, entry-index, or record-width progress.
 235. Zero-length semantic values are valid only when the enclosing descriptor or record still advances.
@@ -12692,8 +12601,7 @@ A compliant implementation MUST satisfy:
 
 238. Staging slices and published slices are separated by type-state.
 239. Publication APIs accept only published-slab slices, verified canonical byte handles, stable intern ids, or
-     frozen-image
-     owned handles.
+     frozen-image owned handles.
 240. Staging-slab slice types cannot cross publication boundaries.
 241. Zero-copy promotion is allowed only with single-owner, write-closed, fully validated, budget-accounted ownership
      transfer.
@@ -12705,8 +12613,8 @@ A compliant implementation MUST satisfy:
 246. Pinned epoch count, pinned sealed bytes, active reader leases, lease duration, or generation gap are bounded by
      resolved runtime/adapter policy.
 
-247. Ordinary published-slab read hot paths use engine-owned lane epoch records, not globally contended
-     lock/counter lease acquisition.
+247. Ordinary published-slab read hot paths use engine-owned lane epoch records, not globally contended lock/counter
+     lease acquisition.
 248. Asynchronous epoch reclaimer scanning is physical memory management and not canonical identity logic.
 249. Reader leases are released or suspended before external I/O, user callbacks, framework callbacks, coroutine
      suspension, virtual-thread parking, or work-stealing migration boundaries.
@@ -12746,8 +12654,7 @@ A compliant implementation MUST satisfy:
 270. Text validation rejects malformed UTF-8 and invalid surrogate material before string material becomes identity
      material.
 271. Text validation uses branch-bounded, table-driven, chunked, vectorized, or equivalent bounded validation where it
-     is
-     in the hot path.
+     is in the hot path.
 272. Platform charset replacement behavior, locale, JVM default charset, and backend decoder side effects are not
      canonical text validation authority.
 
@@ -12771,16 +12678,14 @@ A compliant implementation MUST satisfy:
 283. Seal and materialization boundaries are defined before hot projections are generated.
 284. Sealed projection tuples are immutable and stale projections are rejected by version, epoch, or handle material.
 285. Non-cryptographic hashes are non-semantic hints only after the owning verification path has succeeded for the
-     current
-     operation.
+     current operation.
 286. Digest suite/HID golden vectors are required release artifacts.
 287. Digest suite migration is versioned and cannot silently compare HID material across suites.
 
 288. BLAKE3 is the v1 ratified digest suite implementation, not the semantic identity contract.
 289. Digest algorithms are replaceable only through versioned suite ratification.
 290. The digest suite contract fixes suite id/version, domain separation payload, output width, split rule, migration
-     law,
-     and golden vectors.
+     law, and golden vectors.
 291. An adapter implements the selected digest suite but does not select or mutate the protocol suite.
 292. Swapping the digest algorithm without changing suite id/version is forbidden.
 
@@ -12806,25 +12711,22 @@ A compliant implementation MUST satisfy:
      per-candidate descriptor object allocation as ordinary probe authority.
 305. HID hot-path material is stored as fixed-width primitive words or equivalent primitive substrate projections.
 306. Version mismatch classification on the HID hot path is zero-allocation, non-blocking, and does not require
-     exception
-     creation, string concatenation, synchronous log I/O, or cache-entry allocation.
+     exception creation, string concatenation, synchronous log I/O, or cache-entry allocation.
 307. Repeated stale-version or malicious-version input is contained by primitive classification, resolved policy,
-     adapter
-     quarantine, or fail-closed scope handling rather than unbounded log/exception/cache churn.
+     adapter quarantine, or fail-closed scope handling rather than unbounded log/exception/cache churn.
 308. Parent-dependent child HID material is not reused after parent identity changes without active-suite re-derivation
      under the new parent key and version bundle.
 309. Parent-independent child canonical bytes may be reused only as sealed, version-bound derivation input; they are not
      equality authority and do not bypass verification.
-310. Hierarchical re-keying is O(1) per affected child only when sealed child-local material is already available;
-     ADR-0041
-     does not promise O(1) invalidation for an entire subtree.
+310. Hierarchical re-keying is O (1) per affected child only when sealed child-local material is already available;
+     ADR-0041 does not promise O (1) invalidation for an entire subtree.
 
 311. ADR-0043 owns full canonical contract graph identity semantics.
 312. ADR-0041 may consume sealed structural identity references but MUST NOT treat bare child HID as equality proof.
 313. Parent/context derivation MAY avoid re-reading unchanged child canonical bytes only after child-local material is
      sealed and verification-safe.
-314. Structural/contextual graph identity optimization is O(1) with respect to sealed child byte length per child
-     reference, not O(1) for an entire affected subtree.
+314. Structural/contextual graph identity optimization is O (1) with respect to sealed child byte length per child
+     reference, not O (1) for an entire affected subtree.
 315. Future lowered contract graph material for state, protocol, data, governance, DTO, boundaries, and explicit state
      machines remains reserved until ratified by the top-level contract definition document and ADR-0043.
 
@@ -12845,8 +12747,8 @@ A compliant implementation MUST satisfy:
 327. Committed intern-table rows use primitive id material and table-level proof, not wrapper objects.
 328. `TypeReferenceInternId`, `StableInternId`, and `InternHandle` class/interface shapes are not normative hot-path
      representations.
-329. Hot intern tables MUST NOT store `Array<TypeReferenceInternId>`, `Array<StableInternId>`, `Array<InternHandle>`,
-     or equivalent wrapper-object arrays as their ordinary committed representation.
+329. Hot intern tables MUST NOT store `Array<TypeReferenceInternId>`, `Array<StableInternId>`, `Array<InternHandle>`, or
+     equivalent wrapper-object arrays as their ordinary committed representation.
 330. Type-state for provisional/verified/stable intern handles is normative; object hierarchy is not.
 331. Cold facades may be materialized only after primitive row/table integrity proof has been validated.
 332. Architecture tests reject wrapper-object intern ids in committed hot-path storage, frozen row arrays, planning hot
@@ -12971,8 +12873,7 @@ A compliant implementation MUST satisfy:
      fragmentation.
 408. Route-drain must perform deterministic self-drain before cross-owner assistance or terminal retry.
 409. Circular backpressure must not be classified as terminal failure until the required self-drain phase is exhausted
-     or
-     succeeds.
+     or succeeds.
 410. Cooperative route-drain is not remote work stealing and must not transfer candidate ownership away from the owner
      lane.
 411. Remote cooperative drain of owner payload material is forbidden unless ADR-0042 profile evidence admits it.
@@ -12994,8 +12895,8 @@ A compliant implementation MUST satisfy:
 421. A backend that cannot provide a non-copying capacity strategy must fail backend-profile admission.
 422. Whole-table grow-by-copy may appear only as a rejected alternative, non-compliant diagnostic prototype, or cold
      offline artifact migration outside the ADR-0041 runtime interner path.
-423. A cold offline artifact migration procedure must not be planning-visible, staging-visible, or
-     publication-visible as an ADR-0041 interner backend.
+423. A cold offline artifact migration procedure must not be planning-visible, staging-visible, or publication-visible
+     as an ADR-0041 interner backend.
 
 424. Single-active-batch routing is a memory-constrained profile and must prove a deterministic fragmentation budget
      before admission.
@@ -13009,8 +12910,7 @@ A compliant implementation MUST satisfy:
 
 430. Inline verifier words require selector and false-survivor evidence before occupying hot metadata bytes.
 431. Prefix-only verifier profiles must prove sufficient rejection power or use suffix, sampled-window,
-     secondary-verifier,
-     or exact-verification-first strategy.
+     secondary-verifier, or exact-verification-first strategy.
 432. Inline/external table segregation must not silently add routing-buffer dimensions without routing budget.
 433. Route-segregated transport must budget table-shape-specific buffers, inbox headroom, and fragmentation ratios.
 434. Transport route-neutral or owner-local segregation is preferred when route-level segregation cannot prove batch
@@ -13024,8 +12924,7 @@ A compliant implementation MUST satisfy:
      scope.
 439. Quarantined routing infrastructure must reach a bounded terminal drain, reject, rollback, or fail-closed state.
 440. Collision overflow must not trigger runtime rekeying, hash seed change, suite change, digest-width change, route
-     map
-     change, or stable-id reassignment.
+     map change, or stable-id reassignment.
 441. Stronger-width identity suites must be selected by resolved policy before scope admission and before any
      planning-visible material exists.
 442. Bounded cold collision overflow must terminate escalation at the resolved containment boundary; colder unbounded
@@ -13070,8 +12969,8 @@ A compliant implementation MUST satisfy:
 464. TypeReference hot proof material must be carried by resolved primitive carrier profiles, not per-candidate
      wrappers.
 465. `PACKED_LOCAL_REF64` bit layouts must be resolved by policy and golden-vector covered.
-466. Domains that cannot fit hot proof into one u64 must use table-level proof, `PACKED_REF128`, `SOA_PROOF_COLUMNS`,
-     or a cold boundary; they must not allocate wrapper carriers.
+466. Domains that cannot fit hot proof into one u64 must use table-level proof, `PACKED_REF128`, `SOA_PROOF_COLUMNS`, or
+     a cold boundary; they must not allocate wrapper carriers.
 467. TypeReference canonicalization must enforce resolved generic depth, type argument, projection, F-bound, recursive
      edge, signature byte, and frame fuses before publication.
 468. TypeReference depth fuse failure must be detected by explicit metering, not by JVM `StackOverflowError`.
@@ -13692,8 +13591,7 @@ Architecture tests MUST verify:
 - version-bundle fingerprint derivation is covered by golden vectors and does not depend on map/set iteration order;
 - version-bundle payload construction uses tagged axis entries, not delimiter-free concatenation;
 - version-bundle axis registry is not derived from enum ordinals, declaration order, source order, classpath order,
-  service
-  loader order, or process-global registration order;
+  service loader order, or process-global registration order;
 - version-bundle integer axis payloads are fixed-width little-endian unless explicitly ratified otherwise;
 - version-bundle axis ids are sorted before hashing;
 - version-bundle payload tests verify that `identityDomainId32` is present even when the envelope also contains
@@ -13805,9 +13703,8 @@ Architecture tests MUST verify:
 - count caps are not accepted when their minimum encoded bytes cannot fit into their aggregate byte budget;
 - aggregate byte budgets are not accepted when they exceed their count multiplied by the per-unit fuse unless the domain
   explicitly documents why the extra budget is semantically reachable;
-- ADR-0041 v1 shared metadata interner candidate budgets cover TypeReference, TypeCycleKey,
-  TypeCycleIdentityPrecheck, TypeShapeSummary, RawFactRecord, ActiveMemberKey, LocalSelectorTuple, and
-  RuntimeBindingSnapshot candidates;
+- ADR-0041 v1 shared metadata interner candidate budgets cover TypeReference, TypeCycleKey, TypeCycleIdentityPrecheck,
+  TypeShapeSummary, RawFactRecord, ActiveMemberKey, LocalSelectorTuple, and RuntimeBindingSnapshot candidates;
 - traversal-edge budgets are derived from admitted graph dimensions or explicit domain-split edge budgets;
 - frozen table byte budgets are derived from table layout, row counts, load factor, bitsets, offset tables, and
   headroom.
@@ -13820,12 +13717,11 @@ Architecture tests MUST verify:
 
 ---
 
-- BLAKE3 canonical identity derivation is not replaced by Murmur3, xxHash, JVM hashCode, or any other
-  non-cryptographic route hint.
+- BLAKE3 canonical identity derivation is not replaced by Murmur3, xxHash, JVM hashCode, or any other non-cryptographic
+  route hint.
 - hot lookup code does not repeatedly re-run full BLAKE3 over full canonical material after seal-time projection exists.
 - non-cryptographic physical route hints cannot cross into HID, persistent identity, query fingerprint, stable intern
-  id, or
-  equality-authority surfaces.
+  id, or equality-authority surfaces.
 - collision cap overflow does not publish HID-only equality and does not retroactively repair stable ids.
 - SCC implementations expose metered preflight or equivalent deterministic early-abort evidence.
 - direct/off-heap aligned probe implementations are optional physical backends and cannot be required for v1 heap-array
@@ -13907,8 +13803,7 @@ Rejected.
 The full logical proof vocabulary may exceed what should be passed as ordinary object material on the JVM hot path.
 
 Hot paths must use table-level proof, packed primitive carriers, two-word primitive carriers, or structure-of-arrays
-proof
-columns.
+proof columns.
 
 A facade object may exist only as a cold boundary view.
 
@@ -13930,8 +13825,7 @@ Rejected.
 JVM stack overflow is not a deterministic protocol boundary.
 
 TypeReference canonicalization must use explicit depth, frame, signature byte, generic argument, projection, F-bound,
-and
-recursive edge fuses.
+and recursive edge fuses.
 
 ### 26.69. Require Final TypeCycleKey Before SCC Discovery
 
@@ -13979,8 +13873,7 @@ output, padding unratified bytes, or retrying with different source values.
 Rejected.
 
 A conservative bootstrap cap is useful for early implementation and tests, but generated schema, ORM/entity, GraphQL,
-and
-protocol metadata families may lawfully contain larger cyclic components.
+and protocol metadata families may lawfully contain larger cyclic components.
 
 Large SCCs must be admitted through resolved profile material and explicit memory envelopes rather than being silently
 rejected by a universal constant.
@@ -14049,8 +13942,7 @@ Changing hash seeds, digest suites, digest widths, route maps, or stable-id orde
 would make identity outcomes depend on runtime collision timing.
 
 Stronger-width identity suites may only be selected by resolved policy before scope admission and before
-planning-visible
-material exists.
+planning-visible material exists.
 
 ### 26.61. Quarantine Physical Lanes as the Primary Collision Containment Boundary
 
@@ -14102,16 +13994,14 @@ Preclassification removes a branch by adding another pass.
 For large working sets, the second pass may reread data after cache eviction and regress throughput.
 
 `PRECLASSIFIED_TWO_PASS` requires bounded classification work, scratch, metadata, and cache-touch evidence before
-profile
-admission.
+profile admission.
 
 ### 26.53. Allow Single-Active-Batch Without a Fragmentation Budget
 
 Rejected.
 
 A single-active-batch profile can reduce memory footprint, but alternating owner discovery can collapse batch size to
-one
-candidate per flush.
+one candidate per flush.
 
 Therefore single-active-batch routing is lawful only as a memory-constrained profile with a declared and proven
 fragmentation budget.
@@ -14134,8 +14024,7 @@ global boundary flushes.
 Rejected.
 
 Not every semantic predicate changes candidate reachability, ownership, rollback visibility, provisional-handle
-validity,
-seal eligibility, publication eligibility, or external visibility.
+validity, seal eligibility, publication eligibility, or external visibility.
 
 Forcing a flush on every semantic validation boundary would destroy micro-batching and create pathological flush
 fragmentation.
@@ -14157,8 +14046,7 @@ It creates unnecessary complete old-table plus complete new-table coexistence, a
 invites reliance on physical reclamation behavior that ADR-0041 does not own.
 
 Whole-table grow-by-copy may exist only as a rejected alternative, a non-compliant diagnostic prototype, or a cold
-offline
-artifact migration procedure outside the ADR-0041 runtime interner path.
+offline artifact migration procedure outside the ADR-0041 runtime interner path.
 
 ### 26.51. Reuse Transient Reserve Immediately After Logical Release
 
@@ -14188,8 +14076,7 @@ Whole-table grow-by-copy remains forbidden on the ADR-0041 runtime interner path
 Rejected.
 
 This would turn alternating owner discovery patterns into one-candidate batches and would erase the throughput benefit
-of
-batch routing.
+of batch routing.
 
 Owner-lane change is a flush condition only for a single-active-batch profile that repurposes the same physical batch
 buffer.
@@ -14241,8 +14128,8 @@ Owner inbox pressure is handled through bounded deterministic route-drain or a s
 Rejected.
 
 Cooperative route-drain may help routing infrastructure, but candidate staging, duplicate suppression, provisional
-handle
-issuance, collision verification, stable id assignment, and publication remain owned by the deterministic owner lane.
+handle issuance, collision verification, stable id assignment, and publication remain owned by the deterministic owner
+lane.
 
 ### 26.50. Use Unbounded Producer-Local Duplicate Maps
 
@@ -14368,8 +14255,7 @@ M:N worker/lane topology is dispatch topology, not identity or quota ownership.
 Rejected.
 
 Candidate count does not bound provisional handles, canonical byte staging, scratch arenas, SCC-local material, sort
-keys,
-or bounded diagnostics.
+keys, or bounded diagnostics.
 
 A bounded streaming scope must meter staged bytes before issuing provisional handles.
 
@@ -14402,8 +14288,7 @@ Interning scopes may contain identity domains with highly skewed distributions.
 A single scope-level candidate count allows a hot domain to consume table capacity intended for colder domains.
 
 ADR-0041 therefore requires per-domain candidate counts and either physical partitioning, deterministic domain slices,
-or
-an equivalent isolation proof.
+or an equivalent isolation proof.
 
 ### 26.45. Treat Logical Probe Bytes as Cache-Line Proof
 
@@ -14498,8 +14383,7 @@ Rejected.
 Typed wrapper objects are useful as cold semantic facades, but they are not lawful committed interner storage.
 
 Using wrapper objects in intern tables reintroduces object headers, reference arrays, pointer chasing, interface
-dispatch,
-and GC pressure on the path ADR-0041 is explicitly trying to make primitive and deterministic.
+dispatch, and GC pressure on the path ADR-0041 is explicitly trying to make primitive and deterministic.
 
 The accepted shape is:
 
@@ -14562,8 +14446,7 @@ Mixed branching is lawful only when selected by resolved physical policy and ben
 Rejected.
 
 A measure/write mismatch means the size-only pass and materialization pass are not equivalent under the canonical
-encoder
-law.
+encoder law.
 
 The SCC seal must fail closed before publication.
 
@@ -14920,8 +14803,7 @@ Collision cap overflow is a semantic non-publication event unless the process is
 an unrepresentable state.
 
 Ordinary compliant responses include scope rejection, artifact publication failure, bounded quarantine, or a ratified
-cold
-collision path.
+cold collision path.
 
 ### 26.31. Use Only Worst-Case Count-Times-Fuse Products for Aggregate Budgets
 
@@ -15035,7 +14917,7 @@ A bare HID is a compact candidate descriptor.
 A sealed structural reference must represent child-local material that has passed canonical encoding, digest-suite
 derivation, collision verification, and publication under an explicit scope.
 
-### 26.33V. Promise O(1) Subtree Invalidation
+### 26.33V. Promise O (1) Subtree Invalidation
 
 Rejected.
 
@@ -15111,7 +14993,7 @@ The current extraction target is design-level protocol maintenance, not an exter
 
 ### 27.3. Stable Metadata Identity Protocol Design Note
 
-`docs/design/stable-metadata-identity-protocol.md` owns the extracted maintenance surface for byte-level metadata
+`../../design/stable-metadata-identity-protocol.md` owns the extracted maintenance surface for byte-level metadata
 identity protocol.
 
 It SHOULD receive the following ADR-0041 material:
@@ -15139,7 +15021,7 @@ small-inline, or memory-reclamation mechanics except as non-authoritative refere
 
 ### 27.4. Protocol-Owned Metadata Interning Design Note
 
-`docs/design/protocol-owned-metadata-interning.md` owns the extracted maintenance surface for metadata interning
+`../../design/protocol-owned-metadata-interning.md` owns the extracted maintenance surface for metadata interning
 semantics.
 
 It SHOULD receive the following ADR-0041 material:
@@ -15253,7 +15135,7 @@ substrate mechanics.
 
 ### 27.8. Compiler Constitution Enforcement Hook
 
-`docs/constitution/compiler-core-protocols.md` SHOULD NOT absorb the full ADR-0041 body.
+`../../constitution/compiler-core-protocols.md` SHOULD NOT absorb the full ADR-0041 body.
 
 It SHOULD receive only enforcement hooks required to keep implementation aligned with the extracted documents.
 
@@ -15351,8 +15233,7 @@ After an extraction document is accepted as the narrower maintenance authority, 
 declared authority boundary.
 
 No document may use extraction to make identity dependent on runtime cache state, thread scheduling, backend
-enumeration,
-object identity, physical address, GC behavior, or adaptive profiling.
+enumeration, object identity, physical address, GC behavior, or adaptive profiling.
 
 ### 27.12. Final Extraction Rule
 
@@ -15481,14 +15362,12 @@ diagnostic identity
 ``````
 
 Version compatibility, canonical-byte size bounds, HID width, interner scope, and metadata identity capacity are
-resolved
-protocol surfaces.
+resolved protocol surfaces.
 
 Resource intent is not an arbitrary cap file.
 
 Concrete caps are deterministic resolved policy outputs, and their count/byte/table relationships must be feasible
-before
-scope admission.
+before scope admission.
 
 Canonical identity bytes use `CanonicalEnvelopeHeader` as the mandatory common envelope header.
 
@@ -15580,6 +15459,5 @@ All physical acceleration is subordinate to deterministic identity.
 
 If performance and determinism conflict, determinism wins.
 
-Mechanical sympathy is part of this identity law.
-A compliant implementation must treat canonical encoding and protocol-owned interning as CPU-facing binary
-infrastructure, not as ordinary object serialization.
+Mechanical sympathy is part of this identity law. A compliant implementation must treat canonical encoding and
+protocol-owned interning as CPU-facing binary infrastructure, not as ordinary object serialization.

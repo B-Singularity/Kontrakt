@@ -10,7 +10,7 @@ Accepted
 
 ## Related
 
-- `docs/the-most-important-thing/what-contract-is.md`
+- `../../the-most-important-thing/what-contract-is.md`
 - ADR-0046: IDL-First Interface Contract Frontend and Retained Generated Host Interface and Realization Port Boundary
 - ADR-0045: Contract Pipeline Package Architecture, Explicit State-Machine Axis, and Compiler Realization Mirror
 - ADR-0043: Contract Graph Canonicalization, Sealed Structural References, and Incremental Identity Derivation

@@ -10,8 +10,8 @@ Accepted
 
 ## Related
 
-- `docs/the-most-important-thing/what-contract-is.md`
-- `docs/todo/kontrakt-verifier-implementation-plan.md`
+- `../../the-most-important-thing/what-contract-is.md`
+- `../../todo/kontrakt-verifier-implementation-plan.md`
 - ADR-0054: Policy Contract, Explicit Operating Policies, Self-Contained Contract Worlds, and Interface Binding Boundary
 - ADR-0056: Governance Contract, Policy-World Control, Whole-Machine Coordination, and Selection Boundary
 - ADR-0052: Capacity Contract and Admission Boundary
@@ -24,8 +24,8 @@ Accepted
 - ADR-0041: Stable Metadata Identity, BLAKE3, HID, and Protocol-Owned Interning
 - ADR-0040: Deterministic Frozen Acquisition Pipeline, Explicit Readiness, and Memory-Disciplined Publication
 - ADR-0032: Capacity Law, Resource Policy Resolution, Identity Hierarchy, and Zero-Residue Semantics
-- `docs/design/planner-budget-resolution-and-worker-lifecycle.md`
-- `docs/design/l1-planner-session-primitive-data-structures.md`
+- `../../design/planner-budget-resolution-and-worker-lifecycle.md`
+- `../../design/l1-planner-session-primitive-data-structures.md`
 
 ---
 

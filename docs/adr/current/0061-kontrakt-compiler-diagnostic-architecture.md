@@ -10,10 +10,10 @@ Proposed
 
 ## Related
 
-- `docs/todo/kontrakt-v1-commercial-compiler-foundation-candidate-architecture.md`
-- `docs/todo/kontrakt-frontend-and-contract-refactor-plan.md`
-- `docs/todo/kontrakt-verifier-implementation-plan.md`
-- `docs/constitution/canonical-ir-stage-and-lowering-protocol.md`
+- `../../todo/kontrakt-v1-commercial-compiler-foundation-candidate-architecture.md`
+- `../../todo/kontrakt-frontend-and-contract-refactor-plan.md`
+- `../../todo/kontrakt-verifier-implementation-plan.md`
+- `../../constitution/canonical-ir-stage-and-lowering-protocol.md`
 - ADR-0060: Diagnostic Evidence and Retention Contract
 - ADR-0045: Contract Pipeline Package Architecture, Explicit State-Machine Axis, and Compiler Realization Mirror
 

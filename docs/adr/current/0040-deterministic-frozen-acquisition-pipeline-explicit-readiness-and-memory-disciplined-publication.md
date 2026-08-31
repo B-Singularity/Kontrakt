@@ -23,13 +23,13 @@ Accepted
 - ADR-0039: Adapter-Neutral Metamodel Acquisition, Frozen Fact Image, and Backend-Handle Erasure
 - ADR-0041: Stable Metadata Identity, BLAKE3, HID, and Protocol-owned Interning
 - Future ADR / Amendment: Shared Runtime Policy Snapshot, Policy Epoch Publication, and Bounded-Context Policy Slices
-- `docs/design/cycle-truncation-examples.md`
-- `docs/design/deterministic-active-member-projection-and-ordering-protocol.md`
-- `docs/design/l1-planner-session-primitive-data-structures.md`
-- `docs/design/l2-join-lifecycle-state-machine-mechanics-for-planning-tier-2-cache.md`
-- `docs/design/l2-plan-interner-partitioned-tier2-with-governance.md`
-- `docs/design/planner-budget-resolution-and-worker-lifecycle.md`
-- `docs/design/primitive-lane-owned-delivery-for-tier-2-joined-wait-completion.md`
+- `../../design/cycle-truncation-examples.md`
+- `../../design/deterministic-active-member-projection-and-ordering-protocol.md`
+- `../../design/l1-planner-session-primitive-data-structures.md`
+- `../../design/l2-join-lifecycle-state-machine-mechanics-for-planning-tier-2-cache.md`
+- `../../design/l2-plan-interner-partitioned-tier2-with-governance.md`
+- `../../design/planner-budget-resolution-and-worker-lifecycle.md`
+- `../../design/primitive-lane-owned-delivery-for-tier-2-joined-wait-completion.md`
 
 ## 1. Context
 
@@ -367,8 +367,8 @@ Frozen acquisition and planning both walk `TypeReference`-related structures.
 
 This is intentional but performance-sensitive.
 
-A wrong optimization would merge frozen acquisition traversal with planning expansion traversal.
-That would let backend availability, acquisition order, or lowering details contaminate planning semantics.
+A wrong optimization would merge frozen acquisition traversal with planning expansion traversal. That would let backend
+availability, acquisition order, or lowering details contaminate planning semantics.
 
 The accepted optimization direction is different:
 
@@ -726,16 +726,16 @@ branches should actually be opened?
 
 Therefore, ADR-0040 does not merge frozen acquisition traversal with planning traversal.
 
-It also does not introduce a shared graph engine, shared frontier, shared budget ledger,
-shared readiness bridge, or shared traversal primitive between frozen acquisition and planning.
+It also does not introduce a shared graph engine, shared frontier, shared budget ledger, shared readiness bridge, or
+shared traversal primitive between frozen acquisition and planning.
 
-Mechanically similar ideas may appear in both bounded contexts, but they remain independently owned
-until multiple implementations prove that a shared abstraction is safe.
+Mechanically similar ideas may appear in both bounded contexts, but they remain independently owned until multiple
+implementations prove that a shared abstraction is safe.
 
 ### TypeReference closure, not planning tree
 
-Frozen acquisition may scan backend metadata references to compute the `TypeReference` closure required
-for a complete frozen image.
+Frozen acquisition may scan backend metadata references to compute the `TypeReference` closure required for a complete
+frozen image.
 
 This is not planning tree construction.
 
@@ -780,8 +780,8 @@ Planning expansion:
 
 The optimization target is not to merge these passes.
 
-The optimization target is to make the planning pass dense, ordinal-based, table-backed,
-and free of backend-native handles, canonicalization work, and string-heavy lowering.
+The optimization target is to make the planning pass dense, ordinal-based, table-backed, and free of backend-native
+handles, canonicalization work, and string-heavy lowering.
 
 Frozen acquisition may provide factual reference-requirement indexes.
 
@@ -1645,8 +1645,7 @@ This prevents a shared epoch from becoming a shared mutable runtime object.
 The acquisition engine advances bounded acquisition episodes.
 
 An episode may complete, enter external-readiness state, defer to backend progress, exhaust its deterministic work
-quantum,
-abort, or isolate panic.
+quantum, abort, or isolate panic.
 
 Illustrative shape:
 
@@ -2830,8 +2829,7 @@ Frozen acquisition capacity resolution reserves text and material payload space 
 The solver computes structural budget only after reserving non-structural byte regions.
 
 This law prevents payload-heavy input from consuming the same bytes that must be used for frontier structures, table
-rows,
-record arrays, offset tables, coverage bitsets, and other deterministic acquisition structures.
+rows, record arrays, offset tables, coverage bitsets, and other deterministic acquisition structures.
 
 Conceptual formula:
 
@@ -3121,10 +3119,8 @@ It is not:
 - planning decision material.
 
 The ledger records semantic acquisition work, frozen coverage work, lowering work, deterministic physical work, backend
-work units, frontier work units,
-readiness/restart governance consumption, fixed-width structural bytes, variable material bytes, normal diagnostic
-bytes,
-and emergency diagnostic bytes.
+work units, frontier work units, readiness/restart governance consumption, fixed-width structural bytes, variable
+material bytes, normal diagnostic bytes, and emergency diagnostic bytes.
 
 Illustrative operations:
 
@@ -3255,8 +3251,7 @@ This preserves byte-budget safety without making metering more expensive than ac
 No deterministic acquisition work is free.
 
 Frontier lookup, frontier movement, page splitting, and structural equality verification must be charged as
-deterministic
-physical work.
+deterministic physical work.
 
 This closes the gap where an input graph can consume little memory but burn unbounded CPU through comparator-heavy or
 movement-heavy frontier behavior.
@@ -4224,8 +4219,7 @@ A compliant implementation must satisfy:
 1. Readiness waits and restart admissions must be ledger-accounted and policy-governed.
 1. Restart-control bytes must be ledger-accounted separately from ordinary material bytes.
 1. Table rows, offset slots, length slots, coverage bits, ordinal slots, and membership slots must not be treated as
-   free
-   when payload bytes are charged.
+   free when payload bytes are charged.
 1. Emergency diagnostic bytes must be accounted separately from normal diagnostic summary bytes.
 1. Normal diagnostic budget exhaustion must not recursively trigger unbounded diagnostic rendering.
 1. Static fallback diagnostics must be fixed-shape, bounded, and terminal.
@@ -4336,8 +4330,7 @@ Add tests for:
 - emergency diagnostic fallback emits a terminal reason code instead of silently dying.
 - ledger snapshot emission does not change active acquisition policy or semantic output.
 - ledger snapshot material is not used in TypeReference identity, frozen image identity, PlanCacheKey, L2 route/key
-  material,
-  or planning decisions.
+  material, or planning decisions.
 - runtime watchdog policy is not reachable from frozen acquisition capacity resolver APIs.
 - runtime watchdog policy is not reachable from frontier membership, frozen ordering, or ordinal assignment APIs.
 - elapsed wall-clock timeout does not change closure membership, diagnostics classification, or image identity.
@@ -4517,8 +4510,7 @@ Record-count caps are capacity-solver outputs, not policy inputs.
 
 Sort-buffer capacity, canonical text dedup/scratch table capacity, restart-control capacity, emergency diagnostic
 reserve, fixed metadata overhead, material-index overhead, and deterministic alignment/padding must be represented in
-the
-capacity model.
+the capacity model.
 
 The capacity resolver must expose or internally own a deterministic `TotalFrozenStructBytes(...)` layout calculation.
 

@@ -17,8 +17,8 @@ Accepted
 - ADR-0035: Deterministic Balanced Lanes for Tier-2 Join Completion Delivery
 - ADR-0037: Cycle Identity Preflight and Deferred Raw Fact Resolution
 - ADR-0038: Interface Contract Polymorphic Expansion and Non-Composite Type Expansion Completion
-- `docs/design/deterministic-active-member-projection-and-ordering-protocol.md`
-- `docs/design/l1-planner-session-primitive-data-structures.md`
+- `../../design/deterministic-active-member-projection-and-ordering-protocol.md`
+- `../../design/l1-planner-session-primitive-data-structures.md`
 - `docs/design/adr-0034-l2-join-lifecycle-design-note.md`
 - `docs/design/adr-0035-primitive-lane-owned-delivery-plane.md`
 
@@ -1549,8 +1549,8 @@ Examples:
 - classloader-local lookup key;
 - KSP resolver-local id.
 
-This exception exists because “not storing `KType` directly” is insufficient.
-Frozen material must not be able to recover backend handles indirectly.
+This exception exists because “not storing `KType` directly” is insufficient. Frozen material must not be able to
+recover backend handles indirectly.
 
 ### 12.8. Deterministic Sequence Violation
 
@@ -2202,9 +2202,8 @@ It must not rely on stable sort behavior to preserve backend order.
 
 Reason:
 
-Stable sorting only preserves input order for equal comparator keys.
-If input order comes from reflection, KSP, bytecode, or source parser enumeration, then preserving that order imports
-backend-specific nondeterminism.
+Stable sorting only preserves input order for equal comparator keys. If input order comes from reflection, KSP,
+bytecode, or source parser enumeration, then preserving that order imports backend-specific nondeterminism.
 
 Comparator equality therefore means:
 

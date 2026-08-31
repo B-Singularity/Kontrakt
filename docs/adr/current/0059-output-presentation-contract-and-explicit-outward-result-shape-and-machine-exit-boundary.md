@@ -10,8 +10,8 @@ Accepted
 
 ## Related
 
-- `docs/the-most-important-thing/what-contract-is.md`
-- `docs/todo/kontrakt-verifier-implementation-plan.md`
+- `../../the-most-important-thing/what-contract-is.md`
+- `../../todo/kontrakt-verifier-implementation-plan.md`
 - ADR-0058: Publication Contract, Explicit Outward Exposure Authority, and Core Exit Boundary
 - ADR-0057: Failure Contract, Explicit Machine Failure, Attribution, and Realization Boundary
 - ADR-0056: Governance Contract, Policy-World Control, and Selection Boundary

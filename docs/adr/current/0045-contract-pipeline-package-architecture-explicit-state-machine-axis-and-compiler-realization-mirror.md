@@ -24,10 +24,10 @@ Accepted
 - ADR-0031: Two-Tier Transactional Memoization and Structural Interning
 - ADR-0026: Abstraction of Type Introspection and Execution
 - ADR-0025: Interface-First Design and Test Interface Pattern
-- `docs/constitution/compiler-core-protocols.md`
+- `../../constitution/compiler-core-protocols.md`
 - `docs/design/canonical-ir-stage-and-lowering-protocol.md`
-- `docs/design/stable-metadata-identity-protocol.md`
-- `docs/design/protocol-owned-metadata-interning.md`
+- `../../design/stable-metadata-identity-protocol.md`
+- `../../design/protocol-owned-metadata-interning.md`
 - `docs/release-readiness-todo.md`
 -
 

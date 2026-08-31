@@ -6,7 +6,7 @@ Status: Accepted
 
 Related Consistency References:
 
-- [ADR-0030](migration/0030-edge-aware-deterministic-cycle-truncation-strategy.md)
+- [ADR-0030](../migration/0030-edge-aware-deterministic-cycle-truncation-strategy.md)
 - [ADR-0037](0037-cycle-identity-preflight-and-deferred-raw-fact-resolution.md)
 
 ## Context
@@ -583,14 +583,14 @@ For the identity-first preflight path, this means:
 
 ## Required Follow-up
 
-1. Amend `docs/design/l1-planner-session-primitive-data-structures.md`
+1. Amend `../../design/l1-planner-session-primitive-data-structures.md`
     - full primitive byte ledger,
     - solver law,
     - reset / rollback reachability invariants,
     - sentinel initialization law,
     - arithmetic overflow guard requirements.
 
-2. Amend `docs/design/l2-plan-interner-partitioned-tier2-with-governance.md`
+2. Amend `../../design/l2-plan-interner-partitioned-tier2-with-governance.md`
     - align routing-vs-authority hierarchy,
     - clarify collision vs fault,
     - clarify governance cap scope,
@@ -608,7 +608,7 @@ For the identity-first preflight path, this means:
     - `GateOffOnAutoEquivalenceTest`
     - `ArithmeticOverflowGuardTest`
 
-4. Amend `docs/design/deterministic-active-member-projection-and-ordering-protocol.md`
+4. Amend `../../design/deterministic-active-member-projection-and-ordering-protocol.md`
     - clarify identity-first / fact-lazy active-cycle preflight,
     - clarify type-expansion metering,
     - add type-cycle identity resolution and continuity-check metering,
@@ -616,7 +616,7 @@ For the identity-first preflight path, this means:
     - bind projection/order to semantic-also accounting,
     - forbid PlannerSession mutation inside TypeExpansionPipeline.
 
-5. Amend `docs/design/l1-planner-session-primitive-data-structures.md`
+5. Amend `../../design/l1-planner-session-primitive-data-structures.md`
     - add the `TYPE_EXPANSION` cost-center band,
     - add required Type Expansion cost centers,
     - add `TYPE_CYCLE_IDENTITY_RESOLUTION`,
@@ -624,7 +624,7 @@ For the identity-first preflight path, this means:
     - document that decode bounds must be derived from actual protocol IDs or band maxima, not hand-maintained as a
       stale literal.
 
-6. Amend `docs/design/planner-budget-resolution-and-worker-lifecycle.md`
+6. Amend `../../design/planner-budget-resolution-and-worker-lifecycle.md`
     - clarify that physical and semantic counters are monotonic and rollback-resistant,
     - clarify that fresh-session restart must carry forward both remaining physical and remaining semantic budget if
       semantic work is bounded for the logical run.

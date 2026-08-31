@@ -21,12 +21,12 @@ delegating detailed maintenance to the narrower documents created after acceptan
 ## Related
 
 - ADR-0041 archival monolith: Stable Metadata Identity, BLAKE3/HID, and Protocol-Owned Interning
-- `docs/design/stable-metadata-identity-protocol.md`
-- `docs/design/protocol-owned-metadata-interning.md`
+- `../../design/stable-metadata-identity-protocol.md`
+- `../../design/protocol-owned-metadata-interning.md`
 - ADR-0042: Mechanical Sympathy, Primitive Lifecycle, and Async Ownership Governance
 - ADR-0043: Contract Graph Canonicalization, Sealed Structural References, and Incremental Identity Derivation
 - ADR-0044: Unified Runtime Memory Envelope and Pipeline Lifecycle Governance
-- `docs/constitution/compiler-core-protocols.md`
+- `../../constitution/compiler-core-protocols.md`
 
 ---
 
@@ -178,8 +178,7 @@ The implementation MUST NOT accept digest-only equality.
 ### 4.7. Runtime rekeying prohibition
 
 Observed collision pressure, queue pressure, cold overflow, or adversarial input MUST NOT cause post-visibility changes
-to
-digest suite, seed, HID width, route map, version bundle fingerprint, canonical encoding policy, or stable id order.
+to digest suite, seed, HID width, route map, version bundle fingerprint, canonical encoding policy, or stable id order.
 
 A stronger-width path is lawful only if selected before scope admission by resolved policy and golden vectors.
 
@@ -254,7 +253,7 @@ ADR-0041 delegates detailed post-acceptance maintenance to the following documen
 
 ### 5.1. Stable metadata identity protocol
 
-`docs/design/stable-metadata-identity-protocol.md` owns:
+`../../design/stable-metadata-identity-protocol.md` owns:
 
 - canonical material law;
 - canonical byte encoding law;
@@ -275,7 +274,7 @@ It MUST NOT own interner publication mechanics, physical substrate mechanics, gr
 
 ### 5.2. Protocol-owned metadata interning
 
-`docs/design/protocol-owned-metadata-interning.md` owns:
+`../../design/protocol-owned-metadata-interning.md` owns:
 
 - intern scope law;
 - candidate admission;
@@ -360,7 +359,7 @@ ADR-0044 MUST NOT redefine identity equality or physical substrate mechanics.
 
 ### 5.6. Compiler constitution enforcement
 
-`docs/constitution/compiler-core-protocols.md` owns enforcement hooks such as:
+`../../constitution/compiler-core-protocols.md` owns enforcement hooks such as:
 
 - no backend handles in core identity;
 - no runtime object authority after normalization;

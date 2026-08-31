@@ -10,7 +10,7 @@ Accepted
 
 ## Related
 
-- `docs/the-most-important-thing/what-contract-is.md`
+- `../../the-most-important-thing/what-contract-is.md`
 - `docs/todo/kontrakt-v2-reference-architecture-and-v1-foundations-en.md`
 - ADR-0046: Interface Contract Frontend
 - ADR-0048: Flow Contract Processing — Boundary Refinement and Core Entry

@@ -18,9 +18,9 @@ Draft
 - ADR-0034: Explicit Dual-Axis L2 Join Lifecycle State Machine and Single Terminalization Authority
 - ADR-0032: Capacity Law, Resource Policy Resolution, Identity Hierarchy, and Zero-Residue Semantics
 - ADR-0031: Cache-Blind Determinism and Tier-2 Governance
-- `docs/design/stable-metadata-identity-protocol.md`
-- `docs/design/protocol-owned-metadata-interning.md`
-- `docs/constitution/compiler-core-protocols.md`
+- `../../design/stable-metadata-identity-protocol.md`
+- `../../design/protocol-owned-metadata-interning.md`
+- `../../constitution/compiler-core-protocols.md`
 
 ---
 
@@ -96,8 +96,7 @@ scopes.
 ### 2.7. VM/reporting omission
 
 Planning and identity budgets are controlled, but VM execution and reporting are admitted later without being included
-in
-the same run envelope.
+in the same run envelope.
 
 ### 2.8. Background reclaimer optimism
 
@@ -112,8 +111,7 @@ Readers, leases, or backend reclamation delay prevent reuse.
 Kontrakt will introduce a unified runtime memory envelope.
 
 Every admitted run, pipeline, or top-level orchestration scope must resolve one immutable memory-envelope snapshot
-before
-expensive work begins.
+before expensive work begins.
 
 The envelope owns:
 
@@ -438,8 +436,7 @@ The incremental derivation slice covers:
 - incremental diagnostics.
 
 A full rebuild fallback is lawful only if the runtime envelope has preflighted the full rebuild slice and its overlap
-with
-existing live material.
+with existing live material.
 
 The implementation MUST NOT enter full rebuild merely because incremental budget failed.
 
@@ -619,8 +616,7 @@ Quarantine reserve covers:
 - blocked-continuation records where applicable.
 
 Quarantine MUST NOT hold arbitrary original input, full graph dumps, unbounded canonical bytes, or backend handles
-unless
-explicitly budgeted and ratified.
+unless explicitly budgeted and ratified.
 
 Repeated quarantine pressure must be attributed to logical source/domain/scope before physical worker/lane quarantine.
 

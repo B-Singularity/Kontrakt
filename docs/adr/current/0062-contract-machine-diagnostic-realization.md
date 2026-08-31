@@ -10,8 +10,8 @@ Proposed
 
 ## Related
 
-- `docs/todo/kontrakt-v1-commercial-compiler-foundation-candidate-architecture.md`
-- `docs/constitution/canonical-ir-stage-and-lowering-protocol.md`
+- `../../todo/kontrakt-v1-commercial-compiler-foundation-candidate-architecture.md`
+- `../../constitution/canonical-ir-stage-and-lowering-protocol.md`
 - ADR-0060: Diagnostic Evidence and Retention Contract
 - ADR-0061: Kontrakt Compiler Diagnostic Architecture
 - ADR-0057: Failure Contract, Explicit Machine Failure, Attribution, and Realization Boundary

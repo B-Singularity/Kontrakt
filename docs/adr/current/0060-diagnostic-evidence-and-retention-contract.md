@@ -10,8 +10,8 @@ Proposed
 
 ## Related
 
-- `docs/the-most-important-thing/what-contract-is.md`
-- `docs/constitution/canonical-ir-stage-and-lowering-protocol.md`
+- `../../the-most-important-thing/what-contract-is.md`
+- `../../constitution/canonical-ir-stage-and-lowering-protocol.md`
 - ADR-0059: Output Presentation Contract, Explicit Outward Result Shape, and Machine Exit Boundary
 - ADR-0058: Publication Contract, Explicit Outward Exposure Authority, and Core Exit Boundary
 - ADR-0057: Failure Contract, Explicit Machine Failure, Attribution, and Realization Boundary

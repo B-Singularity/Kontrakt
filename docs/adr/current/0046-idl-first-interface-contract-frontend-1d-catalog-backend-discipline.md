@@ -11,8 +11,8 @@ Accepted
 ## Related
 
 - `docs/what-contract-is.md`
-- `docs/todo/kontrakt-verifier-implementation-plan.md`
-- `docs/todo/release-readiness-todo.md`
+- `../../todo/kontrakt-verifier-implementation-plan.md`
+- `../../todo/release-readiness-todo.md`
 - ADR-0045: Contract Pipeline Package Architecture, Explicit State-Machine Axis, and Compiler Realization Mirror
 - ADR-0041: Stable Metadata Identity, BLAKE3, HID, and Protocol-Owned Interning
 - ADR-0040: Deterministic Frozen Acquisition Pipeline, Explicit Readiness, and Memory-Disciplined Publication
@@ -88,8 +88,7 @@ A valid minimum operation must require only an operation handle, an `Input Contr
 Contract`. Additional positions must be optional contract enrichment, not prerequisites for entering Kontrakt.
 
 The slot board must guide authoring. Each slot must present one bounded design question, preserve unanswered positions
-as
-explicit absence, and let Kontrakt derive only the verification, tests, enforcement, diagnostics, and optimization
+as explicit absence, and let Kontrakt derive only the verification, tests, enforcement, diagnostics, and optimization
 supported by the answers actually declared.
 
 The generated host interface and generated realization ports must remain ordinary JVM/Kotlin code. They exist for
@@ -265,9 +264,8 @@ The `override` here belongs to host-language realization. It is not part of cont
 Lowering and Publication realization ports are generated from exact IDL coordinate relations. They use ordinary host
 types and must not expose Kontrakt runtime wrappers, compiler-internal identities, or hidden contract behavior. Their
 implementations remain replaceable host-language adapters. A backend may analyze, specialize, inline, or erase a
-verified
-port call in the final physical path, but that optimization does not remove the explicit source-level implementation
-boundary. This ADR does not decide the final machine-assembly or implementation-binding protocol.
+verified port call in the final physical path, but that optimization does not remove the explicit source-level
+implementation boundary. This ADR does not decide the final machine-assembly or implementation-binding protocol.
 
 ---
 
@@ -318,8 +316,7 @@ The operation manifest is a slot board. The slot names on the left are IDL keywo
 is both a binding position and a bounded design question. The author supplies material on the right when that question
 matters. This keeps the operation shape visible without asking the user to invent the shape, the development checklist,
 and the test model from an empty file. `Policy`, `Governance`, `Budget`, and `Capacity` are not operation-manifest
-slots.
-When selected, they are bound once for the interface's closed operation set, and their declarations may express
+slots. When selected, they are bound once for the interface's closed operation set, and their declarations may express
 machine-wide limits together with explicit operation allocations or run-grant profiles.
 
 Lowering and Publication are the only one-dimensional authoring exceptions fixed by this ADR. Their exact coordinate
@@ -352,8 +349,8 @@ and output boundary. It does not silently claim Admission, Canonicalization, Fac
 Publication, Diagnostic, Version, Policy, Budget, Capacity, or Governance authority.
 
 Every other position is optional enrichment. Selecting a position adds the declared contract material and allows
-Kontrakt to derive the corresponding machine capability. More declared material gives the machine more knowledge, but
-no position receives authority merely because a backend could guess a useful behavior.
+Kontrakt to derive the corresponding machine capability. More declared material gives the machine more knowledge, but no
+position receives authority merely because a backend could guess a useful behavior.
 
 ```text
 more declared contract material
@@ -427,9 +424,8 @@ The stage names used in the contract axis are contract vocabulary, not a physica
 equivalent structure as long as the declared obligation remains intact.
 
 The required `input` and `output` slots must be selected. Every other slot and interface-scope binding is optional
-unless
-a selected contract explicitly requires another declaration. Kontrakt validates those declared dependencies rather
-than requiring the whole catalog.
+unless a selected contract explicitly requires another declaration. Kontrakt validates those declared dependencies
+rather than requiring the whole catalog.
 
 An unselected optional position becomes canonical explicit absence before lowering. The user may omit ceremony; the
 compiler may not infer a contract, insert a hidden default, or claim the missing authority.
@@ -524,8 +520,7 @@ Governance Contract:
 
 Except for the exact coordinate relations owned by Lowering and Publication, the catalog is not an authoring syntax
 decision. It names the obligation kinds that Kontrakt must recognize across frontend, resolution, lowering,
-verification,
-and backend projection.
+verification, and backend projection.
 
 The catalog remains flat. A user-facing operation manifest may group operation-local presentations as `flow`,
 `movement`, `bounds`, and `diagnostics`, but those groups only help the author read the operation. They do not compose,
@@ -551,8 +546,7 @@ interface CalculateContract {
 ```
 
 This is a valid Kontrakt Operation. Kontrakt can generate the ordinary host interface and bind the implementation
-without
-pretending that Admission, Invariant, State, Publication, or another unselected obligation has been declared.
+without pretending that Admission, Invariant, State, Publication, or another unselected obligation has been declared.
 
 The same operation may be enriched as its requirements become explicit:
 
@@ -627,8 +621,8 @@ movement:
 ```
 
 If no movement region is selected, the compiler lowers canonical absence of declared movement authority. It does not
-infer
-State from a returned value, a method completion, a field named `status`, or backend behavior. An explicitly selected
+infer State from a returned value, a method completion, a field named `status`, or backend behavior. An explicitly
+selected
 `Stateless` declaration remains available when the author needs to assert deliberate statelessness rather than merely
 leave movement unspecified.
 
@@ -665,18 +659,17 @@ Generated host interfaces and realization ports are retained reproducible build 
 They must be regenerated from `.kontrakt` source and must not be manually edited. If generated files are committed for
 consumer convenience, the committed files are still artifacts, not authority.
 
-Removing Kontrakt removes regeneration, verification, contract-aware pipeline assembly, and compiler-owned
-optimization. Retained generated host interfaces and realization ports, together with ordinary implementations compiled
-against them, remain ordinary host-language compatibility code. Removing Kontrakt does not force users to maintain
-Kontrakt syntax inside handwritten host interfaces, because this model has no handwritten host interface source for
-generated contracts.
+Removing Kontrakt removes regeneration, verification, contract-aware pipeline assembly, and compiler-owned optimization.
+Retained generated host interfaces and realization ports, together with ordinary implementations compiled against them,
+remain ordinary host-language compatibility code. Removing Kontrakt does not force users to maintain Kontrakt syntax
+inside handwritten host interfaces, because this model has no handwritten host interface source for generated contracts.
 
 ---
 
 ## 15. Consequences
 
-The accepted frontend makes the interface contract explicit without making the complete catalog a condition of entry.
-An operation may begin with one Input Contract and one Output Presentation Contract. Additional interface bindings and
+The accepted frontend makes the interface contract explicit without making the complete catalog a condition of entry. An
+operation may begin with one Input Contract and one Output Presentation Contract. Additional interface bindings and
 operation slots strengthen that machine only where the author selects them. The slot board exposes the questions that
 usually remain scattered across implementation, tests, reviews, and conventions, so users can discover and declare the
 system they want instead of inventing its structure from an empty code surface.

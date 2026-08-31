@@ -10,8 +10,8 @@ Accepted
 
 ## Related
 
-- `docs/the-most-important-thing/what-contract-is.md`
-- `docs/todo/kontrakt-verifier-implementation-plan.md`
+- `../../the-most-important-thing/what-contract-is.md`
+- `../../todo/kontrakt-verifier-implementation-plan.md`
 - ADR-0054: Policy Contract, Explicit Operating Policies, Self-Contained Contract Worlds, and Interface Binding Boundary
 - ADR-0056: Governance Contract, Policy-World Control, Whole-Machine Coordination, and Selection Boundary
 - ADR-0051: Budget Contract, Explicit Allowance, Contract-Scoped Resource Limits, and Backend Realization Boundary

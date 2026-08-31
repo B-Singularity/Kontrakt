@@ -15,8 +15,8 @@ Proposed
 - ADR-0034: Explicit L2 Join Lifecycle State Machine
 - ADR-0035: Deterministic Balanced Lanes for Tier-2 Join Completion Delivery
 - ADR-0043: Contract Graph Canonicalization, Sealed Structural References, and Incremental Identity Derivation
-- `docs/design/stable-metadata-identity-protocol.md` (post-acceptance extraction target)
-- `docs/design/protocol-owned-metadata-interning.md` (post-acceptance extraction target)
+- `../../design/stable-metadata-identity-protocol.md` (post-acceptance extraction target)
+- `../../design/protocol-owned-metadata-interning.md` (post-acceptance extraction target)
 - `docs/adr/0044-unified-runtime-memory-envelope-and-pipeline-lifecycle-governance.md` (planned)
 
 ## 1. Context
@@ -190,8 +190,7 @@ Examples:
 A port name may appear in domain or application code.
 
 A backend name must remain in adapter, infrastructure, benchmark, test-fixture, or runtime-profile code unless a later
-ADR
-explicitly promotes it to protocol material.
+ADR explicitly promotes it to protocol material.
 
 The ordinary v1 backend may be JVM heap primitive arrays.
 
@@ -220,8 +219,7 @@ Matrix terminology note:
 `Substrate port / backend family` names the lawful substrate capability and ownership family.
 
 It does not require that domain or application core code import a concrete heap-array, `MemorySegment`, off-heap,
-native,
-or mapped implementation.
+native, or mapped implementation.
 
 Concrete physical backends are selected by infrastructure/runtime profile and must remain observationally equivalent to
 the core law.
@@ -308,8 +306,7 @@ These concrete storage examples are backend choices.
 They are not semantic authority.
 
 They MUST NOT be imported as required physical types by metadata identity, planning, interner, frozen-image, or
-execution
-domain law unless a later ADR explicitly ratifies a backend-specific runtime profile.
+execution domain law unless a later ADR explicitly ratifies a backend-specific runtime profile.
 
 Core-facing code SHOULD depend on substrate ports or explicit primitive-compatible handles.
 
@@ -370,8 +367,7 @@ assignment, canonical ordering, semantic equality, or publication law.
 Run-local, lane-local, worker-local, scope-local, and scratch arenas are not published artifacts.
 
 They MUST be reclaimed by deterministic reset, cursor reset, scope teardown, run teardown, lane teardown, or
-adapter-owned
-lifecycle cleanup.
+adapter-owned lifecycle cleanup.
 
 They MUST NOT require reader-epoch reclamation unless they become published immutable artifacts.
 
@@ -399,8 +395,7 @@ Lane epoch slots MUST be:
 - padded or otherwise isolated to reduce false sharing where implementation evidence supports the claim.
 
 The ordinary read hot path MUST NOT mutate a global reader list, acquire a global lock, or increment/decrement a
-globally
-contended reader counter.
+globally contended reader counter.
 
 ### 7.5. Async Event Ingestion Law
 
@@ -519,8 +514,7 @@ Zero-copy is a hot decode optimization.
 It is not a lifetime ownership model.
 
 If decoded payload material must survive the seal boundary, it MUST be copied, compacted, migrated, or promoted under
-one
-of the ratified publication paths in this section.
+one of the ratified publication paths in this section.
 
 The ordinary lawful shape is:
 
@@ -560,8 +554,7 @@ PublishedSlice
 or by a verified canonical byte handle with equivalent type-state guarantees.
 
 Publication APIs MUST accept only published-slab slices, sealed canonical byte handles, stable intern ids, or
-frozen-image
-owned handles.
+frozen-image owned handles.
 
 They MUST NOT accept staging-slab slice types.
 
@@ -942,8 +935,7 @@ External callbacks, adapter completions, retired-epoch notifications, timeout si
 NOT directly mutate lane-owned execution state or canonical identity state.
 
 If an asynchronous source must interact with the engine, it MUST be converted into an explicit event record and
-delivered
-to one of:
+delivered to one of:
 
 - the owning deterministic engine lane;
 - a bounded engine-owned maintenance queue;
@@ -1320,8 +1312,7 @@ Therefore this ADR defines a logical cache-line grouping law rather than a stric
 Heap primitive arrays are the portable v1 baseline.
 
 Off-heap, direct-memory, generated, or otherwise explicitly aligned probe groups are optional advanced physical
-backends,
-not mandatory v1 compliance requirements.
+backends, not mandatory v1 compliance requirements.
 
 A release claiming exact 64-byte physical alignment MUST prove that claim with layout documentation and benchmark
 evidence for the target runtime.
@@ -1345,8 +1336,7 @@ Preferred layouts:
 JVM heap primitive arrays do not by themselves prove physical cache-line alignment.
 
 A `LongArray`, `IntArray`, or `ByteArray` may have an object header, runtime-specific base offset, compressed-oops
-layout,
-alignment padding, and GC relocation behavior.
+layout, alignment padding, and GC relocation behavior.
 
 Therefore, a JVM heap-array implementation MUST treat 64-byte grouping as a logical probe grouping objective, not as a
 guaranteed physical cache-line alignment claim.
@@ -1448,11 +1438,9 @@ Allowed small-inline modes:
 - `SEGREGATED_INLINE_TABLE`: inline candidates and external-slab candidates are stored or scanned through separate
   primitive tables / lanes;
 - `PRECLASSIFIED_TWO_PASS`: candidates are preclassified into inline and external-slab ranges before the hot
-  verification
-  loop;
+  verification loop;
 - `MEASURED_MIXED`: a mixed inline/external layout is allowed only with benchmark evidence proving that the branch is
-  not
-  a throughput regression for the target workload and runtime.
+  not a throughput regression for the target workload and runtime.
 
 A hot verification loop SHOULD NOT contain an unpredictable per-candidate branch of the form:
 
@@ -1606,13 +1594,11 @@ They MUST preserve the ADR-0041 invariants:
 - backend selection must not change semantic equality;
 - backend selection must not change `PlanCacheKey` equality;
 - backend selection must not make routing, cache locality, queue pressure, lane assignment, physical address, or GC
-  timing
-  semantic authority;
+  timing semantic authority;
 - physical acceleration remains observationally equivalent to the deterministic reference pipeline.
 
 The subsection headings below preserve ADR-0041 section anchors so that later extraction reviews can trace every moved
-law
-back to its accepted source.
+law back to its accepted source.
 
 #### 10.1. ADR-0041 13.13.4.1 Owner-Lane Routing, Routed Batches, Backpressure, Suppression, and Skew Handling
 
@@ -1664,8 +1650,7 @@ Routing material is not equality authority.
 `routePrefix`, `route64`, HID prefix material, verifier-prefix material, and local shape summaries MAY route candidates.
 
 They MUST NOT replace canonical byte encoding, collision verification, deterministic stable id assignment, table
-coverage
-validation, or publication integrity validation.
+coverage validation, or publication integrity validation.
 
 The route map MUST be resolved before the route epoch admits candidates.
 
@@ -1972,8 +1957,7 @@ The implementation MUST NOT block a worker indefinitely.
 Circular backpressure MUST be broken by deterministic self-drain before cross-owner assistance or terminal retry.
 
 When an engine lane enters a route-drain safe point, it MUST first drain its own inbound routing inbox and
-routing-control
-queue up to the resolved step budget before waiting on another owner lane's progress.
+routing-control queue up to the resolved step budget before waiting on another owner lane's progress.
 
 The self-drain phase is lawful because the lane processes state that it already owns.
 
@@ -2305,8 +2289,7 @@ publish replacement solely because ordinary capacity increased
 ``````
 
 This prohibition exists because the interner has a resolved candidate cap, resolved byte envelope, resolved probe
-budget,
-and resolved publication boundary before the scope is admitted.
+budget, and resolved publication boundary before the scope is admitted.
 
 Blind doubling is an amortized general-purpose collection heuristic.
 
@@ -2334,12 +2317,10 @@ This is especially true for heap-backed JVM profiles, where GC timing, heap comp
 return are not deterministic protocol events.
 
 A transient reserve may be reused across sequential resize / rebuild / reindex / migration events only after the
-selected
-ADR-0042 backend profile proves one of the following:
+selected ADR-0042 backend profile proves one of the following:
 
 - the bytes are still reserved inside the same pre-admitted arena and are immediately reusable by deterministic
-  pointer /
-  offset reset;
+  pointer / offset reset;
 - the backend uses explicit off-heap/native/`MemorySegment` lifetime control and has completed the required release /
   close / ownership handoff proof;
 - the backend's allocator profile guarantees deterministic reuse of the retired region within the same scope;
@@ -2364,8 +2345,7 @@ A released profile SHOULD prefer zero-resize admission when the resolved candida
 feasible.
 
 The capacity solver MAY choose initial logical capacity large enough to satisfy the resolved candidate cap and
-load-factor
-law before ordinary insertion begins.
+load-factor law before ordinary insertion begins.
 
 If a profile intentionally starts below the cap to reduce initial footprint, it MUST declare:
 
@@ -2446,8 +2426,7 @@ A backend profile must document at least:
 - and benchmark / golden-vector evidence.
 
 A backend that cannot prove compliance with the resolved ADR-0041 probe budget MUST fail backend profile admission
-before
-identity scope admission or fall back to a compliant profile.
+before identity scope admission or fall back to a compliant profile.
 
 It MUST NOT weaken the ADR-0041 budget after candidates have been admitted.
 
@@ -2569,11 +2548,9 @@ Allowed small-inline modes:
 - `SEGREGATED_INLINE_TABLE`: inline candidates and external-slab candidates are stored or scanned through separate
   primitive tables / lanes;
 - `PRECLASSIFIED_TWO_PASS`: candidates are preclassified into inline and external-slab ranges before the hot
-  verification
-  loop;
+  verification loop;
 - `MEASURED_MIXED`: a mixed inline/external layout is allowed only with benchmark evidence proving that the branch is
-  not
-  a throughput regression for the target workload and runtime.
+  not a throughput regression for the target workload and runtime.
 
 `MEASURED_MIXED` is never the default high-performance mode.
 
@@ -2655,12 +2632,10 @@ A release claiming small-inline acceleration MUST publish:
 Segregating inline candidates from external-slab candidates is a physical table-layout decision.
 
 It MUST NOT silently multiply routing-buffer dimensions, owner inbox dimensions, staged-byte budgets, or
-batch-fragmentation
-surfaces.
+batch-fragmentation surfaces.
 
 A profile using `SEGREGATED_INLINE_TABLE` with owner-lane routing MUST choose one of the following transport shapes
-before
-scope admission:
+before scope admission:
 
 ``````text
 ROUTE_NEUTRAL_TRANSPORT
@@ -2742,8 +2717,7 @@ A two-pass profile MUST fail profile admission or fall back to `DISABLED`, `SEGR
 ##### 13.18.2.1. Chunked Preclassification Locality Law
 
 A `PRECLASSIFIED_TWO_PASS` implementation SHOULD process candidates in bounded cache-local chunks when the full
-candidate
-set may exceed the selected backend's verified cache-local working-set envelope.
+candidate set may exceed the selected backend's verified cache-local working-set envelope.
 
 The preferred physical shape is:
 
@@ -2823,8 +2797,7 @@ Failure of a physical inline optimization gate is not semantic inequality.
 It is a backend/profile admission failure or a physical-optimization fallback decision.
 
 It MUST NOT alter canonical bytes, HID derivation, collision verification, stable intern id assignment, semantic
-equality,
-or publication order.
+equality, or publication order.
 
 #### 10.6. ADR-0041 13.25.1 Physical Locality Backend Isolation
 

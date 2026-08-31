@@ -14,8 +14,8 @@ Accepted
 - ADR-0031: Two-Tier Transactional Memoization and Structural Interning
 - ADR-0032: Capacity Law, Resource Policy Resolution, Identity Hierarchy, and Zero-Residue Semantics
 - ADR-0036: Joined-Wait Planning-Run Suspension Bridge and Fresh-Session Restart Authority
-- `docs/design/deterministic-active-member-projection-and-ordering-protocol.md`
-- `docs/design/l1-planner-session-primitive-data-structures.md`
+- `../../design/deterministic-active-member-projection-and-ordering-protocol.md`
+- `../../design/l1-planner-session-primitive-data-structures.md`
 
 ## Context
 

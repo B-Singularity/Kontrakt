@@ -10,8 +10,8 @@ Proposed
 
 ## Related
 
-- `docs/the-most-important-thing/what-contract-is.md`
-- `docs/todo/kontrakt-verifier-implementation-plan.md`
+- `../../the-most-important-thing/what-contract-is.md`
+- `../../todo/kontrakt-verifier-implementation-plan.md`
 - ADR-0063: Contract Establishment, Identity, Applicability, and Composition
 - ADR-0055: Whole Machine, Pipeline Composition, and Contract Concurrency
 - ADR-0054: Policy Contract, Explicit Operating Modes, Self-Contained Contract Worlds, and Interface Binding Boundary
@@ -27,7 +27,7 @@ Proposed
 - ADR-0041: Stable Metadata Identity, BLAKE3, HID, and Protocol-owned Interning
 - ADR-0040: Deterministic Frozen Acquisition Pipeline, Explicit Readiness, and Memory-Disciplined Publication
 - ADR-0039: Adapter-Neutral Metamodel Acquisition, Frozen Fact Image, and Backend-Handle Erasure
-- `docs/design/planner-budget-resolution-and-worker-lifecycle.md`
+- `../../design/planner-budget-resolution-and-worker-lifecycle.md`
 
 ---
 

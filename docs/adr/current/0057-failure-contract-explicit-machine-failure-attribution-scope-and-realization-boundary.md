@@ -10,8 +10,8 @@ Accepted
 
 ## Related
 
-- `docs/the-most-important-thing/what-contract-is.md`
-- `docs/todo/kontrakt-verifier-implementation-plan.md`
+- `../../the-most-important-thing/what-contract-is.md`
+- `../../todo/kontrakt-verifier-implementation-plan.md`
 - ADR-0056: Governance Contract, Policy-World Control, and Selection Boundary
 - ADR-0055: Whole Machine, Pipeline Composition, and Contract Concurrency
 - ADR-0054: Policy Contract, Explicit Operating Modes, Self-Contained Contract Worlds, and Interface Binding Boundary

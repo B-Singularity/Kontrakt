@@ -10,8 +10,8 @@ Accepted
 
 ## Related
 
-- `docs/the-most-important-thing/what-contract-is.md`
-- `docs/todo/kontrakt-verifier-implementation-plan.md`
+- `../../the-most-important-thing/what-contract-is.md`
+- `../../todo/kontrakt-verifier-implementation-plan.md`
 - ADR-0056: Governance Contract, Policy-World Control, Whole-Machine Coordination, and Selection Boundary
 - ADR-0053: Version Contract, Sovereign Contract Revision History, and Realization Boundary
 - ADR-0052: Capacity Contract, Explicit Safe Operating Memory Limits, and Realization Boundary
