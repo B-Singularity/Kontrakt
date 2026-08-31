@@ -1,6 +1,6 @@
 # ADR-005: Adoption of a Unified Two-Pillar Strategy for Test Automation
 
-**Status:** Accepted
+**Status:** Deprecated
 
 **Date:** 2025-11-23
 

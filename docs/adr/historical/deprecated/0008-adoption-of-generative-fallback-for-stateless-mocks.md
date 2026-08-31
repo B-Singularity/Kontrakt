@@ -1,14 +1,13 @@
 # ADR-008: Adoption of Generative Fallback for Stateless Mocks
 
-**Status:** Accepted
+**Status:** Deprecated
 
 **Date:** 2025-12-09
 
 ## Context
 
 Standard mocking libraries (like Mockito) typically return default values such as `null`, `0`, or `false` when an
-unstubbed method is called.
-This behavior leads to critical issues in a "Zero Boilerplate" environment:
+unstubbed method is called. This behavior leads to critical issues in a "Zero Boilerplate" environment:
 
 1. **NPE Hell:** Service logic often crashes with a `NullPointerException` immediately upon consuming a return value
    from a Mock.

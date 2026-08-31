@@ -4,13 +4,12 @@ Date: 2026-02-19
 
 Status: Accepted
 
-Supersedes: [ADR-0010](0010-strict-circular-reference-detection-strategy.md), [ADR-0027](0027-deterministic-cycle-truncation-policy.md)
+Supersedes: [ADR-0010](historical/superseded/0010-strict-circular-reference-detection-strategy.md), [ADR-0027](0027-deterministic-cycle-truncation-policy.md)
 
 Normative References: [ADR-0029](0029-runtime-link-handle-protocol-and-integrity.md)
 
-Related Consistency References (
-AMENDED): Related Consistency References (
-AMENDED): [ADR-0032](0032-capacity-law-resource-policy-resolution-identity-hierarchy-and-zero-residue-semantics.md), [ADR-0037](0037-cycle-identity-preflight-and-deferred-raw-fact-resolution.md)
+Related Consistency References (AMENDED): Related Consistency References
+(AMENDED): [ADR-0032](0032-capacity-law-resource-policy-resolution-identity-hierarchy-and-zero-residue-semantics.md), [ADR-0037](0037-cycle-identity-preflight-and-deferred-raw-fact-resolution.md)
 
 
 <!-- AMENDED(2026-04-16): Added deterministic planning preconditions for active-member selection timing, projection freeze, iteration stability, source-artifact reconciliation, explicit unknown/unavailable sentinel law, entropy exclusion, integer arithmetic discipline, mutable-global contamination prohibition, and deterministic diagnostic evidence ordering without changing prior semantic cycle-truncation policy. -->
@@ -63,8 +62,8 @@ active-cycle detection reports a cycle miss.
 
 This amendment is the ADR-0030-facing expression of ADR-0037.
 
-ADR-0030 remains the authority for deterministic breakpoint selection.
-ADR-0037 is the authority for the pre-cycle staging rule that makes breakpoint selection identity-first and fact-lazy.
+ADR-0030 remains the authority for deterministic breakpoint selection. ADR-0037 is the authority for the pre-cycle
+staging rule that makes breakpoint selection identity-first and fact-lazy.
 
 ## Decision
 
@@ -124,8 +123,7 @@ normative:
 * **Rollback Rule (AMENDED):** rollback may restore rollback-scoped checkpoints, stack-local planner state, and local
   builder/cache log positions, but it **MUST NOT** reduce already-consumed cumulative physical or semantic work.
 * **Reason:** rollback is a control-flow recovery mechanism, not a physical time reversal mechanism. Already-consumed
-  CPU
-  work and semantic budget consumption remain spent.
+  CPU work and semantic budget consumption remain spent.
 
 #### 1.2. Mutable Global Contamination Prohibition Law (AMENDED)
 
@@ -232,8 +230,8 @@ This preserves the two-phase identity law:
 
 `TypeCycleIdentity` replaces any ambiguous conceptual use of raw `nodeIdentity64` as the cycle-detection input.
 
-Implementation may still store `identityBits64` in primitive `LongArray` form.
-The semantic meaning, however, is cycle identity routing, not raw node payload identity.
+Implementation may still store `identityBits64` in primitive `LongArray` form. The semantic meaning, however, is cycle
+identity routing, not raw node payload identity.
 
 #### 2.1. Identity Representation Boundary (AMENDED)
 
@@ -297,8 +295,8 @@ Required rules:
 
 Reason:
 
-Cycle identity answers whether the type is already active on the stack.
-It must not be contaminated by member traversal policy or adapter-specific fact surfaces.
+Cycle identity answers whether the type is already active on the stack. It must not be contaminated by member traversal
+policy or adapter-specific fact surfaces.
 
 #### 2.4. Nullability Strip and Generic Reification Law (AMENDED)
 
@@ -313,8 +311,8 @@ User?
 
 Reason:
 
-Nullability changes absence semantics.
-It does not create a different active-cycle type for structural recursion detection.
+Nullability changes absence semantics. It does not create a different active-cycle type for structural recursion
+detection.
 
 Generic arguments MUST be represented deterministically.
 
@@ -391,8 +389,8 @@ provided that this encoding remains purely mechanical and does not change the se
 
 Reason:
 
-The semantic protocol must expose **availability** explicitly.
-A sentinel such as `-1` may be used for primitive lowering, but it must not replace the semantic fact model.
+The semantic protocol must expose **availability** explicitly. A sentinel such as `-1` may be used for primitive
+lowering, but it must not replace the semantic fact model.
 
 #### 3.3. Entropy Target Key (Index Shift Immunity)
 
@@ -588,8 +586,8 @@ Examples of required incoming-edge metadata may include:
 
 The current cycle-hit type's own constructors/properties are not required to detect the cycle or select the breakpoint.
 
-Previously entered frames in the active segment may already own `OrderedActiveMembers`.
-That is lawful because those frames passed cycle detection earlier.
+Previously entered frames in the active segment may already own `OrderedActiveMembers`. That is lawful because those
+frames passed cycle detection earlier.
 
 The current cycle-hit frame MUST NOT force raw-fact resolution merely to participate in breakpoint selection.
 
@@ -605,8 +603,8 @@ No semantic planning decision may depend on unstable adapter iteration order.
 
 Normative rule:
 
-* raw fact gathering may internally use any data structure,
-  but unstable iteration order MUST NOT cross the domain boundary as semantic truth;
+* raw fact gathering may internally use any data structure, but unstable iteration order MUST NOT cross the domain
+  boundary as semantic truth;
 * insertion-order-preserving containers are insufficient if their insertion order is already unstable upstream;
 * the Core MUST treat backend-provided raw member ordering as non-authoritative and rely only on the deterministic
   selection + projection + canonical ordering protocol of this ADR.
@@ -620,9 +618,8 @@ adapters) MUST reconcile to the same planning-relevant semantic fact surface.
 
 Normative rule:
 
-* if one source cannot natively provide a required planning fact,
-  the adapter MUST either reconstruct it deterministically or emit an explicit unavailable sentinel handled by the Core
-  under deterministic fallback law;
+* if one source cannot natively provide a required planning fact, the adapter MUST either reconstruct it
+  deterministically or emit an explicit unavailable sentinel handled by the Core under deterministic fallback law;
 * source-specific capability differences MUST NOT silently rewrite constructor selection, property eligibility,
   canonical ordering, collision behavior, or diagnostic evidence order.
 
@@ -659,15 +656,13 @@ To prevent semantic-cost policy from leaking into planner-internal wrapper types
 * The semantic cost bound for:
     * deferred break results,
     * substitution results,
-    * and fully materialized results
-      MUST be computed by the upstream semantic assembly / materialization boundary and then passed explicitly into the
-      committed-result layer.
+    * and fully materialized results MUST be computed by the upstream semantic assembly / materialization boundary and
+      then passed explicitly into the committed-result layer.
 * Therefore, committed-result wrapper types MUST NOT be treated as the SSOT location for semantic-cost policy.
 * This keeps:
     * breakpoint choice,
     * concrete realization form,
-    * and semantic-cost ownership
-      on distinct boundaries.
+    * and semantic-cost ownership on distinct boundaries.
 
 *Reason:* breakpoint selection is semantic and comparator-driven, while semantic-cost computation is a separate contract
 that must remain explicit, cache-blind, and centrally owned.
@@ -680,8 +675,8 @@ that must remain explicit, cache-blind, and centrally owned.
 
 To align this ADR with the later capacity-law documents without changing the original meaning:
 
-* The hard-cap concept in this ADR corresponds to the resolved runtime caps later formalized as
-  **`ResolvedPlannerSessionCaps`**.
+* The hard-cap concept in this ADR corresponds to the resolved runtime caps later formalized as **
+  `ResolvedPlannerSessionCaps`**.
 * Representative cap categories include, but are not limited to:
     * `maxNodeIdCap`
     * `maxDepthCap`
@@ -817,8 +812,7 @@ MUST depend only on:
 * deterministic capability state,
 * and explicitly injected deterministic seed surfaces already ratified by protocol.
 
-This law does not require every identifier to be content-hash based.
-It requires explicit separation among:
+This law does not require every identifier to be content-hash based. It requires explicit separation among:
 
 * routing identity,
 * semantic identity,
@@ -863,8 +857,7 @@ exclusively for schema collisions (`AmbiguousEdgeKey`, `AmbiguousEntropyTargetKe
         * `AmbiguousEdgeKey(ownerType, serializedKey, conflictingMembers, faultKind: PlanningFaultKind)` (Uses Dynamic
           Fault Rule).
         * `AmbiguousEntropyTargetKey(ownerType, targetKey, conflictingMembers, faultKind: PlanningFaultKind)` (Uses
-          Dynamic
-          Fault Rule).
+          Dynamic Fault Rule).
         * `InvalidCanonicalKeyComponent(invalidComponent, reason, faultKind = USER_MODEL_INVALID)`
             * *Rule:* Thrown strictly when Reality Defense detects `|`. Always attributed to the user's model or their
               build pipeline (e.g., obfuscator/plugin).
@@ -940,8 +933,8 @@ warnings based strictly on the `faultKind` and provided Domain descriptors.
 
 * The explicit frame machine is more verbose than native recursion.
 * Rollback/checkpoint management requires disciplined implementation and compliance testing.
-* Determinism now depends on stricter Port contract enforcement (normalization, origin/version reporting,
-  canonical component hygiene).
+* Determinism now depends on stricter Port contract enforcement (normalization, origin/version reporting, canonical
+  component hygiene).
 * Additional governance/capacity documents must remain consistent with this ADR to avoid semantic drift.
 * Introduces a separate `TypeCycleIdentityProvider` dependency before raw-fact resolution.
 * Requires stricter subject-continuity checks between `TypeReference`, `ResolvedTypeShape`, and `TypeCycleIdentity`.

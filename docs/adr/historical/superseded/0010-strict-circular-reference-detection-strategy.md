@@ -1,7 +1,7 @@
 # ADR-010: Strict Circular Reference Detection Strategy
 
 * **Status:** Superseded
-* **Superseded by** : [ADR-0027](0027-deterministic-cycle-truncation-policy.md)
+* **Superseded by** : [ADR-0027](../../0027-deterministic-cycle-truncation-policy.md)
 * **Date:** 2025-12-16
 
 ## 1. Context

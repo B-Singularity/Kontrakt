@@ -4,13 +4,13 @@
 
 **Status**: Accepted
 
-**Supersedes**: [ADR-0010](0010-strict-circular-reference-detection-strategy.md)
+**Supersedes**: [ADR-0010](historical/superseded/0010-strict-circular-reference-detection-strategy.md)
 
 ## Context
 
 Unit testing environments frequently involve domain models with recursive structures. The previous "Strict Fail-Fast"
-policy (ADR-010) prevented users from generating tests for common models, limiting usability.
-However, allowing recursion blindly risks `StackOverflowError` or "Silent Failures".
+policy (ADR-010) prevented users from generating tests for common models, limiting usability. However, allowing
+recursion blindly risks `StackOverflowError` or "Silent Failures".
 
 We need a strategy that:
 

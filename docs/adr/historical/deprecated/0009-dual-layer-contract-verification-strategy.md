@@ -1,6 +1,6 @@
 # ADR-009: Adoption of Dual-Layer Contract Verification Strategy
 
-**Status:** Accepted
+**Status:** Deprecated
 
 **Date:** 2025-12-13
 
@@ -50,8 +50,8 @@ We distinguish between Data Objects and Behavioral Components to apply construct
 
 * **Data Supply:** `FixtureGenerator` is solely responsible for generating data (both valid and invalid) and contains no
   validation logic.
-* **Rule Enforcement:** `ContractValidator` serves as the central rule engine. It is used internally by Domain
-  Entities (for self-defense) and externally by the Executor (for compliance checks).
+* **Rule Enforcement:** `ContractValidator` serves as the central rule engine. It is used internally by Domain Entities
+  (for self-defense) and externally by the Executor (for compliance checks).
 
 ## Consequences
 

@@ -1,6 +1,6 @@
 # ADR-006: Adoption of Scoped Discovery Mechanism for Performance Optimization
 
-**Status:** Accepted
+**Status:** Deprecated
 
 **Date:** 2025-12-09
 
@@ -40,7 +40,7 @@ operations based on the provided `ScanScope`.
 
 ### Positive
 
-* **Performance:** Single file execution becomes instantaneous (O(1) lookup vs O(N) scan).
+* **Performance:** Single file execution becomes instantaneous (O (1) lookup vs O (N) scan).
 * **Scalability:** The framework remains fast even as the project grows into a massive Monorepo.
 * **Flexibility:** Future scopes like "Git Changed Files" or "Failed Tests Only" can be easily added to the `ScanScope`
   interface.

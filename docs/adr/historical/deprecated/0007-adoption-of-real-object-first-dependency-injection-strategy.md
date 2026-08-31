@@ -1,14 +1,13 @@
 # ADR-007: Adoption of "Real Object First" Dependency Injection Strategy
 
-**Status:** Accepted
+**Status:** Deprecated
 
 **Date:** 2025-12-09
 
 ## Context
 
 Traditional unit testing practices (Solitary Unit Testing) often advocate replacing all dependencies of the System Under
-Test (SUT) with **Mocks**.
-However, this approach introduces several significant issues:
+Test (SUT) with **Mocks**. However, this approach introduces several significant issues:
 
 1. **False Positives:** Tests may pass even when there are integration bugs because Mocks are configured to behave
    differently from the actual implementation.

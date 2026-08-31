@@ -1,6 +1,6 @@
 # ADR-003: Adoption of Asynchronous API Port Contracts
 
-**Status:** Accepted
+**Status:** Migration Pending
 
 **Date:** 2025-10-11
 
