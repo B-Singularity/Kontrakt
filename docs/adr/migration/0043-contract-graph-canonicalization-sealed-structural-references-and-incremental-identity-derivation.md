@@ -2,7 +2,7 @@
 
 ## Status
 
-Draft
+Migration Pending
 
 ## Date
 
@@ -18,13 +18,13 @@ Draft
 - ADR-0035: Deterministic M:N Dispatch Lanes for Tier-2 Join Completion Delivery
 - ADR-0034: Explicit Dual-Axis L2 Join Lifecycle State Machine and Single Terminalization Authority
 - ADR-0032: Capacity Law, Resource Policy Resolution, Identity Hierarchy, and Zero-Residue Semantics
-- `docs/constitution/compiler-core-protocols.md`
+- `../../constitution/compiler-core-protocols.md`
 - `docs/the-most-important-thing/interface-as-contract.md` (forthcoming top-level contract definition)
 - `docs/design/canonical-ir-stage-and-lowering-protocol.md`
-- `docs/design/l1-planner-session-primitive-data-structures.md`
-- `docs/design/l2-plan-interner-partitioned-tier2-with-governance.md`
-- `docs/design/stable-metadata-identity-protocol.md` (post-ADR-0041 extraction target)
-- `docs/design/protocol-owned-metadata-interning.md` (post-ADR-0041 extraction target)
+- `../../design/l1-planner-session-primitive-data-structures.md`
+- `../../design/l2-plan-interner-partitioned-tier2-with-governance.md`
+- `../../design/stable-metadata-identity-protocol.md` (post-ADR-0041 extraction target)
+- `../../design/protocol-owned-metadata-interning.md` (post-ADR-0041 extraction target)
 - ADR-0044: Unified Runtime Memory Envelope and Pipeline Lifecycle Governance (planned)
 
 ---
@@ -43,8 +43,8 @@ canonical material
 -> deterministic stable intern id assignment
 ``````
 
-ADR-0042 defines the mechanical substrate and ownership laws needed to store, publish, read, and reclaim primitive
-state without allowing physical layout to become semantic identity.
+ADR-0042 defines the mechanical substrate and ownership laws needed to store, publish, read, and reclaim primitive state
+without allowing physical layout to become semantic identity.
 
 However, Kontrakt's contract model is broader than metadata identity.
 
@@ -258,8 +258,7 @@ Structural identity MUST NOT depend on:
 ### 5.3. Contextual Identity
 
 Contextual identity is parent/context-dependent identity for a graph unit under a specific use site, edge role,
-selector,
-state, protocol position, boundary, or governance context.
+selector, state, protocol position, boundary, or governance context.
 
 Contextual identity answers:
 
@@ -815,8 +814,7 @@ The forthcoming contract definition must define:
 
 - what contract facts exist;
 - how interface, annotation, DSL, compiler metadata, generated indexes, DTOs, boundary declarations, governance
-  policies,
-  protocol rules, and state-machine declarations lower into those facts;
+  policies, protocol rules, and state-machine declarations lower into those facts;
 - which facts are graph units;
 - which edges are structural or contextual;
 - which edges are ordered or unordered;
@@ -840,13 +838,13 @@ It consumes:
 
 - ADR-0041 canonical identity protocol;
 - ADR-0041 digest/HID/interner substrate;
-- post-ADR-0041 `docs/design/stable-metadata-identity-protocol.md`;
-- post-ADR-0041 `docs/design/protocol-owned-metadata-interning.md`;
+- post-ADR-0041 `../../design/stable-metadata-identity-protocol.md`;
+- post-ADR-0041 `../../design/protocol-owned-metadata-interning.md`;
 - ADR-0042 primitive substrate lifecycle;
 - and the forthcoming top-level contract definition.
 
-It MUST NOT redefine canonical byte encoding, HID equality meaning, metadata interning, physical substrate ownership,
-or final contract ontology.
+It MUST NOT redefine canonical byte encoding, HID equality meaning, metadata interning, physical substrate ownership, or
+final contract ontology.
 
 ### 17.1. Graph-Lowered Contract Fact Boundary
 
@@ -945,8 +943,7 @@ A graph interner MAY use ADR-0041 stable metadata/interner primitives such as:
 - and bounded diagnostics.
 
 However, graph interning MUST define its own graph-unit identity domains, graph intern scopes, and graph-unit
-compatibility
-axes.
+compatibility axes.
 
 A graph stable intern id is not automatically comparable to a metadata stable intern id.
 
@@ -1185,8 +1182,7 @@ A released ADR-0043 implementation MUST provide golden vectors for:
 2. Structural identity is parent-independent.
 3. Contextual identity is parent/context-dependent.
 4. Parent canonical material should reference sealed child structural references instead of recursively inlining
-   arbitrary
-   child bytes.
+   arbitrary child bytes.
 5. Bare HID is not a sealed structural reference.
 6. Sealed structural references require canonical encoding, digest-suite derivation, collision verification, and seal.
 7. Graph interning is protocol-owned and collision-verified.
@@ -1197,7 +1193,7 @@ A released ADR-0043 implementation MUST provide golden vectors for:
 12. Cyclic graph material uses deterministic SCC sealing.
 13. Incremental derivation must be equivalent to from-scratch derivation.
 14. Incremental reuse requires dependency classification.
-15. O(1) claims apply only with respect to sealed child byte length per child reference, not entire subtree size.
+15. O (1) claims apply only with respect to sealed child byte length per child reference, not entire subtree size.
 16. L2 cache hits are not semantic equality authority.
 17. Physical substrate backends do not change graph identity.
 18. ADR-0042 owns physical lifecycle and async ownership.
@@ -1280,8 +1276,7 @@ Full rebuild is not free.
 It may consume more memory and execution budget than the incremental path that failed.
 
 A full rebuild fallback is lawful only after the caller-owned boundary proves that the full rebuild envelope is
-available
-or admits a separate continuation scope.
+available or admits a separate continuation scope.
 
 ### 20.9. Let Physical Substrate Define Graph Identity
 

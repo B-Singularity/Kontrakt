@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted
+Migration Pending
 
 ## Date
 
@@ -10,8 +10,8 @@ Accepted
 
 ## Related
 
-- `docs/the-most-important-thing/what-contract-is.md`
-- `docs/todo/kontrakt-verifier-implementation-plan.md`
+- `../../the-most-important-thing/what-contract-is.md`
+- `../../todo/kontrakt-verifier-implementation-plan.md`
 - ADR-0049: Flow Contract Processing — Fact, Invariant, Publication, and Output Presentation
 - ADR-0048: Flow Contract Processing — Boundary Refinement and Core Entry
 - ADR-0047: One-Dimensional Contract Presentations, Pipeline-Slot Selection, and Backend Realization Boundary
