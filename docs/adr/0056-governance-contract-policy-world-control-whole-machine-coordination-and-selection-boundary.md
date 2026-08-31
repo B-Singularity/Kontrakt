@@ -172,11 +172,17 @@ relation and graph connectivity create no precedence. Disjoint Governance domain
 while any separately required higher-scope coherence remains the responsibility of the authority that owns that
 composition.
 
+Governance authoring and semantic expression remain flat. Exact semantic material and exact direct relations may, when
+viewed together, form a graph and the semantic-establishment subset is acyclic, but graph shape, traversal, recursive
+reference following, source containment, and higher-order Contract invocation do not establish Governance meaning.
+Derived dependency, invalidation, scheduling, or diagnostic graphs remain compiler or subsystem knowledge.
+
 An established Binding is immutable. Replacement and Withdrawal establish later Governance meaning without rewriting
 that Binding, while Binding Transition establishes the semantic cut at which later applications may acquire different
-Binding applicability. Once one exact governed application has acquired an applicable Binding, later Governance change
-does not replace that Binding inside the same application. How a backend preserves that continuity is realization. The
-common non-retroactive law remains owned by ADR-0063.
+Binding applicability. For one exact Binding, competing succession or termination authority cannot establish, and for
+one exact Replacement or Withdrawal, competing Transition cuts cannot establish. Once one exact governed application has
+acquired an applicable Binding, later Governance change does not replace that Binding inside the same application. How a
+backend preserves that continuity is realization. The common non-retroactive law remains owned by ADR-0063.
 
 Governance must remain separate from the State-Machine axis. Governance establishes Policy-World Binding; it does not
 establish a State or execute a Transition.
@@ -355,14 +361,14 @@ Governance Contract judgment ends with the Decision Outcome. Backend preparation
 reclamation, or realization readiness does not change that Outcome.
 
 **Open in this section:** the exact finite Decision Law language and frontend form remain to be designed. Independently
-attributable law elements must receive stable definition-local semantic coordinates that do not depend on declaration
-order or compiler generation.
+attributable law elements must receive stable Governance-version-local semantic coordinates that do not depend on
+declaration order or compiler generation.
 
 ### 4.5. Governance Scope
 
-Every Governance decision acts over one explicit governed Scope. Scope is an exact governed-domain coordinate inside an
-Established Governance Definition. It is not a universal `Scope Contract`, runtime filter, source container, or current
-member list.
+Every Governance decision acts over one explicit governed Scope. Scope is one exact governed-domain semantic coordinate
+under one resolved Governance Authority and Version. It is not a universal `Scope Contract`, runtime filter, source
+container, semantic parent, or current member list.
 
 The earlier rule:
 
@@ -372,15 +378,15 @@ Governance selection scope = exactly one Interface
 
 is withdrawn.
 
-A Scope may reference an already-established semantic domain. In that case the original authority continues to own the
-domain identity and membership, while Governance owns only the fact that this exact domain is the governed coordinate of
-its definition. Governance does not re-establish the contents of an Interface, Core, Whole Machine, or another existing
-domain.
+A Scope may use an already-established semantic domain. In that case the original authority continues to own the domain
+identity and membership, while Governance establishes only the explicit relation that this exact domain is the governed
+coordinate for its Governance meaning. Governance does not re-establish, contain, inherit, or copy the contents of an
+Interface, Core, Whole Machine, or another existing domain.
 
 Governance may instead declare one explicit grouping when several established semantic subjects must form one
-indivisible Governance meaning and no earlier authority owns that grouping. The grouping relation then receives
-authority as part of the Established Governance Definition. This does not create a separate universal Scope authority or
-`ScopeMembership` Contract.
+indivisible Governance meaning and no earlier authority owns that grouping. That grouping receives one exact Scope
+semantic coordinate under the Governance Authority and Version. This does not create a separate universal Scope
+authority or `ScopeMembership` Contract.
 
 Scope identity remains distinct from expanded membership.
 
@@ -402,10 +408,10 @@ same exact governed application, membership is deterministic and complete. Unres
 `outside`; the material required for that use is incomplete.
 
 Governance defines no closed enum such as `InterfaceScope`, `CoreScope`, `WholeMachineScope`, `FlowScope`, or
-`RunScope`. An Interface, Core, Whole Machine, or future semantic domain may be referenced when it already exists as an
-exact established domain. A flow, run, session, operation, process, thread, deployment, or runtime object does not
-become Governance Scope merely because execution occurs through it. If a future Contract authority separately
-establishes such a semantic domain, its admissibility follows the same law rather than a name-based exception.
+`RunScope`. An Interface, Core, Whole Machine, or future semantic domain may be used when it already exists as an exact
+established domain. A flow, run, session, operation, process, thread, deployment, or runtime object does not become
+Governance Scope merely because execution occurs through it. If a future Contract authority separately establishes such
+a semantic domain, its admissibility follows the same law rather than a name-based exception.
 
 Under the current Policy law, an Operation also cannot be used to split one Interface-complete Policy World into
 independently activated operation-level Worlds. If future Policy semantics introduces such a domain, that change must be
@@ -415,8 +421,8 @@ Direct Governance Overlap is judged over established Scope meaning and does not 
 multi-part Governance meaning may explicitly declare one encompassing Scope when its parts must form one complete
 arrangement. Graph connectivity, repeated co-occurrence, or overlap among independent Scopes cannot infer that grouping.
 
-**Open in this section:** the exact frontend form for referencing existing semantic domains and declaring
-Governance-owned grouping coordinates remains to be designed.
+**Open in this section:** the exact frontend form for using existing semantic domains and declaring Governance-owned
+grouping coordinates remains to be designed.
 
 ### 4.6. Selection
 
@@ -544,40 +550,53 @@ representation remain to be designed.
 
 ### 4.9. Replacement
 
-Replacement is Governance-owned occurrence meaning that establishes exact Binding succession. It relates one exact
-predecessor Binding to one exact successor Binding for the same governed Scope.
+Replacement is Governance-owned Established Occurrence Material that establishes exact Binding succession. It relates
+one exact already-established predecessor Binding to one exact already-established successor Binding for the same
+governed Scope.
 
 ```text
-Binding B1
-    Scope S -> Selection X
-        ↓
-explicit Replacement
-        ↓
-Binding B2
-    Scope S -> Selection Y
+Binding B1 established
+Binding B2 established
+
+explicit Replacement R
+    predecessor = B1
+    successor   = B2
 
 succession:
     B1 -> B2
 ```
 
 A new Binding does not replace an earlier Binding merely because it is newer, visible, loaded, or available. Replacement
-must name the exact predecessor relation in semantic meaning. `current`, `latest`, timestamp order, registry state, or
-backend winner cannot determine the predecessor.
+must establish the exact predecessor-successor relation in semantic meaning. `current`, `latest`, timestamp order,
+registry state, physical completion order, or backend winner cannot determine the predecessor or successor.
 
-Replacement does not mutate B1. When Replacement succeeds, the successor Binding and exact predecessor-successor
-relation become authoritative as one complete Governance occurrence. Neither a successor without its declared lineage
-nor lineage without a legal successor gains partial Replacement authority.
+Replacement does not establish B2 and does not mutate B1 or B2. B2 first has its own complete Binding meaning. The
+Replacement occurrence then establishes only the complete succession relation from B1 to B2. A successor Binding without
+an Established Replacement has no predecessor lineage, and a proposed lineage without two legal established Bindings
+gains no partial Replacement authority.
 
 Replacement is about Binding succession rather than Policy-World inequality. B2 may carry the same exact Selection as B1
-and still be a distinct successor when its Governance meaning or determining authority differs.
+and still be a distinct successor when its Governance occurrence meaning or determining judgment differs.
+
+For one exact established Binding, at most one distinct Replacement or Withdrawal may establish with that Binding as the
+predecessor or target. A Replacement to B2, a different Replacement to B3, and a Withdrawal of B1 are mutually exclusive
+meanings for the same predecessor boundary. If the complete applicable Governance meaning supports distinct competing
+succession or termination results, none of those competing Replacement or Withdrawal occurrences establishes. Governance
+does not choose among them by priority, declaration order, recency, Arbitration, physical completion, or backend state.
+
+Once one Replacement or Withdrawal has validly established for B1, no later distinct Replacement or Withdrawal may
+establish for that same B1. This is not physical first-wins semantics. It follows from already-established immutable
+Governance history: the exact predecessor boundary already has one authoritative succession or termination meaning. A
+later Binding may itself become the predecessor of another Replacement, so legal succession may continue as a
+non-branching chain without reopening an earlier predecessor.
 
 Replacement is local to its exact Scope. Several independent replacements do not become one atomic multi-part change by
 synchronization or graph connectivity. If several parts must change as one Governance meaning, one explicit encompassing
-multi-part Scope must own that arrangement.
+multi-part Scope must declare that arrangement as one Governance meaning.
 
-Replacement establishes lineage, not the applicability cut. Binding Transition owns the later semantic boundary at which
-new applications may acquire the successor Binding. Replacement therefore does not rewrite applications that already
-acquired B1.
+Replacement establishes succession, not the applicability cut. Binding Transition owns the later semantic boundary at
+which later applications may acquire the successor Binding. Replacement therefore does not rewrite applications that
+already acquired B1.
 
 There is no universal `No Replacement` material. The absence of an Established Replacement says only that no Replacement
 authority was established. If a future explicit total Replacement Law requires a negative outcome, that law must declare
@@ -588,14 +607,16 @@ the negative meaning rather than obtaining it from absence.
 ### 4.10. Withdrawal
 
 Withdrawal is Governance-owned Established Occurrence Material that establishes explicit termination meaning for one
-exact Binding without establishing a successor Binding through that judgment.
+exact already-established Binding without a successor in that judgment.
 
 ```text
-Binding B1
-        ↓
+Binding B1 established
+
 explicit Withdrawal W1
-        ↓
-termination meaning for B1
+    target = B1
+
+termination meaning:
+    B1 has no successor through W1
 ```
 
 Withdrawal does not erase or mutate B1, move machine State, rewrite its Policy World, or create `Binding(null)` or a
@@ -605,8 +626,13 @@ retroactively turn the earlier Withdrawal into Replacement.
 Withdrawal targets one exact Binding. Policy disappearance, `No Selection`, `No Resolution`, timeout, restart, process
 death, missing registry state, configuration cleanup, or another realization absence cannot imply Withdrawal.
 
-An indivisible multi-part Binding is withdrawn as one exact Binding. Withdrawal cannot mutate only one internal part and
-leave the remainder of the same Binding authoritative.
+Withdrawal and Replacement are mutually exclusive succession meanings for one exact predecessor Binding under Section
+4.9. If distinct competing Withdrawal or Replacement results are supported for the same Binding boundary, none
+establishes. Once one of those meanings has established, no later distinct Replacement or Withdrawal may establish for
+that same predecessor.
+
+An indivisible multi-part Binding is withdrawn as one exact Binding. Withdrawal cannot change only one part of the same
+Binding and leave the remainder of that Binding authoritative.
 
 Withdrawal establishment and the applicability cut are separate. Withdrawal establishes the termination judgment;
 Binding Transition establishes the semantic boundary after which later applications can no longer newly acquire the
@@ -620,8 +646,8 @@ Binding must be retained. An explicit total law, if one is introduced, must decl
 ### 4.11. Binding Transition and Active Binding Continuity
 
 Binding Transition is Governance-owned Established Occurrence Material that establishes the semantic applicability cut
-caused by one exact Replacement or Withdrawal. It separates succession or termination judgment from the later
-applications that may observe the changed Binding eligibility.
+for one exact already-established Replacement or Withdrawal. It does not compete with Replacement or Withdrawal and does
+not choose a successor. Succession or termination meaning must already be singular before a Transition can establish.
 
 ```text
 Replacement R
@@ -638,6 +664,12 @@ Binding Transition T
         ↓
 later applications may no longer acquire B1
 ```
+
+At most one distinct Binding Transition may establish for one exact Replacement or Withdrawal. If the complete
+applicable Transition meaning supports different applicability cuts for that same triggering occurrence, no competing
+Transition establishes. Governance does not choose a cut by declaration order, timestamp, recency, physical completion,
+runtime publication state, or backend priority. Once one Binding Transition has validly established for an exact
+Replacement or Withdrawal, no later distinct Transition may establish for that same triggering occurrence.
 
 A Transition is not a wall-clock timestamp, thread switch, CAS success, publication write, deployment generation,
 network acknowledgement, scheduler event, or backend epoch. Those may realize or record the semantic boundary but do not
@@ -710,7 +742,10 @@ Withdrawal, Transition, and occurrence meaning may differ. Same-response plurali
 and converges before Binding.
 
 Many immutable Bindings may exist historically or physically for one Scope. Singularity applies to the exact dependent
-application, not to the total number of established Binding occurrences.
+application, not to the total number of established Binding occurrences. Binding Applicability singularity is separate
+from the succession singularity of Sections 4.9-4.11: at most one distinct Replacement or Withdrawal may establish for
+one exact predecessor boundary, and at most one distinct Transition may establish for that succession or termination
+occurrence.
 
 Binding absence is not represented by a universal `NoBinding` material. `No Selection`, `No Resolution`, Withdrawal,
 non-applicability, and a required Binding that does not exist remain distinct semantic facts or non-establishment
@@ -721,56 +756,73 @@ A Governance definition that structurally cannot select any legal Policy World f
 Binding is invalid when that fact is determinable during definition or composition verification. This differs from a
 valid Decision Law establishing `No Selection` for one complete occurrence Basis.
 
-**Open in this section:** exact Failure and Diagnostic treatment for missing required Binding, ambiguous applicable
-Bindings, non-establishment, Withdrawal, and `No Resolution` remains to be aligned with ADR-0057 and the Diagnostic
-ADRs.
+Failure and Diagnostic treatment for missing required Binding, ambiguous applicable Bindings, non-establishment,
+Withdrawal, `No Resolution`, and later succession or Transition ambiguity is outside this Governance semantic decision
+and remains open under Section 6.
 
 ### 4.13. Exact Attribution
 
-Every Governance-established occurrence preserves the exact direct semantic relations that determined its establishment.
-Those relations are Contract meaning. They are not reconstructed from current state, names, declaration order,
-timestamps, logs, compiler generations, or storage history.
+Every Governance-established occurrence must remain exactly attributable to the direct semantic material and direct
+semantic relations that determined its establishment. Attribution is Contract meaning. It is not reconstructed from
+current state, names, declaration order, timestamps, logs, compiler generations, storage history, or backend object
+structure.
 
-Governance does not establish a universal provenance graph or Evidence Contract. Each owning material preserves only its
-direct authoritative relations. Compiler analysis and Diagnostic may follow those relations transitively when they need
-a larger explanation graph.
+Governance semantic expression remains flat. Exact semantic material and exact direct semantic relations are explicit;
+no Governance material is required to contain or own a list of references, producers, dependencies, parents, children,
+or downstream consumers. The Canonical Contract World preserves those relations in its shared semantic substrate without
+becoming a new Governance Authority. A relation may connect exact semantic material without making either endpoint
+contain the other. The physical representation of those relations remains replaceable.
 
-A Governance Decision preserves its exact Governance Definition and Version relation, Decision Law coordinate, governed
-application relation, complete applicable Decision Basis relation, Decision Outcome, and every determining law element.
-Source-owned Basis material remains referenced through ADR-0063 rather than copied into a Governance-specific context.
+Cross-authority source connection remains owned by Composition under ADR-0063. Governance declares Required Basis
+meaning and judges the complete applicable Basis produced from those explicit connections. Governance does not absorb
+the producer topology or re-establish source-owned material merely because that material participates in a Decision.
 
-Independently attributable Decision-Law elements require stable definition-local semantic coordinates. Source line,
-declaration ordinal, array position, compiler generation, or runtime object identity cannot define those coordinates.
-Several elements that determine the same Outcome establish one Decision with plural element attribution; elements that
-determine distinct Outcomes make the judgment ambiguous.
+A Governance Decision remains directly attributable to its exact Governance Authority and Version, Decision Law semantic
+coordinate, exact governed application, complete applicable Decision Basis, Decision Outcome, and every determining law
+element. Independently attributable Decision-Law elements require stable Governance-version-local semantic coordinates.
+Source line, declaration ordinal, array position, compiler generation, or runtime object identity cannot define those
+coordinates. Several elements that determine the same Outcome establish one Decision with plural element attribution;
+elements that determine distinct Outcomes make the judgment ambiguous.
 
-Selection has no independent authority identity. Its exact meaning is the complete order-independent arrangement of
-resolved Policy World Definition References carried by a Decision or Arbitration Outcome. Scope likewise remains an
-exact Governance-definition coordinate or reference to an existing established domain; expanded membership is not Scope
-identity.
+Selection has no independent Contract Authority or Version. It is an exact canonical semantic value whose equality is
+the complete order-independent arrangement of exact resolved Policy World meanings. Scope likewise has its own exact
+semantic coordinate under Governance or preserves the source authority of an existing semantic domain; expanded
+membership is derived analysis and does not become Scope identity.
 
-An Arbitration Judgment preserves its exact Arbitration Law, resolution boundary, complete unordered set of Governance
-Decision occurrence references, Outcome, and determining Arbitration-law elements. It never reduces attribution to the
-selected Policy World names.
+An Arbitration Judgment remains directly attributable to its exact Arbitration Law, resolution boundary, complete
+unordered set of competing Governance Decision occurrences, Arbitration Outcome, and every determining Arbitration-law
+element. It never reduces attribution to selected Policy World names or declaration order.
 
-A Binding preserves its exact Scope, complete effective Selection, and immediate determining Governance judgment
-relation. Same-response concurrence directly preserves every determining Decision occurrence. A Binding produced after
-conflict resolution directly references the Arbitration Judgment, which in turn preserves its exact Decisions. The
-Binding does not duplicate the full ancestry.
+A Binding remains directly attributable to its exact Scope, complete effective Selection, and immediate determining
+Governance judgment. Same-response concurrence preserves every determining Decision relation. Conflict resolution
+preserves the direct relation from Binding to the exact Arbitration Judgment; the Arbitration Judgment separately
+preserves its own exact Decision relations. Binding does not duplicate the full ancestry.
 
-Replacement preserves its exact predecessor and successor Binding relation. Withdrawal preserves its exact target
-Binding. Binding Transition preserves its exact triggering Replacement or Withdrawal and the semantic applicability cut.
-Each material links to the immediately authoritative meaning that established it instead of copying all earlier
-material.
+Replacement establishes the explicit predecessor-successor relation between its exact Bindings. Withdrawal establishes
+the explicit termination relation for its exact target Binding. Binding Transition establishes the explicit relation to
+its exact triggering Replacement or Withdrawal and its exact semantic applicability cut. Those relations are direct and
+complete; they do not require recursive ownership or reference chasing to gain Contract meaning.
 
-A dependent semantic application owns its exact use of an applicable Binding. Binding does not accumulate a mutable list
-of future consumers, and Governance does not acquire authority over every dependent occurrence merely because they use
-its Binding.
+A dependent semantic application owns its exact use of one applicable Binding under ADR-0063. Binding does not
+accumulate a mutable list of future consumers, and Governance does not acquire authority over every dependent occurrence
+merely because they use its Binding.
 
-Semantic Identity and Exact Attribution remain different. Stable Definition or Occurrence References identify exact
-semantic material. Basis relations, determining relations, provenance, and Outcomes explain how that material was
-established. Fingerprints, digests, cache keys, trace IDs, log IDs, storage addresses, timestamps, and compiler-local
-ordinals may support realization or evidence integrity but cannot create either Contract authority or semantic identity.
+The explicit direct relations may form a graph when viewed together. The subset that participates in semantic
+establishment is acyclic because circular semantic authority is illegal. That graph or DAG is an analytical consequence
+of the flat explicit relations, not the Contract authoring model, authority model, or semantic evaluation mechanism.
+Transitive closure, graph traversal, dependency graphs, invalidation graphs, scheduling graphs, and Diagnostic
+provenance graphs are derived subsystem knowledge.
+
+Semantic Identity, canonical value equality, Exact Attribution, and compiler identity remain different. Definition
+Reference and Occurrence Reference remain ADR-0063 semantic relations that identify authoritative definition meaning or
+one exact semantic application. They do not require pointer-bearing Contract objects or recursive reference structures.
+Fingerprints, digests, HIDs, cache keys, trace IDs, storage addresses, timestamps, compiler-local ordinals, intern
+handles, and physical pointers may support realization but cannot create Contract authority or semantic identity.
+
+Physical reevaluation, cache misses, repeated query execution, or backend replay cannot manufacture another Contract
+occurrence when the same already-established occurrence is being represented or recomputed. Conversely, equal Outcome,
+Selection, or other value meaning does not collapse occurrences established by distinct Governance judgments. Occurrence
+distinction remains owned by ADR-0063 and the exact Governance law that establishes each occurrence.
 
 ### 4.14. Scope Independence, Direct Governance Overlap, and Cross-Scope Coherence
 
@@ -845,7 +897,7 @@ conflict-free parts outside its resolution boundary.
 The same completeness law applies to Binding and Binding Transition. One indivisible multi-part application acquires one
 complete multi-part Binding and cannot observe an old/new mixture inside that application.
 
-This law does not make an encompassing Binding implicitly propagate into independently governed child Scopes. The exact
+This law does not make an encompassing Binding implicitly propagate into other independently governed Scopes. The exact
 Scope and Selection must declare the governed meaning.
 
 **Open in this section:** the exact encompassing-Scope authoring form, multi-part Selection frontend, and canonical
@@ -920,9 +972,9 @@ Earlier ADRs that still present Governance as an ordinary per-interaction refusa
 
 ### 4.19. Governance Version
 
-Governance is version-sensitive under ADR-0053. One Governance Version fixes one complete Governance Definition,
-including Decision Basis meaning, Decision Law, Scope coordinates, selectable exact Policy World references, Arbitration
-Law, Binding law, Replacement law, Withdrawal law, and Binding Transition meaning.
+Governance is version-sensitive under ADR-0053. One Governance Version fixes one complete Governance meaning, including
+Decision Basis meaning, Decision Law, Scope semantic coordinates, selectable exact Policy World meanings, Arbitration
+Law, and every declared Replacement, Withdrawal, or Binding Transition law meaning owned by that Governance Version.
 
 Policy Version and Governance Version are independent authorities.
 
@@ -936,23 +988,33 @@ Payment.Policy.Emergency / E7
 G2 continues to mean the exact resolved targets N4 and E7 even if `Normal / N5` or `Emergency / E8` is later declared.
 The existence of a newer Policy Version does not mutate an older Governance Version.
 
-If a Governance definition changes its resolved Policy World reference from N4 to N5, its Governance meaning has changed
+If a Governance definition changes its resolved Policy World target from N4 to N5, its Governance meaning has changed
 and a new Governance Version is required. Reusing G2 for a different resolved target is a Version conflict and must fail
 compilation.
 
-Governance references cannot acquire meaning from `latest`, `current`, `preferred`, Version ranges, registry order, or
-runtime lookup. Frontend syntax may avoid repeating a Version token when another declaration already fixes it, but
-canonical resolution must end in one exact Policy Authority and Version Definition Reference.
+Governance target meaning cannot come from `latest`, `current`, `preferred`, Version ranges, registry order, or runtime
+lookup. Frontend syntax may avoid repeating a Version token when another declaration already fixes it, but semantic
+resolution must end in one exact Policy Authority and Version meaning under ADR-0063.
 
 A Policy World Version likewise fixes the exact Contract arrangement it owns. Later versions of Budget, Capacity,
 Admission, State, or another constituent Contract do not rewrite an established Policy World Version. If Policy chooses
 a new constituent meaning, that requires its own new Policy Version before Governance can target it.
 
 Governance Decision, Arbitration Judgment, Binding, Replacement, Withdrawal, and Binding Transition are occurrence
-material under one resolved Governance Definition. They do not each acquire a second independent Contract Version. Their
-exact relation to the Governance Authority and Version must remain recoverable.
+material under one resolved Governance Authority and Version. They do not each acquire a second independent Contract
+Version. Their exact Governance Authority and Version relation must remain recoverable.
 
-A Binding preserves the exact Policy World Version contained in its Selection. A later Policy or Governance Version does
+Governance uses fine-grained semantic coordinates for exact meaning that must be independently distinguishable or
+attributable, such as Decision Law, Scope, Arbitration Law, and independently attributable law elements. Those
+coordinates remain part of one flat Governance Authority/Version domain; they do not introduce semantic parent/child
+ownership, independent sub-Versions, or recursive Contract structure.
+
+A semantic coordinate under G2 and the corresponding coordinate under G3 are not the same exact versioned Contract
+meaning merely because their resolved local material is equal. Compiler realization may recognize equal resolved local
+canonical structure across Governance Versions and reuse immutable representation or analysis. That structural equality
+or reuse identity is compiler-owned and does not merge the Contract Semantic Identity of the two Versioned meanings.
+
+A Binding preserves the exact Policy World Version carried by its Selection. A later Policy or Governance Version does
 not rewrite that Binding or invalidate applications that already established its applicability.
 
 ```text
@@ -968,24 +1030,27 @@ Binding Transition
 Version revision and governing-authority succession are separate semantic events. New Governance Version existence does
 not implicitly replace, withdraw, or transition an existing Binding.
 
-Governance does not infer Version compatibility from equal names, similar contents, hashes, or small diffs. If a future
-Contract meaning requires compatibility, that meaning needs its own explicit authority. Contract Version identity also
-remains distinct from fingerprints, cache keys, compiler generations, storage revisions, or backend publication
-revisions.
+Governance does not infer Version compatibility from equal names, similar contents, hashes, fingerprints, or small
+diffs. If a future Contract meaning requires compatibility, that meaning needs its own explicit authority. Contract
+Semantic Identity remains distinct from compiler structural identity, HIDs, fingerprints, cache keys, compiler
+generations, storage revisions, ordinals, intern handles, and backend publication revisions.
 
 ## 5. Frontend and Resolution
 
 ### 5.1. Policy World References
 
-Governance refers to declared Policy Authorities and their resolved Contract Worlds.
+Governance uses already-declared Policy Authorities and their resolved Contract Worlds.
 
-Those references must resolve exactly within their authority and Version context. Canonical Governance meaning contains
-an exact Policy Authority and Policy Version Definition Reference even when the authored syntax can omit a repeated
-Version token because another declaration already fixes it.
+An authored Policy symbol is not itself canonical Governance meaning. Resolution must end in the exact Policy Authority
+and Policy Version meaning required by ADR-0063. `Definition Reference` here denotes that exact semantic target; it does
+not require a pointer field, object link, nested reference structure, or runtime lookup inside Governance material.
 
 `latest`, `current`, `preferred`, Version ranges, runtime strings, configuration keys, enum ordinals, object references,
-generated classes, service-registry entries, source nesting, or backend lookup cannot become Policy identity or choose a
-Governance target.
+generated classes, service-registry entries, source nesting, declaration proximity, or backend lookup cannot become
+Policy identity or choose a Governance target.
+
+The physical representation of the resolved target may later use indexes, ordinals, HIDs, intern handles, table slots,
+offsets, or another compiler-owned form. None of those representations creates Policy or Governance authority.
 
 **Open in this section:** the exact `.kontrakt` syntax for Governance Policy World references remains to be designed.
 
@@ -1021,152 +1086,133 @@ Governance selects and binds a declared World; it does not define that World.
 
 ### 5.3. Scope Is Not Source Containment
 
-The earlier Interface-local Governance syntax cannot remain a semantic shortcut for Scope.
+Governance authoring is a flat manifest at the Contract semantic boundary. Source syntax may group declarations for
+readability, but physical nesting, textual containment, inheritance, or declaration placement cannot create semantic
+Scope, authority, precedence, or applicability.
 
-If Governance syntax is physically nested inside an Interface, Core, Whole Machine, or another declaration, that
-containment may be authoring structure only. The governed Scope must still resolve to one exact Governance-definition
-coordinate.
+The earlier Interface-local Governance syntax therefore cannot remain a semantic shortcut for Scope. The governed Scope
+must resolve to one exact Scope semantic coordinate under the resolved Governance Authority and Version, or to one exact
+already-established semantic domain whose source authority remains unchanged.
 
-Where Scope refers to another established semantic domain, the frontend preserves that domain's Definition Reference and
-source authority instead of copying its membership into Governance. Where Governance declares a new grouping, the
-frontend must make that grouping explicit enough for the grouping relation to receive authority as part of the
-Established Governance Definition.
+Where Scope uses another established semantic domain, the explicit semantic relation preserves that domain's exact
+identity and source authority instead of copying its membership into Governance. Where Governance declares a new
+grouping, the grouping itself must be explicit enough to receive one exact Governance Scope coordinate. No semantic
+parent/child containment is introduced in either case.
 
-A runtime flow, run, operation, session, process, thread, or deployment does not become Scope from physical containment
-or execution merely because the frontend can name it. The frontend follows semantic-domain meaning rather than a closed
-Scope-kind enum.
+A runtime flow, run, operation, session, process, thread, deployment, object, or source container does not become Scope
+because execution or syntax happens inside it. The frontend follows established semantic-domain meaning rather than a
+closed Scope-kind enum or physical topology.
+
+Exact Scope relations may contribute to a conceptual graph when considered with other semantic relations. That graph is
+not the frontend model and is not traversed to discover Scope meaning. Scope meaning comes from the flat explicit
+manifest and exact established relations.
+
+The exact flat frontend form for existing semantic domains and Governance-owned grouping coordinates remains owned by
+the open frontend decision in Section 4.5.
 
 ### 5.4. Canonical Governance Material
 
-Canonical Governance material must preserve enough semantic structure for every consumer to reach the same Governance
-meaning without reconstructing it from source layout, current runtime state, logs, timestamps, or backend generations.
+Canonical Governance material preserves the flat explicit Contract meaning established by this ADR. Every consumer must
+be able to reach the same semantic result without reconstructing meaning from source layout, runtime state, logs,
+timestamps, backend generations, pointer topology, recursive object ownership, or graph traversal.
 
-Established Governance Definition material must preserve Governance Authority and Version, Decision Basis meaning,
-Decision Law, stable Scope coordinates or source-domain Definition References, exact selectable Policy World Definition
-References, Arbitration Law, Binding law, Replacement law, Withdrawal law, and Binding Transition meaning. Independently
-attributable Decision and Arbitration law elements require stable definition-local coordinates that do not depend on
-source order.
+Governance Authority and Version define one flat semantic domain. Within that domain, independently distinguishable
+Versioned semantic subjects include Governance Definition meaning, Decision Law, Governance Scope, and Arbitration Law.
+Independently attributable Decision and Arbitration law elements and required-basis entries use stable
+Governance-version-local semantic coordinates but do not become independent Contract Authorities or sub-Versions.
+Whether future Replacement, Withdrawal, or Transition frontend material becomes an independently addressable law subject
+is decided only if its final Contract form requires independent reference or attribution; compiler optimization alone
+cannot create a new Contract identity boundary.
 
-Occurrence material must preserve the distinctions established in this ADR. Governance Decision records one exact
-Decision Outcome, either a complete Selection or `No Selection`, together with its direct Basis and determining-law
-relations. Arbitration Judgment records one complete unordered Decision occurrence set and either a Resolved Selection
-or `No Resolution`. Binding records one complete governing relation and its immediate determining judgment relation.
-Replacement, Withdrawal, and Binding Transition retain their exact direct predecessor, target, trigger, and semantic-cut
-relations without copying the complete ancestry.
+Complete Decision Basis, Selection, Decision Outcome, complete Arbitration input, and Arbitration Outcome are canonical
+semantic values rather than independent Contract Authorities. Their equality is defined by their exact semantic meaning.
+Selection equality is the complete order-independent arrangement of exact resolved Policy World meanings. Complete
+Arbitration input equality is the complete unordered set of exact competing Decision occurrences for its resolution
+boundary. Compiler interning or hashing of those values remains realization.
 
-Selection has no separate authority identity. Its canonical meaning is an order-independent complete arrangement of
-exact Policy World Definition References. Scope likewise does not take identity from its expanded member set. Compiler
-membership expansion, overlap discovery, conflict-set analysis, transitive provenance graphs, dependency graphs, and
-incremental invalidation edges are derived analysis rather than new Contract authority.
+Governance Decision, Arbitration Judgment, Binding, Replacement, Withdrawal, and Binding Transition remain distinct
+Established Occurrence Material. Equal Selection, Outcome, Scope, or other value meaning does not collapse occurrences
+that were established by distinct Governance judgments. Physical reevaluation or cache behavior likewise cannot create a
+new Contract occurrence for meaning that has already been established.
 
-Canonical material must preserve the singularity and completeness laws. Same-response Decisions may remain plural while
-converging into one Binding. Different-response conflict requires one complete Arbitration Judgment before Binding.
-Multi-part Selection, Binding, and Transition remain indivisible for their explicit encompassing Scope. No universal
-`NoBinding`, `NoReplacement`, `NoWithdrawal`, provenance graph, Scope-membership wrapper, or mutable `current Binding`
-source of truth is introduced.
+Canonical Governance semantics preserves exact direct semantic relations between exact semantic material. Participating
+material is not required to contain or own reference lists to other material. Cross-authority source connection remains
+owned by Composition under ADR-0063; Governance-specific relations preserve only the Governance meaning established by
+this ADR. Each relation preserves the exact semantic meaning or exact semantic application identified under its owning
+law, while the physical encoding of that relation remains replaceable compiler representation.
 
-Establishment, Definition and Occurrence Reference, source authority, Basis Resolution, Applicability, complete basis,
-Composition Authority, deterministic establishment, and non-retroactivity remain common law under ADR-0063. Governance
-uses those relations without redefining them.
+The explicit relations may form a graph when viewed together. The semantic-establishment subset is acyclic because
+circular semantic authority is illegal. A graph or DAG is therefore a consequence or analytical view of the flat
+relations, not the Contract authoring model, authority model, data structure, or semantic evaluation mechanism. No
+Contract meaning is obtained by parent/child traversal, recursive reference chasing, higher-order Contract invocation,
+callback evaluation, fixed-point computation, or transitive graph walking.
 
-V2 may use the stable semantic material and direct relations as query keys, reusable analysis products, diagnostic
-slices, or incremental invalidation inputs. Query keys, fingerprints, hashes, cache entries, compiler generations, and
-physical addresses remain realization knowledge and cannot become Contract identity.
+`Definition Reference` and `Occurrence Reference` remain ADR-0063 semantic relations for identifying authoritative
+definition meaning or one exact semantic application. Governance does not introduce a separate `Canonical Reference`
+Contract category. Pointer fields, object links, indexes, table slots, HIDs, ordinals, intern handles, hashes, and
+fingerprints are possible compiler representations, not Contract relations or semantic identity.
 
-Backend representation remains replaceable after canonical meaning is fixed.
+Canonical material preserves the completeness and singularity laws without creating synthetic absence material.
+Same-response Decisions may remain plural while converging into one Binding. Different-response Direct Governance
+Overlap requires one complete Arbitration Judgment before Binding. At most one distinct Replacement or Withdrawal may
+establish for one exact predecessor Binding, and at most one distinct Binding Transition may establish for one exact
+Replacement or Withdrawal. Competing succession, termination, or Transition meanings establish none rather than being
+repaired by priority, order, recency, Arbitration, or physical completion. Multi-part Selection, Binding, succession
+meaning, and Transition remain indivisible for their explicit encompassing Scope.
 
-**Open in this section:** byte-level canonical encoding, compact Definition and Occurrence Reference forms,
-frontend-to-canonical lowering shape, and exact V2 storage or query representation remain to be designed. Reuse of
-ordinary Contract compiler machinery is allowed only where it preserves the Governance authority distinctions above.
+Scope does not take identity from its expanded member set. Compiler membership expansion, overlap discovery,
+conflict-set analysis, transitive attribution graphs, dependency graphs, invalidation graphs, scheduling graphs,
+Diagnostic slices, and other traversals are derived analysis rather than new Contract authority. They may be computed
+from the flat semantic material and explicit relations but cannot feed hidden meaning back into the Contract.
 
-## 6. Verification
+Semantic Identity, canonical value equality, compiler structural equality, and backend technical identity remain
+separate. Different Governance Versions remain different exact Versioned Contract meanings even when some resolved local
+canonical material is equal. V2 may reuse such equal local canonical structure, derive compiler-owned query keys, and
+reuse deterministic analysis products without merging Contract Semantic Identity. HIDs, fingerprints, hashes, cache
+keys, compiler generations, physical addresses, and storage revisions remain realization knowledge.
 
-The Governance verifier must prove that every Governance definition and occurrence preserves the explicit deterministic
-meaning established by this ADR. It verifies Contract legality; it does not repair illegal semantics with runtime order,
-fixed-point evaluation, fallback, or backend state.
+Backend representation remains replaceable after canonical meaning is fixed. The Contract does not prescribe recursive
+byte embedding, pointer chains, graph-node ownership, table layout, arena layout, or any other physical structure.
 
-Every referenced Policy World must resolve exactly to its Policy Authority and Version. Governance cannot construct,
-modify, merge, waive, or implicitly upgrade Policy World contents. A change in a resolved Policy World Version changes
-Governance meaning and requires a new Governance Version.
+**Open in this section:** byte-level canonical encoding, compact realization forms for Definition and Occurrence
+targets, frontend-to-canonical lowering shape, physical representation of explicit semantic relations, and exact V2
+storage or query representation remain to be designed. Reuse of ordinary Contract compiler machinery is allowed only
+where it preserves the Governance authority and flat semantic distinctions above.
 
-Decision verification requires one complete applicable Decision Basis. A valid Decision Law establishes exactly one
-Decision Outcome: one complete Selection or explicit `No Selection`. Several determining law elements may support the
-same Outcome and remain attributed to one Decision. Distinct Outcomes from the same complete Basis are ambiguity and
-cause compilation or occurrence establishment failure at the boundary where they are knowable.
+## 6. Verification Boundary
 
-After Composition resolves Required Basis connections, the compiler must reject every direct or indirect circular
-semantic-establishment relation. Contract inheritance, higher-order Contract indirection, recursive Contract expansion,
-and fixed-point recovery cannot be used to create Governance meaning. An already-established prior occurrence may be
-explicit basis for a later judgment when the resulting relation remains acyclic.
+This ADR defines Governance Contract legality and semantic meaning. It does not define the architecture, pass structure,
+query model, cache strategy, scheduling, diagnostic pipeline, or physical algorithms of the future Verification
+subsystem.
 
-Scope verification uses exact established semantic-domain meaning or one explicit Governance-owned grouping. Source
-nesting, runtime topology, process placement, execution flow, call structure, object ownership, current conditions,
-member-set equality, or overlap connectivity cannot create or collapse Scope identity. Compiler-expanded membership is
-derived analysis and must not become authority.
+A later Verification subsystem must consume the laws established here without inventing repair semantics. Illegal or
+ambiguous Governance meaning cannot be made legal by declaration order, runtime priority, fixed-point recovery,
+recursive query evaluation, fallback, latest-value selection, backend state, or physical completion order. The subsystem
+may derive whatever analysis structure it needs, but that structure remains implementation knowledge and cannot become
+Governance authority.
 
-Selection verification requires a complete order-independent arrangement of exact Policy World Definition References.
-Each governed part has exactly one selected World. A multi-part arrangement must be complete. Candidate cardinality,
-`latest`, `current`, declaration order, names, registry state, or runtime discovery cannot select a target.
+The owning sections of this ADR already define the Contract distinctions that later verification must preserve,
+including complete Decision Basis, deterministic Decision Outcome, exact Scope, complete Selection, Direct Governance
+Overlap, Arbitration, Binding Singularity, succession and Transition singularity, Version exactness, acyclic semantic
+establishment, flat explicit semantic relations, source-authority preservation, and non-retroactivity. This section does
+not duplicate those laws as verifier procedures.
 
-Direct Governance Overlap is checked only where otherwise-applicable Decisions include the same exact governed
-application. Same-response overlap is legal compatible concurrence and keeps every determining Decision. Different-
-response overlap requires one complete unordered Arbitration input for the exact resolution boundary. The verifier
-rejects pairwise folding, incomplete conflict sets, undeclared transitive closure, physical-order precedence, implicit
-Policy composition, ambiguous Arbitration Outcomes, and any attempt to bind `No Resolution`.
-
-Binding verification requires one complete effective Selection and one complete determining Governance judgment
-relation. Same-response concurrence converges into one Binding with plural attribution. Different-response conflict must
-resolve first. Partial Binding and contradictory Binding do not become temporarily authoritative.
-
-For one exact dependent application whose Required Basis includes Governance Binding, exactly one Binding may be
-applicable. Zero leaves the dependent basis incomplete. Two or more are invalid ambiguity even when their Selections are
-equal. A dependent application that does not require Governance does not gain a synthetic optional Governance mode or
-fallback Binding.
-
-Replacement verification requires one exact predecessor and one legal successor Binding for the same Scope. Withdrawal
-requires one exact target Binding. Binding Transition requires one exact triggering Replacement or Withdrawal and must
-preserve already-established applicability. No timestamp, timeout, newest-loaded value, runtime disappearance, process
-lifecycle, or backend publication event may create implicit succession, termination, or Transition.
-
-One exact governed application retains one complete Binding meaning. An indivisible multi-part application cannot
-observe partial old/new Binding arrangements. The compiler does not infer cross-application or cross-Scope
-compatibility. Any such coherence requirement must be an explicit Contract obligation owned by the larger composition
-authority.
-
-Exact Attribution must remain recoverable through direct authoritative relations. The verifier must not accept
-attribution reconstructed from source order, current state, timestamps, logs, fingerprints, compiler generations, or
-backend storage history. Stable definition-local coordinates are required for independently attributable law elements.
-
-Governance Version is resolved before Governance occurrence judgment. `latest`, `current`, `preferred`, Version ranges,
-or compatibility inferred from similar content are illegal Governance Version semantics. Policy revision, Governance
-revision, Replacement, Withdrawal, and Binding Transition remain distinct events.
-
-The Governance verifier must additionally reject hidden fallback or precedence, implicit Scope propagation, State
-movement disguised as Governance, Governance that dynamically selects another Governance Contract, and any recursive
-model that aliases Governance responsibility to Admission, Invariant, Publication, State Machine, or another Contract
-authority.
-
-ADR-0063 supplies common verification law for Establishment, source identity and references, Basis Resolution,
+ADR-0063 remains the common source for Establishment, Definition and Occurrence target identity, Basis Resolution,
 Applicability, complete basis, Composition Authority, occurrence integrity, source-authority preservation, and semantic
 determinism. ADR-0057 remains responsible for Failure meaning when a Governance-related condition is itself declared as
 a Failure trigger.
 
-Equivalent Governance meaning must establish the same Decision Outcome, Scope relation, Direct Overlap relation,
-Arbitration Outcome, Binding, succession or termination relation, and Binding Transition regardless of source
-acquisition order or backend representation.
-
-Physical races, synchronization, storage, transport, distributed realization, and reclamation remain implementation
-concerns. Their realization must preserve the verified Governance meaning but does not extend this Contract Authority.
-
-**Open in this section:** exact diagnostic codes, user-facing explanations, and Failure mapping for incomplete required
-Basis, ambiguous applicable Bindings, `No Selection`, `No Resolution`, Withdrawal, and occurrence non-establishment
-remain to be aligned with ADR-0057 and the Diagnostic ADRs.
+**Open in this section:** the Verification subsystem design, exact diagnostic codes, user-facing explanations, and
+Failure mapping for incomplete required Basis, ambiguous applicable Bindings, `No Selection`, `No Resolution`,
+Withdrawal, succession or Transition ambiguity, and occurrence non-establishment remain to be designed with the
+Verification and Diagnostic subsystems. They must not redefine the Governance semantics established here.
 
 ## 7. Contract and Implementation Boundary
 
-Governance owns Decision Basis, Decision Law, Governance Decision, Scope, Selection, Decision Arbitration, Binding,
-Replacement, Withdrawal, Binding Transition, and exact direct attribution of those meanings. It does not own the
-physical mechanism that observes, stores, transports, synchronizes, publishes, pins, or reclaims their realization.
+Governance owns its Decision Basis meaning, Decision Law, Governance Decision, Scope, Selection, Decision Arbitration,
+Binding, Replacement, Withdrawal, Binding Transition, and the Governance-specific direct semantic relations established
+by those laws. Cross-authority source connection remains owned by Composition under ADR-0063. Governance does not own
+the physical mechanism that observes, stores, transports, synchronizes, publishes, pins, or reclaims realization.
 
 Governance Contract judgment and Governance realization judgment are distinct.
 
@@ -1194,10 +1240,10 @@ Likewise, an operator UI, CLI, deployment controller, scheduler, monitor, automa
 participate in supplying material. Transport or observation does not create Contract authority. Raw realization
 observation must first receive the semantic meaning required by the Governance judgment under an owning authority.
 
-The backend may precompute stable references, memoize deterministic Decision or Arbitration computation, retain
-immutable Bindings, or pin the Binding applicable to one governed application. Reusable computation does not collapse
-distinct Governance occurrences. Physical generation, cache entry, fingerprint, trace ID, publication revision, or
-retained image cannot become semantic identity.
+The backend may derive compact handles for exact semantic targets, memoize deterministic Decision or Arbitration
+computation, retain immutable Bindings, or pin the Binding applicable to one governed application. Reusable computation
+does not collapse distinct Governance occurrences. Physical generation, handle, cache entry, fingerprint, trace ID,
+publication revision, pointer, or retained image cannot become semantic identity or Contract relation.
 
 A backend may allow old and new physical generations to coexist, and may even use mixed physical generation internally,
 when it proves that every exact governed application still observes one complete Binding meaning and all explicit
@@ -1240,9 +1286,10 @@ requirements must be explicit higher-scope Contract obligations. If several Poli
 Governance meaning, they are declared as one complete Governance decision over one encompassing Scope rather than as
 synchronized independent Bindings.
 
-Replacement, Withdrawal, Transition, and new application establishment may be concurrent in one realization. Locking,
-CAS, epochs, transactions, message order, distributed consensus, immutable images, or execution context may preserve the
-required meaning but never determine it.
+Replacement, Withdrawal, Transition, and new application establishment may be physically concurrent where the already-
+established semantic relations permit that coexistence. Physical concurrency cannot make competing succession,
+termination, or Transition judgments valid. Locking, CAS, epochs, transactions, message order, distributed consensus,
+immutable images, or execution context may preserve the required meaning but never determine it.
 
 ### 8.1. Backend World-Replacement Problem
 
@@ -1297,44 +1344,58 @@ This ADR decides the following Governance boundary:
 
 - Policy declares complete Contract Worlds; Governance establishes their authority for exact governed Scopes.
 - Governance declares Required Basis meaning rather than producer topology. Source material remains owned and connected
-  under ADR-0063.
+  under ADR-0063, and cross-authority connection remains Composition-owned.
+- Governance authoring and semantic expression are flat. Exact direct semantic relations may collectively form a graph
+  or acyclic establishment DAG, but parent/child ownership, recursive reference chasing, higher-order Contract
+  invocation, callback discovery, and graph traversal do not establish Governance meaning.
 - Decision Law deterministically establishes one explicit Decision Outcome for one complete applicable Basis: one
   complete Selection or `No Selection`.
 - Governance Decision and Arbitration Judgment are Governance-owned Established Occurrence Material. `No Selection` and
   `No Resolution` are explicit outcomes rather than hidden absence.
-- Scope is an exact coordinate inside an Established Governance Definition. It may reference an existing established
-  semantic domain or declare one Governance-owned grouping; no closed Scope-kind enum or universal membership wrapper is
-  introduced.
-- Selection is one complete order-independent arrangement of exact Policy World Definition References and has no
-  independent Contract identity or Version.
+- Scope is one exact semantic coordinate under a resolved Governance Authority and Version. It may use an existing
+  established semantic domain or declare one Governance-owned grouping; no closed Scope-kind enum, source-containment
+  meaning, semantic hierarchy, or universal membership wrapper is introduced.
+- Selection is one complete order-independent canonical semantic value of exact Policy World meanings and has no
+  independent Contract Authority or Version.
 - Same-response Direct Governance Overlap is compatible concurrence with plural judgment attribution. Different-response
   overlap requires one complete unordered Arbitration Judgment over the exact resolution boundary.
 - Arbitration does not fold pairwise, use physical order, or synthesize Policy meaning. It establishes a Resolved
   Selection or explicit `No Resolution`.
 - One Binding establishes one complete governing relation. Same-response plurality converges before Binding, and one
   exact dependent application that requires Governance may have exactly one applicable Binding.
-- Replacement establishes exact immutable Binding succession. Withdrawal establishes exact termination meaning without
-  deleting its target or manufacturing an empty Binding.
-- Binding Transition is separate from Replacement and Withdrawal. It establishes the semantic applicability cut for
-  later applications without rewriting applicability already established for earlier applications.
+- Replacement relates one exact already-established predecessor Binding to one exact already-established successor
+  Binding. It does not establish the successor Binding. Withdrawal establishes exact termination meaning without a
+  successor and without deleting its target or manufacturing an empty Binding.
+- For one exact predecessor Binding, at most one distinct Replacement or Withdrawal may establish. Competing succession
+  or termination meanings establish none; Governance does not choose a winner by priority, order, recency, Arbitration,
+  or physical completion.
+- Binding Transition is separate from Replacement and Withdrawal and follows one already-established succession or
+  termination judgment. For one exact Replacement or Withdrawal, at most one distinct Transition may establish;
+  competing applicability cuts establish none.
 - One exact governed application keeps one complete Binding meaning. Multi-part Governance meaning remains indivisible,
   while old and new applications may coexist physically.
 - Cross-Scope or cross-application coherence is never inferred. When the larger composition constrains a combination,
   its owning authority must declare that obligation explicitly.
 - Contract inheritance, higher-order Contract indirection, recursive Contract structures, and direct or indirect
-  semantic-establishment cycles are illegal. The compiler detects resolved cycles and fails compilation rather than
-  performing fixed-point recovery. Earlier Established Material may be explicit basis for later acyclic judgments.
+  semantic-establishment cycles are illegal. Earlier Established Material may be explicit basis for later acyclic
+  judgments; no fixed-point or recursive Contract establishment is introduced.
 - Governance requirement is expressed through the dependent law's Required Basis rather than a universal
   required/optional Scope flag. Binding absence, `No Selection`, `No Resolution`, Withdrawal, and non-establishment
   remain distinct.
-- Exact Attribution preserves direct authoritative relations without creating a universal provenance graph. Stable
-  semantic coordinates are separate from provenance, fingerprints, storage IDs, and compiler generations.
-- Governance Version fixes the complete Governance Definition and exact Policy World Version references. Policy
-  revision, Governance revision, Replacement, Withdrawal, and Binding Transition are distinct semantic events. Floating
-  `latest/current/range` Version resolution is forbidden.
+- Exact Attribution is preserved by exact direct semantic relations in the flat semantic model rather than by each
+  material owning dependency or reference lists. Transitive provenance and dependency graphs are derived subsystem
+  knowledge.
+- Governance uses fine-grained exact semantic coordinates where Contract meaning requires independent distinction or
+  attribution, while canonical value equality, compiler structural equality, HIDs, fingerprints, hashes, storage IDs,
+  ordinals, and compiler generations remain separate.
+- Governance Version fixes the complete Governance meaning and exact Policy World Version targets. Equal local resolved
+  structure across different Governance Versions may be reused by V2 compiler realization without merging Versioned
+  Contract Semantic Identity. Floating `latest/current/range` Version resolution is forbidden.
 - Governance Contract judgment remains separate from backend realization. Synchronization, publication, pinning,
-  reclamation, caching, query evaluation, and distributed protocols may realize Governance but cannot create its
-  meaning.
+  reclamation, caching, query evaluation, graph representation, and distributed protocols may realize Governance but
+  cannot create its meaning.
+- Detailed Verification subsystem architecture and Diagnostic/Failure mapping are deferred to their owning subsystem
+  work; they consume this ADR rather than extending Governance semantics here.
 
 Remaining work is recorded only in the sections that own it.
 
@@ -1343,11 +1404,16 @@ Remaining work is recorded only in the sections that own it.
 Governance Establishment, source connection, Basis Resolution, Applicability, and Composition obey ADR-0063's semantic
 determinism law. Governance cannot use hidden runtime order to settle authority.
 
-The same Governance definition, Decision Law, complete applicable Decision Basis, and relevant occurrence meaning
-establish the same Decision Outcome. The same Scope meaning and relevant composition establish the same membership and
-Direct Governance Overlap relation. The same complete unordered conflict set under the same Arbitration Law establishes
-the same Arbitration Outcome. Equivalent Binding, Replacement, Withdrawal, and Binding Transition meaning does not vary
-with physical realization order.
+The same Governance meaning, Decision Law, complete applicable Decision Basis, and relevant occurrence meaning establish
+the same Decision Outcome. The same Scope meaning and relevant composition establish the same membership and Direct
+Governance Overlap relation. The same complete unordered conflict set under the same Arbitration Law establishes the
+same Arbitration Outcome. Equivalent Binding, Replacement, Withdrawal, and Binding Transition meaning does not vary with
+physical realization order.
+
+For one exact predecessor Binding, distinct competing Replacement or Withdrawal meanings do not become deterministic by
+choosing a winner; none establishes. For one exact Replacement or Withdrawal, distinct competing Transition cuts
+likewise establish none. An already-established succession or Transition relation is immutable semantic history rather
+than a physical first-wins result.
 
 The following cannot determine Governance meaning:
 
@@ -1364,21 +1430,25 @@ runtime object identity
 latest-loaded configuration
 wall-clock ordering by itself
 cache presence or compiler generation
+pointer topology or graph traversal order
 ```
 
 A backend may use those mechanisms only to realize separately declared deterministic Contract meaning.
 
-The Governance model preserves exact Definition and Occurrence References, complete Selection arrangements, direct
-determining relations, complete Arbitration inputs, Binding lineage, Withdrawal targets, and Transition triggers where
-they carry Contract meaning. It does not derive semantic identity from fingerprints, digests, ordinals, timestamps, or
-physical addresses.
+The Governance model preserves exact semantic coordinates, canonical value equality, and exact direct semantic relations
+where they carry Contract meaning. `Definition Reference` and `Occurrence Reference` under ADR-0063 identify exact
+authoritative definition meaning or one exact semantic application; they do not require a pointer-bearing or recursively
+linked Contract representation. Semantic identity is not derived from fingerprints, digests, ordinals, hashes,
+timestamps, physical addresses, intern handles, or compiler structural reuse.
 
-Resolved semantic-establishment relations are acyclic. The compiler must reject direct or indirect cycles and must not
-assign meaning through evaluation order, recursion recovery, or fixed-point iteration. Compiler query graphs may have
-their own implementation rules, but they do not redefine Contract cycle legality.
+Explicit semantic relations may be viewed as a graph. Semantic-establishment relations are acyclic, while transitive
+graphs used for verification, diagnostics, query evaluation, invalidation, or scheduling are derived subsystem
+knowledge. Contract meaning is not assigned through recursive traversal, callback evaluation, evaluation order,
+recursion recovery, or fixed-point iteration.
 
 Where Contract theory permits several equivalent physical realizations, that freedom belongs to implementation rather
-than to ambiguous Governance meaning.
+than to ambiguous Governance meaning. Detailed Verification subsystem realization remains outside this ADR as stated in
+Section 6.
 
 ## 11. Consequences
 
@@ -1389,20 +1459,24 @@ establishes exact Decisions, conflict resolution, Binding, succession, terminati
 without taking ownership of the selected 1D Contracts.
 
 Governance remains explicit without becoming a general controller. Decision Basis uses Established Material supplied
-under ADR-0063, Decision Law produces explicit Outcomes, absence is not hidden in `null`, and every authoritative
-occurrence keeps an exact attribution path for Diagnostic and V2 analysis.
+under ADR-0063, Decision Law produces explicit Outcomes, absence is not hidden in `null`, and exact direct semantic
+relations preserve attribution for later Diagnostic and V2 analysis without embedding dependency topology into each
+Contract material.
 
 Scope is no longer tied to Interface source nesting or a fixed hierarchy. Existing semantic domains keep their original
 authority, while Governance can explicitly own a new grouping only when it declares genuinely new governed composition
 meaning.
 
 Same-response plurality is preserved where it matters and converges before Binding. Different-response conflict is
-resolved before governing authority appears. One exact governed application therefore observes one complete Binding,
-while old and new applications may coexist without forcing stop-the-world realization.
+resolved before governing authority appears. One predecessor Binding cannot be the subject of competing established
+succession or termination meanings, and one succession or termination judgment cannot be the trigger of competing
+established Transition cuts. One exact governed application therefore observes one complete Binding, while old and new
+applications may coexist without forcing stop-the-world realization.
 
-Immutable occurrence material, exact Version references, direct semantic relations, and acyclic explicit dependencies
-provide a stable substrate for deterministic diagnostics, PBT, verification, future query-based analysis, incremental
-reuse, and multi-version backend realization without turning those compiler techniques into Contract authority.
+Immutable occurrence material, exact Versioned semantic coordinates, flat direct semantic relations, canonical value
+equality, and acyclic semantic establishment provide a stable substrate for deterministic diagnostics, PBT, future
+verification, query-based analysis, incremental reuse, and multi-version backend realization without turning those
+compiler techniques into Contract authority.
 
 ### Negative
 
@@ -1410,9 +1484,10 @@ Governance remains Proposed because several concrete design layers are still ope
 Law, Scope, Selection, Arbitration, Binding, Replacement, Withdrawal, Transition, and Policy-reference frontend forms
 must still be designed. Multi-part authoring and byte-level canonical encoding also remain open.
 
-Failure and Diagnostic mapping is not yet complete. The ADR still needs exact user-facing treatment for incomplete
-Basis,
-`No Selection`, `No Resolution`, ambiguous Binding applicability, Withdrawal, and occurrence non-establishment.
+Verification subsystem design and Failure/Diagnostic mapping are intentionally not completed here. Later subsystem work
+must define exact checking architecture and user-facing treatment for incomplete Basis, `No Selection`, `No Resolution`,
+ambiguous Binding applicability, Withdrawal, succession or Transition ambiguity, and occurrence non-establishment
+without changing this Governance Contract meaning.
 
 The public Governance control API remains undecided, and the backend still needs a dedicated non-stop-the-world design
 for multi-version publication, pinning, distributed preparation, safe mixed-generation realization, and reclamation.
