@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted
+Migration Pending
 
 ## Date
 
@@ -16,19 +16,17 @@ Accepted
 - ADR-0030: Edge-Aware Deterministic Cycle Truncation Strategy
 - ADR-0032: Capacity Law, Resource Policy Resolution, Identity Hierarchy, and Zero-Residue Semantics
 - ADR-0037: Cycle Identity Preflight and Deferred Raw Fact Resolution
-- `docs/design/deterministic-active-member-projection-and-ordering-protocol.md`
-- `docs/design/l1-planner-session-primitive-data-structures.md`
+- `../../design/deterministic-active-member-projection-and-ordering-protocol.md`
+- `../../design/l1-planner-session-primitive-data-structures.md`
 
 ## Context
 
 Kontrakt's central product direction is to make interfaces first-class executable contracts.
 
-An interface is not merely a JVM type shape.
-An interface is the primary behavioral contract surface.
+An interface is not merely a JVM type shape. An interface is the primary behavioral contract surface.
 
 Annotations are currently the transitional syntax used to express contract constraints, but the architectural direction
-is
-larger:
+is larger:
 
 ``````text
 interface
@@ -155,9 +153,8 @@ Interfaces are not unsupported shapes.
 
 Interfaces are executable contract surfaces and must lower to deterministic polymorphic implementation resolution.
 
-Atomic, collection, array, and map types are not ad hoc exceptions.
-They must be represented by explicit expansion plans, deterministic synthetic edges where applicable, and explicit
-assembly/signature/equality/semantic-cost laws.
+Atomic, collection, array, and map types are not ad hoc exceptions. They must be represented by explicit expansion
+plans, deterministic synthetic edges where applicable, and explicit assembly/signature/equality/semantic-cost laws.
 
 ## Run Ratification and Deterministic Seed Surface
 
@@ -190,8 +187,8 @@ class DeterministicSeedSurface private constructor(
 )
 ``````
 
-This ADR does not define the persistence format of this surface.
-It does define that all semantic choices introduced by this ADR MUST be replay-derivable from:
+This ADR does not define the persistence format of this surface. It does define that all semantic choices introduced by
+this ADR MUST be replay-derivable from:
 
 - `DeterministicSeedSurface`,
 - canonical type identity,
@@ -244,8 +241,8 @@ BLAKE3 is the default family for:
 - deterministic UUID payload derivation,
 - future replay / manifest summary roots within planning scope.
 
-This does not mean every adapter must expose BLAKE3 directly.
-It means the planning protocol standardizes on one hash/PRF/KDF/XOF family so that:
+This does not mean every adapter must expose BLAKE3 directly. It means the planning protocol standardizes on one
+hash/PRF/KDF/XOF family so that:
 
 - semantic law stays uniform;
 - keyed derivation stays uniform;
@@ -256,8 +253,7 @@ equivalent to the ratified derivation law.
 
 BLAKE3 unification belongs to canonical digest / keyed derivation / entropy derivation law.
 
-It does not define canonical string ordering.
-Canonical string ordering remains a higher-level Unicode semantic law.
+It does not define canonical string ordering. Canonical string ordering remains a higher-level Unicode semantic law.
 
 ## HID: Hierarchical Identity Derivation
 
@@ -394,8 +390,8 @@ Propagation rules:
 - `STRUCTURAL_MEMBER`
     - originates from projected/synthetic member expansion context.
 
-The Planning Core, `TypeExpansionPipeline`, or equivalent frame boundary MUST carry this context explicitly.
-Using only `TypeReference` is non-compliant because the same interface type may appear in more than one semantic role.
+The Planning Core, `TypeExpansionPipeline`, or equivalent frame boundary MUST carry this context explicitly. Using only
+`TypeReference` is non-compliant because the same interface type may appear in more than one semantic role.
 
 ## Runtime Binding Snapshot
 
@@ -426,8 +422,7 @@ It MUST be invoked only at run ratification.
 
 The resulting `RuntimeBindingSnapshot` MUST then be frozen and pinned for the lifetime of the logical run.
 
-Planning, linking, and execution MUST consume the pinned snapshot.
-They MUST NOT re-query the provider mid-run.
+Planning, linking, and execution MUST consume the pinned snapshot. They MUST NOT re-query the provider mid-run.
 
 ## Polymorphic Implementation Resolution — AMENDED
 
@@ -534,11 +529,11 @@ Rules:
 - identifiers MUST satisfy the ratified identifier grammar for the relevant protocol surface;
 - ordering follows Kontrakt canonical string order.
 
-Canonical byte lowering is a separate concern from canonical ordering.
-UTF-8 belongs to canonical encoding / hashing / serialization law, not to the top-level ordering law.
+Canonical byte lowering is a separate concern from canonical ordering. UTF-8 belongs to canonical encoding / hashing /
+serialization law, not to the top-level ordering law.
 
-Contract-subject zero-candidate handling follows `ContractVacancyPolicy`.
-Dependency/member ambiguity follows runtime-binding-first law.
+Contract-subject zero-candidate handling follows `ContractVacancyPolicy`. Dependency/member ambiguity follows
+runtime-binding-first law.
 
 ### Sealed Hierarchy Fast Path
 
@@ -698,8 +693,7 @@ Those facets originate from the metadata/contract boundary:
 - normalized metadata constraints,
 - canonical value-object rules already ratified by protocol.
 
-Capability profile may gate whether a strategy is lawful.
-Capability profile MUST NOT invent new constraint data.
+Capability profile may gate whether a strategy is lawful. Capability profile MUST NOT invent new constraint data.
 
 ### Atomic Equality Material
 
@@ -721,8 +715,7 @@ Rules:
 - equality material must not use wall-clock or random UUID;
 -
     - canonical value rendering must follow Kontrakt canonical string order / canonical encoding law as applicable and
-      must
-      be locale-independent.
+      must be locale-independent.
 
 ### Temporal / Duration / UUID Law
 
@@ -736,8 +729,7 @@ However:
 
 Required law:
 
-- TEMPORAL materialization must derive from `DeterministicSeedSurface.rootTime` plus HID-governed deterministic
-  entropy;
+- TEMPORAL materialization must derive from `DeterministicSeedSurface.rootTime` plus HID-governed deterministic entropy;
 - UUID materialization must derive from HID-governed deterministic entropy and MUST be encoded as a UUIDv8-compatible
   custom deterministic identifier;
 - DURATION materialization must derive from deterministic seed/constraint law, not from ad hoc magic constants;
@@ -762,8 +754,7 @@ Forbidden:
 
 Collection expansion is synthetic-edge expansion.
 
-A collection is not a composite object with properties.
-It is a container with deterministic synthetic element edges.
+A collection is not a composite object with properties. It is a container with deterministic synthetic element edges.
 
 Plan shape:
 
@@ -852,8 +843,8 @@ Each canonical entry must carry:
 
 A compliant implementation must ensure that map entries are normalized into a canonical deterministic representation.
 
-This ADR does not require CHAMP specifically.
-It requires a result that is compatible with canonical hash-bucket or trie-based representations.
+This ADR does not require CHAMP specifically. It requires a result that is compatible with canonical hash-bucket or
+trie-based representations.
 
 ### Minimum Compliant Duplicate Detection
 
@@ -1029,12 +1020,11 @@ Polymorphic signature includes:
 
 Discovery remains seed-independent.
 
-This ADR requires deterministic discovery output but does not yet require partitioned Merkle-manifest topology.
-That stronger discovery invalidation law is deferred to a follow-up discovery-focused ADR/design note.
+This ADR requires deterministic discovery output but does not yet require partitioned Merkle-manifest topology. That
+stronger discovery invalidation law is deferred to a follow-up discovery-focused ADR/design note.
 
 A deterministic discovery manifest and summary root are allowed and encouraged, but they are not the central planning
-law
-ratified by this document.
+law ratified by this document.
 
 ## Metering
 
@@ -1089,8 +1079,7 @@ This ADR is proposed target-state architecture.
 Its compliance rules describe the state that the codebase must satisfy after implementation lands.
 
 While the ADR remains `Proposed`, transitional code may temporarily remain non-compliant, but such non-compliance must
-be
-treated as migration debt rather than as a competing architecture.
+be treated as migration debt rather than as a competing architecture.
 
 ## Canonical Ordering vs Canonical Encoding
 
@@ -1141,8 +1130,7 @@ Rules:
 
 Reason:
 
-The tuple is local selector input for HID.
-It is not canonical byte encoding and not Canonical IR.
+The tuple is local selector input for HID. It is not canonical byte encoding and not Canonical IR.
 
 This ADR separates:
 
@@ -1154,8 +1142,7 @@ from:
 - **canonical encoding law**
     - byte lowering used for hashing, digest material, serialization, and golden vectors.
 
-Canonical ordering must not be defined in terms of UTF-8 byte comparison.
-Canonical encoding may still use UTF-8.
+Canonical ordering must not be defined in terms of UTF-8 byte comparison. Canonical encoding may still use UTF-8.
 
 ## Non-Goals
 

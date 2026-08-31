@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed
+Accepted
 
 ## Date
 
@@ -81,8 +81,8 @@ Example:
 A -> B -> A
 ``````
 
-When the second `A` is encountered, the planner can determine that `A` is already active using cycle identity alone.
-It should not first enumerate constructors and properties of `A`.
+When the second `A` is encountered, the planner can determine that `A` is already active using cycle identity alone. It
+should not first enumerate constructors and properties of `A`.
 
 This ADR ratifies a stricter staged pipeline:
 
@@ -320,8 +320,8 @@ User?
 
 Reason:
 
-Nullability changes whether a value may be absent.
-It does not create a different active-cycle type for structural recursion detection.
+Nullability changes whether a value may be absent. It does not create a different active-cycle type for structural
+recursion detection.
 
 ### Generics
 
@@ -632,15 +632,14 @@ If a later stage fails, already-recorded successful work remains consumed.
 
 Reason:
 
-Runtime metering is monotonic.
-Rollback and reset do not rewind physical or semantic counters.
+Runtime metering is monotonic. Rollback and reset do not rewind physical or semantic counters.
 
 ### Failure Events
 
 This ADR does not introduce failure-path cost centers.
 
-Failure-path accounting must be added explicitly if needed.
-Successful-stage events must not be pre-charged to approximate failure cost.
+Failure-path accounting must be added explicitly if needed. Successful-stage events must not be pre-charged to
+approximate failure cost.
 
 ## Interaction with ADR-0030
 
@@ -714,8 +713,7 @@ This ADR does not define:
     - cycle identity,
     - raw facts,
     - projection,
-    - ordering
-      are separately accountable.
+    - ordering are separately accountable.
 
 ### Negative
 
@@ -819,5 +817,5 @@ Add tests for:
 
 Cycle detection MUST be identity-first and fact-lazy.
 
-Raw facts, projection, and ordering are traversal preparation.
-They are not prerequisites for determining whether the current type is already active on the stack.
+Raw facts, projection, and ordering are traversal preparation. They are not prerequisites for determining whether the
+current type is already active on the stack.
