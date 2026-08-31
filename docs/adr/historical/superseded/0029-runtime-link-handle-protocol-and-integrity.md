@@ -1,6 +1,6 @@
 # ADR-0029: Runtime Link Handle Protocol & Integrity
 
-* **Status:** Accepted
+* **Status:** Superseded
 * **Date:** 2026-02-11
 * **Context:** MVP Phase. Single Producer Deployment (Reflection-only OR KSP-only).
 
@@ -107,8 +107,8 @@ Discovery must be robust against environment noise and clear about failure cause
     * **Forbidden:** Silent skipping of invalid classes.
 * **Violation Classification:**
     * `PROTOCOL_VIOLATION`: The class name is invalid per TypeId rules (User/Compiler issue).
-    * `SCANNER_CORRUPTION`: The scanner infrastructure returned unusable data or threw unexpected exceptions (
-      Environment issue).
+    * `SCANNER_CORRUPTION`: The scanner infrastructure returned unusable data or threw unexpected exceptions
+      (Environment issue).
 * **Filters:**
     * **Base Filter:** Applies to ALL scans. Rejects Synthetic, Anonymous, Local classes, and Compiler Artifacts (
       `$DefaultImpls`, `$WhenMappings`, `$$Lambda`).
@@ -117,8 +117,8 @@ Discovery must be robust against environment noise and clear about failure cause
 
 ## Schema Definition (Allow/Deny List)
 
-| Category        | Status        | Examples                                                                                                                           |
-|:----------------|:--------------|:-----------------------------------------------------------------------------------------------------------------------------------|
+| Category        | Status         | Examples                                                                                                                           |
+|:----------------|:---------------|:-----------------------------------------------------------------------------------------------------------------------------------|
 | **Identity**    | ✅ **Allowed** | `TypeId` (Strict JVM Runtime Name Wrapper)                                                                                         |
 | **Structure**   | ✅ **Allowed** | `TestSpecification` (Plain Class, Private Ctor)                                                                                    |
 | **Modes**       | ✅ **Allowed** | `TestMode` (Sealed Interface)                                                                                                      |

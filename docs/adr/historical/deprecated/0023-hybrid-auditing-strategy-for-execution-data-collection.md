@@ -1,8 +1,7 @@
 # ADR-023: Hybrid Auditing Strategy for Execution Data Collection
 
-* **Status:** Accepted
+* **Status:** Deprecated
 * **Date:** 2026-01-17
-* **Authors:** Core Framework Team
 * **Tags:** #Observability #Reliability #Architecture #Safety #CrashForensics
 
 ## 1. Context

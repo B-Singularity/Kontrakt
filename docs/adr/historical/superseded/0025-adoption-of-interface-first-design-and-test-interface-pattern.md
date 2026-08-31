@@ -1,6 +1,6 @@
 # ADR-025: Interface-Driven Contract Verification and Test Interface Pattern
 
-* **Status:** Revised
+* **Status:** Superseded
 * **Date:** 2026-01-30
 * **Context:** Core Architecture & Test Strategy
 * **Relies on:** [ADR-001] Hexagonal Architecture, [ADR-009] Dual-Layer Contract Verification Strategy

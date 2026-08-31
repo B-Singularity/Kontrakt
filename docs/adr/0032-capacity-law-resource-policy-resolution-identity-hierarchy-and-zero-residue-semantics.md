@@ -6,13 +6,12 @@ Status: Accepted
 
 Related Consistency References:
 
-- [ADR-0030](0030-edge-aware-deterministic-cycle-truncation-strategy.md)
+- [ADR-0030](migration/0030-edge-aware-deterministic-cycle-truncation-strategy.md)
 - [ADR-0037](0037-cycle-identity-preflight-and-deferred-raw-fact-resolution.md)
 
 ## Context
 
-Kontrakt’s planning engine is a deterministic compiler-style state machine.
-The framework already commits to:
+Kontrakt’s planning engine is a deterministic compiler-style state machine. The framework already commits to:
 
 - cache-blind semantic determinism,
 - worker-local primitive planning state,
@@ -38,8 +37,8 @@ However, the current capacity handling remains partially heuristic and underspec
         - optional physical byte wiping.
 
 4. **Identity Ambiguity**
-    - Fast routing identities (`route64`, `planKey64`, `nodeIdentity64`) and authoritative semantic identities
-      must be normatively separated to avoid accidental correctness coupling.
+    - Fast routing identities (`route64`, `planKey64`, `nodeIdentity64`) and authoritative semantic identities must be
+      normatively separated to avoid accidental correctness coupling.
 
 5. **Cross-Cutting Scope**
     - The problem spans:
@@ -101,8 +100,8 @@ Rules:
 
 - Resolution from `ResourceProfile -> ResolvedSessionBudget` MUST happen in a Port/Adapter boundary.
 
-- `AUTO` resolution MUST occur at bootstrap or equivalent stable policy-resolution time.
-  It MUST NOT be recomputed mid-session.
+- `AUTO` resolution MUST occur at bootstrap or equivalent stable policy-resolution time. It MUST NOT be recomputed
+  mid-session.
 
 - The resolved numeric budget MUST be immutable for the lifetime of the `PlannerSession`.
 
@@ -171,8 +170,7 @@ The capacity solver MUST fail closed under any of the following:
 - any derived cap would exceed the addressable primitive index range,
 - any sentinel initialization law would be violated.
 
-The solver MUST compute intermediate byte totals in `Long`.
-Silent wraparound is constitutionally forbidden.
+The solver MUST compute intermediate byte totals in `Long`. Silent wraparound is constitutionally forbidden.
 
 ### 6. Semantic Zero-Residue Law
 
@@ -215,8 +213,8 @@ Reason:
 - semantic work already ratified before a failure remains part of the run's consumed budget unless the implementation
   explicitly defines a stronger run-level abort policy outside the rollback boundary.
 
-Zero-residue remains defined as semantic non-reachability of discarded planner state.
-It does not mean runtime metering counters are physically or logically rewound.
+Zero-residue remains defined as semantic non-reachability of discarded planner state. It does not mean runtime metering
+counters are physically or logically rewound.
 
 If a logical planning run spans multiple fresh worker-local sessions, any request/run-scoped remaining execution budget
 MUST carry forward both:
@@ -323,9 +321,8 @@ Cycle identity MUST be resolved before raw facts on the active-cycle detection p
 
 Reason:
 
-Cycle detection asks whether a type identity is already active on the planning stack.
-It must not require the planner to enumerate the type's constructors/properties before deciding that the current node is
-a cycle hit.
+Cycle detection asks whether a type identity is already active on the planning stack. It must not require the planner to
+enumerate the type's constructors/properties before deciding that the current node is a cycle hit.
 
 ### 10. Verification Law
 
@@ -360,8 +357,7 @@ L2 governance and L1 planner-session sizing are related but distinct.
     - per-key waiter caps,
     - speculative-build quotas.
 
-Governance changes MUST NOT alter semantic output.
-They may alter only:
+Governance changes MUST NOT alter semantic output. They may alter only:
 
 - sharing,
 - retention,
@@ -408,10 +404,9 @@ Type Expansion MUST NOT be charged through the `L2_CACHE` band.
 
 Reason:
 
-L2 cache governance controls sharing/reuse infrastructure.
-Type expansion controls semantic preparation for graph expansion.
-Merging these two cost families would make cache policy appear to affect semantic preparation cost and would obscure
-budget diagnostics.
+L2 cache governance controls sharing/reuse infrastructure. Type expansion controls semantic preparation for graph
+expansion. Merging these two cost families would make cache policy appear to affect semantic preparation cost and would
+obscure budget diagnostics.
 
 #### 11.1.1 Type Cycle Identity Preflight
 
@@ -432,8 +427,8 @@ Required distinction:
         - identity algorithm id snapshot,
         - identity algorithm version snapshot.
 
-These cost centers are physical-only because they materialize and validate active-cycle detection identity.
-They do not by themselves ratify raw structural facts, active-member projection, or traversal order.
+These cost centers are physical-only because they materialize and validate active-cycle detection identity. They do not
+by themselves ratify raw structural facts, active-member projection, or traversal order.
 
 Cycle identity resolution MUST occur before raw-fact resolution on the active-cycle detection path.
 
@@ -449,15 +444,15 @@ for the current cycle-hit type.
 
 Reason:
 
-A cycle-hit node is resolved by active-stack identity.
-Raw facts, projection, and ordering are traversal preparation and must be deferred until cycle miss.
+A cycle-hit node is resolved by active-stack identity. Raw facts, projection, and ordering are traversal preparation and
+must be deferred until cycle miss.
 
 #### 11.1.2 Raw Fact Cache Hit vs Actual Resolution
 
 Raw type-fact retrieval MUST distinguish cache hit from actual resolution.
 
-A cached raw-fact hit is not semantic work by itself.
-It is already-ratified fact reuse and MUST be charged as physical-only validation / retrieval work.
+A cached raw-fact hit is not semantic work by itself. It is already-ratified fact reuse and MUST be charged as
+physical-only validation / retrieval work.
 
 Actual raw-fact resolution is semantic lowering input acquisition and MAY be charged as semantic-also work.
 
@@ -547,8 +542,8 @@ This preserves the boundary:
 
 Implementation constraint:
 
-`TypeExpansionPipeline` MUST NOT accept `PlannerSession` in its constructor or factory.
-Any future constructor/factory shape that directly depends on `PlannerSession` is non-compliant.
+`TypeExpansionPipeline` MUST NOT accept `PlannerSession` in its constructor or factory. Any future constructor/factory
+shape that directly depends on `PlannerSession` is non-compliant.
 
 ADR-0037 further requires that `TypeExpansionPipeline` emit metering events only after each corresponding stage
 succeeds.
@@ -571,7 +566,7 @@ For the identity-first preflight path, this means:
 - stronger determinism under injected budgets,
 - scalable capacity without undocumented structural walls,
 - precise identity hierarchy,
-- O(1)-class semantic resets under pooled primitive state.
+- O (1)-class semantic resets under pooled primitive state.
 - cleaner separation between active-cycle identity work and raw-fact traversal preparation,
 - lower cycle-hit overhead because raw facts are not resolved for the current cycle-hit type,
 - stronger budget diagnostics for shape, cycle identity, raw facts, projection, and ordering.

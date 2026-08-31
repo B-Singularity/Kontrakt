@@ -1,6 +1,6 @@
 # ADR-021: Adoption of Zero-Config Hybrid Journaling Strategy for Cloud-Native Execution
 
-* **Status:** Accepted
+* **Status:** Deprecated
 * **Date:** 2026-01-11
 * **Context:** Execution Engine & Infrastructure / Performance Optimization
 * **Relies on:** [ADR-017] Worker-Based Synchronous Audit Journaling
@@ -83,9 +83,9 @@ We will modify the `AuditingInterceptor` to apply **Adaptive Logging Levels**.
 
 ### ⚠️ Negative Consequences (Trade-offs)
 
-* **The "Micro-Gap" Risk:** In the extremely rare event of an **OS-Level Crash** (Kernel Panic) or a hard `kill -9` (
-  SIGKILL) occurring *exactly* when the buffer is full but not flushed, up to **4KB of non-critical data** (approx. last
-  20 lines) may be lost.
+* **The "Micro-Gap" Risk:** In the extremely rare event of an **OS-Level Crash** (Kernel Panic) or a hard `kill -9`
+  (SIGKILL) occurring *exactly* when the buffer is full but not flushed, up to **4KB of non-critical data** (approx.
+  last 20 lines) may be lost.
     * *Mitigation:* This is an acceptable trade-off for a 3000% performance gain. Critical errors trigger a flush
       anyway.
 * **Implementation Complexity:** The `TraceSink` logic becomes more complex. It must manage buffer pointers, handle

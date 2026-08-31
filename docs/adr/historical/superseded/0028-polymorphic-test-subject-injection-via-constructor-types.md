@@ -1,6 +1,6 @@
 # ADR 0028: Polymorphic Test Subject Injection via Constructor Types
 
-* **Status:** Accepted
+* **Status:** Superseded
 * **Date:** 2026-02-07
 * **Context:** The framework needs a unified UX for Contract Testing that handles both "General Compliance" (1
   Interface, N Implementations) and "Specific Verification" (1 Implementation), while strictly enforcing the separation
@@ -122,8 +122,8 @@ To support 1:N execution without ambiguity, we separate the Internal Key from th
 ## 5. Risks & Management
 
 * **Risk:** Users might try to put `@Contract` on a concrete class.
-* **Mitigation:** The framework explicitly blocks this with a configuration exception (Step 0), enforcing DIP (
-  Dependency Inversion Principle).
+* **Mitigation:** The framework explicitly blocks this with a configuration exception (Step 0), enforcing DIP
+  (Dependency Inversion Principle).
 * **Risk:** Blocking 0-parameter tests might alienate users wanting simple tests.
 * **Mitigation:** We explicitly document that Kontrakt is for *Architectural Testing*. Standard unit tests are better
   served by existing tools.

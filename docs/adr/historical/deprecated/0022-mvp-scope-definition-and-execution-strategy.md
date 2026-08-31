@@ -1,6 +1,6 @@
 # ADR-022: MVP Scope Definition and Execution Strategy
 
-* **Status:** Accepted
+* **Status:** Deprecated
 * **Date:** 2026-01-13
 * **Deciders:** Core Team, Architect
 * **Technical Context:** `DefaultScenarioExecutor`, `FixtureGenerator`
@@ -11,9 +11,8 @@ As we build the MVP (Minimum Viable Product) for the **Kontrakt** framework, we 
 *Feature Completeness** (handling all edge cases, complex fuzzing) and **Deterministic Stability** (reproducibility,
 speed, debuggability).
 
-Features like probabilistic parameter injection (coin-toss), infinite fuzzing loops, or complex object graph
-resolution (auto-mocking) can significantly increase architectural complexity and reduce the reproducibility of test
-failures.
+Features like probabilistic parameter injection (coin-toss), infinite fuzzing loops, or complex object graph resolution
+(auto-mocking) can significantly increase architectural complexity and reduce the reproducibility of test failures.
 
 We need to define strict boundaries and simplification strategies to ensure the framework remains lightweight,
 predictable, and strictly isolated.
@@ -126,8 +125,8 @@ We MAY expose a single high-level knob in the future:
 
 - `resourceProfile = AUTO | SMALL_HEAP | DEFAULT | SERVER`
 
-The profile maps to internal `PlannerSessionConfig` budgets.
-Detailed knobs (bytes/steps/semantic units) remain advanced and undocumented unless required by production incidents.
+The profile maps to internal `PlannerSessionConfig` budgets. Detailed knobs (bytes/steps/semantic units) remain advanced
+and undocumented unless required by production incidents.
 
 Notes:
 

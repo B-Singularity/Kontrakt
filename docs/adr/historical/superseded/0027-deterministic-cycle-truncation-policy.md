@@ -2,9 +2,9 @@
 
 **Date**: 2026-02-04
 
-**Status**: Accepted
+**Status**: Superseded
 
-**Supersedes**: [ADR-0010](historical/superseded/0010-strict-circular-reference-detection-strategy.md)
+**Supersedes**: [ADR-0010](0010-strict-circular-reference-detection-strategy.md)
 
 ## Context
 

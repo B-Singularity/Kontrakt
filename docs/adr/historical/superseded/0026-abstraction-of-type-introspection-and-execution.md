@@ -1,6 +1,6 @@
 # ADR 0026: Holistic Transition to Type Graph & Resolver Architecture
 
-* **Status:** Accepted
+* **Status:** Superseded
 * **Date:** 2026-01-28
 * **Context:** The framework's entire lifecycle is critically dependent on JVM Runtime Reflection APIs.
 
@@ -26,8 +26,8 @@ to a "Pre-resolved Type Graph".
 
 ### 2.1. Irreversibility Rationale
 
-This decision is structurally **irreversible**.
-Once the Domain Layer is refactored, reintroducing runtime reflection would require rewriting the entire domain logic.
+This decision is structurally **irreversible**. Once the Domain Layer is refactored, reintroducing runtime reflection
+would require rewriting the entire domain logic.
 
 **Therefore, we accept that there is no rollback path to the old architecture.**
 
@@ -72,8 +72,8 @@ interface TypeResolver {
 A recursive structure representing the type system.
 
 **CRITICAL DESIGN NOTE:**
-To prevent "Flag Explosion" (e.g., `isJson`, `isEntity`), we adopt a **`TypeKind`** classification.
-The `TypeDescriptor` must remain a **Structural Fact Sheet**, not a Behavior Bucket.
+To prevent "Flag Explosion" (e.g., `isJson`, `isEntity`), we adopt a **`TypeKind`** classification. The `TypeDescriptor`
+must remain a **Structural Fact Sheet**, not a Behavior Bucket.
 
 ```kotlin
 enum class TypeKind {
