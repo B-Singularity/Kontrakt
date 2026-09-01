@@ -128,7 +128,7 @@ Partially Superseded   -> migration/
 Superseded             -> historical/superseded/
 Deprecated             -> historical/deprecated/
 Rejected               -> historical/rejected/
-Withdrawn               -> historical/withdrawn/
+Withdrawn              -> historical/withdrawn/
 ```
 
 A normal transition from Draft to Proposed or Accepted does not move the file. Stable paths are preferred while a
@@ -276,12 +276,27 @@ current owner.
 
 ## 14. Changes to Accepted ADRs
 
-Clarifications may be made directly when they do not change the accepted decision.
+Accepted means that the decision is established. It does not make the document immutable.
 
-A material change to meaning, authority, scope, or trade-off requires explicit review.
+A non-material change may be made directly. This includes correction of wording, examples, terminology, references,
+formatting, and explanation when the decision itself remains the same.
 
-When the change creates a distinct architectural decision, create a new ADR and record the relationship instead of
-rewriting the old decision as though the earlier history never existed.
+A material correction may also be made directly when the correction remains within the decision that the ADR already
+owns. This includes correcting an earlier mistake even when the corrected statement is materially different from the
+previous text.
+
+A material correction should leave a concise correction or amendment record when the previous accepted meaning would
+otherwise be difficult to reconstruct from the document itself.
+
+A correction stops being a local edit when it changes the basis of other architectural decisions. If other ADRs must
+change their meaning, authority, scope, or important trade-off because of the correction, the change must be recorded as
+a new architectural decision.
+
+The new ADR owns that decision. Affected ADRs enter migration when their current material must be reorganized or
+rewritten around the new basis.
+
+The size of the textual change does not determine whether a new ADR is required. The relevant boundary is whether the
+change remains inside one decision or requires other decisions to be established again.
 
 ## 15. Repository Rule
 
