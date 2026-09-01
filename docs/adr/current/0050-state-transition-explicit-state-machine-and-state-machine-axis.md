@@ -2,7 +2,7 @@
 
 ## Status
 
-Migration Pending
+Accepted
 
 ## Date
 
