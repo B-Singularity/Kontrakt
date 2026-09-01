@@ -81,7 +81,9 @@ live object.
 V1 must keep Input flat so a nested carrier, reference graph, inherited relation, or runtime implementation topology
 does not become hidden Contract structure.
 
-Input must reuse the existing acquisition and planning pipeline rather than create another source-analysis machine.
+The same selected source meaning must have one authoritative Input interpretation.
+
+Compiler acquisition, planning, storage, or backend structure must not create a second semantic authority path.
 
 A source that cannot be deterministically refined must fail at definition time.
 
@@ -141,66 +143,98 @@ language without changing the Input Contract.
 
 ---
 
-## 5. Definition-Time Authority Path
+## 5. Definition Establishment
 
-Input reuses the established compiler path.
+An Input definition receives authority only after the exact Input source selected for the Operation has been interpreted
+completely and deterministically under the Input Contract.
 
 ```text
-slot-selected flat Input declaration
--> existing adapter-neutral metamodel acquisition
--> FrozenMetamodelImage
--> planning-facing frozen providers
--> direct-coordinate projection and source-profile judgment
--> adapter-erased lowered Input material
--> ratified contract graph unit
--> ContractImage-visible Input material
--> generated boundary realization
+selected Operation Input binding
++
+exact selected Input declaration
+    ↓
+complete deterministic interpretation under the Input law
+    ↓
+complete legal Input definition meaning
+    ↓
+authoritative Input definition
 ```
 
-`FrozenMetamodelImage` remains operation-neutral source and metamodel material.
+The established meaning must contain every distinction required by the Input law and no distinction derived only from
+the current compiler representation.
 
-Input planning does not reopen reflection, KSP, bytecode, source AST, PSI, or backend-local handles.
+A selected source that is incomplete, ambiguous, unsupported, open, or otherwise incompatible with the Input law
+establishes no Input definition authority.
 
-Input does not create another `TypeReference` closure frontier, cycle-identity acquisition path, raw-fact image, graph
-engine, readiness bridge, budget ledger, or frozen publication protocol.
+The compiler must preserve one authoritative semantic interpretation of the selected source. It must not recover Input
+meaning later from host-object identity, compiler topology, planning state, storage position, generated code shape, or
+backend-local representation.
 
-Generation-oriented constructor selection, polymorphic expansion, recursive member traversal, collection expansion, and
-cycle truncation do not become Input semantics merely because compiler machinery may already support such operations
-elsewhere.
+Acquisition, intermediate representation, planning, storage, publication, and code-generation structures are replaceable
+realization. No particular compiler path, graph, frozen image, provider, handle, table, or generated artifact is part of
+Input identity or Input authority.
 
-The operation-specific result is lowered into Kontrakt-owned Input material. A source declaration, DTO object, backend
-handle, or planning node does not become Input identity.
-
-The resolved Input presentation is the logical operation-specific planning and lowering result. It is not another frozen
-metamodel image.
+Compiler machinery may still reject source behavior or structure that cannot be erased without changing Input meaning.
+Constructor execution, polymorphic expansion, recursive member traversal, collection expansion, cycle handling, and
+other source or compiler mechanisms do not become Input semantics merely because one realization can process them.
 
 ---
 
 ## 6. Invocation Boundary
 
-At invocation time the path is:
+For one applicable Operation interaction, Input judges the actual material supplied at that Operation's Input position
+under the applicable Input definition.
 
 ```text
-already-formed flat immutable Input presentation
--> generated boundary reader or static gate
-   -> declared presentation formed -> Admission
-   -> declared presentation refused -> declared Input stop
-   -> delegated cross-cutting gate stops -> result owned by that Contract
+selected Operation interaction
++
+actual material supplied at the Input position
++
+applicable Input definition
+    ↓
+Input judgment
+    ↓
+declared presentation shape satisfied
+    -> Input success
+    -> Admission may judge the presentation
+
+declared presentation shape not satisfied
+    -> Input refusal
+    -> Admission is not reached
 ```
 
-The runtime Input boundary accepts only already-formed immutable presentation material.
+Input judges only whether the actual supplied material realizes the declared Input presentation shape. It does not judge
+whether the presented values may continue. That authority belongs to Admission.
 
-A mutable object, lazy value, proxy, framework-bound object, live collection view, nested carrier graph, or
-lifecycle-dependent carrier is not repaired by Input.
+How the user creates the supplied instance is realization outside Input authority. Constructor, factory, builder,
+adapter, serializer, generated factory, or another creation pattern does not establish Input meaning by itself.
 
-The generated boundary realization must not choose a capture moment, invoke lazy behavior, snapshot mutable state,
-traverse an outside object graph, or derive stable meaning from a live carrier.
+The actual instance is realization material subjected to the Input judgment. Its class identity, object identity,
+allocation identity, construction path, getter behavior, or storage layout does not become Input authority.
 
-Presentation formation that is necessary to reach the flat Input surface happens before this boundary.
+The runtime Input boundary accepts only a flat immutable presentation that satisfies the applicable Input law. A mutable
+object, lazy value, proxy, framework-bound object, live collection view, nested carrier graph, or lifecycle-dependent
+carrier is not repaired, snapshotted, or reinterpreted by Input.
 
-The immutable presentation is not a second frozen image, contract graph unit, or mandatory universal
-`FormedBoundaryMaterial` domain type. Runtime invocation must not repeat metamodel acquisition, source resolution,
-planning, graph ratification, canonical identity derivation, or Contract publication.
+Definition-time verification establishes that the selected declaration can provide a legal Input definition. It does not
+authorize arbitrary material merely because that material has a compatible host type. The actual material participating
+in the Interaction must satisfy the applicable Input law.
+
+After successful Input judgment, later inbound processing may change physical representation only through the declared
+Contract relations that own those changes. The material eventually supplied to the user Operation must preserve the
+meaning lawfully derived through the complete declared inbound pipeline. Undeclared substitution, mutation,
+reinterpretation, or introduction of different meaning is not a valid realization.
+
+The compiler and runtime must prove or check the required integrity at the boundaries where the applicable law cannot be
+guaranteed otherwise. This obligation does not require one generated reader, static gate, wrapper, token, or mandatory
+recheck strategy. Equivalent realization may use static proof, generated checks, controlled immutable material,
+specialized invocation, or another mechanism that preserves the same Contract result.
+
+An independently applicable Policy, Governance, Budget, Capacity, or other Contract retains ownership of its own
+judgment and result. Its stop does not become Input refusal.
+
+Occurrence-time Input judgment uses the already-authoritative Input definition. It must not reinterpret authored source
+or reconstruct Contract meaning from compiler acquisition, planning, graph, cache, or backend representation.
 
 ---
 
