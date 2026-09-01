@@ -10,7 +10,7 @@ Accepted
 
 ## Related
 
-- `../../the-most-important-thing/what-contract-is.md`
+- `docs/the-most-important-thing/what-contract-is.md`
 - `docs/todo/kontrakt-v2-reference-architecture-and-v1-foundations-en.md`
 - ADR-0046: Interface Contract Frontend
 - ADR-0048: Flow Contract Processing — Boundary Refinement and Core Entry
@@ -252,6 +252,76 @@ B owns `N`.
 A continues to own `M`.
 
 A consumer may establish a new conclusion under its own law. It may not rewrite the source meaning.
+
+---
+
+## 4.9. Minimum Contract Detail and Replaceable Realization
+
+Established Material fixes authoritative semantic meaning. It does not prescribe one physical representation of that
+meaning.
+
+The owning Contract must declare each distinction required to preserve its obligation. Identity and applicability belong
+to Contract law only when the owning meaning requires them. The same rule applies to judgment, attribution, and direct
+semantic relations.
+
+A distinction must not become Contract law merely because the current frontend, compiler, runtime, storage model, or
+backend represents material that way.
+
+Contract precision does not mean maximum specification. A detail can over-couple the Contract even when it is described
+with semantic vocabulary. Detail without an independent semantic responsibility creates coupling without adding Contract
+meaning.
+
+Use this test when deciding whether a detail belongs to the Contract:
+
+```text
+detail changes
+
+declared obligation
+required semantic distinctions
+    remain unchanged
+
+then:
+    Contract meaning does not change
+    -> detail remains realization
+```
+
+The owning authority decides which semantic distinctions are required. A later compiler product, Diagnostic consumer,
+Governance consumer, or backend convenience does not create that requirement for the source Contract.
+
+A canonical compiler representation is not automatically canonical Contract meaning. A realization may retain additional
+fields, indexes, summaries, or technical identities. Their presence does not enlarge Established Material meaning.
+
+Established Material is semantically immutable once established. Later realization activity may not rewrite the
+established meaning.
+
+Semantic immutability does not require one physical immutability mechanism. Storage, layout, sharing, and
+materialization may change while the same established meaning is preserved.
+
+Definition Reference, Occurrence Reference, and explicit semantic relations require exact semantic targets and exact
+relations. Sections 6 and 11 define the common reference requirements. They do not require one pointer, table, graph, or
+object representation.
+
+Ordering belongs to Contract law only when the owning law declares the order itself meaningful. Discovery order,
+evaluation order, storage order, and physical publication order do not acquire authority from execution.
+
+A representation itself belongs to Contract law only when the owning Contract explicitly makes that representation part
+of the declared meaning. Exact bytes may therefore be Contract material when the exact byte sequence participates in a
+declared protocol, identity law, or outward obligation. Bytes used only for compiler hashing, caching, persistence, or
+transport remain realization.
+
+A realization may be replaced when every Contract-visible meaning and required distinction is preserved. If a backend
+cannot preserve an established law, that backend is not a valid realization of the law. The Contract must not be
+silently weakened to fit the backend.
+
+The first implementation does not become Contract law merely because it is the first implementation.
+
+V1 must preserve the semantic distinctions required by this ADR without making its current representation authoritative.
+V2 may replace compiler mechanisms for incremental work, storage, scheduling, sharing, or materialization without
+redefining Established Material.
+
+Contract Version and compiler representation version are separate concerns. A representation format may change without a
+Contract Version change when established meaning is unchanged. A semantic change remains a Contract change even when the
+compiler can migrate the physical representation.
 
 ---
 
@@ -626,6 +696,8 @@ Shared analysis may also be reused.
 
 Such reuse does not transfer Contract authority.
 
+---
+
 # 9. Integrity Boundaries
 
 ## 9.1. Observation
@@ -766,6 +838,8 @@ No product reconstructs Contract authority from another product's private repres
 
 Shared analysis remains an implementation facility.
 
+---
+
 # 11. Core Representation Requirements
 
 ## 11.1. Value-Based Semantic Core
@@ -801,8 +875,6 @@ semantic identity
     !=
 local physical address
 ```
-
-Rebuilding the same semantic world may assign another address without changing Contract meaning.
 
 ---
 
@@ -896,6 +968,8 @@ Occurrence-time integrity prevents later reconstruction from being presented as 
 
 Retention controls later availability.
 
+---
+
 # 14. Whole-Machine Consequences
 
 Whole-Machine linking preserves the source identity of unchanged unit material.
@@ -912,6 +986,8 @@ The summary remains compiler knowledge.
 If Whole-Machine semantics require a new result, an owning Whole-Machine law must establish that result.
 
 This keeps semantic composition separate from physical linking.
+
+---
 
 # 15. Verification Requirements
 
@@ -930,6 +1006,8 @@ Reference resolution must remain deterministic across equivalent semantic worlds
 Linking must not mint new identity for unchanged source meaning.
 
 Backend shape cannot be the only way to recover these relations.
+
+---
 
 # 16. V1 Foundation Requirements
 
@@ -961,6 +1039,8 @@ Shared analyses may serve several compiler products while remaining compiler-own
 
 V1 QA must compare clean recomputation with each alternate execution mode that V1 supports.
 
+---
+
 # 17. V2 Consequences
 
 The V2 query system may use semantic identity when forming stable compiler keys.
@@ -991,6 +1071,8 @@ Basis Resolution.
 The exact query engine remains outside this ADR.
 
 The physical storage layout also remains outside this ADR.
+
+---
 
 # 18. Rejected Directions
 
@@ -1078,3 +1160,17 @@ V2 can add incremental reuse and parallel evaluation without redefining Contract
 
 The cost is explicit semantic bookkeeping. The compiler must preserve source identity and applicability instead of
 recovering them later from execution order or backend shape.
+
+---
+
+# 20. Amendment History
+
+## 2026-09-02 — Contract Detail and Replaceable Realization
+
+Section 4.9 clarifies that Established Material fixes semantic authority rather than one physical representation.
+
+The amendment also makes the Contract-detail boundary explicit. A detail belongs to Contract law only when the owning
+authority requires that distinction to preserve its declared meaning.
+
+This amendment does not define new 1D-specific Established Material. The existing establishment, identity,
+applicability, composition, integrity, and V1/V2 laws remain unchanged.
