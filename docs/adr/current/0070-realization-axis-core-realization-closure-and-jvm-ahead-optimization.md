@@ -64,6 +64,9 @@ movement. The Realization axis performs the computation that makes the declared 
 
 Realization is not a Contract.
 
+Contract meaning is stated through the explicit Kontrakt Contract surface. The IDL is the primary authoring surface for
+that meaning. User implementation does not acquire Contract authority merely because the compiler can inspect it.
+
 This separation does not make realization invisible to the compiler. Kontrakt must know enough about user realization to
 determine whether the declared Core remains true in the actual program.
 
@@ -151,6 +154,12 @@ owning boundary.
 A realization that cannot be verified under the supported compiler model must not be silently accepted as closed.
 
 Realization topology is compiler-visible but is not part of the outward Contract surface.
+
+Ordinary user realization must not depend on the verifier or optimizer that Kontrakt happens to use. Changing those
+compiler techniques must not create a new Contract requirement for otherwise legal user code.
+
+Verification machinery must remain realization. A proof system may help Kontrakt establish a required property, but the
+proof system does not define the machine.
 
 A later compiler subsystem must not force an earlier producer to reinterpret its result for that subsystem's purpose.
 
@@ -260,13 +269,37 @@ when Kontrakt can prove that the change preserves the required meaning.
 
 ---
 
-## 6. Adapter and Core Boundary
+## 6. Explicit Contract Surface and User-System Independence
+
+Kontrakt keeps Contract declaration separate from ordinary user implementation.
+
+The IDL is the primary place where the user states the machine's explicit Contract meaning. A supported host declaration
+may provide source evidence when an owning Contract ADR allows it, but that host declaration does not gain authority
+from its class or runtime behavior.
+
+Kontrakt does not discover missing Contract meaning from the shape of user implementation. A helper name or class
+hierarchy does not become a Contract because the compiler can read it. Verification-oriented source material has the
+same limit.
+
+The user system should need Kontrakt knowledge only at an explicit integration boundary. A generated User API or an
+Adapter is such a boundary. Ordinary Core implementation should not need to call a Kontrakt checker or carry
+Kontrakt-specific proof machinery.
+
+Compiler inspection is one-way. Kontrakt may read user realization to verify and optimize it, but the user realization
+does not become valid by depending on the current verifier or optimizer.
+
+A replacement verifier or optimizer must therefore be able to consume the same declared Contract and legal user
+realization without requiring those sources to adopt the replacement's private model.
+
+---
+
+## 7. Adapter and Core Boundary
 
 External technology ends before the Core.
 
-A database connection, network client, framework context, live clock, or another external capability belongs outside
-Core realization. Its information may enter only after the applicable Adapter and inbound Contract processing have
-formed lawful Core material.
+A live external capability belongs outside Core realization. A database connection or system clock is an example. Its
+information may enter only after the applicable Adapter and inbound Contract processing have formed lawful Core
+material.
 
 ```text
 external system
@@ -289,7 +322,7 @@ boundary those owners already establish.
 
 ---
 
-## 7. Core Realization Closure
+## 8. Core Realization Closure
 
 A user Operation realization must remain closed over the factual material and machine context lawfully available at its
 Core position.
@@ -310,7 +343,7 @@ State-Machine decisions that establish that material. This ADR does not create a
 
 ---
 
-## 8. Compile-Time Realization Verification
+## 9. Compile-Time Realization Verification
 
 Kontrakt must inspect enough User-System Realization to establish Core Realization Closure before accepting the
 executable realization.
@@ -322,35 +355,77 @@ When Kontrakt establishes that outside information affects Core computation thro
 
 When the supported analysis cannot establish closure, Kontrakt must not silently assume that closure exists.
 
-This verification is a compile-time responsibility. Runtime execution should not depend on a general monitor that
-discovers ordinary Core-closure violations after the realization has already been accepted.
-
 Runtime Contract judgments that require runtime values remain runtime judgments. This ADR does not move those judgments
 into compile time.
 
-The exact V1 proof model remains open.
+The exact V1 verification method remains open.
 
 ---
 
-## 9. Realization Topology and Cycles
+## 10. Verification Machinery Remains Realization
 
-Implementation topology may contain cycles even though Contract semantic cycles are forbidden.
+Kontrakt may use mathematical or static verification techniques to decide whether realization satisfies an
+already-declared requirement. Those techniques remain part of Kontrakt realization.
 
-A recursive method is realization structure. It does not create recursive Contract authority.
+A verification condition is not Contract meaning. Solver guidance and verification-only state remain compiler material
+even when a verifier depends on them.
 
-Kontrakt must detect realization cycles so analysis terminates and the same region is not traversed without bound.
+The current verifier must not make its preferred proof structure a hidden requirement on the user's algorithm. If one
+verifier needs a different internal model, Kontrakt should change that realization machinery rather than silently
+turning the model into a new user Contract.
 
-A realization cycle may be legal when the relevant region remains inside Core Realization Closure.
+Failure to establish a required property is also distinct from establishing a violation. Kontrakt may refuse compilation
+when required realization evidence cannot be obtained, but diagnostics must preserve the difference between a proven
+violation and an inconclusive or unsupported analysis.
 
-A Contract semantic cycle remains illegal under the Contract laws that own semantic dependency.
+Kontrakt must not treat an unchecked assumption as Contract satisfaction. A verification shortcut cannot create
+authority that the declared machine did not establish.
 
-Earlier cycle-detection work may be reused to implement this analysis. The algorithm is realization and may be replaced.
+Formal proof may still be used to check Kontrakt's own transformations. In that role it protects realization correctness
+and remains replaceable with the compiler machinery that uses it.
+
+---
+
+## 11. No Implicit Runtime Interception
+
+Kontrakt does not preserve Core Realization Closure by placing a general interception layer around user implementation.
+
+A proxy or wrapper that watches ordinary calls at runtime would leave the user realization opaque until execution. It
+would also introduce another execution path whose presence is not part of the declared Contract.
+
+Core-closure verification therefore belongs to compilation. If the supported compiler model cannot establish the
+required closure, Kontrakt does not silently defer that uncertainty to a runtime proxy.
+
+This does not remove Contract judgments that depend on runtime values. Such judgments remain part of the declared
+machine and are emitted in the executable form required by their owning Contract.
+
+The runtime form of those judgments does not need to preserve a proxy, wrapper, or general Contract interpreter merely
+to mirror the source-level Contract structure.
+
+---
+
+## 12. Realization Topology and Cycles
+
+User implementation structure is not Contract authority. This ADR therefore does not classify a call or type cycle as
+Contract-valid or Contract-invalid merely because the cycle exists in implementation.
+
+Ordinary JVM code can lead the compiler back to implementation material it has already seen. Recursion is one example.
+Class and call relationships may create the same analysis problem.
+
+Kontrakt must detect that return so analysis terminates and already-acquired realization knowledge is not rebuilt
+without need.
+
+Cycle detection does not change the user's algorithm and does not turn implementation topology into Contract meaning.
+
+A Contract semantic cycle remains governed by the Contract laws that own semantic dependency.
+
+Earlier cycle-detection work may be reused for compiler traversal. The technique remains replaceable realization.
 
 The exact recursive-region analysis remains open.
 
 ---
 
-## 10. Contract Material and Realization Material
+## 13. Contract Material and Realization Material
 
 Contract material and realization material must remain distinct even when the compiler stores or references them
 together.
@@ -383,7 +458,7 @@ This separation lets Kontrakt change compiler representation without changing th
 
 ---
 
-## 11. Producer and Consumer Direction
+## 14. Producer and Consumer Direction
 
 Material produced earlier in compilation must not depend on which later subsystem will consume it.
 
@@ -410,7 +485,7 @@ recompute a result when independence is part of the check.
 
 ---
 
-## 12. Replaceable Compiler Realization
+## 15. Replaceable Compiler Realization
 
 No compiler technique named in current Kontrakt design work becomes Contract meaning through this ADR.
 
@@ -429,12 +504,12 @@ an implementation strategy, not a Contract concept. A later incremental engine m
 Contract laws in this ADR.
 
 This replaceability is required for optimization in particular. Kontrakt is expected to adopt stronger compiler
-techniques as they become practical. The declared Contract meaning must remain stable while the optimization machinery
-evolves.
+techniques as they become practical. The declared Contract meaning and a legal user realization must not need to change
+merely because that machinery changes.
 
 ---
 
-## 13. Reuse and Compiler Cost
+## 16. Reuse and Compiler Cost
 
 Realization verification must not make Kontrakt repeatedly pay for the same host-program knowledge without reason.
 
@@ -461,31 +536,32 @@ The exact V1 reuse architecture remains open.
 
 ---
 
-## 14. Optimization Boundary
+## 17. Optimization Boundary
 
 Optimization belongs entirely to realization.
 
-Kontrakt may transform a legal User-System Realization when the transformation preserves the established Contract
-meaning and every host behavior that the selected realization must preserve.
+Kontrakt does not prescribe the algorithm chosen by the user implementation. A lawful algorithm does not become a
+Kontrakt algorithm merely because the compiler inspects it.
 
-The authored object structure is not protected merely because it appeared in source code.
+Optimization acts on the executable realization around that computation. Intermediate material does not have to keep the
+authored object topology when that topology carries no required meaning.
 
-For example, a temporary object may disappear when its identity cannot be observed and the same required values reach
-the same lawful consumers. This changes execution structure without changing Contract meaning.
+For example, a temporary carrier may disappear when its identity is not observable and the same required value reaches
+the same consumer. The calculation remains the user's realization while its intermediate physical form changes.
 
 The logical Contract pipeline also does not require a separate runtime object or call for every logical judgment.
 Physical work may be combined when the same judgments and results are preserved.
 
-Kontrakt must decide legality before deciding whether an optimization is profitable.
+Kontrakt must establish realization legality before using that knowledge for optimization.
 
-No particular optimization algorithm is fixed by this ADR. The optimizer may be replaced when the replacement preserves
-the required result.
+No particular optimization technique is fixed by this ADR. Kontrakt may replace its optimization machinery when the
+replacement preserves the required result.
 
 The exact V1 optimization set remains open.
 
 ---
 
-## 15. JVM-Ahead Optimization
+## 18. JVM-Ahead Optimization
 
 Kontrakt must use proven Contract-specific and realization knowledge before the JVM begins its own optimization.
 
@@ -514,7 +590,7 @@ The exact JVM emission strategy remains open.
 
 ---
 
-## 16. Determinism and Meaning Preservation
+## 19. Determinism and Meaning Preservation
 
 Compiler reuse and optimization must not create another semantic mode of Kontrakt.
 
@@ -534,7 +610,7 @@ without changing this decision.
 
 ---
 
-## 17. V1 Foundation and V2 Evolution
+## 20. V1 Foundation and V2 Evolution
 
 V1 owns Core realization verification and Contract-aware optimization before JVM emission.
 
@@ -561,22 +637,27 @@ changing Contract meaning.
 
 ---
 
-## 18. Open in This ADR
+## 21. Open in This ADR
 
-The exact V1 Core Realization Closure proof model remains open. It must define what the compiler can prove about user
-code before that code is accepted as a Kontrakt Core realization.
+The exact V1 Core Realization Closure verification model remains open. It must define what the compiler can establish
+about user code before that code is accepted as a Kontrakt Core realization.
 
 The treatment of implementation that cannot be inspected precisely also remains open. Reflection and native execution
-are two examples that need an explicit V1 rule.
+are two examples that need an explicit V1 rule. Any supported rule must preserve the compile-time boundary in Section 11
+rather than silently falling back to runtime interception.
 
 The observable host-behavior boundary remains open. Optimization needs a clear decision about which behavior outside
 Contract meaning must still be preserved because the selected realization exposes it to the user system.
 
+The exact V1 integration surface remains open where existing User API and Adapter decisions do not already fix it. That
+work may define an explicit integration point, but it must not spread verifier or optimizer knowledge into ordinary Core
+implementation.
+
 The exact compiler material used to analyze realization remains open. This includes the representation used for user
 code and the form of reusable analysis results.
 
-The exact reuse mechanism remains open. Existing frozen, cache, interning, and identity techniques are candidates, not
-requirements.
+The exact reuse mechanism remains open. Existing reuse and identity machinery may be reused, but no current technique is
+required by this ADR.
 
 The exact V1 optimization set remains open. Each accepted transformation needs a defined legality condition and a way to
 verify that its result preserves the required meaning.
@@ -592,18 +673,25 @@ Compiler techniques remain replaceable. Optimization may proceed only when the r
 
 ---
 
-## 19. Consequences
+## 22. Consequences
 
 The Core boundary now applies to the actual user realization rather than stopping at the Operation signature.
 
 Kontrakt must inspect enough implementation to detect factual input that bypasses the declared boundary. This increases
 compiler work, but it makes Fact authority real inside the Core rather than merely descriptive at its edges.
 
+Core closure is therefore not enforced by surrounding ordinary user calls with an implicit proxy or monitoring layer.
+
+The Contract remains explicit in the Kontrakt Contract surface rather than being scattered through proof structures
+inside ordinary implementation. This keeps the user system independent from the verifier and optimizer chosen by
+Kontrakt.
+
 The same compiler knowledge must be reused for optimization after legality has been established when it proves a safe
 simplification. Kontrakt therefore does not stop at verification and restore the authored realization unchanged by
 default.
 
-The optimizer may simplify execution before JVM emission without making its current technique part of Contract meaning.
+Kontrakt may simplify the physical execution around a lawful user computation before JVM emission without making its
+current technique part of Contract meaning.
 
 Earlier publication and reuse work remains useful. Mechanically sympathetic storage may also be reused where it still
 fits the new realization model.
