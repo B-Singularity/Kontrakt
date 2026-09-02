@@ -781,8 +781,9 @@ class names.
 
 ### Negative
 
-The backend must control enough of the contract boundary to preserve `Budget Stop`. Opaque user code, native work,
-external systems, or several runtimes may make a declaration unsupported.
+The backend must control enough of the realized execution to preserve `Budget Stop`. A Budget declaration is unsupported
+when the selected realization cannot observe or control the governed quantity with enough precision to preserve that
+result.
 
 Physical conditions may change whether one data flow reaches a time or memory allowance. This does not change the
 contract comparison law.

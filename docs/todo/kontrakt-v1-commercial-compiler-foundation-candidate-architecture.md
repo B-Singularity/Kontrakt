@@ -68,7 +68,8 @@ Kontrakt already has or is actively establishing several foundations that many c
 - Contract, implementation, and state-machine axes are separated.
 - Contract material is refined and lowered before backend realization.
 - Host classes, reflection handles, KSP symbols, annotations, and runtime objects do not own semantic identity.
-- V1 optimization is restricted to machinery Kontrakt owns rather than arbitrary user implementation code.
+- V1 verifies user core realization under ADR-0070 and may optimize a legal realization before JVM emission when the
+  declared machine meaning is preserved.
 
 ### Deterministic acquisition and canonical material
 
@@ -305,8 +306,8 @@ A single universal IR should be avoided. Modern production compilers preserve ab
 - **P1 — Link-time verification:** re-check cross-module assumptions and capabilities.
 - **P2 — Thin-summary architecture:** reserve lightweight cross-module summaries analogous to modern thin whole-program
   compilation.
-- **POST — Whole-program realization optimization:** only after user-realization optimization is admitted by later
-  contract decisions.
+- **P1 — Closed-realization optimization:** V1 may optimize a user realization region after ADR-0070 verifies that the
+  region is legal. Optimization beyond those proven regions remains later work.
 
 ## 6.1 Whole-Machine and cross-pipeline composition seam
 
@@ -1164,7 +1165,7 @@ The following should preferably have a clean structural seam in V1 without forci
 - wider direct-classfile backend.
 - rich JVM cost model.
 - PGO.
-- whole-program user-code optimization.
+- unrestricted cross-operation and whole-program realization optimization.
 - e-graph/equality-saturation optimizer.
 - advanced formal translation validation.
 - full LSP/IDE server.
@@ -1172,8 +1173,9 @@ The following should preferably have a clean structural seam in V1 without forci
 - off-heap/slab IR storage.
 - multi-backend target support.
 - native code generation.
-- arbitrary implementation-body IR.
-- aggressive alias/escape/effect analysis over user code.
+- general-purpose whole-program implementation IR beyond the realization regions required by ADR-0070.
+- whole-program alias, escape, and effect analysis beyond the precision required for V1 realization verification and
+  selected optimization.
 
 ---
 

@@ -610,10 +610,10 @@ the declared relation.
 
 Otherwise the explicit port call remains.
 
-V1 does not use Lowering authority to optimize arbitrary user core implementation.
+Lowering authority does not extend into the user core realization.
 
-Broader optimization requires separate analysis over effects, aliasing, escape, ownership, identity observability,
-concurrency, and representation.
+ADR-0070 separately governs analysis and optimization after the legal Operation handoff. Any transformation performed
+there must preserve the Fact authority established by this Lowering boundary and mus
 
 ---
 

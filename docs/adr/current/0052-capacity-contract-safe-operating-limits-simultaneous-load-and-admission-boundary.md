@@ -47,11 +47,11 @@ Software engineering has to acknowledge limits before failure exposes them. Memo
 pathological input, an internal expansion, or deliberate exhaustion. The cause does not change the engineering problem:
 additional resident load can push the machine beyond a safe operating line.
 
-That line must not be hidden in heap settings or implementation defaults. At the same time, Kontrakt must not promise
-control over memory it does not own. V1 leaves the user's realization body opaque and does not rewrite or optimize it,
-so V1 Capacity cannot claim to govern arbitrary memory retained by that implementation.
-
-Capacity therefore needs an explicit contract limit and an equally explicit enforcement boundary.
+That line must not be hidden in heap settings or implementation defaults. Kontrakt may now inspect and transform legal
+user realization under ADR-0070. That does not make every allocation inside that realization part of Capacity. Capacity
+can govern memory only where the selected realization can establish the occupancy and preserve the declared wall. The
+enforcement boundary must therefore follow actual backend control rather than whether the code was authored by Kontrakt
+or by the user.
 
 ---
 
@@ -76,14 +76,11 @@ Kontrakt-controlled memory that would take it beyond that wall.
 
 ### 3.2. V1 Enforcement Boundary
 
-V1 Capacity governs only memory whose lifetime and growth Kontrakt directly owns or can control while realizing the
-selected contract boundary.
-
-The user's realization body is outside that authority in V1. Kontrakt does not embed Capacity machinery in user code,
-and an Operation Capacity does not imply that arbitrary implementation memory is governed.
-
-A later realization profile may extend coverage only when Kontrakt actually takes responsibility for transforming or
-controlling that realization. That extension belongs to V2 realization work and does not alter the V1 guarantee.
+That line must not be hidden in heap settings or implementation defaults. Kontrakt may now inspect and transform legal
+user realization under ADR-0070. That does not make every allocation inside that realization part of Capacity. Capacity
+can govern memory only where the selected realization can establish the occupancy and preserve the declared wall. The
+enforcement boundary must therefore follow actual backend control rather than whether the code was authored by Kontrakt
+or by the user.
 
 ### 3.3. No Implementation-Stage Allocation
 
@@ -372,8 +369,9 @@ Capacity, and user code requires no embedded Capacity machinery.
 
 The exact over-capacity result, Diagnostic mapping, canonical identity bytes, and explicit absence syntax remain open.
 
-V2 will revisit the enforcement boundary when Kontrakt begins to optimize or otherwise govern user realization. Only at
-that point may a stronger profile include realization memory in Operation-level Capacity accounting.
+ADR-0070 removes the old assumption that user realization remains opaque until V2. The remaining question is which
+memory produced by transformed realization can be attributed and controlled strongly enough to fall under V1 Capacity.
+That boundary remains open.
 
 Storage Occupancy remains a possible future Capacity quantity if Kontrakt later defines contract-owned retained storage
 independently of database rows, files, or other backend representations. Multi-threaded execution and deterministic
@@ -391,13 +389,13 @@ from Kontrakt-owned processing can be bounded without promoting execution struct
 The design matches Kontrakt's current implementation direction. Bounded tables and storage regions may be used to prove
 physical feasibility, while their binary layouts and capacity schedules remain replaceable backend choices.
 
-The V1 guarantee also stays honest. Kontrakt governs the memory it controls and does not claim that an opaque user
-realization is covered before the compiler owns that realization.
+The V1 guarantee remains limited to memory the selected realization can actually govern. Compiler visibility alone does
+not extend Capacity.
 
 ### Negative
 
-Operation-level Capacity in V1 does not bound arbitrary memory used inside the user's implementation body. A user who
-needs an end-to-end realization memory guarantee must wait for a backend profile that actually controls that code.
+Operation-level Capacity does not automatically cover every allocation made by user realization. Memory becomes governed
+only when the selected backend can attribute it to the Capacity subject and preserve the declared limit.
 
 Strong Capacity enforcement also requires explicit attribution and bounded memory planning inside Kontrakt. Shared and
 transient regions must be modeled carefully enough that the physical high-water calculation remains safe.

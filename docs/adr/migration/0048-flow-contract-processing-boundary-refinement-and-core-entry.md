@@ -2159,39 +2159,20 @@ supplying contract's result rather than a Canonicalization refusal. The supplyin
 its diagnostic attribution, and a later boundary must not repeat the same gate. Physical fusion with implementation does
 not make the implementation function, stage, or call graph the scope or owner of the contract.
 
-### 6.6. V1 Implementation Optimization Boundary
+### 6.6. Core Realization Boundary
 
-Kontrakt V1 does not optimize, rewrite, fuse, devirtualize, or otherwise reinterpret arbitrary user-supplied core
-implementation code. That implementation remains a replaceable realization region. Kontrakt governs which established
-input Facts may be visible, whether the ordinary Operation return becomes the successful result Fact, which failures are
-declared, and which state movements and Publication judgments are legal, but it does not make implementation classes,
-functions, dispatch, allocations, effects, or object layout contract authority.
+This ADR owns the inbound airlock and the handoff into the core.
 
-Slot-selected Admission and selected Canonicalization remain restricted frontend sources, not opaque implementation
-callbacks. Admission may use a finite judgment-expression source. Selected Canonicalization uses either one closed
-built-in law symbol or one uninstantiable coordinate-to-nominal-type signature declaration.
+The core begins only after external-presentation authority has ended and the required input Fact authority has been
+established. Realization inside the core must not reopen the erased external presentation as another source of meaning.
 
-Lowering has two deliberately separated surfaces. Its operation-local sibling IDL body contains only finite immutable
-one-to-one Input-to-Operation-parameter-Fact relations. Its generated retained port carries one explicitly supplied
-physical realization. The relation is completely resolved and erased into canonical contract material. The
-implementation remains replaceable and acquires no authority.
+The user Operation and its internal implementation remain realization rather than Contract authority. Their structure
+does not change the Facts or the Contract world that govern the Operation.
 
-Kontrakt owns and optimizes the generated evaluator, canonicalizer, canonical byte emitter, relation plan, port ABI,
-assembly binding, candidate-completion checks, standing-judgment dispatch, establishment path, generated verification
-and tests, cache plan, and associated deterministic state machinery. Canonicalization omission generates no replacement
-canonicalizer or runtime interception point.
+ADR-0070 owns compile-time verification and optimization of that core realization. Kontrakt may change its physical
+execution when the established Contract meaning is preserved.
 
-Because the Lowering implementation is exactly bound behind a generated port, Kontrakt may devirtualize, inline,
-specialize, fuse around, or erase that port only when analysis proves behavior equivalent under the ratified relation
-and declared deterministic world. If that proof is unavailable, the explicit call remains. Kontrakt never substitutes a
-same-type copy, catalog entry, naming convention, or backend conversion for the supplied implementation.
-
-V1 optimization is concentrated on machinery Kontrakt owns and closed realization boundaries it can prove safe:
-contract acquisition, deterministic planning, frozen material, generated verification gates, state enforcement,
-automatic test generation and execution, diagnostics, structural cache planning, port linking, and publication control.
-These facilities remove validation, test, diagnostic, control, and assembly boilerplate while preserving the user's
-explicit adapter implementation. Any broader optimization of arbitrary core implementation requires separate authority
-and analysis over effects, aliasing, escape, ownership, identity observability, concurrency, and representation.
+Lowering-specific realization remains governed by ADR-0067.
 
 ### 6.7. Handoff to the Explicit Core
 
