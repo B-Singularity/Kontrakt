@@ -4,6 +4,9 @@
 >
 > This document does not establish new Accepted Contract law.  
 > It is a structured **design criterion / architecture proposal / review memo** derived from the discussion so far.
+>
+> The later sections also record the current direction for shared IR reuse. They extend that direction into
+> query-oriented execution and the V2 incremental seam.
 
 ---
 
@@ -353,7 +356,8 @@ self::Foo
 
 may differ in authored spelling but resolve to the same exact declaration.
 
-Once resolution has established the exact declaration, that spelling distinction may no longer be semantically relevant downstream.
+Once resolution has established the exact declaration, that spelling distinction may no longer be semantically relevant
+downstream.
 
 Therefore an IR level is defined more accurately by:
 
@@ -910,7 +914,8 @@ backend/
 
 Therefore:
 
-> IR is architecturally a subsystem, while each semantic or realization subsystem may own its own representation Contract and implementation.
+> IR is architecturally a subsystem, while each semantic or realization subsystem may own its own representation
+> Contract and implementation.
 
 ---
 
@@ -944,61 +949,32 @@ classfile-relevant type relation
 legal control transfer
 ```
 
-Concrete implementations may include:
+Concrete implementations may use compact primitive tables or a streaming bytecode plan. ASM can still be used at the
+emission boundary without making its tree model the logical JVM IR.
 
 ```text
-ASM Tree
-
-custom primitive tables
-
-streaming bytecode plan
-
-direct classfile builder
+JVM IR Contract
+        ↓
+compact JVM representation
+        ↓
+ASM visitor / direct classfile emission
 ```
 
-V1 may use ASM-backed structures.
+V2 may replace the physical JVM representation without changing the upper contract.
 
-V2 may replace them with a custom compact JVM IR.
-
-Upper layers should not need to change if both satisfy the same JVM IR Contract.
+Upper layers should not need to change as long as the replacement satisfies the same JVM IR Contract.
 
 ---
 
 # 21. Execution IR May Have Multiple Implementations
 
-Example:
+A reference implementation may use simpler immutable tables and a more direct traversal model. It should remain easy to
+inspect without introducing one heap object per IR entity.
 
-## Reference Implementation
+A production implementation may use denser SSA tables and primitive slabs.
 
-```text
-simple immutable object graph
-```
-
-Goals:
-
-```text
-clarity
-debuggability
-independent checking
-```
-
-## Production Implementation
-
-```text
-dense SSA tables
-primitive slabs
-compact indices
-```
-
-Goals:
-
-```text
-throughput
-memory locality
-low allocation
-```
-
-If both satisfy the same Execution IR Contract, they can also support strong differential testing.
+Both implementations can satisfy the same Execution IR Contract. This also gives differential testing a useful
+independent path.
 
 ---
 
@@ -1024,7 +1000,8 @@ In shorter form:
 > Each IR level is first defined by a Contract of meaning, invariants, observable relations, and legal transitions.  
 > Concrete IR implementations do not communicate directly.  
 > Movement between levels occurs only through declared Lowering Contracts.  
-> Storage, traversal, indexing, builders, caches, and lowering algorithms are replaceable realizations and do not acquire semantic authority.
+> Storage, traversal, indexing, builders, caches, and lowering algorithms are replaceable realizations and do not
+> acquire semantic authority.
 
 ---
 
@@ -1164,18 +1141,13 @@ Decide physical representation.
 Examples:
 
 ```text
-Kotlin object graph
-
 primitive arrays
-
-arena
-
-slab
-
-ASM MethodNode
-
-custom bytecode table
+arena-backed temporary buffers
+slabs
+compact bytecode tables
 ```
+
+High-cardinality compiler material should not require one JVM object per logical entity.
 
 This prevents physical representation from becoming an architectural law.
 
@@ -1319,7 +1291,149 @@ Recommended sequence:
 
 ---
 
-# 32. Final Summary
+# 32. Reuse One IR Material per Semantic Level
+
+A semantic level should publish one reusable IR Contract and one shared material generation. Read-only consumers should
+reuse that material instead of rebuilding their own representation.
+
+For example:
+
+```text
+                 Realization IR
+                /       |       \
+               /        |        \
+              ▼         ▼         ▼
+         Call/SCC    Verifier  Diagnostics
+          Analysis
+```
+
+These consumers may derive their own analysis results or restricted views. Those results remain side material. A new IR
+is justified only when the meaning of the level actually changes.
+
+A transform is different because it changes the material. It should produce a new generation of the same IR level unless
+the transform crosses a real semantic boundary.
+
+---
+
+# 33. Query-Oriented Reuse
+
+Kontrakt should use a query-oriented execution model from V1. A query asks for a compiler product and records which
+upstream results were read while producing it.
+
+A pass remains local to the query that needs it. The compiler should not make one global pass pipeline the authority for
+every product.
+
+```text
+getOperationVerification(O)
+        ↓
+getSccSummary(S)
+        ↓
+getFunctionSummary(F)
+```
+
+The query dependency graph records recomputation needs. It must remain separate from the Contract semantic graph and
+from the realization call graph.
+
+HID can provide compact lookup for query keys, but it does not define query meaning or semantic identity. A query result
+is valid only for the material generation on which it was computed.
+
+Contract Version is one possible semantic input. A Version change causes reconsideration only where that Version, or
+meaning established under it, is an actual dependency. An unrelated structural analysis does not become invalid merely
+because another Contract Version changed.
+
+---
+
+# 34. V2 Incremental Evolution
+
+V1 should already expose the boundaries that V2 will reuse. The first implementation can keep query results and
+dependency records in memory.
+
+V2 extends those same contracts with persistent reuse. Stable result fingerprints can stop invalidation when
+recomputation produces the same meaning. This is the basis for red-green reuse.
+
+```text
+input changed
+    ↓
+query recomputed
+    ↓
+result unchanged
+    ↓
+downstream reuse continues
+```
+
+Whole-Machine work should reuse summaries instead of constructing one giant IR.
+
+```text
+Function material
+    ↓
+SCC summary
+    ↓
+Operation summary
+    ↓
+Core summary
+    ↓
+Whole-Machine summary
+```
+
+V2 can reopen full material only when a consumer needs more detail.
+
+A source-only change should also be able to update provenance without forcing semantic products to change when the
+established meaning is unchanged.
+
+---
+
+# 35. Keep Contract, Realization, and Query Graphs Separate
+
+The Contract frontend builds its scope and semantic relations from the IDL. The lexer only produces lexical material.
+Scope resolution belongs to the parser/resolver side.
+
+User implementation is acquired independently. Explicit Interface or Operation bindings identify realization roots,
+after which the compiler follows the actual host/JVM implementation to build call and effect knowledge.
+
+```text
+IDL
+ ↓
+Contract Semantic Graph
+        │
+        │ explicit realization binding
+        ▼
+Realization Entry
+ ↓
+Call / Effect / Origin Graph
+```
+
+Implementation topology never becomes Contract topology.
+
+The query graph is separate again. It records which compiler results depend on which other compiler results.
+Verification may compare Contract-established requirements with realization-derived facts, but that comparison does not
+merge the two authority domains.
+
+---
+
+# 36. Object-Free Core Representation
+
+High-cardinality compiler material should use compact, index-addressable storage by default. A logical compiler entity
+does not require a corresponding JVM object.
+
+The preferred physical direction is:
+
+```text
+primitive tables
+dense internal refs
+flat edge slabs
+HID-backed lookup
+frozen published generations
+```
+
+Classes can still organize low-cardinality compiler services. Their existence does not justify object-per-entity storage
+in the high-cardinality core.
+
+Shared read-only consumers should read the same frozen generation. A subsystem that transforms an IR creates a new
+generation instead of copying material merely for ownership.
+
+---
+
+# 37. Final Summary
 
 The core result of this discussion is:
 
@@ -1348,10 +1462,18 @@ It mechanically realizes an already-declared source/target Contract relation.
 Optimizer, verifier, diagnostics, backend, and analysis
 consume IR Contracts rather than concrete IR implementations.
 
-Physical storage, object graphs, slabs, tables, builders, caches,
-and traversal strategies are replaceable realizations.
+High-cardinality physical material should use compact table or slab storage.
+Its layout remains a replaceable realization.
 
 Semantic identity remains separate from physical identity.
+
+One shared IR generation should serve sibling consumers at the same semantic level.
+Derived analyses and summaries remain side products rather than duplicate IRs.
+
+Compiler-wide orchestration should be query-oriented from V1.
+Passes remain local processing mechanisms inside query implementations.
+
+Each graph keeps its own authority and remains separate from the others.
 
 Verification overlays and optimization generations should not be
 promoted into new semantic IR levels without a genuine change in meaning.
@@ -1366,12 +1488,17 @@ while their physical representations remain replaceable.
 The most compressed architecture law is:
 
 > **IR meaning is owned by the Contract; IR physical shape is owned by the Implementation.  
-> Concrete IR implementations do not communicate directly, and all movement between IR levels occurs through explicit IR and Lowering Contracts.  
-> An implementation only realizes meaning already established by the Contract and never acquires semantic authority from its physical representation.**
+> Concrete IR implementations do not communicate directly, and all movement between IR levels occurs through explicit IR
+and Lowering Contracts.  
+> An implementation only realizes meaning already established by the Contract and never acquires semantic authority from
+its physical representation.**
+>
+> Shared IR material is reused through query-owned dependencies. V2 extends that reuse across generations and sessions
+> without changing the IR Contract.
 
 ---
 
-# 33. Status
+# 38. Status
 
 This document is a discussion summary and design proposal.
 
@@ -1390,4 +1517,8 @@ The following remain to be decided during actual IR architecture design:
 - JVM IR Contract
 - V2 alternate representations
 - incremental / persistent storage model
+- Query identity and dependency contract
+- result fingerprint / early-cutoff law
+- summary hierarchy and reuse boundary
+- explicit bridge between Contract semantic material and realization roots
 ```
