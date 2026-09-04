@@ -157,6 +157,13 @@ owning boundary.
 
 A realization that cannot be verified under the supported compiler model must not be silently accepted as closed.
 
+External frameworks may compose around a Kontrakt Interaction. They must not silently participate in a governed
+realization.
+
+Kontrakt must defend the supported execution envelope strongly. Known intervention that violates closure must be
+rejected. A host mechanism that mutates or bypasses an admitted realization outside that envelope is outside Kontrakt's
+guarantee.
+
 Realization topology is compiler-visible but is not part of the outward Contract surface.
 
 Ordinary user realization must not depend on the verifier or optimizer that Kontrakt happens to use. Changing those
@@ -175,6 +182,11 @@ The mechanism used to avoid accidental duplicate work remains replaceable implem
 
 Optimization must preserve the established Contract meaning. The technique used to achieve that optimization is not
 Contract meaning and may be replaced as better techniques become available.
+
+Representation-changing optimization must stay inside an admitted closed region. Kontrakt should reuse analysis already
+needed for verification before paying for additional realization analysis.
+
+Kontrakt must not duplicate expensive generic JVM optimization merely to remove arbitrary user allocations.
 
 V1 must create a foundation that lets V2 add stronger incremental reuse without requiring the Contract architecture to
 change.
@@ -214,6 +226,22 @@ Established Core Facts
 User-System Realization
     ↓
 result-side Contract processing
+```
+
+External framework work may surround this flow. It remains outside the governed realization.
+
+```text
+External host / framework
+        ↓
+boundary formation
+        ↓
+Kontrakt Interaction
+        ↓
+closed governed realization
+        ↓
+Output
+        ↓
+external host / effect
 ```
 
 Kontrakt separately performs compiler work over the declared machine and its realization:
@@ -319,6 +347,30 @@ Fact
 
 The Core may use the established information. It does not keep the live external mechanism that produced it.
 
+External frameworks may compose around a Kontrakt Interaction. Their runtime machinery must not silently enter the
+governed realization.
+
+A host transaction may remain open while the Interaction executes.
+
+```text
+begin transaction
+    ↓
+read external state
+    ↓
+form lawful boundary input
+    ↓
+Kontrakt Interaction
+    ↓
+Output
+    ↓
+apply external effect
+    ↓
+commit
+```
+
+The transaction remains host behavior. The Core does not gain permission to read a repository or ambient transaction
+state merely because the host keeps that transaction open.
+
 Moving an external access behind another method does not change this rule.
 
 This ADR does not redefine Adapter, Input, or Lowering meaning. It requires User-System Realization to preserve the
@@ -339,6 +391,12 @@ independent Fact authority.
 Closure fails when an outside source can affect a Contract-visible result or State-Machine movement without first
 passing through the boundary that owns that information.
 
+Closure also fails when undeclared external runtime behavior participates inside the governed realization. Framework
+interception does not become lawful merely because it is attached to an Operation implementation.
+
+Runtime substitution that can change the participating realization is not part of a closed region unless the supported
+compiler and backend model can establish the required stability.
+
 Kontrakt therefore checks the origin of relevant information rather than treating a local call boundary as proof of
 safety.
 
@@ -357,7 +415,12 @@ safe merely because its caller is local.
 
 When Kontrakt establishes that outside information affects Core computation through an illegal path, compilation fails.
 
-When the supported analysis cannot establish closure, Kontrakt must not silently assume that closure exists.
+Known metadata that requests external runtime participation inside the governed realization is also rejected. Annotation
+syntax alone is not the rule; metadata that is inert under the supported model does not violate closure merely because
+it exists.
+
+When the supported analysis cannot establish closure, Kontrakt must not silently assume that closure exists. The
+realization is not admitted.
 
 Runtime Contract judgments that require runtime values remain runtime judgments. This ADR does not move those judgments
 into compile time.
@@ -390,15 +453,25 @@ and remains replaceable with the compiler machinery that uses it.
 
 ---
 
-## 11. No Implicit Runtime Interception
+## 11. No Implicit Runtime Interception Inside the Governed Realization
 
 Kontrakt does not preserve Core Realization Closure by placing a general interception layer around user implementation.
 
 A proxy or wrapper that watches ordinary calls at runtime would leave the user realization opaque until execution. It
 would also introduce another execution path whose presence is not part of the declared Contract.
 
+The same boundary applies to external frameworks. A framework may intercept host code outside a Kontrakt Interaction,
+but it may not silently insert runtime behavior into the governed realization.
+
 Core-closure verification therefore belongs to compilation. If the supported compiler model cannot establish the
 required closure, Kontrakt does not silently defer that uncertainty to a runtime proxy.
+
+Kontrakt should reject known intervention paths before execution. If a supported runtime check detects that an admitted
+realization has changed, execution must fail closed or the affected product must be invalidated before use.
+
+Kontrakt does not claim to control arbitrary host mutation outside the supported execution envelope. If an unsupported
+host mechanism bypasses that envelope and changes an admitted realization without a supported validation path, the
+resulting execution is outside Kontrakt's guarantee.
 
 This does not remove Contract judgments that depend on runtime values. Such judgments remain part of the declared
 machine and are emitted in the executable form required by their owning Contract.
@@ -547,8 +620,22 @@ Optimization belongs entirely to realization.
 Kontrakt does not prescribe the algorithm chosen by the user implementation. A lawful algorithm does not become a
 Kontrakt algorithm merely because the compiler inspects it.
 
-Optimization acts on the executable realization around that computation. Intermediate material does not have to keep the
-authored object topology when that topology carries no required meaning.
+Optimization acts only inside a realization region whose legality has already been established. Intermediate material
+does not have to keep authored object topology when that topology carries no required observable meaning.
+
+Kontrakt-owned wrappers and carriers are the strongest representation targets because Kontrakt owns their physical form.
+
+Inside a verified Operation-local region, a wrapper or adapter may also disappear when it adds no required behavior and
+its removal cannot be observed outside that region.
+
+A user-local object remains a candidate only when non-observability and non-escape follow cheaply from already-produced
+analysis and bounded local checks. Kontrakt does not perform expensive whole-program analysis solely to remove an
+arbitrary user allocation.
+
+If the required proof is unavailable or inconclusive, the user representation is preserved. Ordinary JVM optimization
+may still remove that cost later.
+
+Kontrakt does not redesign arbitrary user object models.
 
 For example, a temporary carrier may disappear when its identity is not observable and the same required value reaches
 the same consumer. The calculation remains the user's realization while its intermediate physical form changes.
@@ -581,14 +668,19 @@ Kontrakt must not hand a general Contract interpreter to the JVM when compile-ti
 required behavior directly. Runtime Contract judgments still remain where runtime values are required, but their
 executable form should use the information already established before execution.
 
-A user may write an object-oriented realization while Kontrakt emits a simpler execution form. The emitted program does
-not have to preserve allocation or reference topology that carries no required meaning.
+A user may write an object-oriented realization while Kontrakt emits a simpler execution form inside an admitted closed
+region. The emitted program does not have to preserve allocation or reference topology that carries no required
+observable meaning.
 
-Current design work on primitive slabbing and mechanically sympathetic layout may be used for such transformations when
-their preconditions are proven. These are implementation techniques, not requirements of the Contract model.
+Current design work on primitive slabbing and mechanically sympathetic layout may be used for Kontrakt-owned execution
+material when their preconditions are proven. That internal representation does not require Kontrakt to flatten
+arbitrary user objects in the JVM-facing product.
 
-Kontrakt does not replace HotSpot, Graal, or another JVM optimizer. It performs the semantic simplification that depends
-on Kontrakt knowledge and leaves ordinary lower-level optimization to the JVM.
+Kontrakt should not duplicate expensive generic optimization that HotSpot, Graal, or another JVM optimizer can perform
+without Contract-specific knowledge. A realization transform is most valuable when Contract knowledge exposes a
+simplification or when already-required verification makes representation overhead cheap to remove.
+
+Kontrakt does not replace the JVM optimizer. Ordinary lower-level optimization remains the JVM's responsibility.
 
 The exact JVM emission strategy remains open.
 
@@ -621,6 +713,9 @@ V1 owns Core realization verification and Contract-aware optimization before JVM
 Verification is not the endpoint. After a realization is accepted, V1 must use the proven knowledge available to it to
 remove avoidable realization cost before handing execution to the JVM. The exact transformation set remains open and may
 evolve without changing Contract meaning.
+
+This does not require V1 to duplicate generic JVM analyses. A transform may be skipped when its legality or
+profitability would require expensive analysis that is not otherwise justified by realization verification.
 
 V1 must therefore establish stable boundaries between produced compiler material and the subsystems that consume it. A
 consumer must be able to reuse a valid earlier result without changing the meaning of the producer.
@@ -874,7 +969,7 @@ remain engineering references rather than required Kontrakt mechanisms.
 
 ### 21.8. Contract-Aware Optimization Must Expand Beyond the Old Storage Optimizations
 
-The older work mainly makes compiler material cheaper to acquire, store, and reuse. User realization ownership now gives
+The older work mainly makes compiler material cheaper to acquire, store, and reuse. A verified closed realization gives
 Kontrakt a second optimization opportunity.
 
 The compiler should evaluate higher-level transformations while it still knows Contract meaning. Candidate families
@@ -884,8 +979,12 @@ applicable judgment can observe.
 Specialization should also be evaluated where the selected Contract world removes runtime choice. A known Policy World
 or State-machine surface may permit a smaller execution path without changing the user algorithm.
 
-Intermediate realization may be reduced when it carries no required identity. This creates room for allocation reduction
-and direct value propagation before JVM lowering.
+Representation overhead may be removed inside the closed region when the required behavior remains observable in the
+same way. Kontrakt-owned carriers are the strongest candidates. Verified Operation-local wrappers and adapters may also
+be reduced when they add no required behavior.
+
+A user-local object remains only a conditional candidate. V1 should use already-produced verification knowledge and
+bounded local analysis rather than start an expensive generic escape-analysis effort solely to remove that object.
 
 Physical Contract machinery may also be combined when separate runtime calls do not carry separate required meaning.
 Such fusion must preserve judgment result and required Failure or Diagnostic relations.
@@ -1041,8 +1140,10 @@ Core or Whole-Machine relations may require wider summaries.
 The Whole-Machine summary boundary also needs a concrete V1 decision. V1 may build summaries eagerly, but the format
 should not prevent V2 from using them for incremental linking and lazy materialization.
 
-The observable user-realization boundary must be closed before aggressive optimization is accepted. Kontrakt needs to
-know which host behavior must remain visible even when that behavior is not Contract authority.
+The supported execution envelope needs concrete V1 enforcement rules. The boundary decision is already fixed: external
+frameworks may surround an Interaction but may not silently participate inside its governed realization. Review must
+decide which host mutation mechanisms are supported and how a detected realization change invalidates the affected
+product.
 
 The optimizer needs a first V1 legality set. Each accepted transform should state what relation it preserves and what
 independent check can detect a bad rewrite.
@@ -1067,12 +1168,13 @@ The treatment of implementation that cannot be inspected precisely also remains 
 are two examples that need an explicit V1 rule. Any supported rule must preserve the compile-time boundary in Section 11
 rather than silently falling back to runtime interception.
 
-The observable host-behavior boundary remains open. Optimization needs a clear decision about which behavior outside
-Contract meaning must still be preserved because the selected realization exposes it to the user system.
+The host/framework boundary is no longer semantically open. External framework work belongs outside the Interaction
+boundary, and hidden participation in governed realization is not admitted. What remains open is the V1 enforcement
+mechanism for supported runtime mutation and intervention.
 
-The exact V1 integration surface remains open where existing User API and Adapter decisions do not already fix it. That
-work may define an explicit integration point, but it must not spread verifier or optimizer knowledge into ordinary Core
-implementation.
+The exact host-facing API shape remains open where existing User API and Adapter decisions do not already fix it. Any
+such surface must keep framework composition outside the governed realization and must not spread verifier or optimizer
+knowledge into ordinary Core implementation.
 
 The exact compiler material used to analyze realization remains open. This includes the representation used for user
 code and the form of reusable analysis results.
@@ -1101,6 +1203,14 @@ The Core boundary now applies to the actual user realization rather than stoppin
 Kontrakt must inspect enough implementation to detect factual input that bypasses the declared boundary. This increases
 compiler work, but it makes Fact authority real inside the Core rather than merely descriptive at its edges.
 
+External framework compatibility becomes explicit. A host framework may surround a Kontrakt Interaction and keep its own
+runtime behavior outside the governed realization. A usage pattern that injects hidden framework behavior into a
+governed Operation is intentionally rejected.
+
+Kontrakt defends the supported execution envelope but does not claim authority over arbitrary host mutation that
+bypasses that envelope. A detected violation fails closed. Execution after an unsupported bypass is outside the Kontrakt
+guarantee.
+
 Core closure is therefore not enforced by surrounding ordinary user calls with an implicit proxy or monitoring layer.
 
 The Contract remains explicit in the Kontrakt Contract surface rather than being scattered through proof structures
@@ -1110,6 +1220,10 @@ Kontrakt.
 The same compiler knowledge must be reused for optimization after legality has been established when it proves a safe
 simplification. Kontrakt therefore does not stop at verification and restore the authored realization unchanged by
 default.
+
+A closed governed region gives Kontrakt a stable place to remove representation overhead. Kontrakt-owned material and
+verified Operation-local wrappers are the primary targets. User-local objects remain optional candidates when the
+required proof is cheap.
 
 Kontrakt may simplify the physical execution around a lawful user computation before JVM emission without making its
 current technique part of Contract meaning.
