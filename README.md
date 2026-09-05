@@ -164,9 +164,9 @@ One declared machine. That's the whole ballgame.
 
 And look at what happened here.
 
-We didn't add a validator framework. We didn't add a state-machine framework. We didn't add some giant testing DSL and tell you to maintain all three forever.
+you didn't add a validator framework. We didn't add a state-machine framework. you didn't add some giant testing DSL and tell you to maintain all three forever.
 
-We wrote the contract.
+you wrote the contract.
 
 Kontrakt takes that contract and makes the machine obey it. The rules become executable, failures become explainable, and the same material gives the test system something real to work with instead of making things up.
 
