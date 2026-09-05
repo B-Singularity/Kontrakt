@@ -4,7 +4,7 @@
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Maven Central](https://img.shields.io/maven-central/v/com.bsingularity.kontrakt/kontrakt-core.svg?label=Maven%20Central)](https://search.maven.org/search?q=g:com.bsingularity.kontrakt)
 
-> Make Interfaces Great Again!
+# Make Interfaces Great Again!
 
 **Kontrakt is a compiler. Turns explicit machine contracts into validated, tested, optimized software. Nobody does this. Nobody. We do it, and we do it right.**
 
