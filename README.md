@@ -162,6 +162,16 @@ One declared machine. That's the whole ballgame.
 
 ## "Couldn't I Just Do This Myself?"
 
+And look at what happened here.
+
+We didn't add a validator framework. We didn't add a state-machine framework. We didn't add some giant testing DSL and tell you to maintain all three forever.
+
+We wrote the contract.
+
+Kontrakt takes that contract and makes the machine obey it. The rules become executable, failures become explainable, and the same material gives the test system something real to work with instead of making things up.
+
+That's what the compiler is for.
+
 Sure. Absolutely. Go build your own linker too while you're at it, why not.
 
 Real question is whether you can do it with the same engineering quality. Once every judgment has to agree — identity, ordering, failure ownership, state legality, diagnostics, test generation, all of it — your cute little validation layer stops being little. Fast.
