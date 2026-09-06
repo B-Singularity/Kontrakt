@@ -20,13 +20,25 @@ Proposed
 - ADR-0069: Invariant Contract
 - ADR-0068: Fact Contract
 - ADR-0067: Lowering Contract
-- ADR-0063: Contract Establishment, Identity, Applicability, and Composition
+- ADR-0066: Canonicalization Contract
+- ADR-0065: Admission Contract
+- ADR-0064: Input Contract
+- ADR-0063: Contract Establishment, Occurrence, Applicability, and Semantic Dependency
+- ADR-0062: Contract-Machine Diagnostic Realization
+- ADR-0061: Kontrakt Compiler Diagnostic Architecture
+- ADR-0060: Diagnostic Evidence and Retention Contract
+- ADR-0059: Output Presentation Contract
+- ADR-0058: Publication Contract
+- ADR-0057: Failure Contract
+- ADR-0056: Governance Contract
 - ADR-0055: Whole-Machine Pipeline Composition and Contract Concurrency
+- ADR-0054: Policy Contract
+- ADR-0053: Version Contract
 - ADR-0052: Capacity Contract
 - ADR-0051: Budget Contract
-- ADR-0048: Flow Contract Processing — Boundary Refinement and Core Entry
+- ADR-0050: State / Transition Contract
 - ADR-0047: One-Dimensional Contract Presentations, Pipeline-Slot Selection, and Backend Realization Boundary
-- ADR-0046: IDL-First Interface Contract Frontend and Generated Host Interface Boundary
+- ADR-0046: IDL-First Interface Contract Frontend, Generated Host Interface, and Operation Realization Boundary
 - ADR-0045: Contract Pipeline Package Architecture, Explicit State-Machine Axis, and Compiler Realization Mirror
 - ADR-0044: Unified Runtime Memory Envelope and Pipeline Lifecycle Governance
 - ADR-0042: Mechanical Sympathy, Primitive Lifecycle, and Async Ownership Governance
@@ -43,12 +55,16 @@ Proposed
 
 ## Supersedes and Reopens
 
-This ADR supersedes only the earlier V1 assumption in ADR-0048 that arbitrary user core realization remains opaque to
-Kontrakt and outside V1 optimization.
+This ADR supersedes only the earlier V1 assumption inherited from historical ADR-0048 that arbitrary user core
+realization remains opaque to Kontrakt and outside V1 optimization.
 
 It does not give Lowering authority over user core realization. ADR-0067 continues to own the Lowering relation and its
-own realization boundary. Analysis and optimization after the legal core handoff belong to the Realization axis defined
-here.
+compiler-derived realization boundary. Analysis and optimization after the legal Operation handoff belong to the
+Realization axis defined here.
+
+This ADR also clarifies the realization split now fixed by ADR-0046 and ADR-0047. Selected one-dimensional Contracts are
+not user implementation SPIs. Kontrakt resolves, establishes, and realizes their declared meaning. Within the generated
+Kontrakt Contract surface, the user-supplied realization boundary is Operation.
 
 This ADR reopens the V1 Capacity enforcement assumption that depended on user realization being categorically opaque. It
 does not decide that all memory used by user realization is governed Capacity. Exact attribution and backend control
@@ -200,33 +216,55 @@ Kontrakt defines Realization as a separate non-authoritative axis with two domai
 ```text
 Realization Axis
     ├── User-System Realization
-    │       the implementation supplied for an Operation
+    │       the implementation supplied for a declared Operation
     │
     └── Kontrakt Realization
-            the compiler and runtime machinery that produces
-            the executable realization
+            the compiler and backend machinery that realizes
+            declared one-dimensional Contracts, verifies the
+            user Operation realization, and produces executable form
 ```
 
-User-System Realization performs the user's Core computation. Its source structure does not create Contract meaning.
+User-System Realization performs the user's Core computation. Within the generated Kontrakt Contract surface, Operation
+is the user-supplied implementation boundary. Its source structure does not create Contract meaning.
 
-Kontrakt Realization examines that implementation and produces the executable form. Its own internal structures also
-have no Contract authority.
+Selected one-dimensional Contract declarations are not User-System Realization. Input, Admission, Canonicalization,
+Lowering, Invariant, State / Transition, Policy, Budget, Capacity, Governance, Failure, Publication, Output, and other
+declared Contract authorities remain declarative Contract expression under their owning ADRs. Kontrakt resolves and
+establishes that meaning, then compiler/backend realization performs the executable work required by it.
+
+Kontrakt Realization also examines the user Operation implementation and produces the executable form. Its own internal
+structures have no Contract authority.
+
+The interface boundary is asymmetric by design. The IDL interface name is the generated external host interface and is
+implemented by Kontrakt backend realization. A separate generated Operation interface mirrors the resolved Operation
+signature and is implemented by user business code. No selected one-dimensional slot creates another user implementation
+interface.
 
 The semantic direction remains:
 
 ```text
 External World
     ↓
-Adapter
+Adapter / boundary formation
+    ↓
+IDL-named external interface
     ↓
 Input / Admission / Canonicalization / Lowering
     ↓
 Established Core Facts
     ↓
+generated Operation realization surface
+    ↓
 User-System Realization
     ↓
 result-side Contract processing
+    ↓
+Publication / Output
 ```
+
+These are logical Contract and realization boundaries. The backend may fuse or erase physical intermediates when every
+owned judgment, value relation, Failure relation, and host-visible ABI is preserved. It does not need to emit a
+source-level interaction-machine class merely to mirror the logical sequence.
 
 External framework work may surround this flow. It remains outside the governed realization.
 
@@ -268,6 +306,21 @@ The second flow implements the first. It does not become another Contract pipeli
 
 User-System Realization is the implementation supplied for a declared Operation.
 
+It is the ordinary user implementation extension point inside the generated Kontrakt Contract surface. A selected
+one-dimensional Contract does not ask the user for an Admission implementation, Lowering mapper, Invariant validator,
+Publication adapter, Output mapper, or another callback. When a declared Contract is semantically complete, Kontrakt
+realizes it. When it is not complete enough to determine a legal realization under its owning law, compilation fails
+rather than moving the missing meaning into user implementation.
+
+The compiler/backend forms the actual host values required by the Operation signature from lawfully established Contract
+material and binds those values to the admitted Operation invocation. The user does not construct inbound Contract
+machinery or manually pull Input Presentation values through the pipeline. This binding is executable invocation
+binding, not framework dependency injection.
+
+The ordinary host value returned by the user Operation is a result candidate. The return itself does not establish Fact,
+State, Transition, Failure, Publication, or Output meaning. Applicable result-side Contract processing remains owned and
+realized by Kontrakt before outward material is established or presented.
+
 It may contain ordinary computation. A private helper or a local temporary does not become Contract material merely
 because Kontrakt analyzes it.
 
@@ -299,6 +352,11 @@ is not a closed Core realization.
 User-authored source topology does not have to survive execution. A helper object or temporary carrier may disappear
 when Kontrakt can prove that the change preserves the required meaning.
 
+External composition may construct or bind the concrete Operation implementation before Kontrakt adopts it. That
+composition is not Contract input. Kontrakt must capture the effective Operation realization after the supported host
+composition has determined it and before governed Operation execution begins. A later supported rebinding or mutation
+that changes the effective realization invalidates the affected admitted product and requires a new admission decision.
+
 ---
 
 ## 6. Explicit Contract Surface and User-System Independence
@@ -313,9 +371,13 @@ Kontrakt does not discover missing Contract meaning from the shape of user imple
 hierarchy does not become a Contract because the compiler can read it. Verification-oriented source material has the
 same limit.
 
-The user system should need Kontrakt knowledge only at an explicit integration boundary. A generated User API or an
-Adapter is such a boundary. Ordinary Core implementation should not need to call a Kontrakt checker or carry
-Kontrakt-specific proof machinery.
+The user system should need Kontrakt knowledge only at explicit integration boundaries. The generated IDL-named external
+interface, the generated Operation realization interface, and an external Adapter are such boundaries. Ordinary Core
+implementation should not need to call a Kontrakt checker or carry Kontrakt-specific proof machinery.
+
+The external interface is a host-facing artifact of the IDL interface Contract and is implemented by Kontrakt backend
+realization. The generated Operation interface is realization ABI for user business code. Neither generated type becomes
+Contract authority.
 
 Compiler inspection is one-way. Kontrakt may read user realization to verify and optimize it, but the user realization
 does not become valid by depending on the current verifier or optimizer.
@@ -373,8 +435,9 @@ state merely because the host keeps that transaction open.
 
 Moving an external access behind another method does not change this rule.
 
-This ADR does not redefine Adapter, Input, or Lowering meaning. It requires User-System Realization to preserve the
-boundary those owners already establish.
+This ADR does not redefine Adapter, Input, Admission, Canonicalization, Lowering, Publication, or Output meaning. Their
+owning ADRs define the Contract law, and Kontrakt realizes that established law. This ADR requires User-System
+Realization to preserve the boundary those owners already establish.
 
 ---
 
@@ -408,7 +471,8 @@ State-Machine decisions that establish that material. This ADR does not create a
 ## 9. Compile-Time Realization Verification
 
 Kontrakt must inspect enough User-System Realization to establish Core Realization Closure before accepting the
-executable realization.
+executable realization. This inspection applies to the effective Operation implementation captured at the Realization
+admission boundary, not merely to a source class name or an uncomposed declaration.
 
 The analysis may follow a helper because the helper influences the Operation result. A deeper call cannot be treated as
 safe merely because its caller is local.
@@ -778,10 +842,10 @@ The architecture should be evaluated against a shape close to the following.
 ════════════════════════════════════════════════════
                          REALIZATION
 
-User implementation
+User Operation implementation
         │
         ▼
-Realization Acquisition
+Realization Acquisition / Admission
         │
         ▼
 Published Realization Knowledge
@@ -816,8 +880,10 @@ JVM-facing Product
 
 The diagram is a candidate architecture rather than a fixed IR taxonomy.
 
-The important point is the direction. Contract authority is established before product subsystems consume it. User
-realization is inspected separately. Verification of that realization does not rewrite the Contract that constrains it.
+The important point is the direction. Contract authority is established before product subsystems consume it. Declared
+one-dimensional Contracts are realized from that established meaning by Kontrakt; they do not enter through the
+User-System Realization branch. User Operation realization is inspected separately. Verification of that realization
+does not rewrite the Contract that constrains it.
 
 The physical compiler may combine stages when a separate materialization adds no value. It may also materialize a stage
 lazily. The logical boundary must remain visible even when two stages share storage or one stage is produced directly
@@ -853,11 +919,11 @@ For architecture review, the current Contract surface can be grouped by the kind
 
 | Contract area                                 | Architecture that must remain possible                                                                                                               |
 |-----------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Input, Admission, Canonicalization, Lowering  | preserve the exact inbound boundary and the lawful formation of core material without reopening external representation later                        |
+| Input, Admission, Canonicalization, Lowering  | preserve the exact inbound boundary and let compiler/backend realization form lawful core material without a user-supplied 1D implementation         |
 | Fact and Invariant                            | expose pure factual coordinates and exact judgment dependency without requiring runtime object topology to survive                                   |
 | State and Transition                          | preserve legal movement separately from ordinary control-flow structure                                                                              |
 | Policy, Governance, Version, Budget, Capacity | provide applicable machine context without turning compiler scheduling or storage policy into Contract meaning                                       |
-| Failure, Publication, Output                  | preserve declared stop and outward-claim meaning through optimization and backend lowering                                                           |
+| Failure, Publication, Output                  | preserve declared stop and outward-claim meaning while compiler/backend realization performs the required outward machine work                       |
 | Diagnostic Evidence and Retention             | keep explanation tied to its owning judgment while allowing cold provenance and presentation material to remain outside hot execution representation |
 
 These groups are only compiler-review groupings. They do not create Contract hierarchy or composition.
@@ -1077,7 +1143,12 @@ Before this ADR becomes Accepted, the V1 architecture should be checked for the 
 ```text
 Contract authority can publish stable established material.
 
-User realization can be acquired once and reused by later compiler work.
+Selected one-dimensional Contract declarations can be realized without user implementation SPIs.
+
+The generated IDL-named external interface is backend-owned.
+The generated Operation interface is the user implementation boundary.
+
+User Operation realization can be acquired once and reused by later compiler work.
 
 Core-closure verification produces an explicit accepted or refused result.
 
@@ -1134,8 +1205,9 @@ logical boundaries.
 The compiler also needs an ownership decision for shared analysis. That decision must explain how a result becomes
 valid, how later transformation invalidates it, and how independent verification avoids circular reuse.
 
-The unit of realization verification remains open. Operation-local analysis may be sufficient for some checks, while
-Core or Whole-Machine relations may require wider summaries.
+The unit of User-System Realization verification remains open. Operation-local analysis may be sufficient for some
+checks, while Core or Whole-Machine relations may require wider summaries. This does not reopen user realization for
+one-dimensional Contracts.
 
 The Whole-Machine summary boundary also needs a concrete V1 decision. V1 may build summaries eagerly, but the format
 should not prevent V2 from using them for incremental linking and lazy materialization.
@@ -1172,9 +1244,10 @@ The host/framework boundary is no longer semantically open. External framework w
 boundary, and hidden participation in governed realization is not admitted. What remains open is the V1 enforcement
 mechanism for supported runtime mutation and intervention.
 
-The exact host-facing API shape remains open where existing User API and Adapter decisions do not already fix it. Any
-such surface must keep framework composition outside the governed realization and must not spread verifier or optimizer
-knowledge into ordinary Core implementation.
+The host-facing semantic split is no longer open. ADR-0046 fixes the IDL-named external interface as the outward host
+surface and a separate generated Operation interface as the user business-realization surface. What remains open here is
+the physical backend assembly and emission strategy that connects those surfaces without turning generated artifacts
+into authority.
 
 The exact compiler material used to analyze realization remains open. This includes the representation used for user
 code and the form of reusable analysis results.
@@ -1199,6 +1272,10 @@ Compiler techniques remain replaceable. Optimization may proceed only when the r
 ## 23. Consequences
 
 The Core boundary now applies to the actual user realization rather than stopping at the Operation signature.
+
+The user implementation surface is correspondingly narrow. Users declare one-dimensional Contracts in IDL and implement
+Operation business logic. Kontrakt realizes the declared Contract machinery, forms and binds actual Operation
+parameters, and implements the IDL-named external interface through backend product.
 
 Kontrakt must inspect enough implementation to detect factual input that bypasses the declared boundary. This increases
 compiler work, but it makes Fact authority real inside the Core rather than merely descriptive at its edges.
@@ -1247,7 +1324,13 @@ explicit Contract meaning
         +
 legal State-Machine movement
         ↓
-User-System Realization
+Kontrakt Contract realization
+        ↓
+actual established Operation input
+        ↓
+User-System Operation Realization
+        ↓
+result-side Contract realization
         ↓
 Kontrakt verification and optimization
         ↓

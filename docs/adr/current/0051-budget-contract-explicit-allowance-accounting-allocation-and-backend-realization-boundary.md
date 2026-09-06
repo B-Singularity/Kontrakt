@@ -19,7 +19,7 @@ Accepted
 - ADR-0049: Flow Contract Processing — Fact, Invariant, Publication, and Output Presentation
 - ADR-0048: Flow Contract Processing — Boundary Refinement and Core Entry
 - ADR-0047: One-Dimensional Contract Presentations, Pipeline-Slot Selection, and Backend Realization Boundary
-- ADR-0046: IDL-First Interface Contract Frontend and Retained Generated Host Interface and Realization Port Boundary
+- ADR-0046: IDL-First Interface Contract Frontend, Generated Host Interface, and Operation Realization Boundary
 - ADR-0045: Contract Pipeline Package Architecture, Explicit State-Machine Axis, and Compiler Realization Mirror
 - ADR-0041: Stable Metadata Identity, BLAKE3, HID, and Protocol-Owned Interning
 - ADR-0040: Deterministic Frozen Acquisition Pipeline, Explicit Readiness, and Memory-Disciplined Publication

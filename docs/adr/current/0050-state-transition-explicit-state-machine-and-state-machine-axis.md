@@ -12,11 +12,40 @@ Accepted
 
 - `../../the-most-important-thing/what-contract-is.md`
 - `../../todo/kontrakt-verifier-implementation-plan.md`
-- ADR-0049: Flow Contract Processing — Fact, Invariant, Publication, and Output Presentation
-- ADR-0048: Flow Contract Processing — Boundary Refinement and Core Entry
+- ADR-0070: Realization Axis, Core Realization Closure, and JVM-Ahead Optimization
+- ADR-0069: Invariant Contract
+- ADR-0068: Fact Contract
+- ADR-0067: Lowering Contract
+- ADR-0065: Admission Contract
+- ADR-0064: Input Contract
+- ADR-0063: Contract Establishment, Occurrence, Applicability, and Semantic Dependency
+- ADR-0059: Output Presentation Contract, Explicit Outward Result Shape, and Machine Exit Boundary
+- ADR-0058: Publication Contract, Explicit Outward Exposure Authority, and Core Exit Boundary
 - ADR-0047: One-Dimensional Contract Presentations, Pipeline-Slot Selection, and Backend Realization Boundary
-- ADR-0046: IDL-First Interface Contract Frontend and Retained Generated Host Interface and Realization Port Boundary
+- ADR-0046: IDL-First Interface Contract Frontend, Generated Host Interface, and Operation Realization Boundary
 - ADR-0045: Contract Pipeline Package Architecture, Explicit State-Machine Axis, and Compiler Realization Mirror
+
+---
+
+## Amendment
+
+This ADR previously left a generated or supplied State-Machine realization ABI open and allowed later assembly language
+to be read as though State, Transition, or Machine could require a user implementation boundary.
+
+That interpretation is removed.
+
+`State`, `State Transition`, and `Explicit State Machine Manifest` are declarative one-dimensional Contract expressions.
+The user does not implement them. Kontrakt resolves and establishes their declared meaning, and compiler/backend
+realization performs the executable judgment and movement machinery required by that established meaning.
+
+The user-supplied realization boundary remains the declared Operation. Host composition may provide the effective
+Operation realization to Kontrakt, but it does not supply a State, Transition, or Machine implementation. ADR-0046 and
+ADR-0047 own that common boundary. ADR-0070 owns admission, verification, and optimization of the user Operation
+realization.
+
+This amendment does not change the State vocabulary, Transition identity, `Unestablished` law, movement-applicability
+question, flat Machine authoring law, refusal attribution, or deferred physical establishment and commit protocols
+decided below.
 
 ---
 
@@ -115,7 +144,7 @@ declaration. This limited flat manifest is admitted because the State-Machine Ax
 Pipeline and Implementation Pipeline; it is not permission for recursive contract composition elsewhere.
 
 Storage or observation of the current establishment condition, recovery, synchronization, atomic commit, and backend
-realization remain deferred.
+realization remain deferred. That deferral does not create a user implementation SPI for State, Transition, or Machine.
 
 ---
 
@@ -554,6 +583,10 @@ ordering, or general executability of Operations that carry no State movement.
 The Implementation Pipeline realizes declared judgments and permitted movement. It carries no authority to invent
 either.
 
+For the State-Machine Axis, that realization is compiler/backend work derived from established Contract material. The
+user supplies no State, Transition, or Machine implementation. The user Operation remains a separate business
+realization boundary and cannot acquire movement authority by implementing business control flow.
+
 A callback phase, program counter, transaction status, stored value, thread state, workflow node, object field, method
 return, or generated branch does not become State by itself.
 
@@ -578,8 +611,9 @@ Implementation Pipeline
     physically realizes the permitted work
 ```
 
-Generated or handwritten assembly may later connect these axes. That assembly is not contract authority and is outside
-the decision made here.
+Compiler/backend assembly may later connect these axes with the admitted user Operation realization. Host composition
+may bind that Operation realization into the machine, but it does not implement State, Transition, or Machine. Neither
+form of assembly is contract authority.
 
 ---
 
@@ -1502,13 +1536,13 @@ This ADR does not decide:
 - how State movement joins factual change or publication;
 - whether a backend uses memory, database rows, WAL, CAS, transactions, actors, generated tables, or remote
   coordination;
-- the realization ABI;
+- the backend-internal State-Machine realization ABI and machine representation;
 - a Java mirror of the V1 Kotlin declaration grammar;
 - the final textual IDL qualification syntax for selecting a Machine and Transition handle.
 
 None of those mechanisms may later redefine State, `Unestablished`, Transition, Machine membership, Transition
 applicability, or refusal attribution. Missing, unavailable, corrupt, or inconsistent implementation material may not be
-silently converted into `Unestablished`.
+silently converted into `Unestablished`. No deferred mechanism creates a user-supplied State-Machine realization ABI.
 
 ### 11.3. No Implementation Authority
 
@@ -1552,7 +1586,8 @@ contract judgment and may not change refusal attribution.
 ## 13. Complete Three-Axis Contract Model
 
 The Contract Pipeline exposes declared judgment authority. The State-Machine Axis exposes declared selected-movement
-legality. The Implementation Pipeline later realizes both.
+legality. The Implementation Pipeline later realizes both through Kontrakt compiler/backend machinery, while the
+admitted user Operation realization supplies only the business computation at its explicit boundary.
 
 They are neither one linear list nor three unrelated systems.
 
@@ -1571,7 +1606,9 @@ State-Machine Axis
     under the explicit current establishment condition
 
 Implementation Pipeline
-    later realizes the permitted work without acquiring authority
+    compiler/backend realization of declared Contract and movement machinery
+    plus the explicit user Operation realization
+    neither acquires Contract authority
 ```
 
 The conceptual contract relation is:
@@ -1640,7 +1677,7 @@ It also defers:
 - the exact declared dependency relation between prior contract results and a selected Transition;
 - whether another Contract may explicitly consume established State as factual judgment material without transferring
   movement authority to that Contract;
-- the generated or supplied realization ABI;
+- the backend-internal State-Machine realization ABI and machine representation;
 - current-establishment-condition storage, observation, synchronization, recovery, and commit protocols;
 - coordination among several independent State surfaces;
 - governed retry, restart, repetition, and epoch models;
@@ -1697,7 +1734,8 @@ therefore not a name-only wrapper. It is the explicit source boundary that close
 Transition relation for the independent State-Machine Axis.
 
 Users reference Kontrakt's exact `Unestablished` intrinsic only as the source of a first Transition. They do not declare
-or redefine it. The compiler resolves symbol identity, validates the flat manifest, lowers it into one canonical Machine
-image, and may generate guards, indexes, tables, bitsets, tests, diagnostics, or specialized branches. That derived
-material may not become a second permission source. Storage, synchronization, recovery, and optimization must preserve
-this authority without adding another source of truth.
+or redefine it. They also do not implement State, Transition, or Machine realization. The compiler resolves symbol
+identity, validates the flat manifest, lowers it into one canonical Machine image, and the backend may generate guards,
+indexes, tables, bitsets, tests, diagnostics, or specialized branches. That derived material may not become a second
+permission source. Storage, synchronization, recovery, and optimization must preserve this authority without adding
+another source of truth.

@@ -21,7 +21,7 @@ ADR-0048: Flow Contract Processing — Boundary Refinement and Core Entry
 - ADR-0063: Contract Establishment, Identity, Applicability, and Composition
 - ADR-0048: Inbound Airlock Composition, Boundary Refinement, and Core Entry
 - ADR-0047: One-Dimensional Contract Presentations, Pipeline-Slot Selection, and Backend Realization Boundary
-- ADR-0046: IDL-First Interface Contract Frontend and Retained Generated Host Interface and Realization Port Boundary
+- ADR-0046: IDL-First Interface Contract Frontend, Generated Host Interface, and Operation Realization Boundary
 - ADR-0040: Deterministic Frozen Acquisition Pipeline, Explicit Readiness, and Memory-Disciplined Publication
 - ADR-0039: Adapter-Neutral Metamodel Acquisition, Frozen Fact Image, and Backend-Handle Erasure
 

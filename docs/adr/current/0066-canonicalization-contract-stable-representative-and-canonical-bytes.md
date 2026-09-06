@@ -14,15 +14,36 @@ ADR-0048: Flow Contract Processing — Boundary Refinement and Core Entry
 
 ## Related
 
-- `docs/the-most-important-thing/what-contract-is.md`
+- `../../the-most-important-thing/what-contract-is.md`
 - ADR-0067: Lowering Contract
 - ADR-0065: Admission Contract
 - ADR-0064: Input Contract
 - ADR-0063: Contract Establishment, Identity, Applicability, and Composition
 - ADR-0052: Capacity Contract
 - ADR-0051: Budget Contract
-- ADR-0048: Inbound Airlock Composition, Boundary Refinement, and Core Entry
 - ADR-0047: One-Dimensional Contract Presentations, Pipeline-Slot Selection, and Backend Realization Boundary
+
+---
+
+## Amendment
+
+This ADR previously described the omitted-Canonicalization handoff as continuing through a compiler-derived Lowering
+plan to an explicitly bound realization behind a generated port. That wording inherited the former Lowering realization
+model.
+
+That interpretation is removed.
+
+Canonicalization remains a declarative one-dimensional Contract expression. The user selects or declares its permitted
+source evidence but does not implement a canonicalizer. Kontrakt resolves and establishes the selected law, derives the
+required realization knowledge, and compiler/backend realization performs the canonical representative and
+canonical-byte production required by that established meaning.
+
+When Canonicalization is omitted, the admitted Input presentation passes unchanged to the established Lowering relation.
+Lowering realization is likewise not supplied through a user implementation port. ADR-0047 owns the common
+one-dimensional realization boundary, and ADR-0067 owns the Lowering relation and its compiler/backend realization.
+
+This amendment does not change Canonicalization meaning, the same-shape rule, explicit omission, canonical-byte law,
+finite-work law, refusal attribution, coordinate-law authoring boundary, or conformance requirements decided below.
 
 ---
 
@@ -112,8 +133,9 @@ no hidden runtime hook
 no generated replacement stage
 ```
 
-The admitted Input presentation is passed unchanged to the selected Lowering relation, its compiler-derived plan, and
-the explicitly bound realization behind the generated port.
+The admitted Input presentation is passed unchanged to the selected Lowering relation. Kontrakt resolves that relation,
+derives the required Lowering realization knowledge, and the backend performs the later value formation under ADR-0067.
+No user-supplied Lowering implementation or generated user implementation port is inserted by omission.
 
 Deterministic encoding of Kontrakt-owned material remains mandatory, but that protocol is not an implicit
 Canonicalization Contract. Fixed scalar encodings, coordinate order, presence markers, framing, schema identity, and
@@ -171,7 +193,8 @@ for one flat Canonicalization Contract. A source-layout label such as `flow` gra
 file, package, method name, annotation, type relation, and source location do not own Canonicalization authority.
 
 The slot supplies the role. Frontend refinement decides whether the selected source can be ratified. The resulting
-Kontrakt-owned material supplies authority.
+Kontrakt-owned material supplies authority. Selection does not create a user implementation SPI. Executable
+canonicalization remains compiler/backend realization of the established law.
 
 The two selected source forms are:
 
@@ -470,7 +493,8 @@ resolve the exact slot-selected built-in symbol or coordinate-law declaration
 -> prove declared work, source-size, expansion, intermediate-storage, and output bounds
 -> derive the canonical byte schema and protocol version
 -> derive stable Contract identity and ContractImage material
--> generate the deterministic canonicalizer and byte emitter
+-> derive compiler-owned canonicalization realization knowledge
+-> generate or lower the deterministic canonicalizer and byte emitter in the backend
 ```
 
 Runtime performs no declaration lookup, reflection, member discovery, method dispatch, operator resolution, locale or
@@ -513,7 +537,8 @@ same ratified ContractImage
 + same Contract-owned attribution
 ```
 
-Generated canonicalizers and byte emitters are implementation-axis machinery.
+Generated canonicalizers and byte emitters are compiler/backend implementation-axis machinery. They are not user
+implementation points.
 
 They may be specialized, fused, vectorized, allocation-disciplined, or replaced only when the representative, exact
 bytes, outcome, attribution, work walls, and State-visible behavior remain identical.
@@ -546,7 +571,9 @@ Canonicalization does not define Operation parameter targets and does not create
 
 Lowering owns the explicit source-to-target relation and the shape-changing representation formation boundary.
 
-When Canonicalization is omitted, Lowering receives the admitted Input coordinates unchanged.
+When Canonicalization is omitted, the established Lowering relation receives the admitted Input coordinates unchanged.
+Kontrakt derives the required Lowering realization knowledge and the backend performs the declared source-to-target
+value formation. Canonicalization does not open or require a user Lowering implementation boundary.
 
 ---
 
@@ -582,6 +609,8 @@ Budget and Capacity remain honest separate limits instead of being folded into g
 
 This ADR was extracted mechanically from the Canonicalization-owned material of ADR-0048.
 
-The extraction itself does not change the accepted Canonicalization Contract semantics.
+The extraction itself did not change the accepted Canonicalization Contract semantics.
 
-ADR-0048 remains the owner of the shared optional-Canonicalization branch and its handoff to Lowering.
+The current split ADR set now owns the boundary directly. This ADR owns Canonicalization and explicit omission. ADR-0065
+owns the admitted source handoff into Canonicalization, ADR-0067 owns the later Lowering relation, and ADR-0047 owns the
+common one-dimensional selection and compiler/backend realization boundary.

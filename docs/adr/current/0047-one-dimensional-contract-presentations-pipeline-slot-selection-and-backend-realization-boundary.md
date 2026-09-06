@@ -11,7 +11,12 @@ Accepted
 ## Related
 
 - `../../the-most-important-thing/what-contract-is.md`
-- ADR-0046: IDL-First Interface Contract Frontend and Retained Generated Host Interface and Realization Port Boundary
+- ADR-0070: Realization Axis, Core Realization Closure, and JVM-Ahead Optimization
+- ADR-0067: Lowering Contract
+- ADR-0063: Contract Establishment, Occurrence, Applicability, and Semantic Dependency
+- ADR-0059: Output Presentation Contract, Explicit Outward Result Shape, and Machine Exit Boundary
+- ADR-0058: Publication Contract, Explicit Outward Exposure Authority, and Core Exit Boundary
+- ADR-0046: IDL-First Interface Contract Frontend, Generated Host Interface, and Operation Realization Boundary
 - ADR-0045: Contract Pipeline Package Architecture, Explicit State-Machine Axis, and Compiler Realization Mirror
 - ADR-0043: Contract Graph Canonicalization, Sealed Structural References, and Incremental Identity Derivation
 - ADR-0041: Stable Metadata Identity, BLAKE3, HID, and Protocol-Owned Interning
@@ -20,60 +25,79 @@ Accepted
 
 ---
 
+## Amendment
+
+This ADR previously treated Lowering and Publication as special one-dimensional presentations whose selected
+declarations produced retained generated realization ports that users implemented during machine assembly.
+
+That model is removed.
+
+A selected one-dimensional Contract is declarative Contract expression. Its source form may differ by Contract, but
+selection never creates a user implementation SPI. Kontrakt resolves and establishes the declared meaning under the
+owning Contract law, then realizes the required executable work through compiler and backend machinery.
+
+The user-supplied realization boundary is Operation. ADR-0046 owns the generated external interface and Operation
+realization surfaces. ADR-0070 owns verification and optimization of the admitted user Operation realization.
+
+This ADR continues to own the common selection law: operation-local roles are selected explicitly through their declared
+operation positions, interface-scoped roles are selected through explicit enclosing-interface declarations or bindings,
+and no one-dimensional role is inferred from host structure or implementation behavior.
+
+The detailed source grammar and semantic closure of each one-dimensional Contract remain owned by its current
+per-Contract ADR.
+
+---
+
 ## 1. Context
 
 ADR-0046 decides the interface contract frontend.
 
-A `.kontrakt` interface manifest names operation handles. Kontrakt may generate an ordinary host interface from that
-manifest, but the generated interface is only a build artifact. It is not the contract authority.
+A `.kontrakt` interface names Operation handles and the explicit Contract material that governs the interface. Kontrakt
+may generate ordinary host surfaces from that source, but generated host code is build material. It is not Contract
+authority.
 
-ADR-0046 also records the first one-dimensional catalog. It does not decide how those presentations are selected,
-authored, acquired, or lowered. This ADR starts there.
+The one-dimensional catalog has since been split into Contract-specific ADRs. Those ADRs decide their own meaning,
+source grammar, applicability, establishment law, and realization constraints. This ADR does not duplicate those
+semantics. It decides how one-dimensional material receives a role in the enclosing interface and Operation surface.
 
-ADR-0046 now fixes one narrow authoring exception within that catalog. Lowering and Publication retain manifest slots,
-but their exact coordinate relations are authored directly in the same operation scope as declarations parallel to the
-manifest. Their physical realization remains behind generated plain host-language ports.
+The Operation is a selectable business-computation handle. It is not itself the one-dimensional pipeline. For an
+Operation, the manifest exposes explicit positions where operation-local Contract material may be bound. Those positions
+are slots.
 
-The operation is the surface handle. It is not itself the pipeline. For each operation, the manifest exposes the places
-where operation-local contract material belongs. Those places are slots.
-
-A single `.kontrakt` interface may declare a closed set of operation pipelines that enter the same core. `Policy`,
-`Governance`, `Budget`, and `Capacity` are not repeated as operation slots. They are bound once at the enclosing
-interface scope because they coordinate decisions and finite resources shared among those operations. Their declarations
-may contain machine-wide limits together with explicit operation allocations or run-grant profiles.
+Not every Contract is operation-local. `Policy`, `Governance`, `Budget`, and `Capacity` are bound at the enclosing
+interface scope under their own laws because they coordinate the interface's closed Operation set. `Facts` and
+`Invariants` are also declared at the enclosing interface scope as standing Core vocabulary and law. Their exact scope
+and applicability remain owned by their current ADRs.
 
 This matters because Kontrakt has two bad roads in front of it.
 
 One road makes the user's system wear Kontrakt. That happens when user-owned types must carry Kontrakt annotations,
-implement Kontrakt marker interfaces, inherit Kontrakt shapes, or be assembled from Kontrakt objects before they can be
-understood. The user may already have a contract in its own types, messages, schemas, records, and names. Kontrakt
-should not colonize that contract just to read it.
+implement Kontrakt marker interfaces, inherit Kontrakt shapes, or be assembled from Kontrakt runtime objects before they
+can be understood. The user may already have types, messages, schemas, records, and names. Kontrakt should not move
+Contract selection authority into those host mechanics just to read them.
 
 The other road asks Kontrakt to guess. That is not better. A project contains ordinary data, storage shapes, fixtures,
-transport payloads, cache entries, and many values that are not contract material for a given operation. Shape can help
-once a role is known. Shape cannot choose the role.
+transport payloads, cache entries, helper values, and implementation objects that are not Contract material for a given
+Operation. Shape can help once a role is known. Shape cannot choose the role.
 
-The missing mark is already present.
+The missing mark is already present in the declared machine.
 
-An operation slot marks an operation-local role. Material is input because it enters the input slot. Publication is
-selected because the manifest binds the publication slot, while its operation-local sibling declaration states the exact
-permitted source-to-target coordinate relation. Lowering follows the same split between slot selection and relation
-declaration. State movement belongs to the state-machine axis because the manifest says so, not because a host method
-changed a field. The enclosing interface binding marks the machine scope of `Policy`, `Governance`, `Budget`, and
-`Capacity`.
+An operation slot marks an operation-local role. An enclosing interface declaration or binding marks an interface-scoped
+role. State movement belongs to the State-Machine Axis because the Interaction Manifest binds the applicable movement
+material, not because a host method changed a field. A Publication declaration receives its role because the declared
+interface binds it under Publication authority, not because a result object can be serialized. A Lowering declaration
+receives its role because the declared Operation binds it as Lowering, not because implementation happens to copy
+matching values.
 
-The mark is the slot, not the user's type.
+The mark belongs to the declared Contract machine, not to the user's runtime type.
 
-This gives a practical authoring shape without turning Kontrakt into a pile of annotations or a second wiring language.
-The manifest shows the operation and the empty places around it. The author fills those places, or explicitly leaves
-them empty. For Lowering and Publication, the selected handle resolves to an operation-local sibling declaration whose
-body states only the exact permitted coordinate relation. A contract can be replaced at a slot. Responsibility stays
-visible.
+This gives Kontrakt a practical authoring law without turning the system into a pile of annotations, callbacks, or a
+second implementation wiring language. The author states Contract material in the source form owned by each
+one-dimensional ADR. The interface and Operation surface then bind that material at the explicit scope where it applies.
 
-Kontrakt can then remain around the user's system as an adapter and compiler-grade realization layer. If Kontrakt is
-removed, its checks, generated gates, deterministic backend paths, diagnostics, and optimizations disappear. Retained
-plain host-language realization ports and their user implementations may remain as ordinary adapters. The user's own
-contract source should not have to be rewritten out of Kontrakt's shape.
+Selection does not create implementation authority. Once selected, the declaration remains Contract expression. Kontrakt
+resolves it, establishes the applicable Contract meaning, and realizes the required machine behavior. The only user
+business realization boundary inside this interface model is the declared Operation.
 
 ---
 
@@ -82,47 +106,63 @@ contract source should not have to be rewritten out of Kontrakt's shape.
 One-dimensional presentations need a selection law.
 
 Annotations and marker interfaces are convenient marks, but they put the mark on user-owned material. Host inheritance
-and composition are worse because they let contract meaning hide inside host relation mechanics. A separate projection
+and composition are worse because they let Contract meaning hide inside host relation mechanics. A separate projection
 file avoids touching the type, but it easily becomes bureaucratic wiring or a sidecar mirror. Structural discovery over
 the whole project fails for a simpler reason: structure does not say role.
 
-Kontrakt needs an explicit mark, but the mark must belong to the declared contract machine.
+A generated implementation interface for every selected one-dimensional Contract also fails. It turns Contract
+expression into user callback implementation. A user-written validator, mapper, publication adapter, policy hook, or
+other implementation can then become the practical source of meaning even though the IDL selected a Contract obligation.
+
+Kontrakt needs an explicit role mark, but that mark must belong to the declared Contract machine. Runtime work required
+by the selected Contract must remain compiler/backend realization unless the owning Contract itself explicitly defines a
+different law.
 
 ---
 
 ## 3. Decision Drivers
 
-A one-dimensional role must come from an explicit operation slot or, for machine-wide `Policy`, `Governance`,
-`Budget`, and `Capacity`, from an explicit enclosing interface binding—not from incidental host form.
+A one-dimensional role must come from an explicit declaration, slot, or enclosing-interface binding at the scope fixed
+by the owning Contract. It must not come from incidental host form.
 
-User-owned source should stay user-owned. Kontrakt may acquire from it, but the user should not have to reshape the
-system around Kontrakt types.
+User-owned source should stay user-owned. Kontrakt may acquire supported declaration evidence from it, but the user
+should not have to reshape ordinary implementation around Kontrakt marker types or callback interfaces.
 
-Authority must begin after acquisition, resolution, and lowering into Kontrakt-owned canonical material. Source
-carriers, helpers, compiler metadata, generated adapters, caches, and backend tables may help the machine. They do not
-get to own the meaning.
+A selected one-dimensional Contract is declarative source evidence. It is not a request for the user to implement the
+selected Contract in Java or Kotlin.
 
-Boilerplate removal is valuable only after that boundary is clear.
+Contract authority must not remain in source carriers, helpers, compiler metadata, generated adapters, runtime objects,
+caches, or backend tables. Resolution and establishment move the applicable meaning into Kontrakt-owned Contract
+material under the owning authority.
 
-V1 should decide the selection law, not the whole user API. The exception fixed here is the operation-local IDL relation
-body and required generated realization-port boundary for Lowering and Publication.
+Physical realization must remain replaceable. Kontrakt may generate evaluators, guards, value-formation paths,
+materialization code, tables, specialized helpers, or other executable structures as long as they preserve the
+established Contract meaning.
+
+The user-supplied implementation extension point is Operation. That realization performs business computation over the
+material lawfully handed to it. It does not implement the selected one-dimensional Contracts around it.
+
+V1 should decide the common selection and realization boundary without taking source-grammar ownership away from the
+per-Contract ADRs.
 
 ---
 
 ## 4. Alternatives
 
-### 4.1. `.kontrakt` syntax for every one-dimensional body
+### 4.1. One `.kontrakt` body model for every one-dimensional Contract
 
-This keeps the source under one language, but it makes users learn a new surface for every small piece of contract data.
-Most one-dimensional bodies do not need that much ceremony. Lowering and Publication are the narrow exception: their
-exact coordinate relations belong in the operation's `.kontrakt` source because those relations bind the operation
-boundary itself.
+This keeps every declaration under one language, but it forces one source grammar onto Contracts with different semantic
+needs.
 
-Decision: rejected as the only model; accepted only for the Lowering and Publication coordinate-relation bodies.
+Some Contracts are naturally expressed in the interface IDL. Others currently use restricted host-language declaration
+surfaces as source evidence. That choice belongs to the owning Contract ADR.
+
+Decision: rejected as a universal authoring rule.
 
 ### 4.2. Host annotations or marker interfaces
 
-These are easy to find, but they move the mark into the user's material. The user's contract starts wearing Kontrakt.
+These are easy to find, but they move the role mark into the user's material. The user's runtime type starts speaking
+for the Contract.
 
 Decision: rejected as the primary selection mechanism.
 
@@ -135,7 +175,7 @@ Decision: rejected.
 ### 4.4. Sidecar projection mapping
 
 This keeps user types clean, but it creates another document whose job is to remember that one thing means another. If
-it copies source facts, it becomes the mirror ADR-0046 avoided.
+it copies authored Contract facts, it becomes the mirror ADR-0046 avoided.
 
 Decision: rejected as the primary selection mechanism.
 
@@ -145,14 +185,14 @@ Shape is useful inside a known role. It cannot select the role.
 
 Decision: rejected.
 
-### 4.6. Pipeline-slot selection
+### 4.6. Explicit Contract-scope selection
 
-The operation manifest already has the right mark for operation-local roles. A slot says what role the material plays.
-For Lowering and Publication, the selected handle resolves to an operation-local sibling declaration that states the
-exact permitted coordinate relation without turning that relation into implementation. The enclosing interface scope is
-the right mark for `Policy`, `Governance`, `Budget`, and `Capacity`, whose authority must coordinate the closed
-operation set rather than be repeated inside each operation. After either explicit binding, Kontrakt may acquire, check,
-lower, or reject the material under that role and scope.
+The operation manifest already provides the right mark for operation-local roles. The enclosing interface provides the
+right mark for standing Core and machine-wide roles. The owning Contract ADR decides what source declaration may be
+bound at that position.
+
+After explicit selection, Kontrakt may acquire, resolve, establish, verify, reject, and realize the material under that
+role. No implementation callback is needed merely because the Contract requires executable work.
 
 Decision: accepted.
 
@@ -160,29 +200,53 @@ Decision: accepted.
 
 ## 5. Decision
 
-Kontrakt will use pipeline-slot selection for operation-local one-dimensional contract presentations and explicit
-interface-scope binding for machine-wide `Policy`, `Governance`, `Budget`, and `Capacity`.
+Kontrakt will use explicit declared scope as the selection law for one-dimensional Contract presentations.
 
-The interface manifest names a closed set of operation handles. For each operation, the manifest binds operation-local
-contract slots. A slot is the selection point for an operation-local one-dimensional role. Lowering and Publication keep
-those slots, but each selected handle must resolve to a declaration authored beside the manifest inside the same
-operation. The enclosing interface binds `Policy`, `Governance`, `Budget`, and `Capacity` once for that closed operation
-set.
+Operation-local roles are selected through the Operation's declared manifest positions or movement surface. Standing
+Core and machine-wide roles are selected through explicit enclosing-interface declarations or bindings according to
+their owning Contract laws.
+
+The interface manifest names a closed set of Operation handles. Each Operation may bind the one-dimensional Contract
+material applicable to that interaction. The enclosing interface binds material whose authority spans the shared Core or
+the closed Operation set.
 
 A presentation is not selected because a host class has an annotation, a marker interface, an inheritance edge, a
-mapping entry, or a lucky shape. Operation-local material is selected because the operation manifest places it in a
-declared slot. Machine-wide control and resource material is selected because the enclosing interface places it in the
-corresponding explicit binding.
+mapping entry, a matching name, or a convenient shape. It is selected because the authored Contract surface explicitly
+binds it at the role and scope where its owning law applies.
 
-Kontrakt acquires only material selected by declared operation slots, interface-scope bindings, or references owned by
-those selections. Unreferenced user material is ignored.
+Kontrakt acquires only material reachable from those explicit selections and from references lawfully owned by them.
+Unreferenced user material is ignored as Contract source.
 
-For Lowering and Publication, the operation-local declaration body contains only exact source-to-target coordinate
-bindings. It does not contain conversion code, constructors, callbacks, lookup, branching, expressions, implicit
-same-name matching, or backend behavior.
+When an owning Contract permits omission, an unselected optional position becomes explicit absence under that Contract
+law. It is not an unresolved reference and it does not authorize structural inference. A default may apply only when the
+authored Contract explicitly selects a default recognized by the owning law.
 
-The standing `facts` and `invariants` declarations remain at the enclosing interface scope. This ADR changes only
-Lowering and Publication by placing their relation bodies beside the operation manifest inside the same operation.
+The source grammar of the selected declaration remains owned by its current per-Contract ADR. This ADR does not require
+Lowering, Publication, Invariant, Admission, Policy, or another one-dimensional Contract to share one physical authoring
+form.
+
+A selected one-dimensional Contract does not create a user implementation interface.
+
+```text
+selected one-dimensional Contract
+    -> acquire supported source evidence
+    -> resolve under the owning Contract law
+    -> establish applicable Contract material
+    -> compiler/backend realization
+```
+
+The user-supplied realization boundary is separate:
+
+```text
+declared Operation
+    -> generated Operation realization surface
+    -> user business implementation
+```
+
+ADR-0046 owns that generated host boundary. This ADR only establishes that one-dimensional selection does not create
+additional user implementation SPIs beside it.
+
+An illustrative selection surface is:
 
 ```text
 interface CalculateContract {
@@ -193,309 +257,381 @@ interface CalculateContract {
     facts         CalculateFacts
     invariants    CalculateInvariants
 
-    operation calculate(input: CalculateInput): CalculateOutput {
+    operation calculate(command: CalculateCommand): CalculateRecorded {
         manifest {
             flow:
-                lowering       CalculateLowering
-                publication    CalculatePublication
-        }
-
-        lowering CalculateLowering {
-            input.value -> calculation.value
-        }
-
-        publication CalculatePublication {
-            calculation.result -> output.result
+                input             CalculateInput
+                admission         CalculateAdmission
+                canonicalization  CalculateCanonicalization
+                lowering          CalculateLowering
+                publication       CalculatePublication
+                output            CalculateOutput
         }
     }
 }
 ```
 
-Every selected Lowering and Publication declaration produces a required plain host-language realization port. Exactly
-one implementation is supplied during machine assembly. Same-type copying, catalog lookup, naming convention, and
-backend support do not silently close that port. The generated source is a retained build artifact and may remain as an
-ordinary adapter boundary if Kontrakt is removed.
+The example shows selection only. It does not define the source grammar of `CalculateAdmission`,
+`CalculateCanonicalization`, `CalculateLowering`, `CalculatePublication`, or the other selected declarations. Their
+owning ADRs do that.
 
-This ADR does not decide the final user API for the remaining one-dimensional bodies. That may later be done with
-generated helpers, host declaration surfaces, compiler-plugin airlocks, or another ratified frontend. The law is
-unchanged: the operation slot or enclosing interface binding gives the role and scope; resolved contract material gives
-the authority; backend machinery realizes it. Lowering and Publication use the explicit IDL relation and generated
-realization-port boundary fixed here.
+It also does not ask the user to implement those names. They are Contract declarations selected into the machine.
 
 ---
 
 ## 6. Pipeline-Slot Selection Law
 
-A pipeline slot is a declared position in an operation's contract axis or state-machine axis.
+A pipeline slot is a declared position in an Operation's Contract Axis or a corresponding explicit position on the
+State-Machine Axis.
 
-It is not a runtime scheduling statement. It is an operation-local role statement. `Policy`, `Governance`, `Budget`, and
-`Capacity` are machine-scope roles selected by the enclosing interface binding, not pipeline slots and not internal
-implementation-stage annotations.
+It is not a runtime scheduling statement. It is an operation-local role statement.
 
-Input is not input because a DTO says so. Publication is not publication because a response object says so. A transition
-is not a transition because a method rewrites a status field. A Lowering or Publication relation is not selected because
-an implementation method happens to convert matching types.
+`Policy`, `Governance`, `Budget`, and `Capacity` are not ordinary operation-local pipeline slots. Their applicable
+bindings are made at the enclosing interface scope under their current laws. `Facts` and `Invariants` are also standing
+interface-scope declarations rather than per-Operation implementation hooks.
 
-The operation gives its external boundary. The operation slot gives the operation-local role. For Lowering and
-Publication, the operation-local sibling declaration gives the permitted coordinate relation. The enclosing interface
-gives the shared machine scope. The source gives candidate material. Lowering gives Kontrakt material.
+Input is not Input because a DTO says so. Publication is not Publication because a response object says so. A Transition
+is not a Transition because a method rewrites a status field. Lowering is not Lowering because a helper happens to
+convert compatible types.
 
-Several operation pipelines under one enclosing interface may enter the same core. Internal core functions, stages, or
-call graphs do not open another IDL operation or create another slot board. They remain replaceable implementation under
-the machine-wide contracts fixed for the selected operation run.
+The Operation identifies the interaction handle. The slot identifies an operation-local Contract role. The enclosing
+interface identifies the explicit shared scope. The selected declaration supplies source evidence under the owning
+Contract law.
+
+Several Operation interactions under one enclosing interface may enter the same Core. Internal functions, helper
+methods, stages, or call-graph nodes do not open another IDL Operation or create another slot board. They remain
+replaceable realization unless another explicit Contract boundary says otherwise.
+
+A slot is not a callback position.
+
+```text
+slot selection
+    != generated user implementation point
+```
+
+If a selected Contract needs executable work, Kontrakt realizes that work after the applicable Contract meaning has been
+resolved and established.
 
 ---
 
 ## 7. Source Carrier Law
 
-One-dimensional bodies are not required to use `.kontrakt` syntax in V1. The exact coordinate-relation bodies of
-Lowering and Publication are the only exception decided here: they are authored directly in the operation's `.kontrakt`
-scope. That does not turn the remaining bodies into arbitrary host code.
+One-dimensional Contracts are not required to share one V1 source carrier.
 
-A contract source may be carried by a host language, but it must arrive as material the contract machine can read. It
-may name, shape, bound, version, choose, or declare absence. It may carry simple yes-or-no facts. That is about the
-edge. Beyond that edge, behavior starts pretending to be contract.
+The owning Contract ADR decides whether its declaration is written directly in `.kontrakt`, carried by a restricted
+Kotlin or Java declaration, produced by another supported frontend, or represented by another ratified source form.
 
-A source carrier must not hide the contract inside a method, callback, constructor trick, runtime lookup, host control
-flow, or opaque algorithm. If judgment logic is needed, it must be declared in a form Kontrakt can resolve and lower.
-Predicate grade, helper APIs, and the future judgment language remain unresolved here.
+A host-language declaration may carry Contract evidence, but it must arrive as material the Contract machine can read.
+It may name, shape, bound, version, select, relate, or declare absence as permitted by the owning law.
+
+The source carrier must not hide Contract meaning inside arbitrary methods, callbacks, constructor tricks, runtime
+lookup, mutable object identity, host control flow, or opaque algorithms. If a judgment or transformation meaning is
+required, the owning Contract must expose that meaning in a form Kontrakt can resolve and verify.
 
 The rule is not no host language. Kotlin/JVM may provide data classes, compiler metadata, generated source, or typed
-declaration surfaces. They are carriers. Kontrakt reads them, cleans them, and lowers them. Their host mechanics do not
-speak for the contract.
+declaration surfaces. They remain carriers. Their host mechanics do not speak for the Contract.
 
-The carrier may help the author say the material. It does not decide the meaning.
+The carrier may help the author state the material. It does not select its own role and it does not become a user
+realization SPI.
 
 ---
 
 ## 8. Canonical Material Law
 
-Authority begins after acquisition, resolution, and lowering into Kontrakt-owned canonical material.
+Source evidence is not Contract authority merely because it has been selected.
 
-That material must be deterministic. Identity, ordering, equality, version, absence, and failure meaning cannot depend
-on source traversal accidents or host runtime mechanics.
+Kontrakt acquires the selected evidence, resolves its symbols and references, verifies the definition-time law owned by
+the Contract, and lowers the result into deterministic Kontrakt-owned material. Establishment and applicability then
+follow the authority law defined by the owning Contract and ADR-0063.
 
-A source carrier may be pleasant to write. That does not make it the contract.
+Identity, ordering, equality, version, absence, dependency, and failure meaning must not depend on source traversal
+accidents or host runtime mechanics.
 
-The contract-bearing result is the lowered material that Kontrakt owns.
+A source carrier may be pleasant to write. A generated declaration may be convenient to call. A backend table may be
+fast to query. None of them receives Contract authority from that convenience.
+
+The authoritative result is the applicable Contract material established under the owning law.
 
 ---
 
 ## 9. Backend Realization Boundary
 
-Kontrakt may remove boilerplate only after role selection and lowering are controlled.
+Kontrakt may remove boilerplate only after role selection, resolution, and Contract authority are controlled.
 
-For every selected Lowering and Publication declaration, Kontrakt generates a plain host-language realization port from
-the resolved coordinate relation. The port is implementation ABI, not contract authority. Exactly one supplied
-implementation must be closed into the machine assembly. The compiler must not choose an implementation implicitly from
-coordinate names, equal host types, a conversion catalog, classpath contents, or backend convention.
+A selected one-dimensional Contract does not require a user-supplied validator, mapper, adapter, policy hook,
+canonicalizer, publication implementation, or other per-Contract callback merely because its meaning must be executed.
 
-The generated port source is a retained build artifact. Its user implementation may use ordinary reusable libraries, but
-the library does not select itself and does not become contract authority. Removing Kontrakt may leave the retained port
-and implementation as an ordinary adapter boundary.
+Instead:
 
-After explicit binding, the backend may do its job. It may generate code, specialize paths, cache compiler material,
-arrange memory, precompute stable data, devirtualize or inline the supplied implementation, erase intermediate port
-objects, and choose a faster physical layout.
+```text
+declared Contract expression
+    -> resolved Contract material
+    -> applicable establishment
+    -> compiler-derived realization knowledge
+    -> backend executable realization
+```
 
-That is machinery. It is allowed to change when the contract material does not change.
+The backend may generate a direct predicate, material-formation path, projection, accounting path, capacity gate,
+diagnostic producer, static table lookup, specialized helper, or another structure appropriate to the owning Contract.
+That structure is implementation material.
 
-If generated machinery disagrees with canonical material, the machinery is wrong.
+A backend may also fuse compatible work, statically discharge a judgment, inline generated helpers, eliminate temporary
+objects, specialize primitive paths, cache compiler results, or choose a different physical layout. Those changes are
+legal only when the same Contract meaning and observable boundary are preserved.
+
+An internal generated function or ABI may exist when useful. It is not a retained user implementation requirement and it
+must not become a second authority source.
+
+If the selected Contract declaration is not semantically sufficient to determine a legal realization under its own law,
+Kontrakt must not ask user implementation to fill the missing meaning implicitly. The definition must be rejected or the
+owning Contract language must be extended explicitly.
+
+If the Contract is semantically complete but the selected backend cannot preserve its required guarantee, realization
+must fail under the applicable backend/Contract law. Backend inability does not weaken the Contract.
+
+The only ordinary user-supplied business realization boundary in this interface model is Operation.
+
+```text
+established inbound material
+    -> user Operation realization
+    -> candidate result material
+```
+
+That Operation realization is verified and admitted under ADR-0070. It does not acquire authority over the
+one-dimensional Contracts that surround it.
+
+If generated machinery disagrees with established Contract material, the machinery is wrong.
 
 ---
 
 ## 10. Host Boundary Airlock
 
-The slot gives the role. A host boundary airlock may make the host compiler accept the crossing.
+The declared Contract surface gives the role. A host boundary airlock may make the host compiler accept the crossing.
 
-Kotlin/JVM is nominal. It will not accept every structurally suitable object just because a Kontrakt slot could read it.
-If Kontrakt wants less user boilerplate, it needs generated boundary machinery or a compiler-backed form.
+Kotlin/JVM is nominal. It will not accept every structurally suitable value merely because Kontrakt can describe the
+same Contract coordinates. Generated carriers, generated host interfaces, compiler-backed checks, adapters, or direct
+backend products may therefore be needed at integration boundaries.
 
-V1 may use explicit helpers or adapters. Lowering and Publication use the required generated realization ports fixed by
-this ADR; the remaining airlock API stays unresolved. A later compiler plugin may verify call sites and lower direct
-host calls.
+Those mechanisms are machinery. They do not select Contract roles and they do not create Contract meaning.
 
-The user type is not the mark. The airlock is machinery. The lowered material is the contract-bearing result.
+V1 may use explicit generated boundary surfaces where the owning frontend requires them. The external interface and the
+Operation realization surface are owned by ADR-0046. One-dimensional Contracts may also have generated compiler support
+internally, but selection of a Contract does not expose another user implementation interface.
+
+The user type is not the mark. The airlock is not the authority. The established Contract material remains the source of
+machine meaning.
 
 ---
 
 ## 11. Common Processing Model
 
-Each operation-local one-dimensional presentation follows the same authority path: a declared slot selects source
-material or declared absence; Kontrakt acquires it under the slot role, resolves it, closes explicit absence and
-defaults, lowers it into canonical material, and realizes it through generated or static machinery when needed.
+One-dimensional Contracts share a common authority discipline even though their detailed semantics differ.
 
-Lowering and Publication refine that common path without replacing it. Their manifest slots select the roles, their
-operation-local sibling declarations provide the exact coordinate relations, compiler lowering preserves those relations
-as contract material, and generated retained ports carry the explicitly supplied physical realizations.
+Conceptually:
 
-`Policy`, `Governance`, `Budget`, and `Capacity` follow the same authority boundary from source to Kontrakt-owned
-material, but their selection point is the enclosing interface binding. Their declarations may express machine-wide laws
-and limits together with explicit operation allocations or run-grant profiles. They do not acquire authority from
-operation-manifest repetition or implementation-stage placement.
+```text
+supported source evidence
+    -> explicit slot / declaration / interface binding
+    -> acquisition
+    -> resolution
+    -> deterministic canonical Contract material
+    -> applicability and establishment under the owning law
+    -> compiler/backend realization
+```
 
-This is not a physical runtime schedule. It is the path by which authority leaves source form and becomes Kontrakt-owned
-material.
+The diagram is not a physical runtime schedule.
 
-A backend may realize the path differently when the same contract is preserved.
+An owning Contract may perform a definition-time judgment, a run-time judgment, material formation, selection,
+accounting, retention, or another obligation. This ADR does not flatten those differences into one evaluator protocol.
+
+`Policy`, `Governance`, `Budget`, `Capacity`, standing `Facts`, and `Invariants` use interface-scoped declaration or
+binding under their current laws. Operation-local flow, movement, bounds, and diagnostic positions use the explicit
+Operation surface where their owners place them.
+
+The common rule is narrower: source evidence does not select itself, user implementation does not fill a selected
+one-dimensional Contract, and backend realization cannot change established Contract meaning. Permitted omission is
+closed as explicit absence before realization rather than left for backend convention to fill.
 
 ---
 
 ## 12. One-Dimensional Presentations
 
-ADR-0046 already decides the Interface Surface Contract. Operation-local presentations use the slot law defined here.
-`Policy`, `Governance`, `Budget`, and `Capacity` remain part of the same flat one-dimensional catalog, but use the
-enclosing interface binding because their scope crosses the interface's closed operation set.
+ADR-0046 owns the Interface Surface Contract and generated external/Operation host split. The current per-Contract ADRs
+own the detailed meaning below. This section records only the interface-visible obligation catalog needed by the
+selection law.
 
 ### 12.1. Input Contract
 
-Input declares the presentation shape that may appear at an operation boundary. The input slot selects candidate
-material; lowering turns that material into stable input facts. Admission, canonical equivalence, core fact meaning,
-state movement, and publication are not decided here.
+Input declares the finite presentation shape that may appear at the inbound boundary. It does not itself grant
+continuation, canonicalize presentation values, form Operation parameter Facts, or invoke the user Operation.
 
 ### 12.2. Admission Contract
 
-Admission declares when boundary presentation may enter the contract pipeline. It produces declared admit, reject, or
-stop meaning. The final predicate grade and authoring form remain unresolved.
+Admission declares the continuation judgment over a valid Input presentation. It decides whether that presentation may
+continue beyond the boundary under the selected Admission law.
 
 ### 12.3. Canonicalization Contract
 
-Canonicalization declares how admitted presentation becomes a stable system representation. It must cover equivalence,
-the representative, tolerated source drift, and failure when a stable representation cannot be produced.
+Canonicalization declares an optional stable representative law over the admitted Input presentation. Where selected, it
+owns the permitted equivalence and representative meaning without performing shape-changing Operation parameter
+formation.
 
 ### 12.4. Lowering Contract
 
-Lowering declares which canonical boundary coordinates may form which operation-input Fact coordinates. The exact
-source-to-target bindings are authored in an operation-local declaration parallel to the manifest. They are permission
-and factual dependency, not assignment, parsing, construction, lookup, business computation, or implementation.
+Lowering declares the explicit lawful relation by which selected boundary-presentation coordinates may form declared
+Operation-parameter Fact coordinates.
 
-Every selected Lowering declaration generates a required retained plain host-language realization port. Exactly one user
-implementation realizes the declared bindings. The implementation may use reusable libraries, but neither a library nor
-a matching host-type pair is selected implicitly. The generated pipeline owns invocation order, candidate formation,
-failure routing, and the later judgment boundary.
+The declaration is Contract expression. It is not a user mapper. Kontrakt resolves the relation and the backend realizes
+the actual value formation required by the established Lowering law.
 
 ### 12.5. Fact Contract
 
-Fact declares what factual material may exist inside the core. A fact is not a DTO, database row, runtime instance, or
-host value with a nicer name. It belongs to the contract machine's own vocabulary.
+Fact declares what immutable factual material may exist with Fact authority inside the Core. A host object, DTO,
+database row, implementation-local value, or runtime identity does not become a Fact merely because user code can reach
+it.
 
 ### 12.6. Invariant Contract
 
-Invariant declares whether lowered candidate material may become accepted core material. If an operation has no
-additional invariant, that absence must be declared.
+Invariant declares a standing Fact-local integrity law. It is judged under its own applicability law and does not become
+a general user validation callback.
 
 ### 12.7. State Contract
 
-State declares finite, closed, flat machine conditions. It is not a mutable field, lifecycle label, callback phase, or
-open vocabulary.
+State declares finite, closed, flat machine conditions on the State-Machine Axis. It is not a mutable field, lifecycle
+label, callback phase, or open host vocabulary.
 
 ### 12.8. State Transition Contract
 
-State transition declares permitted one-way movement between declared conditions. It is not every stored-value rewrite.
-Hidden transition creation through host behavior is rejected.
+State Transition declares permitted one-way movement between declared machine conditions. Hidden movement inferred from
+host behavior is not Contract movement.
 
 ### 12.9. Explicit State Machine Manifest
 
-The explicit state machine manifest declares the closed movement surface: states, initial condition, terminal
-conditions, and permitted transitions. It belongs to the state-machine axis, not to a normal linear stage.
+The Explicit State Machine Manifest declares the closed movement surface: the State set, establishment conditions, and
+permitted Transition membership required by its owning State-Machine law.
 
 ### 12.10. Failure Contract
 
-Failure declares contract-governed stop results. It is not just an exception. Host errors may be mapped only through a
-declared failure law.
+Failure declares explicit Contract-governed failure meaning, attribution, applicable context, and stopped scope. Host
+exceptions or backend failures do not acquire that meaning merely because they interrupted execution.
 
 ### 12.11. Publication Contract
 
-Publication declares which explicitly permitted internal coordinates may form which outward-presentation coordinates
-after publication authority allows the claim. The exact source-to-target bindings are authored in an operation-local
-declaration parallel to the manifest. They do not themselves authorize disclosure and do not contain serialization or
-business logic.
+Publication declares which established Result or Failure material receives outward exposure authority.
 
-Every selected Publication declaration generates a required retained plain host-language realization port. Exactly one
-user implementation realizes the declared outward representation. The generated pipeline owns publication judgment,
-source eligibility, invocation order, failure routing, and final output-presentation assembly. Serialization libraries
-may assist the implementation; they do not decide the claim or close the port implicitly.
+Publication is positive outward selection, not a user mapper and not Output shape. A backend realizes an
+already-resolved Publication decision without gaining authority to widen it.
 
-### 12.12. Diagnostic Evidence Contract
+### 12.12. Output Presentation Contract
 
-Diagnostic evidence declares what explanation a judgment may offer. It exists because the machine must account for its
-own judgment, not because logging is convenient.
+Output declares the closed outward result shape that may leave the machine after applicable Publication authority has
+been established. Output does not infer its shape from a serializer, response class, Operation return object, or backend
+convention.
 
-### 12.13. Diagnostic Retention Contract
+### 12.13. Diagnostic Evidence Contract
 
-Diagnostic retention declares what evidence may survive after the run. Existence is not retention.
+Diagnostic Evidence declares what Contract-owned explanation material may be established for a declared judgment. It
+exists because the machine must be able to account for its own decisions, not because logging is convenient.
 
-### 12.14. Version Coordinate
+### 12.14. Diagnostic Retention Contract
 
-Version coordinate declares which contract meaning governed a judgment, material, claim, or evidence. It is not a
-release tag convenience.
+Diagnostic Retention declares what diagnostic evidence may remain after the run and under what bounds. Evidence
+existence does not imply retention.
 
-### 12.15. Policy Contract
+### 12.15. Version Coordinate
 
-Policy declares the allocation, priority, borrowing, reclaim, and stop-reaction criteria active across the enclosing
-machine's closed operation set. It is not an implementation option bag and is not attached to internal functions or
-stages.
+Version declares which Contract meaning governs a judgment, material, claim, or evidence. It is a semantic coordinate,
+not a release-tag convenience.
 
-### 12.16. Budget Contract
+### 12.16. Policy Contract
 
-Budget declares finite consumable allowance for the machine and explicit operation or run-grant profiles within that
-allowance. It is not an incidental timeout, loop counter, or limit attached to the current implementation decomposition.
+Policy declares the explicit operating world and the applicable criteria that govern the bound interface machine under
+its current Contract law. It is not an implementation option bag.
 
-### 12.17. Capacity Contract
+### 12.17. Budget Contract
 
-Capacity declares the finite resource walls of the machine and the explicit operation allocations that must remain
-inside those walls. It may govern queues, storage regions, concurrency, resident material, or another stable
-machine-visible resource dimension. It is not merely a buffer size and is not owned by an implementation stage.
+Budget declares finite consumable allowance and its explicit attribution or allocation under the applicable Contract
+world. It is not an incidental timeout, loop counter, or backend limit.
 
-### 12.18. Governance Contract
+### 12.18. Capacity Contract
 
-Governance declares which contract set, policy set, version, capacity, budget, enclosing interface binding, and closed
-operation set is valid. It is the rule for which law book the machine is reading and which machine world is fixed for a
-selected operation run.
+Capacity declares finite simultaneous operating limits and applicable admission walls over the subjects and quantities
+owned by its current Contract law. It is not merely a buffer size or implementation-stage quota.
+
+### 12.19. Governance Contract
+
+Governance declares the explicit selection, scope, binding, validity, and singularity material that determines which
+Contract world is valid for the governed machine. It does not infer authority from implementation topology.
 
 ---
 
 ## 13. Unresolved
 
-Except for the operation-local coordinate-relation bodies and required generated realization ports of Lowering and
-Publication, this ADR does not decide final authoring syntax for one-dimensional bodies, the final host user API, the
-predicate language, the source carrier set for every presentation, or compiler-plugin airlock mechanics.
+This ADR does not decide one universal source syntax for one-dimensional Contract bodies.
 
-Structural checking may be used inside a slot, but structure is not the selection law.
+Each current per-Contract ADR owns its supported source evidence, definition-time closure, applicability, and semantic
+realization requirements. Those decisions may use `.kontrakt`, restricted host declarations, generated declaration
+surfaces, or another ratified frontend without changing the selection law defined here.
 
-Annotations and host markers may later be accepted as optional acquisition hints. They are not the primary selection
-mechanism.
+This ADR also does not decide the final compiler-plugin airlock mechanics, internal backend ABI, generated helper
+layout, DI framework integration, or optimization representation.
+
+Structural checking may be used after a role is explicitly known. Structure is not the selection law.
+
+Annotations and host metadata may be accepted as source evidence or acquisition hints only where an owning Contract ADR
+permits them. They do not become the primary role-selection mechanism.
+
+No unresolved implementation detail reopens a user implementation port for a selected one-dimensional Contract.
 
 ---
 
 ## 14. Consequences
 
-One-dimensional contract selection becomes explicit-scope-centered. Operation-local roles remain pipeline-slot selected,
-while `Policy`, `Governance`, `Budget`, and `Capacity` are selected once by the enclosing interface scope.
+One-dimensional Contract selection becomes explicit-scope-centered.
 
-Kontrakt does not need to mark every user type, scan every data shape, or maintain a sidecar mirror for every contract
-body. The declared slot gives the role. Lowering and Publication add their exact operation-local coordinate relations
-beside the manifest. Source material enters under that role. Lowering turns it into flat canonical material. Generated
-realization ports keep physical implementation explicit and replaceable.
+Operation-local roles are selected through the declared Operation surface. Standing Core and machine-wide roles are
+selected through explicit enclosing-interface declarations or bindings under their current laws. Host structure does not
+select the role.
 
-The interface surface becomes readable as a contract machine. The reader can see the shared resource and control world,
-the closed operation set, each operation's local contract and movement slots, what is absent by declaration, and what
-may be replaced without pretending that a class body is the contract.
+The source grammar of each Contract can evolve independently without changing the common selection law. Lowering may use
+its explicit relation form. Publication may use its own positive exposure declaration. Invariant, Admission,
+Canonicalization, Budget, Capacity, Governance, Failure, Diagnostics, and the other Contracts retain the source form and
+semantic law owned by their current ADRs.
 
-This gives responsibility a place. A design question becomes a slot question before it becomes a code question.
+Selected one-dimensional Contracts remain declaration, not user implementation SPI.
 
-That also makes authoring less empty. The author does not start from a blank implementation. Each operation manifest
-shows the local places that need material, while the enclosing interface shows the shared `Policy`, `Governance`,
-`Budget`, and `Capacity` bindings. Lowering and Publication place their exact relation bodies beside the manifest and
-leave their physical realization behind generated ports. Filling those positions, or explicitly leaving permitted
-operation slots empty, produces the contract machine.
+```text
+user declares Contract meaning
+    -> Kontrakt resolves and establishes it
+    -> compiler/backend realizes it
 
-Kontrakt remains an adapter and compiler-grade realization layer around the user's system. Removing it removes its
-validation, generated pipeline assembly, diagnostics, and contract-aware optimization. Retained Lowering and Publication
-ports and their implementations may remain as ordinary adapters. It should not erase the user's own contract source.
+user implements Operation
+    -> Kontrakt verifies and admits that realization
+```
 
-This keeps ADR-0046's interface decision intact while giving operation-local presentations a practical slot-selection
-law and machine-wide `Policy`, `Governance`, `Budget`, and `Capacity` an explicit interface-scope binding law. Lowering
-and Publication now add explicit operation-local relation declarations and retained generated realization-port
-boundaries without turning their implementations into contract authority. Several operation pipelines may enter the same
-core without turning internal implementation work into nested IDL operations.
+This keeps Contract authority out of validators, mappers, publication adapters, framework hooks, and generated callback
+interfaces.
+
+It also makes the interface surface easier to read. The reader can see which Contract questions are answered for the
+shared Core and for each Operation without confusing those declarations with runtime object wiring. A bounded design
+question becomes a declaration or slot question before it becomes a code question. Permitted unanswered positions stay
+visible as explicit absence rather than hidden defaults.
+
+The author therefore does not begin from a blank set of implementation callbacks. The declared surface shows where
+Contract material may be supplied and which obligations remain absent. Responsibility stays visible without turning the
+slot board into executable wiring.
+
+The cost moves deliberately into the compiler/backend. Kontrakt must be able to realize the executable consequences of
+selected Contract declarations, reject declarations that are semantically incomplete under their owning law, and reject
+backend combinations that cannot preserve the required guarantee.
+
+Backend implementation remains free to fuse judgments, eliminate intermediate values, specialize direct paths, cache
+resolved knowledge, choose compact layouts, or generate JVM-facing executable structures. None of those choices can add,
+remove, or redefine selected Contract meaning.
+
+The user's business code remains concentrated at Operation. Internal helper functions and ordinary implementation
+structure remain replaceable realization unless another explicit Contract boundary applies.
+
+This preserves ADR-0046's frontend split while giving the one-dimensional catalog one common selection and realization
+boundary. The Contract is declared once. Kontrakt realizes the machine around the Operation rather than asking the user
+to reimplement each selected Contract in host code.
