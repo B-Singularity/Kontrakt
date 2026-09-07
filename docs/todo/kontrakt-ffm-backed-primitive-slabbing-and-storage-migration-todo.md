@@ -1,4 +1,4 @@
-# Kontrakt FFM-Backed Primitive Slabbing and Physical Storage Migration TODO
+# Kontrakt FFM-Backed Primitive Slabbing and Target-Aware Physical Layout TODO
 
 ## Status
 
@@ -8,8 +8,8 @@ This document is not an ADR.
 
 It does not define Contract semantics.
 
-It records the current physical-storage direction for the Kontrakt compiler and the migration work that must be reviewed
-before the storage model is promoted into accepted architecture.
+It records the current physical-storage direction for the Kontrakt compiler and the architecture seams that must remain
+open before the storage model is promoted into accepted architecture.
 
 The current direction is:
 
@@ -23,14 +23,18 @@ dense physical ordinals / offsets
 primitive slabbing
     ↓
 FFM-backed MemorySegment storage
+    ↓
+target-aware physical layout
 ```
 
 Primitive slabbing and FFM are not competing designs.
 
-Primitive slabbing defines the physical data organization.
+Primitive slabbing defines how compiler material is organized.
 
-FFM provides the memory substrate used to realize that organization with explicit alignment, offsets, lifetime, and
-layout control.
+FFM provides the memory substrate used to realize that organization with explicit alignment, offsets, layout, and
+lifetime control.
+
+Target-aware physical layout decides how that physical material should be arranged for an admitted target profile.
 
 ---
 
@@ -42,12 +46,14 @@ The V1 target is an object-light, primitive-oriented compiler core.
 
 FFM-backed primitive slabs are the current default physical direction for hot and high-cardinality material.
 
+Physical layout may later depend on target hardware characteristics.
+
 This is a realization decision.
 
 It must not become Contract authority.
 
 The same semantic material must preserve the same identity, ordering, judgment, and publication result even if the
-physical storage backend is replaced.
+physical storage backend or target layout is replaced.
 
 ---
 
@@ -72,12 +78,12 @@ These references identify semantic material.
 
 They are not byte offsets.
 
-Physical lowering may represent them as dense ordinals or offsets:
+Physical lowering may represent them as dense ordinals or offsets.
 
 ```text
 OperationRef
     ↓ physical lowering
-operationOrdinal: int
+operationOrdinal
     ↓
 operationSlabBase + ordinal * stride
 ```
@@ -96,7 +102,7 @@ Byte offset
 HID / persistent fingerprint
 ```
 
-An image-local ordinal or byte offset must never become semantic identity merely because it is fast to access.
+An ordinal or byte offset must never become semantic identity merely because it is fast to access.
 
 ---
 
@@ -148,14 +154,14 @@ The exact field layout remains a storage decision.
 
 FFM should be used to obtain physical control that ordinary heap objects do not provide reliably.
 
-Relevant capabilities include:
+The relevant physical controls include:
 
 ```text
-explicit base alignment
-explicit byte offsets
-explicit field layout
-explicit stride
-explicit padding
+base alignment
+byte offsets
+field layout
+stride
+padding
 large-region allocation
 bulk lifetime control
 ```
@@ -182,13 +188,144 @@ infer semantic meaning
 
 ---
 
-## 5. Cache-Line Locality
+## 5. Target-Aware Physical Layout
+
+Cache-line layout should not be hard-coded into unrelated compiler subsystems.
+
+A dedicated Physical Layout boundary should own target-dependent placement decisions.
+
+The intended seam is:
+
+```text
+compiler analysis
+    ↓
+derived Access Profile
+        +
+explicit Target Hardware Profile
+        ↓
+Physical Layout Planning
+        ↓
+derived Physical Layout Plan
+        ↓
+FFM-backed slab realization
+```
+
+The Physical Layout Plan is derived material.
+
+It is replaceable.
+
+It is non-authoritative.
+
+Changing a target profile may change the physical layout.
+
+It must not change Contract meaning.
+
+---
+
+## 6. Access Profile
+
+A subsystem should not directly request a 64-byte cache line or a specific field offset.
+
+It should publish the access information needed by the physical planner.
+
+The exact schema is not fixed yet.
+
+The material may include information such as:
+
+```text
+fields usually read together
+sequentially scanned ranges
+cold fields
+read-mostly material
+worker-local writes
+shared writes
+expected working-set shape
+```
+
+This is compiler-derived access information.
+
+It is not a Contract declaration.
+
+The access profile may be recomputed when analysis or implementation changes.
+
+---
+
+## 7. Target Hardware Profile
+
+The compiler host hardware must not be assumed to be the execution target.
+
+The architecture must distinguish:
+
+```text
+Compiler Host
+    runs Kontrakt
+
+Target Hardware Profile
+    describes the intended execution environment
+```
+
+Local compilation may derive a profile from the host when that is explicitly the target.
+
+Cross compilation must use an explicit target profile.
+
+Reproducible builds should be able to pin a normalized profile.
+
+A target profile may eventually describe:
+
+```text
+cache-line size
+cache hierarchy
+page size
+vector alignment
+NUMA characteristics
+other backend-relevant physical properties
+```
+
+V1 does not need to model all of these.
+
+A small deterministic profile is sufficient at first.
+
+The profile should have a stable physical identity or fingerprint so that target-dependent products can participate in
+cache validation.
+
+---
+
+## 8. Physical Layout Plan
+
+The Physical Layout Plan combines storage requirements with the target profile.
+
+It may decide:
+
+```text
+alignment
+stride
+field offsets
+hot/cold partitioning
+AoS / SoA / AoSoA representation
+cache-line packing
+false-sharing separation
+range placement
+padding
+```
+
+The plan must remain separate from semantic material.
+
+A verifier, diagnostic subsystem, or test subsystem may consume the same semantic authority while receiving different
+derived physical projections.
+
+That is allowed.
+
+The semantic source stays the same.
+
+---
+
+## 9. Cache-Line Locality
 
 Cache-line placement is a physical optimization concern.
 
 It is not Contract law.
 
-The compiler should control the layout of hot slabs so that values normally read together are physically close.
+The compiler should keep values that are normally read together physically close when measurement supports that choice.
 
 Cold material should not occupy hot cache lines merely because it belongs to the same semantic entity.
 
@@ -207,10 +344,11 @@ Cold Side Slab
     rich diagnostic metadata
 ```
 
-Exact cache-line size must remain target/profile dependent.
+Exact cache-line size must remain target dependent.
 
-A 64-byte line may be the common target on an admitted platform profile, but it must not be hard-coded as a semantic
-invariant.
+A 64-byte line may be a common profile value.
+
+It must not become a semantic invariant.
 
 Alignment, stride, and padding are separate decisions.
 
@@ -224,7 +362,7 @@ The physical choice must follow measured access patterns.
 
 ---
 
-## 6. Reference Depth and Derived Hot Views
+## 10. Reference Depth and Derived Hot Views
 
 A normalized semantic store may contain many explicit relations.
 
@@ -274,7 +412,7 @@ It must not create new semantic meaning.
 
 ---
 
-## 7. Fragmentation and Allocation Policy
+## 11. Fragmentation and Allocation Policy
 
 FFM must not be used as a general per-object native allocator.
 
@@ -309,7 +447,7 @@ The compiler should not use one-cache-line-per-entity as a general rule.
 
 ---
 
-## 8. Lifetime Classes
+## 12. Lifetime Classes
 
 Storage lifetime must follow compiler ownership.
 
@@ -344,7 +482,7 @@ A segment slice must not accidentally keep a much larger obsolete region alive w
 
 ---
 
-## 9. V1 Reclamation
+## 13. V1 Reclamation
 
 V1 should prefer coarse lifetime reclamation.
 
@@ -372,7 +510,7 @@ Reclamation must not depend on semantic object reachability inferred from the JV
 
 ---
 
-## 10. V2 Generation Model
+## 14. V2 Generation Model
 
 V2 incremental compilation changes the lifetime problem.
 
@@ -396,14 +534,14 @@ Persistent query results and immutable compiler products fit better with generat
 
 The exact reclamation model remains open.
 
-Possible mechanisms include epoch retirement, generation reference tracking, or another deterministic ownership
+Possible mechanisms may include epoch retirement, generation reference tracking, or another deterministic ownership
 protocol.
 
 This TODO does not select one yet.
 
 ---
 
-## 11. Host JDK and Target JVM Must Remain Separate
+## 15. Host JDK and Target JVM Must Remain Separate
 
 If FFM is the V1 compiler storage default, the Kontrakt compiler host JDK must support the selected finalized FFM API.
 
@@ -430,7 +568,7 @@ Compiler storage policy and generated runtime policy must not be conflated.
 
 ---
 
-## 12. Persistent Disk Reuse Is a Separate Concern
+## 16. Persistent Disk Reuse Is a Separate Concern
 
 In-process FFM layout and on-disk persistence are related but not identical problems.
 
@@ -450,9 +588,11 @@ A future memory-mapped slab format is possible.
 
 It should be introduced only after the persistent format is independently defined.
 
+Target-dependent products must include the relevant target profile in reuse validation.
+
 ---
 
-## 13. Material Families to Evaluate First
+## 17. Material Families to Evaluate First
 
 The first migration candidates should be high-cardinality material with repeated reads and stable ownership.
 
@@ -471,15 +611,17 @@ backend lowering tables
 
 Cold sparse configuration does not need to be forced into slabs merely for consistency.
 
-The storage architecture should optimize the dominant access pattern, not maximize the percentage of code using FFM.
+The storage architecture should optimize the dominant access pattern.
+
+It should not maximize the percentage of code using FFM.
 
 ---
 
-## 14. Benchmark Requirement
+## 18. Benchmark Requirement
 
 The storage direction must be validated with measured compiler workloads.
 
-At least three shapes should be compared where practical:
+At least three physical shapes should be compared where practical:
 
 ```text
 object graph
@@ -495,21 +637,21 @@ Measurements should cover:
 
 ```text
 allocation and GC pressure
-resident memory / footprint
+resident memory
 hot-loop throughput
 cache-miss behavior
 pointer-chasing sensitivity
 alignment and false-sharing effects
-reclamation / daemon retention
+reclamation and daemon retention
 ```
 
-Benchmarks should use both representative projects and synthetic high-cardinality fixtures.
+Target-aware layout experiments should also compare different legal physical plans for the same semantic material.
 
-A physical optimization must not be promoted to an architectural requirement only because it wins one microbenchmark.
+A physical optimization must not become an architectural requirement only because it wins one microbenchmark.
 
 ---
 
-## 15. Required Correctness Tests
+## 19. Required Correctness Tests
 
 Every physical backend or layout migration must preserve semantic equivalence.
 
@@ -536,13 +678,17 @@ no cross-generation contamination
 no daemon retention after teardown
 ```
 
+Different Target Hardware Profiles may produce different physical layouts.
+
+They must preserve the same Contract meaning.
+
 Performance evidence does not replace equivalence tests.
 
 ---
 
-## 16. Existing Documents That Need Later Migration
+## 20. Existing Documents That Need Later Migration
 
-The current repository contains older physical assumptions that no longer match the intended V1 direction.
+The current repository contains older physical assumptions that may no longer match the intended V1 direction.
 
 These should not be silently rewritten while the storage model is still under review.
 
@@ -550,44 +696,32 @@ They should be migrated together once this TODO is ready to become accepted stor
 
 ### ADR-0041
 
-Current text treats heap primitive arrays as the portable V1 baseline and explicitly aligned `MemorySegment` / off-heap
-storage as an optional high-performance backend.
+Current material should be reviewed if it treats heap primitive arrays as the V1 baseline and aligned `MemorySegment`
+storage as an optional later backend.
 
-The new direction makes FFM-backed primitive slabbing the intended V1 default for relevant compiler-owned material.
-
-The semantic identity law in ADR-0041 should remain unchanged.
+The semantic identity law should remain unchanged.
 
 Only the physical baseline and backend guidance require review.
 
 ### ADR-0042
 
-Current text allows the ordinary V1 backend to be heap primitive arrays and places `MemorySegment` and related physical
-acceleration mainly on the later track.
-
-That physical timeline must be reviewed.
+Current material should be reviewed if it places `MemorySegment` and related physical acceleration mainly on a later
+track.
 
 The separation between semantic law and physical backend remains valid.
 
-The lifecycle material in ADR-0042 should be reused rather than duplicated.
+Existing lifecycle material should be reused rather than duplicated.
 
 ### Release Readiness TODO
 
-The current deferred post-V1 list includes:
+Any deferred post-V1 item that treats off-heap identity tables or full value-slab migration as inherently post-V1 must
+be reviewed if FFM-backed slabbing becomes the accepted V1 baseline.
 
-```text
-Advanced off-heap / direct-memory identity tables
-Full value-slab migration
-```
-
-Those entries conflict with the current V1 direction if FFM-backed slabbing becomes the default compiler substrate.
-
-They must be reclassified when the V1 storage architecture is accepted.
-
-The existing daemon-hygiene and slab-reclamation work remains relevant.
+Daemon hygiene and slab reclamation work remain relevant.
 
 ---
 
-## 17. Migration Target
+## 21. Migration Target
 
 This TODO should eventually be split into two layers.
 
@@ -595,19 +729,22 @@ This TODO should eventually be split into two layers.
 Architecture / ADR
     semantic-vs-physical boundary
     primitive-slabbing default
+    target-aware layout boundary
     storage ownership
-    lifecycle classes
+    lifetime classes
     physical equivalence requirements
     V1 / V2 extension seam
 
 Design document
     exact MemoryLayout
     exact slab families
-    field offsets
+    exact field offsets
     stride
     padding
     allocator implementation
-    benchmark-selected AoS / SoA choices
+    target-profile schema
+    planner heuristics
+    benchmark-selected AoS / SoA / AoSoA choices
 ```
 
 Exact Java classes and field offsets should remain outside the ADR unless a future compatibility requirement makes them
@@ -615,7 +752,7 @@ externally stable.
 
 ---
 
-## 18. Open Decisions
+## 22. Open Decisions
 
 The following items remain open and should be closed with implementation evidence:
 
@@ -623,8 +760,13 @@ The following items remain open and should be closed with implementation evidenc
 compiler host JDK baseline
 exact Arena ownership strategy
 fixed-size versus growable segment policy
+Access Profile schema
+Target Hardware Profile schema
+Physical Layout Plan schema
 hot slab AoS / SoA / AoSoA selection
-cache-line profile discovery
+cache hierarchy depth modeled in V1
+NUMA support timing
+profile-guided layout timing
 persistent frozen-image layout
 V2 immutable generation reclamation
 memory-mapped reuse policy
@@ -637,16 +779,46 @@ They must not be answered by changing Contract semantics.
 
 ---
 
-## 19. V1 Exit Criteria
+## 23. V1 Boundary
+
+V1 does not need a sophisticated hardware optimizer.
+
+The minimum useful architecture is:
+
+```text
+derived Access Profile
+        +
+small deterministic Target Hardware Profile
+        ↓
+simple Physical Layout Planner
+        ↓
+FFM-backed slab plan
+```
+
+The important requirement is the seam.
+
+V1 may use simple rules.
+
+Later versions may add richer hardware profiles, cost models, measured access information, or profile-guided layout
+without changing the Contract model.
+
+The planner must remain replaceable.
+
+---
+
+## 24. Exit Criteria
 
 The storage migration is ready to leave TODO status when:
 
 ```text
 FFM-backed primitive slabbing has a stable ownership model
 high-cardinality material families have explicit slab layouts
+Access Profile ownership is defined
+Target Hardware Profile ownership is defined
+Physical Layout Plan is explicitly non-authoritative
 hot/cold separation is measured
 fragmentation and reclamation behavior are documented
-Gradle/Maven daemon retention tests pass
+daemon retention tests pass
 semantic-equivalence tests pass
 representative compiler benchmarks exist
 host-JDK and target-JVM boundaries are documented
@@ -655,4 +827,4 @@ V2 generation extension does not require a storage rewrite
 
 At that point, the accepted portions should move into the appropriate ADR and design documents.
 
-Until then, this file remains the working storage plan.
+Until then, this file remains the working physical-storage and target-layout plan.
