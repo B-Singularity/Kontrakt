@@ -78,10 +78,15 @@ Canonical Contract World
     ├── Test Synthesis
     ├── Diagnostics
     ├── Generated API Projection
+    ├── Contract-Aware Analysis
     └── Execution Formation
 ```
 
-None of those products becomes the source authority merely because it consumes the shared semantic substrate.
+Contract-Aware Analysis may combine established Contract meaning with realization material to derive compiler knowledge
+for verification, specialization, and execution formation.
+
+None of those products or derived results becomes the source authority merely because it consumes the shared semantic
+substrate.
 
 This ADR defines the common establishment model that makes that architecture possible.
 
@@ -595,6 +600,25 @@ The source authority remains responsible for deciding whether the coordinate mat
 
 ---
 
+## 7.6. Applicability as Compiler Input
+
+The compiler may derive specialization or pruning knowledge from established applicability.
+
+```text
+Established Applicability
+    ↓
+derived compiler knowledge
+    ↓
+formation / optimization
+```
+
+The derived result does not establish applicability.
+
+An alternative may be absent from one compiled realization because established Contract meaning already makes it
+inapplicable there. The optimizer consumes that meaning. It does not create or rewrite it.
+
+---
+
 # 8. Basis and Composition
 
 ## 8.1. Required Basis
@@ -703,6 +727,12 @@ resolved source connection
     ↓
 derived compiler dependency
 ```
+
+Realization call relations, compiler product or query dependencies, and build or artifact dependencies are also distinct
+from Contract Basis and Composition relations.
+
+A compiler relation may be derived from or associated with Contract material. It does not thereby establish a Contract
+semantic source connection.
 
 This keeps compiler dependency tracking useful without making one Contract know another Contract's topology.
 
@@ -888,12 +918,29 @@ The Canonical Contract World represents them without redefining their meaning.
 
 ## 10.6. Derived Compiler Knowledge
 
-Shared analysis may derive compiler knowledge from the Canonical Contract World.
+Compiler analysis may derive knowledge from the Canonical Contract World alone or from the world together with
+realization material.
+
+Examples include specialization context, closed target knowledge, impossible realization alternatives, static judgment
+candidates, and effect or origin summaries.
 
 That knowledge remains compiler-owned unless a Contract authority separately establishes its meaning.
 
+```text
+Established Contract Material
++
+Realization Material
+    ↓
+Compiler Analysis
+    ↓
+Derived Knowledge
+```
+
 A reachability result can support later compiler work without becoming State authority. A computation dependency can
 support compiler orchestration without becoming Contract dependency.
+
+Verification results, optimization results, and Whole-Machine analysis summaries are also derived compiler material.
+They do not become Established Material merely because later compiler stages rely on them.
 
 ---
 
@@ -909,8 +956,15 @@ Canonical Contract World
     ├── Contract Coverage
     ├── Diagnostics
     ├── Generated API Projection
+    ├── Contract-Aware Analysis
     └── Execution Formation
 ```
+
+An actual Reference Judgment may also require candidate or occurrence material and the applicable execution context. The
+Canonical Contract World supplies authoritative definition meaning. It is not itself one universal occurrence.
+
+Generated API material remains a downstream compiler product. Reflection, KSP, or another host-language mechanism must
+not reconstruct Contract authority from that product.
 
 No product reconstructs Contract authority from another product's private representation.
 
@@ -1094,6 +1148,15 @@ source syntax, generated artifacts, another product, or backend shape.
 
 Shared derived analysis may be reused while remaining compiler-owned.
 
+Contract semantic relations must remain distinct from realization call relations, compiler product or query
+dependencies, and build or artifact dependencies.
+
+Contract-Aware Analysis may consume Established Material together with realization material. Its results remain derived
+compiler knowledge.
+
+Verification, optimization, generated artifacts, freezing, and publication must not establish or rewrite Contract
+authority.
+
 Compiler publication must expose only complete material for the logical stage being consumed. Partial compiler state
 must not acquire Contract authority through visibility.
 
@@ -1205,6 +1268,34 @@ A compiler may derive the former from the latter. The derivation does not revers
 
 ---
 
+## 18.11. Verification as Establishment
+
+Rejected because verification judges compiler or realization properties against already-established Contract meaning.
+
+A verified result may become reusable compiler knowledge.
+
+It does not create Contract authority.
+
+---
+
+## 18.12. Optimization as Authority
+
+Rejected because optimization consumes established meaning and preserves required semantics.
+
+A specialization, elimination, or transformed execution form does not establish new Contract meaning merely because the
+compiler proved it safe.
+
+---
+
+## 18.13. Generated Artifact Reconstruction
+
+Rejected because generated APIs and other host artifacts are downstream compiler products.
+
+Reconstructing Contract authority from reflection, KSP, host type shape, or another generated artifact would reverse the
+authority direction.
+
+---
+
 # 19. Consequences
 
 Kontrakt gains one common law for material that has acquired source authority.
@@ -1222,6 +1313,12 @@ The Canonical Contract World can serve independent compiler products without bec
 Established-Material object.
 
 Derived analysis and compiler dependency tracking can reuse established relations without becoming Contract authority.
+
+Contract-Aware Analysis can combine the Canonical Contract World with realization material to produce reusable
+verification and specialization knowledge without changing the established source meaning.
+
+Execution Formation and optimization may omit or transform realization material when established meaning permits it.
+Those compiler consequences remain downstream of Establishment.
 
 Determinism remains part of semantic correctness rather than a property added later by compiler scheduling.
 
@@ -1259,3 +1356,20 @@ law.
 
 The amendment also removes V2-specific assumptions from the Establishment law. Future incremental architecture may
 change without redefining the Contract semantics established by this ADR.
+
+## 2026-09-10 — Contract-Aware Compiler Consumption Alignment
+
+The ADR now makes Contract-Aware Analysis an explicit consumer of the Canonical Contract World.
+
+Established applicability may support specialization and pruning, but compiler-derived knowledge, verification, and
+optimization remain downstream realization and do not establish Contract meaning.
+
+The amendment also separates Contract Basis and Composition relations from realization call relations, compiler product
+or query dependencies, and build or artifact dependencies.
+
+Reference Judgment is clarified as requiring actual candidate or occurrence material and applicable context when it
+judges one application. Generated API products remain downstream products and cannot be used to reconstruct Contract
+authority.
+
+No Establishment, identity, applicability, Required Basis, Basis Resolution, Composition, or occurrence-integrity law is
+changed by this amendment.
