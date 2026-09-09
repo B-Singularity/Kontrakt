@@ -73,70 +73,105 @@ Logical stages and physical materialization are separate.
 
 # 3. Total Architecture
 
+The compiler has a semantic material graph and a build / product dependency graph.
+
+They are related.
+
+They are not the same graph.
+
 ```text
-┌──────────────────────────────────────────────────────────────────────┐
-│                       Compiler Driver / Session                      │
-│ inputs / target / products / resources / generations / reuse        │
-└─────────────────────────────────┬────────────────────────────────────┘
-                                  │
-                  ┌───────────────┴───────────────┐
-                  │                               │
-                  ▼                               ▼
-          Contract Frontend               Realization Frontend
-                  │                               │
-             .kontrakt                    User JVM implementation
-                  │                               │
-          Source / Syntax                    Acquisition
-                  │                               │
-             Resolution                     Realization Body IR
-                  │                               │
-        Resolved Contract HIR         Local Structural Analysis
-                  │                               │
-      Authority-Owned Establishment              │
-                  │                               │
-                  ▼                               │
-       Canonical Contract World                   │
-                  │                               │
-                  └───────────────┬───────────────┘
+┌───────────────────────────────────────────────────────────────────────────┐
+│                        Compiler Driver / Session                          │
+│ request / target / product demand / resources / generations / reuse      │
+│ worker ownership / cancellation / diagnostics / artifact publication      │
+└──────────────────────────────────┬────────────────────────────────────────┘
+                                   │
+                  ┌────────────────┴────────────────┐
+                  │                                 │
+                  ▼                                 ▼
+          Contract Frontend                 Realization Acquisition
+                  │                                 │
+             .kontrakt                     User JVM classfiles
+                  │                                 │
+      Source / Syntax / Recovery                    │
+                  │                                 ▼
+             Resolution                    Realization Body IR
+                  │                                 │
+        Resolved Contract HIR              Local Structural Analysis
+                  │                                 │
+      Authority-Owned Establishment                 │
+                  │                                 │
+                  ▼                                 │
+       Canonical Contract World                     │
+                  │                                 │
+                  │                    Admitted Realization Binding
+                  │                                 │
+                  └────────────────┬────────────────┘
+                                   ▼
+                        Contract-Aware Analysis
+                                   │
+                  ┌────────────────┼────────────────┐
+                  │                │                │
+                  ▼                ▼                ▼
+         Closure Verification  Specialization  Whole-Machine /
+                  │             Knowledge       IPA Knowledge
+                  ▼                │                │
+        Verification Overlay      └────────┬───────┘
+                  │                       │
+                  └───────────────┬───────┘
                                   ▼
-                       Contract-Aware Analysis
+                         Execution Formation
                                   │
-                 ┌────────────────┼────────────────┐
-                 │                │                │
-                 ▼                ▼                ▼
-        Closure Verification   Specialization   Whole-Machine /
-                 │              Knowledge        IPA Knowledge
-                 ▼                │                │
-       Verification Overlay      └────────┬───────┘
-                 │                        │
-                 └──────────────┬─────────┘
-                                ▼
-                        Execution Formation
-                                │
-                    static alternatives omitted
-                    runtime judgments retained
-                                │
-                                ▼
-                   Contract-Aware Execution IR
-                                │
-                       Analysis / Transform Loop
-                                │
-                                ▼
-                    Execution IR New Generation
-                                │
-                                ▼
-                           JVM Plan / IR
-                                │
-                                ▼
-                         Classfile Product
-                                │
-                                ▼
-                          HotSpot / Graal
+                     static alternatives omitted
+                     runtime judgments retained
+                                  │
+                                  ▼
+                    Contract-Aware Execution IR
+                                  │
+                        Analysis / Transform Loop
+                                  │
+                                  ▼
+                     Execution IR New Generation
+                                  │
+                                  ▼
+                            JVM Plan / IR
+                                  │
+                                  ▼
+                          Classfile Product
+                                  │
+                                  ▼
+                           HotSpot / Graal
 ```
 
-The two frontends may perform independent work in parallel.
+The build / product dependency has an additional edge.
 
-They are not semantically independent after that point.
+Generated host APIs are compiler products.
+
+User implementation compilation consumes those products.
+
+```text
+.kontrakt
+    ↓
+Contract Frontend
+    ↓
+Canonical Contract World
+    ↓
+Generated Operation / Interaction API Product
+    ↓
+Host Compiler
+    ↓
+User Classfiles
+    ↓
+Realization Acquisition
+```
+
+A clean build therefore does not assume that the two frontend paths are fully independent.
+
+Some work may overlap when a compatible generated API product and user classfile product already exist.
+
+That is a scheduling opportunity.
+
+It is not a semantic dependency rule.
 
 `Canonical Contract World` must exist before Contract-aware verification or optimization can use Contract meaning.
 
@@ -144,7 +179,7 @@ They are not semantically independent after that point.
 
 # 4. Main Material Flow
 
-The whole compiler can be reduced to five major material families.
+The whole compiler can be reduced to a small set of major material families.
 
 ```text
 Contract Source
@@ -156,12 +191,18 @@ Canonical Contract World
 User Realization
     ↓
 Realization Body IR
+    ↓
+Admitted Realization Binding
 
 Canonical Contract World
 +
-Verified Realization
+Realization Body IR
++
+Admitted Realization Binding
 +
 Derived Knowledge
+    ↓
+Verified Realization
     ↓
 Contract-Aware Execution IR
     ↓
@@ -172,6 +213,8 @@ Classfile
 
 The exact number of physical representations remains open.
 
+The build / product graph may contain more products than this semantic material flow.
+
 ---
 
 # 5. Contract Frontend
@@ -181,11 +224,11 @@ The Contract frontend converts authored Contract source into resolved semantic m
 ```text
 .kontrakt
     ↓
-Source / Provenance
+Source Manager / Provenance
     ↓
-Syntax
+Syntax / Recovery Material
     ↓
-Resolution
+Module / Name / Symbol Resolution
     ↓
 Resolved Contract HIR
 ```
@@ -196,14 +239,34 @@ Its main outputs are:
 source identity
 source provenance
 parsed Contract structure
+recovery / poison state where required
 exact authority references
 resolved slot bindings
 resolved semantic relations
+module / import resolution
 ```
 
 Source location is not semantic identity.
 
+Parser recovery does not establish Contract meaning.
+
+Recovered or poisoned source material must not silently become authoritative semantic material.
+
 Downstream consumers should not repeat source-name lookup.
+
+The frontend language version is separate from Contract Version.
+
+```text
+IDL Language Version
+    = grammar and frontend-language compatibility
+
+Contract Version
+    = Contract semantic coordinate
+```
+
+Feature gates, language compatibility, source spans, and origin chains belong to frontend infrastructure.
+
+They do not define Contract meaning.
 
 ---
 
@@ -366,17 +429,62 @@ Reference Judgment
 
 The realization frontend acquires the user implementation as compiler facts.
 
+A classfile-centered V1 path is the production direction.
+
 ```text
-User JVM implementation
+Generated Operation / Interaction API
     ↓
 Host compilation
     ↓
+User JVM classfiles
+    ↓
 Realization acquisition
     ↓
-Realization Body IR
+Published Realization Body IR
 ```
 
-A classfile-centered V1 path is a strong candidate.
+External composition and implementation binding are separate from classfile acquisition.
+
+```text
+External Composition / DI
+        ↓
+Effective implementation binding
+        ↓
+Realization Admission Boundary
+        ↓
+Admitted Realization Binding
+```
+
+The admission boundary is also the realization airlock.
+
+External technology may exist outside the governed core through explicit adapters.
+
+Hidden technology must not become an undeclared factual ingress into the governed realization.
+
+Examples include:
+
+```text
+reflection / dynamic proxy
+MethodHandle / invokedynamic
+JNI / FFM downcall
+filesystem / clock / network / DB access
+dynamic class loading
+framework interception
+```
+
+The exact supported feature matrix remains a verifier decision.
+
+The architecture rule is stable:
+
+```text
+external technology
+    ↓
+explicit adapter / composition boundary
+    ↓
+realization admission
+    ↓
+inspectable governed realization
+```
 
 The exact acquisition mechanism remains replaceable.
 
@@ -386,7 +494,9 @@ User implementation structure does not create Contract meaning.
 
 # 12. Realization Body IR
 
-The Realization Body IR exists for implementation analysis and verification.
+The Realization Body IR is the published analyzable representation of user implementation structure.
+
+It exists for implementation analysis and verification.
 
 It should expose enough structure for:
 
@@ -412,6 +522,10 @@ summary references
 SSA is not fixed yet.
 
 The important requirement is explicit analyzable control and data relation.
+
+Acquisition-local mutable state is not the published realization product.
+
+Publication should produce stable read-only realization material before shared analysis consumes it.
 
 ---
 
@@ -454,6 +568,29 @@ raw effect summary
 raw origin summary
 def-use
 basic escape information
+```
+
+Analysis identity should include its logical subject and validity context.
+
+A working view is:
+
+```text
+analysis kind
++
+subject / scope
++
+analysis context
++
+input generation / identity
+```
+
+Possible scopes include:
+
+```text
+method
+Operation realization
+Core
+Whole-Machine
 ```
 
 These are derived compiler knowledge.
@@ -507,6 +644,8 @@ Canonical Contract World
 +
 Realization Body IR
 +
+Admitted Realization Binding
++
 valid Contract-Aware Analysis
     ↓
 Core Realization Closure Verification
@@ -519,6 +658,29 @@ verified
 proven violation
 unsupported / inconclusive
 ```
+
+Closure reasoning must distinguish different target classes.
+
+```text
+exact admitted target
+known finite target set
+open / unresolved virtual target
+opaque external target
+unsupported dynamic target
+```
+
+Unknown optimization opportunity and unknown verification evidence are different.
+
+```text
+optimizer cannot prove exact target
+    → keep dynamic behavior
+
+verifier cannot prove required closure
+    → may refuse under the V1 support rule
+```
+
+Reflection, native calls, dynamic loading, framework interception, and other opaque capabilities therefore need an
+explicit support rule.
 
 Under the selected V1 support rule, unsupported realization may cause compile refusal.
 
@@ -845,19 +1007,26 @@ Analysis Result
     └── other consumers
 ```
 
-After a transform:
+After a transform, an analysis result has three possible validity paths.
 
 ```text
 preserved
     → reuse
 
+incrementally maintained
+    → publish updated analysis result
+
 not preserved
     → invalidate
 ```
 
+Invalidated analysis may be recomputed on demand.
+
 Stale analysis is not valid compiler knowledge.
 
 The exact Analysis Manager implementation remains open.
+
+V2 may use domain-specific repair rather than one universal invalidation algorithm.
 
 ---
 
@@ -903,7 +1072,23 @@ global target pruning
 local optimization decisions
 ```
 
+The summary should also drive selective body opening.
+
+```text
+Whole-Machine Summary / Index
+        ↓
+global decision
+        ↓
+required body set
+        ↓
+selective materialization
+        ↓
+local / parallel work
+```
+
 Full body material is opened only where needed.
+
+Summary identity and body identity remain separate.
 
 ---
 
@@ -941,11 +1126,22 @@ The backend does not re-resolve Contract meaning.
 
 It lowers already-resolved execution material into JVM vocabulary.
 
+Kontrakt owns the correctness of the classfile product it emits.
+
+A JVM verifier, class loader, JIT, or external classfile API is not Contract authority and is not a substitute for
+Kontrakt backend correctness.
+
+External encoding facilities may remain replaceable adapters.
+
+JDK or third-party object models should not become the semantic model of the backend.
+
 ---
 
 # 33. JVM Plan / IR
 
 The JVM Plan / IR is target-specific.
+
+A useful logical unit is a typed JVM method plan.
 
 Possible vocabulary:
 
@@ -957,34 +1153,73 @@ returns
 throws
 locals
 exception regions
-frame relations
+CFG relations
+type states
+required frame states
 constant-pool references
 classfile constraints
 ```
 
+The same backend analysis should be reused where possible.
+
+```text
+JVM legalization / planning
+    ↓
+Typed JVM Method Plan
+    ├── instructions
+    ├── CFG
+    ├── type states
+    ├── exception edges
+    └── required frame states
+```
+
+This avoids discarding compiler knowledge and reconstructing it later only for classfile completion.
+
 This is a separate logical level because target vocabulary has changed.
+
+The exact physical schema remains open.
 
 ---
 
 # 34. Classfile Emission
 
+The V1 production backend direction is direct classfile construction.
+
 ```text
-JVM Plan / IR
+Typed JVM Method Plan
     ↓
-frame / metadata derivation
+Classfile Construction
+    ├── bytecode
+    ├── StackMapTable
+    ├── exception table
+    ├── constant pool
+    └── attributes
     ↓
-bytecode emission
+internal structural / compliance checks
     ↓
-classfile verification
+classfile encoding
     ↓
-JVM Product
+valid JVM classfile
+    ↓
+JVM verifier / loader
 ```
 
-A generated-source backend may exist as a bootstrap or reference path.
+Frame and metadata derivation should reuse JVM planning facts where possible.
 
-A direct classfile backend is a strong V1 candidate.
+It should not require an avoidable second reconstruction of CFG and type-state knowledge.
 
-The exact emitter remains replaceable.
+A generated Java / Kotlin source backend may exist as:
+
+```text
+bootstrap path
+reference backend
+debug path
+differential-testing backend
+```
+
+It is not the V1 production backend baseline.
+
+The exact direct encoder remains replaceable.
 
 ---
 
@@ -1013,6 +1248,22 @@ register allocation
 instruction selection
 machine optimization
 ```
+
+Target-aware physical planning remains a separate derived optimization seam.
+
+```text
+Derived Access Profile
++
+Target Hardware Profile
+    ↓
+Physical Layout Plan
+    ↓
+FFM-backed / slab realization
+```
+
+Target layout does not become Contract meaning.
+
+The target profile is not assumed to be the compiler host profile.
 
 ---
 
@@ -1126,26 +1377,71 @@ Passes remain local processing mechanisms.
 
 The compiler should not make one global pass pipeline the owner of every product.
 
+Not every calculation needs to be a query.
+
+A query is useful when demand, reuse, dependency tracking, or invalidation precision justify the boundary.
+
+Product publication also needs lifecycle information.
+
+```text
+producer / schema version
+target identity
+input identity
+artifact identity
+publication generation
+compatibility / corruption check
+stale artifact handling
+```
+
+Persistent compiler products are derived material.
+
+Deleting them may reduce performance.
+
+It must not change Contract meaning.
+
 ---
 
 # 40. Query Architecture Is Replaceable
 
 The current query-oriented V1 decision does not make one traversal algorithm permanent.
 
-The following must remain replaceable:
+Keep these roles separate.
+
+```text
+HID
+    → identity / equality evidence / early cutoff
+
+Merkle structure
+    → hierarchical change localization
+
+Query
+    → computation / demand / dependency interface
+
+Cache tier
+    → reusable-result retention
+
+Incremental repair
+    → how changed derived material is repaired
+```
+
+The following repair strategies must remain replaceable:
 
 ```text
 pull validation
 push invalidation
 change-frontier propagation
+delta maintenance
 hybrid scheduling
 domain-local repair
 priority worklists
+incremental / full-rebuild switching
 ```
 
 V1 should preserve product and dependency boundaries.
 
-V2 may replace the repair and scheduling model.
+V2 is not assumed to use one compiler-wide repair algorithm.
+
+Different compiler domains may use different algorithms.
 
 ---
 
@@ -1165,16 +1461,34 @@ Verification Overlay
 
 IR Backing
     → shared immutable storage / overlay
-
-L1
-    → worker / session hot reuse
-
-L2
-    → wider process-local reuse
-
-Future persistent tier
-    → cross-session reuse
 ```
+
+The currently implemented L1 / L2 structure is planning-specific.
+
+```text
+Planning L1
+    → worker / session-local hot planning state
+
+Planning L2
+    → wider canonical planning-result reuse
+```
+
+They are not yet one compiler-wide generic cache hierarchy.
+
+Future frontend, analysis, verifier, optimizer, and backend domains may reuse the same tiering principle.
+
+Each domain must own its own:
+
+```text
+key meaning
+equality / validation rule
+lifetime
+invalidation boundary
+physical representation
+retention policy
+```
+
+A future persistent tier may provide cross-session reuse for selected products.
 
 Cache is work avoidance.
 
@@ -1226,8 +1540,10 @@ realization call/effect/origin graph
 CFG / data-flow graph
 analysis dependency graph
 compiler product dependency graph
+build / artifact dependency graph
 diagnostic provenance graph
 Whole-Machine summary graph
+incremental propagation graph
 ```
 
 They must not collapse into one universal graph.
@@ -1241,7 +1557,15 @@ query dependency
 
 realization call edge
     ≠ Required Basis relation
+
+build dependency
+    ≠ semantic dependency
 ```
+
+A compressed propagation graph, SCC-condensed graph, reachability index, or transitive reduction is derived compiler
+structure.
+
+It must not silently replace semantic dependency meaning.
 
 ---
 
@@ -1272,6 +1596,26 @@ Related Notes
 
 Rendering is separate.
 
+Evidence kind depends on the failure class.
+
+```text
+Contract Judgment Failure
+    → Contract authority evidence is primary
+
+Realization Verification Failure
+    → deterministic provenance witness is primary
+
+User Implementation Failure
+    → implementation provenance / stack trace is primary
+
+Compiler / runtime Crash
+    → operational failure evidence
+```
+
+A verification provenance witness is not a runtime stack trace.
+
+A Contract Failure is not a JVM exception.
+
 Contract Diagnostic Evidence remains distinct from compiler diagnostics.
 
 ---
@@ -1282,8 +1626,14 @@ Reference Judgment is a sibling of the optimized path.
 
 It should remain simpler and sufficiently independent.
 
+Definition material alone is not enough for an actual judgment.
+
 ```text
 Canonical Contract World
++
+actual candidate / established occurrence material
++
+applicable execution context
     ↓
 Reference Judgment
     ↓
@@ -1293,6 +1643,8 @@ Reference Result
 It may intentionally recompute selected judgments.
 
 Its purpose is validation independence, not runtime performance.
+
+Reference Judgment does not create Contract authority.
 
 ---
 
@@ -1342,13 +1694,39 @@ cache-on / cache-off equivalence
 performance baselines
 ```
 
+Production compiler development also needs observability.
+
+```text
+stage / query timing
+memory and allocation metrics
+optimization remarks
+invalidation / reuse trace
+backend diagnostics
+crash reproducer
+reducer support where practical
+```
+
+Observability is not Contract authority.
+
 Compiler correctness must not depend on one verifier.
 
 ---
 
 # 48. Transform Validation
 
-Important transforms need independent preservation checks.
+IR verification is an architecture boundary, not only a test category.
+
+Possible checkpoints include:
+
+```text
+Realization Body IR publication
+Execution Formation
+meaning-preserving transform
+JVM planning
+classfile construction
+```
+
+Important transforms also need independent preservation checks.
 
 Possible mechanisms:
 
@@ -1362,6 +1740,10 @@ metamorphic testing
 ```
 
 The validator should not simply reuse the transform's own legality code.
+
+Heavy checks may be configurable.
+
+The invariant itself is not optional.
 
 ---
 
@@ -1377,6 +1759,16 @@ stable identity
 deterministic publication
 ```
 
+Product dependency and physical scheduling dependency are different.
+
+```text
+product A depends on product B
+    ≠
+worker A must run immediately after worker B
+```
+
+Parallel work should preserve deterministic semantic publication.
+
 Worker completion order must not decide:
 
 ```text
@@ -1386,7 +1778,22 @@ verification result
 required output ordering
 ```
 
-Clean, cached, parallel, and reused compilation must preserve the same semantic result.
+The Driver / Session also owns compilation resources.
+
+```text
+memory envelope
+worker ownership
+scratch lifetime
+cancellation
+published generation
+old-generation reclamation
+artifact publication
+```
+
+Cancellation must not expose a partially published generation as a successful compiler product.
+
+Clean, cached, parallel, cancelled-and-retried, and reused compilation must preserve the same semantic result for the
+same valid inputs.
 
 ---
 
@@ -1395,42 +1802,56 @@ Clean, cached, parallel, and reused compilation must preserve the same semantic 
 V1 should preserve at least these architecture boundaries.
 
 ```text
-Source / Provenance
+Source Manager / Provenance
+Syntax / Recovery
+Module / Name / Symbol Resolution
 Contract Frontend
 Resolved Contract HIR
 Authority-Owned Establishment
 Canonical Contract World
 Frozen Publication
+Generated API Product Boundary
 
 Realization Acquisition
+Realization Admission / Airlock
+Admitted Realization Binding
 Realization Body IR
 Local Structural Analysis
 Contract-Aware Analysis
 Core Closure Verification
 Verification Overlay
+Dynamic / Opaque Capability Support Rule
 
 Execution Formation
 Contract-Aware Execution IR
+IR Verification
 Analysis / Transform Infrastructure
 Contract-Specific Optimization
 Generic Cleanup
-Whole-Machine Summary Seam
+Whole-Machine Summary / Selective Body-Opening Seam
 
-JVM Plan / IR
-Classfile Emission
+JVM Legalization / Planning
+Typed JVM Method Plan
+Direct Classfile Construction / Emission
 
 Reference Judgment
 PBT / Test Planning
 Structured Diagnostics
 Compiler QA
+Observability / Reproducer
 
 Driver / Session
+Resource Ownership
 Stable Identity
 Generation Validity
 Product / Query Boundaries
 Dependency Recording
-L1 / L2 Reuse
+Artifact / Product Publication
+Existing Planning L1 / L2 Reuse
+V2 Incremental Evolution Seam
 ```
+
+The exact physical split remains open where a semantic or target-level boundary does not require another representation.
 
 ---
 
@@ -1444,18 +1865,38 @@ Possible additions:
 persistent product state
 cross-session reuse
 multiple immutable generations
+Merkle change localization
 incremental analysis repair
+change-frontier propagation
+delta-maintained analysis
 lazy materialization
 summary persistence
 artifact reuse
 incremental test planning
+incremental / full-rebuild switching
 advanced scheduling
+prediction-guided profitability or scheduling
 profile-guided profitability
 ```
 
 No one incremental algorithm is fixed.
 
 Different compiler domains may use different repair strategies.
+
+The common requirement is smaller:
+
+```text
+explicit inputs
+stable product identity
+deterministic computation
+frozen publication
+clear dependency boundary
+replaceable reuse / repair policy
+```
+
+Prediction or historical telemetry may change work order or profitability decisions.
+
+It must not change compiler correctness or Contract meaning.
 
 ---
 
@@ -1475,15 +1916,31 @@ query scheduler
 pull / push / hybrid incremental execution
 red-green adoption
 fingerprint algorithm
-HID encoding
-slab / FFM layout
+final HID encoding
+exact FFM / slab layout
 Whole-Machine summary schema
 frozen table layout
-JVM encoder
+direct classfile encoder implementation
 optimizer pass order
 cost model
 persistent cache design
+prediction / scheduling model
 ```
+
+Some directions are no longer open at the same level.
+
+```text
+V1 production backend
+    → direct classfile path
+
+Generated source backend
+    → reference / bootstrap / debug / differential role
+
+high-cardinality physical direction
+    → FFM-backed primitive slabbing by default
+```
+
+The exact physical layout, migration boundary, target profile, and encoder remain replaceable.
 
 ---
 
@@ -1523,6 +1980,12 @@ Authority-Owned Establishment
     ↓
 Canonical Contract World
     ↓
+Generated API Product
+    ↓
+Host Compilation / Realization Acquisition
+    ↓
+Realization Admission / Airlock
+    ↓
 Contract-Aware Analysis
     ↓
 Realization Verification
@@ -1535,9 +1998,9 @@ Contract-Aware Execution IR
     ↓
 Analysis / Transform Loop
     ↓
-JVM Lowering
+JVM Legalization / Typed Method Planning
     ↓
-JVM Product
+Direct Classfile Product
 ```
 
 The supporting architecture is:
@@ -1545,17 +2008,22 @@ The supporting architecture is:
 ```text
 identity
 provenance
+language / source management
 generation
 frozen publication
 analysis validity
 product dependencies
+build / artifact dependencies
 reuse
 resource ownership
-determinism
+deterministic scheduling
+external-technology airlock
 diagnostics
 Reference
 PBT
 QA
+observability
+V2 incremental seams
 ```
 
 The central rule remains:
