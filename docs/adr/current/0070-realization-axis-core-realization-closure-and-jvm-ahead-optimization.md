@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed
+Accepted
 
 ## Date
 
@@ -362,7 +362,8 @@ When the supported analysis cannot establish closure, Kontrakt must not silently
 Runtime Contract judgments that require runtime values remain runtime judgments. This ADR does not move those judgments
 into compile time.
 
-The exact V1 verification method remains open.
+The exact V1 verification method is deferred to follow-up realization design. The verification boundary and the
+fail-closed requirement established here do not depend on that method.
 
 ---
 
@@ -425,7 +426,8 @@ A Contract semantic cycle remains governed by the Contract laws that own semanti
 
 Earlier cycle-detection work may be reused for compiler traversal. The technique remains replaceable realization.
 
-The exact recursive-region analysis remains open.
+The exact recursive-region analysis is deferred to follow-up realization design. Compiler traversal must still terminate
+without turning implementation recursion into Contract semantics.
 
 ---
 
@@ -572,7 +574,8 @@ Kontrakt must establish realization legality before using that knowledge for opt
 No particular optimization technique is fixed by this ADR. Kontrakt may replace its optimization machinery when the
 replacement preserves the required result.
 
-The exact V1 optimization set remains open.
+The exact V1 optimization set is deferred to optimization design and release planning. This ADR fixes the optimization
+boundary and preservation law rather than a permanent transform catalog.
 
 ---
 
@@ -601,7 +604,8 @@ their preconditions are proven. These are implementation techniques, not require
 Kontrakt does not replace HotSpot, Graal, or another JVM optimizer. It performs the semantic simplification that depends
 on Kontrakt knowledge and leaves ordinary lower-level optimization to the JVM.
 
-The exact JVM emission strategy remains open.
+The exact JVM emission strategy is deferred to backend design. JVM emission remains downstream of the Contract-aware
+optimization boundary established here.
 
 ---
 
@@ -639,7 +643,8 @@ fingerprints where reuse validation benefits from them. The exact physical table
 implementation.
 
 Verification is not the endpoint. After a realization is accepted, V1 may use established Contract knowledge and
-verified realization knowledge before JVM lowering. The exact minimum optimization set remains Open in this ADR.
+verified realization knowledge before JVM lowering. The exact minimum optimization set is deferred to optimization
+design and release planning.
 
 V1 must preserve logical compiler stages without requiring a complete object graph for every stage. The same backing
 material may be published with additional derived products when the semantic vocabulary has not changed. A new
@@ -800,8 +805,8 @@ the analysis owns that result. The consumers do not acquire authority over the C
 derived.
 
 Reference Judgment remains a sibling product rather than the semantic source of the others. The exact amount of derived
-analysis it may share with optimized paths remains Open because that choice affects the independence of differential
-checking.
+analysis it may share with optimized paths is deferred to Reference Judgment and compiler-QA design because that choice
+affects the independence of differential checking.
 
 ### 21.5. V1 Query Architecture Owns Product Orchestration
 
@@ -875,7 +880,8 @@ Verification-derived summaries may be published for later consumers. A backend o
 closure analysis merely to rediscover a result that the verifier has already published and that remains valid for the
 same generation.
 
-The exact supported JVM subset and the treatment of opaque implementation remain Open.
+The exact supported JVM subset and the treatment of opaque implementation are deferred to the realization capability
+matrix and follow-up verifier design.
 
 ### 21.8. Shared Analysis Has Explicit Ownership and Validity
 
@@ -929,8 +935,8 @@ The architecture also permits higher-level Contract-aware optimization. Static d
 unreachable-path reduction, exact binding use, intermediate removal, and judgment fusion remain candidates where their
 legality is established.
 
-The exact minimum transform set required from V1 remains Open. The optimizer stage and its preservation boundary are not
-Open.
+The exact minimum transform set required from V1 is deferred to optimization design and release planning. The optimizer
+stage and its preservation boundary are fixed by this ADR.
 
 Legality and profitability remain separate. Contract and realization preservation decide whether a transform may run. A
 cost model decides whether a legal transform is worth applying.
@@ -1043,36 +1049,44 @@ multiple workers
 
 The equality concerns semantic and required product results. Physical scheduling and cache state may differ.
 
-### 21.16. Architecture Boundaries That Remain Open
+### 21.16. Deferred Decisions Do Not Reopen This Architecture
 
-The architecture above is fixed independently of the remaining policy questions in Section 22.
+The architecture above is complete without fixing every later realization policy or implementation choice. Section 22
+records decisions that belong to follow-up realization, verifier, optimization, backend, or compiler-QA design.
 
-Those questions do not reopen the Canonical Contract World, query-oriented V1 orchestration, sibling product structure,
-separate realization frontend, verification overlay, shared-analysis validity law, Contract-Aware Execution IR, JVM
-lowering boundary, or V2 incremental extension seam.
+Those later decisions do not reopen the Canonical Contract World, query-oriented V1 orchestration, sibling product
+structure, separate realization frontend, verification overlay, shared-analysis validity law, Contract-Aware Execution
+IR, JVM lowering boundary, or V2 incremental extension seam.
 
 ---
 
-## 22. Open in This ADR
+## 22. Deferred Realization Decisions
 
-The observable user-realization boundary remains Open. Kontrakt still needs an explicit decision about which
-host-language behavior outside declared Contract meaning must be preserved when physical realization is transformed.
+The following decisions are intentionally deferred because they depend on concrete realization, verifier, optimizer,
+backend, or compiler-QA construction. They are not acceptance blockers for this ADR.
 
-The V1 supported realization subset remains Open. This includes the treatment of reflection, method handles,
-`invokedynamic`, native execution, dynamic class loading, generated bytecode, and opaque third-party implementation
-where Core Realization Closure cannot be established by ordinary static acquisition.
+The exact host-language observability boundary for transformed user realization is deferred. Later design must state
+which supported host-language behavior outside declared Contract meaning must be preserved by a particular
+transformation. That decision may refine optimizer legality without changing Contract authority.
 
-The trusted-summary boundary remains Open. User-declared trust must not become a way to manufacture Contract
-satisfaction, but this ADR has not yet decided whether Kontrakt-owned or backend-owned verified intrinsic summaries may
-stand in for an implementation body that the compiler cannot inspect directly.
+The V1 realization capability matrix is deferred. Reflection, method handles, `invokedynamic`, native execution, dynamic
+class loading, generated bytecode, and opaque third-party implementation must be classified when the realization
+frontend and verifier define the exact subset they can establish safely. Unsupported material must continue to fail
+closed where Core Realization Closure is required.
 
-The exact V1 optimization obligation set remains Open. Section 21 establishes the optimization stage and its
-preservation boundary, but it does not yet choose the minimum transform families that V1 must actually perform.
+The trusted-summary boundary is deferred. User-declared trust cannot manufacture Contract satisfaction. A later verifier
+or backend decision may define whether Kontrakt-owned or backend-owned verified intrinsic summaries can represent
+implementation material that cannot be inspected directly.
 
-The Reference Judgment independence boundary remains Open. Reference Judgment is a sibling product, but this ADR has not
-yet decided exactly which shared derived analyses it may consume without weakening its role in differential checking.
+The exact V1 optimization obligation set is deferred to optimization design and release planning. Section 21 already
+establishes the optimization stage, its inputs, its preservation boundary, and the requirement that the architecture
+remain able to accept stronger later optimization.
 
-These questions must not weaken the decisions already made here.
+The exact Reference Judgment independence boundary is deferred to Reference Judgment and compiler-QA design. Later work
+may decide which derived analyses are safe to share while preserving the independent-checking value of the reference
+path.
+
+These decisions refine realization. They do not redefine the architecture accepted here.
 
 Realization remains non-authoritative. External technology still ends before the Core. User-System Realization must
 preserve Core Realization Closure.
