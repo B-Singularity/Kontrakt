@@ -1,0 +1,1617 @@
+# Kontrakt Compiler Architecture Map
+
+## Status
+
+**Working design draft. Not an ADR.**
+
+This document gives one concise view of the current Kontrakt compiler architecture.
+
+It does not define new Contract semantics.
+
+`What Contract Is` and Accepted ADRs remain authoritative.
+
+The purpose is to keep the whole V1 compiler visible before individual frontend, IR, verifier, optimizer, backend, QA,
+and V2 decisions are finalized.
+
+---
+
+# 1. Core Direction
+
+Kontrakt separates Contract meaning from compiler realization.
+
+```text
+Contract
+    ↓ constrains
+Realization
+```
+
+Compiler structures may represent, verify, optimize, lower, cache, or publish Contract meaning.
+
+They do not define it.
+
+```text
+JVM shape
+IR storage
+query graph
+cache
+object topology
+backend layout
+    ≠
+Contract authority
+```
+
+---
+
+# 2. Stage and IR Rule
+
+A compiler stage exists because a new invariant becomes true.
+
+A new IR level is justified when one of these changes:
+
+```text
+semantic vocabulary
+equivalence relation
+persistent invariant
+information that may now be discarded
+target vocabulary
+```
+
+The following alone do not justify a new IR level:
+
+```text
+verification completed
+optimization ran
+material was frozen
+storage changed
+a cache entry was created
+a generation changed
+```
+
+Logical stages and physical materialization are separate.
+
+---
+
+# 3. Total Architecture
+
+```text
+┌──────────────────────────────────────────────────────────────────────┐
+│                       Compiler Driver / Session                      │
+│ inputs / target / products / resources / generations / reuse        │
+└─────────────────────────────────┬────────────────────────────────────┘
+                                  │
+                  ┌───────────────┴───────────────┐
+                  │                               │
+                  ▼                               ▼
+          Contract Frontend               Realization Frontend
+                  │                               │
+             .kontrakt                    User JVM implementation
+                  │                               │
+          Source / Syntax                    Acquisition
+                  │                               │
+             Resolution                     Realization Body IR
+                  │                               │
+        Resolved Contract HIR         Local Structural Analysis
+                  │                               │
+      Authority-Owned Establishment              │
+                  │                               │
+                  ▼                               │
+       Canonical Contract World                   │
+                  │                               │
+                  └───────────────┬───────────────┘
+                                  ▼
+                       Contract-Aware Analysis
+                                  │
+                 ┌────────────────┼────────────────┐
+                 │                │                │
+                 ▼                ▼                ▼
+        Closure Verification   Specialization   Whole-Machine /
+                 │              Knowledge        IPA Knowledge
+                 ▼                │                │
+       Verification Overlay      └────────┬───────┘
+                 │                        │
+                 └──────────────┬─────────┘
+                                ▼
+                        Execution Formation
+                                │
+                    static alternatives omitted
+                    runtime judgments retained
+                                │
+                                ▼
+                   Contract-Aware Execution IR
+                                │
+                       Analysis / Transform Loop
+                                │
+                                ▼
+                    Execution IR New Generation
+                                │
+                                ▼
+                           JVM Plan / IR
+                                │
+                                ▼
+                         Classfile Product
+                                │
+                                ▼
+                          HotSpot / Graal
+```
+
+The two frontends may perform independent work in parallel.
+
+They are not semantically independent after that point.
+
+`Canonical Contract World` must exist before Contract-aware verification or optimization can use Contract meaning.
+
+---
+
+# 4. Main Material Flow
+
+The whole compiler can be reduced to five major material families.
+
+```text
+Contract Source
+    ↓
+Resolved Contract HIR
+    ↓
+Canonical Contract World
+
+User Realization
+    ↓
+Realization Body IR
+
+Canonical Contract World
++
+Verified Realization
++
+Derived Knowledge
+    ↓
+Contract-Aware Execution IR
+    ↓
+JVM Plan / IR
+    ↓
+Classfile
+```
+
+The exact number of physical representations remains open.
+
+---
+
+# 5. Contract Frontend
+
+The Contract frontend converts authored Contract source into resolved semantic material.
+
+```text
+.kontrakt
+    ↓
+Source / Provenance
+    ↓
+Syntax
+    ↓
+Resolution
+    ↓
+Resolved Contract HIR
+```
+
+Its main outputs are:
+
+```text
+source identity
+source provenance
+parsed Contract structure
+exact authority references
+resolved slot bindings
+resolved semantic relations
+```
+
+Source location is not semantic identity.
+
+Downstream consumers should not repeat source-name lookup.
+
+---
+
+# 6. Resolved Contract HIR
+
+`Resolved Contract HIR` is the high-level semantic representation before Establishment.
+
+It preserves rich Contract vocabulary.
+
+It may represent exact references to:
+
+```text
+Input
+Admission
+Canonicalization
+Lowering
+Fact
+Invariant
+State / Transition
+Budget
+Capacity
+Version
+Policy
+Governance
+Failure
+Publication
+Output
+```
+
+The main invariant is:
+
+```text
+source ambiguity resolved
+```
+
+The important limit is:
+
+```text
+Resolved Contract HIR
+    ≠
+Contract authority
+```
+
+Resolution does not establish Contract meaning.
+
+---
+
+# 7. Authority-Owned Establishment
+
+Establishment is a Contract semantic boundary.
+
+It is not ordinary compiler lowering.
+
+```text
+Resolved Contract HIR
+    ↓
+Required Basis complete
+    ↓
+Owning Contract Law
+    ↓
+Establishment
+    ↓
+Established Definition Material
+```
+
+Each authority keeps its own meaning.
+
+Kontrakt must not replace all authorities with one universal `EstablishedMaterial` model.
+
+---
+
+# 8. Canonical Contract World
+
+The `Canonical Contract World` is the compiler substrate for already-established Contract definition meaning.
+
+It is not an ordinary optimization IR.
+
+It exposes exact authoritative material and relations to downstream consumers.
+
+Working read surface:
+
+```text
+exact definitions
+exact semantic relations
+Basis relations
+Applicability relations
+Version-aware meaning
+Policy / Governance context
+State surface
+source provenance references
+```
+
+Occurrence material remains separate unless the owning Contract defines occurrence meaning.
+
+---
+
+# 9. Frozen Publication
+
+Establishment and freezing are different.
+
+```text
+Establishment
+    = Contract authority boundary
+
+Freeze / Seal / Publish
+    = compiler publication boundary
+```
+
+Working publication pattern:
+
+```text
+private construction
+    ↓
+verification
+    ↓
+seal / freeze
+    ↓
+publish
+    ↓
+read-only consumers
+```
+
+A separate `Frozen IR` is not required merely because material is immutable.
+
+Existing HID, frozen publication, dense storage, and slab work may be reused behind this boundary.
+
+---
+
+# 10. Canonical Contract World Products
+
+The Canonical Contract World feeds multiple sibling products.
+
+```text
+Canonical Contract World
+    ├── Reference Judgment
+    ├── PBT / Fixture / Unit-Test Planning
+    ├── Contract Coverage
+    ├── Diagnostics
+    ├── Generated APIs
+    ├── Contract-Aware Analysis
+    └── Execution Formation
+```
+
+These products do not define one another.
+
+```text
+Verifier
+    ≠ PBT authority
+
+Diagnostics
+    ≠ backend authority
+
+Reference Judgment
+    ≠ Contract authority
+```
+
+---
+
+# 11. Realization Frontend
+
+The realization frontend acquires the user implementation as compiler facts.
+
+```text
+User JVM implementation
+    ↓
+Host compilation
+    ↓
+Realization acquisition
+    ↓
+Realization Body IR
+```
+
+A classfile-centered V1 path is a strong candidate.
+
+The exact acquisition mechanism remains replaceable.
+
+User implementation structure does not create Contract meaning.
+
+---
+
+# 12. Realization Body IR
+
+The Realization Body IR exists for implementation analysis and verification.
+
+It should expose enough structure for:
+
+```text
+control flow
+value definition/use
+calls
+effects
+origin
+unsupported constructs
+```
+
+A working representation may contain:
+
+```text
+method/type tables
+per-function CFG
+value relations
+call/effect sites
+summary references
+```
+
+SSA is not fixed yet.
+
+The important requirement is explicit analyzable control and data relation.
+
+---
+
+# 13. Early Realization Processing
+
+Some work can happen before Contract-aware verification.
+
+Examples:
+
+```text
+classfile normalization
+structural validation
+CFG formation
+def-use construction
+obvious constant cleanup
+contract-independent canonicalization
+```
+
+This work must not hide a realization violation.
+
+Aggressive Contract-based elimination should not occur before the Contract context and required legality are known.
+
+The factual realization should remain recoverable for verification and diagnostics.
+
+---
+
+# 14. Local Structural Analysis
+
+Realization-local analysis does not require Contract meaning.
+
+Possible products include:
+
+```text
+reachability
+dominance
+call graph
+call targets
+SCC
+raw effect summary
+raw origin summary
+def-use
+basic escape information
+```
+
+These are derived compiler knowledge.
+
+They are not Contract authority.
+
+---
+
+# 15. Contract-Aware Analysis
+
+Contract-aware analysis begins only after both sides are available.
+
+```text
+Canonical Contract World
++
+Realization Body IR
++
+Local Structural Analysis
+    ↓
+Contract-Aware Analysis
+```
+
+This is a central Kontrakt middle-end boundary.
+
+It may derive:
+
+```text
+fixed Policy World context
+fixed Contract Version context
+Governance Binding context
+known applicable State surface
+exact admitted realization binding
+Contract-relative effect classification
+Contract-relative origin classification
+known impossible alternatives
+static judgment candidates
+specialization contexts
+closed call-target knowledge
+```
+
+This knowledge is shared by verification, execution formation, and optimization.
+
+---
+
+# 16. Core Realization Closure Verification
+
+Closure verification depends on established Contract meaning.
+
+```text
+Canonical Contract World
++
+Realization Body IR
++
+valid Contract-Aware Analysis
+    ↓
+Core Realization Closure Verification
+```
+
+Possible results:
+
+```text
+verified
+proven violation
+unsupported / inconclusive
+```
+
+Under the selected V1 support rule, unsupported realization may cause compile refusal.
+
+Verification machinery remains compiler realization.
+
+It does not define Contract meaning.
+
+---
+
+# 17. Verification Overlay
+
+Verification does not require a full second IR.
+
+A working model is:
+
+```text
+Realization Body IR Generation G
++
+Verification Result / Overlay
+```
+
+The overlay may publish verified summaries such as:
+
+```text
+exact call target
+closed reachable graph
+no external factual dependency
+non-escaping value
+stable realization binding
+origin/effect proof result
+```
+
+Downstream consumers should reuse valid verified knowledge instead of repeating closure analysis.
+
+---
+
+# 18. Specialization Knowledge
+
+Some established Contract context is fixed before governed execution.
+
+Examples:
+
+```text
+Policy World
+Contract Version
+Governance Binding
+known State surface
+exact realization binding
+```
+
+These are strong specialization inputs.
+
+Example:
+
+```text
+selected Policy World = A
+    ↓
+Policy World B impossible
+```
+
+The compiler may use this knowledge to avoid materializing B-specific execution machinery.
+
+The optimizer consumes the selection.
+
+It does not make the selection.
+
+---
+
+# 19. Formation-Time Pruning
+
+Not every removable path needs to be generated and later deleted.
+
+When established Contract meaning already proves an alternative impossible:
+
+```text
+static Contract context
+    ↓
+Execution Formation
+    ↓
+only applicable execution material
+```
+
+This is better understood as formation-time pruning or specialization.
+
+It is not general DCE.
+
+Examples:
+
+```text
+unselected Policy worlds
+impossible Version alternatives
+unselected Governance bindings
+statically impossible Contract machinery
+known State-surface alternatives
+```
+
+---
+
+# 20. CFG-Based Elimination
+
+Some dead paths cannot be removed from Contract meaning alone.
+
+They require realization control-flow analysis.
+
+Typical flow:
+
+```text
+Realization CFG
++
+fixed Contract context
+    ↓
+constant / applicability propagation
+    ↓
+infeasible edge
+    ↓
+CFG simplification
+    ↓
+unreachable block removal
+```
+
+The CFG therefore remains an important proof and optimization substrate.
+
+---
+
+# 21. General DCE
+
+General dead-code elimination usually needs more than Contract context.
+
+Typical knowledge:
+
+```text
+CFG
+def-use
+liveness
+effect knowledge
+reachability
+```
+
+DCE may run several times.
+
+```text
+specialization
+    ↓
+constant propagation
+    ↓
+CFG simplification
+    ↓
+DCE
+    ↓
+inlining
+    ↓
+new dead material
+    ↓
+DCE
+```
+
+The exact pass order remains open.
+
+---
+
+# 22. Execution Formation
+
+Execution Formation is where established Contract meaning and verified user realization become executable compiler
+material.
+
+```text
+Canonical Contract World
++
+Verified Realization
++
+Specialization Knowledge
+    ↓
+Execution Formation
+    ↓
+Contract-Aware Execution IR
+```
+
+Execution Formation may already:
+
+```text
+omit impossible alternatives
+resolve exact bindings
+materialize only runtime-required judgments
+preserve exact authority references
+```
+
+It should not lower away high-level Contract knowledge too early.
+
+---
+
+# 23. Contract-Aware Execution IR
+
+This IR is distinct from both the Canonical Contract World and the Realization Body IR.
+
+It represents executable Contract-aware semantics.
+
+Possible vocabulary includes:
+
+```text
+runtime Contract judgment
+realization call
+value
+control flow
+Failure relation
+State movement reference
+Publication relation
+Output relation
+exact Contract authority reference
+```
+
+Important distinctions remain visible.
+
+```text
+State Transition
+    ≠ CFG edge
+
+Contract Failure
+    ≠ JVM exception
+
+Publication
+    ≠ return instruction
+```
+
+JVM stack/local details do not belong here.
+
+---
+
+# 24. Execution IR Analysis
+
+Execution IR has its own analysis layer.
+
+Possible analyses include:
+
+```text
+CFG reachability
+dominance
+SSA / value relations where useful
+effect refinement
+alias / escape where justified
+Contract-context propagation
+specialization opportunities
+cost inputs
+```
+
+Analysis results have explicit validity.
+
+They are reusable only while their input generation remains valid.
+
+---
+
+# 25. Contract-Specific Optimization
+
+Kontrakt should optimize where it has knowledge that the JVM does not naturally have.
+
+Candidate V1 transformations include:
+
+```text
+static judgment discharge
+fixed-context specialization
+exact binding
+unreachable Contract-path removal
+generated wrapper removal
+temporary carrier elimination
+simple stage fusion
+dead realization alternative removal
+cheap verification-derived scalarization
+```
+
+These transformations preserve Contract meaning.
+
+They do not establish new Contract meaning.
+
+---
+
+# 26. Generic Cleanup
+
+Contract-specific transforms may expose ordinary compiler opportunities.
+
+Examples:
+
+```text
+constant propagation
+CFG simplification
+DCE
+small inlining
+allocation removal
+GVN-like simplification where useful
+```
+
+Kontrakt should use generic cleanup when it is cheap and useful.
+
+It should not attempt to reimplement the full HotSpot/Graal optimizer.
+
+---
+
+# 27. Legality and Profitability
+
+Every optimization has two separate decisions.
+
+```text
+Legality
+    = does it preserve required meaning?
+
+Profitability
+    = is the legal transform worth applying?
+```
+
+A cost model cannot make an illegal transform legal.
+
+Runtime profile information is not static Contract truth.
+
+---
+
+# 28. Analysis Reuse and Invalidation
+
+Analysis is shared while valid.
+
+```text
+Material Generation G
+    ↓
+Analysis Result
+    ├── Verifier
+    ├── Optimizer
+    └── other consumers
+```
+
+After a transform:
+
+```text
+preserved
+    → reuse
+
+not preserved
+    → invalidate
+```
+
+Stale analysis is not valid compiler knowledge.
+
+The exact Analysis Manager implementation remains open.
+
+---
+
+# 29. Optimization Generations
+
+Optimization does not automatically create a new IR level.
+
+```text
+Execution IR Generation N
+    ↓
+meaning-preserving transform
+    ↓
+Execution IR Generation N+1
+```
+
+If vocabulary and equivalence remain the same, both generations satisfy the same Execution IR Contract.
+
+---
+
+# 30. Whole-Machine Analysis
+
+Whole-Machine work should not require one giant full IR.
+
+Working direction:
+
+```text
+Core A Summary ┐
+Core B Summary ├──→ Whole-Machine Summary / Index
+Core C Summary ┘
+```
+
+The summary is derived compiler knowledge.
+
+It is not Contract authority.
+
+Whole-Machine analysis may support:
+
+```text
+closure decisions
+cross-Core dependency reasoning
+fixed-context specialization
+global target pruning
+local optimization decisions
+```
+
+Full body material is opened only where needed.
+
+---
+
+# 31. Verification and Optimization Summaries
+
+Verification and optimization may need different summaries.
+
+```text
+Verification Summary
+    = soundness-critical verifier knowledge
+
+Optimization Summary
+    = transform planning knowledge
+```
+
+They may share backing storage.
+
+They should not be treated as one authority.
+
+---
+
+# 32. JVM Backend Boundary
+
+JVM-specific lowering begins after Contract-specific simplification.
+
+```text
+Optimized Contract-Aware Execution IR
+    ↓
+JVM Capability / Legalization
+    ↓
+JVM Plan / IR
+```
+
+The backend does not re-resolve Contract meaning.
+
+It lowers already-resolved execution material into JVM vocabulary.
+
+---
+
+# 33. JVM Plan / IR
+
+The JVM Plan / IR is target-specific.
+
+Possible vocabulary:
+
+```text
+JVM value forms
+invocation forms
+branches
+returns
+throws
+locals
+exception regions
+frame relations
+constant-pool references
+classfile constraints
+```
+
+This is a separate logical level because target vocabulary has changed.
+
+---
+
+# 34. Classfile Emission
+
+```text
+JVM Plan / IR
+    ↓
+frame / metadata derivation
+    ↓
+bytecode emission
+    ↓
+classfile verification
+    ↓
+JVM Product
+```
+
+A generated-source backend may exist as a bootstrap or reference path.
+
+A direct classfile backend is a strong V1 candidate.
+
+The exact emitter remains replaceable.
+
+---
+
+# 35. JVM Handoff
+
+Kontrakt should perform semantic simplification that depends on Kontrakt knowledge.
+
+The JVM should keep its strengths.
+
+Kontrakt:
+
+```text
+Contract specialization
+static discharge
+exact Contract binding
+generated machinery simplification
+```
+
+HotSpot / Graal:
+
+```text
+runtime speculation
+profile-guided inlining
+generic escape analysis
+register allocation
+instruction selection
+machine optimization
+```
+
+---
+
+# 36. IR Classification
+
+| Material                        |                   IR? | Role                                              |
+|---------------------------------|----------------------:|---------------------------------------------------|
+| Source / Syntax Material        | source representation | authored structure                                |
+| **Resolved Contract HIR**       |               **Yes** | resolved Contract semantics before Establishment  |
+| **Canonical Contract World**    |                **No** | established authority substrate                   |
+| Frozen World Generation         |                    No | publication state                                 |
+| **Realization Body IR**         |               **Yes** | analyzable user realization                       |
+| Local / Contract-Aware Analysis |                    No | derived compiler knowledge                        |
+| Verification Overlay            |                    No | verified property over one realization generation |
+| **Contract-Aware Execution IR** |               **Yes** | executable Contract + realization representation  |
+| Optimized Execution Material    |       usually same IR | new Execution IR generation                       |
+| Whole-Machine Summary           |                    No | derived global index                              |
+| **JVM Plan / IR**               |               **Yes** | target-specific representation                    |
+| Classfile                       |                    No | target artifact                                   |
+| Query / Product Result          |         not by itself | compiler product                                  |
+| HID / Dense Ordinal             |                    No | identity / lookup / addressing mechanism          |
+| Source Provenance               |                    No | source relation                                   |
+
+---
+
+# 37. Current Strongest IR Family
+
+```text
+Contract Source
+    ↓
+Resolved Contract HIR
+    ↓
+Establishment
+    ↓
+Canonical Contract World
+
+User Implementation
+    ↓
+Realization Body IR
+
+Canonical Contract World
++
+Verified Realization
+    ↓
+Contract-Aware Execution IR
+    ↓
+JVM Plan / IR
+    ↓
+Classfile
+```
+
+The exact number of internal sublevels remains open.
+
+---
+
+# 38. Lowering Map
+
+Compiler lowering and the 1D `Lowering Contract` are different.
+
+```text
+Source
+    ↓ parse / resolve
+Resolved Contract HIR
+
+Resolved Contract HIR
+    ↓ Establishment
+Canonical Contract World
+
+User Classfile
+    ↓ realization acquisition
+Realization Body IR
+
+Canonical Contract World
++
+Verified Realization
+    ↓ Execution Formation
+Contract-Aware Execution IR
+
+Execution IR
+    ↓ JVM target lowering
+JVM Plan / IR
+
+JVM Plan / IR
+    ↓ emission
+Classfile
+```
+
+---
+
+# 39. Product and Query Orchestration
+
+Kontrakt produces several major compiler products.
+
+A query-oriented V1 interface is currently selected.
+
+The important architecture is:
+
+```text
+Product Identity
++
+Explicit Inputs
++
+Published Result
++
+Dependency Recording
++
+Generation Validity
+```
+
+Passes remain local processing mechanisms.
+
+The compiler should not make one global pass pipeline the owner of every product.
+
+---
+
+# 40. Query Architecture Is Replaceable
+
+The current query-oriented V1 decision does not make one traversal algorithm permanent.
+
+The following must remain replaceable:
+
+```text
+pull validation
+push invalidation
+change-frontier propagation
+hybrid scheduling
+domain-local repair
+priority worklists
+```
+
+V1 should preserve product and dependency boundaries.
+
+V2 may replace the repair and scheduling model.
+
+---
+
+# 41. Reuse Layers
+
+Reuse occurs at several levels.
+
+```text
+Canonical Contract World
+    → shared semantic substrate
+
+Shared Analysis
+    → verifier / optimizer reuse
+
+Verification Overlay
+    → no full verified IR copy
+
+IR Backing
+    → shared immutable storage / overlay
+
+L1
+    → worker / session hot reuse
+
+L2
+    → wider process-local reuse
+
+Future persistent tier
+    → cross-session reuse
+```
+
+Cache is work avoidance.
+
+It is not authority.
+
+---
+
+# 42. Identity Separation
+
+Keep these separate:
+
+```text
+Contract semantic identity
+IR semantic identity
+source provenance identity
+HID / fingerprint
+generation identity
+dense ordinal
+table row
+memory address
+JVM object identity
+```
+
+Typical roles:
+
+```text
+Semantic Identity
+    → meaning
+
+HID
+    → lookup / equality evidence
+
+Dense Ordinal
+    → local addressing
+
+Generation
+    → validity boundary
+```
+
+---
+
+# 43. Graph Separation
+
+Kontrakt contains several different graphs.
+
+```text
+Contract semantic graph
+realization call/effect/origin graph
+CFG / data-flow graph
+analysis dependency graph
+compiler product dependency graph
+diagnostic provenance graph
+Whole-Machine summary graph
+```
+
+They must not collapse into one universal graph.
+
+```text
+CFG edge
+    ≠ Contract State Transition
+
+query dependency
+    ≠ Contract dependency
+
+realization call edge
+    ≠ Required Basis relation
+```
+
+---
+
+# 44. Diagnostics
+
+Diagnostics are structured compiler products.
+
+They may consume:
+
+```text
+frontend result
+Established Contract material
+verification result
+optimization result
+backend result
+source provenance
+```
+
+Working shape:
+
+```text
+Diagnostic Code
+Semantic Reference
+Provenance Reference
+Arguments
+Related Notes
+```
+
+Rendering is separate.
+
+Contract Diagnostic Evidence remains distinct from compiler diagnostics.
+
+---
+
+# 45. Reference Judgment
+
+Reference Judgment is a sibling of the optimized path.
+
+It should remain simpler and sufficiently independent.
+
+```text
+Canonical Contract World
+    ↓
+Reference Judgment
+    ↓
+Reference Result
+```
+
+It may intentionally recompute selected judgments.
+
+Its purpose is validation independence, not runtime performance.
+
+---
+
+# 46. PBT / Fixture / Unit-Test Products
+
+Generated tests come from exact Contract obligations.
+
+```text
+Established Obligation
+    ↓
+Deterministic Test Plan
+    ↓
+Cases
+    ↓
+Reference Judgment
+    ↓
+Expected Result
+    ↓
+Generated Test Artifact
+```
+
+Expected behavior must not be learned from user realization.
+
+PBT is not verifier authority.
+
+---
+
+# 47. Compiler QA
+
+Compiler QA is separate from generated user Contract tests.
+
+V1 should include:
+
+```text
+frontend regression
+parser fuzzing
+semantic regression
+Establishment regression
+realization closure regression
+IR verifier tests
+analysis tests
+optimizer source-target comparison
+JVM codegen tests
+reference-vs-optimized differential tests
+determinism tests
+cache-on / cache-off equivalence
+performance baselines
+```
+
+Compiler correctness must not depend on one verifier.
+
+---
+
+# 48. Transform Validation
+
+Important transforms need independent preservation checks.
+
+Possible mechanisms:
+
+```text
+IR verifier
+local validator
+translation validation
+differential execution
+Reference comparison
+metamorphic testing
+```
+
+The validator should not simply reuse the transform's own legality code.
+
+---
+
+# 49. Determinism and Publication
+
+The compiler should prefer:
+
+```text
+immutable published material
+worker-local mutation
+explicit merge
+stable identity
+deterministic publication
+```
+
+Worker completion order must not decide:
+
+```text
+Contract meaning
+semantic identity
+verification result
+required output ordering
+```
+
+Clean, cached, parallel, and reused compilation must preserve the same semantic result.
+
+---
+
+# 50. V1 Required Skeleton
+
+V1 should preserve at least these architecture boundaries.
+
+```text
+Source / Provenance
+Contract Frontend
+Resolved Contract HIR
+Authority-Owned Establishment
+Canonical Contract World
+Frozen Publication
+
+Realization Acquisition
+Realization Body IR
+Local Structural Analysis
+Contract-Aware Analysis
+Core Closure Verification
+Verification Overlay
+
+Execution Formation
+Contract-Aware Execution IR
+Analysis / Transform Infrastructure
+Contract-Specific Optimization
+Generic Cleanup
+Whole-Machine Summary Seam
+
+JVM Plan / IR
+Classfile Emission
+
+Reference Judgment
+PBT / Test Planning
+Structured Diagnostics
+Compiler QA
+
+Driver / Session
+Stable Identity
+Generation Validity
+Product / Query Boundaries
+Dependency Recording
+L1 / L2 Reuse
+```
+
+---
+
+# 51. V2 Evolution Seam
+
+V2 should extend this architecture rather than replace it.
+
+Possible additions:
+
+```text
+persistent product state
+cross-session reuse
+multiple immutable generations
+incremental analysis repair
+lazy materialization
+summary persistence
+artifact reuse
+incremental test planning
+advanced scheduling
+profile-guided profitability
+```
+
+No one incremental algorithm is fixed.
+
+Different compiler domains may use different repair strategies.
+
+---
+
+# 52. Intentionally Open
+
+This document does not freeze:
+
+```text
+exact IR count
+exact HIR schema
+exact Execution IR operations
+SSA form
+CFG physical layout
+analysis manager API
+pass manager API
+query scheduler
+pull / push / hybrid incremental execution
+red-green adoption
+fingerprint algorithm
+HID encoding
+slab / FFM layout
+Whole-Machine summary schema
+frozen table layout
+JVM encoder
+optimizer pass order
+cost model
+persistent cache design
+```
+
+---
+
+# 53. 1D ADR Review Map
+
+When reviewing each 1D Contract, the architecture needs only the semantic material that authority actually owns.
+
+| Question                        | 1D ADR must decide                                                 |
+|---------------------------------|--------------------------------------------------------------------|
+| Definition meaning              | What does this authority declare?                                  |
+| Established Definition Material | What enters the Canonical Contract World?                          |
+| Occurrence meaning              | Does this authority own occurrence material?                       |
+| Required Basis                  | What must exist before judgment?                                   |
+| Applicability                   | When may the material be used?                                     |
+| Establishment result            | What exactly becomes authoritative?                                |
+| Failure relation                | How does refusal connect to Failure?                               |
+| Execution need                  | What exact relation must Execution Formation consume?              |
+| Diagnostic need                 | What authoritative material must diagnostics explain?              |
+| PBT obligation                  | What semantic partitions or witnesses follow?                      |
+| Verification need               | What must user realization verification prove?                     |
+| Optimization value              | What established context may become static optimization knowledge? |
+
+If downstream work needs semantic material that does not exist, return to the owning ADR.
+
+Do not invent it in the compiler subsystem.
+
+---
+
+# 54. Final Working View
+
+```text
+Contract semantics
+    ↓
+Resolved Contract HIR
+    ↓
+Authority-Owned Establishment
+    ↓
+Canonical Contract World
+    ↓
+Contract-Aware Analysis
+    ↓
+Realization Verification
+    ↓
+Static Specialization Knowledge
+    ↓
+Execution Formation
+    ↓
+Contract-Aware Execution IR
+    ↓
+Analysis / Transform Loop
+    ↓
+JVM Lowering
+    ↓
+JVM Product
+```
+
+The supporting architecture is:
+
+```text
+identity
+provenance
+generation
+frozen publication
+analysis validity
+product dependencies
+reuse
+resource ownership
+determinism
+diagnostics
+Reference
+PBT
+QA
+```
+
+The central rule remains:
+
+```text
+Contract meaning first.
+
+Compiler knowledge consumes it.
+
+Optimization preserves it.
+
+Physical realization remains replaceable.
+```
+
+---
+
+# 55. Basis of This Draft
+
+This draft is aligned with the current Kontrakt direction from:
+
+```text
+What Contract Is
+ADR-0063
+ADR-0070
+
+Kontrakt Established Contract World Architecture TODO
+Kontrakt Contract-Aware Realization Optimization TODO
+Kontrakt IR Subsystem Contract / Implementation Separation Design
+Kontrakt V1 Commercial Compiler Foundation Candidate Architecture
+Kontrakt V2 Reference Architecture and V1 Foundations
+Kontrakt V2 Incremental Architecture Research TODO
+Kontrakt Query-Oriented Compiler Design
+Kontrakt Verifier Candidate Implementation Plan
+
+Modern Compiler Architecture 01–15
+```
+
+The modern compiler material contributes general engineering principles:
+
+```text
+stage invariants
+multi-level IR
+logical / physical separation
+CFG / SSA / data-flow analysis
+analysis / transformation separation
+analysis reuse and invalidation
+context-sensitive and interprocedural analysis
+summary-driven whole-program work
+progressive lowering
+legality / profitability separation
+Reference and differential checking
+structured diagnostics
+compiler QA
+resource ownership
+incremental architecture as a cross-cutting concern
+JVM / JIT handoff
+```
+
+Those principles do not override Kontrakt Contract semantics.
