@@ -20,25 +20,13 @@ Proposed
 - ADR-0069: Invariant Contract
 - ADR-0068: Fact Contract
 - ADR-0067: Lowering Contract
-- ADR-0066: Canonicalization Contract
-- ADR-0065: Admission Contract
-- ADR-0064: Input Contract
-- ADR-0063: Contract Establishment, Occurrence, Applicability, and Semantic Dependency
-- ADR-0062: Contract-Machine Diagnostic Realization
-- ADR-0061: Kontrakt Compiler Diagnostic Architecture
-- ADR-0060: Diagnostic Evidence and Retention Contract
-- ADR-0059: Output Presentation Contract
-- ADR-0058: Publication Contract
-- ADR-0057: Failure Contract
-- ADR-0056: Governance Contract
+- ADR-0063: Contract Establishment, Identity, Applicability, and Composition
 - ADR-0055: Whole-Machine Pipeline Composition and Contract Concurrency
-- ADR-0054: Policy Contract
-- ADR-0053: Version Contract
 - ADR-0052: Capacity Contract
 - ADR-0051: Budget Contract
-- ADR-0050: State / Transition Contract
+- ADR-0048: Flow Contract Processing — Boundary Refinement and Core Entry
 - ADR-0047: One-Dimensional Contract Presentations, Pipeline-Slot Selection, and Backend Realization Boundary
-- ADR-0046: IDL-First Interface Contract Frontend, Generated Host Interface, and Operation Realization Boundary
+- ADR-0046: IDL-First Interface Contract Frontend and Generated Host Interface Boundary
 - ADR-0045: Contract Pipeline Package Architecture, Explicit State-Machine Axis, and Compiler Realization Mirror
 - ADR-0044: Unified Runtime Memory Envelope and Pipeline Lifecycle Governance
 - ADR-0042: Mechanical Sympathy, Primitive Lifecycle, and Async Ownership Governance
@@ -55,16 +43,12 @@ Proposed
 
 ## Supersedes and Reopens
 
-This ADR supersedes only the earlier V1 assumption inherited from historical ADR-0048 that arbitrary user core
-realization remains opaque to Kontrakt and outside V1 optimization.
+This ADR supersedes only the earlier V1 assumption in ADR-0048 that arbitrary user core realization remains opaque to
+Kontrakt and outside V1 optimization.
 
 It does not give Lowering authority over user core realization. ADR-0067 continues to own the Lowering relation and its
-compiler-derived realization boundary. Analysis and optimization after the legal Operation handoff belong to the
-Realization axis defined here.
-
-This ADR also clarifies the realization split now fixed by ADR-0046 and ADR-0047. Selected one-dimensional Contracts are
-not user implementation SPIs. Kontrakt resolves, establishes, and realizes their declared meaning. Within the generated
-Kontrakt Contract surface, the user-supplied realization boundary is Operation.
+own realization boundary. Analysis and optimization after the legal core handoff belong to the Realization axis defined
+here.
 
 This ADR reopens the V1 Capacity enforcement assumption that depended on user realization being categorically opaque. It
 does not decide that all memory used by user realization is governed Capacity. Exact attribution and backend control
@@ -173,13 +157,6 @@ owning boundary.
 
 A realization that cannot be verified under the supported compiler model must not be silently accepted as closed.
 
-External frameworks may compose around a Kontrakt Interaction. They must not silently participate in a governed
-realization.
-
-Kontrakt must defend the supported execution envelope strongly. Known intervention that violates closure must be
-rejected. A host mechanism that mutates or bypasses an admitted realization outside that envelope is outside Kontrakt's
-guarantee.
-
 Realization topology is compiler-visible but is not part of the outward Contract surface.
 
 Ordinary user realization must not depend on the verifier or optimizer that Kontrakt happens to use. Changing those
@@ -199,11 +176,6 @@ The mechanism used to avoid accidental duplicate work remains replaceable implem
 Optimization must preserve the established Contract meaning. The technique used to achieve that optimization is not
 Contract meaning and may be replaced as better techniques become available.
 
-Representation-changing optimization must stay inside an admitted closed region. Kontrakt should reuse analysis already
-needed for verification before paying for additional realization analysis.
-
-Kontrakt must not duplicate expensive generic JVM optimization merely to remove arbitrary user allocations.
-
 V1 must create a foundation that lets V2 add stronger incremental reuse without requiring the Contract architecture to
 change.
 
@@ -216,70 +188,32 @@ Kontrakt defines Realization as a separate non-authoritative axis with two domai
 ```text
 Realization Axis
     ├── User-System Realization
-    │       the implementation supplied for a declared Operation
+    │       the implementation supplied for an Operation
     │
     └── Kontrakt Realization
-            the compiler and backend machinery that realizes
-            declared one-dimensional Contracts, verifies the
-            user Operation realization, and produces executable form
+            the compiler and runtime machinery that produces
+            the executable realization
 ```
 
-User-System Realization performs the user's Core computation. Within the generated Kontrakt Contract surface, Operation
-is the user-supplied implementation boundary. Its source structure does not create Contract meaning.
+User-System Realization performs the user's Core computation. Its source structure does not create Contract meaning.
 
-Selected one-dimensional Contract declarations are not User-System Realization. Input, Admission, Canonicalization,
-Lowering, Invariant, State / Transition, Policy, Budget, Capacity, Governance, Failure, Publication, Output, and other
-declared Contract authorities remain declarative Contract expression under their owning ADRs. Kontrakt resolves and
-establishes that meaning, then compiler/backend realization performs the executable work required by it.
-
-Kontrakt Realization also examines the user Operation implementation and produces the executable form. Its own internal
-structures have no Contract authority.
-
-The interface boundary is asymmetric by design. The IDL interface name is the generated external host interface and is
-implemented by Kontrakt backend realization. A separate generated Operation interface mirrors the resolved Operation
-signature and is implemented by user business code. No selected one-dimensional slot creates another user implementation
-interface.
+Kontrakt Realization examines that implementation and produces the executable form. Its own internal structures also
+have no Contract authority.
 
 The semantic direction remains:
 
 ```text
 External World
     ↓
-Adapter / boundary formation
-    ↓
-IDL-named external interface
+Adapter
     ↓
 Input / Admission / Canonicalization / Lowering
     ↓
 Established Core Facts
     ↓
-generated Operation realization surface
-    ↓
 User-System Realization
     ↓
 result-side Contract processing
-    ↓
-Publication / Output
-```
-
-These are logical Contract and realization boundaries. The backend may fuse or erase physical intermediates when every
-owned judgment, value relation, Failure relation, and host-visible ABI is preserved. It does not need to emit a
-source-level interaction-machine class merely to mirror the logical sequence.
-
-External framework work may surround this flow. It remains outside the governed realization.
-
-```text
-External host / framework
-        ↓
-boundary formation
-        ↓
-Kontrakt Interaction
-        ↓
-closed governed realization
-        ↓
-Output
-        ↓
-external host / effect
 ```
 
 Kontrakt separately performs compiler work over the declared machine and its realization:
@@ -305,21 +239,6 @@ The second flow implements the first. It does not become another Contract pipeli
 ## 5. User-System Realization
 
 User-System Realization is the implementation supplied for a declared Operation.
-
-It is the ordinary user implementation extension point inside the generated Kontrakt Contract surface. A selected
-one-dimensional Contract does not ask the user for an Admission implementation, Lowering mapper, Invariant validator,
-Publication adapter, Output mapper, or another callback. When a declared Contract is semantically complete, Kontrakt
-realizes it. When it is not complete enough to determine a legal realization under its owning law, compilation fails
-rather than moving the missing meaning into user implementation.
-
-The compiler/backend forms the actual host values required by the Operation signature from lawfully established Contract
-material and binds those values to the admitted Operation invocation. The user does not construct inbound Contract
-machinery or manually pull Input Presentation values through the pipeline. This binding is executable invocation
-binding, not framework dependency injection.
-
-The ordinary host value returned by the user Operation is a result candidate. The return itself does not establish Fact,
-State, Transition, Failure, Publication, or Output meaning. Applicable result-side Contract processing remains owned and
-realized by Kontrakt before outward material is established or presented.
 
 It may contain ordinary computation. A private helper or a local temporary does not become Contract material merely
 because Kontrakt analyzes it.
@@ -352,11 +271,6 @@ is not a closed Core realization.
 User-authored source topology does not have to survive execution. A helper object or temporary carrier may disappear
 when Kontrakt can prove that the change preserves the required meaning.
 
-External composition may construct or bind the concrete Operation implementation before Kontrakt adopts it. That
-composition is not Contract input. Kontrakt must capture the effective Operation realization after the supported host
-composition has determined it and before governed Operation execution begins. A later supported rebinding or mutation
-that changes the effective realization invalidates the affected admitted product and requires a new admission decision.
-
 ---
 
 ## 6. Explicit Contract Surface and User-System Independence
@@ -371,13 +285,9 @@ Kontrakt does not discover missing Contract meaning from the shape of user imple
 hierarchy does not become a Contract because the compiler can read it. Verification-oriented source material has the
 same limit.
 
-The user system should need Kontrakt knowledge only at explicit integration boundaries. The generated IDL-named external
-interface, the generated Operation realization interface, and an external Adapter are such boundaries. Ordinary Core
-implementation should not need to call a Kontrakt checker or carry Kontrakt-specific proof machinery.
-
-The external interface is a host-facing artifact of the IDL interface Contract and is implemented by Kontrakt backend
-realization. The generated Operation interface is realization ABI for user business code. Neither generated type becomes
-Contract authority.
+The user system should need Kontrakt knowledge only at an explicit integration boundary. A generated User API or an
+Adapter is such a boundary. Ordinary Core implementation should not need to call a Kontrakt checker or carry
+Kontrakt-specific proof machinery.
 
 Compiler inspection is one-way. Kontrakt may read user realization to verify and optimize it, but the user realization
 does not become valid by depending on the current verifier or optimizer.
@@ -409,35 +319,10 @@ Fact
 
 The Core may use the established information. It does not keep the live external mechanism that produced it.
 
-External frameworks may compose around a Kontrakt Interaction. Their runtime machinery must not silently enter the
-governed realization.
-
-A host transaction may remain open while the Interaction executes.
-
-```text
-begin transaction
-    ↓
-read external state
-    ↓
-form lawful boundary input
-    ↓
-Kontrakt Interaction
-    ↓
-Output
-    ↓
-apply external effect
-    ↓
-commit
-```
-
-The transaction remains host behavior. The Core does not gain permission to read a repository or ambient transaction
-state merely because the host keeps that transaction open.
-
 Moving an external access behind another method does not change this rule.
 
-This ADR does not redefine Adapter, Input, Admission, Canonicalization, Lowering, Publication, or Output meaning. Their
-owning ADRs define the Contract law, and Kontrakt realizes that established law. This ADR requires User-System
-Realization to preserve the boundary those owners already establish.
+This ADR does not redefine Adapter, Input, or Lowering meaning. It requires User-System Realization to preserve the
+boundary those owners already establish.
 
 ---
 
@@ -454,12 +339,6 @@ independent Fact authority.
 Closure fails when an outside source can affect a Contract-visible result or State-Machine movement without first
 passing through the boundary that owns that information.
 
-Closure also fails when undeclared external runtime behavior participates inside the governed realization. Framework
-interception does not become lawful merely because it is attached to an Operation implementation.
-
-Runtime substitution that can change the participating realization is not part of a closed region unless the supported
-compiler and backend model can establish the required stability.
-
 Kontrakt therefore checks the origin of relevant information rather than treating a local call boundary as proof of
 safety.
 
@@ -471,20 +350,14 @@ State-Machine decisions that establish that material. This ADR does not create a
 ## 9. Compile-Time Realization Verification
 
 Kontrakt must inspect enough User-System Realization to establish Core Realization Closure before accepting the
-executable realization. This inspection applies to the effective Operation implementation captured at the Realization
-admission boundary, not merely to a source class name or an uncomposed declaration.
+executable realization.
 
 The analysis may follow a helper because the helper influences the Operation result. A deeper call cannot be treated as
 safe merely because its caller is local.
 
 When Kontrakt establishes that outside information affects Core computation through an illegal path, compilation fails.
 
-Known metadata that requests external runtime participation inside the governed realization is also rejected. Annotation
-syntax alone is not the rule; metadata that is inert under the supported model does not violate closure merely because
-it exists.
-
-When the supported analysis cannot establish closure, Kontrakt must not silently assume that closure exists. The
-realization is not admitted.
+When the supported analysis cannot establish closure, Kontrakt must not silently assume that closure exists.
 
 Runtime Contract judgments that require runtime values remain runtime judgments. This ADR does not move those judgments
 into compile time.
@@ -517,25 +390,15 @@ and remains replaceable with the compiler machinery that uses it.
 
 ---
 
-## 11. No Implicit Runtime Interception Inside the Governed Realization
+## 11. No Implicit Runtime Interception
 
 Kontrakt does not preserve Core Realization Closure by placing a general interception layer around user implementation.
 
 A proxy or wrapper that watches ordinary calls at runtime would leave the user realization opaque until execution. It
 would also introduce another execution path whose presence is not part of the declared Contract.
 
-The same boundary applies to external frameworks. A framework may intercept host code outside a Kontrakt Interaction,
-but it may not silently insert runtime behavior into the governed realization.
-
 Core-closure verification therefore belongs to compilation. If the supported compiler model cannot establish the
 required closure, Kontrakt does not silently defer that uncertainty to a runtime proxy.
-
-Kontrakt should reject known intervention paths before execution. If a supported runtime check detects that an admitted
-realization has changed, execution must fail closed or the affected product must be invalidated before use.
-
-Kontrakt does not claim to control arbitrary host mutation outside the supported execution envelope. If an unsupported
-host mechanism bypasses that envelope and changes an admitted realization without a supported validation path, the
-resulting execution is outside Kontrakt's guarantee.
 
 This does not remove Contract judgments that depend on runtime values. Such judgments remain part of the declared
 machine and are emitted in the executable form required by their owning Contract.
@@ -630,19 +493,21 @@ recompute a result when independence is part of the check.
 
 No compiler technique named in current Kontrakt design work becomes Contract meaning through this ADR.
 
-Current design work already contains useful realization techniques. Frozen publication is one example. Primitive storage
-is another.
+V1 selects query-oriented compiler orchestration as its compiler architecture. Product requests are evaluated through
+explicit query boundaries, and those queries coordinate reusable compiler work. This is a V1 realization decision. It
+does not create a Query Contract in the user machine and does not make query execution part of Contract authority.
 
-These techniques may reduce repeated work or improve machine behavior, but they remain realization.
+Passes remain local processing mechanisms inside the computation that produces a query result. A global pass pipeline is
+not the top-level architecture for the whole Kontrakt compiler because Kontrakt produces verification, test, diagnostic,
+realization, and backend products that do not form one linear semantic chain.
 
-Kontrakt may replace them when a better technique satisfies the same required result.
+The query architecture itself remains replaceable realization. A later compiler architecture may replace the
+orchestration mechanism through a later architecture decision as long as the published compiler products preserve the
+same required meaning and dependency laws.
 
-For example, current publication may use a build-then-seal structure. A later implementation may use another way to
-ensure that consumers never observe incomplete material. The Contract architecture does not depend on the name `Frozen`.
-
-The same rule applies to incremental compilation. The current V2 plan may use query-style dependency recording. Query is
-an implementation strategy, not a Contract concept. A later incremental engine may replace it without changing the
-Contract laws in this ADR.
+The same rule applies to storage and publication. Current design work may use sealed publication, HID-backed lookup,
+primitive slabs, dense tables, or FFM-backed storage. Those mechanisms may be replaced when another realization
+satisfies the same publication, identity, boundedness, and determinism requirements.
 
 This replaceability is required for optimization in particular. Kontrakt is expected to adopt stronger compiler
 techniques as they become practical. The declared Contract meaning and a legal user realization must not need to change
@@ -650,30 +515,39 @@ merely because that machinery changes.
 
 ---
 
-## 16. Reuse and Compiler Cost
+## 16. Query-Oriented Reuse and Compiler Cost
 
-Realization verification must not make Kontrakt repeatedly pay for the same host-program knowledge without reason.
+Realization verification must not make Kontrakt repeatedly pay for the same valid compiler knowledge without reason.
 
-If several Operations depend on the same valid class or method knowledge, the compiler must not reacquire that knowledge
-separately for each Operation without a reason.
+V1 therefore uses query-oriented orchestration for major compiler products and expensive derived results. A query has a
+stable logical identity, explicit inputs, an explicit result, recorded compiler dependencies, and a validity relation to
+the compiler generation from which the result was produced.
 
-The same rule applies to derived realization knowledge. Verification and optimization must consume an already-produced
-compatible result instead of repeating the same source traversal merely because they are different subsystems.
+A published query result is immutable to ordinary consumers. Cache presence does not make that result true. The owning
+compiler subsystem establishes the result, and the query engine records and reuses it.
 
-This requirement does not prescribe a cache hierarchy or a query engine.
+The query dependency graph is not a Contract semantic graph. A query that reads another query creates a compiler
+recomputation dependency. It does not create a missing Contract dependency or a new Required Basis relation.
 
-Earlier acquisition and identity work may be reused to satisfy it. For example, stable realization identity can let the
-compiler recognize material it has already acquired, while cycle-detection work can keep recursive implementation
-topology from causing repeated traversal. Those techniques remain replaceable realization.
+The same separation applies to identity. Semantic identity, query identity, result fingerprint, HID lookup material,
+dense reference, and physical address answer different questions. None becomes interchangeable merely because one
+representation is faster.
 
-Earlier publication and reuse work may also provide useful V1 machinery. Its existing algorithms remain implementation
-choices and may be improved or replaced.
+Verification and optimization should consume already-produced compatible realization summaries instead of repeating the
+same acquisition or graph traversal. Diagnostics and PBT may consume the same compatible derived analysis when
+independence is not part of the check.
 
-Compiler cost is therefore part of realization quality. Rich Contract semantics must not cause already-established
-meaning to be reconstructed without need. Valid host-program knowledge must also not be reacquired merely because
-another compiler consumer needs it.
+V1 records dependencies in memory and binds reusable results to an exact compiler generation or equivalent revision
+boundary. Product storage remains typed by the subsystem that owns the result rather than using one universal object
+payload.
 
-The exact V1 reuse architecture remains open.
+The current acquisition and identity work remains useful under this architecture. Stable realization identity can
+recognize material already acquired. Cycle handling can prevent recursive JVM topology from causing unbounded
+acquisition. Primitive storage can keep the query and dependency substrate compact. These remain realization techniques
+behind the query architecture.
+
+Compiler cost is part of realization quality. Rich Contract semantics must not force every downstream consumer to reopen
+source material, rebuild equivalent indexes, or recalculate already-valid derived knowledge.
 
 ---
 
@@ -684,22 +558,8 @@ Optimization belongs entirely to realization.
 Kontrakt does not prescribe the algorithm chosen by the user implementation. A lawful algorithm does not become a
 Kontrakt algorithm merely because the compiler inspects it.
 
-Optimization acts only inside a realization region whose legality has already been established. Intermediate material
-does not have to keep authored object topology when that topology carries no required observable meaning.
-
-Kontrakt-owned wrappers and carriers are the strongest representation targets because Kontrakt owns their physical form.
-
-Inside a verified Operation-local region, a wrapper or adapter may also disappear when it adds no required behavior and
-its removal cannot be observed outside that region.
-
-A user-local object remains a candidate only when non-observability and non-escape follow cheaply from already-produced
-analysis and bounded local checks. Kontrakt does not perform expensive whole-program analysis solely to remove an
-arbitrary user allocation.
-
-If the required proof is unavailable or inconclusive, the user representation is preserved. Ordinary JVM optimization
-may still remove that cost later.
-
-Kontrakt does not redesign arbitrary user object models.
+Optimization acts on the executable realization around that computation. Intermediate material does not have to keep the
+authored object topology when that topology carries no required meaning.
 
 For example, a temporary carrier may disappear when its identity is not observable and the same required value reaches
 the same consumer. The calculation remains the user's realization while its intermediate physical form changes.
@@ -732,19 +592,14 @@ Kontrakt must not hand a general Contract interpreter to the JVM when compile-ti
 required behavior directly. Runtime Contract judgments still remain where runtime values are required, but their
 executable form should use the information already established before execution.
 
-A user may write an object-oriented realization while Kontrakt emits a simpler execution form inside an admitted closed
-region. The emitted program does not have to preserve allocation or reference topology that carries no required
-observable meaning.
+A user may write an object-oriented realization while Kontrakt emits a simpler execution form. The emitted program does
+not have to preserve allocation or reference topology that carries no required meaning.
 
-Current design work on primitive slabbing and mechanically sympathetic layout may be used for Kontrakt-owned execution
-material when their preconditions are proven. That internal representation does not require Kontrakt to flatten
-arbitrary user objects in the JVM-facing product.
+Current design work on primitive slabbing and mechanically sympathetic layout may be used for such transformations when
+their preconditions are proven. These are implementation techniques, not requirements of the Contract model.
 
-Kontrakt should not duplicate expensive generic optimization that HotSpot, Graal, or another JVM optimizer can perform
-without Contract-specific knowledge. A realization transform is most valuable when Contract knowledge exposes a
-simplification or when already-required verification makes representation overhead cheap to remove.
-
-Kontrakt does not replace the JVM optimizer. Ordinary lower-level optimization remains the JVM's responsibility.
+Kontrakt does not replace HotSpot, Graal, or another JVM optimizer. It performs the semantic simplification that depends
+on Kontrakt knowledge and leaves ordinary lower-level optimization to the JVM.
 
 The exact JVM emission strategy remains open.
 
@@ -774,496 +629,455 @@ without changing this decision.
 
 V1 owns Core realization verification and Contract-aware optimization before JVM emission.
 
-Verification is not the endpoint. After a realization is accepted, V1 must use the proven knowledge available to it to
-remove avoidable realization cost before handing execution to the JVM. The exact transformation set remains open and may
-evolve without changing Contract meaning.
+V1 also selects a query-oriented compiler architecture from the beginning. Major compiler products are requested through
+explicit query boundaries. Dependencies are recorded in memory, reusable results have generation validity, and
+publication remains deterministic.
 
-This does not require V1 to duplicate generic JVM analyses. A transform may be skipped when its legality or
-profitability would require expensive analysis that is not otherwise justified by realization verification.
+The minimum V1 query substrate is intentionally smaller than the V2 incremental system. V1 needs stable logical query
+identity, explicit inputs and results, dependency recording, generation-bound validity, typed result publication, and
+fingerprints where reuse validation benefits from them. The exact physical tables and cache policy remain
+implementation.
 
-V1 must therefore establish stable boundaries between produced compiler material and the subsystems that consume it. A
-consumer must be able to reuse a valid earlier result without changing the meaning of the producer.
+Verification is not the endpoint. After a realization is accepted, V1 may use established Contract knowledge and
+verified realization knowledge before JVM lowering. The exact minimum optimization set remains Open in this ADR.
 
-V1 must also keep semantic identity separate from temporary storage location. Otherwise reuse across compiler
-generations would require semantic rewriting.
+V1 must preserve logical compiler stages without requiring a complete object graph for every stage. The same backing
+material may be published with additional derived products when the semantic vocabulary has not changed. A new
+representation is required only when a new logical level actually needs a different vocabulary, invariant set, or
+equivalence relation.
 
-These requirements prepare V2 without fixing the V2 implementation.
+V2 extends the V1 architecture rather than replacing it. V2 may persist query results and dependency records across
+sessions. It may add red-green validation, semantic early cutoff, lazy materialization, summary-driven linking, multiple
+immutable compiler generations, and parallel demand evaluation.
 
-The current V2 plan includes incremental dependency tracking and persistent reuse. Those mechanisms may be implemented
-through a query system, but this ADR does not require query architecture.
+Different V2 subsystems may use different incremental algorithms. A relational analysis does not need the same repair
+strategy as a JVM artifact product. Incremental state, cache state, dependency state, and scheduling remain derived
+compiler material.
 
-What V1 must preserve is the information needed for later incremental reuse: what result was produced, what inputs
-determined it, and whether a later result is still the same for the consumer that needs it.
-
-V2 may replace the current incremental design if another technique provides the same or stronger guarantees without
-changing Contract meaning.
+V2 may replace any particular incremental mechanism when another implementation preserves the same semantic results,
+invalidation correctness, determinism, and publication laws.
 
 ---
 
-## 21. Architecture Review Before Acceptance
+## 21. Compiler Architecture
 
-This section records architecture that must be reviewed before this ADR becomes Accepted.
+This section defines the architecture that ADR-0070 requires for V1 and the extension seam that V2 must preserve.
 
-It does not make the candidate stage names or the current optimization techniques part of Contract meaning. The purpose
-is to ensure that V1 has a real compiler structure capable of supporting the current Contract model and the stronger V2
-compiler without another architectural rewrite.
+The architecture is not a new Contract hierarchy. It is the compiler structure that consumes established Contract
+authority and user realization without allowing either compiler topology or optimization machinery to become Contract
+meaning.
 
-The review must consider the whole Contract compiler. Realization optimization is only one consumer. Establishment,
-verification, diagnostics, generated tests, and backend realization must fit the same direction of material flow without
-becoming an accidental authority chain.
+### 21.1. Top-Level Material Flow
 
-### 21.1. Candidate Material Flow
-
-The architecture should be evaluated against a shape close to the following.
+The Contract side and the realization side remain separate until explicit execution formation consumes both.
 
 ```text
-                         CONTRACT AUTHORITY
+                         CONTRACT FRONTEND
 
-      IDL / selected external Contract evidence
-                         │
-                         ▼
-             Resolution and Establishment
-                         │
-                         ▼
-              Established Contract World
-                         │
-           ┌─────────────┼─────────────┐
-           │             │             │
-           ▼             ▼             ▼
-       Verifier      Diagnostics    Test Synthesis
-           │             │          / Coverage
-           │             │             │
-           └───────┬─────┴─────┬───────┘
-                   │           │
-                   ▼           ▼
-             Shared Derived   Reference
-                Knowledge     Judgment
+.kontrakt
+    ↓
+Source / Syntax Material
+    ↓
+Resolution
+    ↓
+Resolved Contract HIR
+    ↓
+Authority-owned Establishment
+    ↓
+════════════════════════════════════════════════════
+                  CONTRACT AUTHORITY
+
+Canonical Contract World
+    │
+    ├── Contract Verification
+    ├── Reference Judgment
+    ├── PBT / Fixture / Unit-Test Synthesis
+    ├── Contract Coverage
+    ├── Compiler Diagnostics
+    ├── Diagnostic Evidence Realization Planning
+    └── Execution Formation
 
 ════════════════════════════════════════════════════
-                         REALIZATION
+                  USER REALIZATION
 
-User Operation implementation
-        │
-        ▼
-Realization Acquisition / Admission
-        │
-        ▼
-Published Realization Knowledge
-        │
-        ▼
-Core Realization Verification
-        │
-        ├── illegal or unsupported → compile refusal
-        │
-        ▼
-Verified Realization
-        │
-        ├───────────────┐
-        │               ▼
-        │        Shared Derived Knowledge
-        │               │
-        ▼               │
-Contract-Aware Execution Material
-        │◄──────────────┘
-        ▼
-Optimization
-        │
-        ▼
-Optimized Realization Material
-        │
-        ▼
+User JVM Implementation
+    ↓
+Realization Acquisition
+    ↓
+Realization Body Material
+    ↓
+Realization Analysis / Summaries
+    ↓
+Core Realization Closure Verification
+    ├── proven violation → compile refusal
+    ├── unsupported      → compile refusal under the selected V1 support rule
+    └── verified
+            ↓
+      Verification Result / Overlay
+            ↓
+      Execution Formation
+            ↓
+Contract-Aware Execution IR
+            ↓
+Contract-Preserving Optimization
+            ↓
 JVM Realization Lowering
-        │
-        ▼
+            ↓
 JVM-facing Product
+            ↓
+JVM
 ```
 
-The diagram is a candidate architecture rather than a fixed IR taxonomy.
+The compiler may share physical backing storage across logical stages when the later stage only adds a verified property
+or derived index. The diagram defines logical boundaries, not a requirement to allocate a full copy at every arrow.
 
-The important point is the direction. Contract authority is established before product subsystems consume it. Declared
-one-dimensional Contracts are realized from that established meaning by Kontrakt; they do not enter through the
-User-System Realization branch. User Operation realization is inspected separately. Verification of that realization
-does not rewrite the Contract that constrains it.
+### 21.2. Canonical Contract World Is the Authority Substrate
 
-The physical compiler may combine stages when a separate materialization adds no value. It may also materialize a stage
-lazily. The logical boundary must remain visible even when two stages share storage or one stage is produced directly
-from another.
+ADR-0063 remains the semantic owner of Establishment and the Canonical Contract World.
 
-### 21.2. Establishment Must Remain the Upstream Authority Checkpoint
+This ADR does not introduce a second `Established Contract World`. `Canonical Contract World` is the architecture term
+used for the compiler-owned substrate that exposes already-established Contract definition meaning to downstream
+products.
 
-The current one-dimensional Contract work makes Establishment central to compiler architecture.
+The Canonical Contract World is not an ordinary optimization IR. It does not flatten every one-dimensional Contract into
+a universal node shape.
 
-Each Contract authority establishes its own meaning. The compiler must not replace those authority-specific results with
-one generic `EstablishedMaterial` object whose shape becomes a second semantic model.
+Input remains owned by Input. Fact remains Fact. Governance keeps ownership of the Binding it establishes. Failure
+remains owned by Failure. The common world gives downstream consumers exact references to authority-owned material and
+the relations already established by their owning laws.
 
-Downstream subsystems should consume established material through exact identity and declared relations. They must not
-reopen authored source and establish the same meaning again for their own purpose.
+Occurrence-specific material remains separate where the owning Contract semantics require it. A diagnostic or runtime
+consumer does not create a new Contract occurrence merely because it needs an exact reference.
 
-Definition, occurrence, applicable context, and semantic dependency must remain distinguishable because different
-compiler products use them differently. A verifier may need the definition and its applicable world. Diagnostic
-projection may also need source provenance. Runtime realization may only need compact execution material.
+Source provenance remains adjacent to semantic material rather than part of semantic identity. A source-only change may
+therefore refresh provenance without forcing an unchanged semantic definition to become a different Contract meaning.
 
-This separation is also important for V2. A source-location change should not invalidate an unchanged semantic result
-merely because diagnostic provenance changed. Semantic material and source projection therefore need independent
-physical evolution even when they remain related.
+### 21.3. One-Dimensional Authorities Publish Distinct Material
 
-### 21.3. One-Dimensional Contract Authorities Need Distinct Material
+The compiler must preserve the distinctions established by the one-dimensional Contract ADRs.
 
-The compiler architecture must respect the ownership already established by the one-dimensional Contract ADRs.
+The inbound authorities establish the lawful movement from external presentation toward Core material. Fact and
+Invariant provide factual and judgment material without requiring the host object topology to survive. State and
+Transition remain separate from ordinary realization control flow.
 
-`Established Contract World` must not mean that every Contract is flattened into one universal node shape. Each owning
-authority keeps the material needed to express its own judgment. Shared compiler infrastructure may index or relate that
-material, but the index does not become a new authority.
+Policy, Governance, Version, Budget, and Capacity provide applicable machine context under their own laws. Compiler
+scheduling, cache policy, or memory layout cannot substitute for those Contract meanings.
 
-For architecture review, the current Contract surface can be grouped by the kind of compiler relation it creates.
+Failure, Publication, and Output preserve refusal and outward claim meaning through execution formation and lowering.
+Diagnostic Evidence and Retention remain Contract material where their owning laws establish them, while compiler
+explanation and rendering remain separate compiler products.
 
-| Contract area                                 | Architecture that must remain possible                                                                                                               |
-|-----------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Input, Admission, Canonicalization, Lowering  | preserve the exact inbound boundary and let compiler/backend realization form lawful core material without a user-supplied 1D implementation         |
-| Fact and Invariant                            | expose pure factual coordinates and exact judgment dependency without requiring runtime object topology to survive                                   |
-| State and Transition                          | preserve legal movement separately from ordinary control-flow structure                                                                              |
-| Policy, Governance, Version, Budget, Capacity | provide applicable machine context without turning compiler scheduling or storage policy into Contract meaning                                       |
-| Failure, Publication, Output                  | preserve declared stop and outward-claim meaning while compiler/backend realization performs the required outward machine work                       |
-| Diagnostic Evidence and Retention             | keep explanation tied to its owning judgment while allowing cold provenance and presentation material to remain outside hot execution representation |
+A downstream consumer reads only the authority material and derived relations it requires. Consumer convenience does not
+add fields to an authority-owned Contract simply because one subsystem would prefer them nearby.
 
-These groups are only compiler-review groupings. They do not create Contract hierarchy or composition.
+### 21.4. Product Subsystems Are Siblings
 
-The architecture should let a consumer ask for the exact material it needs without forcing every consumer to load or
-copy every Contract coordinate. This becomes more important as the Contract surface grows.
+Kontrakt does not have one semantic pipeline in which Verifier produces PBT, PBT produces Diagnostics, and Diagnostics
+produce Backend meaning.
 
-V2 should be able to reuse unchanged authority-specific material independently. A change in Diagnostic presentation
-should not require rebuilding an unchanged Fact definition, while a changed Policy World should invalidate products
-whose applicability actually depends on that world.
-
-### 21.4. Product Subsystems Must Share the Contract World Without Forming an Authority Chain
-
-Kontrakt produces more than executable code.
-
-The verifier checks declared obligations. Test synthesis derives concrete verification products from those same
-obligations. Diagnostics explain compiler and Contract results. The backend produces an executable realization. None of
-these products should become the semantic input of another merely because the current implementation happens to run them
-in that order.
-
-The architecture should allow this relation:
+The major product subsystems consume the Canonical Contract World as siblings.
 
 ```text
-Established Contract World
-        ├── Verifier
-        ├── Reference Judgment
-        ├── PBT / Fixture / Unit-Test Synthesis
-        ├── Contract Coverage
-        ├── Compiler Diagnostic Projection
-        ├── Diagnostic Evidence Realization Planning
-        ├── Publication / Output Projection
-        └── Realization Planning
+                  Canonical Contract World
+                           │
+        ┌──────────────────┼──────────────────┐
+        │                  │                  │
+        ▼                  ▼                  ▼
+    Verifier          Test Synthesis      Diagnostics
+        │                  │                  │
+        └──────────────┬───┴───────┬──────────┘
+                       │           │
+                       ▼           ▼
+              Shared Derived    Reference
+                 Knowledge      Judgment
+                       │
+                       ▼
+                Execution Formation
 ```
 
-Shared analysis may sit between the established material and these consumers when several of them need the same derived
-knowledge.
+Shared derived knowledge is allowed when the same result is valid for several consumers. The subsystem that establishes
+the analysis owns that result. The consumers do not acquire authority over the Contract material from which it was
+derived.
 
-The verifier must not become the authority from which PBT learns Contract meaning. PBT must not become the oracle that
-defines backend correctness. Diagnostics must not rewrite semantic material to make explanation easier.
+Reference Judgment remains a sibling product rather than the semantic source of the others. The exact amount of derived
+analysis it may share with optimized paths remains Open because that choice affects the independence of differential
+checking.
 
-A Reference Judgment path should remain deliberately simple enough to serve as an independent oracle for generated
-gates, backend products, PBT, and selected optimizations. Sharing all of its internal logic with the optimized path
-would weaken differential checking.
+### 21.5. V1 Query Architecture Owns Product Orchestration
 
-### 21.5. Diagnostics Need Two Separate Compiler Relations
-
-Compiler diagnostics and Contract Diagnostic Evidence are different products.
-
-Compiler diagnostics explain why compilation, verification, optimization, or backend realization succeeded or failed.
-Contract Diagnostic Evidence is declared Contract material associated with a judgment and its retention law.
-
-The realization architecture must support both without merging them.
-
-Diagnostic richness should not force provenance strings or explanation objects into every hot semantic record. Stable
-semantic material should be able to remain compact while diagnostic projection reaches related provenance when an
-explanation is requested.
-
-V2 should be able to refresh source projection or diagnostic rendering without invalidating unchanged Contract meaning.
-This requires a structure where semantic identity, provenance, and presentation are related but not physically
-inseparable.
-
-### 21.6. Generated PBT, Fixtures, and Unit Tests Are a Product Subsystem
-
-Generated tests must be derived from declared Contract obligations rather than from incidental implementation behavior.
-
-The architecture must give test synthesis access to the same established material and reusable analyses used by
-verification. Generated cases should retain identity linking them to the exact obligation they exercise.
-
-V1 needs a deterministic product boundary for basic valid, invalid, and boundary cases. State-machine legality and
-Failure attribution must also be representable where their owning Contracts require them.
-
-V2 should be able to reuse unchanged test plans, perform stronger constraint-directed generation, and shrink failing
-cases using semantic knowledge. Persistent failing cases may be stored as compiler products, but they do not become
-Contract authority.
-
-Compiler QA remains separate. Fuzzing the compiler and generating user Contract tests are different activities even when
-they reuse generators or reference judgments.
-
-### 21.7. Existing Optimization Work Is the V1 Baseline, Not the Final Architecture
-
-Earlier Kontrakt optimization work remains valuable even though much of it predates the V2 incremental plan.
-
-The current acquisition, identity, publication, cache, and mechanically sympathetic storage work should be treated as
-the V1 baseline. ADR-0070 must not force those exact mechanisms to remain forever, but the new architecture must
-preserve the places where they can be applied.
-
-The following evolution should be reviewed.
-
-| Existing direction                                 | V1 use                                                                                               | V2-aware extension to evaluate                                                                                   |
-|----------------------------------------------------|------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------|
-| bounded class/type acquisition and cycle detection | avoid repeated host traversal and terminate JVM topology analysis                                    | dependency-aware reuse with fine-grained invalidation of changed realization knowledge                           |
-| stable identity and exact collision verification   | recognize already-produced semantic or realization material without using object address as identity | persistent fingerprints, content-addressed artifacts, and cross-session reuse without changing semantic identity |
-| build, verify, seal, publish                       | keep incomplete compiler material invisible to consumers                                             | concurrent immutable generations with safe reader pinning and later reclamation                                  |
-| L1/L2-style bounded reuse                          | remove repeated work inside one compiler run                                                         | separate local, persistent, and optional remote reuse with explicit invalidation and cache non-authority         |
-| direct-to-final materialization                    | avoid temporary object chains and repeated copying                                                   | lazy or partial materialization when a summary or unchanged result is enough                                     |
-| primitive slabs and dense tables                   | reduce pointer chasing and GC pressure on hot compiler material                                      | adaptive hot/cold layout, sparse materialization, and representation selected from measured access patterns      |
-| worker-local ownership and deterministic merge     | reduce contention while preserving deterministic results                                             | parallel incremental evaluation over independent result regions                                                  |
-| canonical compact references                       | make hot access cheap without changing semantic identity                                             | summary indexes and thin whole-machine analysis that avoid loading complete units without need                   |
-
-The V2 extension is not a requirement to implement a particular database, cache, or storage engine. It states what
-future techniques the V1 boundaries should be capable of receiving.
-
-The review should compare this evolution against several production compiler patterns without importing their vocabulary
-into Contract semantics. Useful references include a verified canonical checkpoint before optimization, reusable
-analysis with explicit invalidation, summary-driven whole-program work, incremental early cutoff, independent
-translation validation, and JVM-friendly specialization. The current implementations of those ideas may resemble Swift,
-LLVM/MLIR, rustc-style incremental computation, ThinLTO, Alive2-style validation, or Graal-oriented lowering. They
-remain engineering references rather than required Kontrakt mechanisms.
-
-### 21.8. Contract-Aware Optimization Must Expand Beyond the Old Storage Optimizations
-
-The older work mainly makes compiler material cheaper to acquire, store, and reuse. A verified closed realization gives
-Kontrakt a second optimization opportunity.
-
-The compiler should evaluate higher-level transformations while it still knows Contract meaning. Candidate families
-include static discharge of judgments whose result is already known and dependency slicing that removes material no
-applicable judgment can observe.
-
-Specialization should also be evaluated where the selected Contract world removes runtime choice. A known Policy World
-or State-machine surface may permit a smaller execution path without changing the user algorithm.
-
-Representation overhead may be removed inside the closed region when the required behavior remains observable in the
-same way. Kontrakt-owned carriers are the strongest candidates. Verified Operation-local wrappers and adapters may also
-be reduced when they add no required behavior.
-
-A user-local object remains only a conditional candidate. V1 should use already-produced verification knowledge and
-bounded local analysis rather than start an expensive generic escape-analysis effort solely to remove that object.
-
-Physical Contract machinery may also be combined when separate runtime calls do not carry separate required meaning.
-Such fusion must preserve judgment result and required Failure or Diagnostic relations.
-
-These candidates extend the existing mechanical-sympathy work rather than replacing it. The older work reduces the cost
-of compiler and runtime representation. The newer work uses Contract knowledge to reduce how much realization must exist
-in the first place.
-
-### 21.9. V2 Optimization Should Add Incremental and Summary-Driven Cost Reduction
-
-V2 should not merely add more local optimization passes.
-
-A major V2 optimization target is avoiding compilation work that no longer needs to happen.
-
-Stable producer/result boundaries should allow the compiler to record which earlier results influenced a later result. A
-changed input can then invalidate only the dependent work. Recalculation should be able to stop when a recomputed
-semantic result is unchanged.
-
-Whole-Machine work should also be able to begin from compact summaries. Full materialization of every Contract unit or
-realization body should not be required when a summary can prove that the unit is irrelevant to the current decision.
-
-This direction should be evaluated together with persistent result reuse. A persistent cache is useful only when
-identity, schema, and invalidation remain separate from Contract authority.
-
-V2 may also add stronger cost models and profile-guided decisions. Runtime profile data may influence profitability but
-must not make an otherwise illegal transform legal.
-
-### 21.10. Analysis and Transformation Need an Explicit Relationship
-
-Several subsystems may need the same dependency or applicability knowledge. The compiler should calculate that knowledge
-once when the same result is valid for all of them.
-
-Analysis must remain distinguishable from transformation. A transformation changes realization material. Analysis
-describes material it consumed.
-
-When a transformation changes the facts on which an analysis depended, later consumers must not continue using the old
-analysis as if it were valid.
-
-The exact mechanism remains open. V1 may use a small analysis cache. V2 may use finer invalidation. The architecture
-should make both possible without changing Contract meaning.
-
-Optimization should also separate legality from profitability. Contract preservation decides whether a transformation
-may occur. A cost model decides whether the legal transformation is worth applying.
-
-### 21.11. Important Transforms Need Independent Preservation Checking
-
-The optimized path should not be the only implementation that declares its own transformation correct.
-
-V1 should provide verification hooks around important transformations. A simple reference path or structural verifier
-may be enough for some classes of change.
-
-V2 should be able to attach stronger translation validation where the risk justifies it. The validation method may
-differ by transform because layout rewriting and judgment fusion preserve different relations.
-
-This does not make mathematical proof part of Contract authority. It is independent checking of realization.
-
-### 21.12. JVM Lowering Must Preserve High-Level Knowledge Long Enough to Use It
-
-Kontrakt should not lower to generic JVM structure so early that Contract-specific optimization becomes impossible.
-
-A Contract-aware execution form should retain enough information to know which values come from established Facts and
-which judgments can observe them. It should also preserve the relations needed for Failure and Diagnostic correctness.
-
-Only after those high-level decisions are complete should JVM lowering choose the physical form needed by the target
-backend.
-
-That lowering should aim to produce material friendly to HotSpot or Graal. Avoidable reflection and megamorphic dispatch
-should not be reintroduced after Kontrakt has already resolved the relevant relation.
-
-The target backend should expose its actual capabilities to planning. A transform that requires a capability the backend
-cannot preserve must be rejected or left unapplied.
-
-### 21.13. Logical Stages Must Not Require Full Physical Materialization
-
-A real architecture needs named material boundaries, but each boundary does not need a new object graph.
-
-A verified realization may share backing storage with acquired realization knowledge and add only a verified result or
-index. A later execution form may materialize only the regions needed by the backend.
-
-This freedom matters because Kontrakt already has a large Contract surface. Creating a full object-heavy copy at every
-logical stage would make the architecture itself the source of compile-time cost.
-
-The architecture should therefore define what each stage knows and who may consume it before deciding whether the stage
-requires independent storage.
-
-### 21.14. Candidate V1 Structural Requirements to Review
-
-Before this ADR becomes Accepted, the V1 architecture should be checked for the following capabilities.
+V1 uses query-oriented orchestration for compiler products.
 
 ```text
-Contract authority can publish stable established material.
-
-Selected one-dimensional Contract declarations can be realized without user implementation SPIs.
-
-The generated IDL-named external interface is backend-owned.
-The generated Operation interface is the user implementation boundary.
-
-User Operation realization can be acquired once and reused by later compiler work.
-
-Core-closure verification produces an explicit accepted or refused result.
-
-Verifier, diagnostics, test synthesis, and backend can consume the same Contract world without forming an authority chain.
-
-Shared derived knowledge has an owner and a validity boundary.
-
-Verified realization is distinguishable from later transformed realization.
-
-High-level Contract-aware optimization can occur before JVM-specific lowering.
-
-Semantic identity remains separate from physical location and reuse keys.
-
-Published material can use dense or mechanically sympathetic physical representation without changing its meaning.
-
-Important transforms can be independently checked.
-
-Whole-Machine compilation has a summary seam even if V1 performs eager compilation initially.
-
-Compiler work and memory cost can be attributed to the stage that caused them.
-
-An expensive produced result has enough identity and input relation for V2 to add incremental reuse later.
+Compiler Product Request
+        ↓
+Query Boundary
+        ↓
+Owning Compiler Computation
+        ↓
+Published Result
 ```
 
-These are architecture capabilities rather than commitments to one current implementation technique.
+A major query result has an explicit logical key and explicit inputs. Query evaluation records the results it consumed.
+A published result is immutable to ordinary consumers and has a validity relation to the compiler generation that
+produced it.
 
-### 21.15. Candidate V2 Extensions to Keep Open
+The query engine coordinates work. It does not own Contract semantics.
 
-V2 should be able to add incremental invalidation without changing the Contract model established in V1.
+Passes and local transform pipelines execute inside the computation that produces a query result. They do not become the
+top-level architecture for products that have no semantic reason to run in one linear order.
 
-It should also be able to retain compiler generations long enough for IDE and build consumers to read a coherent
-published world while a new candidate is being produced.
+The query graph, Contract semantic relations, realization call/effect relations, and diagnostic provenance relations
+remain separate graph families. Their cycles, identities, lifetimes, and invalidation rules are not interchangeable.
 
-Persistent reuse should remain possible for semantic products, summaries, test plans, and selected analysis results.
-Different products may need different storage policies rather than one universal cache.
+Query result storage remains typed by product family. A verifier result, an execution product, a diagnostic product, and
+a JVM product do not become one universal `Object` result merely because the query engine can address all of them.
 
-Whole-Machine compilation should be able to use summaries before loading full units. Backend work should remain
-independently parallelizable after global decisions are known.
+### 21.6. Realization Acquisition Is a Separate Frontend
 
-Optimization may gain stronger cost models, broader specialization, or profile-guided profitability. None of those
-extensions may change the legality rule established by Contract meaning.
+The Contract frontend and the realization frontend remain separate compiler subsystems.
 
-Diagnostic explanation may become on-demand and incrementally refreshed. PBT plans may also be reused when their exact
-Contract obligations remain unchanged.
+The realization frontend starts from the explicit host realization binding and acquires the JVM implementation required
+for Core verification. Kotlin or Java implementation topology does not participate in Contract name resolution.
 
-The specific V2 engine remains realization and can be replaced.
+The acquired realization form must make compiler analysis possible without promoting that form into Contract meaning. At
+minimum, the logical realization body representation must support explicit control flow, exact value relations,
+classified call/effect sites, source provenance, and explicit unsupported constructs.
 
-### 21.16. Questions That Must Be Closed Before Acceptance
+Recursive host call topology is handled by compiler traversal and analysis. It does not change the Contract rule that
+semantic cycles are illegal where the owning Contract law forbids them.
 
-The exact material stages still need review. The first question is whether `Published Realization Knowledge`,
-`Verified Realization`, and `Contract-Aware Execution Material` need independent physical forms or only independent
-logical boundaries.
+Backend-native handles do not become published semantic authority. A compiler may keep temporary handles during
+acquisition, but later consumers must not need to reopen the acquisition backend to reconstruct the same valid
+realization knowledge.
 
-The compiler also needs an ownership decision for shared analysis. That decision must explain how a result becomes
-valid, how later transformation invalidates it, and how independent verification avoids circular reuse.
+### 21.7. Verification Adds a Property; It Does Not Require a Full New IR
 
-The unit of User-System Realization verification remains open. Operation-local analysis may be sufficient for some
-checks, while Core or Whole-Machine relations may require wider summaries. This does not reopen user realization for
-one-dimensional Contracts.
+Core Realization Closure verification consumes the acquired realization and the established Contract material that
+constrains it.
 
-The Whole-Machine summary boundary also needs a concrete V1 decision. V1 may build summaries eagerly, but the format
-should not prevent V2 from using them for incremental linking and lazy materialization.
+Verification produces an explicit result tied to the exact realization generation it checked. Proven violation,
+unsupported analysis, and successful establishment must remain distinguishable.
 
-The supported execution envelope needs concrete V1 enforcement rules. The boundary decision is already fixed: external
-frameworks may surround an Interaction but may not silently participate inside its governed realization. Review must
-decide which host mutation mechanisms are supported and how a detected realization change invalidates the affected
-product.
+`Verified Realization` is a logical boundary. V1 does not require a full second copy of the realization IR merely
+because verification succeeded.
 
-The optimizer needs a first V1 legality set. Each accepted transform should state what relation it preserves and what
-independent check can detect a bad rewrite.
+A lawful physical implementation may use:
 
-The verifier, Reference Judgment, PBT, diagnostics, and backend need a final producer-consumer map. That map should
-identify which material each subsystem consumes without giving one product authority over another.
+```text
+Realization Body Material
+        +
+Verification Result / Index
+```
 
-Compiler resource ownership also needs to be attached to the architecture. The richer compiler must be able to identify
-where memory and semantic work are spent so optimization of user execution does not make compilation itself unbounded.
+when the semantic vocabulary of the realization has not changed.
 
-These questions should be closed from Contract semantics outward. The architecture must not change the Contract model
-merely to make one current compiler technique easier to implement.
+Verification-derived summaries may be published for later consumers. A backend or optimizer should not rerun Core
+closure analysis merely to rediscover a result that the verifier has already published and that remains valid for the
+same generation.
+
+The exact supported JVM subset and the treatment of opaque implementation remain Open.
+
+### 21.8. Shared Analysis Has Explicit Ownership and Validity
+
+Analysis and transformation are different compiler work.
+
+Analysis reads a material generation and establishes derived compiler knowledge. Transformation changes realization
+material or lowers it into a different logical level.
+
+A shared analysis result has an owner, an input generation, and a validity boundary. When a transformation changes
+material on which the analysis depended, the transformation must either preserve that analysis explicitly or cause later
+consumers to request a valid replacement.
+
+This rule applies whether V1 stores the result in a compact analysis table or another structure. The physical cache is
+not the architectural meaning.
+
+Deliberate independent recomputation remains allowed when independence is part of verification. Ordinary duplicate
+recomputation is not the default architecture.
+
+### 21.9. Contract-Aware Execution IR Is a Separate Logical Level
+
+Execution formation is where established Contract meaning and verified user realization are combined into an executable
+compiler representation.
+
+This requires a logical level distinct from both the Canonical Contract World and the acquired user realization.
+
+The Contract-Aware Execution IR must make runtime-required judgments explicit and retain exact references to the
+Contract authority that owns those judgments. It must preserve the relations needed for Failure, State movement,
+Publication, Output, and required diagnostic attribution.
+
+It must not duplicate the Canonical Contract World into every IR operation. An execution operation keeps only the exact
+reference needed to reach the authoritative material.
+
+JVM-specific stack shape, local-slot placement, bytecode encoding, or physical object layout do not belong to this
+level.
+
+Optimization normally produces another generation satisfying the same Execution IR contract. An optimization generation
+is not automatically a new semantic IR level.
+
+### 21.10. Optimization Uses Contract and Verification Knowledge Before JVM Lowering
+
+V1 contains an explicit Contract-aware optimization stage before JVM-specific lowering.
+
+The optimizer may consume fixed established Contract context and valid realization analyses. It may simplify generated
+Contract machinery or physical realization only when the required meaning is preserved.
+
+Existing Kontrakt optimization work remains the baseline. Stable acquisition, exact identity, sealed publication,
+bounded reuse, direct materialization, dense storage, and mechanically sympathetic layout remain usable implementation
+techniques.
+
+The architecture also permits higher-level Contract-aware optimization. Static discharge, specialization,
+unreachable-path reduction, exact binding use, intermediate removal, and judgment fusion remain candidates where their
+legality is established.
+
+The exact minimum transform set required from V1 remains Open. The optimizer stage and its preservation boundary are not
+Open.
+
+Legality and profitability remain separate. Contract and realization preservation decide whether a transform may run. A
+cost model decides whether a legal transform is worth applying.
+
+### 21.11. JVM Lowering Is a Separate Target Boundary
+
+Kontrakt retains high-level Contract knowledge until Contract-specific simplification is complete.
+
+Only then does JVM lowering choose target-specific execution form.
+
+The JVM lowering boundary may introduce JVM value forms, invocation forms, control transfer, classfile constraints, and
+backend capability checks. It must not reinterpret the Contract meaning that justified the earlier execution form.
+
+The emitted product should be friendly to HotSpot or Graal without attempting to replace their general low-level
+optimization role.
+
+Physical layout planning may be fused with backend work or may exist as a distinct derived product. Its target profile,
+slab layout, alignment, and storage mechanism remain realization. They do not define semantic identity.
+
+### 21.12. Published Compiler Material Uses Complete Generations
+
+A consumer must not observe half-built compiler material.
+
+The V1 architecture retains the existing construction discipline:
+
+```text
+private construction
+    ↓
+verification
+    ↓
+seal
+    ↓
+publish
+```
+
+The exact physical mechanism may use frozen tables, immutable slabs, or another representation. The architectural
+property is complete publication.
+
+Generation identity is compiler state rather than Contract identity. Two compiler generations may contain the same
+semantic Contract World.
+
+High-cardinality material must not require one JVM object per logical entity. Published hot material must remain
+lowerable to dense tables, primitive columns, compact ranges, or another index-addressable representation without
+changing its logical contract.
+
+Logical stage boundaries do not require full physical copies. A verification overlay may share the realization body. An
+execution region may be materialized only when the requested product requires it.
+
+### 21.13. Whole-Machine Work Uses Explicit Summaries
+
+Whole-Machine work has an explicit summary boundary from V1.
+
+A summary is derived compiler material. It is not a second Contract authority and does not replace the full unit when
+full material is required.
+
+The summary boundary must allow global decisions to be made without eagerly merging every complete Contract unit or
+realization body into one giant graph.
+
+V1 may compute summaries eagerly and keep them only in memory. V2 may persist them, use them for incremental linking,
+and materialize full units only when a requested downstream product requires them.
+
+The exact summary schema belongs to design and follows the final Contract semantics owned by the relevant ADRs.
+
+### 21.14. Diagnostics, PBT, and Compiler QA Remain Separate Products
+
+Compiler diagnostics consume semantic subjects, source provenance, and compiler-derived evidence. They do not reopen the
+IDL and independently reconstruct Contract meaning.
+
+Contract Diagnostic Evidence remains separate from compiler diagnostics. The first is Contract material where declared
+by its owning law. The second is a compiler product explaining compilation and realization results.
+
+PBT, fixture generation, and unit-test synthesis are product subsystems. Generated cases identify the exact Contract
+obligation from which they were derived. Test generation does not become production Contract authority.
+
+Compiler QA remains separate from generated user tests. Differential testing, fuzzing, golden vectors, and translation
+validation may check the compiler and its transformations without becoming part of the user Contract model.
+
+### 21.15. V2 Extends the Same Product Graph
+
+V2 keeps the V1 product and authority boundaries.
+
+It extends query execution with persistent result and dependency state. Recomputed results may stop propagation when
+their consumer-visible result is unchanged. Source provenance may invalidate independently from unchanged semantic
+material.
+
+V2 may add lazy semantic and realization materialization, persistent summaries, multiple immutable compiler generations,
+parallel demand evaluation, and selected persistent caches.
+
+Incremental granularity is product-specific. The compiler does not require one universal incremental algorithm for
+semantic queries, relational analyses, whole-machine summaries, and backend artifacts.
+
+HID or another compact fingerprint may support reuse validation. Merkle structure may localize structural changes.
+Dependency graphs record computational consumers. Cache tiers decide retention. These mechanisms remain distinct.
+
+The same equivalence laws apply across clean and reused execution:
+
+```text
+clean build
+    ==
+incremental build
+
+cold cache
+    ==
+warm cache
+
+one worker
+    ==
+multiple workers
+```
+
+The equality concerns semantic and required product results. Physical scheduling and cache state may differ.
+
+### 21.16. Architecture Boundaries That Remain Open
+
+The architecture above is fixed independently of the remaining policy questions in Section 22.
+
+Those questions do not reopen the Canonical Contract World, query-oriented V1 orchestration, sibling product structure,
+separate realization frontend, verification overlay, shared-analysis validity law, Contract-Aware Execution IR, JVM
+lowering boundary, or V2 incremental extension seam.
 
 ---
 
 ## 22. Open in This ADR
 
-The exact V1 Core Realization Closure verification model remains open. It must define what the compiler can establish
-about user code before that code is accepted as a Kontrakt Core realization.
+The observable user-realization boundary remains Open. Kontrakt still needs an explicit decision about which
+host-language behavior outside declared Contract meaning must be preserved when physical realization is transformed.
 
-The treatment of implementation that cannot be inspected precisely also remains open. Reflection and native execution
-are two examples that need an explicit V1 rule. Any supported rule must preserve the compile-time boundary in Section 11
-rather than silently falling back to runtime interception.
+The V1 supported realization subset remains Open. This includes the treatment of reflection, method handles,
+`invokedynamic`, native execution, dynamic class loading, generated bytecode, and opaque third-party implementation
+where Core Realization Closure cannot be established by ordinary static acquisition.
 
-The host/framework boundary is no longer semantically open. External framework work belongs outside the Interaction
-boundary, and hidden participation in governed realization is not admitted. What remains open is the V1 enforcement
-mechanism for supported runtime mutation and intervention.
+The trusted-summary boundary remains Open. User-declared trust must not become a way to manufacture Contract
+satisfaction, but this ADR has not yet decided whether Kontrakt-owned or backend-owned verified intrinsic summaries may
+stand in for an implementation body that the compiler cannot inspect directly.
 
-The host-facing semantic split is no longer open. ADR-0046 fixes the IDL-named external interface as the outward host
-surface and a separate generated Operation interface as the user business-realization surface. What remains open here is
-the physical backend assembly and emission strategy that connects those surfaces without turning generated artifacts
-into authority.
+The exact V1 optimization obligation set remains Open. Section 21 establishes the optimization stage and its
+preservation boundary, but it does not yet choose the minimum transform families that V1 must actually perform.
 
-The exact compiler material used to analyze realization remains open. This includes the representation used for user
-code and the form of reusable analysis results.
+The Reference Judgment independence boundary remains Open. Reference Judgment is a sibling product, but this ADR has not
+yet decided exactly which shared derived analyses it may consume without weakening its role in differential checking.
 
-The exact reuse mechanism remains open. Existing reuse and identity machinery may be reused, but no current technique is
-required by this ADR.
+These questions must not weaken the decisions already made here.
 
-The exact V1 optimization set remains open. Each accepted transformation needs a defined legality condition and a way to
-verify that its result preserves the required meaning.
-
-The exact JVM emission path remains open.
-
-These open questions must not weaken the decisions already made here.
-
-Realization remains non-authoritative, and external technology still ends before the Core. User-System Realization must
+Realization remains non-authoritative. External technology still ends before the Core. User-System Realization must
 preserve Core Realization Closure.
+
+V1 remains query-oriented. Query state and cached products remain compiler realization rather than Contract authority.
 
 Compiler techniques remain replaceable. Optimization may proceed only when the required meaning is preserved.
 
@@ -1273,20 +1087,8 @@ Compiler techniques remain replaceable. Optimization may proceed only when the r
 
 The Core boundary now applies to the actual user realization rather than stopping at the Operation signature.
 
-The user implementation surface is correspondingly narrow. Users declare one-dimensional Contracts in IDL and implement
-Operation business logic. Kontrakt realizes the declared Contract machinery, forms and binds actual Operation
-parameters, and implements the IDL-named external interface through backend product.
-
 Kontrakt must inspect enough implementation to detect factual input that bypasses the declared boundary. This increases
 compiler work, but it makes Fact authority real inside the Core rather than merely descriptive at its edges.
-
-External framework compatibility becomes explicit. A host framework may surround a Kontrakt Interaction and keep its own
-runtime behavior outside the governed realization. A usage pattern that injects hidden framework behavior into a
-governed Operation is intentionally rejected.
-
-Kontrakt defends the supported execution envelope but does not claim authority over arbitrary host mutation that
-bypasses that envelope. A detected violation fails closed. Execution after an unsupported bypass is outside the Kontrakt
-guarantee.
 
 Core closure is therefore not enforced by surrounding ordinary user calls with an implicit proxy or monitoring layer.
 
@@ -1298,9 +1100,9 @@ The same compiler knowledge must be reused for optimization after legality has b
 simplification. Kontrakt therefore does not stop at verification and restore the authored realization unchanged by
 default.
 
-A closed governed region gives Kontrakt a stable place to remove representation overhead. Kontrakt-owned material and
-verified Operation-local wrappers are the primary targets. User-local objects remain optional candidates when the
-required proof is cheap.
+V1 organizes that compiler work through query-oriented product boundaries. Verification, diagnostics, test synthesis,
+execution formation, optimization, and backend products can therefore request and reuse valid upstream material without
+forming one semantic authority chain.
 
 Kontrakt may simplify the physical execution around a lawful user computation before JVM emission without making its
 current technique part of Contract meaning.
@@ -1324,13 +1126,7 @@ explicit Contract meaning
         +
 legal State-Machine movement
         ↓
-Kontrakt Contract realization
-        ↓
-actual established Operation input
-        ↓
-User-System Operation Realization
-        ↓
-result-side Contract realization
+User-System Realization
         ↓
 Kontrakt verification and optimization
         ↓
