@@ -285,25 +285,47 @@ consumer may later need it.
 
 Occurrence material exists only when the owning authority gives one semantic application result meaning of its own.
 
-It must preserve:
+At minimum, the occurrence must preserve the exact semantic coordinates needed to interpret that established result.
 
 ```text
-the owning authority
-the Established Definition being applied
-the established result of that application
-every occurrence coordinate required by the owning law
+Established Occurrence O
+
+Occurrence Reference
+    → exact semantic application
+
+Definition Reference
+    → exact applied Definition
+
+Applicable Basis
+    → exact Required Basis
+    → exact Basis Binding
+    → exact Established Material
+
+Applicable Context
+    → exact meaning-relevant established coordinates only
+
+Applicability Law
+    → exact law coordinate
+      only when the other preserved coordinates
+      do not identify that law uniquely
+
+Established Result
+    → exact occurrence-owned meaning
 ```
 
-An Occurrence Reference is required when later meaning depends on which application established the result.
+The occurrence does not need to copy complete source material when an exact semantic reference already preserves the
+required relation.
 
-Applicable context belongs to the occurrence only where the owning meaning requires that context to interpret the
-result.
+It must not replace exact attribution with a lookup of `current`, `latest`, nearest, or physically reachable material.
 
-Compiler execution, query evaluation, diagnostic retention, or runtime invocation does not create an occurrence by
-itself.
+A successful Applicable Basis relation already means that the bound material was applicable to that occurrence.
+
+A second independent `applicable = true` field is not required by Contract law.
+
+Candidate search order, rejected alternatives, solver trace, query dependencies, cache state, worker state, and storage
+position are not occurrence meaning unless the owning Contract explicitly makes one of them semantic basis.
 
 Equal occurrence results do not collapse distinct occurrences when the owning law preserves their distinction.
-
 ---
 
 ## 4.5. Contract Occurrence
@@ -677,78 +699,529 @@ definitions it consumes.
 
 Established Material is authoritative under its source meaning.
 
-That does not make it valid basis for every later responsibility.
+That does not make it valid Basis for every later semantic use.
 
-The **Applicable Context** of an occurrence is the Contract material required to interpret that occurrence under its
-owning law.
+**Applicable Context** is the exact Contract context that the owning applicability law actually uses to decide one
+dependent application.
 
-Each authority defines the context it needs.
+```text
+Applicable Context
 
-No universal context object is introduced.
+Version
+    → V4
+
+State
+    → Ready
+```
+
+Another applicability law may use different coordinates.
+
+```text
+Applicable Context
+
+Governance Binding
+    → G17
+
+Policy World
+    → Emergency
+```
+
+A law that needs no additional context has no additional context requirement.
+
+```text
+Applicable Context
+    → none
+```
+
+`none` means that the owning law requires no additional context.
+
+It does not mean that one universal empty context object exists.
+
+The context must not contain coordinates merely because they are globally available.
+
+A universal context such as the following is not Contract law.
+
+```text
+currentVersion
+currentPolicy
+currentState
+currentGovernance
+currentEverything
+```
+
+Only meaning-determining coordinates belong to the Applicability judgment.
+
+Source provenance, compiler generation, cache state, storage identity, worker state, and query state are not Applicable
+Context.
+
+When Version, Policy, Governance, State, or another Contract coordinate is already Established Material, Applicability
+may preserve an exact reference to that material rather than copy its complete meaning.
+
+### Why This Choice
+
+A sparse context states exactly which Contract coordinates can change the judgment.
+
+A universal context makes unrelated changes appear semantically relevant and obscures the actual Contract dependency.
 
 ---
 
-## 7.2. Applicability Relation
+## 7.2. Applicability Judgment
 
-**Applicability** answers whether exact Established Material may participate in a dependent semantic application.
-
-The relation starts from the source reference established in Section 6.
+**Applicability** decides whether one exact Basis Binding may participate in one exact dependent semantic application.
 
 ```text
-exact source meaning
-    +
-dependent responsibility
-    +
-required context
+Applicability Judgment
+
+Owning Applicability Law
     ↓
-applicable basis
+
+Basis Binding
+    Required Basis R
+        → Exact Established Material M
+
+Dependent Application
+    → U
+
+Applicable Context
+    → only meaning-determining coordinates
+
+Result
+    → Applicable
+    or
+    → Inapplicable
+```
+
+The Basis Binding is one input.
+
+Applicability does not independently accept another Required Basis or another source material that could disagree with
+that binding.
+
+The dependent application must identify the semantic use being judged.
+
+Examples include:
+
+```text
+Definition-time application
+    → exact Definition judgment
+
+Occurrence-time application
+    → exact Contract Occurrence
+
+Higher-scope application
+    → exact composition judgment
+```
+
+A runtime call, compiler query, source container, parent object, or physical scope does not define the dependent
+application by itself.
+
+The owning applicability law must be identifiable exactly.
+
+If the already-preserved authority, Definition, Required Basis, and dependent application identify one law uniquely, no
+additional applicability-law coordinate is required.
+
+If more than one meaning-distinct applicability law remains possible, an exact law coordinate must remain recoverable.
+
+```text
+Invariant I / Version V3
+
+inputFact
+    → Applicability Law L1
+
+stateBasis
+    → Applicability Law L2
+```
+
+The compiler must not infer `L1` or `L2` from declaration order, function order, table position, or lookup path.
+
+### Why This Choice
+
+Applicability is a judgment over an exact semantic relation and an exact use.
+
+Keeping the law, binding, use, and relevant context explicit prevents compiler lookup structure from becoming Contract
+authority.
+
+---
+
+## 7.3. Applicability Result and Applicable Basis
+
+The result of an Applicability judgment is:
+
+```text
+Applicable
+```
+
+or:
+
+```text
+Inapplicable
 ```
 
 The source material does not carry a permanent `applicable` flag.
 
-Applicability is decided for the dependent use.
-
----
-
-## 7.3. Deterministic Applicability
-
-Applicability depends on semantic meaning alone.
-
-The same source meaning under the same relevant context must produce the same applicability result.
-
-A compiler cache cannot make material applicable.
-
-Physical reachability cannot do so either.
-
----
-
-## 7.4. Applicability After Change
-
-Later establishment may change what is applicable to later use.
-
-The earlier establishment remains unchanged.
+Applicability belongs to the dependent use.
 
 ```text
-earlier meaning stays fixed
+Established Material M
 
-later meaning may govern later use
+Use U1
+    → Applicable
+
+Use U2
+    → Inapplicable
 ```
 
-The authority that owns succession decides when later material replaces what was previously applicable.
+When the result is `Applicable`, the Basis Binding may become **Applicable Basis** for that exact semantic use.
+
+```text
+Applicable Basis
+
+Required Basis R
+    → Basis Binding B
+        → Established Material M
+    → applicable to Use U
+```
+
+The Applicable Basis relation itself records successful applicability.
+
+A separate independent Boolean is not required.
+
+The following do not establish Applicable Basis:
+
+```text
+same Contract kind
+material exists
+material is published
+material is reachable
+Basis Binding exists
+compiler lookup succeeds
+cache entry exists
+```
+
+A bound but inapplicable material does not satisfy the Required Basis.
+
+This ADR does not create one permanent Established Applicability object for every applicability check.
+
+If a later Established result depends on the judgment, the exact determining relation must remain attributable according
+to Section 7.6.
+
+### Why This Choice
+
+A permanent flag would incorrectly move use-specific meaning onto the source material.
+
+A universal Applicability object for every check would turn semantic evaluation into an occurrence or query-result
+store.
+
+---
+
+## 7.4. Deterministic Applicability
+
+Applicability depends only on the semantic inputs owned by the applicable law.
+
+```text
+same Owning Applicability Law
+    +
+same Basis Binding
+    +
+same Dependent Application
+    +
+same meaning-determining Applicable Context
+    ↓
+same Applicability Result
+```
+
+A change to an irrelevant coordinate must not change the result.
+
+The following cannot change Applicability meaning:
+
+```text
+compiler generation
+cache hit or miss
+storage address
+table position
+worker or thread
+query order
+analysis traversal order
+source formatting
+provenance-only movement
+```
+
+A change to a Contract coordinate used by the owning applicability law may require a new judgment for a later semantic
+application.
+
+The compiler may use these exact semantic inputs for reuse or invalidation.
+
+Reuse machinery does not become Applicability law.
+
+### Why This Choice
+
+The Contract exposes the complete semantic determinant set without fixing a cache key, fingerprint, or incremental
+algorithm.
+
+This permits precise reuse while keeping compiler mechanisms replaceable.
+
+---
+
+## 7.5. Candidate Set, Singularity, and Arbitration
+
+Applicability judges whether each candidate relation is valid for the dependent use.
+
+It does not choose one candidate merely because several are applicable.
+
+```text
+Candidate Basis Bindings
+
+B1
+    → Applicable
+
+B2
+    → Applicable
+```
+
+This result does not authorize Applicability to select `B1` or `B2`.
+
+```text
+B1 + B2 are applicable
+    ↓
+Required Basis completeness
+or
+Singularity law
+or
+explicit Arbitration law
+```
+
+Selection belongs to the authority that owns that decision.
+
+Candidate discovery order, ranking heuristic, hash order, declaration order, and first match are not implicit
+arbitration.
+
+Rejected candidates are not automatically part of the later Established Occurrence.
+
+They are preserved as Contract attribution only when the owning law makes the candidate set itself determining semantic
+Basis.
+
+For example:
+
+```text
+Governance Arbitration
+
+Determining Decisions
+    → D1
+    → D2
+    → D3
+
+Arbitration Law
+    ↓
+Resolved Selection
+```
+
+Here the complete competing set is semantic Basis because the Governance law says so.
+
+A compiler solver trace is still not Contract meaning.
+
+### Why This Choice
+
+Applicability answers legality, not preference.
+
+Combining legality and selection would let compiler candidate machinery silently acquire Contract authority.
+
+---
+
+## 7.6. Applicability Attribution in Established Occurrence Material
+
+When an Applicability judgment contributes to an Established Occurrence, the occurrence must preserve the exact semantic
+attribution that made the successful use meaningful.
+
+```text
+Established Occurrence O
+
+Occurrence Reference
+    → O
+
+Definition Reference
+    → D
+
+Applicable Basis
+
+    Required Basis R1
+        → Basis Binding B1
+        → Established Material M1
+
+    Required Basis R2
+        → Basis Binding B2
+        → Established Material M2
+
+Applicable Context
+
+    Context Coordinate C1
+        → exact Established Material C1'
+
+    Context Coordinate C2
+        → exact Established Material C2'
+
+Applicability Law
+    → exact law coordinate
+      only when not otherwise uniquely determined
+
+Established Result
+    → occurrence-owned meaning
+```
+
+The occurrence preserves **direct determining relations**.
+
+It does not copy the entire transitive semantic world.
+
+If `M1`, `C1'`, or another determinant is already Established Material with an exact reference, that exact reference is
+sufficient unless the owning occurrence law requires additional local meaning.
+
+```text
+Occurrence O
+    → Governance Binding G17
+        → Governance owns its own complete meaning
+```
+
+`O` does not need to duplicate every field already established by `G17`.
+
+The occurrence must not preserve a later lookup rule such as:
+
+```text
+use current Governance Binding
+use latest State
+use current Version
+```
+
+It preserves the exact material that determined that occurrence.
+
+The Applicable Basis relation already records the successful Applicability result.
+
+The occurrence must not depend on a second independently mutable `applicable = true` value.
+
+Candidate search order, rejected alternatives, proof trace, query dependency, cache entry, compiler generation, source
+line, and full provenance chain are not required attribution.
+
+They may belong to diagnostics or compiler analysis.
+
+If the owning Contract law makes a complete candidate set, exact source position, or another coordinate part of the
+result meaning, that coordinate becomes Contract attribution for that law.
+
+### Example
+
+```text
+Invariant Occurrence O17
+
+Definition
+    → PositiveBalance / V3
+
+Required Basis
+
+target
+    → Fact
+
+Applicable Basis
+
+target
+    → Basis Binding B42
+        → BalanceFact F42
+
+Applicable Context
+
+Policy World
+    → Normal
+
+State
+    → Active
+
+Result
+    → invariant satisfied
+```
+
+If later context changes:
+
+```text
+Policy World
+    Normal → Emergency
+
+State
+    Active → Closed
+```
+
+`O17` is not rewritten.
+
+A later semantic application may establish another occurrence under the new context.
+
+```text
+Invariant Occurrence O18
+
+Policy World
+    → Emergency
+
+State
+    → Closed
+```
+
+### Why This Choice
+
+The established occurrence remains interpretable without reconstructing historical context from mutable world state.
+
+Direct exact references avoid duplicating already-established meaning while preserving the complete semantic basis of
+the
+occurrence.
+
+---
+
+## 7.7. Applicability After Change
+
+Later establishment may change what is applicable to later semantic use.
+
+Earlier Established Occurrence Material remains unchanged.
+
+```text
+Occurrence O17
+    → Basis Binding B17
+    → State Ready
+
+later
+
+State Ready
+    → State Closed
+
+Occurrence O17
+    → unchanged
+```
+
+The new State may affect a later occurrence.
+
+It does not retroactively rewrite the earlier Applicable Basis or Applicable Context.
+
+The authority that owns succession decides which material applies to the later semantic application.
 
 No universal mutable `current` result is created here.
 
 ---
 
-## 7.5. Version and Governance
+## 7.8. Version and Governance
 
-Version may participate in Applicable Context when the owning Contract makes Version relevant.
+Version may participate in Applicable Context when the owning applicability law makes Version relevant.
 
-Governance Binding may participate when the dependent law requires a governed arrangement.
+Governance Binding may participate when the dependent law requires Governance material.
 
-Neither coordinate receives universal meaning from this ADR.
+```text
+Applicable Context
 
-The source authority remains responsible for deciding whether the coordinate matters to its own result.
+Version
+    → V7
+
+Governance Binding
+    → G22
+```
+
+Neither coordinate is universal.
+
+An Applicability law that does not use Version must not acquire Version dependency merely because Version exists.
+
+An Applicability law that does not use Governance must not acquire Governance dependency merely because a Governance
+Binding is available.
+
+The original source authority remains unchanged when its material becomes applicable to another semantic use.
 
 ---
 
@@ -756,128 +1229,498 @@ The source authority remains responsible for deciding whether the coordinate mat
 
 ## 8.1. Required Basis
 
-An authority defines the meaning required for its own judgment.
+A **Required Basis** is semantic material that a Contract judgment requires before that judgment can establish its
+result.
 
-It does not name the authority that must produce that material.
+The requirement belongs to the judgment that needs the material.
 
 ```text
-required basis meaning
-    ↓
-own judgment
+Definition judgment
+    └── Definition-time Required Basis
+
+Occurrence judgment
+    └── Occurrence-time Required Basis
+
+Higher-scope composition judgment
+    └── Higher-scope Required Basis
 ```
 
-This keeps each Contract independent from the topology that supplies its input.
+A Required Basis states **what meaning is required**.
+
+It does not state which authority, definition, compiler product, or runtime producer must supply that meaning.
+
+```text
+Required Basis
+
+leftOperand
+    → Fact
+
+rightOperand
+    → Fact
+```
+
+`leftOperand` and `rightOperand` are distinct requirements even though both require `Fact`.
+
+If the owning law gives two requirements different meaning, the compiler must be able to distinguish them without using
+declaration order, array position, storage order, or discovery order.
+
+A Definition owns a Required Basis only when that Basis is required for the Definition judgment itself.
+
+A Basis required only for one occurrence or one higher-scope judgment does not become Definition meaning.
+
+### Why This Choice
+
+The consuming Contract declares its need without naming its producer.
+
+This keeps source authority independent from composition topology.
+
+The trade-off is explicit requirement bookkeeping. That cost is required to avoid hidden producer and ordering
+semantics.
 
 ---
 
-## 8.2. Applicable Basis
+## 8.2. Basis Resolution and Basis Binding
 
-Material supplied to a judgment can satisfy the required basis only when it is applicable under Section 7.
+**Basis Resolution** determines which exact Established Material satisfies one exact Required Basis under the applicable
+composition law.
 
-The consuming authority judges the supplied meaning.
-
-It does not reconstruct how that material was produced.
+The result is a **Basis Binding**.
 
 ```text
-required basis
-    +
-applicable supplied material
-    ↓
-usable basis
+Required Basis
+
+leftOperand
+    → Fact
+
+rightOperand
+    → Fact
+
+
+Basis Binding
+
+leftOperand
+    → Established Fact A
+
+rightOperand
+    → Established Fact B
 ```
+
+Each Basis Binding must preserve both sides exactly:
+
+```text
+Required Basis
+    → exact requirement being satisfied
+
+Established Material
+    → exact source material supplied for that requirement
+```
+
+The consuming Contract does not choose the producer.
+
+The composition law that owns the semantic connection determines the binding.
+
+A compiler lookup result, call edge, query dependency, storage relation, or discovery path does not establish a Basis
+Binding.
+
+If the applicable composition law cannot determine the required exact source, that Required Basis remains unresolved.
+
+A Basis Binding is a semantic relation. Its physical representation is not defined here.
+
+### Why This Choice
+
+Requirement and source connection are different meanings.
+
+Keeping them separate allows the same Contract requirement to participate in different valid compositions without
+rewriting the requirement itself.
+
+The compiler must retain an explicit exact binding instead of recovering it later from implementation topology.
 
 ---
 
-## 8.3. Basis Resolution
+## 8.3. Applicable Basis
 
-Basis Resolution interprets a source connection owned by the composition that supplies the required basis.
+A Basis Binding does not by itself satisfy a Required Basis.
 
-It does not choose a source on behalf of the consuming Contract.
+The bound Established Material must also be applicable to the semantic judgment being performed.
 
-The resolved connection preserves the source reference from Section 6.
+```text
+Required Basis
+    ↓
+Basis Binding
+    ↓
+Applicability
+    ↓
+Applicable Basis
+```
 
-If the composition law does not determine the required connection, the basis remains unresolved.
+An **Applicable Basis** is a Basis Binding whose bound Established Material is permitted by the applicable Contract law
+to
+satisfy that exact Required Basis for that exact semantic use.
 
-The consuming Contract stays independent from producer topology, while the composed application remains deterministic.
+```text
+Basis Binding
+
+leftOperand
+    → Established Fact A
+        → applicable
+
+rightOperand
+    → Established Fact B
+        → applicable
+```
+
+The following are not enough:
+
+```text
+same Contract kind
+material exists
+material is published
+material is reachable
+Basis Binding exists
+compiler lookup succeeded
+```
+
+Applicability remains a separate Contract judgment.
+
+```text
+exists
+    ≠
+bound
+    ≠
+applicable
+```
+
+A bound but inapplicable material does not satisfy the requirement.
+
+### Why This Choice
+
+Source connection and permission to use that source may change for different reasons.
+
+Separating them prevents Version, Policy, State, or other applicability context from being hidden inside producer
+topology.
 
 ---
 
 ## 8.4. Complete Basis
 
-The owning law decides when its basis is complete.
-
-If required material is missing, the result receives no partial authority.
-
-```text
-required:
-    A + B
-
-available:
-    A
-
-result:
-    not established
-```
-
-Another complete alternative is valid only when the owning law declares it.
-
-Missing basis does not create another result.
-
----
-
-## 8.5. Composition Authority
-
-Resolving several inputs does not establish a larger meaning by itself.
-
-A separate law must own any meaning created from their combination.
+A judgment has **Complete Basis** only when every Required Basis owned by that judgment is satisfied according to the
+completeness law of the owning Contract.
 
 ```text
-MA + MB
-    ↓
-composition law
-    ↓
-MC
+Required Basis
+
+leftOperand
+    → applicable Established Fact A
+
+rightOperand
+    → unresolved
+
+Result
+    → Basis incomplete
+    → judgment cannot establish
 ```
 
-`MC` belongs to the composing authority.
+One satisfied requirement does not grant partial authority for another unsatisfied requirement.
 
-The source meanings keep their original authority.
+The owning Contract defines the required shape and cardinality.
+
+Examples include:
+
+```text
+exactly one
+
+zero or one
+
+one or more
+
+exact finite set
+
+A and B
+
+A or B
+```
+
+These are examples of possible owning laws. This ADR does not define one universal Basis cardinality language.
+
+For an `exactly one` requirement:
+
+```text
+zero applicable bindings
+    → incomplete
+
+one applicable binding
+    → satisfied
+
+more than one applicable binding
+    → invalid when singularity is required
+```
+
+A different alternative is valid only when the owning Contract explicitly defines that alternative.
+
+Missing Basis does not create another result.
+
+### Why This Choice
+
+Completeness belongs to the Contract that owns the judgment.
+
+A universal compiler rule would either reject valid Contract shapes or silently accept incomplete authority.
 
 ---
 
-## 8.6. Derived Dependency
+## 8.5. Basis States
 
-Basis Resolution establishes the exact semantic source connection owned by the applicable composition law.
+The following states are distinct.
 
-A compiler may derive its own computation dependencies from that relation.
+```text
+Not Owned
 
-The derived dependency is not Contract dependency and cannot replace the established source connection.
+The judgment defines no such Required Basis.
 
+
+Permitted Absence
+
+The owning law permits absence for that requirement.
+
+
+Required, Unresolved
+
+The judgment requires the Basis.
+No exact Basis Binding has been established.
+
+
+Bound, Inapplicable
+
+An exact Basis Binding exists.
+The bound material cannot satisfy this semantic use.
+
+
+Bound, Applicable
+
+An exact Basis Binding exists.
+The bound material may satisfy this semantic use.
+
+
+Complete
+
+Every requirement required by the owning law is satisfied.
+```
+
+`Not Owned`, `Permitted Absence`, and `Required, Unresolved` must not collapse into one semantic absence.
+
+A required unresolved Basis prevents the owning judgment from establishing.
+
+A representation may encode these states in any form. It must preserve their semantic distinction.
+
+### Why This Choice
+
+A single missing value cannot tell whether material was unnecessary, legally absent, or required but unresolved.
+
+That distinction is necessary for correct establishment, diagnostics, and later reuse.
 
 ---
 
-## 8.7. Whole-Machine Composition
+## 8.6. Basis and Definition Identity
 
-Whole-Machine composition may resolve basis connections across unit boundaries.
+A Required Basis belongs to the meaning of the judgment that declares it.
 
-The local Contract on either side remains independent of that connection.
+A resolved source does not automatically become part of the identity of the consuming Definition.
 
-If Whole-Machine semantics establish a new result from the connected material, a Whole-Machine-owned law must own that
-result.
+```text
+Definition D
+    Required Basis R
 
-Physical linking does not establish that meaning by itself.
+
+World A
+
+R
+    → Established Fact F1
+
+
+World B
+
+R
+    → Established Fact F2
+```
+
+If the owning Contract defines `D` as requiring any material that satisfies `R`, then the two worlds may preserve the
+same
+Definition Meaning and Authority-Owned Definition Identity while holding different Basis Bindings.
+
+```text
+Definition Meaning
+    → same
+
+Authority-Owned Definition Identity
+    → same
+
+Basis Binding
+    → different
+```
+
+If the owning Contract instead defines `D` specifically against exact Definition `F1`, that exact reference is part of
+the Definition Meaning.
+
+Changing `F1` to `F2` then changes the meaning according to that owning law.
+
+```text
+Exact source reference
+    ∈ Definition Meaning
+        ↓
+identity-significant under the owning law
+```
+
+The compiler must not decide identity significance merely because one reference is convenient to hash, store, or cache.
+
+### Why This Choice
+
+Always placing resolved bindings inside Definition Identity would make composition changes rewrite otherwise unchanged
+definitions.
+
+Always excluding them would lose Contracts whose meaning explicitly names an exact source.
+
+The owning Contract therefore decides whether the exact source relation is Definition meaning.
 
 ---
 
-## 8.8. Shared Consumption
+## 8.7. Semantic Prerequisite Order
 
-One source meaning may serve several compiler products.
+Basis creates semantic prerequisite order.
 
-Each consumer can retain the exact source reference while using the material for its own purpose.
+```text
+Required Basis
+    ↓
+Basis Binding
+    ↓
+Applicability
+    ↓
+Complete Basis
+    ↓
+Owning Judgment
+    ↓
+Establishment
+```
 
-Shared derived analysis may also be reused.
+The diagram states prerequisites, not compiler pass order.
 
-Such reuse does not transfer Contract authority.
+A judgment that requires Basis must not establish before its required Basis is complete.
+
+A Basis Binding may bind only to material whose owning Establishment has already succeeded.
+
+Later Establishment may consume earlier Established Material.
+
+No parser order, query order, worker order, declaration order, table order, or cache order gains Contract meaning from
+this prerequisite relation.
+
+### Cycles
+
+An unresolved semantic prerequisite cycle cannot establish.
+
+```text
+A requires B
+B requires C
+C requires A
+
+No member has Complete Basis.
+    ↓
+No member may establish from that cycle.
+```
+
+The Contract rule is the prohibition of circular semantic establishment.
+
+The compiler algorithm used to detect the cycle is realization.
+
+### Why This Choice
+
+A partial order states only the prerequisites required by Contract meaning.
+
+It leaves independent work free to be scheduled, parallelized, reused, or incrementally repaired by later compiler
+implementations.
+
+---
+
+## 8.8. Composition Authority
+
+Connecting several Established Materials does not establish a larger meaning by itself.
+
+A Contract law must own the new meaning.
+
+```text
+Established Material A
+    +
+Established Material B
+    ↓
+owning composition law
+    ↓
+Established Material C
+```
+
+`C` belongs to the composing authority.
+
+`A` and `B` keep their original authorities and Definition References.
+
+Basis Bindings used by the composition do not transfer source authority to the consumer.
+
+---
+
+## 8.9. Whole-Machine Composition
+
+Whole-Machine composition may establish Basis Bindings across unit boundaries.
+
+```text
+Core A material
+    ↓
+Whole-Machine Basis Binding
+    ↓
+Core B requirement
+```
+
+Neither local Contract needs to name the other as its producer.
+
+The Whole-Machine law owns the cross-unit connection.
+
+If that law establishes new Whole-Machine meaning from the connected material, that result belongs to the
+Whole-Machine authority.
+
+Physical linking does not establish the connection or the larger meaning.
+
+---
+
+## 8.10. Compiler-Derived Dependency
+
+The compiler may derive computation dependencies from established Basis Bindings.
+
+```text
+Contract Basis Binding
+    ↓
+compiler-derived dependency
+```
+
+The direction does not reverse.
+
+A query edge, analysis dependency, build edge, or cached dependency cannot establish a Contract Basis Binding.
+
+The compiler may discard and rebuild its derived dependency representation without changing the established semantic
+connection.
+
+---
+
+## 8.11. Shared Consumption
+
+The same Established Material may satisfy several independently owned requirements when each use is valid.
+
+```text
+Established Fact A
+    ├── Basis Binding → Judgment X
+    └── Basis Binding → Judgment Y
+```
+
+Each Basis Binding remains exact to its own Required Basis.
+
+Shared consumption does not transfer or merge source authority.
+
+One consumer's use does not create applicability for another consumer.
+
+---
 
 ---
 
@@ -914,14 +1757,29 @@ Failure remains governed by Failure law.
 
 ## 9.3. Occurrence-Time Integrity
 
-Occurrence-specific Established Material keeps the source relation that belonged to its establishment.
+Occurrence-specific Established Material keeps the exact semantic attribution that determined its establishment.
 
-Later material may support a new judgment.
+```text
+Established Occurrence O
+
+Definition
+    → exact Definition Reference
+
+Applicable Basis
+    → exact bound source material
+
+Applicable Context
+    → exact meaning-relevant context at O
+```
+
+Later Version, Policy, Governance, State, Basis Binding, or other material may support a new judgment.
 
 It may not be presented as though it belonged to the earlier occurrence.
 
-This is the common law that lets Diagnostic distinguish source-time material from later reconstruction.
+The earlier occurrence must not be reinterpreted through `current` or `latest` semantic material.
 
+This is the common law that lets later consumers and Diagnostic distinguish source-time meaning from later
+reconstruction.
 ---
 
 ## 9.4. Retention
@@ -1001,8 +1859,8 @@ Authority-Owned Definition Identity
 Owning Authority Binding
 Definition Reference
 direct established semantic relations
-resolved Basis bindings where already established
-owned Applicability relations where already established
+resolved Basis bindings where already established as definition meaning
+definition-owned Applicability relations where already established
 other authority-owned relations required by the definition meaning
 ```
 
@@ -1011,6 +1869,9 @@ Source provenance may be exposed through a separate exact relation.
 The world must distinguish a relation that is not owned by an authority from a relation that is required but unresolved.
 
 It must not manufacture missing semantic relations for downstream convenience.
+
+Occurrence-specific Applicable Basis, Applicable Context, and occurrence attribution do not become Definition-world
+material merely because they reference definitions in the Canonical Contract World.
 
 ---
 
@@ -1146,7 +2007,14 @@ equivalent semantic world.
 A semantic application is invalid when required Basis cannot be resolved or when supplied material is not applicable to
 that use.
 
-Where the owning law requires complete Basis, partial authority is invalid.
+Where the owning law requires Complete Basis, partial authority is invalid.
+
+An Applicability judgment is invalid when its Basis Binding, dependent application, meaning-determining context, or
+required applicability-law coordinate cannot be identified exactly.
+
+Multiple applicable candidates do not authorize implicit first-match or compiler-selected resolution.
+
+Selection requires the owning Singularity, completeness, or Arbitration law.
 
 Composition must preserve the exact source references used by the composing law.
 
@@ -1156,7 +2024,14 @@ Established Definition Material is incomplete when a semantic consumer would nee
 Owning Authority, or an already-established required relation from source syntax, realization topology, compiler
 heuristics, or another compiler product.
 
-Established Occurrence Material is invalid when a distinction required by its owning occurrence law is lost.
+Established Occurrence Material is incomplete when its owning meaning depends on Applicability but the exact Applicable
+Basis or required Applicable Context cannot be recovered.
+
+An earlier occurrence is invalidly represented when later `current` or `latest` material can silently replace the exact
+semantic attribution fixed at that occurrence.
+
+Candidate search order, solver trace, query state, cache state, compiler generation, and storage layout must not be
+required to recover Contract Applicability meaning.
 
 # 16. Compiler Realization Obligation
 
@@ -1328,7 +2203,7 @@ authority direction.
 
 # 19. Consequences
 
-Established Definition Material now has an explicit semantic binding model.
+Established Definition Material has an explicit semantic binding model.
 
 Definition Meaning, Authority-Owned Definition Identity, and Owning Authority Binding remain distinct.
 
@@ -1336,17 +2211,38 @@ Every Established Definition has exactly one Owning Authority Binding.
 
 An exact Definition Reference combines the authority reference with the identity defined under that authority.
 
-This prevents source layout, compiler containment, local handles, fingerprints, cache state, and publication generation
-from silently becoming Contract identity.
+Basis is explicit as Required Basis, Basis Binding, Applicability, and Complete Basis.
 
-The Canonical Contract World preserves exact Established Definition bindings without turning the whole world into one
-aggregate semantic identity.
+Applicability is now explicit as a judgment over one exact Basis Binding, one exact dependent application, and only the
+Contract context used by the owning applicability law.
 
-The compiler may choose different physical representations and future incremental mechanisms as long as those exact
+Applicable Basis records successful applicability for that semantic use.
+
+The source material does not acquire a permanent applicability flag.
+
+Multiple applicable candidates do not create implicit selection authority.
+
+An Established Occurrence that depends on Applicability preserves its exact Definition Reference, determining Applicable
+Basis, meaning-relevant Applicable Context, and an exact applicability-law coordinate only when that law is not already
+uniquely determined.
+
+The occurrence preserves direct determining references rather than copying the transitive semantic world.
+
+Later Version, Policy, Governance, State, or other semantic material cannot rewrite an earlier occurrence.
+
+This prevents source layout, compiler containment, solver behavior, local handles, fingerprints, cache state, and
+publication generation from silently becoming Contract meaning.
+
+The Canonical Contract World preserves exact Established Definition bindings without absorbing occurrence-specific
+attribution into one aggregate definition world.
+
+The compiler may choose different physical representations and future incremental mechanisms as long as these exact
 semantic distinctions and bindings remain unchanged.
 
-The cost is explicit binding bookkeeping. The benefit is that later 1D material design and compiler implementation can
-derive exact representation obligations from Contract semantics without making one implementation authoritative.
+The cost is explicit binding and attribution bookkeeping.
+
+The benefit is precise establishment, diagnostics, reuse, and later incremental invalidation without making one compiler
+implementation authoritative.
 
 ---
 
@@ -1433,3 +2329,62 @@ Canonical Contract World wording is reduced to the exact semantic binding surfac
 
 Structural containment, compiler-local handles, fingerprints, storage identity, and publication generation remain
 compiler realization rather than Contract identity.
+
+## 2026-09-11 — Explicit Basis Binding Contract
+
+Basis is now expressed as an explicit Contract model rather than an abstract dependency description.
+
+The amendment separates Required Basis, Basis Resolution, Basis Binding, Applicability, and Complete Basis.
+
+Required Basis is owned by the semantic judgment that needs it and names required meaning rather than producer topology.
+
+Distinct requirements remain distinguishable even when they require the same Contract kind.
+
+Basis Resolution produces an exact Basis Binding from one Required Basis to exact Established Material under the owning
+composition law.
+
+Binding does not imply Applicability.
+
+The owning Contract defines cardinality and completeness.
+
+`Not Owned`, `Permitted Absence`, `Required, Unresolved`, `Bound, Inapplicable`, and `Bound, Applicable` remain distinct
+semantic states.
+
+A resolved source becomes Definition-identity-significant only when the owning Contract makes that exact source relation
+part of Definition Meaning.
+
+Basis prerequisite order is semantic partial order rather than compiler scheduling order. Circular semantic
+establishment remains invalid.
+
+Compiler dependency remains derived from Contract Basis Binding and cannot create it.
+
+## 2026-09-11 — Explicit Applicability and Occurrence Attribution Contract
+
+Applicability is now defined over an exact Basis Binding, an exact dependent semantic application, and only the
+meaning-determining context used by the owning applicability law.
+
+Applicable Context is sparse Contract context rather than a universal nullable context object.
+
+A successful Applicability judgment produces an Applicable Basis relation for that semantic use.
+
+The source material does not receive a permanent `applicable` flag, and this ADR does not create one permanent
+Established Applicability object for every check.
+
+Multiple applicable candidates do not authorize implicit selection. Singularity, completeness, or explicit Arbitration
+remains responsible for selection.
+
+When Applicability contributes to Established Occurrence Material, the occurrence preserves its exact Definition
+Reference, determining Applicable Basis, exact meaning-relevant context, and the applicability-law coordinate only when
+the other preserved coordinates do not already identify that law uniquely.
+
+The occurrence preserves direct determining semantic references rather than the full transitive semantic world.
+
+Existing Established Material may therefore be referenced without copying its complete meaning.
+
+Later Version, Policy, Governance, State, Basis Binding, or other material does not rewrite the attribution of an
+earlier
+Established Occurrence.
+
+Candidate search order, rejected alternatives, solver trace, query dependency, cache state, compiler generation, and
+storage layout remain outside Contract attribution unless an owning Contract law explicitly gives one of them semantic
+meaning.
