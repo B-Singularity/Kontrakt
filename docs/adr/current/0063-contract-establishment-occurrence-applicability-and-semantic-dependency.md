@@ -157,37 +157,55 @@ A physical event may realize that boundary. The event does not define the author
 
 **Established Material** is semantic material that has received the authority owned by its source.
 
-The term describes a semantic property. It does not define a shared compiler container.
+```text
+source-owned judgment
+    ↓
+Establishment
+    ↓
+Established Material
+```
 
-Fact remains Fact after establishment. Failure remains Failure. Governance keeps ownership of the Binding it
-establishes.
+Establishment does not replace the source kind.
 
-A later responsibility may require Established Material because the source judgment has already been completed under the
-source law.
+```text
+Fact
+    → Established Fact
+
+Failure
+    → Established Failure
+
+Governance Binding
+    → Established Governance Binding
+```
+
+The examples do not define a common payload. Each authority keeps ownership of its own result meaning.
 
 ### 4.2.1. Common Established Material Contract
 
-Every Established Material must preserve the complete meaning actually established by its owning authority.
+Every Established Material preserves:
 
-The owning authority decides which semantic distinctions and direct relations are required for that meaning.
+```text
+complete source-owned meaning
+    +
+semantic distinctions required by the owning law
+    +
+direct established relations required to interpret that meaning
+```
 
-The common Contract does not add coordinates merely because another Contract or compiler consumer finds them useful.
-
-When exact later use depends on identity or another established relation, that relation must remain exactly recoverable.
+A later consumer may rely on those exact relations. It may not add new source meaning for its own convenience.
 
 ### 4.2.2. No Universal Material Schema
 
-Established Material is a semantic category, not one common payload.
+Established Material is a semantic category.
 
-Fact remains Fact. Failure remains Failure. Governance retains ownership of the Binding it establishes.
+```text
+Established Material
+    ↛ one universal object
+    ↛ one universal field set
+    ↛ one universal relation set
+```
 
-Different authorities may therefore establish different material shapes and different relation sets.
-
-The common law requires exact, complete source-owned meaning. It does not require a universal `EstablishedMaterial`
-object or field set.
-
-
----
+A semantic coordinate exists only where the owning law requires it.
 
 ## 4.3. Established Definition Material
 
@@ -220,44 +238,27 @@ Compiler publication does not create this authority. Publication makes a complet
 
 ### 4.3.1. Established Definition Material Contract
 
-Established Definition Material preserves three distinct semantic coordinates:
+Established Definition Material preserves the authoritative definition meaning and the exact reference required to
+identify it.
 
 ```text
+Established Definition D
+
 Definition Meaning
+    → exact source-owned meaning
 
-Authority-Owned Definition Identity
+Definition Reference
+    → exact authoritative Definition
+    → defined by Section 6
 
-Owning Authority Binding
+Direct Established Relations
+    → only relations owned by D's definition meaning
 ```
 
-**Definition Meaning** is the semantic content established by the owning Contract law.
+Section 6 owns the common identity model, including Owning Authority Binding, Version Binding, and any
+Authority-Local Definition Coordinate required by the owning identity law.
 
-**Authority-Owned Definition Identity** identifies that definition within the identity domain defined by the owning
-authority.
-
-**Owning Authority Binding** is the exact semantic relation from the Established Definition to the authority that owns
-that meaning and identity.
-
-Every Established Definition has exactly one Owning Authority Binding.
-
-The three coordinates are distinct, but they are not freely interchangeable. The owning Contract law decides how its
-definition meaning determines its authority-owned identity.
-
-Changing the owning authority cannot preserve the same authoritative Definition Reference, even when another authority
-could establish equal-looking definition content.
-
-Established Definition Material must also preserve every direct established relation required to interpret that
-definition.
-
-Where Basis, Applicability, Version, Policy, Governance, State, or another coordinate belongs to the owning definition
-meaning, the exact established relation must remain recoverable.
-
-A coordinate does not become part of every definition merely because another authority owns a relation with that name.
-
-Source provenance remains separate from Definition Meaning, Definition Identity, and Owning Authority Binding.
-
-
----
+Source provenance remains separate from Definition Meaning and Definition Reference.
 
 ## 4.4. Established Occurrence Material
 
@@ -285,8 +286,6 @@ consumer may later need it.
 
 Occurrence material exists only when the owning authority gives one semantic application result meaning of its own.
 
-At minimum, the occurrence must preserve the exact semantic coordinates needed to interpret that established result.
-
 ```text
 Established Occurrence O
 
@@ -296,37 +295,17 @@ Occurrence Reference
 Definition Reference
     → exact applied Definition
 
-Applicable Basis
-    → exact Required Basis
-    → exact Basis Binding
-    → exact Established Material
-
-Applicable Context
-    → exact meaning-relevant established coordinates only
-
-Applicability Law
-    → exact law coordinate
-      only when the other preserved coordinates
-      do not identify that law uniquely
+Determining Semantic Basis
+    → exact occurrence attribution
+    → defined by Section 7.6
 
 Established Result
     → exact occurrence-owned meaning
 ```
 
-The occurrence does not need to copy complete source material when an exact semantic reference already preserves the
-required relation.
+Equal result values do not collapse distinct occurrences when the owning law preserves their distinction.
 
-It must not replace exact attribution with a lookup of `current`, `latest`, nearest, or physically reachable material.
-
-A successful Applicable Basis relation already means that the bound material was applicable to that occurrence.
-
-A second independent `applicable = true` field is not required by Contract law.
-
-Candidate search order, rejected alternatives, solver trace, query dependencies, cache state, worker state, and storage
-position are not occurrence meaning unless the owning Contract explicitly makes one of them semantic basis.
-
-Equal occurrence results do not collapse distinct occurrences when the owning law preserves their distinction.
----
+The occurrence does not copy an entire transitive semantic world merely to preserve attribution.
 
 ## 4.5. Contract Occurrence
 
@@ -436,21 +415,8 @@ its own.
 
 ## 4.9. Minimum Contract Detail and Replaceable Realization
 
-Established Material fixes authoritative semantic meaning. It does not prescribe one physical representation of that
-meaning.
-
-The owning Contract must declare each distinction required to preserve its obligation. Identity and applicability belong
-to Contract law only when the owning meaning requires them. The same rule applies to judgment, attribution, and direct
-semantic relations.
-
-A distinction must not become Contract law merely because the current frontend, compiler, runtime, storage model, or
-backend represents material that way.
-
-Contract precision does not mean maximum specification. A detail can over-couple the Contract even when it is described
-with semantic vocabulary. Detail without an independent semantic responsibility creates coupling without adding Contract
-meaning.
-
-Use this test when deciding whether a detail belongs to the Contract:
+A detail belongs to Contract law only when changing that detail can change a declared obligation or a semantic
+distinction required by the owning law.
 
 ```text
 detail changes
@@ -459,43 +425,35 @@ declared obligation
 required semantic distinctions
     remain unchanged
 
-then:
-    Contract meaning does not change
-    -> detail remains realization
+then
+
+Contract meaning
+    → unchanged
+
+detail
+    → realization
 ```
 
-The owning authority decides which semantic distinctions are required. A later compiler product, Diagnostic consumer,
-Governance consumer, or backend convenience does not create that requirement for the source Contract.
+Contract precision does not require maximum specification.
 
-A canonical compiler representation is not automatically canonical Contract meaning. A realization may retain additional
-fields, indexes, summaries, or technical identities. Their presence does not enlarge Established Material meaning.
+The owning authority declares the distinctions required to preserve its meaning. A compiler consumer, Diagnostic,
+backend, or first implementation cannot add Contract meaning merely because it needs another field, index, summary, or
+handle.
 
-Established Material is semantically immutable once established. Later realization activity may not rewrite the
-established meaning.
+Established Material is semantically immutable after Establishment.
 
-Semantic immutability does not require one physical immutability mechanism. Storage, layout, sharing, and
-materialization may change while the same established meaning is preserved.
+```text
+same Established Material
+    → same semantic meaning
 
-Definition Reference, Occurrence Reference, and explicit semantic relations require exact semantic targets and exact
-relations. Section 6 defines the common reference requirements. They do not require one pointer, table, graph, or object
-representation.
+physical representation
+    → may change
+```
 
-Ordering belongs to Contract law only when the owning law declares the order itself meaningful. Discovery order,
-evaluation order, storage order, and physical publication order do not acquire authority from execution.
+Exact bytes become Contract material only when the owning law explicitly makes those bytes part of a protocol, identity,
+or outward obligation.
 
-A representation itself belongs to Contract law only when the owning Contract explicitly makes that representation part
-of the declared meaning. Exact bytes may therefore be Contract material when the exact byte sequence participates in a
-declared protocol, identity law, or outward obligation. Bytes used only for compiler implementation remain realization.
-
-A realization may be replaced when every Contract-visible meaning and required distinction is preserved. If a backend
-cannot preserve an established law, that backend is not a valid realization of the law. The Contract must not be
-silently weakened to fit the backend.
-
-The first implementation does not become Contract law merely because it is the first implementation.
-
-Contract Version and compiler representation version are separate concerns. A representation format may change without a
-Contract Version change when established meaning is unchanged. A semantic change remains a Contract change even when the
-compiler can migrate the physical representation.
+Section 11 owns the general Contract / representation boundary.
 
 ---
 
@@ -505,27 +463,21 @@ compiler can migrate the physical representation.
 
 Establishment depends only on semantic material that the owning law treats as relevant.
 
-Equal semantic basis must therefore establish equal meaning.
-
 ```text
 same semantic basis
     ↓
 same established meaning
 ```
 
-This law defines what may influence the Contract result.
+This law defines the determinant set of the Contract result.
 
 ---
 
 ## 5.2. Hidden Compiler State
 
-Compiler state cannot change established meaning unless that state has first become applicable semantic material.
+Compiler-only state cannot change established meaning.
 
-A reused compiler result must agree with recomputation.
-
-A different worker schedule must also preserve the result.
-
-This keeps implementation state outside Contract authority.
+A reused result must agree with recomputation under the same semantic basis.
 
 ---
 
@@ -535,24 +487,27 @@ Physical completion order has no semantic authority.
 
 ```text
 physical completion order
-    !=
-semantic establishment order
+    ≠
+semantic prerequisite order
 ```
 
-If order changes Contract meaning, an authority must declare that ordering relation.
+If ordering changes Contract meaning, the owning law must declare that ordering relation.
 
 ---
 
 ## 5.4. Deterministic Composition
 
-Composition obeys the same rule.
+Composition follows the same law.
 
-When the same source meanings are applicable under the same composition law, the composed meaning must be the same.
+```text
+same applicable source meanings
+    +
+same owning composition law
+        ↓
+same composed meaning
+```
 
-The compiler may discover the source material in a different physical order without changing the result.
-
-Rebuilding or republishing the same semantic world under the same semantic basis must not change the established
-meaning.
+Discovery, scheduling, rebuilding, or republication order cannot change the result.
 
 ---
 
@@ -560,27 +515,32 @@ meaning.
 
 ## 6.1. Definition Meaning, Identity, and Authority
 
-Definition Meaning, Authority-Owned Definition Identity, and Owning Authority Binding are separate semantic
-coordinates.
+An Established Definition keeps these semantic concepts distinct.
 
 ```text
+Established Definition
+
 Definition Meaning
-        │
-        │ interpreted under
-        ▼
-Owning Authority
-        │
-        │ owns
-        ▼
+    → what was established
+
+Owning Authority Binding
+    → which exact authority owns that meaning
+
 Authority-Owned Definition Identity
+    → which Definition that authority identifies
+
+Version Binding
+    → exact Version under that authority
+      when the authority is version-sensitive
+
+Authority-Local Definition Coordinate
+    → additional local coordinate
+      only when the owning identity law needs one
 ```
 
-This separation does not permit compiler realization to assign Contract identity independently of the owning law.
+These concepts may share one physical encoding. They do not become one semantic concept.
 
-Source path, declaration order, container nesting, host-object ownership, query ownership, storage position, and
-compiler
-generation do not establish Owning Authority or Definition Identity unless an owning Contract law explicitly gives such
-a coordinate semantic meaning.
+Section 11 forbids compiler representation identity from creating any of these coordinates.
 
 ---
 
@@ -594,102 +554,298 @@ Established Definition
 exact Contract Authority
 ```
 
-The binding is semantic. It is not compiler memory ownership or source containment.
+The binding is semantic.
 
-The binding must be directly recoverable by a semantic consumer. A consumer must not need to infer authority from a
-parent object, table position, generated host type, source nesting, or another compiler product.
+It is not compiler memory ownership or source containment.
 
-The physical identity representation may encode authority together with other identity material. That implementation
-choice does not remove the semantic distinction between Definition Identity and Owning Authority Binding.
+The binding must be directly recoverable by a semantic consumer.
+
+A consumer must not need to infer authority from a parent object, table position, generated host type, source nesting,
+or
+another compiler product.
+
+The physical identity representation may encode authority together with other identity material.
+
+That implementation choice does not remove the semantic distinction between Definition Identity and Owning Authority
+Binding.
 
 ---
 
-## 6.3. Definition Reference
+## 6.3. Version Binding
 
-A **Definition Reference** identifies one exact authoritative definition.
-
-Its semantic form is:
+A **Version Binding** connects one version-sensitive Contract Authority to one exact Version Identity under that
+authority.
 
 ```text
-Owning Authority Reference
-    +
-Authority-Owned Definition Identity
-    ↓
-exact authoritative Definition
+Version Binding
+
+Contract Authority A
+    → Version Identity V
 ```
 
-An Authority-Owned Definition Identity is therefore not required to be globally unique outside its owning authority.
+Version Identity is authority-scoped Contract meaning.
 
-Equal authority-local identity material under different authorities does not denote the same authoritative Definition.
+A Version label or claim is not globally meaningful by itself.
 
-A Definition Reference must resolve to the same source-owned definition meaning in an equivalent semantic world.
+```text
+Authority A
+    → Version Stable
+
+Authority B
+    → Version Stable
+```
+
+The two `Stable` values do not establish Version Agreement merely because their authored spelling is equal.
+
+### Version Claim and Resolution
+
+A **Version Claim** is the declared version coordinate presented for resolution.
+
+It is not yet the resolved Version Binding.
+
+```text
+Version Claim
+    → Stable
+
+Required Authority
+    → A
+
+exact Authority-scoped resolution
+    ↓
+
+Version Binding
+    → A / Stable
+```
+
+Unknown or ambiguous Version Claims remain unresolved.
+
+They must not be mapped implicitly to:
+
+```text
+current
+latest
+preferred
+nearest
+first available
+```
+
+A Version Binding must identify the exact authority and the exact Version Identity selected by Contract law.
+
+Compiler lookup behavior does not select Contract Version.
+
+### Versioned Definition Coordinate
+
+For an authority that owns one independently addressable Definition per Version:
+
+```text
+Exact Versioned Definition
+
+Authority A
+    +
+Version V
+        ↓
+Definition
+```
+
+When one Authority / Version owns several independently addressable Definitions, the owning law must also preserve the
+coordinate that distinguishes them.
+
+```text
+Exact Versioned Definition
+
+Authority A
+    +
+Version V
+    +
+Definition Coordinate L
+        ↓
+Definition
+```
+
+`L` is not a mandatory universal field.
+
+It exists only when the owning identity law needs an additional semantic coordinate.
+
+Declaration order, array position, table position, hash order, source nesting, and compiler discovery order must not
+substitute for `L`.
+
+### Exactness
+
+The following coordinates denote one exact Versioned Definition coordinate:
+
+```text
+same Authority A
+    +
+same Version V
+    +
+same Definition Coordinate L
+        ↓
+same exact Versioned Definition coordinate
+```
+
+A different Version Identity denotes a different exact Versioned Definition coordinate.
+
+```text
+same Authority A
+    +
+different Version
+        ↓
+different exact Versioned Definition
+```
+
+If the same exact `A / V / L` coordinate would establish different Definition Meaning, both meanings cannot be accepted
+as
+the same Versioned Definition.
+
+ADR-0053 owns the history and merge rules used to resolve that conflict.
+
+Version Binding itself does not invent a compatibility rule or silently merge meanings.
+
+### Why This Choice
+
+Version is Contract meaning, not an artifact revision number.
+
+Keeping Authority, Version, and local Definition coordinates explicit prevents cache identity or serialized format
+version from becoming semantic identity.
+
+The compiler may still pack or hash these coordinates for efficient lookup.
+
+---
+
+## 6.4. Definition Reference
+
+A **Definition Reference** identifies one exact authoritative Definition.
+
+For a version-sensitive authority, its semantic form is:
+
+```text
+Definition Reference
+
+Owning Authority Reference
+    → A
+
+Version Binding
+    → V
+
+Authority-Local Definition Coordinate
+    → L
+      when required by the owning identity law
+
+        ↓
+
+exact authoritative Versioned Definition
+```
+
+The earlier `Authority-Owned Definition Identity` remains the identity owned by `A`.
+
+Version Binding and the local coordinate are explicit semantic components of that authority-owned identity law.
+
+An Authority-Local Definition Coordinate is not required to be globally unique outside its Authority / Version.
+
+Equal local coordinates under different authorities or different Versions do not denote the same authoritative
+Definition.
+
+A Definition Reference must resolve to the same source-owned Definition Meaning in an equivalent semantic world.
 
 Its physical encoding is compiler realization.
 
 ---
 
-## 6.4. Occurrence Reference
+## 6.5. Occurrence Reference
 
 An **Occurrence Reference** identifies the exact semantic application to which occurrence-specific Established Material
 belongs.
 
 This relation is required when later meaning depends on which application established the source result.
 
-Occurrence identity remains distinct from Definition identity.
+Occurrence identity remains distinct from Definition identity and Version Binding.
+
+When an occurrence references a Versioned Definition, its exact Definition Reference already fixes that Definition
+Version.
 
 A universal runtime occurrence object is not required.
 
 ---
 
-## 6.5. Identity Boundaries
+## 6.6. Identity Boundaries
 
-Several coordinates may describe material without becoming the same identity.
+Contract identity and compiler representation identity are different coordinate families.
 
-| Coordinate                          | Meaning                                                              |
-|-------------------------------------|----------------------------------------------------------------------|
-| Definition meaning                  | What source-owned semantic content was established?                  |
-| Authority-owned definition identity | Which definition is this within the owning authority's identity law? |
-| Owning Authority Binding            | Which exact authority owns that meaning and identity?                |
-| Definition Reference                | Which exact authoritative definition is denoted?                     |
-| Occurrence relation                 | Which semantic application does occurrence material belong to?       |
-| Source provenance                   | Where did authored material come from?                               |
-| Fingerprint                         | Compiler evidence for comparing represented material for a use       |
-| Compiler generation                 | Which compiler publication contains a representation?                |
-| Local address                       | Where is that representation currently stored?                       |
+```text
+Contract semantic coordinates
 
-These coordinates must not be collapsed.
+Definition Meaning
+    → established semantic content
 
-A source-only change may change provenance while preserving the same Definition Reference and Definition Meaning.
+Owning Authority Binding
+    → exact owning authority
 
-A later compiler generation may assign a different local address to the same authoritative definition.
+Version Binding
+    → exact authority-scoped Version
 
-A fingerprint, local address, generation, or compiler-local handle cannot become Definition Identity merely because an
-implementation uses it for lookup.
+Authority-Local Definition Coordinate
+    → exact local Definition coordinate when required
+
+Definition Reference
+    → exact authoritative Definition
+
+Occurrence Reference
+    → exact semantic application
+```
+
+```text
+Adjacent or realization coordinates
+
+Source Provenance
+    → authored source location / origin
+
+Fingerprint
+    → compiler comparison evidence
+
+Compiler Generation
+    → compiler publication generation
+
+Compiler Schema Version
+    → serialized compiler representation version
+
+Local Address / Handle
+    → current physical lookup coordinate
+```
+
+The second group must not become the first group merely because an implementation uses it for lookup.
+
+A provenance-only change may preserve Definition Meaning and Definition Reference.
+
+A schema migration, compiler generation change, or local relocation may preserve the same Version Binding and exact
+Definition Reference.
 
 ---
 
-## 6.6. Deterministic Reference Resolution
+## 6.7. Deterministic Reference Resolution
 
-The same Definition Reference in the same semantic world must resolve to the same source-owned definition meaning and
-Owning Authority Binding.
+The same Definition Reference in the same semantic world must resolve to the same source-owned Definition Meaning,
+Version
+Binding, and Owning Authority Binding.
 
-Physical ordering, allocation, scheduling, and publication layout cannot change that result.
+Physical ordering, allocation, scheduling, cache state, compiler generation, and publication layout cannot change that
+result.
 
-A new compiler generation may use a different representation while preserving the same semantic reference.
+A new compiler generation or representation schema may use a different physical representation while preserving the same
+semantic reference.
 
 ---
 
-## 6.7. Identity Across Linking
+## 6.8. Identity Across Linking
 
-Linking preserves the Definition Reference of unchanged source-owned meaning.
+Linking preserves the exact Definition Reference of unchanged source-owned meaning.
 
-Physical relocation or aggregation into a larger compiler world does not mint a new authoritative Definition.
+For Versioned Definitions, linking also preserves the exact Version Binding already contained in that reference.
 
-A new authoritative identity appears only when an owning Contract law establishes different meaning or a different
-Owning Authority relation.
+Physical relocation, aggregation into a larger compiler world, or artifact regeneration does not mint a new Contract
+Version or authoritative Definition.
 
-A higher-scope authority may establish a new higher-scope result without rewriting the identities of unchanged source
-definitions it consumes.
+A higher-scope authority may establish a new higher-scope result without rewriting the Authority, Version, or Definition
+identity of unchanged source definitions it consumes.
 
 ---
 
@@ -842,23 +998,19 @@ authority.
 
 ---
 
-## 7.3. Applicability Result and Applicable Basis
+## 7.3. Applicability Result
 
-The result of an Applicability judgment is:
+An Applicability judgment has two semantic results.
 
 ```text
+Applicability Judgment
+    ↓
 Applicable
-```
-
-or:
-
-```text
+or
 Inapplicable
 ```
 
-The source material does not carry a permanent `applicable` flag.
-
-Applicability belongs to the dependent use.
+The result belongs to the exact dependent use.
 
 ```text
 Established Material M
@@ -870,46 +1022,12 @@ Use U2
     → Inapplicable
 ```
 
-When the result is `Applicable`, the Basis Binding may become **Applicable Basis** for that exact semantic use.
+The source material does not acquire a permanent `applicable` flag.
 
-```text
-Applicable Basis
+`Applicable` permits the exact Basis Binding to participate as Applicable Basis. Section 8.3 owns the Applicable Basis
+relation.
 
-Required Basis R
-    → Basis Binding B
-        → Established Material M
-    → applicable to Use U
-```
-
-The Applicable Basis relation itself records successful applicability.
-
-A separate independent Boolean is not required.
-
-The following do not establish Applicable Basis:
-
-```text
-same Contract kind
-material exists
-material is published
-material is reachable
-Basis Binding exists
-compiler lookup succeeds
-cache entry exists
-```
-
-A bound but inapplicable material does not satisfy the Required Basis.
-
-This ADR does not create one permanent Established Applicability object for every applicability check.
-
-If a later Established result depends on the judgment, the exact determining relation must remain attributable according
-to Section 7.6.
-
-### Why This Choice
-
-A permanent flag would incorrectly move use-specific meaning onto the source material.
-
-A universal Applicability object for every check would turn semantic evaluation into an occurrence or query-result
-store.
+This ADR does not create one permanent Established Applicability object for every check.
 
 ---
 
@@ -1002,19 +1120,19 @@ Basis.
 For example:
 
 ```text
-Governance Arbitration
+Owning Arbitration Judgment
 
-Determining Decisions
-    → D1
-    → D2
-    → D3
+Determining Candidates
+    → C1
+    → C2
+    → C3
 
 Arbitration Law
     ↓
 Resolved Selection
 ```
 
-Here the complete competing set is semantic Basis because the Governance law says so.
+The complete candidate set is semantic Basis only when the owning Contract law declares that set determining.
 
 A compiler solver trace is still not Contract meaning.
 
@@ -1170,58 +1288,52 @@ occurrence.
 
 ## 7.7. Applicability After Change
 
-Later establishment may change what is applicable to later semantic use.
-
-Earlier Established Occurrence Material remains unchanged.
+New semantic context may require a new Applicability judgment for a later use.
 
 ```text
-Occurrence O17
-    → Basis Binding B17
-    → State Ready
+earlier Occurrence O17
+    → attribution fixed
 
-later
-
-State Ready
-    → State Closed
-
-Occurrence O17
-    → unchanged
+later context change
+    → may affect later application
+    → must not rewrite O17
 ```
 
-The new State may affect a later occurrence.
-
-It does not retroactively rewrite the earlier Applicable Basis or Applicable Context.
-
-The authority that owns succession decides which material applies to the later semantic application.
-
-No universal mutable `current` result is created here.
+Section 9.3 owns the common occurrence-time integrity law.
 
 ---
 
-## 7.8. Version and Governance
+## 7.8. Version and Other Established Context
 
-Version may participate in Applicable Context when the owning applicability law makes Version relevant.
-
-Governance Binding may participate when the dependent law requires Governance material.
+A Definition Reference already fixes the Version of the Definition it denotes.
 
 ```text
+Definition Reference
+    → Invariant / V3
+
 Applicable Context
-
-Version
-    → V7
-
-Governance Binding
-    → G22
+    → State Ready
 ```
 
-Neither coordinate is universal.
+`V3` is not repeated merely because the Definition is versioned.
 
-An Applicability law that does not use Version must not acquire Version dependency merely because Version exists.
+If an Applicability law independently consumes another Versioned or otherwise Established relation, that exact relation
+belongs to Applicable Context.
 
-An Applicability law that does not use Governance must not acquire Governance dependency merely because a Governance
-Binding is available.
+```text
+Definition Reference
+    → RefundInvariant / V4
 
-The original source authority remains unchanged when its material becomes applicable to another semantic use.
+Applicable Context
+
+Source Definition
+    → PaymentFact / V2
+
+Other Established Binding
+    → B17
+```
+
+Only independently meaning-determining relations are included.
 
 ---
 
@@ -1722,8 +1834,6 @@ One consumer's use does not create applicability for another consumer.
 
 ---
 
----
-
 # 9. Integrity Boundaries
 
 ## 9.1. Observation
@@ -1757,29 +1867,21 @@ Failure remains governed by Failure law.
 
 ## 9.3. Occurrence-Time Integrity
 
-Occurrence-specific Established Material keeps the exact semantic attribution that determined its establishment.
+Established occurrence meaning is fixed at Establishment.
 
 ```text
-Established Occurrence O
+Occurrence O
+    → exact attribution at Establishment
 
-Definition
-    → exact Definition Reference
-
-Applicable Basis
-    → exact bound source material
-
-Applicable Context
-    → exact meaning-relevant context at O
+later semantic material
+    → may support a later judgment
+    ↛ rewrite O
 ```
 
-Later Version, Policy, Governance, State, Basis Binding, or other material may support a new judgment.
+A later consumer must use the exact attribution preserved by Section 7.6.
 
-It may not be presented as though it belonged to the earlier occurrence.
+It must not reinterpret an earlier occurrence through `current`, `latest`, nearest, or newly reachable material.
 
-The earlier occurrence must not be reinterpreted through `current` or `latest` semantic material.
-
-This is the common law that lets later consumers and Diagnostic distinguish source-time meaning from later
-reconstruction.
 ---
 
 ## 9.4. Retention
@@ -1851,94 +1953,148 @@ Physical linking or republishing may change compiler representation without chan
 
 ## 10.4. Exact Binding Surface
 
-For each Established Definition made available through the world, the exact semantic surface must preserve:
+For every Established Definition exposed by the Canonical Contract World:
 
 ```text
-Definition Meaning
-Authority-Owned Definition Identity
-Owning Authority Binding
+Established Definition D
+
 Definition Reference
-direct established semantic relations
-resolved Basis bindings where already established as definition meaning
-definition-owned Applicability relations where already established
-other authority-owned relations required by the definition meaning
+    → exact identity model from Section 6
+
+Definition Meaning
+    → exact established meaning
+
+Direct Established Relations
+    → only relations already established as D's meaning
+
+Source Provenance
+    → separate exact relation when retained
 ```
 
-Source provenance may be exposed through a separate exact relation.
+The world must distinguish:
 
-The world must distinguish a relation that is not owned by an authority from a relation that is required but unresolved.
+```text
+relation not owned
+    ≠
+owned and validly absent
+    ≠
+required but unresolved
+```
 
-It must not manufacture missing semantic relations for downstream convenience.
+It must not manufacture a missing semantic relation for downstream convenience.
 
-Occurrence-specific Applicable Basis, Applicable Context, and occurrence attribution do not become Definition-world
-material merely because they reference definitions in the Canonical Contract World.
+Occurrence-specific Applicable Basis, Applicable Context, and occurrence attribution remain outside Definition-world
+material unless an owning Contract explicitly establishes such a relation.
 
 ---
 
 ## 10.5. World Boundary
 
-The Canonical Contract World does not turn:
+The Canonical Contract World is an authoritative semantic substrate, not a universal compiler IR.
 
 ```text
-compiler analysis
-verification
-optimization
-query dependency
-build dependency
-storage relation
-generated artifact
+Canonical Contract World
+    → exposes Established Definition meaning
+
+compiler analysis / verification / optimization
+    → consume that meaning
+
+query / cache / storage / generated artifact
+    → realize or consume compiler work
+
+none of the latter
+    → create Contract authority
 ```
 
-into Contract authority.
+Representation, indexing, publication, reuse, and incremental mechanisms remain compiler realization.
 
-The exact representation, indexing, storage, publication, reuse, and incremental mechanisms remain compiler
-realization.
+---
 
 # 11. Contract and Representation Boundary
 
-Compiler realization must preserve the semantic distinctions and exact bindings defined by this ADR.
-
-It may change storage, layout, indexing, local handles, materialization, publication, or reuse mechanisms without
-changing:
+Compiler realization must preserve every semantic coordinate and exact relation defined by this ADR.
 
 ```text
+Contract semantic material
+
+Established Material meaning
+Definition / Occurrence distinction
+Judgment / Establishment distinction
+Source Authority
 Definition Meaning
 Authority-Owned Definition Identity
 Owning Authority Binding
+Version Binding
+Authority-Local Definition Coordinate
+    when required by the owning identity law
 Definition Reference
-Definition / Occurrence distinction
-owned Basis / Applicability / Composition relations
+Occurrence Reference
+Required Basis
+Basis Binding
+Applicable Basis
+Applicability Judgment / Result
+Applicable Context
+Complete Basis
+Composition relation
+Semantic prerequisite order
+Occurrence attribution
+
+        ≠
+
+Compiler realization material
+
+source container
+host object identity
+local handle
+table position
+query state
+cache state
+fingerprint
+compiler generation
+compiler schema version
+worker schedule
+backend artifact layout
 ```
 
-No physical representation becomes the source of those semantics merely because the compiler uses it to implement them.
+The realization group may encode, index, compare, cache, or transport the Contract group.
+
+It may not establish, revoke, merge, or rewrite Contract authority.
+
+```text
+Contract Version
+    ≠ Compiler Schema Version
+    ≠ Compiler Generation
+    ≠ Cache Generation
+    ≠ Backend Artifact Format Version
+```
+
+A representation may change while Contract meaning remains unchanged.
+
+A semantic change remains a Contract change even when the compiler can migrate the physical representation.
+
+A backend that cannot preserve an established law is not a valid realization of that law.
+
+---
 
 # 12. Relation to Existing Authorities
 
-The existing authorities keep their local semantics.
+This ADR defines only the common Establishment relations.
 
-| Authority           | Common relation defined here                                                               |
-|---------------------|--------------------------------------------------------------------------------------------|
-| Input               | Input establishes the boundary meaning owned by Input.                                     |
-| Admission           | Admission owns its continuation judgment and establishes only the meaning its law defines. |
-| Canonicalization    | Canonicalization establishes its representative meaning.                                   |
-| Lowering            | Lowering can produce candidate core material without granting Fact authority.              |
-| Fact                | Fact receives factual authority only after its required basis succeeds.                    |
-| Invariant           | Invariant owns its integrity judgment without becoming Fact authority.                     |
-| State Machine       | State and Transition keep movement authority separate from Contract authority.             |
-| Budget              | A Budget result can become source-owned basis for a dependent responsibility.              |
-| Capacity            | A Capacity result can become source-owned basis for a dependent responsibility.            |
-| Version             | Version may affect later applicability without reinterpreting earlier material.            |
-| Policy              | Policy keeps ownership of its Contract World meaning.                                      |
-| Governance          | Governance may require source-owned basis while owning only the Binding it establishes.    |
-| Failure             | Failure keeps the meaning fixed at the occurrence where Failure law establishes it.        |
-| Publication         | Publication decides outward authorization without taking source authority.                 |
-| Output              | Output owns the outward shape after Publication authorization.                             |
-| Diagnostic Evidence | Diagnostic may bind to an exact source occurrence while owning only Diagnostic meaning.    |
+```text
+1D Authority
+    → owns its local Established Material
 
-The owning ADR defines each local result.
+ADR-0063
+    → defines common Establishment / identity / Basis / Applicability / composition relations
 
-This table does not define the final Established Material schema for any 1D authority. Those meanings remain owned by
-their respective ADRs.
+Another Authority
+    → may consume source-owned material
+      only through an explicit applicable relation
+```
+
+Each 1D ADR defines its own material meaning, local judgment, and any authority-specific binding.
+
+ADR-0063 does not duplicate or replace those local laws.
 
 ---
 
@@ -1946,445 +2102,344 @@ their respective ADRs.
 
 ## 13.1. Governance
 
-Governance defines the meaning required in its Decision Basis.
+Governance keeps ownership of its own semantics.
 
-It does not declare which Contract must provide that basis.
+ADR-0063 does not define Governance selection, scope, validity, singularity, or local Binding shape.
 
-Composition supplies Established Material to one Governance application.
+When Governance consumes another authority's Established Material, the common rules remain:
 
-Section 6 preserves the exact source meaning carried by that material.
+```text
+source Established Material
+    → exact Basis Binding
+    → Applicability
+    → Governance-owned judgment
+    → Governance-owned result
+```
 
-Section 7 decides whether the supplied material is applicable.
-
-Governance then judges only its own responsibility and establishes its own Binding.
-
-Raw realization observation cannot bypass this path.
+Source authority does not transfer to Governance.
 
 ---
 
 ## 13.2. Diagnostic
 
-Diagnostic can refer to source meaning without recreating source authority.
+Diagnostic may explain authoritative meaning without recreating it.
 
-A Definition Reference is sufficient when the governing definition is the subject.
+```text
+definition explanation
+    → Definition Reference
 
-An Occurrence Reference is needed when the explanation concerns one exact source application.
+occurrence explanation
+    → Occurrence Reference
+    → exact occurrence attribution when required
+```
 
-Occurrence-time integrity prevents later reconstruction from being presented as original source material.
+Diagnostic evidence, provenance, and compiler-derived evidence remain distinct from the source authority they explain.
 
-Retention controls later availability.
-
-Diagnostic remains a consumer of authoritative material, provenance, and compiler-derived evidence. It does not become
-the authority source for Governance or another compiler product.
+Retention controls whether retained evidence remains available; it does not recreate Establishment.
 
 ---
 
 # 14. Whole-Machine Consequences
 
-Whole-Machine linking preserves the source identity of unchanged unit material.
+Section 8.9 owns the common Whole-Machine composition rule.
 
-Composition may connect material from one unit to a required basis in another unit.
+```text
+unit source material
+    → keeps source identity and authority
 
-Neither local Contract needs to name the other authority before that connection is resolved.
+Whole-Machine connection
+    → owned by Whole-Machine composition law
 
-If Whole-Machine semantics require a new result, an owning Whole-Machine law must establish that result.
+new Whole-Machine meaning
+    → requires Whole-Machine Establishment
+```
 
-Physical linking does not establish the result and does not replace the source authority of unchanged material.
+Physical linking establishes none of these relations by itself.
 
 ---
 
 # 15. Semantic Validity Requirements
 
-The compiler must reject authority that appears without the Establishment law owned by its source.
+The compiler must reject semantic states that cannot satisfy the exact Establishment contract.
 
-Every Established Definition must have one exact Owning Authority Binding and one authority-owned Definition identity
-sufficient to form an exact Definition Reference.
+```text
+Invalid Establishment
 
-A Definition Reference must resolve deterministically to the same source-owned meaning and Owning Authority Binding in
-an
-equivalent semantic world.
+Establishment Input
+    → semantic subject unresolved
+    → required semantic reference unresolved
+    → parser recovery or realization topology used to complete missing meaning
 
-A semantic application is invalid when required Basis cannot be resolved or when supplied material is not applicable to
-that use.
+Owning Authority
+    → missing or non-exact
 
-Where the owning law requires Complete Basis, partial authority is invalid.
+Definition Reference
+    → cannot resolve exact authoritative meaning
 
-An Applicability judgment is invalid when its Basis Binding, dependent application, meaning-determining context, or
-required applicability-law coordinate cannot be identified exactly.
+Version Binding
+    → required but unresolved
+    → ambiguous claim
+    → implicit current / latest fallback
 
-Multiple applicable candidates do not authorize implicit first-match or compiler-selected resolution.
+Authority / Version / local Definition coordinate
+    → same exact coordinate
+    → conflicting Definition Meaning
 
-Selection requires the owning Singularity, completeness, or Arbitration law.
+Required Basis
+    → required but unresolved
+    → bound but inapplicable
+    → incomplete under owning completeness law
 
-Composition must preserve the exact source references used by the composing law.
+Applicability
+    → Basis Binding not exact
+    → dependent application not exact
+    → meaning-determining context not recoverable
+    → owning law not identifiable when another coordinate is required
 
-Linking must preserve unchanged Definition References.
+Applicable candidates
+    → more than owning singularity law permits
+    → no owning Arbitration law resolves them
 
-Established Definition Material is incomplete when a semantic consumer would need to reconstruct source-owned meaning,
-Owning Authority, or an already-established required relation from source syntax, realization topology, compiler
-heuristics, or another compiler product.
+Semantic prerequisite
+    → unresolved cycle
 
-Established Occurrence Material is incomplete when its owning meaning depends on Applicability but the exact Applicable
-Basis or required Applicable Context cannot be recovered.
+Composition
+    → source relation not exact
+    → new meaning has no owning composition law
 
-An earlier occurrence is invalidly represented when later `current` or `latest` material can silently replace the exact
-semantic attribution fixed at that occurrence.
+Established Occurrence
+    → determining attribution not recoverable
+    → historical attribution replaced by current / latest material
+```
 
-Candidate search order, solver trace, query state, cache state, compiler generation, and storage layout must not be
-required to recover Contract Applicability meaning.
+Compiler-only identity, lookup, ordering, reachability, cache state, or physical representation cannot repair any
+invalid
+state above.
+
+Where an owning law permits absence or another cardinality, that law decides validity. The compiler must not substitute
+a
+universal default.
+
+---
 
 # 16. Compiler Realization Obligation
 
-Compiler realization must provide exact access to every semantic distinction and binding required by this ADR.
+Compiler realization must provide exact access to every semantic distinction required by this ADR.
 
-The representation may combine coordinates physically or store them separately.
+```text
+semantic relation
+    → exactly recoverable
 
-It must not require a consumer to infer Contract meaning from implementation topology.
+physical encoding
+    → replaceable
+```
 
-Reuse, caching, fingerprinting, generation management, and incremental evaluation may avoid compiler work. They cannot
-establish, revoke, merge, or rewrite Contract authority.
+Coordinates may be packed or stored separately.
+
+A consumer must not need to reconstruct Contract meaning from implementation topology.
+
+Reuse and incremental machinery may avoid compiler work. They do not create Contract authority.
 
 ---
 
 # 17. Evolution Boundary
 
-Future compiler generations may replace identity encoding, storage, publication, dependency, reuse, or incremental
-mechanisms.
+Future compiler generations may replace identity encoding, storage, publication, dependency, reuse, incremental, or
+serialization mechanisms.
 
-Such changes remain compatible only when equivalent semantic worlds preserve the same Definition Meaning, exact
-Definition References, Owning Authority Bindings, and authority-owned relations.
+Compatibility requires preservation of the same Contract-visible meaning and exact semantic relations.
 
-Compiler generation, storage identity, and provenance changes therefore remain independently changeable where the
-owning Contract meaning is unchanged.
+```text
+Contract semantics
+    → stable under equivalent semantic world
+
+compiler realization
+    → may evolve independently
+```
+
+Contract Version remains distinct from representation and compiler generation under Section 11.
+
+Compatibility or migration between Contract Versions does not make their Version Identities equal.
+
+This boundary leaves V2 incremental architecture open without redefining Establishment semantics.
 
 ---
 
 # 18. Rejected Directions
 
-## 18.1. Universal Established-Material Object
+## 18.1. Universal Semantic Containers
 
-Rejected because Established Material is a semantic category rather than one physical shape.
+Rejected:
 
-A common wrapper would couple unrelated source authorities.
+```text
+one universal EstablishedMaterial object
+one universal Established-Material field set
+one universal Reference object
+one universal Applicable Context object
+one universal lifetime model
+```
 
----
+Different authorities own different semantic coordinates.
 
-## 18.1.1. Universal Established-Material Coordinates
-
-Rejected because not every authority owns the same semantic coordinates.
-
-Basis, Applicability, Version, occurrence context, judgment attribution, and other relations belong to common
-Establishment law only where the owning Contract makes them part of its meaning.
-
-Downstream convenience cannot make one universal field set mandatory for every authority.
-
----
-
-## 18.2. Host-Object Identity
-
-Rejected because object allocation belongs to realization.
-
-Changing the JVM representation must not create new Contract identity.
+A common compiler representation may exist. It does not become one universal Contract schema.
 
 ---
 
-## 18.3. Universal Reference Object
+## 18.2. Representation as Contract Authority
 
-Rejected because Definition Reference and Occurrence Reference are semantic relations.
+Rejected:
 
-Their physical representation may differ by compiler layer.
+```text
+host-object identity
+source nesting
+parent object
+symbol-table containment
+generated host type
+compiler-local handle
+pointer / ordinal / intern id
+table position
+physical completion order
 
----
+    ↛
 
-## 18.3.1. Structural Ownership as Contract Authority
+Owning Authority
+Definition Identity
+Version Identity
+semantic order
+```
 
-Rejected because source nesting, parent objects, symbol-table containment, generated host types, and compiler object
-ownership belong to representation or source organization.
-
-They do not establish Owning Authority Binding.
-
----
-
-## 18.3.2. Compiler-Local Handle as Definition Identity
-
-Rejected because local ordinals, pointers, intern identifiers, query keys, and storage handles may change across
-compiler
-generations or representations.
-
-They may accelerate exact lookup but do not define Contract identity.
-
----
-
-## 18.4. Compiler State as Authority
-
-Rejected because compiler orchestration, cache state, and derived analysis describe compiler work.
-
-They do not establish Contract meaning.
+These coordinates belong to source organization or realization unless an owning Contract explicitly gives one semantic
+meaning.
 
 ---
 
-## 18.5. Observation as Authority
+## 18.3. Implicit Semantic Reconstruction
 
-Rejected because observed realization state requires an owning semantic interpretation before a Contract can rely on it.
+Rejected:
 
----
+```text
+observation
+    → authority without owned semantic qualification
 
-## 18.6. Automatic Composition
+source results
+    → automatic larger composition
 
-Rejected because source results do not establish their own combination.
+generated artifact / reflection / KSP / host shape
+    → reconstructed Contract authority
 
-The larger meaning requires an owning law.
+Version Claim unresolved
+    → current / latest / preferred / nearest / first available
+```
 
----
-
-## 18.7. Universal Context or Lifetime
-
-Rejected because each authority defines the context required by its own meaning.
-
-Applicability already explains whether established material may participate later.
-
----
-
-## 18.8. Physical Order as Semantic Order
-
-Rejected because scheduling belongs to realization.
-
-Semantic order exists only where an authority declares it.
+Authority must come from the owning Contract law and exact established relations.
 
 ---
 
-## 18.9. Canonical Contract World as Universal IR
+## 18.4. Derived Compiler Work as Contract Authority
 
-Rejected because the Canonical Contract World represents already-established Contract definition meaning, while IRs
-represent compiler states used to analyze, transform, realize, or lower that meaning.
+Rejected:
 
-Collapsing them would mix Contract authority, derived analysis, optimization state, and backend realization into one
-representation.
+```text
+compiler state
+query dependency
+build dependency
+cache state
+verification result
+optimization proof
+specialized execution form
 
----
+    ↛
 
-## 18.10. Compiler Dependency as Contract Dependency
+Contract dependency
+Contract Establishment
+Contract authority
+```
 
-Rejected because compiler dependencies describe what compiler work determines another compiler result.
+The compiler may derive its own knowledge from Contract relations.
 
-Contract dependencies exist only where Contract law establishes the corresponding semantic relation.
+The derivation cannot reverse the authority direction.
 
-A compiler may derive the former from the latter. The derivation does not reverse the authority direction.
-
----
-
-## 18.11. Verification as Establishment
-
-Rejected because verification judges compiler or realization properties against already-established Contract meaning.
-
-A verified result may become reusable compiler knowledge.
-
-It does not create Contract authority.
-
----
-
-## 18.12. Optimization as Authority
-
-Rejected because optimization consumes established meaning and preserves required semantics.
-
-A specialization, elimination, or transformed execution form does not establish new Contract meaning merely because the
-compiler proved it safe.
+The Canonical Contract World also remains an authoritative substrate rather than a universal IR that absorbs analysis,
+optimization, or backend state.
 
 ---
 
-## 18.13. Generated Artifact Reconstruction
+## 18.5. Version Conflation
 
-Rejected because generated APIs and other host artifacts are downstream compiler products.
+Rejected:
 
-Reconstructing Contract authority from reflection, KSP, host type shape, or another generated artifact would reverse the
-authority direction.
+```text
+Contract Version
+    = Compiler Schema Version
+
+Contract Version
+    = Compiler Generation
+
+Contract Version
+    = Backend Artifact Format Version
+
+Version V3 compatible with V4
+    → V3 = V4
+```
+
+Representation compatibility, migration, or another compatibility law does not create Version equality.
+
+ADR-0053 remains the owner of Contract Version semantics.
 
 ---
 
 # 19. Consequences
 
-Established Definition Material has an explicit semantic binding model.
+The model requires explicit semantic binding and attribution.
 
-Definition Meaning, Authority-Owned Definition Identity, and Owning Authority Binding remain distinct.
+```text
+Cost
 
-Every Established Definition has exactly one Owning Authority Binding.
+exact Definition / Occurrence references
+explicit Version Binding
+explicit Required Basis / Basis Binding
+explicit Applicable Context
+explicit occurrence attribution
 
-An exact Definition Reference combines the authority reference with the identity defined under that authority.
+    → more compiler bookkeeping
+```
 
-Basis is explicit as Required Basis, Basis Binding, Applicability, and Complete Basis.
+```text
+Benefit
 
-Applicability is now explicit as a judgment over one exact Basis Binding, one exact dependent application, and only the
-Contract context used by the owning applicability law.
+source authority remains exact
+semantic identity survives representation change
+applicability remains use-specific
+historical occurrence meaning remains recoverable
+diagnostics can reference exact semantic sources
+reuse and incremental invalidation can be fine-grained
 
-Applicable Basis records successful applicability for that semantic use.
+    → without compiler mechanism becoming Contract authority
+```
 
-The source material does not acquire a permanent applicability flag.
-
-Multiple applicable candidates do not create implicit selection authority.
-
-An Established Occurrence that depends on Applicability preserves its exact Definition Reference, determining Applicable
-Basis, meaning-relevant Applicable Context, and an exact applicability-law coordinate only when that law is not already
-uniquely determined.
-
-The occurrence preserves direct determining references rather than copying the transitive semantic world.
-
-Later Version, Policy, Governance, State, or other semantic material cannot rewrite an earlier occurrence.
-
-This prevents source layout, compiler containment, solver behavior, local handles, fingerprints, cache state, and
-publication generation from silently becoming Contract meaning.
-
-The Canonical Contract World preserves exact Established Definition bindings without absorbing occurrence-specific
-attribution into one aggregate definition world.
-
-The compiler may choose different physical representations and future incremental mechanisms as long as these exact
-semantic distinctions and bindings remain unchanged.
-
-The cost is explicit binding and attribution bookkeeping.
-
-The benefit is precise establishment, diagnostics, reuse, and later incremental invalidation without making one compiler
-implementation authoritative.
+The physical representation remains replaceable as long as these semantic laws are preserved.
 
 ---
 
 # 20. Amendment History
 
-## 2026-09-02 — Contract Detail and Replaceable Realization
+Amendment history is non-normative. The body of this ADR is the current authority.
 
-Section 4.9 clarifies that Established Material fixes semantic authority rather than one physical representation.
+```text
+2026-09-02
+    → clarified Contract detail vs replaceable realization
 
-The amendment also makes the Contract-detail boundary explicit. A detail belongs to Contract law only when the owning
-authority requires that distinction to preserve its declared meaning.
+2026-09-09
+    → aligned Resolved Contract HIR / Establishment / Canonical Contract World boundary
 
-This amendment does not define new 1D-specific Established Material. The existing establishment, identity,
-applicability, composition, and integrity laws remain unchanged.
+2026-09-10
+    → aligned Contract-aware compiler consumption
+    → closed common Established Material contract
+    → separated Definition Meaning / identity / Owning Authority Binding
 
-## 2026-09-09 — Compiler Semantic Boundary Alignment
-
-The ADR now makes the V1 compiler boundary explicit as `Source / Syntax → Resolution → Resolved Contract HIR →
-Authority-owned Establishment → Canonical Contract World`.
-
-Resolved Contract HIR is clarified as non-authoritative intermediate compiler material. The Canonical Contract World is
-clarified as the semantic substrate representing Established Definition Material rather than an ordinary IR level.
-
-Compiler products are clarified as sibling consumers of the authoritative substrate. Query, incremental, storage,
-scheduling, and physical materialization mechanisms remain replaceable compiler realization rather than Establishment
-law.
-
-The amendment also removes V2-specific assumptions from the Establishment law. Future incremental architecture may
-change without redefining the Contract semantics established by this ADR.
-
-## 2026-09-10 — Contract-Aware Compiler Consumption Alignment
-
-The ADR now makes Contract-Aware Analysis an explicit consumer of the Canonical Contract World.
-
-Established applicability may support specialization and pruning, but compiler-derived knowledge, verification, and
-optimization remain downstream realization and do not establish Contract meaning.
-
-The amendment also separates Contract Basis and Composition relations from realization call relations, compiler product
-or query dependencies, and build or artifact dependencies.
-
-Reference Judgment is clarified as requiring actual candidate or occurrence material and applicable context when it
-judges one application. Generated API products remain downstream products and cannot be used to reconstruct Contract
-authority.
-
-No Establishment, identity, applicability, Required Basis, Basis Resolution, Composition, or occurrence-integrity law is
-changed by this amendment.
-
-## 2026-09-10 — Established Material Contract Closure
-
-The ADR now defines the Contract boundary from Resolved Contract HIR admission through Established Material and the
-Canonical Contract World.
-
-An Establishment Input Contract requires exact resolved semantic subjects and references without prescribing one HIR
-schema.
-
-A Common Established Material Contract now requires source authority, established meaning, and every semantic
-distinction
-owned by the source law while rejecting one universal material payload.
-
-Definition Material and Occurrence Material now have separate minimum semantic contracts.
-
-The Canonical Contract World now has an explicit semantic access contract for Established Definition Material.
-
-Compiler analysis, verification, optimization, query, cache, publication, storage, and backend mechanisms remain outside
-this Contract boundary.
-
-No physical representation, query architecture, fingerprint, cache, IR layout, or backend mechanism is established by
-this amendment.
-
-## 2026-09-10 — Definition Meaning, Identity, and Authority Binding
-
-Established Definition Material now separates Definition Meaning, Authority-Owned Definition Identity, and Owning
-Authority Binding.
-
-Every Established Definition has exactly one explicit Owning Authority Binding.
-
-An exact Definition Reference is defined semantically by the Owning Authority Reference together with the
-Authority-Owned Definition Identity.
-
-The amendment also removes compiler-consumer, optimization, and query detail that is already owned by the current
-compiler architecture and Established Contract World design documents.
-
-Canonical Contract World wording is reduced to the exact semantic binding surface required by Establishment.
-
-Structural containment, compiler-local handles, fingerprints, storage identity, and publication generation remain
-compiler realization rather than Contract identity.
-
-## 2026-09-11 — Explicit Basis Binding Contract
-
-Basis is now expressed as an explicit Contract model rather than an abstract dependency description.
-
-The amendment separates Required Basis, Basis Resolution, Basis Binding, Applicability, and Complete Basis.
-
-Required Basis is owned by the semantic judgment that needs it and names required meaning rather than producer topology.
-
-Distinct requirements remain distinguishable even when they require the same Contract kind.
-
-Basis Resolution produces an exact Basis Binding from one Required Basis to exact Established Material under the owning
-composition law.
-
-Binding does not imply Applicability.
-
-The owning Contract defines cardinality and completeness.
-
-`Not Owned`, `Permitted Absence`, `Required, Unresolved`, `Bound, Inapplicable`, and `Bound, Applicable` remain distinct
-semantic states.
-
-A resolved source becomes Definition-identity-significant only when the owning Contract makes that exact source relation
-part of Definition Meaning.
-
-Basis prerequisite order is semantic partial order rather than compiler scheduling order. Circular semantic
-establishment remains invalid.
-
-Compiler dependency remains derived from Contract Basis Binding and cannot create it.
-
-## 2026-09-11 — Explicit Applicability and Occurrence Attribution Contract
-
-Applicability is now defined over an exact Basis Binding, an exact dependent semantic application, and only the
-meaning-determining context used by the owning applicability law.
-
-Applicable Context is sparse Contract context rather than a universal nullable context object.
-
-A successful Applicability judgment produces an Applicable Basis relation for that semantic use.
-
-The source material does not receive a permanent `applicable` flag, and this ADR does not create one permanent
-Established Applicability object for every check.
-
-Multiple applicable candidates do not authorize implicit selection. Singularity, completeness, or explicit Arbitration
-remains responsible for selection.
-
-When Applicability contributes to Established Occurrence Material, the occurrence preserves its exact Definition
-Reference, determining Applicable Basis, exact meaning-relevant context, and the applicability-law coordinate only when
-the other preserved coordinates do not already identify that law uniquely.
-
-The occurrence preserves direct determining semantic references rather than the full transitive semantic world.
-
-Existing Established Material may therefore be referenced without copying its complete meaning.
-
-Later Version, Policy, Governance, State, Basis Binding, or other material does not rewrite the attribution of an
-earlier
-Established Occurrence.
-
-Candidate search order, rejected alternatives, solver trace, query dependency, cache state, compiler generation, and
-storage layout remain outside Contract attribution unless an owning Contract law explicitly gives one of them semantic
-meaning.
+2026-09-11
+    → made Required Basis / Basis Binding / Complete Basis explicit
+    → made Applicability / Applicable Context / Occurrence attribution explicit
+    → made Authority-scoped Version Binding explicit
+    → removed semantic duplication and assigned one canonical owner section per common law
+```
