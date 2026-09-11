@@ -124,6 +124,12 @@ The compiler core must not require host-object identity to preserve these relati
 
 The design must leave room for replaceable compiler representation without prescribing one storage format.
 
+A semantic distinction must not require a separate object, allocation, table, compiler product, or reference hop merely
+because the meanings are distinct.
+
+The compiler must remain free to split or fuse physical material according to independent consumption, invalidation,
+reuse, lifetime, publication, and access-pattern needs.
+
 The individual Contracts must keep ownership of their own result meaning.
 
 Compiler intermediate representations, derived analysis, scheduling, caching, and publication mechanisms must not create
@@ -206,6 +212,16 @@ Established Material
 ```
 
 A semantic coordinate exists only where the owning law requires it.
+
+A named semantic coordinate or relation does not become separate Established Material merely because it can be described
+independently.
+
+```text
+semantic distinction
+    ≠ separate Established Material
+```
+
+Separate Established Material exists only when an owning Contract law establishes complete meaning of its own.
 
 ## 4.3. Established Definition Material
 
@@ -434,11 +450,28 @@ detail
     → realization
 ```
 
-Contract precision does not require maximum specification.
+Contract precision does not require maximum structural specification.
 
-The owning authority declares the distinctions required to preserve its meaning. A compiler consumer, Diagnostic,
-backend, or first implementation cannot add Contract meaning merely because it needs another field, index, summary, or
-handle.
+The owning authority declares the distinctions required to preserve its meaning.
+
+It does not require one physical structure for each distinction.
+
+```text
+semantic coordinate
+    ≠ field requirement
+
+semantic relation
+    ≠ pointer requirement
+
+semantic boundary
+    ≠ allocation boundary
+
+semantic material
+    ≠ compiler-product boundary
+```
+
+A compiler consumer, Diagnostic, backend, or first implementation cannot add Contract meaning merely because it needs
+another field, index, summary, handle, table, or projection.
 
 Established Material is semantically immutable after Establishment.
 
@@ -447,14 +480,16 @@ same Established Material
     → same semantic meaning
 
 physical representation
-    → may change
+    → may split
+    → may fuse
+    → may move
+    → may be projected differently
 ```
 
 Exact bytes become Contract material only when the owning law explicitly makes those bytes part of a protocol, identity,
 or outward obligation.
 
-Section 11 owns the general Contract / representation boundary.
-
+Section 11 owns the general logical-separation / physical-materialization boundary.
 ---
 
 # 5. Deterministic Establishment
@@ -1986,6 +2021,18 @@ It must not manufacture a missing semantic relation for downstream convenience.
 Occurrence-specific Applicable Basis, Applicable Context, and occurrence attribution remain outside Definition-world
 material unless an owning Contract explicitly establishes such a relation.
 
+This exact binding surface defines semantic recoverability.
+
+It does not require one field, row, object, table, or reference edge per relation.
+
+```text
+exact semantic relation
+    → must remain recoverable
+
+physical path used to recover it
+    → replaceable
+```
+
 ---
 
 ## 10.5. World Boundary
@@ -2011,6 +2058,8 @@ Representation, indexing, publication, reuse, and incremental mechanisms remain 
 ---
 
 # 11. Contract and Representation Boundary
+
+## 11.1. Semantic Separation
 
 Compiler realization must preserve every semantic coordinate and exact relation defined by this ADR.
 
@@ -2038,9 +2087,202 @@ Complete Basis
 Composition relation
 Semantic prerequisite order
 Occurrence attribution
+```
 
-        ≠
+These distinctions are logical.
 
+They do not prescribe physical topology.
+
+```text
+semantic distinction
+    ≠ separate object
+    ≠ separate allocation
+    ≠ separate table
+    ≠ separate compiler product
+    ≠ pointer or reference hop
+```
+
+The realization must preserve meaning.
+
+It does not have to preserve the semantic diagram as an object graph.
+
+---
+
+## 11.2. Logical Separation Does Not Require Physical Indirection
+
+A semantic reference denotes an exact semantic coordinate or relation.
+
+It does not require a host-language object reference.
+
+```text
+Definition Reference
+    → exact Definition
+
+Basis Binding
+    → exact Required Basis / source relation
+
+Occurrence Reference
+    → exact semantic application
+```
+
+The Contract does not require:
+
+```text
+DefinitionObject
+    → VersionObject
+        → BasisBindingObject
+            → ApplicabilityObject
+                → OccurrenceObject
+```
+
+A realization may instead use packed identity, dense handles, flat relations, primitive slabs, direct offsets,
+summaries,
+or another representation that preserves the same exact semantics.
+
+```text
+semantic reference
+    → may realize as dense handle
+
+semantic relation
+    → may realize as flat row / slab range
+
+several semantic coordinates
+    → may realize in one physical record
+```
+
+No encoding choice gains Contract authority.
+
+---
+
+## 11.3. Material, Product, and Storage Boundaries
+
+The following boundaries are independent decisions.
+
+```text
+Semantic Coordinate
+    ↓ may or may not require
+Established Material
+    ↓ may or may not require
+Compiler Product
+    ↓ may or may not require
+Physical Storage Unit
+```
+
+A semantic distinction alone does not justify promotion to the next boundary.
+
+Separate Established Material exists only when an owning Contract law establishes complete meaning of its own.
+
+Separate compiler material or product is a realization decision.
+
+A compiler may split a product when independent consumption, invalidation, reuse, lifetime, publication, or
+materialization makes that split useful.
+
+A compiler may fuse products when consumers repeatedly need the same semantic material together and no independent
+boundary requires separate materialization.
+
+```text
+semantic split
+    → preserved
+
+physical split / fuse
+    → replaceable
+```
+
+The Contract does not decide product granularity for the compiler.
+
+---
+
+## 11.4. Performance-Sensitive Projection
+
+A hot consumer must not be forced to repeatedly reconstruct semantic relations that the compiler has already resolved.
+
+```text
+Canonical semantic relations
+
+Definition
+Version
+Basis
+Applicability
+Composition
+
+        ↓
+consumer-specific projection
+
+        ↓
+hot consumer
+```
+
+A realization may:
+
+```text
+pre-resolve
+flatten
+fuse
+co-locate
+denormalize derived values
+build summaries
+replace semantic reference chains with dense lookup
+```
+
+when those changes preserve the canonical semantic source and exact Contract meaning.
+
+This freedom applies to compiler analysis, verification, whole-machine processing, execution formation, and backend
+realization.
+
+A projection is derived realization material.
+
+```text
+canonical semantic source
+    → authority
+
+derived projection
+    → performance / consumer representation
+    ↛ authority
+```
+
+A derived copy may duplicate a semantic value for locality.
+
+That duplication does not create a second semantic owner.
+
+---
+
+## 11.5. Temperature Is Not Contract Meaning
+
+Hot, warm, and cold are compiler realization properties.
+
+They are not Contract coordinates.
+
+A backend or compiler generation may classify the same semantic material differently.
+
+```text
+Hot
+    → may favor fusion
+    → may favor co-location
+    → may favor pre-resolution
+
+Warm
+    → may favor indexed flat relations
+    → may favor summaries
+
+Cold
+    → may favor indirection
+    → may favor separate provenance or diagnostic storage
+```
+
+These are realization options, not mandatory layouts.
+
+The Contract does not permanently classify Definition, Version, Basis, Applicability, Occurrence, provenance, or any
+other coordinate as hot or cold.
+
+Physical temperature follows actual consumer behavior and cost.
+
+---
+
+## 11.6. Representation Authority Boundary
+
+Compiler realization material remains distinct from Contract meaning.
+
+```text
 Compiler realization material
 
 source container
@@ -2054,9 +2296,11 @@ compiler generation
 compiler schema version
 worker schedule
 backend artifact layout
+consumer-specific summary
+derived projection
 ```
 
-The realization group may encode, index, compare, cache, or transport the Contract group.
+The realization group may encode, index, compare, cache, duplicate, transport, split, or fuse Contract material.
 
 It may not establish, revoke, merge, or rewrite Contract authority.
 
@@ -2234,18 +2478,43 @@ physical encoding
     → replaceable
 ```
 
-Coordinates may be packed or stored separately.
+Exact recoverability does not require a fixed traversal path.
+
+```text
+semantic chain
+
+A
+    → B
+    → C
+    → D
+
+may realize as
+
+pre-resolved projection P
+```
+
+A compiler may pack, split, fuse, flatten, summarize, or duplicate derived projections when Contract meaning remains
+unchanged.
 
 A consumer must not need to reconstruct Contract meaning from implementation topology.
 
-Reuse and incremental machinery may avoid compiler work. They do not create Contract authority.
+A hot consumer should not be forced to repeat semantic resolution that an earlier valid compiler stage has already made
+available in a verified projection.
+
+Reuse and incremental machinery may avoid compiler work.
+
+Performance projections may avoid reference chasing.
+
+Neither creates Contract authority.
+
+The realization must preserve the ability to change physical split / fuse decisions without changing Contract semantics.
 
 ---
 
 # 17. Evolution Boundary
 
-Future compiler generations may replace identity encoding, storage, publication, dependency, reuse, incremental, or
-serialization mechanisms.
+Future compiler generations may replace identity encoding, storage, publication, dependency, reuse, incremental,
+serialization, product granularity, or split / fuse decisions.
 
 Compatibility requires preservation of the same Contract-visible meaning and exact semantic relations.
 
@@ -2257,11 +2526,24 @@ compiler realization
     → may evolve independently
 ```
 
+A future compiler may:
+
+```text
+split one physical product into several
+fuse several products into one
+move a relation between hot and cold storage
+replace a reference chain with a summary
+replace a summary with another validated projection
+```
+
+without changing this ADR when the same Contract semantics remain exactly recoverable.
+
 Contract Version remains distinct from representation and compiler generation under Section 11.
 
 Compatibility or migration between Contract Versions does not make their Version Identities equal.
 
-This boundary leaves V2 incremental architecture open without redefining Establishment semantics.
+This boundary leaves V2 incremental architecture and later performance work open without redefining Establishment
+semantics.
 
 ---
 
@@ -2388,6 +2670,38 @@ ADR-0053 remains the owner of Contract Version semantics.
 
 ---
 
+## 18.6. Semantic Decomposition as Mandatory Physical Topology
+
+Rejected:
+
+```text
+semantic concept A
+semantic concept B
+semantic concept C
+
+therefore
+
+AObject
+    → BObject
+        → CObject
+```
+
+Distinct semantics do not require distinct heap objects, tables, allocations, compiler products, or repeated reference
+traversal.
+
+Also rejected:
+
+```text
+first implementation layout
+    → permanent semantic architecture
+```
+
+The compiler may physically split or fuse material as access patterns and product boundaries evolve.
+
+No first representation becomes Contract law merely because it was convenient to implement.
+
+---
+
 # 19. Consequences
 
 The model requires explicit semantic binding and attribution.
@@ -2401,7 +2715,21 @@ explicit Required Basis / Basis Binding
 explicit Applicable Context
 explicit occurrence attribution
 
-    → more compiler bookkeeping
+    → more semantic bookkeeping
+```
+
+The model does not require equivalent physical fragmentation.
+
+```text
+Semantic precision
+    → preserved
+
+Physical realization
+    → may split
+    → may fuse
+    → may flatten
+    → may pre-resolve
+    → may build consumer-specific summaries
 ```
 
 ```text
@@ -2411,11 +2739,16 @@ source authority remains exact
 semantic identity survives representation change
 applicability remains use-specific
 historical occurrence meaning remains recoverable
+hot consumers can avoid unnecessary reference chasing
+physical product granularity can evolve
 diagnostics can reference exact semantic sources
 reuse and incremental invalidation can be fine-grained
 
     → without compiler mechanism becoming Contract authority
 ```
+
+The compiler therefore pays the cost of preserving exact semantic relations while retaining freedom to choose a
+performance-oriented physical layout.
 
 The physical representation remains replaceable as long as these semantic laws are preserved.
 
@@ -2442,4 +2775,5 @@ Amendment history is non-normative. The body of this ADR is the current authorit
     → made Applicability / Applicable Context / Occurrence attribution explicit
     → made Authority-scoped Version Binding explicit
     → removed semantic duplication and assigned one canonical owner section per common law
+    → separated semantic decomposition from compiler product and physical split / fuse decisions
 ```
