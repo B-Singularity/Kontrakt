@@ -10,13 +10,13 @@ Migrated
 
 ## Related
 
-- `docs/the-most-important-thing/what-contract-is.md`
-- `docs/todo/kontrakt-v1-commercial-compiler-foundation-candidate-architecture.md`
-- `docs/todo/v2/kontrakt-v2-reference-architecture-and-v1-foundations.md`
-- `docs/todo/kontrakt-verifier-implementation-plan.md`
-- `docs/quality/TESTING_STRATEGY.md`
-- `docs/constitution/compiler-core-protocols.md`
-- `docs/constitution/canonical-ir-stage-and-lowering-protocol.md`
+- `../../the-most-important-thing/what-contract-is.md`
+- `../../todo/kontrakt-v1-commercial-compiler-foundation-candidate-architecture.md`
+- `../../todo/v2/kontrakt-v2-reference-architecture-and-v1-foundations.md`
+- `../../todo/kontrakt-verifier-implementation-plan.md`
+- `../../quality/TESTING_STRATEGY.md`
+- `../../constitution/compiler-core-protocols.md`
+- `../../constitution/canonical-ir-stage-and-lowering-protocol.md`
 - ADR-0069: Invariant Contract
 - ADR-0068: Fact Contract
 - ADR-0067: Lowering Contract
@@ -34,10 +34,10 @@ Migrated
 - ADR-0040: Deterministic Frozen Acquisition Pipeline, Explicit Readiness, and Memory-Disciplined Publication
 - ADR-0039: Adapter-Neutral Metamodel Acquisition, Frozen Fact Image, and Backend-Handle Erasure
 - ADR-0031: Two-Tier Transactional Memoization and Structural Interning
-- `docs/design/stable-metadata-identity-protocol.md`
-- `docs/design/protocol-owned-metadata-interning.md`
-- `docs/design/l1-planner-session-primitive-data-structures.md`
-- `docs/design/l2-plan-interner-partitioned-tier2-with-governance.md`
+- `../../design/stable-metadata-identity-protocol.md`
+- `../../design/protocol-owned-metadata-interning.md`
+- `../../design/l1-planner-session-primitive-data-structures.md`
+- `../../design/l2-plan-interner-partitioned-tier2-with-governance.md`
 
 ---
 
