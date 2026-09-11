@@ -2509,6 +2509,10 @@ Neither creates Contract authority.
 
 The realization must preserve the ability to change physical split / fuse decisions without changing Contract semantics.
 
+Appendix A gives non-normative V1 implementation examples for these semantic relations. Those examples are
+implementation
+reference only and do not constrain later representation.
+
 ---
 
 # 17. Evolution Boundary
@@ -2777,3 +2781,2271 @@ Amendment history is non-normative. The body of this ADR is the current authorit
     → removed semantic duplication and assigned one canonical owner section per common law
     → separated semantic decomposition from compiler product and physical split / fuse decisions
 ```
+
+---
+
+# Appendix A. Non-Normative Kontrakt V1 Implementation Reference
+
+## A.1. Status
+
+**This appendix is implementation reference only. It is not Contract law.**
+
+Sections 1–20 define normative Contract meaning. Appendix A gives one plausible Kontrakt V1 realization so
+implementation can start from concrete material shapes without turning those shapes into authority.
+
+```text
+Normative Contract
+    → Sections 1–20
+
+V1 implementation reference
+    → Appendix A
+    → non-normative
+    → replaceable
+```
+
+Nothing here fixes Kotlin class shape, JVM object topology, table count, slab count, IR operation names, HID encoding,
+dense-handle width, query API, serialization schema, or physical split / fuse choice.
+
+---
+
+## A.2. Reading Form
+
+Each important internal material answers the same questions.
+
+```text
+Material
+    → what Kontrakt calls or observes
+
+Produced by
+    → compiler boundary that creates it
+
+Consumes
+    → exact upstream material
+
+Exposes
+    → information downstream may read
+
+Example dump
+    → human-readable internal view
+
+Possible V1 backing
+    → concrete primitive / slab candidate
+
+Consumed by
+    → downstream compiler products
+```
+
+`Possible V1 backing` is concrete by design. It is still replaceable.
+
+---
+
+## A.3. End-to-End Material Map
+
+```text
+Contract Source
+    ↓
+Source / Syntax / Provenance
+    ↓
+Resolved Contract HIR
+    ↓
+Authority-Owned Establishment
+    ↓
+Canonical Contract World
+    ├── Generated API Product
+    ├── Reference Judgment
+    ├── PBT / Fixture / Coverage
+    ├── Diagnostics / Evidence
+    └── Contract-Aware consumers
+
+User JVM Classfiles
+    ↓
+Realization Acquisition
+    ↓
+Realization Body IR
+    ↓
+Admitted Realization Binding
+    ↓
+Contract-Aware Analysis
+    ↓
+Verification Overlay
+    ↓
+Whole-Machine / Specialization Knowledge
+    ↓
+Execution Formation
+    ↓
+Contract-Aware Execution IR
+    ↓
+Analysis / Transform
+    ↓
+Execution IR New Generation
+    ↓
+JVM Plan / IR
+    ↓
+Classfile Product
+```
+
+```text
+Resolved Contract HIR
+    → IR
+
+Canonical Contract World
+    → authoritative semantic substrate
+    → not ordinary optimization IR
+
+Realization Body IR
+    → IR
+
+Contract-Aware Analysis
+Verification Overlay
+Whole-Machine Summary
+    → derived compiler material
+
+Contract-Aware Execution IR
+    → IR
+
+JVM Plan / IR
+    → target IR
+```
+
+---
+
+## A.4. Running Example
+
+```text
+Invariant Definition
+    → PositiveBalance
+
+Version
+    → V3
+
+Required Basis
+    target
+        → Balance Fact
+        → exactly one
+
+Applicability uses
+    → State
+
+Occurrence Context
+    State
+        → Active
+
+Occurrence Result
+    → Satisfied
+```
+
+The appendix begins after authored syntax has been parsed. Exact `.kontrakt` grammar is outside this example.
+
+---
+
+## A.5. Source, Provenance, and Resolved Contract HIR
+
+### Material
+
+```text
+Source / Provenance Material
+Resolved Contract HIR
+```
+
+### Produced by
+
+```text
+.kontrakt
+    ↓
+Source Manager / Parser / Recovery
+    ↓
+Resolution
+```
+
+### Exposes
+
+```text
+exact source provenance
+resolved authority references
+resolved semantic names
+resolved slot / relation references
+poison / recovery state when required
+```
+
+### Example dump
+
+```text
+hir.definition %d17
+
+kind
+    → Invariant
+
+authority
+    → invariant:PositiveBalance
+
+versionClaim
+    → V3
+
+localDefinition
+    → PositiveBalance
+
+requiredBasis
+    target
+        → Fact<Balance>
+        → exactly one
+
+applicabilityInputs
+    → State
+
+provenance
+    → src#91
+```
+
+### Possible V1 backing
+
+```text
+ResolvedDefinitionHIR
+
+kind[]
+authorityRef[]
+versionClaimRef[]
+localDefinitionRef[]
+
+requiredBasisBase[]
+requiredBasisCount[]
+
+applicabilityInputBase[]
+applicabilityInputCount[]
+
+provenanceHandle[]
+poisonTag[]
+```
+
+Example:
+
+```text
+ResolvedDefinitionHIR[17]
+
+kind                     = INVARIANT
+authorityRef             = 8
+versionClaimRef          = 3
+localDefinitionRef       = 12
+requiredBasisBase        = 40
+requiredBasisCount       = 1
+applicabilityInputBase   = 70
+applicabilityInputCount  = 1
+provenanceHandle         = 91
+poisonTag                = CLEAN
+```
+
+### Consumed by
+
+```text
+Authority-Owned Establishment
+compiler diagnostics
+source-aware tooling
+```
+
+Resolved HIR is not authoritative.
+
+---
+
+## A.6. Establishment Input and Established Definition Output
+
+### Material
+
+```text
+Establishment Input
+Established Definition Material
+```
+
+### Produced by
+
+```text
+Resolved Contract HIR
+    ↓
+Basis / applicability prerequisites as required
+    ↓
+Owning Contract Law
+    ↓
+Establishment
+```
+
+### Example input
+
+```text
+establishment.input
+
+candidate
+    → hir.definition %d17
+
+owningAuthority
+    → invariant:PositiveBalance
+
+resolvedVersion
+    → V3
+
+requiredBasisDeclaration
+    target
+        → Fact<Balance>
+        → exactly one
+
+provenance
+    → src#91
+```
+
+### Example output
+
+```text
+established.definition @def:42
+
+definitionReference
+    → invariant:PositiveBalance / V3
+
+owningAuthority
+    → invariant:PositiveBalance
+
+versionBinding
+    → V3
+
+authorityLocalDefinition
+    → PositiveBalance
+
+definitionMeaning
+    → positive-balance-invariant#5
+
+requiredBasis
+    target
+        → requiredBasis#80
+
+directRelations
+    → relationRange[120..122)
+
+provenance
+    → src#91
+```
+
+### Possible V1 backing
+
+```text
+DefinitionTable
+
+authorityHandle[]
+versionHandle[]
+localDefinitionCoordinate[]
+meaningKind[]
+meaningPayloadHandle[]
+requiredBasisBase[]
+requiredBasisCount[]
+relationBase[]
+relationCount[]
+provenanceHandle[]
+```
+
+Example:
+
+```text
+DefinitionTable[42]
+
+authorityHandle           = 8
+versionHandle             = 3
+localDefinitionCoordinate = 12
+meaningKind               = INVARIANT
+meaningPayloadHandle      = 5
+requiredBasisBase         = 80
+requiredBasisCount        = 1
+relationBase              = 120
+relationCount             = 2
+provenanceHandle          = 91
+```
+
+### Consumed by
+
+```text
+Canonical Contract World publication
+Reference Judgment
+PBT planning
+diagnostics
+Contract-Aware Analysis
+Execution Formation
+```
+
+No universal `EstablishedMaterial` row is required.
+
+---
+
+## A.7. Canonical Contract World, Stable Keys, and Dense Handles
+
+### Material
+
+```text
+Canonical Contract World Generation G12
+```
+
+### Produced by
+
+```text
+Established Definition Material
+    ↓
+semantic verification
+    ↓
+freeze / seal
+    ↓
+publication
+```
+
+### Example world view
+
+```text
+CanonicalContractWorld G12
+
+authorities
+    → AuthorityTable
+
+versions
+    → VersionTable
+
+definitions
+    → DefinitionTable
+
+requiredBasis
+    → RequiredBasisSlab
+
+relations
+    → DefinitionRelationSlab
+
+stableIdentity
+    → StableKeyIndex
+
+provenance
+    → ProvenanceStore
+```
+
+Occurrence-specific material remains separate unless an owning Contract defines otherwise.
+
+### Identity use
+
+```text
+Stable Definition Key
+    → hid:7f4a...19c2
+
+Generation-Local Definition Handle
+    → 42
+```
+
+```text
+hid:7f4a...19c2
+    ↓ resolve once in G12
+definitionHandle = 42
+    ↓ repeated reads
+DefinitionTable[42]
+```
+
+### Possible V1 backing
+
+```text
+StableKeyIndex
+    stableKey[]
+    denseHandle[]
+
+DefinitionRelationSlab
+    relationKind[]
+    leftHandle[]
+    rightKind[]
+    rightHandle[]
+
+ProvenanceStore
+    sourceId[]
+    spanStart[]
+    spanEnd[]
+    originHandle[]
+```
+
+### Consumed by
+
+```text
+all sibling Contract products
+Contract-Aware Analysis
+Execution Formation
+Whole-Machine work
+```
+
+Stable keys and dense handles are lookup machinery, not authority.
+
+---
+
+## A.8. Required Basis and Basis Binding Material
+
+### Contract view
+
+```text
+Required Basis
+
+target
+    → Fact<Balance>
+    → exactly one
+```
+
+Later:
+
+```text
+Basis Binding
+
+target
+    → Balance Fact F42
+```
+
+### Possible V1 backing
+
+```text
+RequiredBasisSlab
+
+ownerKind[]
+ownerHandle[]
+requirementCoordinate[]
+requiredMeaningKind[]
+requiredMeaningPayload[]
+cardinalityKind[]
+cardinalityPayload[]
+```
+
+```text
+RequiredBasisSlab[80]
+
+ownerKind              = DEFINITION
+ownerHandle            = 42
+requirementCoordinate  = TARGET
+requiredMeaningKind    = FACT
+requiredMeaningPayload = Balance
+cardinalityKind        = EXACTLY_ONE
+cardinalityPayload     = 0
+```
+
+Resolved connection:
+
+```text
+BasisBindingSlab
+
+requiredBasisHandle[]
+sourceKind[]
+sourceHandle[]
+dependentApplicationHandle[]
+```
+
+```text
+BasisBindingSlab[100]
+
+requiredBasisHandle        = 80
+sourceKind                 = FACT
+sourceHandle               = 205
+dependentApplicationHandle = 17
+```
+
+### Consumed by
+
+```text
+Applicability evaluation
+Complete Basis check
+Occurrence establishment
+diagnostics
+Reference Judgment
+Execution Formation when runtime-relevant
+```
+
+The two slabs may later be fused.
+
+---
+
+## A.9. Applicability, Applicable Context, and Complete Basis
+
+### Produced by
+
+```text
+Basis Binding
++
+Dependent Application
++
+Applicable Context
++
+Owning Applicability Law
+    ↓
+Applicability Judgment
+```
+
+### Example input
+
+```text
+applicability.input
+
+law
+    → invariant-target-applicability#4
+
+basisBinding
+    → basisBinding#100
+
+dependentApplication
+    → occurrenceCandidate#17
+
+context
+    State
+        → Active
+```
+
+### Example transient result
+
+```text
+applicability.result
+
+basisBinding
+    → basisBinding#100
+
+application
+    → occurrenceCandidate#17
+
+result
+    → Applicable
+```
+
+### Possible V1 backing for sparse context
+
+```text
+ContextSlab
+
+ownerApplicationHandle[]
+coordinateKind[]
+materialKind[]
+materialHandle[]
+```
+
+```text
+ContextSlab[55]
+
+ownerApplicationHandle = 17
+coordinateKind         = STATE
+materialKind           = STATE
+materialHandle         = 301
+```
+
+### Complete Basis
+
+```text
+Complete Basis for occurrenceCandidate#17
+
+target
+    → basisBinding#100
+    → Applicable
+
+Completeness Law
+    → exactly one target
+
+result
+    → Complete
+```
+
+A permanent `CompleteBasis` object is not required. V1 may derive it from requirement ranges, applicable binding ranges,
+and the owning completeness law.
+
+### Consumed by
+
+```text
+Occurrence establishment
+Reference Judgment
+verification / diagnostics when relevant
+Execution Formation when runtime-relevant
+```
+
+---
+
+## A.10. Established Occurrence Material
+
+### Produced by
+
+```text
+exact Definition
++
+Complete Basis
++
+Applicable Context
++
+Owning Occurrence Judgment
+    ↓
+Occurrence Establishment
+```
+
+### Example dump
+
+```text
+established.occurrence @occ:17
+
+occurrenceReference
+    → PositiveBalance occurrence O17
+
+definitionReference
+    → invariant:PositiveBalance / V3
+
+applicableBasis
+    target
+        → requiredBasis#80
+        → basisBinding#100
+        → Balance Fact F42
+
+applicableContext
+    State
+        → Active
+
+result
+    → Satisfied
+```
+
+### Possible V1 backing
+
+```text
+OccurrenceTable
+
+definitionHandle[]
+basisBase[]
+basisCount[]
+contextBase[]
+contextCount[]
+resultKind[]
+resultPayloadHandle[]
+```
+
+```text
+OccurrenceTable[17]
+
+definitionHandle    = 42
+basisBase           = 100
+basisCount          = 1
+contextBase         = 55
+contextCount        = 1
+resultKind          = SATISFIED
+resultPayloadHandle = 0
+```
+
+### Consumed by
+
+```text
+later Contract judgments when explicitly used as Basis
+diagnostics
+Reference comparison
+execution products when occurrence meaning remains runtime-relevant
+```
+
+Version need not be duplicated when the Definition Reference already fixes it.
+
+---
+
+## A.11. Composition and Whole-Machine Established Material
+
+### Produced by
+
+```text
+already-established source material
++
+Owning Composition Law
+    ↓
+Composition Judgment
+    ↓
+new Established meaning when the law establishes one
+```
+
+### Example
+
+```text
+composition @comp:7
+
+law
+    → whole-machine-composition#7
+
+inputs
+    coreAResult
+        → Established Material A17
+
+    coreBResult
+        → Established Material B3
+
+result
+    → Whole-Machine Material W9
+
+owner
+    → Whole-Machine Authority W
+```
+
+### Possible V1 backing
+
+```text
+CompositionTable
+
+lawHandle[]
+inputBase[]
+inputCount[]
+resultKind[]
+resultHandle[]
+ownerAuthorityHandle[]
+```
+
+```text
+CompositionInputSlab
+
+compositionHandle[]
+roleCoordinate[]
+sourceKind[]
+sourceHandle[]
+```
+
+Example:
+
+```text
+CompositionTable[7]
+
+lawHandle            = 44
+inputBase             = 300
+inputCount            = 2
+resultKind            = WHOLE_MACHINE
+resultHandle          = 9
+ownerAuthorityHandle  = 61
+```
+
+### Consumed by
+
+```text
+Canonical Contract World when the result is Definition meaning
+Whole-Machine linking
+Whole-Machine verification
+later semantic judgments
+```
+
+Source materials keep their original authorities.
+
+---
+
+## A.12. Generated Operation / Interaction API Product
+
+### Produced by
+
+```text
+Canonical Contract World
+    ↓
+Generated API projection
+```
+
+### Example
+
+```text
+generated.api @order-v3
+
+contractInterface
+    → Order / V3
+
+hostType
+    → io.example.OrderInteraction
+
+operations
+    placeOrder
+        → operationDefinition#72
+        → descriptor#18
+```
+
+### Possible V1 backing
+
+```text
+GeneratedApiProduct
+
+contractInterfaceHandle[]
+hostTypeNameHandle[]
+operationBase[]
+operationCount[]
+artifactHandle[]
+```
+
+```text
+GeneratedApiOperationSlab
+
+productHandle[]
+operationDefinitionHandle[]
+hostMethodNameHandle[]
+descriptorHandle[]
+```
+
+### Consumed by
+
+```text
+host compiler
+user implementation compilation
+IDE / source generation tools
+```
+
+Generated API material is artifact output, not authority.
+
+---
+
+## A.13. Reference Judgment Product
+
+### Produced by
+
+```text
+Canonical Contract World
+    ↓
+simple deterministic reference path
+```
+
+### Example
+
+```text
+reference.request @r11
+
+subject
+    → invariant:PositiveBalance / V3
+
+basis
+    target
+        → Balance Fact F42
+
+context
+    State
+        → Active
+```
+
+```text
+reference.result @r11
+
+judgment
+    → Satisfied
+
+determiningBasis
+    → basisBinding#100
+
+determiningContext
+    → contextRange[55..56)
+```
+
+### Possible V1 backing
+
+```text
+ReferenceResult
+
+requestKey[]
+subjectKind[]
+subjectHandle[]
+resultTag[]
+resultPayloadHandle[]
+basisBase[]
+basisCount[]
+contextBase[]
+contextCount[]
+```
+
+### Consumed by
+
+```text
+PBT oracle
+generated-gate differential checking
+backend differential checking
+optimization validation
+compiler regression
+```
+
+Reference Judgment is intentionally simpler than the optimized path.
+
+---
+
+## A.14. PBT, Fixture, and Contract Coverage Products
+
+### Produced by
+
+```text
+Canonical Contract World
+    ↓
+Obligation Extraction
+    ↓
+Test Objective Planning
+    ↓
+Case Generation
+    ↓
+Reference Judgment
+```
+
+### Example objective
+
+```text
+test.objective @t21
+
+contractObligation
+    → invariant:PositiveBalance / V3
+
+witnessKind
+    → violating
+
+requiredContext
+    State
+        → Active
+
+generationDomain
+    → balance-domain#4
+```
+
+### Possible V1 backing
+
+```text
+TestObjectiveSlab
+
+obligationKind[]
+obligationHandle[]
+witnessKind[]
+contextBase[]
+contextCount[]
+domainHandle[]
+```
+
+```text
+GeneratedTestCase
+
+objectiveHandle[]
+seed[]
+inputFixtureHandle[]
+expectedReferenceResultHandle[]
+```
+
+```text
+ContractCoverage
+
+obligationHandle[]
+coverageKind[]
+coveredTag[]
+witnessCount[]
+```
+
+### Consumed by
+
+```text
+generated unit-test product
+PBT runner
+fixture adapter
+coverage reporting
+```
+
+Randomness controls generation, not Contract truth.
+
+---
+
+## A.15. Diagnostics and Diagnostic Evidence Products
+
+Two products may coexist.
+
+```text
+Contract Diagnostic Evidence
+Compiler Diagnostic Record
+```
+
+The Contract evidence meaning is owned by its Diagnostic ADR. Compiler diagnostics are realization products.
+
+### Example compiler diagnostic
+
+```text
+compiler.diagnostic @D-KON-0174
+
+code
+    → KON-0174
+
+semanticSubject
+    → occurrence @occ:17
+
+primaryProvenance
+    → src#91
+
+arguments
+    → argRange[12..15)
+
+relatedNotes
+    → noteRange[7..9)
+```
+
+### Possible V1 backing
+
+```text
+CompilerDiagnosticRecord
+
+codeHandle[]
+semanticSubjectKind[]
+semanticSubjectHandle[]
+primaryProvenanceHandle[]
+argumentBase[]
+argumentCount[]
+noteBase[]
+noteCount[]
+```
+
+A Contract evidence projection may preserve:
+
+```text
+ContractDiagnosticEvidence
+
+semanticSubject
+    → exact Established material
+
+determiningBasis
+    → exact Basis references
+
+applicableContext
+    → exact relevant context
+
+failureReference
+    → exact Failure when present
+```
+
+### Consumed by
+
+```text
+CLI rendering
+IDE diagnostics
+reports
+test failure explanation
+reproducer generation
+```
+
+Rendering is separate from semantic diagnostic identity.
+
+---
+
+## A.16. Realization Body IR
+
+### Produced by
+
+```text
+User JVM classfile
+    ↓
+Realization Acquisition
+    ↓
+normalization / CFG formation
+```
+
+### Example IR
+
+```text
+realization.method @m31
+
+signature
+    → OrderOperation.place(PlaceOrderFact) -> OrderPlacedFact
+
+entry bb0
+
+bb0:
+    %v0 = param 0
+    %v1 = call @helper.calculateTotal(%v0)
+    %v2 = new OrderPlacedFact(%v1)
+    return %v2
+```
+
+### Possible V1 backing
+
+```text
+MethodTable
+
+ownerTypeHandle[]
+nameHandle[]
+descriptorHandle[]
+blockBase[]
+blockCount[]
+valueBase[]
+valueCount[]
+callSiteBase[]
+callSiteCount[]
+```
+
+```text
+BlockSlab
+
+methodHandle[]
+firstInstruction[]
+instructionCount[]
+successorBase[]
+successorCount[]
+```
+
+```text
+CallSiteSlab
+
+callerMethod[]
+blockHandle[]
+targetKind[]
+targetHandle[]
+originHandle[]
+```
+
+### Consumed by
+
+```text
+local structural analysis
+Contract-Aware Analysis
+verification
+Execution Formation
+```
+
+This IR describes realization, not Contract meaning.
+
+---
+
+## A.17. Admitted Realization Binding
+
+### Produced by
+
+```text
+external composition / DI
+    ↓
+effective implementation selection
+    ↓
+realization admission boundary
+```
+
+### Example
+
+```text
+realization.binding @rb12
+
+operationDefinition
+    → OrderOperation.place / V2
+
+realizationMethod
+    → method @m31
+
+admission
+    → Admitted
+
+origin
+    → external-composition#4
+```
+
+### Possible V1 backing
+
+```text
+OperationRealizationBindingTable
+
+operationDefinitionHandle[]
+methodHandle[]
+admissionTag[]
+originHandle[]
+```
+
+### Consumed by
+
+```text
+Core closure verification
+Contract-Aware Analysis
+Execution Formation
+```
+
+This is realization-side binding material.
+
+---
+
+## A.18. Contract-Aware Analysis and Verification Overlay
+
+### Produced by
+
+```text
+Canonical Contract World
++
+Realization Body IR
++
+Admitted Realization Binding
++
+local structural analysis
+    ↓
+Contract-Aware Analysis
+    ↓
+Core Realization Verification
+```
+
+### Example analysis
+
+```text
+analysis.contractAware @ca9
+
+subject
+    → method @m31
+
+contractDefinition
+    → operationDefinition#72
+
+fixedContext
+    State
+        → Active
+
+callTargets
+    @helper.calculateTotal
+        → exact method @m88
+
+effects
+    → no undeclared external factual ingress
+
+origin
+    → result values derived from admitted input
+
+specialization
+    → state-is-fixed
+```
+
+### Possible V1 backing
+
+```text
+ContractAwareSummary
+
+subjectHandle[]
+contractDefinitionHandle[]
+contextBase[]
+contextCount[]
+callTargetSummaryHandle[]
+effectSummaryHandle[]
+originSummaryHandle[]
+specializationSummaryHandle[]
+```
+
+Verification:
+
+```text
+verification.overlay @v7
+
+realizationGeneration
+    → RG5
+
+subject
+    → method @m31
+
+result
+    → Verified
+
+evidence
+    → summaryRange[40..44)
+```
+
+```text
+VerificationOverlayTable
+
+subjectHandle[]
+realizationGeneration[]
+verificationTag[]
+summaryBase[]
+summaryCount[]
+```
+
+### Consumed by
+
+```text
+Execution Formation
+optimization
+diagnostics
+Whole-Machine analysis
+```
+
+These products are derived and recomputable.
+
+---
+
+## A.19. Whole-Machine Summary
+
+### Produced by
+
+```text
+per-Core semantic / realization summaries
+    ↓
+Whole-Machine analysis
+```
+
+### Example
+
+```text
+wholeMachine.summary @wm3
+
+machine
+    → OrderMachine / V3
+
+cores
+    → coreSummary#11
+    → coreSummary#12
+
+crossCoreBindings
+    → bindingRange[500..504)
+
+reachableOperations
+    → operationSet#7
+
+effects
+    → effectSummary#31
+
+origin
+    → originSummary#18
+
+specializationContext
+    Policy World
+        → Normal
+```
+
+### Possible V1 backing
+
+```text
+WholeMachineSummary
+
+machineHandle[]
+coreBase[]
+coreCount[]
+crossBindingBase[]
+crossBindingCount[]
+reachableOperationSetHandle[]
+effectSummaryHandle[]
+originSummaryHandle[]
+contextBase[]
+contextCount[]
+```
+
+### Consumed by
+
+```text
+Whole-Machine verification
+Execution Formation
+global pruning
+selective full-body materialization
+```
+
+The summary is derived compiler knowledge, not Whole-Machine Contract authority.
+
+---
+
+## A.20. Execution Formation Input
+
+### Consumes
+
+```text
+Canonical Contract World
+verified realization
+Admitted Realization Binding
+Contract-Aware Summary
+Whole-Machine / specialization knowledge
+target capability
+```
+
+### Example
+
+```text
+execution.form @ef5
+
+interactionDefinition
+    → Order.place / V3
+
+realizationBinding
+    → realization.binding @rb12
+
+verification
+    → verification.overlay @v7
+
+staticContext
+    State
+        → Active
+
+derivedKnowledge
+    → contractAwareSummary#9
+    → wholeMachineSummary#3
+```
+
+Execution Formation may already resolve:
+
+```text
+Version V3
+    → fixed
+
+State Active
+    → fixed
+
+realization target
+    → method @m31
+
+unselected alternatives
+    → not materialized
+```
+
+### Produces
+
+```text
+Contract-Aware Execution IR
+```
+
+---
+
+## A.21. Contract-Aware Execution IR
+
+### Exposes
+
+```text
+executable control flow
+values
+realization calls
+runtime Contract judgments
+Failure relation
+State movement reference
+Publication relation
+Output relation
+exact Contract references
+```
+
+### Example IR
+
+```text
+exec.function @interaction.placeOrder
+
+contract
+    → Order.place / V3
+
+entry bb0
+
+bb0:
+    %in0 = input.slot 0
+
+    %fact0 = establish.fact %in0
+        definitionRef → factDefinition#18
+
+    %r0 = realization.call @m31(%fact0)
+        admittedBinding → rb12
+
+    %j0 = contract.judgment PositiveBalance(%r0)
+        definitionRef → @def:42
+
+    branch %j0
+        true  → bb_publish
+        false → bb_fail
+
+bb_publish:
+    publication.emit %r0
+        publicationRef → publicationDefinition#63
+        outputRef      → outputDefinition#64
+
+    return
+
+bb_fail:
+    failure.establish
+        failureRef → failureDefinition#71
+
+    return
+```
+
+### Possible V1 backing
+
+```text
+ExecutionFunctionTable
+ExecutionBlockSlab
+ExecutionValueSlab
+ExecutionInstructionSlab
+RuntimeJudgmentSlab
+ContractReferenceSlab
+```
+
+```text
+RuntimeJudgmentSlab[60]
+
+definitionHandle = 42
+valueSlot        = 4
+successTarget    = 9
+failureTarget    = 7
+```
+
+### Consumed by
+
+```text
+Execution IR analysis
+Contract-specific optimization
+generic cleanup
+JVM lowering
+```
+
+State Transition is not a CFG edge. Failure is not automatically a JVM exception. Publication is not automatically a
+return instruction.
+
+---
+
+## A.22. Failure, Publication, and Output Projections
+
+The exact semantics remain owned by their 1D ADRs. These are compiler projections only.
+
+### Failure projection
+
+```text
+FailureProjection
+
+failureDefinition
+    → failureDefinition#71
+
+origin
+    → invariant occurrence @occ:17
+
+failedMeaning
+    → PositiveBalance unsatisfied
+
+applicableContext
+    → contextRange[55..56)
+
+stoppedScope
+    → Core Order
+
+executionTarget
+    → block 7
+```
+
+```text
+FailureProjectionTable
+
+failureDefinitionHandle[]
+originKind[]
+originHandle[]
+contextBase[]
+contextCount[]
+stoppedScopeHandle[]
+executionTarget[]
+```
+
+### Publication projection
+
+```text
+PublicationProjection
+
+publicationDefinition
+    → publicationDefinition#63
+
+source
+    → result Fact F88
+
+allowedProjection
+    → publicationFields[10..14)
+
+executionTarget
+    → block 9
+```
+
+```text
+PublicationProjectionTable
+
+publicationDefinitionHandle[]
+sourceKind[]
+sourceHandle[]
+fieldBase[]
+fieldCount[]
+executionTarget[]
+```
+
+### Output projection
+
+```text
+OutputProjection
+
+outputDefinition
+    → outputDefinition#64
+
+publication
+    → publicationDefinition#63
+
+hostShape
+    → OrderPlacedOutput
+
+adapterBoundary
+    → external-output-adapter#2
+```
+
+```text
+OutputProjectionTable
+
+outputDefinitionHandle[]
+publicationDefinitionHandle[]
+hostShapeHandle[]
+adapterBoundaryHandle[]
+```
+
+### Consumed by
+
+```text
+Execution Formation
+Execution IR
+JVM lowering
+diagnostics
+```
+
+---
+
+## A.23. Execution Analysis, Optimization Generation, and Hot Projection
+
+### Example analysis
+
+```text
+execution.analysis @ea4
+
+function
+    → interaction.placeOrder
+
+reachability
+    → blockSet#10
+
+dominance
+    → domTree#3
+
+fixedContractContext
+    State
+        → Active
+
+specializationOpportunity
+    → publication-path-fixed
+```
+
+### Optimized generation
+
+```text
+Execution IR Generation 12
+    ↓
+static judgment discharge
+formation-time pruning
+CFG simplification
+DCE
+    ↓
+Execution IR Generation 13
+```
+
+The IR vocabulary may remain the same.
+
+### Hot projection
+
+```text
+ExecutionFunctionTable[5]
+
+entryBlock           = 0
+inputBase            = 20
+inputCount           = 1
+operationTarget      = 31
+runtimeJudgmentBase  = 60
+runtimeJudgmentCount = 1
+failureTarget        = 7
+publicationTarget    = 9
+```
+
+A hot consumer need not traverse:
+
+```text
+Definition
+    → Version
+    → Required Basis
+    → Basis Binding
+    → Applicability
+    → Realization Binding
+```
+
+again after a verified projection exists.
+
+### Consumed by
+
+```text
+JVM lowering
+performance diagnostics
+translation / differential validation
+```
+
+---
+
+## A.24. JVM Plan / IR and Classfile Product
+
+### Produced by
+
+```text
+optimized Contract-Aware Execution IR
+    ↓
+JVM capability / legalization
+    ↓
+JVM Plan / IR
+    ↓
+classfile emission
+```
+
+### Example JVM plan
+
+```text
+jvm.method-plan @placeOrder
+
+descriptor
+    → (LPlaceOrderFact;)LOrderPlacedFact;
+
+locals
+    slot0
+        → input
+
+    slot1
+        → operation result
+
+blocks
+    B0
+        → load input
+        → invoke-static OrderService.place
+        → store slot1
+        → test lowered PositiveBalance predicate
+        → if-false B2
+        → goto B1
+
+    B1
+        → load slot1
+        → return
+
+    B2
+        → materialize mapped failure
+        → return / throw according to selected output realization
+```
+
+### Possible V1 backing
+
+```text
+JvmMethodPlanTable
+JvmBlockSlab
+JvmValueSlab
+JvmInstructionSlab
+JvmExceptionRegionSlab
+ConstantPoolPlan
+FramePlan
+```
+
+### Classfile product
+
+```text
+ClassfileProduct
+
+generatedType
+    → io.example.OrderInteractionMachine
+
+bytes
+    → artifact#55
+
+sourceContract
+    → Order / V3
+
+backendTarget
+    → JVM target#4
+```
+
+### Consumed by
+
+```text
+JVM verifier
+HotSpot / Graal
+artifact publication
+```
+
+The JVM backend does not re-establish Contract meaning.
+
+---
+
+## A.25. Primitive Storage Families and Split / Fuse Examples
+
+A plausible V1 physical family is:
+
+```text
+Frontend
+    Source / Provenance Store
+    ResolvedDefinitionHIR
+    ResolvedRelationSlab
+
+Canonical Contract World
+    AuthorityTable
+    VersionTable
+    DefinitionTable
+    RequiredBasisSlab
+    DefinitionRelationSlab
+    StableKeyIndex
+
+Occurrence / semantic-use material
+    OccurrenceTable
+    BasisBindingSlab
+    ContextSlab
+    CompositionTable
+    CompositionInputSlab
+
+Sibling compiler products
+    GeneratedApiProduct
+    ReferenceResult
+    TestObjectiveSlab
+    GeneratedTestCase
+    ContractCoverage
+    CompilerDiagnosticRecord
+
+Realization
+    MethodTable
+    BlockSlab
+    ValueSlab
+    CallSiteSlab
+    OperationRealizationBindingTable
+
+Derived analysis
+    ContractAwareSummary
+    VerificationOverlayTable
+    WholeMachineSummary
+
+Execution
+    ExecutionFunctionTable
+    ExecutionBlockSlab
+    ExecutionInstructionSlab
+    RuntimeJudgmentSlab
+    FailureProjectionTable
+    PublicationProjectionTable
+    OutputProjectionTable
+
+Backend
+    JvmMethodPlanTable
+    JvmBlockSlab
+    JvmInstructionSlab
+    ConstantPoolPlan
+    ClassfileProduct
+```
+
+This is a candidate map, not a required product list.
+
+### Split example
+
+```text
+RequiredBasisSlab
+
+requirementCoordinate[]
+requiredMeaningKind[]
+cardinalityKind[]
+```
+
+```text
+BasisBindingSlab
+
+requiredBasisHandle[]
+sourceHandle[]
+applicationHandle[]
+```
+
+### Fused example
+
+```text
+ApplicationBasisSlab
+
+requirementCoordinate[]
+requiredMeaningKind[]
+cardinalityKind[]
+sourceHandle[]
+applicationHandle[]
+applicabilityTag[]
+```
+
+Both realize the same semantics. The compiler may choose either from actual access patterns.
+
+---
+
+## A.26. Query / Product View and Frozen Publication
+
+### Query / product view
+
+```text
+resolvedContractHir(sourceUnit)
+    → Resolved Contract HIR
+
+establishedDefinition(definitionKey)
+    → published Definition handle
+
+requiredBasis(definitionHandle)
+    → Required Basis range
+
+referenceJudgment(subject, basis, context)
+    → Reference Result
+
+verifyRealization(operationDefinition, realizationBinding)
+    → Verification Overlay
+
+wholeMachineSummary(machine)
+    → Whole-Machine Summary
+
+formExecution(interactionDefinition, admittedBinding, target)
+    → Execution IR generation
+```
+
+```text
+query dependency
+    ≠ Contract Basis Binding
+```
+
+### Frozen publication
+
+```text
+worker-local / private builders
+    ↓
+semantic verification
+reference closure
+collision verification where required
+deterministic merge
+    ↓
+seal / freeze
+    ↓
+Published Generation G12
+    ↓
+read-only consumers
+```
+
+A generation is a publication / validity boundary, not Contract Version.
+
+---
+
+## A.27. Example Consumer Reads
+
+### Reference Judgment
+
+```text
+reads
+    DefinitionTable[42]
+    RequiredBasisSlab[80..81)
+    BasisBindingSlab[100..101)
+    ContextSlab[55..56)
+
+produces
+    ReferenceResult[r11]
+```
+
+### Diagnostics
+
+```text
+reads
+    OccurrenceTable[17]
+    DefinitionTable[42]
+    BasisBindingSlab[100..101)
+    ContextSlab[55..56)
+    ProvenanceStore[91]
+
+produces
+    CompilerDiagnosticRecord[D-KON-0174]
+```
+
+### Verifier
+
+```text
+reads
+    DefinitionTable[operationDefinition]
+    Realization Body IR method[31]
+    OperationRealizationBindingTable[12]
+    ContractAwareSummary[9]
+
+produces
+    VerificationOverlay[7]
+```
+
+### Whole-Machine analysis
+
+```text
+reads
+    CoreSummary[*]
+    CompositionTable[*]
+    ContractAwareSummary[*]
+
+produces
+    WholeMachineSummary[3]
+```
+
+### Execution Formation
+
+```text
+reads
+    Canonical Contract World G12
+    VerificationOverlay[7]
+    ContractAwareSummary[9]
+    WholeMachineSummary[3]
+    Realization Body IR
+    Admitted Realization Binding[12]
+
+produces
+    Contract-Aware Execution IR Generation 12
+```
+
+### JVM backend
+
+```text
+reads
+    Optimized Execution IR Generation 13
+
+produces
+    JVM Plan / IR
+    Classfile Product
+```
+
+These examples define producer / consumer direction, not one mandatory pass schedule.
+
+---
+
+## A.28. Coverage Audit of Major V1 Material Families
+
+```text
+Contract frontend
+
+Source / Provenance
+    → A.5
+
+Resolved Contract HIR
+    → A.5
+
+Authority-Owned Establishment
+    → A.6
+
+Established Definition Material
+    → A.6
+
+Canonical Contract World
+    → A.7
+
+Frozen publication
+    → A.26
+
+
+ADR-0063 semantic relations
+
+Required Basis
+    → A.8
+
+Basis Binding
+    → A.8
+
+Applicability
+    → A.9
+
+Applicable Context
+    → A.9
+
+Complete Basis
+    → A.9
+
+Established Occurrence
+    → A.10
+
+Composition
+    → A.11
+
+
+Canonical-world sibling products
+
+Generated APIs
+    → A.12
+
+Reference Judgment
+    → A.13
+
+PBT / Fixture
+    → A.14
+
+Contract Coverage
+    → A.14
+
+Diagnostics / Evidence
+    → A.15
+
+
+Realization
+
+Realization Body IR
+    → A.16
+
+Admitted Realization Binding
+    → A.17
+
+Contract-Aware Analysis
+    → A.18
+
+Verification Overlay
+    → A.18
+
+Whole-Machine Summary
+    → A.19
+
+
+Execution / optimization
+
+Execution Formation
+    → A.20
+
+Contract-Aware Execution IR
+    → A.21
+
+Failure projection
+    → A.22
+
+Publication projection
+    → A.22
+
+Output projection
+    → A.22
+
+Execution analysis
+    → A.23
+
+optimized Execution IR generation
+    → A.23
+
+hot execution projection
+    → A.23
+
+
+Backend
+
+JVM Plan / IR
+    → A.24
+
+Classfile Product
+    → A.24
+
+
+Compiler infrastructure
+
+primitive / slab candidates
+    → A.25
+
+split / fuse alternatives
+    → A.25
+
+query / product boundaries
+    → A.26
+
+generation publication
+    → A.26
+
+consumer reads
+    → A.27
+```
+
+The following remain intentionally open:
+
+```text
+exact HIR schema
+exact Canonical Contract World schema
+exact Whole-Machine summary schema
+exact query names
+exact Execution IR opcode set
+SSA choice
+CFG physical layout
+exact JVM IR instruction set
+exact slab layout
+exact HID encoding
+exact product granularity
+```
+
+---
+
+## A.29. Implementation Reading Rule
+
+```text
+1. Read the normative section
+    → identify exact Contract meaning
+
+2. Find the matching Appendix A example
+    → use it as a V1 starting shape
+
+3. Check the current compiler architecture
+    → identify the actual IR / product owner
+
+4. Choose physical split / fuse from real access patterns
+    → not from semantic naming alone
+
+5. Keep stable semantic identity separate from dense local addressing
+
+6. Publish only complete verified generations
+
+7. Let Execution Formation pre-resolve hot semantic chains when legal
+
+8. Never let the chosen representation become Contract authority
+```
+
+If a change affects only table layout, slab layout, dense handles, summary shape, query boundary, materialization
+strategy, split / fuse choice, or hot / cold placement, ADR-0063 need not change.
+
+If it changes the normative semantic relation, the change is not implementation-only.
