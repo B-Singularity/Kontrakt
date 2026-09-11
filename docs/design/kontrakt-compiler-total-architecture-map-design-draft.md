@@ -79,6 +79,14 @@ They are related.
 
 They are not the same graph.
 
+The Contract frontend also has more than one authoring input form.
+
+`.kontrakt` source and selected 1D Contract carrier source are frontend inputs.
+
+The carrier is an immutable authoring data surface.
+
+It is not Contract authority and does not remain the semantic model merely because the frontend used it.
+
 ```text
 ┌───────────────────────────────────────────────────────────────────────────┐
 │                        Compiler Driver / Session                          │
@@ -91,22 +99,28 @@ They are not the same graph.
                   ▼                                 ▼
           Contract Frontend                 Realization Acquisition
                   │                                 │
-             .kontrakt                     User JVM classfiles
-                  │                                 │
-      Source / Syntax / Recovery                    │
-                  │                                 ▼
-             Resolution                    Realization Body IR
-                  │                                 │
-        Resolved Contract HIR              Local Structural Analysis
-                  │                                 │
-      Authority-Owned Establishment                 │
-                  │                                 │
-                  ▼                                 │
-       Canonical Contract World                     │
-                  │                                 │
+      Contract Authoring Inputs             User JVM classfiles
+          │               │                         │
+          │               │                         ▼
+      .kontrakt      selected 1D             Realization Body IR
+        source       carrier source                   │
+          │               │                  Local Structural Analysis
+          └───────┬───────┘                          │
+                  ▼                                  │
+      Source / Syntax / Carrier Material              │
+                  │                                  │
+      Resolution / Binding / Normalization            │
+                  │                                  │
+        Resolved Contract HIR                         │
+                  │                                  │
+      Authority-Owned Establishment                   │
+                  │                                  │
+                  ▼                                  │
+       Canonical Contract World                      │
+                  │                                  │
                   │                    Admitted Realization Binding
-                  │                                 │
-                  └────────────────┬────────────────┘
+                  │                                  │
+                  └────────────────┬─────────────────┘
                                    ▼
                         Contract-Aware Analysis
                                    │
@@ -142,6 +156,15 @@ They are not the same graph.
                                   ▼
                            HotSpot / Graal
 ```
+
+The frontend boxes are logical architecture boundaries.
+
+They do not require one heap object graph or one physical product per box.
+
+Frontend processing may desugar, normalize, intern, deduplicate, pre-resolve, compact, or otherwise improve compiler
+representation before Establishment when resolved candidate meaning is preserved.
+
+That work does not create Contract authority.
 
 The build / product dependency has an additional edge.
 
@@ -182,9 +205,13 @@ It is not a semantic dependency rule.
 The whole compiler can be reduced to a small set of major material families.
 
 ```text
-Contract Source
+Contract Authoring Inputs
+    ↓
+Source / Syntax / Carrier Material
     ↓
 Resolved Contract HIR
+    ↓
+Authority-Owned Establishment
     ↓
 Canonical Contract World
 
@@ -211,7 +238,30 @@ JVM Plan / IR
 Classfile
 ```
 
+The material families have different meanings.
+
+```text
+Source / Syntax / Carrier Material
+    → authored and frontend-acquired material
+
+Resolved Contract HIR
+    → resolved compiler-semantic baseline
+
+Established Definition Material
+    → authority-owned Contract meaning
+
+Canonical Contract World
+    → compiler substrate for established definition meaning
+
+Derived Knowledge
+    → recomputable compiler analysis / summary / projection
+```
+
 The exact number of physical representations remains open.
+
+A logical material family may be physically split or fused.
+
+A physically aggregated product may expose fine-grained access and dependency boundaries.
 
 The build / product graph may contain more products than this semantic material flow.
 
@@ -219,26 +269,52 @@ The build / product graph may contain more products than this semantic material 
 
 # 5. Contract Frontend
 
-The Contract frontend converts authored Contract source into resolved semantic material.
+The Contract frontend converts authored Contract inputs into resolved compiler-semantic material.
+
+Current authoring inputs include `.kontrakt` source and selected immutable 1D Contract carrier source.
+
+The carrier is a frontend authoring form.
+
+Its host-language class shape, object identity, field layout, and construction topology are not Contract authority.
+
+The two input forms need different acquisition work before they meet at resolution.
 
 ```text
 .kontrakt
     ↓
 Source Manager / Provenance
     ↓
-Syntax / Recovery Material
-    ↓
+Lexical / Syntax / Recovery Material
+    ┐
+    │
+    ├───────────────┐
+    │               │
+    │        selected 1D carrier source
+    │               ↓
+    │        Carrier Acquisition Material
+    │               │
+    └───────┬───────┘
+            ↓
 Module / Name / Symbol Resolution
-    ↓
+            ↓
+Slot / Role-Constrained Binding
+            ↓
+Frontend Validation / Semantic Normalization
+            ↓
 Resolved Contract HIR
 ```
 
-Its main outputs are:
+The names above describe logical responsibilities.
+
+They do not require one class, pass, object graph, or compiler product per line.
+
+Its main outputs include:
 
 ```text
 source identity
 source provenance
 parsed Contract structure
+carrier-acquired frontend facts
 recovery / poison state where required
 exact authority references
 resolved slot bindings
@@ -252,7 +328,33 @@ Parser recovery does not establish Contract meaning.
 
 Recovered or poisoned source material must not silently become authoritative semantic material.
 
-Downstream consumers should not repeat source-name lookup.
+Downstream consumers should not repeat source-name lookup or host-carrier inspection to recover meaning already resolved
+by the frontend.
+
+Frontend processing may improve representation before Establishment.
+
+Possible work includes:
+
+```text
+desugaring
+syntax-only distinction removal
+semantic normalization allowed by the source language
+exact-reference formation
+interning
+deduplication
+pre-resolution
+compact compiler representation
+```
+
+This is compiler realization work.
+
+It may reduce compile-time work or improve locality.
+
+It must preserve the resolved candidate meaning presented to Establishment.
+
+It must not infer or create Contract authority.
+
+The exact frontend transform set remains open.
 
 The frontend language version is separate from Contract Version.
 
@@ -272,7 +374,12 @@ They do not define Contract meaning.
 
 # 6. Resolved Contract HIR
 
-`Resolved Contract HIR` is the high-level semantic representation before Establishment.
+`Resolved Contract HIR` is the high-level compiler-semantic representation before Establishment.
+
+It is not merely temporary parser output.
+
+It is the stable semantic result of frontend resolution that later compiler work may consume without reopening source
+syntax or repeating name resolution.
 
 It preserves rich Contract vocabulary.
 
@@ -300,17 +407,56 @@ The main invariant is:
 
 ```text
 source ambiguity resolved
++
+required frontend references exact
++
+syntax-only ambiguity no longer required by later semantic work
 ```
 
-The important limit is:
+The HIR owns compiler-resolved meaning.
+
+It does not own Contract authority.
 
 ```text
+Resolved Contract HIR
+    → compiler-owned resolved semantic baseline
+    → suitable for Establishment input
+    → suitable for frontend diagnostics / tooling / reuse
+
 Resolved Contract HIR
     ≠
 Contract authority
 ```
 
-Resolution does not establish Contract meaning.
+Resolution success does not establish Contract meaning.
+
+HIR semantic meaning and source provenance remain distinct.
+
+```text
+source / provenance change
+    ↓
+resolved HIR meaning may remain unchanged
+```
+
+A provenance-only change therefore need not force semantic invalidation when the resolved HIR result is proven
+unchanged.
+
+The exact reuse mechanism is compiler realization.
+
+The HIR should be published behind a stable read boundary before independent consumers share it.
+
+Ordinary downstream consumers should not mutate a published HIR generation in place.
+
+A later compiler implementation may use immutable backing, phase-qualified material, overlays, new generations, or
+another
+representation that preserves the same invariant.
+
+One logical HIR generation does not require one monolithic dependency or storage unit.
+
+The compiler may expose fine-grained definition-level projections even when construction or storage is physically
+aggregated.
+
+This keeps V2 incremental granularity open without making query structure part of HIR semantics.
 
 ---
 
@@ -365,7 +511,7 @@ Occurrence material remains separate unless the owning Contract defines occurren
 
 # 9. Frozen Publication
 
-Establishment and freezing are different.
+Establishment and compiler publication are different.
 
 ```text
 Establishment
@@ -375,23 +521,32 @@ Freeze / Seal / Publish
     = compiler publication boundary
 ```
 
-Working publication pattern:
+The publication rule is not limited to the Canonical Contract World.
+
+Published HIR, Realization Body IR, analysis results, summaries, and other shared compiler products may use the same
+pattern when stable shared reads are required.
 
 ```text
 private construction
     ↓
-verification
+producer validation
     ↓
-seal / freeze
-    ↓
-publish
+seal / freeze / publish
     ↓
 read-only consumers
 ```
 
+Publication does not add Contract authority.
+
 A separate `Frozen IR` is not required merely because material is immutable.
 
-Existing HID, frozen publication, dense storage, and slab work may be reused behind this boundary.
+A logical publication boundary also does not require a full physical copy.
+
+Backing storage may be shared when the published invariant remains protected.
+
+Existing HID, frozen publication, dense storage, and slab work may be reused behind appropriate publication boundaries.
+
+The exact publication granularity remains a compiler design choice.
 
 ---
 
@@ -407,8 +562,30 @@ Canonical Contract World
     ├── Diagnostics
     ├── Generated APIs
     ├── Contract-Aware Analysis
-    └── Execution Formation
+    ├── Execution Formation
+    └── Shared Contract-Derived Knowledge
 ```
+
+`Shared Contract-Derived Knowledge` is an optional compiler seam.
+
+It may contain summaries, indexes, or projections derived from established meaning when several consumers need the same
+calculation.
+
+```text
+Canonical Contract World
+    ↓
+Shared Contract-Derived Knowledge
+    ├── verifier
+    ├── optimizer
+    ├── diagnostics
+    └── execution formation
+```
+
+The exact summary families remain open.
+
+A consumer may still read the exact Canonical Contract World directly when that is the better boundary.
+
+Derived summaries do not replace the authoritative source.
 
 These products do not define one another.
 
@@ -421,7 +598,13 @@ Diagnostics
 
 Reference Judgment
     ≠ Contract authority
+
+Shared Summary
+    ≠ Contract authority
 ```
+
+No sibling product becomes a semantic authority chain merely because another product reuses its validated derived
+knowledge.
 
 ---
 
@@ -1292,7 +1475,9 @@ The target profile is not assumed to be the compiler host profile.
 # 37. Current Strongest IR Family
 
 ```text
-Contract Source
+Contract Authoring Inputs
+    ↓
+Source / Syntax / Carrier Material
     ↓
 Resolved Contract HIR
     ↓
@@ -1315,6 +1500,12 @@ JVM Plan / IR
 Classfile
 ```
 
+The HIR is a compiler-semantic baseline.
+
+The Canonical Contract World is authority-bearing definition substrate.
+
+Derived summary or projection material may exist between these major families without becoming another IR level.
+
 The exact number of internal sublevels remains open.
 
 ---
@@ -1324,8 +1515,8 @@ The exact number of internal sublevels remains open.
 Compiler lowering and the 1D `Lowering Contract` are different.
 
 ```text
-Source
-    ↓ parse / resolve
+Contract Authoring Inputs
+    ↓ acquire / parse / resolve / normalize
 Resolved Contract HIR
 
 Resolved Contract HIR
@@ -1350,6 +1541,14 @@ JVM Plan / IR
     ↓ emission
 Classfile
 ```
+
+`acquire / parse / resolve / normalize` may contain several logical frontend responsibilities.
+
+They need not create several physical IR levels.
+
+Pre-Establishment normalization preserves resolved candidate meaning.
+
+Execution optimization occurs later under the invariants of its own IR level.
 
 ---
 
@@ -1381,6 +1580,22 @@ Not every calculation needs to be a query.
 
 A query is useful when demand, reuse, dependency tracking, or invalidation precision justify the boundary.
 
+Logical material size and query / product granularity are separate decisions.
+
+A physically aggregated HIR or Contract World may expose fine-grained stable projections.
+
+```text
+Aggregate frontend material
+    ├── Definition projection A
+    ├── Definition projection B
+    └── Provenance projection P
+```
+
+A change to the aggregate representation does not require all downstream products to become invalid when their exact
+semantic inputs are unchanged.
+
+This gives V1 a dependency seam without fixing V2 to one incremental algorithm.
+
 Product publication also needs lifecycle information.
 
 ```text
@@ -1392,6 +1607,8 @@ publication generation
 compatibility / corruption check
 stale artifact handling
 ```
+
+Semantic and provenance products may have different validity boundaries.
 
 Persistent compiler products are derived material.
 
@@ -1417,12 +1634,20 @@ Merkle structure
 Query
     → computation / demand / dependency interface
 
+Projection
+    → fine-grained stable view over larger material
+
 Cache tier
     → reusable-result retention
 
 Incremental repair
     → how changed derived material is repaired
 ```
+
+Projection boundaries may act as change-propagation firewalls.
+
+For example, a large HIR generation may change physically while an unchanged definition-level projection remains a
+valid input for later work.
 
 The following repair strategies must remain replaceable:
 
@@ -1450,8 +1675,17 @@ Different compiler domains may use different algorithms.
 Reuse occurs at several levels.
 
 ```text
+Source / Provenance
+    → source acquisition and diagnostic reuse
+
+Resolved Contract HIR
+    → frontend semantic reuse
+
 Canonical Contract World
-    → shared semantic substrate
+    → shared authoritative semantic substrate
+
+Shared Contract-Derived Knowledge
+    → repeated Contract-side analysis reuse
 
 Shared Analysis
     → verifier / optimizer reuse
@@ -1462,6 +1696,20 @@ Verification Overlay
 IR Backing
     → shared immutable storage / overlay
 ```
+
+Semantic reuse and provenance reuse need not have the same validity boundary.
+
+```text
+provenance-only change
+    +
+resolved semantic result unchanged
+        ↓
+semantic downstream may remain reusable
+```
+
+The compiler must prove the unchanged semantic result under the producer's validity rule.
+
+A source offset or object address is not sufficient evidence.
 
 The currently implemented L1 / L2 structure is planning-specific.
 
@@ -1501,9 +1749,11 @@ It is not authority.
 Keep these separate:
 
 ```text
+source content / revision identity
+source provenance identity
+frontend semantic identity
 Contract semantic identity
 IR semantic identity
-source provenance identity
 HID / fingerprint
 generation identity
 dense ordinal
@@ -1515,8 +1765,17 @@ JVM object identity
 Typical roles:
 
 ```text
-Semantic Identity
-    → meaning
+Source / Revision Identity
+    → authored input revision
+
+Source Provenance Identity
+    → where authored material came from
+
+Frontend Semantic Identity
+    → equality of resolved compiler-semantic material
+
+Contract Semantic Identity
+    → authoritative Contract meaning
 
 HID
     → lookup / equality evidence
@@ -1527,6 +1786,12 @@ Dense Ordinal
 Generation
     → validity boundary
 ```
+
+Equal source position does not imply equal semantic meaning.
+
+Different source position does not imply different resolved or established meaning.
+
+Frontend semantic identity may therefore support early cutoff before later Contract or compiler products are rebuilt.
 
 ---
 
@@ -1803,10 +2068,13 @@ V1 should preserve at least these architecture boundaries.
 
 ```text
 Source Manager / Provenance
-Syntax / Recovery
+Lexical / Syntax / Recovery
+1D Carrier Acquisition Boundary
 Module / Name / Symbol Resolution
+Slot / Role-Constrained Binding
+Frontend Validation / Semantic Normalization
 Contract Frontend
-Resolved Contract HIR
+Resolved Contract HIR Publication
 Authority-Owned Establishment
 Canonical Contract World
 Frozen Publication
@@ -1845,13 +2113,17 @@ Resource Ownership
 Stable Identity
 Generation Validity
 Product / Query Boundaries
+Fine-Grained Projection Seam
 Dependency Recording
+Semantic / Provenance Validity Separation
 Artifact / Product Publication
 Existing Planning L1 / L2 Reuse
 V2 Incremental Evolution Seam
 ```
 
 The exact physical split remains open where a semantic or target-level boundary does not require another representation.
+
+The listed frontend responsibilities do not require one implementation class, pass, or physical product per line.
 
 ---
 
@@ -1865,6 +2137,12 @@ Possible additions:
 persistent product state
 cross-session reuse
 multiple immutable generations
+incremental lexing / parsing
+incremental name / symbol resolution
+persistent frontend semantic results
+provenance-only refresh
+fine-grained HIR projections
+frontend semantic early cutoff
 Merkle change localization
 incremental analysis repair
 change-frontier propagation
@@ -1891,8 +2169,16 @@ stable product identity
 deterministic computation
 frozen publication
 clear dependency boundary
+semantic / provenance separation
+fine-grained stable access where useful
 replaceable reuse / repair policy
 ```
+
+A source revision may change while a resolved semantic result remains reusable.
+
+A resolved semantic result may change while unrelated definition-level products remain reusable.
+
+V1 should not prevent either boundary.
 
 Prediction or historical telemetry may change work order or profitability decisions.
 
@@ -1905,8 +2191,14 @@ It must not change compiler correctness or Contract meaning.
 This document does not freeze:
 
 ```text
-exact IR count
+exact authoring carrier acquisition mechanism
+exact lexer / parser representation
+exact frontend normalization set
+exact HIR count
 exact HIR schema
+exact HIR physical publication granularity
+in-place phase-qualified HIR vs immutable HIR generations
+exact fine-grained frontend projection set
 exact Execution IR operations
 SSA form
 CFG physical layout
@@ -1919,6 +2211,7 @@ fingerprint algorithm
 final HID encoding
 exact FFM / slab layout
 Whole-Machine summary schema
+shared Contract-derived summary schema
 frozen table layout
 direct classfile encoder implementation
 optimizer pass order
@@ -1972,7 +2265,12 @@ Do not invent it in the compiler subsystem.
 # 54. Final Working View
 
 ```text
-Contract semantics
+Contract Authoring Inputs
+    .kontrakt + selected immutable 1D carrier source
+    ↓
+Source / Syntax / Carrier Acquisition
+    ↓
+Resolution / Binding / Frontend Normalization
     ↓
 Resolved Contract HIR
     ↓
@@ -2003,16 +2301,36 @@ JVM Legalization / Typed Method Planning
 Direct Classfile Product
 ```
 
+The Contract frontend has its own optimization freedom.
+
+```text
+source-faithful material
+    ↓
+resolution / desugaring / normalization / pre-resolution
+    ↓
+compiler-friendly resolved HIR
+```
+
+This work improves compiler realization.
+
+It does not establish Contract authority.
+
+Published HIR, Canonical Contract World, realization material, summaries, and later IRs may have different lifetimes,
+identities, reuse rules, and physical layouts.
+
 The supporting architecture is:
 
 ```text
 identity
 provenance
 language / source management
+frontend semantic publication
+frontend semantic / provenance validity separation
 generation
 frozen publication
 analysis validity
 product dependencies
+fine-grained projections
 build / artifact dependencies
 reuse
 resource ownership
@@ -2031,9 +2349,11 @@ The central rule remains:
 ```text
 Contract meaning first.
 
-Compiler knowledge consumes it.
+Compiler semantic material may exist before authority.
 
-Optimization preserves it.
+Compiler knowledge consumes established meaning where authority is required.
+
+Optimization preserves the meaning owned by its input level.
 
 Physical realization remains replaceable.
 ```
@@ -2067,6 +2387,8 @@ The modern compiler material contributes general engineering principles:
 stage invariants
 multi-level IR
 logical / physical separation
+frontend source / semantic separation
+semantic checkpoint publication
 CFG / SSA / data-flow analysis
 analysis / transformation separation
 analysis reuse and invalidation
@@ -2082,4 +2404,37 @@ incremental architecture as a cross-cutting concern
 JVM / JIT handoff
 ```
 
-Those principles do not override Kontrakt Contract semantics.
+Additional external architecture references were used only as engineering evidence.
+
+```text
+rustc
+    → AST-to-HIR desugaring
+    → compiler-friendly HIR
+    → query / incremental dependency tracking
+    → fine-grained projection over larger material
+
+Kotlin K2 / FIR
+    → frontend IR with phase invariants
+    → logical resolution phases without requiring one new IR per phase
+
+Swift compiler request evaluator
+    → immutable declaration direction
+    → lazy derived semantic requests
+    → cached dependency-aware results
+
+Clang frontend / serialized AST
+    → source provenance retention
+    → reusable frontend semantic material
+    → lazy loading of persisted frontend state
+
+MLIR
+    → analysis / transformation separation
+    → explicit preservation / invalidation
+    → canonicalization as an optimization-enabling IR concern
+```
+
+These systems are references for isolated architecture principles.
+
+They are not templates for Kontrakt.
+
+They do not override Kontrakt Contract semantics or current accepted ADRs.
