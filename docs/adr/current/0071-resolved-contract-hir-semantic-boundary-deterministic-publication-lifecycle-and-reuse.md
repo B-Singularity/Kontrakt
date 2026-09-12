@@ -516,6 +516,39 @@ recomputable compiler products unless an owning semantic law explicitly says oth
 This access boundary allows a later implementation to introduce lazy materialization or dependency observation without
 forcing consumers to learn how HIR is physically stored.
 
+## 8.7. HIR Semantic Access Boundary
+
+Published Resolved HIR must expose a stable semantic access boundary between HIR meaning and its physical realization.
+
+```text
+HIR Semantic Contract
+    ↓ observed through
+HIR Semantic Access Boundary
+    ↓ realized by
+Physical HIR Representation
+```
+
+The access boundary is the compiler-facing seam through which ordinary consumers observe published HIR. It preserves
+the meaning of typed subjects, exact references, semantic projections, generation context, and other HIR material that
+this ADR makes observable.
+
+The boundary does not expose a slab address, page identity, backing-array position, allocator choice, object topology,
+or storage-engine layout as semantic meaning. A compact generation-local handle may cross the boundary when the HIR
+model defines that handle as an opaque typed reference. Its numeric value does not become observable layout.
+
+This boundary is logical. It does not require an object-oriented interface, virtual dispatch, wrapper allocation, or one
+accessor call per field. A physical realization may provide inlined primitive access, typed bulk reads, contiguous
+ranges,
+or another compiler-native access path when those paths preserve the same semantic surface.
+
+The first implementation may use primitive slabs. A later implementation may use segmented persistent slabs,
+memory-mapped pages, content-addressed chunks, or another representation without changing downstream HIR meaning. A
+consumer that requires such a change to rewrite its semantic logic is depending on physical representation rather than
+Published Resolved HIR.
+
+The exact protocol shape is not fixed here. Owner granularity, projection catalog, bulk-access forms, handle encoding,
+and storage-specific fast paths remain later design work.
+
 ---
 
 # 9. HIR Identity and Equality
@@ -1550,6 +1583,10 @@ materialize all units eagerly, but consumers must not depend on that choice.
 Invalid source must be isolated at the smallest sound semantic owner boundary. Unaffected owners may remain available to
 frontend diagnostics and tooling even when the overall compilation cannot succeed.
 
+V1 must expose Published Resolved HIR through a semantic access boundary that does not require ordinary consumers to
+depend on the physical HIR layout. The first backing representation may be primitive slabs without making that choice
+part of HIR meaning.
+
 Cache-off and clean-recompute execution must remain valid and must agree with reused execution.
 
 ---
@@ -1574,7 +1611,9 @@ determinism-first rule.
 This ADR does not freeze the HIR physical schema.
 
 It does not decide whether V1 uses objects, tables, primitive arrays, slabs, persistent structures, or mixed storage. It
-does not choose the final HIR projection catalog. It does not select a query scheduler, Analysis Manager API, Pass
+does not choose the final HIR projection catalog. It does not fix the concrete API shape of the HIR Semantic Access
+Boundary, its bulk-access forms, or its handle encoding. It does not select a query scheduler, Analysis Manager API,
+Pass
 Manager API, fingerprint algorithm, CAS implementation, reclamation algorithm, serialization format, or V2 repair
 algorithm.
 
