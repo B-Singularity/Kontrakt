@@ -902,10 +902,11 @@ the same HIR semantic contract when material is fully resolved.
 
 # 24. Non-Normative Reference Semantic Model
 
-The normative sections above define HIR meaning. This section gives one concrete mental model for implementing that
-meaning without making the example a required storage schema.
+The normative sections above define HIR meaning. This section gives one concrete compiler-oriented realization of that
+meaning. It is intentionally close to the physical direction already used elsewhere in Kontrakt so that the semantic law
+can be implemented without first translating it into a heap object model.
 
-The central split is:
+The example does not define the required storage schema. It demonstrates the required separation.
 
 ```text
 resolved semantic subjects and relations
@@ -917,79 +918,91 @@ query / cache state
 physical storage identity
 ```
 
-A useful logical HIR view can therefore expose typed semantic subjects while keeping their physical representation
-replaceable.
-
-The pseudocode below is illustrative. The names are not required API names and the records are not required Kotlin
-objects.
+The reference model uses typed columnar families and generation-local dense ordinals.
 
 ```text
-semantic interface ResolvedHirGeneration {
-    generation: HirGenerationRef
+HIR Generation G
 
-    owner(key: HirOwnerKey): ResolvedHirOwner
+Owner columns
+    ownerStableKeyRef[]
+    ownerFirstSubject[]
+    ownerSubjectCount[]
 
-    interfaceCandidate(key: HirInterfaceKey): ResolvedInterfaceCandidate
-    operationCandidate(key: HirOperationKey): ResolvedOperationCandidate
+Subject columns
+    subjectKind[]
+    subjectOwner[]
+    subjectStableKeyRef[]
 
-    inputCandidate(key: HirInputKey): ResolvedInputCandidate
-    admissionCandidate(key: HirAdmissionKey): ResolvedAdmissionCandidate
-    loweringCandidate(key: HirLoweringKey): ResolvedLoweringCandidate
+Operation columns
+    operationCommandTypeRef[]
+    operationResultTypeRef[]
+    operationInputRef[]
+    operationAdmissionRef[]
+    operationCanonicalizationRef[]
+    operationLoweringRef[]
 
-    provenanceOf(subject: HirSubjectKey): ProvenanceSet
-}
+Lowering columns
+    loweringEdgeBase[]
+    loweringEdgeCount[]
 
-semantic record ResolvedHirOwner {
-    key: HirOwnerKey
-    publishedSubjects: SemanticSet<HirSubjectKey>
-}
+Lowering-edge columns
+    loweringSourceCoordinateRef[]
+    loweringTargetCoordinateRef[]
 
-semantic record ResolvedOperationCandidate {
-    subject: HirOperationKey
-    commandType: ResolvedHostTypeRef
-    resultType: ResolvedHostTypeRef
+Stable-key storage
+    semanticKeyBytes[]
+    semanticKeyOffset[]
+    semanticKeyLength[]
 
-    input: HirInputKey
-    admission: HirAdmissionKey
-    canonicalization: HirCanonicalizationKey?
-    lowering: HirLoweringKey
-}
-
-semantic record ResolvedInputCandidate {
-    subject: HirInputKey
-    meaning: InputCandidateMeaning
-}
-
-semantic record ResolvedLoweringCandidate {
-    subject: HirLoweringKey
-    meaning: LoweringCandidateMeaning
-}
-
-generation-local ref HirInputRef {
-    generation: HirGenerationRef
-    handle: LocalHandle
-}
+Provenance sidecar
+    provenanceSubjectRef[]
+    provenanceSourceRef[]
+    provenanceStart[]
+    provenanceEnd[]
 ```
 
-`InputCandidateMeaning` remains owned by the Input ADR. `LoweringCandidateMeaning` remains owned by the Lowering ADR.
-The HIR architecture does not replace them with a generic property bag.
+Each array name denotes a logical column. A JVM realization may back high-cardinality columns with primitive arrays or
+FFM `MemorySegment` storage. Small metadata may use another compact representation when that is cheaper. The semantic
+contract does not depend on the backing choice.
 
-`HirInputKey` and the other semantic keys mean that the frontend can identify one exact candidate independently of
-its current storage location. `HirInputRef` illustrates a separate generation-local fast reference. Neither form is
-required to be an object pointer, table row, string, HID, or Contract `Definition Reference` value.
+A local reference such as `operationInputRef[operationOrdinal]` is a dense reference inside one published generation. It
+is not a Contract `Definition Reference` and it is not stable across generations.
 
-`ResolvedHirOwner` illustrates logical publication ownership. It does not make owner membership a new Contract relation.
-The exact owner catalog and key encoding remain open.
+A stable semantic locator is represented separately. The example stores its canonical bytes in `semanticKeyBytes` and
+uses offset/length columns to address them. This avoids making a table row, object address, current ordinal, or one
+fixed
+hash width the cross-generation identity law.
 
-A published implementation may expose the same logical view over objects, immutable tables, primitive slabs, persistent
-nodes, or mixed storage.
+The stable-key encoding shown here is only a compiler representation example. The final HID or fingerprint encoding
+remains outside this ADR.
+
+Each 1D authority keeps its own semantic payload family. For example, an Input candidate may have an
+`inputPayloadRef[]` column into Input-owned semantic slabs. A Lowering candidate may have the edge ranges shown above.
+Kontrakt must not replace those authority-specific meanings with one generic property map or universal edge record.
+
+The important shape is:
+
+```text
+shared compact HIR substrate
++
+typed authority-specific semantic slabs
++
+exact generation-local references
++
+separate stable semantic locators
++
+separate provenance
+```
+
+This gives consumers a typed semantic surface without requiring a pointer-heavy object graph.
 
 ---
 
 # 25. Non-Normative End-to-End Reference Realization
 
-This example follows one authored Operation from source to a published HIR generation. It also shows how the same result
-can participate in query reuse and lifecycle management without putting those mechanisms into HIR meaning.
+This example follows one authored Operation from source acquisition to a published HIR generation. It also shows
+verification, publication, query consumption, semantic early cutoff, and generation retirement using compiler-oriented
+storage.
 
 The source shape follows the existing IDL decisions.
 
@@ -1019,251 +1032,384 @@ interface DepositContract {
 }
 ```
 
-## 25.1. Source and Working State
+## 25.1. Source Acquisition and Frontend Working Storage
 
-Parsing may first produce source-oriented material whose references are still lexical.
+The parser may retain source-oriented syntax in a compact arena. The exact parser representation is not HIR.
 
-```text
-ParsedOperation {
-    name = "deposit"
-    commandType = Symbol("DepositCommand")
-    resultType = Symbol("DepositRecorded")
-
-    flow.input = Symbol("DepositInput")
-    flow.admission = Symbol("DepositAdmission")
-    flow.canonicalization = Symbol("DepositCanonicalization")
-    flow.lowering = Symbol("DepositLowering")
-}
-```
-
-The resolver is free to use mutable maps, worklists, temporary IDs, or intern tables while it resolves those symbols.
-That working state belongs to the frontend computation. A downstream consumer cannot observe it as HIR.
-
-## 25.2. Resolved Semantic Formation
-
-Resolution converts source lookup problems into exact semantic relations.
+One possible working layout is:
 
 ```text
-ResolvedOperationCandidate {
-    subject = operationRef(DepositContract.deposit)
-    commandType = exactHostType(DepositCommand)
-    resultType = exactHostType(DepositRecorded)
+byte[]  declKind
+int[]   declNameTokenRef
+int[]   declFirstSlot
+int[]   declSlotCount
 
-    input = ref<InputCandidate>(DepositInput)
-    admission = ref<AdmissionCandidate>(DepositAdmission)
-    canonicalization = ref<CanonicalizationCandidate>(DepositCanonicalization)
-    lowering = ref<LoweringCandidate>(DepositLowering)
-}
+byte[]  slotKind
+int[]   slotTargetTokenRef
 
-ResolvedLoweringCandidate {
-    subject = ref<LoweringCandidate>(DepositLowering)
-    meaning = {
-        ref<InputCoordinate>(DepositInput.accountIdText)
-            -> ref<OperationCoordinate>(deposit.command.accountId)
-
-        ref<InputCoordinate>(DepositInput.amountText)
-            -> ref<OperationCoordinate>(deposit.command.amountMinor)
-    }
-}
+int[]   loweringFirstEdge
+int[]   loweringEdgeCount
+int[]   loweringSourceTokenRef
+int[]   loweringTargetTokenRef
 ```
 
-The exact reference expressions above are semantic notation. They do not prescribe how references are encoded.
+The source buffer and token index remain separate. `slotTargetTokenRef` still points to lexical material. It is
+therefore
+not a valid HIR reference.
 
-At this point `"DepositInput"` is no longer a lookup authority for downstream semantic work. The original spelling and
-source range may still be retained by provenance.
+Resolution may use bounded transient structures such as an open-addressed symbol index, work queues, scratch ordinals,
+or intern tables. Those structures belong to the producer episode. They are not published HIR.
 
-The Lowering candidate is still a candidate. The HIR reference to it does not mean that Lowering Establishment has
-succeeded.
+The frontend may release scratch structures as soon as the information has been lowered into the resolved HIR candidate.
 
-## 25.3. HIR Verification
+## 25.2. Deterministic Pre-Count and Direct HIR Formation
 
-Before publication, Kontrakt verifies the HIR contract.
+The reference path does not build a graph of `ResolvedOperationCandidate` objects and later copy it into tables.
 
-A reference used by the `input` slot must resolve to an Input candidate. Every source and target used by the Lowering
-candidate must already denote one exact coordinate. Recovery nodes and unresolved symbols are forbidden from the
-published generation.
-
-The verifier does not decide whether the Input or Lowering candidate receives Contract authority. That judgment remains
-with the owning Establishment law.
-
-Conceptually:
+It first determines the required family sizes.
 
 ```text
-verifyResolvedHir(candidateGeneration) {
-    require(noRecoveryMaterialIsPublished)
-    require(allSemanticReferencesAreExact)
-    require(slotTargetsHaveResolvedCompatibleRoles)
-    require(allPublishedRelationsAreWellFormed)
-    require(observableOrderingIsDeterministic)
-}
+count owners
+count subjects by authority kind
+count operations
+count Lowering relations
+count provenance ranges
 ```
 
-The function above illustrates the boundary. It is not the required verifier API or algorithm.
-
-## 25.4. One Possible V1 Physical Realization
-
-The verified semantic model may be published using compact storage.
-
-One implementation could keep a small generation header, typed definition tables, compact reference tables, and a
-separate provenance store.
+It then allocates exact or bounded-capacity column storage once.
 
 ```text
-HIR Generation G42
-
-Semantic storage
-    Interface table
-    Operation table
-    Input table
-    Admission table
-    Lowering table
-    Exact-reference table / indexes
-
-Side material
-    Provenance store
-    source spelling / source range mapping
-
-Product infrastructure
-    generation metadata
-    projection identity / validity metadata
-    dependency records owned by the query system
+allocate owner columns
+allocate subject columns
+allocate operation columns
+allocate authority-specific payload slabs
+allocate provenance sidecar
 ```
 
-The diagram is not a schema requirement. A first implementation could use ordinary immutable objects and later move hot
-families into primitive slabs without changing the HIR semantic contract.
+Local ordinals are assigned by a deterministic compiler ordering that does not depend on worker completion order, hash
+iteration order, object allocation order, or cache state.
 
-Table order is not semantic order. A dense ordinal may address one row inside `G42`, but that ordinal is not the
-semantic
-identity of the Input or Lowering candidate.
+Resolution then writes directly into the candidate HIR slabs.
+
+For the `deposit` Operation, the resulting local relations are conceptually:
+
+```text
+op = operationOrdinal(DepositContract.deposit)
+
+operationInputRef[op]            = inputOrdinal(DepositInput)
+operationAdmissionRef[op]        = admissionOrdinal(DepositAdmission)
+operationCanonicalizationRef[op] = canonicalizationOrdinal(DepositCanonicalization)
+operationLoweringRef[op]         = loweringOrdinal(DepositLowering)
+```
+
+The Lowering payload is written as a contiguous range.
+
+```text
+lower = loweringOrdinal(DepositLowering)
+base  = loweringEdgeBase[lower]
+
+loweringSourceCoordinateRef[base + 0] = coordinateOrdinal(DepositInput.accountIdText)
+loweringTargetCoordinateRef[base + 0] = coordinateOrdinal(deposit.command.accountId)
+
+loweringSourceCoordinateRef[base + 1] = coordinateOrdinal(DepositInput.amountText)
+loweringTargetCoordinateRef[base + 1] = coordinateOrdinal(deposit.command.amountMinor)
+
+loweringEdgeCount[lower] = 2
+```
+
+The ordinals are generation-local fast references. The source spelling `"DepositInput"` is no longer consulted by
+ordinary downstream semantic consumers.
+
+Original spelling and source ranges remain reachable through the provenance sidecar.
+
+The candidate is still non-authoritative. Direct-to-slab formation does not perform Contract Establishment.
+
+## 25.3. HIR Verification as a Deterministic Table Scan
+
+HIR verification validates the candidate generation before publication. The reference path does not use assertion-style
+`require(...)` calls as the verification model.
+
+Verification scans typed slabs in deterministic ordinal order and writes structured compiler violations into a bounded
+violation buffer.
+
+```text
+short[] violationCode
+int[]   violationSubject
+int[]   violationRelation
+int     violationCount
+```
+
+A simplified scan is:
+
+```text
+for op in 0 ..< operationCount:
+    input = operationInputRef[op]
+    if input < 0 or input >= inputCount:
+        emit(HIR_INVALID_INPUT_REF, operationSubject(op), input)
+
+    admission = operationAdmissionRef[op]
+    if admission < 0 or admission >= admissionCount:
+        emit(HIR_INVALID_ADMISSION_REF, operationSubject(op), admission)
+
+for lower in 0 ..< loweringCount:
+    base  = loweringEdgeBase[lower]
+    count = loweringEdgeCount[lower]
+
+    if base < 0 or count < 0 or base + count > loweringEdgeTotal:
+        emit(HIR_INVALID_LOWERING_RANGE, loweringSubject(lower), base)
+        continue
+
+    for edge in base ..< base + count:
+        src = loweringSourceCoordinateRef[edge]
+        dst = loweringTargetCoordinateRef[edge]
+
+        if not exactInputCoordinate(src):
+            emit(HIR_INVALID_LOWERING_SOURCE, loweringSubject(lower), edge)
+
+        if not exactOperationCoordinate(dst):
+            emit(HIR_INVALID_LOWERING_TARGET, loweringSubject(lower), edge)
+```
+
+Additional scans reject unresolved lexical references, recovery material, invalid owner ranges, incompatible slot target
+kinds, malformed stable-key slices, and non-deterministic observable ordering.
+
+The scan produces compiler diagnostic material when violations exist. The candidate generation is not published as valid
+Resolved HIR.
+
+The verifier does not decide whether `DepositInput` or `DepositLowering` receives Contract authority. That remains the
+owning Establishment law.
+
+The physical validator may use bitsets, vectorized range checks, partitioned validation, or parallel local scans when
+the
+result remains deterministic. Those are implementation choices.
+
+## 25.4. Reference V1 Physical Layout
+
+A production-oriented V1 baseline should not require one heap object per HIR subject or relation.
+
+A representative JVM layout is:
+
+```text
+Generation header
+    primitive counts
+    product/schema version
+    stable-key index reference
+    provenance index reference
+
+Hot semantic slabs
+    operation columns          -> primitive slab / FFM segment
+    subject columns            -> primitive slab / FFM segment
+    owner columns              -> primitive slab / FFM segment
+    authority-specific refs    -> primitive slab / FFM segment
+    relation ranges            -> primitive slab / FFM segment
+
+Variable-width canonical material
+    semantic-key byte slab
+    optional canonical payload byte slabs where justified
+
+Cold side material
+    provenance ranges
+    authored spelling references
+    diagnostic-only source relations
+
+Derived infrastructure outside HIR meaning
+    query dependency records
+    cached projection fingerprints
+    persistent-product metadata
+```
+
+High-cardinality material should prefer primitive columnar storage. FFM-backed slabs are the default physical direction
+when off-heap storage, explicit lifetime, or larger contiguous regions make them profitable. Heap primitive arrays
+remain
+a replaceable option where measurement favors them.
+
+The formation path follows the same memory discipline already used elsewhere in Kontrakt:
+
+```text
+pre-count
+    ↓
+pre-size
+    ↓
+deterministic local ordinal assignment
+    ↓
+direct-to-slab formation
+    ↓
+release frontend scratch that is no longer needed
+    ↓
+batch HIR verification
+    ↓
+seal
+    ↓
+publish generation
+```
+
+There is no required intermediate object graph between resolved frontend facts and published HIR slabs.
+
+Vertical partitioning remains important. Establishment for Input should not have to touch provenance bytes, diagnostic
+strings, Lowering edge slabs, or unrelated authority payloads merely because they share one HIR generation.
 
 ## 25.5. Publication and Consumer Access
 
-After verification, the producer publishes `G42` atomically from the consumer's point of view.
+After verification succeeds, Kontrakt publishes the sealed slab set as one coherent HIR generation.
+
+Publication changes visibility. It does not rewrite semantic rows in place.
 
 ```text
-frontend working state W42
+working slabs W42
     ↓
-resolved candidate generation
+complete direct formation
     ↓
-HIR verification
+verify W42
     ↓
-publish G42
+seal slabs
+    ↓
+publish manifest G42
 ```
 
-Establishment may now request the Input projection for `DepositInput`. A generated-API product may request the resolved
-Operation projection. A diagnostic may join the Lowering projection with its provenance.
-
-A query system records those product reads at semantic projection boundaries. It does not need to record that one
-consumer happened to touch row `17` in one physical table.
-
-Conceptually:
+A consumer obtains a typed semantic projection. The projection may resolve a stable semantic key through the generation
+index and then use one dense ordinal for hot reads.
 
 ```text
-establishInput(DepositInput)
-    reads HIR.InputProjection(DepositInput)
-
-buildOperationApi(deposit)
-    reads HIR.OperationProjection(deposit)
-
-renderLoweringDiagnostic(DepositLowering)
-    reads HIR.LoweringProjection(DepositLowering)
-    reads Provenance(DepositLowering)
+DepositInput stable key
+    ↓ generation index
+input ordinal 17
+    ↓
+input-owned semantic columns
 ```
 
-Those dependency records belong to compiler product infrastructure. They are not fields of the Input, Operation, or
-Lowering HIR meaning.
+The ordinal `17` is not recorded as cross-generation semantic identity.
 
-## 25.6. Next Generation and Early Cutoff
+Conceptually, compiler products consume boundaries such as:
 
-Assume a comment is inserted above `DepositInput` without changing its candidate meaning.
+```text
+Establishment
+    consumes InputProjection(DepositInput)
 
-The frontend may produce a new source revision and then publish `G43`. The provenance for `DepositInput` changes because
-the source range moved. The semantic Input projection remains equal.
+Generated API product
+    consumes OperationProjection(DepositContract.deposit)
+
+Frontend diagnostic
+    consumes LoweringProjection(DepositLowering)
+    consumes ProvenanceProjection(DepositLowering)
+```
+
+Query infrastructure records those semantic product reads. It does not make `inputPayloadRef[17]` or a raw FFM address
+the permanent dependency law.
+
+## 25.6. Semantic Early Cutoff
+
+Assume a comment moves `DepositInput` to another source range without changing its resolved candidate meaning.
+
+`G43` may contain different provenance while the Input semantic projection remains equivalent to `G42`.
 
 ```text
 G42
     InputProjection(DepositInput) = S
-    provenance = P42
+    Provenance(DepositInput)      = P42
 
 G43
     InputProjection(DepositInput) = S
-    provenance = P43
+    Provenance(DepositInput)      = P43
 ```
 
-The compiler may validate that the Input projection is semantically unchanged. Products whose exact input is only `S`
-may stop propagation at that boundary. A diagnostic that needs the source range uses `P43` instead.
+A fast fingerprint may reject equality quickly when the values differ. A matching fingerprint is not by itself Contract
+or HIR semantic authority. Reuse must follow the HIR projection equality law or another collision-safe validation rule.
 
-Now assume the Lowering relation itself changes from `command.amountMinor` to another declared target. The Lowering
-projection is no longer equal. Products depending on that projection cannot take the previous semantic early cutoff.
-Unrelated Input projections do not become different merely because the aggregate HIR generation changed.
+When equality is established, propagation may stop at the Input projection boundary. Products that consume provenance
+still observe `P43`.
 
-## 25.7. Lifecycle Completion
+If the Lowering target changes, the Lowering semantic projection changes. Its dependents cannot reuse the previous
+result
+through the same cutoff. Unrelated Input projections remain independently reusable.
 
-Publishing `G43` supersedes `G42` as the current generation for the new explicit input set. It does not mutate `G42`.
-A consumer that was already using `G42` may finish under the applicable lifetime rule.
+This is why the HIR product boundary is finer than one serialized generation blob even when physical storage is grouped
+into large slabs.
+
+## 25.7. Generation Transition and Reclamation
+
+A new generation is produced beside the old one. The old published slabs are not mutated into the new meaning.
 
 ```text
-G42 published
-    ↓
-G43 construction
-    ↓
-G43 verified
-    ↓
-G43 published
-    ↓
-G42 superseded
-    ↓
-last legal G42 reader released
-    ↓
+G42 published and readable
+        │
+        ├──────── readers may still pin G42
+        │
+source revision 43
+        ↓
+construct W43
+        ↓
+verify W43
+        ↓
+seal W43
+        ↓
+publish G43
+        ↓
+G42 superseded for new requests
+        ↓
+last legal G42 reader releases its pin
+        ↓
 G42 retired
-    ↓
-G42 storage reclaimed when the implementation permits
+        ↓
+G42 slabs reclaimed
 ```
 
-A failed `G43` construction leaves `G42` intact. Publication and reclamation remain separate operations.
+A failed W43 formation or verification leaves G42 intact. Publication and reclamation are separate lifecycle operations.
 
-This complete path is the reference mental model for the ADR. It explains the law without requiring this exact object
-model, storage model, query API, or reclamation mechanism.
+The exact pinning or reclamation mechanism remains open. Reference counting, epochs, arenas, RCU-like retirement, or
+another deterministic-safe strategy may realize the same lifecycle law.
 
-## 25.8. Owner-Local Publication and Failure Isolation
+## 25.8. Owner-Local Formation and Failure Isolation
 
-A scalable implementation does not need one mutable HIR tree for the whole project.
+The compiler does not need one mutable HIR tree for the whole project.
 
-For example, `DepositLowering` may have a stable semantic key under one logical HIR owner while its compact row or
-handle
-changes between `G42` and `G43`. The generation manifest maps the stable key to the current owner-local product. A query
-that only needs `DepositLowering` may request that projection without traversing unrelated HIR material.
+A logical HIR owner may correspond to one independently addressable semantic unit or one deterministic group of closely
+related units. Its hot material occupies ranges inside typed slabs.
 
-If another independent definition fails resolution, the compiler reports that failure without inserting a poison node
-into `DepositLowering`. A dependent owner whose exact meaning requires the failed definition is not published as valid
-HIR. An independent owner may still be verified and made available to diagnostics or tooling.
+```text
+ownerOrdinal
+    ↓
+ownerFirstSubject[ownerOrdinal]
+ownerSubjectCount[ownerOrdinal]
+```
 
-The first V1 implementation may materialize all owners eagerly. A later implementation may compute one owner or
-projection on demand. In both cases the consumer receives the same verified HIR meaning.
+A query that needs `DepositLowering` can resolve its stable semantic locator to the current owner-local ordinal and read
+only the required Lowering range.
+
+If another independent definition fails resolution, no poison object is inserted into the valid `DepositLowering` rows.
+The failed owner is rejected from valid Resolved HIR publication. Independent owners remain valid when their determinant
+closure does not include the failure.
+
+V1 may form all owner ranges eagerly. V2 may materialize or repair selected owner products on demand. Both paths must
+publish the same HIR semantic meaning for the same valid inputs.
 
 ---
 
 # 26. Non-Normative Implementation Reading Guide
 
-An implementation should be able to map each architecture responsibility to one concrete owner without collapsing the
-responsibilities into one mega-HIR object.
+The reference realization should be read as a compiler storage model, not as a proposed Kotlin domain model.
 
-The frontend parser owns source structure. Resolution owns conversion from lexical references to exact HIR targets. HIR
-formation owns the resolved candidate representation. HIR verification owns compiler-semantic well-formedness.
-Publication owns the transition from private candidate state to a stable generation. Provenance owns source origin.
-Query and analysis infrastructure own derived dependency and validity state. Establishment owns Contract authority.
+The parser owns source-oriented syntax arenas. Resolution owns conversion from lexical references to exact HIR targets.
+HIR formation writes resolved candidate meaning into typed slabs. HIR verification checks compiler-semantic
+well-formedness. Publication exposes sealed generations. Provenance owns source origin. Query and analysis
+infrastructure
+own dependency, validity, and reuse state. Establishment owns Contract authority.
 
-These owners may share physical storage or execute inside one compiler process. Their responsibilities remain separate.
+The production baseline should avoid a per-node heap object graph for high-cardinality HIR material. The preferred
+physical direction is deterministic dense ordinals, primitive columns, direct ranges, compact indexes, and FFM-backed or
+heap-primitive slabs selected by measured cost.
 
-The implementation should also distinguish the logical HIR owner, a stable semantic key that can survive unrelated
-changes, and any generation-local handle used for hot access. A consumer should not need to know which of those forms is
-backed by an object, table, slab, interner, or persistent product.
+Temporary frontend objects are permissible only when they are bounded construction aids and do not become the published
+HIR model. The normal hot path should be able to lower resolved working material directly into pre-sized HIR storage
+without allocating one wrapper object per semantic row or relation.
 
-A practical V1 implementation may begin with ergonomic construction objects and a simple immutable published view. It
-can later replace hot published families with tables or slabs. That migration should not require Establishment,
-diagnostics, or query consumers to reinterpret source syntax or learn the new backing layout.
+Consumers should see typed semantic projections rather than raw backing storage. A projection implementation may reduce
+to a few ordinal-indexed slab reads. The consumer contract must survive a later replacement of heap primitive arrays by
+FFM segments, a different local ordinal assignment, or a different stable-key index.
 
-A good implementation test is therefore not whether its classes resemble this ADR. The test is whether a consumer can
-be written only against the published HIR meaning and still survive replacement of the physical representation.
+A good implementation test is therefore stronger than class-shape compatibility. Replacing the physical HIR backing
+must not require Establishment, diagnostics, query consumers, or generated-product consumers to reinterpret source
+syntax
+or change the semantic dependency they declare.
 
 ---
 
