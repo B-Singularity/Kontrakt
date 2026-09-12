@@ -107,13 +107,13 @@ It is not Contract authority and does not remain the semantic model merely becau
           │               │                  Local Structural Analysis
           └───────┬───────┘                          │
                   ▼                                  │
-      Source / Syntax / Carrier Material              │
+      Source / Syntax / Carrier Material             │
                   │                                  │
-      Resolution / Binding / Normalization            │
+      Resolution / Binding / Normalization           │
                   │                                  │
-        Resolved Contract HIR                         │
+        Resolved Contract HIR                        │
                   │                                  │
-      Authority-Owned Establishment                   │
+      Authority-Owned Establishment                  │
                   │                                  │
                   ▼                                  │
        Canonical Contract World                      │
@@ -130,9 +130,9 @@ It is not Contract authority and does not remain the semantic model merely becau
          Closure Verification  Specialization  Whole-Machine /
                   │             Knowledge       IPA Knowledge
                   ▼                │                │
-        Verification Overlay      └────────┬───────┘
-                  │                       │
-                  └───────────────┬───────┘
+        Verification Overlay       └────────┬───────┘
+                  │                         │
+                  └───────────────┬─────────┘
                                   ▼
                          Execution Formation
                                   │
