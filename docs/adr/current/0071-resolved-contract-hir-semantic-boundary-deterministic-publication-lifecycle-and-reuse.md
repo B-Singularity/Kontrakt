@@ -272,6 +272,66 @@ context. Those inputs do not exist merely because a definition candidate has bee
 
 The compiler must therefore keep applicability declaration from applicability result.
 
+## 4.8. HIR Verification Contract
+
+Every published Resolved HIR generation must satisfy the HIR invariant before an independent consumer can observe it.
+
+HIR verification checks compiler-semantic well-formedness. It does not run the owning Contract Establishment judgment.
+A verifier may reject an unresolved reference, a role-incompatible target, recovery material, a malformed resolved
+relation, or another violation of the HIR contract. It must not reject a fully resolved candidate merely because the
+owning Contract law will later refuse to establish it.
+
+Private construction may temporarily contain incomplete structures while one frontend computation is in progress. That
+freedom ends at publication. A representation-preserving transform over private HIR material must also leave a valid
+HIR result before publication.
+
+HIR verification is compiler correctness machinery. A verifier failure is not a Contract refusal and does not create
+Contract Failure meaning.
+
+## 4.9. Normalized Semantic Form
+
+Resolved HIR is source-independent enough that semantically equivalent authoring forms can converge on the same
+consumer-visible candidate meaning.
+
+Normalization may remove alias spelling, import spelling, source-only nesting, authoring sugar, or another distinction
+whose meaning has already been resolved. The original form may remain available through provenance or source material.
+
+Normalization must not erase a distinction owned by a Contract law. If two authored forms lead to different candidate
+meaning under an owning 1D ADR, HIR must preserve that difference.
+
+This normalization is compiler frontend work. It is not the `Canonicalization Contract`. It also does not require one
+byte-canonical HIR storage format. The required property is semantic convergence at the HIR observable surface.
+
+If order is not semantic, physical construction order must not become observable meaning. If order is semantic, its
+source must be explicit in the owning law or frontend language.
+
+## 4.10. HIR Determinant Set and Frontend Confluence
+
+The observable meaning of one HIR semantic unit must be determined by explicit frontend inputs.
+
+Those inputs include the authored material that owns the candidate, the frontend language version, and the exact
+resolution environment required to interpret the candidate. A compiler option belongs to this determinant set only when
+it is explicitly allowed to change frontend semantic meaning.
+
+Worker scheduling, cache state, allocation order, current memory layout, and the route by which a query happened to be
+computed are not determinants.
+
+Different supported authoring forms may converge on the same HIR meaning. When `.kontrakt` source and a selected 1D
+carrier express the same resolved candidate meaning under the same applicable frontend law, the authoring route does not
+create a second HIR meaning. Their source origin may remain different provenance.
+
+This confluence rule prevents frontend implementation choice from leaking into Establishment, equality, or reuse.
+
+## 4.11. Typed Extension Boundary
+
+HIR has shared compiler infrastructure, but each Contract authority keeps its own candidate vocabulary.
+
+Adding a new 1D Contract family must not require existing candidate meanings to be rewritten into a weaker universal
+property model. The shared HIR substrate may provide references, publication, provenance relations, ownership, and
+projection access. The new authority provides the semantic payload that its own ADR defines.
+
+A generic tag or property bag may exist as physical encoding. It is not the semantic contract of HIR.
+
 ---
 
 # 5. Information Retention and Loss
@@ -331,6 +391,16 @@ node is not a partially authoritative Contract definition.
 Tooling may expose a separate incomplete frontend view when necessary. Such a view must not be accepted as Resolved
 Contract HIR by Establishment.
 
+Invalid source must not poison unrelated resolved semantic units.
+
+If one candidate cannot satisfy the HIR admission invariant, that candidate and any semantic unit whose exact meaning
+depends on it are not published as valid HIR. An independent candidate may still be formed and verified when its own
+determinant closure is complete. The compiler records the rejected source through diagnostic or recovery products rather
+than inserting a fabricated HIR placeholder.
+
+Compilation success is separate from this failure-isolation rule. A batch build may still fail because any required
+source unit is invalid, while diagnostics or tooling continue to consume already-valid HIR units.
+
 ---
 
 # 7. Establishment Handoff
@@ -385,6 +455,67 @@ The exact projection catalog remains a compiler design decision.
 
 A projection is not a new Contract authority and is not automatically a new IR level.
 
+## 8.3. Reference Direction and Ownership
+
+A resolved HIR reference denotes another semantic subject. It does not physically own that subject merely because the
+source syntax was nested or one declaration mentioned another.
+
+The compiler may store related subjects next to one another, but consumers must observe an exact reference relation
+rather than infer semantic ownership from containment, parent pointers, object nesting, or table adjacency.
+
+This keeps source hierarchy, semantic reference, and physical storage as separate concerns. It also permits one
+definition-level product to be reused without copying every referenced definition into the same physical object graph.
+
+## 8.4. Semantic Ownership and Partition
+
+HIR needs an explicit logical ownership boundary for independently addressable compiler-semantic material.
+
+An owner is a compiler publication and reuse boundary. It is not Contract authority, source nesting, or object
+containment. An independently published HIR subject belongs to one logical owner, and a relation to material owned
+elsewhere is expressed as an exact semantic reference.
+
+This prevents one large mutable graph from becoming the only unit of lowering, verification, reuse, or reclamation. It
+also gives query and incremental infrastructure a stable unit larger than individual fields and smaller than the whole
+frontend world.
+
+The exact owner catalog remains design work. Interface, Interaction, Operation, and 1D Definition boundaries are
+candidates only where their semantic and reuse laws justify independent ownership.
+
+## 8.5. Stable Semantic Locator and Generation-Local Handle
+
+Cross-generation identity and fast in-generation addressing are different requirements.
+
+A semantic unit that may be compared or reused across generations needs a deterministic semantic locator that survives
+unrelated physical relocation. The compiler may also assign a dense generation-local handle for fast access inside one
+published generation.
+
+```text
+stable HIR semantic locator
+    → cross-generation lookup / comparison
+
+generation-local handle
+    → fast access inside one generation
+```
+
+Neither value is Contract Definition identity merely because it is stable or efficient.
+
+A generation-local handle cannot be interpreted in another generation without an explicit remap or validation. A
+persistent product must not serialize a raw local handle as though it were a cross-session semantic identity.
+
+## 8.6. Consumer Access Discipline
+
+Ordinary consumers read HIR through typed semantic subjects, references, and projections. They do not gain semantic
+authority by traversing backing objects, parent pointers, table adjacency, or mutable producer state.
+
+The implementation may expose specialized internal access for the HIR producer, verifier, serializer, or representation
+transform. That access is not the stable consumer contract.
+
+Derived reverse indexes, lookup accelerators, and cached navigation tables may be built when useful. They remain
+recomputable compiler products unless an owning semantic law explicitly says otherwise.
+
+This access boundary allows a later implementation to introduce lazy materialization or dependency observation without
+forcing consumers to learn how HIR is physically stored.
+
 ---
 
 # 9. HIR Identity and Equality
@@ -403,6 +534,11 @@ Fingerprints and HID may provide efficient equality evidence. They remain implem
 cache lookup must never be allowed to establish a false semantic equality.
 
 The exact collision-safe comparison strategy remains outside this ADR.
+
+Equality is defined at the semantic surface being consumed. Whole-generation inequality does not imply that every owner
+or projection is unequal. A projection family must therefore have an equality law strong enough to decide whether its
+own consumer-visible meaning changed. Generic object equality or serialized-byte equality is not the semantic law unless
+the owning HIR product explicitly makes that representation canonical.
 
 ---
 
@@ -425,18 +561,30 @@ may invalidate the HIR projection even when a source span happens to remain iden
 
 The compiler must not store formatted diagnostic text as HIR meaning.
 
+One semantic subject may have more than one relevant authored origin. A normalized or synthesized HIR subject may also
+need an origin chain that points to the source material from which the compiler formed it. HIR therefore does not assume
+a mandatory one-subject-to-one-span provenance model.
+
+Synthetic compiler material that has no direct authored token must still be distinguishable from missing provenance.
+Its provenance may identify the semantic source that caused synthesis without making that source location part of HIR
+equality.
+
 ---
 
 # 11. Publication
 
-## 11.1. Private Construction
+## 11.1. Frontend Working State
 
-Frontend construction may use mutable builders, temporary maps, arenas, worklists, intern tables, or another bounded
-working representation.
+Before Resolved HIR is published, the frontend may keep private working state while it resolves and normalizes authored
+material. A resolver may use temporary symbol maps, worklists, intern tables, arenas, or another bounded representation
+to perform that work.
 
-That state is private to the producer.
+This working state is compiler implementation material. It is not Resolved HIR. Establishment, query consumers, tooling,
+and other independent downstream work must not depend on a half-resolved builder or on the shape of the temporary
+structures used to produce HIR.
 
-Independent consumers do not observe it as Resolved HIR.
+The frontend may retain source and working material for diagnostics, tooling, or later frontend work. Retention does not
+make that material part of published HIR meaning.
 
 ---
 
@@ -461,6 +609,23 @@ Publication is a compiler lifecycle boundary. It adds no Contract authority.
 
 A published generation is immutable to ordinary consumers. The physical realization may use immutable structures,
 sealed tables, overlays, snapshots, persistent structures, or another mechanism that preserves this rule.
+
+## 11.3. Publication Granularity and Materialization
+
+A coherent HIR generation does not require one monolithic physical publication barrier.
+
+The compiler may publish a generation as a stable manifest over independently sealed owner units or semantic
+projections. A unit becomes observable only after that unit satisfies the HIR invariant and is associated with the same
+coherent generation inputs.
+
+Physical materialization may be eager or demand-driven. A lazy unit is not permission to expose partially resolved
+state. When a consumer receives the unit, the same HIR admission and verification laws apply as they do to eagerly
+materialized HIR.
+
+This allows V1 to use a simple eager implementation while preserving a path to owner-local queries, IDE demand, and V2
+incremental materialization without changing HIR meaning.
+
+The exact publication and materialization granularity remains a compiler design decision.
 
 ---
 
@@ -499,6 +664,11 @@ ownership, product metadata, publication handles, or another mechanism.
 HIR architecture must permit lifecycle management at a finer semantic granularity than the whole frontend world when
 that is useful. Fine-grained lifecycle units are stable semantic products or projections, not arbitrary physical fields.
 
+A semantic owner may outlive its construction scratch state while cold derived indexes or source-oriented material are
+discarded earlier. The HIR contract does not require every projection, index, provenance expansion, or decoded body to
+remain simultaneously materialized. Selective retention must not make a consumer-visible semantic unit unavailable
+while that unit is still validly published and required.
+
 The exact reclamation mechanism remains open.
 
 ---
@@ -533,6 +703,10 @@ requiring one query scheduler, one Analysis Manager API, or one pass pipeline.
 
 Derived knowledge remains outside HIR. If several consumers need the same expensive calculation, Kontrakt may publish a
 shared derived product rather than storing the result inside unrelated HIR definitions.
+
+Query and analysis scope should follow semantic ownership when that gives a smaller valid dependency boundary. A
+consumer that needs one Definition projection should not be forced to depend on the full frontend generation merely
+because the first physical implementation stores both in one allocation domain.
 
 ---
 
@@ -706,6 +880,10 @@ reinterpreted as current HIR meaning.
 Content-addressed storage may be used to deduplicate immutable products. A CAS address remains a storage identity, not a
 Contract identity or HIR semantic law.
 
+A restored persistent HIR product must pass the same semantic admission boundary as a newly computed product. The
+implementation may avoid re-running every expensive check when schema compatibility, integrity validation, and prior
+verification provide equivalent evidence. Deserialization or cache presence alone is not publication authority.
+
 ---
 
 # 23. Diagnostics and Tooling
@@ -722,36 +900,395 @@ the same HIR semantic contract when material is fully resolved.
 
 ---
 
-# 24. Example
+# 24. Non-Normative Reference Semantic Model
 
-Assume one resolved Input Definition keeps the same candidate meaning while a comment is inserted above its source.
+The normative sections above define HIR meaning. This section gives one concrete mental model for implementing that
+meaning without making the example a required storage schema.
 
-The next frontend run publishes a new HIR generation because the source revision changed. The source span in the
-provenance product also changes.
-
-The Input Definition projection, however, is semantically equal to its previous HIR projection.
+The central split is:
 
 ```text
-HIR generation G17
-    Input A semantic projection = S
-    provenance = line 20
-
-source comment added
-
-HIR generation G18
-    Input A semantic projection = S
-    provenance = line 45
+resolved semantic subjects and relations
+    ≠
+source provenance
+    ≠
+query / cache state
+    ≠
+physical storage identity
 ```
 
-A diagnostic that points to the source must use the new provenance. Establishment or another product that depends only
-on `S` may reuse its previous semantic result after the compiler validates the equality of the new projection.
+A useful logical HIR view can therefore expose typed semantic subjects while keeping their physical representation
+replaceable.
 
-The optimization is legal because the semantic determinant did not change. It is not legal because the old cache entry
-happened to exist.
+The pseudocode below is illustrative. The names are not required API names and the records are not required Kotlin
+objects.
+
+```text
+semantic interface ResolvedHirGeneration {
+    generation: HirGenerationRef
+
+    owner(key: HirOwnerKey): ResolvedHirOwner
+
+    interfaceCandidate(key: HirInterfaceKey): ResolvedInterfaceCandidate
+    operationCandidate(key: HirOperationKey): ResolvedOperationCandidate
+
+    inputCandidate(key: HirInputKey): ResolvedInputCandidate
+    admissionCandidate(key: HirAdmissionKey): ResolvedAdmissionCandidate
+    loweringCandidate(key: HirLoweringKey): ResolvedLoweringCandidate
+
+    provenanceOf(subject: HirSubjectKey): ProvenanceSet
+}
+
+semantic record ResolvedHirOwner {
+    key: HirOwnerKey
+    publishedSubjects: SemanticSet<HirSubjectKey>
+}
+
+semantic record ResolvedOperationCandidate {
+    subject: HirOperationKey
+    commandType: ResolvedHostTypeRef
+    resultType: ResolvedHostTypeRef
+
+    input: HirInputKey
+    admission: HirAdmissionKey
+    canonicalization: HirCanonicalizationKey?
+    lowering: HirLoweringKey
+}
+
+semantic record ResolvedInputCandidate {
+    subject: HirInputKey
+    meaning: InputCandidateMeaning
+}
+
+semantic record ResolvedLoweringCandidate {
+    subject: HirLoweringKey
+    meaning: LoweringCandidateMeaning
+}
+
+generation-local ref HirInputRef {
+    generation: HirGenerationRef
+    handle: LocalHandle
+}
+```
+
+`InputCandidateMeaning` remains owned by the Input ADR. `LoweringCandidateMeaning` remains owned by the Lowering ADR.
+The HIR architecture does not replace them with a generic property bag.
+
+`HirInputKey` and the other semantic keys mean that the frontend can identify one exact candidate independently of
+its current storage location. `HirInputRef` illustrates a separate generation-local fast reference. Neither form is
+required to be an object pointer, table row, string, HID, or Contract `Definition Reference` value.
+
+`ResolvedHirOwner` illustrates logical publication ownership. It does not make owner membership a new Contract relation.
+The exact owner catalog and key encoding remain open.
+
+A published implementation may expose the same logical view over objects, immutable tables, primitive slabs, persistent
+nodes, or mixed storage.
 
 ---
 
-# 25. Consequences
+# 25. Non-Normative End-to-End Reference Realization
+
+This example follows one authored Operation from source to a published HIR generation. It also shows how the same result
+can participate in query reuse and lifecycle management without putting those mechanisms into HIR meaning.
+
+The source shape follows the existing IDL decisions.
+
+```text
+interface DepositContract {
+    policy        DepositPolicy
+    governance    DepositGovernance
+    budget        DepositBudget
+    capacity      DepositCapacity
+    facts         DepositFacts
+    invariants    DepositInvariants
+
+    operation deposit(command: DepositCommand): DepositRecorded {
+        manifest {
+            flow:
+                input             DepositInput
+                admission         DepositAdmission
+                canonicalization  DepositCanonicalization
+                lowering          DepositLowering
+        }
+
+        lowering DepositLowering {
+            accountIdText -> command.accountId
+            amountText    -> command.amountMinor
+        }
+    }
+}
+```
+
+## 25.1. Source and Working State
+
+Parsing may first produce source-oriented material whose references are still lexical.
+
+```text
+ParsedOperation {
+    name = "deposit"
+    commandType = Symbol("DepositCommand")
+    resultType = Symbol("DepositRecorded")
+
+    flow.input = Symbol("DepositInput")
+    flow.admission = Symbol("DepositAdmission")
+    flow.canonicalization = Symbol("DepositCanonicalization")
+    flow.lowering = Symbol("DepositLowering")
+}
+```
+
+The resolver is free to use mutable maps, worklists, temporary IDs, or intern tables while it resolves those symbols.
+That working state belongs to the frontend computation. A downstream consumer cannot observe it as HIR.
+
+## 25.2. Resolved Semantic Formation
+
+Resolution converts source lookup problems into exact semantic relations.
+
+```text
+ResolvedOperationCandidate {
+    subject = operationRef(DepositContract.deposit)
+    commandType = exactHostType(DepositCommand)
+    resultType = exactHostType(DepositRecorded)
+
+    input = ref<InputCandidate>(DepositInput)
+    admission = ref<AdmissionCandidate>(DepositAdmission)
+    canonicalization = ref<CanonicalizationCandidate>(DepositCanonicalization)
+    lowering = ref<LoweringCandidate>(DepositLowering)
+}
+
+ResolvedLoweringCandidate {
+    subject = ref<LoweringCandidate>(DepositLowering)
+    meaning = {
+        ref<InputCoordinate>(DepositInput.accountIdText)
+            -> ref<OperationCoordinate>(deposit.command.accountId)
+
+        ref<InputCoordinate>(DepositInput.amountText)
+            -> ref<OperationCoordinate>(deposit.command.amountMinor)
+    }
+}
+```
+
+The exact reference expressions above are semantic notation. They do not prescribe how references are encoded.
+
+At this point `"DepositInput"` is no longer a lookup authority for downstream semantic work. The original spelling and
+source range may still be retained by provenance.
+
+The Lowering candidate is still a candidate. The HIR reference to it does not mean that Lowering Establishment has
+succeeded.
+
+## 25.3. HIR Verification
+
+Before publication, Kontrakt verifies the HIR contract.
+
+A reference used by the `input` slot must resolve to an Input candidate. Every source and target used by the Lowering
+candidate must already denote one exact coordinate. Recovery nodes and unresolved symbols are forbidden from the
+published generation.
+
+The verifier does not decide whether the Input or Lowering candidate receives Contract authority. That judgment remains
+with the owning Establishment law.
+
+Conceptually:
+
+```text
+verifyResolvedHir(candidateGeneration) {
+    require(noRecoveryMaterialIsPublished)
+    require(allSemanticReferencesAreExact)
+    require(slotTargetsHaveResolvedCompatibleRoles)
+    require(allPublishedRelationsAreWellFormed)
+    require(observableOrderingIsDeterministic)
+}
+```
+
+The function above illustrates the boundary. It is not the required verifier API or algorithm.
+
+## 25.4. One Possible V1 Physical Realization
+
+The verified semantic model may be published using compact storage.
+
+One implementation could keep a small generation header, typed definition tables, compact reference tables, and a
+separate provenance store.
+
+```text
+HIR Generation G42
+
+Semantic storage
+    Interface table
+    Operation table
+    Input table
+    Admission table
+    Lowering table
+    Exact-reference table / indexes
+
+Side material
+    Provenance store
+    source spelling / source range mapping
+
+Product infrastructure
+    generation metadata
+    projection identity / validity metadata
+    dependency records owned by the query system
+```
+
+The diagram is not a schema requirement. A first implementation could use ordinary immutable objects and later move hot
+families into primitive slabs without changing the HIR semantic contract.
+
+Table order is not semantic order. A dense ordinal may address one row inside `G42`, but that ordinal is not the
+semantic
+identity of the Input or Lowering candidate.
+
+## 25.5. Publication and Consumer Access
+
+After verification, the producer publishes `G42` atomically from the consumer's point of view.
+
+```text
+frontend working state W42
+    ↓
+resolved candidate generation
+    ↓
+HIR verification
+    ↓
+publish G42
+```
+
+Establishment may now request the Input projection for `DepositInput`. A generated-API product may request the resolved
+Operation projection. A diagnostic may join the Lowering projection with its provenance.
+
+A query system records those product reads at semantic projection boundaries. It does not need to record that one
+consumer happened to touch row `17` in one physical table.
+
+Conceptually:
+
+```text
+establishInput(DepositInput)
+    reads HIR.InputProjection(DepositInput)
+
+buildOperationApi(deposit)
+    reads HIR.OperationProjection(deposit)
+
+renderLoweringDiagnostic(DepositLowering)
+    reads HIR.LoweringProjection(DepositLowering)
+    reads Provenance(DepositLowering)
+```
+
+Those dependency records belong to compiler product infrastructure. They are not fields of the Input, Operation, or
+Lowering HIR meaning.
+
+## 25.6. Next Generation and Early Cutoff
+
+Assume a comment is inserted above `DepositInput` without changing its candidate meaning.
+
+The frontend may produce a new source revision and then publish `G43`. The provenance for `DepositInput` changes because
+the source range moved. The semantic Input projection remains equal.
+
+```text
+G42
+    InputProjection(DepositInput) = S
+    provenance = P42
+
+G43
+    InputProjection(DepositInput) = S
+    provenance = P43
+```
+
+The compiler may validate that the Input projection is semantically unchanged. Products whose exact input is only `S`
+may stop propagation at that boundary. A diagnostic that needs the source range uses `P43` instead.
+
+Now assume the Lowering relation itself changes from `command.amountMinor` to another declared target. The Lowering
+projection is no longer equal. Products depending on that projection cannot take the previous semantic early cutoff.
+Unrelated Input projections do not become different merely because the aggregate HIR generation changed.
+
+## 25.7. Lifecycle Completion
+
+Publishing `G43` supersedes `G42` as the current generation for the new explicit input set. It does not mutate `G42`.
+A consumer that was already using `G42` may finish under the applicable lifetime rule.
+
+```text
+G42 published
+    ↓
+G43 construction
+    ↓
+G43 verified
+    ↓
+G43 published
+    ↓
+G42 superseded
+    ↓
+last legal G42 reader released
+    ↓
+G42 retired
+    ↓
+G42 storage reclaimed when the implementation permits
+```
+
+A failed `G43` construction leaves `G42` intact. Publication and reclamation remain separate operations.
+
+This complete path is the reference mental model for the ADR. It explains the law without requiring this exact object
+model, storage model, query API, or reclamation mechanism.
+
+## 25.8. Owner-Local Publication and Failure Isolation
+
+A scalable implementation does not need one mutable HIR tree for the whole project.
+
+For example, `DepositLowering` may have a stable semantic key under one logical HIR owner while its compact row or
+handle
+changes between `G42` and `G43`. The generation manifest maps the stable key to the current owner-local product. A query
+that only needs `DepositLowering` may request that projection without traversing unrelated HIR material.
+
+If another independent definition fails resolution, the compiler reports that failure without inserting a poison node
+into `DepositLowering`. A dependent owner whose exact meaning requires the failed definition is not published as valid
+HIR. An independent owner may still be verified and made available to diagnostics or tooling.
+
+The first V1 implementation may materialize all owners eagerly. A later implementation may compute one owner or
+projection on demand. In both cases the consumer receives the same verified HIR meaning.
+
+---
+
+# 26. Non-Normative Implementation Reading Guide
+
+An implementation should be able to map each architecture responsibility to one concrete owner without collapsing the
+responsibilities into one mega-HIR object.
+
+The frontend parser owns source structure. Resolution owns conversion from lexical references to exact HIR targets. HIR
+formation owns the resolved candidate representation. HIR verification owns compiler-semantic well-formedness.
+Publication owns the transition from private candidate state to a stable generation. Provenance owns source origin.
+Query and analysis infrastructure own derived dependency and validity state. Establishment owns Contract authority.
+
+These owners may share physical storage or execute inside one compiler process. Their responsibilities remain separate.
+
+The implementation should also distinguish the logical HIR owner, a stable semantic key that can survive unrelated
+changes, and any generation-local handle used for hot access. A consumer should not need to know which of those forms is
+backed by an object, table, slab, interner, or persistent product.
+
+A practical V1 implementation may begin with ergonomic construction objects and a simple immutable published view. It
+can later replace hot published families with tables or slabs. That migration should not require Establishment,
+diagnostics, or query consumers to reinterpret source syntax or learn the new backing layout.
+
+A good implementation test is therefore not whether its classes resemble this ADR. The test is whether a consumer can
+be written only against the published HIR meaning and still survive replacement of the physical representation.
+
+---
+
+# 27. Non-Normative Engineering Validation
+
+The HIR implementation should have a deterministic inspection path for compiler QA. The inspection form is a derived
+debug product, not HIR authority.
+
+It should be possible to compare clean and reused compilation at the HIR semantic boundary. A comment-only edit should
+be able to demonstrate semantic equality with changed provenance. A semantic edit should identify the projections that
+changed. Randomized worker completion order should not change the semantic inspection result.
+
+HIR verification should also be runnable in compiler tests after HIR formation and after any transformation that claims
+to preserve the HIR contract. This follows the same general engineering discipline used by production IR systems: valid
+IR is a precondition for later work, and transformations must return material that satisfies the IR invariants before it
+is published to the next consumer.
+
+Compiler QA should also move unrelated declarations and reorder independent construction work while checking that stable
+semantic keys and HIR projections remain equivalent. Tests should reject cross-generation use of a generation-local
+handle unless an explicit remap occurs. An invalid definition should not create poison HIR for an independent owner.
+Eager and demand-driven materialization, when both are implemented, must produce the same semantic inspection result.
+
+---
+
+# 28. Consequences
 
 The frontend gains a strict semantic checkpoint before Contract authority.
 
@@ -772,55 +1309,55 @@ published contract.
 
 ---
 
-# 26. Rejected Alternatives
+# 29. Rejected Alternatives
 
-## 26.1. Parsed Source Directly to Establishment
+## 29.1. Parsed Source Directly to Establishment
 
 This would keep source lookup and syntax interpretation inside authority-owned judgment. It would also make multiple
 authoring frontends harder to converge on one semantic boundary.
 
 Rejected.
 
-## 26.2. One Mutable Mega-HIR
+## 29.2. One Mutable Mega-HIR
 
 A representation that stores syntax, resolved meaning, diagnostics, analysis results, cache state, backend state, and
 incremental metadata in one mutable graph would couple unrelated lifetimes and invalidation rules.
 
 Rejected.
 
-## 26.3. Recovery Nodes Inside Published Resolved HIR
+## 29.3. Recovery Nodes Inside Published Resolved HIR
 
 This weakens the meaning of `Resolved` and forces every consumer to distinguish complete meaning from parser poison.
 Recovery remains a sibling frontend concern.
 
 Rejected for the published HIR semantic surface.
 
-## 26.4. One Whole-HIR Dependency Unit
+## 29.4. One Whole-HIR Dependency Unit
 
 This makes small semantic changes invalidate unrelated consumers and blocks definition-level early cutoff.
 
 Rejected as the only dependency model.
 
-## 26.5. Physical Field Reads as Incremental Dependencies
+## 29.5. Physical Field Reads as Incremental Dependencies
 
 This would turn layout into incremental architecture and make later storage replacement expensive.
 
 Rejected.
 
-## 26.6. Fingerprint or CAS Identity as Semantic Identity
+## 29.6. Fingerprint or CAS Identity as Semantic Identity
 
 A hash or storage address can accelerate equality and lookup. It cannot replace the semantic equality law.
 
 Rejected.
 
-## 26.7. Incremental State as Correctness Authority
+## 29.7. Incremental State as Correctness Authority
 
 A compiler that can only produce correct HIR when previous cache or dependency state is present has lost the semantic
 source of truth.
 
 Rejected.
 
-## 26.8. Global Compiler Lifecycle State Machine
+## 29.8. Global Compiler Lifecycle State Machine
 
 The compiler does not move linearly from `parsed` to `HIR` to `established` to `optimized` as one mutable global state.
 Different products may exist at different generations and lifetimes.
@@ -829,9 +1366,24 @@ HIR keeps its own publication lifecycle without becoming the global compiler sta
 
 Rejected.
 
+## 29.9. Source Containment as HIR Ownership
+
+Using parser nesting or host object containment as the permanent HIR owner relation would make source shape control
+publication, reuse, and lifetime.
+
+Rejected.
+
+## 29.10. Generation-Local Handles as Persistent Identity
+
+A dense ordinal, arena index, row number, or local interner ID may be efficient inside one generation. Reusing that
+value
+as a cross-generation or cross-session semantic locator would couple persistence to physical construction order.
+
+Rejected.
+
 ---
 
-# 27. V1 Requirements
+# 30. V1 Requirements
 
 V1 must provide a real Resolved Contract HIR boundary between frontend resolution and Establishment.
 
@@ -845,17 +1397,24 @@ boundaries, and reuse a published result only under a valid generation or equiva
 V1 must support deterministic semantic early cutoff where equality is already available and profitable. It need not
 incrementalize every frontend computation.
 
+V1 must define a logical HIR ownership or partition boundary, stable semantic locators for independently reusable units,
+and a separate generation-local addressing mechanism when dense local handles are used. The first implementation may
+materialize all units eagerly, but consumers must not depend on that choice.
+
+Invalid source must be isolated at the smallest sound semantic owner boundary. Unaffected owners may remain available to
+frontend diagnostics and tooling even when the overall compilation cannot succeed.
+
 Cache-off and clean-recompute execution must remain valid and must agree with reused execution.
 
 ---
 
-# 28. V2 Evolution Seam
+# 31. V2 Evolution Seam
 
 V2 may add persistent HIR generations and finer frontend repair without changing this ADR.
 
-Possible work includes persistent semantic projections, incremental lexing and parsing, incremental resolution,
-provenance-only refresh, cross-session early cutoff, Merkle-style localization, dynamic dependency repair, domain-local
-delta maintenance, and adaptive switching between repair and rebuild.
+Possible work includes persistent semantic projections, owner-local or demand-driven materialization, incremental lexing
+and parsing, incremental resolution, provenance-only refresh, cross-session early cutoff, Merkle-style localization,
+dynamic dependency repair, domain-local delta maintenance, and adaptive switching between repair and rebuild.
 
 Those techniques remain compiler realization.
 
@@ -864,7 +1423,7 @@ determinism-first rule.
 
 ---
 
-# 29. Intentionally Open
+# 32. Intentionally Open
 
 This ADR does not freeze the HIR physical schema.
 
@@ -881,20 +1440,32 @@ this ADR are preserved.
 
 ---
 
-# 30. Non-Normative Engineering Basis
+# 33. Non-Normative Engineering Basis
 
 This decision is consistent with several production systems, but none of them is a template for Kontrakt.
 
-`rustc` lowers AST into HIR after removing syntax structure that later analysis does not need. Its query system also
-shows why large products benefit from smaller projection queries: a large product may change while many projected
-consumer-visible results remain equal.
+`rustc` lowers AST into HIR after removing syntax structure that later analysis does not need. HIR lowering is organized
+around semantic owners rather than one undifferentiated tree, and stable identity work is separated from
+compilation-local
+IDs for incremental reuse. Its query system also shows why larger products need smaller semantic projections and why
+query dependency must not be confused with the semantic relation represented by HIR. Owner-local identity is especially
+important because unrelated movement should not renumber every semantic unit.
 
 Kotlin K2 FIR shows that logical resolution phases can strengthen one frontend semantic representation without requiring
 one physically separate full IR for every phase. The relevant architectural lesson is the phase invariant, not FIR's
-object model.
+object model. FIR symbol access also shows the value of giving consumers a stable semantic access surface instead of
+requiring them to reach through a symbol into mutable backing declarations.
 
-Swift's Request Evaluator separates derived computations and dependency tracking from mutable semantic representation.
-This supports keeping query and analysis state outside HIR meaning.
+LLVM and MLIR make IR validity explicit. Their verifier boundaries let later passes assume well-formed input and require
+transformations to return valid IR. MLIR also separates a common IR substrate from dialect-owned semantics, which is a
+useful comparison for preserving distinct 1D Contract vocabularies over shared compiler infrastructure. Its pass
+isolation rules also demonstrate why independently processed units need explicit mutation and ownership boundaries for
+parallel work. Kontrakt adopts these invariant and isolation lessons without adopting LLVM or MLIR's universal operation
+model.
+
+Swift's Request Evaluator separates derived computations, dependency tracking, and cached results from the underlying
+semantic representation. This supports keeping query and analysis state outside HIR meaning while still allowing
+fine-grained demand-driven compiler work.
 
 Bazel Skyframe uses immutable computed values and change pruning. Its documentation also records a deliberate preference
 for repeatable clean-build equivalence over incremental mutation that is hard to validate. Kontrakt adopts the same
@@ -919,7 +1490,7 @@ stable result and dependency boundaries rather than a cache implementation.
 
 ---
 
-# 31. Final Law
+# 34. Final Law
 
 Resolved Contract HIR is the deterministic published compiler-semantic form of fully resolved Contract candidates before
 Contract authority.
