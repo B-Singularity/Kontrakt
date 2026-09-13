@@ -104,8 +104,8 @@ incremental repair path must not change the resolved meaning presented to Establ
 
 Contract meaning remains prior to compiler realization.
 
-Resolved HIR must preserve every source-owned distinction that Establishment still needs. It must erase source-only
-differences once those differences no longer affect resolved candidate meaning.
+Resolved HIR must preserve every resolved candidate-semantic distinction that Establishment still needs. It may erase
+authored differences once those differences no longer affect resolved candidate meaning.
 
 A downstream consumer must not reopen source or inspect host-carrier topology to recover meaning that the frontend has
 already resolved.
@@ -129,11 +129,11 @@ cannot preserve the same observable HIR result as clean deterministic computatio
 
 ## 4.1. Resolved Contract HIR Role
 
-Resolved Contract HIR is the high-level compiler-semantic representation produced after frontend resolution and before
-Contract Establishment.
+Resolved Contract HIR is the high-level compiler-semantic representation produced after Contract frontend resolution
+and before Contract Establishment.
 
 ```text
-Authoring Material
+Contract Authoring Material
     ↓
 parse / acquire
     ↓
@@ -147,6 +147,14 @@ Authority-Owned Establishment
 HIR owns **resolved candidate meaning**.
 
 It does not own Contract authority.
+
+`High-Level` denotes semantic altitude in the Kontrakt compiler. Contract meaning is the highest semantic premise that
+constrains later realization compilation, machine formation, optimization, and target lowering. HIR is not named by
+proximity to user realization source.
+
+Resolved Contract HIR is therefore the Contract-side HIR. User realization lexing, parsing, semantic analysis,
+verification, optimization, and target lowering belong to later compiler domains and products. They may consume
+established Contract meaning, but they do not extend Resolved Contract HIR.
 
 Resolution success means that the compiler can state the candidate exactly in compiler-semantic form. It does not mean
 that the owning Contract law has accepted that candidate.
@@ -441,10 +449,16 @@ tight loop.
 
 ```text
 Authored Contract Material
-    +
-Explicit IDL Slot Selection
         ↓
 Exact Source / Symbol Resolution
+        ↓
+Resolved Contract Surface Formation
+    Contract Interface Subject
+    Interaction Subject
+    Operation Subject
+    exact direct relations
+        ↓
+Explicit IDL Slot Selection
         ↓
 Resolved 1D Role Selection
         ↓
@@ -460,6 +474,10 @@ HIR Verification
         ↓
 Published Resolved Contract HIR
 ```
+
+Contract Interface, Interaction, and Operation are resolved semantic subjects, not generated host API artifacts. Their
+formation does not create a source-containment identity hierarchy. Exact semantic relations connect them; nesting,
+parent pointers, declaration order, and physical adjacency do not define their identity.
 
 Role selection precedes 1D interpretation. The frontend does not infer a role from carrier shape and then treat the
 inference as IDL meaning.
@@ -612,6 +630,9 @@ established or lower material instead. Their needs still matter when deciding wh
 early.
 
 Generated API semantics must not bypass Establishment by treating HIR as authoritative Contract definition material.
+Generated Interaction and Operation APIs are downstream compiler products derived from established Contract meaning.
+HIR preserves the Contract-semantic subjects and relations from which those products are derived; host API shape is not
+HIR meaning.
 
 ---
 
@@ -620,14 +641,23 @@ Generated API semantics must not bypass Establishment by treating HIR as authori
 Published Resolved HIR has one primary semantic surface. It contains the resolved compiler-semantic material that later
 valid consumers would otherwise have to recover by reopening authored source or re-running 1D frontend interpretation.
 
-The primary surface contains the semantic subjects and direct relations that HIR itself owns. At minimum it includes:
+The primary surface contains the semantic subjects and direct relations that HIR itself owns. Its primary subject
+categories include:
 
+- Contract Interface Subject,
+- Interaction Subject,
+- Operation Subject,
 - typed Definition Candidate and IDL Binding Candidate membership,
 - the complete 1D-owned Definition Candidate meaning,
 - the complete IDL Binding Candidate meaning,
 - exact direct semantic references, and
 - presence, absence, multiplicity, ordering, cardinality, or another distinction only when the owning law makes that
   distinction semantic.
+
+Contract Interface, Interaction, and Operation are Contract-semantic subjects resolved from IDL meaning. They are not
+the
+generated Interaction API, generated Operation API, host-language declaration, JVM symbol, or another realization
+artifact.
 
 This is not one universal record schema. Each 1D authority owns its candidate vocabulary. A typed reference domain or an
 authority-specific slab may carry role structurally; HIR does not require a redundant per-row authority tag when the
@@ -647,11 +677,14 @@ Explicit absence is observable only where an owning law makes absence meaningful
 HIR must expose semantic units that can be addressed independently of physical layout.
 
 A whole frontend generation is a coherent publication unit. It is not required to be the only dependency or reuse unit.
-A Definition Candidate, Binding Candidate, interface-level surface, interaction-level surface, or another meaningfully
-independent semantic unit may be consumed separately when the HIR semantics support that separation.
+A Contract Interface Subject, Interaction Subject, Operation Subject, Definition Candidate, Binding Candidate, or
+another
+meaningfully independent semantic unit may be consumed separately when the HIR semantics support that separation.
 
-The exact primary subject catalog remains later HIR design work. In particular, this ADR does not yet decide whether
-Interface, Interaction, Operation, or another enclosing semantic subject is itself a primary HIR subject.
+This ADR fixes Contract Interface, Interaction, Operation, Definition Candidate, and IDL Binding Candidate as primary
+HIR
+semantic subject categories for the current frontend model. It does not freeze the exact payload, reference coordinate,
+projection set, or physical representation of those subjects.
 
 ---
 
@@ -1336,11 +1369,22 @@ The reference model uses typed columnar families and generation-local dense hand
 ```text
 HIR Generation G
 
-Operation slot columns
-    operationInputBindingRef[]
-    operationAdmissionBindingRef[]
-    operationCanonicalizationBindingRef[]
-    operationLoweringBindingRef[]
+Contract Interface Subject columns
+    interfaceOperationRefBase[]
+    interfaceOperationRefCount[]
+
+Contract Interface -> Operation relation columns
+    interfaceOperationRef[]
+
+Interaction Subject columns
+    interactionOperationRef[]
+    interactionInputBindingRef[]
+    interactionAdmissionBindingRef[]
+    interactionCanonicalizationBindingRef[]
+    interactionLoweringBindingRef[]
+
+Operation Subject columns
+    operation-owned resolved semantic material
 
 Input Binding Candidate columns
     inputBindingTargetRef[]
@@ -1400,6 +1444,8 @@ The important shape is:
 ```text
 shared compact HIR infrastructure
 +
+Contract Interface / Interaction / Operation subject material
++
 typed Definition Candidate slabs
 +
 exact IDL Binding Candidate relations
@@ -1418,9 +1464,10 @@ into semantic ownership.
 
 # 25. Non-Normative End-to-End Reference Realization
 
-This example follows one authored Operation from source acquisition to a published HIR generation. It shows how an IDL
-slot grants a 1D role, how Definition Candidate and Binding Candidate material stay separate, and how the compiler can
-still use direct primitive formation, verification, publication, early cutoff, and reclamation.
+This example follows one selected Interaction and its Operation from source acquisition to a published HIR generation.
+It shows how the Interaction Manifest binds flat 1D selections for that interaction, how one IDL slot grants a 1D role,
+how Definition Candidate and Binding Candidate material stay separate, and how the compiler can still use direct
+primitive formation, verification, publication, early cutoff, and reclamation.
 
 The source shape follows the existing IDL decisions.
 
@@ -1452,7 +1499,8 @@ interface DepositContract {
 
 `DepositAdmission` is authoring material until the explicit `admission` slot selects it for the Admission role. The
 selected source form is evidence for frontend refinement. The published HIR surface is the resolved Admission candidate
-meaning and the exact binding from this Operation context to that candidate.
+meaning and the exact binding from the selected Interaction context to that candidate. The Operation remains the exact
+selectable realization handle related to that Interaction; it does not own the flat 1D Contract pipeline.
 
 ## 25.1. Source Acquisition and Frontend Working Storage
 
@@ -1518,16 +1566,16 @@ direct-to-slab formation
 Exact pre-count is not required by the HIR contract. A deterministic segmented or chunked layout is equally valid when
 it produces the same observable HIR result.
 
-For the `deposit` Operation, the final hot relation is conceptually two-step.
+For the selected `deposit` Interaction, the final hot relation is conceptually two-step.
 
 ```text
-op = operationHandle(DepositContract.deposit)
+ix = interactionHandle(DepositContract.deposit.interaction)
 
 ab = admissionBindingHandle(deposit.admission)
 ad = admissionDefinitionHandle(DepositAdmission)
 
-operationAdmissionBindingRef[op] = ab
-admissionBindingTargetRef[ab]    = ad
+interactionAdmissionBindingRef[ix] = ab
+admissionBindingTargetRef[ab]      = ad
 ```
 
 The Binding Candidate is completed only after `ad` denotes a complete resolved Admission Definition Candidate. Before
@@ -1582,10 +1630,10 @@ int     violationCount
 A simplified scan is:
 
 ```text
-for op in 0 ..< operationCount:
-    binding = operationAdmissionBindingRef[op]
+for ix in 0 ..< interactionCount:
+    binding = interactionAdmissionBindingRef[ix]
     if binding < 0 or binding >= admissionBindingCount:
-        emit(HIR_INVALID_ADMISSION_BINDING_REF, operationSubject(op), binding)
+        emit(HIR_INVALID_ADMISSION_BINDING_REF, interactionSubject(ix), binding)
         continue
 
     target = admissionBindingTargetRef[binding]
@@ -1638,7 +1686,8 @@ Generation header
     provenance index metadata
 
 Hot semantic slabs
-    Operation slot -> Binding Candidate handles
+    Contract Interface / Interaction / Operation subject material
+    Interaction -> Binding Candidate handles
     Binding Candidate -> Definition Candidate handles
     authority-specific Definition Candidate columns
     authority-specific relation ranges
@@ -1725,7 +1774,7 @@ The number `17` is not the reference meaning and it is not recorded as cross-gen
 The IDL use remains separately observable as a Binding Candidate.
 
 ```text
-DepositContract.deposit.admission
+DepositContract.deposit.interaction.admission
     ↓ Binding Candidate B
 B
     ↓ exact target relation
@@ -2099,14 +2148,16 @@ semantic material.
 V1 must provide a real Resolved Contract HIR boundary between frontend resolution and Establishment.
 
 Published HIR must satisfy the admission invariant and remain read-only to ordinary consumers. The compiler must keep
-source provenance separate from semantic equality. Definition Candidate and Binding Candidate semantic units must be
-separately addressable even if the first physical implementation groups their storage.
+source provenance separate from semantic equality. Contract Interface, Interaction, Operation, Definition Candidate,
+and Binding Candidate semantic units must remain independently addressable where their semantic relations require it,
+even if the first physical implementation groups their storage.
 
-V1 must expose a Primary HIR Semantic Surface that contains complete 1D-owned Definition Candidate meaning, complete IDL
-Binding Candidate meaning, exact direct semantic references, and owning-law distinctions required by valid consumers.
-Reverse indexes, summaries, query edges, fingerprints, and other derived material do not become Primary HIR meaning
-merely
-because V1 chooses to materialize them.
+V1 must expose a Primary HIR Semantic Surface that contains Contract Interface, Interaction, and Operation subjects,
+complete 1D-owned Definition Candidate meaning, complete IDL Binding Candidate meaning, exact direct semantic
+references,
+and owning-law distinctions required by valid consumers. Generated host APIs are downstream products and do not become
+Primary HIR meaning. Reverse indexes, summaries, query edges, fingerprints, and other derived material do not become
+Primary HIR meaning merely because V1 chooses to materialize them.
 
 V1 must preserve provenance relation, publication/generation behavior, and any V1 persistence obligations independently
 from semantic equality. HIR semantic access is the semantic observation boundary, not the only publication-preservation
@@ -2185,11 +2236,14 @@ It does not decide whether V1 uses objects, tables, primitive arrays, slabs, per
 does not require exact pre-count, one global allocation pass, one segmented layout, or one chunking policy. Those are
 physical formation choices constrained by the logical formation and determinism laws.
 
-It does not choose the final Primary HIR semantic subject catalog or HIR projection catalog. It does not fix the
-concrete
-API shape of the HIR Semantic Access Boundary, its bulk-access forms, or its handle encoding. It does not select a query
-scheduler, Analysis Manager API, Pass Manager API, fingerprint algorithm, CAS implementation, reclamation algorithm,
-serialization format, compression strategy, canonical persistent encoding, or V2 repair algorithm.
+It fixes Contract Interface, Interaction, Operation, Definition Candidate, and IDL Binding Candidate as primary HIR
+semantic subject categories for the current frontend model. It does not fix their complete payload, exact reference
+coordinates, HIR projection catalog, or concrete API shape of the HIR Semantic Access Boundary, its bulk-access forms,
+or
+its handle encoding. It does not select a query scheduler, Analysis Manager API, Pass Manager API, fingerprint
+algorithm,
+CAS implementation, reclamation algorithm, serialization format, compression strategy, canonical persistent encoding,
+or V2 repair algorithm.
 
 It also does not define the complete semantic payload of each 1D Contract. The owning 1D ADR must still state the
 candidate meaning, Definition determinants, and semantic distinctions that HIR has to preserve.
@@ -2259,7 +2313,14 @@ stable result and dependency boundaries rather than a cache implementation.
 # 34. Final Law
 
 Resolved Contract HIR is the deterministic published compiler-semantic form of fully resolved Contract candidates before
-Contract authority.
+Contract authority. It is Kontrakt's highest Contract-semantic IR because established Contract meaning constrains later
+realization compilation, machine formation, optimization, and target lowering. Its level is defined by semantic
+altitude,
+not by proximity to user realization source.
+
+Contract Interface, Interaction, and Operation are primary Contract-semantic subjects in HIR. They are distinct from the
+generated Interaction and Operation host APIs that later project established Contract meaning into realization-facing
+compiler products.
 
 Explicit IDL binding grants the 1D role. HIR keeps reusable Definition Candidate meaning separate from contextual
 Binding
