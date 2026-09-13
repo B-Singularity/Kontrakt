@@ -2986,7 +2986,7 @@ localDefinition
 
 requiredBasis
     target
-        → Fact<Balance>
+        → exact Fact kind Balance
         → exactly one
 
 applicabilityInputs
@@ -3082,7 +3082,7 @@ resolvedVersion
 
 requiredBasisDeclaration
     target
-        → Fact<Balance>
+        → exact Fact kind Balance
         → exactly one
 
 provenance
@@ -3277,7 +3277,7 @@ Stable keys and dense handles are lookup machinery, not authority.
 Required Basis
 
 target
-    → Fact<Balance>
+    → exact Fact kind Balance
     → exactly one
 ```
 
