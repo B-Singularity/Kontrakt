@@ -298,34 +298,43 @@ HIR result before publication.
 HIR verification is compiler correctness machinery. A verifier failure is not a Contract refusal and does not create
 Contract Failure meaning.
 
-## 4.9. Normalized Semantic Form
+## 4.9. Authoring Refinement and Semantic Convergence
 
-Resolved HIR is source-independent enough that semantically equivalent authoring forms can converge on the same
-consumer-visible candidate meaning.
+Resolved HIR is source-independent enough that different authoring forms may converge on the same consumer-visible
+candidate meaning when the owning frontend and 1D laws say that their resolved meaning is the same.
 
-Normalization may remove alias spelling, import spelling, source-only nesting, authoring sugar, or another distinction
-whose meaning has already been resolved. The original form may remain available through provenance or source material.
+Frontend refinement may remove alias spelling, import spelling, source-only nesting, authoring sugar, host-carrier
+structure, or another distinction whose semantic interpretation has already been resolved. The original form may remain
+available through provenance or source material.
 
-Normalization must not erase a distinction owned by a Contract law. If two authored forms lead to different candidate
-meaning under an owning 1D ADR, HIR must preserve that difference.
+Frontend refinement must not collapse a distinction owned by a Contract law. It must not perform value
+Canonicalization, Admission judgment, Fact Establishment, Applicability judgment, or another authority-owned decision in
+order to obtain a convenient HIR form.
 
-This normalization is compiler frontend work. It is not the `Canonicalization Contract`. It also does not require one
-byte-canonical HIR storage format. The required property is semantic convergence at the HIR observable surface.
+If two authored forms lead to different candidate meaning under an owning 1D ADR, HIR preserves that difference. If
+they lead to the same resolved candidate meaning, their authoring route does not create a second HIR meaning.
+
+This is compiler frontend refinement. It is not the `Canonicalization Contract`, and it does not require one byte-level
+canonical HIR storage format.
 
 If order is not semantic, physical construction order must not become observable meaning. If order is semantic, its
 source must be explicit in the owning law or frontend language.
 
-## 4.10. HIR Determinant Set and Frontend Confluence
+## 4.10. HIR Semantic Determinants and Frontend Confluence
 
-The observable meaning of one HIR semantic unit must be determined by explicit frontend inputs.
+The observable meaning of one HIR semantic unit must be determined by explicit semantic inputs.
 
-Those inputs include the role-qualified declared material, the frontend language version, and the exact resolution
-environment required to interpret that material. Binding context contributes to Definition Candidate meaning only when
-the owning 1D law declares that context to be Definition-determining. A compiler option belongs to this determinant set
-only when it is explicitly allowed to change frontend semantic meaning.
+Those inputs include the role-qualified declared material and the exact resolution environment required to interpret
+that material. Binding context contributes to Definition Candidate meaning only when the owning 1D law declares that
+context to be Definition-determining. A frontend language or semantic profile version participates only where its owning
+law makes it relevant to candidate meaning.
 
-Worker scheduling, cache state, allocation order, current memory layout, and the route by which a query happened to be
-computed are not determinants.
+Worker scheduling, cache state, allocation order, current memory layout, compiler traversal order, and the route by
+which a query happened to be computed are not semantic determinants.
+
+Semantic determinants are not the same thing as compiler reuse-validity inputs. A compiler schema version, frontend
+implementation revision, persistent-product encoding, or another compiler-owned input may invalidate a cached physical
+product without becoming part of Contract candidate meaning.
 
 Different supported authoring forms may converge on the same HIR meaning. When `.kontrakt` source and a selected 1D
 carrier express the same role-qualified resolved candidate meaning under the same applicable frontend law, the authoring
@@ -373,8 +382,9 @@ HIR separates reusable Definition Candidate meaning from the exact IDL use that 
 
 A **Definition Candidate** is the resolved 1D definition meaning determined by the owning 1D law.
 
-A **Binding Candidate** is the exact current relation by which one IDL context selects a Definition Candidate for one
-1D slot or role.
+A **Binding Candidate** is the exact current frontend relation by which one IDL context selects a Definition Candidate
+for one 1D slot or role. In this ADR, `Binding Candidate` names that IDL-use relation. It is not `Basis Binding`,
+`Version Binding`, Governance Binding, or another authority-bearing Binding established later.
 
 ```text
 IDL A ── Binding Candidate A ──┐
@@ -422,6 +432,49 @@ State Transition, or Version-owned history does not create HIR identity continui
 
 A missing previous product may reduce reuse. It must not reduce the semantic completeness of current HIR.
 
+## 4.16. Logical HIR Formation Order
+
+HIR formation has an ordered logical dependency even when one physical implementation fuses several steps into one
+tight loop.
+
+```text
+Authored Contract Material
+    +
+Explicit IDL Slot Selection
+        ↓
+Exact Source / Symbol Resolution
+        ↓
+Resolved 1D Role Selection
+        ↓
+1D-Owned Definition Determinant Projection
+        ↓
+Authority-Specific Authoring Refinement
+        ↓
+Definition Candidate Reference and Meaning Formation
+        ↓
+IDL Binding Candidate Completion
+        ↓
+HIR Verification
+        ↓
+Published Resolved Contract HIR
+```
+
+Role selection precedes 1D interpretation. The frontend does not infer a role from carrier shape and then treat the
+inference as IDL meaning.
+
+Definition determinant projection follows role selection because only the owning 1D law can decide which surrounding
+context changes Definition meaning. Context that is not Definition-determining remains outside the Definition Candidate.
+
+A complete Binding Candidate is formed only after its exact Definition Candidate target exists. Before that point the
+frontend may hold a resolved slot selection and the minimum role-qualified formation input, but that working relation is
+not a partially published Binding Candidate.
+
+The logical stages do not require one heap object, one IR level, or one materialized table per stage. They state the
+invariants that a fused, lazy, direct-to-slab, or future incremental realization must preserve.
+
+Definition, Binding, and Occurrence remain different semantic categories. Definition Formation does not establish an
+Occurrence. Occurrence meaning, when an owning Contract has one, is created only after the later basis, applicability,
+and occurrence judgment required by that law.
 ---
 
 # 5. Information Retention and Loss
@@ -507,20 +560,40 @@ Resolved Definition Candidate
 Definition-time semantic basis allowed by the owning law
     ↓
 Authority-Owned Definition Establishment
+    ↓
+Established Definition
 ```
 
 Binding, Required Basis, Applicability, and occurrence-specific work remain at the boundaries that own those meanings.
 A Binding Candidate does not become an Established Occurrence merely because its target Definition is established.
 
-If a 1D law makes some binding context Definition-determining, that context has already participated in Definition
+When an owning 1D law gives a concrete application separate semantic meaning, the later path is conceptually:
+
+```text
+Established Definition
+    +
+exact application context
+    +
+Required Basis resolution / Basis Binding where owned
+    +
+Applicability judgment where owned
+        ↓
+Occurrence judgment
+        ↓
+Established Occurrence
+```
+
+Not every 1D requires an Established Occurrence. The owning Contract law decides whether application meaning exists as a
+separate semantic product.
+
+If a 1D law makes some IDL binding context Definition-determining, that context has already participated in Definition
 Candidate formation under Section 4.14. Establishment does not rediscover that rule from IDL topology.
 
 Establishment does not repair missing frontend resolution.
 
-HIR publication does not establish authority. Establishment does not become a compiler normalization pass. Canonical
-Contract World publication remains a later compiler representation of already-established Definition meaning.
-
----
+HIR publication does not establish authority. Establishment does not become a compiler refinement or representation
+pass. Canonical Contract World publication remains a later compiler representation of already-established Definition
+meaning.
 
 # 8. Observable HIR Surface
 
@@ -710,7 +783,7 @@ may invalidate the HIR projection even when a source span happens to remain iden
 
 The compiler must not store formatted diagnostic text as HIR meaning.
 
-One semantic subject may have more than one relevant authored origin. A normalized or synthesized HIR subject may also
+One semantic subject may have more than one relevant authored origin. A refined or synthesized HIR subject may also
 need an origin chain that points to the source material from which the compiler formed it. HIR therefore does not assume
 a mandatory one-subject-to-one-span provenance model.
 
@@ -724,7 +797,7 @@ equality.
 
 ## 11.1. Frontend Working State
 
-Before Resolved HIR is published, the frontend may keep private working state while it resolves and normalizes authored
+Before Resolved HIR is published, the frontend may keep private working state while it resolves and refines authored
 material. A resolver may use temporary symbol maps, worklists, intern tables, arenas, or another bounded representation
 to perform that work.
 
@@ -845,7 +918,7 @@ Resolved HIR is a compiler product. It is not a query object and it is not owned
 
 A query-oriented compiler may request whole HIR generations or smaller HIR projections. An Analysis Manager may attach
 derived results to an exact HIR subject and validity context. A local Pass Manager may orchestrate HIR-preserving
-normalization before publication or over a private generation.
+representation preparation before publication or over a private generation.
 
 None of those infrastructures defines HIR meaning.
 
@@ -909,30 +982,39 @@ reuse. Their retention policy does not become HIR semantics.
 
 HIR supports semantic early cutoff.
 
-If a recomputed semantic projection is equivalent to the previous projection, downstream products whose exact semantic
+A previous product may be considered for reuse only after the current computation has resolved the current 1D role, the
+complete current semantic determinant set required for the product, and the exact current semantic references on which
+that product depends. Compiler-owned reuse-validity inputs must also permit comparison with the previous product.
+
+If the current semantic projection is equivalent to the previous projection, downstream products whose exact semantic
 inputs are limited to that projection need not be invalidated further.
 
 ```text
-input revision changed
+current explicit inputs
     ↓
-HIR projection recomputed
+resolve role / determinants / exact references
     ↓
-consumer-visible HIR meaning unchanged
+validate previous product compatibility
+    ↓
+compare consumer-visible HIR result
+    ↓
+meaning unchanged
     ↓
 semantic propagation may stop
 ```
 
-Early cutoff is based on consumer-visible semantic equality, not on the fact that a cache entry exists or the aggregate
-HIR generation changed. Selecting a previous product for comparison is compiler reuse work and does not create a
-cross-generation identity relation.
+Early cutoff is based on consumer-visible semantic equality, not on the fact that a cache entry exists, a fingerprint
+matches, or the aggregate HIR generation changed. A fingerprint may reject a mismatch quickly. It does not prove HIR or
+Contract equality by itself.
+
+Selecting a previous product for comparison is compiler reuse work and does not create a cross-generation identity
+relation.
 
 A provenance-only change may therefore refresh source projection and diagnostics while allowing semantic downstream
 products to remain reusable.
 
 Early cutoff is an optimization. Failing to take the cutoff may cost time. Taking an unsound cutoff is a correctness
-failure.
-
----
+failure. When reuse validity is uncertain, Kontrakt recomputes.
 
 # 18. Incremental Architecture Boundary
 
@@ -976,48 +1058,92 @@ source from which correct HIR meaning can be recovered.
 
 ---
 
-# 20. Pre-Establishment Transformation Law
+# 20. HIR Formation, Transformation, and Optimization Law
 
-Compiler transformations may improve HIR representation before Establishment.
+HIR formation has a semantic plane and a physical realization plane.
 
-They may remove syntax-only structure, normalize an already-defined frontend meaning, intern exact references,
-deduplicate equivalent compiler representation, compact storage, or precompute a resolved projection.
+The semantic plane is fixed by Sections 4.12 through 4.16. It resolves the explicit IDL role, projects the owning 1D
+Definition determinants, refines authored material under that 1D law, forms exact candidate references and meaning,
+completes the IDL Binding Candidate, verifies the result, and publishes Resolved HIR.
 
-The legal relation is:
+The physical realization may fuse those logical stages. Fusion does not remove their invariants.
+
+## 20.1. Authority-Specific Authoring Refinement
+
+Frontend refinement may erase syntax-only or host-only structure after its meaning is known. It may resolve aliases,
+replace lexical references with exact candidate references, remove authoring sugar, and form the explicit absence or
+relation material already required by the owning 1D law.
+
+Frontend refinement must not invent a new semantic equivalence. It must not collapse a distinction merely because the
+compiler can store the result more compactly. The `Canonicalization Contract`, Admission judgment, Fact Establishment,
+Applicability judgment, Policy selection, Governance judgment, and other Contract authorities remain at their owning
+boundaries.
+
+## 20.2. Physical Formation Optimization
+
+Compiler-owned formation optimization may reduce work or improve locality without changing HIR meaning.
+
+Legal techniques include direct-to-slab formation, role-partitioned work ranges, dense current-generation handles,
+primitive columnar storage, compact relation ranges, collision-safe interning, deterministic parallel fill, and early
+release of producer scratch that has no remaining semantic, provenance, diagnostic, or reader obligation.
+
+Exact pre-count and exact sizing are permitted when profitable. They are not HIR semantic requirements. A realization
+may instead use bounded sizing, deterministic segmented slabs, deterministic chunked formation, or another
+representation
+that preserves the same published result.
+
+The compiler may share formation computation or physical payload storage across uses when the relevant current inputs
+are equivalent. That sharing does not merge two distinct Definition Candidates. Semantic entity identity remains owned
+by the applicable 1D law.
+
+## 20.3. Formation Reuse
+
+Formation reuse is work avoidance. It does not change the logical formation law.
+
+The compiler may reuse a previous Definition or projection only after current semantic determinants, exact references,
+and compiler-owned validity inputs establish that the previous product is a valid comparison candidate. Reuse never
+supplies a missing current determinant and never establishes current identity.
+
+When those conditions cannot be proven, Kontrakt follows the valid clean formation path.
+
+## 20.4. Published HIR Boundary
+
+Published Resolved HIR is read-only to ordinary consumers. A compiler optimization does not mutate published candidate
+meaning in place.
+
+Representation preparation, compaction, interning, or validation used to create one publication occurs before that
+publication. Later compiler work that needs a different optimized representation publishes a derived compiler product or
+a later IR instead of silently changing the already-published HIR meaning.
+
+The legal optimization relation is therefore:
 
 ```text
-HIR meaning before transform
-    ==
-HIR meaning after transform
+same explicit semantic inputs
+    ↓
+clean / cached / incremental / parallel formation
+    ↓
+same observable Published Resolved HIR meaning
 ```
 
-A transform does not gain permission to discharge an authority-owned Contract judgment merely because the answer seems
-static.
-
-Policy selection, Governance judgment, Applicability result, Fact establishment, or another Contract authority remains
-at its owning boundary.
-
-A representation-only transform does not justify a new HIR level. A semantic transformation that changes the HIR
-observable meaning produces a different HIR result and must be published under the appropriate new generation.
-
----
+A physical optimization that cannot preserve that relation is not a legal HIR optimization.
 
 # 21. Concurrency
 
 Parallel frontend work is allowed only behind deterministic publication.
 
 Workers may build independent private candidate material. Their completion order must not determine semantic identity,
-reference assignment, definition ordering, or user-visible deterministic output.
+exact candidate references, dense-handle assignment, semantic relation ordering, or user-visible deterministic output.
+When a persistent or serialized HIR format claims canonical reproducibility, worker count and scheduling must not change
+its canonical bytes.
 
-A deterministic merge or equivalent publication law resolves concurrent candidate work into one coherent HIR
-generation.
+A deterministic partition, assignment, merge, or equivalent publication law resolves concurrent candidate work into one
+coherent HIR generation. Concurrent interning or first-writer races must not decide semantic equality or stable output.
 
 Cancellation must not expose a partial generation. A stale worker result for an older input or generation must not
 replace a newer valid publication.
 
-The exact lock, epoch, persistent-structure, actor, work-stealing, or transaction mechanism remains implementation.
-
----
+The exact lock, epoch, persistent-structure, actor, work-stealing, transaction, or parallel-fill mechanism remains
+implementation.
 
 # 22. Persistence and Cross-Session Products
 
@@ -1142,7 +1268,7 @@ The important shape is:
 ```text
 shared compact HIR infrastructure
 +
-reusable typed Definition Candidate slabs
+typed Definition Candidate slabs
 +
 exact IDL Binding Candidate relations
 +
@@ -1227,37 +1353,40 @@ or intern tables. Those structures belong to the producer episode. They are not 
 The frontend may release scratch structures as soon as the information has been formed into resolved HIR candidate
 material.
 
-## 25.2. Deterministic Pre-Count and Direct HIR Formation
+## 25.2. Deterministic Layout Planning and Direct HIR Formation
 
-The reference path does not build a graph of candidate objects and later copy it into tables.
+The reference path does not require a graph of candidate objects that is later copied into production tables.
 
-It first determines the required family sizes and the exact binding relations that can be formed from current explicit
-inputs.
-
-```text
-count Operations
-count Binding Candidates by 1D role
-count Definition Candidates by 1D family
-count authority-specific relation rows
-count provenance ranges
-```
-
-The compiler then allocates exact or bounded-capacity column storage once.
+The frontend first resolves exact IDL slot selections and partitions work by 1D role. Each authority-specific formation
+kernel then projects only the Definition-determining context owned by that 1D law.
 
 ```text
-allocate Operation slot columns
-allocate typed Binding Candidate columns
-allocate authority-specific Definition Candidate slabs
-allocate relation slabs
-allocate provenance sidecar
+IDL slot selections
+    ↓
+role-partitioned work ranges
+    ↓
+1D Definition determinant projection
+    ↓
+authority-specific direct HIR formation
 ```
 
-Local handles are assigned by a deterministic compiler ordering that does not depend on worker completion order, hash
-iteration order, object allocation order, or cache state.
+A V1 implementation may pre-count Definitions, Binding Candidates, relation rows, and provenance ranges when that avoids
+reallocation at acceptable scan cost. It may then allocate exact or bounded-capacity column storage once.
 
-Resolution then writes directly into candidate HIR storage.
+```text
+optional pre-count / capacity planning
+    ↓
+allocate or reserve typed columns
+    ↓
+deterministic current-generation handle assignment
+    ↓
+direct-to-slab formation
+```
 
-For the `deposit` Operation, the relation is conceptually two-step.
+Exact pre-count is not required by the HIR contract. A deterministic segmented or chunked layout is equally valid when
+it produces the same observable HIR result.
+
+For the `deposit` Operation, the final hot relation is conceptually two-step.
 
 ```text
 op = operationHandle(DepositContract.deposit)
@@ -1269,12 +1398,19 @@ operationAdmissionBindingRef[op] = ab
 admissionBindingTargetRef[ab]    = ad
 ```
 
-The same structure applies to the other 1D slots. If another IDL explicitly selects the same Admission declaration and
-the Admission law says that the differing context does not change Definition meaning, its Binding Candidate may target
-the same Admission Definition Candidate. If an owning 1D law makes the context Definition-determining, the frontend
-forms the distinct Definition Candidate required by that law.
+The Binding Candidate is completed only after `ad` denotes a complete resolved Admission Definition Candidate. Before
+that point the frontend may retain the role-selected source handle and the Admission-owned determinant input as private
+working state.
 
-The Lowering payload remains a contiguous relation range.
+If another IDL explicitly selects the same Admission declaration and the Admission law says that the differing context
+does not change Definition meaning, the compiler may share the Definition formation result or its physical payload while
+retaining each exact Binding Candidate. If the two uses denote distinct Definition Candidates under the owning identity
+law, equal payload does not merge those semantic entities.
+
+If an owning 1D law makes the context Definition-determining, its determinant projection forms the distinct Definition
+Candidate required by that law.
+
+The Lowering payload remains a contiguous relation range in this reference realization.
 
 ```text
 lower = loweringDefinitionHandle(DepositLowering)
@@ -1294,7 +1430,7 @@ The source spellings are no longer consulted by ordinary downstream semantic con
 
 Original spelling and source ranges remain reachable through provenance.
 
-The candidate remains non-authoritative. Direct-to-slab formation does not perform Contract Establishment.
+The candidate remains non-authoritative. Direct formation does not perform Contract Establishment.
 
 ## 25.3. HIR Verification as a Deterministic Table Scan
 
@@ -1396,18 +1532,18 @@ when off-heap storage, explicit lifetime, or larger contiguous regions make them
 remain
 a replaceable option where measurement favors them.
 
-The formation path follows the same memory discipline already used elsewhere in Kontrakt:
+One efficient V1 path may use exact pre-count and pre-sizing, but the architecture does not require that strategy:
 
 ```text
-pre-count
+role / determinant resolution
     ↓
-pre-size
+layout planning
     ↓
 deterministic current-generation handle assignment
     ↓
-direct-to-slab formation
+direct typed formation
     ↓
-release frontend scratch that is no longer needed
+release only scratch whose semantic / provenance / diagnostic obligations are complete
     ↓
 batch HIR verification
     ↓
@@ -1416,7 +1552,8 @@ seal
 publish generation
 ```
 
-There is no required intermediate object graph between resolved frontend facts and published HIR slabs.
+`layout planning` may mean exact pre-sizing, bounded capacity, or deterministic segmented/chunked storage. There is no
+required intermediate object graph between resolved frontend facts and published HIR storage.
 
 Vertical partitioning remains important. Establishment for Admission should not have to touch provenance bytes,
 diagnostic strings, Lowering edge slabs, or unrelated authority payloads merely because they share one HIR generation.
@@ -1483,8 +1620,9 @@ permanent dependency law.
 
 ## 25.6. Semantic Early Cutoff
 
-Assume a comment moves the authored `DepositAdmission` declaration to another source range without changing its resolved
-Definition Candidate meaning or the exact IDL binding.
+Assume a comment moves the authored `DepositAdmission` declaration to another source range without changing its current
+Admission role, Definition-determining inputs, exact semantic references, Definition Candidate meaning, or exact IDL
+binding.
 
 The new generation may contain different provenance while the semantic projections remain equivalent.
 
@@ -1501,18 +1639,23 @@ G43
 ```
 
 `R42` and `R43` are current-generation references. The compiler does not claim that one inherited the identity of the
-other. Previous-product infrastructure may select the prior projections for comparison, establish semantic equality, and
-reuse dependent results when their exact determinants remain valid.
+other.
+
+For G43, the frontend first resolves the current role, current Admission Definition determinants, and current exact
+references. Previous-product infrastructure may then select the G42 projections for comparison if compiler-owned
+validity inputs also permit that comparison.
 
 A fast fingerprint may reject equality quickly when values differ. A matching fingerprint is not by itself Contract or
 HIR semantic authority. Reuse must follow the HIR projection equality law or another collision-safe validation rule.
 
-When equality is established, propagation may stop at the Definition and Binding projection boundaries. Products that
-consume provenance still observe `P43`.
+When semantic equality and reuse validity are established, propagation may stop at the Definition and Binding projection
+boundaries. Products that consume provenance still observe `P43`.
 
 If the binding target changes, the Binding projection changes even when both target definitions happen to have equal
 payload meaning. If the Definition meaning changes while the binding remains structurally the same, Definition-dependent
 products recompute. These are separate change dimensions.
+
+If any required determinant or reuse-validity input is uncertain, the compiler recomputes the affected product.
 
 This is why the HIR product boundary is finer than one serialized generation blob even when physical storage is grouped
 into large slabs.
@@ -1587,8 +1730,9 @@ physical direction is deterministic dense ordinals, primitive columns, direct ra
 heap-primitive slabs selected by measured cost.
 
 Temporary frontend objects are permissible only when they are bounded construction aids and do not become the published
-HIR model. The normal hot path should be able to lower resolved working material directly into pre-sized HIR storage
-without allocating one wrapper object per semantic row or relation.
+HIR model. The normal hot path should be able to form resolved working material directly into typed HIR storage without
+allocating one wrapper object per semantic row or relation. Exact pre-sizing is one optimization, not a semantic
+requirement.
 
 Consumers should see typed semantic projections rather than raw backing storage. A projection implementation may
 reduce to a few handle-indexed slab reads. The consumer contract must survive a later replacement of heap primitive
@@ -1619,7 +1763,9 @@ Compiler QA should also move unrelated declarations and reorder independent cons
 current semantic references and HIR projections remain correct. Tests should reject use of a generation-local handle in
 another generation unless current reference material is resolved or validated into a new handle. An invalid Definition
 Candidate should not create poison HIR for an independent semantic product. Eager and demand-driven materialization,
-when both are implemented, must produce the same semantic inspection result.
+exact pre-count and segmented formation, clean and reused formation, and different legal worker schedules must produce
+the same semantic inspection result. When a persisted format claims canonical encoding, those tests should also compare
+its canonical bytes.
 
 ---
 
@@ -1641,7 +1787,8 @@ the same complexity into every downstream subsystem and make V2 invalidation dep
 
 This ADR does not require HIR to be physically object-heavy. The stronger semantic boundary allows the implementation to
 use more aggressive tables, slabs, interning, persistent structures, or other compact representations behind the
-published contract.
+published contract. It also allows formation stages to be physically fused, skipped through validated reuse, or realized
+with different layout strategies as long as their logical invariants and published result remain unchanged.
 
 ---
 
@@ -1750,6 +1897,34 @@ other version and coordinate rules.
 
 Rejected.
 
+## 29.15. Compiler Normalization as Hidden Contract Canonicalization
+
+Allowing frontend optimization to collapse distinctions merely because two forms are convenient to store would let
+compiler representation decide Contract equivalence. Contract-owned Canonicalization and other authority judgments must
+remain explicit.
+
+Rejected.
+
+## 29.16. Merging Definition Candidates by Equal Payload
+
+Two Definition Candidates may have equal current payload without being one semantic entity. Formation computation or
+physical payload may be shared when valid, but semantic Definition identity remains owned by the applicable 1D law.
+
+Rejected.
+
+## 29.17. Mandatory Exact Pre-Count Before HIR Formation
+
+Exact pre-count can reduce allocation and copying, but requiring it as architecture would force additional scans and
+constrain lazy, segmented, or incremental formation even when another deterministic layout is better.
+
+Rejected as a semantic or universal physical requirement.
+
+## 29.18. Reuse Before Current Determinants Are Resolved
+
+Using a previous product because its key or fingerprint appears unchanged before current role, semantic determinants,
+and exact references are known can hide changed inputs and produce stale HIR.
+
+Rejected.
 ---
 
 # 30. V1 Requirements
@@ -1760,19 +1935,29 @@ Published HIR must satisfy the admission invariant and remain read-only to ordin
 source provenance separate from semantic equality. Definition Candidate and Binding Candidate projections must be
 separately addressable even if the first physical implementation groups their storage.
 
-V1 frontend formation must obtain a 1D role from explicit IDL binding rather than from user API shape alone. The same
-role-qualified declaration may be reused by several IDL bindings when the owning 1D determinant law permits one reusable
-Definition Candidate.
+V1 frontend formation must obtain a 1D role from explicit IDL binding rather than from user API shape alone. It must
+project Definition-determining context through the owning 1D law before forming Definition Candidate meaning. A complete
+Binding Candidate is formed only after its exact Definition Candidate target exists.
+
+The same role-qualified declaration may be reused by several IDL bindings when the owning 1D determinant and identity
+laws permit one reusable Definition Candidate. Equal payload alone does not merge distinct Definition Candidates.
 
 V1 must preserve exact current Definition Candidate and Binding Candidate references separately from generation-local
 dense handles. A dense handle may realize a hot relation inside one generation but cannot become semantic identity,
 persistent reference, or history.
 
+V1 may physically fuse role resolution, determinant projection, authority-specific refinement, Definition Formation,
+and Binding completion. Fusion must preserve the logical formation order and each stage invariant.
+
 V1 query orchestration must be able to identify explicit HIR inputs, observe product dependencies at stable semantic
 boundaries, and reuse a published result only under a valid generation or equivalent validity rule.
 
-V1 must support deterministic semantic early cutoff where equality is already available and profitable. It need not
-incrementalize every frontend computation.
+V1 must support deterministic semantic early cutoff where current determinants, exact references, semantic equality, and
+reuse validity are already available and the cutoff is profitable. It need not incrementalize every frontend
+computation.
+
+V1 may use exact pre-count and pre-sized primitive slabs. It may also use deterministic bounded, segmented, or chunked
+formation when measurement favors them. No one layout-planning strategy is part of HIR meaning.
 
 V1 may choose physical partitions for locality, formation, publication, and lifetime. Those partitions must not create
 Definition ownership or Binding meaning, and ordinary consumers must not depend on their topology.
@@ -1784,41 +1969,49 @@ V1 must expose Published Resolved HIR through a semantic access boundary that do
 depend on the physical HIR layout. The first backing representation may be primitive slabs without making that choice
 part of HIR meaning.
 
-Cache-off and clean-recompute execution must remain valid and must agree with reused execution.
-
----
+Cache-off and clean-recompute execution must remain valid and must agree with reused execution. Worker count, legal
+scheduling order, cache state, and layout strategy must not change observable Published HIR meaning.
 
 # 31. V2 Evolution Seam
 
 V2 may add persistent HIR products and finer frontend repair without changing this ADR.
 
 Possible work includes persistent semantic projections, demand-driven materialization, incremental lexing and parsing,
-incremental resolution, provenance-only refresh, cross-session early cutoff, dynamic dependency repair, domain-local
-delta maintenance, and adaptive switching between repair and rebuild.
+incremental resolution, determinant-local Definition Formation, provenance-only refresh, cross-session early cutoff,
+dynamic dependency repair, domain-local delta maintenance, and adaptive switching between repair and rebuild.
 
-Previous-product metadata may help locate comparison candidates or avoid work. It remains compiler reuse infrastructure.
+Previous-product metadata may help locate comparison products or avoid work. It remains compiler reuse infrastructure.
 It does not create predecessor identity, successor identity, or semantic lineage for current HIR.
+
+A V2 formation engine may avoid rebuilding one Definition Candidate only after current role, current 1D semantic
+determinants, exact current references, and compiler-owned reuse-validity inputs are sufficient to validate the reused
+result. Missing history or persistent state falls back to clean formation.
+
+V2 may choose a different physical formation architecture from V1. Persistent segmented slabs, mapped immutable pages,
+content-addressed chunks, database-like product storage, or another representation remain legal behind the same semantic
+access and publication laws.
 
 Those techniques remain compiler realization.
 
-V2 must preserve the same admission invariant, current-reference law, semantic equality, authority boundary, publication
-law, and determinism-first rule.
-
----
+V2 must preserve the same admission invariant, current-reference law, semantic equality, authority boundary, logical
+formation law, publication law, and determinism-first rule.
 
 # 32. Intentionally Open
 
 This ADR does not freeze the HIR physical schema.
 
 It does not decide whether V1 uses objects, tables, primitive arrays, slabs, persistent structures, or mixed storage. It
-does not choose the final HIR projection catalog. It does not fix the concrete API shape of the HIR Semantic Access
+does not require exact pre-count, one global allocation pass, one segmented layout, or one chunking policy. Those are
+physical formation choices constrained by the logical formation and determinism laws.
+
+It does not choose the final HIR projection catalog. It does not fix the concrete API shape of the HIR Semantic Access
 Boundary, its bulk-access forms, or its handle encoding. It does not select a query scheduler, Analysis Manager API,
 Pass
 Manager API, fingerprint algorithm, CAS implementation, reclamation algorithm, serialization format, or V2 repair
 algorithm.
 
 It also does not define the complete semantic payload of each 1D Contract. The owning 1D ADR must still state the
-candidate meaning that HIR has to preserve.
+candidate meaning, Definition determinants, and semantic distinctions that HIR has to preserve.
 
 The exact component set of each 1D Definition Candidate Reference remains open until the owning 1D identity and
 reference laws are audited. This ADR does not require one universal `Authority + Contract Id + Version + Local
@@ -1828,8 +2021,6 @@ already says so.
 
 The exact compiler product lifetime and memory policy remain design work as long as the publication and validity laws in
 this ADR are preserved.
-
----
 
 # 33. Non-Normative Engineering Basis
 
@@ -1902,6 +2093,11 @@ storage into dependency law.
 Lifecycle and transition belong to compiler publication and validity. They do not become Contract State or Transition.
 A new generation is published instead of mutating already-published meaning in place, and old-generation reclamation is
 separate from publication.
+
+HIR formation follows a logical semantic order from explicit IDL role through 1D determinant projection and
+authority-specific refinement to complete Definition and Binding candidates. A physical implementation may fuse those
+stages or avoid work through validated reuse, but it cannot make layout, scheduling, cache state, or optimization policy
+part of HIR meaning.
 
 Caching, persistence, and incremental repair may avoid work. Early cutoff may stop propagation when a consumer-visible
 HIR result is unchanged. None of those mechanisms may change the result that clean deterministic computation would
