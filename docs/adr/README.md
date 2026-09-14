@@ -26,28 +26,70 @@ docs/adr/
 ├── README.md
 ├── index.md
 ├── current/
-│   └── index.md
+│   ├── index.md
+│   ├── contract/
+│   │   ├── interface-api/
+│   │   ├── data-model/
+│   │   ├── one-dimensional/
+│   │   ├── establishment/
+│   │   ├── governance/
+│   │   ├── composition/
+│   │   └── outcomes/
+│   ├── compiler-structure/
+│   ├── frontend/
+│   ├── ir/
+│   │   └── hir/
+│   ├── compiler-engine/
+│   ├── diagnostics/
+│   ├── runtime/
+│   └── infrastructure/
 ├── migration/
-│   └── index.md
 └── historical/
-    ├── index.md
     ├── superseded/
-    │   └── index.md
     ├── deprecated/
-    │   └── index.md
     ├── rejected/
-    │   └── index.md
     └── withdrawn/
-        └── index.md
 ```
 
-`current/` contains ADRs that still participate in the current architecture. A document may be incomplete and still
-belong here when its decision is under active design rather than migration.
+`current/` contains ADRs that still participate in the current architecture. Current ADRs are grouped by their primary
+architectural owner so that related decisions can be found without changing their historical ADR numbers.
 
 `migration/` contains ADRs whose ownership or structure is being changed. This directory exists to prevent an authority
 gap while material moves to its new owner.
 
 `historical/` contains records that no longer provide current authority.
+
+### Current Categories
+
+`contract/` contains decisions that define Contract meaning and authority.
+
+- `interface-api/` covers the user-facing Interface, Interaction, Operation, and Contract declaration boundaries.
+- `data-model/` covers shared value structure, aggregate, collection, equality, and related data laws.
+- `one-dimensional/` contains individual 1D Contract authorities such as Input, Admission, Canonicalization, Lowering,
+  Fact, and Invariant.
+- `establishment/` covers Definition, Occurrence, Required Basis, Applicability, and authority establishment.
+- `governance/` covers Policy, Governance, Versioning, and control over applicable Contract worlds.
+- `composition/` covers composition between Contracts, flows, cores, and whole machines.
+- `outcomes/` covers Failure, Publication, Output, and other established Contract outcomes.
+
+`compiler-structure/` contains decisions about the compiler's overall package, stage, and subsystem structure.
+
+`frontend/` contains decisions for acquisition, resolution, and formation of resolved compiler-semantic material.
+
+`ir/` contains decisions for compiler intermediate representations and their semantic boundaries. HIR-specific decisions
+live under `ir/hir/`; MIR and LIR categories are added when those architectures are established.
+
+`compiler-engine/` contains query execution, dependency tracking, reuse, caching, generations, scheduling, and
+incremental computation decisions shared across compiler stages.
+
+`diagnostics/` contains compiler and user diagnostic architecture.
+
+`runtime/` contains execution-time machine behavior and runtime lifecycle decisions.
+
+`infrastructure/` contains shared low-level compiler mechanisms such as stable identity, primitive storage, and common
+execution machinery that do not own higher-level semantic meaning.
+
+A category is a navigation and ownership aid. It does not create architectural or Contract authority.
 
 ## 3. Status
 
@@ -115,12 +157,12 @@ was technically disproven.
 
 ## 4. Status and Path
 
-Status determines the expected path.
+Status determines the expected authority directory. Current ADRs then use their primary category below `current/`.
 
 ```text
-Draft                  -> current/
-Proposed               -> current/
-Accepted               -> current/
+Draft                  -> current/<category>/
+Proposed               -> current/<category>/
+Accepted               -> current/<category>/
 
 Migration Pending      -> migration/
 Partially Superseded   -> migration/
@@ -131,11 +173,15 @@ Rejected               -> historical/rejected/
 Withdrawn              -> historical/withdrawn/
 ```
 
-A normal transition from Draft to Proposed or Accepted does not move the file. Stable paths are preferred while a
-decision remains current.
+A normal transition from Draft to Proposed or Accepted does not move the file unless its primary ownership also changes.
+Stable paths are preferred while a decision remains current.
 
-A file moves when its authority class changes. Migration and historical records are physically separated because stale
-normative language must not appear indistinguishable from current law.
+A file moves when its authority class changes or when its primary architectural owner changes. Category movement does
+not
+change ADR identity or decision history.
+
+Migration and historical records are physically separated because stale normative language must not appear
+indistinguishable from current law.
 
 ## 5. Numbering
 
@@ -145,7 +191,7 @@ An issued number is never reused. Existing ADRs are not renumbered to make the c
 
 A new decision receives a new number even when it replaces, extracts, or reorganizes an older ADR.
 
-Semantic reading order belongs in the indexes. It is not encoded by ADR numbering.
+Semantic reading order belongs in the indexes and categories. It is not encoded by ADR numbering.
 
 ## 6. Migration
 
@@ -177,7 +223,8 @@ every decision in the source.
 
 Use `Related` for important context that does not transfer authority.
 
-Relationships must identify exact ADR numbers. A relationship must not be inferred from file order or numbering
+Relationships must identify exact ADR numbers. A relationship must not be inferred from file order, category, or
+numbering
 proximity.
 
 ## 8. Document Header
@@ -216,7 +263,7 @@ The file name begins with the permanent ADR number and uses a concise lowercase 
 0064-input-contract.md
 ```
 
-Renaming a file does not change ADR identity.
+Renaming or moving a file does not change ADR identity.
 
 A title should not claim broader authority than the document actually owns.
 
@@ -237,14 +284,18 @@ backend mechanisms, or document organization.
 
 ## 11. Ownership
 
-One ADR should have a coherent decision subject.
+One ADR should have a coherent decision subject and one primary category.
+
+The primary category identifies where the decision is easiest to find. A decision may affect several compiler areas
+without being duplicated across their directories.
 
 Independent Contract authorities should not be combined merely because they are adjacent in a pipeline. They may remain
 together when the architectural decision is genuinely about their shared relationship and is clearer as one unit.
 
 A later ADR may narrow or extract ownership when the original document became too broad.
 
-Document structure must follow semantic ownership rather than preserve an accidental historical grouping.
+Document structure must follow semantic or architectural ownership rather than preserve an accidental historical
+grouping.
 
 ## 12. Indexes
 
@@ -253,16 +304,12 @@ Document structure must follow semantic ownership rather than preserve an accide
 It includes current, migrating, and historical ADRs. The registry exists to locate an ADR by permanent identity and to
 show its current status and path.
 
-`current/index.md` presents the current architecture in a useful semantic reading order. It does not need to follow ADR
-number order.
+`current/index.md` presents current ADRs by category and primary ownership. It does not need to follow ADR number order.
 
-`migration/index.md` records active ownership movement. It should make clear what still belongs to the source and what
-has already moved.
+Migration and historical indexes, when present, describe authority movement and non-current decisions. They do not
+replace the complete registry.
 
-`historical/index.md` provides the entry point for non-current decisions. Each historical subdirectory maintains its own
-local index.
-
-Indexes are navigation and status projections. They do not create architectural authority.
+Indexes and categories are navigation and status projections. They do not create architectural authority.
 
 ## 13. References
 
@@ -304,5 +351,5 @@ ADR history is preserved.
 
 Current authority must remain easy to identify.
 
-The repository therefore keeps current law, active migration, and historical records separate without discarding the
-decisions that led to the present architecture.
+The repository therefore keeps current law, active migration, and historical records separate while using categories to
+make current architectural ownership easy to navigate.
