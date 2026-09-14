@@ -21,10 +21,10 @@ Migration Pending
 - `../../constitution/compiler-core-protocols.md`
 - `docs/the-most-important-thing/interface-as-contract.md` (forthcoming top-level contract definition)
 - `docs/design/canonical-ir-stage-and-lowering-protocol.md`
-- `../../design/l1-planner-session-primitive-data-structures.md`
-- `../../design/l2-plan-interner-partitioned-tier2-with-governance.md`
-- `../../design/stable-metadata-identity-protocol.md` (post-ADR-0041 extraction target)
-- `../../design/protocol-owned-metadata-interning.md` (post-ADR-0041 extraction target)
+- `../../design/compiler-engine/l1-planner-session-primitive-data-structures.md`
+- `../../design/compiler-engine/l2-plan-interner-partitioned-tier2-with-governance.md`
+- `../../design/infrastructure/stable-metadata-identity-protocol.md` (post-ADR-0041 extraction target)
+- `../../design/infrastructure/protocol-owned-metadata-interning.md` (post-ADR-0041 extraction target)
 - ADR-0044: Unified Runtime Memory Envelope and Pipeline Lifecycle Governance (planned)
 
 ---
@@ -838,8 +838,8 @@ It consumes:
 
 - ADR-0041 canonical identity protocol;
 - ADR-0041 digest/HID/interner substrate;
-- post-ADR-0041 `../../design/stable-metadata-identity-protocol.md`;
-- post-ADR-0041 `../../design/protocol-owned-metadata-interning.md`;
+- post-ADR-0041 `../../design/infrastructure/stable-metadata-identity-protocol.md`;
+- post-ADR-0041 `../../design/infrastructure/protocol-owned-metadata-interning.md`;
 - ADR-0042 primitive substrate lifecycle;
 - and the forthcoming top-level contract definition.
 

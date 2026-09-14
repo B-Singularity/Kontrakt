@@ -9,7 +9,7 @@ Supersedes: [ADR-0010](../historical/superseded/0010-strict-circular-reference-d
 Normative References: [ADR-0029](../historical/superseded/0029-runtime-link-handle-protocol-and-integrity.md)
 
 Related Consistency References (AMENDED): Related Consistency References
-(AMENDED): [ADR-0032](../current/0032-capacity-law-resource-policy-resolution-identity-hierarchy-and-zero-residue-semantics.md), [ADR-0037](0037-cycle-identity-preflight-and-deferred-raw-fact-resolution.md)
+(AMENDED): [ADR-0032](../current/runtime/0032-capacity-law-resource-policy-resolution-identity-hierarchy-and-zero-residue-semantics.md), [ADR-0037](0037-cycle-identity-preflight-and-deferred-raw-fact-resolution.md)
 
 
 <!-- AMENDED(2026-04-16): Added deterministic planning preconditions for active-member selection timing, projection freeze, iteration stability, source-artifact reconciliation, explicit unknown/unavailable sentinel law, entropy exclusion, integer arithmetic discipline, mutable-global contamination prohibition, and deterministic diagnostic evidence ordering without changing prior semantic cycle-truncation policy. -->
@@ -892,7 +892,7 @@ exclusively for schema collisions (`AmbiguousEdgeKey`, `AmbiguousEntropyTargetKe
 *Adapter Translation Rule:* The Inbound Port adapters MUST translate these Domain Exceptions into human-readable
 warnings based strictly on the `faultKind` and provided Domain descriptors.
 
-* Examples: [cycle-truncation-examples](../../design/cycle-truncation-examples.md)
+* Examples: [cycle-truncation-examples](../../design/frontend/cycle-truncation-examples.md)
 
 ## Additional Invariants from ADR-0037
 

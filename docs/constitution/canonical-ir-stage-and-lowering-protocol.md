@@ -16,7 +16,7 @@ Proposed
 - ADR-0032: Capacity Law, Resource Policy Resolution, Identity Hierarchy, and Zero-Residue Semantics
 - ADR-0037: Cycle Identity Preflight and Deferred Raw Fact Resolution
 - ADR-0038: Interface Contract Polymorphic Expansion and Non-Composite Type Expansion Completion
-- `docs/design/deterministic-active-member-projection-and-ordering-protocol.md`
+- `../design/frontend/deterministic-active-member-projection-and-ordering-protocol.md`
 - `docs/design/type-expansion-decision-and-synthetic-edge-protocol.md`
 
 ## 1. Purpose

@@ -11,9 +11,9 @@ Migrated
 ## Related
 
 - `../../the-most-important-thing/what-contract-is.md`
-- `../../todo/kontrakt-v1-commercial-compiler-foundation-candidate-architecture.md`
-- `../../todo/v2/kontrakt-v2-reference-architecture-and-v1-foundations.md`
-- `../../todo/kontrakt-verifier-implementation-plan.md`
+- `../../todo/roadmap/kontrakt-v1-commercial-compiler-foundation-candidate-architecture.md`
+- `../../todo/roadmap/kontrakt-v2-reference-architecture-and-v1-foundations.md`
+- `../../todo/verification/kontrakt-verifier-implementation-plan.md`
 - `../../quality/TESTING_STRATEGY.md`
 - `../../constitution/compiler-core-protocols.md`
 - `../../constitution/canonical-ir-stage-and-lowering-protocol.md`
@@ -34,10 +34,10 @@ Migrated
 - ADR-0040: Deterministic Frozen Acquisition Pipeline, Explicit Readiness, and Memory-Disciplined Publication
 - ADR-0039: Adapter-Neutral Metamodel Acquisition, Frozen Fact Image, and Backend-Handle Erasure
 - ADR-0031: Two-Tier Transactional Memoization and Structural Interning
-- `../../design/stable-metadata-identity-protocol.md`
-- `../../design/protocol-owned-metadata-interning.md`
-- `../../design/l1-planner-session-primitive-data-structures.md`
-- `../../design/l2-plan-interner-partitioned-tier2-with-governance.md`
+- `../../design/infrastructure/stable-metadata-identity-protocol.md`
+- `../../design/infrastructure/protocol-owned-metadata-interning.md`
+- `../../design/compiler-engine/l1-planner-session-primitive-data-structures.md`
+- `../../design/compiler-engine/l2-plan-interner-partitioned-tier2-with-governance.md`
 
 ---
 
