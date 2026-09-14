@@ -52,7 +52,7 @@ The law must also protect the opposite boundary.
 
 When a user selects an admitted Java or Kotlin surface, Kontrakt may not weaken, reinterpret, or silently normalize the
 contract that surface already promises. The compiler may change representation. It may not change remaining observable
-meaning merely because a slab, table, primitive lane, or another backend form is easier to optimize.
+meaning merely because another backend representation is easier to optimize.
 
 This is a compiler-wide concern.
 
@@ -144,9 +144,8 @@ representation.
 
 Physical realization remains replaceable.
 
-A platform object may disappear after its observable obligations have been represented independently. Slabbing,
-primitive lanes, compact tables, scalar replacement, and another lowering form remain legal when they preserve the
-required meaning.
+A platform object may disappear after its observable obligations have been represented independently. Physical
+representation may change when the required meaning remains preserved.
 
 Unknown meaning fails closed.
 
@@ -1000,15 +999,15 @@ The criterion is preservation of the applicable semantic and platform-visible ob
 
 ---
 
-## 14.2. Slabbing and Object Elimination
+## 14.2. Representation Replacement Law
 
 A Java or Kotlin object may disappear when object identity is not part of the admitted meaning.
 
-A value can be decomposed into primitive lanes, compact fields, indexes, or another backend form. A collection can use a
-different internal layout. A `BigDecimal` can be realized without retaining one permanent `BigDecimal` object if the
-remaining required scale, value, equality, arithmetic, and user-facing obligations are preserved.
+The physical representation may be replaced only when every distinction that remains observable under the established
+platform and Contract obligations is preserved. The replacement itself does not establish new meaning and does not
+become new semantic authority.
 
-The optimized form does not become new semantic authority.
+This ADR does not choose the replacement representation or the mechanism used to realize it.
 
 ---
 
@@ -1020,16 +1019,15 @@ It must retain an exact relation, plan obligation, verified projection, or anoth
 the
 compiler can justify the realized behavior against the required platform contract.
 
-A dense handle or specialized opcode can implement that relation. Its numeric identity is not the obligation itself.
+An implementation may encode that relation in a compact form. The physical identifier or encoding is not the obligation
+itself.
 
 ---
 
 ## 14.4. No Early Loss for Target Convenience
 
-MIR, LIR, JVM Plan/IR, slabbing, scalar replacement, inlining, constant folding, collection specialization, and
-classfile
-emission may progressively remove high-level material only after the removed distinction is proven unnecessary for every
-remaining legal observation.
+Later IR and backend transformations may progressively remove high-level material only after the removed distinction is
+proven unnecessary for every remaining legal observation.
 
 Target convenience is not a proof.
 
@@ -1226,8 +1224,8 @@ Additional vanilla value candidates such as `UUID`, `Optional`, URI-related valu
 `ZonedDateTime` remain open until separately audited. Their apparent value-like shape is not sufficient for automatic
 admission.
 
-MIR, LIR, JVM Plan/IR, slabbing layout, scalar replacement, collection kernel design, reprojection strategy, and backend
-specialization remain Design work.
+MIR, LIR, JVM Plan/IR, physical layout, representation replacement, collection realization, reprojection strategy, and
+backend specialization remain Design work.
 
 The exact translation-validation technology remains open.
 
