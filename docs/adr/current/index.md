@@ -19,9 +19,9 @@ provide Accepted authority.
 
 ### Data Model
 
-| ADR                                                                                                                  | Title                                                                          | Status   |
-|----------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------|----------|
-| [ADR-0072](contract/data-model/0072-input-collection-presentation-aggregate-semantics-and-deterministic-equality.md) | Input Collection Presentation, Aggregate Semantics, and Deterministic Equality | Proposed |
+| ADR                                                                                                                         | Title                                                                          | Status   |
+|-----------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------|----------|
+| [ADR-0072](contract/data-model/0072-jvm-collection-contract-preservation-aggregate-semantics-and-deterministic-equality.md) | Input Collection Presentation, Aggregate Semantics, and Deterministic Equality | Proposed |
 
 ### One-Dimensional Contracts
 
