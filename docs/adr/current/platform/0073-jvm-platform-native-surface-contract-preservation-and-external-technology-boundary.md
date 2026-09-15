@@ -12,13 +12,8 @@ Proposed
 
 - *What Contract Is*
 - ADR-0046: IDL-First Interface Contract Frontend and 1D Contract Catalog
-- ADR-0047: One-Dimensional Contract Presentations and Pipeline-Slot Selection
-- ADR-0053: Version Contract
-- ADR-0056: Governance Contract
-- ADR-0057: Failure Contract
 - ADR-0063: Contract Establishment, Identity, Applicability, and Composition
 - ADR-0064: Input Contract, Explicit Boundary Presentation, and External-Authority Boundary
-- ADR-0067: Lowering Contract
 - ADR-0068: Fact Contract
 - ADR-0071: Resolved Contract HIR Semantic Boundary, Deterministic Visibility, Lifecycle, and Reuse
 - ADR-0072: JVM Collection Contract Preservation, Aggregate Semantics, and Deterministic Equality
@@ -32,1325 +27,724 @@ Proposed
 
 *What Contract Is* treats external contract infiltration as a direct threat to Contract authority.
 
-An external interface does not become a Core contract because it is familiar, typed, standardized, or widely used. If a
-library, framework, runtime mechanism, or platform is allowed to decide the obligation inside the Core, the outside has
-crossed the boundary and begun defining the machine.
+An external API does not become a Core contract because it is familiar, typed, standardized, or widely used. Frameworks,
+libraries, runtime mechanisms, providers, and vendor APIs remain outside unless an explicit boundary admits material
+from
+them.
 
-Kontrakt nevertheless runs on the JVM. Java and Kotlin therefore impose a small set of unavoidable declaration surfaces
-that users must be able to use naturally when they declare Input, Contract-facing values, or user realization. Primitive
-values, strings, arrays, ordinary standard collections, arbitrary-precision numeric values, and the admitted immutable
-date/time values are examples.
+Kontrakt nevertheless runs on the JVM. Java and Kotlin therefore expose a small set of ordinary platform surfaces that
+users must be able to use without wrapping every value in a Kontrakt-specific type.
 
-Kontrakt does not treat this as general permission to import external contracts. It treats it as a narrow host-platform
-exception that must be explicitly ratified.
+This is a host-platform constraint. It is not general permission for external contracts to enter the governed machine.
 
-This ADR defines that ratification boundary.
+ADR-0073 defines the narrow JVM-native exception and the boundary that separates it from Adapter-only technology.
 
 ---
 
 # 2. Problem
 
-There are two ways to violate the boundary.
+Kontrakt can violate its own boundary in two opposite ways.
 
-The first is to accept the JVM platform as Contract authority. If Kontrakt admits `java.*`, `java.base`,
-`kotlin-stdlib`,
-or another familiar API merely because it is part of the host environment, platform contracts begin deciding Core
-meaning. The same mistake becomes worse when it is extended to frameworks, libraries, providers, runtime hooks, or
-vendor APIs.
+It can accept too much. If Java SE, `java.base`, Kotlin stdlib, or another familiar platform namespace is treated as
+implicitly native, capability, lifecycle, environment, and external-technology contracts can enter the Core through the
+host platform.
 
-The second is to pretend the host platform does not exist. Java and Kotlin users cannot reasonably declare ordinary JVM
-values if Kontrakt forces an artificial wrapper or Adapter around every primitive value, string, array, collection,
-`BigInteger`, `BigDecimal`, or admitted immutable time value. That does not remove the platform contract. It only hides
-it behind another surface.
+It can also accept too little. If ordinary JVM values require artificial wrappers only to cross a Contract-facing
+boundary, Kontrakt stops behaving like a JVM compiler and forces users to abandon normal Java and Kotlin value surfaces.
 
-Kontrakt therefore needs one exact exception. A small, versioned, explicitly audited Platform-Native Surface may be
-ratified because the JVM host makes that surface unavoidable. Ratification preserves the platform contract that the user
-actually selected. It does not donate Contract authority to the platform, and it does not make neighboring APIs native
-by
-association.
+The required boundary is therefore narrow.
 
-Everything outside that ratified surface remains outside. It must enter through the appropriate Adapter or other
-declared
-boundary before it can influence the governed machine.
+Kontrakt must decide which JVM surfaces it directly ratifies. When Contract theory applies to one of those surfaces,
+Kontrakt is responsible for interpreting the relevant platform contract correctly. Where Kontrakt has no Contract reason
+to reinterpret or transform platform behavior, it acts conservatively and leaves that behavior to the JVM.
+
+Everything outside the ratified native boundary remains Adapter-only or unsupported.
 
 ---
 
-# 3. Decision Drivers
+# 3. Decision
 
-Contract authority remains primary. Platform-native support is an exception created by the JVM host constraint, not a
-second source of Contract authority.
+Kontrakt defines an explicitly ratified **JVM Platform-Native Surface**.
 
-Ratification must be exact. The compiler must know the selected platform target, the admitted surface, the legal role,
-and every observable platform distinction that remains relevant. Unknown or incomplete meaning fails closed.
+Platform-Native status is owned by Kontrakt. It is not selected by the user and is not inferred from package membership,
+classpath presence, runtime availability, inheritance, or popularity.
 
-Input and user realization preserve a ratified platform contract because those boundaries expose the user's selected JVM
-surface. A later 1D Contract may reject, canonicalize, lower, or establish different meaning under its own authority.
-The
-change must occur at that explicit Contract boundary.
+A ratified surface may participate directly in a Contract-facing or legal user-realization boundary only within the role
+that Kontrakt has admitted for it.
 
-Frontend and HIR must preserve enough resolved platform meaning that Establishment and later legal observers never need
-to reconstruct it from runtime classes or implementation detail. Physical representation remains replaceable after those
-obligations are independently preserved.
+Ratification does not transfer Contract authority to Java, Kotlin, or the JVM. It creates a preservation obligation for
+the platform meaning that Kontrakt has chosen to admit.
+
+Kontrakt may apply its own 1D Contract law at an explicit later Contract boundary. It may not silently rewrite the
+earlier
+platform meaning to make compilation or optimization easier.
 
 ---
 
-# 4. Core Model
+# 4. Native Boundary Principle
 
-## 4.1. Platform-Native Surface
+## 4.1. Explicit Ratification
 
-Kontrakt defines a **JVM Platform-Native Surface**.
+A platform surface is Native only after Kontrakt has explicitly ratified it.
 
-The Platform-Native Surface is the explicitly supported Java and Kotlin surface that may participate directly in
-Contract-facing declarations or user realization without an external-technology Adapter.
-
-It exists only because the JVM is the selected host platform.
+The following do not establish Native status:
 
 ```text
-JVM host constraint
-    ↓
-explicit Platform-Native Surface
-    ↓
-resolved platform obligation
-    ↓
-Kontrakt Contract / realization processing
+java.*
+java.base
+kotlin.*
+kotlin-stdlib
+default imports
+runtime classpath presence
 ```
 
-Platform-Native status is not inherited from package membership, library popularity, classpath presence, or runtime
-availability.
-
-A surface is native only when the applicable Platform-Native Profile admits it for the exact role in which it is used.
+These may contain both ordinary values and capabilities. Namespace membership is therefore evidence only.
 
 ---
 
-## 4.2. Platform-Native Profile
+## 4.2. Contract-Relevant Interpretation
 
-A **Platform-Native Profile** is versioned compiler-semantic knowledge that states which Java and Kotlin surfaces
-Kontrakt
-supports for one explicit platform target.
+Kontrakt does not need to re-model the whole JVM contract of every ratified surface.
 
-The profile is not Contract authority.
+It must understand every platform distinction that remains legally observable through the Contract boundary or user
+realization in which the surface is admitted.
 
-It tells the frontend which external platform obligations must be preserved when an owning Contract or legal user
-realization uses that surface.
+A JVM implementation detail that no legal observer can depend on does not become Contract meaning.
 
-The profile may be represented by generated tables, frozen metadata, source-defined compiler data, or another
-deterministic form. Its physical schema does not define meaning.
-
-The profile does not enter the Canonical Contract World as one independent Contract Definition.
+A guaranteed platform distinction that the user can legally rely on cannot be dropped merely because Kontrakt has a more
+convenient internal representation.
 
 ---
 
-## 4.3. Native Surface, Carrier, Operation, and Mapping Are Different
+## 4.3. Later 1D Authority
 
-Kontrakt distinguishes four concerns.
+Platform preservation does not freeze one value meaning for the whole pipeline.
 
-A **Native Declaration Surface** is a Java or Kotlin type surface that may appear directly where the profile and owning
-Contract permit it.
+Input and user realization preserve an admitted JVM surface where that surface is exposed to the user. A later 1D
+Contract may reject the material or establish a different meaning under its own authority.
 
-A **Native Carrier** is one actual host value that may be observed to form the declared surface at a boundary.
-
-A **Native Operation** is one exact Java or Kotlin operation that the profile permits without crossing the external
-technology boundary.
-
-A **Platform Mapping** is an exact source-language relation where Java and Kotlin expose one runtime representation
-through different source-level surfaces.
-
-These categories do not imply one another.
-
-A third-party object can sometimes be a carrier of an admitted standard interface without making the third-party class a
-Native Declaration Surface. A native type does not make every method native. A JVM runtime class does not erase the
-source-level distinction between a Java declaration and a Kotlin mapped declaration.
+For example, Canonicalization may establish a new equivalence relation that was not the equality relation of the
+original
+platform value. That does not retroactively change what the earlier platform-facing value meant.
 
 ---
 
-## 4.4. No Transitive Native Authority
+## 4.4. Conservative JVM Delegation
 
-Native status never propagates merely by reachability.
+Kontrakt does not replace platform behavior merely because replacement is possible.
 
-A native collection whose element type is external does not make that element type native. A native type returned by a
-framework does not make the framework native. A native receiver does not make a third-party extension function native.
+When Contract-established knowledge does not justify a transformation, the platform operation or representation remains
+intact and normal JVM optimization remains responsible for it.
 
-User-defined Contract declarations are also not classified as external technology merely because they are not platform
-native. Their legality comes from the relevant Kontrakt Contract law.
+When Kontrakt does transform a ratified platform surface, it must preserve every platform and Contract observation that
+remains legal after that point.
 
-The Platform-Native Surface is therefore neither a universal allow-list nor the complete type system of Kontrakt.
+If that preservation cannot be established, Kontrakt does not perform the transformation.
 
 ---
 
-## 4.5. Resolved Platform Obligation
+# 5. Ratification Law
 
-A **Resolved Platform Obligation** is compiler-semantic material produced when one admitted Native Declaration Surface
-or
-Native Operation is resolved under one exact Platform Target Binding.
+Ratification is governed by three laws.
 
-It is not Established Material.
+## 5.1. Closure
 
-It states the platform contract that the owning Contract candidate or legal user-realization boundary must preserve.
+Kontrakt must be able to close the relevant meaning of the admitted surface.
 
-The obligation is typed by the surface being resolved. Kontrakt does not force every platform type into one universal
-metadata tuple.
+The compiler must know the observable obligations needed by the admitted role and the constituent meaning required to
+interpret them. A known outer type does not make an unknown constituent legal.
 
-Every resolved obligation must nevertheless make the following questions answerable without reopening the platform:
+`List<ExternalResource>` therefore does not become native merely because `List` is a ratified platform surface.
+
+---
+
+## 5.2. Authority Isolation
+
+Ratification may not import undeclared authority into the governed machine.
+
+A surface is not an ordinary Native value surface when its admitted meaning requires a live external resource, ambient
+environment, provider, lifecycle owner, framework runtime, vendor facility, or another hidden capability.
+
+This rule applies even when the API is shipped as part of Java SE or Kotlin stdlib.
+
+---
+
+## 5.3. Preservation
+
+Kontrakt may directly admit only the meaning it can preserve for every remaining legal observer.
+
+The compiler may keep the original JVM behavior when that is the safest realization. It may use another realization only
+when the relevant observations remain equivalent.
+
+Uncertainty is not permission to guess. An unresolved surface remains Adapter-only or unsupported.
+
+---
+
+# 6. Ratification Verification
+
+## 6.1. Verification Domain
+
+Platform ratification is compiler verification work.
+
+It belongs in the Verification domain, but it is not Contract Establishment and it does not become Contract authority.
+
+The Platform Boundary Verifier is a sibling of Contract and realization verification concerns. It verifies whether the
+compiler may rely on one platform surface under the laws of this ADR.
+
+---
+
+## 6.2. Full Ratification Audit
+
+Kontrakt performs the expensive audit when support for a platform surface or platform version is created or changed.
+
+That audit applies the ratification laws and checks the relevant standard contract. It is not repeated from first
+principles for every user compilation.
+
+The audit must be able to reject a surface when its relevant contract cannot be closed or when a capability boundary
+cannot be isolated.
+
+---
+
+## 6.3. Ratified Native Surface Catalog
+
+Successful audit produces compiler-owned **Ratified Native Surface Catalog** material.
+
+The catalog records already-audited platform knowledge needed for later compilation. It is not a flat class-name
+whitelist and it is not Contract authority.
+
+Catalog knowledge is about the platform surface itself. It does not duplicate one entry for every Kontrakt role or every
+generic instantiation in which that surface may later appear.
+
+At minimum, the compiler must be able to recover from catalog material:
 
 ```text
-Which exact platform surface was selected?
-Under which exact target binding?
-For which role is it legal?
-Which observable distinctions must be preserved?
-Which exact operations are admitted when operation use is relevant?
-Which capability boundary remains forbidden?
-Which source-language mapping produced this surface?
+the exact ratified platform surface
+its platform classification
+the observable obligations Kontrakt has ratified
+its relation to any reusable operation profile
+any exact operation-specific exception
+whether direct use is Native, delegated, Adapter-required, or unsupported
 ```
 
-The obligation can be projected into smaller consumer-specific views. A projection remains derived compiler material and
-may not drop a distinction its consumer still requires.
+A missing catalog entry does not imply permission. Unknown material still fails closed.
+
+The physical representation of this catalog is implementation work.
+
+Deleting or rebuilding the catalog cannot change which result is correct. A wrong catalog entry is a compiler defect.
 
 ---
 
-# 5. Platform Target and Profile Identity
+## 6.4. Compilation Surface Gate
 
-## 5.1. Platform Target Claim
+Normal user compilation does not rerun the full ratification audit.
 
-Platform meaning is resolved against an explicit **Platform Target Claim**.
+The compiler resolves only the platform surfaces actually encountered by the compilation and checks them against the
+ratified catalog.
 
-The claim identifies the platform basis against which user-facing Java and Kotlin surfaces are interpreted.
+The compilation gate still performs context-sensitive checks that cannot be precomputed globally. In particular, it must
+verify the requested Kontrakt role, the closure of resolved constituent meaning, and the owning boundary in which the
+platform surface is being used.
 
-Where applicable, it includes the Java SE API release, JVM/classfile target, Kotlin language surface, and Kotlin
-standard
-library surface required to interpret the declaration.
+Platform knowledge and use legality are different products. A platform surface may be ratified once and then be legal in
+one Kontrakt role, carrier-only in another, or rejected in another without duplicating the platform audit.
 
-The exact compiler command-line or build-tool syntax is implementation.
-
-The semantic requirement is that the target is explicit compiler input rather than ambient host state.
-
-The JDK currently running Kontrakt does not silently become the target.
+The same ratified surface used many times in one compilation may reuse one valid classification result.
 
 ---
 
-## 5.2. Platform Target Binding
+## 6.5. External Technology Isolation Gate
 
-Frontend resolution converts a valid Platform Target Claim into one exact **Platform Target Binding**.
+Platform ratification and external-technology isolation are related but different checks.
 
-The binding selects the Platform-Native Profile material used for semantic resolution.
+The compilation or realization boundary must still reject Adapter-only capability, framework, provider, or external
+technology that attempts to cross into governed material through a ratified platform surface.
+
+A native carrier does not legalize the external authority that produced it.
+
+---
+
+## 6.6. Independent Catalog Validation
+
+The catalog itself requires independent verification appropriate to a compiler release or platform-support update.
+
+Kontrakt should be able to compare its built-in platform knowledge with the normative platform surface and run positive
+and negative conformance tests without relying only on the same fast compilation lookup path.
+
+The exact validation tool is implementation work.
+
+---
+
+# 7. Ratification Unit and Use Legality
+
+Ratification is not attached to a package, module, runtime class hierarchy, or one global class-level boolean.
+
+Kontrakt separates stable platform knowledge from compilation-specific use legality.
+
+## 7.1. Exact Platform Surface
+
+The release-time audit is anchored to an **Exact Platform Surface**.
+
+An Exact Platform Surface is the smallest platform declaration surface for which Kontrakt can state one coherent
+ratification result without importing unrelated platform behavior. It may represent a value or type surface, an
+interface surface, or an exact callable surface.
+
+Package or namespace membership is too broad. Runtime class identity alone is also insufficient when Java and Kotlin
+source contracts expose distinctions that share one JVM representation.
+
+The exact physical key used to identify the surface is compiler implementation work. Ratification requires enough
+identity to prevent overloads, unrelated owners, or source-language distinctions from being conflated.
+
+---
+
+## 7.2. Platform Surface and Kontrakt Role Are Separate
+
+The platform contract of a surface is audited independently from the Kontrakt role in which a user later requests it.
+
+The catalog therefore does not pre-expand one platform surface into every Input, Fact, Operation, Output, or later
+Contract role.
+
+Normal compilation combines the ratified platform knowledge with the requested role and owning boundary to determine
+use legality.
+
+This prevents a platform fact from being rewritten merely because Kontrakt adds a new Contract role later.
+
+---
+
+## 7.3. Constituents Are Checked by Closure
+
+Generic arguments, array components, map keys and values, nested aggregates, and other constituent meaning are not
+pre-expanded into every possible catalog combination.
+
+The outer platform surface is audited once. Actual compilation verifies that every resolved constituent required by the
+use also satisfies the Native boundary.
+
+`List<BigDecimal>` therefore does not require a dedicated release-time catalog entry. `List<ExternalResource>` does not
+become legal merely because the outer `List` surface is ratified.
+
+---
+
+## 7.4. Operations Are Separate from Type Ratification
+
+Ratifying a value or type surface does not ratify every method, factory, constructor, or static operation reachable from
+it.
+
+An operation that reads ambient state, acquires a capability, depends on a provider, exposes lifecycle authority, or has
+another materially different platform contract must be classified independently from the receiver or result type.
+
+The operation audit is anchored to an exact callable identity sufficient to distinguish owner, overload, and signature.
+The ADR does not prescribe the physical encoding of that identity.
+
+---
+
+## 7.5. Semantic Operation Profile
+
+Repeated operation meaning may be represented by a reusable **Semantic Operation Profile**.
+
+The profile summarizes already-audited platform obligations shared by multiple exact callables. It exists to avoid
+duplicating the same platform analysis and verification knowledge across the catalog.
+
+The profile is compiler knowledge. It is not Contract authority and it does not define the platform contract.
+
+The direction is:
 
 ```text
-Platform Target Claim
-    ↓ deterministic target resolution
-Platform Target Binding
-    ↓
-Native Surface resolution
+platform callable contract
+    -> ratification audit
+    -> reusable semantic operation profile
 ```
 
-The binding is compiler-semantic basis. It is not Contract Version.
-
-`Contract Version`, `Platform Target Binding`, compiler version, profile storage schema version, and classfile format
-version
-remain different coordinates.
-
----
-
-## 5.3. Profile Revision Is Not Platform Meaning
-
-Kontrakt may revise the compiler data used to describe one unchanged platform release.
-
-A profile revision can fix a compiler bug, add a previously unsupported entry, improve diagnostics, or change physical
-encoding without changing the external platform specification.
-
-That revision is a compiler-product input. It is not automatically Contract meaning.
-
-A profile revision that changes the resolved observable obligation of an existing declaration invalidates the affected
-HIR product and requires clean semantic recomputation.
-
-The compiler must not preserve an old result merely because the Java or Kotlin version string is unchanged.
-
----
-
-## 5.4. Definition Determinant Boundary
-
-The existence of a Platform Target Binding does not mean that every platform version number becomes part of every
-Contract Definition identity.
-
-The owning 1D law continues to decide Definition determinants under ADR-0071.
-
-Platform information is definition-determining only to the extent that it changes the resolved Contract-visible meaning
-of that Definition Candidate.
-
-Two target profiles may therefore resolve one declaration to semantically equal candidate meaning without creating two
-meanings merely because their platform version coordinates differ.
-
-The compiler still retains enough target attribution to reproduce and validate that resolution.
-
----
-
-## 5.5. Exact Native Surface Reference
-
-Before Establishment, a resolved native declaration or operation has one exact current compiler-semantic reference.
-
-The reference denotes the exact profile entry and resolved surface selected under the current Platform Target Binding.
-
-A string class name, package name, reflection `Class`, JVM object identity, class-loader identity, ordinal, table index,
-HID, or fingerprint is not by itself that semantic reference.
-
-A physical implementation may map the exact reference to a generation-local dense handle for fast access. The dense
-handle does not become persistent identity or Contract authority.
-
----
-
-## 5.6. Native Surface Entry Contract
-
-One Platform-Native Profile entry denotes one exact audited platform surface.
-
-A valid entry preserves enough compiler-semantic information to determine its target availability, exact declared
-surface, supported role, observable obligation, and operation boundary when operations are supported.
-
-For a mapped Java/Kotlin surface, it also preserves the exact mapping relation needed to distinguish source-level
-meaning
-from runtime representation.
-
-For an operation entry, the exact callable meaning and hidden-input boundary are part of the entry.
-
-The profile entry does not need to store this material in one object. It may use typed tables and shared indexes. The
-logical contract remains the same.
-
-Entry equality, physical row identity, and semantic obligation equality are different. Two entries or revisions may
-produce equal consumer-visible obligations without becoming the same physical profile record.
-
----
-
-## 5.7. Platform Binding Singularity
-
-One visible Contract HIR generation and one linked Whole-Machine compilation use one effective Platform Target Binding
-for
-Platform-Native resolution.
-
-V1 does not compose two conflicting native platform worlds inside one machine.
-
-Persisted or imported compiler material formed under another binding must be revalidated against the current target. It
-may be reused only when the producer can prove that its required native obligations remain valid under the current
-binding.
-
-This is compiler compatibility law. It does not create a new Contract World or Policy World.
-
----
-
-# 6. V1 Native Value Baseline
-
-## 6.1. Mandatory Baseline
-
-V1 must directly understand the ordinary JVM value surface required for normal Java and Kotlin Contract declarations.
-
-The mandatory baseline includes primitive values, the ordinary boxed value aspect of primitive wrappers, `String`, Java
-and Kotlin arrays including primitive arrays, and the finite named value aspect of language enum declarations.
-
-Standard Java and Kotlin collection surfaces are admitted through ADR-0072 and this ADR together.
-
-`BigInteger` and `BigDecimal` are mandatory native numeric values. Their Java-visible distinctions remain preserved
-until
-an owning later Contract explicitly establishes different meaning.
-
-The baseline also includes the ordinary immutable ISO-oriented `java.time` value surface that can be interpreted without
-acquiring ambient time or provider state. The initial mandatory set includes `Instant`, `Duration`, `LocalDate`,
-`LocalTime`, `LocalDateTime`, `OffsetTime`, `OffsetDateTime`, `ZoneOffset`, `Period`, `Year`, `YearMonth`, `MonthDay`,
-`Month`, and `DayOfWeek`.
-
-`MathContext` is admitted as the immutable explicit arithmetic context required by supported `BigDecimal` operations.
-`RoundingMode` is already covered by the enum rule.
-
-This list is the V1 minimum. A profile may support additional audited vanilla values without changing the admission law
-of this ADR.
-
----
-
-## 6.2. Value-Based Classification Is Evidence, Not Admission
-
-Java's value-based-class classification is useful evidence because it rejects identity-sensitive interpretation for
-classes such as primitive wrappers and many `java.time` values.
-
-It is not sufficient for Platform-Native admission.
-
-A value-based class can still be outside the V1 baseline or expose operations that consult hidden state.
-
-Kontrakt therefore never implements the rule:
+It is never:
 
 ```text
-Java value-based class
-    → automatically Platform-Native
+semantic operation profile
+    -> platform meaning
 ```
 
-For an admitted value-based surface, reference identity, monitor identity, identity hash, or another identity-sensitive
-observation does not become native value meaning merely because one JVM object happens to exist.
+An exact callable-specific fact or exception takes precedence over a shared profile. A profile cannot make a capability
+operation Native merely because neighboring operations of the same type are Native.
+
+The exact vocabulary and contents of Semantic Operation Profiles remain open for further review.
 
 ---
 
-## 6.3. Numeric Contract Preservation
+## 7.6. Delegated Operations
 
-A numeric platform value is preserved according to its actual admitted platform contract rather than a simplified
-mathematical approximation.
+The catalog is not intended to become a complete reimplementation of the Java or Kotlin API.
 
-For `BigDecimal`, numerical comparison and `equals` are not the same relation. Scale remains observable where the Java
-contract makes it observable.
+When an admitted operation needs no Contract-specific reinterpretation or transformation, Kontrakt may conservatively
+delegate the original platform behavior to the JVM.
 
-Kontrakt may later canonicalize or lower a decimal under a different 1D law. Input, frontend resolution, HIR compaction,
-or backend convenience may not pretend that the earlier `BigDecimal` surface already had that later equality.
+Delegation is not inferred from the absence of catalog knowledge. It must follow from ratified platform knowledge that
+the operation may remain untouched under the current boundary. Unknown operations still fail closed.
 
----
-
-## 6.4. Date and Time Value Boundary
-
-Admitting a date/time value does not admit a time source.
-
-An `Instant` value can be native material. An operation that obtains the current instant from an ambient clock crosses a
-different boundary.
-
-`ZoneId`, `ZonedDateTime`, `Clock`, provider-backed calendar surfaces, and other values or operations whose complete
-behavior can depend on external zone-rule or provider state are not part of the mandatory V1 baseline until separately
-audited.
-
-This is conservative by design. A later profile may admit them with an explicit platform-basis law.
+Delegated behavior remains subject to the same preservation law. Kontrakt may not later transform it in a way that loses
+a legal platform or Contract observation.
 
 ---
 
-## 6.5. Top Types Do Not Widen the Native Surface
+## 7.7. Platform Use Verification
 
-`Object`, Kotlin `Any`, `Number`, `Comparable`, `Serializable`, `Cloneable`, and another broad host supertype do not
-grant
-native status to every value assignable to them.
+The compilation-time result is **Platform Use Verification**, not a new platform audit.
 
-If one Contract-facing declaration permits several runtime alternatives, the owning Contract law must still close the
-allowed semantic alternatives or provide another explicit type law.
+Conceptually it consumes:
 
-A broad JVM supertype is not an escape hatch through which external library objects enter the governed machine.
+```text
+Ratified Platform Surface
+Requested Kontrakt Role
+Resolved Constituents
+Relevant Owning Boundary
+```
 
----
+and establishes whether that use is directly legal, carrier-only, Adapter-required, or unsupported.
 
-# 7. Native Operation Law
-
-## 7.1. Operation Admission Is Exact
-
-Native operation admission applies to one exact operation meaning.
-
-It is not inherited from the receiver type, package, superclass, interface, or source-language convenience syntax.
-
-The profile resolves the operation sufficiently to distinguish overload, receiver contract, argument meaning, result
-meaning, and the platform version in which that operation is supported.
-
-For Kotlin extension functions, the declaring standard-library function is part of the resolved operation identity. An
-extension from user code is user realization. An extension from a third-party library is not platform native merely
-because its receiver is native.
+The exact compiler product name and storage representation remain implementation work.
 
 ---
 
-## 7.2. Hidden-Input Prohibition
+## 7.8. Audit Questions
 
-A Native Operation may depend on its explicit receiver, explicit arguments, platform constants fixed by the selected
-profile, and newly created local state allowed by the surrounding realization law.
+The full audit must answer enough questions to expose hidden contract infiltration rather than merely confirm that a
+surface looks value-like.
 
-It may not silently obtain semantic input from the current clock, default locale, default time zone, environment
-variables, system properties, random source, provider registry, filesystem, network, process state, class-loader state,
-reflection discovery, foreign memory, foreign functions, or another undeclared capability.
+It checks whether all required constituent meaning can be closed, whether the surface can import ambient authority or
+lifecycle, whether external mutation can invalidate an earlier judgment, whether object identity is required by the
+admitted meaning, and whether the platform leaves an observation unspecified or implementation-dependent.
 
-If such material is semantically required, it must enter through an explicit Adapter, Contract basis, or another
-approved boundary before the governed computation relies on it.
+Java/Kotlin source mappings are also part of the audit when one JVM representation exposes different source-level
+contracts.
 
-This law is about semantic input. It does not prohibit ordinary allocation or compiler-generated temporary storage when
-those mechanisms are not observable as Contract meaning.
-
----
-
-## 7.3. Local Mutation Is Not External Capability
-
-Not every state change is external technology.
-
-A supported standard collection used as local user-realization working state may perform its standard local mutation
-when the surrounding realization and 1D laws permit that use.
-
-The mutation does not grant permission to publish mutable aliasing as Fact authority or to retain hidden external state
-across Contract boundaries.
-
-Role legality therefore remains distinct from operation legality.
+These questions are verification criteria. They do not require one universal runtime metadata object.
 
 ---
 
-## 7.4. Exceptional Behavior Is Observable Where the Platform Defines It
+# 8. Native, Carrier, Adapter, and Unsupported Are Different Results
 
-If a supported Native Operation has a specified exceptional result for one explicit operand condition, optimization may
-not silently replace that behavior with another result.
+Ratification is not one global boolean attached to a JVM class.
 
-How an implementation exception is attributed to the Failure Contract remains owned by ADR-0057 and the realization
+A platform surface may be directly Native for one declared role. A concrete implementation may be accepted only as a
+carrier of that surface. Another operation may require an Adapter even though its receiver is Native.
+
+An unknown or incompletely understood surface is unsupported until Kontrakt explicitly decides otherwise.
+
+This ADR therefore distinguishes the following semantic outcomes:
+
+```text
+Native Surface
+Carrier Only
+Adapter Required
+Unsupported
+```
+
+The implementation does not need to encode these outcomes as one enum.
+
+---
+
+# 9. Initial Native Baseline
+
+The initial V1 baseline includes the JVM value surfaces already considered unavoidable and sufficiently understood for
+ordinary Java and Kotlin Contract usage.
+
+It includes primitive values, the ordinary value aspect of primitive wrappers, `String`, arrays including primitive
+arrays, language enum values, the standard Java and Kotlin collection surfaces governed by ADR-0072, `BigInteger`,
+`BigDecimal`, and the major immutable value-oriented `java.time` surfaces that can be used without acquiring ambient
+time
+or provider state.
+
+This list establishes the initial audit scope. It does not imply that every operation reachable from those types is
+Native.
+
+Additional surfaces require the same ratification process.
+
+---
+
+# 10. Adapter Boundary
+
+Frameworks, optional libraries, vendor APIs, live resource handles, ambient environment access, and external technology
+do not become Native merely because they execute on the JVM.
+
+Such material enters through an explicit Adapter or another separately approved external boundary before it can
+influence governed Contract processing.
+
+An Adapter may produce a ratified platform value or user-defined candidate material. The external authority that
+produced
+that value does not accompany the value into the Core.
+
+Unknown external technology fails closed.
+
+---
+
+# 11. Frontend and HIR Obligation
+
+Frontend resolution is responsible for recognizing a referenced JVM surface and applying the Platform Boundary
+Verification result.
+
+HIR does not need to reproduce Java or Kotlin library internals. It must preserve the platform distinction that a later
+Contract authority or legal user-realization observation still requires.
+
+The frontend or HIR may discard implementation detail once that detail has no remaining semantic role.
+
+Later consumers do not reopen runtime classes or platform documentation to repair a platform distinction that frontend
+resolution failed to preserve.
+
+The exact HIR schema remains owned by ADR-0071 and later IR design.
+
+---
+
+# 12. Establishment Boundary
+
+Platform ratification is not Contract Establishment.
+
+This ADR does not create a parallel `Established Platform Material` authority.
+
+The owning Contract establishes its own meaning under ADR-0063. When that meaning depends on an admitted platform
+obligation, the required distinction must already be resolved before Establishment.
+
+A later Contract authority may establish different meaning under its own law. It does not rewrite the earlier platform
+contract.
+
+---
+
+# 13. User Realization Boundary
+
+User realization may use a ratified JVM surface where the relevant role permits it.
+
+Kontrakt preserves the platform behavior that user code is legally allowed to observe at that boundary. Internal
+representation freedom does not permit a weaker substitute.
+
+A Native value does not open a tunnel to arbitrary JVM capability or framework operations. Realization verification
+still
+applies the Adapter boundary.
+
+---
+
+# 14. Optimization Non-Interference
+
+Kontrakt optimization is strongest where Contract-established knowledge gives the compiler information that the JVM does
+not have.
+
+That advantage does not grant permission to replace unrelated platform behavior.
+
+A transformation that changes a ratified platform realization is legal only when every remaining legal platform and
+Contract observation is preserved. If the compiler cannot establish that preservation, the original platform behavior is
+kept and the JVM retains optimization responsibility.
+
+This ADR does not choose MIR, LIR, physical layout, object elimination, collection realization, or another optimization
+mechanism.
+
+---
+
+# 15. Reuse and Incremental Boundary
+
+The expensive ratification audit is not a per-use compilation activity.
+
+V1 may ship pre-audited catalog material and reuse valid Exact Platform Surface classification and Platform Use
+Verification results within one compiler generation. The query or memoization mechanism is compiler realization and
+remains replaceable.
+
+Stable platform knowledge and context-specific use legality remain separate reuse boundaries. A source location change
+does not by itself change the ratified meaning of `BigDecimal`, and a new Kontrakt role does not require re-auditing the
+platform contract of every previously ratified type.
+
+V2 may persist or incrementally repair these verification products when their explicit inputs and validity law permit
+it. V2 does not change the semantic result of ratification and does not make cache state, query topology, a Semantic
+Operation Profile, or a catalog row into authority.
+
+Clean recomputation remains the correctness reference.
+
+The exact persistent key, invalidation granularity, scheduling policy, and repair algorithm remain open.
+
+---
+
+# 16. Refusal Boundary
+
+An unsupported or ambiguous platform surface is rejected before it becomes Contract authority.
+
+A surface that is known but requires an Adapter is rejected when it is used in a direct Native role without that
 boundary.
 
-This ADR fixes only the preservation obligation: admitted platform operation semantics include their legal success and
-failure observations where those observations remain visible to user code.
+A forbidden platform or external-technology operation reached by user realization is a realization-verification failure,
+not a valid Contract Failure during governed execution.
+
+Diagnostics explain the violated boundary. They do not decide Native status.
 
 ---
 
-# 8. Role-Qualified Admission
+# 17. Determinism
 
-## 8.1. Native Status Is Role-Specific
+Platform ratification and compilation-time classification are deterministic compiler products.
 
-The Platform-Native Profile records role-qualified support.
+For the same explicit compiler inputs and supported platform knowledge, worker scheduling, cache state, filesystem
+order,
+reflection order, runtime provider order, or the currently executing host JDK cannot change the result.
 
-At minimum, Kontrakt distinguishes whether a surface may be used as a Contract-facing declaration, an external boundary
-carrier, a generated/user API surface, or a user-realization operation surface.
-
-The physical profile schema may encode these roles differently. The semantic distinction must remain available.
-
-A role grant from this profile is necessary but not sufficient. The owning 1D Contract may impose a stricter law.
+A fast cached path and a clean uncached path must agree.
 
 ---
 
-## 8.2. Concrete Implementation and Declared Surface Are Different
+# 18. Intentionally Open
 
-A concrete Java or Kotlin implementation can be accepted as a carrier of a supported declaration without importing the
-implementation's entire contract into the governed machine.
+The exact catalog schema remains open.
 
-For example, an object implementing a supported `List` surface can be observed through that declared surface when the
-boundary can form a complete coherent value without triggering an external capability.
+The exact Java and Kotlin frontend integration remains open.
 
-Kontrakt does not thereby establish the concrete class identity, private storage strategy, framework lifecycle, or
-additional methods as Contract meaning.
+The exact platform-version representation remains open until the related compiler target model is decided.
 
-If the user declares the concrete implementation class itself as the Contract-facing surface, Kontrakt must either
-preserve the complete relevant contract of that declaration for the requested role or reject the declaration. Silent
-widening to a smaller interface is not support.
+The exact vocabulary and minimum semantic contents of Semantic Operation Profiles remain open.
 
----
+The exact set of additional Native values and Native operations remains open and will be refined through the
+ratification
+questions defined by this ADR.
 
-## 8.3. Carrier Observation Must Be Closed
-
-A carrier is directly usable only when the observation required to form the native value is complete at the boundary.
-
-Reading the carrier must not require lazy database loading, network access, provider lookup, future completion, stream
-consumption with hidden producer state, or another undeclared capability.
-
-A third-party object may therefore satisfy a standard interface as a plain carrier in one case and require an Adapter in
-another.
-
-The deciding question is whether the admitted platform surface can be observed completely and coherently without
-importing the carrier's external technology contract.
-
----
-
-# 9. External Technology Boundary
-
-## 9.1. Capability Surface
-
-A **Capability Surface** is a type or operation whose useful meaning depends on access to a live resource, ambient
-runtime state, external system, lifecycle authority, scheduler, provider, or effectful service beyond one closed value.
-
-Capability surfaces are not Platform-Native Contract values merely because Java SE or Kotlin ships them.
-
-I/O handles, sockets, filesystem access, clocks as time sources, random generators as stateful sources, threads,
-executors, atomics as shared mutable synchronization state, reflection objects, class loaders, service/provider
-discovery,
-foreign memory, and foreign functions remain outside the native Contract surface unless a later ADR explicitly grants a
-narrower role.
-
----
-
-## 9.2. External Libraries and Frameworks
-
-Spring, Jackson, Hibernate, Guava, Reactor, `kotlinx.*` libraries, vendor APIs, application-server APIs, and other
-optional
-libraries are not Platform-Native by default.
-
-Their types may appear outside the governed machine. Their behavior may be consumed by an Adapter. They do not enter the
-native profile merely because they are common, deterministic in one application, or implemented entirely in Java or
-Kotlin.
-
-A future explicit integration decision may define an Adapter or another boundary. It does not retroactively enlarge the
-Platform-Native Surface.
-
----
-
-## 9.3. Adapter Output Does Not Import Adapter Authority
-
-An Adapter may produce a native platform value or user-defined Contract material.
-
-After that output crosses the appropriate boundary, later Contract processing judges the produced material under its own
-law.
-
-The framework, database, serializer, network client, or provider that produced the value does not accompany it as hidden
-Contract authority.
-
-Diagnostic provenance may retain the external origin without making that origin semantic identity.
-
----
-
-# 10. Frontend Resolution Contract
-
-## 10.1. Frontend Input
-
-Platform resolution consumes explicit source declaration material, the exact Platform Target Binding, and the current
-Platform-Native Profile revision required to interpret that target.
-
-It may also consume source-language semantic information already established by the Java or Kotlin frontend.
-
-It does not consume current runtime class discovery as semantic authority.
-
-Reflection, class loading, compiler host APIs, or loaded bytecode may be used as acquisition evidence in one frontend
-implementation. They cannot override the profile or fill semantic gaps heuristically.
-
----
-
-## 10.2. Exact Resolution
-
-A platform declaration is resolved only when one exact supported surface can be selected for the requested role.
-
-Resolution closes source-language mapping, generic constituent meaning, relevant nullability/presence relation, and the
-observable platform obligations required by the owning candidate.
-
-Assignability alone is not enough. Package prefix matching is not enough. Simple class-name matching is not enough.
-
-If multiple native meanings remain possible, the candidate is not resolved.
-
----
-
-## 10.3. Kotlin/JVM Mapping Is Source Meaning
-
-Kotlin/JVM mapped types are resolved from the Kotlin declaration the user wrote, not reconstructed later from the erased
-or runtime Java class.
-
-A Kotlin read-only `List` surface and a Java `List` declaration can share one JVM runtime interface while exposing
-different source-level affordances. Kontrakt preserves the declared source-language surface needed by legal observation.
-
-The frontend may also record the JVM realization mapping required by later code generation. That mapping does not
-replace
-the source-level contract.
-
----
-
-## 10.4. Generic and Aggregate Closure
-
-A native generic container does not make its constituents native automatically.
-
-Every constituent type required to interpret the declaration must independently resolve under the relevant Contract,
-platform, or user-defined type law.
-
-The frontend must reject a candidate whose outer native surface is known but whose constituent meaning remains external,
-ambiguous, or unresolved for that role.
-
-ADR-0072 owns the additional collection law.
-
----
-
-## 10.5. Frontend Refusal Boundary
-
-The following conditions fail before authority is established:
-
-```text
-unsupported Platform Target Claim
-unknown or unsupported native surface
-surface known but illegal for the requested role
-operation known but not admitted
-ambiguous Java/Kotlin mapping
-native outer type with unresolved constituent meaning
-use of preview / experimental / vendor-specific surface without explicit support
-```
-
-These are compiler/frontend refusal conditions. They are not Input occurrence failures and do not create Contract
-Failure
-material merely because compilation stopped.
-
-Diagnostics may explain the reason. Diagnostics do not decide support.
-
----
-
-## 10.6. Frontend Determinism
-
-For the same source declaration, Platform Target Binding, profile revision, and other explicit frontend inputs, platform
-resolution must produce the same resolved meaning.
-
-Classpath enumeration order, current host JDK, loaded implementation class, runtime provider set, reflection order,
-filesystem order, worker schedule, and cache state cannot select the result.
-
-A clean frontend computation remains the correctness reference for incremental reuse.
-
----
-
-## 10.7. Platform Contract Source and Runtime Evidence
-
-The Platform-Native Profile is derived from the supported Java, JVM, and Kotlin language/library contracts for the exact
-target version.
-
-Observed behavior of one JDK build, one vendor implementation, or one runtime experiment may be used as verification
-evidence. It does not define an unspecified platform guarantee.
-
-If the standard leaves one behavior unspecified, Kontrakt may choose a deterministic private realization when that
-choice
-remains unobservable as source-platform meaning. It may not publish the private choice as though the platform had
-promised it.
-
-A mismatch between the profile and the normative supported platform contract is a compiler defect.
-
----
-
-# 11. Resolved Contract HIR Contract
-
-## 11.1. Resolved Platform Obligation Is Compiler-Semantic Material
-
-When a platform-native distinction participates in one Contract Definition Candidate, Visible HIR preserves that
-resolved distinction as compiler-semantic candidate meaning.
-
-The platform profile itself does not become HIR authority.
-
-HIR carries the resolved obligation required to interpret the candidate without reopening the Java or Kotlin platform.
-
-```text
-source platform declaration
-    ↓ frontend resolution
-resolved platform obligation
-    ↓ participates in
-Resolved Contract HIR candidate
-```
-
----
-
-## 11.2. HIR Candidate Sufficiency
-
-A candidate that uses a Platform-Native Surface is sufficient for later Establishment only when HIR can state every
-platform distinction that the owning law needs to interpret that candidate.
-
-HIR consumers must not need to ask:
-
-```text
-what does this Java class mean on this JDK?
-what did Kotlin map this source type to?
-was this operation using ambient state?
-which platform contract did this collection surface promise?
-```
-
-Those questions belong to frontend resolution.
-
----
-
-## 11.3. Platform Surface Binding and Contract Meaning Remain Separate
-
-HIR distinguishes the resolved platform-facing obligation from the owning Contract candidate meaning that consumes it.
-
-A platform surface may be required later to regenerate a user-facing API or verify user realization while not itself
-being Definition identity.
-
-Conversely, one platform distinction can be part of Definition meaning when the owning 1D law makes that distinction a
-determinant.
-
-Physical co-location of those materials does not merge their semantic roles.
-
----
-
-## 11.4. HIR Information-Loss Boundary
-
-HIR may erase implementation details that no remaining authority or legal observer requires.
-
-HIR may not erase a platform-native distinction while that distinction remains required by:
-
-- the owning Contract candidate,
-- Establishment,
-- a later legal user-realization boundary,
-- a generated API surface,
-- or a downstream preservation proof.
-
-The list names consumers of the law. It does not require one universal metadata record.
-
-The transformation that removes a distinction carries the burden of proving that no remaining legal observation depends
-on it.
-
----
-
-## 11.5. HIR Equality and Reuse
-
-Platform provenance, target attribution, candidate semantic equality, and physical profile identity remain separate.
-
-Two HIR projections can be semantically equal even when they were resolved under different profile revisions, provided
-current resolution proves the same consumer-visible meaning.
-
-A changed profile revision invalidates only the products whose determining resolution can change.
-
-HID, fingerprint, serialized bytes, or profile row identity may accelerate comparison. None of them establishes HIR
-semantic equality by itself.
-
----
-
-## 11.6. No Runtime Platform Re-Interpretation
-
-After Visible HIR is formed, Establishment, verifier, optimizer, backend, diagnostics, and query consumers do not reopen
-runtime classes or standard-library documentation to rediscover native meaning.
-
-A missing obligation is a frontend/HIR defect. It is not repaired by later interpretation.
-
----
-
-# 12. Establishment Contract
-
-## 12.1. No Independent Established Platform Authority
-
-This ADR does not create `Established Platform Material` as a new Contract authority.
-
-Platform resolution produces compiler-semantic obligation material. The owning Contract establishes its own meaning
-under ADR-0063.
-
-```text
-resolved platform obligation
-+
-complete owning Contract candidate
-    ↓
-owning Establishment law
-    ↓
-Established owning material
-```
-
-The platform remains external source meaning that the owning authority is required to respect where applicable.
-
----
-
-## 12.2. Establishment Input Requirement
-
-If one platform-native distinction is required to interpret the candidate, the Establishment input must already carry an
-exact resolved relation to that distinction.
-
-Establishment may not resolve an unresolved Java class, inspect one runtime object, select one Kotlin mapping, or
-consult
-one provider to complete candidate meaning.
-
-An unresolved or partial platform obligation makes the Establishment input incomplete.
-
----
-
-## 12.3. Establishment Output Requirement
-
-Successful Establishment preserves only the meaning owned by the establishing Contract.
-
-Where an admitted platform distinction is part of that meaning, the output preserves it exactly until another authority
-explicitly establishes different meaning.
-
-Establishment does not additionally establish:
-
-```text
-platform profile authority
-backend representation
-native operation reachability
-optimization legality
-adapter provenance as semantic identity
-```
-
-Those remain separate concerns.
-
----
-
-## 12.4. Later 1D Authority May Change the Domain
-
-Platform preservation at one boundary does not freeze meaning for the whole pipeline.
-
-Admission may refuse material. Canonicalization may establish another representative relation. Lowering may establish a
-target meaning that no longer carries every source distinction. Fact may apply its own sameness law.
-
-That change is legal only because the later authority owns a new judgment or result meaning.
-
-It does not rewrite what the earlier platform-facing Input or user-realization surface meant.
-
----
-
-## 12.5. Canonical Contract World Boundary
-
-The Canonical Contract World contains the Established Definition meaning owned by Contracts.
-
-It does not need to retain the whole Platform-Native Profile.
-
-It retains only the established meaning and exact relations required by the owning Contract. Compiler-side platform
-surface bindings may remain in separate products when generated APIs, realization verification, diagnostics, or backend
-projection still need them.
-
-This separation prevents platform metadata from becoming Contract authority while preserving downstream sufficiency.
-
----
-
-# 13. User Realization Contract
-
-## 13.1. Declared Native Surface Is Preserved
-
-When user realization receives or returns an admitted native surface, Kontrakt preserves the observable contract that
-the
-user was legally allowed to rely on at that boundary.
-
-Internal representation freedom does not permit a weaker substitute.
-
-If Kontrakt cannot realize the declared surface without losing an observable obligation, that realization is invalid.
-The compiler must reject it rather than silently narrowing the contract.
-
----
-
-## 13.2. Native Value Does Not Open a Capability Tunnel
-
-The presence of a native value in user realization does not make arbitrary reachable platform operations legal.
-
-The realization verifier still applies the Native Operation law and the external-technology boundary.
-
-A legal `Instant` parameter does not authorize current-time acquisition. A legal collection does not authorize a lazy
-framework-backed collection that reaches a database while being observed.
-
-Only the declared native obligation crosses the boundary.
-
----
-
-## 13.3. Local Platform Values
-
-User realization may create and manipulate supported local Java or Kotlin values when those operations are legal under
-the platform profile and surrounding realization law.
-
-Such local values do not gain Contract authority merely because they exist inside the implementation.
-
-When one local result is proposed back into a Contract-visible boundary, the receiving Contract judges that result under
-its own law.
-
-This keeps ordinary JVM implementation ergonomics without allowing local object state to become hidden Contract state.
-
----
-
-## 13.4. Result Re-entry
-
-A user realization result that carries a native platform surface is candidate material until the next owning boundary
-accepts or establishes it.
-
-User code cannot establish Fact, Publication, or another Contract result merely by constructing the corresponding Java
-or
-Kotlin object.
-
-The platform surface remains usable. Authority still comes from the Contract pipeline.
-
----
-
-# 14. Realization and Optimization Preservation
-
-## 14.1. Observation-Preservation Law
-
-A physical realization is valid only when every platform-native obligation that remains legally observable is preserved.
-
-```text
-resolved / established semantic obligation
-    ↓ constrains
-optimized representation
-    ↓ observed through
-legal Contract or user boundary
-```
-
-Representation equality is not the criterion.
-
-The criterion is preservation of the applicable semantic and platform-visible observation law.
-
----
-
-## 14.2. Representation Replacement Law
-
-A Java or Kotlin object may disappear when object identity is not part of the admitted meaning.
-
-The physical representation may be replaced only when every distinction that remains observable under the established
-platform and Contract obligations is preserved. The replacement itself does not establish new meaning and does not
-become new semantic authority.
-
-This ADR does not choose the replacement representation or the mechanism used to realize it.
-
----
-
-## 14.3. Semantic Anchor Must Survive Required Observation
-
-Hot execution material does not need to carry full frontend metadata beside every value.
-
-It must retain an exact relation, plan obligation, verified projection, or another sufficient semantic anchor so that
-the
-compiler can justify the realized behavior against the required platform contract.
-
-An implementation may encode that relation in a compact form. The physical identifier or encoding is not the obligation
-itself.
-
----
-
-## 14.4. No Early Loss for Target Convenience
-
-Later IR and backend transformations may progressively remove high-level material only after the removed distinction is
-proven unnecessary for every remaining legal observation.
-
-Target convenience is not a proof.
-
-The current JVM representation also does not define the highest legal information-loss point.
-
----
-
-## 14.5. Transformation Validation Obligation
-
-A transformation that can affect a platform-visible obligation must have a validation path appropriate to its risk.
-
-V1 does not mandate one proof technology.
-
-Reference execution, structural verification, differential checking, pass-specific preservation checks, or later formal
-proof may be used. The architecture must preserve the input and output semantic relation needed to perform that
-checking.
-
-This keeps V1 practical while leaving a direct seam for stronger translation validation.
-
----
-
-# 15. Failure and Diagnostic Boundary
-
-## 15.1. Unsupported Surface Is a Compile-Time Refusal
-
-An unknown platform type, unsupported target, illegal role, forbidden native operation, or ambiguous mapping fails
-before
-Contract authority is established.
-
-That refusal is a compiler/frontend result.
-
-It is not an Input occurrence failure and does not create an Established Failure merely because the user sees a
-diagnostic.
-
----
-
-## 15.2. Runtime Carrier Violation Belongs to the Owning Boundary
-
-A supported declaration can still receive one runtime carrier that cannot form the declared value coherently.
-
-The owning boundary decides that occurrence result.
-
-ADR-0064 and ADR-0072 own Input-time carrier refusal for Input and collection cases. This ADR does not create a parallel
-platform runtime failure authority.
-
----
-
-## 15.3. Forbidden User Realization Operation Is Verification Failure
-
-If user implementation reaches an Adapter-only capability or an operation outside the permitted native surface, the
-realization is not admitted as a legal governed implementation.
-
-The verifier reports the exact forbidden boundary relation.
-
-It does not reinterpret the operation as a Contract Failure that occurred during a valid run.
-
----
-
-## 15.4. Backend Preservation Failure Is a Compiler Defect or Rejection
-
-If the backend cannot preserve an already-supported native obligation, it cannot silently emit a weaker machine.
-
-The compiler must reject the unsupported realization or treat the discrepancy as a compiler correctness defect.
-
-A user Contract does not absorb backend miscompilation as ordinary domain failure.
-
----
-
-# 16. Platform Evolution
-
-## 16.1. New Platform Version Audit
-
-Supporting a new Java or Kotlin version requires a semantic compatibility audit.
-
-The audit checks newly available surfaces, removed or changed guarantees, Java/Kotlin mapping changes, experimental or
-preview status, hidden-input behavior, role legality, HIR representability, and preservation through user realization.
-
-Successful compilation against the SDK is not sufficient evidence.
-
----
-
-## 16.2. Adding One Native Surface
-
-A new profile entry is admitted only when Kontrakt can state its relevant observable contract completely enough for
-every
-role it claims to support.
-
-The audit must answer:
-
-```text
-What exact declaration or operation is being admitted?
-Which explicit platform target owns that contract?
-What observations are guaranteed?
-What hidden inputs or capabilities can it reach?
-Which Contract-facing and realization roles are legal?
-What HIR meaning must survive?
-Where may information first be discarded?
-How is preservation checked after optimization?
-```
-
-If those questions cannot be answered, the surface remains Adapter-only or unsupported.
-
----
-
-## 16.3. Stable, Preview, Experimental, and Vendor Surfaces
-
-Stable standard Java and Kotlin contracts are candidates for the native profile.
-
-Preview, incubating, experimental, vendor-specific, JDK-specific, or implementation-specific APIs are excluded from the
-baseline unless a later explicit decision adds one with a version-scoped compatibility law.
-
-Experimental Kotlin stdlib status and JDK availability are evidence for this classification. They do not replace the
-Kontrakt audit.
-
----
-
-## 16.4. Vendor Neutrality
-
-Kontrakt native meaning follows the admitted standard platform contract, not one vendor's undocumented behavior.
-
-A vendor-specific extension remains external unless explicitly supported outside the baseline.
-
-A compiler running on one vendor JDK must not change native meaning merely because that implementation exposes
-additional
-classes, providers, or behavior.
-
----
-
-# 17. Reuse and Incremental Law
-
-Platform resolution is a compiler product and may be reused.
-
-Reuse is valid only for the exact determining source declaration, Platform Target Binding, relevant profile revision,
-source-language mapping, role context, and other producer-owned semantic inputs.
-
-A profile change does not require invalidating unrelated HIR merely because one global profile file changed physically.
-The producer may expose finer semantic projections so that only affected native-surface resolutions change.
-
-Incremental evaluation cannot disagree with a clean resolution.
-
-The profile row, query node, cache key, fingerprint, or persistent artifact does not become platform or Contract
-authority.
-
----
-
-# 18. Consumer Sufficiency
-
-Frontend resolution must leave enough material for downstream consumers to do their own jobs without reinterpreting the
-platform.
-
-Establishment needs the exact resolved obligation required by the owning Contract candidate.
-
-Generated API formation needs the platform-facing surface that remains part of the legal user boundary.
-
-User-realization verification needs the admitted operation and capability boundary.
-
-Optimization needs the observation-preservation obligation that limits information loss.
-
-Diagnostics needs exact provenance and classification sufficient to explain why one surface is native, Adapter-only, or
-unsupported without becoming authority itself.
-
-No consumer may add a platform distinction merely because the producer omitted it.
-
----
-
-# 19. Verification and QA Obligation
-
-A claimed native surface requires executable evidence in addition to documentation.
-
-Kontrakt must maintain conformance tests for supported target versions and negative tests for capability boundaries.
-Where a platform operation is optimized or re-realized, differential or reference checking must be possible against the
-unoptimized legal behavior.
-
-Clean compilation and incremental compilation must agree on resolved native meaning.
-
-Cross-version tests must verify that adding support for a new Java or Kotlin target does not silently change meaning for
-an older explicit target.
-
-Determinism tests must vary worker scheduling, cache state, physical ordering, and host runtime where practical while
-requiring identical semantic resolution for identical explicit inputs.
-
-The exact test harness is implementation. The obligations are not optional for a surface that Kontrakt claims to
-support.
-
----
-
-# 20. Intentionally Open
-
-The physical schema of the Platform-Native Profile remains open.
-
-The exact Kotlin frontend integration and Java frontend integration remain implementation work.
-
-Additional vanilla value candidates such as `UUID`, `Optional`, URI-related values, Kotlin `Duration`, `ZoneId`, and
-`ZonedDateTime` remain open until separately audited. Their apparent value-like shape is not sufficient for automatic
-admission.
-
-MIR, LIR, JVM Plan/IR, physical layout, representation replacement, collection realization, reprojection strategy, and
-backend specialization remain Design work.
-
-The exact translation-validation technology remains open.
+HIR, MIR, LIR, backend representation, translation validation, and physical optimization remain owned by their
+respective
+ADR and Design work.
 
 Framework-specific Adapter generation remains outside this ADR.
 
 ---
 
-# 21. Rejected Directions
+# 19. Rejected Directions
 
-## 21.1. Admit All of `java.base`
-
-Rejected.
-
-The module contains both fundamental values and capability/runtime mechanisms.
-
----
-
-## 21.2. Admit All of `java.*` or Java SE
+## 19.1. Native by Namespace
 
 Rejected.
 
-Standard-platform status is wider than the Contract-native value boundary.
+A standard namespace contains both ordinary values and capability or runtime mechanisms.
 
 ---
 
-## 21.3. Admit All of `kotlin-stdlib`
+## 19.2. Native by Runtime Availability
 
 Rejected.
 
-The library contains ordinary values together with lazy computation, I/O helpers, concurrency support, and other
-behavior that requires a separate legality decision.
+Classpath presence, host JDK availability, inheritance, or assignability does not prove ratification.
 
 ---
 
-## 21.4. Native by Package, Interface, or Assignability
+## 19.3. Full Audit on Every Compilation Use
 
 Rejected.
 
-Namespace, inheritance, and assignability do not prove complete semantic compatibility or role legality.
+The expensive platform audit belongs to compiler/platform support work. Normal compilation performs exact lookup and
+context-sensitive legality checks only for surfaces that are actually used.
 
 ---
 
-## 21.5. Native by Value-Based Classification
+## 19.4. Catalog as Authority
 
 Rejected.
 
-Value-based status is useful evidence. It is not a complete capability, operation, version, or role audit.
+The catalog is verified compiler knowledge. It does not define Contract meaning and cannot make an illegal surface legal
+because one row exists.
 
 ---
 
-## 21.6. Native Type Means Every Operation Is Native
+## 19.5. Native Type Means Every Operation Is Native
 
 Rejected.
 
-A legal value can expose an operation that obtains hidden environment state.
+A legal value surface can expose an operation that acquires ambient state or another capability.
 
 ---
 
-## 21.7. Third-Party Contract Preservation Inside Core
-
-Rejected by default.
-
-External library and framework contracts enter through Adapter or another explicit external boundary. The narrow JVM
-native exception does not generalize to the ecosystem.
-
----
-
-## 21.8. Backend Reconstructs Platform Meaning
+## 19.6. Platform Optimization by Default Replacement
 
 Rejected.
 
-Backend inspection cannot repair missing frontend semantic resolution.
+Kontrakt transforms platform behavior only when the relevant preservation obligation is established. Otherwise the JVM
+retains that responsibility.
 
 ---
 
-## 21.9. Lower to JVM Representation Before Preservation Obligations Are Closed
+## 19.7. One Global Native Boolean per JVM Class
 
 Rejected.
 
-Physical JVM shape is not sufficient evidence that all source-level Java or Kotlin obligations have been retained.
+A value surface, a carrier, and an operation can have different legal results. Class-level admission is too coarse to
+represent those distinctions.
 
 ---
 
-## 21.10. Platform Target Inferred from Compiler Host
+## 19.8. Role-Expanded Platform Catalog
 
 Rejected.
 
-The current JDK, installed provider set, or runtime classpath cannot silently define compilation meaning.
+Platform knowledge is not duplicated for every Kontrakt role. Role legality is checked when the ratified surface is
+used.
 
 ---
 
-# 22. Consequences
+## 19.9. Catalog Entry per Generic Instantiation
+
+Rejected.
+
+Generic and aggregate combinations are checked by constituent closure during compilation. Pre-expanding every
+combination would duplicate platform knowledge and create unbounded catalog growth.
+
+---
+
+## 19.10. One Independent Semantic Model per Callable
+
+Rejected.
+
+Exact callable identity is required, but repeated platform obligations may share a Semantic Operation Profile. Exact
+callable exceptions remain independently expressible.
+
+---
+
+## 19.11. Delegation by Catalog Absence
+
+Rejected.
+
+Unknown operations fail closed. JVM delegation is a ratified result, not a default created by missing compiler
+knowledge.
+
+---
+
+# 20. Consequences
 
 Java and Kotlin remain natural user surfaces without making the JVM ecosystem part of Contract authority.
 
-The frontend gains a stronger responsibility. It must resolve platform-native meaning exactly rather than treat host
-classes as opaque type names.
+Platform support becomes explicit compiler verification work rather than scattered hard-coded type checks.
 
-HIR becomes more complete. It retains admitted platform obligations only as long as later authority or legal observation
-requires them, while remaining free to erase implementation mechanics.
+Normal compilation stays cheap because expensive platform ratification is performed outside the ordinary per-use path.
+The compiler examines only the surfaces that a compilation actually uses and may reuse stable surface knowledge and
+context-specific use-verification results independently.
 
-Establishment remains clean. It consumes resolved candidate meaning and does not create a parallel Java authority.
+The catalog does not explode across Kontrakt roles or generic instantiations. Exact callable identity remains available
+where operation semantics differ, while repeated operation obligations may share audited semantic profiles.
 
-User realization remains practical. Ordinary native values and legal standard operations can be used directly, while
-capability acquisition and external technology remain behind the airlock.
+The Adapter airlock remains strong. Framework, resource, provider, environment, and vendor authority cannot enter merely
+through a standard-looking JVM type.
 
-Optimization gains representation freedom because the observable preservation obligation is separated from JVM object
-topology.
+Frontend and HIR gain a preservation duty but do not become platform reimplementation layers.
 
-Platform upgrades become explicit compatibility work. This adds maintenance cost, but it prevents host-version drift and
-silent semantic change.
+Optimization remains conservative at the JVM boundary. Kontrakt exploits Contract-specific knowledge where it has real
+semantic authority and otherwise leaves platform optimization to the JVM.
 
-ADR-0064, ADR-0071, and ADR-0072 require corresponding references to this boundary. The future realization design must
-consume the operation and observation-preservation laws defined here.
-
----
-
-# 23. Non-Normative Engineering Basis
-
-Kontrakt project law remains authoritative. The external systems below are engineering evidence only.
-
-Java SE distinguishes portable `java.*` APIs from JDK-specific `jdk.*` APIs, but the portable platform is still wider
-than Kontrakt's native value boundary. `java.base` itself includes fundamental language classes together with
-reflection,
-foreign access, runtime support, and reference-processing facilities.
-
-Java's value-based-class guidance is useful because it explicitly separates value substitution from object identity for
-classes such as primitive wrappers and many date/time values. It also demonstrates why JVM object identity cannot be the
-semantic identity of admitted value material.
-
-`BigDecimal` demonstrates that a platform value can expose more than one important equality-related relation. Numerical
-ordering and `equals` differ because scale is observable. This is direct evidence against replacing platform meaning
-with
-a smaller compiler-preferred numerical model.
-
-Kotlin/JVM mapped types demonstrate that source-level language meaning cannot be recovered from runtime class identity
-alone. Kotlin distinguishes read-only and mutable collection surfaces even though Java runtime representations are
-mapped underneath them.
-
-Rust `core` is useful as a boundary precedent because it deliberately excludes heap allocation, concurrency, and I/O
-from its minimal portable foundation. Kontrakt uses a different boundary, but the example supports separating basic
-language values from platform integration.
-
-The WebAssembly Component Model similarly distinguishes ordinary value types from resource handles and keeps canonical
-lifting/lowering separate from higher-level type meaning. This supports preserving semantic obligation above replaceable
-physical realization.
-
-Recent work on cross-language and cross-target compilation reinforces the same boundary. Forcrat reports that C and Rust
-I/O APIs require explicit origin and capability analysis because library functions that appear analogous do not preserve
-the same resource semantics automatically. Wasm cross-compilation studies have found silent semantic differences caused
-by standard-library implementations, unsupported system APIs, and compiler defects. Java reproducible-build research
-shows that hidden or unstable build inputs remain a practical source of nondeterminism at ecosystem scale.
-
-Recent verified-compilation work such as HELIX and cross-level RISC-V refinement work further support keeping explicit
-semantic relations across multiple lowering levels instead of assuming that target representation preserves source
-meaning automatically. Kontrakt does not require those proof systems in V1, but it preserves the semantic seams needed
-for later translation validation.
+The detailed ratification criteria, additional Native surfaces, and version-evolution law remain open for the next
+review
+of this ADR.
 
 ---
 
-# 24. Final Law
+# 21. Non-Normative Engineering Basis
 
-Kontrakt accepts a narrow, explicitly audited JVM Platform-Native Surface because Java and Kotlin are unavoidable parts
-of
-its host programming environment.
+The architecture follows a pattern used by production compilers and systems: expensive platform knowledge is audited or
+generated outside the ordinary hot compilation path, while actual compilation performs narrow lookup and legality
+checking over the referenced surface.
 
-That exception ends at the exact admitted platform contract.
+LLVM TargetLibraryInfo separates compiler-known library semantics from target-specific availability and binds known
+library behavior to exact functions rather than an entire namespace. Rust compiler-known library items are explicit
+rather than inferred from all of the standard library, and associated items are resolved from exact semantic owners.
+Clang also generates compact compiler tables for large builtin surfaces instead of rediscovering their semantics from
+source on every compilation.
 
-```text
-explicit platform target
-    ↓
-exact native-surface resolution
-    ↓
-Resolved Contract HIR obligation
-    ↓
-owning Contract Establishment
-    ↓
-representation may change
-    ↓
-remaining legal observations preserve the required contract
-```
+These systems also show why identity precision and semantic reuse should be separate. A compiler can bind an exact
+callable while sharing generated or summarized semantic knowledge across many callables. Kontrakt adopts that principle
+without making another compiler's builtin model part of Contract authority.
 
-Java, Kotlin, the JDK, and their libraries do not become general Contract authority.
+Bazel and Nix show the corresponding failure mode from build systems: undeclared ambient inputs break correctness and
+reproducibility even when the underlying tool or filesystem makes them conveniently available.
 
-A later 1D Contract may establish new meaning under its own law. External technology enters through Adapter or another
-explicit boundary. Compiler optimization may replace physical form, never the meaning that a remaining authority or
-legal
-observer is still entitled to see.
+These systems are references for separation of concerns. They do not define Kontrakt Contract authority.
