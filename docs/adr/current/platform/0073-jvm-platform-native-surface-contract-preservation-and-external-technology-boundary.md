@@ -1,4 +1,4 @@
-# ADR-0073: JVM Platform-Native Surface, Exact Contract Preservation, and External Technology Boundary
+# ADR-0073: JVM Platform-Native Contract Ratification and External Contract Infiltration Boundary
 
 ## Status
 
@@ -30,127 +30,67 @@ Proposed
 
 # 1. Context
 
-Kontrakt is a Contract compiler hosted on the JVM.
+*What Contract Is* treats external contract infiltration as a direct threat to Contract authority.
 
-That host choice creates a narrow compatibility obligation.
+An external interface does not become a Core contract because it is familiar, typed, standardized, or widely used. If a
+library, framework, runtime mechanism, or platform is allowed to decide the obligation inside the Core, the outside has
+crossed the boundary and begun defining the machine.
 
-A Java or Kotlin user must be able to express ordinary Contract-facing values with the basic platform types that are
-unavoidable in normal JVM programs. Kontrakt must not require a second wrapper universe for primitive values, strings,
-arrays, ordinary platform collections, arbitrary-precision numbers, or the ordinary immutable date/time values that are
-already part of the platform language surface.
+Kontrakt nevertheless runs on the JVM. Java and Kotlin therefore impose a small set of unavoidable declaration surfaces
+that users must be able to use naturally when they declare Input, Contract-facing values, or user realization. Primitive
+values, strings, arrays, ordinary standard collections, arbitrary-precision numeric values, and the admitted immutable
+date/time values are examples.
 
-The same obligation does not extend to the entire JDK, Java SE API, Kotlin standard library, or JVM ecosystem.
+Kontrakt does not treat this as general permission to import external contracts. It treats it as a narrow host-platform
+exception that must be explicitly ratified.
 
-Those environments contain capabilities, runtime services, provider mechanisms, I/O, concurrency facilities,
-reflection, foreign-memory access, lazy computation, framework integration, and other behavior whose meaning is not one
-closed Contract value.
-
-Kontrakt therefore needs one explicit law for the small part of Java and Kotlin that is admitted directly because the
-JVM is the selected host platform.
-
-The law must also protect the opposite boundary.
-
-When a user selects an admitted Java or Kotlin surface, Kontrakt may not weaken, reinterpret, or silently normalize the
-contract that surface already promises. The compiler may change representation. It may not change remaining observable
-meaning merely because another backend representation is easier to optimize.
-
-This is a compiler-wide concern.
-
-Frontend resolution must know what platform contract was selected. Resolved Contract HIR must retain every distinction
-that later authority or legal user code still needs. Establishment must preserve source-owned meaning under the owning
-Contract law. User realization must observe the platform contract it was promised. Optimization and backend lowering may
-replace representation only after the required meaning is independently preserved.
-
-This ADR defines that boundary.
+This ADR defines that ratification boundary.
 
 ---
 
 # 2. Problem
 
-The boundary cannot be inferred from package or module membership.
+There are two ways to violate the boundary.
 
-`java.base` contains language fundamentals and immutable values, but it also contains reflection, foreign access,
-class-loading support, reference processing, runtime services, I/O-related facilities, and other mechanisms that are not
-plain Contract values.
+The first is to accept the JVM platform as Contract authority. If Kontrakt admits `java.*`, `java.base`,
+`kotlin-stdlib`,
+or another familiar API merely because it is part of the host environment, platform contracts begin deciding Core
+meaning. The same mistake becomes worse when it is extended to frameworks, libraries, providers, runtime hooks, or
+vendor APIs.
 
-Kotlin has the same problem. `kotlin-stdlib` contains basic values and collections, but also lazy sequences, I/O
-helpers,
-threading helpers, atomics, and other operations whose legality cannot be inferred from library membership alone.
+The second is to pretend the host platform does not exist. Java and Kotlin users cannot reasonably declare ordinary JVM
+values if Kontrakt forces an artificial wrapper or Adapter around every primitive value, string, array, collection,
+`BigInteger`, `BigDecimal`, or admitted immutable time value. That does not remove the platform contract. It only hides
+it behind another surface.
 
-A second problem is that type support and operation support are different.
+Kontrakt therefore needs one exact exception. A small, versioned, explicitly audited Platform-Native Surface may be
+ratified because the JVM host makes that surface unavoidable. Ratification preserves the platform contract that the user
+actually selected. It does not donate Contract authority to the platform, and it does not make neighboring APIs native
+by
+association.
 
-An immutable value can be admissible while one method associated with that type reads a clock, default locale, provider,
-random source, system property, or another hidden input. Admitting the value must not transitively admit every operation
-reachable from its class or package.
-
-A third problem is source-language mapping.
-
-Java and Kotlin can expose different source-level contracts over the same JVM runtime representation. Kotlin maps many
-Java types at compile time, including collection interfaces. Runtime class identity is therefore insufficient to recover
-the contract the user selected.
-
-A fourth problem is role legality.
-
-A concrete mutable platform class can be a legal external carrier while being illegal as an established immutable Fact
-surface. A platform value can be legal in user realization while one capability-acquiring operation on that value
-remains
-illegal. One boolean `supported` flag cannot represent these distinctions.
-
-A fifth problem appears in HIR and optimization.
-
-If the frontend retains only a Java class name, JVM descriptor, Kotlin type name, or current runtime object, later
-stages
-must reopen the platform or reconstruct meaning from implementation detail. If the compiler lowers too early, a physical
-representation can erase an equality, order, scale, range, failure, or other obligation that legal observation still
-requires.
-
-A sixth problem is platform evolution.
-
-Java, Kotlin, and the JDK continue to add APIs. Supporting a new platform version cannot mean only that Kontrakt
-compiles
-against a newer SDK. A new version can add a surface, alter availability, change a source-language mapping, or change
-the
-observable contract that the compiler must preserve.
-
-Kontrakt needs an exact, deterministic, version-aware platform boundary that remains subordinate to Contract authority.
+Everything outside that ratified surface remains outside. It must enter through the appropriate Adapter or other
+declared
+boundary before it can influence the governed machine.
 
 ---
 
 # 3. Decision Drivers
 
-Determinism has priority over convenience.
+Contract authority remains primary. Platform-native support is an exception created by the JVM host constraint, not a
+second source of Contract authority.
 
-The same Contract source, the same explicit platform target, and the same other semantic inputs must resolve to the same
-platform obligations regardless of the JDK that happens to run the compiler, classpath discovery order, loaded classes,
-reflection order, cache state, worker schedule, or physical compiler layout.
+Ratification must be exact. The compiler must know the selected platform target, the admitted surface, the legal role,
+and every observable platform distinction that remains relevant. Unknown or incomplete meaning fails closed.
 
-Platform compatibility is narrow.
+Input and user realization preserve a ratified platform contract because those boundaries expose the user's selected JVM
+surface. A later 1D Contract may reject, canonicalize, lower, or establish different meaning under its own authority.
+The
+change must occur at that explicit Contract boundary.
 
-Kontrakt recognizes only the Java and Kotlin surface required to provide a natural JVM programming experience. This does
-not grant native status to arbitrary standard-library modules, optional libraries, providers, frameworks, or vendor
-APIs.
-
-Platform meaning is preserved exactly where it remains legally observable.
-
-Input and user realization do not receive authority to replace a JVM contract with a preferred Kontrakt interpretation.
-A later 1D Contract may establish different meaning under its own law. The change must occur at that explicit authority
-boundary.
-
-Frontend meaning must be complete before Visible HIR.
-
-Establishment and later compiler consumers must not infer missing platform semantics from current host classes or
-backend
-representation.
-
-Physical realization remains replaceable.
-
-A platform object may disappear after its observable obligations have been represented independently. Physical
-representation may change when the required meaning remains preserved.
-
-Unknown meaning fails closed.
-
-Kontrakt does not guess that a type is native because it resembles a supported value or implements one familiar
-interface.
+Frontend and HIR must preserve enough resolved platform meaning that Establishment and later legal observers never need
+to reconstruct it from runtime classes or implementation detail. Physical representation remains replaceable after those
+obligations are independently preserved.
 
 ---
 
