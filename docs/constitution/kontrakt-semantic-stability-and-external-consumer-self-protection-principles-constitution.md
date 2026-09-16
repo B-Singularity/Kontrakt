@@ -4,1871 +4,813 @@
 
 Working Constitution draft.
 
-This document is not an ADR.
+This document belongs under `constitution/`. It is not an ADR and does not record one local architecture decision. Its
+purpose is broader: it defines project-wide constraints that future ADRs, compiler protocols, designs, public APIs,
+generated artifacts, and backend implementations must preserve.
 
-It isolates project-wide laws that protect Kontrakt from becoming the kind of unstable external platform that ADR-0073
-is currently learning to defend against.
-
-This document belongs under `constitution/`.
-
-It remains a working draft until the project-wide laws are sufficiently closed.
+The document remains a draft. The principles are intentionally stronger and more durable than the engineering mechanisms
+that will eventually implement them.
 
 ---
 
 # 1. Purpose
 
-Kontrakt is currently examining the JVM as an external platform.
+ADR-0073 began with a JVM-specific problem: Kontrakt must use a host platform without allowing the host platform's
+accidental behavior to become Contract authority. That investigation exposes the same risk in the opposite direction. If
+Kontrakt succeeds, other software will eventually treat Kontrakt as a platform. Those consumers may depend on its APIs,
+generated code, serialized material, diagnostics, protocols, compiler behavior, compatibility rules, or other observable
+behavior.
 
-That work exposes a broader problem.
+The dangerous point is not simply that public behavior exists. The dangerous point is that an implementation choice can
+escape, remain observable for long enough, and become something consumers rely on even though the project never intended
+to promise it. At that moment a realization detail has turned into compatibility debt.
 
-Any successful software system eventually becomes another system's platform.
+Kontrakt therefore needs a self-protection rule that applies above one host language, one backend, and one compiler
+implementation:
 
-Its users depend on:
+> **Declared semantic authority must remain stable, while realization remains replaceable.**
 
-- public APIs,
-- serialized material,
-- generated artifacts,
-- compiler behavior,
-- protocol semantics,
-- failure behavior,
-- versioning rules,
-- extension points,
-- compatibility promises,
-- and behavior that was never intended to become a promise.
-
-The same problem appears in compilers, kernels, databases, build systems, distributed systems, wire protocols,
-observability standards, security systems, and software supply chains.
-
-A system can begin with a clean internal architecture and still become difficult to evolve because implementation
-accidents escape into its public meaning.
-
-Kontrakt must prevent that failure in itself.
-
-The core requirement is:
-
-```text
-declared semantic obligation
-    → stable authority
-
-implementation accident
-environment accident
-execution-order accident
-cache accident
-host-platform accident
-extension accident
-    ↛ stable authority
-```
-
-This document defines the project-wide principles required to preserve that separation.
-
-It does not define one physical implementation.
+The rest of this document explains what that means. It does not require one physical representation, one query engine,
+one binary format, or one verification technique.
 
 ---
 
 # 2. Authority Order
 
-This document does not replace existing Contract semantics.
+This Constitution draft does not create new Contract authority above *What Contract Is*. The existing authority order
+remains intact.
 
-The authority order remains:
-
-```text
-What Contract Is
-    ↓
-Accepted current Contract ADRs
-    ↓
-current compiler architecture laws
-    ↓
-this Constitution draft
-    ↓
-Design / implementation documents
-    ↓
-external engineering references
-```
-
-External systems and papers are evidence.
-
-They do not override Kontrakt Contract law.
+*What Contract Is* is the highest semantic authority. Accepted Contract ADRs refine it. Current compiler architecture
+laws constrain how those semantics are represented and processed. This Constitution draft adds cross-cutting
+self-protection laws that every outward-facing Kontrakt surface should obey. Design and implementation documents then
+choose concrete mechanisms under those laws. External systems and research are evidence only; they never override
+project law.
 
 ---
 
 # 3. Existing Kontrakt Basis
 
-The project already contains most of the required foundations.
+Most of the required foundation already exists.
 
-*What Contract Is* establishes that observed behavior does not become Contract merely because a consumer depends on it.
+*What Contract Is* distinguishes declared obligation from observed behavior and keeps realization replaceable. ADR-0063
+gives each authority source ownership of the meaning it establishes. Compiler analysis, storage, query state,
+realization topology, and optimization knowledge may support that meaning, but they do not create it. ADR-0071 applies
+the same separation to Resolved Contract HIR: HIR carries resolved compiler-semantic material before Establishment, but
+it is not itself Contract authority.
 
-It separates declared obligation from realization.
+ADR-0041 makes the same distinction for identity infrastructure. HID, fingerprints, hashes, interning state, and storage
+identities can make lookup and persistence efficient, but semantic equality remains owned by semantic law.
 
-It also requires implementation replaceability.
+The compiler architecture extends this separation to execution. A clean build, a cached build, a parallel build, and a
+future incremental build must not disagree on Contract meaning merely because the work was scheduled or reused
+differently. Prediction and telemetry may influence work order or profitability. They may not decide correctness.
 
-ADR-0063 establishes source-owned authority.
-
-Compiler analysis, storage, query state, realization topology, and optimization knowledge do not become Contract
-authority.
-
-ADR-0071 establishes Resolved Contract HIR as compiler-semantic material rather than Contract authority.
-
-Resolved meaning and physical representation remain separate.
-
-ADR-0041 separates semantic identity from HID, fingerprints, hashes, storage identities, and interning machinery.
-
-The current compiler architecture additionally requires:
-
-```text
-clean compilation
-cached compilation
-parallel compilation
-incremental compilation
-```
-
-to preserve the same Contract meaning.
-
-Prediction and telemetry may influence work order or profitability.
-
-They may not change correctness or Contract meaning.
-
-This document generalizes those existing rules to every outward-facing Kontrakt surface.
+This document takes those existing laws and applies them to every surface that another system might observe or depend
+on.
 
 ---
 
 # 4. The General Failure Pattern
 
-A system becomes unstable when its consumers can no longer tell which observations are promised meaning and which
-observations are accidental realization.
+The recurring failure pattern is simple.
 
-A common progression is:
+An implementation chooses one behavior. The behavior becomes externally visible. A consumer begins to depend on it. The
+behavior then becomes difficult to change, even though it was never part of the original semantic design.
 
-```text
-implementation chooses one behavior
-    ↓
-behavior is externally observable
-    ↓
-consumer depends on it
-    ↓
-behavior becomes ecosystem compatibility debt
-    ↓
-implementation can no longer change freely
-```
+The detail that escapes may look harmless. Iteration order is a common example. Exception timing, filesystem
+enumeration, generated names, diagnostic ordering, class-loading order, serialization order, hash traversal, cache
+history, or a host default can produce the same problem. None of these is automatically wrong. The problem appears when
+the system never states whether the observation is promised, unstable, or irrelevant, yet allows consumers to treat it
+as stable.
 
-This does not require a bad API.
+The root failure is authority leakage. A fact about realization starts being used as though it were a fact about
+meaning.
 
-It can happen through:
-
-```text
-iteration order
-exception timing
-filesystem order
-thread scheduling
-default locale
-current provider
-class-loading order
-serialization order
-generated names
-hash choice
-diagnostic order
-cache history
-runtime reflection
-plugin discovery
-environment variables
-implicit version selection
-```
-
-The root problem is authority leakage.
-
-The consumer begins treating a realization fact as semantic authority.
-
-Kontrakt must prevent that leakage where possible and explicitly classify it where it cannot be prevented.
+Kontrakt should prevent that leakage where it can. Where an observation genuinely must be public, Kontrakt should make
+the obligation explicit enough that later implementations know what they must preserve.
 
 ---
 
 # 5. Cross-Domain SOTA Evidence
 
-The same architectural problem appears in mature systems under different names.
-
-The examples below are not templates to copy.
-
-They are evidence for recurring engineering laws.
-
----
+The same problem appears in mature systems under different names. The following systems are useful because they expose
+recurring engineering laws from different directions. None of them is a template for Kontrakt.
 
 ## 5.1. Production Compilers
 
-Modern compilers preserve language meaning while repeatedly changing representation.
+Production compilers continuously change representation while preserving language meaning. LLVM, GCC, rustc, Swift,
+Graal, and MLIR all rely on this separation even though they organize their IRs and optimization pipelines differently.
 
-LLVM, GCC, rustc, Swift, Graal, and MLIR all separate higher-level semantic material from lower-level target
-representation.
+The important lesson is not that Kontrakt should copy a particular pass manager or IR stack. The important lesson is
+that a representation-changing step needs a preservation obligation. If a transform lowers, folds, reorders,
+specializes, or erases a distinction, the compiler must know why the remaining program still means the same thing for
+the observations the language promises.
 
-The important principle is not the number of IRs.
+rustc incremental compilation adds a second lesson. A cached query result is reusable because the compiler has enough
+evidence that the determining inputs and the result remain valid. Cache state itself does not define Rust semantics.
+Fingerprints accelerate equality and invalidation decisions; they do not become the language's authority.
 
-The important principle is:
+Recent verified-compilation work makes the same point more formally. HELIX, published in 2026, verifies preservation
+through several intermediate languages down to LLVM IR. Kontrakt does not need to adopt HELIX's proof technology in V1.
+What matters is the architecture it reinforces: representation change and semantic preservation are different
+responsibilities, and the second must not be assumed merely because the first succeeded.
 
-```text
-a lower representation may change
-only under a preservation obligation
-```
-
-rustc incremental compilation adds another relevant law.
-
-A cached query is reusable because its determining inputs and result are unchanged.
-
-The cache is not semantic authority.
-
-The rustc red-green model explicitly depends on compiler determinism: unchanged inputs must produce the same result.
-
-Fingerprint equality accelerates reuse.
-
-It does not define Rust language meaning.
-
-Kontrakt already follows the same direction.
-
-```text
-Contract meaning
-    ≠
-query result identity
-    ≠
-fingerprint
-    ≠
-physical IR node
-```
-
-Recent verified-compilation work strengthens this separation.
-
-HELIX, published in 2026, verifies semantic preservation through multiple intermediate languages down to LLVM IR rather
-than assuming that target representation preserves high-level meaning automatically.
-
-The lesson for Kontrakt is not that V1 must use Coq.
-
-The lesson is that every representation-changing boundary needs an explicit meaning-preservation story.
-
-Sources:
-
-- LLVM documentation: <https://llvm.org/docs/>
-- rustc incremental compilation: <https://rustc-dev-guide.rust-lang.org/queries/incremental-compilation.html>
-- rustc incremental compilation in
-  detail: <https://rustc-dev-guide.rust-lang.org/queries/incremental-compilation-in-detail.html>
-- HELIX, 2026: <https://arxiv.org/abs/2604.18593>
-
----
+Relevant sources are LLVM documentation, the rustc incremental-compilation guide, and HELIX 2026.
 
 ## 5.2. Operating Systems and Stable ABIs
 
-Operating systems demonstrate the long-term cost of public behavior.
+Operating systems show what happens when implementation and public compatibility are not separated early.
 
-Linux explicitly classifies ABI surfaces by stability.
+Linux explicitly distinguishes stable userspace interfaces from internal kernel structures. The kernel can change its
+internal data structures, algorithms, and organization while preserving the ABI commitments made to userspace.
+Experimental or unstable surfaces can have weaker guarantees.
 
-Stable userspace interfaces receive compatibility commitments that internal kernel structures do not receive.
+The important point for Kontrakt is that "public" is not one stability category. A system can expose several surfaces
+while promising different levels of compatibility for each. The stability level itself becomes part of the outward
+contract.
 
-The kernel may change internally while preserving the declared userspace ABI.
-
-That boundary is critical.
-
-Without it, kernel implementation freedom would collapse into public compatibility debt.
-
-Linux also demonstrates that one system does not need to promise stability for every exposed experimental surface.
-
-Stability level itself is part of the public contract.
-
-Source:
-
-- Linux ABI documentation: <https://www.kernel.org/doc/html/latest/admin-guide/abi.html>
-
-This supports two Kontrakt rules:
-
-```text
-stable public semantic surface
-    ≠
-all observable implementation behavior
-```
-
-and:
-
-```text
-stability status must itself be explicit
-```
-
----
+This is a useful model for Kontrakt because Contract semantics, generated Java/Kotlin APIs, diagnostics, tooling
+interfaces, persistent artifacts, and extension SPIs will not necessarily need the same compatibility law.
 
 ## 5.3. Capability Security
 
-seL4 and Capsicum show another form of the same boundary.
+Capability systems show why object shape is not enough to reason about authority.
 
-Authority is not inferred from object shape.
+In seL4 and Capsicum, authority is explicit. Possessing a capability grants access to a resource; the system does not
+infer that authority merely because some value has a convenient type or familiar API.
 
-A capability is an explicit token of authority.
+The same problem appears in ordinary software through ambient state. A method can look like a simple value operation
+while internally consulting a global registry, the current environment, a filesystem, a clock, or a runtime class
+loader. Syntactic convenience does not make that behavior semantically closed.
 
-Possession of the capability permits access to a resource.
-
-Ambient process state is therefore different from explicitly held authority.
-
-This matters to Kontrakt because a public API may accidentally grant authority through:
-
-```text
-default registries
-global service lookup
-current environment
-implicit filesystem access
-current clock
-runtime class loading
-```
-
-even when the API appears value-oriented.
-
-Kontrakt must not confuse syntactic convenience with semantic closure.
-
-Sources:
-
-- seL4 capabilities: <https://docs.sel4.systems/Tutorials/capabilities.html>
-- FreeBSD Capsicum: <https://docs.freebsd.org/en/books/handbook/security/>
-
-Recent capability research continues to separate authority, aliasing, and resource lifetime.
-
-`Typestate via Revocable Capabilities` demonstrates in 2025 that stateful-resource correctness requires capability
-lifetime and state-transition reasoning rather than a simple pure/impure classification.
-
-Source:
-
-- Typestate via Revocable Capabilities, 2025: <https://arxiv.org/abs/2510.08889>
-
----
+Recent capability research continues to separate resource state, authority, and lifetime rather than collapsing them
+into a single pure/impure distinction. `Typestate via Revocable Capabilities` is one recent example. Kontrakt should
+preserve the same distinction at its own public boundaries: a value-like API must not become an invisible authority
+channel.
 
 ## 5.4. Databases
 
-Databases demonstrate that hidden semantic basis drift can corrupt persisted meaning.
+Databases show how hidden semantic-basis drift can corrupt persisted meaning.
 
-PostgreSQL records the provider version associated with a collation.
+PostgreSQL stores the provider version associated with a collation. If the provider later changes its ordering rules, an
+existing index may still be physically present and structurally valid, yet semantically wrong for the new ordering
+relation. PostgreSQL warns because the stored derived structure was built under a different semantic basis.
 
-When the current provider version differs from the recorded version, PostgreSQL warns because existing indexes may have
-been built under a different ordering relation.
+This is a particularly strong example for Kontrakt. The same type, identifier, and bytes do not guarantee the same
+meaning when a hidden semantic basis has changed.
 
-The physical bytes can still exist.
-
-The schema can still exist.
-
-The provider can still be available.
-
-The semantic ordering basis has changed.
-
-That is enough to make previously valid derived structure unsafe.
-
-Source:
-
-- PostgreSQL `ALTER COLLATION`: <https://www.postgresql.org/docs/17/sql-altercollation.html>
-
-The general lesson is:
-
-```text
-same type
-same object
-same identifier
-    ≠
-same semantic basis
-```
-
-A second database lesson comes from consistency models.
-
-A consistency model describes the histories that are legal.
-
-It does not prescribe one internal replication algorithm.
-
-This is the correct separation between externally promised behavior and realization freedom.
-
-Reference:
-
-- Jepsen consistency models: <https://jepsen.io/consistency>
-
----
+Databases also provide a second lesson through consistency models. A consistency model defines which histories are legal
+without prescribing one replication algorithm. That is exactly the separation Kontrakt needs between outward semantics
+and replaceable realization.
 
 ## 5.5. Deterministic Distributed-System Testing
 
-FoundationDB uses deterministic simulation to reproduce distributed failures.
+FoundationDB demonstrates that operational nondeterminism and semantic nondeterminism are not the same thing.
 
-Its simulator controls time, randomness, networking, processes, and failures under a deterministic seed.
+Production execution is distributed. Scheduling, message delivery, failures, and timing vary. FoundationDB's
+deterministic simulator controls those sources for testing so that a failing scenario can be replayed from a seed. The
+simulator does not claim that production has one physical schedule. It creates a reproducible experiment around a system
+whose legal behavior is broader than one trace.
 
-The production system is distributed and operationally nondeterministic.
+Jepsen complements this model from the outside. It records real concurrent histories and checks them against a declared
+consistency model. The history is evidence; the model remains the reference.
 
-The test model makes the chosen experiment reproducible.
-
-FoundationDB therefore demonstrates an important distinction:
-
-```text
-real-world scheduling nondeterminism
-    ≠
-semantic nondeterminism
-```
-
-and:
-
-```text
-controlled entropy
-    → reproducible judgment
-```
-
-A system does not need one physical execution order.
-
-It needs stable rules about which outcomes are legal.
-
-Sources:
-
-- FoundationDB simulation and testing: <https://apple.github.io/foundationdb/testing.html>
-- FoundationDB engineering: <https://apple.github.io/foundationdb/engineering.html>
-
-Jepsen complements this model.
-
-Jepsen does not prove implementation correctness.
-
-It captures real concurrent histories and checks them against declared consistency models.
-
-The declared model remains the reference.
-
-The observed run is evidence.
-
-Source:
-
-- Jepsen: <https://jepsen.io/>
-
----
+For Kontrakt, the lesson is that determinism should first be defined at the level of judgment. Parallel execution,
+randomized exploration, and different work schedules can remain implementation choices as long as they do not change
+which authoritative semantic results are legal.
 
 ## 5.6. Hermetic Build Systems
 
-Bazel and Nix make hidden inputs a first-class correctness problem.
+Bazel and Nix make hidden inputs a correctness problem rather than merely a build-speed problem.
 
-Bazel defines hermeticity in terms of isolation from undeclared host state.
+A hermetic build tries to ensure that the declared inputs are the inputs that matter. If host libraries, environment
+state, undeclared files, or tool versions can silently change the result, then caching and remote execution become
+unreliable because the cache key does not describe the real computation.
 
-The same declared inputs should not produce different meaning because another machine has a different compiler, library,
-or ambient environment.
+Kontrakt has the same requirement at a semantic level. If a judgment depends on a provider, versioned dataset,
+environment value, or other external basis, that dependency must be identifiable before reuse or compatibility can be
+trusted.
 
-Nix derivations similarly define build steps from explicit inputs.
-
-A derivation describes what executable runs on what declared material to produce outputs.
-
-These systems show why a cache is only safe when the true determining inputs are explicit.
-
-Sources:
-
-- Bazel hermeticity: <https://bazel.build/concepts/hermeticity>
-- Bazel remote execution: <https://bazel.build/docs/remote-execution>
-- Nix store derivations: <https://nix.dev/manual/nix/2.34/store/derivation/>
-
-The lesson for Kontrakt is broader than build reproducibility:
-
-```text
-hidden semantic input
-    → invalid reuse
-    → invalid comparison
-    → invalid compatibility claim
-```
-
----
+This does not mean every implementation detail should be added to semantic identity. It means that anything capable of
+changing authoritative meaning cannot remain an undeclared input.
 
 ## 5.7. Reproducible Builds and Software Supply Chains
 
-Reproducible-build work separates source trust from artifact trust.
+Reproducible-build work shows that source equality does not imply artifact equality. Build time, filesystem order,
+environment state, random state, archive metadata, compiler behavior, and packaging choices can all leak into output.
 
-The same source is not sufficient if build time, filesystem ordering, random state, environment state, archive metadata,
-compiler behavior, or packaging state can change the artifact.
+The 2025 study `Canonicalization for Unreproducible Builds in Java` analyzes a large Java corpus and evaluates repair
+techniques on 12,283 unreproducible artifacts. Its results are a useful reminder that a mature ecosystem does not become
+reproducible automatically.
 
-The Java ecosystem still exhibits these failures at scale.
+Supply-chain systems such as SLSA and in-toto add provenance. They record who or what produced an artifact and under
+which process. That information is important, but it is not the artifact's semantic meaning.
 
-The 2025 study `Canonicalization for Unreproducible Builds in Java` develops a six-cause taxonomy of unreproducibility
-and evaluates mitigation on 12,283 unreproducible artifacts.
-
-Its Chains-Rebuild technique raises successful reproducibility in that dataset from 9.48% to 26.89%.
-
-This is direct evidence that deterministic artifact production cannot be assumed merely because the source language and
-build tool are mature.
-
-Source:
-
-- Canonicalization for Unreproducible Builds in Java, 2025: <https://arxiv.org/abs/2504.21679>
-
-SLSA and in-toto add provenance.
-
-They track what produced an artifact and under what process.
-
-That provenance is important evidence.
-
-It is not the artifact's semantic meaning.
-
-Sources:
-
-- SLSA provenance: <https://slsa.dev/spec/v1.2/provenance>
-- in-toto: <https://in-toto.io/docs/what-is-in-toto/>
-
-This supports a Kontrakt separation:
-
-```text
-semantic identity
-    ≠
-production provenance
-```
-
-Both may be required.
-
-They remain different.
-
----
+Kontrakt therefore needs to keep semantic identity, artifact identity, and production provenance separate. They may be
+related and may all matter, but none should silently stand in for the others.
 
 ## 5.8. Public API Evolution
 
-Kubernetes treats API stability as an explicit lifecycle.
+Kubernetes, Linux, and OpenTelemetry all demonstrate that stability must be scoped.
 
-Stable API versions receive stronger compatibility guarantees than alpha or beta surfaces.
+Kubernetes ties stronger compatibility guarantees to stable API versions and uses explicit lifecycle stages for less
+mature surfaces. OpenTelemetry goes further by separating the stability of APIs, SDKs, semantic conventions,
+instrumentation, and produced telemetry.
 
-Evolution therefore happens through declared version boundaries and deprecation policy rather than silent
-reinterpretation.
-
-Source:
-
-- Kubernetes API: <https://kubernetes.io/docs/concepts/overview/kubernetes-api/>
-
-Linux follows a similar pattern for ABI maturity.
-
-OpenTelemetry goes further and separates stability of:
-
-```text
-API
-SDK
-semantic conventions
-instrumentation
-telemetry output
-```
-
-Stable components cannot casually inherit instability from experimental components.
-
-Sources:
-
-- OpenTelemetry versioning and stability: <https://opentelemetry.io/docs/specs/otel/versioning-and-stability/>
-- OpenTelemetry semantic convention
-  groups: <https://opentelemetry.io/docs/specs/semconv/general/semantic-convention-groups/>
-- OpenTelemetry telemetry stability: <https://opentelemetry.io/docs/specs/otel/telemetry-stability/>
-
-This is strong evidence against one global statement such as:
-
-```text
-Kontrakt API is stable
-```
-
-Different outward surfaces may require different compatibility laws.
-
-The stability level must not be inferred from package location or accidental longevity.
-
----
+This is directly relevant to Kontrakt. Saying "Kontrakt is stable" would be too vague. Contract semantics may require
+stronger guarantees than a compiler tooling API. Generated host APIs may evolve under different rules from
+machine-readable diagnostics. An experimental backend SPI should not weaken a stable Contract surface merely because
+both are shipped by the same project.
 
 ## 5.9. Wire Protocols and Schema Evolution
 
-Protocol Buffers preserve unknown fields in their binary representation.
+Protocol Buffers provide a useful example of information preservation.
 
-An older consumer can parse a newer message, retain fields it does not understand, and serialize them again.
+An older consumer can read a newer binary message, retain fields it does not understand, and later serialize them again.
+The older consumer does not gain permission to erase unknown material merely because it cannot interpret that material
+itself. By contrast, some conversions, such as a field-by-field rebuild or a JSON round trip, can lose those unknown
+fields.
 
-However, field-by-field reconstruction or conversion through JSON can lose that unknown material.
-
-Source:
-
-- Protocol Buffers unknown fields: <https://protobuf.dev/programming-guides/proto3/>
-
-This demonstrates an important information-preservation law.
-
-A consumer that does not understand one distinction is not automatically authorized to erase it.
-
-If the outer compatibility contract promises round-trip preservation, ignorance is not permission to discard
-information.
-
-Kontrakt already has the same idea in HIR information-loss rules.
-
-The principle should apply to public compatibility surfaces as well.
-
----
+Kontrakt already has the same principle in HIR: ignorance is not authority to discard a distinction that a later legal
+consumer may need. The same law should protect public compatibility surfaces, serialized material, and adapter
+translations.
 
 ## 5.10. Component and Resource Models
 
-The WebAssembly Component Model separates high-level component types from Core WebAssembly representation.
+The WebAssembly Component Model separates high-level component meaning from Core WebAssembly representation. The
+Canonical ABI defines how values are lowered and lifted between those levels. It also separates ordinary values from
+resources and resource handles.
 
-The Canonical ABI defines lifting and lowering between those worlds.
+This is relevant because physical similarity does not establish semantic equality. A resource handle can be represented
+by an integer and still not be an integer value in the semantic model.
 
-It also separates ordinary values from resources and resource handles.
-
-The fact that a resource handle may be physically represented as an integer does not make the resource an integer
-semantic value.
-
-Sources:
-
-- WebAssembly Component Model: <https://github.com/WebAssembly/component-model>
-- Canonical ABI: <https://github.com/WebAssembly/component-model/blob/main/design/mvp/CanonicalABI.md>
-
-This directly supports Kontrakt's existing rule:
-
-```text
-representation equality
-    ≠
-semantic equality
-```
-
----
+Kontrakt already depends on the same distinction. A JVM class, an integer handle, a table row, or an HID may carry
+meaning, but representation equality is not semantic equality.
 
 ## 5.11. Observability Standards
 
-OpenTelemetry demonstrates that even telemetry becomes an external semantic API.
+OpenTelemetry shows that telemetry itself can become an API.
 
-Dashboards, alerts, and analysis systems depend on attribute names, event names, metric identities, and well-known
-values.
+Dashboards, alerts, collectors, and analysis pipelines can depend on metric identities, event names, attributes, and
+well-known values. Changing that emitted material can therefore be a breaking change even when the program's binary API
+remains unchanged.
 
-Changing emitted telemetry can therefore be a breaking change even when program behavior and binary API remain
-unchanged.
-
-OpenTelemetry explicitly defines which produced telemetry is stable and which is not.
-
-This matters to Kontrakt diagnostics and evidence.
-
-A diagnostic code, evidence field, generated metric, or machine-readable result can become a public contract if external
-tooling is expected to consume it.
-
-Human wording and machine semantic identity should not be conflated.
-
-Source:
-
-- OpenTelemetry semantic conventions: <https://opentelemetry.io/docs/specs/semconv/>
-
----
+Kontrakt diagnostics and evidence will face the same issue. A human-readable explanation can evolve more freely than a
+stable diagnostic code or machine-readable evidence field. If external tooling is expected to consume a diagnostic
+surface, the project must state which parts are stable and which are presentation.
 
 ## 5.12. Software-Ecosystem Research
 
-Recent research shows that syntactic compatibility is the easy part.
+Recent ecosystem research shows that syntactic compatibility is the easy part.
 
 The 2026 systematic literature review `Breaking Changes in Software Ecosystems` synthesizes 97 primary studies across
-Maven/Java, npm/JavaScript, Python, Web APIs, and Linux distributions.
+several ecosystems. One of its recurring findings is that tools are much better at detecting structural or syntactic
+breaks than behavioral breaks. Semantic-versioning trust, behavioral compatibility, and transitive dependency effects
+remain difficult.
 
-It reports that tools detect syntactic breaks much better than behavioral breaks.
+The 2025 Roseau work on Java API breakage points in the same direction. Rich semantic models outperform coarse
+shape-only comparison.
 
-It also identifies semantic-versioning trust, behavioral-break detection, and transitive dependency propagation as
-unresolved ecosystem problems.
-
-Source:
-
-- Breaking Changes in Software Ecosystems, 2026: <https://arxiv.org/abs/2605.24397>
-
-The 2025 `Roseau` work reaches high accuracy for source-based Java API breaking-change analysis and demonstrates that
-rich semantic API models are more effective than coarse binary-shape comparison.
-
-Source:
-
-- Roseau, 2025: <https://arxiv.org/abs/2507.17369>
-
-The Kontrakt consequence is clear.
-
-```text
-signature compatibility
-    ≠
-semantic compatibility
-```
-
-Semantic stability must be defined at the level users are promised.
+For Kontrakt, the lesson is straightforward: the fact that an API still compiles or a descriptor still has the same
+shape does not prove that the promised meaning is unchanged.
 
 ---
 
 # 6. Recurring Failure Classes
 
-The cross-domain survey exposes a small set of repeated failure patterns.
-
-These patterns are more important than any one technology.
-
----
+The cross-domain survey reveals a small set of failures that appear repeatedly.
 
 ## 6.1. Ambient Semantic Input
 
-Meaning depends on material that was never declared as an input.
+A semantic result is unstable when it depends on material that was never declared as part of the judgment. A current
+locale or timezone is an obvious example. The same applies to a provider registry, a wall clock, a random source, the
+current classpath, or a host tool version.
 
-Examples include:
-
-```text
-current locale
-current timezone
-filesystem state
-provider registry
-environment variable
-wall clock
-random source
-current classpath
-loaded plugin set
-host tool version
-```
-
-The result may look deterministic on one machine.
-
-It is not semantically closed.
-
----
+The point is not that these inputs are forbidden. Some legitimate behavior needs them. The problem is allowing them to
+change authoritative meaning while remaining invisible to the law that owns that judgment.
 
 ## 6.2. Representation Leakage
 
-Consumers depend on:
+Representation leakage occurs when consumers begin to depend on details such as class identity, object layout, field
+order, hash traversal, an IR node shape, a generated class name, a table slot, or a binary encoding accident.
 
-```text
-class identity
-object layout
-field order
-hash order
-IR node shape
-generated class name
-storage row number
-table layout
-binary encoding accident
-```
-
-even though none of these were intended to define meaning.
-
-The implementation then becomes difficult to replace.
-
----
+Once that happens, replacing the realization becomes much harder because compatibility is no longer defined only in
+terms of the intended semantics.
 
 ## 6.3. Accidental Observation
 
-A system leaves one implementation detail observable.
+A system can leak compatibility obligations even when no one exposes an explicit "internal" API. Repeatedly stable
+iteration order, diagnostic ordering, exception timing, serialization order, or generated naming is enough for consumers
+to form dependencies.
 
-Consumers build dependencies on it.
-
-The detail becomes compatibility debt even though it was never declared.
-
-This is especially dangerous for:
-
-```text
-iteration order
-diagnostic order
-exception timing
-serialization order
-thread timing
-generated names
-```
-
----
+This is why documentation silence is not always an adequate defense. If an observation is easy to consume and remains
+stable for years, the ecosystem may treat it as a contract whether the project intended that or not.
 
 ## 6.4. Moving-Target Selection
 
-A semantic decision is based on:
+Names such as "latest", "current", "default", "preferred", or "first found" are useful for convenience, but they are
+dangerous semantic selectors.
 
-```text
-latest
-current
-default
-first discovered
-highest available
-nearest compatible
-first on classpath
-```
-
-without pinning the selected meaning.
-
-A later environment change silently changes the result.
-
----
+If the selected meaning can change because the environment changes, an authoritative judgment must resolve that moving
+target to an exact selection before the result becomes stable. Otherwise the same declaration may mean something
+different tomorrow without any explicit semantic event.
 
 ## 6.5. Version-Label Substitution
 
-A version label is treated as proof of semantic compatibility.
+A version label can be useful provenance, but it is not automatically proof of semantic compatibility.
 
-Examples include:
-
-```text
-same major version
-same JDK family
-same provider version string
-same package version
-```
-
-without proving that the relevant semantic obligation is unchanged.
-
-Version coordinates are useful references.
-
-They are not universal semantic proofs.
-
----
+The same major version may contain behavioral changes. The same JDK family may contain different semantic datasets. A
+provider version string may be only an imperfect proxy for the actual data. Compatibility must therefore be judged
+against the obligation that matters, not inferred solely from a convenient version coordinate.
 
 ## 6.6. Shape-Only Compatibility
 
-Two surfaces have the same:
+Two APIs may have the same signature while differing in failure behavior, ordering, lifecycle, callback behavior, or
+other legal observations. Two wire schemas may have the same field shape while assigning different meaning to a field.
 
-```text
-method signature
-wire field shape
-runtime class
-binary descriptor
-schema shape
-```
-
-and are therefore assumed to mean the same thing.
-
-Behavioral compatibility is ignored.
-
-This is a recurring source of ecosystem breakage.
-
----
+Shape is evidence about compatibility. It is not sufficient authority for semantic compatibility.
 
 ## 6.7. Extension Infiltration
 
-A plugin, subclass, callback, provider, proxy, runtime-discovered implementation, or dynamically loaded component gains
-the ability to modify stable core meaning.
+Plugins, callbacks, subclasses, providers, proxies, and runtime-discovered implementations are useful extension
+mechanisms. They become dangerous when merely being loadable gives them the ability to redefine stable core meaning.
 
-The extension mechanism becomes an undeclared authority mechanism.
-
----
+An extension mechanism should extend implementation unless an explicit semantic authority mechanism says otherwise.
 
 ## 6.8. Cache Authority
 
-A cache hit, fingerprint equality, memoized query, previous successful build, or persistent artifact is treated as proof
-that meaning is still valid.
+A cache hit or matching fingerprint can only justify reuse if the semantic assumptions behind that reuse remain valid.
 
-The determining semantic basis is no longer checked.
-
-Performance state has become correctness authority.
-
----
+If previous success, persistent state, or a digest starts being treated as proof that meaning is still correct without
+re-establishing the required basis, performance infrastructure has become correctness authority.
 
 ## 6.9. Provenance / Identity Collapse
 
-Two products are considered semantically different because they were produced by different machines or sessions.
+Production history and semantic identity answer different questions.
 
-Or they are considered semantically equal only because their provenance is similar.
-
-Production history and semantic identity become confused.
-
----
+Two artifacts can have the same meaning while coming from different builders. Two artifacts can also have similar
+provenance while carrying different meaning. A design that collapses provenance into semantic identity, or semantic
+identity into provenance, loses both distinctions.
 
 ## 6.10. Information-Loss by Ignorance
 
-A consumer does not understand one piece of material and drops it.
+A consumer may encounter material it does not understand. That lack of understanding does not grant permission to erase
+the material when a later legal consumer may still need it.
 
-Later consumers would have understood it.
-
-Forward compatibility is broken by an intermediate layer that had no authority to reinterpret the information.
-
----
+This problem appears in protocol forwarding, frontend lowering, generated projections, and compatibility layers. The
+layer that removes information carries the burden of showing that no remaining legal observer needs the distinction.
 
 ## 6.11. Operational Nondeterminism Becoming Semantic Nondeterminism
 
-Different worker schedules or network orders are allowed to change an authoritative answer.
+Different worker schedules, message orders, or thread timings may produce different physical executions. That is not
+automatically a problem.
 
-Parallelism stops being an implementation choice.
-
-It becomes semantic authority.
-
----
+The problem begins when those scheduling differences change the authoritative judgment. At that point realization has
+become semantic authority.
 
 ## 6.12. Evidence Becoming Authority
 
-Tests, logs, diagnostics, traces, observed runtime behavior, or reference implementations become the de facto source of
-meaning.
+Tests, traces, diagnostics, logs, runtime experiments, and reference implementations are evidence. They can reveal bugs
+and strengthen confidence.
 
-They are useful evidence.
-
-They must not silently replace the declared law they are supposed to check.
+They should not silently replace the declared law they are intended to check. A test suite can be incomplete. A
+reference implementation can be wrong. An observed run is not the constitution.
 
 ---
 
 # 7. Core Self-Protection Laws
 
-The following laws are the proposed cross-cutting core of this document.
-
-They describe obligations.
-
-They do not prescribe one data structure, query engine, API class, storage form, or backend.
-
----
+The following laws are the normative core of this draft. They describe obligations and leave physical mechanisms open.
 
 ## 7.1. Declared Semantic Authority Law
 
 A behavior becomes stable Kontrakt semantic authority only through the authority mechanism that owns that meaning.
 
-Observed behavior, generated artifacts, test expectations, runtime experiments, implementation classes, plugins, or
-downstream reliance do not establish new Contract meaning.
-
-```text
-declared obligation
-    → may be authority
-
-observed realization
-    → evidence only
-```
-
-If Kontrakt intentionally wants to guarantee an observed behavior, the guarantee must be declared by an owning law.
-
----
+Generated artifacts, runtime observations, tests, plugins, implementation classes, or downstream dependence may reveal
+that a behavior exists. None of them establishes new Contract meaning by itself. If Kontrakt intends to guarantee an
+observed behavior, an owning law must make that guarantee explicit.
 
 ## 7.2. Semantic Determinism Law
 
-For the same complete semantic inputs, applicable Contract world, explicit semantic basis, and owning law, Kontrakt must
-establish the same authoritative semantic result.
+For the same complete semantic inputs, applicable Contract world, applicable semantic basis, and owning law, Kontrakt
+must establish the same authoritative semantic result.
 
-The result must not depend on:
+Worker order, cache state, memory address, filesystem enumeration, hash-table traversal, reflection order, classpath
+enumeration, and other realization facts must not change that result unless an owning law explicitly makes one of them
+part of the semantic basis.
 
-```text
-worker completion order
-thread scheduling
-cache state
-memory address
-object identity
-filesystem enumeration
-hash-table traversal
-classpath enumeration
-reflection order
-current host defaults
-unbound provider state
-```
-
-unless one of those is explicitly part of the governing semantic basis.
-
-This law applies to semantic judgment.
-
-It does not require every physical execution to use the same schedule.
-
----
+This law concerns meaning, not physical schedule.
 
 ## 7.3. Operational Nondeterminism Containment Law
 
-Kontrakt may use parallelism, concurrency, speculation, randomized testing, nondeterministic resource scheduling, or
-target-specific execution.
+Kontrakt may use concurrency, parallelism, speculation, randomized testing, target-specific execution, or
+nondeterministic resource scheduling.
 
-Those mechanisms may change:
-
-```text
-work order
-latency
-resource usage
-optimization choice
-test exploration path
-```
-
-They must not change which authoritative semantic outcomes are legal.
-
-Operational nondeterminism stays in realization unless an owning Contract explicitly models it.
-
----
+Those mechanisms may change latency, resource use, exploration order, or optimization choice. They must not change which
+semantic outcomes are legal unless the relevant Contract explicitly models that nondeterminism.
 
 ## 7.4. Explicit Semantic Input Law
 
-Every input that may change authoritative meaning must be explicit at the semantic boundary that owns that judgment.
+Anything that can change authoritative meaning must be visible to the semantic boundary that owns the judgment.
 
-An ambient input may not silently influence semantic authority.
+A clock, random source, provider set, environment value, toolchain semantic dataset, or other external state may be a
+legitimate input. It may not remain ambient if it changes Contract meaning.
 
-Examples include:
-
-```text
-clock
-random source
-environment
-provider set
-toolchain semantic data
-default locale
-runtime registry
-external configuration
-```
-
-An implementation may read ambient material for non-semantic purposes.
-
-That read must not change Contract meaning.
-
----
+An implementation may still read ambient state for logging, scheduling, or another non-semantic purpose. Such reads
+remain realization.
 
 ## 7.5. Semantic Basis Completeness Law
 
-When one judgment depends on external or versioned semantic knowledge, the complete relevant basis must be identifiable.
+When a judgment depends on external or versioned semantic knowledge, the relevant basis must be identifiable completely
+enough to explain the judgment.
 
-A coarse platform label is not sufficient merely because it correlates with the real semantic data.
-
-```text
-JDK 26
-```
-
-does not automatically identify:
-
-```text
-TZDB meaning
-Unicode meaning
-CLDR meaning
-provider configuration
-vendor-specific semantic data
-```
-
-The basis must be no wider than necessary and no narrower than correctness requires.
-
----
+A broad label such as "JDK 26" is not automatically sufficient if the actual meaning depends on TZDB, Unicode data, CLDR
+data, provider configuration, or vendor-specific semantic material. The basis should include what correctness requires
+and exclude unrelated environment detail.
 
 ## 7.6. Representation Non-Authority Law
 
-Physical realization does not define semantic authority.
+Physical representation does not define semantic authority.
 
-This includes:
-
-```text
-Kotlin class
-Java class
-JVM descriptor
-IR node
-table row
-HID
-hash
-cache key
-storage offset
-generated source
-classfile shape
-backend object
-```
-
-A representation may carry or accelerate access to meaning.
-
-It does not create that meaning.
-
----
+A Kotlin class, Java class, JVM descriptor, IR node, table row, HID, hash, cache key, storage offset, generated source
+file, classfile shape, or backend object may represent or index meaning. None of those forms creates the meaning it
+carries.
 
 ## 7.7. Legal Observation Law
 
-A stable public surface must define which observations consumers are entitled to rely on.
+Every stable public semantic surface must make clear which observations consumers are entitled to rely on.
 
-Compatibility is judged against those legal observations.
+The relevant observation may be value equality, ordering, multiplicity, a failure category, a state transition, a
+published field, a protocol message, a stable diagnostic identity, or a consistency guarantee. The exact set depends on
+the surface.
 
-A legal observation may include:
-
-```text
-value distinction
-equality
-ordering
-multiplicity
-failure category
-state transition
-published field
-protocol message
-stable diagnostic code
-consistency guarantee
-```
-
-Implementation details that are outside the legal observation set remain replaceable.
-
-A public surface with an undefined observation boundary invites accidental contracts.
-
----
+Compatibility is judged against these legal observations. Anything outside that set remains replaceable implementation
+unless another law says otherwise.
 
 ## 7.8. Explicit Underspecification Law
 
-If Kontrakt does not guarantee one observable distinction, that non-guarantee should be explicit where the distinction
-can realistically become consumer-visible.
+If a distinction is externally visible but intentionally not guaranteed, Kontrakt should say so where practical.
 
-Kontrakt must not rely on documentation silence while repeatedly producing one stable accidental behavior and then
-assume no consumer will depend on it.
+The project should not repeatedly emit one accidental ordering or naming scheme for years and then rely on documentation
+silence as proof that no consumer may have depended on it. Where an accidental observation is likely to become sticky,
+implementation should either hide it, vary it safely, or document that it is not a semantic guarantee.
 
-Where practical, implementation should prevent accidental stability from masquerading as a guarantee.
-
-A private deterministic choice may be used internally.
-
-It must not be published as though the semantic law required it.
-
----
+This does not mean making internal execution nondeterministic for its own sake. A deterministic internal choice is fine
+as long as it is not published as though Contract law required it.
 
 ## 7.9. No Moving Target Law
 
-Authoritative semantic selection must not depend on an unpinned moving target.
+An authoritative semantic decision must not remain bound to a moving selector such as "latest", "current", "default", or
+"first discovered".
 
-The following are not sufficient semantic selectors by themselves:
-
-```text
-latest
-current
-default
-preferred
-first found
-highest installed
-nearest compatible
-```
-
-A convenience layer may use such language only if the resulting exact semantic selection is resolved and pinned before
-it can become authoritative.
-
-Compiler and runtime convenience must not create implicit version authority.
-
----
+Convenience APIs may use such selectors, but before authority is established the chosen meaning must be resolved to an
+exact semantic selection. Otherwise environment drift becomes silent semantic drift.
 
 ## 7.10. Stable Semantic Identity Law
 
-Once Kontrakt has assigned one exact semantic identity to one Contract meaning, a later compiler release must not
-silently reinterpret that same identity as a different Contract meaning.
+Once an exact semantic identity has been assigned to a Contract meaning, a later compiler release must not silently
+reinterpret that identity as a different meaning.
 
-A semantic change requires an explicit semantic event.
+A real semantic change requires an explicit semantic event, such as a new Contract Version, a new Policy World, a new
+semantic basis, a declared migration, or another explicit compatibility mechanism. A compiler implementation version is
+not a substitute for Contract Version.
 
-Examples include:
-
-```text
-new Contract Version
-new Policy World
-new explicit semantic basis
-declared migration
-declared compatibility relation
-```
-
-A compiler implementation version is not a substitute for Contract Version.
-
-A bug fix may correct an incorrect prior implementation.
-
-It must not pretend that the historical incorrect behavior was always the same authoritative meaning.
-
----
+A bug fix may correct a previously incorrect implementation. It should not rewrite history by pretending that the
+incorrect behavior and the corrected meaning were always the same implementation fact.
 
 ## 7.11. Compatibility Is a Judgment Law
 
-Compatibility is not inferred from:
+Compatibility is itself a semantic judgment.
 
-```text
-same name
-same signature
-same major version
-same hash prefix
-same storage shape
-small textual diff
-same runtime class
-```
+It is not established merely because names, signatures, runtime classes, storage shapes, or major versions match. The
+judgment must be tied to an exact obligation or legal observation set, and it may be directional.
 
-Compatibility must be defined relative to an exact obligation or legal observation set.
-
-It may be directional.
-
-Two exact identities may differ while still being compatible for one consumer.
-
-Two surfaces may have identical shape while being semantically incompatible.
-
-Unknown compatibility fails closed where correctness requires a proof.
-
----
+Two different identities may be compatible for one consumer. Two identical-looking shapes may be incompatible because
+they promise different behavior. Where correctness requires proof, unknown compatibility fails closed.
 
 ## 7.12. Behavioral Compatibility Law
 
-A public API is not compatible merely because existing clients still compile.
+A public API is not semantically compatible merely because old source still compiles or old binaries still link.
 
-Behavioral obligations are part of compatibility when they are part of the stable surface.
+If the stable surface promises ordering, failures, lifecycle, callback behavior, ownership, consistency, state
+transitions, or another behavioral property, compatibility must preserve that property as well.
 
-This includes relevant:
-
-```text
-failure behavior
-ordering
-consistency
-lifecycle
-callback behavior
-resource ownership
-state transition
-semantic output
-```
-
-The 2026 software-ecosystem literature review identifies behavioral break detection as substantially weaker than
-syntactic-break detection.
-
-Kontrakt should design stable APIs so that behavioral obligations are explicit enough to verify.
-
----
+Recent ecosystem research shows that behavioral break detection is much weaker than syntactic break detection. Kontrakt
+should reduce that ambiguity by making important behavioral obligations explicit enough to reason about.
 
 ## 7.13. Information-Loss Burden Law
 
-A layer may discard a distinction only when no remaining legal consumer, authority, round-trip obligation, or
-compatibility promise requires it.
+A layer may discard a distinction only after establishing that no remaining legal authority, consumer, round-trip
+obligation, or compatibility promise still needs it.
 
-Ignorance is not authority to erase information.
+This generalizes the existing HIR information-loss rule. It applies equally to frontend lowering, generated projections,
+serialization, adapter translation, protocol migration, and diagnostic evidence.
 
-This law generalizes the existing HIR information-loss boundary.
-
-It applies to:
-
-```text
-frontend lowering
-generated API projection
-serialization
-adapter translation
-protocol migration
-diagnostic evidence projection
-future compatibility material
-```
-
-The transformation that removes information carries the burden of proving that the distinction is no longer legally
-observable.
-
----
+The layer that removes information carries the burden of proof. A layer that simply does not understand the distinction
+has not met that burden.
 
 ## 7.14. Canonical External Projection Law
 
-When Kontrakt publishes material whose external bytes, ordering, identity, or structured representation are themselves
-stable public observations, that projection must be canonical under its declared semantic basis.
+When an external representation itself is part of a stable promise, its projection must be canonical under the semantic
+basis that governs it.
 
-Canonical projection must not depend on:
+For example, if published bytes or ordering are promised to be reproducible, allocation order, worker scheduling, hash
+iteration, filesystem enumeration, cache state, and process identity must not leak into those bytes.
 
-```text
-allocation order
-worker schedule
-hash iteration
-filesystem order
-cache state
-process identity
-```
+This law does not require every internal compiler object to have canonical bytes. It applies only when the external
+representation is itself a legal observation.
 
-This law does not require every internal compiler object to have canonical bytes.
-
-It applies only when external representation itself is part of the promised surface.
-
-ADR-0041 remains the identity substrate where its accepted scope applies.
-
-HID does not replace the semantic law that determines what is canonical.
-
----
+ADR-0041 remains the identity substrate where its scope applies. HID can identify canonical material efficiently; it
+does not define what the semantic law considers canonical.
 
 ## 7.15. Provenance Separation Law
 
-Kontrakt may retain rich provenance describing:
+Kontrakt may retain rich provenance about source origin, compiler version, builder identity, toolchain, semantic basis,
+transformation history, or artifact production.
 
-```text
-source origin
-compiler version
-builder
-toolchain
-semantic basis
-transformation history
-artifact production
-```
+That material is useful for diagnostics, reproduction, verification, and supply-chain integrity. It is not automatically
+part of semantic identity.
 
-Provenance supports diagnostics, verification, supply-chain integrity, and reproduction.
-
-Provenance does not become semantic identity unless an owning law explicitly makes one provenance distinction
-semantically relevant.
-
-```text
-same semantics
-different provenance
-```
-
-can be valid.
-
-```text
-same provenance
-different semantics
-```
-
-can also be valid.
-
----
+Two artifacts with the same semantics may have different provenance. Two artifacts with similar provenance may still
+have different semantics.
 
 ## 7.16. Extension Isolation Law
 
-An extension mechanism does not receive Contract authority merely because Kontrakt can load or call it.
+An extension does not receive Contract authority merely because Kontrakt can load, call, or bind it.
 
-This applies to:
+Plugins, adapters, backends, providers, callbacks, subclasses, generated implementations, and compiler extensions remain
+implementation mechanisms unless an explicit semantic authority mechanism grants a narrower role.
 
-```text
-plugin
-adapter
-backend
-provider
-callback
-subclass
-generated implementation
-service registry
-compiler extension
-```
-
-Stable semantic extension must occur through an explicit authority mechanism.
-
-Implementation extension remains implementation.
-
-An unstable extension must not silently weaken the guarantees of a stable surface.
-
----
+An unstable extension surface must not silently weaken a stable semantic surface.
 
 ## 7.17. Capability Isolation Law
 
-Possession or invocation of a public Kontrakt value must not silently grant authority over an unrelated external
-resource unless that authority is part of the explicitly declared surface.
+A public Kontrakt value or operation must not silently grant authority over an unrelated external resource unless that
+authority is part of the declared surface.
 
-Global registries, default services, ambient environment, hidden callbacks, and runtime discovery must not become
-invisible authority channels.
-
-This law applies to Kontrakt itself as well as to external platforms consumed by Kontrakt.
-
----
+Global registries, default services, ambient environment, hidden callbacks, and runtime discovery are common ways this
+mistake appears. The rule applies both when Kontrakt consumes an external platform and when external software consumes
+Kontrakt.
 
 ## 7.18. Cache, Prediction, and Telemetry Non-Authority Law
 
 Caching, historical telemetry, profile data, machine-learning prediction, incremental state, and prior successful
 judgments may improve compiler execution.
 
-They may not establish Contract meaning.
+They may decide whether to reuse work, which work to schedule first, or which optimization looks profitable. They must
+not decide semantic legality.
 
-They may affect:
-
-```text
-reuse
-scheduling
-work priority
-optimization profitability
-speculation
-```
-
-They must not affect semantic legality.
-
-Removing all cache and profile state must not change the authoritative answer.
-
----
+A useful test is simple: removing all caches and profiles may make the compiler slower, but it must not change the
+authoritative answer.
 
 ## 7.19. Stability-Domain Separation Law
 
-Kontrakt must not use one vague stability promise for all outward surfaces.
+Kontrakt must not apply one vague stability promise to every outward-facing surface.
 
-Different surfaces may have different stability contracts.
+Contract semantics, the IDL language, generated host APIs, compiler tooling APIs, persistent artifact formats,
+machine-readable diagnostics, backend or adapter SPIs, and experimental extensions have different evolution pressures.
+The final stability levels remain open, but the domains themselves must be distinguishable before long-term
+compatibility promises are made.
 
-Possible domains include:
-
-```text
-Contract semantic surface
-IDL language surface
-generated host API
-compiler tooling API
-persistent artifact format
-machine-readable diagnostics
-adapter / backend SPI
-experimental extension surface
-```
-
-This document does not assign final stability levels.
-
-It requires that the domains be distinguishable before public compatibility promises are made.
-
-An unstable domain must not silently contaminate a stable one.
-
----
+Instability in one domain must not silently contaminate another domain that has stronger guarantees.
 
 ## 7.20. Independent Conformance Law
 
-Production realization must remain checkable against an independently derived semantic reference.
+Production realization should remain checkable against an independently derived semantic reference.
 
-The exact verification mechanism may vary.
+The project may use a Reference Judgment, property-based tests, golden semantic vectors, differential execution,
+translation validation, formal proof, or cross-backend comparison depending on the risk and maturity of the subsystem.
+No single technique is mandated here.
 
-Candidates include:
+The important rule is that the production implementation and the analysis used to optimize it should not be the only
+evidence used to prove themselves correct when an independent check is practical.
 
-```text
-Reference Judgment
-property-based testing
-golden semantic vectors
-differential execution
-translation validation
-formal proof
-cross-backend comparison
-```
-
-The checker is evidence.
-
-The declared Contract remains authority.
-
-The production implementation and its primary optimization analyses must not be the only source used to prove themselves
-correct where independent checking is practical.
+The checker remains evidence. Declared Contract law remains authority.
 
 ---
 
 # 8. Determinism Is Not One Thing
 
-The word `determinism` can hide several different obligations.
-
-Kontrakt should keep them separate.
-
----
+Kontrakt should not use the word `determinism` as though it described one property.
 
 ## 8.1. Semantic Determinism
 
-Same complete semantic basis produces the same authoritative meaning.
-
-This is mandatory.
-
----
+Semantic determinism means that the same complete semantic basis produces the same authoritative meaning. This is a
+property of the semantic system, not of one physical execution schedule.
 
 ## 8.2. Judgment Determinism
 
-The same exact judgment inputs produce the same judgment result.
-
-This is mandatory for Contract judgment.
-
----
+Judgment determinism applies the same requirement to one exact judgment. When the complete judgment inputs are the same,
+the judgment result must be the same. This is mandatory for Contract judgment.
 
 ## 8.3. Artifact Reproducibility
 
-The same artifact inputs produce bit-identical output.
-
-This is required only where the artifact contract says its bytes are canonical or reproducible.
-
-It is highly desirable for persistent compiler products and release artifacts.
-
-It is not the definition of Contract semantics.
-
----
+Artifact reproducibility is narrower. It means that the same artifact inputs produce bit-identical output. Release
+artifacts or persistent compiler products may require this property, but bit identity is not the definition of Contract
+semantics.
 
 ## 8.4. Execution-Schedule Determinism
 
-The same program uses the same thread or operation schedule.
-
-This is generally not required.
-
-A system may be semantically deterministic while using different schedules.
-
----
+A parallel or distributed realization does not normally need to execute work in the same order every time. Different
+schedules are acceptable as long as they preserve the semantic law that defines which results are legal.
 
 ## 8.5. Diagnostic Determinism
 
-Machine-readable diagnostic identity and semantic evidence should remain deterministic under the same failing semantic
-case.
-
-Human wording, presentation order, or auxiliary context may have a different stability law.
-
-This distinction should be explicit before diagnostic APIs become public.
+Diagnostics have a related but separate stability problem. A machine-readable diagnostic identity or semantic evidence
+should not change merely because workers finished in a different order. Human wording and presentation may have weaker
+compatibility requirements. That distinction should be explicit before diagnostics become an ecosystem API.
 
 ---
 
 # 9. Public API Self-Protection
 
-Kontrakt should assume that every sufficiently convenient public API will eventually be depended upon.
-
-The safest strategy is not to hide all behavior.
-
-It is to publish the smallest precise obligation that users genuinely need.
-
----
+Kontrakt should assume that any convenient public API may eventually be depended upon. The safest response is not to
+hide all behavior. It is to expose the smallest semantic obligation users genuinely need and avoid exposing
+implementation identity as though it were meaning.
 
 ## 9.1. Public API Must Name Meaning
 
-A public API should expose semantic concepts where those concepts are the stable obligation.
-
-It should avoid exposing implementation-only identity as though that identity were semantic.
-
-Conceptually preferred:
-
-```text
-Contract Id
-Version Id
-exact semantic reference
-judgment result
-stable failure category
-explicit semantic basis
-```
-
-Conceptually dangerous:
-
-```text
-compiler object address
-internal IR class
-table slot
-cache generation
-backend node
-runtime proxy identity
-```
-
-This does not require one specific Java API design.
-
-It defines the direction.
-
----
+A stable API should name semantic concepts when those concepts are what consumers need. Contract Id, Version Id, an
+exact semantic reference, a judgment result, a stable failure category, or an explicit semantic basis are examples.
+Internal compiler-object identity, table slots, cache generations, backend nodes, or runtime proxy identity should not
+become substitutes for them.
 
 ## 9.2. Generated APIs Remain Projections
 
-Generated Java or Kotlin artifacts may provide user ergonomics.
-
-They do not become the source of Contract authority.
-
-If generated shape changes while the declared Contract obligation is preserved, that may be an implementation or
-generated-API compatibility question.
-
-It is not automatically a Contract semantic change.
-
-The stability law for generated APIs must therefore be explicit and separate.
-
----
+Generated Java or Kotlin APIs remain projections. They can carry compatibility promises of their own, but they do not
+become the source of Contract authority. A change in generated shape may therefore be a generated-API compatibility
+event without being a Contract semantic change.
 
 ## 9.3. Defaults Must Not Become Hidden Semantics
 
-Convenience defaults are dangerous when they select meaning.
-
-A default may be used only when either:
-
-```text
-the default cannot change semantic meaning
-```
-
-or:
-
-```text
-the default is resolved to one exact explicit semantic selection
-before authority is established
-```
-
-The system must not rely on:
-
-```text
-whatever policy is current
-whatever backend is installed
-whatever provider answers first
-whatever version is newest
-```
-
-as invisible semantic law.
-
----
+Defaults require the same care. A convenience default is safe only when it cannot change semantic meaning or when the
+default is resolved to one exact choice before authority is established. "Whatever provider answers first" or "whatever
+policy is current" is not an acceptable invisible semantic law.
 
 ## 9.4. Stable APIs Need Behavioral Tests
 
-Signature compatibility is insufficient.
-
-Every stable semantic API should have tests derived from its legal observation set.
-
-Those tests should cover:
-
-```text
-value behavior
-failure behavior
-version behavior
-compatibility behavior
-information preservation
-authority isolation
-```
-
-where applicable.
-
-The exact harness belongs to Design and QA.
-
-The obligation belongs here.
+Stable public APIs need behavioral tests derived from their legal observation sets. Signature tests are necessary but
+not sufficient. The exact harness belongs in Design and QA; the obligation to test the promised behavior belongs here.
 
 ---
 
 # 10. Versioning and Evolution
 
-Software must evolve.
-
-The goal is not immobility.
-
-The goal is controlled semantic change.
-
----
+Software must evolve. This Constitution does not try to freeze Kontrakt. The rule is that evolution must not silently
+rewrite old meaning.
 
 ## 10.1. New Version Does Not Rewrite Old Meaning
 
-A new implementation or specification version may add new behavior.
-
-It must not silently change the meaning already assigned to an older exact semantic coordinate.
-
-If old material is no longer supported, that is a support-policy decision.
-
-It is not permission to reinterpret old meaning.
-
----
+A new implementation or specification version may add capabilities, optimize more aggressively, or introduce new
+Contract versions. It may also stop supporting an old surface according to an explicit support policy. None of those
+actions gives it permission to assign a different meaning to an old exact semantic identity without an explicit semantic
+event.
 
 ## 10.2. Compatibility Must Be Explicitly Scoped
 
-A compatibility relation should answer:
-
-```text
-compatible for what observation?
-compatible in which direction?
-under what basis?
-for which lifetime?
-```
-
-One global `compatible=true` is usually too weak.
-
----
+Compatibility must say what it is compatibility for. The relevant observation, direction, semantic basis, and lifetime
+matter. A global `compatible=true` is usually too weak to carry that meaning safely.
 
 ## 10.3. Migration Is Not Equality
 
-A migration may lawfully transform old material into new material.
-
-That does not mean the two semantic identities were always equal.
-
-```text
-old meaning
-    ↓ explicit migration
-new meaning
-```
-
-is different from:
-
-```text
-old meaning == new meaning
-```
-
-This distinction protects history and diagnostics.
-
----
+An explicit migration can lawfully transform old material into new material. That does not mean the two semantic
+identities were always equal. Migration is a relation between meanings, not retroactive proof that no semantic change
+occurred.
 
 ## 10.4. Deprecation Does Not Remove Meaning Retroactively
 
-A deprecated public semantic surface may stop being recommended.
-
-Its historical meaning remains the meaning consumers were previously promised.
-
-Removal and replacement need an explicit compatibility or migration rule where persisted or external consumers are
-involved.
+A deprecated surface may stop being recommended or may eventually stop being supported. Its historical promised meaning
+does not disappear merely because the project now prefers another surface.
 
 ---
 
 # 11. External Artifact Self-Protection
 
-Kontrakt may eventually publish more than executable classfiles.
+Kontrakt may eventually publish many kinds of artifacts: generated APIs, contract metadata, machine-readable reports,
+diagnostic evidence, persistent compiler products, backend products, test plans, or cross-language descriptors.
 
-Possible external artifacts include:
+Each artifact needs a clear status. It may be semantic authority, a projection of authority, compiler-owned derived
+material, provenance, or implementation-private material. The fact that an artifact can be read by external tooling does
+not by itself make it authoritative.
 
-```text
-contract metadata
-generated APIs
-persistent compiler products
-diagnostic evidence
-machine-readable reports
-test plans
-cacheable artifacts
-backend products
-cross-language descriptors
-```
-
-Each artifact must state whether it is:
-
-```text
-semantic authority
-projection of authority
-compiler-owned derived material
-provenance
-implementation-private material
-```
-
-No artifact format should acquire authority merely because consumers can read it.
+This distinction matters because artifact formats tend to become sticky. Once external tools begin to parse one internal
+format, implementation detail can quickly become a de facto protocol. Kontrakt should decide that boundary deliberately
+rather than discover it after consumers have already depended on it.
 
 ---
 
 # 12. Machine-Readable Diagnostics and Evidence
 
-Diagnostics are especially vulnerable to accidental contracts.
+Diagnostics are especially vulnerable to accidental compatibility.
 
-Human messages naturally evolve.
+Human messages naturally evolve. External tools, however, prefer stable identifiers and structured evidence. Kontrakt
+should therefore separate stable diagnostic identity from human explanation and presentation.
 
-External tools prefer stable identifiers.
-
-Kontrakt should therefore distinguish:
-
-```text
-stable diagnostic identity
-semantic evidence
-human explanation
-presentation formatting
-```
-
-before diagnostics become an ecosystem API.
-
-A stable diagnostic code must not depend on source ordering, worker order, or which verifier happens to fail first when
-multiple equivalent witnesses exist.
-
-The exact canonical-witness policy remains a Diagnostic design question.
-
-The determinism obligation does not.
+A stable diagnostic code should not depend on worker order, source enumeration accidents, or which equivalent verifier
+witness happened to be discovered first. The exact canonical-witness strategy remains a Diagnostic design question. The
+requirement that machine-readable meaning remain deterministic does not.
 
 ---
 
 # 13. Supply-Chain and Provenance Implication
 
-Kontrakt should be able to explain how one published artifact was produced without making production history part of
-Contract meaning.
+Kontrakt should eventually be able to explain how a published artifact was produced without making that production
+history part of Contract meaning.
 
-This suggests a future separation:
+This implies a lasting distinction among semantic identity, artifact identity, builder or toolchain provenance, and the
+semantic basis that was consumed during production. SLSA and in-toto provide useful engineering evidence for that
+separation.
 
-```text
-semantic identity
-artifact identity
-production provenance
-builder identity
-toolchain identity
-```
-
-These may be linked.
-
-They should not be collapsed.
-
-SLSA and in-toto provide strong external evidence for this separation.
-
-The exact attestation format remains outside this document.
+The exact attestation format is not decided here.
 
 ---
 
 # 14. Conformance Strategy
 
-No single correctness technique is sufficient.
+No single verification technique is sufficient for every Kontrakt subsystem.
 
-A SOTA-grade Kontrakt should combine independent techniques according to risk.
+A mature implementation will likely combine several approaches. A Reference Judgment can provide an independent semantic
+interpretation. Property-based tests can explore broad input spaces. Golden semantic vectors can protect especially
+important invariants. Differential execution can compare independent implementations or backends. Translation validation
+can check individual transformations. Formal proof may be valuable for some high-risk components.
 
-A likely long-term structure is:
+FoundationDB demonstrates the value of deterministic simulation for complex execution spaces. Jepsen demonstrates the
+value of checking observed histories against a declared model. Verified-compilation research demonstrates the value of
+explicit preservation arguments across lowering boundaries.
 
-```text
-declared Contract law
-        ↓
-Reference Judgment
-        ↓
-production compiler / runtime
-
-plus
-
-property-based tests
-differential tests
-golden vectors
-artifact reproducibility checks
-target-specific conformance tests
-translation validation where valuable
-```
-
-FoundationDB shows the value of deterministic simulation.
-
-Jepsen shows the value of checking observed histories against a declared model.
-
-Verified-compilation research shows the value of preservation proof across lowering boundaries.
-
-Kontrakt should preserve the architectural seams needed to use stronger methods later.
-
-V1 does not need to adopt every method.
+V1 does not need to implement every technique. It should preserve architectural seams so stronger checks can be added
+without redefining Contract meaning.
 
 ---
 
 # 15. Proposed Self-Protection Invariants
 
-The following invariants summarize the document.
+The previous laws can be reduced to a few compact invariants.
 
-```text
-same semantic inputs
-+
-same Contract world
-+
-same applicable semantic basis
-    ↓
-same authoritative semantic result
-```
+For the same complete semantic inputs, Contract world, and applicable semantic basis, the authoritative semantic result
+must be the same. Different physical representations may carry the same meaning, and identical-looking representations
+may carry different meaning. Observation alone does not create a Contract. A cache hit does not create authority.
+Version similarity does not prove compatibility. Plugin availability does not create semantic extension. Provenance
+equality does not prove semantic equality.
 
-```text
-same implementation representation
-    ↛ same semantic meaning
-```
+The same separation applies in the other direction. A different runtime schedule does not by itself imply different
+semantics. A layer that does not understand a distinction does not gain permission to erase it. A compiler upgrade does
+not gain permission to reinterpret an old semantic identity.
 
-```text
-same semantic meaning
-    ↛ same physical representation
-```
-
-```text
-observed behavior
-    ↛ declared contract
-```
-
-```text
-cache hit
-    ↛ authority
-```
-
-```text
-version similarity
-    ↛ compatibility
-```
-
-```text
-plugin availability
-    ↛ semantic extension
-```
-
-```text
-provenance equality
-    ↛ semantic equality
-```
-
-```text
-runtime scheduling difference
-    ↛ semantic difference
-```
-
-```text
-unknown distinction
-    ↛ permission to discard
-```
-
-```text
-implementation upgrade
-    ↛ silent reinterpretation
-```
+These invariants are deliberately semantic. They are intended to remain valid even if the implementation language,
+backend, storage architecture, query engine, or incremental algorithm changes.
 
 ---
 
 # 16. Consequences for Kontrakt Architecture
 
-This document strengthens several existing directions.
+This Constitution draft strengthens several decisions already present in the project.
 
-Contract semantics remain independent from Kotlin/JVM.
+Contract semantics remain independent from Kotlin/JVM. Resolved Contract HIR remains compiler-semantic material rather
+than Contract authority. Canonical Contract World remains the authoritative substrate for established Contract
+definition meaning. Generated host APIs remain projections.
 
-Resolved Contract HIR remains compiler-semantic material rather than authority.
-
-Canonical Contract World remains the authority substrate for established Contract definition meaning.
-
-Generated host APIs remain projections.
-
-Query and cache state remain non-authoritative.
-
-HID remains an identity substrate rather than semantic equality authority.
-
+Query and cache state remain non-authoritative. HID remains an identity substrate rather than a semantic-equality law.
 Backend representation remains replaceable.
 
-External platform behavior must be resolved before it can affect Contract meaning.
-
-Public compatibility must be defined in terms of legal observations rather than implementation shape.
-
-Different outward Kontrakt surfaces need explicit stability domains before long-term promises are made.
-
-Reference Judgment and conformance remain independent enough to detect production implementation errors.
+External platform behavior must be resolved before it is allowed to affect Contract meaning. Public compatibility must
+be judged through legal observations rather than implementation shape. Outward Kontrakt surfaces need explicit stability
+domains before strong long-term promises are made. Production realization should remain independently checkable enough
+to detect implementation errors rather than merely reproduce them.
 
 ---
 
 # 17. What This Document Does Not Decide
 
-This document intentionally does not freeze:
+This Constitution draft intentionally stops before concrete mechanism.
 
-```text
-public package layout
-Java/Kotlin API class hierarchy
-wire format
-persistent metadata format
-diagnostic JSON schema
-exact compatibility matrix
-exact semantic fingerprint
-HID encoding
-query keys
-cache design
-incremental algorithm
-backend API
-plugin ABI
-adapter SPI
-conformance test harness
-translation-validation engine
-formal proof technology
-artifact attestation format
-```
+It does not choose the public Java/Kotlin package layout, a class hierarchy, a wire format, a persistent metadata
+format, a diagnostic JSON schema, a compatibility table, an HID encoding, query keys, cache structures, an incremental
+algorithm, a plugin ABI, an adapter SPI, a backend API, an attestation format, or one conformance harness.
 
-Those are Design or later protocol decisions.
+It also does not mandate translation validation or formal proof technology.
 
-This document defines the obligations those mechanisms must preserve.
+Those choices belong to later Design or protocol work. They are free to change as long as they preserve the laws defined
+here.
 
 ---
 
 # 18. Questions Still Open Before This Becomes Accepted Project Law
 
-The project still needs to decide the exact stability domains exposed to external users.
+Several project-wide questions remain open.
 
-The project must decide which outward artifacts are long-term supported interfaces and which are compiler-private.
+Kontrakt still needs to define the exact stability domains it exposes externally and identify which artifacts are
+supported long-term interfaces rather than compiler-private material. Each stable semantic surface will need an explicit
+legal observation set.
 
-The project must define the legal observation set for each stable public semantic surface.
+The project also needs a clean relationship among Contract Version, IDL Language Version, compiler version,
+generated-API version, and external artifact-format version. Those versions should not collapse into one number merely
+for convenience.
 
-The project must define how Contract Version, IDL Language Version, compiler version, generated-API version, and
-external artifact-format version relate without collapsing them.
+The long-term Reference Judgment and cross-backend conformance policy remain open, as does the minimum provenance
+required for release and persistent-artifact verification.
 
-The project must define the long-term Reference Judgment and cross-backend conformance policy.
-
-The project must define the minimum provenance required for release and persistent artifact verification.
-
-The project must decide when this Constitution draft is sufficiently complete to become accepted project law.
-
-Those decisions should happen after ADR-0073 is sufficiently closed.
+These questions should be revisited after ADR-0073 and the surrounding compiler boundaries are sufficiently closed.
 
 ---
 
@@ -1878,202 +820,168 @@ Those decisions should happen after ADR-0073 is sufficiently closed.
 
 Rejected.
 
-That rule destroys implementation replaceability.
-
-Observed behavior can create ecosystem debt.
-
-It does not automatically create Contract authority.
-
----
+If every observable behavior automatically became Contract, implementation replaceability would disappear. Observation
+can create ecosystem debt, but it does not create semantic authority.
 
 ## 19.2. "Documentation Silence Is Enough"
 
 Rejected.
 
-Repeated stable accidental behavior can become a practical dependency.
-
-Where one distinction is materially observable, Kontrakt should define whether it is guaranteed, unstable, or
-intentionally unspecified.
-
----
+Repeated accidental stability can become a practical dependency. Where an observation is likely to matter, Kontrakt
+should make clear whether it is guaranteed, unstable, or intentionally unspecified.
 
 ## 19.3. "Semantic Versioning Solves Compatibility"
 
 Rejected.
 
-Versioning is communication and coordination.
-
-It is not a proof of behavioral compatibility.
-
-Recent ecosystem research continues to identify behavioral breaking changes and transitive compatibility as difficult
-problems.
-
----
+Versioning communicates intent and coordinates releases. It does not prove behavioral compatibility. Recent ecosystem
+research continues to show that semantic breakage and transitive compatibility are harder than version labels suggest.
 
 ## 19.4. "Same API Signature Means Same Contract"
 
 Rejected.
 
-Behavioral obligations may differ while shape remains identical.
-
----
+A signature can remain unchanged while ordering, failure behavior, lifecycle, resource ownership, or another legal
+observation changes.
 
 ## 19.5. "Canonical Bytes Define Meaning"
 
 Rejected.
 
-Canonical bytes may represent already-defined meaning.
-
-They do not determine the semantic law that makes two values equal.
-
----
+Canonical bytes can represent meaning after semantic law has decided what counts as equal. The bytes do not create that
+equality law.
 
 ## 19.6. "Cache Equality Defines Semantic Equality"
 
 Rejected.
 
-Cache reuse is compiler realization.
-
-Semantic equality remains owned by semantic law.
-
----
+A cache is compiler realization. Semantic equality remains owned by the semantic domain whose result is being cached.
 
 ## 19.7. "One Stable API Promise Covers Everything"
 
 Rejected.
 
-Contract semantics, tooling, generated artifacts, diagnostics, plugin APIs, and experimental features have different
-evolution pressures.
-
-They require separate stability domains.
-
----
+Contract semantics, generated artifacts, diagnostics, tooling APIs, backend SPIs, and experimental extensions evolve
+under different pressures. They require separate stability domains.
 
 ## 19.8. "All Nondeterminism Is Forbidden"
 
 Rejected.
 
-Parallel execution, distributed scheduling, random test exploration, and target-specific optimization may be
-operationally nondeterministic.
-
-The required law is that such nondeterminism does not silently alter authoritative semantics.
-
----
+Parallel execution, distributed scheduling, randomized test exploration, and target-specific optimization may remain
+operationally nondeterministic. The requirement is that they do not silently change authoritative semantics.
 
 ## 19.9. "Tests Define the Contract"
 
 Rejected.
 
-Tests verify declared law.
-
-They do not replace it.
-
-A test suite can be incomplete or wrong.
-
----
+Tests check declared law. They can be incomplete or wrong and therefore cannot replace that law.
 
 ## 19.10. "Implementation Upgrade May Reinterpret Old Meaning"
 
 Rejected.
 
-A new compiler may fix bugs.
-
-It may introduce new versions.
-
-It may not silently redefine an existing exact semantic identity.
+A new compiler may fix bugs or introduce new semantic versions. It may not silently assign a different meaning to an
+existing exact semantic identity.
 
 ---
 
 # 20. Non-Normative Engineering Basis
 
-The following sources informed this document.
+The following sources informed this draft. They are engineering evidence rather than Kontrakt authority.
 
-They are evidence rather than Kontrakt authority.
+### Kontrakt project material
 
-## Kontrakt project material
+*What Contract Is*; ADR-0041, *Stable Metadata Identity, BLAKE3 HID, and Protocol-Owned Interning*; ADR-0063, *Contract
+Establishment, Occurrence, Applicability, and Semantic Dependency*; ADR-0071, *Resolved Contract HIR*; the current
+ADR-0073 work; the Kontrakt Compiler Total Architecture Map; and *Modern Compiler Architecture 01–15*.
 
-- *What Contract Is*
-- ADR-0041: Stable Metadata Identity, BLAKE3 HID, and Protocol-Owned Interning
-- ADR-0063: Contract Establishment, Occurrence, Applicability, and Semantic Dependency
-- ADR-0071: Resolved Contract HIR
-- ADR-0073: JVM Platform-Native Contract Ratification work
-- Kontrakt Compiler Total Architecture Map
-- *Modern Compiler Architecture 01–15*
+### Compilers
 
-## Compilers
+LLVM documentation: <https://llvm.org/docs/>
 
-- LLVM documentation: <https://llvm.org/docs/>
-- rustc incremental compilation: <https://rustc-dev-guide.rust-lang.org/queries/incremental-compilation.html>
-- HELIX: Verified compilation of cyber-physical control systems to LLVM IR, 2026: <https://arxiv.org/abs/2604.18593>
+rustc incremental compilation: <https://rustc-dev-guide.rust-lang.org/queries/incremental-compilation.html>
 
-## Operating systems and capabilities
+rustc incremental compilation in
+detail: <https://rustc-dev-guide.rust-lang.org/queries/incremental-compilation-in-detail.html>
 
-- Linux ABI documentation: <https://www.kernel.org/doc/html/latest/admin-guide/abi.html>
-- seL4 capabilities: <https://docs.sel4.systems/Tutorials/capabilities.html>
-- FreeBSD Capsicum: <https://docs.freebsd.org/en/books/handbook/security/>
-- Typestate via Revocable Capabilities, 2025: <https://arxiv.org/abs/2510.08889>
+HELIX, 2026: <https://arxiv.org/abs/2604.18593>
 
-## Databases and distributed systems
+### Operating systems and capabilities
 
-- PostgreSQL collation versioning: <https://www.postgresql.org/docs/17/sql-altercollation.html>
-- FoundationDB simulation: <https://apple.github.io/foundationdb/testing.html>
-- FoundationDB engineering: <https://apple.github.io/foundationdb/engineering.html>
-- Jepsen consistency models: <https://jepsen.io/consistency>
+Linux ABI documentation: <https://www.kernel.org/doc/html/latest/admin-guide/abi.html>
 
-## Build systems and software supply chain
+seL4 capabilities: <https://docs.sel4.systems/Tutorials/capabilities.html>
 
-- Bazel hermeticity: <https://bazel.build/concepts/hermeticity>
-- Bazel remote execution: <https://bazel.build/docs/remote-execution>
-- Nix derivations: <https://nix.dev/manual/nix/2.34/store/derivation/>
-- SLSA provenance: <https://slsa.dev/spec/v1.2/provenance>
-- in-toto: <https://in-toto.io/docs/what-is-in-toto/>
-- SOURCE_DATE_EPOCH: <https://reproducible-builds.org/specs/source-date-epoch/>
-- Canonicalization for Unreproducible Builds in Java, 2025: <https://arxiv.org/abs/2504.21679>
+FreeBSD Capsicum: <https://docs.freebsd.org/en/books/handbook/security/>
 
-## API, protocol, and semantic evolution
+`Typestate via Revocable Capabilities`, 2025: <https://arxiv.org/abs/2510.08889>
 
-- Kubernetes API: <https://kubernetes.io/docs/concepts/overview/kubernetes-api/>
-- Protocol Buffers: <https://protobuf.dev/programming-guides/proto3/>
-- OpenTelemetry Versioning and Stability: <https://opentelemetry.io/docs/specs/otel/versioning-and-stability/>
-- OpenTelemetry Semantic Conventions: <https://opentelemetry.io/docs/specs/semconv/>
-- WebAssembly Component Model: <https://github.com/WebAssembly/component-model>
-- Roseau: Fast, Accurate, Source-based API Breaking Change Analysis in Java, 2025: <https://arxiv.org/abs/2507.17369>
-- Breaking Changes in Software Ecosystems: A Systematic Literature Review, 2026: <https://arxiv.org/abs/2605.24397>
+### Databases and distributed systems
+
+PostgreSQL `ALTER COLLATION` and collation versioning: <https://www.postgresql.org/docs/17/sql-altercollation.html>
+
+FoundationDB simulation: <https://apple.github.io/foundationdb/testing.html>
+
+FoundationDB engineering: <https://apple.github.io/foundationdb/engineering.html>
+
+Jepsen: <https://jepsen.io/>
+
+Jepsen consistency models: <https://jepsen.io/consistency>
+
+### Build systems and software supply chain
+
+Bazel hermeticity: <https://bazel.build/concepts/hermeticity>
+
+Bazel remote execution: <https://bazel.build/docs/remote-execution>
+
+Nix derivations: <https://nix.dev/manual/nix/2.34/store/derivation/>
+
+SLSA provenance: <https://slsa.dev/spec/v1.2/provenance>
+
+in-toto: <https://in-toto.io/docs/what-is-in-toto/>
+
+SOURCE_DATE_EPOCH: <https://reproducible-builds.org/specs/source-date-epoch/>
+
+`Canonicalization for Unreproducible Builds in Java`, 2025: <https://arxiv.org/abs/2504.21679>
+
+### API, protocol, and semantic evolution
+
+Kubernetes API: <https://kubernetes.io/docs/concepts/overview/kubernetes-api/>
+
+Protocol Buffers: <https://protobuf.dev/programming-guides/proto3/>
+
+OpenTelemetry versioning and stability: <https://opentelemetry.io/docs/specs/otel/versioning-and-stability/>
+
+OpenTelemetry semantic convention
+groups: <https://opentelemetry.io/docs/specs/semconv/general/semantic-convention-groups/>
+
+OpenTelemetry telemetry stability: <https://opentelemetry.io/docs/specs/otel/telemetry-stability/>
+
+OpenTelemetry semantic conventions: <https://opentelemetry.io/docs/specs/semconv/>
+
+WebAssembly Component Model: <https://github.com/WebAssembly/component-model>
+
+WebAssembly Canonical ABI: <https://github.com/WebAssembly/component-model/blob/main/design/mvp/CanonicalABI.md>
+
+Roseau, 2025: <https://arxiv.org/abs/2507.17369>
+
+`Breaking Changes in Software Ecosystems`, 2026: <https://arxiv.org/abs/2605.24397>
 
 ---
 
 # 21. Final Working Law
 
-Kontrakt must be designed as though another independent system will eventually depend on every public semantic promise
-it makes.
+Kontrakt should be designed on the assumption that another independent system will eventually rely on every public
+semantic promise it makes.
 
-That dependency must remain safe across compiler rewrites, backend replacement, host-platform change, parallel
-execution, incremental compilation, plugin growth, and ecosystem evolution.
+That reliance must remain safe across compiler rewrites, backend replacement, host-platform change, parallel and
+incremental compilation, extension growth, and ecosystem evolution.
 
-The project therefore protects one boundary above all others:
+The project therefore protects one boundary above all others: declared semantic authority may create stable legal
+observations, and those observations constrain replaceable realization. The reverse direction is not allowed. An
+implementation accident, ambient environment, cache state, execution schedule, extension behavior, or toolchain accident
+does not become semantic authority merely because it was observable.
 
-```text
-declared semantic authority
-        ↓
-stable legal observation
-        ↓
-replaceable realization
-```
-
-The reverse direction is forbidden.
-
-```text
-realization accident
-ambient environment
-cache state
-execution schedule
-extension behavior
-toolchain accident
-        ↛
-declared semantic authority
-```
-
-Determinism begins at meaning.
-
-Reproducibility, canonical artifacts, compatibility, provenance, verification, and optimization are downstream
-obligations that must preserve that meaning without becoming its source.
+**Determinism begins at meaning.** Reproducibility, canonical artifacts, compatibility, provenance, verification, and
+optimization are downstream obligations. They must preserve the meaning without becoming its source.
