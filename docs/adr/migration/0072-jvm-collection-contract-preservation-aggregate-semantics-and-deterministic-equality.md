@@ -2,7 +2,18 @@
 
 ## Status
 
-Proposed
+Migrated
+
+ADR-0072 was superseded as an independent Contract ADR.
+
+Collection boundary legality and platform preservation are now owned by
+ADR-0064 and ADR-0073.
+
+Collection-specific compiler semantic mapping, aggregate-family modeling,
+platform support matrices, HIR payload design, verification material,
+and physical realization are migrated to the Collection/Aggregate Design.
+
+No independent Collection Contract authority is created.
 
 ## Date
 
