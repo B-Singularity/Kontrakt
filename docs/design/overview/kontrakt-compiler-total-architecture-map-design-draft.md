@@ -73,25 +73,20 @@ Logical stages and physical materialization are separate.
 
 # 3. Total Architecture
 
-The compiler has a semantic material graph and a build / product dependency graph.
+The compiler has a semantic material graph and a build / product dependency graph. It also has a realization graph that
+represents user implementation. These graphs interact through explicit products, but one graph does not become another
+kind of semantic relation.
 
-They are related.
-
-They are not the same graph.
-
-The Contract frontend also has more than one authoring input form.
-
-`.kontrakt` source and selected 1D Contract carrier source are frontend inputs.
-
-The carrier is an immutable authoring data surface.
-
-It is not Contract authority and does not remain the semantic model merely because the frontend used it.
+The Contract frontend accepts more than one authoring form. `.kontrakt` source and selected 1D Contract carrier source
+are
+frontend inputs. A carrier is an immutable authoring data surface. Its host topology does not remain the semantic model
+merely because the frontend acquired Contract evidence from it.
 
 ```text
 ┌───────────────────────────────────────────────────────────────────────────┐
 │                        Compiler Driver / Session                          │
 │ request / target / product demand / resources / generations / reuse      │
-│ worker ownership / cancellation / diagnostics / artifact publication      │
+│ worker ownership / cancellation / diagnostics / artifact publication     │
 └──────────────────────────────────┬────────────────────────────────────────┘
                                    │
                   ┌────────────────┴────────────────┐
@@ -157,20 +152,18 @@ It is not Contract authority and does not remain the semantic model merely becau
                            HotSpot / Graal
 ```
 
-The frontend boxes are logical architecture boundaries.
+This diagram is an overview. Section 4 owns the finer semantic production protocol. In particular, it separates
+Definition
+Candidates from IDL Binding Candidates and keeps occurrence-specific material outside the Definition world unless the
+owning
+Contract gives an occurrence result authority of its own.
 
-They do not require one heap object graph or one physical product per box.
+The frontend boxes are logical architecture boundaries. They do not require one heap object graph or one physical
+product
+per box. Frontend processing may desugar, normalize, intern, deduplicate, pre-resolve, or compact representation before
+Establishment when the published HIR invariant in Section 6 remains true.
 
-Frontend processing may desugar, normalize, intern, deduplicate, pre-resolve, compact, or otherwise improve compiler
-representation before Establishment when resolved candidate meaning is preserved.
-
-That work does not create Contract authority.
-
-The build / product dependency has an additional edge.
-
-Generated host APIs are compiler products.
-
-User implementation compilation consumes those products.
+The build / product graph has an additional dependency through generated APIs.
 
 ```text
 .kontrakt
@@ -188,33 +181,97 @@ User Classfiles
 Realization Acquisition
 ```
 
-A clean build therefore does not assume that the two frontend paths are fully independent.
+A clean build therefore does not require the Contract frontend and realization acquisition to execute as two fully
+independent schedules. Compatible generated APIs and user classfiles may let the compiler reuse existing products. That
+is
+a scheduling and product-reuse opportunity. It does not add a Contract semantic dependency.
 
-Some work may overlap when a compatible generated API product and user classfile product already exist.
-
-That is a scheduling opportunity.
-
-It is not a semantic dependency rule.
-
-`Canonical Contract World` must exist before Contract-aware verification or optimization can use Contract meaning.
+The `Canonical Contract World` must exist before Contract-aware verification or optimization can use authoritative
+Contract
+Definition meaning.
 
 ---
 
 # 4. Main Material Flow
 
-The whole compiler can be reduced to a small set of major material families.
+Section 3 shows the whole compiler. This section owns the detailed semantic material flow used by 1D ADR review. It
+keeps
+Definition production, occurrence application, and realization material separate because they have different authority
+rules.
+
+## 4.1. Definition production
+
+Authored Contract material becomes authoritative only after frontend resolution and the owning Definition judgment.
 
 ```text
 Contract Authoring Inputs
     ↓
 Source / Syntax / Carrier Material
     ↓
-Resolved Contract HIR
+Resolution / Role Binding / Semantic Normalization
     ↓
-Authority-Owned Establishment
+Published Resolved Contract HIR
+    ├── Definition Candidates
+    ├── IDL Binding Candidates
+    ├── exact semantic references
+    └── adjacent provenance references
+    ↓
+Authority-Owned Definition Establishment
+    ↓
+Established Definition Material
     ↓
 Canonical Contract World
+```
 
+`Definition Candidate` describes the resolved meaning that one authority may establish. `IDL Binding Candidate`
+describes
+the exact resolved use that selects or relates that Definition in the authored Contract surface. The owning 1D ADR
+decides
+which contextual differences are Definition determinants and which remain binding-only meaning.
+
+These subjects do not require separate physical objects. They are logical semantic products inside the HIR boundary.
+
+## 4.2. Occurrence application
+
+Definition meaning and application meaning remain separate. An occurrence path exists only when the owning authority
+gives
+one semantic application result meaning of its own.
+
+```text
+Established Definition Reference
+    +
+exact application / binding
+    +
+Required Basis where owned
+    +
+Applicable Context where owned
+    +
+actual candidate material
+        ↓
+Owning Occurrence Judgment
+        ├── success
+        │      ↓
+        │  Established Occurrence Material
+        │
+        └── unsuccessful judgment
+               ↓
+           exact unsuccessful result meaning
+```
+
+Established Occurrence Material does not automatically enter the Canonical Contract World. The owning ADR decides
+whether
+occurrence meaning exists and which semantic coordinates determine it. A runtime call, query execution, or carrier
+object
+does not create occurrence identity by itself.
+
+Failure and diagnostics may consume an exact unsuccessful judgment when their own laws permit it. They do not re-run the
+source 1D law to reconstruct another answer.
+
+## 4.3. Realization material
+
+The realization path remains non-authoritative.
+
+```text
 User Realization
     ↓
 Realization Body IR
@@ -238,32 +295,43 @@ JVM Plan / IR
 Classfile
 ```
 
-The material families have different meanings.
+Compiler analysis may derive new realization knowledge from established meaning. That knowledge does not alter the
+Definition or occurrence that justified the analysis.
 
-```text
-Source / Syntax / Carrier Material
-    → authored and frontend-acquired material
+## 4.4. Material-family responsibility
 
-Resolved Contract HIR
-    → resolved compiler-semantic baseline
+| Material family                    | Responsibility                                                                                        |
+|------------------------------------|-------------------------------------------------------------------------------------------------------|
+| Source / Syntax / Carrier Material | Preserve authored and frontend-acquired information before exact semantic resolution                  |
+| Resolved Contract HIR              | Publish resolved compiler-semantic candidate meaning and exact use relations before authority         |
+| Established Definition Material    | Preserve authority-owned Definition meaning after successful Establishment                            |
+| Canonical Contract World           | Provide one compiler substrate through which downstream products read Established Definition Material |
+| Established Occurrence Material    | Preserve the result of one semantic application when the owning authority defines occurrence meaning  |
+| Exact Unsuccessful Judgment Result | Preserve an authority-owned unsuccessful application meaning where the owning law defines one         |
+| Derived Knowledge                  | Hold recomputable compiler analysis, summaries, and projections without becoming Contract authority   |
+| Realization / Execution IR         | Represent implementation and executable semantics under the invariants of their own IR levels         |
 
-Established Definition Material
-    → authority-owned Contract meaning
+The exact number of physical representations remains open. A logical material family may be physically split or fused
+when its authority, information-loss, publication, and consumer-visible invariants remain intact.
 
-Canonical Contract World
-    → compiler substrate for established definition meaning
+## 4.5. Published Semantic Producer Protocol
 
-Derived Knowledge
-    → recomputable compiler analysis / summary / projection
-```
+Every published semantic producer must define its own consumer-visible result before query, cache, or storage design is
+chosen. This is a compiler architecture protocol. It is not a new Contract kind.
 
-The exact number of physical representations remains open.
+| Producer responsibility    | Required decision                                                                                       |
+|----------------------------|---------------------------------------------------------------------------------------------------------|
+| Semantic subject           | What logical subject does this producer compute?                                                        |
+| Explicit inputs            | Which semantic or compiler inputs determine the result?                                                 |
+| Produced meaning           | What may a consumer rely on after publication?                                                          |
+| Equality / equivalence     | When is a recomputed result unchanged for that producer's consumers?                                    |
+| Validity boundary          | Which input change makes the published result stale?                                                    |
+| Publication boundary       | When is the result complete enough for independent readers?                                             |
+| Stable references          | How may later products refer to the result without using object identity or storage address as meaning? |
+| Provenance relation        | What source relation remains separately addressable?                                                    |
+| Information-loss guarantee | Which distinctions has the producer preserved, and which distinctions has it lawfully erased?           |
 
-A logical material family may be physically split or fused.
-
-A physically aggregated product may expose fine-grained access and dependency boundaries.
-
-The build / product graph may contain more products than this semantic material flow.
+Section 39 adds query and dependency orchestration to this producer protocol. It does not redefine the semantic product.
 
 ---
 
@@ -374,16 +442,14 @@ They do not define Contract meaning.
 
 # 6. Resolved Contract HIR
 
-`Resolved Contract HIR` is the high-level compiler-semantic representation before Establishment.
+`Resolved Contract HIR` is the published high-level compiler-semantic representation before Establishment. Section 4
+owns
+the material-flow role of HIR. This section defines the invariant that a HIR producer must preserve.
 
-It is not merely temporary parser output.
+HIR is not temporary parser output. It is the stable result of frontend resolution that later compiler work may consume
+without reopening source syntax or repeating semantic resolution.
 
-It is the stable semantic result of frontend resolution that later compiler work may consume without reopening source
-syntax or repeating name resolution.
-
-It preserves rich Contract vocabulary.
-
-It may represent exact references to:
+The HIR preserves rich Contract vocabulary. It may represent exact references to:
 
 ```text
 Input
@@ -403,109 +469,165 @@ Publication
 Output
 ```
 
-The main invariant is:
+One published HIR generation may contain several logical semantic subjects. Their physical storage may still be shared.
+
+| HIR semantic subject                        | Required meaning                                                                                          |
+|---------------------------------------------|-----------------------------------------------------------------------------------------------------------|
+| Contract / Interaction / Operation subjects | Exact resolved subjects needed by later Contract processing                                               |
+| Definition Candidates                       | Authority-qualified candidate meaning after 1D-owned determinant projection                               |
+| IDL Binding Candidates                      | Exact use relation that selects a Definition Candidate in the resolved IDL context                        |
+| Exact semantic references                   | Resolved targets required to interpret a candidate without lexical lookup                                 |
+| Basis Requirement Law                       | The declared requirement when that law is part of Definition meaning; not the future Basis Binding result |
+| Applicability Law                           | The declared applicability rule when Definition-owned; not a future applicability judgment result         |
+| Platform preservation obligations           | Only resolved platform-visible obligations still required by later authority or legal host observation    |
+| Provenance references                       | Adjacent source relation that remains outside HIR semantic identity                                       |
+
+Definition Candidate meaning and IDL Binding Candidate meaning remain distinct. The same Definition Candidate may be
+used
+by more than one binding when the owning 1D ADR says that the different use context does not change Definition meaning.
+
+The main HIR invariant is:
 
 ```text
 source ambiguity resolved
 +
-required frontend references exact
+required semantic references exact
 +
-syntax-only ambiguity no longer required by later semantic work
+owning candidate meaning complete enough for Establishment
++
+syntax-only distinctions erased only when later semantic work no longer needs them
 ```
 
-The HIR owns compiler-resolved meaning.
+This creates an information-loss boundary. If Establishment, generated API projection, legal platform reprojection, or a
+later authority still needs a distinction, frontend processing must preserve that distinction before Visible HIR is
+published. Establishment must not repair an incomplete HIR by reopening Java, Kotlin, `.kontrakt`, or another authoring
+surface.
 
-It does not own Contract authority.
+Recovery or poison information may remain available to frontend diagnostics, but it cannot masquerade as a complete
+valid
+Definition Candidate. Material that cannot satisfy the HIR publication invariant does not become authoritative merely by
+being assigned a HIR row or handle.
 
-```text
-Resolved Contract HIR
-    → compiler-owned resolved semantic baseline
-    → suitable for Establishment input
-    → suitable for frontend diagnostics / tooling / reuse
+HIR owns compiler-resolved meaning. It does not own Contract authority. Resolution success therefore does not establish
+a
+Contract Definition.
 
-Resolved Contract HIR
-    ≠
-Contract authority
-```
+HIR semantic meaning and source provenance remain separate. A source-only change may update provenance while leaving the
+resolved HIR meaning unchanged. The compiler may reuse the semantic result when the producer's equality and validity
+rules
+prove that it is unchanged.
 
-Resolution success does not establish Contract meaning.
+The HIR should be published behind a stable read boundary before independent consumers share it. Ordinary consumers do
+not
+mutate a published HIR generation in place.
 
-HIR semantic meaning and source provenance remain distinct.
+A later compiler may use immutable backing, phase-qualified material, overlays, or replacement generations. Those
+choices
+remain implementation as long as the published invariant is preserved.
 
-```text
-source / provenance change
-    ↓
-resolved HIR meaning may remain unchanged
-```
-
-A provenance-only change therefore need not force semantic invalidation when the resolved HIR result is proven
-unchanged.
-
-The exact reuse mechanism is compiler realization.
-
-The HIR should be published behind a stable read boundary before independent consumers share it.
-
-Ordinary downstream consumers should not mutate a published HIR generation in place.
-
-A later compiler implementation may use immutable backing, phase-qualified material, overlays, new generations, or
-another
-representation that preserves the same invariant.
-
-One logical HIR generation does not require one monolithic dependency or storage unit.
-
-The compiler may expose fine-grained definition-level projections even when construction or storage is physically
-aggregated.
-
-This keeps V2 incremental granularity open without making query structure part of HIR semantics.
+One logical HIR generation does not imply one monolithic dependency unit. The producer may expose stable Definition,
+binding, or provenance projections over physically aggregated material. This keeps V2 incremental granularity open
+without
+making query structure part of HIR semantics.
 
 ---
 
 # 7. Authority-Owned Establishment
 
-Establishment is a Contract semantic boundary.
+Establishment is the semantic boundary where an owning Contract or State-Machine law grants authority to resolved
+candidate
+meaning. It is not ordinary compiler lowering, and it does not discover semantic information that the frontend failed to
+resolve.
 
-It is not ordinary compiler lowering.
+Definition Establishment follows this protocol:
 
 ```text
-Resolved Contract HIR
-    ↓
-Required Basis complete
-    ↓
-Owning Contract Law
-    ↓
-Establishment
-    ↓
+Authority-qualified Definition Candidate
+    +
+exact semantic subject
+    +
+exact required semantic references
+    +
+Definition-time Required Basis meaning where owned
+    +
+Definition-time Applicable Context where owned
+        ↓
+Owning Definition Judgment
+        ↓
 Established Definition Material
 ```
 
-Each authority keeps its own meaning.
+The candidate must already contain the meaning required by its owning ADR. Establishment must not reopen source names,
+inspect host-object containment, discover platform behavior, or infer meaning from realization topology.
 
-Kontrakt must not replace all authorities with one universal `EstablishedMaterial` model.
+Successful Definition Establishment produces the authority-specific material defined by ADR-0063.
+
+```text
+Established Definition
+
+Definition Meaning
+    → exact authoritative meaning owned by this Definition
+
+Definition Reference
+    → exact authoritative Definition identity
+
+Direct Established Relations
+    → only relations owned directly by this Definition meaning
+```
+
+Source provenance remains adjacent to this material. It is not part of Definition Meaning or Definition Reference.
+
+If Definition Establishment does not succeed, no Established Definition Material is created for that candidate. The
+compiler must retain enough exact subject and rejection information for the owning refusal rule and diagnostics to
+preserve
+the distinction between an unresolved frontend problem, an unsuccessful authority judgment, and a later realization
+failure. A Contract-specific unsuccessful result exists only when the owning law defines one.
+
+Occurrence Establishment is a separate application relation. Where an authority owns occurrence meaning, it follows the
+application protocol in Section 4.2 and ADR-0063. It is not folded into Definition Establishment merely because the same
+compiler subsystem happens to execute both judgments.
+
+Kontrakt must not replace the authority-specific results with one universal `EstablishedMaterial` semantic model.
 
 ---
 
 # 8. Canonical Contract World
 
-The `Canonical Contract World` is the compiler substrate for already-established Contract definition meaning.
+The `Canonical Contract World` is the compiler substrate for already-established Contract Definition meaning. It is not
+an
+optimization IR and it does not replace the authorities that established the material.
 
-It is not an ordinary optimization IR.
+The world provides one coherent read surface over authority-owned Definition material. Its logical contents are
+constrained
+by the owning ADRs and ADR-0063.
 
-It exposes exact authoritative material and relations to downstream consumers.
+| World surface                       | Meaning                                                                                               |
+|-------------------------------------|-------------------------------------------------------------------------------------------------------|
+| Established Definition Material     | Exact authoritative meaning produced by each owning Contract or State-Machine authority               |
+| Definition References               | Exact references to authoritative Definitions                                                         |
+| Direct Established Relations        | Relations already owned and established by the relevant Definition law                                |
+| Basis relations                     | Basis Resolution or Binding relations only after the responsible composition law has established them |
+| Applicability relations             | Authoritative applicability material only where an owning law has established it                      |
+| Version-aware meaning               | Exact Version Binding and Version-sensitive Definition meaning owned by the Contract model            |
+| Policy / Governance / State context | Established context only where the respective authority owns that meaning                             |
+| Provenance handles                  | Compact relation to source provenance; provenance is not semantic identity                            |
 
-Working read surface:
+The world must not infer a transitive Contract relation merely because the compiler can derive one. Reachability,
+closure,
+summary indexes, and consumer-specific projections remain derived compiler knowledge unless an owning law establishes
+the
+same meaning directly.
 
-```text
-exact definitions
-exact semantic relations
-Basis relations
-Applicability relations
-Version-aware meaning
-Policy / Governance context
-State surface
-source provenance references
-```
+Established Occurrence Material is separate from the Canonical Contract World by default. An authority may define
+occurrence meaning as described in Section 4.2, but a diagnostic or runtime consumer does not justify inserting every
+occurrence into the Definition world.
 
-Occurrence material remains separate unless the owning Contract defines occurrence meaning.
+The Canonical Contract World also does not contain the realization call graph, query dependency graph, diagnostic
+provenance graph, or optimization summaries as Contract authority. Those structures keep the owners defined elsewhere in
+this document.
+
+The physical world representation remains replaceable. A unified logical read surface does not require one universal
+`EstablishedMaterial` object model or one giant object graph.
 
 ---
 
@@ -552,24 +674,29 @@ The exact publication granularity remains a compiler design choice.
 
 # 10. Canonical Contract World Products
 
-The Canonical Contract World feeds multiple sibling products.
+The Canonical Contract World feeds sibling compiler products. Section 8 owns the authoritative read surface. This
+section
+only fixes the direction of consumption.
 
-```text
-Canonical Contract World
-    ├── Reference Judgment
-    ├── PBT / Fixture / Unit-Test Planning
-    ├── Contract Coverage
-    ├── Diagnostics
-    ├── Generated APIs
-    ├── Contract-Aware Analysis
-    ├── Execution Formation
-    └── Shared Contract-Derived Knowledge
-```
+| Consumer                           | Authoritative input                                                                                         | Derived product                       |
+|------------------------------------|-------------------------------------------------------------------------------------------------------------|---------------------------------------|
+| Reference Judgment                 | Established Definition Material plus the exact candidate or occurrence inputs required by the judgment      | Reference Result                      |
+| PBT / Fixture / Unit-Test Planning | Exact established obligations and semantic partitions                                                       | Deterministic Test Plan and witnesses |
+| Contract Coverage                  | Exact obligation and semantic-subject references                                                            | Coverage product                      |
+| Diagnostics                        | Exact semantic references, adjacent provenance, and the evidence appropriate to the failure class           | Structured Diagnostic                 |
+| Generated APIs                     | Established definitions and any platform-facing obligation that must remain observable at the host boundary | Interaction / Operation API Product   |
+| Contract-Aware Analysis            | Established Contract meaning together with realization material and valid local analysis                    | Derived Contract-relative knowledge   |
+| Verification                       | Established Contract meaning together with admitted realization and valid analysis                          | Verification Result / Overlay         |
+| Execution Formation                | Established Contract meaning, verified realization, and valid specialization knowledge                      | Contract-Aware Execution IR           |
 
-`Shared Contract-Derived Knowledge` is an optional compiler seam.
+A consumer must not reopen source or host declarations to reconstruct meaning that the frontend and Establishment
+already
+produced. A consumer also must not add its own convenience field to Established Definition Material merely to simplify
+one
+implementation.
 
-It may contain summaries, indexes, or projections derived from established meaning when several consumers need the same
-calculation.
+`Shared Contract-Derived Knowledge` remains an optional compiler seam. It is useful when several consumers need the same
+recomputable projection.
 
 ```text
 Canonical Contract World
@@ -581,30 +708,11 @@ Shared Contract-Derived Knowledge
     └── execution formation
 ```
 
-The exact summary families remain open.
+The exact summary families remain open. A consumer may read the exact Canonical Contract World directly when that is the
+better boundary.
 
-A consumer may still read the exact Canonical Contract World directly when that is the better boundary.
-
-Derived summaries do not replace the authoritative source.
-
-These products do not define one another.
-
-```text
-Verifier
-    ≠ PBT authority
-
-Diagnostics
-    ≠ backend authority
-
-Reference Judgment
-    ≠ Contract authority
-
-Shared Summary
-    ≠ Contract authority
-```
-
-No sibling product becomes a semantic authority chain merely because another product reuses its validated derived
-knowledge.
+Sibling products may reuse validated derived knowledge, but that reuse does not create a semantic authority chain. The
+owning Contract remains the source of Contract meaning.
 
 ---
 
@@ -1452,23 +1560,29 @@ The target profile is not assumed to be the compiler host profile.
 
 # 36. IR Classification
 
-| Material                        |                   IR? | Role                                              |
-|---------------------------------|----------------------:|---------------------------------------------------|
-| Source / Syntax Material        | source representation | authored structure                                |
-| **Resolved Contract HIR**       |               **Yes** | resolved Contract semantics before Establishment  |
-| **Canonical Contract World**    |                **No** | established authority substrate                   |
-| Frozen World Generation         |                    No | publication state                                 |
-| **Realization Body IR**         |               **Yes** | analyzable user realization                       |
-| Local / Contract-Aware Analysis |                    No | derived compiler knowledge                        |
-| Verification Overlay            |                    No | verified property over one realization generation |
-| **Contract-Aware Execution IR** |               **Yes** | executable Contract + realization representation  |
-| Optimized Execution Material    |       usually same IR | new Execution IR generation                       |
-| Whole-Machine Summary           |                    No | derived global index                              |
-| **JVM Plan / IR**               |               **Yes** | target-specific representation                    |
-| Classfile                       |                    No | target artifact                                   |
-| Query / Product Result          |         not by itself | compiler product                                  |
-| HID / Dense Ordinal             |                    No | identity / lookup / addressing mechanism          |
-| Source Provenance               |                    No | source relation                                   |
+| Material                        |                   IR? | Role                                                                                                    |
+|---------------------------------|----------------------:|---------------------------------------------------------------------------------------------------------|
+| Source / Syntax Material        | source representation | authored structure                                                                                      |
+| **Resolved Contract HIR**       |               **Yes** | resolved Contract semantics before Establishment                                                        |
+| Established Definition Material |                    No | authority-owned Definition meaning                                                                      |
+| **Canonical Contract World**    |                **No** | compiler substrate for established Definition meaning                                                   |
+| Established Occurrence Material |                    No | authority-owned result of one semantic application where the owning Contract defines occurrence meaning |
+| Frozen World Generation         |                    No | compiler publication state                                                                              |
+| **Realization Body IR**         |               **Yes** | analyzable user realization                                                                             |
+| Local / Contract-Aware Analysis |                    No | derived compiler knowledge                                                                              |
+| Verification Overlay            |                    No | verified property over one realization generation                                                       |
+| **Contract-Aware Execution IR** |               **Yes** | executable Contract + realization representation                                                        |
+| Optimized Execution Material    |       usually same IR | new Execution IR generation                                                                             |
+| Whole-Machine Summary           |                    No | derived global index                                                                                    |
+| **JVM Plan / IR**               |               **Yes** | target-specific representation                                                                          |
+| Classfile                       |                    No | target artifact                                                                                         |
+| Query / Product Result          |         not by itself | compiler product                                                                                        |
+| HID / Dense Ordinal             |                    No | lookup / addressing / equality evidence mechanism                                                       |
+| Source Provenance               |                    No | source relation                                                                                         |
+
+Established Definition Material and Established Occurrence Material are semantic authority products, not IR levels. The
+Canonical Contract World provides a compiler substrate for Definition material. Occurrence material follows the separate
+boundary described in Sections 4.2 and 8.
 
 ---
 
@@ -1554,35 +1668,31 @@ Execution optimization occurs later under the invariants of its own IR level.
 
 # 39. Product and Query Orchestration
 
-Kontrakt produces several major compiler products.
+Kontrakt produces several major compiler products. Published semantic products follow the producer protocol defined in
+Section 4.5. Query orchestration does not replace that protocol.
 
-A query-oriented V1 interface is currently selected.
+A query-oriented V1 interface is currently selected because some products benefit from demand-driven computation, reuse,
+and dependency tracking. Passes remain local processing mechanisms, and not every calculation needs to become a query.
 
-The important architecture is:
+For a product that participates in query orchestration, the query layer adds dependency information to the
+producer-owned
+result.
 
 ```text
-Product Identity
-+
-Explicit Inputs
-+
-Published Result
-+
-Dependency Recording
-+
+Published Product
+    +
+Recorded Dependencies
+    +
 Generation Validity
+        ↓
+Reusable Query Result
 ```
 
-Passes remain local processing mechanisms.
+The query identity is compiler realization. It does not replace the semantic subject or identity defined by the product
+producer.
 
-The compiler should not make one global pass pipeline the owner of every product.
-
-Not every calculation needs to be a query.
-
-A query is useful when demand, reuse, dependency tracking, or invalidation precision justify the boundary.
-
-Logical material size and query / product granularity are separate decisions.
-
-A physically aggregated HIR or Contract World may expose fine-grained stable projections.
+Logical material size and query granularity remain separate decisions. A physically aggregated HIR or Contract World may
+expose stable projections without turning every internal row into an independent query.
 
 ```text
 Aggregate frontend material
@@ -1591,30 +1701,16 @@ Aggregate frontend material
     └── Provenance projection P
 ```
 
-A change to the aggregate representation does not require all downstream products to become invalid when their exact
-semantic inputs are unchanged.
+A change to the aggregate representation does not invalidate every downstream product when the exact semantic input to a
+projection is unchanged. This gives V1 a dependency seam without fixing V2 to one incremental algorithm.
 
-This gives V1 a dependency seam without fixing V2 to one incremental algorithm.
+Persistent or externally stored compiler products need additional artifact lifecycle checks. Those checks may cover
+schema
+compatibility, corruption, stale-generation rejection, and target compatibility. They remain product-publication rules
+rather than Contract semantics.
 
-Product publication also needs lifecycle information.
-
-```text
-producer / schema version
-target identity
-input identity
-artifact identity
-publication generation
-compatibility / corruption check
-stale artifact handling
-```
-
-Semantic and provenance products may have different validity boundaries.
-
-Persistent compiler products are derived material.
-
-Deleting them may reduce performance.
-
-It must not change Contract meaning.
+Semantic products and provenance products may have different validity boundaries. Persistent compiler products are
+derived material. Deleting them may reduce performance, but it must not change Contract meaning.
 
 ---
 
@@ -2075,8 +2171,11 @@ Slot / Role-Constrained Binding
 Frontend Validation / Semantic Normalization
 Contract Frontend
 Resolved Contract HIR Publication
-Authority-Owned Establishment
-Canonical Contract World
+Definition Candidate / IDL Binding Candidate Distinction
+Authority-Owned Definition Establishment
+Established Definition Material / Canonical Contract World
+Occurrence Candidate / Judgment Result Boundary where owned
+Unsuccessful Judgment Meaning Boundary where owned
 Frozen Publication
 Generated API Product Boundary
 
@@ -2121,9 +2220,11 @@ Existing Planning L1 / L2 Reuse
 V2 Incremental Evolution Seam
 ```
 
-The exact physical split remains open where a semantic or target-level boundary does not require another representation.
+The Definition Candidate, binding, occurrence, and unsuccessful-result boundaries above are logical semantic boundaries.
+They do not require one physical product or object graph for each line.
 
-The listed frontend responsibilities do not require one implementation class, pass, or physical product per line.
+The exact physical split remains open where a semantic or target-level boundary does not require another representation.
+The listed frontend responsibilities likewise do not require one implementation class or pass per line.
 
 ---
 
@@ -2239,56 +2340,127 @@ The exact physical layout, migration boundary, target profile, and encoder remai
 
 # 53. 1D ADR Review Map
 
-When reviewing each 1D Contract, the architecture needs only the semantic material that authority actually owns.
+Each 1D ADR must define enough semantic material for the frontend, Establishment, and later compiler consumers to work
+without reconstructing that Contract from source syntax or host implementation. The ADR should define only meaning owned
+by that authority. It must not add fields only because one current compiler subsystem finds them convenient.
 
-| Question                        | 1D ADR must decide                                                 |
-|---------------------------------|--------------------------------------------------------------------|
-| Definition meaning              | What does this authority declare?                                  |
-| Established Definition Material | What enters the Canonical Contract World?                          |
-| Occurrence meaning              | Does this authority own occurrence material?                       |
-| Required Basis                  | What must exist before judgment?                                   |
-| Applicability                   | When may the material be used?                                     |
-| Establishment result            | What exactly becomes authoritative?                                |
-| Failure relation                | How does refusal connect to Failure?                               |
-| Execution need                  | What exact relation must Execution Formation consume?              |
-| Diagnostic need                 | What authoritative material must diagnostics explain?              |
-| PBT obligation                  | What semantic partitions or witnesses follow?                      |
-| Verification need               | What must user realization verification prove?                     |
-| Optimization value              | What established context may become static optimization knowledge? |
+A question may have the answer `not owned`. That is a complete answer when the Contract truly does not own the concept.
+The review must distinguish that case from an accidental omission.
 
-If downstream work needs semantic material that does not exist, return to the owning ADR.
+## 53.1. Definition and HIR completeness
 
-Do not invent it in the compiler subsystem.
+| Question                      | 1D ADR must decide                                                                                                          |
+|-------------------------------|-----------------------------------------------------------------------------------------------------------------------------|
+| Authority                     | What exact judgment does this Contract own, and where does that ownership stop?                                             |
+| Authoring surface             | What must the author state explicitly before frontend resolution can begin?                                                 |
+| Definition meaning            | What does one Definition mean after authoring syntax has been removed?                                                      |
+| Definition determinants       | Which semantic differences make two Definition Candidates different?                                                        |
+| Resolved HIR surface          | What exact resolved meaning must the frontend produce for this authority?                                                   |
+| HIR information-loss boundary | Which distinctions must still exist when Visible Resolved HIR is published?                                                 |
+| Definition / use separation   | Which meaning belongs to the reusable Definition Candidate, and which meaning belongs only to the exact IDL use or binding? |
+| Required semantic references  | Which referenced definitions or semantic subjects must already be exact before Establishment?                               |
+| Provenance relation           | What source origin must remain addressable without becoming semantic identity?                                              |
+| HIR equivalence               | When may two resolved frontend products be treated as the same consumer-visible HIR meaning?                                |
+
+The HIR questions do not require the 1D ADR to define a table layout, Kotlin class, query key, or serialization format.
+They define the semantic payload that ADR-0071 must be able to represent.
+
+## 53.2. Definition Establishment completeness
+
+| Question                         | 1D ADR must decide                                                                                                     |
+|----------------------------------|------------------------------------------------------------------------------------------------------------------------|
+| Establishment input              | What must be complete before the owning Definition judgment may begin?                                                 |
+| Required Basis law               | Does the Definition declare required basis meaning, and if so what meaning is required?                                |
+| Definition-time applicability    | Does Establishment depend on an applicability relation owned by this Contract?                                         |
+| Establishment judgment           | What does the owning authority actually decide over the resolved candidate?                                            |
+| Established Definition Material  | What exact authoritative meaning enters the Canonical Contract World?                                                  |
+| Direct established relations     | Which relations are owned directly by this Definition rather than derived later?                                       |
+| Definition identity              | Which authority, Version, and authority-local coordinates identify the Definition under ADR-0063?                      |
+| Unsuccessful Definition judgment | If Definition Establishment does not succeed, what exact subject and unsuccessful meaning must remain distinguishable? |
+
+Established Definition Material must remain authority-specific. The review must not invent a universal payload shared by
+all 1D Contracts.
+
+## 53.3. Application and occurrence completeness
+
+| Question                        | 1D ADR must decide                                                                                           |
+|---------------------------------|--------------------------------------------------------------------------------------------------------------|
+| Occurrence model                | Does this Contract give one semantic application result meaning of its own?                                  |
+| Application context             | Which exact use, binding, scope, or already-established context determines one legal application?            |
+| Occurrence candidate            | What material may be presented to the occurrence judgment?                                                   |
+| Candidate stability             | What must remain stable or coherent while the judgment depends on that candidate?                            |
+| Occurrence determinants         | Which semantic coordinates distinguish one occurrence from another?                                          |
+| Occurrence judgment             | What exact result does the authority decide for one application?                                             |
+| Established Occurrence Material | If occurrence meaning exists, what exact result becomes authoritative?                                       |
+| Unsuccessful occurrence result  | What exact unsuccessful judgment meaning exists before Failure or diagnostics consume it?                    |
+| Preservation lifetime           | Which distinctions must remain available after the judgment, and when may realization erase or replace them? |
+
+A runtime call does not define occurrence identity by itself. A physical carrier does not become occurrence authority
+merely
+because it contains the judged value.
+
+## 53.4. Cross-Contract and compiler-consumer completeness
+
+| Consumer concern    | 1D ADR must make possible                                                                                         |
+|---------------------|-------------------------------------------------------------------------------------------------------------------|
+| Failure             | Failure can consume the exact unsuccessful judgment meaning without re-running the source 1D law.                 |
+| Policy / Governance | Selection or binding can address the exact Definition or application relation without redefining the 1D meaning.  |
+| Diagnostics         | A semantic subject, result, and related provenance can be referenced without reopening source syntax.             |
+| Reference Judgment  | The judgment can be reproduced independently from the same authoritative meaning and exact application inputs.    |
+| PBT / test planning | Legal, illegal, and boundary partitions can be derived from declared obligations rather than host behavior.       |
+| Generated APIs      | A host projection can preserve every Contract-visible and still-required platform-visible distinction.            |
+| Verification        | Realization obligations can be stated without making verifier internals part of the Contract.                     |
+| Execution Formation | The exact runtime-required judgment and authority references can be preserved when executable material is formed. |
+| Optimization        | Static knowledge can remove physical work without removing or rewriting the Contract judgment.                    |
+| Summary derivation  | Shared summaries can be derived without adding summary-only fields to authority material.                         |
+
+These are consumer-read requirements. They do not require the producer 1D to create separate verifier, PBT, diagnostic,
+or optimizer payloads.
+
+## 53.5. Evolution and representation completeness
+
+| Question                         | 1D ADR must decide                                                                                               |
+|----------------------------------|------------------------------------------------------------------------------------------------------------------|
+| Semantic equality                | What result equality is owned by this Contract, and what equalities belong to another layer?                     |
+| Incremental determinant set      | Which semantic inputs can invalidate the resolved or established result?                                         |
+| Reuse boundary                   | Which unchanged producer-visible result may allow downstream early cutoff?                                       |
+| Semantic / provenance separation | Can source-only change refresh provenance while leaving semantic material reusable?                              |
+| Platform preservation            | Which externally observable platform obligations remain live, and where may they be discharged?                  |
+| Representation freedom           | Which carrier, storage, snapshot, table, cache, layout, and optimization choices remain replaceable realization? |
+
+If downstream work needs semantic material that is absent from this review, return to the owning ADR.
+
+Do not invent the missing meaning in HIR, the Canonical Contract World, a verifier summary, an execution IR, or a
+backend
+product.
 
 ---
 
 # 54. Final Working View
 
+The final view combines the material flow in Section 4 with the realization path in Sections 11 through 35.
+
 ```text
 Contract Authoring Inputs
-    .kontrakt + selected immutable 1D carrier source
     ↓
-Source / Syntax / Carrier Acquisition
+Contract Frontend
     ↓
-Resolution / Binding / Frontend Normalization
+Published Resolved Contract HIR
     ↓
-Resolved Contract HIR
-    ↓
-Authority-Owned Establishment
+Authority-Owned Definition Establishment
     ↓
 Canonical Contract World
-    ↓
+    ├── Generated API Products
+    ├── sibling Contract-derived products
+    └── Contract-aware compiler consumers
+
 Generated API Product
     ↓
-Host Compilation / Realization Acquisition
+Host Compilation
     ↓
-Realization Admission / Airlock
+Realization Acquisition / Admission
     ↓
-Contract-Aware Analysis
-    ↓
-Realization Verification
-    ↓
-Static Specialization Knowledge
+Contract-Aware Analysis and Verification
     ↓
 Execution Formation
     ↓
@@ -2301,48 +2473,16 @@ JVM Legalization / Typed Method Planning
 Direct Classfile Product
 ```
 
-The Contract frontend has its own optimization freedom.
+Definition Candidate, IDL Binding Candidate, Definition Establishment, and occurrence-specific material follow the
+semantic production protocol defined in Section 4. This summary does not collapse those boundaries.
 
-```text
-source-faithful material
-    ↓
-resolution / desugaring / normalization / pre-resolution
-    ↓
-compiler-friendly resolved HIR
-```
+The Contract frontend may improve its own compiler representation before Establishment. Section 6 owns the HIR invariant
+that limits that work. Later optimization follows the same rule at its own semantic level: representation may change,
+but the meaning owned by that level must be preserved.
 
-This work improves compiler realization.
-
-It does not establish Contract authority.
-
-Published HIR, Canonical Contract World, realization material, summaries, and later IRs may have different lifetimes,
-identities, reuse rules, and physical layouts.
-
-The supporting architecture is:
-
-```text
-identity
-provenance
-language / source management
-frontend semantic publication
-frontend semantic / provenance validity separation
-generation
-frozen publication
-analysis validity
-product dependencies
-fine-grained projections
-build / artifact dependencies
-reuse
-resource ownership
-deterministic scheduling
-external-technology airlock
-diagnostics
-Reference
-PBT
-QA
-observability
-V2 incremental seams
-```
+The supporting compiler architecture is defined in Sections 39 through 51. Those sections own product orchestration,
+identity, graph separation, diagnostics, validation, publication, V1 boundaries, and V2 evolution. This final view does
+not restate those rules.
 
 The central rule remains:
 
@@ -2351,7 +2491,9 @@ Contract meaning first.
 
 Compiler semantic material may exist before authority.
 
-Compiler knowledge consumes established meaning where authority is required.
+Authority is created only by the owning Contract or State-Machine law.
+
+Compiler-derived knowledge consumes established meaning where authority is required.
 
 Optimization preserves the meaning owned by its input level.
 
