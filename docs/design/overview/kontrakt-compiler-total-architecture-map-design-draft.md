@@ -152,11 +152,10 @@ merely because the frontend acquired Contract evidence from it.
                            HotSpot / Graal
 ```
 
-This diagram is an overview. Section 4 owns the finer semantic production protocol. In particular, it separates
-Definition
-Candidates from IDL Binding Candidates and keeps occurrence-specific material outside the Definition world unless the
-owning
-Contract gives an occurrence result authority of its own.
+This diagram is an overview. Section 4 owns the finer semantic production protocol. It separates Definition meaning from
+the IDL slot relation that selects that meaning for one exact machine position. It also keeps occurrence-specific
+material
+outside the Definition world unless the owning Contract gives an occurrence result authority of its own.
 
 The frontend boxes are logical architecture boundaries. They do not require one heap object graph or one physical
 product
@@ -199,37 +198,71 @@ keeps
 Definition production, occurrence application, and realization material separate because they have different authority
 rules.
 
-## 4.1. Definition production
+## 4.1. Definition and IDL slot-binding production
 
-Authored Contract material becomes authoritative only after frontend resolution and the owning Definition judgment.
+Authored 1D material and the IDL manifest contribute different semantic subjects. The 1D declaration provides candidate
+Definition meaning. The IDL provides the explicit machine position that selects that meaning for one Contract role.
+Neither
+source form is final authority before resolution and the owning establishment law succeeds.
 
 ```text
-Contract Authoring Inputs
+1D Authoring Material
     ↓
-Source / Syntax / Carrier Material
-    ↓
-Resolution / Role Binding / Semantic Normalization
-    ↓
-Published Resolved Contract HIR
-    ├── Definition Candidates
-    ├── IDL Binding Candidates
-    ├── exact semantic references
-    └── adjacent provenance references
+Resolved Definition Candidate
     ↓
 Authority-Owned Definition Establishment
     ↓
 Established Definition Material
+
+.kontrakt Interface / Interaction Manifest
+    ↓
+Resolved IDL Slot Binding Candidate
+    ↓
+Owning Binding Establishment
+    ↓
+Authoritative IDL Slot Binding Relation
+
+Established Definition Material
++
+Authoritative IDL Slot Binding Relation
+    ↓
+Exact Contract Definition selected for one machine position
     ↓
 Canonical Contract World
 ```
 
-`Definition Candidate` describes the resolved meaning that one authority may establish. `IDL Binding Candidate`
-describes
-the exact resolved use that selects or relates that Definition in the authored Contract surface. The owning 1D ADR
-decides
-which contextual differences are Definition determinants and which remain binding-only meaning.
+The two paths are resolved in one frontend and may be processed together physically. They remain distinct semantic
+products.
+A Definition Candidate answers what one 1D Definition means after source syntax has been removed. An IDL Slot Binding
+Candidate answers which exact Interface, Interaction or Operation position selects which exact Definition Candidate
+under
+which fixed Contract role.
 
-These subjects do not require separate physical objects. They are logical semantic products inside the HIR boundary.
+The slot relation is not provenance and it is not merely a use-site convenience record. The slot gives the selected
+source
+its Contract role within the declared machine. A host declaration does not become Input, Admission, Canonicalization, or
+another 1D role because of its class shape. The corresponding IDL slot or enclosing interface binding selects that role
+under ADR-0046 and ADR-0047.
+
+The IDL source text is also not final authority. Frontend resolution must first make the enclosing Interface subject,
+the
+Interaction or Operation subject, the slot identity, the selected Definition reference, and the scope of that selection
+exact. The owning binding law then determines whether the resolved relation becomes authoritative. This document does
+not
+create one universal `EstablishedBinding` Contract kind or require a separate physical binding pass.
+
+One Established Definition may participate in more than one authoritative slot binding when the owning 1D law says that
+the differing machine position does not change Definition meaning. A binding therefore must not copy the complete
+Definition payload merely to make the use relation convenient. Conversely, a Definition must not absorb Interface or
+Interaction identity merely because one current IDL binding selects it.
+
+The authoritative IDL slot relation remains distinct from Required-Basis Binding and Applicability. The IDL relation
+selects
+which Contract Definition governs one declared machine position. Required-Basis Binding connects one judgment
+requirement to
+exact Established Material. Applicability decides whether the already exact semantic relation may participate in one
+exact
+dependent application. Later sections refer back to this distinction rather than redefining it.
 
 ## 4.2. Occurrence application
 
@@ -300,19 +333,27 @@ Definition or occurrence that justified the analysis.
 
 ## 4.4. Material-family responsibility
 
-| Material family                    | Responsibility                                                                                        |
-|------------------------------------|-------------------------------------------------------------------------------------------------------|
-| Source / Syntax / Carrier Material | Preserve authored and frontend-acquired information before exact semantic resolution                  |
-| Resolved Contract HIR              | Publish resolved compiler-semantic candidate meaning and exact use relations before authority         |
-| Established Definition Material    | Preserve authority-owned Definition meaning after successful Establishment                            |
-| Canonical Contract World           | Provide one compiler substrate through which downstream products read Established Definition Material |
-| Established Occurrence Material    | Preserve the result of one semantic application when the owning authority defines occurrence meaning  |
-| Exact Unsuccessful Judgment Result | Preserve an authority-owned unsuccessful application meaning where the owning law defines one         |
-| Derived Knowledge                  | Hold recomputable compiler analysis, summaries, and projections without becoming Contract authority   |
-| Realization / Execution IR         | Represent implementation and executable semantics under the invariants of their own IR levels         |
+| Material family                         | Responsibility                                                                                                                                                   |
+|-----------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Source / Syntax / Carrier Material      | Preserve authored and frontend-acquired information before exact semantic resolution                                                                             |
+| Resolved Contract HIR                   | Publish resolved compiler-semantic candidate meaning, including distinct Definition and IDL Slot Binding Candidates, before authority                            |
+| Established Definition Material         | Preserve authority-owned Definition meaning after successful Definition Establishment                                                                            |
+| Authoritative IDL Slot Binding Relation | Preserve the established relation from one exact Interface / Interaction / Operation slot to one exact Established Definition under the role selected by the IDL |
+| Canonical Contract World                | Provide one compiler substrate through which downstream products read Established Definition Material and authoritative machine-position relations               |
+| Established Occurrence Material         | Preserve the result of one semantic application when the owning authority defines occurrence meaning                                                             |
+| Exact Unsuccessful Judgment Result      | Preserve an authority-owned unsuccessful application meaning where the owning law defines one                                                                    |
+| Derived Knowledge                       | Hold recomputable compiler analysis, summaries, and projections without becoming Contract authority                                                              |
+| Realization / Execution IR              | Represent implementation and executable semantics under the invariants of their own IR levels                                                                    |
 
 The exact number of physical representations remains open. A logical material family may be physically split or fused
-when its authority, information-loss, publication, and consumer-visible invariants remain intact.
+when
+its authority, information-loss, publication, and consumer-visible invariants remain intact.
+
+`Authoritative IDL Slot Binding Relation` is a logical architecture name used here to keep the relation visible. It does
+not
+rename or replace the authority-specific binding laws owned by Accepted ADRs. It is also distinct from ADR-0063
+Required-Basis
+Binding and from Applicability.
 
 ## 4.5. Published Semantic Producer Protocol
 
@@ -365,7 +406,7 @@ Lexical / Syntax / Recovery Material
             ↓
 Module / Name / Symbol Resolution
             ↓
-Slot / Role-Constrained Binding
+IDL Slot / Scope Binding Resolution
             ↓
 Frontend Validation / Semantic Normalization
             ↓
@@ -385,7 +426,8 @@ parsed Contract structure
 carrier-acquired frontend facts
 recovery / poison state where required
 exact authority references
-resolved slot bindings
+resolved Definition Candidates
+resolved IDL Slot Binding Candidates
 resolved semantic relations
 module / import resolution
 ```
@@ -444,7 +486,8 @@ They do not define Contract meaning.
 
 `Resolved Contract HIR` is the published high-level compiler-semantic representation before Establishment. Section 4
 owns
-the material-flow role of HIR. This section defines the invariant that a HIR producer must preserve.
+the material-flow roles of Definition and IDL slot binding. This section defines the invariant that a HIR producer must
+preserve.
 
 HIR is not temporary parser output. It is the stable result of frontend resolution that later compiler work may consume
 without reopening source syntax or repeating semantic resolution.
@@ -471,20 +514,29 @@ Output
 
 One published HIR generation may contain several logical semantic subjects. Their physical storage may still be shared.
 
-| HIR semantic subject                        | Required meaning                                                                                          |
-|---------------------------------------------|-----------------------------------------------------------------------------------------------------------|
-| Contract / Interaction / Operation subjects | Exact resolved subjects needed by later Contract processing                                               |
-| Definition Candidates                       | Authority-qualified candidate meaning after 1D-owned determinant projection                               |
-| IDL Binding Candidates                      | Exact use relation that selects a Definition Candidate in the resolved IDL context                        |
-| Exact semantic references                   | Resolved targets required to interpret a candidate without lexical lookup                                 |
-| Basis Requirement Law                       | The declared requirement when that law is part of Definition meaning; not the future Basis Binding result |
-| Applicability Law                           | The declared applicability rule when Definition-owned; not a future applicability judgment result         |
-| Platform preservation obligations           | Only resolved platform-visible obligations still required by later authority or legal host observation    |
-| Provenance references                       | Adjacent source relation that remains outside HIR semantic identity                                       |
+| HIR semantic subject                                    | Required meaning                                                                                                                                                         |
+|---------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Contract / Interface / Interaction / Operation subjects | Exact resolved subjects needed by later Contract processing                                                                                                              |
+| Definition Candidates                                   | Authority-qualified candidate meaning after 1D-owned determinant projection                                                                                              |
+| IDL Slot Binding Candidates                             | Exact resolved relation from one declared machine position to one selected Definition Candidate, including the fixed Contract role and the scope that owns the selection |
+| Exact semantic references                               | Resolved targets required to interpret a candidate without lexical lookup                                                                                                |
+| Basis Requirement Law                                   | The declared requirement when that law is part of Definition meaning; not the future Basis Binding result                                                                |
+| Applicability Law                                       | The declared applicability rule when Definition-owned; not a future applicability judgment result                                                                        |
+| Platform preservation obligations                       | Only resolved platform-visible obligations still required by later authority or legal host observation                                                                   |
+| Provenance references                                   | Adjacent source relation that remains outside HIR semantic identity                                                                                                      |
 
-Definition Candidate meaning and IDL Binding Candidate meaning remain distinct. The same Definition Candidate may be
-used
-by more than one binding when the owning 1D ADR says that the different use context does not change Definition meaning.
+Definition Candidate meaning and IDL Slot Binding Candidate meaning remain distinct. One Definition Candidate may be
+selected
+by more than one IDL slot binding when the owning 1D ADR says that the differing machine position does not change
+Definition
+meaning. The binding candidate must therefore identify the exact enclosing semantic subject, exact slot, exact role, and
+exact selected Definition Candidate without copying that Definition meaning into the binding relation.
+
+An IDL Slot Binding Candidate is not authority merely because the parser observed a slot. The frontend must resolve the
+IDL
+source symbol, enclosing Interface and Interaction or Operation, slot identity, Contract role, and selected Definition
+Candidate before the relation is complete enough for its owning binding law. Runtime host handles, generated host types,
+string lookup, source containment, and storage adjacency cannot complete a missing binding meaning.
 
 The main HIR invariant is:
 
@@ -493,24 +545,27 @@ source ambiguity resolved
 +
 required semantic references exact
 +
-owning candidate meaning complete enough for Establishment
+owning Definition Candidate meaning complete enough for Definition Establishment
++
+IDL Slot Binding Candidate complete enough for its owning binding establishment law
 +
 syntax-only distinctions erased only when later semantic work no longer needs them
 ```
 
-This creates an information-loss boundary. If Establishment, generated API projection, legal platform reprojection, or a
-later authority still needs a distinction, frontend processing must preserve that distinction before Visible HIR is
-published. Establishment must not repair an incomplete HIR by reopening Java, Kotlin, `.kontrakt`, or another authoring
-surface.
+This creates an information-loss boundary. If Definition Establishment, binding establishment, generated API projection,
+legal platform reprojection, or a later authority still needs a distinction, frontend processing must preserve that
+distinction before Visible HIR is published. Later authority processing must not repair an incomplete HIR by reopening
+Java,
+Kotlin, `.kontrakt`, or another authoring surface.
 
 Recovery or poison information may remain available to frontend diagnostics, but it cannot masquerade as a complete
 valid
-Definition Candidate. Material that cannot satisfy the HIR publication invariant does not become authoritative merely by
-being assigned a HIR row or handle.
+Definition Candidate or IDL Slot Binding Candidate. Material that cannot satisfy the HIR publication invariant does not
+become authoritative merely by being assigned a HIR row or handle.
 
-HIR owns compiler-resolved meaning. It does not own Contract authority. Resolution success therefore does not establish
+HIR owns compiler-resolved meaning. It does not own Contract authority. Resolution success therefore establishes neither
 a
-Contract Definition.
+Contract Definition nor an authoritative machine-position binding.
 
 HIR semantic meaning and source provenance remain separate. A source-only change may update provenance while leaving the
 resolved HIR meaning unchanged. The compiler may reuse the semantic result when the producer's equality and validity
@@ -526,9 +581,11 @@ choices
 remain implementation as long as the published invariant is preserved.
 
 One logical HIR generation does not imply one monolithic dependency unit. The producer may expose stable Definition,
-binding, or provenance projections over physically aggregated material. This keeps V2 incremental granularity open
-without
-making query structure part of HIR semantics.
+binding, or provenance projections over physically aggregated material. A Definition-only change and a binding-only
+change
+may therefore invalidate different downstream products when their semantic dependencies differ. This keeps V2
+incremental
+granularity open without making query structure part of HIR semantics.
 
 ---
 
@@ -557,8 +614,9 @@ Owning Definition Judgment
 Established Definition Material
 ```
 
-The candidate must already contain the meaning required by its owning ADR. Establishment must not reopen source names,
-inspect host-object containment, discover platform behavior, or infer meaning from realization topology.
+The candidate must already contain the meaning required by its owning ADR. Definition Establishment must not reopen
+source
+names, inspect host-object containment, discover platform behavior, or infer meaning from realization topology.
 
 Successful Definition Establishment produces the authority-specific material defined by ADR-0063.
 
@@ -577,40 +635,86 @@ Direct Established Relations
 
 Source provenance remains adjacent to this material. It is not part of Definition Meaning or Definition Reference.
 
-If Definition Establishment does not succeed, no Established Definition Material is created for that candidate. The
-compiler must retain enough exact subject and rejection information for the owning refusal rule and diagnostics to
-preserve
-the distinction between an unresolved frontend problem, an unsuccessful authority judgment, and a later realization
-failure. A Contract-specific unsuccessful result exists only when the owning law defines one.
+The IDL slot relation follows a separate authority path defined by the frontend and binding laws that own that relation.
+Section 4.1 owns the distinction. At this boundary the resolved relation must already identify the exact machine
+position,
+its fixed Contract role, and the exact Definition Candidate or Established Definition selected for that position.
+
+```text
+Resolved IDL Slot Binding Candidate
+    +
+exact established Definition required by that selection
+        ↓
+Owning Binding Judgment / Composition Law
+        ↓
+Authoritative IDL Slot Binding Relation
+```
+
+The architecture does not require one independent runtime stage for this relation. Definition Establishment and binding
+establishment may be fused when their logical judgments remain distinguishable. The resulting authoritative relation
+must
+remain directly recoverable by semantic consumers; they must not infer it later from a parent object, source nesting,
+generated host signature, table adjacency, or current lookup result.
+
+This IDL slot binding does not replace ADR-0063 Owning Authority Binding. Owning Authority Binding identifies which
+Contract
+authority owns an Established Definition. The IDL slot relation identifies where that exact Definition is selected in
+the
+declared machine. It also remains distinct from Required-Basis Binding and Applicability, as defined in Section 4.1.
+
+If Definition Establishment does not succeed, no Established Definition Material is created for that candidate. A slot
+binding that requires that Definition cannot become an authoritative selection by substituting another Definition
+through
+lookup convention. If the binding relation itself is unresolved, ambiguous, or invalid under its owning law, the
+compiler
+must preserve that failure as a binding problem rather than silently rewriting Definition meaning.
+
+The compiler must retain enough exact subject and rejection information for the owning refusal rule and diagnostics to
+preserve the distinction among an unresolved frontend problem, an unsuccessful Definition judgment, an unsuccessful
+binding
+judgment, and a later realization failure. A Contract-specific unsuccessful result exists only when the owning law
+defines
+one.
 
 Occurrence Establishment is a separate application relation. Where an authority owns occurrence meaning, it follows the
-application protocol in Section 4.2 and ADR-0063. It is not folded into Definition Establishment merely because the same
-compiler subsystem happens to execute both judgments.
+application protocol in Section 4.2 and ADR-0063. The occurrence consumes the exact authoritative machine-position
+binding
+when that binding determines which Definition governs the application. It is not folded into Definition Establishment
+merely
+because the same compiler subsystem happens to execute both judgments.
 
-Kontrakt must not replace the authority-specific results with one universal `EstablishedMaterial` semantic model.
+Kontrakt must not replace the authority-specific results with one universal `EstablishedMaterial` or universal
+`EstablishedBinding` semantic model.
 
 ---
 
 # 8. Canonical Contract World
 
-The `Canonical Contract World` is the compiler substrate for already-established Contract Definition meaning. It is not
-an
-optimization IR and it does not replace the authorities that established the material.
+The `Canonical Contract World` is the compiler substrate for already-established Contract Definition meaning and the
+exact
+authoritative relations needed to use those Definitions in the declared machine. It is not an optimization IR and it
+does
+not replace the authorities that established the material.
 
-The world provides one coherent read surface over authority-owned Definition material. Its logical contents are
-constrained
-by the owning ADRs and ADR-0063.
+The world provides one coherent read surface over authority-owned Definition material and established machine-position
+relations. Its logical contents are constrained by the owning ADRs and ADR-0063.
 
-| World surface                       | Meaning                                                                                               |
-|-------------------------------------|-------------------------------------------------------------------------------------------------------|
-| Established Definition Material     | Exact authoritative meaning produced by each owning Contract or State-Machine authority               |
-| Definition References               | Exact references to authoritative Definitions                                                         |
-| Direct Established Relations        | Relations already owned and established by the relevant Definition law                                |
-| Basis relations                     | Basis Resolution or Binding relations only after the responsible composition law has established them |
-| Applicability relations             | Authoritative applicability material only where an owning law has established it                      |
-| Version-aware meaning               | Exact Version Binding and Version-sensitive Definition meaning owned by the Contract model            |
-| Policy / Governance / State context | Established context only where the respective authority owns that meaning                             |
-| Provenance handles                  | Compact relation to source provenance; provenance is not semantic identity                            |
+| World surface                            | Meaning                                                                                                                                                 |
+|------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Established Definition Material          | Exact authoritative meaning produced by each owning Contract or State-Machine authority                                                                 |
+| Definition References                    | Exact references to authoritative Definitions                                                                                                           |
+| Authoritative IDL Slot Binding Relations | Exact established relation from one Interface / Interaction / Operation slot to the exact Established Definition selected there under its Contract role |
+| Direct Established Relations             | Relations already owned and established by the relevant Definition law                                                                                  |
+| Basis relations                          | Basis Resolution or Binding relations only after the responsible composition law has established them                                                   |
+| Applicability relations                  | Authoritative applicability material only where an owning law has established it                                                                        |
+| Version-aware meaning                    | Exact Version Binding and Version-sensitive Definition meaning owned by the Contract model                                                              |
+| Policy / Governance / State context      | Established context only where the respective authority owns that meaning                                                                               |
+| Provenance handles                       | Compact relation to source provenance; provenance is not semantic identity                                                                              |
+
+The authoritative IDL slot relation allows a consumer to recover which exact Definition governs one declared machine
+position without looking at source text or generated host code. It does not duplicate the complete Definition meaning in
+that relation. It also does not collapse IDL selection, Required-Basis Binding, or Applicability into one generic edge.
+Section 4.1 owns those distinctions.
 
 The world must not infer a transitive Contract relation merely because the compiler can derive one. Reachability,
 closure,
@@ -627,7 +731,7 @@ provenance graph, or optimization summaries as Contract authority. Those structu
 this document.
 
 The physical world representation remains replaceable. A unified logical read surface does not require one universal
-`EstablishedMaterial` object model or one giant object graph.
+`EstablishedMaterial` object model, one universal binding object, or one giant object graph.
 
 ---
 
@@ -674,26 +778,33 @@ The exact publication granularity remains a compiler design choice.
 
 # 10. Canonical Contract World Products
 
-The Canonical Contract World feeds sibling compiler products. Section 8 owns the authoritative read surface. This
-section
-only fixes the direction of consumption.
+The Canonical Contract World feeds sibling compiler products. Section 8 owns the authoritative read surface, including
+the
+machine-position binding relations defined first in Section 4.1. This section only fixes the direction of consumption.
 
-| Consumer                           | Authoritative input                                                                                         | Derived product                       |
-|------------------------------------|-------------------------------------------------------------------------------------------------------------|---------------------------------------|
-| Reference Judgment                 | Established Definition Material plus the exact candidate or occurrence inputs required by the judgment      | Reference Result                      |
-| PBT / Fixture / Unit-Test Planning | Exact established obligations and semantic partitions                                                       | Deterministic Test Plan and witnesses |
-| Contract Coverage                  | Exact obligation and semantic-subject references                                                            | Coverage product                      |
-| Diagnostics                        | Exact semantic references, adjacent provenance, and the evidence appropriate to the failure class           | Structured Diagnostic                 |
-| Generated APIs                     | Established definitions and any platform-facing obligation that must remain observable at the host boundary | Interaction / Operation API Product   |
-| Contract-Aware Analysis            | Established Contract meaning together with realization material and valid local analysis                    | Derived Contract-relative knowledge   |
-| Verification                       | Established Contract meaning together with admitted realization and valid analysis                          | Verification Result / Overlay         |
-| Execution Formation                | Established Contract meaning, verified realization, and valid specialization knowledge                      | Contract-Aware Execution IR           |
+| Consumer                           | Authoritative input                                                                                                                                                                                   | Derived product                       |
+|------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------|
+| Reference Judgment                 | Established Definition Material, the authoritative binding that selects the Definition when application identity depends on it, and the exact candidate or occurrence inputs required by the judgment | Reference Result                      |
+| PBT / Fixture / Unit-Test Planning | Exact established obligations, the relevant authoritative binding, and semantic partitions                                                                                                            | Deterministic Test Plan and witnesses |
+| Contract Coverage                  | Exact obligation, Definition, binding, and semantic-subject references needed by the covered obligation                                                                                               | Coverage product                      |
+| Diagnostics                        | Exact semantic references, the relevant Definition or binding subject, adjacent provenance, and the evidence appropriate to the failure class                                                         | Structured Diagnostic                 |
+| Generated APIs                     | Established definitions, authoritative IDL slot bindings, and any platform-facing obligation that must remain observable at the host boundary                                                         | Interaction / Operation API Product   |
+| Contract-Aware Analysis            | Established Contract meaning and authoritative machine-position relations together with realization material and valid local analysis                                                                 | Derived Contract-relative knowledge   |
+| Verification                       | Established Contract meaning and the exact binding surface being realized together with admitted realization and valid analysis                                                                       | Verification Result / Overlay         |
+| Execution Formation                | Established Contract meaning, authoritative machine-position bindings, verified realization, and valid specialization knowledge                                                                       | Contract-Aware Execution IR           |
 
 A consumer must not reopen source or host declarations to reconstruct meaning that the frontend and Establishment
 already
-produced. A consumer also must not add its own convenience field to Established Definition Material merely to simplify
-one
-implementation.
+produced. In particular, a consumer must not infer the current Input, Admission, Canonicalization, or another selected
+1D
+Definition from generated method signatures, source nesting, lookup order, or current compiler tables when an
+authoritative
+IDL slot relation already exists.
+
+A consumer also must not add its own convenience field to Established Definition Material or the authoritative binding
+relation merely to simplify one implementation. When several consumers need the same recomputable projection, that
+result
+belongs to derived compiler knowledge.
 
 `Shared Contract-Derived Knowledge` remains an optional compiler seam. It is useful when several consumers need the same
 recomputable projection.
@@ -712,7 +823,8 @@ The exact summary families remain open. A consumer may read the exact Canonical 
 better boundary.
 
 Sibling products may reuse validated derived knowledge, but that reuse does not create a semantic authority chain. The
-owning Contract remains the source of Contract meaning.
+owning Contract remains the source of Definition meaning, and the owning IDL/binding law remains the source of the
+machine-position selection relation.
 
 ---
 
@@ -1560,29 +1672,33 @@ The target profile is not assumed to be the compiler host profile.
 
 # 36. IR Classification
 
-| Material                        |                   IR? | Role                                                                                                    |
-|---------------------------------|----------------------:|---------------------------------------------------------------------------------------------------------|
-| Source / Syntax Material        | source representation | authored structure                                                                                      |
-| **Resolved Contract HIR**       |               **Yes** | resolved Contract semantics before Establishment                                                        |
-| Established Definition Material |                    No | authority-owned Definition meaning                                                                      |
-| **Canonical Contract World**    |                **No** | compiler substrate for established Definition meaning                                                   |
-| Established Occurrence Material |                    No | authority-owned result of one semantic application where the owning Contract defines occurrence meaning |
-| Frozen World Generation         |                    No | compiler publication state                                                                              |
-| **Realization Body IR**         |               **Yes** | analyzable user realization                                                                             |
-| Local / Contract-Aware Analysis |                    No | derived compiler knowledge                                                                              |
-| Verification Overlay            |                    No | verified property over one realization generation                                                       |
-| **Contract-Aware Execution IR** |               **Yes** | executable Contract + realization representation                                                        |
-| Optimized Execution Material    |       usually same IR | new Execution IR generation                                                                             |
-| Whole-Machine Summary           |                    No | derived global index                                                                                    |
-| **JVM Plan / IR**               |               **Yes** | target-specific representation                                                                          |
-| Classfile                       |                    No | target artifact                                                                                         |
-| Query / Product Result          |         not by itself | compiler product                                                                                        |
-| HID / Dense Ordinal             |                    No | lookup / addressing / equality evidence mechanism                                                       |
-| Source Provenance               |                    No | source relation                                                                                         |
+| Material                                |                   IR? | Role                                                                                                    |
+|-----------------------------------------|----------------------:|---------------------------------------------------------------------------------------------------------|
+| Source / Syntax Material                | source representation | authored structure                                                                                      |
+| **Resolved Contract HIR**               |               **Yes** | resolved Contract semantics before Establishment                                                        |
+| Established Definition Material         |                    No | authority-owned Definition meaning                                                                      |
+| Authoritative IDL Slot Binding Relation |                    No | established machine-position selection relation from an exact IDL slot to an exact Definition           |
+| **Canonical Contract World**            |                **No** | compiler substrate for established Definition meaning and authoritative machine-position relations      |
+| Established Occurrence Material         |                    No | authority-owned result of one semantic application where the owning Contract defines occurrence meaning |
+| Frozen World Generation                 |                    No | compiler publication state                                                                              |
+| **Realization Body IR**                 |               **Yes** | analyzable user realization                                                                             |
+| Local / Contract-Aware Analysis         |                    No | derived compiler knowledge                                                                              |
+| Verification Overlay                    |                    No | verified property over one realization generation                                                       |
+| **Contract-Aware Execution IR**         |               **Yes** | executable Contract + realization representation                                                        |
+| Optimized Execution Material            |       usually same IR | new Execution IR generation                                                                             |
+| Whole-Machine Summary                   |                    No | derived global index                                                                                    |
+| **JVM Plan / IR**                       |               **Yes** | target-specific representation                                                                          |
+| Classfile                               |                    No | target artifact                                                                                         |
+| Query / Product Result                  |         not by itself | compiler product                                                                                        |
+| HID / Dense Ordinal                     |                    No | lookup / addressing / equality evidence mechanism                                                       |
+| Source Provenance                       |                    No | source relation                                                                                         |
 
-Established Definition Material and Established Occurrence Material are semantic authority products, not IR levels. The
-Canonical Contract World provides a compiler substrate for Definition material. Occurrence material follows the separate
-boundary described in Sections 4.2 and 8.
+Established Definition Material, Authoritative IDL Slot Binding Relations, and Established Occurrence Material are
+semantic
+authority products or relations, not IR levels. The Canonical Contract World provides a compiler substrate for
+Definition
+material and authoritative machine-position relations. Occurrence material follows the separate boundary described in
+Sections 4.2 and 8.
 
 ---
 
@@ -2167,12 +2283,13 @@ Source Manager / Provenance
 Lexical / Syntax / Recovery
 1D Carrier Acquisition Boundary
 Module / Name / Symbol Resolution
-Slot / Role-Constrained Binding
+IDL Slot / Scope Binding Resolution
 Frontend Validation / Semantic Normalization
 Contract Frontend
 Resolved Contract HIR Publication
-Definition Candidate / IDL Binding Candidate Distinction
+Definition Candidate / IDL Slot Binding Candidate Distinction
 Authority-Owned Definition Establishment
+Authoritative IDL Slot Binding Relation
 Established Definition Material / Canonical Contract World
 Occurrence Candidate / Judgment Result Boundary where owned
 Unsuccessful Judgment Meaning Boundary where owned
@@ -2220,8 +2337,10 @@ Existing Planning L1 / L2 Reuse
 V2 Incremental Evolution Seam
 ```
 
-The Definition Candidate, binding, occurrence, and unsuccessful-result boundaries above are logical semantic boundaries.
-They do not require one physical product or object graph for each line.
+The Definition Candidate, IDL slot binding, occurrence, and unsuccessful-result boundaries above are logical semantic
+boundaries. They do not require one physical product, pass, or object graph for each line. Section 4.1 owns the
+distinction
+between machine-position binding, Required-Basis Binding, and Applicability.
 
 The exact physical split remains open where a semantic or target-level boundary does not require another representation.
 The listed frontend responsibilities likewise do not require one implementation class or pass per line.
@@ -2340,91 +2459,108 @@ The exact physical layout, migration boundary, target profile, and encoder remai
 
 # 53. 1D ADR Review Map
 
-Each 1D ADR must define enough semantic material for the frontend, Establishment, and later compiler consumers to work
-without reconstructing that Contract from source syntax or host implementation. The ADR should define only meaning owned
-by that authority. It must not add fields only because one current compiler subsystem finds them convenient.
+Each 1D ADR must define enough semantic material for the frontend, Establishment, IDL binding, and later compiler
+consumers
+to work without reconstructing that Contract from source syntax or host implementation. The ADR should define only
+meaning
+owned by that authority. It must not add fields only because one current compiler subsystem finds them convenient.
 
 A question may have the answer `not owned`. That is a complete answer when the Contract truly does not own the concept.
-The review must distinguish that case from an accidental omission.
+The
+review must distinguish that case from an accidental omission. The binding questions below refer to the machine-position
+selection relation defined in Section 4.1. They do not redefine Required-Basis Binding or Applicability.
 
-## 53.1. Definition and HIR completeness
+## 53.1. Definition, IDL binding, and HIR completeness
 
-| Question                      | 1D ADR must decide                                                                                                          |
-|-------------------------------|-----------------------------------------------------------------------------------------------------------------------------|
-| Authority                     | What exact judgment does this Contract own, and where does that ownership stop?                                             |
-| Authoring surface             | What must the author state explicitly before frontend resolution can begin?                                                 |
-| Definition meaning            | What does one Definition mean after authoring syntax has been removed?                                                      |
-| Definition determinants       | Which semantic differences make two Definition Candidates different?                                                        |
-| Resolved HIR surface          | What exact resolved meaning must the frontend produce for this authority?                                                   |
-| HIR information-loss boundary | Which distinctions must still exist when Visible Resolved HIR is published?                                                 |
-| Definition / use separation   | Which meaning belongs to the reusable Definition Candidate, and which meaning belongs only to the exact IDL use or binding? |
-| Required semantic references  | Which referenced definitions or semantic subjects must already be exact before Establishment?                               |
-| Provenance relation           | What source origin must remain addressable without becoming semantic identity?                                              |
-| HIR equivalence               | When may two resolved frontend products be treated as the same consumer-visible HIR meaning?                                |
+| Question                        | 1D ADR must decide                                                                                                                 |
+|---------------------------------|------------------------------------------------------------------------------------------------------------------------------------|
+| Authority                       | What exact judgment does this Contract own, and where does that ownership stop?                                                    |
+| Authoring surface               | What must the author state explicitly before frontend resolution can begin?                                                        |
+| Definition meaning              | What does one Definition mean after authoring syntax has been removed?                                                             |
+| Definition determinants         | Which semantic differences make two Definition Candidates different?                                                               |
+| IDL binding subject             | Which Interface, Interaction or Operation scope and which fixed slot may select this 1D role?                                      |
+| Binding determinants            | Which semantic differences make two IDL slot bindings different without redefining the selected Definition?                        |
+| Resolved HIR Definition surface | What exact resolved Definition Candidate meaning must the frontend produce for this authority?                                     |
+| Resolved HIR binding surface    | What exact machine-position relation must the frontend resolve before the owning binding law can establish the selection?          |
+| HIR information-loss boundary   | Which Definition and binding distinctions must still exist when Visible Resolved HIR is published?                                 |
+| Definition / binding separation | Which meaning belongs to the reusable Definition Candidate, and which meaning belongs only to the exact IDL slot relation?         |
+| Required semantic references    | Which referenced definitions or semantic subjects must already be exact before Definition or binding Establishment?                |
+| Provenance relation             | What source origin must remain addressable without becoming Definition or binding identity?                                        |
+| HIR equivalence                 | When may two resolved Definition products or two resolved binding products be treated as unchanged for their respective consumers? |
 
 The HIR questions do not require the 1D ADR to define a table layout, Kotlin class, query key, or serialization format.
-They define the semantic payload that ADR-0071 must be able to represent.
+They
+define the semantic payload that ADR-0071 must be able to represent.
 
-## 53.2. Definition Establishment completeness
+## 53.2. Definition and binding Establishment completeness
 
-| Question                         | 1D ADR must decide                                                                                                     |
-|----------------------------------|------------------------------------------------------------------------------------------------------------------------|
-| Establishment input              | What must be complete before the owning Definition judgment may begin?                                                 |
-| Required Basis law               | Does the Definition declare required basis meaning, and if so what meaning is required?                                |
-| Definition-time applicability    | Does Establishment depend on an applicability relation owned by this Contract?                                         |
-| Establishment judgment           | What does the owning authority actually decide over the resolved candidate?                                            |
-| Established Definition Material  | What exact authoritative meaning enters the Canonical Contract World?                                                  |
-| Direct established relations     | Which relations are owned directly by this Definition rather than derived later?                                       |
-| Definition identity              | Which authority, Version, and authority-local coordinates identify the Definition under ADR-0063?                      |
-| Unsuccessful Definition judgment | If Definition Establishment does not succeed, what exact subject and unsuccessful meaning must remain distinguishable? |
+| Question                                | 1D ADR must decide                                                                                                                                                           |
+|-----------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Definition Establishment input          | What must be complete before the owning Definition judgment may begin?                                                                                                       |
+| Required Basis law                      | Does the Definition declare required basis meaning, and if so what meaning is required?                                                                                      |
+| Definition-time applicability           | Does Definition Establishment depend on an applicability relation owned by this Contract?                                                                                    |
+| Definition Establishment judgment       | What does the owning authority actually decide over the resolved Definition Candidate?                                                                                       |
+| Established Definition Material         | What exact authoritative Definition meaning enters the Canonical Contract World?                                                                                             |
+| Direct established relations            | Which relations are owned directly by this Definition rather than derived later?                                                                                             |
+| Definition identity                     | Which authority, Version, and authority-local coordinates identify the Definition under ADR-0063?                                                                            |
+| Binding Establishment input             | Which exact resolved Interface / Interaction / Operation, slot, role, and selected Definition must be present before the machine-position relation may become authoritative? |
+| Authoritative binding result            | What exact relation must later consumers recover to know which Established Definition governs that machine position?                                                         |
+| Definition / binding failure separation | How are unsuccessful Definition establishment and unresolved or invalid slot binding distinguished without substituting another Definition by lookup convention?             |
 
 Established Definition Material must remain authority-specific. The review must not invent a universal payload shared by
-all 1D Contracts.
+all
+1D Contracts. The same applies to the machine-position relation: this map uses one architecture term for visibility but
+does
+not require one universal `EstablishedBinding` semantic object.
 
 ## 53.3. Application and occurrence completeness
 
-| Question                        | 1D ADR must decide                                                                                           |
-|---------------------------------|--------------------------------------------------------------------------------------------------------------|
-| Occurrence model                | Does this Contract give one semantic application result meaning of its own?                                  |
-| Application context             | Which exact use, binding, scope, or already-established context determines one legal application?            |
-| Occurrence candidate            | What material may be presented to the occurrence judgment?                                                   |
-| Candidate stability             | What must remain stable or coherent while the judgment depends on that candidate?                            |
-| Occurrence determinants         | Which semantic coordinates distinguish one occurrence from another?                                          |
-| Occurrence judgment             | What exact result does the authority decide for one application?                                             |
-| Established Occurrence Material | If occurrence meaning exists, what exact result becomes authoritative?                                       |
-| Unsuccessful occurrence result  | What exact unsuccessful judgment meaning exists before Failure or diagnostics consume it?                    |
-| Preservation lifetime           | Which distinctions must remain available after the judgment, and when may realization erase or replace them? |
+| Question                        | 1D ADR must decide                                                                                                               |
+|---------------------------------|----------------------------------------------------------------------------------------------------------------------------------|
+| Occurrence model                | Does this Contract give one semantic application result meaning of its own?                                                      |
+| Authoritative selection input   | Does one occurrence depend on an authoritative IDL slot binding, and if so which exact binding selects the governing Definition? |
+| Application context             | Which scope or already-established context beyond that selection determines one legal application?                               |
+| Occurrence candidate            | What material may be presented to the occurrence judgment?                                                                       |
+| Candidate stability             | What must remain stable or coherent while the judgment depends on that candidate?                                                |
+| Occurrence determinants         | Which semantic coordinates distinguish one occurrence from another?                                                              |
+| Occurrence judgment             | What exact result does the authority decide for one application?                                                                 |
+| Established Occurrence Material | If occurrence meaning exists, what exact result becomes authoritative?                                                           |
+| Unsuccessful occurrence result  | What exact unsuccessful judgment meaning exists before Failure or diagnostics consume it?                                        |
+| Preservation lifetime           | Which distinctions must remain available after the judgment, and when may realization erase or replace them?                     |
 
 A runtime call does not define occurrence identity by itself. A physical carrier does not become occurrence authority
 merely
-because it contains the judged value.
+because it contains the judged value. The current compiler lookup result also cannot replace an authoritative IDL slot
+binding when that binding determines which Definition governs the occurrence.
 
 ## 53.4. Cross-Contract and compiler-consumer completeness
 
-| Consumer concern    | 1D ADR must make possible                                                                                         |
-|---------------------|-------------------------------------------------------------------------------------------------------------------|
-| Failure             | Failure can consume the exact unsuccessful judgment meaning without re-running the source 1D law.                 |
-| Policy / Governance | Selection or binding can address the exact Definition or application relation without redefining the 1D meaning.  |
-| Diagnostics         | A semantic subject, result, and related provenance can be referenced without reopening source syntax.             |
-| Reference Judgment  | The judgment can be reproduced independently from the same authoritative meaning and exact application inputs.    |
-| PBT / test planning | Legal, illegal, and boundary partitions can be derived from declared obligations rather than host behavior.       |
-| Generated APIs      | A host projection can preserve every Contract-visible and still-required platform-visible distinction.            |
-| Verification        | Realization obligations can be stated without making verifier internals part of the Contract.                     |
-| Execution Formation | The exact runtime-required judgment and authority references can be preserved when executable material is formed. |
-| Optimization        | Static knowledge can remove physical work without removing or rewriting the Contract judgment.                    |
-| Summary derivation  | Shared summaries can be derived without adding summary-only fields to authority material.                         |
+| Consumer concern    | 1D ADR must make possible                                                                                                                                      |
+|---------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Failure             | Failure can consume the exact unsuccessful judgment meaning without re-running the source 1D law.                                                              |
+| Policy / Governance | Selection or higher-scope control can address the exact Definition and machine-position binding without redefining the 1D meaning.                             |
+| Diagnostics         | A Definition, binding, occurrence, result, and related provenance can be referenced without reopening source syntax.                                           |
+| Reference Judgment  | The judgment can be reproduced independently from the same authoritative Definition, exact binding where required, and exact application inputs.               |
+| PBT / test planning | Legal, illegal, and boundary partitions can be derived from declared obligations and the selected machine position rather than host behavior.                  |
+| Generated APIs      | A host projection can be derived from authoritative IDL slot bindings while preserving every Contract-visible and still-required platform-visible distinction. |
+| Verification        | Realization obligations can be tied to the exact authoritative machine position without making verifier internals part of the Contract.                        |
+| Execution Formation | The exact runtime-required judgment, governing Definition, and authoritative slot relation can be preserved when executable material is formed.                |
+| Optimization        | Static knowledge can remove physical work without removing, rebinding, or rewriting the Contract judgment.                                                     |
+| Summary derivation  | Shared summaries can be derived without adding summary-only fields to Definition or binding authority material.                                                |
 
 These are consumer-read requirements. They do not require the producer 1D to create separate verifier, PBT, diagnostic,
-or optimizer payloads.
+or
+optimizer payloads.
 
 ## 53.5. Evolution and representation completeness
 
 | Question                         | 1D ADR must decide                                                                                               |
 |----------------------------------|------------------------------------------------------------------------------------------------------------------|
-| Semantic equality                | What result equality is owned by this Contract, and what equalities belong to another layer?                     |
-| Incremental determinant set      | Which semantic inputs can invalidate the resolved or established result?                                         |
-| Reuse boundary                   | Which unchanged producer-visible result may allow downstream early cutoff?                                       |
-| Semantic / provenance separation | Can source-only change refresh provenance while leaving semantic material reusable?                              |
+| Definition semantic equality     | What Definition equality is owned by this Contract, and what equalities belong to another layer?                 |
+| Binding semantic equality        | When has the exact IDL slot relation changed even though the selected Definition meaning is unchanged?           |
+| Incremental determinant sets     | Which semantic inputs invalidate the resolved Definition result, and which invalidate only the binding result?   |
+| Reuse boundary                   | Which unchanged Definition or binding product may allow downstream early cutoff?                                 |
+| Semantic / provenance separation | Can source-only change refresh provenance while leaving Definition and binding material reusable?                |
 | Platform preservation            | Which externally observable platform obligations remain live, and where may they be discharged?                  |
 | Representation freedom           | Which carrier, storage, snapshot, table, cache, layout, and optimization choices remain replaceable realization? |
 
@@ -2446,13 +2582,22 @@ Contract Authoring Inputs
 Contract Frontend
     ↓
 Published Resolved Contract HIR
-    ↓
-Authority-Owned Definition Establishment
-    ↓
-Canonical Contract World
-    ├── Generated API Products
-    ├── sibling Contract-derived products
-    └── Contract-aware compiler consumers
+    ├── Definition Candidates
+    └── IDL Slot Binding Candidates
+            ↓
+    ┌───────┴───────────────────┐
+    │                           │
+    ▼                           ▼
+Definition Establishment   Binding Establishment
+    │                           │
+    ▼                           ▼
+Established Definition     Authoritative IDL Slot Binding
+    └──────────────┬────────────┘
+                   ▼
+         Canonical Contract World
+            ├── Generated API Products
+            ├── sibling Contract-derived products
+            └── Contract-aware compiler consumers
 
 Generated API Product
     ↓
@@ -2473,16 +2618,26 @@ JVM Legalization / Typed Method Planning
 Direct Classfile Product
 ```
 
-Definition Candidate, IDL Binding Candidate, Definition Establishment, and occurrence-specific material follow the
-semantic production protocol defined in Section 4. This summary does not collapse those boundaries.
+The diagram shows two logical authority paths after HIR because Definition meaning and machine-position selection are
+not
+the same semantic subject. Their physical implementation may be fused. Section 4.1 owns the distinction and also
+separates
+IDL slot binding from Required-Basis Binding and Applicability.
+
+Occurrence-specific material follows Section 4.2. An occurrence judgment consumes the exact authoritative selection when
+that relation determines which Definition governs the application. The occurrence path does not turn the IDL binding
+into
+occurrence identity and does not move occurrence material into the Definition world by default.
 
 The Contract frontend may improve its own compiler representation before Establishment. Section 6 owns the HIR invariant
 that limits that work. Later optimization follows the same rule at its own semantic level: representation may change,
-but the meaning owned by that level must be preserved.
+but
+the meaning owned by that level must be preserved.
 
 The supporting compiler architecture is defined in Sections 39 through 51. Those sections own product orchestration,
 identity, graph separation, diagnostics, validation, publication, V1 boundaries, and V2 evolution. This final view does
-not restate those rules.
+not
+restate those rules.
 
 The central rule remains:
 
@@ -2491,9 +2646,11 @@ Contract meaning first.
 
 Compiler semantic material may exist before authority.
 
-Authority is created only by the owning Contract or State-Machine law.
+Authority is created only by the owning Contract, binding, composition, or State-Machine law.
 
-Compiler-derived knowledge consumes established meaning where authority is required.
+An IDL slot selects the role and machine position; generated host shape does not.
+
+Compiler-derived knowledge consumes established meaning and authoritative relations where authority is required.
 
 Optimization preserves the meaning owned by its input level.
 
