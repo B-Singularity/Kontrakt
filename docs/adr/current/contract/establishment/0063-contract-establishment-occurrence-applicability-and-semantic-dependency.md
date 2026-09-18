@@ -382,6 +382,14 @@ required basis meaning
 owning Establishment law
 ```
 
+An IDL Binding Candidate carried by Resolved Contract HIR remains candidate material.
+
+It does not become a Version Binding, Basis Binding, Governance Binding, or another authoritative Binding merely because
+frontend resolution completed.
+
+If an owning law later establishes an authoritative slot-binding relation, that relation remains distinct from the IDL
+Binding Candidate presented to Establishment.
+
 This contract does not require one HIR schema. It defines only the semantic boundary that any frontend representation
 must
 satisfy before Establishment may rely on it.
@@ -636,7 +644,12 @@ The two `Stable` values do not establish Version Agreement merely because their 
 
 A **Version Claim** is the declared version coordinate presented for resolution.
 
-It is not yet the resolved Version Binding.
+It is not yet a Version Binding.
+
+Exact frontend resolution produces a **Resolved Version Candidate Coordinate**.
+
+The Resolved Version Candidate Coordinate is exact authority-scoped compiler-semantic material presented to the owning
+Establishment law. It is not authoritative Version Binding material.
 
 ```text
 Version Claim
@@ -648,9 +661,18 @@ Required Authority
 exact Authority-scoped resolution
     ↓
 
+Resolved Version Candidate Coordinate
+    → A / Stable
+    ↓
+owning Establishment law
+    ↓
+
 Version Binding
     → A / Stable
 ```
+
+Successful Establishment does not choose another Version in place of the resolved candidate coordinate. A rejected
+candidate establishes no substitute Version Binding.
 
 Unknown or ambiguous Version Claims remain unresolved.
 
@@ -751,6 +773,11 @@ The compiler may still pack or hash these coordinates for efficient lookup.
 
 A **Definition Reference** identifies one exact authoritative Definition.
 
+A pre-Establishment HIR Candidate Reference is not a Definition Reference.
+
+A Candidate Reference identifies exact resolved compiler-semantic candidate material within its legal HIR observation
+domain. It does not identify authoritative Definition meaning.
+
 For a version-sensitive authority, its semantic form is:
 
 ```text
@@ -783,6 +810,10 @@ Definition.
 A Definition Reference must resolve to the same source-owned Definition Meaning in an equivalent semantic world.
 
 Its physical encoding is compiler realization.
+
+Candidate material and Established Definition Material may share immutable physical backing. Such physical reuse does
+not
+merge Candidate Reference and Definition Reference, and it does not create Contract authority.
 
 ---
 
