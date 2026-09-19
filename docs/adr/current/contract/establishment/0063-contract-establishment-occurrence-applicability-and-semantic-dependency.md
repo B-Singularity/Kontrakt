@@ -67,7 +67,10 @@ Established Definition / Occurrence Material
 
 For definition meaning, Established Definition Material is made available through the Canonical Contract World.
 
-Occurrence material remains separate and exists only where an owning authority defines occurrence meaning.
+Occurrence material remains separate and exists only where an owning authority defines occurrence meaning. Definition
+and occurrence material are observed by ordinary downstream compiler consumers through the Established Semantic Protocol
+defined by Section 11. The Protocol does not create, transfer, or disclose Contract authority; it defines legal semantic
+observation over authority-owned material.
 
 Source parsing, compiler analysis, optimization, query orchestration, caching, storage, and backend realization are not
 Establishment law.
@@ -190,7 +193,8 @@ semantic distinctions required by the owning law
 direct established relations required to interpret that meaning
 ```
 
-A later consumer may rely on those exact relations. It may not add new source meaning for its own convenience.
+A later consumer may rely on those exact relations. It may not add new source meaning for its own convenience. Section
+11 owns the legal observation boundary through which ordinary downstream compiler consumers read Established Material.
 
 ### 4.2.2. No Universal Material Schema
 
@@ -222,7 +226,8 @@ owning Contract law accepts its complete semantic definition. Resolved Contract 
 legal HIR observation rules are owned by Section 4.7.1 and ADR-0071.
 
 Established Definition Material is the authoritative definition meaning represented by the Canonical Contract World.
-Compiler publication may expose a completed representation, but it does not create this authority.
+Ordinary downstream compiler consumers observe that meaning through the Established Semantic Protocol in Section 11.
+Compiler visibility and Protocol observation expose completed meaning; neither creates this authority.
 
 ---
 
@@ -270,7 +275,8 @@ Definition material states authoritative Contract meaning.
 Occurrence material records the result established by one application of that meaning.
 
 Occurrence-specific material is not automatically part of the Canonical Contract World merely because a compiler
-consumer may later need it.
+consumer may later need it. Section 11 may expose legal occurrence observations without moving that material into the
+default Definition World.
 
 ### 4.4.1. Established Occurrence Material Contract
 
@@ -427,7 +433,7 @@ compiler reachability
 optimization facts
 diagnostic explanation
 realization closure
-consumer-specific projection
+consumer-derived realization view
 transitive semantic conclusions
 ```
 
@@ -1683,9 +1689,8 @@ Established Occurrence Material
 ```
 
 A compiler evaluation, query result, runtime call, diagnostic observation, or World lookup cannot create a Contract
-Occurrence. Item-specific storage and the later Established Semantic Protocol may provide legal observation of
-occurrence
-material without turning the Canonical Contract World into a universal semantic-event container.
+Occurrence. Item-specific storage and the Established Semantic Protocol in Section 11 may provide legal observation of
+occurrence material without turning the Canonical Contract World into a universal semantic-event container.
 
 ---
 
@@ -1742,7 +1747,8 @@ Contract identity. Reusing one of those mechanisms does not inherit Contract aut
 Consumer completeness is consumer-specific. One unavailable Definition need not erase independent Established
 Definitions from all legal observation, while a consumer whose required semantic closure includes that unavailable
 Definition cannot enter merely because other World material is visible. This ADR therefore creates no universal
-`CompleteCanonicalWorld` Contract entity.
+`CompleteCanonicalWorld` Contract entity. Section 11 consumes this coherent logical World view as one backing source for
+legal Established Definition observations; it does not weaken the World coherence law.
 
 ---
 
@@ -1786,17 +1792,350 @@ canonical byte encoding, sort order, hash layout, object graph, table schema, or
 
 ---
 
-# 11. Contract and Representation Boundary
+# 11. Established Semantic Protocol and Representation Boundary
 
-## 11.1. Semantic Separation
+## 11.1. Protocol Role and Semantic Access Boundary
 
-Compiler realization must preserve the semantic distinctions and exact relations defined by Sections 4 through 10. This
-section does not restate that catalog. Those distinctions are logical and do not prescribe object, allocation, table,
-compiler-product, or pointer topology.
+Authority-Owned Establishment creates Established meaning. The **Established Semantic Protocol** defines how ordinary
+later compiler consumers may legally observe that meaning without depending on the physical representation that happens
+to carry it.
+
+```text
+Authority-Owned Established Semantics
+    ↓ observed through
+Established Semantic Access Boundary
+    ↓ realizes
+Established Semantic Protocol
+    ↓
+legal downstream compiler consumers
+```
+
+The Protocol is not another IR, another Contract authority, another Establishment stage, a universal Established
+Material
+schema, or a mandatory physical copy. It does not receive authority from the source Contract and does not transfer
+source authority to a consumer. A reference or projection exposed through the Protocol denotes already-established
+meaning; possession of that observation does not grant ownership of the meaning.
+
+The Protocol also does not authorize outward disclosure. Internal Protocol visibility is distinct from Publication under
+ADR-0058, Output under ADR-0059, and diagnostic disclosure law. A compiler consumer may be legally allowed to observe
+internal Established meaning while remaining forbidden to expose that meaning outside the applicable machine boundary.
+
+Established Definition Material is normally backed by the Canonical Contract World defined by Section 10. Established
+Occurrence Material remains in the separately owned semantic family defined by Section 4.4. Other authority-owned
+Established Material may use another backing when its owning ADR requires it. The common Protocol may observe all of
+those families without forcing them into one World, one table, one object model, or one exhaustive taxonomy.
+
+Ordinary Protocol observation is read-only. A consumer may identify exact Established subjects, select legal
+projections, and follow exact direct semantic references. It may not mutate Established meaning, attach a new relation,
+rewrite a source result, mark a Contract judgment valid, or create a later authority merely through Protocol access.
 
 ---
 
-## 11.2. Logical Separation Does Not Require Physical Indirection
+## 11.2. Typed Established Semantic Reference Domains
+
+The Protocol preserves the exact semantic reference kinds defined by the owning laws. It does not require one universal
+`EstablishedRef`, one universal numeric id, or one compiler-global identity domain.
+
+Representative reference domains include:
+
+```text
+Definition Reference
+Occurrence Reference
+authority-specific exact references where separately defined
+```
+
+A Definition Reference denotes one exact authoritative Definition under Section 6. An Occurrence Reference denotes one
+exact semantic application under Sections 4.4 and 9. A source-specific reference keeps the meaning and comparability law
+defined by its source authority.
+
+```text
+Definition Reference
+    ≠ Occurrence Reference
+    ≠ HID / fingerprint
+    ≠ dense handle
+    ≠ table row
+    ≠ storage address
+    ≠ query key
+```
+
+The Protocol does not mint these authoritative references. It observes references that already satisfy the owning
+identity law. Compiler mappings may resolve one semantic reference to a generation-local dense handle, table row, mapped
+segment, or another physical coordinate. Those coordinates remain replaceable lookup mechanisms.
+
+An authoritative Definition Reference may denote the same Definition across compiler World generations when the owning
+identity and meaning remain the same. A generation-local access handle need not remain stable. Cross-generation reuse
+therefore resolves or validates the current semantic reference before exposing a current local handle; it does not
+serialize or inherit a stale local handle as authority.
+
+---
+
+## 11.3. Established Projection Families
+
+The Protocol defines common observation discipline without imposing one common Established payload. Legal projection
+families include:
+
+```text
+Established Definition Projection
+Established Occurrence Projection
+authority-specific Established Projection
+Direct Established Relation Projection
+Fine-Grained Established Semantic Projection
+```
+
+An **Established Definition Projection** exposes one exact Definition Reference and the complete local Definition
+meaning
+owned by that Definition, including the authoritative identity closure and the direct established relations that Section
+4.3.1 makes part of that Definition meaning. Completeness of the projection does not require recursive expansion of
+every
+target reached by those direct relations.
+
+```text
+Definition D projection
+    → complete local Definition meaning
+    → exact direct relation to Definition A
+    → exact direct relation to Definition B
+
+not
+
+Definition D
+    → recursively embed A
+    → recursively embed B
+    → recursively embed every reachable target
+```
+
+An **Established Occurrence Projection** exists only where the owning law defines occurrence meaning. It exposes the
+exact Occurrence Reference and the complete occurrence-owned meaning required by Section 4.4.1. Exact determining Basis,
+Applicable Context, Applicable Basis, or another relation appears only when the occurrence-owning law makes it part of
+that occurrence meaning. The projection does not move occurrence material into the Canonical Contract World.
+
+An **authority-specific Established Projection** exposes another separately established source kind using the vocabulary
+owned by its source ADR. Fact, Failure, Governance Binding, State-related established material, or another source kind
+is
+not forced into Definition or Occurrence shape merely to fit the common Protocol.
+
+The Protocol therefore provides a common observation law, not a common semantic payload schema.
+
+---
+
+## 11.4. Direct Relation and Fine-Grained Projection Law
+
+A **Direct Established Relation Projection** exposes an already-established direct relation without turning lookup
+structure into new Contract meaning.
+
+```text
+exact source reference
+    ── exact established relation ──>
+exact target reference
+```
+
+A reverse index over an existing direct relation may be exposed as a legal re-indexed observation when every returned
+relation is reducible to the same explicit established relation set. The reverse index does not establish a new inverse
+ownership relation merely because the compiler stores it efficiently.
+
+A **Fine-Grained Established Semantic Projection** may select, restrict, re-index, or otherwise re-express meaning that
+already exists in Established Material. It must remain complete for the exact observation it declares. It does not
+create
+a new semantic or compiler judgment merely because that judgment can be computed from Established meaning.
+
+```text
+existing Established meaning
+    → select / restrict / re-index / re-express
+    → legal projection
+
+transitive reachability
+conflict analysis
+Whole-Machine summary
+ranking / prediction
+optimization judgment
+diagnostic explanation
+cost model
+    → derived compiler product, not Protocol projection
+```
+
+A legal projection may omit meaning outside its declared observation. Such omission is not semantic absence. A consumer
+may treat a coordinate as absent only when the owning semantic law explicitly establishes that absence. Projection
+semantic equality follows the source-owned distinctions represented by that declared observation. Byte equality, object
+identity, HID equality, cache-key equality, or physical range equality cannot replace that semantic equality law.
+
+Generic recursive navigation is not part of the common Protocol. Operations such as `getParent`, `getChildren`,
+`walkGraph`, `allReachable`, or arbitrary dependency traversal would make physical or inferred topology look like
+Established meaning. A consumer follows exact direct semantic references or consumes a separately defined derived
+analysis product instead.
+
+Logical projection meaning and physical materialization are separate. One legal projection need not correspond to one
+allocation, one virtual call, one query, one cache entry, one persistent record, or one physical range.
+
+---
+
+## 11.5. Consumption Law
+
+The Established Semantic Protocol is consumer-independent and consumption-oriented. A consumer declares which legal
+semantic observations its work requires; it does not define the meaning, completeness, or equality of those
+observations.
+
+```text
+consumer requirement
+    → selects existing legal Protocol observations
+
+consumer requirement
+    ↛ creates consumer-specific Established meaning
+```
+
+Verifier, diagnostics, Reference Judgment, PBT, Generated API formation, Contract-aware analysis, Execution Formation,
+and later compiler products may select different legal projections of the same Established meaning. Their differing
+needs do not create `Verifier Definition`, `Diagnostic Definition`, or another consumer-specific authority surface.
+
+A consumer may combine several legal observations as inputs to its own compiler product. If that combination performs a
+new join, closure, conflict check, summary, proof, ranking, optimization, or other judgment, the result is owned by that
+later compiler product. It is not retroactively an Established Semantic Projection.
+
+The Protocol does not create product-to-product authority chains. A downstream compiler product may explicitly consume
+another compiler product where its own architecture requires that dependency, but Contract authority still comes from
+the exact Established observations that own the relevant Contract meaning.
+
+Consumer selection and Protocol projection remain separate from physical access granularity. One consumer observation
+may be served by several physical reads, several observations may be served by one bulk read, and a query engine may
+batch or fuse observations without changing their semantic boundaries.
+
+---
+
+## 11.6. Observation Coherence, Availability, and Compiler Failure
+
+A legal Protocol observation is supplied only from a coherent logical view. Definition-side observations backed by the
+Canonical Contract World obey Section 10.7. Occurrence-side or authority-specific backing must provide equivalent
+coherence for the exact material observed with it.
+
+Physical backing from different compiler generations, persistent segments, mapped pages, or shared immutable stores may
+participate in one logical observation when current validity has been established. The consumer does not gain permission
+to combine arbitrary stale and current material merely because both remain physically reachable.
+
+Protocol availability is separate from Contract meaning.
+
+```text
+semantic absence
+    ≠ not retained
+    ≠ not materialized yet
+    ≠ unavailable backing
+    ≠ unsupported Protocol realization
+    ≠ corrupt compiler storage
+```
+
+If an Established result exists but compiler machinery cannot supply a required legal Protocol observation, the owning
+compiler unsuccessful result is governed by ADR-0074. The source Established meaning is not rewritten into Contract
+Failure and is not revoked merely because its current observation mechanism failed. A later judgment that cannot obtain
+a
+required observation does not receive a synthetic Contract result when it never legally entered.
+
+A cache miss, a rejected reuse attempt, or a decision to recompute is not by itself an unsuccessful Protocol result. The
+compiler may follow the clean deterministic formation path when existing material cannot be reused. Only an actual
+compiler-owned requirement that cannot be satisfied under the applicable compiler-result law produces the corresponding
+compiler unsuccessful result.
+
+---
+
+## 11.7. Reuse and Current-Validity Law
+
+Established semantic equality, physical retention, and current reuse validity are distinct.
+
+```text
+same Established semantic observation
+    ≠ retained backing exists
+    ≠ current reuse is valid
+```
+
+A retained, cached, or persisted realization may satisfy a current Protocol observation only when the compiler can
+establish that every semantic determinant, exact semantic reference, closure condition, and separately compiler-owned
+validity input required by that observation remains valid now.
+
+```text
+retained projection P
+    + current authoritative identity correspondence
+    + current exact-reference validity
+    + complete validity of P's meaning-determining inputs
+    + coherent current observation domain
+        ↓
+current-valid realization of P
+```
+
+The validity set is complete for the projection being reused but need not include unrelated ambient state. A projection
+that claims a complete relation set, singularity, absence, or another closed observation may depend on evidence that no
+new legal member has appeared, not only on the continued validity of members already present. The compiler may represent
+such closure evidence with indexes, counts, dependency records, summaries, Merkle material, selective revalidation, or
+another sound mechanism. Those mechanisms remain compiler evidence rather than Contract meaning.
+
+Reuse validity may be finer than a complete Definition or World generation. An unchanged legal projection may remain
+reusable when another projection of the same Definition changes, provided the reused projection's own semantic equality
+and complete current-validity requirements are satisfied. This permits early cutoff without decomposing the underlying
+Contract Definition into unrelated semantic authorities.
+
+Semantic observation granularity and compiler product granularity are independent.
+
+```text
+one legal projection
+    ≠ one query
+    ≠ one dependency node
+    ≠ one cache entry
+    ≠ one persistent object
+
+one compiler product
+    → may realize several legal projections
+```
+
+Lazy physical materialization is permitted. Lazy semantic completion is not. A projection may be decoded, mapped,
+materialized, or reconstructed from validated backing only when the consumer receives a complete and coherent legal
+observation before acting on it.
+
+The Protocol does not own invalidation, repair, persistence, memoization, or dependency scheduling. V1 or V2 compiler
+subsystems decide whether an existing realization can satisfy the same Protocol observation without clean recomputation.
+A successful reuse path and the clean deterministic path must expose equivalent legal Established Semantic observations.
+
+---
+
+## 11.8. Protocol Evolution and V2 Openness
+
+Contract Version, Established Semantic Protocol evolution, persistent-product format evolution, and compiler or
+incremental-engine generation are separate stability domains.
+
+```text
+Contract Version
+    ≠ Established Semantic Protocol evolution
+    ≠ persistent semantic product format
+    ≠ compiler / incremental-engine generation
+```
+
+A representation change, query-engine change, persistent encoding change, storage-layout change, or new incremental
+algorithm does not create a new Contract Version. A new Contract Version does not require a Protocol revision when the
+existing Protocol can already represent every legal observation required by the new authoritative meaning.
+
+Protocol compatibility is established by preservation of the semantic observations required by a consumer, not by
+revision-number, compiler-version, format, or decode equality alone. A complete legal projection, a lossless
+representation conversion, or an explicitly validated migration may satisfy compatibility. Silent semantic downgrade,
+loss of a required distinction, fabricated defaults, or treating unavailable meaning as semantic absence is forbidden.
+
+The common Protocol does not prescribe rustc-style red-green validation, a Salsa-style tracked database, a build graph,
+a relational incremental engine, delta maintenance, a Merkle strategy, or another V2 algorithm. V2 may choose different
+strategies for different semantic or compiler-product domains while preserving the same Protocol observations.
+
+A future change/delta observation surface is compiler-owned unless a separate ADR gives such history Contract meaning.
+The Established Semantic Protocol defines exact current observation; it does not require one universal
+`delta Definition`,
+`delta Occurrence`, or incremental-history vocabulary.
+
+V1 must already place ordinary downstream consumers behind this Protocol boundary. A V1 implementation may realize the
+Protocol through primitive slabs, frozen tables, dense generation-local handles, and query-oriented orchestration. V2
+may
+add persistent semantic segments, lazy materialization, validated cross-session reuse, summary-based early cutoff,
+domain-local delta maintenance, selective repair, concurrent logical generations, or selective rebuild without changing
+this ADR when the same legal observations and failure boundaries are preserved.
+
+A conformance seam must compare legal Protocol observations rather than physical representation. Clean formation,
+cached reuse, persistent reload, incremental repair, different legal worker schedules, and representation changes must
+agree on the same Established Semantic observations whenever each path claims to realize the same current semantic
+inputs.
+
+---
+
+## 11.9. Logical Separation Does Not Require Physical Indirection
 
 A semantic reference denotes an exact semantic coordinate or relation.
 
@@ -1824,8 +2163,7 @@ DefinitionObject
 ```
 
 A realization may instead use packed identity, dense handles, flat relations, primitive slabs, direct offsets,
-summaries,
-or another representation that preserves the same exact semantics.
+summaries, or another representation that preserves the same exact semantics.
 
 ```text
 semantic reference
@@ -1842,36 +2180,31 @@ No encoding choice gains Contract authority.
 
 ---
 
-## 11.3. Material, Product, and Storage Boundaries
+## 11.10. Material, Product, Storage, and Projection Granularity
 
 Section 4.2.2 decides when a semantic meaning constitutes separate Established Material. Whether that material receives
 a
 separate compiler product or physical storage unit remains a realization decision.
 
 A compiler may split or fuse physical products according to independent consumption, invalidation, reuse, lifetime,
-publication, or materialization needs, provided the semantic boundaries remain recoverable. Contract decomposition does
-not determine compiler product granularity.
+visibility, or materialization needs, provided the semantic boundaries remain recoverable. Contract decomposition does
+not determine compiler product granularity, and Protocol projection granularity does not determine query, cache,
+allocation, or persistence granularity.
 
 ---
 
-## 11.4. Performance-Sensitive Projection
+## 11.11. Performance-Sensitive Realization
 
 A hot consumer must not be forced to repeatedly reconstruct semantic relations that the compiler has already resolved.
+An ordinary consumer first selects legal Established Semantic Protocol observations. The compiler may then realize those
+observations through flattened, fused, co-located, denormalized, summarized, or pre-resolved physical forms.
 
 ```text
-Canonical semantic relations
-
-Definition
-Version
-Basis
-Applicability
-Composition
-
-        ↓
-consumer-specific projection
-
-        ↓
-hot consumer
+Established semantic source
+        ↓ legal Protocol observation
+consumer-selected projection
+        ↓ compiler realization
+hot consumer access
 ```
 
 A realization may:
@@ -1886,29 +2219,17 @@ build summaries
 replace semantic reference chains with dense lookup
 ```
 
-when those changes preserve the canonical semantic source and exact Contract meaning.
+when those changes preserve the source-owned semantic meaning and the declared Protocol observation. A summary that
+performs a new judgment remains a derived compiler product even when it is stored beside Protocol backing for locality.
 
-This freedom applies to compiler analysis, verification, whole-machine processing, execution formation, and backend
-realization.
-
-A projection is derived realization material.
-
-```text
-canonical semantic source
-    → authority
-
-derived projection
-    → performance / consumer representation
-    ↛ authority
-```
-
-A derived copy may duplicate a semantic value for locality.
-
-That duplication does not create a second semantic owner.
+A physical or derived copy may duplicate a semantic value for locality. That duplication does not create a second
+semantic owner or a consumer-specific Contract meaning. The same physical freedom may be used inside later derived
+compiler products such as Execution IR or backend planning when those products preserve their own contracts; such
+products remain outside the Established Semantic Protocol.
 
 ---
 
-## 11.5. Temperature Is Not Contract Meaning
+## 11.12. Temperature Is Not Contract Meaning
 
 Hot, warm, and cold are compiler realization properties.
 
@@ -1940,13 +2261,21 @@ Physical temperature follows actual consumer behavior and cost.
 
 ---
 
-## 11.6. Representation Authority Boundary
+## 11.13. Representation Authority Boundary
 
 The coordinate-family boundary is owned by Section 6.6. Realization may encode, index, compare, cache, duplicate,
-transport, split, or fuse Contract material, but it may not establish, revoke, merge, or rewrite Contract authority. A
-backend that cannot preserve an established law is not a valid realization of that law.
+transport, split, fuse, persist, lazily materialize, or incrementally repair Contract material, but it may not
+establish,
+revoke, merge, or rewrite Contract authority. A backend that cannot preserve an established law is not a valid
+realization
+of that law.
 
----
+The Protocol does not expose slab address, backing-array position, page identity, object topology, allocator choice,
+query graph, cache state, worker identity, dependency-node identity, persistence key, or incremental scheduling state as
+Established meaning. HID, fingerprint, Merkle material, dense handles, and similar compact coordinates may accelerate
+lookup or validity checking; they do not become Contract identity or authority merely because a Protocol realization
+uses
+them.
 
 # 12. Relation to Existing Authorities
 
@@ -2006,23 +2335,24 @@ law remains the validity authority.
 
 # 16. Compiler Realization Obligation
 
-Section 11 owns the realization boundary. A conforming compiler must make every semantic relation required by this ADR
-exactly recoverable without forcing a consumer to reconstruct Contract meaning from implementation topology. Verified
-projections may avoid repeated semantic resolution when they preserve the same owning meaning. Appendix A illustrates
-one
+Section 11 owns the Established Semantic Protocol and the replaceable realization boundary. A conforming compiler must
+make every legal Established observation required by a consumer available without forcing that consumer to reconstruct
+Contract meaning from implementation topology. Legal projections and validated reuse may avoid repeated semantic work
+when they preserve the same source-owned meaning and satisfy current-validity law. Appendix A illustrates one
 non-normative V1 realization.
 
 ---
 
 # 17. Evolution Boundary
 
-Future compiler generations may replace identity encoding, storage, publication, dependency tracking, reuse,
+Future compiler generations may replace identity encoding, storage, visibility realization, dependency tracking, reuse,
 incremental algorithms, serialization, product granularity, and physical split or fusion without changing this ADR when
-they preserve the semantic laws defined above. Section 6 owns authoritative identity, Section 11 owns representation
-freedom, and ADR-0053 keeps Contract Version distinct from compiler or representation evolution.
+they preserve the semantic laws and legal observations defined above. Section 6 owns authoritative identity, Sections
+11.7 through 11.13 own reuse, Protocol evolution, and representation freedom, and ADR-0053 keeps Contract Version
+distinct from compiler or representation evolution.
 
-This boundary leaves V2 incremental architecture and later performance work open without redefining Establishment
-semantics.
+This boundary leaves V2 persistent and incremental architecture open to multiple domain-specific strategies without
+redefining Establishment semantics or making one V1 query architecture permanent.
 
 ---
 
@@ -2038,7 +2368,7 @@ result.
 
 Using host objects, source containment, compiler handles, table position, hashes, or completion order as Contract
 identity
-is rejected by Sections 6.6 and 11.6.
+is rejected by Sections 6.6 and 11.13.
 
 ## 18.3. Implicit Semantic Reconstruction
 
@@ -2058,8 +2388,9 @@ judgment. ADR-0053 and Section 6.3 own this distinction.
 
 ## 18.6. Semantic Decomposition as Mandatory Physical Topology
 
-Mapping every semantic distinction to a separate object, table, allocation, compiler product, or repeated reference hop
-is rejected by Section 11. The first implementation layout likewise acquires no semantic permanence.
+Mapping every semantic distinction or Protocol projection to a separate object, table, allocation, query, cache entry,
+compiler product, or repeated reference hop is rejected by Section 11. The first implementation layout likewise acquires
+no semantic permanence.
 
 ---
 
@@ -2068,8 +2399,8 @@ is rejected by Section 11. The first implementation layout likewise acquires no 
 The model requires the compiler to preserve exact semantic identity, Basis, Applicability, composition, and occurrence
 attribution rather than recovering them from implementation topology. That increases semantic bookkeeping, but Section
 11
-allows those relations to be packed, fused, projected, summarized, or addressed through dense compiler structures when
-the authoritative meaning remains unchanged.
+allows legal observations to be packed, fused, bulk-read, lazily materialized, validated for reuse, or addressed through
+dense compiler structures when the authoritative meaning remains unchanged.
 
 The resulting separation supports precise diagnostics, reuse, invalidation, reference checking, and optimized execution
 without making those compiler mechanisms Contract authority.
@@ -2110,6 +2441,10 @@ Amendment history is non-normative. The body of this ADR is the current authorit
     → restricted the World substrate to complete Established Definition meaning and Definition-owned direct relations
     → kept Established Occurrence Material outside the default Definition World and required coherent logical visibility
     → separated World formation failure, compiler generation, and durable Version-history publication from Contract authority
+    → defined the Established Semantic Protocol and Established Semantic Access Boundary for post-authority observation
+    → separated consumer-selected legal projections from consumer-specific meaning and derived compiler judgments
+    → separated Established semantic equality, physical retention, current reuse validity, and compiler product granularity
+    → kept V2 persistence, incremental repair, delta maintenance, and query strategies replaceable behind Protocol observations
 ```
 
 ---
@@ -2154,17 +2489,22 @@ Authority-Owned Establishment
     ↓
 Established Definition Material
     ↓ compiler visibility handoff
-Canonical Contract World
+Canonical Contract World ─────────────────────┐
+                                              │
+Authority-Owned semantic application           │
+    ↓                                         │
+Established Occurrence Material               │
+    ↓ separate occurrence backing             ├──→ Established Semantic Access Boundary
+                                              │
+other authority-owned Established Material ───┘
+where separately defined
+               ↓
+Established Semantic Protocol
     ├── Generated API Product
     ├── Reference Judgment
     ├── PBT / Fixture / Coverage
     ├── Diagnostics / Evidence
     └── Contract-Aware consumers
-
-Authority-Owned semantic application
-    ↓
-Established Occurrence Material
-    → separate occurrence semantic family
 
 User JVM Classfiles
     ↓
@@ -2198,8 +2538,13 @@ Resolved Contract HIR
     → IR
 
 Canonical Contract World
-    → authoritative semantic substrate
+    → authoritative Definition substrate
     → not ordinary optimization IR
+
+Established Semantic Protocol
+    → legal post-authority observation boundary
+    → not IR
+    → not Contract authority
 
 Realization Body IR
     → IR
@@ -2480,15 +2825,16 @@ by Section 6.4 is coherent.
 ### Consumed by
 
 ```text
-Canonical Contract World visibility
-Reference Judgment
-PBT planning
-diagnostics
-Contract-Aware Analysis
-Execution Formation
+Canonical Contract World formation / visibility
+    ↓
+Established Semantic Protocol
+    ↓
+ordinary downstream compiler consumers
 ```
 
-The consumer list is illustrative; Sections 4.2.2 and 11.3 decide semantic and physical product boundaries.
+The raw `DefinitionTable` backing is not the stable consumer contract. Section 11 defines legal post-authority
+observation,
+and Sections 4.2.2 and 11.10 keep semantic material boundaries separate from physical product granularity.
 
 ---
 
@@ -2583,16 +2929,35 @@ ProvenanceStore
     originHandle[]
 ```
 
+### Legal observation
+
+The Canonical Contract World is the primary backing for the Definition side of the Established Semantic Protocol. An
+ordinary downstream consumer identifies an exact Definition Reference and receives a legal Established Definition or
+fine-grained projection. It does not depend on `DefinitionTable[42]`, `StableKeyIndex`, or another backing coordinate as
+semantic API.
+
+```text
+Definition Reference D
+    ↓ Established Semantic Protocol
+legal Definition observation
+    ↓ current physical resolution
+generation-local dense handle / slab range where useful
+```
+
+A V1 query may perform the current physical resolution and a V2 implementation may validate persistent backing or lazily
+materialize the same observation. Neither path changes the Protocol meaning.
+
 ### Consumed by
 
 ```text
-all sibling Contract products
-Contract-Aware Analysis
-Execution Formation
-Whole-Machine work
+Established Semantic Protocol
+    ↓
+Reference Judgment / PBT / diagnostics / analysis / Execution Formation / other legal consumers
 ```
 
-Section 6.6 governs both compiler stable keys and generation-local handles; neither is Definition identity.
+Section 6.6 governs both compiler stable keys and generation-local handles; neither is Definition identity. Sections
+11.7
+and 11.8 govern current-valid reuse and V2 replacement of the physical access strategy.
 
 ---
 
@@ -2900,14 +3265,27 @@ resultKind          = SATISFIED
 resultPayloadHandle = 0
 ```
 
-### Consumed by
+### Legal observation and consumption
+
+Occurrence backing remains outside the default Definition World, but ordinary compiler consumers observe retained
+occurrence meaning through the same Established Semantic Protocol law. The Protocol may expose an Established Occurrence
+Projection or a legal fine-grained observation without making the occurrence a World Definition.
 
 ```text
-later Contract judgments when explicitly used as Basis
+Occurrence Reference O17
+    ↓ Established Semantic Protocol
+legal Occurrence observation
+    ↓
+later Contract judgment when explicitly used as Basis
 diagnostics
 Reference comparison
 execution products when occurrence meaning remains runtime-relevant
 ```
+
+If occurrence backing is no longer retained, observation unavailability is not semantic absence and does not
+retroactively
+undo the occurrence. Section 11.6 owns that distinction.
+
 
 ---
 
@@ -3882,7 +4260,7 @@ failureTarget        = 7
 publicationTarget    = 9
 ```
 
-The hot table above is one realization of the pre-resolved projection freedom defined by Section 11.4.
+The hot table above is one realization of the performance-sensitive realization freedom defined by Section 11.11.
 
 ### Consumed by
 
@@ -4095,18 +4473,22 @@ serve lookup locality but cannot create an additional semantic determinant.
 
 ### Query / product view
 
+A V1 query-oriented realization may map semantic observations and later compiler products approximately as follows.
+These
+query names are illustrative implementation boundaries, not the Established Semantic Protocol itself.
+
 ```text
 resolvedContractHir(sourceUnit)
     → Resolved Contract HIR
 
-establishedDefinition(definitionRef)
-    → visible Definition handle in one valid logical World view
+establishedDefinitionObservation(definitionRef)
+    → legal Established Definition Projection
 
-basisRequirementLaw(definitionHandle)
-    → Basis Requirement Law range
+basisRequirementLawObservation(definitionRef, requirementCoordinate)
+    → legal fine-grained Definition observation
 
-requiredBasis(judgmentHandle)
-    → exact Required Basis range
+requiredBasisObservation(judgmentRef)
+    → exact established relation observation where available
 
 referenceJudgment(subject, basis, context)
     → Reference Result
@@ -4121,7 +4503,9 @@ formExecution(interactionDefinition, admittedBinding, target)
     → Execution IR generation
 ```
 
-Query dependency semantics are governed by Section 8.10.
+One legal Protocol projection need not map to one query, and one query may materialize or validate several compatible
+projections. Query dependency semantics are governed by Section 8.10; current-valid reuse and product granularity are
+governed by Sections 11.7 and 11.10.
 
 ### Frozen visibility
 
@@ -4137,24 +4521,31 @@ seal / freeze
     ↓
 Visible logical World generation G12
     ↓
-read-only consumers
+Established Semantic Access Boundary
+    ↓
+read-only Protocol consumers
 ```
 
-This compiler visibility boundary adds no Contract authority. Section 10.7 governs coherent logical observation and
-Section 6.6 governs the distinction between compiler generation and Contract identity.
+This compiler visibility boundary adds no Contract authority. Section 10.7 governs coherent logical World observation,
+Section 11 governs legal downstream semantic observation, and Section 6.6 governs the distinction between compiler
+generation and Contract identity.
 
 ---
 
 ## A.27. Example Consumer Reads
 
+These examples show legal semantic reads first. A V1 implementation may satisfy them through the slabs and dense handles
+shown elsewhere in this appendix, but the consumer contract is the Established Semantic Protocol rather than the backing
+table schema.
+
 ### Reference Judgment
 
 ```text
 reads
-    DefinitionTable[42]
-    RequiredBasisSlab[80..81)
-    BasisBindingSlab[100..101)
-    ContextSlab[55..56)
+    Established Semantic Protocol
+        → Established Definition Projection for @def:42
+        → exact Required Basis / Basis Binding relation observations required by the judgment
+        → exact Applicable Context observation required by the judgment
 
 produces
     ReferenceResult[r11]
@@ -4164,21 +4555,28 @@ produces
 
 ```text
 reads
-    OccurrenceTable[17]
-    DefinitionTable[42]
-    BasisBindingSlab[100..101)
-    ContextSlab[55..56)
-    ProvenanceStore[91]
+    Established Semantic Protocol
+        → Established Occurrence Projection for @occ:17
+        → Established Definition Projection for @def:42
+        → exact direct Basis / context relations required to explain that occurrence
+
+    separate Provenance relation
+        → src#91
 
 produces
     CompilerDiagnosticRecord[D-KON-0174]
 ```
 
+Diagnostics do not widen the Protocol and provenance does not become Established meaning merely because one diagnostic
+consumes both observations.
+
 ### Verifier
 
 ```text
 reads
-    DefinitionTable[operationDefinition]
+    Established Semantic Protocol
+        → legal Definition observations for the Operation
+
     Realization Body IR method[31]
     OperationRealizationBindingTable[12]
     ContractAwareSummary[9]
@@ -4187,23 +4585,32 @@ produces
     VerificationOverlay[7]
 ```
 
+The realization and analysis products are separate compiler inputs. They do not enter the Established Semantic Protocol.
+
 ### Whole-Machine analysis
 
 ```text
 reads
+    Established Semantic Protocol
+        → exact established Composition / Definition observations required by the analysis
+
     CoreSummary[*]
-    CompositionTable[*]
     ContractAwareSummary[*]
 
 produces
     WholeMachineSummary[3]
 ```
 
+A Whole-Machine summary is a derived compiler product unless an owning Contract law separately establishes Whole-Machine
+meaning under Section 8.9.
+
 ### Execution Formation
 
 ```text
 reads
-    Canonical Contract World G12
+    Established Semantic Protocol
+        → exact Established observations required for the interaction
+
     VerificationOverlay[7]
     ContractAwareSummary[9]
     WholeMachineSummary[3]
@@ -4225,7 +4632,12 @@ produces
     Classfile Product
 ```
 
-These examples define producer / consumer direction, not one mandatory pass schedule.
+The backend need not reread the Established Semantic Protocol when the upstream Execution IR already preserves every
+Contract reference and result required by the backend contract. That is an explicit compiler-product dependency, not a
+transfer of Contract authority to the Execution IR.
+
+These examples define producer / consumer direction, not one mandatory pass schedule, one query graph, or one physical
+access granularity.
 
 ---
 
@@ -4254,6 +4666,12 @@ Canonical Contract World
 
 coherent World visibility
     → A.7 / A.26
+
+Established Semantic Protocol
+    → A.7 / A.10 / A.26 / A.27
+
+consumer-selected legal projections / current-valid reuse seam
+    → A.7 / A.26 / A.27
 
 
 ADR-0063 semantic relations
@@ -4391,6 +4809,7 @@ exact product granularity
 ## A.29. Implementation Reading Rule
 
 Use an Appendix A shape only after identifying the normative owner of the represented meaning. Physical split, fusion,
-dense addressing, summaries, query boundaries, materialization strategy, and hot/cold placement remain compiler-design
-choices under Sections 6.6 and 11. A representation-only change does not require ADR-0063 to change; a change to a
-normative semantic relation does.
+dense addressing, summaries, query boundaries, materialization strategy, persistence, incremental repair, and hot/cold
+placement remain compiler-design choices under Sections 6.6 and 11. Ordinary consumers depend on legal Protocol
+observations rather than the illustrated table schema. A representation-only change does not require ADR-0063 to change;
+a change to a normative semantic relation or legal Protocol observation does.
