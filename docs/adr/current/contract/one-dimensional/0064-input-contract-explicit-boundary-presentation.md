@@ -77,9 +77,12 @@ invocation.
 
 Input is presentation, not truth. Section 7.8 owns that authority boundary.
 
-Source evidence may nominate an Input Contract, but only Input-owned Establishment grants authority. The runtime
-boundary therefore receives an already-formed presentation rather than choosing when or how a live object should be
-captured.
+Source evidence may nominate an Input Definition Candidate, but only Input-owned Establishment grants Contract
+authority. At the invocation boundary, one exact Input semantic application presents already-formed material to the
+Input judgment. Input does not choose a capture point or derive a snapshot from live mutable state. An Input Occurrence
+is that semantic application, not a runtime object, wrapper, allocation, or storage unit. Once established,
+occurrence-specific Input meaning is observed through the producer-owned Established Input Semantic Protocol, while its
+physical realization remains replaceable.
 
 V1 keeps the directly addressable Input coordinate surface flat under Section 4.2. A direct coordinate may contain a
 closed value topology under Section 7.9, but nested constituents do not become nested Contract authorities or additional
@@ -109,7 +112,7 @@ outside presentation evidence
 -> Resolved Input Definition Candidate
 -> Input Definition judgment
 -> Established Input Definition
--> one fresh already-formed immutable Input boundary application
+-> one fresh Input semantic application over an already-formed immutable presentation
 -> Input Occurrence judgment
 -> Established Input Occurrence
 -> Admission when the occurrence result is Presented
@@ -526,7 +529,7 @@ with a dense handle, packed value, slab row, or another current representation, 
 identity and cannot make nested constituents into direct Input coordinates.
 
 Input establishes no third Input-specific material family beside Definition and Occurrence material. Selection bindings,
-world material, Basis material, and application-context containers remain owned by their respective authorities or are
+world material, Basis material, and application-context relations remain owned by their respective authorities or are
 not semantic material at all.
 
 ## 6. Invocation Boundary
@@ -562,12 +565,15 @@ or
 Refused
 ```
 
-`Presented` means that the exact complete immutable presentation satisfies the applicable Input law. The occurrence then
-owns that Established Presentation as Input meaning, and Admission may judge that occurrence-bound presentation.
+`Presented` means that the exact complete immutable presentation satisfies the applicable Input law. Input Establishment
+therefore establishes a direct occurrence-specific relation from the exact `EstablishedInputOccurrenceRef` to that
+Established Presentation, and Admission may observe that presentation through the legal Established Input Presentation
+Projection.
 
 `Refused` means that the Input judgment was legally entered but the supplied material did not satisfy the declared Input
-presentation law. The occurrence establishes the refusal result, but no Input-authoritative presentation is established
-from the malformed or incompatible material. Admission is not reached.
+presentation law. Input Establishment establishes `Refused` as the result of that exact Input semantic application, but
+no Input-authoritative presentation relation is established from the malformed or incompatible material. Admission is
+not reached.
 
 The judgment includes the presentation-level uniqueness and relation obligations owned by Section 7.9 when they apply.
 It does not decide whether an otherwise correctly presented value may continue. Section 7.8 owns that boundary between
@@ -615,55 +621,74 @@ presentation distinction is equal.
 
 ### 6.3. Established Input Occurrence Material
 
-A legally entered Input judgment establishes one complete Input Occurrence result.
+A legally entered Input judgment establishes one complete occurrence-specific semantic result under ADR-0063. This
+material is a set of exact semantic relations owned by Input. It does not require an occurrence object, wrapper, record,
+allocation, or storage unit.
 
-For a successful presentation:
+For a successful presentation, the established relations are:
 
 ```text
-Established Input Occurrence O
-    OccurrenceRef
-        -> O
-    DefinitionRef
-        -> exact Established Input Definition
-    InteractionRef
-        -> exact Interaction whose Input boundary was entered
-    Result
+EstablishedInputOccurrenceRef
+    -> exact Input semantic application
+
+Applied Input Definition relation
+    EstablishedInputOccurrenceRef
+        -> exact EstablishedInputDefinitionRef
+
+Interaction attribution relation
+    EstablishedInputOccurrenceRef
+        -> exact InteractionRef whose Input boundary was entered
+
+Input occurrence result relation
+    EstablishedInputOccurrenceRef
         -> Presented
-    Established Presentation
+
+Established Presentation relation
+    EstablishedInputOccurrenceRef
         -> exact complete immutable Input presentation
 ```
 
-For a refusal:
+For a refusal, the established relations are:
 
 ```text
-Established Input Occurrence O
-    OccurrenceRef
-        -> O
-    DefinitionRef
-        -> exact Established Input Definition
-    InteractionRef
-        -> exact Interaction whose Input boundary was entered
-    Result
+EstablishedInputOccurrenceRef
+    -> exact Input semantic application
+
+Applied Input Definition relation
+    EstablishedInputOccurrenceRef
+        -> exact EstablishedInputDefinitionRef
+
+Interaction attribution relation
+    EstablishedInputOccurrenceRef
+        -> exact InteractionRef whose Input boundary was entered
+
+Input occurrence result relation
+    EstablishedInputOccurrenceRef
         -> Refused
 ```
 
-The occurrence preserves only direct Input-owned attribution that actually determines its meaning. The current Input law
-has no Required Basis or Input-owned Applicable Context under Section 5.10, so it does not copy Policy World,
-Governance Binding, State, Budget, Capacity, run state, or the surrounding transitive semantic world into every
-occurrence.
+These relations preserve only direct Input-owned attribution that actually determines the application meaning. The
+current Input law has no Required Basis or Input-owned Applicable Context under Section 5.10, so Policy World,
+Governance Binding, State, Budget, Capacity, run state, and the surrounding transitive semantic world do not become
+occurrence-specific Input relations.
 
-`InteractionRef` is direct occurrence attribution because one Input Definition may be used by several Interactions and
-the occurrence belongs to one exact Interaction Input boundary. A separate Input-role field is unnecessary in the
-occurrence meaning: the semantic category is already an Input Occurrence and the Interaction relation identifies the
-boundary to which it belongs.
+The direct relation to `InteractionRef` is required because one Input Definition may be used by several Interactions and
+one Input semantic application occurs at one exact Interaction Input boundary. A separate Input-role semantic relation
+is unnecessary: the reference domain already identifies an Input Occurrence and the Interaction relation identifies the
+boundary to which that application belongs.
 
-A Refused occurrence does not retain the raw mutable carrier, malformed partial presentation, thrown exception, or
-runtime object as Input-authoritative payload. Separate Diagnostic or provenance products may preserve permitted
-evidence under their own laws without turning that evidence into Input meaning.
+A `Refused` application establishes no relation from its `EstablishedInputOccurrenceRef` to the raw mutable carrier,
+malformed partial presentation, thrown exception, or runtime object as Input-authoritative meaning. Separate Diagnostic
+or provenance products may preserve permitted evidence under their own laws without turning that evidence into Input
+meaning.
 
-Once established, the occurrence's Definition, Interaction, result, and any Input-owned determining attribution are
-fixed for that occurrence. A later Version, Policy, Governance, State, world replacement, retry, or compiler generation
-may affect a later application, but it cannot rewrite the earlier Input Occurrence.
+Once established, these occurrence-specific semantic relations are immutable. A later Version, Policy, Governance,
+State, world replacement, retry, or compiler generation may affect a later application, but it cannot rewrite the
+meaning already established for the earlier Input Occurrence Reference.
+
+The producer-owned Established Input Semantic Protocol defined in Sections 10.2 through 10.4 is the legal observation
+boundary for these relations. Consumers do not obtain occurrence meaning by dereferencing an occurrence object or by
+traversing compiler storage topology.
 
 After a Presented occurrence is established, later inbound processing may change physical representation only through
 the declared Contract relations that own those changes. The material eventually supplied to the user Operation must
@@ -1243,9 +1268,10 @@ and fails the Input-owned Definition law. No authoritative Input Definition is e
 
 `Refused` at invocation time occurs only after an exact Established Input Definition and exact Interaction have allowed
 a
-fresh Input semantic application to enter the occurrence-time judgment. That judgment still establishes one Input
-Occurrence with result `Refused`, but it establishes no Input-authoritative presentation and Admission is not reached.
-A supplied boundary value that omits a required coordinate or violates the declared presentation law is handled here.
+fresh Input semantic application to enter the occurrence-time judgment. That judgment establishes a fresh
+`EstablishedInputOccurrenceRef` and the exact result relation `Refused`, but it establishes no Input-authoritative
+presentation relation and Admission is not reached. A supplied boundary value that omits a required coordinate or
+violates the declared presentation law is handled here.
 
 A transport, acquisition, or orchestration failure that prevents the material from entering the Input semantic
 application creates no Input Occurrence. Likewise, failure to obtain an applicable Established Input Definition or a
@@ -1271,28 +1297,29 @@ coordinates merely because they are addressable inside the Input presentation.
 Those later authorities do not enter Input Definition identity. Their negative results also remain distinct from Input
 Definition Refusal and Input Occurrence `Refused` under Section 9.
 
-### 10.1. World and Backing Placement
+### 10.1. World and Occurrence Semantic Placement
 
 Established Input Definition Material is definition-world meaning and is made available through the Canonical Contract
 World under ADR-0063. Direct Input coordinate meaning belongs to that complete Established Definition surface.
 
-Established Input Occurrences are occurrence-specific material. They remain outside the Canonical Contract World unless
-a future owning law establishes an explicit relation requiring otherwise.
+Established Input Occurrence Material is occurrence-specific established meaning. It remains semantically separate from
+the Canonical Contract World unless a future owning law establishes an explicit relation requiring otherwise. That
+separation does not prescribe a second object store, occurrence repository, or dedicated allocation domain.
 
 ```text
-Canonical Contract World
-    -> Established Input Definition Material
-    -> direct established Input coordinate meaning
+Established Input Definition Material
+    -> made available through the Canonical Contract World
 
-Occurrence backing
-    -> Established Input Occurrence Material
+Established Input Occurrence Material
+    -> remains occurrence-specific established meaning
+
+Established Input Semantic Protocol
+    -> legal observation of the Input-owned Definition and Occurrence projections
 ```
 
-This is a semantic placement law, not a storage-topology mandate. Definition and occurrence observations may use
-separate
-or shared physical storage when the required semantic boundaries remain intact. Reclaiming occurrence backing under a
-legal retention policy does not mean the occurrence was never established, and retaining backing does not extend
-semantic authority by itself.
+This is a semantic-placement and observation law, not a storage-topology mandate. Physical retention, sharing, and
+reclamation are realization concerns. Reclaiming physical representation for an occurrence does not mean the semantic
+application was never established, and retaining physical representation does not extend semantic authority by itself.
 
 For Input-owned relations, legal observation keeps `relation not owned`, explicitly permitted absence, present relation,
 and required-but-unresolved relation distinct. A required unresolved coordinate or relation cannot appear as successful
@@ -1303,7 +1330,9 @@ identity.
 
 ### 10.2. Established Input Semantic Protocol
 
-Input specializes the common ADR-0063 Established Semantic Protocol through these typed reference domains:
+Input specializes the common ADR-0063 Established Semantic Protocol as the legal observation boundary over
+Input-owned Established meaning. The Protocol is not an occurrence object model, DTO layer, storage schema, or mandatory
+copy boundary. It exposes these typed reference domains:
 
 ```text
 EstablishedInputDefinitionRef
@@ -1335,29 +1364,29 @@ The **Established Input Definition Projection** is complete for one exact Defini
 `EstablishedInputDefinitionRef`, Owning Input Authority Binding, Version Binding, complete Input Definition Meaning, and
 the complete direct established coordinate relation owned by that Definition.
 
-The **Established Input Occurrence Projection** is complete for one exact Input application: its
-`EstablishedInputOccurrenceRef`, exact Definition Reference, exact Interaction Reference, exact occurrence result, and,
-when that result is `Presented`, the exact Established Presentation.
+The **Established Input Occurrence Projection** is complete for observation of one exact Input application. It exposes
+the `EstablishedInputOccurrenceRef`, the direct relation to the exact Definition Reference, the direct Interaction
+attribution relation, the exact occurrence result relation, and, when that result is `Presented`, the exact Established
+Presentation relation.
 
-The **Established Input Presentation Projection** exists only for a `Presented` occurrence and exposes the exact
-Occurrence Reference, Definition Reference, Interaction Reference, and complete immutable Established Presentation. Its
-absence is not an alternative way to infer Contract result meaning; the occurrence result remains observable through the
-Input Occurrence Outcome Projection.
+The **Established Input Presentation Projection** exists only for an application whose occurrence result relation is
+`Presented`. It exposes the exact Occurrence Reference, Definition Reference, Interaction Reference, and complete
+immutable Established Presentation relation. Its unavailability is not an alternative way to infer Contract result
+meaning; the exact result relation remains observable through the Input Occurrence Outcome Projection.
 
-The **Input Direct Coordinate Value Projection** observes one direct coordinate of one Presented occurrence through the
-exact `EstablishedInputOccurrenceRef` and `EstablishedInputCoordinateRef`. It exposes the coordinate's explicit presence
-state and, when present, the exact presented coordinate value. It does not promote a nested member, element, key, or
-value
-into a direct Input coordinate.
+The **Input Direct Coordinate Value Projection** observes one direct coordinate for one `Presented` Input application
+through the exact `EstablishedInputOccurrenceRef` and `EstablishedInputCoordinateRef`. It exposes the coordinate's
+explicit presence state and, when present, the exact presented coordinate value. It does not promote a nested member,
+element, key, or value into a direct Input coordinate.
 
 Projection equality follows the Input-owned observation that each projection declares complete. Equal projection payload
 does not merge distinct Definition or Occurrence References. In particular, two distinct Input Occurrences may expose
 semantically equal Established Presentations while remaining different occurrences.
 
 Observing these projections neither transfers Input authority nor grants Publication authority. Semantic absence is also
-not the same as backing not retained, a projection not yet physically materialized, unsupported observation machinery,
-or corrupt compiler storage. If a required legal observation cannot be supplied, Section 10.6 and ADR-0074 govern the
-compiler-side availability boundary rather than fabricating Input absence or Refusal.
+not the same as physical representation not retained, a projection not yet physically materialized, unsupported
+observation machinery, or corrupt compiler storage. If a required legal observation cannot be supplied, Section 10.6
+and ADR-0074 govern the compiler-side availability boundary rather than fabricating Input absence or Refusal.
 
 ### 10.4. Direct Relations and Consumer Law
 
@@ -1382,8 +1411,8 @@ Admission consumes the Established Input Presentation Projection. It does not re
 `equals` or `hashCode`, recover a source declaration, inspect runtime object identity, or rediscover the collection law.
 Canonicalization may consume the same legal presentation observation when its own law requires the Input presentation.
 Lowering may consume `EstablishedInputCoordinateRef` together with the Input Direct Coordinate Value Projection.
-Diagnostics may consume the full occurrence or the Input Occurrence Outcome Projection. Generated API formation,
-verification, and PBT planning may consume the Definition projection.
+Diagnostics may consume the Established Input Occurrence Projection or the narrower Input Occurrence Outcome
+Projection. Generated API formation, verification, and PBT planning may consume the Definition projection.
 
 Consumers select producer-defined legal projections. They do not create `Diagnostic Input Meaning`, `Backend Input
 Meaning`, `Test Input Meaning`, or another consumer-specific Contract semantics.
@@ -1405,15 +1434,13 @@ as surviving members. It must establish that no new direct coordinate was added 
 removed; validating only the old coordinates is insufficient.
 
 Occurrence authority follows a different law. A fresh Input boundary entry never reuses an older occurrence as the new
-semantic occurrence, even when the same Definition and Presentation yield the same deterministic result. The compiler
-may reuse an Input checker, a comparison accelerator, a current Definition handle, a coordinate access plan, or
-immutable
-presentation backing. Two occurrences may even share physical immutable presentation storage. None of that makes their
-Occurrence References equal.
+semantic occurrence, even when the same Definition and Presentation yield the same deterministic result. Realization may
+reuse validated non-authoritative computation or physical representation under Section 10.6, but such reuse cannot
+substitute an older `EstablishedInputOccurrenceRef` for the fresh application or make two Occurrence References equal.
 
 Conversely, duplicated physical computation of one already-identified exact occurrence does not create two semantic
-occurrences. Parallel or speculative workers may converge on one occurrence result when they are evaluating the same
-exact application.
+occurrences. Parallel or speculative realizations may converge on the same legal occurrence result and Protocol
+observation when they are evaluating that same exact application.
 
 Clean formation, validated in-memory reuse, persistent reload, future incremental repair, and parallel formation must
 produce the same legal Input Protocol observations. Cache state, fingerprints, HIDs, dependency topology, or retained
@@ -1428,15 +1455,15 @@ bytes likewise does not establish current semantic validity without the checks a
 ### 10.6. Coherent Observation, Representation Freedom, and Verification
 
 One legal Input Protocol observation must be coherent. A consumer cannot combine a Definition from one semantic
-generation with a stale presentation-law projection or coordinate relation from another merely because all backing is
-still physically reachable. Cross-generation backing may participate only after current validity has established one
-coherent logical observation.
+generation with a stale presentation-law projection or coordinate relation from another merely because old physical
+representation remains reachable. Cross-generation physical reuse may participate only after current validity has
+established one coherent logical observation.
 
-Protocol crossing does not require a wrapper allocation or full copy. Resolved HIR, Establishment, the Canonical
-Contract
-World, occurrence backing, and consumers may use primitive arrays, typed slabs, columnar ranges, dense generation-local
-handles, shared immutable backing, memory-mapped storage, or another representation that preserves the same legal
-observations. Physical sharing does not merge semantic entities.
+Protocol crossing does not require a wrapper allocation, occurrence object, or full copy. The physical realization
+behind Resolved HIR and Established Input Protocol observations may use primitive arrays, typed slabs, columnar ranges,
+dense generation-local handles, shared immutable backing, memory-mapped storage, or another replaceable representation
+that preserves the same legal observations. These are realization choices only. Physical sharing does not merge semantic
+entities or turn a storage coordinate into an Input semantic reference.
 
 Lazy physical materialization is permitted only after the semantic unit and its legal membership are already complete. A
 consumer cannot treat unresolved semantic meaning as a value that will become complete on first access. Typed reference
@@ -1475,32 +1502,34 @@ input_definition_judgment(candidate_handle)
     or Input Definition Refusal
 ```
 
-Occurrence processing may likewise keep application identity separate from presentation storage.
+Occurrence realization may likewise use flat typed relations rather than an occurrence object. The following is one
+non-normative columnar/slab-shaped realization of the same semantic protocol.
 
 ```text
 definition_ref = established_input_definition_for_interaction[interaction_ref]
 occurrence_ref = fresh_input_occurrence_ref()
+occurrence_handle = current_dense_handle[occurrence_ref]
 
 result = judge_input_presentation(
     definition_ref,
     submitted_material
 )
 
+input_occurrence_definition_ref[occurrence_handle] = definition_ref
+input_occurrence_interaction_ref[occurrence_handle] = interaction_ref
+input_occurrence_result[occurrence_handle] = result
+
 if result == Presented:
-    establish occurrence_ref with
-        definition_ref
-        interaction_ref
-        Presented
-        complete immutable presentation
-else:
-    establish occurrence_ref with
-        definition_ref
-        interaction_ref
-        Refused
+    presentation_ref = retain_or_reuse_immutable_presentation(submitted_material)
+    input_occurrence_presentation_ref[occurrence_handle] = presentation_ref
+
+expose legal Established Input Occurrence Projection
 ```
 
-A later Admission read is defined over the legal Established Input Presentation Projection, not over the physical
-carrier used to form it.
+The arrays, handles, and presentation references in this sketch are physical realization only. A different realization
+may replace them without changing the Contract meaning or the producer-owned Protocol observations. A later Admission
+read is defined over the legal Established Input Presentation Projection, not over these physical columns or the carrier
+used to form them.
 
 ## 11. Open in This Section
 
@@ -1601,13 +1630,13 @@ copies. This lets Admission, Canonicalization, Lowering, diagnostics, verificati
 share authoritative Input meaning without rebuilding it from source or host carriers.
 
 Definition reuse and occurrence reuse are intentionally asymmetric. Stable Definition projections may avoid compiler
-work after complete current-validity checks, while a fresh boundary entry always has fresh occurrence identity. Physical
-presentation backing may still be shared when doing so preserves the same immutable observation.
+work after complete current-validity checks, while a fresh boundary entry always has fresh occurrence identity. Any
+validated physical reuse remains a realization concern and cannot substitute physical identity for that semantic
+application identity.
 
-Logical Protocol boundaries do not impose physical indirection. A V1 compiler may use dense handles, primitive slabs,
-columnar storage, or shared immutable ranges while keeping Candidate, Established Definition, Established Occurrence,
-and
-consumer observations semantically distinct.
+Logical Protocol boundaries do not impose an occurrence object or physical indirection. A V1 compiler may use dense
+handles, primitive slabs, columnar storage, or shared immutable ranges while keeping Candidate, Established Definition,
+Established Occurrence, and consumer observations semantically distinct.
 
 ## 13. Migration History
 
@@ -1700,11 +1729,14 @@ Definition Refusal, marked Required Basis, Basis Binding, Complete Basis, Input-
 arbitration as not applicable, and closed the complete Established Input Definition surface. It also established Input
 Occurrence as an independent semantic application: every fresh boundary re-entry creates a new occurrence, `Presented`
 and `Refused` are the occurrence result vocabulary, and equal presentations or equal results do not merge occurrences.
-Established Definition material remains in the Canonical Contract World while occurrence material remains separately
-backed and reclaimable. The audit defined the Established Input Semantic Protocol, direct relation ownership, consumer
-access law, complete-set reuse validation, coherent observation, and the distinction between reusable physical backing
-and fresh occurrence authority. Compiler unsuccessful-result and recovery details remain a provisional common dependency
-on Proposed ADR-0074; physical HIR schema, query, cache, persistence, and JVM carrier realization remain Design or
+Established Definition material remains in the Canonical Contract World while occurrence-specific Established meaning
+remains semantically separate and is observed through the Established Input Semantic Protocol. Physical storage and
+reclamation remain replaceable realization concerns. The audit defined the Established Input Semantic Protocol, direct
+relation ownership, consumer access law, complete-set reuse validation, coherent observation, and the distinction
+between reusable physical representation and fresh occurrence authority. Compiler unsuccessful-result and recovery
+details remain a
+provisional common dependency on Proposed ADR-0074; physical HIR schema, query, cache, persistence, and JVM carrier
+realization remain Design or
 ADR-0073 work rather than Input meaning.
 
 ADR-0048 remains the owner of the shared inbound-airlock composition and core-entry relation.
