@@ -37,132 +37,54 @@ Proposed
 
 ## 1. Context
 
-Kontrakt is not a compiler architecture that happens to process contracts.
+Kontrakt is a Contract machine implemented by a compiler.
 
-Its compiler architecture exists to realize a Contract machine whose authority comes from declared obligations.
+The compiler exists to realize declared Contract meaning.
 
-The governing direction is:
+Its internal organization must not become a second source of that meaning.
 
-```text
-Contract meaning
-    ↓ constrains
-compiler realization
-    ↓ produces
-physical realization
-```
+ADR-0071 already defines the pre-authority HIR boundary.
 
-The reverse direction is not allowed.
+ADR-0063 already defines Establishment and the observation of Established meaning.
 
-```text
-query topology
-cache state
-analysis layout
-storage topology
-backend shape
-worker schedule
-physical reachability
+ADR-0074 defines compiler-owned unsuccessful results and recovery.
 
-    ✕ must not define
+The remaining problem is how later compiler responsibilities consume those results.
 
-Contract meaning
-```
+Later compiler responsibilities need earlier results.
 
-`What Contract Is` requires a machine that is explicit, rich enough to state its real obligations, honest about finite
-resources and failure, and independent from the mechanism that happens to realize those obligations.
+They must be able to consume those results without reopening source meaning or inheriting the producer's private
+implementation state.
 
-This gives four requirements that precede the usual compiler-product questions.
+This ADR defines that compiler-wide consumption boundary. It also fixes the separation between compiler-derived
+knowledge and Contract authority.
 
-First, **determinism is primary**. The same exact semantic determinants in the same applicable semantic world must not
-gain
-different Contract meaning because work was scheduled differently, cached differently, persisted differently, fused,
-split, parallelized, repaired, or lowered through another physical path.
-
-Second, **Contract meaning must be explicit and sufficiently rich**. If Input owns order, absence, sameness, topology,
-or
-another distinction, that distinction must exist in the owning semantic surface. It must not be reconstructed from a
-backend object because a later compiler consumer happens to need it.
-
-Third, **the machine must admit reality rather than idealize it away**. Semantic absence, unavailable compiler backing,
-unsupported observation, stale retained material, corrupt storage, resource exhaustion, compiler inability, Contract
-refusal, and declared Failure are not one state. The compiler must represent the difference at the boundary that owns
-the
-problem instead of fabricating Contract meaning.
-
-Fourth, **Contract and implementation remain different axes**. Compiler architecture may be explicit, verified,
-incremental, cached, persistent, parallel, table-driven, query-oriented, pass-oriented, or replaced entirely. Those
-choices must not become the Contract merely because the first implementation needs them.
-
-ADR-0071 and ADR-0063 already close two central semantic boundaries.
-
-ADR-0071 gives complete pre-authority Resolved Contract HIR a legal producer-owned observation surface for
-Establishment.
-ADR-0063 gives already-established Contract meaning a legal observation boundary without transferring source authority.
-
-The unresolved problem is downstream compiler organization.
-
-Many independent consumers need already-produced semantic or compiler results:
-
-```text
-Visible Resolved HIR
-    → Establishment
-
-Established Contract meaning
-    → diagnostics
-    → verification
-    → PBT / coverage
-    → generated artifacts
-    → realization analysis
-    → execution formation
-
-Realization material
-    → analysis
-    → verification
-    → optimization
-
-IR
-    → analysis
-    → transformation
-    → lower IR
-
-local products / summaries
-    → wider-scope products
-
-compiler results
-    → retained / cached / persistent / incremental reuse
-```
-
-A common compiler discipline is useful here, but that discipline must not become a second Contract theory.
-
-The purpose of this ADR is therefore narrower than the first draft.
-
-It defines how compiler-owned results are produced and legally consumed **while preserving the prior Contract meaning,
-determinism, reality boundaries, and realization replaceability**.
-
-Caching and incrementality are consequences of that architecture. They are not its reason for existence.
+Caching and incremental compilation depend on this boundary. They do not define it.
 
 ---
 
 ## 2. Decision
 
-Kontrakt will use **producer-owned compiler result boundaries** for independently consumable compiler results.
+Kontrakt will use producer-owned compiler result boundaries for results that are consumed outside the responsibility
+that produced them.
 
-A compiler result boundary exists when one compiler responsibility has completed a result sufficiently for another
-responsibility to rely on its declared guarantee without reopening or reinterpreting the producer's hidden state.
+A result boundary exists when a producer has completed a result that another compiler responsibility may rely on.
 
-This ADR does not create one universal `CompilerProduct` semantic object.
+The producer exposes that result through a declared observation surface.
 
-It does not make every temporary calculation a published product.
+The consumer must not need the producer's private mutable state to interpret it.
 
-It does not create a new Contract authority.
+This ADR does not create a universal `CompilerProduct` semantic type. It also does not turn local temporary values into
+published compiler products.
 
-It establishes the following order of responsibility:
+The direction is:
 
 ```text
 Declared Contract law
     ↓
-legal semantic representation / observation
+legal semantic observation
     ↓
-compiler-owned derivation or transformation
+compiler-owned derivation
     ↓
 complete compiler result
     ↓
@@ -171,92 +93,68 @@ legal compiler consumption
 replaceable physical realization
 ```
 
-The common laws are:
+Contract authority remains owned by the Contract law that declares it.
 
-1. Contract authority is determined only by the owning Contract law.
-2. Compiler consumption cannot create, widen, transfer, revoke, or merge Contract authority.
-3. An upstream semantic producer must not change its meaning to accommodate a later compiler consumer.
-4. A downstream compiler consumer must not reconstruct missing Contract meaning from source, host objects, cache state,
-   physical indexes, or another implementation topology.
-5. The same legal determinants must produce the same legal result at every deterministic boundary owned by that result.
-6. A compiler result may derive new compiler knowledge, but that new knowledge belongs to the deriving compiler
-   responsibility and does not retroactively become source Contract meaning.
-7. Compiler inability, unavailable backing, unsupported product format, stale retained state, and corruption remain
-   compiler reality. They do not fabricate Contract absence, refusal, Failure, or authority.
-8. Physical split, fusion, scheduling, caching, persistence, repair, and representation remain replaceable when the same
-   legal observations and required results are preserved.
+Compiler consumption does not transfer that authority.
+
+A compiler consumer may derive new compiler knowledge. That new knowledge belongs to the deriving compiler
+responsibility.
+
+A downstream compiler responsibility must not reconstruct missing Contract meaning from implementation state.
+
+A deterministic result must not change because the compiler chose another legal physical execution path.
+
+Compiler inability must remain a compiler result unless an owning Contract law gives that condition Contract meaning.
+
+Physical implementation choices remain replaceable when the required legal observations stay the same.
 
 ---
 
-## 3. Four Architecture Layers
+## 3. Architecture Layers
 
-The architecture must keep four layers conceptually distinct even when one implementation physically fuses them.
+The architecture distinguishes four layers.
+
+The first layer is declared Contract law. It owns Contract meaning and authority.
+
+The second layer is semantic material that represents meaning at a compiler boundary.
+
+Resolved Contract HIR belongs here before authority.
+
+Established Semantic Protocol observations belong here after authority.
+
+The third layer is compiler-derived knowledge.
+
+Analysis results belong here when they come from compiler reasoning.
+
+Summaries belong here for the same reason.
+
+Verification results and execution plans do too.
+
+Backend plans remain compiler-derived unless Contract law says otherwise.
+
+The fourth layer is physical realization.
+
+Storage layout belongs here.
+
+Query scheduling does too.
+
+Cache structure and persistence are also physical realization.
+
+Backend data structures remain in this layer.
 
 ```text
-┌──────────────────────────────────────────────┐
-│ 1. DECLARED CONTRACT LAW                     │
-│                                              │
-│ Input / Admission / Canonicalization         │
-│ Lowering / Fact / Invariant / State          │
-│ Failure / Publication / Output               │
-│ Version / Policy / Budget / Capacity         │
-│ Governance / Diagnostic Evidence             │
-│                                              │
-│ Definition / Occurrence / Basis /            │
-│ Applicability / authority-owned relations    │
-└──────────────────────────────────────────────┘
-                      │
-                      │ represented without authority transfer
-                      ▼
-┌──────────────────────────────────────────────┐
-│ 2. SEMANTIC MATERIAL AND OBSERVATION         │
-│                                              │
-│ Resolved Contract HIR                        │
-│ HIR Semantic Protocol                        │
-│ Established Material                         │
-│ Established Semantic Protocol                │
-│                                              │
-│ complete / typed / explicit / coherent       │
-│ observation surfaces                         │
-└──────────────────────────────────────────────┘
-                      │
-                      │ consumed legally
-                      ▼
-┌──────────────────────────────────────────────┐
-│ 3. COMPILER-DERIVED KNOWLEDGE AND RESULTS    │
-│                                              │
-│ realization knowledge                        │
-│ CFG / SSA / analyses                         │
-│ summaries                                    │
-│ verification results                         │
-│ generated-artifact plans                     │
-│ execution formation                          │
-│ optimization knowledge                       │
-│ JVM planning                                 │
-└──────────────────────────────────────────────┘
-                      │
-                      ▼
-┌──────────────────────────────────────────────┐
-│ 4. PHYSICAL REALIZATION                      │
-│                                              │
-│ queries / passes / caches                     │
-│ slabs / tables / arenas / mmap               │
-│ HID / fingerprints / Merkle / CAS            │
-│ threads / epochs / RCU-like reclamation      │
-│ persistence / red-green / delta repair       │
-│ JVM backend structures                       │
-└──────────────────────────────────────────────┘
+Contract law
+    ↓
+semantic material and legal observation
+    ↓
+compiler-derived result
+    ↓
+physical realization
 ```
 
-Layer 2 is not Contract authority merely because it represents Contract meaning.
+A physical implementation may fuse work across these layers. That optimization does not merge their ownership.
 
-Layer 3 may derive useful facts about realization or compilation. Those facts do not become Contract obligations unless
-a
-separate owning Contract law declares them.
-
-Layer 4 may replace the implementation of Layers 2 and 3. It cannot change their legal meaning.
-
-A design statement that crosses these layers must say which layer owns each part.
+Section 6 owns the general separation law. Later sections refer back to it rather than restating it.
 
 ---
 
@@ -264,7 +162,7 @@ A design statement that crosses these layers must say which layer owns each part
 
 ### 4.1. Semantic Determinism
 
-ADR-0063 already establishes the Contract law:
+ADR-0063 already establishes the semantic law:
 
 ```text
 same semantic basis
@@ -272,115 +170,75 @@ same semantic basis
 same established meaning
 ```
 
-This ADR preserves that law and adds a compiler-side consequence.
+This ADR does not redefine that law.
 
-Compiler machinery cannot become an undeclared determinant of semantic meaning.
+Compiler state that is not part of the owning semantic basis cannot change Established meaning.
 
-The following do not alter Contract meaning merely because they alter execution:
+A different worker schedule therefore cannot change Contract meaning.
 
-```text
-worker count
-worker completion order
-query evaluation order
-legal pass scheduling order
-cache hit / miss
-persistent product presence
-physical row assignment
-arena address
-hash-table iteration order
-slab partition
-mmap placement
-backend object identity
-```
+A different cache state cannot change it either.
 
-If one of these changes Contract meaning, the compiler implementation has leaked into the Contract.
+Changing storage or evaluation strategy follows the same rule.
+
+If changing a compiler mechanism changes Contract meaning, that mechanism has leaked into the Contract.
 
 ### 4.2. Deterministic Compiler Results
 
-A compiler-owned result may have its own explicit result-affecting inputs that are not Contract determinants.
+A compiler-owned result may have explicit inputs that are not Contract determinants. A backend target is one example.
 
-Examples include an exact target architecture or an explicitly selected backend mode.
-
-When a compiler result declares such inputs, the same declared inputs must produce the same consumer-visible result
-where
-that result is specified as deterministic.
-
-This is separate from Contract semantic determinism.
+When a compiler result is declared deterministic, the same declared inputs must produce the same consumer-visible
+result.
 
 ```text
 Contract determinism
-    → same semantic determinants produce same Contract meaning
+    → owned by Contract semantic determinants
 
 compiler-result determinism
-    → same declared compiler inputs produce same declared compiler result
+    → owned by declared compiler-result inputs
 ```
 
-The second must never be used to redefine the first.
+The compiler-result rule cannot redefine Contract equality or Contract identity.
 
 ### 4.3. Physical Schedule Freedom
 
-Determinism does not require one execution schedule.
+Determinism does not require one physical schedule.
 
-```text
-physical schedule may vary
-consumer-visible deterministic result may not
-```
-
-Parallelism is permitted only when merge, ordering, identity formation, and visibility preserve the declared result.
+The compiler may evaluate independent work in another order. It may also parallelize that work. The consumer-visible
+result must still satisfy the same deterministic result law.
 
 ### 4.4. Cache-Blind Correctness
 
-Cold cache and warm cache must not define different legal meaning.
+Cache state cannot decide meaning.
 
-Deleting all reusable compiler state may increase work. It must not change what the current exact inputs mean.
+A cold cache may require more work than a warm cache. It must not change the legal result for the same current inputs.
 
-A cache that decides whether a result is legal is authority leakage.
+Section 21 owns the storage and cache consequences of this law.
 
 ---
 
-## 5. Explicit and Rich Meaning Before Compiler Convenience
+## 5. Explicit Meaning Before Compiler Convenience
 
-Kontrakt does not obtain semantic richness by attaching more compiler metadata to products.
+Contract meaning must be complete at the boundary owned by its Contract law.
 
-Rich Contract meaning means that the owning Contract law declares the real distinctions required by the machine.
+If a later compiler responsibility needs a distinction that belongs to Input, that distinction must already exist in
+legal Input meaning.
 
-For example, Input may own distinctions such as:
+The compiler may not recover it from a host object. It may not recover it from backend representation either.
 
-```text
-presence / absence
-presentation family
-coordinate topology
-form-defining extent
-Presentation Sameness
-observable order
-uniqueness
-exact semantic references
-```
+The same rule applies to every other Contract authority. A later consumer cannot enlarge an earlier semantic surface for
+convenience.
 
-If such a distinction matters, it must be present in the owning Contract/HIR/Established surface according to that law.
+Compiler metadata does not become Contract meaning merely because it is useful.
 
-A later optimizer, diagnostic subsystem, verifier, or backend cannot add the distinction merely because it would be
-useful.
+A cache key remains compiler metadata.
 
-The converse is also important.
+A storage address remains physical state.
 
-Compiler-only facts such as:
+A fingerprint remains compiler evidence unless an owning semantic law gives the represented distinction Contract
+meaning.
 
-```text
-query identity
-cache key
-slab address
-fingerprint
-reader epoch
-analysis preservation state
-cost estimate
-codegen unit
-```
-
-are not Contract richness.
-
-They remain compiler realization or compiler-derived knowledge unless an owning Contract independently declares the same
-meaning for a different reason.
+The owning Contract ADRs define the actual semantic detail. This ADR only prevents downstream compiler needs from
+changing that detail.
 
 ---
 
@@ -388,349 +246,209 @@ meaning for a different reason.
 
 ### 6.1. No Consumer-Driven Semantic Growth
 
-An upstream semantic producer owns its meaning independently of downstream compiler consumers.
+An upstream semantic producer owns its meaning independently of its consumers.
+
+If a downstream subsystem needs semantic information that the producer does not legally expose, the subsystem must not
+invent it.
+
+The design must return to the semantic owner. The owner then decides whether the missing distinction belongs in that
+semantic surface.
+
+This rule applies to every downstream compiler consumer.
+
+Verification does not get an exception. Optimization does not get one either. Diagnostics, generated artifacts, and
+backend work remain consumers under the same rule.
+
+### 6.2. Compiler Derivation Owns Its Result
+
+A compiler responsibility may derive a new result from legal upstream observations.
+
+That result belongs to the compiler responsibility that formed it. It may be reused by other compiler work. It does not
+retroactively become Established Contract meaning.
 
 ```text
-Producer meaning
-    ≠ verifier-specific meaning
-    ≠ optimizer-specific meaning
-    ≠ diagnostic-specific meaning
-    ≠ backend-specific meaning
-```
-
-If a downstream subsystem requires semantic material that does not exist, the compiler must not invent that meaning in a
-product layer.
-
-The question returns to the owning Contract or semantic ADR.
-
-### 6.2. Compiler Derivation Owns Only Its Derived Knowledge
-
-A downstream compiler subsystem may derive a new result from legal semantic observations.
-
-That result belongs to the compiler subsystem that derived it.
-
-```text
-Established Contract meaning
+Established meaning
     ↓ legal observation
-Analysis
+compiler analysis
     ↓
-Derived Analysis Result
+derived compiler result
 ```
-
-The Analysis Result may influence optimization, verification, or planning.
-
-It does not become Established Contract meaning.
 
 ### 6.3. User Realization and Compiler Realization Are Both Non-Authority
 
-Kontrakt has at least two realization axes.
+User code realizes the declared machine. The Kontrakt compiler also realizes that machine through its own
+implementation.
 
-```text
-Declared Contract
-├── User-System Realization
-│      Operation implementation
-│      explicit adapters / realization ports
-│
-└── Kontrakt Compiler Realization
-       HIR storage
-       Establishment executor
-       query engine
-       verifier
-       optimizer
-       cache
-       incremental engine
-       backend
-```
+Neither realization defines Contract meaning.
 
-Neither realization axis may define Contract meaning.
+The distinction matters because compiler code is maintained by Kontrakt itself. Internal implementation convenience
+therefore needs the same authority boundary as external user realization.
 
-Compiler realization requires special discipline because it is maintained by Kontrakt itself and can therefore be
-mistaken for authority.
+### 6.4. Mechanism Names Stay Below the Contract
 
-### 6.4. Mechanism Names Must Stay Below the Contract
+Contract ADRs state obligations. They do not require a particular compiler mechanism unless that mechanism is itself the
+subject of a compiler architecture ADR.
 
-The following may be selected by compiler design:
+A query engine is therefore not a Contract concept. A pass manager is not a Contract concept. An incremental algorithm
+is not a Contract concept.
 
-```text
-query
-pass
-analysis manager
-red-green
-Merkle validation
-CAS
-RCU-like reclamation
-persistent slab
-DB-style incremental maintenance
-```
-
-No owning Contract ADR should require these mechanisms merely to state its semantic law.
+Sections 20 through 22 define the compiler consequences without moving those mechanisms into Contract law.
 
 ---
 
-## 7. Reality Is Part of the Machine, Not an Exception to the Model
+## 7. Reality and Availability
 
-A real compiler and a real Contract machine operate under incomplete source, finite memory, unsupported features,
-corrupted persistence, version mismatch, stale products, and resource limits.
+A real compiler can fail to provide material even when the semantic category itself is well-defined.
 
-Kontrakt must not hide those conditions by coercing them into semantic states they are not.
+Retained material can be unavailable.
 
-The following categories remain distinguishable where applicable:
+A persisted representation can be corrupt.
 
-```text
-Contract-level
-    valid semantic absence
-    Contract refusal
-    declared Failure
-    established negative judgment
+A compiler feature can be unsupported.
 
-compiler-level
-    not retained
-    not yet physically materialized
-    backing unavailable
-    unsupported protocol or product revision
-    stale retained result
-    corrupt persisted bytes
-    compiler unable to prove a required condition
-    compiler resource exhaustion
-    internal compiler defect
-```
+None of those states is semantic absence by itself.
 
-These categories may share diagnostics or recovery infrastructure. They do not share authority.
+Contract refusal and declared Failure also remain separate from compiler inability.
 
-A required semantic observation that cannot currently be supplied does not become semantic absence.
+The compiler must preserve the owning boundary of each condition.
 
-A compiler failure to prove legality does not establish Contract rejection unless an owning Contract law explicitly
-gives
-that inability Contract meaning.
+A compiler problem does not become a Contract judgment merely because later work cannot continue.
 
-A cache miss is not Contract Failure.
+A stale retained result remains a compiler-validity problem. A resource limit remains compiler reality under Section 26.
+An internal compiler defect remains compiler-owned unsuccessful state under ADR-0074.
 
-Corrupt persisted bytes do not revoke a previously established semantic occurrence merely because its old backing cannot
-be loaded.
+ADR-0074 owns the common representation of compiler unsuccessful results and recovery. This ADR only requires those
+results to remain separate from Contract meaning.
 
-ADR-0074 owns the common compiler unsuccessful-result and recovery representation. This ADR fixes only the separation
-law
-that prevents those results from being reinterpreted as Contract meaning.
+The same principle applies to materialization.
+
+Material that is not currently materialized is not automatically absent from the semantic model.
+
+Material that was never retained is also distinct from semantic absence.
 
 ---
 
 ## 8. HIR Producer Boundary
 
-ADR-0071 remains the owner of the pre-authority semantic boundary.
+ADR-0071 remains the owner of Resolved Contract HIR.
 
-The primary HIR subjects remain distinct:
+This ADR does not redefine HIR subjects or HIR projection families.
 
-```text
-Contract Interface
-Interaction
-Operation
-Definition Candidate
-IDL Binding Candidate
-```
+Establishment must consume HIR through the legal observation boundary defined by ADR-0071. It must not reopen source
+syntax or infer Candidate meaning from physical storage.
 
-The logical Establishment-facing HIR Protocol remains:
+HIR remains pre-authority material. Observation of HIR does not create Contract authority.
 
-```text
-Typed HIR Semantic Reference Domain
-Definition Candidate Projection
-IDL Binding Candidate Projection
-Fine-Grained Semantic Projection
-```
-
-These projections expose already-resolved HIR meaning.
-
-They do not establish Contract authority.
-
-They do not expose physical storage as meaning.
-
-They do not permit Establishment to reopen source, host objects, mutable producer state, query topology, or backing
-containment to recover missing Candidate meaning.
-
-This ADR does not add a second generic protocol above ADR-0071.
+Physical storage used to expose HIR remains an implementation detail under ADR-0071 and Section 28 of this ADR.
 
 ---
 
 ## 9. HIR-to-Establishment Handoff
 
-The handoff must remain complete enough that Establishment can execute the owning law without a hidden frontend.
+The HIR handoff must contain enough resolved semantic information for the owning Establishment law to run without a
+hidden frontend.
 
-Every semantic determinant of an Established result must be traceable to one of the following:
+Every determinant used by Establishment must come from a legal HIR observation or from another exact authoritative
+prerequisite that the owning law permits.
 
-```text
-legal HIR Protocol observation
-exact separately Established prerequisite
-explicit authority-owned judgment input
-```
+An explicit authority-owned judgment input is also legal when the owning law defines it.
 
-The handoff must not contain later authority merely for compiler convenience.
+HIR must not pre-establish a later result to simplify compiler implementation.
 
-```text
-HIR Candidate
-    ✕ must not pre-establish
-Version Binding
-Basis Binding
-Applicability result
-Established DefinitionRef
-Established Occurrence result
-```
+Establishment still creates only the meaning owned by the establishing authority.
 
-Establishment creates only the meaning owned by the establishing authority.
+Compiler reachability does not appear as a side effect of Establishment.
 
-It does not implicitly create:
+Optimization knowledge does not appear there either.
 
-```text
-compiler reachability
-optimization facts
-diagnostic explanations
-realization closure
-consumer-specific semantic meaning
-transitive semantic conclusions
-```
+Diagnostic explanation remains consumer-owned. Other downstream conclusions follow the same rule.
 
-This preserves ADR-0063 rather than replacing it.
+These laws are already owned by ADR-0071 and ADR-0063. This section fixes only their handoff discipline for later
+compiler products.
 
 ---
 
 ## 10. Establishment and Established Semantic Observation
 
-Successful Establishment produces authority-owned material according to the owning law.
+ADR-0063 remains the owner of Established Material and the Established Semantic Protocol.
 
-The common categories remain:
+Established Definition meaning remains distinct from occurrence-specific meaning.
 
-```text
-Established Definition Material
-Established Occurrence Material, when the authority owns occurrence meaning
-other authority-specific Established Material, only when an owning law requires it
-```
+Authority-specific Established Material also remains possible when an owning law defines it.
 
-Established Definition Material belongs to the Canonical Contract World according to ADR-0063.
+This ADR does not change the semantic placement of any of those categories.
 
-Occurrence-specific material does not automatically become part of that world merely because a compiler consumer wants a
-single aggregate store.
+Downstream compiler work must consume Established meaning through the legal observation surfaces defined by ADR-0063 and
+the owning authority-specific ADR.
 
-Downstream consumers observe Established meaning through the Established Semantic Protocol and its authority-owned
-specializations.
+Observation does not perform another Establishment. It also does not transfer authority to the consumer.
 
-Observation:
-
-```text
-≠ Establishment
-≠ authority transfer
-≠ outward Publication
-```
-
-This ADR does not introduce a universal `EstablishedMaterial` schema.
+This ADR does not add a universal `EstablishedMaterial` schema.
 
 ---
 
 ## 11. IDL Binding Discipline
 
-HIR already distinguishes Definition Candidate meaning from IDL Binding Candidate selection meaning.
+ADR-0071 already separates Definition Candidate meaning from IDL Binding Candidate selection meaning. This ADR preserves
+that distinction.
 
-```text
-Definition Candidate
-    → what this resolved 1D Definition means
+The current architecture may require an authoritative relation from a declared machine position to an exact Established
+Definition. This ADR does not create that relation.
 
-IDL Binding Candidate
-    → which declared machine position selected which Candidate
-```
+The owning Contract law must define the authoritative relation before compiler products can consume it.
 
-This separation remains.
+That law must define the relation's determinants. It must define when the relation becomes established.
 
-The current compiler architecture may need an authoritative established relation that connects an Interface,
-Interaction,
-Operation, role, or Policy World to an exact Established Definition.
+If Policy participates, its effect must be owned explicitly. Governance follows the same rule.
 
-This ADR does **not** invent that relation.
+A compiler dependency edge cannot create the missing authority. A generated host artifact cannot create it either.
 
-The owning Contract law must state:
-
-```text
-whether the relation is authoritative
-who owns it
-what determines it
-when it becomes established
-how Policy / Governance affect it
-```
-
-Only after that semantic ownership exists may compiler products consume the relation.
-
-A query edge from an IDL Binding Candidate to a Definition Candidate cannot create the authoritative relation.
-
-A generated host interface cannot create it either.
-
-This is an explicit open dependency on the owning Interface / Governance / Policy binding law where current Accepted
-ADRs
-have not yet closed the exact post-HIR owner.
+Where the current Contract ADRs have not closed the exact post-HIR owner, that question remains outside this ADR.
 
 ---
 
 ## 12. Compiler Result Boundary
 
-A compiler result boundary is an architecture boundary, not a Contract category.
+A compiler result boundary belongs to compiler architecture.
 
-It is useful when an independently owned compiler responsibility produces a result that another responsibility may
-consume
-without depending on the producer's private mutable state.
+A major result should state its logical subject and its producer. It should also state what a legal consumer is allowed
+to rely on.
 
-A result boundary should state, where applicable:
+When the result has compiler-specific inputs, those inputs must be explicit enough to support deterministic
+recomputation.
 
-```text
-logical result subject
-producer ownership
-explicit result-affecting compiler inputs
-legal upstream semantic observations
-consumer-visible guarantee
-legal read surface
-result comparison law when reuse needs one
-availability / unsuccessful-result boundary
-information-retention or information-loss guarantee
-```
+The producer must also expose a legal read surface for the completed result.
 
-These are **compiler architecture obligations**.
+When the result can be unavailable, its unsuccessful-result boundary must be explicit.
 
-They do not become user-facing Contract obligations merely because this ADR requires the compiler to be explicit about
-them.
+If reuse depends on result comparison, the producer owns that comparison rule for the compiler result family.
 
-Not every local value is a compiler result boundary.
+Information loss must also be visible when later consumers rely on the result.
 
-Temporary calculations, scratch buffers, local worklists, local SSA construction state, or loop-local facts may remain
-private when no independent consumer or reuse boundary requires exposure.
+This requirement applies only to independently consumed results. Local scratch state may remain private.
+
+ADR-0074 owns the common unsuccessful-result protocol.
+
+Section 15 owns information-loss rules. Section 17 owns explicit compiler inputs. Section 19 owns reuse distinctions.
 
 ---
 
 ## 13. Legal Consumption
 
-A compiler consumer may use only observations legally exposed by the producer level it consumes.
+A consumer may use only the observation surface exposed by the producer level it consumes.
 
-For Contract semantic material:
+Resolved HIR consumption follows ADR-0071.
 
-```text
-Resolved HIR
-    → ADR-0071 HIR Semantic Protocol
+Established semantic consumption follows ADR-0063.
 
-Established Contract Material
-    → ADR-0063 Established Semantic Protocol
-```
+Compiler-derived results use a producer-owned read surface appropriate to that result family. This ADR does not require
+every such surface to be named `Protocol`.
 
-For compiler-derived results, the producer exposes an appropriate read-only result surface.
+The physical access method is not part of the logical rule. A producer may expose the same legal observation through a
+compact table or through another representation.
 
-This ADR does not require every compiler result to define a named `Protocol` type.
-
-The physical realization may be:
-
-```text
-primitive-array reads
-typed slab ranges
-columnar tables
-immutable objects
-bulk views
-mmap regions
-shared immutable backing
-```
-
-The logical rule is only that a consumer must not depend on private construction state or reconstruct upstream semantic
-meaning from physical topology.
+A consumer must not depend on private construction state. It also must not reconstruct upstream semantic meaning from
+physical topology.
 
 Consumption transfers neither Contract authority nor producer ownership.
 
@@ -738,685 +456,505 @@ Consumption transfers neither Contract authority nor producer ownership.
 
 ## 14. Projection and Summary
 
-A **projection** narrows already-existing producer meaning without adding a new judgment.
+A projection exposes part of meaning that the producer already owns.
 
-A **summary** is newly derived compiler knowledge.
+A summary is a new compiler result formed by analysis of earlier material.
 
 ```text
 producer meaning
-    ↓ select / restrict / re-index
+    ↓
 producer-owned projection
 
 producer meaning
-    ↓ analysis / aggregation / closure / compression
-summary producer
-    ↓
+    ↓ analysis
 summary result
 ```
 
-This distinction prevents Whole-Machine optimization pressure from expanding HIR or Established Material into universal
-consumer schemas.
+The distinction matters because a summary may answer a wider-scope compiler question without becoming a second semantic
+authority.
 
-If a global consumer needs only a compact result, it may consume a summary rather than full producer material.
+If a consumer only needs the summary, it may avoid materializing the full producer body. Section 25 applies this rule to
+Whole-Machine work.
 
-The summary remains derived compiler knowledge.
+The exact summary representation remains Design unless another compiler ADR gives that summary an explicit architecture
+boundary.
 
-It cannot become source Contract authority because many consumers use it.
-
-The exact summary family, persistence policy, update strategy, and query key remain Design unless another ADR gives them
-a
-compiler architecture boundary of their own.
+Its persistence policy remains Design as well. The same is true for its update strategy and query key.
 
 ---
 
 ## 15. Information Preservation and Loss
 
-Every semantic lowering or compiler transformation that intentionally loses information must respect ownership.
+A compiler stage may erase information only when the erased distinction is no longer required by any legal consumer of
+that stage.
 
-A producer may erase a distinction only after that distinction is no longer required by the legal consumers of that
-producer level.
+A later consumer must not reconstruct erased Contract meaning from source shape or backend representation.
 
-A later consumer must not reconstruct intentionally erased Contract meaning from:
+If later work still needs the distinction, the upstream legal observation must retain it or a separately owned compiler
+result must preserve it before the loss occurs.
 
-```text
-source spelling
-source containment
-host type shape
-object adjacency
-backend descriptor
-storage layout
-heuristic inference
-```
+This law explains why target lowering cannot discard high-level Contract knowledge before Kontrakt has finished using
+that knowledge.
 
-If later work needs the distinction, one of the following must be true:
-
-1. the distinction was required to remain in the upstream legal semantic observation;
-2. a separately owned derived result preserved it before lowering; or
-3. the later work does not actually require that Contract distinction.
-
-Target lowering therefore remains delayed until Kontrakt has used the high-level Contract knowledge that only Kontrakt
-possesses.
-
-This does not require the JVM IR to preserve every upstream semantic distinction forever.
+It does not require lower IR to carry every earlier distinction forever.
 
 ---
 
 ## 16. Derived Analysis and Transformation
 
-Analysis and transformation belong to compiler realization.
+Analysis and transformation are compiler realization.
 
-An analysis result is compiler-derived knowledge over a declared subject.
+A transformation can make earlier analysis results stale. The compiler must not silently consume such a result after its
+assumptions no longer hold.
 
-A transform may invalidate knowledge that was true of the earlier representation.
+This ADR does not require the LLVM or MLIR invalidation API.
 
-Compiler architecture must therefore prevent stale derived knowledge from being silently consumed after its assumptions
-no longer hold.
+The compiler may recompute a result.
 
-This ADR does not constitutionalize LLVM `PreservedAnalyses`, MLIR `AnalysisManager`, or any equivalent API.
+It may update it.
 
-A compiler realization may satisfy the requirement by:
+It may invalidate it and rebuild later.
 
-```text
-recomputing derived knowledge
-updating it together with the transformation
-proving a relevant result unchanged
-invalidating and lazily rebuilding it
-using a product-specific incremental repair
-```
+It may prove that the relevant result did not change.
 
-The Contract-level requirement remains smaller:
+It may also use an incremental repair strategy.
 
-```text
-compiler transformation
-    must preserve the meaning it is obligated to preserve
-```
+Any of those implementations is legal when stale knowledge cannot escape the producer's validity rule.
 
-Analysis invalidation is a compiler correctness mechanism used to achieve that requirement. It is not Contract law.
+The Contract requirement remains that a legal compiler transformation preserve the meaning it is obligated to preserve.
+
+Section 33 records the external engineering references for this rule.
 
 ---
 
 ## 17. Explicit Compiler Inputs Without Semantic Leakage
 
-Compiler results must not depend on ambient implementation state that silently changes their declared result.
+A deterministic compiler result must not depend on hidden implementation state.
 
-For a compiler-owned result, legitimate result-affecting implementation inputs should be explicit at the compiler
-boundary
-that owns them.
+When a compiler-specific condition can legally affect a result, the producer must own that condition as an explicit
+compiler input.
 
-Examples may include:
+A backend target is one example.
 
-```text
-exact backend target
-explicit compiler feature mode
-explicit toolchain capability
-explicitly selected optimization mode, where output form may differ legally
-persistent format revision
-```
+A selected compiler feature mode can be another.
 
-This is not a statement that these become Contract determinants.
+Toolchain capability can also be explicit when the result depends on it.
 
-They are compiler inputs to a compiler result.
+An optimization mode may be explicit when legal output form changes.
 
-Ambient state such as current wall clock, filesystem enumeration order, process-global locale, random seed, mutable
-singleton state, or cache presence must not silently change deterministic compiler output unless a higher architecture
-explicitly declares and owns that variability.
+A persistent format revision is an input when it affects whether retained material can be reused.
 
-This follows the same engineering lesson as reproducible build systems: hidden environmental inputs create accidental
-non-determinism.
+These compiler inputs do not become Contract determinants.
+
+Uncontrolled environment state must not silently change a deterministic result.
+
+Wall-clock time cannot enter the result unless the producer declares it.
+
+Filesystem traversal order cannot alter the result either.
+
+Process locale cannot silently change it.
+
+Randomness must be owned explicitly when it is legal.
+
+Mutable global state cannot become an undeclared determinant.
+
+Cache presence cannot become one either.
+
+Section 4 owns the determinism law. This section only states how compiler-specific determinants enter that law.
 
 ---
 
 ## 18. Visibility and Coherent Observation
 
-An independently consumed result must not expose half-formed state as a successful current result.
+An independently consumed result must become visible only after the producer has completed the guarantee exposed to
+ordinary consumers.
 
-Conceptually:
+A consumer must observe a compatible set of inputs for one computation.
 
-```text
-private formation
-    ↓
-producer checks
-    ↓
-complete visible result
-    ↓
-ordinary consumers
-```
+Compatibility is a semantic and compiler-result requirement.
 
-This is compiler visibility, not ADR-0058 Publication authority.
+Matching one numeric generation identifier is not sufficient by itself.
 
-One consumer computation must observe mutually compatible inputs.
+Physical visibility remains implementation work. The compiler may use immutable generations or another safe publication
+mechanism.
 
-Compatibility does not require every input to have the same numeric generation identifier.
+Reclamation is separate from semantic validity. Keeping old storage alive does not make it current. Reclaiming storage
+does not undo a previously established semantic occurrence.
 
-It requires that the combination be legal for the current computation.
-
-```text
-same generation number
-    ≠ sufficient compatibility proof
-
-old physical backing
-    ≠ automatically stale semantic meaning
-```
-
-Physical visibility and memory reclamation remain implementation questions.
-
-RCU-like reader pinning, immutable generations, copy-on-write, arena generations, versioned tables, snapshots, reference
-counting, or another mechanism may implement the invariant.
-
-The mechanism does not become semantic lifetime.
+Section 28 keeps the physical mechanism replaceable.
 
 ---
 
-## 19. Equality, Validity, and Reuse Must Not Collapse
+## 19. Equality, Validity, and Reuse
 
-Three questions must remain distinct.
+Semantic equality answers what semantic meaning is the same. The owning semantic producer controls that law.
 
-```text
-What does this result mean?
-Is the retained old result usable for the current request?
-Can a cheap physical comparison avoid more work?
-```
+Compiler-result equality answers whether two results of one compiler result family are equivalent under that producer's
+declared comparison.
 
-For semantic products, equality remains owned by the semantic producer and the owning Contract law.
+Reuse validity answers whether retained material may satisfy the current request.
 
-For compiler-derived products, the compiler producer may define a result comparison useful for its own result family.
+These are different questions.
 
-That compiler comparison cannot redefine upstream Contract equality.
+A fingerprint may help answer a physical comparison question. It does not become semantic equality authority.
 
-A retained representation may be unusable because its codec, backend, target, or compiler compatibility no longer holds
-even when clean recomputation would produce equal semantic meaning.
+Byte equality is also not semantic equality by itself. Object identity is not semantic equality either.
 
-Conversely, a physical hash match is only evidence. It is not semantic authority by itself.
+A retained result can be semantically equal to a clean result and still be unusable because its compiler compatibility
+has expired.
 
-```text
-semantic equality
-    ≠ compiler-result equality
-    ≠ current reuse eligibility
-    ≠ byte equality
-    ≠ fingerprint equality
-    ≠ object identity
-```
+The reverse is also important. Physical identity never proves semantic equality by itself.
+
+Sections 21 through 23 use this separation for cache and incremental work.
 
 ---
 
 ## 20. Dependency Recording Is Compiler Machinery
 
-Compiler dependency tracking exists to avoid unnecessary work and to preserve correctness under reuse.
+Compiler dependency tracking records work needed for recomputation and reuse. It does not define Contract dependency.
 
-It does not define Contract dependency.
+A Contract Basis relation remains distinct from a compiler computation edge.
 
-The following remain distinct:
+HIR semantic relations remain distinct as well.
 
-```text
-Contract semantic prerequisite / Basis relation
-pre-authority HIR semantic relation
-compiler derivation input
-observed compiler computation dependency
-build / artifact dependency
-provenance relation
-physical reachability
-```
+Build dependencies remain separate. Provenance remains separate. Physical reachability remains separate.
 
-A previous dynamic dependency trace records what one previous computation observed.
+A previous dynamic dependency trace describes one previous computation. It cannot be treated as the complete semantic
+law for future computations.
 
-It is not universal semantic law.
+When control flow changes, later reads may also change. An incremental engine must therefore validate or rediscover
+dependencies soundly.
 
-In branch-dependent computation, a changed earlier dependency may alter which later dependencies are discovered.
-
-Therefore an incremental engine must validate dependency structure soundly rather than assuming that the old trace
-defines
-all future legal reads.
-
-The exact representation of dependency edges, dependency ordering, query nodes, invalidation marks, red/green state, or
-change frontiers is Design.
+The representation of the dependency graph remains Design.
 
 ---
 
 ## 21. Cache, Persistence, and Content Addressing
 
-Cache is work avoidance.
+Cache avoids work. Persistence retains representation. Content addressing helps locate or validate retained
+representation.
 
-Persistence is retained representation.
+None of them creates Contract authority.
 
-Content addressing is lookup and integrity machinery.
+A retained item is usable only after the producer's current validity rule has been satisfied. Finding the bytes is not
+enough.
 
-None creates Contract authority.
+A fingerprint or HID may accelerate lookup and validation. It does not become semantic identity authority.
 
-None creates semantic identity by existence alone.
+BLAKE3 may be used to compute such evidence. Merkle summaries may support wider validation. CAS may retain reusable
+representation. None of those mechanisms changes the owning meaning.
 
-None makes stale material current merely because bytes can be found.
+If retained state is missing or unusable, the compiler must have another legal path when the requested result is
+otherwise computable.
 
-The compiler may use:
-
-```text
-HID
-BLAKE3
-fingerprints
-Merkle summaries
-CAS
-persistent tables
-serialized products
-```
-
-to accelerate lookup, comparison, corruption detection, deduplication, and validation routing.
-
-The owning semantic or compiler-result law remains responsible for deciding what counts as current legal meaning.
-
-A cache miss or unreadable persisted result returns the compiler to another legal path. It does not change the Contract.
+Section 4.4 owns cache-blind correctness. Section 19 owns the equality and reuse distinction.
 
 ---
 
-## 22. Incremental Compilation Follows the Architecture; It Does Not Define It
+## 22. Incremental Compilation Follows the Architecture
 
-V1 must not be architected as a non-incremental compiler whose only future seam is `cache key -> value`.
+V1 must leave a durable seam for future incremental work. It must not define one incremental algorithm as permanent
+architecture.
 
-It also must not constitutionalize one incremental engine.
+A reusable major result therefore needs a stable logical subject. Its legal inputs must be knowable. Its producer must
+also own the result comparison used by reuse.
 
-The V1 requirement is smaller and more durable.
+A clean recomputation path remains the semantic reference when retained state is absent.
 
-Reusable major results should expose enough stable architecture that a future engine can determine:
+V2 may choose different repair strategies for different result families. A query result and a data-flow result do not
+need the same incremental algorithm.
 
-```text
-what result is being discussed
-what legal semantic observations it depends on
-what explicit compiler inputs affect it
-what result comparison is legal for that family
-what unsuccessful / unavailable state prevents reuse
-how clean recomputation remains possible
-```
+The incremental engine remains below the semantic boundary defined by the earlier ADRs.
 
-V2 may implement persistence and incremental repair with different strategies for different product families.
-
-Possible mechanisms include:
-
-```text
-red-green query reevaluation
-dynamic dependency repair
-summary-level change cutoff
-Merkle-assisted validation
-delta maintenance
-incremental data-flow analysis
-persistent segmented products
-adaptive repair versus rebuild
-```
-
-No one strategy becomes Contract law.
-
-The clean path remains semantically sufficient when retained state is absent.
+Section 6 preserves the authority boundary. Section 20 preserves the dependency boundary.
 
 ---
 
 ## 23. Early Cutoff Is a Derived Optimization
 
-A compiler may stop change propagation when the exact result observed by downstream consumers has been re-established as
-unchanged under the result owner’s legal comparison.
+An incremental engine may stop propagation when the producer has re-established that the result observed by downstream
+consumers is unchanged.
 
-This is an optimization of compiler work.
+An upstream source change alone does not prove that cutoff is legal. The owning result must first be validated,
+recomputed, or repaired.
 
-It is not a semantic rule that an upstream source change is irrelevant.
+A fingerprint may accelerate that check only under a sound producer-owned comparison rule.
 
-The legal reasoning is:
+A hash collision must not redefine producer-owned equality.
 
-```text
-upstream changed
-    ↓
-old downstream assumption cannot be trusted automatically
-    ↓
-validate / recompute / repair the owning result
-    ↓
-consumer-visible owned result unchanged
-    ↓
-consumers that depend only on that owned result need not be recomputed
-```
-
-A fingerprint may accelerate this proof only under a sound producer-owned validation scheme.
-
-A hash collision must not be allowed to redefine Contract equality.
+This section does not change Contract equality. It only permits the compiler to avoid downstream work after the relevant
+owned result is known to be unchanged.
 
 ---
 
 ## 24. Generated APIs and Backend Products
 
-Generated external interfaces and Operation realization interfaces are downstream artifacts.
+Generated host interfaces are downstream compiler artifacts. They do not create Contract authority.
 
-They are not sources of Contract authority.
+The compiler may derive an intermediate plan before generation.
 
-The Contract requirement is that they preserve the declared surface they are required to represent.
+It may also fuse planning with generation.
 
-This ADR does not require one fixed direct dependency path such as:
+The Contract-visible requirement is only that the generated surface preserve the meaning it is required to represent.
 
-```text
-Established Semantic Protocol
-    → Generated API generator
-```
+The backend follows the same direction. Backend structures consume legal upstream material. They do not reinterpret JVM
+object shape as new Contract meaning.
 
-The compiler may introduce a derived API plan, fuse planning with generation, or reuse a validated artifact plan.
-
-Those are compiler realization choices.
-
-What remains forbidden is reconstructing Contract authority from the generated artifact after the authoritative semantic
-material already exists.
-
-The same rule applies to the backend.
-
-Backend structures may consume legally derived execution material. They must not reinterpret generated JVM object shape
-as
-new Contract meaning.
+Section 6 owns this authority separation. Section 15 owns information preservation before target lowering.
 
 ---
 
 ## 25. Whole-Machine and Summary-Driven Work
 
-Whole-Machine work must not force every global consumer to materialize every full local body when a sufficient owned
-summary can answer the question.
+Whole-Machine compiler work may consume a sufficient summary instead of forcing every consumer to materialize complete
+local bodies.
 
-This is a scale principle, not a new Contract relation.
+The summary remains a compiler result owned by its producer.
 
-A summary producer owns its derived compiler result.
+If a local change leaves that summary unchanged, a consumer that depends only on the summary may avoid recomputation
+under Section 23.
 
-The global consumer may depend on the summary rather than the full body.
+A Whole-Machine Contract authority is different.
 
-If the summary remains unchanged after a local recomputation, propagation may stop for consumers whose only legal input
-is
-that summary.
-
-The compiler must not make the summary authoritative merely because it becomes a convenient global index.
-
-If a Whole-Machine Contract authority establishes new semantic meaning, that authority remains separate and must be
-owned
-by the relevant Contract law.
+If Contract law establishes new Whole-Machine meaning, the relevant Contract ADR must own it. Summary infrastructure
+cannot take that authority.
 
 ---
 
 ## 26. Resource Reality
 
-Compiler work is finite.
+Compiler work is finite. The compiler therefore needs explicit implementation limits that prevent uncontrolled resource
+consumption.
 
-A correct semantic design does not justify unbounded compiler memory, stack use, serialization size, graph traversal, or
-analysis work.
+Those limits are not automatically Contract Budget or Contract Capacity.
 
-Compiler resource governance is implementation/runtime reality and must be explicit enough to avoid accidental denial of
-service or hidden failure modes.
+They belong to compiler realization unless an owning Contract law declares them as part of the user machine.
 
-This ADR does not turn compiler memory limits into Contract Budget or Capacity unless an owning Contract explicitly
-makes
-them part of the user machine.
+Resource exhaustion must not silently alter Contract meaning.
 
-The distinction is:
+The compiler must use a legal fallback when one exists. Otherwise the relevant subsystem produces its compiler
+unsuccessful result under ADR-0074.
 
-```text
-Contract Budget / Capacity
-    → declared machine obligation
-
-compiler resource limit
-    → realization safety / operability constraint
-```
-
-Both should be explicit in their own layer.
-
-Exhausting a compiler resource limit must not silently change Contract meaning.
-
-The compiler may fail, degrade tooling, abandon an optimization, switch to a clean or conservative path, or return an
-explicit unsuccessful compiler result according to ADR-0074 and subsystem law.
+An optimization may be abandoned when it exceeds its compiler limit. Required semantic work cannot be silently omitted
+for that reason.
 
 ---
 
 ## 27. Query and Pass Orchestration Are Replaceable
 
-V1 may use query-oriented orchestration for major products and expensive reusable derived results.
+V1 may use query-oriented orchestration for major reusable results.
 
-Passes may remain useful inside a producer computation for local ordered transformation.
+Passes may still be used inside a producer when ordered local transformation is the suitable implementation.
 
-Neither `query` nor `pass` is a Contract concept.
+Neither query topology nor pass order defines Contract authority.
 
-```text
-query graph
-    → compiler computation topology
+A later compiler may change orchestration strategy without changing the semantic law, provided that the same legal
+result boundaries remain observable.
 
-pass order
-    → compiler realization schedule
-
-neither
-    → Contract authority graph
-```
-
-A later architecture may replace query orchestration, change query granularity, or move work into a persistent
-relational
-engine if it preserves the same semantic and compiler-result laws.
+Section 20 owns dependency recording. Section 22 owns the incremental seam.
 
 ---
 
 ## 28. Physical Representation Freedom
 
-A logical semantic or compiler result boundary does not require one JVM object.
+A logical result boundary does not imply one JVM object or one table.
 
-Legal implementations include:
+The compiler may choose a representation that matches measured access patterns. It may also change that representation
+later.
 
-```text
-primitive arrays
-typed slabs
-columnar tables
-immutable object graphs
-arena-backed ranges
-side tables
-compressed columns
-segmented persistent slabs
-mmap pages
-content-addressed chunks
-mixed representations
-```
+Physical fusion does not merge semantic ownership. Physical separation does not create new semantic entities.
 
-Physical split and fusion follow measured access patterns and lifetime needs.
+The first implementation therefore does not become permanent architecture merely because it uses one particular layout.
 
-They must preserve logical ownership and legal observation.
+ADR-0071 already applies the same principle to HIR.
 
-The first layout does not become architecture law merely because implementation started there.
+ADR-0063 applies it to Established meaning.
+
+This section extends that implementation freedom to compiler-derived results.
 
 ---
 
 ## 29. V1 Requirements
 
-V1 must close the following compiler architecture seams.
+V1 must preserve Visible HIR as the deterministic pre-authority boundary defined by ADR-0071.
 
-```text
-1. Visible HIR remains a complete deterministic pre-authority semantic boundary.
-2. Establishment consumes legal HIR observations and exact authoritative prerequisites only.
-3. Established semantic material is consumed through ADR-0063-owned observation surfaces.
-4. Major independently consumed compiler results have explicit ownership and complete consumer-visible guarantees.
-5. Derived compiler knowledge cannot become Contract authority by reuse or convenience.
-6. Hidden compiler state cannot change deterministic semantic or declared compiler results.
-7. Successful visible results are coherent and ordinary consumers do not observe incomplete construction state.
-8. Compiler unsuccessful / unavailable states remain distinct from Contract negative meaning.
-9. Clean recomputation remains correct without cache or persistence.
-10. Query / storage / representation choices remain replaceable.
-11. Verification can compare optimized or reused paths against an independent or clean reference where required.
-12. The exact authoritative IDL / Interface binding owner is not invented by compiler architecture and remains an explicit
-    semantic closure item where still open.
-```
+Establishment must consume only legal HIR observations and exact authoritative prerequisites permitted by the owning
+law.
 
-V1 does not need to persist every product or incrementalize every computation.
+Established semantic material must be consumed through ADR-0063-owned observation surfaces.
+
+Every major compiler result that is independently consumed must have an explicit producer and a complete
+consumer-visible guarantee.
+
+Derived compiler knowledge must remain non-authoritative under Section 6.
+
+Deterministic results must remain independent of hidden compiler state under Section 4.
+
+Ordinary consumers must not observe incomplete successful results under Section 18.
+
+Compiler unsuccessful results must remain distinct from Contract negative meaning under Section 7 and ADR-0074.
+
+Clean recomputation must remain correct without cache or persistence under Section 21.
+
+Query choices must remain replaceable under Section 27.
+
+Storage choices must remain replaceable under Section 28.
+
+Verification must retain an independent or clean comparison path where such a path is required by the product family.
+
+The unresolved authoritative IDL binding owner must not be invented by compiler architecture. Section 11 preserves that
+open semantic ownership question.
+
+V1 does not need to persist every result. It also does not need to incrementalize every computation.
 
 ---
 
 ## 30. V2 Evolution
 
-V2 may add persistent and incremental realization behind the same boundaries.
+V2 may add persistence and incremental repair behind the V1 boundaries.
 
-Candidate work includes:
+Persistent HIR projections remain subject to ADR-0071. Persistent compiler products remain subject to their
+producer-owned reuse laws.
 
-```text
-persistent HIR projections
-persistent Established-derived compiler products
-cross-session result lookup
-selective dependency validation
-red-green-like early cutoff
-persistent summaries
-incremental analysis
-incremental Whole-Machine repair
-adaptive repair versus rebuild
-incremental backend artifact reuse
-reader pinning / generation reclamation
-```
+Selective dependency validation may be added where it reduces work.
 
-V2 must not require Contract ADRs to change merely because the compiler chooses a stronger reuse engine.
+Incremental analysis may be added where the result family supports it.
 
-A V2 engine may change its storage, dependency model, scheduling policy, and repair strategy while preserving the same
-legal semantic observations.
+Whole-Machine summaries may gain incremental repair.
+
+Backend artifacts may also gain reuse.
+
+Reader lifetime and reclamation may be optimized independently of semantic identity.
+
+It may persist HIR observations when ADR-0071 compatibility rules permit that. It may also persist compiler-derived
+results whose producer defines a safe reuse rule.
+
+Different result families may choose different dependency and repair strategies.
+
+The compiler may also add stronger summary reuse and backend artifact reuse where the owning result boundaries support
+them.
+
+These implementation changes must not require Contract ADRs to change merely because the compiler has gained a stronger
+reuse engine.
+
+Section 22 remains the governing architecture seam.
 
 ---
 
 ## 31. Adversarial Review
 
-The architecture must be tested against at least the following failures.
+The following cases test whether the earlier laws are being violated.
 
 ### 31.1. Implementation Becomes Authority
 
-```text
-cache hit
-    → treated as proof of Contract validity
-```
+A cache hit is treated as proof of Contract validity.
 
-Rejected.
+Rejected by Sections 6 and 21.
 
 ### 31.2. Consumer Creates Missing Contract Meaning
 
-```text
-backend needs field X
-    → adds X to Established Material semantics
-```
+A backend adds a semantic field because backend generation needs it.
 
-Rejected.
-
-Return to the owning Contract law if X is truly semantic.
+Rejected by Sections 5 and 6. The question returns to the owning semantic ADR.
 
 ### 31.3. HIR Pre-Establishes Authority
 
-```text
-HIR formation computes Applicability result
-because Establishment would be easier
-```
+HIR computes a later authoritative result only to simplify Establishment.
 
-Rejected unless HIR is only representing meaning already owned as pre-authority material and the actual authority
-remains
-later.
+Rejected by Sections 8 and 9.
 
 ### 31.4. Compiler Failure Masquerades as Contract Failure
 
-```text
-persistent bytes corrupt
-    → Contract Failure
-```
+Corrupt retained compiler data is reported as Contract Failure.
 
-Rejected.
+Rejected by Section 7 and ADR-0074.
 
 ### 31.5. Hidden Environment Changes Result
 
-```text
-same declared inputs
-+ different filesystem iteration order
-    → different semantic result
-```
+The same declared inputs produce another deterministic result because an undeclared environment condition changed.
 
-Rejected.
+Rejected by Sections 4 and 17.
 
 ### 31.6. Generated Artifact Becomes Source of Truth
 
-```text
-generated Kotlin signature
-    → reconstruct Contract identity
-```
+A generated JVM signature is used to reconstruct Contract identity.
 
-Rejected.
+Rejected by Sections 6 and 24.
 
 ### 31.7. Old Dependency Trace Becomes Semantic Law
 
-```text
-previous query read-set
-    → assumed complete future semantic dependency
-```
+A previous dynamic read-set is treated as the complete future semantic dependency relation.
 
-Rejected.
+Rejected by Section 20.
 
 ### 31.8. Stale Derived Knowledge Survives Transformation
 
-```text
-IR changed
-analysis assumption invalid
-analysis reused anyway
-```
+A transformation invalidates an analysis assumption and the old result is still consumed.
 
-Rejected as compiler correctness failure.
+Rejected by Section 16.
 
 ### 31.9. Summary Becomes Authority
 
-```text
-Whole-Machine Summary
-    → canonical Contract meaning
-```
+A Whole-Machine summary is treated as canonical Contract meaning.
 
-Rejected.
+Rejected by Sections 14 and 25.
 
 ### 31.10. Resource Exhaustion Changes Meaning
 
-```text
-compiler budget exhausted
-    → silently omit semantic member
-```
+Compiler resource exhaustion causes required semantic material to be omitted.
 
-Rejected.
-
-Return an explicit compiler unsuccessful result or use a legal fallback.
+Rejected by Section 26.
 
 ### 31.11. Physical Co-Location Creates Identity
 
-```text
-same slab row / same CAS object
-    → same semantic entity
-```
+Two semantic entities are treated as identical because they share physical backing.
 
-Rejected.
+Rejected by Sections 19 and 28.
 
 ### 31.12. Consumer-Specific Equality Rewrites Producer Meaning
 
-```text
-optimizer only cares about field A
-    → declares full Established Definition equal when field B changed
-```
+A consumer ignores a producer-owned distinction and declares the complete producer result equal.
 
-Rejected.
-
-Use a producer-owned legal projection or a separately owned derived summary.
+Rejected by Section 19. A legal projection or a separately owned summary is required instead.
 
 ---
 
 ## 32. Verification and QA Requirements
 
-This ADR requires verification at the boundaries it protects, without making the verification machinery Contract
-authority.
+Verification must test the laws at the boundaries that own them.
 
-The compiler test strategy should include:
+A clean computation should be compared with a reused computation where reuse exists.
 
-```text
-clean path vs reused path
-cold cache vs warm cache
-single-thread vs parallel formation
-legal scheduling variations
-persistent reload vs clean recomputation
-representation A vs representation B
-optimized path vs reference path
-valid current product vs stale product
-corrupt persisted product rejection
-unsupported product revision rejection
-hidden-environment perturbation
-hash / fingerprint adversarial checks where used
-```
+Cache state should be varied.
 
-The invariant is not that every physical byte is identical unless a product explicitly requires byte reproducibility.
+Parallel execution should be compared with the reference path when the result is deterministic.
 
-The invariant is that the relevant legal observation or declared deterministic compiler result is identical.
+Alternative legal schedules should also preserve the same declared result.
 
-For final artifacts where reproducibility is itself required, the backend must additionally remove or explicitly own
-nondeterministic inputs such as timestamps, unstable traversal order, or build-path leakage.
+Persistent reload must be checked against clean recomputation.
+
+Stale retained material must be rejected by the owning validity law.
+
+Unsupported retained revisions must also be rejected by that boundary.
+
+Corrupt retained material must follow ADR-0074 rather than changing semantic meaning.
+
+Fingerprint and hash validation should include adversarial checks when those mechanisms participate in reuse evidence.
+
+Where the compiler supports more than one physical representation, tests should confirm that the legal observation
+remains the same.
+
+This check covers changes in physical split and fusion as well as changes in storage form.
+
+Optimized paths should be compared with an independent or reference path where the subsystem requires that assurance.
+
+Hidden environment perturbation should be part of determinism testing when such state could accidentally enter the
+result.
+
+If a final artifact requires byte reproducibility, the backend must control every input that can legally affect those
+bytes.
+
+That requirement is stronger than semantic determinism. The artifact producer owns it.
 
 ---
 
@@ -1426,30 +964,30 @@ The following systems support individual engineering principles. None defines Ko
 
 ### 33.1. LLVM New Pass Manager
 
-LLVM caches analysis results and invalidates them when transforms no longer preserve their assumptions. A transform may
-update an analysis or report the analyses it preserves. This supports the compiler-side law that stale derived knowledge
-must not be silently consumed.
+LLVM keeps reusable analysis results separate from transforms. A transform must not leave stale analysis visible as if
+it were still valid.
+
+This supports Section 16. It does not require Kontrakt to copy LLVM's pass-manager API.
 
 Source: <https://llvm.org/docs/NewPassManager.html>
 
 ### 33.2. MLIR Pass Infrastructure
 
-MLIR analyses are separate from transformations, are cached, and are assumed invalidated unless preserved. Pass failure
-is
-also an explicit compiler state. This is useful evidence for keeping derived knowledge ownership and compiler failure
-separate from domain semantics.
+MLIR also separates analysis lifetime from transformation. Its preservation rules provide another implementation example
+of the stale-knowledge problem described in Section 16.
 
 Source: <https://mlir.llvm.org/docs/PassManagement/>
 
 ### 33.3. rustc Query and Incremental Compilation
 
-rustc incremental compilation relies on deterministic query results. If all recorded inputs are unchanged, a query
-result
-must be unchanged or the compiler is not deterministic. Its red-green algorithm is therefore an optimization built on a
-prior determinism assumption, not a replacement for it.
+rustc incremental compilation assumes deterministic query results before reuse is considered. That supports the ordering
+used by Sections 4 and 22.
 
-rustc also records dependency order because an earlier changed dependency can alter which later dependencies are read.
-This is evidence against treating a previous dynamic read-set as universal future semantic law.
+rustc also tracks dynamic query dependencies.
+
+A changed earlier read can change which later reads occur.
+
+That supports the warning in Section 20 that an old dependency trace is not semantic law.
 
 Sources:
 
@@ -1458,20 +996,19 @@ Sources:
 
 ### 33.4. LLVM ThinLTO
 
-ThinLTO demonstrates that wider-scope work can consume compact summaries instead of forcing every consumer to
-materialize
-full local IR. The summary is derived optimization material, not source semantic authority.
+ThinLTO demonstrates that global compiler work can use a compact derived summary instead of requiring every consumer to
+load complete local IR.
+
+This supports Sections 14 and 25.
 
 Source: <https://clang.llvm.org/docs/ThinLTO.html>
 
 ### 33.5. Reproducible Builds and Nix
 
-Reproducible-build systems show why ambient time, filesystem ordering, and uncontrolled environment state must not
-silently
-enter deterministic build results. Nix derivations similarly model reproducible builds from explicit build inputs.
+Reproducible-build work demonstrates the danger of undeclared build inputs. Nix derivations provide a related example of
+making build inputs explicit.
 
-These systems do not define Contract semantics. They are evidence for explicit compiler-input boundaries and cache-blind
-correctness.
+These systems support Section 17 and the cache-blind rule in Section 4. They do not define Contract semantics.
 
 Sources:
 
@@ -1481,11 +1018,11 @@ Sources:
 
 ### 33.6. Linux RCU and RocksDB Snapshots
 
-RCU separates replacement from reclamation so readers do not observe partially updated references and old storage is not
-reclaimed before readers stop using it. RocksDB snapshots provide explicit point-in-time read views.
+RCU demonstrates that replacement and reclamation can be separate physical concerns. RocksDB snapshots demonstrate
+explicit point-in-time read views.
 
-These are physical-coherence references only. Kontrakt does not make RCU epochs or RocksDB sequence numbers semantic
-identity.
+These systems support the implementation freedom in Section 18. Their epoch or sequence identifiers are not semantic
+identity in Kontrakt.
 
 Sources:
 
@@ -1494,12 +1031,13 @@ Sources:
 
 ### 33.7. DBSP and Enzyme
 
-Database incremental-view-maintenance work shows that some derived computations can support principled delta
-maintenance.
-DBSP gives a formal incrementalization model for suitable computations. Enzyme shows production systems may choose among
-refresh strategies according to cost.
+DBSP demonstrates principled incremental maintenance for computations that fit its model.
 
-Kontrakt therefore keeps the incremental algorithm below the semantic boundary and permits product-specific strategies.
+Enzyme shows that a production system may choose among refresh strategies.
+
+These examples support product-specific incremental design rather than one universal algorithm.
+
+These systems support Section 22. They do not define the Kontrakt incremental architecture.
 
 Sources:
 
@@ -1508,18 +1046,16 @@ Sources:
 
 ### 33.8. Verified Compilation and Reproducibility Research
 
-Recent verified-compiler work remains useful as evidence that implementation paths can be checked against independently
-specified semantics rather than treated as semantics themselves. Reproducible-build research likewise treats build
-repetition as evidence about the integrity of the implementation pipeline rather than as the definition of source
-meaning.
+Recent verified-compiler work provides evidence for checking implementation paths against independently specified
+semantics. Reproducibility research provides related evidence for checking the integrity of artifact production.
+
+These references support Section 32. They are not architecture templates.
 
 Examples:
 
 - *Verified VCG and Verified Compiler for Dafny* (2025): <https://arxiv.org/abs/2512.05262>
-- *Verifiable Provenance of Software Artifacts with Zero-Knowledge Compilation* (2026):
-  <https://arxiv.org/abs/2602.11887>
-
-These are research references, not architecture templates.
+- *Verifiable Provenance of Software Artifacts with Zero-Knowledge Compilation*
+  (2026): <https://arxiv.org/abs/2602.11887>
 
 ---
 
@@ -1527,68 +1063,43 @@ These are research references, not architecture templates.
 
 ### 34.1. Compiler Product Graph as Contract Graph
 
-Rejected.
-
-Compiler computation dependencies may be derived from Contract relations but cannot establish them.
+Rejected. Section 20 keeps compiler dependency recording separate from Contract semantic dependency.
 
 ### 34.2. One Universal Product Schema
 
-Rejected.
-
-HIR Candidate meaning, Established Contract meaning, analysis result, summary, verification result, and backend artifact
-do
-not gain one common semantic field set merely because a compiler stores them.
+Rejected. Sections 3 and 12 preserve producer-owned result families instead of one semantic super-schema.
 
 ### 34.3. Query as Authority
 
-Rejected.
-
-Query evaluates work. The owning law determines meaning.
+Rejected. Section 27 keeps query orchestration below Contract authority.
 
 ### 34.4. Cache as Validity
 
-Rejected.
-
-Cache presence avoids work only after current-validity requirements are satisfied.
+Rejected. Sections 19 and 21 require current reuse validity independently of cache presence.
 
 ### 34.5. Fingerprint as Semantic Equality
 
-Rejected.
-
-Fingerprint may provide evidence under a legal comparison law. It does not own semantic equality.
+Rejected. Section 19 keeps fingerprints below producer-owned equality.
 
 ### 34.6. Compiler Unavailability as Semantic Absence
 
-Rejected.
-
-Unsupported, unavailable, stale, corrupt, and absent are different states.
+Rejected. Section 7 keeps compiler availability separate from semantic absence.
 
 ### 34.7. Analysis API as Contract Law
 
-Rejected.
-
-LLVM-style or MLIR-style invalidation APIs are useful realization references but remain replaceable compiler machinery.
+Rejected. Section 16 fixes the correctness requirement without fixing one analysis API.
 
 ### 34.8. Generated API as Authority
 
-Rejected.
-
-Generated artifacts represent and realize already-declared meaning.
+Rejected. Section 24 treats generated APIs as downstream artifacts.
 
 ### 34.9. Full Source Reopening Downstream
 
-Rejected.
-
-If a legal downstream semantic consumer must reopen source to recover required meaning, the upstream semantic boundary
-is
-incomplete or the ownership decision is wrong.
+Rejected. Sections 8, 9, and 13 require legal upstream observations instead.
 
 ### 34.10. First Physical Layout as Permanent Architecture
 
-Rejected.
-
-Primitive slabs, objects, mmap, or CAS may be replaced without Contract evolution when legal observations remain the
-same.
+Rejected. Section 28 keeps physical representation replaceable.
 
 ---
 
@@ -1596,116 +1107,104 @@ same.
 
 ### 35.1. Positive
 
-The architecture keeps Contract authority above compiler machinery.
+Contract authority remains above compiler machinery.
 
-Determinism becomes a prerequisite for reuse rather than a side effect of a cache design.
+Determinism is established before reuse and incremental optimization.
 
-HIR and Established Semantic Protocols remain narrow semantic observation boundaries instead of becoming universal
-compiler APIs.
+HIR and Established Semantic Protocols remain semantic observation boundaries rather than universal compiler APIs.
 
-Compiler-derived knowledge gains explicit ownership without becoming a second semantic world.
+Compiler-derived knowledge gains an explicit owner without becoming a second Contract model.
 
-Compiler failure and resource reality can be represented honestly without fabricating Contract Failure or absence.
+Compiler failure can be represented without fabricating Contract Failure.
 
-V1 can use practical query and in-memory techniques while leaving V2 free to adopt stronger persistent and incremental
-algorithms.
+V1 can use practical in-memory compiler techniques while V2 remains free to adopt stronger persistence and incremental
+repair.
 
-Whole-Machine scaling can use summaries without moving authority into summary indexes.
+Whole-Machine work can use summaries without moving authority into those summaries.
 
 Backend replacement remains possible because target representation does not define Contract meaning.
 
 ### 35.2. Costs
 
-Compiler subsystems must state ownership and result guarantees more explicitly.
+Compiler subsystems must state ownership and consumer-visible guarantees more precisely.
 
-Some apparently convenient direct reads from source or global compiler context become illegal architectural shortcuts.
+Some direct reads from source or global compiler context become illegal shortcuts.
 
-Incremental engines need sound dependency and validity design rather than treating cache presence as correctness.
+Reuse requires a real validity rule rather than cache presence.
 
-Verification must test alternate physical paths against the same legal observations.
+Verification must compare alternative execution paths where a product family requires that assurance.
 
-The open authoritative IDL binding ownership question cannot be hidden inside compiler plumbing and must be closed by
-the
+The unresolved authoritative IDL binding owner cannot be hidden inside compiler plumbing. It must be closed by the
 semantic owner.
 
 ---
 
 ## 36. Required Follow-Up
 
-After this ADR is reviewed, the next work should be separated by layer.
+The next work remains separated by ownership.
 
 ### 36.1. Contract / Establishment Follow-Up
 
-```text
-Close the exact authoritative IDL / Interface slot-binding owner.
-Continue 1D-specific HIR → Establishment closure using the master checklist.
-Do not move compiler dependency or cache fields into 1D semantic meaning.
-```
+The exact authoritative IDL or Interface slot-binding owner must be closed by the owning Contract law.
+
+The 1D HIR-to-Establishment review must continue through the master checklist without adding compiler reuse metadata to
+1D meaning.
 
 ### 36.2. Compiler Architecture Follow-Up
 
-```text
-Map major producer/result owners from HIR through JVM backend.
-For each major result, state consumer-visible guarantee and legal upstream inputs.
-Mark derived knowledge explicitly as non-Contract.
-Define common compiler-result availability / unsuccessful-result integration with ADR-0074.
-```
+The major result producers from HIR through the JVM backend must be mapped.
+
+Each independently consumed result must state its consumer-visible guarantee and its legal upstream inputs.
+
+ADR-0074 integration must close the common compiler-result availability boundary.
 
 ### 36.3. Design Follow-Up
 
-```text
-Choose V1 query boundaries.
-Choose primitive/table/slab storage shapes.
-Choose analysis preservation / invalidation implementation.
-Choose generation / reader lifetime mechanism.
-Choose cache / fingerprint / HID evidence strategy.
-Measure summary granularity and split / fuse decisions.
-```
+V1 must choose concrete query boundaries and storage representations.
+
+The storage design must also decide where physical split or fusion is useful from measured access patterns.
+
+The implementation must also choose its analysis-validity mechanism and its visibility mechanism.
+
+Reuse evidence remains a Design decision under the laws in this ADR.
+
+The fingerprint or HID strategy belongs there as well.
+
+Summary granularity also remains Design.
 
 ### 36.4. V2 Research Follow-Up
 
-```text
-persistent products
-dependency recording
-selective invalidation
-early cutoff
-incremental analysis
-summary repair
-delta maintenance
-adaptive repair versus rebuild
-persistent backend reuse
-```
+V2 research should compare persistence strategies for the result families that benefit from them.
+
+It should include persistent product loading and selective validation.
+
+It should also compare dependency-repair strategies.
+
+Incremental analysis needs its own evaluation. Summary repair needs another. Delta maintenance should be considered only
+where the result family fits that model.
+
+Adaptive repair versus rebuild should remain open.
+
+Backend reuse should be evaluated under the same producer-owned validity model.
+
+Persistent backend artifact reuse must not create a new semantic authority.
 
 ---
 
 ## 37. Summary
 
-Kontrakt does not introduce compiler result boundaries in order to make caching convenient.
+Kontrakt uses compiler result boundaries so later compiler responsibilities can consume already-formed meaning without
+recreating semantic authority.
 
-It introduces them so that a large compiler can consume already-resolved meaning without recreating authority, hidden
-semantics, or implementation coupling.
+The compiler may derive new knowledge from legal observations. That knowledge remains compiler-owned.
 
-The governing order is:
+Deterministic results remain independent of replaceable physical machinery under Section 4.
 
-```text
-explicit declared Contract
-    ↓
-complete legal semantic observation
-    ↓
-consumer-owned compiler derivation
-    ↓
-deterministic result
-    ↓
-replaceable realization
-```
+Contract and implementation remain separate under Section 6.
 
-Caching, persistence, fingerprints, dependency graphs, incremental repair, summaries, and backend specialization may
-avoid
-work beneath that structure.
+Compiler failure remains separate from Contract meaning under Section 7.
 
-They do not define the structure.
+Reuse and incremental compilation build on those laws under Sections 19 through 23.
 
-The machine remains explicit about what it promises, explicit about what it knows, explicit about what failed, explicit
-about what it cannot currently provide, and explicit about which layer owns each fact.
-
-That separation is the precondition for aggressive optimization rather than an obstacle to it.
+This separation allows the compiler to become more aggressive without making its current implementation part of the
+Contract.
