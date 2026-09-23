@@ -48,11 +48,9 @@ separated. A retry can require a fresh semantic Occurrence while still allowing 
 knowledge from an earlier computation to remain useful. That showed that semantic freshness and computational reuse are
 related but are not the same decision.
 
-HIR and Establishment then made the distinction more explicit. ADR-0071 defines how Resolved Contract HIR is formed and
-observed before authority. ADR-0063 defines how Established meaning is formed and observed after authority. Those ADRs
-also separate their semantic meaning from query state, physical storage, retained representation, and compiler
-generation. They solve their own producer-side problems, but they do not define how every later compiler subsystem
-should manage knowledge that has already been produced.
+HIR and Establishment then made the distinction more explicit. Their semantic and observation laws remain with
+ADR-0071, ADR-0063, and the applicable authority-specific ADRs. ADR-0075 relies on those boundaries and starts where
+compiler-produced material or knowledge is consumed across responsibility boundaries.
 
 The same family of questions will recur at lower compiler levels without making those levels identical. MIR may maintain
 CFG and SSA while also producing data-flow knowledge. LIR and the JVM backend add target-dependent material. Downstream
@@ -106,10 +104,10 @@ proven-preserved result, maintain it through the change, or form it again. If th
 unchanged, later work may be able to stop. This is the familiar incremental propagation case.
 
 Other cases have a different shape. A transformation can mutate one IR unit in place and invalidate only some analyses.
-A whole-machine consumer can depend on a compact summary while the backend depends on the full body. A fresh runtime
-Occurrence can reuse definition-level compiler knowledge without reusing the old Occurrence. An independent checker can
-deliberately recompute information that another subsystem would normally share because sharing would weaken its value as
-a correctness oracle.
+A whole-machine consumer can depend on a compact summary while the backend depends on the full body. Under ADR-0063
+and the applicable 1D ADR, a fresh runtime Occurrence can coexist with reuse of definition-level compiler knowledge
+without reusing the old Occurrence. An independent checker can deliberately recompute information that another subsystem
+would normally share because sharing would weaken its value as a correctness oracle.
 
 The architecture therefore has to answer more than whether a cache entry is present. It has to preserve the boundary
 between what a producer guarantees, what a particular consumer actually observes, what changes can invalidate that
@@ -132,8 +130,8 @@ ownership rule.
 
 The scope covers derived knowledge that later compiler work consumes. Analyses and summaries are common examples. It
 also covers realization-facing results such as verification material or backend output. Retained representations enter
-scope when they are used for later reuse. The protocol can apply at HIR, MIR, LIR, or backend boundaries without
-defining the internal semantics of those IR families.
+scope when they are used for later reuse. These boundaries can occur around HIR, MIR, LIR, or backend work, while the
+meaning and invariants of those families remain with their owning ADRs.
 
 The scope also includes cases in which a subsystem does not use the common query or cache machinery internally. A JVM
 backend, external adapter, or local pass pipeline can remain independently implemented while still participating in the
@@ -143,10 +141,9 @@ Private scratch values are outside this ADR unless they become independently obs
 computation that owns them. The same is true for worker-local temporary state whose lifetime ends with one operation and
 whose contents cannot affect a later consumer after that operation completes.
 
-Contract identity and semantic equality remain with their owning ADRs. Provenance meaning and other authority-specific
-relations stay there as well. Definition and Occurrence semantics are therefore outside this ADR, as are Required Basis,
-Applicability, and Version Binding. ADR-0071 likewise keeps ownership of HIR Candidate and Binding identity. Future MIR
-and LIR ADRs remain responsible for the invariants and meaning of their own representations.
+Semantic and representation-specific laws remain with their owning ADRs. ADR-0075 refers to ADR-0071, ADR-0063,
+the applicable authority-specific ADRs, and future MIR, LIR, or backend ADRs where those laws are needed instead of
+restating them here.
 
 The ADR also stops above concrete reuse machinery. Cache and query architecture remain replaceable, as do dependency
 storage, fingerprinting, persistence, and incremental repair mechanisms. A later compiler ADR can give one of those
@@ -156,23 +153,16 @@ mechanisms a narrower architectural role when necessary.
 
 ## 4. Existing Ownership Boundaries
 
-This ADR relies on upstream ownership rather than copying it.
+This ADR relies on existing owners rather than copying their laws. Resolved Contract HIR remains under ADR-0071;
+Establishment and Established observation remain under ADR-0063 and the applicable authority-specific ADRs;
+compiler-side
+unsuccessful-result handling remains under ADR-0074. Future MIR, LIR, and backend ADRs likewise own the meaning and
+invariants of the representations and results they introduce.
 
-Resolved Contract HIR and its legal observations remain owned by ADR-0071. Established Material and the Established
-Semantic Protocol remain owned by ADR-0063 and the applicable authority-specific ADR. Input and the other 1D Contract
-ADRs continue to own their Definition, Occurrence, and judgment semantics. ADR-0074 owns the common unsuccessful
-compiler-result boundary, including recovery and the distinction between compiler inability and Contract negative
-meaning.
-
-The same rule will apply to compiler IRs that are not yet closed. A MIR ADR can define what a MIR generation means and
-what guarantees a MIR consumer may rely on. A later LIR or backend ADR can define target-facing invariants. ADR-0075 may
-govern reuse of material produced under those guarantees, but it must not become the place where their semantics are
-invented.
-
-Where this ADR uses an upstream observation, the upstream owner determines what that observation means. Where a
-compiler-derived result needs a comparison, validity rule, or change response that is specific to its result family,
-that family owns the specific rule. ADR-0075 defines only the cross-responsibility obligations that are common enough to
-survive those specializations.
+ADR-0075 begins at the cross-responsibility consumption, validity, reuse, and change boundary created when those
+owner-defined results are consumed or retained by other compiler responsibilities. Family-specific comparison, validity,
+and change rules remain with the producer family. ADR-0075 defines only obligations that survive those
+specializations.
 
 ---
 
@@ -241,10 +231,9 @@ another responsibility may rely without entering the producer's private construc
 producer and the guarantee being exposed. It also identifies the logical subject of that guarantee to the extent needed
 by that result family.
 
-This requirement does not create a new compiler-wide identity system. HIR, Established meaning, MIR, derived analysis,
-and backend artifacts can all use subject coordinates defined by their own owners. ADR-0075 requires only that a
-consumer can state which producer-owned result it is using without treating incidental storage as the meaning of that
-result.
+This requirement does not create a new compiler-wide identity system. The boundary uses the subject or reference law
+supplied by the result's owner and requires only that a consumer can identify the producer-owned result it uses without
+treating incidental storage as the meaning of that result.
 
 A boundary does not require a one-to-one physical representation. One completed observation can span several structures,
 and several logical results can share backing storage. Physical fusion does not merge their ownership, while physical
@@ -307,9 +296,9 @@ CFG and SSA are clear examples of why validity cannot be reduced to cache lookup
 memory state can be maintained alongside the IR or derived on demand. A transform can preserve one guarantee while
 invalidating another.
 
-ADR-0075 does not define CFG or SSA semantics. Their owning IR and analysis designs decide what makes those structures
-correct. This ADR requires only that later consumers do not observe a structure after a relevant mutation unless its
-owner has preserved, updated, repaired, or re-established the guarantee they rely on.
+CFG, SSA, and related structural invariants remain with their owning IR and analysis work. ADR-0075 requires only that
+later consumers do not observe a structure after a relevant mutation unless its owner has preserved, updated, repaired,
+or re-established the guarantee they rely on.
 
 The rule also applies across IR levels. Derived knowledge from one representation does not automatically remain valid
 after lowering merely because the lower representation was produced from the higher one. A later stage can explicitly
@@ -325,9 +314,9 @@ transformation to allocate a new complete IR.
 ## 11. Dependency Observation
 
 A derived result that may be reused after change needs enough information to determine which upstream observations can
-affect its guarantee. This compiler dependency is not a substitute for Contract Basis, HIR semantic relations,
-provenance, program call edges, or build-artifact dependency. Those relations remain separate even when one computation
-happens to observe several of them.
+affect its guarantee. Compiler dependency observation does not redefine relations owned elsewhere. Contract and HIR
+semantic relations remain under their owning ADRs, while program and artifact dependencies retain their own owners. One
+computation can observe several such relations without merging their meanings.
 
 Dependency capture must be sound. Omitting an upstream observation that can change the result allows stale material to
 survive under-invalidation. At the same time, making a narrow result depend on an unrelated whole-world fingerprint can
@@ -397,21 +386,11 @@ equality merely because it is fast to compare.
 
 ---
 
-## 14. Projection, Summary, and Multi-Consumer Reuse
+## 14. Summary and Multi-Consumer Reuse
 
-A producer-owned projection exposes part of a result the producer already owns. A summary is separately derived compiler
-knowledge formed to answer a narrower or wider compiler question. They must not be treated as the same abstraction
-merely because both can reduce the amount of material a consumer reads.
-
-```text
-producer-owned result
-    ↓
-producer-owned projection
-
-producer-owned result
-    ↓ analysis
-compiler-owned summary
-```
+Owner-defined observations remain governed by the result family that exposes them. HIR and Established projections in
+particular remain under ADR-0071 and ADR-0063. This section concerns separately derived summaries and other compiler
+knowledge formed so that multiple consumers can reuse a bounded result without reopening the producer's private state.
 
 A wider consumer does not necessarily need the full body. Whole-machine verification or planning can often depend on
 local summaries, and a backend can still require body-level material. This allows one local change to invalidate backend
@@ -570,8 +549,8 @@ should automatically be injected into every subsystem.
 
 ## 21. Information Preservation and Loss
 
-A compiler representation may discard information when no later legal consumer requires the discarded distinction. This
-is a property of the consumer graph, not a requirement that every lower IR carry all upstream knowledge forever.
+Whether an IR or another compiler representation may discard a distinction is owned by that representation's ADR and
+its legal consumer requirements. ADR-0075 does not define those representation invariants.
 
 If a later subsystem still needs high-level information that will disappear during lowering, the compiler must consume
 that information before the loss or preserve the needed derived knowledge through an explicit product boundary. A later
