@@ -1,4 +1,4 @@
-# ADR-0075: Compiler Product Protocol, Legal Consumption, Deterministic Realization, and Contract/Implementation Separation
+# ADR-0075: Compiler-Produced Material and Knowledge, Consumption, Validity, Reuse, and Incremental Boundaries
 
 ## Status
 
@@ -27,378 +27,647 @@ Proposed
 - ADR-0071: Resolved Contract HIR Semantic Boundary, Deterministic Visibility, Lifecycle, and Reuse
 - ADR-0073: JVM Platform, External Technology, and Realization Boundary
 - ADR-0074: Compiler Result, Explicit Unsuccessful Result, Recovery, and Observation Boundary
-- `kontrakt-1d-hir-establishment-master-checklist.md`
 - `kontrakt-compiler-total-architecture-map-design-draft.md`
 - `kontrakt-compiler-reuse-incremental-v1-v2-todo.md`
 - `kontrakt-v2-incremental-architecture-research-todo.md`
+- `adr-0075-pre-taxonomy-research-inventory-produced-knowledge-reuse-validity-incremental-survey.md`
 - *Modern Compiler Architecture 01-15*
 
 ---
 
 ## 1. Context
 
-Kontrakt is a Contract machine realized through a compiler, but the compiler is not a second source of Contract meaning.
-Its job is to realize meaning that has already been declared under the owning Contract law.
+Kontrakt does not stop producing useful information after source resolution or Establishment. Later compiler work forms
+new representations and derives knowledge that other responsibilities may need. Some of that work is cheap and local.
+Other results are expensive enough to share between consumers or retain for a later compilation.
 
-The compiler nevertheless contains responsibilities that produce material or results for other responsibilities to use.
-ADR-0071 already defines one such boundary for Resolved Contract HIR, while ADR-0063 defines the observation of
-Established meaning. ADR-0074 separately owns the common boundary for compiler-side unsuccessful results and recovery.
-These are important applications of a broader compiler problem rather than the complete scope of this ADR.
+This problem appeared before the current compiler architecture was complete. In the earlier runtime-oriented
+implementation, repeated reads of classes and attributes were already being replaced by L1/L2 reuse of information that
+Kontrakt had interpreted once and could use again. The same question reappeared when Definition and Occurrence were
+separated. A retry can require a fresh semantic Occurrence while still allowing definition-level or compiler-derived
+knowledge from an earlier computation to remain useful. That showed that semantic freshness and computational reuse are
+related but are not the same decision.
 
-The same producer-consumer problem can appear elsewhere as the compiler develops. A realization analysis may publish a
-result that verification consumes, and a later IR producer may expose material that lowering consumes. Future persistent
-products may cross compilation sessions while preserving the same logical ownership boundary. The common requirement is
-that a consumer can rely on a completed producer-owned result without reopening upstream meaning or depending on the
-producer's private implementation state.
+HIR and Establishment then made the distinction more explicit. ADR-0071 defines how Resolved Contract HIR is formed and
+observed before authority. ADR-0063 defines how Established meaning is formed and observed after authority. Those ADRs
+also separate their semantic meaning from query state, physical storage, retained representation, and compiler
+generation. They solve their own producer-side problems, but they do not define how every later compiler subsystem
+should manage knowledge that has already been produced.
 
-This ADR defines that compiler-wide product protocol. It fixes the ownership and legal observation relation that must
-survive changes in compiler structure. Caching and incremental compilation may exploit this protocol, but neither
-defines it.
+The same family of questions will recur at lower compiler levels without making those levels identical. MIR may maintain
+CFG and SSA while also producing data-flow knowledge. LIR and the JVM backend add target-dependent material. Downstream
+responsibilities can read overlapping upstream information and still require different validity rules. A result that
+remains sufficient for verification, for example, can already be stale for backend generation.
+
+The pre-taxonomy survey found related problems well beyond compiler caches. The evidence ranges from LLVM analysis
+preservation and rustc incremental queries to ThinLTO summaries, persistent build artifacts, database snapshots, and OS
+lifetime mechanisms. These systems all reuse previously produced information, but they do not solve one identical
+problem. Treating them as instances of one universal cache or product rule would hide distinctions that matter for
+correctness.
+
+ADR-0075 therefore does not begin by declaring one generic reuse mechanism. It defines the horizontal compiler
+architecture in which produced material and knowledge can cross responsibility boundaries, remain valid or become stale,
+be reused or recomputed, and later participate in incremental execution. Common law is introduced only where the same
+obligation actually survives across those different cases.
 
 ---
 
-## 2. Decision and Scope
+## 2. Problem
 
-Kontrakt will use producer-owned compiler product boundaries when completed material or a completed result crosses from
-one compiler responsibility to another. The producing responsibility owns what it publishes and exposes the legal
-observation surface on which another responsibility may rely.
+The compiler needs to avoid two opposite failures.
 
-A compiler product in this ADR is therefore not every intermediate value produced during compilation. Private scratch
-state stays private to the responsibility that owns the computation. Material enters this protocol only when it is made
-available across that responsibility boundary for independent observation or consumption.
+The first is repeated reconstruction. Several later responsibilities may need the same upstream knowledge. If each one
+reopens source, reacquires the same realization body, or rebuilds the same analysis, the compiler repeats expensive work
+and can even produce divergent interpretations of one compiler state.
 
-A consumer may use the published observation and derive another compiler-owned result for its own responsibility. It may
-not gain the producer's authority by consuming the result, and it may not recover missing Contract meaning from
-producer-private state. When the consumed material carries Contract meaning, the owning Contract ADR continues to define
-that meaning.
+The second is unsound reuse. Once information has been retained, the fact that it still exists says nothing by itself
+about whether it is valid for the current computation. A body may have changed while an old summary remains in memory. A
+transformation may leave an analysis object allocated even though one of its assumptions is no longer true. A persisted
+artifact may still decode after the producer schema or target capability has changed. An earlier dependency trace may no
+longer describe the reads performed by a later execution.
 
-The protocol is compiler-wide without imposing one universal `CompilerProduct` semantic type. Different product families
-may expose different legal observations because their producers own different guarantees. The physical access method
-remains replaceable as long as the same legal observation is preserved.
-
-The local relation is:
+A simple producer-consumer example exposes only part of the problem.
 
 ```text
-producer responsibility
-    ↓ publishes a completed legal observation
-consumer responsibility
-    ↓ may derive
-consumer-owned compiler result
+upstream material U
+    ↓
+producer A
+    ↓
+observation P
+    ↓
+consumer B
+    ↓
+result Q
 ```
 
-This relation does not imply a global compiler pipeline. It states only the direction of ownership across one product
-boundary.
+If `U` changes, the compiler must determine whether the observation of `P` used by `B` is still current. A changed
+observation can force `Q` to be re-established, but that does not always mean a full rebuild. The producer can keep a
+proven-preserved result, maintain it through the change, or form it again. If the downstream observation of `Q` is then
+unchanged, later work may be able to stop. This is the familiar incremental propagation case.
+
+Other cases have a different shape. A transformation can mutate one IR unit in place and invalidate only some analyses.
+A whole-machine consumer can depend on a compact summary while the backend depends on the full body. A fresh runtime
+Occurrence can reuse definition-level compiler knowledge without reusing the old Occurrence. An independent checker can
+deliberately recompute information that another subsystem would normally share because sharing would weaken its value as
+a correctness oracle.
+
+The architecture therefore has to answer more than whether a cache entry is present. It has to preserve the boundary
+between what a producer guarantees, what a particular consumer actually observes, what changes can invalidate that
+observation, what retained representation can still be trusted, and what work must be repeated when those conditions no
+longer hold.
+
+The difficulty is that these questions occur in many compiler domains with different semantics. A single rule that is
+too weak permits stale knowledge to cross subsystem boundaries. A rule that is too strong forces unrelated products to
+share the same lifetime, comparison, dependency, or invalidation model and can destroy the scaling benefits that reuse
+was intended to provide.
 
 ---
 
-## 3. Protocol Relations and Topology Freedom
+## 3. Scope
 
-ADR-0075 does not define a universal compiler layer stack. It does not fix the number of IR levels or require every
-legal product to be reached through one mandatory traversal path. Those choices belong to compiler architecture and
-Design rather than to this protocol.
+ADR-0075 applies when compiler-produced material or knowledge leaves the private computation that formed it and another
+compiler responsibility can rely on it independently. The same boundary can support immediate consumption, later reuse,
+or retention across a wider compiler lifetime. Persistence extends that lifetime across sessions without changing the
+ownership rule.
 
-The absence of a fixed global topology does not remove local prerequisite law. Resolved Contract HIR still precedes the
-Establishment judgment that legally consumes it because ADR-0071 and ADR-0063 define that relation. Other product
-families may define their own prerequisites through their owning architecture or semantic law. ADR-0075 preserves those
-relations without combining them into one compiler-wide linear order.
+The scope covers derived knowledge that later compiler work consumes. Analyses and summaries are common examples. It
+also covers realization-facing results such as verification material or backend output. Retained representations enter
+scope when they are used for later reuse. The protocol can apply at HIR, MIR, LIR, or backend boundaries without
+defining the internal semantics of those IR families.
 
-Compiler Design may later revise an IR family or introduce another internal level. A subsystem boundary may also change
-as the compiler evolves. None of those changes is legal if it breaks the producer-consumer protocol or an applicable
-prerequisite owned elsewhere.
+The scope also includes cases in which a subsystem does not use the common query or cache machinery internally. A JVM
+backend, external adapter, or local pass pipeline can remain independently implemented while still participating in the
+same cross-responsibility validity and reuse architecture at its boundary.
 
-A logical product boundary also does not require a separate physical copy. Its physical realization may change when the
-required legal observation remains unchanged. Later sections define the product-specific validity and reuse laws without
-turning one current representation into permanent architecture.
+Private scratch values are outside this ADR unless they become independently observable or reusable outside the
+computation that owns them. The same is true for worker-local temporary state whose lifetime ends with one operation and
+whose contents cannot affect a later consumer after that operation completes.
 
----
+Contract identity and semantic equality remain with their owning ADRs. Provenance meaning and other authority-specific
+relations stay there as well. Definition and Occurrence semantics are therefore outside this ADR, as are Required Basis,
+Applicability, and Version Binding. ADR-0071 likewise keeps ownership of HIR Candidate and Binding identity. Future MIR
+and LIR ADRs remain responsible for the invariants and meaning of their own representations.
 
-## 4. Existing Project Constraints
-
-ADR-0075 assumes the project-wide Contract and realization boundaries already established by *What Contract Is* and the
-owning Contract ADRs. Compiler machinery does not acquire Contract authority, downstream compiler convenience does not
-enlarge upstream Contract meaning, and replaceable query, cache, storage, scheduling, or backend machinery cannot become
-a hidden source of Contract meaning.
-
-A compiler responsibility may derive compiler-owned knowledge from legal upstream observations, but that derivation does
-not transfer or recreate the upstream authority. ADR-0075 does not restate the semantic details of those laws. It uses
-them only as constraints on the Compiler Product Protocol defined below.
-
-The protocol-specific questions of compiler-product determinism, product inputs, equality, validity, and dependency
-observation are not closed by this project-level constraint. They remain owned by the corresponding sections of this
-ADR.
+The ADR also stops above concrete reuse machinery. Cache and query architecture remain replaceable, as do dependency
+storage, fingerprinting, persistence, and incremental repair mechanisms. A later compiler ADR can give one of those
+mechanisms a narrower architectural role when necessary.
 
 ---
 
-## 5. Existing Protocol Boundaries
+## 4. Existing Ownership Boundaries
 
-ADR-0075 does not redefine the protocols already owned elsewhere. Resolved Contract HIR is observed under ADR-0071.
-Established semantic material is observed under ADR-0063 and the owning authority-specific ADR. Compiler-side
-unsuccessful results, recovery, trust loss, and non-entry remain owned by ADR-0074. Any authoritative Interface, Policy,
-Governance, Version, or other Contract relation remains with its owning Contract law.
+This ADR relies on upstream ownership rather than copying it.
 
-A Compiler Product may consume those legal observations, but it cannot fill a missing semantic relation, reopen an
-upstream representation to reconstruct meaning, or reinterpret an unsuccessful compiler result as Contract meaning.
-Where an upstream authority is still unresolved, ADR-0075 leaves that question unresolved rather than absorbing it into
-compiler plumbing.
+Resolved Contract HIR and its legal observations remain owned by ADR-0071. Established Material and the Established
+Semantic Protocol remain owned by ADR-0063 and the applicable authority-specific ADR. Input and the other 1D Contract
+ADRs continue to own their Definition, Occurrence, and judgment semantics. ADR-0074 owns the common unsuccessful
+compiler-result boundary, including recovery and the distinction between compiler inability and Contract negative
+meaning.
 
-ADR-0074 is still Proposed in the current project material. The unsuccessful-result and availability portions on which
-this ADR depends therefore remain provisional until that ownership is accepted or reassigned.
+The same rule will apply to compiler IRs that are not yet closed. A MIR ADR can define what a MIR generation means and
+what guarantees a MIR consumer may rely on. A later LIR or backend ADR can define target-facing invariants. ADR-0075 may
+govern reuse of material produced under those guarantees, but it must not become the place where their semantics are
+invented.
 
----
-
-## 6. Compiler Product Subject, Identity, and Boundary
-
-A compiler product boundary belongs to compiler architecture. For a major product, the boundary must identify the
-logical subject, the producer that owns it, and the guarantee on which a legal consumer may rely.
-
-The producer must expose a legal observation surface for the completed product. When the product can be unavailable, its
-unsuccessful-result boundary must remain explicit under ADR-0074. Product inputs and the common determinism law are
-owned by Section 11 rather than being defined indirectly by this boundary.
-
-When reuse compares an earlier result with a current one, the producer owns the comparison rule for that result family.
-Information loss must likewise remain visible whenever later consumers depend on the lost distinction. These
-requirements
-apply to independently consumed products rather than to private scratch state.
-
-This boundary does not require one query node, cache entry, persisted record, physical allocation, or object per
-Compiler Product. Those are realization choices. ADR-0074 owns the common unsuccessful-result protocol. Information loss
-is governed by Section 9, compiler inputs by Section 11, and reuse distinctions by Section 13.
-
-This Proposed ADR has not yet closed the exact product identity protocol. In particular, the roles of product family,
-logical subject, product identity, product generation or occurrence, and their separation from HID, query keys, cache
-keys, persistence keys, and physical addresses remain to be decided here rather than inferred from the current
-implementation.
+Where this ADR uses an upstream observation, the upstream owner determines what that observation means. Where a
+compiler-derived result needs a comparison, validity rule, or change response that is specific to its result family,
+that family owns the specific rule. ADR-0075 defines only the cross-responsibility obligations that are common enough to
+survive those specializations.
 
 ---
 
-## 7. Legal Consumption
+## 5. Architecture Decision
 
-A consumer may use only the observation surface exposed by the producer level it consumes. Resolved HIR therefore
-follows
-ADR-0071, while Established semantic consumption follows ADR-0063.
+Kontrakt will not use one universal `CompilerProduct` semantic model for every reusable result. Compiler-produced
+material and knowledge differ too much in scope, lifetime, change sensitivity, and failure consequence for a single
+product schema or one invalidation rule to remain sound.
 
-Compiler-derived results use a producer-owned read surface appropriate to that result family. This ADR does not
-require every such surface to be named `Protocol`. The physical access method is not part of the logical rule. A
-producer may expose the same legal observation through a compact table or through another representation.
+Instead, independently consumed compiler material has a producer-owned boundary. That boundary states what completed
+guarantee is exposed to consumers and which observations are legal at that boundary. The producer family also owns the
+conditions under which the exposed result is current, together with any family-specific comparison needed for reuse or
+change propagation.
 
-A consumer must not depend on private construction state or reconstruct upstream semantic meaning from physical
-topology.
-Using a result transfers neither Contract authority nor producer ownership.
+The compiler-wide architecture supplies the rules that connect those producer-owned boundaries. It governs how a
+consumer records its dependence on an upstream observation, how retained material is qualified before reuse, how stale
+knowledge is kept out of ordinary consumption, how transformations preserve or invalidate derived knowledge, and how
+incremental work may stop when an observed result has been re-established unchanged.
 
----
+This is a stratified architecture rather than a universal ontology. HIR observations, derived analyses, summaries,
+backend artifacts, and retained representations can all participate while keeping their own internal laws. Shared
+storage or orchestration does not transfer ownership of the guarantee or validity rule being executed.
 
-## 8. Projection, Derivation, and Summary
-
-A projection exposes part of meaning that the producer already owns. A summary is a new compiler result formed by
-analysis of earlier material.
+The local relation is therefore:
 
 ```text
-producer meaning
+producer-owned guarantee
+    ↓ exposes
+legal observation
+    ↓ consumed by
+another compiler responsibility
+    ↓ may form
+new compiler-owned material or knowledge
+```
+
+A later reuse path may avoid some of that work, but only after the relevant producer-owned validity conditions have been
+satisfied.
+
+---
+
+## 6. Working Classification Boundary
+
+The research inventory deliberately collected more cases than this ADR should eventually own. Before the ADR is
+accepted, those cases must be classified so that a rule introduced for one family is not silently applied to another.
+
+The classification is not based on class names or storage objects. It examines what kind of material is being consumed,
+how long it can outlive the computation that produced it, what kinds of change can affect its guarantee, and what the
+consequence of stale reuse would be. A run-local analysis result and a cross-session backend artifact can both be
+reusable while requiring very different qualification and integrity checks.
+
+The current survey also shows several legitimate responses to change. Some results remain valid. Others are invalidated
+and formed again. Certain families can be maintained during the change or repaired incrementally, while retained
+material can be loaded again after qualification. These are possible responses, not universal lifecycle states that
+every result must implement.
+
+The final taxonomy remains open. The rest of this Proposed ADR records common obligations only where the current
+evidence is strong enough, and it keeps family-specific questions visible instead of forcing them into one generic
+schema.
+
+---
+
+## 7. Produced-Material Boundary
+
+A cross-responsibility boundary exists when one compiler responsibility exposes completed material or knowledge on which
+another responsibility may rely without entering the producer's private construction state. The boundary identifies the
+producer and the guarantee being exposed. It also identifies the logical subject of that guarantee to the extent needed
+by that result family.
+
+This requirement does not create a new compiler-wide identity system. HIR, Established meaning, MIR, derived analysis,
+and backend artifacts can all use subject coordinates defined by their own owners. ADR-0075 requires only that a
+consumer can state which producer-owned result it is using without treating incidental storage as the meaning of that
+result.
+
+A boundary does not require a one-to-one physical representation. One completed observation can span several structures,
+and several logical results can share backing storage. Physical fusion does not merge their ownership, while physical
+separation does not create a new semantic distinction.
+
+A result that never leaves one private computation does not need this boundary merely because it is expensive. It
+becomes relevant to ADR-0075 when another responsibility is allowed to observe it independently, when it is retained for
+later use, or when change propagation depends on it as a stable compiler result.
+
+---
+
+## 8. Legal Consumption and Derived Knowledge
+
+A consumer uses the observation exposed by the producer boundary it actually consumes. It must not reopen
+producer-private state to reconstruct a stronger result, and it must not replace an upstream semantic observation with
+facts inferred from an incidental storage layout or generated artifact.
+
+When a consumer combines legal observations and computes new information, the resulting knowledge belongs to that
+compiler responsibility. This is important for analyses and summaries because they can be widely reused without becoming
+a second semantic authority.
+
+The compiler can intentionally create a shared producer when several subsystems need the same expensive derived
+knowledge. For example, a realization analysis can produce an effect summary that verification and optimization both
+consume. The fact that diagnostics happened to compute the same information first is not a sufficient architectural
+reason to make diagnostics the producer for the backend.
+
+Shared knowledge is therefore explicit. Accidental execution order must not decide which consumer becomes the owner of
+information used by other subsystems.
+
+---
+
+## 9. Change, Validity, and Preservation
+
+Produced knowledge is valid only while the guarantee exposed by its producer remains true for the current computation.
+Storage lifetime and object lifetime do not establish that condition.
+
+A transformation is one common source of change. It can preserve an earlier result, update the result as part of the
+transformation, invalidate it for later recomputation, or make incremental repair possible. The exact strategy belongs
+to the producer and transformation design, but a stale result must not remain available to ordinary consumers as if no
+relevant change had occurred.
+
+This rule applies beyond classical middle-end analyses. A changed realization body can stale a transitive summary. A
+changed target capability can stale a backend plan. A changed obligation can stale a generated PBT plan. A changed
+compiler schema can make a persisted result unreadable or incompatible even when the clean result would otherwise be the
+same.
+
+A claim that a result was preserved is itself a correctness claim. The compiler cannot treat preservation as a
+performance hint that may be wrong without consequence. The claim must be sound for the exact guarantee that later
+consumers are allowed to observe.
+
+The same requirement applies when a logical subject is replaced or deleted. An allocated analysis object, dense handle,
+or table slot that survives the change does not prove that the old result still belongs to the current subject. Reuse
+must not depend on stale physical identity after the subject relation that justified the result has ended.
+
+---
+
+## 10. Structural Knowledge and IR Transformation
+
+CFG and SSA are clear examples of why validity cannot be reduced to cache lookup. Related knowledge such as dominance or
+memory state can be maintained alongside the IR or derived on demand. A transform can preserve one guarantee while
+invalidating another.
+
+ADR-0075 does not define CFG or SSA semantics. Their owning IR and analysis designs decide what makes those structures
+correct. This ADR requires only that later consumers do not observe a structure after a relevant mutation unless its
+owner has preserved, updated, repaired, or re-established the guarantee they rely on.
+
+The rule also applies across IR levels. Derived knowledge from one representation does not automatically remain valid
+after lowering merely because the lower representation was produced from the higher one. A later stage can explicitly
+carry, translate, summarize, or discard earlier knowledge. Reuse across that transition needs the corresponding
+producer-owned relation instead of an assumption that ancestry alone preserves validity.
+
+In-place mutation and immutable replacement are both legal realization strategies. A validity protocol must work for
+both. Kontrakt therefore does not make immutable generations a prerequisite for every optimizer or force every
+transformation to allocate a new complete IR.
+
+---
+
+## 11. Dependency Observation
+
+A derived result that may be reused after change needs enough information to determine which upstream observations can
+affect its guarantee. This compiler dependency is not a substitute for Contract Basis, HIR semantic relations,
+provenance, program call edges, or build-artifact dependency. Those relations remain separate even when one computation
+happens to observe several of them.
+
+Dependency capture must be sound. Omitting an upstream observation that can change the result allows stale material to
+survive under-invalidation. At the same time, making a narrow result depend on an unrelated whole-world fingerprint can
+turn every small change into global invalidation. The former is a correctness failure. The latter can make the reuse
+architecture operationally useless even when it remains correct.
+
+A previous dynamic read set is evidence about one execution, not a complete law for all future executions. If changed
+input can alter control flow or which upstream result is consulted, the dependency mechanism must validate or rediscover
+the current relation rather than treating the old trace as permanent truth.
+
+Some results make a closed-world or complete-set claim. Revalidating only the members previously present is then
+insufficient. A call-target set, whole-machine reachability result, or other complete collection can become stale when a
+new member appears even if every old member remains unchanged. The producer must include whatever closure condition is
+necessary for the completeness guarantee it exposes.
+
+The physical graph representation remains Design. A producer can track dependencies more finely inside its
+implementation than it exposes to other responsibilities. A subsystem outside a future common query engine can also
+declare dependencies explicitly at its boundary.
+
+---
+
+## 12. Scope, Context, and Assumptions
+
+Reusable compiler knowledge is not automatically valid outside the scope in which it was produced. A function-local
+analysis, an SCC summary, a whole-machine result, and a target-specific backend plan answer different questions even
+when they inspect overlapping material.
+
+A consumer request does not grant permission to widen the producer's scope implicitly. If a local consumer needs a wider
+result, that wider analysis must be a separately owned computation with its own cost, validity, and dependency boundary.
+This prevents convenience calls from turning local work into repeated whole-machine computation.
+
+Context sensitivity follows the same rule. A helper summary can be reusable across several Operations when the summary
+is intentionally parameter-relative or context-independent. A context-specialized result may require a different
+current-validity basis. The owner of the result family defines that distinction rather than leaving it to the cache key
+chosen by an implementation.
+
+Compiler assumptions can also participate in validity. Target capabilities, a closed-world realization assumption, a
+selected profile, or a backend feature can affect a compiler result without becoming Contract meaning. When such an
+assumption is allowed to affect the result, it must be visible to the producer's validity law. Ambient state cannot
+silently play that role.
+
+---
+
+## 13. Result Comparison and Reuse Qualification
+
+ADR-0075 does not define semantic equality. Semantic producers keep the equality laws already established by their
+owning ADRs. Compiler-derived result families can nevertheless need a producer-owned comparison to decide whether an
+earlier result and a newly established result are equivalent for that result family's exposed guarantee.
+
+The comparison belongs to the producer boundary, not to an arbitrary consumer. If verification depends on a compact
+effect summary while the backend depends on the executable body, the two consumers can observe different producer-owned
+results or projections. The verifier does not obtain the right to declare the complete body equal merely because the
+change is irrelevant to its question.
+
+Retained material introduces another distinction. A representation can exist and still be incompatible with the current
+producer implementation. It can be compatible to decode and still fail the current validity rule. It can be
+current-valid and still be rejected because integrity or trust validation failed. These conditions must not collapse
+into a single cache-hit predicate.
+
+The final modeling of result-determining inputs and reuse-only compatibility conditions remains open. The architecture
+must preserve the distinction even if a later Design represents them in one metadata structure. A schema revision, for
+example, can invalidate an old serialized representation without changing the result that clean computation would
+produce.
+
+A fingerprint, content hash, HID, byte comparison, or object identity can support reuse evidence. None becomes semantic
+equality merely because it is fast to compare.
+
+---
+
+## 14. Projection, Summary, and Multi-Consumer Reuse
+
+A producer-owned projection exposes part of a result the producer already owns. A summary is separately derived compiler
+knowledge formed to answer a narrower or wider compiler question. They must not be treated as the same abstraction
+merely because both can reduce the amount of material a consumer reads.
+
+```text
+producer-owned result
     ↓
 producer-owned projection
 
-producer meaning
+producer-owned result
     ↓ analysis
-summary result
+compiler-owned summary
 ```
 
-The distinction matters because a summary may answer a wider-scope compiler question without becoming a second
-semantic authority. If a consumer only needs the summary, it may avoid materializing the full producer body. A
-Whole-Machine compiler summary remains compiler-owned derived material; it does not acquire Whole-Machine Contract
-authority merely because wider compiler work depends on it.
+A wider consumer does not necessarily need the full body. Whole-machine verification or planning can often depend on
+local summaries, and a backend can still require body-level material. This allows one local change to invalidate backend
+work while leaving a higher-level verifier unchanged when the summary that verifier consumes is re-established
+unchanged.
 
-The exact summary representation remains Design unless another compiler ADR gives it an explicit architecture boundary.
-Its persistence policy, update strategy, query key, and physical granularity remain Design for the same reason.
+A useful summary is complete for its declared question without becoming a miniature copy of all upstream material. If it
+omits information required by that question, the consumer will eventually be forced to reopen upstream internals or will
+make an unsound decision. If it carries every upstream detail, it loses much of the memory, invalidation, and
+persistence advantage that motivated the summary.
 
----
-
-## 9. Information Preservation and Loss
-
-A compiler stage may erase information only when the erased distinction is no longer required by any legal consumer of
-that stage. A later consumer must not reconstruct erased Contract meaning from source shape or backend representation.
-If later work still needs the distinction, the upstream legal observation must retain it or a separately owned
-compiler result must preserve it before the loss occurs.
-
-This law explains why target lowering cannot discard high-level Contract knowledge before Kontrakt has finished using
-that knowledge. It does not require lower IR to carry every earlier distinction forever.
+Summary schemas, aggregation algorithms, and physical indexes remain owned by the subsystem that defines them. ADR-0075
+governs only their role as independently consumed derived knowledge.
 
 ---
 
-## 10. Derived Analysis and Transformation Validity
+## 15. Completion, Visibility, and Coherent Observation
 
-Analysis and transformation belong to compiler realization, but a transformation may invalidate assumptions used by an
-earlier analysis. Once that happens, the compiler must not keep consuming the stale result as though it were still
-valid.
+An ordinary consumer must not observe a successful result before the producer has completed the guarantee associated
+with that result boundary. Internal partial state can exist while a producer is working, but it remains private unless a
+separate protocol explicitly gives that partial state meaning.
 
-This ADR does not require the LLVM or MLIR invalidation API. The producer may recompute or update the result, invalidate
-it for later rebuilding, or prove that the relevant result did not change.
+A consumer that needs several related observations must see a coherent set permitted by their producers. Combining an
+old value from one generation with a new value from another can create a compiler state that no completed producer ever
+exposed. A matching numeric generation alone is not proof of coherence if the underlying products have different
+validity domains.
 
-Incremental repair is another legal strategy. Whichever mechanism the producer chooses, stale knowledge must remain
-inside the producer's validity boundary. The Contract requirement is unchanged: a legal compiler transformation must
-preserve the meaning it is obligated to preserve. This ADR does not prescribe one invalidation or repair API.
+The architecture must support both snapshot-style replacement and in-place mutation. A daemon or future IDE compiler may
+keep an older coherent view alive while a new view is formed. A local optimizer may mutate one IR unit in place and
+invalidate selected analyses. ADR-0075 requires coherent legal observation in both cases without prescribing one
+memory-management mechanism.
 
----
+A failed or cancelled replacement must not expose a partially completed successful result. Whether an older completed
+result remains usable after that failure depends on its own current-validity law, not on the mere fact that a newer
+attempt was started.
 
-## 11. Compiler Product Inputs and Determinism
-
-A deterministic compiler result must not depend on hidden implementation state. Any compiler-specific condition that may
-legally affect the result must therefore be owned by the producer as an explicit compiler input. A backend target is one
-such input when the result depends on the selected target.
-
-The same rule applies to a selected compiler feature mode or toolchain capability when the result depends on it. An
-optimization mode must be explicit when it changes the legal output form.
-
-A persistent format revision can affect whether retained material is reusable without necessarily changing the result
-that clean computation would produce. The common protocol must therefore keep such reuse compatibility from silently
-becoming Contract meaning or an undeclared result determinant. This Proposed ADR has not yet closed whether
-result-determining inputs and reuse-only compatibility inputs should be modeled as two explicit protocol classes or as
-one input family with distinct producer-owned roles.
-
-Wall-clock time can affect the result only when the producer declares it. Filesystem traversal order and process locale
-must not silently change the outcome. Randomness likewise needs an explicit owner when it is legal. Mutable global state
-and cache presence cannot become undeclared determinants.
-
-The common product determinism law is not yet closed. This ADR still has to decide whether every protocol-visible
-Compiler Product must provide the same legal observation for the same complete determining inputs, how legal
-nondeterministic sources such as time or randomness are represented when they are intentionally admitted, and which
-conditions affect clean product formation rather than only retained-product compatibility.
-
-Section 13 owns the distinction between equality and reuse validity. This section must close the input and determinism
-side of that relation without turning compiler configuration or compatibility metadata into Contract determinants.
+Retention and reclamation are separate from current validity. Keeping old backing storage alive for a reader does not
+make it current for new consumers, while reclaiming unused backing does not retroactively change the meaning of a result
+that was validly consumed earlier.
 
 ---
 
-## 12. Completion, Visibility, and Coherent Observation
+## 16. Retention, Cache, and Persistence
 
-An independently consumed result must become visible only after the producer has completed the guarantee exposed to
-ordinary consumers. A consumer must observe a compatible set of inputs for one computation. Compatibility is a
-semantic and compiler-result requirement.
+L1, L2, persisted state, content-addressed storage, and future remote caches are mechanisms for making earlier compiler
+work available again. They are not the law that decides whether that work can satisfy the current request.
 
-A matching numeric generation identifier is not enough by itself to prove that observation is coherent. Physical
-visibility remains implementation work, and the compiler may realize it with immutable generations or another safe
-publication mechanism.
+The earlier L1/L2 direction remains useful in this architecture because it can retain information Kontrakt already
+interpreted instead of forcing later consumers to reread classes, attributes, or other raw inputs. The reusable unit,
+however, is defined by the producer boundary and its validity law rather than by the container in which the
+representation happens to be stored.
 
-Reclamation is separate from semantic validity. Keeping old storage alive does not make it current, while reclaiming
-that
-storage does not undo a semantic occurrence that was previously established. Section 3 keeps the physical mechanism
-replaceable.
+A retained representation must be qualified before use. The required checks depend on the result family and retention
+lifetime. In-memory generation reuse may need a different compatibility check from a cross-session serialized artifact.
+An externally obtained or remote artifact adds integrity and trust questions that an in-process cache may not have.
 
----
+Missing retained state is not a semantic event. If the requested result is otherwise computable, the compiler can form
+it again through a legal clean path. Corrupt or incompatible retained state is likewise a compiler problem and follows
+ADR-0074 where it prevents the requested compiler result from being produced.
 
-## 13. Equality, Validity, and Reuse
-
-Semantic equality answers whether semantic meaning is the same and is controlled by the owning semantic producer.
-Compiler-product equality asks a different question: whether two results in one compiler product family are equivalent
-under the comparison declared by that producer.
-
-Reuse validity asks whether retained material may satisfy the current request, which is different from either equality
-judgment. A fingerprint may support a physical comparison, but it does not become semantic equality authority.
-
-Byte equality is also not semantic equality by itself. Object identity is not semantic equality either. A retained
-result can be semantically equal to a clean result and still be unusable because its compiler compatibility has expired.
-The converse also holds: physical identity does not prove semantic equality.
-
-ADR-0071 already permits one HIR product to expose producer-defined projections with their own producer-owned equality
-relations. The compiler-wide generalization remains open in this Proposed ADR: whether every product family may expose
-legal observation or projection equality distinct from complete-product equality, and how that distinction controls
-downstream reuse, must be closed without allowing consumers to redefine producer meaning.
-
-Sections 15 through 17 use the established distinction between equality and reuse validity. They do not settle that open
-granularity question by themselves.
+Concrete retention machinery remains Design. The compiler can change its hashing, cache layout, serialization, or
+storage engine without changing the producer-owned guarantee or the validity law they implement.
 
 ---
 
-## 14. Dependency Observation
+## 17. Incremental Reuse and Change Propagation
 
-Compiler dependency tracking records the work needed for recomputation and reuse; it does not define Contract
-dependency.
-A Contract Basis relation therefore remains distinct from a compiler computation edge.
+Incremental execution builds on the producer, dependency, and validity boundaries defined earlier. It is not a separate
+source of meaning and it is not equivalent to persistence.
 
-HIR semantic relations are separate for the same reason. Build dependency, provenance, and physical reachability also
-remain independent relations rather than alternate forms of semantic dependency.
+A previous result can avoid work in several ways. The compiler may directly reuse retained material after establishing
+that its validity still holds. It may recompute a changed producer and discover that the result observed downstream is
+unchanged. It may update or repair a result incrementally rather than rebuild it from the beginning. Different result
+families can choose different strategies.
 
-A dynamic dependency trace describes one previous computation rather than the complete semantic law for every future
-run.
-If control flow changes, later reads may change as well, so an incremental engine must validate or rediscover its
-dependencies soundly. The representation of the dependency graph remains Design.
+The common requirement is that downstream work stops only after the observation on which that downstream work depends
+has been re-established as current and unchanged. An upstream source edit, a changed cache key, or a different physical
+generation is not enough by itself to determine whether propagation must continue.
 
-ADR-0071 already prevents HIR dependency observation from becoming permanently tied to slab offsets, object fields,
-table rows, or other incidental storage boundaries. The compiler-wide boundary is not yet fully closed here: this
-Proposed ADR must still decide whether cross-responsibility dependencies are required to name producer-owned legal
-Product or Projection observations while allowing each producer to keep finer-grained dependency machinery private.
-That decision must preserve future incremental freedom without turning physical layout into protocol law.
+```text
+upstream change
+    ↓
+validate / preserve / update / repair / recompute producer result
+    ↓
+consumer-visible observation changed?
+    ├─ no  → downstream may remain reusable
+    └─ yes → downstream validity must be reconsidered
+```
 
----
+This is the architecture seam required for early cutoff. The particular mechanism can be red-green validation,
+generation comparison, delta maintenance, explicit invalidation, or another algorithm that preserves the same
+obligations.
 
-## 15. Retention and Persistence
-
-Cache and persistence support reuse in different ways. Cache avoids repeated work, while persistence keeps a
-representation available across a wider lifetime. A retained representation may also carry compiler-owned evidence that
-helps locate or validate the product.
-
-None of those mechanisms creates Contract authority. Retained material is usable only after the producer's current
-validity law has succeeded; finding stored material is not enough. A fingerprint, content key, or other reuse evidence
-may accelerate lookup or validation without becoming semantic identity or equality authority.
-
-If retained state is missing or unusable, the compiler needs another legal path whenever the requested result is
-otherwise
-computable. HIR retention and persistence remain subject to ADR-0071's HIR-specific compatibility law rather than being
-redefined here. Cache state must not alter the legal current result, while Section 13 owns the distinction between
-equality and reuse validity. Concrete hash algorithms, content-addressing structures, cache tiers, persistence stores,
-and eviction policies remain Design.
+V1 is not required to persist every result or to implement fine-grained incremental repair everywhere. It must avoid
+boundaries that make later incremental reuse impossible without changing the semantic model. V2 can add stronger
+dependency tracking and retained state behind those boundaries.
 
 ---
 
-## 16. Incremental Evolution
+## 18. Backend, External Subsystems, and Target-Specific Products
 
-V1 must leave a durable seam for future incremental work without making one incremental algorithm permanent
-architecture.
-A reusable major result therefore needs a stable logical subject, knowable legal inputs, and a producer-owned comparison
-rule sufficient for the reuse law that applies to that result family.
+A subsystem does not leave this architecture merely because it is implemented outside a common query engine. The JVM
+backend, JDK Classfile facilities, generated-artifact code, or another external adapter can use their own local
+implementation while exposing a result boundary that states what upstream observations and target conditions determine
+the product.
 
-A clean recomputation path remains the semantic reference when retained state is absent. V1 is not required to persist
-every result or incrementalize every computation. V2 may choose different repair strategies for different result
-families, and a query result and a data-flow result do not need the same incremental algorithm.
+Backend products often have a different reuse radius from semantic or verification products. A helper body change can
+leave a verification summary unchanged while still requiring new bytecode. Target baseline, classfile version, backend
+capability, debug mode, or profile information can affect one backend product without changing upstream Contract
+meaning.
 
-A stronger reuse engine must remain below the semantic boundaries defined by the earlier ADRs. Adding persistence,
-selective validation, delta maintenance, or another repair strategy must not require a Contract ADR to change merely
-because the compiler implementation became more capable. HIR persistence remains governed by ADR-0071, while other
-compiler products remain governed by their producer-owned product and reuse laws.
+Cross-stage and cross-tool reuse therefore needs an explicit boundary. Earlier high-level knowledge can be translated or
+summarized for a backend, but ancestry does not make every earlier analysis valid after target lowering. An opaque tool
+output can be retained only under the compatibility and validity conditions of the adapter that owns that result.
 
-Section 4 preserves the inherited authority constraint, and Section 14 owns the compiler dependency boundary. Concrete
-scheduling,
-repair/rebuild thresholds, persistent state layout, and incremental algorithms remain Design.
-
----
-
-## 17. Early Cutoff
-
-An incremental engine may stop propagation when the producer has re-established that the result observed by downstream
-consumers is unchanged. An upstream source change alone does not prove that cutoff is legal. The owning result must
-first be validated, recomputed, or repaired.
-
-A fingerprint may accelerate the check only under a sound producer-owned comparison rule, and a hash collision cannot
-redefine that equality. This section leaves Contract equality unchanged; it permits only the compiler to avoid
-downstream
-work once the relevant owned result is known to be unchanged.
+Profile and cost information require additional care. They can guide profitability or product selection without becoming
+a proof that a transformation is legal. Where a producer uses such information, its role in the compiler result must
+remain explicit so that profile change does not accidentally invalidate unrelated semantic judgments or, in the opposite
+direction, leave a profile-dependent optimization plan current after its basis changed.
 
 ---
 
-## 18. Consequences
+## 19. Failure, Cancellation, Integrity, and Trust
 
-The protocol keeps Contract authority with the owning Contract law while allowing compiler responsibilities to publish
-completed products that other compiler work may consume. HIR and Established semantic observation retain their own
-owners instead of becoming instances of one universal compiler schema. Derived analysis, summaries, backend products,
-and future retained products can therefore evolve without creating a second Contract model.
+ADR-0074 owns the representation of unsuccessful compiler results. ADR-0075 defines only the boundary conditions
+required by reusable material.
 
-The cost is that compiler product families must state ownership and consumer-visible guarantees explicitly. Reuse cannot
-be justified by cache presence, physical identity, or a query edge alone, and stale derived knowledge cannot remain
-visible merely because its storage still exists. Some direct reads from source, ambient compiler state, or
-producer-private
-construction state become illegal shortcuts.
+A failed or cancelled producer must not leave ordinary consumers with a partially formed successful result. A previous
+completed result can remain available only if its own current-validity law still permits use. Recovery cannot turn
+incomplete construction state into a completed result merely to preserve cache continuity.
 
-This Proposed ADR is not ready for acceptance. The protocol still has to close product subject and identity, the common
-input and determinism model, projection and product equality, and the cross-responsibility dependency observation
-boundary. The ADR-0074 unsuccessful-result ownership on which this protocol depends must also be accepted or reassigned.
-Concrete cache, storage, dependency-graph, scheduling, verification, and incremental algorithms remain Design, research,
-or QA work.
+Persistent and external material adds integrity risk. Successful decoding proves only that bytes can be read. It does
+not prove that the producer schema is compatible, that the dependency basis is current, or that the material came from a
+trusted source. A failed integrity or trust check cannot be converted into successful reuse.
+
+Reuse validity is also not proof that the original producer was correct. A result can be perfectly reusable according to
+its dependency metadata and still have been produced by a buggy analysis or transformation. Verification, translation
+validation, differential testing, and other correctness mechanisms therefore remain distinct from reuse qualification.
+
+---
+
+## 20. Independent Validation and Deliberate Non-Reuse
+
+Reuse is an optimization opportunity, not an obligation imposed on every consumer. Some consumers exist partly to
+provide independence from the path that produced the result being checked.
+
+A reference judgment, critical verifier, or transformation checker can intentionally recompute selected knowledge
+instead of sharing the optimizer's analysis. This duplicate work is justified when sharing would cause the checker and
+optimized path to inherit the same implementation error or invalid assumption.
+
+The architecture must therefore permit a result family to be shareable for ordinary consumers while another consumer
+chooses an independent path. A future reuse engine must not assume that every matching subject and valid retained result
+should automatically be injected into every subsystem.
+
+---
+
+## 21. Information Preservation and Loss
+
+A compiler representation may discard information when no later legal consumer requires the discarded distinction. This
+is a property of the consumer graph, not a requirement that every lower IR carry all upstream knowledge forever.
+
+If a later subsystem still needs high-level information that will disappear during lowering, the compiler must consume
+that information before the loss or preserve the needed derived knowledge through an explicit product boundary. A later
+consumer must not reconstruct lost Contract meaning from backend shape, generated code, or other implementation residue.
+
+The same principle applies to summaries and plans. Preserving a compact derived result can be preferable to carrying the
+entire earlier representation forward, provided that the derived result is sufficient for its declared consumers and
+remains independently valid under its own producer law.
+
+---
+
+## 22. Deterministic Reuse and Hidden State
+
+Reusable computation requires a stable relationship between the producer's declared basis and the result it exposes.
+Hidden execution state cannot silently change that result. Worker scheduling, iteration order, cache presence, locale,
+or mutable global state are examples of implementation conditions that must not become undeclared determinants.
+
+This section does not restate Contract semantic determinism. It applies to compiler-owned results that are intended to
+participate in sharing, retention, or incremental execution. Any compiler-specific condition that is allowed to change
+such a result must enter through an explicit producer-owned basis appropriate to that result family.
+
+Legal nondeterministic input, if a future subsystem genuinely needs it, cannot remain ambient. Time or randomness must
+enter through a producer-owned form that makes reuse qualification possible. Runtime profile and external capability
+information require the same explicit treatment when they affect the result.
+
+Determinism constrains the exposed result, not the scheduling algorithm. Independent work can still run in parallel, and
+physical completion order can vary, provided that the resulting legal observations satisfy the producer's declared
+guarantee.
+
+---
+
+## 23. Design Boundary
+
+This ADR deliberately stops before concrete reuse machinery.
+
+A query engine can automate dependency capture and memoization, while a pass manager can remain a better fit for ordered
+local transformations. A data-flow engine can update one analysis incrementally, while another product is cheaper to
+recompute. A backend can expose coarse artifact dependencies without moving its entire implementation into the query
+system.
+
+Physical storage remains free to follow measured access patterns. Primitive tables, slabs, arenas, or snapshot-like
+structures are all possible realizations. Dependency capture can likewise be dynamic or explicit, and persistent
+material can use any compatible format that respects the producer boundary.
+
+Those choices become Design work after the architecture has closed the relevant result family, validity basis,
+dependency boundary, and failure behavior. ADR-0075 must not freeze an algorithm merely because the first implementation
+needs one.
+
+---
+
+## 24. Open Decisions Before Acceptance
+
+The research inventory is intentionally broader than the current normative body of this ADR. Several classification
+questions still need to be closed before the document can move to Accepted.
+
+The first is the final taxonomy of compiler-produced material. It must separate kinds of material whose ownership,
+lifetime, and invalidation behavior are materially different. The categories should follow those behaviors rather than
+the current class layout.
+
+The second is the exact reusable-result qualification model. The ADR still needs to decide how result-determining
+conditions, reuse-only compatibility conditions, assumptions, scope, and producer versioning are represented without
+creating one universal metadata tuple.
+
+The third is the cross-responsibility dependency contract. The current direction requires sound dependency on the
+producer-owned observations actually used by a consumer, but the boundary between public observation dependency and
+finer producer-private dependency still needs to be closed carefully.
+
+The fourth is preservation and repair. The common rule that stale knowledge cannot remain visible is clear, while the
+exact architecture contract for preservation claims, incremental updates, stage-crossing translation, and complete-set
+validity still needs further review against the surveyed compiler families.
+
+The fifth is coherent multi-product observation. V1 can remain simpler than a persistent IDE compiler, but the API must
+not assume one mutable global state if V2 will require readers to remain on one coherent view while another view is
+being formed.
+
+The sixth is the relationship with ADR-0074. Unavailable, corrupt, unsupported, cancelled, and internally failed
+compiler results must have one consistent unsuccessful-result boundary before retention and incremental recovery can be
+considered closed.
+
+---
+
+## 25. Consequences
+
+This structure lets Kontrakt reuse compiler knowledge without turning cache, query topology, or retained bytes into a
+second source of meaning. It also avoids a different failure mode in which every subsystem invents its own unrelated
+rules for stale knowledge, persistence, and incremental change.
+
+The architecture is intentionally more demanding than a generic memoization layer. A reusable boundary has to state what
+a producer guarantees, what a consumer observes, what can invalidate that observation, and how retained material is
+qualified. That work is required only where material actually crosses a responsibility or reuse boundary; private local
+computation is not forced into a heavyweight protocol.
+
+The benefit is that semantic and IR families can evolve independently while later compiler subsystems still share one
+horizontal architecture for valid reuse. The same architecture can support analysis and verification today, then extend
+to backend retention or future incremental execution without forcing those subsystems into one product model.
+
+This ADR remains Proposed. The next work is to classify the collected internal and external cases, test the candidate
+categories against known failure modes, and then close only the common laws that remain valid across those categories.
+The pre-taxonomy research inventory remains the evidence base for that review rather than being copied into this ADR.
