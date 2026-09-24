@@ -211,7 +211,11 @@ Admission follows a separate occurrence-time authority path:
 
 ```text
 exact Established Admission Definition
-+ exact Input Occurrence already established as Presented
++ fresh Admission application requiring one Presented Input Occurrence
+-> ADR-0048 inbound-airlock composition supplies the exact legal upstream relation
+-> exact Basis Binding to one already-Established Presented Input Occurrence
+-> Applicability confirms that binding for the exact dependent application; no additional Applicable Context is required in V1
+-> Complete Basis
 -> one Admission semantic application legally enters
 -> obtain one coherent approved Input-owned Established Presentation observation for that exact occurrence
    through Kontrakt-controlled mediation
@@ -284,7 +288,7 @@ Shared meaning is reused by selecting the same flat declaration.
 
 ---
 
-## 6. Input Observation and Binding Boundary
+## 6. Input Observation and Composition Boundary
 
 Admission judges the exact presentation already established by Input for the applicable Interaction boundary.
 
@@ -295,9 +299,10 @@ observations that its judgment requires. Input independently owns the semantic s
 composition relation connects the exact selected definitions and determines whether the selected Input-owned surface
 satisfies the already-complete Admission requirements.
 
-The binding does not create missing Admission meaning, specialize Admission by silently importing Input Definition
-identity, or make Input meaning Admission-owned. Conversely, Admission does not become a structural constraint system
-that accepts any producer merely because host fields, JVM types, collection shapes, or source names appear compatible.
+The composition relation does not create missing Admission meaning, specialize Admission by silently importing Input
+Definition identity, or make Input meaning Admission-owned. Conversely, Admission does not become a structural
+constraint system that accepts any producer merely because host fields, JVM types, collection shapes, or source names
+appear compatible.
 Compatibility must follow an explicit Contract-owned matching law rather than accidental structural duck typing.
 
 The user-facing Admission declaration may receive the ordinary generated or supported Java/Kotlin Input-facing surface
@@ -505,6 +510,187 @@ Reuse, persistence, parallel formation, or incremental repair may avoid repeated
 current-validity and reference conditions are satisfied. Such machinery cannot turn an earlier Established Definition or
 Definition Refusal into authority for a different current Candidate. The owning current Admission Definition judgment
 remains the authority source.
+
+### 6.6. Definition Identity, Version, and References
+
+ADR-0053 owns Admission Contract Authority continuity and Contract Version semantics. ADR-0063 owns the common
+Established Definition identity and reference law. Admission specializes those laws without adding a second identity
+system.
+
+One explicitly declared Admission Contract denotes one Admission Contract Authority. In the current flat Admission
+model, one Admission Authority owns one independently addressable Admission Definition for each Contract Version.
+Admission therefore requires no additional Authority-Local Definition Coordinate.
+
+```text
+exact Admission Contract Authority
++
+exact Contract Version
+    -> exact versioned Admission Definition
+```
+
+Before Establishment, `AdmissionDefinitionCandidateRef` designates the exact resolved Admission Contract Authority
+coordinate together with the exact authority-scoped Resolved Version Candidate Coordinate. The authored Version Claim
+must resolve to that exact candidate coordinate before the Admission Definition Candidate becomes valid Visible HIR.
+Source declaration order, operation position, selected Input identity, HIR generation, HID, fingerprint, dense handle,
+or table position does not complete this reference.
+
+Establishment forms `EstablishedAdmissionDefinitionRef` from the exact Owning Admission Authority Reference and the
+exact
+Version Binding under ADR-0063. `AdmissionDefinitionCandidateRef` is not cast, promoted, or physically reinterpreted as
+`EstablishedAdmissionDefinitionRef` merely because Establishment succeeds.
+
+```text
+AdmissionDefinitionCandidateRef
+    = exact resolved Admission Authority coordinate
+    + exact Resolved Version Candidate Coordinate
+
+EstablishedAdmissionDefinitionRef
+    = exact Owning Admission Authority Reference
+    + exact Version Binding
+```
+
+Operation, Interaction, exact Input Definition, and the ADR-0048 Input-to-Admission composition relation remain outside
+Admission Definition identity. Several legal operation selections may therefore select the same Admission Definition
+without minting another Definition. Different compositions may connect that same Definition to different exact Input
+Definitions without redefining Admission.
+
+A Contract-visible change to Admission Definition meaning participates in the normal Admission Version law when the same
+Authority continues. Source refactoring, equivalent host syntax, helper factoring, backend choice, physical layout, or
+another realization-only change does not create a new Admission Definition merely because the compiler representation
+changed. Equal Definition Meaning also does not merge distinct Contract Versions or authoritative Definition References.
+If conflicting Definition Meaning is presented for the same exact Admission Authority and Version coordinate, the common
+ADR-0053 and ADR-0063 conflict law applies; compiler storage or discovery order cannot choose between them.
+
+### 6.7. Occurrence Basis, Applicability, and Composition Boundary
+
+Admission owns one occurrence-time Basis Requirement Law. It requires one coherent Input occurrence rather than one
+Required Basis per field, member, constituent, or source read.
+
+```text
+Admission occurrence Basis Requirement Law
+
+requirement coordinate
+    presentedInput
+
+required meaning
+    one Established Input Occurrence
+    whose Input result is Presented
+
+cardinality
+    exactly one
+
+permitted absence
+    no
+```
+
+The reusable requirement law belongs to Admission Definition meaning. The exact Required Basis instance belongs to one
+fresh Admission semantic application. It does not preselect one Input producer or make one exact Input Definition a
+Definition determinant.
+
+ADR-0048 owns the shared inbound-airlock composition and the direct Input-to-Admission adjacency. That composition
+relation supplies the exact legal upstream relation used by occurrence-time Basis Resolution. Basis Resolution therefore
+does not search the Contract World, choose the first compatible producer, inspect host types, follow query reachability,
+or infer a source from physical adjacency.
+
+For one exact Admission application, legal Basis Resolution forms one exact Basis Binding from its `presentedInput`
+requirement to the exact already-Established `Presented` Input Occurrence supplied by the applicable inbound-airlock
+composition. Individual Input observations remain observations of that one coherent source occurrence; they do not
+become separate Required Basis instances.
+
+Basis Binding and Applicability remain distinct under ADR-0063. Current V1 Admission requires no additional
+meaning-determining Applicable Context beyond the exact Basis Binding and exact dependent Admission application. The
+absence of additional Applicable Context is a semantic decision, not permission to consult ambient Policy, State,
+Governance, current Version, runtime state, or compiler state.
+
+A legal Basis Binding formed under the exact ADR-0048 composition to one `Presented` Input Occurrence is Applicable for
+that exact Admission application. A `Refused` Input Occurrence or an occurrence from an Input Definition that is not the
+legal upstream source under the applicable composition does not become a convenient bound source and then get repaired
+by an `Inapplicable` result; the legal Basis Binding is not formed in the first place.
+
+Exactly one Applicable Basis constitutes Complete Basis for the occurrence judgment. Zero Applicable Basis instances
+leave the prerequisite incomplete and prevent the Admission occurrence judgment from legally entering. More than one
+violates the Admission exactly-one singularity law. Admission defines no arbitration or first-match rule for this
+requirement. Incomplete or invalid prerequisite formation does not fabricate `Rejected`, Contract Failure, or another
+Admission occurrence result.
+
+The exact representation and placement of the ADR-0048 composition relation, Basis Binding, Applicability evidence, or
+Complete Basis are not fixed by this ADR. Semantic distinctions may share a physical table, slab, relation encoding, or
+execution plan when all required references and legal observations remain recoverable. A compiler dependency edge,
+cache entry, query edge, or retained compatibility proof cannot replace the Contract-owned composition or Basis
+relation.
+
+### 6.8. Established Admission Semantic Protocol
+
+Admission exposes Established meaning through a small producer-owned Protocol. The minimum typed reference domains are:
+
+```text
+EstablishedAdmissionDefinitionRef
+EstablishedAdmissionOccurrenceRef
+```
+
+No third Admission-specific exact reference domain is required in V1. Requirement meaning and outcome meaning remain
+parts of Definition or Occurrence meaning rather than independently established authority subjects.
+
+The **Established Admission Definition Projection** is complete for one exact Established Admission Definition. It
+exposes the exact `EstablishedAdmissionDefinitionRef`, its exact Owning Admission Authority Binding and Version Binding,
+and the complete local Admission Definition Meaning established by Section 6.5. Reference equality identifies the exact
+Definition subject. Producer-owned Definition Meaning equality compares its complete semantic content. Neither equality
+relation substitutes for the other.
+
+The **Established Admission Occurrence Projection** is complete for one exact Established Admission Occurrence. It
+exposes the exact `EstablishedAdmissionOccurrenceRef`, the exact applied `EstablishedAdmissionDefinitionRef`, the exact
+determining `Presented` Input Occurrence through the occurrence's Applicable Basis attribution, and the exact
+`Admitted` or `Rejected` result. It does not recursively embed the complete Input presentation, surrounding Contract
+World, provenance graph, or transitive semantic dependency graph.
+
+The **Direct Established Relation Projection** may expose the two direct relations owned by Admission occurrence
+meaning:
+
+```text
+Established Admission Occurrence
+    -> exact Established Admission Definition
+
+Established Admission Occurrence
+    -> exact determining Presented Input Occurrence
+       through Applicable Basis attribution
+```
+
+A reverse index from one Input Occurrence to later Admission Occurrences is not an inverse Contract relation merely
+because a compiler representation can provide that lookup. If such an index is useful, it remains a derived compiler
+product.
+
+Admission defines only two fine-grained Established projections in V1.
+
+The **Established Admission Input Observation Requirement Projection** is anchored to one exact
+`EstablishedAdmissionDefinitionRef` and is complete for the Admission-owned Input Observation Requirement Law of that
+Definition. Its semantic equality is producer-owned and compares exactly that requirement meaning. Two Admission
+Definitions may have equal Requirement Projection meaning while their complete Definition Meaning differs. This equality
+does not merge Definitions, Versions, or authoritative references and does not by itself establish current reuse
+validity.
+
+The **Admission Occurrence Outcome Projection** is anchored to one exact `EstablishedAdmissionOccurrenceRef` and exposes
+only its established `Admitted` or `Rejected` result. Equal outcome values do not collapse distinct Occurrences or
+permit
+an older Occurrence to substitute for a fresh semantic application.
+
+Admission does not define field-specific, operator-specific, `DiagnosticProjection`, `PBTProjection`, verifier-specific,
+or backend-specific Contract projections. A consumer may select a legal producer-defined projection, but it may not
+redefine its completeness, semantic equality, or source authority. A consumer that combines Admission observations with
+other material and derives new compiler knowledge owns a new compiler product unless another explicit Contract authority
+owns that new meaning.
+
+Protocol availability and semantic authority remain separate. Not retained, not materialized, unavailable, unsupported,
+stale, corrupt, and semantically absent states must not be collapsed. Failure to obtain a required legal observation
+does
+not revoke already Established Admission meaning and does not fabricate `Admission Definition Refusal`, `Rejected`, or
+Contract Failure. ADR-0075 owns cross-responsibility mediation, current-validity qualification, retention, persistence,
+and reuse. Clean, cached, persistent, incrementally repaired, and parallel realization paths must expose the same legal
+Admission observation for the same current-valid semantic basis.
+
+No Protocol projection requires one object, query, table, record, allocation, or physical read. Primitive arrays, slabs,
+dense handles, columnar relations, shared immutable backing, or another representation may realize several logical
+observations together as long as typed reference domains, semantic completeness, coherence, and producer-owned equality
+remain recoverable.
 
 ---
 
@@ -842,8 +1028,8 @@ resolve the exact Admission declaration selected by the applicable IDL / Contrac
 -> hand complete pre-authority Admission meaning through the common HIR boundary
 -> keep each exact IDL selection in its own ADR-0071 Binding Candidate
 -> Admission Definition judgment establishes an Established Admission Definition or Admission Definition Refusal without importing exact Input Definition identity
--> keep exact Input-to-Admission compatibility in the separate owning composition relation
--> the owning composition judgment connects exact established definitions when the declared compatibility law is satisfied
+-> keep exact Input-to-Admission compatibility in the ADR-0048 inbound-airlock composition relation
+-> that composition judgment connects exact established definitions when the declared compatibility law is satisfied
 -> successful Established Admission Definition may enter optimized execution formation
 ```
 
@@ -1008,13 +1194,41 @@ whole-machine execution composes several judgments around the same Interaction.
 
 ---
 
-## 13. Open in This Section
+## 13. Closure and Deferred Work
 
-This section distinguishes unresolved Admission-specific law from questions already owned by common HIR, Establishment,
-compiler-product, or realization architecture. A Design choice is not an Admission semantic OPEN merely because the
-current implementation has not selected its mechanism.
+Current V1 Admission-specific semantic law is closed under the common ADR-0053, ADR-0063, ADR-0071, and ADR-0075
+boundaries together with the shared inbound-airlock composition owned by ADR-0048. The remaining work in this section is
+frontend coverage, common compiler architecture, verification, resource enforcement, or physical Design. Those items do
+not remain Admission semantic OPENs merely because their mechanisms are not yet selected.
 
-### 13.1. Still Open
+### 13.1. Closed Admission-Specific Decisions
+
+Sections 6.3 through 6.8 close the Admission Definition Candidate meaning, producer-owned semantic equality, typed HIR
+references and projections, Definition Establishment judgment, Definition identity and Version specialization,
+occurrence-time Basis Requirement Law, Basis/Applicability boundary, and Established Admission Semantic Protocol.
+
+One Admission Authority owns one independently addressable Admission Definition per Contract Version in the current flat
+model. `AdmissionDefinitionCandidateRef` therefore uses the exact resolved Admission Authority coordinate and exact
+Resolved Version Candidate Coordinate, while `EstablishedAdmissionDefinitionRef` uses the exact Owning Admission
+Authority Reference and exact Version Binding. No additional Authority-Local Definition Coordinate is required in V1.
+
+Admission owns one occurrence Required Basis requirement, `presentedInput`, whose required meaning is exactly one
+already-Established `Presented` Input Occurrence. ADR-0048 owns the shared inbound-airlock composition that supplies the
+legal upstream relation used by Basis Resolution. Admission requires no additional Applicable Context in V1. Exactly one
+Applicable Basis completes the occurrence prerequisite; incomplete or invalid prerequisite formation prevents legal
+entry rather than fabricating `Rejected` or Failure.
+
+The Established Protocol contains typed Definition and Occurrence references, complete Definition and Occurrence
+projections, direct occurrence-to-Definition and occurrence-to-determining-Input relation observations, and only two
+fine-grained Established projections: the Established Admission Input Observation Requirement Projection and the
+Admission Occurrence Outcome Projection. Consumer-specific Contract projections and one-projection-per-field or
+one-projection-per-query proliferation are not part of the V1 law.
+
+Input and Admission Definition authority remain independent. Composition does not import exact Input identity into
+Admission Definition meaning, and compiler reuse does not reuse old Contract composition, Definition, or Occurrence
+authority for different current subjects.
+
+### 13.2. Frontend and Capability Work That Does Not Block Semantic Closure
 
 The exact public Java or Kotlin Admission declaration shape may change as long as the user-facing model remains ordinary
 host-language authoring selected through the normal Kontrakt IDL surface. V1 does not require users to learn a separate
@@ -1025,10 +1239,10 @@ Contract authority. V1 should cover common value-oriented standard-library opera
 or overload still requires complete supported semantic knowledge and legal use in the Admission role. Runtime
 executability alone is insufficient.
 
-The exact V1 capability matrix remains to be closed. It must evaluate source operations against the Input presentation
-family and observable distinctions they consume, exact resolved callable or language operation, class/object
-initialization and other implicit execution, aliasing and escape, partial or exceptional completion, guarded legal
-domains, external effects or ambient basis, relation or order introduced by temporary computation, host
+The exact V1 capability matrix remains frontend/compiler work. It must evaluate source operations against the Input
+presentation family and observable distinctions they consume, exact resolved callable or language operation,
+class/object initialization and other implicit execution, aliasing and escape, partial or exceptional completion,
+guarded legal domains, external effects or ambient basis, relation or order introduced by temporary computation, host
 underspecification, invocation semantics for lambdas or binders, temporary-result escape, work behavior, and whether
 Kontrakt can erase or lawfully preserve the host operation without importing host implementation authority.
 
@@ -1039,58 +1253,32 @@ analyze a source form is a compiler-side unsupported result, not evidence that t
 Admission. Expanding Admission's semantic inputs, outputs, authority, or result vocabulary requires a separate Contract
 decision.
 
-The exact Admission Definition Candidate Reference and Established Definition Reference specialization still needs to be
-closed against ADR-0053, ADR-0063, and ADR-0071, including whether Admission requires any Authority-Local Definition
-Coordinate beyond its exact Authority and Version. The common typed-reference law and the prohibition on physical
-identity as semantic identity already apply.
-
-The exact post-Establishment Input-to-Admission compatibility/composition law remains to be specialized. That work must
-identify the current exact Input and Admission Definitions, the owner of the composition judgment, the exact matching
-law, and the relation to occurrence-time Basis and Applicability without moving compatibility into either IDL Binding
-Candidate.
-
-The Established Admission Semantic Protocol catalog remains to be closed under ADR-0063 and the master checklist. The
-occurrence meaning itself is already closed: one fresh exact `Presented` Input Occurrence that reaches one exact
-Established Admission Definition determines one fresh Admission semantic application, and Established Admission
-Occurrence Material appears only after `Admitted` or `Rejected` is established.
-
-### 13.2. Closed by the HIR–Establishment Review
-
-Admission Definition meaning is complete without one exact Input Definition identity. It owns its complete judgment law,
-its complete Input-observation requirement, and only other Admission-owned Definition determinants. Section 6.3 closes
-producer-owned Definition Meaning equality without merging Candidate References, Contract Versions, or authoritative
-Definitions.
-
-Section 6.4 closes the Admission HIR projection minimum required by current consumers: the complete Definition Candidate
-Projection, the ordinary ADR-0071 IDL Binding Candidate Projection, and the fine-grained Admission Input Observation
-Requirement Projection. Input-to-Admission compatibility is not HIR Binding Candidate meaning, and a semantic projection
-is not required to map one-to-one to a query, object, table, cache entry, or physical read.
-
-Section 6.5 closes the Admission Definition Establishment judgment and separates successful Establishment,
-`Admission Definition Refusal`, and compiler-side non-entry. Occurrence-time `Rejected`, Input `Refused`, and Failure
-Contract meaning remain separate result domains.
-
 ### 13.3. Owned Elsewhere or Derived
 
 ADR-0064 owns the Input semantic observations and their projection meaning, completeness, and equality. Admission states
-what Input observations it requires; it does not redefine Input meaning for compatibility, diagnostics, PBT,
-verification,
+what Input observations it requires; it does not redefine Input meaning for composition, diagnostics, PBT, verification,
 or another consumer.
 
 ADR-0071 owns the common HIR Binding Candidate law, HIR visibility and seal, typed Protocol behavior, and the rule that
 fine-grained projections are producer-owned observations rather than new authority. ADR-0063 and ADR-0053 own common
-Established identity, Version Binding, Required Basis, Basis Binding, Applicability, and authoritative Definition
-reference law. ADR-0048 currently remains the owner of the shared inbound-airlock composition and direct
-Input-to-Admission adjacency until that ownership is relocated by a later accepted decision.
+Established identity, Version Binding, Required Basis, Basis Binding, Applicability, authoritative Definition reference,
+and semantic prerequisite laws. ADR-0048 owns the shared inbound-airlock composition and direct Input-to-Admission
+adjacency. ADR-0065 consumes that composition relation where Admission occurrence Basis Resolution requires the exact
+legal upstream Input source; it does not create a second composition owner.
 
 ADR-0075 owns cross-responsibility mediation, current-validity qualification, reuse, retention, and change containment.
 A requester states the information or guarantee it needs; Kontrakt-controlled mediation may resolve, obtain, qualify,
 compare, retain, or deliver the applicable producer-owned observation. Cache state, dependency edges, fingerprints,
-HIDs, or retained material do not establish Admission meaning or a Contract composition relation.
+HIDs, retained material, or compatibility work do not establish Admission meaning or a Contract composition relation.
+ADR-0075 does not require one physical manager or subsystem for those responsibilities.
 
 The exact compiler-owned unsuccessful-result and recovery representation remains a common compiler concern. A missing,
 unsupported, stale, corrupt, or unavailable compiler observation must not be converted into `Admission Definition
 Refusal`, `Rejected`, or Contract Failure merely to keep processing moving.
+
+Whole-Machine summaries, transitive reachability, conflict analyses, optimization judgments, verifier proofs, rankings,
+cost models, and predictions are derived compiler products or separately owned higher-scope meaning. They are not
+silently added to the Admission Established Protocol.
 
 ### 13.4. Moved to Design or Narrower Compiler Architecture
 
@@ -1099,6 +1287,13 @@ layout, handle encoding, protocol dispatch, query mapping, dependency recording,
 persistence, retention, comparison fast path, incremental repair algorithm, and parallel collection strategy remain
 replaceable compiler realization. Their implementation must preserve the logical Protocol surfaces and deterministic
 clean-path result defined by this ADR, ADR-0071, and ADR-0075.
+
+The exact physical placement of inbound-airlock composition formation, Basis relation encoding, Applicability evidence,
+and Protocol mediation is likewise not selected here. Logical ownership does not require a dedicated
+`CompositionManager`, `AdmissionManager`, store, query engine, or object graph. Existing compiler responsibilities may
+be
+physically fused when doing so preserves authority, coherence, failure containment, determinism, and the legal Protocol
+surface.
 
 The exact execution-cost accounting, runtime resource enforcement, verifier strategy, and optimized matcher or
 collection realization remain Design, Budget, Capacity, Verification, or backend work as applicable. No single theorem
@@ -1226,5 +1421,16 @@ current-validity machinery outside Contract authority. The same review defined t
 separated `Admission Definition Refusal` from compiler-side non-entry and occurrence-time `Rejected`, and clarified that
 reuse may preserve compiler work but cannot transfer old Definition, Occurrence, or composition authority to current
 subjects.
+
+A subsequent 2026-09-25 Admission closure review specialized Definition identity and Version references, confirmed that
+the current flat Admission Authority requires no Authority-Local Definition Coordinate, and closed occurrence-time Basis
+and Applicability. It defined one exactly-one `presentedInput` Required Basis, used the ADR-0048 inbound-airlock
+composition as the exact legal source relation for Basis Resolution, required no additional V1 Applicable Context, and
+made incomplete prerequisites prevent occurrence entry rather than fabricate a Contract result. The review also closed
+the Established Admission Semantic Protocol with typed Definition and Occurrence references, complete Definition and
+Occurrence projections, direct source-owned occurrence relations, and only the independently useful Requirement and
+Outcome fine-grained projections. Remaining public syntax, API coverage, verifier, resource, reuse mechanism, storage,
+and subsystem-placement questions were reclassified as frontend, common compiler architecture, or Design rather than
+Admission semantic OPENs.
 
 ADR-0048 remains the owner of the shared inbound-airlock composition and direct Input-to-Admission adjacency.
