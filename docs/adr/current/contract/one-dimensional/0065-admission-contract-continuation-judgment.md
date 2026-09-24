@@ -20,6 +20,8 @@ ADR-0048: Flow Contract Processing — Boundary Refinement and Core Entry
 - ADR-0063: Contract Establishment, Identity, Applicability, and Composition
 - ADR-0071: Resolved Contract HIR Semantic Boundary, Deterministic Visibility, Lifecycle, and Reuse
 - ADR-0073: JVM Platform-Native Contract Ratification and External Contract Infiltration Boundary
+- ADR-0075: Compiler-Produced Material and Knowledge, Protocol-Mediated Consumption, Validity, Reuse, and Incremental
+  Boundaries
 - ADR-0048: Inbound Airlock Composition, Boundary Refinement, and Core Entry
 - ADR-0047: One-Dimensional Contract Presentations, Pipeline-Slot Selection, and Backend Realization Boundary
 - ADR-0046: IDL-First Interface Contract Frontend and Retained Generated Host Interface and Realization Port Boundary
@@ -105,8 +107,9 @@ control-flow shape, or other frontend execution mechanics.
 Admission is judgment, not downstream transformation. It may compute temporary derived values, but it does not establish
 those values as a replacement presentation or another Contract's material.
 
-Admission owns exactly two V1 judgment outcomes: `Admitted` and `Rejected`. A legally entered Admission semantic
-application whose owning judgment completes establishes exactly one of them. Exception, throwing completion, catch
+The Admission occurrence judgment owns exactly two V1 outcomes: `Admitted` and `Rejected`. A legally entered Admission
+semantic application whose owning judgment completes establishes exactly one of them. Exception, throwing completion,
+catch
 selection, resource exhaustion, compiler unavailability, trust loss, or another authority's stopping result is not a
 third Admission outcome. If the machinery cannot establish a trustworthy Admission result, it must not fabricate
 `Admitted` or `Rejected`; the common compiler or realization unsuccessful-result boundary remains separate.
@@ -176,29 +179,33 @@ Admission follows this conceptual definition-time path under the common HIR and 
 ordinary Java or Kotlin Admission declaration
 -> selected for the Admission role by the applicable IDL / Contract World relation
 -> acquired by the matching frontend
--> rejected or resolved under the supported source law
--> complete implementation-erased, backend-independent Admission meaning
--> common Resolved HIR handoff
--> Admission-owned Establishment
--> Established Admission meaning
--> Kontrakt-owned execution formation and optimization
+-> resolved into complete frontend-known meaning or ends in a compiler-owned unsuccessful result
+-> complete implementation-erased, backend-independent Admission Definition Candidate meaning
+-> common Resolved HIR seal and visible handoff
+-> Admission Definition judgment
+-> Established Admission Definition or Admission Definition Refusal
+-> successful Established Admission Definition may enter Kontrakt-owned execution formation and optimization
 ```
 
-This path states the authority direction only. Admission Definition formation may consume legal producer-owned HIR
-projections of the complete Visible Resolved Input Definition Candidate designated by the applicable resolved role
-selection. Those projections provide pre-authority semantic input to Admission resolution and refinement. They do not
-make one exact Input Definition part of Admission Definition identity or Admission-owned meaning merely because the
-Admission frontend used that Input Candidate while forming the Admission Candidate.
+This path states the authority direction only. Admission Definition formation and Establishment do not make one exact
+Input Definition part of Admission Definition identity or Admission-owned meaning merely because an Admission
+occurrence will later consume Input. A complete Admission Definition instead owns the complete Input-observation
+requirements needed by its judgment. The exact selected Input Definition and exact selected Admission Definition are
+connected by the owning
+post-Establishment composition relation, which must determine that the selected Input-owned semantic surface satisfies
+those already-complete Admission requirements without supplying missing Admission Definition meaning.
 
-Admission retains the complete Admission-owned meaning that survives that refinement. Exact Input Candidate identity is
-retained only if a separate Admission law independently makes that identity Definition-determining. All producer-owned
-observations used to form one Admission Candidate must belong to one coherent Visible Input HIR meaning. Formation must
-not combine mutually inconsistent producer observations or recover additional Input meaning through hidden producer
-state. Selection-only context remains outside Admission Definition meaning and is preserved by the applicable HIR
-Binding Candidate once its exact Admission Definition Candidate target exists. Role selection must not be inferred from
-accidental structural similarity, host type coincidence, source co-location, or compiler convenience. The exact
-Admission-specific HIR references, projections, Established reference families, table shapes, handles, and protocol
-encodings are internal Kontrakt architecture and are not part of the user-facing Admission API.
+This relation must not arise from accidental structural similarity, host type coincidence, source co-location, or
+compiler convenience. Each Input and Admission IDL Binding Candidate retains only its own exact selection relation under
+ADR-0071. Exact Input-to-Admission compatibility is a separate Contract-owned composition relation and does not become
+HIR Binding Candidate meaning.
+
+Cross-responsibility formation, compatibility, or reuse work may request legal Input or Admission observations through
+Kontrakt-controlled mediation under ADR-0075. Mediation may resolve, obtain, qualify, compare, retain, or reuse compiler
+material, but it does not acquire Admission authority, add a semantic determinant, or establish the Input-to-Admission
+Contract relation. The exact Admission-specific HIR references, semantic projections, and Established reference families
+remain internal Kontrakt architecture. Their physical tables, handles, protocol dispatch, and encodings remain
+replaceable realization and are not part of the user-facing Admission API.
 
 Admission follows a separate occurrence-time authority path:
 
@@ -206,7 +213,8 @@ Admission follows a separate occurrence-time authority path:
 exact Established Admission Definition
 + exact Input Occurrence already established as Presented
 -> one Admission semantic application legally enters
--> consume the Input-owned Established Input Presentation Projection for that exact occurrence
+-> obtain one coherent approved Input-owned Established Presentation observation for that exact occurrence
+   through Kontrakt-controlled mediation
 -> Admission-owned judgment completes
 -> Admitted or Rejected
 -> Established Admission Occurrence Material for that exact application
@@ -280,35 +288,35 @@ Shared meaning is reused by selecting the same flat declaration.
 
 Admission judges the exact presentation already established by Input for the applicable Interaction boundary.
 
-Admission Definition meaning is not defined by, owned by, or identified through one exact Input Definition merely
-because its frontend formation observes Input meaning. The applicable resolved role-selection context designates one
-complete Visible Resolved Input Definition Candidate. Admission formation consumes only legal producer-owned HIR
-projections of that Candidate when it resolves Input-facing source reads.
+Admission Definition meaning is not defined by, owned by, or identified through one exact Input Definition. The
+Admission Definition must be complete before exact Input/Admission composition and must state the complete Input
+semantic
+observations that its judgment requires. Input independently owns the semantic surface it provides. The separate
+composition relation connects the exact selected definitions and determines whether the selected Input-owned surface
+satisfies the already-complete Admission requirements.
 
-Those projection observations are pre-authority semantic formation inputs. They do not transfer Input authority, create
-consumer-specific Input meaning, or authorize Admission to reopen Input source, host structure, or storage topology.
-Every Input-owned distinction that can affect Admission Definition meaning must enter formation through the legal
-producer-owned HIR observation boundary. A protocol-bypassing read of producer storage, source material, host structure,
-or ambient compiler state cannot become a legal hidden determinant of the Admission Candidate. Admission semantic
-analysis and refinement use the legally observed Input meaning together with the Admission declaration to form one
-complete backend-independent Admission Definition Candidate. Exact Input Candidate identity survives into that Candidate
-only when the Admission law independently makes it Definition-determining.
+The binding does not create missing Admission meaning, specialize Admission by silently importing Input Definition
+identity, or make Input meaning Admission-owned. Conversely, Admission does not become a structural constraint system
+that accepts any producer merely because host fields, JVM types, collection shapes, or source names appear compatible.
+Compatibility must follow an explicit Contract-owned matching law rather than accidental structural duck typing.
 
 The user-facing Admission declaration may receive the ordinary generated or supported Java/Kotlin Input-facing surface
 as authoring evidence. That host type or generated artifact does not make the corresponding exact Input Definition part
-of Admission Definition identity. A complete Admission IDL Binding Candidate is formed only after its exact Admission
-Definition Candidate target exists. It preserves the exact selection relation and other selection-owned meaning; it does
-not supply missing Admission Definition meaning. Because role selection precedes 1D interpretation, neither the
-selection nor the Input source may be inferred from accidental host structural compatibility.
+of Admission Definition identity. During resolution, the Admission frontend states the Input semantic observations it
+needs, and Kontrakt-controlled mediation obtains approved observations from the producer-owned Input HIR protocol. The
+selected Input Candidate may therefore participate in frontend formation without becoming an Admission Definition
+determinant. The resulting Admission Definition Candidate retains only the complete Admission-owned observation
+requirements and other Admission meaning that survive source erasure.
 
 The user does not receive `EstablishedInputOccurrenceRef`, `EstablishedInputDefinitionRef`,
 `EstablishedInputCoordinateRef`,
 protocol projections, dense handles, or other internal semantic coordinates as the normal Admission programming model.
 
-Internally, Admission consumes the Input-owned legal presentation observation defined by ADR-0064. That observation
-supplies the exact complete immutable Established Presentation for one `Presented` Input application together with the
-internal attribution needed to identify the source application. Admission must not reopen the JVM carrier, source
-declaration, storage topology, or backend representation to recover Input meaning.
+Internally, Admission requires the Input-owned legal presentation observation defined by ADR-0064. Kontrakt-controlled
+mediation supplies one coherent approved observation of the exact complete immutable Established Presentation for the
+`Presented` Input application together with the internal attribution required by that protocol. Admission does not
+select an Input implementation, reconcile stale producer state, or reopen the JVM carrier, source declaration, storage
+topology, or backend representation to recover Input meaning.
 
 Admission may observe only distinctions that the exact Input presentation law makes legally available. Named Product
 members, Closed Tagged Choice cases and payloads, Sequence elements and position, Membership constituents, Association
@@ -397,6 +405,106 @@ be reclaimed under the applicable retention and realization laws without changin
 established. Conversely, retaining bytes, logs, cache entries, or diagnostic evidence does not extend Admission
 authority
 or make an occurrence current again.
+
+### 6.3. Definition Candidate Meaning and Semantic Equality
+
+One complete Admission Definition Candidate contains only meaning owned by Admission. Its logical meaning consists of
+the
+complete Admission judgment law, the complete Input-observation requirement needed by that judgment, and any closed
+Admission-local material or exact semantic-law reference whose change can change Admission Definition meaning. The
+selected Input Candidate, IDL selection context, source provenance, host representation, query dependency, cache state,
+HID, fingerprint, execution plan, and physical storage topology do not enter that meaning merely because they
+participate
+in formation or realization.
+
+Admission Definition Meaning equality is producer-owned. Two Admission Definition Meanings are semantically equal only
+when every Admission-owned Definition determinant is equal under the law that owns that determinant. Equal meaning does
+not establish Candidate Reference equality, authoritative Definition identity, Contract Version equality, or Occurrence
+identity. It also does not merge separately identified Candidates or Definitions. Physical interning, shared backing,
+cached work, or another reuse mechanism remains compiler realization and cannot create semantic equality or authority.
+
+### 6.4. Resolved Admission HIR Candidate Protocol
+
+Admission specializes the common ADR-0071 HIR Protocol with typed Admission references and producer-owned projections.
+The minimum logical catalog is:
+
+```text
+AdmissionDefinitionCandidateRef
+AdmissionIDLBindingCandidateRef
+
+Admission Definition Candidate Projection
+Admission IDL Binding Candidate Projection
+
+Fine-Grained Semantic Projection
+    Admission Input Observation Requirement Projection
+```
+
+The **Admission Definition Candidate Projection** is complete for the full Admission Definition Candidate meaning. The
+**Admission IDL Binding Candidate Projection** exposes only the exact selection relation owned by ADR-0071 and does not
+copy Candidate payload or Input-to-Admission compatibility meaning.
+
+The **Admission Input Observation Requirement Projection** is complete for the Input semantic observations required by
+one exact Admission Definition Candidate. Admission owns that requirement and its semantic equality. Two complete
+Admission Candidates may differ while their Requirement Projections remain semantically equal when the distinction that
+changed does not alter what Input meaning the Admission judgment requires. Equal Requirement Projection meaning does not
+merge Candidate References or Definitions and does not by itself establish current reuse validity.
+
+This fine-grained projection exists because compatibility and other legal consumers can require the Admission-owned
+Input
+requirement without depending on the complete Admission judgment body. It is not a consumer-specific
+`CompatibilityProjection`, `DiagnosticProjection`, `PBTProjection`, or backend view. Additional fine-grained Admission
+projections require an independently useful legal observation boundary; this ADR does not create one projection for each
+source read, member, operator, method, query, or physical field.
+
+A logical projection does not imply one object, record, table, query, cache entry, allocation, or physical read. Several
+logical projections may share immutable backing or be computed together. Kontrakt-controlled mediation resolves and
+qualifies cross-responsibility requests against these producer-owned surfaces; query routing, dependency recording,
+fingerprinting, persistence, current-validity checks, and physical protocol dispatch remain compiler architecture or
+Design rather than Admission meaning.
+
+The Input HIR observations used while forming an Admission Candidate are compiler formation dependencies. They are not
+the Admission-owned Input Observation Requirement itself, and the exact Input Candidate observed during formation does
+not survive as an Admission determinant unless a separate Admission law explicitly makes that identity semantic.
+
+### 6.5. Admission Definition Establishment Judgment
+
+The Admission Definition judgment legally enters only after one complete Admission Definition Candidate is available as
+valid Visible HIR. It consumes the complete Admission Definition Candidate meaning through the Resolved Admission HIR
+Candidate Protocol together with the exact authoritative Version prerequisite required by ADR-0053 and ADR-0063. The
+Admission IDL Binding Candidate, the Input IDL Binding Candidate, an exact Input Definition Candidate, and an exact
+Established Input Definition are not inputs to Admission Definition Establishment merely because later composition or
+occurrence judgment will relate them.
+
+The judgment has two Admission-owned Definition-time semantic results:
+
+```text
+complete resolved Admission Candidate
++ meaning that satisfies the Admission Definition law
+    -> Established Admission Definition
+
+complete resolved Admission Candidate
++ meaning that violates the Admission Definition law
+    -> Admission Definition Refusal
+```
+
+`Admission Definition Refusal` exists only after a complete resolved Candidate legally enters the owning Definition
+judgment. Frontend refinement may preserve a completely known Candidate that the Admission Definition law will later
+refuse; semantic illegality that can be represented exactly must not be collapsed into compiler unsupported merely to
+avoid the owning judgment. If source meaning cannot be resolved, a required semantic reference is unresolved, the HIR
+handoff is invalid, material is recovery-tainted, or the compiler otherwise cannot provide valid Visible HIR, the
+Admission Definition judgment does not enter. That condition remains a compiler-owned unsuccessful result rather than
+Admission Definition Refusal.
+
+HIR seal verification does not perform this Admission judgment. Conversely, Admission Establishment must not reopen
+source, host structure, query topology, cache state, backing containment, or producer-private state to recover missing
+Candidate meaning. Successful Establishment creates one complete authoritative Admission Definition; partial
+Establishment is not visible. `Admission Definition Refusal` is distinct from occurrence-time `Rejected`, from Input
+`Refused`, and from the separately owned Failure Contract.
+
+Reuse, persistence, parallel formation, or incremental repair may avoid repeated compiler work only after the applicable
+current-validity and reference conditions are satisfied. Such machinery cannot turn an earlier Established Definition or
+Definition Refusal into authority for a different current Candidate. The owning current Admission Definition judgment
+remains the authority source.
 
 ---
 
@@ -721,11 +829,9 @@ The conceptual path is:
 ```text
 resolve the exact Admission declaration selected by the applicable IDL / Contract World relation
 -> identify the one eligible root judgment
--> use the applicable resolved role-selection context to designate the complete Visible Resolved Input Definition Candidate
--> resolve every Input-facing source read only through legal producer-owned Input HIR projections of that Candidate
--> require all Input observations used by this formation to come from one coherent producer-visible meaning
--> refine those observations into complete Admission-owned semantic operands, relations, and operation meaning
+-> request approved Input HIR observations needed to resolve every Input-facing source read through Kontrakt-controlled mediation
 -> erase exact provider identity from Admission Definition meaning unless a separate Contract law makes that identity Admission-visible
+-> retain the complete Admission-owned Input-observation requirements needed by the judgment
 -> close every semantically reachable helper, implicit access path, initializer contribution, and local computation that contributes to the judgment
 -> resolve property access, operator syntax, equality, indexing, casts or type tests, destructuring, helpers, and exact host callables to their actual supported semantic operations
 -> acquire closed Definition material without executing user initialization or application behavior
@@ -734,10 +840,11 @@ resolve the exact Admission declaration selected by the applicable IDL / Contrac
 -> erase class, object, getter, lambda, iterator, Stream, Sequence, regex-engine, exception-control, and ordinary library-call mechanics when they are not Contract-visible
 -> retain only complete backend-independent Admission meaning and separate source provenance needed by legal consumers
 -> hand complete pre-authority Admission meaning through the common HIR boundary
--> complete the Admission IDL Binding Candidate only after its exact Admission Definition Candidate target exists, preserving selection-only context there
--> Admission-owned Establishment grants authority to the Admission Definition without importing exact Input Definition identity merely because Input HIR projections were formation inputs
--> any later authoritative composition relation remains owned by the Contract law that explicitly defines that relation
--> execution formation chooses the optimized realization
+-> keep each exact IDL selection in its own ADR-0071 Binding Candidate
+-> Admission Definition judgment establishes an Established Admission Definition or Admission Definition Refusal without importing exact Input Definition identity
+-> keep exact Input-to-Admission compatibility in the separate owning composition relation
+-> the owning composition judgment connects exact established definitions when the declared compatibility law is satisfied
+-> successful Established Admission Definition may enter optimized execution formation
 ```
 
 The user does not observe or manage the internal HIR references, producer projections, Established references, analysis
@@ -753,10 +860,14 @@ diagnostics without becoming Definition identity or semantic equality.
 
 ## 10. Deterministic Evaluation
 
-At occurrence time, the Admission realization consumes only the exact Established Input presentation observation legally
-supplied by Input and the exact closed material owned by the Established Admission Definition. The user-facing Java or
-Kotlin parameter is an authoring and generated-API surface; runtime correctness does not depend on reopening that host
-carrier as Contract authority.
+At occurrence time, Admission requires only the exact Established Input presentation observation legally exposed by
+Input and the exact closed material owned by the Established Admission Definition. Kontrakt-controlled mediation
+supplies
+one coherent approved Input observation under the producer-owned Established Input Protocol. The requester does not
+reconcile generations, retained state, or producer implementation details for itself. The user-facing Java or Kotlin
+parameter is an authoring and generated-API surface; runtime correctness does not depend on reopening that host carrier
+as
+Contract authority.
 
 Runtime symbol lookup, reflection, property discovery, hidden virtual dispatch, callback construction, dynamic
 semantic-operation selection, arbitrary host regex-engine delegation, exception-driven result selection, and
@@ -811,8 +922,12 @@ additional Admission Occurrences.
 
 ## 11. Result Law
 
-The logical V1 result is exactly `Admitted` or `Rejected`. A source Boolean `true` maps to `Admitted` and `false` maps
-to `Rejected` only after the complete source computation has been resolved into legal Admission meaning.
+The occurrence-time logical V1 result is exactly `Admitted` or `Rejected`. A source Boolean `true` maps to `Admitted`
+and `false` maps to `Rejected` only after the complete source computation has been resolved into legal Admission
+meaning.
+`Admission Definition Refusal` is the separate Definition-time result defined by Section 6.5 and is not a third
+occurrence
+outcome.
 
 `Admitted` means only that the exact presented Input satisfies the continuation condition owned by the selected
 Admission Contract. It does not mean that the whole Interaction is globally authorized, that another Contract cannot
@@ -841,10 +956,13 @@ Deferred, Capacity-shaped, Budget-shaped, Policy-shaped, Governance-shaped, Stat
 outcomes remain owned by their respective Contracts. An early stop supplied by another Contract must retain that
 Contract's result and must not be converted into Admission rejection.
 
-If source cannot be resolved into complete legal Admission meaning, Admission authority is not established from that
-source. The exact compiler-owned unsuccessful-result and recovery representation remains a common compiler concern
-rather than an Admission result. If a legally entered Admission occurrence evaluates its established continuation
-condition as unsatisfied, Admission establishes `Rejected`.
+If source cannot be resolved into a complete valid Admission Definition Candidate, the Admission Definition judgment
+does
+not enter. The exact compiler-owned unsuccessful-result and recovery representation remains a common compiler concern
+rather than an Admission result. If a complete Candidate legally enters Definition Establishment and violates the
+Admission Definition law, Admission establishes `Admission Definition Refusal`. If a legally entered Admission
+occurrence
+evaluates its established continuation condition as unsatisfied, Admission establishes `Rejected`.
 
 Admission rejection stops that presented material from continuing through Admission. Rejected material does not continue
 under another name. The source Input Occurrence remains the already-established Input result that determined the
@@ -892,6 +1010,12 @@ whole-machine execution composes several judgments around the same Interaction.
 
 ## 13. Open in This Section
 
+This section distinguishes unresolved Admission-specific law from questions already owned by common HIR, Establishment,
+compiler-product, or realization architecture. A Design choice is not an Admission semantic OPEN merely because the
+current implementation has not selected its mechanism.
+
+### 13.1. Still Open
+
 The exact public Java or Kotlin Admission declaration shape may change as long as the user-facing model remains ordinary
 host-language authoring selected through the normal Kontrakt IDL surface. V1 does not require users to learn a separate
 Admission expression language, internal semantic-reference model, or compiler protocol.
@@ -915,40 +1039,73 @@ analyze a source form is a compiler-side unsupported result, not evidence that t
 Admission. Expanding Admission's semantic inputs, outputs, authority, or result vocabulary requires a separate Contract
 decision.
 
-Admission Definition does not own one exact Input Definition reference as a Definition determinant and does not require
-one exact Established Input Definition as an Admission-owned Definition-time Required Basis merely because Admission
-later consumes Input occurrences. At Definition-formation time, the applicable resolved role-selection context may
-designate one complete Visible Resolved Input Definition Candidate, and Admission formation may consume only that
-producer's legal HIR projections as pre-authority semantic input.
+The exact Admission Definition Candidate Reference and Established Definition Reference specialization still needs to be
+closed against ADR-0053, ADR-0063, and ADR-0071, including whether Admission requires any Authority-Local Definition
+Coordinate beyond its exact Authority and Version. The common typed-reference law and the prohibition on physical
+identity as semantic identity already apply.
 
-The common HIR law already closes the main direction: Input HIR projection material may participate in Admission
-semantic
-resolution and refinement, while the resulting Visible Admission Definition Candidate must contain complete
-Admission-owned meaning and may not recover missing meaning from its later IDL Binding Candidate. Exact Input Candidate
-identity does not survive merely because it was observed during formation. The exact Admission-specific Candidate
-payload,
-the boundary between Input-projected formation evidence and Admission-owned meaning that survives refinement, whether
-nested constituent observation needs any additional producer-owned fine-grained Input projection, the exact internal
-representation of the pre-authority role-selection relation, any later post-Establishment composition relation, and the
-HIR and Established projection catalogs remain to be closed under ADR-0071, ADR-0063, ADR-0064, and the 1D master
-checklist. Compiler mechanisms for tracking which projections were read, propagating dependency information through
-helper computations, maintaining coherent reader state, validating cached work, comparing fingerprints, or collecting
-such information under parallel formation are compiler design. They do not extend Admission Definition Meaning or create
-Admission authority. None of those internal references or projections are public authoring obligations.
+The exact post-Establishment Input-to-Admission compatibility/composition law remains to be specialized. That work must
+identify the current exact Input and Admission Definitions, the owner of the composition judgment, the exact matching
+law, and the relation to occurrence-time Basis and Applicability without moving compatibility into either IDL Binding
+Candidate.
 
-The occurrence semantics are no longer open at that level. Admission has independent occurrence meaning. One fresh exact
-`Presented` Input Occurrence that reaches one exact Established Admission Definition determines one fresh Admission
-semantic application. Established Admission Occurrence Material appears only after that application establishes
-`Admitted` or `Rejected`, preserves the exact determining Input Occurrence relation, remains separate from the default
-Definition World, and is not multiplied by repeated physical evaluation of the same exact application. The exact
-compiler encoding, storage layout, retention mechanism, and projection implementation remain replaceable realization
-work.
+The Established Admission Semantic Protocol catalog remains to be closed under ADR-0063 and the master checklist. The
+occurrence meaning itself is already closed: one fresh exact `Presented` Input Occurrence that reaches one exact
+Established Admission Definition determines one fresh Admission semantic application, and Established Admission
+Occurrence Material appears only after `Admitted` or `Rejected` is established.
+
+### 13.2. Closed by the HIR–Establishment Review
+
+Admission Definition meaning is complete without one exact Input Definition identity. It owns its complete judgment law,
+its complete Input-observation requirement, and only other Admission-owned Definition determinants. Section 6.3 closes
+producer-owned Definition Meaning equality without merging Candidate References, Contract Versions, or authoritative
+Definitions.
+
+Section 6.4 closes the Admission HIR projection minimum required by current consumers: the complete Definition Candidate
+Projection, the ordinary ADR-0071 IDL Binding Candidate Projection, and the fine-grained Admission Input Observation
+Requirement Projection. Input-to-Admission compatibility is not HIR Binding Candidate meaning, and a semantic projection
+is not required to map one-to-one to a query, object, table, cache entry, or physical read.
+
+Section 6.5 closes the Admission Definition Establishment judgment and separates successful Establishment,
+`Admission Definition Refusal`, and compiler-side non-entry. Occurrence-time `Rejected`, Input `Refused`, and Failure
+Contract meaning remain separate result domains.
+
+### 13.3. Owned Elsewhere or Derived
+
+ADR-0064 owns the Input semantic observations and their projection meaning, completeness, and equality. Admission states
+what Input observations it requires; it does not redefine Input meaning for compatibility, diagnostics, PBT,
+verification,
+or another consumer.
+
+ADR-0071 owns the common HIR Binding Candidate law, HIR visibility and seal, typed Protocol behavior, and the rule that
+fine-grained projections are producer-owned observations rather than new authority. ADR-0063 and ADR-0053 own common
+Established identity, Version Binding, Required Basis, Basis Binding, Applicability, and authoritative Definition
+reference law. ADR-0048 currently remains the owner of the shared inbound-airlock composition and direct
+Input-to-Admission adjacency until that ownership is relocated by a later accepted decision.
+
+ADR-0075 owns cross-responsibility mediation, current-validity qualification, reuse, retention, and change containment.
+A requester states the information or guarantee it needs; Kontrakt-controlled mediation may resolve, obtain, qualify,
+compare, retain, or deliver the applicable producer-owned observation. Cache state, dependency edges, fingerprints,
+HIDs, or retained material do not establish Admission meaning or a Contract composition relation.
+
+The exact compiler-owned unsuccessful-result and recovery representation remains a common compiler concern. A missing,
+unsupported, stale, corrupt, or unavailable compiler observation must not be converted into `Admission Definition
+Refusal`, `Rejected`, or Contract Failure merely to keep processing moving.
+
+### 13.4. Moved to Design or Narrower Compiler Architecture
+
+The physical representation of the Input-observation requirement, projection materialization strategy, table or slab
+layout, handle encoding, protocol dispatch, query mapping, dependency recording, cache layout, fingerprint or HID use,
+persistence, retention, comparison fast path, incremental repair algorithm, and parallel collection strategy remain
+replaceable compiler realization. Their implementation must preserve the logical Protocol surfaces and deterministic
+clean-path result defined by this ADR, ADR-0071, and ADR-0075.
 
 The exact execution-cost accounting, runtime resource enforcement, verifier strategy, and optimized matcher or
 collection realization remain Design, Budget, Capacity, Verification, or backend work as applicable. No single theorem
 prover, verifier algorithm, runtime meter, SSA form, effect system, or loop-bound analysis is required by this ADR.
-Those mechanisms must preserve Admission meaning without turning resource exhaustion or implementation availability into
-a third Admission result.
+Those
+mechanisms must preserve Admission meaning without turning resource exhaustion or implementation availability into a
+third occurrence result.
 
 Constant-time execution, confidentiality, and side-channel resistance are not implied by Admission determinism. If such
 properties become required, they need an explicitly owning security or realization law rather than being inferred from
@@ -958,8 +1115,9 @@ properties become required, they need an explicitly owning security or realizati
 
 ## 14. Consequences
 
-Admission becomes a real two-result Contract judgment rather than a Boolean callback, exception-driven validation hook,
-or general policy engine.
+The Admission occurrence judgment becomes a real two-result Contract judgment rather than a Boolean callback,
+exception-driven validation hook, or general policy engine. Definition-time Establishment remains a separate judgment
+with the success/refusal boundary defined by Section 6.5.
 
 Users may write ordinary supported Java or Kotlin expressions and familiar standard-library code through the normal IDL,
 generated interface or artifact, and 1D declaration surface. They do not construct Kontrakt IR, Established references,
@@ -987,17 +1145,16 @@ Finite actual Input extent and machine resource policy are separate concerns. Ad
 occurrence whose size varies by invocation without owning an arbitrary global maximum, while Budget, Capacity,
 compiler-safety, and backend mechanisms retain responsibility for their own limits and stopping conditions.
 
-Input and Admission Definition authority remain independent. Admission Definition Meaning is determined by
-Admission-owned
-semantic law, not by whether a prior compiler result can be reused. Different legal formation contexts may converge on
-semantically equal Admission meaning when their complete Admission-owned determinants are equal, but equality is not
-created by source identity, cache state, dependency topology, dense handles, HID, or fingerprints. Compiler machinery
-may record and validate the producer-owned HIR observations that influenced one formation in order to avoid repeated
-work. If any required observation is changed, stale, unknown, or no longer coherent with the current producer-visible
-meaning, the compiler must not treat prior formation work as current merely because the Admission declaration is
-unchanged. It may recompute the affected Admission HIR and stop downstream propagation only when the current
-Admission-owned semantic result is equal under the owning equality law. These validity and reuse decisions remain
-compiler realization concerns and do not make dependency metadata Contract authority.
+Input and Admission Definition authority remain independent. Admission Definition reuse is not tied to one exact Input
+Definition merely because a particular composition selects the two together. When either exact selected Definition
+changes, the owning composition law must establish the relation for the current exact subjects; an older authoritative
+composition relation is not inherited merely because retained compatibility work still exists.
+
+Compiler work used to determine compatibility may nevertheless be reused through ADR-0075 when the current Admission
+Input Observation Requirement Projection and the relevant producer-owned Input observations are current-valid and
+semantically equivalent for that request. Propagation may then stop at the relevant protocol or compatibility-product
+boundary. This optimization does not reuse old Contract relation identity and does not make the incremental dependency
+graph Contract authority.
 
 Input and Admission occurrence authority remain separate. A `Presented` Input Occurrence survives an Admission
 `Rejected` result as the exact upstream occurrence that determined that judgment, while rejected material does not reach
@@ -1049,23 +1206,25 @@ result vocabulary. It also separated fresh occurrence identity from physical re-
 meaning outside the default Definition World, separated retention from Establishment, and left future incremental or
 cached realizations free to reuse validated work without reusing fresh occurrence authority.
 
-A subsequent 2026-09-22 HIR and binding review removed the stronger candidate model in which Admission Definition
-meaning or Definition Establishment directly depended on one exact Input Definition. The review aligned Admission with
-ADR-0071 and ADR-0064: the applicable resolved role-selection context designates one complete Visible Resolved Input
-Definition Candidate, and Admission formation consumes only legal producer-owned Input HIR projections as pre-authority
-semantic input. Admission refinement then produces complete Admission-owned HIR meaning. Exact Input Candidate identity
-is not retained merely because it supplied formation evidence, while selection-only context remains with the IDL Binding
-Candidate that is completed after its exact Admission Definition Candidate target exists. The review also keeps the
-occurrence-time exact Input Occurrence relation unchanged and makes V2 reuse depend on producer-owned projection
-equality
-and consumer-product equality rather than on Contract identity or incremental graph topology.
+A subsequent 2026-09-22 binding review removed the stronger candidate model in which Admission Definition meaning or
+Definition Establishment directly depended on one exact Input Definition. Admission Definition now remains complete and
+independent by owning the Input-observation requirements needed by its judgment. Input independently owns the semantic
+surface it provides. The owning IDL / Contract World binding or composition relation connects the exact selected Input
+and Admission Definitions and determines compatibility without supplying missing Admission meaning. The review also
+forbids accidental structural duck typing, keeps exact provider identity out of Admission Definition meaning unless a
+separate Contract law explicitly requires it, preserves the exact Input Occurrence relation at occurrence time, and
+keeps V2 incremental dependency tracking subordinate to the binding and protocol boundaries rather than Contract
+authority.
 
-A 2026-09-23 formation-boundary review clarified the separation between semantic formation and compiler reuse. Every
-Input-owned distinction that can affect Admission Definition meaning must enter through the legal producer-owned HIR
-observation boundary, and one Admission Candidate formation must observe one coherent producer-visible meaning. Compiler
-metadata may track those observations to validate or avoid repeated work, but dependency capture, helper propagation,
-reader pinning, fingerprint comparison, parallel collection, and cache mechanics are not Admission Contract semantics.
-The review also clarified that Admission semantic equality precedes compiler reuse: cache state, HID, fingerprints, and
-incremental dependency topology cannot create Admission Definition identity or equality.
+A 2026-09-25 HIR–Establishment and compiler-product review aligned Admission with ADR-0071, ADR-0063, the 1D master
+checklist, and ADR-0075. It made Admission Definition Meaning equality explicitly producer-owned, introduced the
+Admission Input Observation Requirement Projection as the narrow HIR observation boundary for consumers that do not need
+the full judgment body, and kept projection granularity independent from source reads and physical query or storage
+granularity. It separated each IDL Binding Candidate from the later Input-to-Admission composition relation, placed
+cross-responsibility observation, qualification, reuse, and coherence behind Kontrakt-controlled mediation, and kept
+current-validity machinery outside Contract authority. The same review defined the Admission Definition judgment,
+separated `Admission Definition Refusal` from compiler-side non-entry and occurrence-time `Rejected`, and clarified that
+reuse may preserve compiler work but cannot transfer old Definition, Occurrence, or composition authority to current
+subjects.
 
 ADR-0048 remains the owner of the shared inbound-airlock composition and direct Input-to-Admission adjacency.
