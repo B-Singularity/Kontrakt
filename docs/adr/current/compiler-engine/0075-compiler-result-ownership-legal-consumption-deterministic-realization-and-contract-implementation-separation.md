@@ -1,4 +1,4 @@
-# ADR-0075: Compiler-Produced Material and Knowledge, Consumption, Validity, Reuse, and Incremental Boundaries
+# ADR-0075: Compiler-Produced Material and Knowledge, Protocol-Mediated Consumption, Validity, Reuse, and Incremental Boundaries
 
 ## Status
 
@@ -64,9 +64,9 @@ problem. Treating them as instances of one universal cache or product rule would
 correctness.
 
 ADR-0075 therefore does not begin by declaring one generic reuse mechanism. It defines the horizontal compiler
-architecture in which produced material and knowledge can cross responsibility boundaries, remain valid or become stale,
-be reused or recomputed, and later participate in incremental execution. Common law is introduced only where the same
-obligation actually survives across those different cases.
+architecture in which produced material and knowledge cross responsibility boundaries through explicit protocol
+mediation, remain valid or become stale, be reused or recomputed, and later participate in incremental execution. Common
+law is introduced only where the same obligation actually survives across those different cases.
 
 ---
 
@@ -80,44 +80,50 @@ and can even produce divergent interpretations of one compiler state.
 
 The second is unsound reuse. Once information has been retained, the fact that it still exists says nothing by itself
 about whether it is valid for the current computation. A body may have changed while an old summary remains in memory. A
-transformation may leave an analysis object allocated even though one of its assumptions is no longer true. A persisted
-artifact may still decode after the producer schema or target capability has changed. An earlier dependency trace may no
-longer describe the reads performed by a later execution.
+transformation may leave retained analysis material available even though one of its assumptions is no longer true. A
+persisted artifact may still decode after the producer schema or target capability has changed. An earlier dependency
+trace may no longer describe the reads performed by a later execution.
 
-A simple producer-consumer example exposes only part of the problem.
+The cross-responsibility problem is not a direct producer-consumer call relation. A compiler responsibility states the
+information or guarantee it requires. Kontrakt-controlled mediation resolves that requirement against the legal protocol
+surface of the responsibility that can provide it, obtains or forms the required material, performs the checks owned by
+the relevant compiler layer, and exposes only an approved observation to the requester.
 
 ```text
-upstream material U
-    ↓
-producer A
-    ↓
-observation P
-    ↓
-consumer B
-    ↓
-result Q
+requesting responsibility
+    ↓ states required information or guarantee
+Kontrakt-controlled mediation
+    ↓ resolves and qualifies
+producer-owned protocol surface
+    ↓ provides legal material or knowledge
+approved observation
 ```
 
-If `U` changes, the compiler must determine whether the observation of `P` used by `B` is still current. A changed
-observation can force `Q` to be re-established, but that does not always mean a full rebuild. The producer can keep a
-proven-preserved result, maintain it through the change, or form it again. If the downstream observation of `Q` is then
-unchanged, later work may be able to stop. This is the familiar incremental propagation case.
+This direction is important for change containment. A producer can change its internal computation, representation, or
+local dependency structure without forcing that change across the responsibility boundary when the protocol-visible
+meaning required by downstream work remains unchanged. Comparison, fingerprinting, recomputation, or another compiler
+mechanism can help establish that fact, but those mechanisms do not become the protocol meaning.
+
+The same requirement does not imply that the compiler must avoid dependency graphs. Some problems are naturally graphs,
+and a deep graph can be the right realization when its semantic or computational benefit justifies its cost. The
+architecture problem arises when chains of calculated results become the default compiler-wide topology even though the
+same relationship could be expressed through a shallower, explicit protocol boundary or sufficient summary.
 
 Other cases have a different shape. A transformation can mutate one IR unit in place and invalidate only some analyses.
-A whole-machine consumer can depend on a compact summary while the backend depends on the full body. Under ADR-0063
-and the applicable 1D ADR, a fresh runtime Occurrence can coexist with reuse of definition-level compiler knowledge
-without reusing the old Occurrence. An independent checker can deliberately recompute information that another subsystem
-would normally share because sharing would weaken its value as a correctness oracle.
+A whole-machine responsibility can depend on a compact summary while the backend depends on the full body. Under
+ADR-0063 and the applicable 1D ADR, a fresh runtime Occurrence can coexist with reuse of definition-level compiler
+knowledge without reusing the old Occurrence. An independent checker can deliberately recompute information that another
+subsystem would normally share because sharing would weaken its value as a correctness oracle.
 
-The architecture therefore has to answer more than whether a cache entry is present. It has to preserve the boundary
-between what a producer guarantees, what a particular consumer actually observes, what changes can invalidate that
-observation, what retained representation can still be trusted, and what work must be repeated when those conditions no
-longer hold.
+The architecture therefore has to preserve the boundary between what a producer guarantees, what the requesting
+responsibility is allowed to obtain, which Kontrakt-controlled systems mediate that transfer, what changes can alter the
+protocol-visible meaning, what retained representation can still be trusted, and what work must be repeated when those
+conditions no longer hold.
 
-The difficulty is that these questions occur in many compiler domains with different semantics. A single rule that is
-too weak permits stale knowledge to cross subsystem boundaries. A rule that is too strong forces unrelated products to
-share the same lifetime, comparison, dependency, or invalidation model and can destroy the scaling benefits that reuse
-was intended to provide.
+The difficulty is that these questions occur in many compiler domains with different semantics. A rule that is too weak
+permits stale knowledge or hidden coupling to cross subsystem boundaries. A rule that is too strong can force unrelated
+responsibilities into one lifetime, comparison, dependency, invalidation, or management model and can destroy the
+scaling and replacement freedom that the boundary was intended to provide.
 
 ---
 
@@ -133,21 +139,27 @@ also covers realization-facing results such as verification material or backend 
 scope when they are used for later reuse. These boundaries can occur around HIR, MIR, LIR, or backend work, while the
 meaning and invariants of those families remain with their owning ADRs.
 
+Cross-responsibility consumption is mediated by Kontrakt-controlled compiler systems rather than by direct management
+between the requesting and providing responsibilities. This ADR defines that mediation contract and the principles by
+which mediation responsibilities may later be distributed across compiler layers. It does not prescribe one manager,
+one query engine, or one physical subsystem topology.
+
 The scope also includes cases in which a subsystem does not use the common query or cache machinery internally. A JVM
 backend, external adapter, or local pass pipeline can remain independently implemented while still participating in the
-same cross-responsibility validity and reuse architecture at its boundary.
+same cross-responsibility protocol and validity architecture at its boundary.
 
 Private scratch values are outside this ADR unless they become independently observable or reusable outside the
 computation that owns them. The same is true for worker-local temporary state whose lifetime ends with one operation and
-whose contents cannot affect a later consumer after that operation completes.
+whose contents cannot affect a later requester after that operation completes.
 
 Semantic and representation-specific laws remain with their owning ADRs. ADR-0075 refers to ADR-0071, ADR-0063,
 the applicable authority-specific ADRs, and future MIR, LIR, or backend ADRs where those laws are needed instead of
 restating them here.
 
-The ADR also stops above concrete reuse machinery. Cache and query architecture remain replaceable, as do dependency
-storage, fingerprinting, persistence, and incremental repair mechanisms. A later compiler ADR can give one of those
-mechanisms a narrower architectural role when necessary.
+The ADR also stops above concrete reuse and orchestration machinery. Cache and query architecture remain replaceable, as
+do dependency storage, fingerprinting, persistence, incremental repair, routing, and physical protocol dispatch. A later
+compiler architecture or Design document can allocate those responsibilities to concrete systems once their workload,
+coherence, lifetime, concurrency, and failure characteristics are known.
 
 ---
 
@@ -172,34 +184,54 @@ Kontrakt will not use one universal `CompilerProduct` semantic model for every r
 material and knowledge differ too much in scope, lifetime, change sensitivity, and failure consequence for a single
 product schema or one invalidation rule to remain sound.
 
-Instead, independently consumed compiler material has a producer-owned boundary. That boundary states what completed
-guarantee is exposed to consumers and which observations are legal at that boundary. The producer family also owns the
-conditions under which the exposed result is current, together with any family-specific comparison needed for reuse or
-change propagation.
+Independently consumed compiler material is exposed through a producer-owned protocol boundary. The producer family owns
+the meaning of the guarantee available at that boundary and the legal information that can be provided through it. A
+requesting responsibility states the information or guarantee it needs; it does not directly manage the producer,
+retained material, comparison machinery, or formation lifecycle.
 
-The compiler-wide architecture supplies the rules that connect those producer-owned boundaries. It governs how a
-consumer records its dependence on an upstream observation, how retained material is qualified before reuse, how stale
-knowledge is kept out of ordinary consumption, how transformations preserve or invalidate derived knowledge, and how
-incremental work may stop when an observed result has been re-established unchanged.
+Cross-responsibility consumption passes through Kontrakt-controlled mediation. The mediation can resolve a request to an
+appropriate protocol surface, obtain or form required material, apply the qualification and validation required by the
+relevant layer, perform comparison or fingerprint-based machinery where permitted, and provide the approved observation
+to the requester. These are logical mediation responsibilities. ADR-0075 does not require them to live in one manager or
+even in one compiler layer.
 
-This is a stratified architecture rather than a universal ontology. HIR observations, derived analyses, summaries,
-backend artifacts, and retained representations can all participate while keeping their own internal laws. Shared
-storage or orchestration does not transfer ownership of the guarantee or validity rule being executed.
+The physical allocation of those responsibilities remains replaceable. Responsibilities that share one coherence domain
+can be placed close together when separation would require disproportionate synchronization, duplicated state, retry,
+or hot-path coordination. They can still remain physically separate when independence, scaling, concurrency, failure
+containment, or replacement benefit justifies an explicit coherence mechanism. Logical separation therefore does not
+require physical separation, and physical fusion does not merge ownership.
 
-The local relation is therefore:
+The opposite extremes are both avoided. Excessively fine subsystem boundaries can turn useful separation into repeated
+routing, state duplication, synchronization, qualification, and boundary-crossing cost. Excessively broad systems can
+couple unrelated change, lifetime, concurrency, scaling, and failure domains and can make later replacement rigid. The
+later compiler architecture must allocate systems at a granularity justified by those competing costs rather than by a
+one-responsibility-one-system rule.
+
+Protocol meaning is also a change-containment boundary. If internal computation, representation, or local dependency
+structure changes while the protocol-visible meaning required by other responsibilities remains the same, that internal
+change does not by itself propagate across the boundary. The mechanism used to establish sameness remains compiler
+machinery and can differ by result family and compiler layer.
+
+Kontrakt likewise does not define the compiler as one mandatory fine-grained graph of calculated results. Deep graphs
+are legal when the problem itself or the computational benefit justifies their depth and scope. Otherwise,
+cross-responsibility architecture should prefer explicit and comparatively shallow protocol relations or sufficient
+summaries, while graph machinery remains local to the responsibilities that benefit from it. Graph depth is therefore a
+costed architectural choice, not a default consequence of chaining compiler results.
+
+The overall relation is:
 
 ```text
-producer-owned guarantee
-    ↓ exposes
-legal observation
-    ↓ consumed by
-another compiler responsibility
-    ↓ may form
-new compiler-owned material or knowledge
+requesting responsibility
+    ↓ declares required information or guarantee
+Kontrakt-controlled mediation
+    ↓ resolves, obtains, qualifies, and delivers as required
+producer-owned protocol boundary
+    ↓ exposes legal material or knowledge
+approved observation
 ```
 
-A later reuse path may avoid some of that work, but only after the relevant producer-owned validity conditions have been
-satisfied.
+A later reuse or incremental path can avoid work behind this relation, but it cannot transfer semantic ownership to the
+mediation machinery or require the requester to understand the producer's internal realization.
 
 ---
 
@@ -208,8 +240,9 @@ satisfied.
 The research inventory deliberately collected more cases than this ADR should eventually own. Before the ADR is
 accepted, those cases must be classified so that a rule introduced for one family is not silently applied to another.
 
-The classification is not based on class names or storage objects. It examines what kind of material is being consumed,
-how long it can outlive the computation that produced it, what kinds of change can affect its guarantee, and what the
+The classification is not based on host-language type names or storage forms. It examines what kind of material is
+being consumed, how long it can outlive the computation that produced it, what kinds of change can affect its guarantee,
+and what the
 consequence of stale reuse would be. A run-local analysis result and a cross-session backend artifact can both be
 reusable while requiring very different qualification and integrity checks.
 
@@ -226,53 +259,65 @@ schema.
 
 ## 7. Produced-Material Boundary
 
-A cross-responsibility boundary exists when one compiler responsibility exposes completed material or knowledge on which
-another responsibility may rely without entering the producer's private construction state. The boundary identifies the
-producer and the guarantee being exposed. It also identifies the logical subject of that guarantee to the extent needed
-by that result family.
+A cross-responsibility boundary exists when one compiler responsibility makes completed material or knowledge available
+through a legal protocol surface and another responsibility can request the corresponding information without entering
+the producer's private construction state. The producer owns the guarantee and protocol meaning. Kontrakt-controlled
+mediation governs the transfer path used to resolve, obtain, qualify, and deliver that information at the appropriate
+compiler layer.
 
 This requirement does not create a new compiler-wide identity system. The boundary uses the subject or reference law
-supplied by the result's owner and requires only that a consumer can identify the producer-owned result it uses without
-treating incidental storage as the meaning of that result.
+supplied by the result's owner and requires only enough stable reference information for the mediation layer to resolve
+the requested material without treating incidental storage as the meaning of that result.
 
 A boundary does not require a one-to-one physical representation. One completed observation can span several structures,
 and several logical results can share backing storage. Physical fusion does not merge their ownership, while physical
 separation does not create a new semantic distinction.
 
 A result that never leaves one private computation does not need this boundary merely because it is expensive. It
-becomes relevant to ADR-0075 when another responsibility is allowed to observe it independently, when it is retained for
-later use, or when change propagation depends on it as a stable compiler result.
+becomes relevant to ADR-0075 when another responsibility can request it independently, when it is retained for later
+use,
+or when its protocol-visible meaning participates in a wider compiler decision.
 
 ---
 
 ## 8. Legal Consumption and Derived Knowledge
 
-A consumer uses the observation exposed by the producer boundary it actually consumes. It must not reopen
-producer-private state to reconstruct a stronger result, and it must not replace an upstream semantic observation with
-facts inferred from an incidental storage layout or generated artifact.
+A requesting responsibility states the information or guarantee it needs to Kontrakt-controlled mediation. It does not
+select a producer implementation or reopen producer-private state. The mediation resolves the request against the legal
+protocol surface available at the relevant compiler layer and returns only an observation that has satisfied the checks
+required for that request.
 
-When a consumer combines legal observations and computes new information, the resulting knowledge belongs to that
-compiler responsibility. This is important for analyses and summaries because they can be widely reused without becoming
-a second semantic authority.
+The requester must not reconstruct a stronger upstream result from incidental storage topology, retained representation,
+or generated artifacts. Likewise, the producer does not need to know which downstream responsibility ultimately uses the
+information when the same protocol guarantee can satisfy several requesters.
+
+When a responsibility combines approved observations and computes new information, the resulting knowledge belongs to
+that compiler responsibility. This is important for analyses and summaries because they can be widely reused without
+becoming a second semantic authority.
 
 The compiler can intentionally create a shared producer when several subsystems need the same expensive derived
 knowledge. For example, a realization analysis can produce an effect summary that verification and optimization both
-consume. The fact that diagnostics happened to compute the same information first is not a sufficient architectural
-reason to make diagnostics the producer for the backend.
+request through mediation. The fact that diagnostics happened to compute the same information first is not a sufficient
+architectural reason to make diagnostics the producer for the backend.
 
-Shared knowledge is therefore explicit. Accidental execution order must not decide which consumer becomes the owner of
-information used by other subsystems.
+Shared knowledge is therefore explicit. Accidental execution order must not decide which requester becomes the owner of
+information used by other subsystems, and direct requester-provider coupling must not replace the protocol boundary.
 
 ---
 
 ## 9. Change, Validity, and Preservation
 
 Produced knowledge is valid only while the guarantee exposed by its producer remains true for the current computation.
-Storage lifetime and object lifetime do not establish that condition.
+Storage lifetime and physical retention do not establish that condition.
+
+Internal producer change does not automatically become cross-responsibility change. When the protocol-visible meaning
+required by other responsibilities remains unchanged, the boundary contains the internal change. Kontrakt-controlled
+systems can use producer-approved comparison material, recomputation, qualification, fingerprints, or other legal
+machinery to establish that condition without making those mechanisms part of the protocol meaning.
 
 A transformation is one common source of change. It can preserve an earlier result, update the result as part of the
 transformation, invalidate it for later recomputation, or make incremental repair possible. The exact strategy belongs
-to the producer and transformation design, but a stale result must not remain available to ordinary consumers as if no
+to the producer and transformation design, but a stale result must not remain available to ordinary requesters as if no
 relevant change had occurred.
 
 This rule applies beyond classical middle-end analyses. A changed realization body can stale a transitive summary. A
@@ -282,10 +327,10 @@ same.
 
 A claim that a result was preserved is itself a correctness claim. The compiler cannot treat preservation as a
 performance hint that may be wrong without consequence. The claim must be sound for the exact guarantee that later
-consumers are allowed to observe.
+requesters are allowed to obtain.
 
-The same requirement applies when a logical subject is replaced or deleted. An allocated analysis object, dense handle,
-or table slot that survives the change does not prove that the old result still belongs to the current subject. Reuse
+The same requirement applies when a logical subject is replaced or deleted. Retained analysis material, a dense handle,
+or a table slot that survives the change does not prove that the old result still belongs to the current subject. Reuse
 must not depend on stale physical identity after the subject relation that justified the result has ended.
 
 ---
@@ -311,30 +356,38 @@ transformation to allocate a new complete IR.
 
 ---
 
-## 11. Dependency Observation
+## 11. Dependency Topology and Change Containment
 
-A derived result that may be reused after change needs enough information to determine which upstream observations can
-affect its guarantee. Compiler dependency observation does not redefine relations owned elsewhere. Contract and HIR
-semantic relations remain under their owning ADRs, while program and artifact dependencies retain their own owners. One
-computation can observe several such relations without merging their meanings.
+ADR-0075 does not require one compiler-wide dependency graph. A compiler responsibility can use a deep or fine-grained
+graph when the problem itself is graph-shaped or when the computational benefit justifies the bookkeeping, scheduling,
+state, and coordination cost. Such graph machinery should remain local to the responsibility or compiler system that
+benefits from it unless a wider graph is itself justified.
 
-Dependency capture must be sound. Omitting an upstream observation that can change the result allows stale material to
-survive under-invalidation. At the same time, making a narrow result depend on an unrelated whole-world fingerprint can
-turn every small change into global invalidation. The former is a correctness failure. The latter can make the reuse
-architecture operationally useless even when it remains correct.
+Across responsibility boundaries, dependencies should be expressed at the narrowest sufficient legal protocol boundary.
+A requester that needs one summary or one protocol-visible guarantee should not become dependent on an entire upstream
+representation merely because that representation was convenient to access. This reduces change amplification and keeps
+provider implementation changes from becoming requester changes when the required protocol meaning is stable.
 
-A previous dynamic read set is evidence about one execution, not a complete law for all future executions. If changed
-input can alter control flow or which upstream result is consulted, the dependency mechanism must validate or rediscover
-the current relation rather than treating the old trace as permanent truth.
+This is a preference for shallow and explicit cross-responsibility topology, not a prohibition on depth. A deep graph is
+legal when it provides real semantic or computational value that a shallower relation would lose or reproduce at greater
+cost. Depth that appears only because calculated results repeatedly depend on other calculated results is not sufficient
+justification by itself.
 
-Some results make a closed-world or complete-set claim. Revalidating only the members previously present is then
-insufficient. A call-target set, whole-machine reachability result, or other complete collection can become stale when a
-new member appears even if every old member remains unchanged. The producer must include whatever closure condition is
-necessary for the completeness guarantee it exposes.
+Protocol boundaries act as change-containment cuts. When internal changes re-establish the same protocol-visible
+meaning,
+those changes stop at that boundary for responsibilities that depend only on that meaning. A sufficient summary can
+serve
+the same architectural purpose when carrying the complete upstream material would create an unnecessarily wide
+relationship.
 
-The physical graph representation remains Design. A producer can track dependencies more finely inside its
-implementation than it exposes to other responsibilities. A subsystem outside a future common query engine can also
-declare dependencies explicitly at its boundary.
+Local dependency capture still has to be sound for the guarantee it supports. A previous dynamic read set can be useful
+machinery without becoming permanent architecture, and a complete-set result can require a closure condition that is not
+visible from previously present members alone. The owning subsystem can use dynamic tracking, explicit dependency
+records, delta maintenance, or another mechanism appropriate to its problem.
+
+The physical graph representation, graph engine, and invalidation algorithm remain Design or narrower compiler
+architecture work. Compiler dependency machinery does not redefine Contract, HIR, IR, program, artifact, or provenance
+relations owned elsewhere.
 
 ---
 
@@ -363,13 +416,15 @@ silently play that role.
 ## 13. Result Comparison and Reuse Qualification
 
 ADR-0075 does not define semantic equality. Semantic producers keep the equality laws already established by their
-owning ADRs. Compiler-derived result families can nevertheless need a producer-owned comparison to decide whether an
-earlier result and a newly established result are equivalent for that result family's exposed guarantee.
+owning ADRs. Compiler-derived result families can nevertheless need an owner-defined comparison relation or comparison
+material so that Kontrakt-controlled qualification can determine whether an earlier result remains sufficient for the
+current request.
 
-The comparison belongs to the producer boundary, not to an arbitrary consumer. If verification depends on a compact
-effect summary while the backend depends on the executable body, the two consumers can observe different producer-owned
-results or projections. The verifier does not obtain the right to declare the complete body equal merely because the
-change is irrelevant to its question.
+The requester does not perform that decision against producer-private state. The result family defines what comparison
+is meaningful for its exposed guarantee, while the appropriate Kontrakt-controlled compiler system performs or
+coordinates the actual qualification. If verification depends on a compact effect summary while the backend depends on
+the executable body, the two requests can be resolved against different producer-owned guarantees. The verifier does
+not obtain the right to declare the complete body equal merely because the change is irrelevant to its question.
 
 Retained material introduces another distinction. A representation can exist and still be incompatible with the current
 producer implementation. It can be compatible to decode and still fail the current validity rule. It can be
@@ -381,8 +436,10 @@ must preserve the distinction even if a later Design represents them in one meta
 example, can invalidate an old serialized representation without changing the result that clean computation would
 produce.
 
-A fingerprint, content hash, HID, byte comparison, or object identity can support reuse evidence. None becomes semantic
-equality merely because it is fast to compare.
+A fingerprint, content hash, HID, byte comparison, or physical-reference equality can support qualification evidence.
+The appropriate Kontrakt-controlled system may use such machinery, but none becomes semantic equality or protocol
+meaning
+merely because it is efficient to compare.
 
 ---
 
@@ -390,45 +447,51 @@ equality merely because it is fast to compare.
 
 Owner-defined observations remain governed by the result family that exposes them. HIR and Established projections in
 particular remain under ADR-0071 and ADR-0063. This section concerns separately derived summaries and other compiler
-knowledge formed so that multiple consumers can reuse a bounded result without reopening the producer's private state.
+knowledge formed so that multiple requesters can reuse a bounded result without reopening the producer's private state.
 
-A wider consumer does not necessarily need the full body. Whole-machine verification or planning can often depend on
-local summaries, and a backend can still require body-level material. This allows one local change to invalidate backend
-work while leaving a higher-level verifier unchanged when the summary that verifier consumes is re-established
-unchanged.
+A wider responsibility does not necessarily need the full body. Whole-machine verification or planning can often request
+local summaries, and a backend can still require body-level material. A sufficient summary therefore acts not only as a
+reuse unit but also as a dependency and change-containment boundary: upstream internals can change without affecting the
+summary requester when the summary's protocol-visible meaning is re-established unchanged.
 
 A useful summary is complete for its declared question without becoming a miniature copy of all upstream material. If it
-omits information required by that question, the consumer will eventually be forced to reopen upstream internals or will
-make an unsound decision. If it carries every upstream detail, it loses much of the memory, invalidation, and
-persistence advantage that motivated the summary.
+omits information required by that question, the requester will eventually be forced to reopen upstream internals or
+will
+make an unsound decision. If it carries every upstream detail, it loses much of the memory, invalidation, persistence,
+and topology advantage that motivated the summary.
 
 Summary schemas, aggregation algorithms, and physical indexes remain owned by the subsystem that defines them. ADR-0075
-governs only their role as independently consumed derived knowledge.
+governs only their role as independently requested derived knowledge and as explicit boundaries between otherwise deeper
+compiler relations.
 
 ---
 
 ## 15. Completion, Visibility, and Coherent Observation
 
-An ordinary consumer must not observe a successful result before the producer has completed the guarantee associated
+An ordinary requester must not receive a successful result before the producer has completed the guarantee associated
 with that result boundary. Internal partial state can exist while a producer is working, but it remains private unless a
 separate protocol explicitly gives that partial state meaning.
 
-A consumer that needs several related observations must see a coherent set permitted by their producers. Combining an
-old value from one generation with a new value from another can create a compiler state that no completed producer ever
-exposed. A matching numeric generation alone is not proof of coherence if the underlying products have different
+A request that needs several related observations must receive a coherent set permitted by their producers. Combining an
+old observation from one view with a new observation from another can create a compiler state that no completed producer
+ever exposed. A matching numeric generation alone is not proof of coherence if the underlying results have different
 validity domains.
 
-The architecture must support both snapshot-style replacement and in-place mutation. A daemon or future IDE compiler may
-keep an older coherent view alive while a new view is formed. A local optimizer may mutate one IR unit in place and
-invalidate selected analyses. ADR-0075 requires coherent legal observation in both cases without prescribing one
-memory-management mechanism.
+Responsibilities whose independently changing state can form an invalid requester-visible combination share a coherence
+obligation. That obligation is a system-allocation criterion, not a command to place the responsibilities in one
+physical subsystem. They can be placed close together when that removes disproportionate coordination, or separated when
+concurrency, scaling, replacement, or failure containment justifies an explicit coherence mechanism.
+
+The requester does not reconcile that coherence for itself. Kontrakt-controlled mediation must provide an observation
+that satisfies the required coherence boundary regardless of whether the implementation uses snapshot-style replacement,
+in-place mutation, reader pinning, versioned state, or another safe mechanism.
 
 A failed or cancelled replacement must not expose a partially completed successful result. Whether an older completed
 result remains usable after that failure depends on its own current-validity law, not on the mere fact that a newer
 attempt was started.
 
 Retention and reclamation are separate from current validity. Keeping old backing storage alive for a reader does not
-make it current for new consumers, while reclaiming unused backing does not retroactively change the meaning of a result
+make it current for new requests, while reclaiming unused backing does not retroactively change the meaning of a result
 that was validly consumed earlier.
 
 ---
@@ -439,13 +502,18 @@ L1, L2, persisted state, content-addressed storage, and future remote caches are
 work available again. They are not the law that decides whether that work can satisfy the current request.
 
 The earlier L1/L2 direction remains useful in this architecture because it can retain information Kontrakt already
-interpreted instead of forcing later consumers to reread classes, attributes, or other raw inputs. The reusable unit,
+interpreted instead of forcing later requesters to reread classes, attributes, or other raw inputs. The reusable unit,
 however, is defined by the producer boundary and its validity law rather than by the container in which the
 representation happens to be stored.
 
-A retained representation must be qualified before use. The required checks depend on the result family and retention
-lifetime. In-memory generation reuse may need a different compatibility check from a cross-session serialized artifact.
-An externally obtained or remote artifact adds integrity and trust questions that an in-process cache may not have.
+Retained material must be qualified by an appropriate Kontrakt-controlled system before it is delivered for use. The
+required checks depend on the result family and retention lifetime. In-memory reuse may need a different compatibility
+check from a cross-session serialized artifact. An externally obtained or remote artifact adds integrity and trust
+questions that an in-process cache may not have.
+
+The qualification responsibility need not be centralized. HIR, analysis, backend, and persistence layers can use
+different systems when their coherence, lifetime, cost, or failure domains differ, provided that requesters observe the
+same legal protocol guarantees rather than those systems' internal machinery.
 
 Missing retained state is not a semantic event. If the requested result is otherwise computable, the compiler can form
 it again through a legal clean path. Corrupt or incompatible retained state is likewise a compiler problem and follows
@@ -458,35 +526,40 @@ storage engine without changing the producer-owned guarantee or the validity law
 
 ## 17. Incremental Reuse and Change Propagation
 
-Incremental execution builds on the producer, dependency, and validity boundaries defined earlier. It is not a separate
-source of meaning and it is not equivalent to persistence.
+Incremental execution builds on protocol containment, producer validity, and the local change machinery of the systems
+that actually benefit from incremental work. It is not a separate source of meaning and it is not equivalent to
+persistence.
 
-A previous result can avoid work in several ways. The compiler may directly reuse retained material after establishing
-that its validity still holds. It may recompute a changed producer and discover that the result observed downstream is
+The first architecture defense against broad propagation is the protocol boundary itself. When a producer or local
+compiler system changes internally but re-establishes the same protocol-visible meaning, responsibilities that depend
+only on that meaning do not need to inherit the internal change. A sufficient summary can provide the same containment
+when downstream work does not require the full upstream material.
+
+A previous result can avoid work in several ways. A local system may directly reuse retained material after establishing
+that its validity still holds. It may recompute a changed producer and discover that the protocol-visible result is
 unchanged. It may update or repair a result incrementally rather than rebuild it from the beginning. Different result
 families can choose different strategies.
 
-The common requirement is that downstream work stops only after the observation on which that downstream work depends
-has been re-established as current and unchanged. An upstream source edit, a changed cache key, or a different physical
-generation is not enough by itself to determine whether propagation must continue.
+Local systems can use deep dependency graphs, red-green validation, generation comparison, delta maintenance, explicit
+invalidation, or another algorithm when the benefit justifies the cost. ADR-0075 does not require those local graphs to
+be joined into one compiler-wide calculated-result graph, and it does not require the same incremental algorithm at each
+compiler layer.
 
 ```text
-upstream change
+internal or upstream change
     ↓
-validate / preserve / update / repair / recompute producer result
+local validation / preservation / update / repair / recomputation
     ↓
-consumer-visible observation changed?
-    ├─ no  → downstream may remain reusable
-    └─ yes → downstream validity must be reconsidered
+protocol-visible meaning changed?
+    ├─ no  → change is contained for requesters of that meaning
+    └─ yes → affected downstream protocol requirements must be reconsidered
 ```
 
-This is the architecture seam required for early cutoff. The particular mechanism can be red-green validation,
-generation comparison, delta maintenance, explicit invalidation, or another algorithm that preserves the same
-obligations.
-
-V1 is not required to persist every result or to implement fine-grained incremental repair everywhere. It must avoid
-boundaries that make later incremental reuse impossible without changing the semantic model. V2 can add stronger
-dependency tracking and retained state behind those boundaries.
+V1 is not required to persist every result or to implement fine-grained incremental repair everywhere. It must preserve
+the explicit protocol boundaries and system-allocation freedom needed for later incremental strategies. V2 can add
+stronger local dependency tracking, retained state, or repair machinery without turning that machinery into the
+compiler-
+wide semantic topology.
 
 ---
 
@@ -584,20 +657,30 @@ guarantee.
 
 ## 23. Design Boundary
 
-This ADR deliberately stops before concrete reuse machinery.
+This ADR deliberately stops before concrete reuse, orchestration, and subsystem-allocation machinery.
 
 A query engine can automate dependency capture and memoization, while a pass manager can remain a better fit for ordered
-local transformations. A data-flow engine can update one analysis incrementally, while another product is cheaper to
-recompute. A backend can expose coarse artifact dependencies without moving its entire implementation into the query
-system.
+local transformations. A data-flow engine can update one analysis incrementally, while another result is cheaper to
+recompute. A backend can expose coarse protocol material without moving its entire implementation into the query system.
+
+Kontrakt-controlled mediation can be distributed differently at different compiler layers. Requirement handling,
+protocol resolution, acquisition, qualification, coherence, comparison, retention, and delivery are logical
+responsibilities, not a required list of separately deployed compiler systems. Later architecture work can fuse or split
+them according to measured coherence, change, lifetime, concurrency, traffic, resource, failure, and hot-path
+characteristics.
 
 Physical storage remains free to follow measured access patterns. Primitive tables, slabs, arenas, or snapshot-like
-structures are all possible realizations. Dependency capture can likewise be dynamic or explicit, and persistent
+structures are all possible realizations. Local dependency capture can likewise be dynamic or explicit, and persistent
 material can use any compatible format that respects the producer boundary.
 
-Those choices become Design work after the architecture has closed the relevant result family, validity basis,
-dependency boundary, and failure behavior. ADR-0075 must not freeze an algorithm merely because the first implementation
-needs one.
+A later architecture should avoid both gratuitous fragmentation and monolithic coordination. Splitting a responsibility
+is not valuable when it merely replaces local work with repeated routing, duplicated state, synchronization, or
+qualification cost. Fusion is not valuable when it forces unrelated changes, lifetimes, scaling requirements, failure
+domains, or replacement cycles to move together.
+
+Those choices become Design or narrower compiler-architecture work after the protocol and ownership laws have closed the
+relevant responsibility boundaries. ADR-0075 must not freeze an algorithm or subsystem topology merely because the first
+implementation needs one.
 
 ---
 
@@ -614,19 +697,25 @@ The second is the exact reusable-result qualification model. The ADR still needs
 conditions, reuse-only compatibility conditions, assumptions, scope, and producer versioning are represented without
 creating one universal metadata tuple.
 
-The third is the cross-responsibility dependency contract. The current direction requires sound dependency on the
-producer-owned observations actually used by a consumer, but the boundary between public observation dependency and
-finer producer-private dependency still needs to be closed carefully.
+The third is the final protocol-mediation boundary. The current direction requires requesters to depend on legal
+protocol-visible meaning rather than producer implementation, while Kontrakt-controlled systems resolve, obtain,
+qualify, and deliver the required information. The remaining work is to test which of those mediation obligations are
+truly common across result families without prematurely fixing their physical allocation.
 
-The fourth is preservation and repair. The common rule that stale knowledge cannot remain visible is clear, while the
+The fourth is system allocation. This ADR now establishes the allocation principles but not the subsystem topology. The
+remaining review must test the accepted coherence criterion together with graph proportionality, protocol containment,
+and the costs of fragmentation or fusion against the surveyed compiler, build, database, OS, storage, and distributed
+systems before the principles are finalized.
+
+The fifth is preservation and repair. The common rule that stale knowledge cannot remain visible is clear, while the
 exact architecture contract for preservation claims, incremental updates, stage-crossing translation, and complete-set
 validity still needs further review against the surveyed compiler families.
 
-The fifth is coherent multi-product observation. V1 can remain simpler than a persistent IDE compiler, but the API must
-not assume one mutable global state if V2 will require readers to remain on one coherent view while another view is
-being formed.
+The sixth is coherent multi-result observation. V1 can remain simpler than a persistent IDE compiler, but the protocol
+surface must not assume one mutable global state if V2 will require readers to remain on one coherent view while another
+view is being formed. The mechanism and physical system placement remain open.
 
-The sixth is the relationship with ADR-0074. Unavailable, corrupt, unsupported, cancelled, and internally failed
+The seventh is the relationship with ADR-0074. Unavailable, corrupt, unsupported, cancelled, and internally failed
 compiler results must have one consistent unsuccessful-result boundary before retention and incremental recovery can be
 considered closed.
 
@@ -634,19 +723,30 @@ considered closed.
 
 ## 25. Consequences
 
-This structure lets Kontrakt reuse compiler knowledge without turning cache, query topology, or retained bytes into a
-second source of meaning. It also avoids a different failure mode in which every subsystem invents its own unrelated
-rules for stale knowledge, persistence, and incremental change.
+This structure lets Kontrakt reuse compiler knowledge without turning cache, query topology, retained bytes, or one
+compiler-wide dependency graph into a second source of meaning. It also prevents each requesting responsibility from
+managing producer lifecycle, comparison, qualification, and retention on its own.
 
-The architecture is intentionally more demanding than a generic memoization layer. A reusable boundary has to state what
-a producer guarantees, what a consumer observes, what can invalidate that observation, and how retained material is
-qualified. That work is required only where material actually crosses a responsibility or reuse boundary; private local
-computation is not forced into a heavyweight protocol.
+The architecture is intentionally more demanding than a generic memoization layer. A cross-responsibility boundary has
+to state what protocol-visible guarantee is available, while Kontrakt-controlled mediation must provide the required
+observation without exposing producer-private construction state. That work is required only where material actually
+crosses a responsibility or reuse boundary; private local computation is not forced into a heavyweight protocol.
 
-The benefit is that semantic and IR families can evolve independently while later compiler subsystems still share one
-horizontal architecture for valid reuse. The same architecture can support analysis and verification today, then extend
-to backend retention or future incremental execution without forcing those subsystems into one product model.
+Protocol boundaries also contain change. Internal computation, representation, and local dependency topology can evolve
+without forcing downstream change when the protocol-visible meaning required downstream remains stable. Where a deep or
+fine-grained graph provides real value, a compiler system can still use it locally or across a wider scope that is
+explicitly justified. The architecture simply does not make deep calculated-result dependency the default organization
+of the whole compiler.
 
-This ADR remains Proposed. The next work is to classify the collected internal and external cases, test the candidate
-categories against known failure modes, and then close only the common laws that remain valid across those categories.
-The pre-taxonomy research inventory remains the evidence base for that review rather than being copied into this ADR.
+Mediation responsibilities can be distributed across compiler layers rather than centralized in one manager. Later
+architecture work can place closely coherent responsibilities together, separate them behind explicit coherence
+mechanisms, or physically fuse logical responsibilities for hot-path efficiency without merging their ownership. The
+same freedom allows later profiling to correct boundaries that prove too fragmented or too broad.
+
+The benefit is that semantic and IR families can evolve independently while compiler systems retain explicit protocol
+boundaries for valid reuse, replacement, and later incremental execution. V1 can use simpler local machinery while
+leaving V2 free to adopt different incremental, persistence, or scheduling techniques behind those boundaries.
+
+This ADR remains Proposed. The next work is to continue testing the mediation and allocation principles against the
+internal taxonomy and SOTA failure cases, then close only the common laws that remain valid across those categories. The
+pre-taxonomy research inventory remains the evidence base for that review rather than being copied into this ADR.
