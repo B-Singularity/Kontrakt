@@ -34,15 +34,15 @@
 
 ## 0. Intention
 
-The most important thing in software is intention. Not class, not object, not type theory, and not an abstract model
-that ignores the machine it has to run on.
+The most important thing in software is intention.
+If you miss what the machine is for, the rest is just machinery you happen to know how to use.
 
 I am describing the contract model that fits my intention.
 
 It will not fit every software system, every team, or every engineering goal. The limitation is intentional. A model
 that pretends to fit everything usually says nothing useful.
 
-I am trying to say what kind of machine I want to build, and why the machine has to be shaped this way.
+so I'm trying to say what kind of machine I want to build, and why the machine has to be shaped this way.
 
 Software runs under limits. It receives bad inputs, broken environments, vague requirements, strange users, and machines
 that do exactly what you told them, not what you hoped they would understand. So the question
@@ -66,48 +66,54 @@ The document stays inside that scope.
 
 The good machine I am describing is not meant to be a universal machine for every context.
 
-In this document, a good machine means a machine that actually works in reality, knows its limits, prepares for them,
-fulfills its declared purpose, and makes the conditions that govern its behavior explicit.
+An aircraft is built knowing that parts will fail.
+It carries instruments and records so a failure can be found and dealt with instead of guessed at afterward.
 
-This is not only a software idea.
+A power system is built knowing exactly how much it can take.
+It protects itself before that limit turns into damage.
 
-`Good machine` names the engineering shape I want to preserve. It gathers the features serious machines already need:
-controlled entry, declared refusal, stable internal material, legal movement, known limits, honest failure, bounded
-evidence, and replaceable machinery.
+Serious engineering does not pretend these problems away.
+It makes them visible and builds the machine around them.
 
-A factory, refinery, aircraft, reactor, medical device, or software system may realize those features differently. The
-shape is still the same. The machine must not let outside material define its inside, must not move without permission,
-must not discover its limits only after damage, and must not explain failure by folklore.
+Software should be held to the same standard.
 
-Software is no exception. It only became unusually good at hiding these obligations inside code.
+A good machine should make the conditions that govern it explicit and deal honestly with the limits and failures of the
+real world.
 
-Most serious architecture already moves in this direction. Real systems already depend on contract-shaped structure;
-they just leave too much of it implicit.
+Outside material should not get to define its inside, and the machine should not move simply because the implementation
+happens to let it.
 
-The problem is that modern software made implicit structure look normal.
+It should behave consistently under the same declared conditions, leave enough evidence to explain what happened, and
+let the machinery underneath change without changing what the machine promised.
 
-Mathematical elegance made recursive forms look noble. Object-oriented programming made inheritance and subtyping look
-like natural reuse. Frameworks made proxies, interception, reflection, and runtime decoration look harmless. Callbacks
-and dynamic dispatch made hidden control flow feel normal.
+Software is no exception. Most serious architectures already contain these ideas, but software has gotten very good at
+tearing them apart and hiding each piece somewhere in the implementation. We got so used to that that implicit structure
+started to look normal.
 
-Framework defaults, mutation, exceptions, tests, and configuration files are only places where the hidden contract shows
-up. The deeper problem is that implicitness became a design foundation.
+Software did not end up this way by accident.
 
-Here, the contracts already controlling the machine should become visible software material.
+As software evolved, it started serving different intentions. Mathematical elegance made recursive forms attractive.
+Object-oriented programming put reuse and substitution ahead of keeping the machine flat and obvious. Frameworks made
+hidden behavior through proxies, reflection, and interception feel normal. Callbacks and dynamic dispatch taught us to
+accept control flow we could no longer see directly.
 
-A good machine should be explicit about the things that decide its behavior: what may enter, what must be rejected,
-which
-state exists, which transition is legal, which failure is declared, which result may be published, which evidence
-remains, which policy is active, and which limits the machine must respect.
+I think that was the wrong direction.
 
-When these things are not explicit, they do not disappear. They become hidden rule-makers. The result is bullshit: the
-machine has contracts, but they are implicit, and everyone pretends the implementation is innocent.
+We optimized software for elegance, reuse, and abstraction when a good machine needs almost the opposite. Its rules
+should be visible. Its movement should be understandable. Its limits should be known before they become failures.
 
-The surface should still be simple. Making developers write legal paperwork in code would miss the point. The visible
-surface should be small, readable, and ordinary, while the machine keeps enough
-explicit contract material to verify, lower, diagnose, and govern the system.
+We pushed software in the opposite direction from engineering.
 
-The goal is not more code. The goal is less hidden meaning.
+That is the direction I want to reverse.
+
+I want software to become a good machine again.
+Engineering starts by facing the real obligations of the machine instead of hiding them inside the implementation.
+
+Those obligations need to be explicit enough that we can actually see what the machine is supposed to be.
+That explicit form is what I call Contract.
+
+That is the point of this document. Contract is how I want to bring software back to engineering.
+
 
 ---
 
@@ -229,8 +235,8 @@ it lists every contract authority that governs the interaction, not only the dec
 interaction manifest
     -> interface contract and its public surface
     -> input presentation contract
-    -> admission contract
     -> canonicalization contract
+    -> admission contract
     -> lowering contract
     -> fact contract
     -> invariant contract
@@ -309,9 +315,8 @@ Human purposes are too contextual, too fragmented, and too dependent on judgment
 purpose has not been lowered by the designer into hard, machine-readable obligations, the machine has nothing honest to
 judge.
 
-Aligning the contract to the purpose is the designer's job.
-
-Not the compiler's.
+The designer's intended purpose must be expressed through declared obligations and aligned consistently across the
+system.
 
 The machine can only judge what has been explicitly declared. If the purpose has not shaped concrete input rules,
 admission rules, lowering obligations, fact laws, invariants, state movement, failure rules, publication authority,
