@@ -288,13 +288,20 @@ The compiler should stop the shape before anyone gets clever with it.
 
 ## 5. Purpose
 
-Machines are built for a purpose.
+Engineering exists to achieve a purpose.
 
-But that does not mean "purpose" is some magical contract feature the software can just figure out for you.
+You build a machine because you want something specific to happen in the real world. Everything that follows should
+serve that end.
 
-Purpose comes before the contract. It is the compass. It explains why the designer chose these specific obligations,
-why certain trade-offs are forbidden, and why a machine may prefer one kind of failure, diagnostic, publication rule,
-or governance rule over another.
+That purpose shapes the choices you make. It decides which obligations matter, which trade-offs are acceptable, and
+which Contracts the machine needs.
+
+So a good machine cannot be a pile of individually reasonable decisions. Its choices have to stay aligned with the
+purpose it was built to serve.
+
+The designer chooses the Contracts. The implementation realizes them. Both exist to make that purpose real.
+
+A machine that is internally consistent but drifts away from its purpose is still bad engineering.
 
 But the software itself is utterly indifferent to your purpose.
 
@@ -306,37 +313,47 @@ judge.
 The designer's intended purpose must be expressed through declared obligations and aligned consistently across the
 system.
 
-The machine can only judge what has been explicitly declared. If the purpose has not shaped concrete input rules,
-admission rules, lowering obligations, fact laws, invariants, state movement, failure rules, publication authority,
-outward presentation, diagnostic retention, version coordinates, policy, budget, capacity, or governance, then the
-machine must not pretend
-that it verified the purpose.
+The machine can only judge what has been explicitly declared. The designer's purpose has to shape those obligations
+consistently across the system.
 
-This is where the rot usually starts.
+But turning purpose into Contract does not mean turning purpose into mathematics. The Contract states what the machine
+must do to serve that purpose. It does not mathematically encode the purpose itself.
 
-The moment purpose is treated as something the machine can prove by itself, the architecture drifts into bullshit. Type
-theorists will try to encode the purpose into some unreadable formal proposition. Proof-zealots will shrink the real
-machine into a toy small enough to prove. Framework cultists will build proxy layers, observe runtime behavior, and
-call that observation a proof. An AI may generate an interpretation and try to pass it off as authority.
+The machine may judge whether those obligations hold. It does not understand the human purpose behind them, and it
+certainly does not prove that purpose.
+
+The rot starts when proving the purpose becomes the goal.
+
+Software does this all the time. Type theory gets pushed until it is supposed to encode the purpose itself. Proof work
+starts cutting away the ugly parts of the real machine until there is something neat enough to prove. Frameworks observe
+behavior and start treating that observation as authority. Now AI can generate an interpretation and pretend it
+discovered what the system was meant to do.
 
 That is proof theater.
 
-Purpose is not a type-level costume. It is not an oracle hiding behind a friendly API. It is not a proxy proof. It is
-not an AI interpretation. And it is absolutely not an excuse to weld the contract to a specific implementation just
-because that implementation happens to work today.
+The problem is not that these tools exist. The problem is that the direction has flipped. We started with something we
+wanted a real machine to achieve, then slowly changed the job into proving a model of that purpose.
 
-A purpose guides contract selection and arrangement.
+A Contract is not a mathematical replacement for purpose. It is the explicit set of obligations the machine must satisfy
+in order to serve that purpose.
 
-The contract must still declare the actual obligations.
+Once proving the Contract becomes more important than building the machine the Contract was meant to serve, engineering
+has already lost the plot.
 
-A system whose declared purpose includes determinism may choose contracts that forbid backend order from becoming
-semantic order, forbid cache state from changing meaning, require canonical ordering, require exact collision handling,
-require fail-closed judgment, require explicit state movement, and restrict publication to stable declared claims.
-Those are contracts. The purpose itself did not become a proof. It guided which obligations had to be declared.
+A purpose guides which Contracts the designer chooses and how they fit together. The Contracts then state the
+obligations the machine must actually satisfy.
 
-The same applies to any other purpose. A safety-oriented system, a privacy-oriented system, a low-latency system, a
-regulatory system, or a financial settlement system may arrange different contracts because it is built for a different
-end. The machine does not discover that end. The designer declares obligations that make the end visible to the machine.
+If the purpose calls for predictable behavior, the designer may choose obligations that keep the machine consistent
+under the same declared conditions. The purpose itself has not become a Contract or a proof. It has simply shaped what
+the machine is required to do.
+
+The same applies to any other purpose.
+
+A machine built for safety will not make the same choices as one built for low latency. A privacy-sensitive system will
+draw different lines again. The end changes, so the obligations change with it.
+
+The machine does not discover that end for itself. The designer turns it into Contracts that keep the whole machine
+pointed in the same direction.
 
 So the line is absolute:
 
@@ -346,10 +363,14 @@ contract declares obligations
 implementation realizes those obligations
 ```
 
-If the purpose has not been lowered into explicitly declared obligations, the machine verifies nothing.
+If the purpose has not been lowered into explicit obligations, the machine has nothing to judge about that purpose.
 
-And if the implementation is presented as the proof that the purpose was satisfied, the contract has already been
-swallowed by the implementation.
+And even when those obligations are satisfied, that does not mean the machine has proved the purpose itself. The
+implementation is not proof either. It is only one way the machine happened to fulfill the Contract.
+
+The moment we use the implementation to explain what the Contract really means, the Contract has already been swallowed
+by the implementation.
+
 
 ---
 
