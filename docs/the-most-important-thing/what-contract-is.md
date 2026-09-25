@@ -183,29 +183,37 @@ I do not want software to serve formal elegance. I want a machine that works.
 A contract is the declared set of obligations software must satisfy.
 ```
 
-I use that definition here.
+I mean that literally.
 
-This definition is not tied to class, object, type trick, framework, or implementation style. A contract is not what a
-class looks like. It is not what an object happens to contain. It is not what a type theorist can encode with enough
-clever machinery.
+The machine has an obligation before we decide how to realize it. We choose an implementation to fulfill that
+obligation, not the other way around.
 
-A contract is the declared obligation.
+That matters because an implementation comes with its own shape. A class may inherit. A framework may hide behavior. A
+type system may build deep structure. Fine. Those are ways to build the machine. They are not the Contract.
 
-A trap appears here. If contracts inherit other contracts, compose other contracts, include other contracts, and those
-contracts do the same thing again, the whole structure turns into genealogy. It is the same family tree under a cleaner
-name.
+The trouble starts when we copy that shape back into the Contract. One Contract gets its meaning from another, which
+gets its meaning from another again. Before long, we are tracing a family tree just to find out what the machine
+actually owes.
 
-That structure does not clarify contracts. It gives inheritance better branding.
+That is not a clearer Contract. It is the same hidden structure with better branding.
+
+A good machine should do the opposite. Its obligations should be explicit enough to stand on their own, and rich enough
+to say what actually matters.
+
+That naturally gives us two things. We need the individual Contracts that state those obligations, and we need one place
+that shows which Contracts belong to the machine we are looking at.
+
+That is the role of the manifest.
 
 So contract structure has to stay two-dimensional.
 
-The first dimension contains closed contract presentations and required coordinates:
+The first dimension contains closed Contract presentations and the coordinates they require:
 
 ```text
 interface contract and its public surface
 input presentation contract
-admission contract
 canonicalization contract
+admission contract
 lowering contract
 fact contract
 invariant contract
@@ -220,43 +228,21 @@ version coordinate
 policy / budget / capacity / governance contract
 ```
 
-The second dimension contains interaction manifests. A manifest does not inherit contracts. It does not compose
-interfaces. It does not pull in another manifest, which pulls in another manifest, which pulls in another one until
-nobody knows what is actually required.
+The second dimension is the interaction manifest.
 
-It binds a flat list of closed contract presentations and required coordinates for one interaction.
+It does not create another layer of Contract meaning. It simply says which of those closed Contracts govern one
+interaction. That gives us one place to see what the interaction owes without making the Contracts depend on one
+another.
 
-Fact and Invariant do not become private laws recreated by each interaction. Fact declares the factual vocabulary that
-may stand inside the core. Invariant declares a standing integrity law attached to one factual kind. An interaction may
-bring material to those laws, but it does not privately redefine them. The interaction manifest still names both because
-it lists every contract authority that governs the interaction, not only the declarations written again inside it.
+Some of those Contracts are standing laws rather than something recreated for every interaction. Fact defines what
+factual material may stand inside the core. Invariant defines the integrity law that factual material must continue to
+satisfy. The manifest names them because they govern the interaction, not because the interaction owns or redefines
+them.
 
-```text
-interaction manifest
-    -> interface contract and its public surface
-    -> input presentation contract
-    -> canonicalization contract
-    -> admission contract
-    -> lowering contract
-    -> fact contract
-    -> invariant contract
-    -> state contract
-    -> state transition contract
-    -> explicit state machine manifest
-    -> failure contract
-    -> publication contract
-    -> output presentation contract
-    -> diagnostic evidence / retention contract
-    -> version coordinate
-    -> policy / budget / capacity / governance contract
-```
+The state machine manifest works the same way. It makes the legal movement between declared states visible. It is not a
+parent sitting above State and Transition, and it does not gain meaning by pulling in another state machine.
 
-An explicit state machine manifest may feel like orchestration, but in this model it is only the declared surface of
-states and one-way transitions. It is listed here because the movement surface must be explicit, not because it becomes
-a parent contract above state and transition. It should state its own conditions and legal moves and stop there. It
-should not inherit another state machine. It should not compose another state machine.
-
-The model rejects these shapes:
+This is why the structure stays flat.
 
 ```text
 interface inheritance
@@ -268,8 +254,8 @@ hidden transitive obligation
 cyclic contract reference
 ```
 
-A manifest is a flat table, not genealogy. If one interaction requires five ancestors to understand it, the contract
-document has already failed. The same structure returned under a different name.
+If understanding one interaction means tracing a chain of other Contracts just to discover what it owes, the Contract
+has already stopped being explicit. That is genealogy again, no matter what name we give it.
 
 Convention is not enough here.
 
