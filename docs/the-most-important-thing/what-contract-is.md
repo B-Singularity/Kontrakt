@@ -201,7 +201,7 @@ A good machine should do the opposite. Its obligations should be explicit enough
 to say what actually matters.
 
 That naturally gives us two things. We need the individual Contracts that state those obligations, and we need one place
-that shows which Contracts belong to the machine we are looking at.
+that shows which Contracts govern the interaction we are looking at.
 
 That is the role of the manifest.
 
@@ -230,7 +230,8 @@ policy / budget / capacity / governance contract
 
 The second dimension is the interaction manifest.
 
-It does not create another layer of Contract meaning. It simply says which of those closed Contracts govern one
+It does not become another parent Contract above them. It simply says which closed Contracts govern one interaction. It
+simply says which of those closed Contracts govern one
 interaction. That gives us one place to see what the interaction owes without making the Contracts depend on one
 another.
 
@@ -239,7 +240,8 @@ factual material may stand inside the core. Invariant defines the integrity law 
 satisfy. The manifest names them because they govern the interaction, not because the interaction owns or redefines
 them.
 
-The state machine manifest works the same way. It makes the legal movement between declared states visible. It is not a
+The state machine manifest follows the same rule of flatness. It makes the legal movement between declared states
+visible. It is not a
 parent sitting above State and Transition, and it does not gain meaning by pulling in another state machine.
 
 This is why the structure stays flat.
