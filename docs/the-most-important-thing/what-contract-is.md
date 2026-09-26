@@ -374,22 +374,20 @@ by the implementation.
 
 ---
 
-## 6. Make Interfaces Great Again
+### 6. Make Interfaces Great Again
 
-Software needs a way to present contracts. One important surface is the interface.
+An **Interface** is a Contract defining the interaction surface of a machine.  
+An **Operation** is a Contract defining an action available through that surface.
 
 ```text
-Interface:
-    the software-visible contract presentation for interaction.
+Interface Contract:
+    Declares the interaction surface of the machine.
+
+Operation Contract:
+    Declares an action available through that surface.
 ```
 
-An interface is not an implementation skeleton, not a class without fields, and not a naive method list. It is the
-software-visible contract document for interaction.
-
-Modern interfaces usually fail at this. They are mostly weak method shells. A method list says, "this operation shape
-exists." A method list barely counts as a contract document.
-
-Still, the method surface should not be thrown away. The old JVM interface method gives users something familiar:
+Software has relied on this relationship in a familiar structure for decades.
 
 ```kotlin
 interface OrderPort {
@@ -397,38 +395,90 @@ interface OrderPort {
 }
 ```
 
-The shape is useful. It gives the operation name, an ordinary input-to-result surface, and a familiar handle for use.
-Remove that and the system becomes annoying to use. Nobody wants a contract theory that makes ordinary use harder than
-the problem it was meant to solve.
+We establish an interaction surface like `OrderPort` and make an action like `submit` available through it. An
+interaction participant provides the command and receives the result. There is no need or reason for that participant to
+know how the machine realizes the interaction internally.
 
-So the method remains.
+Originally, this gave us an outstanding boundary.
 
-But the method is not the contract, and the call is not the contract either.
+The problem started when people began defining an Interface mainly as some kind of **"abstract wrapper around an
+implementation."**
 
-Object-oriented programming trained people to confuse method calls, callbacks, virtual dispatch, and contract meaning. A
-method call is an invocation mechanism. A callback is a control-flow trick. They became so common that people started
-treating them like the natural shape of software contracts.
+An Interface can hide implementations, but hiding details is not what gives it meaning as a Contract. The participant
+does not need to know the realization because the machine has already declared what it promises at that interaction
+surface.
 
-They are not contract meaning.
+**Obligation comes first. Realization is subordinate to it and has to satisfy the declared Contract without changing
+what the Contract means.**
 
 ```text
-Method:
-    an operation handle at an interface surface.
+Contract
+    ↓ obligates
+Realization
 ```
 
-A method signature is only the weakest shell of an operation contract. It may show an operation name and an ordinary
-input-to-result surface. It does not by itself declare the boundary Input Presentation, the factual authority of the
-input or result, the Invariant judgment that lets a Fact stand, the authority to publish, the outward Output
-Presentation, the declared failures, or the policy, budget, capacity, and governance rules that apply.
+Contracts can also be discovered from existing codebases. Several implementations may already follow the same rule, and
+writing that rule down can turn an implicit understanding into an explicit Contract.
 
-For one method, the interaction manifest is still flat:
+Once the Contract is declared, though, its meaning no longer comes from those implementations. You can rewrite the
+realization, move it to another platform, replace the technology underneath it, or throw the old implementation away
+entirely. If the obligation stays the same, the Contract stays the same.
+
+This matters because "abstraction" is often used as an excuse to leave the actual obligations vague.
+
+Suppose an interaction is governed by ten rules, but the Interface only makes two of them explicit. The other eight do
+not disappear. They end up scattered through annotations, middleware, configuration, callbacks, framework behavior, or
+simply left in somebody's head.
+
+A codebase can be full of Interfaces and still fail to answer a very basic question:
+
+> **"What actually governs this interaction?"**
+
+At that point the Interface still exists, but the interaction Contract has become implicit.
+
+And interaction is the whole point here.
+
+A machine does not merely expose a method. It accepts something from another participant, decides what that interaction
+means, decides whether and how it may continue, performs an act, and eventually produces something that may or may not
+become visible outside the machine.
+
+A good machine has Contracts governing those things.
+
+The exact Contracts are discussed later. What matters here is that they do not stop being part of the interaction just
+because the method signature only shows an input and a result.
+
+That surface can stay simple:
+
+```text
+input
+    ↓
+operation
+    ↓
+output
+```
+
+but the interaction itself can still be governed by a rich set of machine obligations.
+
+We should not solve that by stuffing every obligation into the Operation Contract. Those Contracts have their own
+meanings and their own authority.
+
+What the Operation needs is one explicit declaration showing which of those independent Contracts govern that act.
+
+That declaration is the **Interaction Manifest**.
+
+```text
+Interaction Manifest:
+    Declares which independent Contracts govern one Operation.
+```
+
+For example:
 
 ```text
 submit(...)
-    -> interface contract and its public surface
+    -> interface contract
     -> input presentation contract
-    -> admission contract
     -> canonicalization contract
+    -> admission contract
     -> lowering contract
     -> fact contract
     -> invariant contract
@@ -443,15 +493,57 @@ submit(...)
     -> policy / budget / capacity / governance contract
 ```
 
-Fact and Invariant remain standing core laws. The operation may consume or produce material governed by them, but the
-operation does not create private factual kinds or private integrity laws for itself.
+The Manifest does not absorb these Contracts, merge them into the Operation, or become the authority over what they
+mean. It simply makes the relationship visible.
 
-Methods should not become another genealogy. Method inheritance must not become contract meaning, overloads must not
-become contract reuse, and default methods must not become hidden contract behavior. The method is the handle. The
-manifest is the contract. The call is just how
-one implementation path may enter the operation.
+When `submit` happens, these are the Contracts governing that interaction.
 
-Keep the method, but make it stop pretending to be enough. Make interfaces great again.
+That is the part Interfaces should have been helping us see all along.
+
+The interaction participant can still use a very small surface. It should not need the entire machine dumped in front of
+it just to invoke one Operation.
+
+A good machine can have a lot going on inside one interaction. The participant does not need all of those internal
+processes dumped onto the surface just to use it.
+
+This is what got lost when Interface became mostly a conversation about implementation abstraction.
+
+We spent too much time asking what an Interface hides and not enough time asking what kind of interaction it declares.
+
+That is backwards because Interface was already a natural place for interaction.
+
+It gives the machine a visible surface. Operations give that surface behavior. The Manifest lets one Operation point to
+the full set of Contracts governing that act without destroying the independence of those Contracts.
+
+Now the Interface becomes useful again in the way it was meant to be useful.
+
+It gives a participant a clear place to interact with the machine, while giving the machine a clear place to say what
+that interaction actually means.
+
+The participant can still get a simple interaction surface without forcing the machine to dumb down the Contracts that
+govern everything happening behind it.
+
+There is no reason to throw Interfaces away, invent another architectural pattern to recover the interaction boundary,
+and then spend the rest of the system trying to figure out where the real interaction went.
+
+The interaction meaning of Interface was already there. We just let it fade behind a much louder story about
+abstraction.
+
+Bring that meaning back.
+
+Make the Interface explicitly about interaction again.
+
+Let the Operation describe the act available through that interaction, and let the Manifest show the Contracts governing
+it.
+
+Then Interface can do what it was designed to do in the first place: give software a clear, explicit Contract for
+interacting with a machine.
+
+Reducing Interfaces to superficial wrappers around implementations was **fucking backwards**.
+
+Restore the interaction.
+
+Make Interfaces Great Again.
 
 ### 6.1 The Surface of an Interface Contract
 
