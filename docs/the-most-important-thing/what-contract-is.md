@@ -1056,63 +1056,110 @@ It is which parts of this machine actually carry Contract authority.
 
 ---
 
-## 11. What Counts as Contract in the Pipeline
+### 11. What Counts as Contract in the Pipeline
 
-A pipeline does not automatically become a contract. A processing sequence is just a processing sequence until it
-declares an obligation.
+Think about a normal engineering process for a second.
 
-The distinction is simple enough to miss.
-
-A stage says that something happens. A contract says what the machine must preserve, permit, reject, produce, or refuse
-while it happens.
-
-This means a pipeline name is not contract authority. Neither is execution order. A stage becomes contract-shaped only
-when changing or removing its declared obligation would change what the machine is allowed to accept, believe, move,
-retain, or publish.
-
-The same test works in the other direction. If a step can be replaced, fused with another step, or removed without
-changing any declared obligation, that step belongs to realization. It may be necessary machinery. It is still not a
-contract merely because the pipeline contains it.
-
-So the useful question is not:
+A factory takes something in and sends something out, but nobody with a functioning brain thinks the factory is just raw
+material directly becoming a finished product.
 
 ```text
-Is this part of the pipeline?
+raw material
+    ->
+finished product
 ```
 
-It is:
+The middle is the factory. Material moves deliberately through explicit processes: one stage completes its work,
+material reaches the required condition for the next step, and the second stage begins based on that progress. If
+something breaks, the line halts right there to handle the failure on the spot.
+
+Visible processes give you control. Instead of guessing what happened inside the machinery, explicit intermediate
+positions let you attach state and manage the machine according to that state.
+
+When something fails, the stage retains what entered, what happened, and why the process stopped, leaving diagnostic
+evidence right where the failure occurred. You fix the specific stage, redesign the problematic boundary, or rewire the
+machinery without pretending the intermediate process never existed.
+
+Ordinary engineering depends on knowing how the machine gets from one meaningful condition to another.
+
+Software went the complete opposite way. Paradigms and frameworks spent decades hiding the middle behind functions,
+objects, indirection, callbacks, recursion, and runtime magic. The intermediate process never disappeared—we just became
+exceptionally good at making it implicit and unreadable.
+
+Kontrakt is not inventing some revolutionary software concept called a Pipeline. I am doing something much less
+exciting: taking an ordinary engineering reality and putting it back into software.
+
+If the intermediate process matters, make it explicit. A realistic Contract Machine should expose the causal structure
+that actually matters to the domain without forcing anyone to reconstruct it from the implementation afterward.
+
+That explicit logical structure is the Pipeline. A Flow is one progression through it, and a Stage is a declared logical
+position inside it.
 
 ```text
-What obligation would the machine lose if this declaration disappeared?
+Pipeline
+    = explicit logical structure of the machine process
+
+Flow
+    = one progression through that structure
+
+Stage
+    = one declared logical position in that structure
 ```
 
-If there is no clear answer, the declaration is probably describing implementation.
+Think about the factory again.
 
-The real line is still declaration.
+What matters is not the particular motor, conveyor, controller, or robot arm installed today. What matters to the
+process is that material reaches a stage under the right condition, intended work happens there, and only an acceptable
+result moves forward.
 
-A behavior does not become contract just because someone can observe it, depend on it, or break when it changes. That is
-how duck typing, framework convention, accidental behavior, and test expectation sneak back in as implicit contracts.
+The physical machinery can change. One machine can be replaced, two physical operations can be combined, or one step can
+be split into several while the required relations between stages remain intact.
 
-A contract exists only when the obligation is declared as contract material and bound through the valid contract world:
-a closed contract presentation, a flat interaction manifest, a required coordinate, or governed contract metadata.
+Software should get the exact same treatment. The Pipeline is not a copy of the call graph or runtime topology—those are
+just ways to realize the process. The Pipeline describes the process that must remain meaningful even when those
+implementation details change.
 
-If a change alters a declared obligation, it is contract change.
+Once that process is explicit, managing the machine becomes straightforward. We know which Stage a Flow reached, what
+has already been established, what is allowed next, where execution stopped, and which part owns the information
+explaining why. We preserve diagnostic evidence right where something unusual happened instead of reconstructing history
+from whatever garbage the implementation happened to leave in the logs.
 
-If a change preserves the declared obligation and only changes realization, it is implementation change.
+We can also optimize against an explicit process instead of blindly tuning code. Work can move earlier when required
+information already exists, bad material gets stopped before wasting more resources, physical operations get combined
+without merging distinct meanings, and an implementation can be replaced completely while the Pipeline stays untouched.
 
-If a change breaks undeclared reliance, that reliance is compatibility debt, not contract authority.
+Making the middle explicit does not freeze the implementation. It defines which parts of the process actually carry
+domain authority, giving the implementation far more freedom to change everything else.
 
-Do not let observed behavior become contract by accident.
+There is, however, an important line here: just because something appears in the Pipeline does not automatically make it
+a Contract.
 
-Contract and implementation stay on different axes. The contract names the obligation. The implementation realizes it.
-As long as the obligation survives, the realization may change. If changing the realization also changes the contract,
-the mechanism has leaked into authority.
+A Stage gives the machine an explicit logical position in the process, whereas a Contract gives the machine an
+obligation.
 
-Presentation needs the same discipline. Input Presentation and Output Presentation may be contract material when they
-declare a closed reliance shape. That still gives them no factual, judgment, movement, or publication authority. They
-declare what may be presented, not what the machine must believe or say.
+```text
+Stage
+    = a declared logical position in the Pipeline
 
-The following section applies this distinction to the contract presentations that appear in the pipeline.
+Contract
+    = a declared obligation governing the machine
+```
+
+A box on a diagram has no authority just because somebody drew it there. Execution order has no authority simply because
+that is how the code currently runs.
+
+The useful question to ask is always:
+
+> What obligation would the machine lose if this declaration disappeared?
+
+If removing or changing a declaration alters what the machine is allowed to accept, establish, move, expose, or refuse,
+then Contract meaning changed. But if the physical machinery underneath can change while those obligations remain
+strictly true, that machinery belongs purely to realization. Necessity alone does not confer Contract authority.
+
+That gives us the Pipeline, but it still does not tell us what kinds of Contract actually participate in it, which ones
+belong to a Stage, which ones govern movement across several Stages, and which ones sit on another axis entirely.
+
+That is the next problem.
 
 ---
 
