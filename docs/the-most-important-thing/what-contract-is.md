@@ -547,106 +547,90 @@ Make Interfaces Great Again.
 
 ### 6.1 The Surface of an Interface Contract
 
-An interface contract needs a surface.
+An Interface Contract needs a surface.
 
-The surface is the public reliance boundary of that interface contract. It tells the outside user exactly what they are
-allowed to touch: which operation they can select, what Input Presentation they can hand over, what public claim they
-may expect, through which Output Presentation that claim may appear, and which public failures or limits they can safely
-rely on.
+The surface is the part of the Contract an interaction participant actually uses and is allowed to depend on. It should
+give the participant everything needed to use the machine correctly without making them learn how the machine happens to
+work inside.
 
-The surface is not the whole machine. It is the strict part of the interface contract the user is allowed to depend on.
+This is basic engineering almost everywhere else.
 
-And that distinction matters.
+You do not learn the drivetrain before driving a car. You do not study the wiring diagram before operating a machine.
+You do not need to understand quantum mechanics, semiconductor physics, memory controllers, or file systems just to use
+a smartphone.
 
-A good machine does not make the user dissect its guts just to use it correctly. You do not need to understand
-combustion timing, fuel injection, or brake hydraulics to drive a car. A smartphone user does not need to learn
-semiconductor physics, file systems, or memory controllers just to make a call.
+Making complicated machinery easy to use is part of building the machinery well.
 
-That is what a surface is for.
+Software gets fucking weird here.
 
-It gives the user a stable, usable contract. Press this. Turn this. Submit this. Receive that. Stop here. Retry there.
-The user relies on the promised surface, not on the plumbing hiding behind it.
+Somehow, memorizing implementation details became a measure of developer skill. People learn framework lifecycles,
+runtime quirks, hidden ordering rules, undocumented behavior, internal classes, configuration tricks, and whatever other
+shit happens to make the thing work today. Then we look at the person who remembers the most of it and call them an
+expert.
 
-If the machine forces the user to understand its internal mechanisms just to use it correctly, the surface is garbage.
+If they are actually working on the machine itself, that makes sense. Someone debugging the runtime, modifying the
+framework, optimizing the implementation, or building the next version obviously needs to know how the machinery works.
 
-And there is another failure mode that is worse.
+But needing all of that just to use the thing is not expertise. It means the tool is badly made.
 
-If internal machinery bleeds into the surface, the implementation loses its freedom to move. Imagine a car where the
-public driving contract forces the driver to rely on the exact gearbox mechanism and hydraulic response curve. The
-second the manufacturer tries to replace the transmission or move to an electric drivetrain, the driving contract
-breaks. You permanently destroyed your freedom to replace the backend because you taught the user to rely on your
-plumbing.
+From the side of the person building the tool, that should be embarrassing. I gave you a surface because I wanted you to
+use the surface. The implementation behind it is my problem. I should be able to tear it apart tomorrow and replace half
+of it without forcing everyone using the machine to relearn how the machine works.
 
-Software is exactly the same.
+If I cannot do that because my users had to memorize the internals just to operate the thing, then I did not build some
+wonderfully sophisticated tool for advanced engineers.
 
-A surface must never expose the current implementation as public meaning. It can expose presentation shapes, operation
-names, public failures, public limits, and public claims. It can say what the user is allowed to rely on. But it must
-absolutely not force the user to rely on whatever temporary machinery happens to realize the contract today.
+I built a shitty tool with a shitty surface.
 
-Spring is a useful warning here.
+Nobody thinks a car is impressive because the driver has to understand the gearbox before moving forward. Nobody thinks
+an industrial machine is well designed because the operator needs the wiring diagram beside the controls. Nobody praises
+a smartphone because you need to understand semiconductor behavior before making a call.
 
-Its surface looks deceptively simple: slap an annotation on a class, inject a dependency, and let the magic handle the
-request. But the minute you do serious engineering, you are forced to understand the hidden machinery: when the
-framework is speaking for the program, when the program is actually speaking for itself, and which invisible convention
-is quietly deciding the result.
+Software should not get a special exemption from basic engineering just because we got used to bad surfaces.
 
-That is not a clean surface. That is internal machinery leaking straight into the user's contract.
+A surface should tell the participant what the machine offers and what can safely be relied on while using it. The
+machine may have a huge amount going on behind that interaction. It may carry rich Contracts, complicated judgments,
+state, resources, failures, and whatever else the machine actually needs. None of that means the participant should have
+to carry the machinery around in their own head just to use the thing.
 
-The problem is not that Spring uses machinery. Every real machine needs machinery. The problem is that the user is
-forced to reverse-engineer that machinery just to use the surface correctly.
+The participant can still get something simple:
 
-A good machine does not play that game.
+```text
+input
+    ↓
+operation
+    ↓
+output
+```
 
-This is also where hexagonal architecture meets the same wall.
+That simplicity is not permission to make the Contract vague.
 
-Hexagonal architecture wants the core protected from outside technology. That instinct is useful. The problem appears
-when the outside technology is not a small tool, but a platform.
+If something matters to the participant when using the machine, it belongs on the surface in a form the participant can
+rely on. Hiding an actual obligation somewhere inside the implementation does not make the surface cleaner. It just
+means the surface failed to say something important.
 
-Put Spring inside the core, and the core starts speaking through Spring. The operation is no longer only the operation
-you declared. It becomes the operation as shaped by Spring's runtime machinery. The contract meaning has been handed to
-an outside machine.
+A good surface exposes enough of the Contract for the interaction to be used correctly and leaves the machinery that
+realizes that Contract where it belongs.
 
-Push Spring out to an adapter, and the core stays cleaner. But Spring stops being the platform it was designed to be.
-Its strongest force now sits at the edge, away from the place where the system's main obligations are supposed to be
-declared.
+That is what lets the machine change without dragging everyone using it along for the ride.
 
-That is the dilemma.
+Change the algorithm. Replace the storage. Rewrite the realization. Move the whole thing to another platform if you
+want. As long as the Contract has not changed, the interaction participant should not have to give a shit.
 
-Hexagonal architecture does not remove it. It names the place where it hurts.
+The participant gets something stable and understandable to use, while the machine keeps the freedom to improve
+underneath it.
 
-A port can separate code. It cannot, by itself, purify authority. If the platform decides the meaning, the core is
-contaminated. If the platform is kept away from meaning, the platform becomes outer machinery.
+That is what the surface is doing.
 
-Kontrakt takes the harder line. The contract must not be donated to the platform, and the platform must not be smuggled
-into the contract just because it is convenient. The machine may use outside machinery behind a boundary, but the
-declared obligation must be lowered into contract-owned material before that machinery gets to act.
+It is not just a pretty API or a thin layer covering the "real" system. It is the part of the Interface Contract through
+which another participant actually deals with the machine.
 
-The surface declares the public obligation. It does not force the user to learn the implementation.
+If using your machine requires learning its guts, you made a bad surface.
 
-This is exactly why a naive interface is not enough.
+If you deliberately made it that way and think the required internal knowledge proves how sophisticated your engineering
+is, you did a fucking bad job.
 
-An interface may present a software-visible operation surface. A method may give the user a familiar handle. But the
-surface of the interface contract must still explicitly declare what the user can depend on, without demanding that they
-learn the inside of the machine.
-
-The interaction manifest does not arrive later as another runtime step. It binds the selected interface surface to the
-interaction-specific contract world: Input Presentation, admission, canonicalization, lowering, Fact, Invariant, state,
-transition, failure, Publication, Output Presentation, diagnostic retention, version coordinate, policy, budget,
-capacity, and governance. Fact and Invariant remain standing laws of the enclosing core; naming them here means that
-they
-govern the interaction, not that the interaction redeclares them.
-
-The user sees the surface.
-
-The verifier sees the manifest.
-
-The implementation realizes the manifest behind the surface.
-
-If the surface leaks implementation, the implementation has stolen contract authority.
-
-If the surface hides a public obligation inside internal machinery, the contract has failed in the other direction.
-
-A good surface lets the user depend on the contract without giving a single fuck about the machinery.
+A good surface lets the participant depend on the Contract without giving a single fuck about the machinery behind it.
 
 ---
 
