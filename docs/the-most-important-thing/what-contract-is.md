@@ -1165,9 +1165,12 @@ That is the next problem.
 
 ## 12. Contract Presentations in the Pipeline
 
+If we read software as an engineering machine with an explicit Pipeline, the Contracts that govern that machine can be
+placed along that process and examined by the role each one owns.
+
 Calling everything `contract` does not make the machine explicit. It only gives the confusion a respectable name.
 
-This section follows material through the pipeline and separates the obligations that govern it along the way. Those
+This section follows material through the Pipeline and separates the obligations that govern it along the way. Those
 obligations belong to one machine, but they do not answer the same question and should not be allowed to blur together.
 
 ### 12.1 Fact Contract and Immutable Fact
