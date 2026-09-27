@@ -696,154 +696,198 @@ A good machine cannot be a fantasy function. It is a function-like system that a
 
 ---
 
-## 9. Core, Boundary, and the Fucking Bastards Outside
+### 9. Core, Boundary, and the Fucking Bastards Outside
 
-There is one thing worth taking from object-oriented programming: disciplined separation.
+A good machine needs somewhere it can speak in its own terms. We call that its Core. Inside it, the machine uses its own
+representations, operations, and Contracts.
 
-Not inheritance. Not subtype games. Not callback-shaped control flow. Most of that can go to hell. But the instinct to
-split responsibilities, keep things apart, and group what belongs together is useful. A real machine needs that.
+Anything from outside has to cross a Boundary before it can enter that world, and that boundary has to be strict because
+there are fucking bastards outside it.
 
-Once a machine has a logical pipeline, the space between input and output cannot stay as one magical blob. It breaks
-into
-stages. Once there are stages, there are boundaries.
+Users do not use programs the way you hoped. Some send garbage by accident, some are careless, and some are actively
+trying to break the machine. Attackers look for the gap between what the machine accepts and what it actually
+understands—give them one crack and they will keep hitting it.
 
-A stage is not just code. It has an outside and an inside. It receives material, performs judgment, and passes forward
-only what it is allowed to pass. Each unit pipeline has a boundary and a core.
+Outside material does not get trusted just because it arrived in a valid type. Before it enters the Core, the machine
+has to inspect it, judge it, and turn it into something the Core understands in its own terms. If JSON comes in, the
+Core does not become JSON. If a database gives us a row, that row does not automatically become our domain
+representation.
 
-The core is where the declared contract must hold.
-
-The boundary is where outside material is inspected, judged, rejected, or lowered into something the core is allowed to
-understand.
-
-The boundary has to be strict because there are fucking bastards outside it.
-
-Users do not use programs the way you hoped. Some send garbage by accident. Some send garbage because they are careless.
-Some send garbage because they are trying to break the machine.
-
-Attackers are worse. They inject strange input, exploit ambiguity, abuse serialization, forge shape, poison state, and
-look for every tiny crack between what the program accepts and what the program actually understands.
-
-Users and attackers are not the only fucking bastards outside the boundary.
-
-Frameworks, libraries, proxies, bytecode agents, reflection tools, serializers, runtime hooks, build plugins, and
-instrumentation systems can also mutate what the machine thinks it received. They intercept calls, wrap objects, rewrite
-bytecode, fake types, decorate behavior, delay execution, and smuggle implementation tricks into places where people
-start treating them as facts.
-
-A lot of modern software depends on these things without thinking. Everything looks fine
-until one dependency, one proxy, one bytecode trick, or one hidden runtime convention changes the meaning of what
-crossed
-the boundary.
-
-So the core must not trust material just because it arrived through a familiar API, because a framework handed it over,
-or because a library says it is already shaped.
-
-Everything outside the core is untrusted until the boundary has judged it.
-
-The same goes for contracts.
-
-One of the easiest ways to poison a core is to accidentally drag an external contract into it. A language-library
-interface, framework interface, proxy interface, persistence interface, serialization interface, or test-tool interface
-can look harmless because it is already typed and familiar. The trap appears when the core starts depending on that
-external interface as if it were its own contract. At that
-moment, the outside has entered the inside.
-
-I call this external contract infiltration.
-
-You cannot build everything from zero. That would be stupid. External libraries and frameworks are useful. But their
-interfaces must not be accepted as core contracts just because they exist. They must be judged, mapped, and adopted only
-when they match the internal contract you actually meant to declare.
-
-The rule is not:
+Outside material comes in speaking somebody else's language. The Core should speak ours.
 
 ```text
-This framework gives me an interface, so I will use it as my contract.
+Outside material
+    -> inspect
+    -> judge
+    -> translate
+    -> machine representation
+    -> Core
 ```
 
-The rule is:
+This takes work. You have to define your own representation and write the translation. Sometimes it feels much easier to
+pass whatever the framework or database gave you straight through the system. A lot of software does exactly that, which
+is also how you end up with a Core that belongs to everything except you.
+
+Doing the annoying work gives the machine control over what its own world means. If foreign material can walk straight
+through the Boundary and stay foreign all the way into the Core, the Boundary is bullshit.
+
+Users and attackers are not the only fucking bastards outside it. Libraries are outside, frameworks are outside, and the
+language we used to build the machine is outside too. People forget that one all the time.
+
+Java is not my machine. Kotlin is not my machine. The JVM is not my machine.
+
+A language feels different because the whole system is written with it. Its standard library is always there, so its
+types and behavior start feeling native. They are not—they belong to the language and the platform.
+
+You see people talk seriously about DDD or Hexagonal Architecture, put a clean adapter around a database, and then let
+platform types and runtime behavior spread through the entire Core. They noticed one outside dependency and forgot the
+one sitting under every line of code. Something does not become ours because it ships with the language or because we
+have used it for so long that we stopped noticing it.
+
+Outside is outside. That does not mean we stop using outside things, as trying to build everything ourselves would be
+stupid. It means we know what belongs to our machine and what we merely use to build it.
+
+The same principle applies to Contracts. Every dependency brings rules with it—sometimes those rules are exactly what we
+want, like a protocol with promises we are happy to depend on or a platform with behavior we deliberately choose to rely
+on.
+
+Giving somebody else's Contract authority over our machine should always be a conscious decision. Look at what it
+promises, look at what can change, and then decide whether to keep it outside and translate at the Boundary or
+deliberately accept it as a dependency of our machine.
+
+What is unacceptable is letting a foreign Contract spread through the Core simply because calling the external API
+directly was easier. When the Core quietly starts assuming somebody else's lifecycle or error meaning, external Contract
+infiltration has occurred. If we chose that dependency knowingly, there is no problem, but if nobody chose it and the
+Core still answers to it, the Contract has been contaminated.
 
 ```text
-This external interface may be used only if it can be ratified against my internal contract.
+External dependency
+    -> may provide machinery
+    -> may provide an external Contract
+
+Reviewed and declared dependency
+    -> legitimate Contract relation
+
+Foreign Contract silently deciding Core meaning
+    -> Contract infiltration
+
+Our meaning now depends on that undeclared authority
+    -> Contract contamination
 ```
 
-If it matches, adopt it explicitly. If it does not match, isolate it behind a boundary. If it changes the obligation, do
-not pretend nothing happened. Your contract has been touched.
+"Dependencies are dangerous" is useless advice. Of course they are dangerous—the point is knowing *what* we actually
+agreed to depend on.
 
-External dependencies can change the meaning of your system without asking permission. A library update, framework
-proxy, generated adapter, bytecode agent, serializer rule, reflection convention, or default method can quietly bend the
-contract away from your intention. Dependencies are not just code you call. They can be foreign contracts
-trying to move into your core.
+That is why dependency management is part of system quality. A machine that knows where a foreign Contract enters keeps
+the freedom to replace it or accept it deliberately. A machine that lets foreign assumptions spread everywhere loses
+that freedom.
 
-Boundary work is contract work.
+If an external Contract changes and we depend on what changed, something real changed for us too. We deal with that
+honestly.
 
-For now:
+But if the Contract stayed the same and an implementation update still breaks our machine, we were depending on an
+undocumented ordering rule, a serializer quirk, or some other implementation accident we were never promised in the
+first place.
+
+That is a fucking ticking time bomb sitting quietly until somebody upgrades a library or runtime. When the machine blows
+up, the dependency did not betray us—we were just stupid enough to build domain meaning on top of something it never
+promised.
+
+Importing an external interface does not make it our Contract either. Another system's Contract is a lot like another
+country's law: we can recognize it and explicitly agree to depend on parts of it, but we do not replace our own
+constitution just because importing the package was convenient.
 
 ```text
-Never use outside material directly inside the core.
-Never import an external contract as a core contract without ratification.
+My Contract
+    -> explicitly depends on
+External Contract
+
+External Contract
+    -> does not automatically become
+My Contract
 ```
 
-Judge it. Reject it if it fails. Lower it if it passes. Adopt it only if it is coherent with the contract you declared.
+Use what you need, declare the dependency, and stay clear about who owns the meaning.
 
-If the core accepts outside material as-is, the boundary is fake. If the core accepts external interfaces as its own
-contract without judgment, the contract is already infected.
+And do not get too comfortable pointing at everybody else outside the wall.
 
-The fucking bastards do not only try to break into the core.
-They also wait outside, hoping you are stupid enough to bleed internal truth.
+**We are somebody else's fucking bastard outside, too.**
 
-Imagine the core holds an established Fact. It carries the exact meaning the machine needs: internal identifiers,
-provenance, internal relations, scope, version, governance markers. Then some lazy programmer decides the "efficient"
-thing to do is just hand that entire Fact to the outside world. No separate publication claim. No closed presentation.
-Just dump the Fact into the response and go home early.
+The moment another machine uses our API, we become part of its outside world. If we leak internal identifiers or
+accidental behavior through that surface, someone out there *will* build on top of them. Then we refactor our
+implementation, and their machine breaks.
 
-Congratulations. You just blew the doors off the vault.
+We can yell *"that was never part of the Contract!"* all we want, and technically we might be right. But we still gave
+them a shitty surface if our internal garbage looked stable enough to depend on. Undeclared behavior does not become a
+Contract just because somebody saw it, but exposing internal garbage still creates compatibility debt and gives other
+systems something to depend on that we never meant to guarantee.
 
-An attacker is sitting there scraping your internal identifiers. They correlate facts you never meant to connect. They
-infer hidden relations, replay stale material, exploit version drift, and mine every internal coordinate for data the
-public contract never promised.
-
-Ordinary users are just as destructive, but by accident. They instantly start depending on whatever garbage they can
-see. An internal coordinate becomes their public dependency. A provenance marker becomes their business signal. A
-temporary relation becomes their hardcoded ID. A version tag becomes something their client branches on.
-
-The minute you try to change the core, you break them. You are now permanently paralyzed by people who were never
-supposed to depend on your internal factual shape in the first place.
-
-The thieves did not break into the vault.
-You dragged the fucking vault outside and opened it for them.
-
-An established Fact is not an output presentation. Internal truth is not automatically a public claim. Just because the
-machine is allowed to know something does not mean the outside world gets to see it, depend on it, stash it, replay it,
-or throw it back at you as authority.
-
-The rule is absolutely not:
+Every machine is an "outside" to someone else. Machines should meet through declared Contract meanings—not by letting
+their implementations bleed into each other until nobody knows who owns the rules anymore.
 
 ```text
-The core knows this Fact, so just return the damn thing.
+Machine A Contract
+    -> declared outward meaning
+    -> explicit dependency relation
+    -> Machine B Contract
 ```
 
-The rule is:
+The fucking bastards outside are dangerous in the other direction too. Engineers usually picture an attacker throwing
+malicious Input at the machine, but that is only half of it.
+
+The exact same bastard can sit outside and carefully watch what comes back. Maybe two errors reveal different internal
+states, or maybe the response size changes depending on a secret. Security history is full of attacks built from tiny
+outward differences like these.
+
+An attacker does not need you to hand over the database. Sometimes one bit at a time is more than enough.
+
+Anything visible from outside can reveal something about what happened inside. Payload matters, but payload is far from
+the only thing that talks. Internal knowledge is not public knowledge, and internal material is not automatically an
+Output. Just because something is useful inside the Core does not give the fucking bastards outside permission to see it
+or depend on it.
+
+> *"The machine knows this internally"* is **never** a good enough reason to return it.
+
+Only the outward meaning the machine is actually allowed to claim should cross that line. Once something has gone
+outside, sending it back does not magically preserve its old authority—it goes through the Boundary again with no
+fucking VIP entrance.
+
+A Boundary is not just a filter for bad Input. Going in, it stops foreign material and foreign Contracts from becoming
+native by accident. Going out, it stops internal meaning from leaking into places where it was never supposed to matter.
 
 ```text
-The core may form only the outward claim that Publication explicitly authorizes,
-and that claim may appear only through its declared Output Presentation.
+Outside -> Inside
+    inspect
+    judge
+    translate into the Core's representation
+    admit what the machine accepts
+
+Inside -> Outside
+    form declared outward meaning
+    expose only what may be relied on
+    keep internal meaning inside
 ```
 
-Publication decides what factual meaning gets to cross the line. Output Presentation declares the exact, closed outward
-shell that carries it. Everything else stays locked inside.
-
-And if an exposed Fact somehow comes back from the outside? It is outside material again. Period. Prior exposure does
-not grant it core authority. It does not bypass the airlock, and it sure as hell doesn't prove its own innocence just
-because the machine published something similar yesterday.
-
-For now:
+Building a Boundary this way takes work, because building a good system takes work.
 
 ```text
-Never use outside material directly inside the core.
-Never expose an established Fact directly outside the core.
-Never import an external contract as a core contract without ratification.
-Never treat internal factual meaning as public meaning without Publication.
+Invariants:
+    1. Outside material does not become Core material just because it arrived.
+    2. Foreign material must enter the Core in a representation the machine owns and understands.
+    3. External Contracts are reviewed before they are allowed to govern the machine.
+    4. Legitimate Contract dependencies are declared explicitly.
+    5. Foreign implementation accidents never become Core meaning.
+    6. Internal meaning does not become public meaning by convenience.
+    7. Output is an active part of the Boundary too.
+    8. Our machine is also someone else's fucking outside.
 ```
+
+Boundary design is Contract design.
+
+If you do not know what crossed the line, how your Core came to understand it, which foreign Contract you chose to
+depend on, or what the other side is allowed to learn from you—you do not have a Boundary.
+
+You just drew a fucking line on an architecture diagram.
 
 ---
 
