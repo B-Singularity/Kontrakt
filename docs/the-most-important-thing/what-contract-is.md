@@ -893,73 +893,166 @@ You just drew a fucking line on an architecture diagram.
 
 ## 10. Applying Contract to a Good Machine
 
-Now apply the contract definition to this machine.
+From the principles established so far, the characteristics of a good machine can be summarized as follows.
 
-The interface names the interaction contract at the software surface. The method names the operation surface inside that
-interface. Once the operation enters a real machine, it cannot remain a flat invocation shape. It unfolds into a causal
-flow.
+1. **A good machine serves a declared purpose.**  
+   Its Contracts and engineering choices exist to serve the purpose for which the machine was built.
+
+2. **A good machine faces reality.**  
+   Failure and crash are expected and prepared for. Time, memory, capacity, dependencies, and the useful life of
+   software are finite. The machine should know the limits it can govern and remain honest about where its control ends.
+
+3. **A good machine remains function-like where reality permits it.**  
+   Under the same declared conditions, the machine should behave consistently and predictably rather than changing its
+   behavior through hidden or accidental conditions.
+
+4. **A good machine has a meaningful middle and owns it explicitly.**  
+   Unlike a mathematical function, a real machine has an intermediate process, and that process matters to engineering.
+   The important causal structure of the machine should remain visible rather than disappearing into callbacks, proxies,
+   hidden dispatch, or other implicit implementation flow.
+
+5. **A good machine represents its condition richly, accurately, and honestly.**  
+   Its State, legal movement, failures, judgments, and diagnostic evidence should describe what is actually happening in
+   the machine rather than forcing that condition to be reconstructed later from implementation residue.
+
+6. **A good machine separates Contract from Implementation.**  
+   Contract declares the obligation. Implementation realizes it. The realization may be replaced, optimized, or
+   rewritten without changing Contract meaning as long as the same obligations remain satisfied.
+
+7. **A good machine owns its Core and its meaning.**  
+   The Core speaks in machine-owned representations and Contracts. Language, runtime, framework, external
+   representation, and foreign Contract meaning do not become native authority merely because they are convenient to
+   use.
+
+8. **A good machine controls both sides of its Boundary.**  
+   Outside material does not become Core material merely because it arrived, and internal meaning does not become public
+   meaning merely because the machine knows it.
+
+9. **A good machine makes authority and control explicit.**  
+   Authority should come from the Contract that owns a judgment, not from the fact that some implementation happened to
+   execute, return, mutate, or expose something.
+
+10. **A good machine respects physical engineering.**  
+    Mathematical elegance and abstraction do not excuse a machine that is too slow, too expensive, too wasteful, too
+    unpredictable, or too difficult to operate for its purpose. Implementation mechanisms remain replaceable, but the
+    machine must satisfy the physical obligations required by the purpose it serves.
+
+11. **A good machine remains usable from the outside.**  
+    Rich internal Contracts should not force an interaction participant to understand the machinery behind them. The
+    interaction surface should expose what the participant may rely on while keeping the realization behind that surface
+    replaceable.
+
+These properties cannot be expressed honestly through one method signature or one general-purpose Contract wrapped
+around an implementation.
+
+Different parts of the machine carry different obligations, so those obligations need distinct Contract authority.
+
+At the level developed so far, that gives us the following Contract structure:
 
 ```text
-interface:
-    contract document at the surface
+Interface
+    declares the interaction surface
 
-method:
-    operation handle
+Operation
+    declares an act available through that surface
 
-pipeline:
-    explicit causal shape needed to satisfy the operation contract inside the machine
+Interaction Manifest
+    declares which independent Contracts govern one Operation
+
+Input Presentation
+    declares the closed form in which outside material may be presented
+
+Canonicalization
+    declares the stable machine-owned representative of declared-equivalent presentation
+
+Admission
+    declares whether presented material may continue
+
+Lowering
+    declares how admitted material becomes Core-owned candidate material
+
+Fact
+    declares what factual material may stand inside the Core
+
+Invariant
+    declares whether candidate factual material may obtain factual authority
+
+State
+    declares the machine condition governing legal movement
+
+Transition
+    declares legal movement between States
+
+Explicit State Machine
+    declares the complete State and Transition surface
+
+Failure
+    declares contract-governed refusal or failure
+
+Publication
+    declares what established internal meaning may become an outward claim
+
+Output Presentation
+    declares the closed outward form of an authorized claim
+
+Diagnostic Evidence / Retention
+    declares what explanation may be produced and retained
+
+Version
+    identifies the Contract meaning under which material and judgments exist
+
+Policy / Budget / Capacity / Governance
+    declare the criteria, limits, and validity governing the machine
 ```
 
-From a purely functional view, we may care only about stable input and stable output. The middle can be ignored. A real
-machine does not get to skip the middle. The middle is where admission, rejection, factual establishment, movement,
-failure, evidence, Publication, and outward presentation actually happen.
+These Contracts do not form an inheritance tree, and they do not become one large Contract owned by the Operation. They
+remain independent authorities and are bound to an interaction through the Interaction Manifest.
 
-A good machine should not hide causal flow inside nested calls, closures, lazy thunks, higher-order function tricks, or
-callback-shaped control. Those forms may be fine for some formal model. They are not the machine I want.
-
-For control, each pipeline should have a single entry and a single exit. If everything can enter from everywhere and
-leave from anywhere, you do not have a pipeline. You have a mess.
-
-A rough contract pipeline looks like this:
+Applied to one interaction, they produce a causal Contract pipeline of roughly this shape:
 
 ```text
 Input Presentation
--> Admission
--> admitted material or declared stop
--> Canonicalization
--> Lowering
--> candidate input Fact
--> applicable Invariant judgment
--> established input Fact
--> Operation
--> candidate result Fact
--> applicable Invariant judgment
--> applicable State and Transition judgment
--> established result Fact and Operation success
-   or declared Operation failure
--> Publication
--> authorized public claim or declared publication stop
--> Output Presentation
-
-diagnostic evidence:
-    may be offered at declared judgment stages
-    retained only through the diagnostic retention boundary
+    ↓
+Canonicalization, if declared
+    ↓
+Admission
+    ↓
+Lowering
+    ↓
+candidate input Fact
+    ↓
+Invariant judgment
+    ↓
+established input Fact
+    ↓
+Operation
+    ↓
+candidate result Fact
+    ↓
+Invariant judgment
+    ↓
+State / Transition judgment, where applicable
+    ↓
+established result Fact
+    or declared Operation failure
+    ↓
+Publication
+    ↓
+Output Presentation
 ```
 
-Producing result material does not complete an Operation.
+Policy, Budget, Capacity, Governance, Version, Failure, and Diagnostic obligations apply where their authority is
+required. They are not necessarily separate sequential stages in the main pipeline.
 
-If the declared result must stand as Fact, the Operation succeeds only after every applicable judgment succeeds. If
-establishment fails, the Operation has failed to produce its contractual result. There is no successful result waiting
-outside the judgment and no public claim waiting behind a failed Fact.
+This pipeline describes causal Contract meaning, not a required physical execution layout.
 
-Policy, budget, capacity, and governance are not one naive stage at the end. They cut across the whole flow:
+The implementation may fuse work, change storage, execute independent work differently, or replace the backend entirely.
+Those choices belong to realization as long as the declared obligations, causal relations, and authority boundaries
+remain intact.
 
-```text
-policy / budget / capacity / governance:
-    applies across boundary, admission, execution, failure, publication, presentation, and diagnostic
-```
+The next question is therefore not whether something appears in the pipeline.
 
-The shape is still provisional. Each step needs its own explanation.
+It is which parts of this machine actually carry Contract authority.
 
 ---
 
