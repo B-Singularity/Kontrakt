@@ -1297,90 +1297,64 @@ means.
 What matters is that the machine knows its limits before crossing them. A machine that only discovers its resource
 limits after exhaustion or overload has already given part of its operation to accident rather than Contract.
 
-### 12.4 Input Presentation, DTO, and Raw Material
+### 12.4 Input Presentation Contract
 
-Something has to arrive at the boundary. Whatever arrives there is not yet a core fact and not a contract rule. It is
-just the form in which the outside world showed up.
+An Interaction gives the outside world an explicit point of entry into the machine. That entry still requires a declared
+form for any material presented through it.
 
-Maybe it came as JSON. Maybe it came as a message. Maybe it came through a framework object with three layers of
-annotations. The boundary still needs a shape it can look at.
+Input is the first Contract of the inbound Airlock. Sitting between the outside world and the Core, this boundary forces
+external material to prove itself before participating in Core meaning. Without it, uncontrolled assumptions from the
+outside world inevitably leak into the machine.
 
-That boundary-facing shape is the DTO.
+External material almost always arrives wrapped in technologies the machine does not own—databases, networks,
+frameworks, devices, serialization protocols, or third-party libraries. While necessary to transport data to the door,
+these mechanisms must never cross into the Airlock alongside the material. If understanding or using an Input requires
+reaching back into the stack that produced it, the Airlock has completely failed its job.
 
-A DTO is the boundary-facing presentation shape that makes outside material judgeable by the machine.
-
-Without that shape, the machine is not judging material. It is trying to reason over arbitrary outside material.
-
-The DTO gives the boundary something finite, named, and inspectable to judge. It is material presented to the airlock,
-not material allowed to live inside the core.
+Input gives external material a declared presentation that the machine can evaluate entirely on its own terms. Foreign
+technology can dictate how information reaches the Interaction, but it surrenders all right to define what that
+information means once presented.
 
 ```text
 Input Presentation Contract:
-    the contract that declares the closed presentation shape that may appear at the boundary
-
-DTO / Raw Presentation:
-    the boundary-facing data shape presented for judgment
+    the Contract that declares how outside material may be presented at an Interaction Boundary
 ```
 
-A DTO has no contract authority. It should not validate itself, decide, become a domain object, or carry framework
-rules, serializer rules, persistence rules, proxy behavior, or external interface meaning into the core.
+Rather than defining what the outside world is, Input declares what form the machine accepts at an Interaction.
 
-The DTO exists so the boundary can judge outside material under declared policy, budget, capacity, and governance.
+This gives the machine a concrete baseline for judgment. Material may originate from an untrusted source, but once it
+reaches the Airlock, the Input Contract dictates exactly what must be present to count as a valid presentation.
 
-In practice, a structurally valid DTO can still be rejected by policy. A meaningful DTO can still be deferred by
-capacity. A malformed DTO can fail fast. A suspicious DTO may leave bounded diagnostic evidence if the diagnostic policy
-allows it.
+The same dependency rule applies strictly to behavior. Data can enter as Input, but callbacks, lazy evaluations,
+proxies, repositories, mutable objects, or other live mechanisms that let the machine reach back past the Airlock must
+stay outside. Allowing them turns the outside world into an undeclared participant in Core logic.
 
-That last sentence needs discipline.
+The Airlock draws a strict line between external authority and governed material. Outside systems can transform data all
+they want before an Interaction, but Core authority begins strictly at the declared Boundary. History before
+presentation carries no weight.
 
-Rejected material does not get a second life just because somebody wants a debug trail. Keeping hostile material around
-is not free. It consumes storage, leaks secrets, creates replay paths, gives review tools a dangerous appetite, and
-tempts some later piece of code to treat rejected junk as if it were almost admitted.
+This does not make Input a complete judgment on whether material should proceed through the Pipeline. A value can pass
+presentation checks perfectly and still fail later domain rules. Input merely verifies that material matches the
+declared entry form.
 
-So the contract should not introduce a special kind of "quarantined material" as if it were part of the pipeline.
+Presentation material also stops short of becoming Core Fact. It remains boundary-level data within the inbound
+Airlock—ready to be evaluated, mapped, or transformed by subsequent Contracts. Crossing the threshold grants admission,
+not authority.
 
-The pipeline continues with admitted material.
+Implementation details like carriers are irrelevant here. Whether data arrives as a message, record, serialized payload,
+or DTO changes nothing. A DTO is just a vehicle; it is not what creates an Input. The underlying carrier can be swapped
+entirely without touching the Contract, so long as the declared presentation holds.
 
-Everything else stops.
+The same principle applies to memory allocation. The machine does not need to copy objects just to prove a boundary was
+crossed. Physical data structures can pass through processing untouched while their contractual meaning evolves along
+the Pipeline. Authority springs from Airlock judgments, not memory allocation.
 
-What may remain is evidence, not authority.
+Finally, presentation requires stability during evaluation. If an external process mutates material while the machine is
+reading it, verifying what arrived becomes impossible. Ensuring that stability is an implementation detail, but the
+Contract must observe a single, coherent snapshot.
 
-Examples:
-
-```text
-fast-fail policy:
-    reject invalid presentation immediately with declared failure
-
-diagnostic-retention policy:
-    bound how much diagnostic evidence remains and how long it remains available
-
-diagnostic-use policy:
-    allow retained evidence to support diagnosis, but never authoritative core reasoning or publication
-
-reject-unknown policy:
-    reject undeclared fields, metadata, shape, or external contract material
-
-compatibility policy:
-    allow legacy presentation only under a declared compatibility rule
-
-capacity-overflow policy:
-    reject or defer material when the declared capacity limit cannot admit it
-
-budget-exhaustion policy:
-    stop, defer, or fail when the declared allowance is exhausted
-```
-
-Compressed:
-
-```text
-DTO is judgeable outside presentation.
-It is not core fact.
-It is not contract authority.
-Rejected material may leave evidence.
-It must not leave authority.
-```
-
-A DTO entering the core as-is means the boundary did no real work.
+Once material satisfies the Input Presentation Contract, it becomes valid Boundary material for the remaining Airlock
+checks. Only after those Contracts finish their work can material cross from external presentation into Core authority.
 
 ### 12.5 Guard and Admission Judgment
 
