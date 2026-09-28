@@ -1175,62 +1175,29 @@ obligations belong to one machine, but they do not answer the same question and 
 
 ### 12.1 Fact Contract and Immutable Fact
 
-An immutable fact needs a careful description.
-
-Calling it ordinary data makes the concept too weak. Calling it the contract rule makes the concept wrong.
-
-An immutable fact is not a constraint, action rule, state transition rule, publication rule, or policy. Those are
-contract obligations. The fact is the factual material those obligations inspect.
+A machine consists of two things: operations that execute work, and facts that describe what the machine knows. In the
+Core, that information exists strictly as immutable Fact.
 
 ```text
 Fact Contract:
-    the contract that defines what kind of factual material may exist inside the core
+    the Contract that defines what factual information may exist inside the Core
 
 Immutable Fact:
-    the immutable factual material that exists under that fact contract
+    the immutable expression of that factual information
 ```
 
-Think of an Invariant that says an amount must not be negative. The immutable Fact says what the amount is. Think of a
-Transition that says which move is legal. The immutable Fact provides factual material that movement judgment may use.
-Think of Publication that says what outward claim may be formed. The immutable Fact provides the factual meaning that
-may justify that claim.
+Fact gives the machine an explicit language for information without deciding what should be done with it.
 
-The Fact stays dumb in this model.
+This is fundamentally different from the material moving through the Pipeline. Material is the concrete subject of a
+Stage—a Stage receives material, performs work, and passes updated or transformed material forward. Fact is the
+authoritative truth behind that material inside the Core.
 
-Dumb means dumb all the way down.
+Material changes condition from stage to stage, but Fact never changes with it. Once information is expressed as Fact,
+subsequent processing cannot rewrite it. If new information emerges later in the process, the machine simply emits a new
+Fact.
 
-A Fact has no behavior of any kind. It does not interpret, compare, select, validate, judge, move, diagnose, or publish
-itself. It does not carry convenience behavior disguised as harmless help. It is only complete immutable factual
-material.
-
-The Fact Contract defines the factual kind, the complete canonical factual values that belong to that kind, the
-applicable contract world, immutability, and Fact sameness. Invalid candidate material may be refused factual authority,
-but the Fact does not perform that refusal itself.
-
-The sameness law is direct:
-
-```text
-same Fact kind
-+ same complete canonical factual values
-+ same applicable contract world
-= same Fact
-```
-
-A repeated occurrence does not create another Fact.
-
-A different reference does not create another Fact.
-
-A different place of storage does not create another Fact.
-
-No act of production, representation, storage, reference, or occurrence grants factual authority or creates a separate
-factual identity. A Fact has no identity outside its complete factual meaning under the applicable contract world.
-
-```text
-Fact Contract is contract.
-Immutable Fact is contract-governed factual material.
-```
-
-Keeping those two apart prevents the old mixture of rule, data, identity, and behavior from coming back.
+A Fact carries no behavior. It performs no computation, holds no logic, and makes no decisions about what happens next.
+It merely states what is true, immutably.
 
 ### 12.2 Policy, Budget, Capacity, and Governance Contracts
 
