@@ -1199,82 +1199,105 @@ Fact.
 A Fact carries no behavior. It performs no computation, holds no logic, and makes no decisions about what happens next.
 It merely states what is true, immutably.
 
-### 12.2 Policy, Budget, Capacity, and Governance Contracts
+### 12.2 Policy and Governance Contracts
 
-A real machine is not an idea floating outside the world. It can bear only so much load before its operation begins to
-degrade or fails altogether.
+A real machine cannot operate under the assumption that one fixed execution path fits every situation.
 
-A good machine admits this before reality demonstrates it the hard way. Its usable capacity and operating limits belong
-in the contract because pretending the machine can endure anything does not make it stronger. It only makes the failure
-dishonest.
-
-A good machine must be honest about its own limits. It declares them, measures them, and operates under them.
-
-A machine that does not know its limits still hits them. It will hit them by accident, under pressure, in the worst
-possible place, while everyone pretends the contract was fine. The premise was false.
-
-Policy, budget, capacity, and governance exist because the machine is finite and must be operated wisely. They are not
-little stages tacked onto the end of the pipeline. They cut across boundary, admission, lowering, core judgment,
-failure,
-publication, and diagnostic.
+Even during normal operation, changing conditions demand different ways of operating. Pipeline outputs, active States,
+diagnostic evidence, and other governing Contracts continuously yield information that alters what should be allowed or
+required. Engineering handles this by explicitly declaring how the machine responds to operational information. Policy
+brings those decisions into the Contract.
 
 ```text
 Policy Contract:
-    the contract that declares which judgment criteria are active for a given machine context
-
-Budget Contract:
-    the contract that declares the finite consumable allowance of an operation, run, stage, or diagnostic path
-
-Capacity Contract:
-    the contract that declares the admissible limit of a machine, surface, stage, or storage region
+    the Contract that declares how the machine should respond to declared information relevant to its operation
 
 Governance Contract:
-    the contract that declares how contract sets, policy sets, budget profiles, capacity limits, versions, and
-    manifest bindings become valid for a machine
+    the Contract that governs the operation of the machine using declared Policy
 ```
 
-Policy is about judgment criteria. It says under which declared criteria material may be accepted, rejected, deferred,
-failed, published, exposed, retained as evidence, or hidden. Policy is not configuration. Configuration may select a
-policy, but the selected policy must be declared contract material. Policy is not a callback, not an arbitrary function,
-and not hidden behavior wearing a nicer name.
+Policy connects what the machine knows with a declared response, drawing its basis from information established across
+the Pipeline and its active Contracts.
 
-A policy must be finite, named, inspectable, governed, and explicitly bound to the interaction or surface where it
-applies. If it cannot be named, inspected, versioned, and governed, it is not contract. It is behavior hiding behind a
-nicer word.
+A successful result might dictate one path while another requires a different one. State alters what subsequent work is
+allowed to proceed. Diagnostic evidence might justify shifting execution strategy even without a failure, and when a
+failure does occur, the response must belong to declared Contract rather than being invented on the fly by
+implementation code.
 
-Policy axes may include boundary strictness, unknown material handling, external contract infiltration, capacity
-overflow, budget exhaustion, diagnostic retention, publication exposure, version compatibility, duplicate or replay
-handling, determinism requirement, degradation permission, priority, fairness, and trust requirement.
+Policy uses information produced by other Contracts without usurping their underlying meaning or overriding their
+authority. Choosing a different operational path may alter which Contracts come into play, but Policy merely dictates
+how the machine responds—it does not rewrite domain laws.
 
-These axes are declared judgment criteria, not algorithms. The rule axis and the tool that later realizes it are
-different things.
+Without an explicit Policy, operational decisions silently collapse into ordinary implementation logic. Code inspects an
+arbitrary flag and branches, runtime configuration alters behavior, or an operator manually steers the system. The
+machine might still run, but the rules governing its operation cease to be part of its declared Contract.
 
-Budget is finite consumption. It says how much a run, operation, stage, or diagnostic path may consume before the
-machine
-must stop, reject, defer, or declare failure. The contract declares the allowance and the required outcome when the
-allowance is exhausted.
+Declaring available responses is only half the problem. The machine also needs an authority that uses Pipeline
+information to enforce how those responses apply across its components. That authority is Governance.
 
-Capacity is the machine's declared admissible limit. It says how much a machine, surface, stage, or storage region may
-accept,
-retain as bounded evidence, keep in flight, expose, or publish. Capacity should not be guessed from optimism. It should
-be measured, chosen, declared, and governed. Valid material may still be rejected or deferred by capacity. A finite
-machine can reject valid material when accepting it would exceed what the machine can survive.
+Governance evaluates Pipeline information against Policy to establish which declared operating choice governs a specific
+Scope. When multiple parts of the machine must adhere to the same operational decision, Governance enforces that
+boundary consistently across them.
 
-Governance is the validity of the contract world. It says which contract set, policy set, budget profile, capacity
-limit, version, and manifest binding is valid for a machine. Without governance, nobody knows which rules are
-actually
-active. Systems quietly rot in that gap.
+Governance cannot invent responses that Policy never declared, nor can it alter the Contracts active under that
+response. Its job is strictly to manage the machine through choices already declared within Policy.
 
-These contracts declare judgment criteria, finite allowance, admissible limit, and validity. They do not declare
-mechanisms.
+This does not make Governance a scheduler or runtime controller. Threads, locks, queues, process boundaries, and
+deployment mechanisms may realize a governing decision, but physical mechanics do not define what the decision means.
 
-The contract does not say how the machine stores work, schedules work, counts work, or physically enforces the limit.
-Those are realization choices. The contract says what limit exists, where it applies, under which governance it is
-valid, and what declared outcome follows when the limit is reached.
+Policy declares how the machine responds to relevant information. Governance applies those declared responses to manage
+the machine.
 
-A good machine admits it is finite, declares its limits, and operates inside them.
+### 12.3 Budget and Capacity Contracts
 
-### 12.3 Input Presentation, DTO, and Raw Material
+Every real machine has limits. It consumes resources, it can only sustain so much work at once, and some of what it
+consumes cannot be recovered without cost. Physical machines wear out, batteries run down, and computing machines
+eventually run out of time, memory, storage, or other resources if work is allowed to consume them without bound.
+
+A machine therefore needs more than a definition of correct work. It also needs a Contract that says how much may be
+consumed and how much load may be carried without crossing the limits under which the machine can still operate as
+intended.
+
+```text
+Budget Contract:
+    the Contract that declares a finite allowance for a governed subject or Scope
+
+Capacity Contract:
+    the Contract that declares a finite simultaneous limit for a governed subject or Scope
+```
+
+Budget deals with consumption. Work may be valid and may even be making progress, but that does not mean the machine
+should allow it to consume indefinitely. A Budget puts a declared limit around how much of a resource may be spent
+within the part of the machine it governs.
+
+Time is the simplest example. A particular piece of work may have a time Budget, but the same idea can govern a larger
+Flow, a subsystem, or the machine as a whole. The subject and Scope of the Budget determine what consumption belongs to
+that allowance.
+
+The important part is that Budget belongs to the machine obligation whose consumption is being bounded. It is not an
+arbitrary timeout or counter added because an implementation became inconvenient. The Contract declares a finite
+allowance, and exhaustion of that allowance has Contract meaning.
+
+Capacity deals with how much the machine can bear at once. A machine may handle each individual piece of work correctly
+and still fail when too much valid work or material is present together.
+
+Memory occupancy is one example. The problem is not how much memory has been consumed over time, but how much governed
+memory is held at the same time. Concurrent work has the same shape when the machine must keep the amount of active work
+within a limit it can support.
+
+Budget and Capacity therefore protect different limits of the same finite machine. Budget bounds consumption over the
+subject or Scope it governs. Capacity keeps simultaneous load within what that subject or Scope can safely support.
+Releasing occupied Capacity can make room again, while consumption already charged to a Budget remains part of that
+Budget unless its own Contract says otherwise.
+
+The implementation may realize these Contracts through business logic, clocks, counters, accounting records, memory
+measurements, permits, or other mechanisms. Those mechanisms can change without changing what the Budget or Capacity
+means.
+
+What matters is that the machine knows its limits before crossing them. A machine that only discovers its resource
+limits after exhaustion or overload has already given part of its operation to accident rather than Contract.
+
+### 12.4 Input Presentation, DTO, and Raw Material
 
 Something has to arrive at the boundary. Whatever arrives there is not yet a core fact and not a contract rule. It is
 just the form in which the outside world showed up.
@@ -1359,7 +1382,7 @@ It must not leave authority.
 
 A DTO entering the core as-is means the boundary did no real work.
 
-### 12.4 Guard and Admission Judgment
+### 12.5 Guard and Admission Judgment
 
 Once the boundary has a shape to look at, it has to decide whether the material may continue.
 
@@ -1437,7 +1460,7 @@ Admission failure is part of the contract.
 The guard may be realized in many ways. The contract does not care. The contract only declares what the boundary must
 judge, which verdicts are legal, and which dispositions may be applied to material that does not continue.
 
-### 12.5 Declared Failure, Admitted Material, and Diagnostic Evidence
+### 12.6 Declared Failure, Admitted Material, and Diagnostic Evidence
 
 Admission has two honest directions.
 
@@ -1521,7 +1544,7 @@ The boundary exists for a reason. Outside material must either continue under an
 contract-governed outcome and disposition. It must not become a second pipeline just because a debug path, review path,
 or storage mechanism exists.
 
-### 12.6 Canonicalization Rule
+### 12.7 Canonicalization Rule
 
 Admitted material has passed the boundary. That is all.
 
@@ -1611,7 +1634,7 @@ one declared meaning.
 
 Canonicalization gives declared meaning a deterministic internal handle.
 
-### 12.7 Lowering Obligation
+### 12.8 Lowering Obligation
 
 Canonical representation is not core material yet.
 
@@ -1703,7 +1726,7 @@ Lowering forms the candidate.
 
 It does not promote the candidate into accepted core material.
 
-### 12.8 Invariant Contract
+### 12.9 Invariant Contract
 
 After lowering, the core may have one complete candidate Fact.
 
@@ -1785,7 +1808,7 @@ The Invariant is the standing integrity law that decides whether candidate mater
 Mix them and the old object soup returns: data carrying rules, behavior hiding judgment, mutation pretending to be
 state, and implementation accidents sneaking into factual identity.
 
-### 12.9 State Contract
+### 12.10 State Contract
 
 `State` is a dangerous word because it arrives with luggage.
 
@@ -1871,7 +1894,7 @@ ignoring the machine, and implementation steps dressing themselves up as contrac
 
 A good machine declares state before movement and uses that declared state to keep movement honest.
 
-### 12.10 State Transition Contract
+### 12.11 State Transition Contract
 
 State already explained the condition that governs movement.
 
@@ -1943,7 +1966,7 @@ stay close, but they do not become one vague validation step.
 A good machine does not mutate itself and then search for a story that makes the mutation legal. It lets the relevant
 judgment produce a declared result, then follows only the movement that the transition contract permits.
 
-### 12.11 Explicit State Machine
+### 12.12 Explicit State Machine
 
 State and transition are enough to form a state machine.
 
@@ -2008,7 +2031,7 @@ The point is not ceremony.
 The point is to keep state and transition from becoming implementation folklore. The explicit state machine names the
 whole state surface so nobody gets to smuggle in extra movement later and call the mess a model.
 
-### 12.12 Publication Judgment
+### 12.13 Publication Judgment
 
 Established Fact is not automatically public claim.
 
@@ -2068,7 +2091,7 @@ The point is simple.
 
 The machine may know more than it is allowed to say.
 
-### 12.13 Output Presentation Contract
+### 12.14 Output Presentation Contract
 
 An authorized public claim still needs a declared outward shape.
 
@@ -2113,7 +2136,7 @@ Output Presentation:
 
 Neither presentation grants the judgment authority that surrounds it.
 
-### 12.14 Diagnostic Evidence
+### 12.15 Diagnostic Evidence
 
 A good machine should be able to describe its own condition.
 
@@ -2202,7 +2225,7 @@ debug-shaped leak is still a leak, even when the leak has a very serious inciden
 Diagnostic evidence must also remain interpretable under the contract meaning that produced it. That is why version
 coordinates come next.
 
-### 12.15 Version Coordinate
+### 12.16 Version Coordinate
 
 A version number is not magic dust.
 
@@ -2279,7 +2302,7 @@ facts, manifests, tables, generated images, identifiers, or some uglier machiner
 The point is to stop the machine from confusing stable-looking material with stable meaning, and to keep authority over
 which meanings the machine is still willing to recognize.
 
-### 12.16 Where Preconditions and Postconditions Went
+### 12.17 Where Preconditions and Postconditions Went
 
 Someone familiar with DBC will eventually ask an obvious question:
 
@@ -2360,7 +2383,7 @@ Output Presentation
     != outward delivery
 ```
 
-### 12.17 Execution Flow, Not Lifecycle Vocabulary
+### 12.18 Execution Flow, Not Lifecycle Vocabulary
 
 This section is not a new contract type.
 
