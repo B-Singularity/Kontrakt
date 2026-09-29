@@ -36,76 +36,65 @@ ADR-0048: Flow Contract Processing — Boundary Refinement and Core Entry
 
 ## 1. Context
 
-Input is the first one-dimensional Contract of the inbound airlock.
+Input is the first one-dimensional Contract of the inbound airlock, and its primary semantic subject is one complete
+inbound presentation Contract. It states the presentation meaning that outside material must realize at an Interaction
+boundary. The Input Contract does not include the Interaction that selects it, the Operation that may later consume
+material derived from it, the host carrier that expresses source evidence, or the binding relation that connects it to
+one Interaction.
 
-The primary semantic subject of Input is one complete inbound presentation Contract. It states the presentation meaning
-that outside material must realize at an Interaction boundary.
-
-The Input Contract is not the Interaction that selects it, the Operation that may later consume material derived from
-it, the host carrier that expresses source evidence, or the binding relation that connects it to one Interaction.
-
-Admission still decides whether a successfully presented value may continue. Canonicalization may establish a stable
-same-shape representative when selected. Lowering later owns the explicit relation from Input coordinates toward
-Operation-parameter and Fact coordinates.
+Later Contracts retain their own authority over the material that follows Input. Canonicalization may establish a stable
+same-shape representative when selected, Admission decides whether the material presented to its judgment may continue,
+and Lowering owns the explicit relation from Input coordinates toward Operation-parameter and Fact coordinates. Their
+composition and ordering are not Input authority.
 
 A host declaration may already state useful external contract evidence. Closed scalar values, finite alternatives,
 presence distinctions, bounded presentations, and other explicitly defined Input forms do not become silent merely
-because Kotlin, Java, or another frontend carries them.
-
-The host declaration and its object instances do not receive Kontrakt authority directly.
-
-The declaration nominates external evidence. Kontrakt must refine and ratify that evidence before it becomes Input
-authority.
+because Kotlin, Java, or another frontend carries them. However, neither the host declaration nor its object instances
+receive Kontrakt authority directly. The declaration only nominates external evidence, which Kontrakt must refine and
+ratify before it becomes Input authority.
 
 ## 2. Problem
 
 The boundary must accept ordinary external presentations without allowing the host representation to become Contract
-authority.
-
-Host mechanics can influence what a program happens to observe even when the declared data appears unchanged. Input
-therefore needs a refinement boundary that removes those mechanics before authority is granted. Sections 7.3 through 7.7
-define the relevant immutability, carrier, inheritance, presence, and opaque-value rules.
+authority. Host mechanics can influence what a program observes even when the declared data appears unchanged, so Input
+needs a refinement boundary that removes those mechanics before authority is granted. Sections 7.3 through 7.7 define
+the applicable immutability, carrier, inheritance, presence, and opaque-value rules.
 
 A supported host declaration may already express one Input presentation completely. In that case the frontend should
-refine that declaration rather than require a second Kontrakt-specific DTO that restates the same Contract evidence.
-
-The V1 boundary therefore needs a narrow ratifiable presentation law. The result must be finite and directly inspectable
-before Admission, while material that cannot meet that law must be formed into a supported presentation before
-invocation.
+refine the declaration rather than require a second Kontrakt-specific DTO that restates the same Contract evidence. V1
+therefore needs a narrow ratifiable presentation law whose result is finite and directly inspectable at the Input
+boundary and by any later authority that is legally allowed to observe it. Material that cannot meet that law must be
+formed into a supported presentation before invocation.
 
 ## 3. Decision Drivers
 
-Input is presentation, not truth. Section 7.8 owns that authority boundary.
-
-Source evidence may nominate an Input Definition Candidate, but only Input-owned Establishment grants Contract
-authority. At the invocation boundary, one exact Input semantic application presents already-formed material to the
-Input judgment. Input does not choose a capture point or derive a snapshot from live mutable state. An Input Occurrence
-is that semantic application, not a runtime object, wrapper, allocation, or storage unit. Once established,
-occurrence-specific Input meaning is observed through the producer-owned Established Input Semantic Protocol, while its
-physical realization remains replaceable.
+Input owns presentation rather than truth, and Section 7.8 defines that authority boundary. Source evidence may nominate
+an Input Definition Candidate, but only Input-owned Establishment grants Contract authority. At the invocation boundary,
+one exact Input semantic application presents already-formed material to the Input judgment. Input neither chooses a
+capture point nor derives a snapshot from live mutable state. The resulting Input Occurrence is that semantic
+application
+rather than a runtime object, wrapper, allocation, or storage unit. Once established, occurrence-specific Input meaning
+is observed through the producer-owned Established Input Semantic Protocol while its physical realization remains
+replaceable.
 
 V1 keeps the directly addressable Input coordinate surface flat under Section 4.2. A direct coordinate may contain a
 closed value topology under Section 7.9, but nested constituents do not become nested Contract authorities or additional
-direct Input coordinates.
-
-The owning Input law alone determines Definition Meaning. Selection context remains outside that meaning unless this ADR
-explicitly makes the context determinant. Section 5.4 closes that split.
-
-Several Interactions may select one Input Definition when they intentionally require the same complete Contract meaning.
-Section 4.4 permits that relation, while Section 8 prevents reuse from becoming an authoring objective.
+direct Input coordinates. The owning Input law alone determines Definition Meaning, while selection context remains
+outside that meaning unless this ADR explicitly makes the context determinant; Section 5.4 closes that split. Several
+Interactions may select one Input Definition when they intentionally require the same complete Contract meaning under
+Section 4.4, while Section 8 prevents reuse from becoming an authoring objective.
 
 Definition-time refinement must be deterministic. Section 9 distinguishes compiler-side non-entry from Input-owned
-Definition Refusal and occurrence-time `Refused`, and Admission remains unreachable after a Refused Input occurrence.
-
-Policy, Governance, Budget, and Capacity retain their own authority when they independently apply. Different declared
-Policy Worlds may select different Input Definitions for one Interaction under Section 4.4; the Governance API that
-makes an applicable world usable by an external caller remains outside this ADR.
+Definition Refusal and occurrence-time `Refused`; after a Refused Input occurrence, no later inbound authority is
+reached. Policy, Governance, Budget, and Capacity retain their own authority when they independently apply. Different
+declared Policy Worlds may select different Input Definitions for one Interaction under Section 4.4, while the
+Governance API that makes an applicable world usable by an external caller remains outside this ADR.
 
 ## 4. Decision
 
 ### 4.1. Input Meaning
 
-Input is the boundary presentation Contract.
+Input is the boundary presentation Contract, with the following authority path:
 
 ```text
 outside presentation evidence
@@ -115,22 +104,18 @@ outside presentation evidence
 -> one fresh Input semantic application over an already-formed immutable presentation
 -> Input Occurrence judgment
 -> Established Input Occurrence
--> Admission when the occurrence result is Presented
+-> the next selected inbound authority when the occurrence result is Presented
 ```
 
-Input declares the complete finite presentation surface that may appear at the Interaction boundary.
-
-It preserves only the distinctions that the Input law makes observable. Later Contracts may observe those distinctions
-through their own lawful relations, but they do not retroactively add Input meaning.
-
-Input does not decide whether presented values may continue. It does not canonicalize them, lower them into core Fact
-meaning, or invoke the user Operation.
+Input declares the complete finite presentation surface that may appear at the Interaction boundary and preserves only
+the distinctions that its law makes observable. Later Contracts may observe those distinctions through their own lawful
+relations, but they do not retroactively add Input meaning. Input does not decide whether presented values may continue,
+canonicalize them, lower them into core Fact meaning, or invoke the user Operation.
 
 ### 4.2. Flat V1 Presentation
 
-V1 keeps the directly addressable Input coordinate surface flat.
-
-The presentation exposes one finite set of direct Input coordinates. Each direct coordinate may itself carry a finite,
+V1 keeps the directly addressable Input coordinate surface flat, exposing one finite set of direct Input coordinates.
+Each direct coordinate may itself carry a finite,
 closed, acyclic value presentation under Section 7.9.
 
 Nested members, alternatives, elements, keys, and values are constituents of that coordinate's Input meaning. They do
@@ -146,9 +131,8 @@ presentation before it reaches the Input boundary.
 
 ### 4.3. Source Evidence Is Not Authority
 
-A supported Java or Kotlin declaration may nominate Input evidence.
-
-Section 7.4 owns the carrier-and-Contract separation law. Section 7.11 owns the direct-carrier exception for a host form
+A supported Java or Kotlin declaration may nominate Input evidence under the carrier-and-Contract separation law in
+Section 7.4. Section 7.11 owns the direct-carrier exception for a host form
 that already realizes a legal Input presentation.
 
 A different frontend may resolve to the same Input Definition Meaning without making frontend syntax, host type
@@ -246,9 +230,8 @@ its own.
 
 ### 5.2. Complete Input Candidate Meaning
 
-The Input Definition Meaning is the complete Input-owned presentation meaning defined by this ADR.
-
-The Candidate preserves the complete direct coordinate surface required by Sections 7.1 and 7.2. Section 7.6 owns
+The Input Definition Meaning is the complete Input-owned presentation meaning defined by this ADR, and the Candidate
+preserves the complete direct coordinate surface required by Sections 7.1 and 7.2. Section 7.6 owns
 presence and absence. Section 7.8 owns form-defining bounds. Section 7.9 owns the closed value-presentation algebra,
 nested constituent law, collection observation law, and closed Leaf-presentation boundary.
 
@@ -285,9 +268,8 @@ Input law explicitly makes their result observable.
 ### 5.4. Definition Meaning Determinants
 
 Input Definition Meaning is determined only by Contract-visible material that this ADR makes part of the declared
-presentation.
-
-The direct coordinate surface is a determinant under Sections 7.1 and 7.2. Presentation-family and constituent meaning
+presentation. Under that rule, the direct coordinate surface is a determinant under Sections 7.1 and 7.2.
+Presentation-family and constituent meaning
 are determinants under Section 7.9 whenever changing them would change the Input-visible presentation. Presentation
 Sameness is determined by that complete Input-owned meaning. An ordering law or exact semantic basis is an additional
 determinant only when Section 7.9 makes that distinction part of the presentation meaning. An implementation or provider
@@ -366,7 +348,7 @@ Visible HIR. The judgment consumes the Input Definition Candidate meaning throug
 Protocol defined in Section 5.8 together with the exact authoritative Version prerequisite permitted by ADR-0053 and
 ADR-0063. The Input IDL Binding Candidate is not a Definition Establishment input.
 
-The judgment has two Input-owned semantic results.
+The judgment has two Input-owned semantic results:
 
 ```text
 complete resolved Candidate
@@ -567,17 +549,17 @@ Refused
 
 `Presented` means that the exact complete immutable presentation satisfies the applicable Input law. Input Establishment
 therefore establishes a direct occurrence-specific relation from the exact `EstablishedInputOccurrenceRef` to that
-Established Presentation, and Admission may observe that presentation through the legal Established Input Presentation
-Projection.
+Established Presentation. A later inbound authority may observe the presentation only through a legal producer-owned
+Established Input projection and only when the selected composition makes that Input material available to it.
 
 `Refused` means that the Input judgment was legally entered but the supplied material did not satisfy the declared Input
 presentation law. Input Establishment establishes `Refused` as the result of that exact Input semantic application, but
-no Input-authoritative presentation relation is established from the malformed or incompatible material. Admission is
-not reached.
+no Input-authoritative presentation relation is established from the malformed or incompatible material, so no later
+inbound authority is reached.
 
-The judgment includes the presentation-level uniqueness and relation obligations owned by Section 7.9 when they apply.
-It does not decide whether an otherwise correctly presented value may continue. Section 7.8 owns that boundary between
-Input and Admission.
+The judgment includes the presentation-level uniqueness and relation obligations owned by Section 7.9 when they apply,
+but it does not decide whether an otherwise correctly presented value may continue. Section 7.8 defines Input's side of
+that boundary, while Admission owns the continuation judgment under its own Contract.
 
 Carrier formation and the separation between carrier mechanics and Contract meaning follow Section 7.4. Immutability
 follows Section 7.3. Input does not repair, snapshot, normalize, or reinterpret material that reaches the boundary in a
@@ -723,7 +705,7 @@ and 7.12 close that route.
 Slot selection therefore nominates a candidate but does not guarantee ratification. Sections 5.7 and 9 distinguish
 compiler-side non-entry, Input Definition Refusal, and an entered Input Occurrence whose result is Refused.
 
-An Input source candidate is ratifiable only when it satisfies the conditions below.
+The following sections define the conditions that an Input source candidate must satisfy before it is ratifiable.
 
 ### 7.1. Coordinate Closure
 
@@ -733,13 +715,10 @@ Candidate under ADR-0071 and ADR-0047. Section 4.4 owns the exact selecting cont
 Input does not infer, broaden, replace, merge, or arbitrate that selection. One exact selection occurrence must resolve
 to one exact target before the resulting Binding Candidate can become Visible HIR.
 
-Every contract-visible direct Input coordinate must resolve to one complete and closed presentation meaning.
-
-No direct coordinate may remain semantically open, erased, dynamically unresolved, or dependent on runtime type
-discovery.
-
-Frontend-specific source forms are admissible only when the frontend can refine them completely into that closed
-meaning. Otherwise the Input definition is not established. Java raw or wildcarded types and Kotlin star-projected forms
+Every contract-visible direct Input coordinate must resolve to one complete and closed presentation meaning; no direct
+coordinate may remain semantically open, erased, dynamically unresolved, or dependent on runtime type discovery. A
+frontend-specific source form is admissible only when the frontend can refine it completely into that closed meaning.
+Otherwise the Input definition is not established. Java raw or wildcarded types and Kotlin star-projected forms
 are examples of source forms that require such complete refinement.
 
 The closed Input surface does not silently accept or prune an undeclared semantic coordinate. Material that contains
@@ -749,9 +728,8 @@ boundary unless a future Input law explicitly owns that projection.
 ### 7.2. Direct Coordinate Identity and Meaning
 
 Every direct Input coordinate has one exact nominal identity within its Input Definition and resolves to one complete
-and closed presentation meaning.
-
-The resolved nominal coordinate, not its source declaration ordinal, constructor position, record-component position,
+and closed presentation meaning. The resolved nominal coordinate, not its source declaration ordinal, constructor
+position, record-component position,
 HIR row, table position, storage offset, or traversal order, identifies that direct coordinate. Structural resemblance
 also does not create coordinate identity.
 
@@ -767,39 +745,28 @@ exposure.
 Nested presentation members may have Input-local constituent identity under Section 7.9. They do not thereby become
 direct Input coordinates, cross-authority coordinate references, or Lowering source coordinates.
 
-Input authority depends on the resolved coordinate meaning, not on the host type used to present it.
-
-A frontend may admit a source form only when it preserves every distinction required by the declared Input meaning.
+Because Input authority depends on the resolved coordinate meaning rather than the host type used to present it, a
+frontend may admit a source form only when it preserves every distinction required by the declared Input meaning.
 Primitive types, strings, enum forms, nullable forms, and other host-language categories are frontend evidence, not
 Input Contract vocabulary by themselves.
 
 ### 7.3. Explicit Immutability
 
-The presentation judged at an Interaction's Input boundary is immutable.
+The presentation judged at an Interaction's Input boundary is immutable, and material participating in an Input
+occurrence must already provide the complete declared presentation without contract-visible mutation when it reaches
+that boundary. Input judges this already-formed presentation rather than creating an admissible Input by copying,
+snapshotting, freezing, repairing, normalizing, or otherwise transforming mutable incoming material. Construction,
+adaptation, copying, or other formation may occur before the Input boundary, where it remains outside Input authority.
 
-Material participating in an Input occurrence must already provide the complete declared presentation without
-contract-visible mutation when it reaches the Input boundary.
-
-Input judges that presentation. It does not create an admissible Input by copying, snapshotting, freezing, repairing,
-normalizing, or otherwise transforming mutable incoming material.
-
-Construction, adaptation, copying, or other formation may occur before the Input boundary. Such work remains outside
-Input authority.
-
-The immutability obligation covers the complete declared Input presentation, including every constituent value of an
-admitted collection or bounded presentation.
-
-The presentation must not depend on mutable backing state, externally mutable aliases, live views, lazy materialization,
-proxy activation, or framework lifecycle.
-
-Host-language immutability mechanisms are evidence used by a frontend or realization. They do not define the Contract
-obligation.
+The immutability obligation covers the complete declared Input presentation, including every constituent value of a
+legal collection or bounded presentation. The presentation cannot depend on mutable backing state, externally mutable
+aliases, live views, lazy materialization, proxy activation, or framework lifecycle. Host-language immutability
+mechanisms may provide evidence to a frontend or realization, but they do not define the Contract obligation.
 
 ### 7.4. Carrier and Contract Separation
 
-A host carrier may express Input evidence, but it does not own the resulting Input meaning.
-
-The carrier's runtime identity and storage are realization. The mechanisms that constructed it are also realization,
+A host carrier may express Input evidence without owning the resulting Input meaning. Its runtime identity and storage
+are realization. The mechanisms that constructed it are also realization,
 even when they are convenient for acquisition.
 
 Executable host behavior cannot create Input coordinates or change their meaning. An accessor may expose
@@ -811,9 +778,8 @@ defines. Section 7.11 covers the case where the same host declaration also serve
 
 ### 7.5. Inheritance and Polymorphism Boundary
 
-Input meaning must be complete in the selected Input definition.
-
-Inheritance does not supply missing Input meaning. The same rule applies when a runtime subtype or executable dispatch
+Input meaning must be complete in the selected Input definition, so inheritance does not supply missing Input meaning.
+The same rule applies when a runtime subtype or executable dispatch
 would be needed to discover the presentation after the definition was established.
 
 A frontend may admit a host source only when it can resolve the complete Input presentation without depending on
@@ -825,10 +791,9 @@ cannot add or reinterpret coordinates through a more specific implementation typ
 
 ### 7.6. Presence, Absence, and Finite Choice
 
-Input may declare presence, absence, and finite alternatives as explicit presentation distinctions.
-
-Input must preserve every distinction required by the declared presentation meaning and must not silently collapse
-distinct alternatives.
+Input may declare presence, absence, and finite alternatives as explicit presentation distinctions, but it must
+preserve every distinction required by the declared presentation meaning and cannot silently collapse distinct
+alternatives.
 
 Presence or absence is Contract meaning only when the Input law declares that distinction. A host-language `null`,
 nullable type, optional wrapper, sentinel value, or another source representation does not acquire Input meaning by
@@ -846,13 +811,12 @@ A finite choice must be closed. Every declared alternative must be completely an
 the Input law. The actual runtime material may not enlarge, replace, or reinterpret the declared alternative set through
 subtype discovery or implementation-specific behavior.
 
-How a frontend or backend represents those alternatives is realization.
+Frontend or backend representation of those alternatives remains realization.
 
 ### 7.7. Opaque Values and External Denotation
 
-Host object-reference identity does not provide Input meaning or semantic identity.
-
-An Input coordinate may carry a declared immutable value that denotes something outside the Input presentation. Input
+Host object-reference identity does not provide Input meaning or semantic identity. An Input coordinate may nevertheless
+carry a declared immutable value that denotes something outside the Input presentation. Input
 owns only the declared presentation of that value. The existence, identity, validity, ownership, or behavior of the
 denoted target is not established by Input.
 
@@ -874,23 +838,20 @@ Contract that owns them.
 ### 7.8. Presentation-Only Authority
 
 Input owns only the distinctions required to determine whether the actual material supplied at the Input boundary
-realizes the declared presentation shape.
-
-Sections 7.1, 7.2, 7.6, and 7.9 define the presentation distinctions that Input may own. This section does not add
-another shape vocabulary; it only fixes the boundary between presentation authority and later Contract judgment.
+realizes the declared presentation shape. Sections 7.1, 7.2, 7.6, and 7.9 define those presentation distinctions; this
+section adds no second shape vocabulary and only fixes the boundary between presentation authority and later Contract
+judgment.
 
 A presentation bound constrains the form in which Input material may be presented. It does not decide whether an
 otherwise correctly presented value may continue. Structural extent, cardinality, or another bound may therefore belong
 to Input when that bound is part of the declared presentation form; value-domain, business, Policy, or
 operation-specific admissibility conditions do not.
 
-A value may denote something outside the Input presentation. Input owns only the declared presentation of that value and
-does not acquire authority over the denoted target.
-
-Input does not decide whether a correctly presented value may continue. That judgment belongs to Admission.
-
-Input does not establish canonical identity, Fact or core meaning, State or Transition legality, Policy or Governance
-selection, Publication authority, Output meaning, or machine movement. Those meanings remain with their owning Contract
+A value may denote something outside the Input presentation, but Input owns only the declared presentation of that value
+and does not acquire authority over the denoted target. It also does not decide whether a correctly presented value may
+continue; Admission owns that judgment. Input does not establish canonical identity, Fact or core meaning, State or
+Transition legality, Policy or Governance selection, Publication authority, Output meaning, or machine movement.
+Those meanings remain with their owning Contract
 authorities or, for machine movement, the State-Machine axis.
 
 ### 7.9. V1 Presentation Algebra
@@ -982,15 +943,14 @@ formed through another legal boundary before Input. ADR-0073 owns that platform-
 A later Contract may intentionally establish a different relation without retroactively changing Input. In particular,
 Canonicalization may explicitly declare an equivalence and establish a stable representative that collapses distinctions
 preserved by Input. When Canonicalization is absent, no hidden equality, normalization, or representative law is
-inserted; the admitted Input presentation continues unchanged toward the next selected authority. Fact sameness, HIR
-semantic equality, Definition and Occurrence identity, and other later relations remain owned by their respective
-authorities.
+inserted; the Established Input Presentation remains unchanged when observed by the next selected inbound authority.
+Fact sameness, HIR semantic equality, Definition and Occurrence identity, and other later relations remain owned by
+their respective authorities.
 
 #### 7.9.2. Constituent Closure
 
-A direct coordinate may contain these families recursively only as a finite, closed, acyclic presentation graph.
-
-Nested members, cases, elements, keys, and values belong to the containing Input Definition. They do not create
+A direct coordinate may contain these families recursively only as a finite, closed, acyclic presentation graph. Nested
+members, cases, elements, keys, and values belong to the containing Input Definition. They do not create
 independent Contract authorities, independent Input Definitions, or independent Input Occurrences.
 
 The actual value judged at the Input boundary must be complete and finite. A semantic recursive type, mutually recursive
@@ -1002,9 +962,8 @@ is carried as an explicitly declared descriptive value under Section 7.7 rather 
 
 #### 7.9.3. Collection Order Observation
 
-Sequence owns positional order intrinsically.
-
-Membership and Association may own one of the following order-observation laws:
+Sequence owns positional order intrinsically, while Membership and Association may own one of the following
+order-observation laws:
 
 ```text
 No Observable Order
@@ -1083,9 +1042,8 @@ Fixed-extent sequence
 ```
 
 Coordinate absence remains distinct from an Option-like value, an empty collection, a null-like Leaf value, and
-whole-Input absence.
-
-V1 deliberately does not add a generic positional heterogeneous Tuple, Multiset, or generic Result family. A future
+whole-Input absence. V1 deliberately does not add a generic positional heterogeneous Tuple, Multiset, or generic Result
+family. A future
 revision may add one only after demonstrating a Contract-visible distinction that cannot be represented without semantic
 loss and after passing the same HIR, Establishment, platform-preservation, and API review applied here. Unsupported
 meaning is not approximated through a supported family.
@@ -1225,11 +1183,10 @@ from merging independently declared Contract identities.
 
 ### 7.12. Behavior and Capability Are Not Opaque Leaves
 
-Callbacks, services, repositories, live resources, async control surfaces, and other executable capabilities are not
-rescued by labeling them opaque.
-
-Input may carry a specifically declared descriptive identifier, token-like value, coordinate, source text, bounded
-bytes, URI Reference, Zone Descriptor, or another approved closed value that refers to something outside the machine.
+Labeling a callback, service, repository, live resource, async control surface, or other executable capability as
+opaque does not make it legal Input. Input may instead carry a specifically declared descriptive identifier, token-like
+value, coordinate, source text, bounded bytes, URI Reference, Zone Descriptor, or another approved closed value that
+refers to something outside the machine.
 The execution capability, live resource authority, provider state, or resource ownership denoted by that value remains
 outside Input authority. A bearer or capability token is not rescued by scalar-shaped presentation.
 
@@ -1238,10 +1195,9 @@ outside Input authority. A bearer or capability token is not rescued by scalar-s
 ## 8. Authoring Boundary
 
 Each declared Input selection is authored from the complete Contract meaning intended for that selection rather than
-from a reuse target.
-
-Section 4.4 permits several legal selection occurrences to select one Input Definition when they intentionally select
-the same complete meaning. Those occurrences may belong to different Interactions or to different declared Contract
+from a reuse target, although Section 4.4 permits several legal selection occurrences to select one Input Definition
+when they intentionally select the same complete meaning. Those occurrences may belong to different Interactions or
+to different declared Contract
 World contexts. Similar host shape is insufficient. If two Inputs were declared independently, Section 5.6 prevents
 later structural equality from merging them.
 
@@ -1256,9 +1212,8 @@ application object model into the Contract Core.
 
 ## 9. Refusal Boundary
 
-Input distinguishes compiler-side non-entry from two Input-owned negative results.
-
-A source or Candidate that cannot satisfy the Resolved HIR seal does not enter the Input Definition judgment. Unresolved
+Input distinguishes compiler-side non-entry from two Input-owned negative results. A source or Candidate that cannot
+satisfy the Resolved HIR seal does not enter the Input Definition judgment. Unresolved
 source, recovery or poison material, an invalid Protocol handoff, or another compiler-owned failure therefore does not
 create `Input Definition Refusal`. The exact unsuccessful compiler result is owned by the applicable compiler judgment;
 its common representation and recovery behavior currently depend on Proposed ADR-0074.
@@ -1267,11 +1222,10 @@ its common representation and recovery behavior currently depend on Proposed ADR
 and fails the Input-owned Definition law. No authoritative Input Definition is established from that Candidate.
 
 `Refused` at invocation time occurs only after an exact Established Input Definition and exact Interaction have allowed
-a
-fresh Input semantic application to enter the occurrence-time judgment. That judgment establishes a fresh
+a fresh Input semantic application to enter the occurrence-time judgment. That judgment establishes a fresh
 `EstablishedInputOccurrenceRef` and the exact result relation `Refused`, but it establishes no Input-authoritative
-presentation relation and Admission is not reached. A supplied boundary value that omits a required coordinate or
-violates the declared presentation law is handled here.
+presentation relation, so no later inbound authority is reached. A supplied boundary value that omits a required
+coordinate or violates the declared presentation law is handled here.
 
 A transport, acquisition, or orchestration failure that prevents the material from entering the Input semantic
 application creates no Input Occurrence. Likewise, failure to obtain an applicable Established Input Definition or a
@@ -1286,16 +1240,14 @@ meaning.
 
 ## 10. Relationship to Later Contracts
 
-Input establishes only Input-owned Definition and Occurrence meaning. It creates no later pipeline authority.
-
-Admission owns continuation, as stated in Section 7.8. Canonicalization, when selected, may establish a stable
-same-shape representative without redefining Input. Lowering owns the later relation from direct Input coordinates
-toward
-Operation parameters and Fact coordinates. Nested constituents under Section 7.9 do not become Lowering source
-coordinates merely because they are addressable inside the Input presentation.
-
-Those later authorities do not enter Input Definition identity. Their negative results also remain distinct from Input
-Definition Refusal and Input Occurrence `Refused` under Section 9.
+Input establishes only Input-owned Definition and Occurrence meaning and creates no later pipeline authority. Admission
+owns continuation under Section 7.8, Canonicalization may establish a stable same-shape representative when selected,
+and Lowering owns the later declared relation from Input coordinates toward Operation parameters and Fact coordinates.
+Which later authority observes an Established Input Presentation directly is determined by the selected inbound
+composition rather than by Input. Nested constituents under Section 7.9 do not become Lowering source coordinates
+merely because they are addressable inside the Input presentation. None of those later authorities enters Input
+Definition identity, and their negative results remain distinct from Input Definition Refusal and Input Occurrence
+`Refused` under Section 9.
 
 ### 10.1. World and Occurrence Semantic Placement
 
@@ -1317,8 +1269,8 @@ Established Input Semantic Protocol
     -> legal observation of the Input-owned Definition and Occurrence projections
 ```
 
-This is a semantic-placement and observation law, not a storage-topology mandate. Physical retention, sharing, and
-reclamation are realization concerns. Reclaiming physical representation for an occurrence does not mean the semantic
+These placement and observation rules do not mandate a storage topology. Physical retention, sharing, and reclamation
+remain realization concerns. Reclaiming physical representation for an occurrence does not mean the semantic
 application was never established, and retaining physical representation does not extend semantic authority by itself.
 
 For Input-owned relations, legal observation keeps `relation not owned`, explicitly permitted absence, present relation,
@@ -1407,15 +1359,21 @@ A Policy World relation that selects an Input Definition is owned by Policy, Int
 Input. A later relation from an Input coordinate toward Lowering is owned by Lowering. The Established Input Semantic
 Protocol does not reverse those ownership directions merely because a consumer wants convenient navigation.
 
-Admission consumes the Established Input Presentation Projection. It does not reopen the JVM carrier, call host
-`equals` or `hashCode`, recover a source declaration, inspect runtime object identity, or rediscover the collection law.
-Canonicalization may consume the same legal presentation observation when its own law requires the Input presentation.
-Lowering may consume `EstablishedInputCoordinateRef` together with the Input Direct Coordinate Value Projection.
-Diagnostics may consume the Established Input Occurrence Projection or the narrower Input Occurrence Outcome
-Projection. Generated API formation, verification, and PBT planning may consume the Definition projection.
+A later inbound authority may consume the Established Input Presentation Projection only when the selected inbound
+composition makes that Established Input Presentation its direct semantic input. Such a consumer does not reopen the
+JVM carrier, call host `equals` or `hashCode`, recover a source declaration, inspect runtime object identity, or
+rediscover the collection law. Canonicalization may consume the legal presentation observation when it is selected as
+the direct consumer of Input; when Canonicalization is not selected, Admission may consume that observation under its
+own Contract. The Protocol does not authorize a later authority to bypass an intervening established result and recover
+the earlier Input presentation as its occurrence value.
 
-Consumers select producer-defined legal projections. They do not create `Diagnostic Input Meaning`, `Backend Input
-Meaning`, `Test Input Meaning`, or another consumer-specific Contract semantics.
+Lowering may consume Definition-level Input coordinate meaning through the legal Definition projections when its own law
+requires the Input coordinate relation. Its occurrence-time value source is governed by the Lowering Contract and the
+selected inbound composition rather than granted by Input. Diagnostics may consume the Established Input Occurrence
+Projection or the narrower Input Occurrence Outcome Projection, while generated API formation, verification, and PBT
+planning may consume the Definition projection. These consumers select producer-defined legal projections rather than
+creating `Diagnostic Input Meaning`, `Backend Input Meaning`, `Test Input Meaning`, or another consumer-specific
+Contract semantics.
 
 If a consumer joins several Input observations, computes transitive reachability, proves a property, builds a summary,
 or performs another new judgment, that result belongs to the consuming compiler product or later owning authority. It is
@@ -1527,9 +1485,9 @@ expose legal Established Input Occurrence Projection
 ```
 
 The arrays, handles, and presentation references in this sketch are physical realization only. A different realization
-may replace them without changing the Contract meaning or the producer-owned Protocol observations. A later Admission
-read is defined over the legal Established Input Presentation Projection, not over these physical columns or the carrier
-used to form them.
+may replace them without changing the Contract meaning or the producer-owned Protocol observations. Any later legal
+consumer reads the presentation through the Established Input Presentation Projection rather than through these physical
+columns or the carrier used to form them.
 
 ## 11. Open in This Section
 
@@ -1596,53 +1554,46 @@ Input meaning.
 
 ## 12. Consequences
 
-Input becomes an explicit immutable boundary presentation rather than a host object treated as Contract authority.
-
-The directly addressable Input surface remains flat, while one direct coordinate may carry a finite, closed, acyclic
-nested value presentation. This keeps Contract authority topology simple without forcing Input values to be scalar-only.
-
-The six-family V1 presentation algebra gives HIR and Establishment a closed semantic target while leaving Java/Kotlin
-carrier choice, storage layout, collection realization, and generated API projection replaceable.
+Input becomes an explicit immutable boundary presentation rather than a host object treated as Contract authority. Its
+directly addressable surface remains flat, while one direct coordinate may carry a finite, closed, acyclic nested value
+presentation, keeping Contract authority topology simple without forcing Input values to be scalar-only. The six-family
+V1 presentation algebra gives HIR and Establishment a closed semantic target while leaving Java/Kotlin carrier choice,
+storage layout, collection realization, and generated API projection replaceable.
 
 Collection order is represented only when the Input presentation law makes that order observable. ADR-0073 separately
-determines whether a platform surface can preserve that already-declared order in the requested role. Compiler canonical
-order and physical storage order remain realization.
+determines whether a platform surface can preserve that already-declared order in the requested role, while compiler
+canonical order and physical storage order remain realization. Presentation Sameness is derived from complete
+Input-visible meaning and is the sole V1 uniqueness relation for Membership constituents and Association keys. Input
+exposes no user-selectable equality, collation, normalization, or coarser equivalence surface. A later Canonicalization
+Contract may explicitly collapse Input-preserved distinctions and establish a representative under its own authority;
+omission creates no hidden replacement relation.
 
-Presentation Sameness is derived from complete Input-visible meaning and is the sole V1 uniqueness relation for
-Membership constituents and Association keys. Input exposes no user-selectable equality, collation, normalization, or
-coarser equivalence surface. A later Canonicalization Contract may explicitly collapse Input-preserved distinctions and
-establish a representative under its own authority; omission creates no hidden replacement relation.
+A meaning-affecting relation or semantic-basis change changes Input meaning, whereas a backend, library, or provider
+upgrade that provably preserves the same exact resolved law remains realization. Some application objects therefore
+cannot cross the boundary directly even when their business data could be represented by a legal Input presentation.
+They need an ADR-0073-compatible direct mapping or explicit presentation formation before invocation, preserving the
+distinction between application representation and Input authority.
 
-A meaning-affecting relation or semantic-basis change changes Input meaning. A backend, library, or provider upgrade
-that provably preserves the same exact resolved law remains realization.
-
-Some application objects therefore cannot cross the boundary directly even when their business data could be represented
-by a legal Input presentation. They need an ADR-0073-compatible direct mapping or explicit presentation formation before
-invocation. That cost preserves the distinction between application representation and Input authority.
-
-Input now preserves application multiplicity explicitly. Retry, restart, redelivery, or another fresh boundary re-entry
+Input preserves application multiplicity explicitly: retry, restart, redelivery, or another fresh boundary re-entry
 creates a new Input Occurrence even when deterministic judgment produces the same semantic result. Later Fact identity
-may converge equal factual meaning without collapsing those earlier boundary occurrences.
+may converge equal factual meaning without collapsing those earlier boundary occurrences. The HIR and Established
+Semantic Protocols expose producer-owned legal observations instead of consumer-specific semantic copies. Each consumer
+may use only the projection made legal by its own authority and the selected composition, so Canonicalization,
+Admission,
+Lowering, diagnostics, verification, generated APIs, and test synthesis do not need to rebuild Input meaning from source
+or host carriers.
 
-The HIR and Established Semantic Protocols expose producer-owned legal observations instead of consumer-specific
-semantic
-copies. This lets Admission, Canonicalization, Lowering, diagnostics, verification, generated APIs, and test synthesis
-share authoritative Input meaning without rebuilding it from source or host carriers.
-
-Definition reuse and occurrence reuse are intentionally asymmetric. Stable Definition projections may avoid compiler
+Definition reuse and occurrence reuse remain intentionally asymmetric. Stable Definition projections may avoid compiler
 work after complete current-validity checks, while a fresh boundary entry always has fresh occurrence identity. Any
 validated physical reuse remains a realization concern and cannot substitute physical identity for that semantic
-application identity.
-
-Logical Protocol boundaries do not impose an occurrence object or physical indirection. A V1 compiler may use dense
-handles, primitive slabs, columnar storage, or shared immutable ranges while keeping Candidate, Established Definition,
-Established Occurrence, and consumer observations semantically distinct.
+application identity. Logical Protocol boundaries also impose no occurrence object or physical indirection: a V1
+compiler may use dense handles, primitive slabs, columnar storage, or shared immutable ranges while keeping Candidate,
+Established Definition, Established Occurrence, and consumer observations semantically distinct.
 
 ## 13. Migration History
 
-This ADR was extracted mechanically from the Input-owned material of ADR-0048.
-
-The extraction itself does not change the accepted Input Contract semantics.
+This ADR was extracted mechanically from the Input-owned material of ADR-0048, and that extraction did not change the
+accepted Input Contract semantics.
 
 A 2026-09-02 review clarified the Contract/frontend boundary for coordinate closure, direct presentation meaning,
 immutability, carrier separation, inheritance and polymorphism, presence and finite choice, opaque values, presentation
@@ -1736,7 +1687,12 @@ relation ownership, consumer access law, complete-set reuse validation, coherent
 between reusable physical representation and fresh occurrence authority. Compiler unsuccessful-result and recovery
 details remain a
 provisional common dependency on Proposed ADR-0074; physical HIR schema, query, cache, persistence, and JVM carrier
-realization remain Design or
-ADR-0073 work rather than Input meaning.
+realization remain Design or ADR-0073 work rather than Input meaning.
 
-ADR-0048 remains the owner of the shared inbound-airlock composition and core-entry relation.
+A 2026-09-29 consistency review removed residual assumptions that Admission directly follows every successful Input
+Occurrence. Input still establishes the same Definition and Occurrence meaning, including the Established Input
+Presentation, but the selected inbound composition determines which later authority may observe that presentation
+directly. The Established Input Semantic Protocol no longer grants a later authority occurrence-time access that would
+bypass an intervening established result. Definition-level Input coordinate observations remain available to later laws
+that legally require them, while occurrence-time value sourcing remains owned by the consuming Contract and the selected
+composition. ADR-0048 remains the owner of the shared inbound-airlock composition and core-entry relation.

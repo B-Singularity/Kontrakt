@@ -1693,8 +1693,7 @@ lowering:
 
 If lowering cannot preserve the declared meaning, cannot resolve the required reference, or cannot form candidate
 material under the active governance, the machine must stop with a declared failure. No half-lowered object. No "the
-next
-stage will figure it out." That is how rotten material reaches the core.
+next stage will figure it out." That is how rotten material reaches the core.
 
 Lowering forms the candidate.
 
