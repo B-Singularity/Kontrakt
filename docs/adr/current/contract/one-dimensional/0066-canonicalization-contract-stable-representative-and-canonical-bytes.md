@@ -1,4 +1,4 @@
-# ADR-0066: Canonicalization Contract, Stable Representative, Canonical Bytes, and Explicit Omission
+# ADR-0066: Canonicalization Contract, Inbound Representation Control, Stable Representative, Canonical Bytes, and Explicit Omission
 
 ## Status
 
@@ -14,111 +14,165 @@ ADR-0048: Flow Contract Processing — Boundary Refinement and Core Entry
 
 ## Related
 
-- `../../../../the-most-important-thing/what-contract-is.md`
+- `docs/the-most-important-thing/what-contract-is.md`
 - ADR-0067: Lowering Contract
 - ADR-0065: Admission Contract
 - ADR-0064: Input Contract
 - ADR-0063: Contract Establishment, Identity, Applicability, and Composition
 - ADR-0052: Capacity Contract
 - ADR-0051: Budget Contract
+- ADR-0048: Inbound Airlock Composition, Boundary Refinement, and Core Entry
 - ADR-0047: One-Dimensional Contract Presentations, Pipeline-Slot Selection, and Backend Realization Boundary
-
----
-
-## Amendment
-
-This ADR previously described the omitted-Canonicalization handoff as continuing through a compiler-derived Lowering
-plan to an explicitly bound realization behind a generated port. That wording inherited the former Lowering realization
-model.
-
-That interpretation is removed.
-
-Canonicalization remains a declarative one-dimensional Contract expression. The user selects or declares its permitted
-source evidence but does not implement a canonicalizer. Kontrakt resolves and establishes the selected law, derives the
-required realization knowledge, and compiler/backend realization performs the canonical representative and
-canonical-byte production required by that established meaning.
-
-When Canonicalization is omitted, the admitted Input presentation passes unchanged to the established Lowering relation.
-Lowering realization is likewise not supplied through a user implementation port. ADR-0047 owns the common
-one-dimensional realization boundary, and ADR-0067 owns the Lowering relation and its compiler/backend realization.
-
-This amendment does not change Canonicalization meaning, the same-shape rule, explicit omission, canonical-byte law,
-finite-work law, refusal attribution, coordinate-law authoring boundary, or conformance requirements decided below.
 
 ---
 
 ## 1. Context
 
-Admission only decides that a boundary presentation may continue.
+External material reaches a Contract Machine under an authority that the machine does not own. Input Presentation closes
+the form in which that material may first appear, but a legal Input presentation can still contain representation
+choices that the Contract author does not want to control later machine meaning.
 
-Outside presentation can still contain distinctions that the Contract declares equivalent or representation noise that
-must not define stable machine identity.
+Those choices are not limited to malicious input. Two outside producers can intend the same meaning while using
+different legal spellings or orderings. Unicode normalization, decimal scale, case, line endings, floating
+representation, and temporal representation are familiar examples. A hostile producer can deliberately exploit the same
+freedom. In either case, the outside representation must not acquire semantic authority merely because it happened to
+arrive first.
 
-Canonicalization exists to establish one stable system-owned representative when equivalence has been declared.
+Canonicalization gives the Contract author an explicit inbound control over that freedom. Through the IDL, the user may
+select a closed Canonicalization law that says which distinctions of an already legal Input presentation remain
+meaningful and which declared-equivalent distinctions must no longer control later machine judgments. Kontrakt then
+establishes the representative required by that law.
 
-Canonicalization is not cleanup, repair, parsing, arbitrary transformation, or business computation.
+The user selects meaning. The user does not supply the executable canonicalizer that becomes authority. V1 exposes a
+restricted Kontrakt-owned catalog and inert nominal authoring types whose semantics are already closed, versioned,
+bounded, documented, and independently verifiable. The compiler may replace or optimize their realization without
+changing the Contract.
 
-It does not change the Contract-visible coordinate shape of the selected Input.
+Canonicalization therefore belongs to the inbound airlock. It exists because outside presentation is not trusted to
+choose the representation that later controls machine meaning. This is an authority-boundary problem, not a cleanup
+convenience.
 
-It operates over admitted presentation and may establish a stable same-shape representative together with exact
-canonical bytes.
+The outward side has a different responsibility. Publication begins with material that already has Core authority, and
+Output Presentation gives Publication-authorized material its declared outward shape. The producing machine already
+controls that meaning. It does not need a second inbound-style Canonicalization stage merely to mirror the pipeline.
 
-When the `canonicalization` slot is selected, its law receives the same immutable Contract-visible presentation after
-Admission and deterministically produces the one representative permitted by that law. Successful production grants
-stable representative authority immediately. There is no user-authored post-canonical validation Contract. If a
-successful Kontrakt realization produces noncanonical material, Kontrakt is defective.
+Canonicalization is not cleanup, repair, sanitization, parsing, validation, arbitrary transformation, business
+computation, or Lowering. It does not make invalid external material valid. It operates only after Input has established
+a legal presentation. It may remove only the representation freedom that the selected law explicitly declares
+irrelevant.
 
-Canonicalization is optional.
+Canonicalization does not change the Contract-visible coordinate shape of the selected Input. Shape-changing formation
+remains outside this authority.
 
-Its omission is meaningful and must remain distinct from selecting an exact-preservation law.
+Canonicalization is optional. Its omission is a semantic choice and must remain distinct from selecting an
+exact-preservation law.
 
 ---
 
 ## 2. Problem
 
-If external presentation defines internal identity directly, the same declared meaning may split across host
-representation differences.
+A machine loses control of its boundary when outside representation can silently decide later meaning.
 
-If Canonicalization is implicit, the machine hides a meaning-changing stage.
+The same declared meaning may arrive in several legal presentations. If those differences flow into equality, lookup,
+authorization, identity, caching, ordering, or later judgments without an explicit Contract decision, outside
+representation has become an undeclared authority.
 
-If users can provide arbitrary canonicalizer callbacks, executable source behavior becomes Contract authority.
+The opposite mistake is also dangerous. A machine that normalizes aggressively may erase distinctions the user intended
+to preserve. Canonicalization is therefore not a policy of making values "more normalized." It must remove only
+distinctions that the selected Contract law declares equivalent.
 
-If canonical work is unbounded, a Canonicalization Contract can become permission for unlimited computation and memory.
+A boundary judgment can also become unsound when it sees one interpretation and later execution uses another. If
+Canonicalization collapses a distinction, Admission and later semantic consumers must not recover the original spelling,
+order, scale, case, or other erased distinction and use it as a second determinant. The machine needs one declared
+interpretation after the canonical boundary rather than several independent normalizers.
 
-If host equality, hashing, iteration order, locale, timezone, Unicode implementation, comparator behavior, object
-identity, or platform defaults define canonical material, determinism becomes backend-dependent.
+Canonicalization must not repair material that failed Input. Otherwise malformed or illegal outside material could be
+changed into a different presentation and admitted under a meaning that Input never established. The canonicalizable
+domain begins inside the legal Input presentation domain.
 
-Canonicalization therefore needs closed versioned law material, explicit selection, bounded production, exact byte
-meaning, and conformance material.
+Application-defined canonicalizer callbacks create another problem. Their meaning is no longer closed by the Contract
+declaration when execution may consult mutable or ambient state. The same problem appears when a callback inherits
+locale, provider versions, collection order, hidden parsing, or object identity from the host environment. The callback
+then becomes an opaque semantic authority that the compiler cannot fully verify or replace.
+
+Unbounded Canonicalization is equally unsuitable for an airlock. A law that allows arbitrary recursion, expansion,
+comparison, sorting, or user computation can turn one untrusted Input into unbounded work or memory consumption.
+
+Determinism also fails when the host platform is allowed to finish the law. Host equality or hashing may change the
+observed classes. Iteration order or comparator behavior may choose another representative. Locale, timezone, Unicode
+data, filesystem rules, or object identity may inject ambient meaning that the IDL never declared.
+
+Finally, deterministic encoding must not be confused with semantic Canonicalization. A compiler may need deterministic
+bytes for identity, caching, persistence, verification, or artifact production even when no Canonicalization Contract is
+selected. Those bytes represent existing meaning. They do not decide which Input distinctions are equivalent.
+
+Canonicalization therefore needs an explicit IDL selection, a closed semantic law, a declared canonicalizable domain, a
+stable representative law, bounded production, exact treatment of preserved and collapsed distinctions, versioned
+external semantic bases where they matter, and normative conformance material.
 
 ---
 
 ## 3. Decision Drivers
 
-Equivalent meaning must produce one stable representative under one declared law.
+The Contract author must retain control over which outside representation differences remain meaningful after the Input
+boundary.
 
-Distinct meaning must not be collapsed without declaration.
+Equivalent presentation meaning under one selected Canonicalization law must converge to the representative required by
+that law. Distinct meaning must not collapse merely because an implementation finds that convenient.
 
-Canonicalization selection must be explicit.
+The selected law must be visible in the IDL. Source type shape, host library behavior, annotations, runtime
+registration, or downstream implementation must not infer it silently.
 
-Omission must create no hidden `ExactCanonicalization`, callback, proxy, interceptor, or replacement stage.
+Omission must remain explicit. No omitted slot may synthesize `ExactCanonicalization`, a hidden callback, a proxy, an
+interceptor, a generated normalization stage, or another replacement authority.
 
-Users must not author executable canonicalizer behavior as Contract authority.
+A successful Canonicalization result must become the only canonicalized semantic operand for later judgments that depend
+on that boundary meaning. Raw Input may remain as separately owned diagnostic or provenance evidence, but later
+Contracts must not regain erased distinctions from that evidence.
 
-A selected law must completely cover the selected Input coordinate surface.
+Canonicalization must never be a repair path for material that Input did not establish as legal presentation.
 
-Canonical output must be deterministic, bounded, versioned, and independently testable.
+Users must not author executable canonicalizer behavior as Contract authority in V1. V1 should let users choose from a
+restricted, reviewed, Kontrakt-owned API catalog through nominal types and complete built-in law symbols.
 
-Budget and Capacity remain separate authorities when their walls are crossed.
+A future custom-law facility must not appear by relaxing V1 type checks. It requires a separate Contract and security
+design. Before application code can own such a law, the product surface must explain what it means to define equivalence
+and erase distinctions. It must also make aggregate collisions, versioned external semantic data, and resource
+amplification visible as part of the responsibility the user is taking on.
 
-Generated canonicalization machinery may be optimized only when representative meaning, exact bytes, result,
-attribution, bounds, and State-visible behavior are preserved.
+A selected coordinate-law declaration must completely cover the selected Input coordinate surface. No undeclared default
+may decide what happens to a newly added coordinate.
+
+Canonical output must be deterministic under the law's declared semantic basis. Budget, Capacity, compiler resource
+exhaustion, and implementation availability do not choose a different representative.
+
+The realization may use specialized algorithms, quick checks, zero-copy reuse, vectorization, deterministic sorting,
+memoization, or other optimizations. These mechanisms remain replaceable when they preserve the declared representative,
+result, attribution, observable bounds, and any canonical bytes owned by the selected law.
 
 ---
 
 ## 4. Decision
 
-### 4.1. Optional Contract
+### 4.1. Canonicalization Is an Inbound Representation-Control Contract
+
+Canonicalization governs the representation freedom of already legal outside Input before that freedom can influence
+later machine meaning.
+
+The user selects the law in the IDL. The selected law states which distinctions remain semantically observable and which
+distinctions belong to one declared equivalence class. Kontrakt owns the realization that produces the law's
+representative.
+
+A selected Canonicalization law does not grant authority to the host type that names it. The Java or Kotlin symbol is
+frontend evidence. After resolution, the Contract meaning must no longer depend on the source class, constructor,
+package, reflection shape, runtime object, or executable behavior associated with that source form.
+
+Canonicalization is not a general transformation slot. It cannot derive new business meaning or reinterpret one domain
+as another. It cannot repair malformed material, invent defaults, or acquire information through lookup. Projection and
+shape-changing formation remain separate responsibilities, so Canonicalization cannot be used as a disguised Lowering
+step.
+
+### 4.2. Optional Contract
 
 An Operation may omit Canonicalization.
 
@@ -133,94 +187,196 @@ no hidden runtime hook
 no generated replacement stage
 ```
 
-The admitted Input presentation is passed unchanged to the selected Lowering relation. Kontrakt resolves that relation,
-derives the required Lowering realization knowledge, and the backend performs the later value formation under ADR-0067.
-No user-supplied Lowering implementation or generated user implementation port is inserted by omission.
+When Canonicalization is omitted, the exact presentation established by Input remains the semantic presentation observed
+by Admission and by later inbound Contracts that legally consume it.
 
-Deterministic encoding of Kontrakt-owned material remains mandatory, but that protocol is not an implicit
-Canonicalization Contract. Fixed scalar encodings, coordinate order, presence markers, framing, schema identity, and
-Version material may still be required for identity, ordering, hashing, caching, Publication, or verification. They
-determine how existing material is represented inside Kontrakt; they do not collapse semantic distinctions or produce a
-new representative value.
+Omission does not mean that the compiler may skip deterministic encoding required elsewhere. Fixed scalar encodings,
+coordinate order, presence markers, framing, schema identity, Version material, or other deterministic compiler
+protocols may still be required for identity, ordering, hashing, caching, persistence, Publication, or verification.
+Those protocols represent existing material. They do not collapse Input distinctions or produce a Canonicalization
+representative.
 
-Selecting `ExactCanonicalization` is different.
+Selecting `ExactCanonicalization` is different. It is an explicit Canonicalization Contract with its own identity,
+conformance obligations, refusal domain, representative law, and any canonical material that the selected law explicitly
+owns.
 
-When selected, it is an explicit Canonicalization Contract with its own identity, conformance, refusal domain,
-representative law, and canonical-material production.
+### 4.3. Canonicalization Receives Only Legal Input Presentation
 
-### 4.2. Same-Shape Representative
+Input remains responsible for deciding whether outside material can become a legal Input Presentation. Canonicalization
+cannot reopen material that Input refused, and it cannot transform an illegal carrier into a legal presentation.
+
+Noncanonical does not mean invalid. A legal Input may contain a spelling, ordering, scale, case, normalization form, or
+other representation variant that the selected Canonicalization law is specifically intended to collapse. Such material
+is ordinary Canonicalization input.
+
+Malformed, structurally illegal, unavailable, or otherwise unestablished Input material is not ordinary Canonicalization
+input. A later canonicalizer must not repair it and then claim that the repaired value was what Input established.
+
+This boundary prevents Canonicalization from becoming a hidden parser or sanitizer placed ahead of the declared Input
+law.
+
+### 4.4. Declared Equivalence and Stable Representative
+
+Canonicalization removes only declared representation freedom.
+
+For every supported presentation domain, the selected law must make it possible to determine which distinctions are
+preserved and which are collapsed. A distinction that has not been explicitly made irrelevant remains meaningful.
+
+A successful application establishes the one representative required by the selected law for the applicable equivalence
+class. An implementation is not permitted to choose a different representative because another form is cheaper, more
+familiar to a host library, easier to serialize, or more convenient for a backend.
+
+A published V1 law must be stable under repeated application. Applying the same law to a value that already satisfies
+its representative law must not move that value again. A hidden second normalization therefore cannot create another
+semantic result under the same law.
+
+The law must not collapse two presentations merely because a hash, cache key, byte encoding, comparator, or host
+equality implementation collides. Any collapse must follow the declared equivalence itself.
+
+Security suspicion does not create Canonicalization equivalence. Two presentations do not become the same meaning merely
+because they are visually confusable, spoofable, unusual, risky, or likely to trigger a security rule. A
+security-sensitive distinction may be rejected by Admission, Policy, or another authority that owns that judgment while
+Canonicalization continues to preserve the distinction. If a Canonicalization law does collapse that distinction, the
+collapse must be part of the law's declared equivalence rather than an implicit security heuristic.
+
+The fact that two inputs produce the same canonical representative establishes only the relation owned by the selected
+Canonicalization law. It does not by itself establish the same identity, authorization result, cache authority, Fact
+meaning, or any other downstream relation. Another authority may rely on the representative only through its own
+declared law. Canonicalization therefore cannot be used as a shortcut that silently transfers one authority's
+equivalence into another authority's identity or judgment.
+
+### 4.5. Judgment–Use Coherence
+
+Once Canonicalization establishes a representative, later judgments that consume the canonicalized boundary meaning must
+consume that representative relation.
+
+Admission must not judge the representative and then allow Lowering to recover a canonicalized-away distinction from raw
+Input. Lowering must not independently normalize the source again under another rule. A downstream library, adapter, or
+host operation also cannot silently redefine the Canonicalization law by interpreting the representative through a
+different normalization rule.
+
+The selected branch is therefore conceptually:
+
+```text
+Established Input Presentation
+    -> Canonicalization
+    -> stable representative
+    -> Admission
+    -> Lowering
+```
+
+When Canonicalization is omitted, the conceptual branch is:
+
+```text
+Established Input Presentation
+    -> Admission
+    -> Lowering
+```
+
+ADR-0048 remains the owner of final whole-airlock composition and slot wiring. This ADR fixes the Canonicalization-side
+requirement that the established representative, when selected, is the semantic boundary meaning passed forward. It also
+forbids later semantic resurrection of distinctions that the selected law erased.
+
+Raw Input material may be retained under separately owned provenance or diagnostic rules. Retention does not restore
+semantic authority to that raw representation.
+
+### 4.6. Same-Shape Representative
 
 Canonicalization does not perform shape-changing Operation input formation.
 
 The selected Input coordinate surface remains the Canonicalization surface.
 
-A selected law may preserve or collapse distinctions only as the declared law permits.
+A selected law may replace a coordinate value with an equivalent representative. It may impose deterministic order where
+the law declares source order irrelevant. It may collapse a distinction only when the law explicitly says that the
+distinction does not survive Canonicalization.
 
-Canonicalization may replace a coordinate value with an equivalent representative, impose deterministic order where the
-selected Contract declares source order irrelevant, and collapse only distinctions that the selected law explicitly
-names as irrelevant. It does not add, remove, rename, retype, parse, flatten, project, or otherwise remap
-Contract-visible coordinates. Those are shape-changing obligations and belong to Lowering or another explicit
-transformation boundary.
+Canonicalization does not add a Contract-visible coordinate. It does not remove one. It does not rename or retype one.
+It does not parse one coordinate into another domain, flatten a product, project a subset, or otherwise remap the Input
+surface.
 
-Lowering remains responsible for the later relation from boundary coordinates to Operation-parameter Fact coordinates.
+Those are different obligations and remain owned by Lowering or another explicitly declared transformation boundary.
 
-### 4.3. Canonical Bytes
+### 4.7. Canonical Bytes
 
-A selected Canonicalization law defines exact canonical bytes where canonical byte material is part of the law.
+A selected Canonicalization law defines exact canonical bytes only when canonical byte material is part of that law.
 
-Canonical bytes are not an arbitrary serialization result.
+Canonical bytes are not an arbitrary serializer result, and deterministic serialization is not automatically semantic
+Canonicalization.
 
-Their protocol version, schema identity, ordering, distinction law, and bounds are Contract material.
+When a law owns canonical bytes, its protocol version, schema identity, ordering rules, distinction law, and semantic
+bounds are Contract material. A change to those obligations is not hidden as an emitter implementation change.
 
-Generated byte emitters remain implementation.
+Generated byte emitters remain implementation. A law that does not declare canonical bytes may still be fully valid
+Canonicalization when its representative obligation is complete.
+
+### 4.8. Inbound and Outbound Boundaries Are Not Stage-Symmetric
+
+Canonicalization exists on the inbound side because outside representation reaches the machine before it has Core
+authority. The Contract author may need to remove outside representation freedom before later judgments rely on the
+material.
+
+The outward path starts from the opposite condition. Publication sees material that already has Core authority, and
+Output Presentation gives authorized material its declared outward structure. Output does not need a second
+Canonicalization Contract merely to mirror the inbound pipeline.
+
+A protocol-specific deterministic encoding may still be required outside the Core. That requirement belongs to the
+authority that owns the outward protocol or its realization. It does not turn Output into another inbound-style
+Canonicalization stage.
+
+If the outward result later enters another Contract Machine, it is outside material for that other machine. That machine
+applies its own Input and any Canonicalization law selected for its own boundary.
 
 ---
 
-## 5. V1 Authoring Boundary
+## 5. V1 IDL Authoring Boundary
+
+V1 deliberately exposes a narrow Canonicalization authoring surface.
+
+The user declares the Canonicalization choice through the IDL. The IDL selects one exact Canonicalization declaration
+for the applicable role. Java or Kotlin nominal types provide restricted frontend evidence for that declaration; they do
+not independently acquire the role because they exist in source.
 
 V1 supports two selected source forms.
 
-The first is one complete flat Kontrakt-owned built-in Canonicalization symbol.
+The first is one complete Kontrakt-owned built-in Canonicalization law symbol.
 
-The second is one uninstantiable Java or Kotlin coordinate-law signature declaration whose parameter names identify
-selected Input coordinates and whose parameter types identify exact Kontrakt-owned nominal canonical type symbols.
+The second is one inert Java or Kotlin coordinate-law signature declaration. Its parameter names identify the direct
+Input coordinates covered by the declaration. Its parameter types select exact Kontrakt-owned nominal Canonicalization
+laws from the supported V1 catalog.
 
-The user does not declare a canonical output DTO, encoder object, transformation method, callback, descriptor instance,
-IR object, or runtime law value.
+The V1 source surface contains no executable canonicalizer. A user does not provide a transformation method, callback,
+comparator, equality implementation, encoder object, or runtime descriptor and ask Kontrakt to treat its behavior as the
+law. A second canonical output DTO is unnecessary because Canonicalization preserves the Input presentation surface.
 
-The independently resolved `canonicalization` slot names exactly one Java or Kotlin symbol as external source evidence
-for one flat Canonicalization Contract. A source-layout label such as `flow` grants no meaning. The selected symbol,
-file, package, method name, annotation, type relation, and source location do not own Canonicalization authority.
+The IDL selection supplies the role. Frontend refinement determines whether the selected source evidence denotes one
+complete legal Canonicalization Contract. Only the resulting Kontrakt-owned law material may later carry
+Canonicalization authority.
 
-The slot supplies the role. Frontend refinement decides whether the selected source can be ratified. The resulting
-Kontrakt-owned material supplies authority. Selection does not create a user implementation SPI. Executable
-canonicalization remains compiler/backend realization of the established law.
-
-The two selected source forms are:
+The two source forms are:
 
 ```text
 Direct law selection:
-    one complete Kontrakt-provided built-in Canonicalization symbol
+    the IDL selects one complete Kontrakt-provided Canonicalization law
 
-Coordinate-law type declaration:
-    one inert Java or Kotlin signature declaration whose parameter names bind every
-    directly named Input coordinate and whose parameter types are exact Kontrakt-owned
-    nominal canonical type symbols
+Coordinate-law declaration:
+    the IDL selects one inert Java or Kotlin declaration
+    whose direct parameter names bind Input coordinates
+    and whose parameter types select exact Kontrakt-owned nominal laws
 ```
 
-When present, the manifest names one declaration only.
+A direct law selection may conceptually appear as:
 
 ```text
 canonicalization  UnicodeNfcCaseFoldCanonicalization
 ```
 
-or:
+A coordinate-law declaration may be selected as:
 
 ```text
 canonicalization  CustomerCanonicalization
 ```
 
-When absent, the manifest simply continues from Admission to Lowering.
+When the slot is omitted, the IDL does not select any Canonicalization declaration.
 
 ```text
 input          CustomerInput
@@ -228,22 +384,36 @@ admission      CustomerAdmission
 lowering       CustomerLowering
 ```
 
-The omission says nothing about values that may have existed before `CustomerInput` was submitted. Kontrakt observes
-only the submitted Input presentation.
+Omission says nothing about values that existed before `CustomerInput` was submitted. Kontrakt reasons only from the
+Input presentation that its own boundary established.
 
-### 5.1. Built-In Law
+### 5.1. Built-In Law Catalog
 
-One built-in symbol names one flat closed versioned Canonicalization law.
+One built-in symbol names one closed, versioned Canonicalization law.
 
-A built-in law does not inherit, override, recursively compose, or acquire meaning from another built-in law.
+A built-in law does not inherit its meaning from another law. It does not override another law. It does not recursively
+compose Contract authority from a hierarchy of child laws. Implementation code may share algorithms behind the boundary,
+but that reuse must not appear as Contract inheritance or runtime dispatch.
 
-Implementation reuse is allowed behind the Contract boundary. It must not appear as Contract inheritance or composition.
+A built-in name may describe a law whose semantics involve more than one familiar normalization step, but the published
+name still denotes one complete law. `UnicodeNfcCaseFoldCanonicalization`, for example, must not mean that the runtime
+may compose an NFC helper and a case-fold helper in whichever order is convenient. Normalization operations are not
+generally commutative, and an intermediate result can change what a later step observes. Whenever order, intermediate
+normalization, or reapplication can change the representative, that sequence is part of the law's declared meaning and
+conformance material.
 
-Representative built-in families may include:
+V1 therefore does not expose an arbitrary user-authored pipeline of canonicalization operations. If Kontrakt publishes a
+combined law, Kontrakt must have closed the complete combined semantics before the law becomes selectable. Reusing
+implementation routines behind that law does not turn those routines into separately selectable Contract stages.
+
+V1 should publish only a restricted catalog whose traps have already been analyzed by Kontrakt. A type enters that
+catalog only after its equivalence, representative, legal domain, refusal behavior, version dependencies, aggregate
+behavior where applicable, boundedness, and conformance obligations are closed.
+
+Candidate families may include:
 
 ```text
 ExactCanonicalization
-RecursiveExactCanonicalization
 
 UnicodeNfcCanonicalization
 UnicodeNfdCanonicalization
@@ -278,50 +448,68 @@ InstantOnlyCanonicalization
 FixedPrecisionInstantCanonicalization
 ```
 
-The list is illustrative.
+This list is illustrative. A name in this ADR is not enough to ratify a public API law.
 
-A law must not be published merely because a host library offers a convenient operation.
+The former illustrative `RecursiveExactCanonicalization` name is not carried forward as a V1 candidate. V1 may support a
+closed law over finite structured presentation, but it does not expose recursive Contract composition as a
+Canonicalization authoring feature.
 
-Its semantics, bounds, byte law, refusal domain, security properties, and conformance material must be complete first.
+A host library operation does not become a Canonicalization law merely because it performs a familiar normalization.
+Kontrakt must understand the exact semantic profile rather than delegate authority to the library implementation.
 
-### 5.2. Coordinate-Law Nominal-Type Declaration
+### 5.2. Nominal Canonicalization Types
 
-A coordinate-law declaration is not a canonicalizer implementation.
+A public Canonicalization type is a closed authoring name, not a runtime abstraction.
 
-It is an uninstantiable frontend signature.
+Application code can import and name the type where the Canonicalization authoring surface permits it. The application
+cannot instantiate the type, implement it, subclass it, replace it through dependency injection, construct a descriptor
+from it, register a new implementation dynamically, or call a method on it to perform canonicalization.
 
-The binding law is:
+A nominal type may represent a law over a scalar presentation or over another complete closed Input presentation domain
+that Kontrakt has explicitly ratified. The public type name does not imply that the law is a JVM scalar operation. What
+matters is that the law for that supported presentation domain is complete before the type becomes selectable.
+
+V1 does not let an application construct arbitrary nested Canonicalization trees from generic type expressions. It does
+not support path-based overrides into a nested presentation. It does not infer a law from host object structure. If a
+closed structured presentation needs Canonicalization, V1 must expose a ratified law that is complete for that supported
+presentation domain rather than asking application code to assemble a recursive Contract graph.
+
+The frontend accepts only the exact Kontrakt-owned symbol that the API catalog publishes. A user-defined imitation,
+subtype, alias that changes identity, dynamically registered replacement, or type with merely similar spelling does not
+acquire the law.
+
+### 5.3. Coordinate-Law Nominal-Type Declaration
+
+A coordinate-law declaration is not a canonicalizer implementation. It is an inert frontend signature selected through
+the IDL.
+
+The binding form is:
 
 ```text
-selected Input coordinate name
-+ selected Input coordinate sort
-+ one exact Kontrakt-owned nominal canonical type symbol
-= one coordinate law inside one flat Canonicalization Contract
+selected direct Input coordinate
++ exact supported presentation domain for that coordinate
++ one exact Kontrakt-owned nominal Canonicalization law
+= one law assignment inside one flat Canonicalization declaration
 ```
 
-Matching occurs only within the Operation that independently selected the Input and Canonicalization declarations.
+The declaration remains one Canonicalization Contract. Its parameters do not become independent child Contracts merely
+because several nominal laws appear in the source signature.
 
-Resolution uses exact source symbols, parameter names, and exact nominal parameter types at definition time.
+Resolution uses exact source symbols and exact direct coordinate names. It also verifies that the selected nominal law
+supports the presentation domain of the coordinate to which it is assigned.
 
-It is not runtime string lookup, reflection, annotation scan, assignability, package convention, or type-wide Contract
-inference.
+Resolution is not runtime string lookup. It does not use reflection, annotation scanning, assignability, package
+convention, source proximity, or type-wide inference to discover Canonicalization authority.
 
-The declaration contains no law value, enum constant, singleton instance, factory call, constructor call, method body,
-callback, property initializer, or descriptor object.
+The declaration contains no executable law value. It contains no enum constant or singleton that the runtime switches
+over as authority. It contains no factory call, method body, callback, property initializer, mutable descriptor, custom
+comparator, user-defined equality, or other behavior that could become a hidden canonicalizer.
 
-The public authoring vocabulary consists only of nominal type names supplied by Kontrakt. A public canonical type is a
-closed name rather than a usable runtime abstraction. It has no accessible constructor, factory, singleton value,
-method, callback, mutable state, extension point, or user-implementable interface. It is final and cannot be subclassed
-or implemented by application code.
-
-The frontend accepts the exact fully qualified Kontrakt-owned symbol. A matching simple name, user-defined imitation,
-subtype, alias, or dynamically registered replacement is not sufficient.
-
-The source form is conceptually equivalent to the following compilable Kotlin declaration.
+The source form is conceptually equivalent to the following Kotlin declaration:
 
 ```kotlin
-// Kontrakt-provided authoring API. Application code imports these names;
-// it does not define, instantiate, implement, or extend them.
+// Kontrakt-provided authoring API. Application code may name these types,
+// but cannot instantiate, implement, extend, or execute them.
 class ExactText private constructor()
 class UnicodeNfcCaseFold private constructor()
 class AsciiUppercase private constructor()
@@ -332,7 +520,8 @@ data class CustomerInput(
     val regionCode: String,
 )
 
-// User-authored source declaration. It is never instantiated.
+// User-authored source evidence. The IDL selects this declaration.
+// Kontrakt never instantiates it.
 class CustomerCanonicalization private constructor(
     customerId: ExactText,
     name: UnicodeNfcCaseFold,
@@ -340,166 +529,217 @@ class CustomerCanonicalization private constructor(
 )
 ```
 
-The Kontrakt-provided declarations exist in the real authoring API rather than in user source. They are shown only to
-make the example compiler-complete. The user writes the Input and the selected coordinate-law declaration.
+The Kontrakt-provided nominal types belong to the real authoring API. The application writes its Input declaration and,
+when it needs per-coordinate selection, the inert Canonicalization declaration that the IDL names.
 
-The private constructor prevents formation of a `CustomerCanonicalization` object. Its parameters are not properties.
-Only their names and exact nominal types are declaration evidence. The frontend resolves and erases the declaration
-class, inaccessible constructor, parameter symbols, generic signatures, and every referenced host type before authority
-begins.
+Constructor parameters are declaration evidence rather than runtime properties. The declaration does not create values,
+runtime descriptors, nested Canonicalization Contracts, parent-child authority, inheritance, recursive Contract
+composition, or a second user-visible presentation shape.
 
-The coordinate-law signature follows the already-ratified flat Input presentation. Each constructor parameter binds one
-directly named Input coordinate to one exact nominal canonical type. The signature does not create values, runtime
-descriptors, nested Canonicalization Contracts, parent-child authority, inheritance, recursive Contract composition, or
-a second presentation shape.
+V1 rejects any source form that turns the declaration into executable or replaceable behavior. Public constructors,
+factories, methods, callbacks, lambdas, executable initializers, mutable or delegated state, and captured runtime
+dependencies are therefore outside the authoring surface. The same restriction excludes custom comparators, user-defined
+equality or ordering, inheritance-based role acquisition, arbitrary generic law construction, enum or singleton law
+values, and annotations on the Input carrier that attempt to acquire Canonicalization authority indirectly.
 
-V1 rejects declaration properties, `val` or `var` law bindings, enum law categories, enum constants, law singleton
-objects, public constructors, factory calls, arbitrary generic types, executable initializers, methods, callbacks,
-lambdas, property references, custom comparators, user-defined equality or ordering, inheritance, interface-based role
-acquisition, annotations on the Input DTO, mutable fields, lazy or delegated values, captured dependencies, and values
-acquired from runtime execution.
+### 5.4. Complete Coordinate Coverage
 
-A canonical type is accepted only when its complete semantics, Version, applicable sorts, preserved and collapsed
-distinctions, representative law, bounded-work law, canonical-byte law, refusal domain, and conformance material are
-known before ContractImage publication. V1 exposes no application-defined canonical-type extension point.
+A coordinate-law declaration must cover every direct Contract-visible Input coordinate exactly once.
 
-For every public canonical type, the Kontrakt API specification and user documentation must state at least:
+A missing coordinate is invalid. A duplicate or unknown coordinate is invalid. A renamed coordinate that no longer
+resolves to the selected Input surface is invalid. A nominal law that does not support the coordinate's presentation
+domain is invalid.
 
-```text
-supported Input sort and direct-coordinate position
-preserved and collapsed distinctions
-unique representative law
-semantic profile and version
-null, absence, finite-alternative, ordering, and duplicate behavior where applicable
-work, source-size, expansion, and output bounds
-canonical byte law and protocol version
-refusal domain and cross-contract stop attribution
-normative examples and conformance-vector reference
-```
+Adding, removing, renaming, or retyping an Input coordinate invalidates the old coordinate-law binding and requires the
+declaration to be ratified again. Source declaration order does not silently provide semantic fallback for a changed
+coordinate set.
 
-The type name and documentation are public projections of the same versioned Kontrakt-owned canonical law material.
-Documentation explains the law but does not replace that material as authority.
+No new coordinate receives an undeclared `Exact` default.
 
-V1 does not require or permit a second user-authored canonical output presentation. The Contract-visible shape remains
-the Input shape. Representative values may change under the selected equivalence law, while Kontrakt-owned physical
-material may use another frozen layout or canonical byte encoding. A different user-visible output shape belongs to
-Lowering.
+A whole-presentation built-in law has the same completeness obligation, but the completeness belongs to that law rather
+than to a user-written parameter list.
 
-### 5.3. Complete Coordinate Coverage
+### 5.5. No Application-Defined Canonicalization Law in V1
 
-Every Contract-visible Input coordinate must appear exactly once.
+V1 exposes no application-defined Canonicalization law extension point.
 
-A missing coordinate, duplicate coordinate, unknown coordinate, renamed coordinate, or incompatible canonical type
-rejects the Contract definition.
+This restriction is deliberate. A custom canonicalizer can erase a distinction that later authorization expected to
+preserve, or it can repair material that should never have entered the stage. It can collapse aggregate keys, depend on
+an unstable semantic table, or make resource cost attacker-controlled. It can also disagree with Admission or Lowering
+about what the value means. Allowing a `T -> T` callback would conceal those decisions behind executable behavior.
 
-Adding, removing, renaming, reordering, or retyping an Input coordinate invalidates the old binding and requires
-re-ratification.
+A future version may open custom Canonicalization only through a separate design and security review. The extension must
+make the semantic burden explicit rather than simply accepting executable code. At minimum, a custom law would need a
+closed presentation domain and an explicit account of which distinctions survive. Its equivalence and representative
+behavior would have to be inspectable rather than inferred from code. Versioned semantic bases, refusal conditions,
+aggregate collision behavior, boundedness, determinism, and conformance would also need contract-owned definitions.
 
-No undeclared default applies to a new coordinate.
+The product must also explain the security consequences to users before application-defined authority is exposed. A
+custom law can change authorization keys, cache keys, equality classes, lookup behavior, deduplication, or downstream
+interpretations even when the code appears to be a harmless normalizer.
 
-V1 uses exact nominal canonical type selection.
+Future custom support must not weaken the V1 rule by treating an application callback as a nominal type implementation.
+It requires an explicit Contract surface of its own.
 
-It does not infer Canonicalization from shape-directed generic or nested-signature structure.
+### 5.6. Public Law Specification
+
+Every public Canonicalization type must be backed by a complete Kontrakt-owned specification.
+
+The specification must identify the Input presentation domain for which the law is legal. It must explain which
+distinctions survive and which are collapsed, then describe the stable representative and the cases that fall outside
+the canonicalizable domain. Null-like values, explicit absence, and finite alternatives require their own declared
+behavior whenever the supported presentation can observe those distinctions. If the law depends on a versioned semantic
+table or profile, that dependency must be explicit rather than inherited from the running platform.
+
+Aggregate laws must define what happens when Canonicalization causes two previously distinct elements or keys to
+collide. The implementation must not choose a first-wins, last-wins, iteration-order, or hash-table behavior unless the
+Contract law explicitly owns that result.
+
+The specification must state the law's meaningful bounds and refusal behavior, including the attribution of stops that
+belong to another Contract rather than Canonicalization. It must also state whether exact canonical bytes belong to the
+law and, if so, which byte protocol version applies.
+
+Normative examples and conformance vectors must be versioned with the law. User documentation explains the same law in
+usable terms, but documentation is not an alternate source of authority.
+
+V1 does not require or permit a second user-authored canonical output presentation. Representative values may change
+under the selected equivalence law while the Contract-visible Input surface remains the same. A different user-visible
+target shape belongs to Lowering.
 
 ---
 
-## 6. Canonical-Type Applicability
+## 6. Canonicalization Law Eligibility
 
-Every public nominal canonical type must resolve to enough ratified law material to determine its meaning before
-ContractImage publication.
+A public nominal Canonicalization type is selectable only after Kontrakt can determine its complete meaning without
+executing application behavior. Publication into the V1 catalog also requires the security review appropriate to an
+inbound law; the detailed threat model belongs to the separate Canonicalization Security ADR rather than to this
+document.
 
-That material must cover the supported source sort, preserved and collapsed distinctions, representative law, absence
-and finite-choice behavior where applicable, numeric or textual semantics where applicable, bounds, canonical-byte
-schema, refusal domain, attribution, and normative conformance material.
+The law must identify the supported Input presentation domain and the distinctions it preserves. It must also identify
+the distinctions it collapses and the representative required for each successful class. Numeric, textual, temporal,
+binary, finite-choice, ordering, duplicate, and aggregate semantics must be closed wherever the law observes them.
 
-Unknown, application-defined, aliased, imitated, dynamically registered, or incompletely specified canonical type
-symbols are rejected.
+A law that depends on external semantic data must pin the material that can change its result. Unicode or temporal data
+are obvious examples, but the same rule applies to collation, numeric, URI, or other semantic profiles. Whatever
+provider happens to be installed on the host cannot silently complete Contract meaning.
 
-Executable law values, callbacks, lambdas, helper execution, virtual dispatch, inheritance-dependent behavior, runtime
-subtype selection, mutable state, lazy observation, dependency injection, repository access, environment access, time,
-randomness, synchronization, reflection, object identity, or runtime reference traversal are not Canonicalization
-authority.
+Unknown, application-defined, imitated, dynamically registered, or incompletely specified canonical type symbols are
+rejected in V1.
 
-Host default locale, timezone, charset, collation, normalization table, path behavior, hash-table order, acquisition
-order, or unstable sorting tie-break must not silently define canonical meaning.
+Executable law values are not Canonicalization authority. V1 does not complete a law by invoking application callbacks
+or by following virtual dispatch, inheritance, runtime subtype discovery, reflection, or object identity. Nor may the
+law consult mutable state or acquire missing meaning through dependency injection, repositories, the environment, time,
+randomness, synchronization, or lazy runtime traversal.
 
-Shape-changing output, parsing, projection, flattening, business derivation, or arbitrary repair is outside
-Canonicalization.
+Host defaults cannot finish a Canonicalization law. Locale, timezone, charset, collation, or normalization data must be
+explicit when they affect meaning. Filesystem rules, hash-table order, acquisition order, and unstable sorting
+tie-breaks likewise cannot choose a representative merely because the implementation exposes them.
+
+A law may reject a legal Input when that Input lies outside its declared canonicalizable domain. It may not use
+rejection as a substitute for Input legality, and it may not repair illegal Input into the domain.
+
+Shape-changing output, business derivation, arbitrary parsing, projection, flattening, capability acquisition,
+external-resource resolution, or general repair remains outside Canonicalization.
 
 ---
 
 ## 7. Finite-Work Law
 
-Canonicalization is a producer Contract. It is not permission for unbounded work.
+Canonicalization is a producer Contract on an untrusted inbound path. It cannot be permission for unlimited work.
 
-Every accepted law must establish finite source-size, depth, cardinality where applicable, intermediate-storage,
-output-size, and work bounds before publication.
+Every V1 law must have a finite, analyzable work shape for the presentation domains that the public API allows. The
+review must cover the size and depth the law can consume, the aggregate cardinality it can traverse, and the maximum
+expansion of the representative. Temporary storage and output growth also need known bounds whenever they can become
+material to safe realization.
 
-General imperative iteration and recursive object-graph traversal are forbidden as user-defined Canonicalization
-behavior.
+The Contract must distinguish a semantic bound from a compiler resource limit. A semantic bound is part of the law when
+crossing it changes whether an Input belongs to the law's legal domain or changes the required representative. Compiler
+CPU limits, temporary allocation ceilings, cancellation, worker limits, or implementation-specific scratch space do not
+become Canonicalization meaning merely because the implementation must remain safe.
 
-Where a closed built-in law operates on bounded structured material, its traversal and aggregation semantics must
-already be part of the ratified law.
+General application-defined imperative iteration and recursive object-graph traversal are not available as
+Canonicalization behavior in V1. A closed Kontrakt-owned law may operate over finite structured presentation when its
+traversal, ordering, duplicate behavior, collision behavior, and completion rules are already part of the ratified law.
 
-A valid implementation may use canonical child bytes, domain-separated hashes, exact byte comparison, and declared
-duplicate law to realize deterministic ordering when that strategy is compatible with the selected law.
+A valid realization may avoid work when the Input already satisfies the representative law. It may reuse immutable
+backing, use a quick check, perform zero-copy projection, specialize scalar operations, vectorize, sort with a
+law-preserving algorithm, or memoize reusable computation. The Contract requires the same semantic result, not the same
+amount or shape of physical work.
 
-That strategy is implementation. It is not frontend syntax or additional Contract meaning.
+A realization may use canonical child material, domain-separated hashes, exact comparison, or another deterministic
+implementation technique when that technique preserves the selected law. Hash equality alone never becomes permission to
+collapse distinctions.
 
-Capacity and Budget own their declared walls.
-
-Exceeding those walls produces the owning Capacity or Budget result rather than a generic Canonicalization refusal.
+Budget and Capacity retain their own declared authorities. Crossing one of their walls does not create a different
+Canonicalization representative or redefine equivalence.
 
 ---
 
 ## 8. Canonicalizable-Domain Condition
 
-A source is not refused merely because it is not already canonical. Noncanonical spelling, order, scale, case,
-normalization form, or other declared drift is ordinary Input to Canonicalization.
+Canonicalization starts inside the legal Input Presentation domain.
 
-A Canonicalization refusal occurs only when the source lies outside the selected canonicalizable domain, the selected
-law cannot define one unique representative, an operation is undefined under that law, or required semantic material is
-unavailable. Capacity and Budget stops remain separate.
+A source is not refused merely because it is not already canonical. A noncanonical spelling, order, scale, case,
+normalization form, or other variation that the selected law explicitly accepts is ordinary Canonicalization input.
+
+A Canonicalization refusal occurs only after the law has a legal Input presentation to judge. Refusal may occur when the
+presentation lies outside the selected canonicalizable domain, when the law cannot establish the required representative
+for that presentation, or when another Canonicalization-owned condition makes the application invalid under the declared
+law.
+
+Input illegality is not Canonicalization refusal. Compiler inability is not Canonicalization refusal. Budget or Capacity
+stops retain their own result ownership.
 
 ```text
-noncanonical but canonicalizable source:
-    produce the representative
+legal but noncanonical presentation:
+    establish the selected representative
 
-source outside the selected canonicalizable domain:
+legal presentation outside the selected canonicalizable domain:
     Canonicalization refusal
 
-successful result that is not canonical:
+Input material that never became a legal presentation:
+    Canonicalization does not enter
+
+successful result that violates the selected representative law:
     Kontrakt defect
 ```
 
-There is no `isCanonical`, `validateCanonical`, or user-supplied verifier step after successful production.
+There is no user-authored `isCanonical`, `validateCanonical`, or post-production verifier that can accept a different
+result after Kontrakt has completed the selected law.
 
 ---
 
 ## 9. Definition-Time Processing
 
+This revision does not yet re-open the HIR or Establishment model for Canonicalization. The existing definition-time
+frontend obligations remain, but their implementation must preserve the IDL-first and restricted V1 authoring boundary
+defined above.
+
 The Canonicalization definition path is:
 
 ```text
-resolve the exact slot-selected built-in symbol or coordinate-law declaration
+resolve the exact IDL-selected built-in symbol or coordinate-law declaration
 -> acquire the selected source through the existing frozen frontend machinery
 -> determine direct-law or coordinate-law nominal-type source form
--> verify one flat selectable Contract and an uninstantiable signature declaration when applicable
--> bind every declared parameter name to exactly one ratified Input coordinate
--> verify complete coordinate coverage, declared order, and sort compatibility
+-> verify one flat selectable Contract and an inert signature declaration when applicable
+-> bind every declared parameter name to exactly one legal direct Input coordinate
+-> verify complete coordinate coverage and presentation-domain compatibility
 -> resolve every exact nominal canonical type to pinned semantic material
 -> reject law values, constructors, factories, execution, environment, dispatch, State, effect, imitation, and dynamic-registration paths
--> ratify preserved and collapsed distinctions for every coordinate and the complete presentation
--> prove declared work, source-size, expansion, intermediate-storage, and output bounds
--> derive the canonical byte schema and protocol version
--> derive stable Contract identity and ContractImage material
--> derive compiler-owned canonicalization realization knowledge
--> generate or lower the deterministic canonicalizer and byte emitter in the backend
+-> ratify preserved and collapsed distinctions for every selected law and the complete presentation
+-> verify the declared semantic bounds and the implementation safety obligations required before publication
+-> derive canonical byte material only when the selected law owns canonical bytes
+-> derive stable Contract identity and the existing Canonicalization definition material
+-> generate or select the deterministic realization
 ```
 
 Runtime performs no declaration lookup, reflection, member discovery, method dispatch, operator resolution, locale or
 Unicode-table selection, comparator acquisition, hash-policy selection, or byte-schema construction. It executes only
-the generated realization over fixed ratified coordinates and declared cross-Contract bounds.
+Kontrakt-owned realization over already resolved law material.
+
+The exact HIR Definition Candidate, Binding Candidate, Establishment handoff, Required Basis, Applicability, Occurrence,
+Established Material, and Established Semantic Protocol are deliberately not defined by this revision. They remain the
+next reclosure step under ADR-0071, ADR-0063, and the 1D master checklist.
 
 ## 10. Identity and Conformance
 
@@ -509,7 +749,8 @@ It is not derived from the selected source class name alone.
 
 Identity material includes the law kind, semantic profile version, source presentation identity, preserved and collapsed
 distinctions, coordinate-law bindings, representative-law versions, applicable scalar-law meaning, canonicalizable
-domain, refusal law, work and output bound law, canonical byte protocol version and schema identity.
+domain, refusal law, work and output bound law, canonical byte protocol version and schema identity where canonical
+bytes belong to the law.
 
 A frontend change that changes accepted meaning or generated canonical material changes Contract identity.
 
@@ -518,90 +759,158 @@ suite.
 
 Changing semantic meaning or a normative expected result changes the law identity.
 
-Adding attack cases, property tests, differential tests, or implementation verification coverage without changing the
-law does not change Contract meaning.
+Changing the verification suite alone does not change Contract meaning. Attack cases, property tests, differential
+checks, performance tests, and additional implementation coverage may grow while the normative law stays the same.
+
+The exact Definition identity law will be re-audited when Canonicalization HIR and Establishment are reopened. This
+section preserves the existing rule that source symbols and implementation artifacts do not own semantic identity.
 
 ---
 
 ## 11. Determinism Law
 
-The determinism law is:
+Canonicalization result meaning depends only on semantic material that the selected law declares relevant.
+
+The law is conceptually:
 
 ```text
-same ratified ContractImage
-+ same immutable admitted Input presentation
-+ same applicable Budget and Capacity world
+same Canonicalization law meaning
++ same legal Established Input presentation meaning
++ same meaning-determining versioned semantic bases, where applicable
 = same canonical representative
-+ same canonical bytes
 + same Canonicalization outcome
 + same Contract-owned attribution
++ same canonical bytes, only when the law owns canonical bytes
 ```
 
-Generated canonicalizers and byte emitters are compiler/backend implementation-axis machinery. They are not user
-implementation points.
+Budget availability, Capacity availability, cache state, worker count, traversal schedule, allocation order, host
+locale, current provider state, and other implementation conditions do not choose a different representative.
 
-They may be specialized, fused, vectorized, allocation-disciplined, or replaced only when the representative, exact
-bytes, outcome, attribution, work walls, and State-visible behavior remain identical.
+Generated canonicalizers and byte emitters remain implementation-axis machinery. Kontrakt may specialize or fuse them,
+eliminate allocation, add a quick-check path, reuse validated work, or replace one algorithm with another. Those choices
+are legal only while the Contract-visible result remains identical under the selected law. Canonicalization itself owns
+no mutable State, so an optimization must not introduce state-visible behavior as a hidden side effect of realization.
+
+Physical reordering across the Canonicalization boundary requires a stronger proof than ordinary local equivalence. A
+later predicate, guard, lookup, or other judgment may be evaluated before Canonicalization only when the compiler can
+prove that its result is invariant over every Canonicalization equivalence class that the movement crosses. If two
+presentations are equivalent under the selected Canonicalization law but the moved computation can distinguish them,
+moving that computation before Canonicalization changes the declared machine and is illegal.
+
+```text
+x equivalent-to y under the selected Canonicalization law
+    ->
+any computation moved across that boundary
+    must observe the same result for x and y
+```
+
+This proof obligation constrains optimization rather than adding a new Canonicalization judgment. The logical Contract
+order remains authoritative even when execution is fused or scheduled differently.
+
+Semantic determinism does not imply constant-time execution, identical allocation behavior, or one mandatory physical
+algorithm. Those are separate security or realization questions.
 
 ---
 
 ## 12. Refusal Boundary
 
-Canonicalization receives only material that Admission allowed to continue.
+Canonicalization receives only material that Input has already established as a legal presentation and only when the
+selected Canonicalization branch is applicable.
 
-It refuses only when the selected Canonicalization law cannot establish the required unique bounded representative
-within its declared domain.
+It refuses only under a Canonicalization-owned negative condition after legal entry. A presentation may be noncanonical
+and still succeed. A presentation may be legal Input yet lie outside the selected Canonicalization law's domain and
+therefore be refused by Canonicalization.
 
-A Budget or Capacity stop observed during canonical production remains a Budget or Capacity result.
+Canonicalization must not convert Input refusal into Canonicalization refusal by repairing the original material. It
+also must not hide Admission rejection, Lowering refusal, Failure, or cross-cutting resource results under a generic
+canonicalization error.
+
+A Budget or Capacity stop observed while realizing Canonicalization remains owned by Budget or Capacity. Compiler
+resource exhaustion or implementation unavailability is not a new Canonicalization semantic result.
 
 When Canonicalization is omitted, there is no Canonicalization refusal surface.
 
-Canonicalization failure must not be used to hide Input refusal, Admission rejection, Lowering refusal, or cross-cutting
-resource results.
-
 ---
 
-## 13. Relationship to Lowering
+## 13. Relationship to Admission and Lowering
 
-A selected Canonicalization law preserves the Input coordinate surface.
+A selected Canonicalization law preserves the Input coordinate surface and establishes the representative that later
+inbound judgments must use for the distinctions governed by that law.
 
-Its stable representative values become Lowering source values.
+Admission therefore judges the canonical representative when Canonicalization is selected. When Canonicalization is
+omitted, Admission judges the Input-established presentation directly.
 
-Canonicalization does not define Operation parameter targets and does not create Fact meaning.
+Lowering receives the same semantic boundary meaning that Admission judged. It must not return to an earlier raw
+presentation and recover distinctions that Canonicalization already erased. It must not apply another hidden
+normalization and treat the result as the same Canonicalization Contract.
 
-Lowering owns the explicit source-to-target relation and the shape-changing representation formation boundary.
+Canonicalization does not define Operation parameter targets and does not create Fact meaning. Lowering continues to own
+the explicit source-to-target relation and the shape-changing representation-formation boundary.
 
-When Canonicalization is omitted, the established Lowering relation receives the admitted Input coordinates unchanged.
-Kontrakt derives the required Lowering realization knowledge and the backend performs the declared source-to-target
-value formation. Canonicalization does not open or require a user Lowering implementation boundary.
+The final shared inbound branch, slot singularity, and whole-airlock composition remain owned by ADR-0048. This ADR
+fixes only the Canonicalization-side semantic requirement that selected Canonicalization occurs before later judgments
+that are meant to rely on its representative.
 
 ---
 
 ## 14. Open in This Section
 
-The final token spelling and exact public nominal canonical type names may change.
+The final IDL token spelling may change.
 
-The exact Java or Kotlin carrier syntax for the uninstantiable coordinate-law declaration may change.
+The exact public nominal Canonicalization type names may change.
 
-Those frontend changes must preserve the fixed V1 authoring boundary: explicit optional slot, complete flat selected
-law, exact nominal type resolution, complete coordinate coverage, no implicit Exact law, no executable user
-canonicalizer, and no shape-directed generic or nested-signature inference.
+The exact Java or Kotlin carrier syntax for an inert coordinate-law declaration may change.
+
+The exact set of V1 built-in laws remains API and platform-support work. A candidate name in this ADR is not a ratified
+promise until its semantic and security review is complete.
+
+A future application-defined Canonicalization facility remains deferred. It requires a separate Contract design and a
+Security ADR rather than an extension point hidden inside the V1 nominal type API.
+
+HIR Definition Candidate, Binding Candidate, Establishment, Required Basis, Applicability, Occurrence, Established
+Material, Established Semantic Protocol, current-validity, and V2 incremental details remain intentionally outside this
+revision pass.
+
+Any frontend change must preserve the fixed V1 authoring boundary: explicit IDL selection, explicit omission, closed
+Kontrakt-owned law material, exact nominal type resolution, complete coordinate coverage where coordinate-law authoring
+is used, no implicit `ExactCanonicalization`, no executable user canonicalizer, and no arbitrary shape-directed or
+nested user law inference.
 
 ---
 
 ## 15. Consequences
 
-Canonicalization becomes a declared equivalence and stable-representation Contract rather than cleanup code.
+Canonicalization becomes an explicit inbound representation-control Contract rather than cleanup code.
 
-Omission is explicit and cheap.
+The outside world may still choose how to express a legal Input within the presentation space that Input permits. It
+does not automatically get to decide which of those differences remain meaningful after the Canonicalization boundary.
 
-Selected laws can support aggressive generated optimization because their meaning, bytes, bounds, and conformance are
-closed.
+The user retains that semantic choice through the IDL. V1 gives the user control by exposing reviewed law selections,
+not by handing over executable authority to arbitrary callbacks.
 
-The price is a deliberately strict authoring boundary. Application-defined canonicalizer behavior cannot silently enter
-Contract authority.
+Kontrakt can therefore verify and optimize the realization against closed law material. Already-canonical input may use
+a fast path or reuse immutable backing without changing the semantic application. More expensive structured laws may use
+specialized implementation techniques while remaining subject to the same representative and boundedness obligations.
 
-Budget and Capacity remain honest separate limits instead of being folded into generic canonicalization failure.
+Omission remains explicit and cheap. It preserves the Input presentation distinctions rather than pretending that an
+invisible identity canonicalizer ran.
+
+The selected branch obtains one canonical interpretation for later inbound judgments. Admission and Lowering cannot
+silently disagree by re-reading different normalized forms of the same outside material.
+
+The stricter V1 authoring boundary reduces flexibility. That restriction is deliberate. Custom Canonicalization can
+change security-sensitive equality classes, cache behavior, lookup keys, authorization behavior, duplicate handling, and
+resource cost. Kontrakt should not expose that authority until its Contract surface and security model are explicit
+enough for users to understand what they are declaring.
+
+Budget and Capacity remain separate authorities instead of being folded into generic Canonicalization failure. Compiler
+resource mechanisms remain implementation unless another Contract explicitly owns them.
+
+Canonical bytes remain separate from generic deterministic compiler encoding. A selected law owns exact bytes only when
+it explicitly declares that obligation.
+
+Output remains asymmetric with Input. Publication and Output Presentation control authoritative material leaving the
+machine; they do not acquire another Canonicalization stage solely for symmetry.
 
 ---
 
@@ -611,6 +920,25 @@ This ADR was extracted mechanically from the Canonicalization-owned material of 
 
 The extraction itself did not change the accepted Canonicalization Contract semantics.
 
-The current split ADR set now owns the boundary directly. This ADR owns Canonicalization and explicit omission. ADR-0065
-owns the admitted source handoff into Canonicalization, ADR-0067 owns the later Lowering relation, and ADR-0047 owns the
-common one-dimensional selection and compiler/backend realization boundary.
+A later rework reframed Canonicalization around the inbound authority boundary already implied by `What Contract Is`.
+Canonicalization now explicitly controls which representation freedoms of an established outside Input may continue to
+influence later machine meaning. The review also moved the selected conceptual order to Input Presentation ->
+Canonicalization -> Admission -> Lowering so that judgment and later use share one declared interpretation.
+
+The same review tightened the V1 authoring surface around IDL selection and a restricted Kontrakt-owned nominal law
+catalog. Application-defined executable canonicalizers remain unavailable in V1. Future custom-law support requires a
+separate Contract and security design rather than a callback extension point.
+
+The review also made explicit that Canonicalization cannot repair illegal Input, that erased distinctions cannot be
+resurrected by later semantic consumers, that canonical bytes are law-specific rather than an implicit property of every
+deterministic encoding, and that semantic bounds remain distinct from Budget, Capacity, and compiler resource
+mechanisms.
+
+A final pass clarified four boundaries that follow from the same model. Security suspicion does not create equivalence.
+A combined built-in law owns the exact ordering of its semantic steps rather than exposing an arbitrary normalization
+pipeline. Equal canonical representatives do not silently merge identity, authorization, cache authority, or another
+downstream judgment. Compiler reordering across Canonicalization is legal only when the moved computation is invariant
+over the Canonicalization equivalence classes it crosses.
+
+ADR-0048 remains the owner of the shared optional-Canonicalization branch and final inbound composition.
+Canonicalization-specific HIR and Establishment reclosure is intentionally deferred to the next ADR-0066 revision pass.
