@@ -80,9 +80,11 @@ Deterministic byte production is a separate concern unless exact bytes are thems
 selected Contract law. This ADR does not create a user-facing canonical-byte facility merely because other ecosystems
 use the word canonicalization for signing or serialization.
 
-This ADR therefore decides the qualification boundary for built-in laws and records the current V1 candidates. A
-candidate becomes ratified only after its semantic, determinism, evolution, adversarial, and evidence obligations are
-closed.
+This ADR therefore decides the qualification boundary for built-in laws and records the current V1 candidates.
+`Candidate` is a working state, not an accepted catalog state. During this ADR's Proposed lifecycle, each initial V1
+candidate must be reviewed against Section 5 and its closed result recorded here before the ADR can become Accepted. A
+later addition to an already accepted catalog requires a new catalog ADR rather than an implementation update or a
+mutable registry entry.
 
 # 3. Decision Drivers
 
@@ -90,8 +92,9 @@ Determinism is the first qualification requirement. The same law-owned determina
 produce the same Canonicalization-owned outcome under every legal realization.
 
 That rule requires complete determinant closure. Meaning cannot depend on ambient locale, current provider state, host
-iteration order, scheduling, cache history, or another undeclared source. External semantic material becomes explicit
-Basis when it can change the result.
+iteration order, scheduling, cache history, or another undeclared source. External semantic material that can change the
+result must be closed either as Definition-determining law material or as an explicit Required Basis requirement under
+its owning law.
 
 The catalog must also preserve the authority boundary established by ADR-0066. A built-in law establishes one
 representative under one exact equivalence relation; convenience, validation, ordering, serialization, or business
@@ -117,9 +120,10 @@ generated API shape, or realization details into compatibility obligations.
 
 Kontrakt will maintain a **Canonicalization Built-In Law Catalog** as Contract-owned semantic specification material.
 
-Catalog membership is an ADR-level decision. A ratified entry owns an exact semantic profile, including the
+Catalog membership is an ADR-level decision. A ratified Catalog Law owns an exact semantic profile, including the
 representative, the distinctions it erases, the determinants that can affect the result, and any Canonicalization-owned
-refusal.
+refusal. The catalog record, table, generated index, or other carrier does not acquire that authority by containing the
+law.
 
 The catalog does not own host-language names or implementation algorithms. API Specification maps source names to
 Catalog Laws, while Design decides how a ratified law is realized.
@@ -164,7 +168,7 @@ A Catalog Law is ratifiable only when its Canonicalization-owned outcome is dete
 determinants.
 
 For a law `L`, legal Input `x`, and any two legal realizations `R1` and `R2` operating under the same law identity and
-the same Required Basis binding:
+the same applicable Required Basis binding when one is required:
 
 ```text
 Outcome(R1, L, x) = Outcome(R2, L, x)
@@ -172,8 +176,9 @@ Outcome(R1, L, x) = Outcome(R2, L, x)
 
 The outcome is the exact representative or the exact refusal owned by `L`.
 
-Ambient state cannot participate invisibly. Any external semantic source that can change the outcome must be closed as a
-determinant or Required Basis. Physical execution state cannot choose Contract-visible meaning.
+Ambient state cannot participate invisibly. Any external semantic source that can change the outcome must be closed as
+Definition-determining law material or through an explicit Required Basis requirement and binding under its owning law.
+Physical execution state cannot choose Contract-visible meaning.
 
 A referenced standard may leave implementation freedom that Kontrakt does not. Any choice capable of changing the
 representative or owned refusal must be fixed by the Kontrakt profile. When representative selection requires ordering
@@ -185,46 +190,50 @@ resource behavior into Canonicalization meaning.
 
 ## 5.2. Semantic Closure
 
-The law-defined relation must be an exact equivalence relation over the law's successful domain. Its representative must
-identify that partition without accidental over-collapse.
+A Catalog Law must define its equivalence relation independently of the representative procedure. Let `E_L` be the exact
+same-meaning relation owned by law `L`, and let `C_L` be the representative function over the law's successful domain.
+`E_L` must be an equivalence relation before `C_L` is used to test or implement it.
 
-For successful inputs:
+The representative must realize exactly that independently specified partition.
 
 ```text
-x equivalent-to y under L
-    iff
 C_L(x) = C_L(y)
-```
+    iff
+E_L(x, y)
 
-The representative must remain inside the same equivalence class and must be stable.
-
-```text
-x equivalent-to C_L(x) under L
+E_L(x, C_L(x))
 
 C_L(C_L(x)) = C_L(x)
 ```
 
+This prevents a defective representative procedure from defining its own equivalence by accidental over-collapse. The
+specification of `E_L` is the authority against which representative formation and conformance are checked.
+
 The law must also close the presentation interpretation it consumes. A structured textual profile cannot validate one
-interpretation and later rely on another parser that gives the same source different meaning. The successful domain and
-any Canonicalization-owned refusal boundary must therefore be part of the profile.
+interpretation and later rely on another parser that gives the same source different meaning. Canonicalization begins
+only after Input has established a legal presentation. A legal Input may still lie outside the selected law's
+canonicalizable domain and receive a Canonicalization-owned refusal; material that never became legal Input does not
+enter Canonicalization.
+
+A combined built-in law must define its own `E_L`, `C_L`, determinant set, and exact ordering semantics. Sequentially
+applying two existing Catalog Laws does not by itself create a third Contract law.
 
 Canonicalization selects a representative of already-declared meaning. A transformation that acquires or changes meaning
 belongs to another authority.
 
 ## 5.3. Composition and Reuse Closure
 
-A law must state any semantic property on which safe reuse can depend.
+Ratification must establish which reuse claims, if any, are sound consequences of the law. Canonical material is not
+assumed to remain canonical after concatenation, aggregation, slicing, or another domain operation merely because the
+source fragments were canonical.
 
-Canonical material is not assumed to remain canonical after arbitrary composition. If concatenation, aggregation,
-slicing, or another domain operation can invalidate the representative relation, the compiler must not infer otherwise
-merely because each input fragment was canonical.
+A candidate may expose a certified property that permits composition closure, boundary-local re-establishment, or
+another narrower reuse rule. That property is compiler-consumable knowledge derived from the authoritative law rather
+than a second Canonicalization judgment. Adding stronger proof or a new optimization property does not by itself change
+the Catalog Law identity when equivalence, representative, domain, determinants, and refusal remain unchanged.
 
-A law may instead establish a narrower locality property that permits local repair or incremental recomputation. Such a
-property belongs to the semantic profile only when it is true across legal realizations. The algorithm that exploits it
-remains Design.
-
-When no useful composition property exists, the law may state only whole-value re-establishment. That is preferable to
-an unsound optimization seam.
+In the absence of an applicable certified property, compiler work may assume only whole-value re-establishment. The
+physical algorithm that exploits a certified property remains Design.
 
 ## 5.4. Adversarial Realizability
 
@@ -282,61 +291,194 @@ expose the same legal outcome. Parallelism, caching, persistence, or a supported
 External implementations are useful for differential testing. A disagreement is evidence to investigate, not authority
 to copy.
 
-# 6. Catalog Entry Model
+# 6. Catalog Law Model and Consumer Projections
 
-A catalog entry must be complete enough that the compiler never needs to reopen a public source type or an
-implementation library to discover the selected law's meaning.
+A ratified Catalog Law needs one authoritative semantic definition. Compiler properties, ratification evidence, outward
+stability material, and physical catalog representation may be associated with that law, but they do not become one
+undifferentiated Contract record merely because one implementation stores them together.
 
-| Catalog concern             | Required meaning                                                                                                |
-|-----------------------------|-----------------------------------------------------------------------------------------------------------------|
-| Semantic law id             | Stable reference to the law family and semantic profile                                                         |
-| Presentation domain         | Exact Input presentation domain and interpretation consumed by the law                                          |
-| Equivalence                 | Exact same-meaning partition owned by the law                                                                   |
-| Preserved distinctions      | Distinctions that remain observable after Canonicalization                                                      |
-| Representative              | Exact successful representative                                                                                 |
-| Determinants                | Complete law-owned inputs that can change the outcome                                                           |
-| Required Basis              | Separately established external semantic material, when required                                                |
-| Refusal                     | Exact Canonicalization-owned negative outcome, if one exists                                                    |
-| Composition                 | Semantic facts that permit reuse, local repair, or require whole-value re-establishment                         |
-| Adversarial envelope        | Hostile-input characteristics that constrain safe realization                                                   |
-| External legal observations | Exact Catalog Law semantics that independent consumers may rely on                                              |
-| Evolution and compatibility | Changes that preserve those observations, require a new profile, or require explicit compatibility or migration |
-| Conformance                 | Evidence required to ratify and continuously verify the law                                                     |
+The compiler must be able to resolve the selected law without reopening a public source type or implementation library.
+That requirement does not justify copying every downstream concern into semantic identity.
 
-This model is logical. It does not require one runtime object, one table row, or one persistent record containing every
-item.
+## 6.1. Authoritative Semantic Law Definition
 
-# 7. Catalog Classes
+The authoritative law definition contains only material that can determine Canonicalization meaning.
 
-The catalog uses semantic classes to control scope. They are not a runtime enum exposed to user code.
+| Semantic concern               | Required meaning                                                                                                                           |
+|--------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------|
+| Exact Catalog Law Reference    | Stable reference to one exact semantic law profile, not to a family, class, API symbol, table row, or ordinal                              |
+| Input Presentation Requirement | Exact already-established Input meaning and interpretation that the law may consume                                                        |
+| Canonicalizable Domain         | Exact subset of legal Input for which the law can establish its representative                                                             |
+| Law-Defined Equivalence        | Independent same-meaning relation `E_L` owned by the law                                                                                   |
+| Representative Law             | Exact representative function `C_L` for the successful domain                                                                              |
+| Definition Determinants        | Closed law material whose value can change the semantic outcome                                                                            |
+| Required Basis Requirements    | Semantic meaning that must be supplied through the applicable ADR-0063 basis relation when the law does not close it inside the definition |
+| Owned Refusal                  | Exact Canonicalization-owned negative outcome after legal Input entry, when one exists                                                     |
 
-## 7.1. Core General Law
+`Input Presentation Requirement` references Input-owned meaning rather than redefining Input legality.
+`Canonicalizable Domain` begins inside that legal presentation domain. Material that Input never established does not
+become a Canonicalization refusal.
 
-A Core General Law solves a common application problem without requiring a user-selected professional Basis. A law may
-still depend on a ratified Kontrakt Basis when that material is part of the law's exact semantics.
+The law may expose a preserved-distinction projection for specification, diagnostics, and verification, but that
+projection must agree with `E_L`. It cannot become a second source of equivalence authority.
 
-A ratified Core General Law may ship with the base V1 Canonicalization API.
+An exact semantic table, registry snapshot, or other versioned material may be a Definition determinant when the profile
+itself fixes that material. A Required Basis requirement is different: it states meaning that must be supplied by a
+later legal basis relation. Actual Basis Resolution, Basis Binding, and Applicability remain owned by ADR-0063 and are
+not Catalog fields.
 
-## 7.2. Standard Profile Law
+## 6.2. Certified Compiler Properties
 
-A Standard Profile Law adopts a narrowly identified public standard whose equivalence and representative are precise
-enough to become one Kontrakt law.
+A compiler may exploit only properties that are sound consequences of the authoritative law. Composition locality,
+fragment reuse, fast-path preconditions, or another optimization-relevant fact belongs here when Kontrakt has
+established that every legal realization preserving the law may rely on it.
 
-The external standard is evidence and semantic input, not an automatic authority transfer. Kontrakt must close every
-option, version dependency, and interpretation that can change its own outcome.
+A certified compiler property does not acquire Canonicalization authority. Strengthening the proof or adding a newly
+established property may change compiler-product validity without changing the Catalog Law identity when the underlying
+Contract meaning is unchanged. Absence of a property requires conservative behavior rather than inference from Catalog
+class, implementation shape, or historical success.
 
-## 7.3. Specialized Domain Law
+The property surface must remain typed and producer-owned. It must not become an open property bag in which a backend
+can assign new semantic meaning to an arbitrary flag.
 
-A Specialized Domain Law requires domain-specific semantic material or a domain model that is not appropriate for the
-base catalog.
+### 6.2.1. Certified Compiler Property Vocabulary
 
-It is not published until its Basis, domain, representative, adversarial properties, and HIR / Establishment obligations
-can be expressed without weakening the common qualification gate.
+OPEN
 
-# 8. V1 Core General Candidate Catalog
+## 6.3. Ratification Assurance
 
-The laws in this section are the current V1 Core candidates. Presence in this section does not mean ratification. Each
-law must pass Section 5 before its public API projection becomes stable.
+Adversarial analysis and conformance evidence are required for ratification, but they are not themselves the law's
+semantic identity. The law owns semantic bounds when crossing a bound changes domain, representative, or refusal.
+Security analysis separately records hostile-input work shape, amplification risk, buffering pressure, or other
+realization threats that must be tested and contained without changing that meaning.
+
+Normative vectors, generated properties, differential checks, reference realizations, and adversarial corpora provide
+evidence that the law and its realizations conform. Evidence may grow as the implementation and threat model improve.
+Adding stronger evidence does not create a new semantic profile unless the normative law itself changes.
+
+Assurance material may be packaged with compiler or release tooling, but ordinary semantic consumers do not depend on
+the entire assurance corpus merely because they select the law.
+
+## 6.4. External Legal Observation and Compatibility
+
+The legal observations on which independent consumers may rely are a producer-owned projection of the authoritative law.
+That projection may expose the exact law reference and the stable semantic obligations needed by an external consumer,
+but it cannot contradict or extend the law through a second source of meaning.
+
+Compatibility and migration are relations between exact semantic profiles and exact observation scopes. They may be
+directional. They are not intrinsic fields that one Catalog Law can completely define in isolation, because a later
+profile or consumer obligation may not exist when the original law is ratified.
+
+### 6.4.1. Compatibility and Migration Relation Schema
+
+OPEN
+
+## 6.5. Consumer and Dependency Boundary
+
+Compiler and external consumers must consume producer-owned projections rather than one monolithic Catalog record. HIR
+and Establishment need the exact law meaning and any applicable basis requirements. Optimization and incremental reuse
+may additionally consume certified compiler properties. Verification and QA consume assurance material. External tooling
+consumes only the legal observation surface that Kontrakt deliberately publishes.
+
+These are logical boundaries, not a requirement for separate runtime objects or files. One physical table may co-locate
+several projections, and several tables may realize one projection. Physical co-location does not widen semantic
+dependency.
+
+This separation is also the V2 invalidation boundary. A conformance-corpus addition does not invalidate Contract
+meaning. A new certified compiler property invalidates only products that depend on that property when their validity
+requires reconsideration. A semantic-law change reaches semantic dependents. Catalog order, table layout, sharding, or
+another representation change does not become semantic invalidation merely because the same storage carries the law.
+
+# 7. Catalog Classification and Publication Boundary
+
+Catalog classification organizes review and publication. It does not define Canonicalization meaning, security,
+complexity, determinism, or optimization legality. Those properties belong to the exact ratified law and to the
+producer-owned projections defined in Section 6.
+
+The Catalog itself is also not Contract authority. A law is authoritative because its semantic profile has been ratified
+under this ADR and the owning Contract architecture. A generated catalog row, numeric id, declaration order, module, or
+lookup table merely represents or locates that law.
+
+## 7.1. Orthogonal Classification Rule
+
+One class axis must not carry unrelated claims. Domain scope and normative origin describe different facts and are
+treated separately. Neither axis changes the Section 5 qualification gate.
+
+A scope classification describes whether the law belongs to generally reusable presentation semantics or requires a
+specialized professional or scientific domain model. A normative-origin classification describes whether the exact
+profile is defined directly by Kontrakt or is materially backed by one or more externally published standards whose
+remaining choices Kontrakt has closed.
+
+The classification does not delegate authority to an external standard and does not imply that a standard-backed law is
+safer, cheaper, or more deterministic. It also does not imply that a general law has weaker Basis, adversarial, or
+conformance obligations than a specialized law.
+
+## 7.2. Scope Classification
+
+`Core General` denotes a broadly reusable presentation law that does not require a domain-specific professional model.
+It may still consume exact ratified semantic material when that material is part of the law.
+
+`Specialized Domain` denotes a law whose meaning requires a domain-specific model, reference material, or semantic
+provisioning that is not appropriate as a general presentation assumption. This changes neither its authority level nor
+its qualification standard.
+
+## 7.3. Normative-Origin Classification
+
+`Kontrakt-Defined` denotes a profile whose normative equivalence and representative are closed by the Kontrakt law
+itself. External research or standards may inform the decision without becoming the profile's normative source.
+
+`Standard-Backed` denotes a profile for which an exact external standard materially defines the domain, equivalence,
+representative, or another semantic obligation. Kontrakt still owns the Contract profile and must close every standard
+option, version dependency, and interpretation that can change its legal observation.
+
+## 7.4. Per-Law Classification Assignment
+
+OPEN
+
+## 7.5. Class-Independent Qualification
+
+Every selectable law passes Section 5 in full. Classification is not a trust label and cannot substitute for determinant
+closure, adversarial review, conformance, or external-stability analysis.
+
+Compiler consumers likewise cannot derive optimization facts from classification. A backend may use only the exact
+semantic law and certified compiler properties it legally observes. `Core General`, `Specialized Domain`,
+`Kontrakt-Defined`, or `Standard-Backed` does not by itself prove cost, locality, safety, or reuse legality.
+
+## 7.6. Compilation and Publication Boundary
+
+Expensive ratification belongs to Catalog authoring, release qualification, and platform-support work rather than the
+ordinary compilation hot path. Normal compilation resolves the exact selected law and performs only the semantic and
+context checks required by that use. It does not rescan or revalidate the complete Catalog.
+
+The physical Catalog may therefore be generated, partitioned, sharded, lazily materialized, or otherwise reorganized
+without changing Contract meaning. Those choices remain Design. Dynamic application registration cannot manufacture a V1
+Catalog Law merely by adding a row to that representation.
+
+## 7.7. Incremental and Consumer Boundary
+
+Catalog classification, declaration order, physical module placement, and storage coordinates are not semantic
+determinants, semantic identity components, reuse keys, or optimization facts. Adding an unrelated law or reorganizing
+the Catalog must not invalidate a Definition that observes only another unchanged law.
+
+A compiler product records dependency only on the exact producer-owned observation it consumes. A semantic consumer may
+depend on the law projection. A product that exploits a certified compiler property may additionally depend on that
+property. A product that consumes Basis-derived meaning depends on the applicable Basis relation. The implementation may
+track these dependencies more finely, but physical storage topology cannot become their semantic source.
+
+## 7.8. Public Support and Packaging Policy
+
+OPEN
+
+# 8. V1 General Candidate Review Group
+
+The laws in this section are grouped together for V1 review because they address general presentation or value
+normalization. This is a document review group rather than a final Catalog classification. Presence here does not mean
+ratification, and each law must pass Section 5 before its public API projection becomes stable.
+
+Text candidates consume the `Text` presentation already established by ADR-0064, which is a sequence of Unicode scalar
+values rather than arbitrary JVM UTF-16 code units. Host material outside that legal Input presentation never enters
+Canonicalization. Until a candidate closes its Section 5.3 composition property, whole-value re-establishment is the
+only reusable assumption.
 
 The names below are semantic law names. Public Java and Kotlin names belong to API Specification.
 
@@ -363,8 +505,8 @@ Canonical bytes are not part of this candidate law.
 The candidate uses the same canonical-equivalence domain as NFC and selects Unicode Normalization Form D as the
 decomposed representative.
 
-Ratification must close the same Basis and unassigned-code-point questions as NFC. It must also justify retaining NFD in
-the base V1 surface rather than treating it as a specialized text-processing profile.
+Ratification must close the same Basis and unassigned-code-point questions as NFC and must state the exact V1 semantic
+use for which NFD is published.
 
 ## 8.3. Unicode NFKC
 
@@ -383,19 +525,21 @@ and intended presentation domain before this stronger equivalence becomes a base
 The candidate erases the same compatibility distinctions as NFKC and selects the compatibility-decomposed
 representation.
 
-Its law is semantically clear only after the same Basis and evolution questions are closed. V1 value must also be
-demonstrated because a decomposed compatibility form is less common as an application boundary representative.
+Its law is semantically clear only after the same Basis and evolution questions are closed. Ratification must also state
+the exact V1 semantic use for which this decomposed compatibility representative is published.
 
 ## 8.5. Unicode NFC Case Fold
 
 **Semantic law id:** `text.unicode.nfc-casefold`
 
-This candidate is intended to collapse Unicode canonical-equivalent and default-caseless distinctions while selecting
-one stable Unicode-defined representative.
+This candidate is a combined Kontrakt profile intended to collapse Unicode canonical-equivalent and default-caseless
+distinctions under one independently specified law. It is not defined merely by composing the existing NFC and case-fold
+Catalog entries, and it must not be described as a Unicode-defined profile unless ratification identifies an exact
+normative Unicode profile that owns the same relation.
 
-Ratification must close the exact transformation order, case-folding profile, Unicode Basis, unassigned-code-point
-behavior, and composition properties. Locale-sensitive lowercasing is not part of the law and cannot substitute for the
-ratified profile.
+Ratification must close the independent equivalence relation, exact transformation order, fixed-point behavior,
+case-folding profile, Unicode Basis, unassigned-code-point behavior, and composition property. Locale-sensitive
+lowercasing is not part of the law and cannot substitute for the ratified profile.
 
 ## 8.6. Unicode NFKC Case Fold
 
@@ -425,7 +569,8 @@ The law treats the supported line-ending spellings as equivalent and selects LF 
 standalone CR therefore converge to LF without changing an existing LF.
 
 Other Unicode line separators and other whitespace are preserved. The transformation does not expand the source, trim
-content, or collapse blank lines.
+content, or collapse blank lines. The law is composition-sensitive at fragment boundaries, so ratification must state
+the exact Section 5.3 reuse property rather than permit fragment-wise canonicalization by default.
 
 ## 8.9. Unicode Boundary Whitespace Trim
 
@@ -436,7 +581,8 @@ Basis. Interior whitespace remains unchanged.
 
 The Unicode property set, not Java `trim()` or `strip()`, defines the law. Because property membership can be
 version-sensitive, the Unicode Basis is meaning-determining. The law does not collapse internal whitespace or perform
-line-ending normalization.
+line-ending normalization. Its boundary operation is not assumed to compose over independently canonicalized fragments;
+ratification must record the exact Section 5.3 property.
 
 ## 8.10. Decimal Numeric Value
 
@@ -455,12 +601,12 @@ without changing the exact value. Zero has one representative with coefficient z
 600.0
     → coefficient 6 with scale -2
 
--0.0
-    → zero with scale 0
+0.00
+    → coefficient 0 with scale 0
 ```
 
-The law performs no rounding. Material that cannot be represented exactly in the supported finite domain is outside the
-law rather than silently rounded.
+The law performs no rounding and does not parse floating-point or textual material into Decimal. It operates only on the
+legal finite Decimal presentation established by Input.
 
 This profile is distinct from monetary scale or market tick rules, where scale or step size may carry independent
 business meaning.
@@ -488,10 +634,11 @@ requirement as binary32.
 
 ---
 
-# 9. V1 Standard Profile Candidate Catalog
+# 9. V1 Protocol and Identifier Candidate Review Group
 
-These profiles are V1 candidates backed by external standards. They are not ratified until the Kontrakt profile closes
-every interpretation and Basis dependency that can change the outcome.
+These candidates are grouped together for review because their current definitions directly name protocol or identifier
+standards. This is a document review group rather than a final Catalog classification. They are not ratified until the
+Kontrakt profile closes every interpretation and semantic dependency that can change the outcome.
 
 ## 9.1. IPv6 RFC 5952 Text
 
@@ -500,9 +647,11 @@ every interpretation and Basis dependency that can change the outcome.
 The candidate domain is legal textual IPv6 presentation without an external zone identifier. Alternate legal spellings
 are equivalent when they denote the same IPv6 address, and RFC 5952 supplies the target text form.
 
-Ratification must keep parsing legality separate from representative selection. The accepted textual domain and the
-owner of malformed-input rejection must be explicit so that a host parser cannot silently enlarge or narrow the law.
-Zone identifiers remain outside this profile, and the law performs no DNS lookup.
+Ratification must keep Input legality separate from the candidate's canonicalizable domain. Material that is illegal
+under the selected Input presentation never reaches this law. If the selected Input is broader legal Text, text that is
+not a legal IPv6 presentation lies outside this candidate's canonicalizable domain and is a Canonicalization refusal.
+The exact grammar interpretation must therefore be fixed by the profile rather than inherited from a host parser. Zone
+identifiers remain outside this profile, and the law performs no DNS lookup.
 
 ## 9.2. BCP 47 Language Tag
 
@@ -521,16 +670,17 @@ registry as authority, and unsupported extension semantics cannot receive an imp
 The candidate domain is the standard textual UUID form accepted by the profile. Hexadecimal letter case is declared
 irrelevant and lowercase text is the representative.
 
-Ratification must confirm that the accepted textual grammar is exact and that the profile adds enough V1 value to
-justify a distinct law. It changes neither UUID bits nor version or variant meaning. A structured UUID value that no
-longer contains textual case does not require this profile.
+Ratification must confirm that the accepted textual grammar, equivalence relation, and representative are exact. It
+changes neither UUID bits nor version or variant meaning. A structured UUID value that no longer contains textual case
+does not require this profile.
 
 ---
 
 # 10. Deferred General Profiles
 
-The following profiles are plausible Canonicalization laws but are not part of the initial V1 catalog. A later amendment
-may ratify one after its remaining semantic or security question is closed.
+The following profiles are plausible Canonicalization laws but are not part of the initial V1 catalog. After this ADR is
+Accepted, adding one as a ratified Catalog Law requires a later catalog ADR that preserves the identities and legal
+observations already established here.
 
 ## 10.1. Unicode Stabilized Normalization
 
@@ -720,8 +870,9 @@ After frontend resolution, a Canonicalization Definition Candidate must refer to
 reference rather than by Java or Kotlin class name. Coordinate bindings remain part of one Canonicalization Definition
 Candidate; referenced Catalog Laws do not become child 1D Definitions merely because they have stable identities.
 
-If a Catalog Law has Required Basis, the candidate must preserve that requirement wherever it is definition-determining.
-Actual Basis Binding and Applicability remain owned by ADR-0063.
+If a Catalog Law has a Required Basis requirement, the candidate must preserve that requirement wherever the law needs
+it. Definition-determining material that the profile itself closes remains Definition meaning instead. Actual Basis
+Resolution, Basis Binding, and Applicability remain owned by ADR-0063.
 
 The re-audit must still decide the exact Canonicalization occurrence unit. This ADR does not choose whether occurrence
 is per coordinate, per declaration application, or another semantic unit.
@@ -730,83 +881,83 @@ is per coordinate, per declaration application, or another semantic unit.
 
 # 19. External Semantic Basis
 
-External semantic material belongs to a Catalog Law only when changing that material can change the law's outcome.
+External semantic material belongs to a Catalog Law only when changing that material can change the law's outcome. A
+broad platform label is not sufficient when the law actually depends on a particular Unicode dataset, registry state, or
+domain reference.
 
-A ratified profile must identify that dependency narrowly enough for two implementations to determine whether they
-operate under the same meaning. A broad platform label is not sufficient when the law actually depends on a particular
-Unicode dataset, registry state, or domain reference.
+When a profile itself fixes exact versioned semantic material, that material is Definition-determining law meaning. It
+is preserved through the exact Catalog Law definition and is not converted into an occurrence-time ADR-0063 Required
+Basis merely because the material originated outside Kontrakt.
 
-Some laws need no external Basis because the profile fully defines their result. Other laws depend on ratified versioned
-data. A future specialized law may require a per-application Basis established through ADR-0063.
+A law uses ADR-0063 Required Basis only when the Canonicalization judgment genuinely requires semantic material to be
+supplied through a later legal basis relation. In that case the Catalog carries the requirement while Basis Resolution,
+Basis Binding, and Applicability remain with ADR-0063.
 
-The physical representation of a Basis remains replaceable. What matters here is semantic determinant closure and the
-consequence of Basis change, not how the compiler stores the data.
+The physical representation of either kind of semantic material remains replaceable. What matters here is determinant
+closure, exact dependency, and the consequence of semantic change rather than how the compiler stores the data.
 
 # 20. Versioning, External Consumer Stability, and Catalog Evolution
 
-A ratified Catalog Law is a public semantic dependency surface. Independent systems may rely on its declared
-equivalence, representative, successful domain, owned refusal, and Basis obligations without depending on Kontrakt's
-internal realization. The Catalog Law identity therefore names a stable semantic promise rather than a moving
-implementation target.
+Section 5.5 owns the semantic stability rule. Applied to the Catalog, it means that adding unrelated laws, changing
+review or classification metadata, reorganizing physical catalog material, replacing generated realizations, or changing
+host API projection does not change an existing Catalog Law.
 
-Adding an unrelated law does not change an existing law. Reordering the physical catalog, changing generated evaluators,
-replacing tables, or changing host API projection also does not change that law unless another outward specification
-separately promises those details. External consumers must not need compiler-private structure to identify or interpret
-Catalog meaning.
+An implementation defect is different from a semantic revision. Correcting a realization so that it again conforms to
+the already-declared law does not mint a new law identity. Material previously derived from the defective realization
+may nevertheless be non-conforming. Any affected persistent key, index, cache, artifact, or other external derivative
+must be detected and revalidated, rebuilt, or migrated under the protocol that owns that material rather than being
+treated as valid merely because the Catalog Law identity did not change.
 
-A change that can alter a legal observation under an existing law identity is a semantic change. Kontrakt must represent
-that change through a new semantic profile or an explicit migration or compatibility relation rather than silently
-reinterpreting the old identity. An implementation bug fix that restores the already-declared law does not create new
-Contract meaning; the declared law remains the reference.
-
-Compatibility is judged against the exact observation being consumed. A later Basis or profile may be compatible for one
-use while remaining incompatible for another, and matching source names, version labels, binary shapes, or successful
-decoding do not establish that judgment. Where compatibility is unknown and correctness depends on it, the old
-observation is not assumed valid.
-
-A Basis or standard revision does not automatically require a new profile when a ratified stability guarantee proves the
-relevant result unchanged. When the result may change, directly dependent material must be reconsidered. Downstream
-invalidation may stop once the consumer-visible Canonicalization observation is established to be unchanged.
-
-Deprecation, support withdrawal, and semantic identity remain separate. A future release may stop offering a profile
-according to an explicit support policy, but that does not retroactively assign a different meaning to material
-established under the earlier ratified profile.
-
-Editorial clarification and stronger verification do not create a new semantic profile when normative meaning remains
+When a Basis or standard changes, only material whose legal observation actually depends on that change is reconsidered.
+Downstream invalidation may stop after recomputation establishes that the published Canonicalization observation is
 unchanged.
+
+Deprecation, support withdrawal, and semantic identity remain separate. Editorial clarification and stronger
+verification likewise leave the law identity unchanged when normative meaning remains unchanged.
 
 # 21. V2 Incremental and Reuse Boundary
 
-The catalog must not become one monolithic dependency. A Definition that selects one law depends on that law and its
-actual Required Basis, not on unrelated entries stored beside it.
+The Catalog must not become one monolithic dependency. A Definition that selects one law consumes the exact semantic
+projection it needs, not every field or artifact stored beside that law. A consumer that additionally uses a certified
+compiler property or Basis-derived meaning records those dependencies separately.
 
-V1 therefore preserves exact per-law references, determinant relations, and any composition property that later reuse
-may rely on. V2 may exploit those facts through a different incremental architecture without changing Contract meaning.
+V1 therefore preserves exact law references, determinant relations, Required Basis requirements, and producer-owned
+compiler properties without collapsing them into physical Catalog identity. V2 may exploit those logical boundaries
+through a different incremental architecture without changing Contract meaning.
 
 ```text
 Canonicalization Definition
-    ↓ selected law reference
-Catalog Law
-    ↓ only when required
-Semantic Basis
+    ↓
+Law Semantic Projection
+
+optional compiler consumer
+    ↓
+Certified Compiler Property Projection
+
+when required
+    ↓
+Basis Requirement / Applicable Basis relation
 ```
 
-Fragment reuse or local repair is legal only when the selected law's Section 5.3 obligations justify it. Otherwise clean
-whole-value re-establishment remains the safe semantic path.
+Fragment reuse or local repair is legal only when an applicable certified property establishes it. Otherwise clean
+whole-value re-establishment remains the safe path. A change to assurance evidence, Catalog classification, or physical
+layout does not become semantic invalidation merely because the implementation co-locates that material.
 
 HID, fingerprints, Merkle structure, dependency graphs, and cache layout remain implementation mechanisms. They may
 recognize or accelerate already-defined equality and validity; they do not define either.
 
 # 22. Compiler Product and Protocol Boundary
 
-Catalog Law is the semantic source even when the compiler realizes it through generated code, precomputed tables,
-vectorized routines, or another optimized form.
+The Catalog Law semantic definition is the source of Canonicalization meaning even when the compiler realizes it through
+generated code, precomputed tables, vectorized routines, or another optimized form.
 
 Every legal realization must preserve Section 5.1. Target profitability may change the work performed but cannot select
 a different Contract representative.
 
-Compiler-owned products derived from the law remain subject to the compiler product protocol. Reuse, caching,
-persistence, and parallel evaluation may change execution history while preserving the same legal observation.
+Compiler-owned products derived from the law remain subject to the compiler product protocol. A product may consume a
+certified compiler property when that property is part of its legality proof, but Catalog classification or physical
+representation cannot substitute for that property. Reuse, caching, persistence, and parallel evaluation may change
+execution history while preserving the same legal observation.
 
 A compiler-private representation does not become an external Catalog protocol merely because tooling can inspect it. If
 Kontrakt later publishes machine-readable catalog metadata for independent consumers, that artifact needs its own
@@ -820,9 +971,9 @@ Canonicalization authority.
 Built-in Canonicalization operates on outside-controlled material, so hostile input is part of catalog admission rather
 than a later implementation concern.
 
-A law must expose enough of its difficult input shape for Design and verification to defend the machine without changing
-the law. Pathological structure may justify operational refusal or limits only through the authority that owns that
-judgment.
+Section 5.4 requires each candidate review to identify the hostile-input characteristics that matter to safe
+realization. Design and verification may defend the machine against those cases without changing the law. Pathological
+structure may justify operational refusal or limits only through the authority that owns that judgment.
 
 Security suspicion does not create equivalence. A visually confusable or otherwise suspicious value remains semantically
 distinct unless the selected Catalog Law explicitly declares the distinction irrelevant.
@@ -843,39 +994,48 @@ Kontrakt must compare a clean reference realization with materially different le
 cached, restored, or target-specific paths must expose the same Canonicalization-owned outcome when their semantic
 determinants are the same.
 
-Adversarial tests must exercise the difficult input shapes identified by Section 5.4. Performance regressions remain
-Design and QA concerns, but a performance workaround is invalid if it changes the representative or semantic domain.
+Adversarial tests must exercise the difficult input characteristics recorded by the Section 5.4 review. Performance
+regressions remain Design and QA concerns, but a performance workaround is invalid if it changes the representative or
+semantic domain.
 
 Differential testing against an external implementation is useful evidence. It never replaces the ratified law or its
 normative vectors.
 
 # 25. Current V1 Candidate Summary
 
-This draft does not mark a law `Ratified` before its Section 5 review is complete.
+This draft does not mark a law `Ratified` before its Section 5 review is complete. `Candidate` is not a terminal status
+for an Accepted initial V1 catalog. Ratification occurs by revising this Proposed ADR so that the entry itself contains
+the closed semantic profile and the summary records the result; it does not occur through a mutable implementation
+registry.
 
-| Class            | Semantic law id                          | Current status |
-|------------------|------------------------------------------|----------------|
-| Core             | `text.unicode.nfc`                       | Candidate      |
-| Core             | `text.unicode.nfd`                       | Candidate      |
-| Core             | `text.unicode.nfkc`                      | Candidate      |
-| Core             | `text.unicode.nfkd`                      | Candidate      |
-| Core             | `text.unicode.nfc-casefold`              | Candidate      |
-| Core             | `text.unicode.nfkc-casefold`             | Candidate      |
-| Core             | `text.ascii.casefold`                    | Candidate      |
-| Core             | `text.line-ending.lf`                    | Candidate      |
-| Core             | `text.unicode.whitespace-trim`           | Candidate      |
-| Core             | `number.decimal.numeric-value`           | Candidate      |
-| Core             | `number.binary32.canonical-nan`          | Candidate      |
-| Core             | `number.binary64.canonical-nan`          | Candidate      |
-| Standard Profile | `network.ipv6.rfc5952`                   | Candidate      |
-| Standard Profile | `identifier.bcp47.rfc5646`               | Candidate      |
-| Standard Profile | `identifier.uuid.rfc9562-lowercase-text` | Candidate      |
+| Current review group  | Semantic law id                          | Current status |
+|-----------------------|------------------------------------------|----------------|
+| General               | `text.unicode.nfc`                       | Candidate      |
+| General               | `text.unicode.nfd`                       | Candidate      |
+| General               | `text.unicode.nfkc`                      | Candidate      |
+| General               | `text.unicode.nfkd`                      | Candidate      |
+| General               | `text.unicode.nfc-casefold`              | Candidate      |
+| General               | `text.unicode.nfkc-casefold`             | Candidate      |
+| General               | `text.ascii.casefold`                    | Candidate      |
+| General               | `text.line-ending.lf`                    | Candidate      |
+| General               | `text.unicode.whitespace-trim`           | Candidate      |
+| General               | `number.decimal.numeric-value`           | Candidate      |
+| General               | `number.binary32.canonical-nan`          | Candidate      |
+| General               | `number.binary64.canonical-nan`          | Candidate      |
+| Protocol / Identifier | `network.ipv6.rfc5952`                   | Candidate      |
+| Protocol / Identifier | `identifier.bcp47.rfc5646`               | Candidate      |
+| Protocol / Identifier | `identifier.uuid.rfc9562-lowercase-text` | Candidate      |
 
 The first detailed ratification batch is NFC, NFD, NFKC, NFKD, and NFC Case Fold. Each law must pass the complete
 Section 5 gate before it becomes `Ratified`.
 
-The deferred profile families in Section 10 and the specialized domains in Section 11 remain outside this candidate
-table until their current blocking issue is resolved.
+Before this ADR can become Accepted, every entry that remains designated as an initial V1 candidate must complete that
+review and receive an explicit terminal catalog decision in this document. After acceptance, new Catalog Laws are added
+by later ADRs rather than by rewriting an existing law identity in place.
+
+The review-group labels in this table are organizational only. Final per-law Catalog classification remains OPEN under
+Section 7.4. The deferred profile families in Section 10 and the specialized domains in Section 11 remain outside this
+candidate table until their current blocking issue is resolved.
 
 # 26. Decisions Against Earlier Candidate Material
 
@@ -916,17 +1076,17 @@ Project documentation should migrate to one active statement of this relation.
 
 # 28. Consequences
 
-The V1 frontend gains a finite semantic target without granting authority to host libraries or implementation
-algorithms. Once a Catalog Law is ratified, resolution can produce one semantic reference that HIR preserves and
-Establishment can consume.
+When the initial V1 catalog has completed ratification and this ADR is Accepted, the V1 frontend gains a finite semantic
+target without granting authority to host libraries or implementation algorithms. For each ratified Catalog Law,
+resolution can produce one semantic reference that HIR preserves and Establishment can consume.
 
 Determinism becomes an admission property of the law rather than an expectation placed on individual implementations.
 This gives the backend more optimization freedom because different legal realizations may change physical work while
 remaining observationally identical at the Contract boundary.
 
-The stronger qualification gate also makes the base catalog smaller until evidence is complete. That is intentional. A
-useful profile stays a candidate rather than becoming public Contract meaning while its Basis, evolution behavior,
-adversarial properties, or outward stability obligations remain unresolved.
+The stronger qualification gate keeps unresolved profiles in `Candidate` state until their evidence is complete.
+Candidate status preserves the profile under review without turning incomplete Basis, evolution, adversarial, or
+outward-stability assumptions into public Contract meaning.
 
 Once a law is ratified, external systems can depend on its declared semantic observations without inheriting Kontrakt's
 table layout, generated implementation, or compiler version as part of that dependency. This protects consumers from
@@ -941,13 +1101,19 @@ The immediate work is to apply Section 5 to the first Unicode batch rather than 
 
 NFC, NFD, NFKC, NFKD, and NFC Case Fold must each be checked against the current Unicode specification and stability
 guarantees. The remaining Basis and evolution questions must be closed first. Composition and refusal behavior must then
-be verified before V1 Core membership is decided.
+be verified before final Catalog classification and publication placement are decided.
 
 The next batch covers NFKC Case Fold, ASCII Case Fold, LF Line Ending, Unicode Boundary Whitespace Trim, and Decimal
-Numeric Value. Binary NaN profiles and the standard-backed candidates follow only after the same gate is applied.
+Numeric Value. Binary NaN profiles and the protocol / identifier review group follow only after the same gate is
+applied.
 
-Once ADR-0076 is closed, ADR-0075 is the next ADR to close. Its compiler-product protocol should then be checked against
-the concrete Catalog Law, established semantic material, and realization boundaries produced here.
+For project sequencing, ADR-0076 is closed only when the initial V1 candidate set has no unresolved `Candidate` state
+and every published entry has a complete Section 5 profile recorded here. After that closure, ADR-0075 is the next ADR
+to close. Its compiler-product protocol should then be checked against the concrete Catalog Law, established semantic
+material, and realization boundaries produced here.
+
+The OPEN items in Sections 6.2.1, 6.4.1, 7.4, and 7.8 must be resolved before acceptance or explicitly transferred to
+the owning compiler-product, API, or Design document without weakening the semantic boundaries fixed here.
 
 The Canonicalization HIR and Establishment re-audit remains necessary after those semantic boundaries are stable. API
 Specification follows ratification; Design follows the API-independent semantic law. Canonical-byte protocols remain a
