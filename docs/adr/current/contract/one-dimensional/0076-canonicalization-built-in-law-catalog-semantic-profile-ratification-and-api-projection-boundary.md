@@ -227,6 +227,12 @@ only after Input has established a legal presentation. A legal Input may still l
 canonicalizable domain and receive a Canonicalization-owned refusal; material that never became legal Input does not
 enter Canonicalization.
 
+Selection applicability is positive and law-owned. A law may be selected only for an exact Input presentation meaning
+that its profile explicitly admits. Absence of an admitted relation does not become permission, and an unknown or
+incompatible presentation rejects the Contract definition before runtime. This selection boundary is distinct from the
+canonicalizable value domain: the former decides whether the law may govern that presentation kind, while the latter
+decides whether one legal occurrence can establish a representative or must receive a Canonicalization-owned refusal.
+
 A combined built-in law must define its own `E_L`, `C_L`, determinant set, canonicalizable domain, owned refusal, and
 exact ordering semantics. Sequentially applying two existing Catalog Laws does not by itself create a third Contract
 law.
@@ -330,20 +336,28 @@ That requirement does not justify copying every downstream concern into semantic
 
 The authoritative law definition contains only material that can determine Canonicalization meaning.
 
-| Semantic concern               | Required meaning                                                                                                                           |
-|--------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------|
-| Exact Catalog Law Reference    | Stable reference to one exact semantic law profile, not to a family, class, API symbol, table row, or ordinal                              |
-| Input Presentation Requirement | Exact already-established Input meaning and interpretation that the law may consume                                                        |
-| Canonicalizable Domain         | Exact subset of legal Input for which the law can establish its representative                                                             |
-| Law-Defined Equivalence        | Independent same-meaning relation `E_L` owned by the law                                                                                   |
-| Representative Law             | Exact representative function `C_L` for the successful domain                                                                              |
-| Definition Determinants        | Closed law material whose value can change the semantic outcome                                                                            |
-| Required Basis Requirements    | Semantic meaning that must be supplied through the applicable ADR-0063 basis relation when the law does not close it inside the definition |
-| Owned Refusal                  | Exact Canonicalization-owned negative outcome after legal Input entry, when one exists                                                     |
+| Semantic concern                    | Required meaning                                                                                                                           |
+|-------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------|
+| Exact Catalog Law Reference         | Stable reference to one exact semantic law profile, not to a family, class, API symbol, table row, or ordinal                              |
+| Supported Input Presentation Domain | Exact already-established Input presentation meanings for which this law may be selected                                                   |
+| Canonicalizable Domain              | Exact subset of admitted legal Input occurrences for which the law can establish its representative                                        |
+| Law-Defined Equivalence             | Independent same-meaning relation `E_L` owned by the law                                                                                   |
+| Representative Law                  | Exact representative function `C_L` for the successful domain                                                                              |
+| Definition Determinants             | Closed law material whose value can change the semantic outcome                                                                            |
+| Required Basis Requirements         | Semantic meaning that must be supplied through the applicable ADR-0063 basis relation when the law does not close it inside the definition |
+| Owned Refusal                       | Exact Canonicalization-owned negative outcome after legal Input entry, when one exists                                                     |
 
-`Input Presentation Requirement` references Input-owned meaning rather than redefining Input legality.
-`Canonicalizable Domain` begins inside that legal presentation domain. Material that Input never established does not
-become a Canonicalization refusal.
+`Supported Input Presentation Domain` references Input-owned semantic presentation rather than Java or Kotlin carrier
+identity, assignability, package membership, or a global host-type category. Selection is therefore a positive
+`Catalog Law × exact Input presentation meaning` relation. A missing relation means that the law is not selectable for
+that coordinate; a blacklist may explain a diagnostic but cannot define legality by exception. `Canonicalizable Domain`
+begins inside the admitted presentation domain and governs actual legal occurrences after selection. Material that Input
+never established does not become a Canonicalization refusal.
+
+The Catalog does not need one global `canonicalizable=true` bit for an Input type. Different laws may admit different
+presentation meanings over the same broad family, and one host carrier may represent several semantic presentations.
+Conversely, a legal Input presentation may have no applicable V1 Canonicalization law and remain legal when
+Canonicalization is omitted.
 
 The law may expose a preserved-distinction projection for specification, diagnostics, and verification, but that
 projection must agree with `E_L`. It cannot become a second source of equivalence authority.
@@ -515,8 +529,9 @@ semantic law and certified compiler properties it legally observes. `Core Genera
 Expensive ratification belongs to Catalog authoring, release qualification, and platform-support work rather than the
 ordinary compilation hot path. This includes composition interaction analysis, order-sensitivity review, conformance,
 and any proof used to certify a composite or a legal reordering. Normal compilation resolves the exact selected law and
-performs only the semantic and context checks required by that use. It does not search the permutation space, solve
-composition, or revalidate the complete Catalog.
+verifies the positive selection relation against the exact Input presentation meaning at that coordinate. It does not
+infer support from carrier type, search a blacklist, search the permutation space, solve composition, or revalidate the
+complete Catalog.
 
 The physical Catalog may therefore be generated, partitioned, sharded, lazily materialized, or otherwise reorganized
 without changing Contract meaning. Those choices remain Design. Dynamic application registration cannot manufacture a V1
@@ -911,6 +926,15 @@ An aggregate law and a Composite Catalog Law are different concerns. Aggregate d
 by one coordinate. Composite describes one exact law whose meaning combines more than one canonicalization concern over
 its admitted domain. Either may exist without the other, and neither creates child 1D Contracts.
 
+The Catalog does not enumerate every Java or Kotlin generic instantiation as a separate applicability entry. Aggregate
+applicability must be stated in semantic presentation terms and may use explicit constituent requirements when the
+owning aggregate law makes them part of its qualification. Physical generic shape or assignability cannot manufacture
+applicability.
+
+## 16.1. Aggregate Applicability Closure
+
+OPEN
+
 ---
 
 # 17. API Projection Boundary
@@ -943,6 +967,10 @@ The public type is evidence for one Catalog Law, not a runtime strategy object. 
 Catalog Law. API Specification may publish a nominal name for an already-ratified composite meaning, but it cannot
 create a new meaning by sequencing primitive API symbols, choosing an implementation order, or inferring a combination
 that the Catalog has not ratified.
+
+API Specification may expose a law for a coordinate only when the Catalog's positive selection relation admits that
+exact Input presentation meaning. This projection may support discovery or diagnostics, but host type compatibility is
+not itself the applicability law and the API cannot make an unsupported pairing legal.
 
 ### 17.1. User Composition Surface
 
@@ -1229,9 +1257,9 @@ and every published entry has a complete Section 5 profile recorded here. After 
 to close. Its compiler-product protocol should then be checked against the concrete Catalog Law, established semantic
 material, and realization boundaries produced here.
 
-The OPEN items in Sections 6.2.1, 6.3.1, 6.3.2, 6.3.3, 6.5.1, 7.4, 7.8, 8.13, 8.14, and 17.1 must be resolved before
-acceptance or explicitly transferred to the owning compiler-product, API, or Design document without weakening the
-semantic boundaries fixed here.
+The OPEN items in Sections 6.2.1, 6.3.1, 6.3.2, 6.3.3, 6.5.1, 7.4, 7.8, 8.13, 8.14, 16.1, and 17.1 must be resolved
+before acceptance or explicitly transferred to the owning compiler-product, API, or Design document without weakening
+the semantic boundaries fixed here.
 
 The Canonicalization HIR and Establishment re-audit remains necessary after those semantic boundaries are stable. API
 Specification follows ratification and must expose only Catalog-approved single-law or composite-law selections; it does
