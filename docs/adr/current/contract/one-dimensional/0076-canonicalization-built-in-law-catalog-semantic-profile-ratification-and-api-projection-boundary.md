@@ -554,6 +554,22 @@ OPEN
 
 # 8. V1 General Candidate Review Group
 
+The independent candidate laws reviewed in this section are:
+
+- `text.unicode.nfc` — Unicode NFC
+- `text.unicode.nfd` — Unicode NFD
+- `text.unicode.nfkc` — Unicode NFKC
+- `text.unicode.nfkd` — Unicode NFKD
+- `text.ascii.casefold` — ASCII Case Fold
+- `text.line-ending.lf` — LF Line Ending
+- `text.unicode.whitespace-trim` — Unicode Boundary Whitespace Trim
+- `number.decimal.numeric-value` — Decimal Numeric Value
+- `number.binary32.canonical-nan` — Binary32 Canonical NaN
+- `number.binary64.canonical-nan` — Binary64 Canonical NaN
+
+Composite candidates are intentionally omitted from this overview and are reviewed under their own composition
+obligations below. Public Java and Kotlin API names remain owned by API Specification.
+
 The laws in this section are grouped together for V1 review because they address general presentation or value
 normalization. This is a document review group rather than a final Catalog classification. Presence here does not mean
 ratification, and each law must pass Section 5 before its public API projection becomes stable. A candidate may be
