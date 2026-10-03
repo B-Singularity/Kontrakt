@@ -16,6 +16,7 @@ ADR-0048: Flow Contract Processing — Boundary Refinement and Core Entry
 
 - `docs/the-most-important-thing/what-contract-is.md`
 - ADR-0067: Lowering Contract
+- ADR-0076: Canonicalization Built-In Law Catalog, Semantic Profile Ratification, and API Projection Boundary
 - ADR-0065: Admission Contract
 - ADR-0064: Input Contract
 - ADR-0063: Contract Establishment, Identity, Applicability, and Composition
@@ -230,6 +231,27 @@ law.
 
 Canonicalization removes only declared representation freedom.
 
+For any selected Canonicalization law `L`, let `E_L` denote the exact same-meaning relation owned by that law, and let
+`C_L` denote representative selection over the law's successful canonicalizable domain. `E_L` is specified independently
+of the procedure that forms the representative. A representative implementation therefore cannot define its own
+equivalence by accidentally collapsing additional distinctions.
+
+For every successful input in the law's domain, the common Canonicalization law requires:
+
+```text
+C_L(x) = C_L(y)
+    iff
+E_L(x, y)
+
+E_L(x, C_L(x))
+
+C_L(C_L(x)) = C_L(x)
+```
+
+`E_L` must be an equivalence relation on the domain for which the law claims same-meaning comparison. `C_L` must select
+a representative from the same declared meaning class. These are properties of Canonicalization as a Contract rather
+than optional implementation or optimization properties.
+
 For every supported presentation domain, the selected law must make it possible to determine which distinctions are
 preserved and which are collapsed. A distinction that has not been explicitly made irrelevant remains meaningful.
 
@@ -240,6 +262,10 @@ law rather than substituting a form that is cheaper or easier for the host platf
 A published V1 law must be stable under repeated application. Applying the same law to a value that already satisfies
 its representative law must not move that value again. A hidden second normalization therefore cannot create another
 semantic result under the same law.
+
+ADR-0076 owns the exact `E_L`, `C_L`, supported presentation relation, canonicalizable domain, determinants, Required
+Basis requirements, and owned refusal of each built-in Catalog Law. This ADR owns the common semantic shape that every
+Canonicalization law must satisfy.
 
 Implementation collisions do not define equivalence. A hash or encoded form may be useful for locating candidate
 material, but exact law-defined equivalence must still justify the collapse. The same rule applies when an
@@ -390,7 +416,7 @@ lowering       CustomerLowering
 Omission says nothing about values that existed before `CustomerInput` was submitted. Kontrakt reasons only from the
 Input presentation that its own boundary established.
 
-### 5.1. Built-In Law Catalog
+### 5.1. Built-In Law Catalog Boundary
 
 One built-in symbol names one closed, versioned Canonicalization law that may be used inside a Canonicalization
 declaration.
@@ -399,66 +425,21 @@ A built-in law does not inherit its meaning from another law. It does not overri
 compose Contract authority from a hierarchy of child laws. Implementation code may share algorithms behind the boundary,
 but that reuse must not appear as Contract inheritance or runtime dispatch.
 
-A built-in name may describe a law whose semantics require several normalization operations, but the published name
-still denotes one complete law. For example, `UnicodeNfcCaseFoldCanonicalization` cannot leave the order of
-normalization and case folding to runtime convenience. An intermediate form can change what the next operation observes.
-Whenever the sequence changes the representative, that sequence belongs to the declared law and its conformance
-material.
+A built-in name may denote a law whose meaning combines several familiar canonicalization concerns. The name still
+selects one complete law. If order, intermediate representation, or reapplication can change the representative, those
+choices belong to the exact law rather than to runtime convenience. V1 therefore does not expose an arbitrary
+user-authored pipeline of canonicalization operations.
 
-V1 therefore does not expose an arbitrary user-authored pipeline of canonicalization operations. If Kontrakt publishes a
-combined law, Kontrakt must have closed the complete combined semantics before the law becomes usable in a declaration.
-Reusing implementation routines behind that law does not turn those routines into separately selectable Contract stages.
+ADR-0076 owns the built-in Catalog population, the exact semantic profile of every built-in law, Catalog-specific
+ratification, and the admission of curated Composite Catalog Laws. This ADR does not enumerate candidate families or
+restate their exact equivalence and representative definitions.
 
-V1 should publish only a restricted catalog whose semantic traps have already been analyzed by Kontrakt. Before a type
-enters that catalog, Kontrakt must know what it treats as equivalent and which representative it establishes. The
-supported domain and refusal behavior must also be closed. If external semantic data or aggregate behavior can change
-the result, those obligations must be explicit. The law must finally be bounded and accompanied by enough conformance
-material to verify the implementation.
+The common authoring rule is only that each selected nominal type resolves to one complete closed law before it may
+appear in a Canonicalization declaration. A host library operation does not become a Canonicalization law merely because
+it performs a familiar normalization, and implementation reuse does not create another Contract law.
 
 V1 does not publish a generic `ExactCanonicalization` law merely to fill coordinates that require no canonicalization.
 Absence of a coordinate binding already expresses that Canonicalization has no authority over that coordinate.
-
-Candidate families may include:
-
-```text
-UnicodeNfcCanonicalization
-UnicodeNfdCanonicalization
-UnicodeNfkcCanonicalization
-UnicodeNfkdCanonicalization
-AsciiCaseFoldCanonicalization
-UnicodeCaseFoldCanonicalization
-UnicodeNfcCaseFoldCanonicalization
-LineEndingLfCanonicalization
-
-RawBitFloatCanonicalization
-RawBitDoubleCanonicalization
-CanonicalNaNPreserveSignedZeroCanonicalization
-CanonicalNaNCollapseSignedZeroCanonicalization
-RejectNaNCanonicalization
-RejectNonFiniteCanonicalization
-IeeeTotalOrderCanonicalization
-
-DecimalScalePreservingCanonicalization
-DecimalNumericValueCanonicalization
-DecimalFixedScaleCanonicalization
-
-OrderPreservingSequenceCanonicalization
-OrderAgnosticSetCanonicalization
-OrderAgnosticBagCanonicalization
-CanonicalMapKeyOrderCanonicalization
-ExactBinaryCanonicalization
-
-ExactZonedTimeCanonicalization
-InstantPreservingZonedTimeCanonicalization
-InstantOnlyCanonicalization
-FixedPrecisionInstantCanonicalization
-```
-
-This list is illustrative. A name in this ADR is not enough to ratify a public API law. The semantic review of each
-candidate may still remove a law whose behavior does not belong to Canonicalization.
-
-A host library operation does not become a Canonicalization law merely because it performs a familiar normalization.
-Kontrakt must understand the exact semantic profile rather than delegate authority to the library implementation.
 
 ### 5.2. Nominal Canonicalization Types
 
@@ -640,10 +621,23 @@ survive Canonicalization and which distinctions are treated as equivalent. The r
 from that declaration. Domain-specific semantics need only be specified where the law can actually observe them, but no
 observed distinction may be left to host convention.
 
-A law that depends on external semantic data must pin the material that can change its result. Unicode and temporal
-rules are common examples because their data can be versioned independently of the application. The same principle
-applies to any other semantic profile: whichever provider happens to be installed on the host cannot silently complete
-Contract meaning.
+Applicability is positive. A Canonicalization law may govern a coordinate only when the law explicitly admits that exact
+Input presentation meaning. Absence of an admitted relation is not permission, and an unknown or incompatible
+law/presentation pairing is a definition-time error rather than a runtime fallback. This selection applicability is
+separate from the canonicalizable value domain: applicability decides whether the law may govern that kind of
+presentation, while the canonicalizable domain decides whether one legal occurrence succeeds or receives a
+Canonicalization-owned refusal.
+
+ADR-0076 owns the positive applicability facts of built-in Catalog Laws. This ADR owns the common rule that such a fact
+must exist before a binding is legal.
+
+A law that depends on external semantic data must close every semantic input that can change its result. Material fixed
+by the law itself is Definition-determining meaning. Material that must be supplied through a later legal basis relation
+is an explicit Required Basis requirement. Ambient provider state cannot substitute for either form.
+
+ADR-0076 specifies that distinction for each built-in law. The Canonicalization Definition Candidate must preserve any
+Required Basis requirement that the selected law actually needs; Basis Resolution, Basis Binding, and Applicability of
+an actual basis remain owned by ADR-0063.
 
 A Canonicalization type is accepted only when it resolves to the exact closed law published by Kontrakt. An
 application-defined look-alike or dynamically supplied replacement does not satisfy that requirement. An incompletely
@@ -732,11 +726,11 @@ established representative.
 
 ---
 
-## 9. Definition-Time Processing
+## 9. Definition-Time Processing, HIR, and Establishment Boundary
 
-This revision does not yet re-open the HIR or Establishment model for Canonicalization. The existing definition-time
-frontend obligations remain, but their implementation must preserve the IDL-first and sparse coordinate authoring
-boundary defined above.
+Definition-time processing preserves the IDL-first and sparse coordinate authoring boundary defined above. The
+Canonicalization Contract is resolved from one selected inert declaration and its explicit coordinate bindings; the
+runtime does not rediscover that source form or complete semantic choices left open by the frontend.
 
 The Canonicalization definition path is:
 
@@ -747,25 +741,40 @@ resolve the exact Canonicalization declaration selected by the IDL
 -> require at least one declared coordinate binding
 -> bind every declared parameter name to exactly one legal direct Input coordinate
 -> reject duplicate, unknown, removed, or incompatible selected coordinates
--> resolve every selected nominal canonical law to pinned semantic material
+-> resolve every selected nominal Canonicalization law to one exact semantic law reference
 -> leave unselected Input coordinates outside Canonicalization
 -> reject executable or dynamically supplied law behavior
--> ratify preserved and collapsed distinctions for every selected coordinate law
--> verify the declared semantic bounds and the implementation safety obligations required before publication
--> derive canonical byte material only when a selected law owns canonical bytes
--> derive stable Contract identity and the existing Canonicalization definition material
--> generate or select the deterministic realization
+-> preserve the selected law's presentation applicability and canonicalizable-domain requirements
+-> preserve Definition-determining semantic material and any explicit Required Basis requirement
+-> derive stable Canonicalization Definition Candidate material
 ```
 
-Runtime does not rediscover the declaration or complete semantic choices that definition-time processing left open. It
-executes only Kontrakt-owned realization over already resolved law material. Any runtime mechanism needed to perform
-that realization therefore receives closed semantic inputs rather than authority to select the law.
+After frontend resolution, HIR refers to each selected built-in law by its exact semantic law reference rather than by a
+Java or Kotlin class name. Coordinate bindings remain part of one Canonicalization Definition Candidate. Referenced
+Catalog Laws do not become child 1D Definitions merely because they have stable identities.
 
-This revision deliberately stops before the Canonicalization HIR and Establishment model is reclosed. The next pass must
-first define the HIR candidate and its binding relation. It must then close the Basis and Applicability that
-Establishment relies on. After that, it must decide whether Canonicalization owns an Occurrence and define the
-Established Material that legal consumers may observe. ADR-0071 and ADR-0063 provide the common model, while the 1D
-master checklist controls the audit.
+A Composite Catalog Law crosses the same boundary as one exact law. HIR does not reconstruct its meaning by expanding a
+public API name into component helpers or an implementation pipeline. Whether a law is primitive or composite is a
+Catalog concern unless another Canonicalization judgment explicitly needs that distinction.
+
+If the selected law has a Required Basis requirement, the Definition Candidate preserves that requirement wherever the
+law needs it. Semantic material fixed by the law itself remains Definition-determining meaning instead. Actual Basis
+Resolution, Basis Binding, and Applicability remain owned by ADR-0063.
+
+Establishment must therefore judge the Canonicalization Definition from the exact selected law meaning and the legal
+binding context, not from host type identity, implementation topology, catalog row position, generated evaluator shape,
+or runtime object identity. The exact Established Material and protocol view remain to be closed by the Canonicalization
+HIR and Establishment re-audit, but that material cannot recover semantic distinctions that the selected law erased or
+replace the exact law reference with implementation structure.
+
+The exact Canonicalization occurrence unit remains OPEN. This ADR does not yet decide whether occurrence is per selected
+coordinate, per declaration application, or another semantic unit. The Established Material shape, Established Semantic
+Protocol, current-validity relation, and the precise Definition identity consequences of wider Input-surface change also
+remain OPEN under the ADR-0071 / ADR-0063 / 1D master-checklist re-audit.
+
+Runtime receives only Kontrakt-owned realization over already resolved law material. It performs no declaration lookup,
+reflection-based law selection, ambient semantic-table selection, or reconstruction of Catalog meaning from executable
+helpers.
 
 ## 10. Identity and Conformance
 
@@ -801,7 +810,18 @@ section preserves the existing rule that source symbols and implementation artif
 
 Canonicalization result meaning depends only on semantic material that the selected law declares relevant.
 
-The law is conceptually:
+For one exact law `L`, one legal presentation `x`, and any two legal realizations `R1` and `R2` operating under the same
+law meaning and the same applicable Required Basis binding when one is required, the Canonicalization-owned outcome must
+be identical:
+
+```text
+Outcome(R1, L, x) = Outcome(R2, L, x)
+```
+
+The outcome is the exact representative or the exact Canonicalization-owned refusal of `L`. This universal law is owned
+here; ADR-0076 supplies the exact determinants and outcome definition for each built-in law.
+
+The declaration-level law is conceptually:
 
 ```text
 same Canonicalization declaration meaning
@@ -893,16 +913,18 @@ The exact public nominal Canonicalization type names may change.
 
 The exact Java or Kotlin carrier syntax for the inert Canonicalization declaration may change.
 
-The exact set of V1 built-in laws remains API and platform-support work. A candidate name in this ADR is not a ratified
-promise until its semantic and security review is complete.
+The exact set of V1 built-in laws and their ratification state are owned by ADR-0076. This ADR defines the common
+Canonicalization law shape and authoring boundary; a candidate name outside ADR-0076 is not a ratified Catalog promise.
 
 A future application-defined Canonicalization facility remains deferred. It requires a separate Contract design and a
 Security ADR rather than an extension point hidden inside the V1 nominal type API.
 
-The next revision must reclose Canonicalization against the common HIR and Establishment model. That work includes the
-Definition Candidate and Binding Candidate, then the Required Basis and Applicability needed by Establishment. It must
-also decide whether Canonicalization owns an Occurrence and what Established Material its legal consumers may observe.
-Current-validity and V2 incremental treatment remain later compiler concerns.
+Section 9 now fixes the Canonicalization-side HIR and Establishment ownership boundary: exact semantic law references,
+sparse coordinate bindings, Definition-determining material, and Required Basis requirements must survive frontend
+resolution without being reconstructed from implementation. The exact HIR storage shape, Binding Candidate form,
+Canonicalization occurrence unit, Established Material, Established Semantic Protocol, and current-validity relation
+remain OPEN for the dedicated re-audit under ADR-0071, ADR-0063, and the 1D master checklist. V2 incremental treatment
+remains a later compiler concern.
 
 Any frontend change must preserve the V1 authoring boundary described by this ADR. The IDL must continue to select one
 Canonicalization declaration explicitly, and omission must remain a distinct choice. The declaration may name only the
@@ -986,5 +1008,11 @@ establish only Canonicalization's relation rather than another authority's ident
 across the stage remains legal only when the moved computation cannot distinguish members of a Canonicalization
 equivalence class.
 
-ADR-0048 remains the owner of the shared optional-Canonicalization branch and final inbound composition.
-Canonicalization-specific HIR and Establishment reclosure is intentionally deferred to the next ADR-0066 revision pass.
+A later Catalog-boundary reallocation separated the common Canonicalization meta-law from built-in Catalog population.
+ADR-0066 now owns the universal equivalence/representative closure, positive applicability rule, semantic-basis
+requirement, determinism law, and Canonicalization-specific HIR / Establishment preservation boundary. ADR-0076 owns the
+exact `E_L` and `C_L` of each built-in law, its exact presentation applicability, domain, determinants, Required Basis
+requirements, refusal semantics, Catalog relations, ratification, evolution, and initial population.
+
+ADR-0048 remains the owner of the shared optional-Canonicalization branch and final inbound composition. The remaining
+Canonicalization-specific HIR and Establishment questions are the OPEN items recorded in Sections 9 and 14 of this ADR.
