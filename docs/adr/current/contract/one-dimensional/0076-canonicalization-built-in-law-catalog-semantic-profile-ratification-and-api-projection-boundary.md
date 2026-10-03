@@ -552,9 +552,295 @@ track these dependencies more finely, but physical storage topology cannot becom
 
 OPEN
 
-# 8. V1 General Candidate Review Group
+# 8. Candidate Universe and Initial V1 Review Group
 
-The independent candidate laws reviewed in this section are:
+Before the initial V1 Catalog is narrowed, candidate review starts from a broader semantic universe. Inclusion in this
+inventory means only that the profile is worth qualification under Sections 5 through 7. It does not establish V1
+support, Catalog classification, applicability to a particular Input presentation, public API availability, or
+ratification.
+
+The inventory excludes arbitrary combinations whose meaning would be created by sequencing two or more Catalog laws.
+Curated Composite Catalog Laws remain governed by Sections 5.3, 5.7, 6.2.1, 8.13, and 8.14. A standard-defined profile
+may still appear below when the standard itself defines one closed semantic profile rather than leaving the composition
+order to the user.
+
+Candidates whose primary product is canonical bytes, signature material, or another protocol encoding are retained in a
+separate boundary-review group. Their presence does not decide that the 1D Canonicalization Contract is the correct
+owner. The same rule applies to domain-specific profiles whose meaning may require a Specialized Domain Catalog or an
+exact Required Basis.
+
+The broader candidate universe is:
+
+**General Unicode and text**
+
+```text
+text.unicode.nfc
+text.unicode.nfd
+text.unicode.nfkc
+text.unicode.nfkd
+text.unicode.casefold-full
+text.unicode.casefold-simple
+text.ascii.casefold
+text.ascii.lowercase
+text.ascii.uppercase
+text.line-ending.lf
+text.line-ending.crlf
+text.whitespace.ascii-trim
+text.whitespace.ascii-collapse
+text.whitespace.xml-replace
+text.whitespace.xml-collapse
+text.unicode.whitespace-trim
+text.unicode.whitespace-collapse
+text.unicode.default-ignorable-remove
+text.unicode.confusable-skeleton
+text.unicode.identifier-skeleton
+```
+
+**Identifier and naming profiles**
+
+```text
+identifier.bcp47.rfc5646
+identifier.uuid.rfc9562-lowercase-text
+identifier.uuid.rfc9562-uppercase-text
+identifier.uuid.rfc9562-hex-and-dash
+identifier.unicode-locale.cldr-canonical
+identifier.unicode-locale.cldr-maximal-canonical
+identifier.unicode-locale.cldr-minimal-canonical
+identifier.time-zone.iana-link-canonical
+identifier.time-zone.cldr-canonical
+identifier.precis.username-case-mapped
+identifier.precis.username-case-preserved
+identifier.precis.opaque-string
+identifier.precis.nickname
+identifier.idna.uts46-nontransitional
+identifier.idna.uts46-transitional
+identifier.idna2008.a-label
+identifier.idna2008.u-label
+identifier.python-project.pep503
+identifier.python-version.pep440
+identifier.package-url.canonical
+identifier.purl.pypi
+identifier.purl.npm
+identifier.purl.maven
+identifier.purl.nuget
+identifier.purl.golang
+identifier.purl.rpm
+identifier.purl.deb
+identifier.purl.apk
+identifier.purl.alpm
+identifier.purl.cargo
+identifier.purl.gem
+identifier.purl.composer
+identifier.purl.conan
+identifier.purl.cocoapods
+identifier.purl.swift
+identifier.purl.pub
+identifier.purl.hackage
+identifier.purl.hex
+identifier.purl.cran
+```
+
+**Typed lexical value forms**
+
+```text
+lexical.xsd.boolean
+lexical.xsd.decimal
+lexical.xsd.integer
+lexical.xsd.non-positive-integer
+lexical.xsd.negative-integer
+lexical.xsd.long
+lexical.xsd.int
+lexical.xsd.short
+lexical.xsd.byte
+lexical.xsd.non-negative-integer
+lexical.xsd.unsigned-long
+lexical.xsd.unsigned-int
+lexical.xsd.unsigned-short
+lexical.xsd.unsigned-byte
+lexical.xsd.positive-integer
+lexical.xsd.float
+lexical.xsd.double
+lexical.xsd.duration
+lexical.xsd.year-month-duration
+lexical.xsd.day-time-duration
+lexical.xsd.date-time
+lexical.xsd.date-time-stamp
+lexical.xsd.date
+lexical.xsd.time
+lexical.xsd.g-year-month
+lexical.xsd.g-year
+lexical.xsd.g-month-day
+lexical.xsd.g-day
+lexical.xsd.g-month
+lexical.xsd.hex-binary
+lexical.xsd.base64-binary
+lexical.xsd.normalized-string
+lexical.xsd.token
+```
+
+`QName` is intentionally absent from this block. Its context-sensitive namespace interpretation is a control case for
+the applicability and ownership review rather than evidence that every XSD lexical form has a Canonicalization law.
+
+**Numeric value representations**
+
+```text
+number.decimal.numeric-value
+number.decimal.fixed-scale
+number.decimal.trailing-zero-collapse
+number.binary16.canonical-nan
+number.binary32.canonical-nan
+number.binary64.canonical-nan
+number.binary128.canonical-nan
+number.rational.reduced-positive-denominator
+number.integer.decimal-lexical
+number.unsigned-integer.decimal-lexical
+```
+
+**Base-N and binary-text presentations**
+
+```text
+encoding.base16.rfc4648
+encoding.base32.rfc4648
+encoding.base32hex.rfc4648
+encoding.base64.rfc4648
+encoding.base64url.rfc4648
+encoding.base64.rfc4648-padded
+encoding.base64url.unpadded
+encoding.hex.lowercase
+encoding.hex.uppercase
+```
+
+**URI, IRI, and URL presentations**
+
+```text
+uri.rfc3986.percent-hex-uppercase
+uri.rfc3986.unreserved-percent-decode
+uri.rfc3986.scheme-lowercase
+uri.rfc3986.host-lowercase
+uri.rfc3986.remove-dot-segments
+uri.http.default-port-elide
+uri.https.default-port-elide
+iri.rfc3987.nfc
+iri.percent-hex-uppercase
+iri.unreserved-percent-decode
+url.whatwg.canonical
+url.whatwg-host.canonical
+url.whatwg-ipv4.canonical
+email.domain.idna
+email.domain.ascii-lowercase
+```
+
+A generic whole-email-address profile is intentionally absent. Local-part semantics and provider-specific interpretation
+prevent the Catalog from treating one convenient normalization rule as universal equality.
+
+**IP, DNS, and network presentations**
+
+```text
+network.ipv4.dotted-decimal
+network.ipv6.rfc5952
+network.ipv6.rfc5952-mixed-ipv4
+network.ip-prefix.network-address
+network.ipv4-prefix.network-address
+network.ipv6-prefix.network-address
+dns.name.dnssec-canonical
+dns.name.dnssec-canonical-order
+network.port.decimal-lexical
+```
+
+**HTTP, MIME, and directory-protocol values**
+
+```text
+http.field-name.lowercase
+http.media-type.canonical
+http.media-type.type-subtype-lowercase
+http.structured-field.rfc9651
+ldap.directory-string.case-ignore
+ldap.directory-string.case-exact
+ldap.telephone-number.match
+ldap.numeric-string.match
+```
+
+LDAP matching profiles remain research candidates until each one demonstrates a unique representative rather than only
+an equivalence or comparison procedure.
+
+**Temporal presentations**
+
+```text
+time.rfc3339.utc-z
+time.rfc3339.zero-offset-z
+time.rfc3339.fractional-second
+time.instant.fixed-precision
+time.instant.utc
+time.zone-id.iana-canonical
+time.zone-id.cldr-canonical
+```
+
+**Scientific, professional, and domain-specific profiles**
+
+```text
+science.unit.ucum-canonical
+science.unit.ucum-semantic-canonical
+genomics.ga4gh-vrs.normalize
+genomics.ga4gh-vrs.allele-fully-justified
+genomics.ga4gh-vrs.reference-length-normalized
+genomics.ga4gh-refget.sequence
+genomics.ga4gh-refget.sequence-identifier
+chemistry.inchi.standard
+chemistry.inchi.canonical-labeling
+chemistry.smiles.canonical
+chemistry.smiles.standard-form
+graph.canonical-labeling
+telecom.e164.international-number
+```
+
+These names do not imply base-Catalog placement. Several require a Specialized Domain classification, an exact external
+semantic Basis, or further proof that a stable unique representative exists independently of implementation convention.
+
+**Canonical-byte and protocol boundary review**
+
+```text
+serialization.json.jcs.rfc8785
+serialization.cbor.rfc8949-core-deterministic
+serialization.cbor.rfc8949-length-first-deterministic
+serialization.cbor.ctap2-canonical
+serialization.ipld.dag-cbor
+serialization.ipld.dag-json
+serialization.ipld.dag-pb
+serialization.avro.schema-parsing-canonical-form
+serialization.xml.c14n10
+serialization.xml.c14n11
+serialization.xml.exclusive-c14n10
+serialization.asn1.der
+serialization.asn1.cer
+graph.rdf.rfdc-1.0
+dns.rr.dnssec-canonical-wire
+dns.rrset.dnssec-canonical-order
+security.jwk.rfc7638-thumbprint-input
+mail.dkim.header-simple
+mail.dkim.header-relaxed
+mail.dkim.body-simple
+mail.dkim.body-relaxed
+mail.openpgp.text-signature-canonical
+mail.smime.text-canonical
+security.oauth1.base-string-uri
+security.oauth1.parameter-normalization
+security.oauth1.signature-base-string
+security.http-message-signature.component
+security.http-message-signature.base
+security.aws-sigv4.uri
+security.aws-sigv4.query
+security.aws-sigv4.headers
+security.aws-sigv4.request
+security.google-v4-signing.request
+build.nix.derivation-canonical-encoding
+```
+
+This block is deliberately not promoted into the general 1D Catalog. Some entries are deterministic encodings of an
+already-defined meaning, some establish signature input rather than a same-shape representative, and some may belong to
+Publication, protocol realization, or another specialized authority. Section 5 qualification must therefore begin with
+ownership rather than with implementation convenience.
+
+The current detailed V1 review tranche is narrower. Its independent candidates are:
 
 - `text.unicode.nfc` — Unicode NFC
 - `text.unicode.nfd` — Unicode NFD
