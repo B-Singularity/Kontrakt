@@ -55,6 +55,11 @@ The catalog must cover common representation problems without turning Canonicali
 point. It must also leave a path for specialized domains whose representative depends on an explicit semantic basis.
 Other transformations remain separate unless they satisfy the Canonicalization law itself.
 
+A single Input coordinate may also need a meaning that combines more than one familiar canonicalization concern.
+Kontrakt does not treat that need as permission to expose an arbitrary normalization pipeline. When a combination is
+admitted, the Catalog owns one complete Composite Catalog Law whose equivalence, representative, ordering semantics,
+determinant closure, refusal surface, and security properties are ratified as one semantic profile.
+
 This ADR defines that catalog boundary, the initial V1 catalog, and the rules for admitting later profiles. Because a
 ratified Catalog Law can become a semantic dependency of another system, it also fixes the outward stability boundary of
 that law. Public API projection and implementation Design remain separate.
@@ -82,9 +87,11 @@ use the word canonicalization for signing or serialization.
 
 This ADR therefore decides the qualification boundary for built-in laws and records the current V1 candidates.
 `Candidate` is a working state, not an accepted catalog state. During this ADR's Proposed lifecycle, each initial V1
-candidate must be reviewed against Section 5 and its closed result recorded here before the ADR can become Accepted. A
-later addition to an already accepted catalog requires a new catalog ADR rather than an implementation update or a
-mutable registry entry.
+candidate must be reviewed against Section 5 and its closed result recorded here before the ADR can become Accepted. V1
+also admits a curated set of Composite Catalog Laws formed only from Kontrakt-approved law material after the complete
+combination has passed the same qualification gate. Arbitrary user composition remains outside this ADR. A later
+addition to an already accepted catalog requires a new catalog ADR rather than an implementation update or a mutable
+registry entry.
 
 # 3. Decision Drivers
 
@@ -115,6 +122,11 @@ A ratified Catalog Law is also an outward semantic surface. Another system may p
 indexes or keys from the representative, or otherwise rely on the legal observations that Kontrakt deliberately
 publishes. Kontrakt must therefore keep those semantic promises stable without turning incidental catalog layout,
 generated API shape, or realization details into compatibility obligations.
+
+Composition must preserve the same boundary. A Composite Catalog Law is not identified by an implementation pipeline, by
+a tuple of component API names, or by the order in which helper routines happen to run. Its semantic identity belongs to
+the independently ratified composite profile. Component references may support specification, verification, or
+realization reuse without becoming a substitute for that identity.
 
 # 4. Decision
 
@@ -215,8 +227,15 @@ only after Input has established a legal presentation. A legal Input may still l
 canonicalizable domain and receive a Canonicalization-owned refusal; material that never became legal Input does not
 enter Canonicalization.
 
-A combined built-in law must define its own `E_L`, `C_L`, determinant set, and exact ordering semantics. Sequentially
-applying two existing Catalog Laws does not by itself create a third Contract law.
+A combined built-in law must define its own `E_L`, `C_L`, determinant set, canonicalizable domain, owned refusal, and
+exact ordering semantics. Sequentially applying two existing Catalog Laws does not by itself create a third Contract
+law.
+
+When two or more approved laws are candidates for one coordinate, implementation order is never allowed to complete
+missing Contract meaning. If the complete legal observation is order-sensitive, each admitted ordered meaning is a
+distinct Composite Catalog Law unless one separately ratified profile defines another exact result. If the Catalog
+claims that order is irrelevant, that claim must be established for the complete composite observation rather than
+inferred from apparently independent implementations.
 
 Canonicalization selects a representative of already-declared meaning. A transformation that acquires or changes meaning
 belongs to another authority.
@@ -231,6 +250,13 @@ A candidate may expose a certified property that permits composition closure, bo
 another narrower reuse rule. That property is compiler-consumable knowledge derived from the authoritative law rather
 than a second Canonicalization judgment. Adding stronger proof or a new optimization property does not by itself change
 the Catalog Law identity when equivalence, representative, domain, determinants, and refusal remain unchanged.
+
+Composition qualification is stricter than showing equality of final values for one implementation. Any
+order-independence claim used to admit or optimize a composite must preserve the complete Canonicalization-owned
+observation under the same legal determinants. Representative value, successful or refused outcome, and Contract-owned
+attribution cannot vary merely because a legal realization evaluates approved component machinery in another order.
+Cross-cutting Budget or Capacity results remain owned by those Contracts and therefore require separate treatment before
+an implementation reordering can be certified as legal.
 
 In the absence of an applicable certified property, compiler work may assume only whole-value re-establishment. The
 physical algorithm that exploits a certified property remains Design.
@@ -345,7 +371,44 @@ can assign new semantic meaning to an arbitrary flag.
 
 OPEN
 
-## 6.3. Ratification Assurance
+## 6.3. Composition Relations and Composite Catalog Laws
+
+V1 may publish a curated Composite Catalog Law when one Input coordinate needs a meaning that combines more than one
+already-approved canonicalization concern. The public and HIR selection unit remains one exact Catalog Law. A composite
+therefore does not weaken ADR-0066's rule that one selected coordinate resolves to one closed law.
+
+A Composite Catalog Law is independently authoritative. Its semantic identity is not the ordered tuple of component law
+identities, even when its reference realization reuses those laws. The composite must pass Section 5 as a whole and must
+close its own equivalence, representative, canonicalizable domain, determinants, Required Basis requirements, refusal
+behavior, evolution law, and adversarial realization. Component relations are specification and verification material
+unless the composite law explicitly makes one such relation part of its own meaning.
+
+The Catalog may also record a relation between approved laws when that relation is useful for deciding whether a
+composite profile can be ratified or whether an implementation may legally reorder work. Such a relation is evidence
+about exact law interaction; it is not an automatic law constructor and does not grant users arbitrary composition
+authority. Pairwise evidence also does not establish an arbitrary larger composite when domain, refusal, Basis, or other
+semantic interactions can arise only in the whole combination.
+
+A V1 composition review should concentrate on laws that can interact over the same presentation domain. Laws whose
+domains or semantic effects cannot participate in one coordinate do not create a useful permutation space merely because
+they coexist in the Catalog. Proven order-independent interaction may eliminate redundant ordered variants, while an
+order-sensitive combination requires an exact ratified composite profile for every ordered meaning that Kontrakt chooses
+to publish. The Catalog is curated semantic vocabulary rather than the algebraic closure of all primitive laws, so V1
+does not generate every subset or permutation merely because it is mechanically expressible.
+
+### 6.3.1. Composition Relation Vocabulary
+
+OPEN
+
+### 6.3.2. V1 Curated Composite Admission Set
+
+OPEN
+
+### 6.3.3. N-Ary Composition Qualification
+
+OPEN
+
+## 6.4. Ratification Assurance
 
 Adversarial analysis and conformance evidence are required for ratification, but they are not themselves the law's
 semantic identity. The law owns semantic bounds when crossing a bound changes domain, representative, or refusal.
@@ -359,7 +422,7 @@ Adding stronger evidence does not create a new semantic profile unless the norma
 Assurance material may be packaged with compiler or release tooling, but ordinary semantic consumers do not depend on
 the entire assurance corpus merely because they select the law.
 
-## 6.4. External Legal Observation and Compatibility
+## 6.5. External Legal Observation and Compatibility
 
 The legal observations on which independent consumers may rely are a producer-owned projection of the authoritative law.
 That projection may expose the exact law reference and the stable semantic obligations needed by an external consumer,
@@ -369,16 +432,18 @@ Compatibility and migration are relations between exact semantic profiles and ex
 directional. They are not intrinsic fields that one Catalog Law can completely define in isolation, because a later
 profile or consumer obligation may not exist when the original law is ratified.
 
-### 6.4.1. Compatibility and Migration Relation Schema
+### 6.5.1. Compatibility and Migration Relation Schema
 
 OPEN
 
-## 6.5. Consumer and Dependency Boundary
+## 6.6. Consumer and Dependency Boundary
 
 Compiler and external consumers must consume producer-owned projections rather than one monolithic Catalog record. HIR
-and Establishment need the exact law meaning and any applicable basis requirements. Optimization and incremental reuse
-may additionally consume certified compiler properties. Verification and QA consume assurance material. External tooling
-consumes only the legal observation surface that Kontrakt deliberately publishes.
+and Establishment need the exact law meaning and any applicable basis requirements. A consumer of a Composite Catalog
+Law depends on that composite semantic observation rather than automatically depending on every physical component
+implementation used to realize it. Optimization and incremental reuse may additionally consume certified compiler
+properties or composition evidence when their legality relies on those facts. Verification and QA consume assurance
+material. External tooling consumes only the legal observation surface that Kontrakt deliberately publishes.
 
 These are logical boundaries, not a requirement for separate runtime objects or files. One physical table may co-locate
 several projections, and several tables may realize one projection. Physical co-location does not widen semantic
@@ -393,7 +458,8 @@ another representation change does not become semantic invalidation merely becau
 
 Catalog classification organizes review and publication. It does not define Canonicalization meaning, security,
 complexity, determinism, or optimization legality. Those properties belong to the exact ratified law and to the
-producer-owned projections defined in Section 6.
+producer-owned projections defined in Section 6. Primitive and Composite Catalog Laws pass through the same
+classification and qualification boundary; composition provenance is not an authority tier.
 
 The Catalog itself is also not Contract authority. A law is authoritative because its semantic profile has been ratified
 under this ADR and the owning Contract architecture. A generated catalog row, numeric id, declaration order, module, or
@@ -447,8 +513,10 @@ semantic law and certified compiler properties it legally observes. `Core Genera
 ## 7.6. Compilation and Publication Boundary
 
 Expensive ratification belongs to Catalog authoring, release qualification, and platform-support work rather than the
-ordinary compilation hot path. Normal compilation resolves the exact selected law and performs only the semantic and
-context checks required by that use. It does not rescan or revalidate the complete Catalog.
+ordinary compilation hot path. This includes composition interaction analysis, order-sensitivity review, conformance,
+and any proof used to certify a composite or a legal reordering. Normal compilation resolves the exact selected law and
+performs only the semantic and context checks required by that use. It does not search the permutation space, solve
+composition, or revalidate the complete Catalog.
 
 The physical Catalog may therefore be generated, partitioned, sharded, lazily materialized, or otherwise reorganized
 without changing Contract meaning. Those choices remain Design. Dynamic application registration cannot manufacture a V1
@@ -473,7 +541,9 @@ OPEN
 
 The laws in this section are grouped together for V1 review because they address general presentation or value
 normalization. This is a document review group rather than a final Catalog classification. Presence here does not mean
-ratification, and each law must pass Section 5 before its public API projection becomes stable.
+ratification, and each law must pass Section 5 before its public API projection becomes stable. A candidate may be
+primitive or composite. `text.unicode.nfc-casefold` and `text.unicode.nfkc-casefold` are reviewed as complete composite
+profiles rather than as permission for users to sequence their component operations.
 
 Text candidates consume the `Text` presentation already established by ADR-0064, which is a sequence of Unicode scalar
 values rather than arbitrary JVM UTF-16 code units. Host material outside that legal Input presentation never enters
@@ -631,6 +701,14 @@ while every non-NaN bit pattern remains unchanged.
 
 The current candidate representative is `0x7ff8000000000000`. Ratification carries the same bit-observability
 requirement as binary32.
+
+## 8.13. V1 Composition Interaction Matrix
+
+OPEN
+
+## 8.14. V1 Additional Curated Composite Candidates
+
+OPEN
 
 ---
 
@@ -829,6 +907,10 @@ V1 does not expose arbitrary recursive law composition. A built-in aggregate pro
 complete aggregate equivalence and representative are defined, preventing the catalog from becoming a normalization
 programming language.
 
+An aggregate law and a Composite Catalog Law are different concerns. Aggregate describes the presentation domain owned
+by one coordinate. Composite describes one exact law whose meaning combines more than one canonicalization concern over
+its admitted domain. Either may exist without the other, and neither creates child 1D Contracts.
+
 ---
 
 # 17. API Projection Boundary
@@ -857,7 +939,14 @@ The API Specification must preserve the authoring law already fixed by ADR-0066:
 - an unnamed coordinate remains outside Canonicalization;
 - the declaration contains no executable canonicalizer.
 
-The public type is evidence for one Catalog Law, not a runtime strategy object.
+The public type is evidence for one Catalog Law, not a runtime strategy object. The same rule applies to a Composite
+Catalog Law. API Specification may publish a nominal name for an already-ratified composite meaning, but it cannot
+create a new meaning by sequencing primitive API symbols, choosing an implementation order, or inferring a combination
+that the Catalog has not ratified.
+
+### 17.1. User Composition Surface
+
+OPEN
 
 ---
 
@@ -868,7 +957,9 @@ that work.
 
 After frontend resolution, a Canonicalization Definition Candidate must refer to each selected Catalog Law by semantic
 reference rather than by Java or Kotlin class name. Coordinate bindings remain part of one Canonicalization Definition
-Candidate; referenced Catalog Laws do not become child 1D Definitions merely because they have stable identities.
+Candidate; referenced Catalog Laws do not become child 1D Definitions merely because they have stable identities. A
+Composite Catalog Law crosses this boundary as one exact law reference; HIR does not reconstruct its meaning by
+expanding a public API name into an implementation pipeline.
 
 If a Catalog Law has a Required Basis requirement, the candidate must preserve that requirement wherever the law needs
 it. Definition-determining material that the profile itself closes remains Definition meaning instead. Actual Basis
@@ -922,8 +1013,11 @@ projection it needs, not every field or artifact stored beside that law. A consu
 compiler property or Basis-derived meaning records those dependencies separately.
 
 V1 therefore preserves exact law references, determinant relations, Required Basis requirements, and producer-owned
-compiler properties without collapsing them into physical Catalog identity. V2 may exploit those logical boundaries
-through a different incremental architecture without changing Contract meaning.
+compiler properties without collapsing them into physical Catalog identity. A Composite Catalog Law remains one semantic
+dependency for consumers that observe only its published meaning; physical reuse of component evaluators does not widen
+that dependency. A compiler product that specifically relies on a certified composition or reordering property records
+that additional producer-owned dependency separately. V2 may exploit those logical boundaries through a different
+incremental architecture without changing Contract meaning.
 
 ```text
 Canonicalization Definition
@@ -949,10 +1043,13 @@ recognize or accelerate already-defined equality and validity; they do not defin
 # 22. Compiler Product and Protocol Boundary
 
 The Catalog Law semantic definition is the source of Canonicalization meaning even when the compiler realizes it through
-generated code, precomputed tables, vectorized routines, or another optimized form.
+generated code, precomputed tables, vectorized routines, or another optimized form. A Composite Catalog Law may
+initially use a simple reference realization that invokes reusable component machinery in the law-defined order. A later
+backend may fuse, table-drive, vectorize, or otherwise replace that realization without changing the composite law.
 
 Every legal realization must preserve Section 5.1. Target profitability may change the work performed but cannot select
-a different Contract representative.
+a different Contract representative. An optimization may reorder component work only when the Catalog has certified that
+reordering for the complete legal observation; otherwise the semantic order of the composite remains fixed.
 
 Compiler-owned products derived from the law remain subject to the compiler product protocol. A product may consume a
 certified compiler property when that property is part of its legality proof, but Catalog classification or physical
@@ -981,6 +1078,11 @@ distinct unless the selected Catalog Law explicitly declares the distinction irr
 The same interpretation must also survive downstream use. A parser or library cannot re-read the representative under
 incompatible semantics and thereby resurrect or invent distinctions after Canonicalization.
 
+Composite laws add an additional differential risk. Intermediate values, component execution order, parser choice, or a
+supposedly equivalent alternate pipeline cannot become a second interpretation surface. Security-sensitive order must
+therefore be fixed by the Composite Catalog Law itself, while an order-independence claim requires qualification of the
+complete legal observation before a backend may exploit it.
+
 # 24. Conformance and QA
 
 Ratification requires evidence for the law, not merely for one implementation.
@@ -1000,6 +1102,12 @@ semantic domain.
 
 Differential testing against an external implementation is useful evidence. It never replaces the ratified law or its
 normative vectors.
+
+Composite qualification additionally requires adversarial order tests over the admitted interaction domain. Where the
+Catalog claims order independence, conformance must cover both legal evaluation orders and any optimized fused
+realization against the same composite reference meaning. Where order is semantic, tests must prove that the published
+ordered profile does not silently accept another ordering as equivalent. Larger composites require whole-profile tests
+rather than pairwise evidence alone.
 
 # 25. Current V1 Candidate Summary
 
@@ -1027,7 +1135,8 @@ registry.
 | Protocol / Identifier | `identifier.uuid.rfc9562-lowercase-text` | Candidate      |
 
 The first detailed ratification batch is NFC, NFD, NFKC, NFKD, and NFC Case Fold. Each law must pass the complete
-Section 5 gate before it becomes `Ratified`.
+Section 5 gate before it becomes `Ratified`. NFC Case Fold and NFKC Case Fold also exercise the V1 Composite Catalog Law
+model and must be qualified as complete laws rather than as sequences of independently selectable primitives.
 
 Before this ADR can become Accepted, every entry that remains designated as an initial V1 candidate must complete that
 review and receive an explicit terminal catalog decision in this document. After acceptance, new Catalog Laws are added
@@ -1068,7 +1177,8 @@ each selected coordinate references one ratified Catalog Law
 ```
 
 An unselected coordinate remains outside Canonicalization. The IDL does not select a built-in law directly, no
-`ExactCanonicalization` filler is inserted, and the declaration contains no executable user canonicalizer.
+`ExactCanonicalization` filler is inserted, and the declaration contains no executable user canonicalizer. A selected
+exact law may be primitive or composite; that distinction does not change the authoring relation.
 
 Project documentation should migrate to one active statement of this relation.
 
@@ -1092,16 +1202,23 @@ Once a law is ratified, external systems can depend on its declared semantic obs
 table layout, generated implementation, or compiler version as part of that dependency. This protects consumers from
 silent semantic drift and protects Kontrakt from accidental compatibility debt.
 
-V1 still does not expose arbitrary user-composed normalization pipelines. One coordinate selects one closed law. General
-custom-law support remains a separate extension problem that must not turn callbacks into Contract authority.
+V1 still does not expose arbitrary user-composed normalization pipelines. One coordinate selects one closed law. V1 may
+nevertheless publish curated Composite Catalog Laws that have passed the same semantic, security, evolution, and
+conformance qualification as primitive laws. This expands the semantic vocabulary without exposing implementation
+ordering as user authority. General custom-law support and arbitrary composition remain separate extension problems that
+must not turn callbacks into Contract authority.
 
 # 29. Open Work After This ADR
 
-The immediate work is to apply Section 5 to the first Unicode batch rather than add more catalog candidates.
+The immediate work is to apply Section 5 to the first Unicode batch and to build the V1 composition interaction matrix
+before adding unbounded candidate combinations.
 
 NFC, NFD, NFKC, NFKD, and NFC Case Fold must each be checked against the current Unicode specification and stability
-guarantees. The remaining Basis and evolution questions must be closed first. Composition and refusal behavior must then
-be verified before final Catalog classification and publication placement are decided.
+guarantees. The remaining Basis and evolution questions must be closed first. NFC Case Fold must additionally be
+reviewed as one complete Composite Catalog Law. The matrix must then identify which approved laws can interact over the
+same presentation domain, which interactions are provably order-independent, which are order-sensitive, and which are
+unsupported or still unknown. Only useful combinations that survive that review become additional V1 composite
+candidates.
 
 The next batch covers NFKC Case Fold, ASCII Case Fold, LF Line Ending, Unicode Boundary Whitespace Trim, and Decimal
 Numeric Value. Binary NaN profiles and the protocol / identifier review group follow only after the same gate is
@@ -1112,9 +1229,12 @@ and every published entry has a complete Section 5 profile recorded here. After 
 to close. Its compiler-product protocol should then be checked against the concrete Catalog Law, established semantic
 material, and realization boundaries produced here.
 
-The OPEN items in Sections 6.2.1, 6.4.1, 7.4, and 7.8 must be resolved before acceptance or explicitly transferred to
-the owning compiler-product, API, or Design document without weakening the semantic boundaries fixed here.
+The OPEN items in Sections 6.2.1, 6.3.1, 6.3.2, 6.3.3, 6.5.1, 7.4, 7.8, 8.13, 8.14, and 17.1 must be resolved before
+acceptance or explicitly transferred to the owning compiler-product, API, or Design document without weakening the
+semantic boundaries fixed here.
 
 The Canonicalization HIR and Establishment re-audit remains necessary after those semantic boundaries are stable. API
-Specification follows ratification; Design follows the API-independent semantic law. Canonical-byte protocols remain a
-separate decision rather than an extension of this coordinate catalog.
+Specification follows ratification and must expose only Catalog-approved single-law or composite-law selections; it does
+not own arbitrary composition semantics. Design follows the API-independent semantic law and may reuse or fuse component
+realizations only when the exact composite observation is preserved. Canonical-byte protocols remain a separate decision
+rather than an extension of this coordinate catalog.
