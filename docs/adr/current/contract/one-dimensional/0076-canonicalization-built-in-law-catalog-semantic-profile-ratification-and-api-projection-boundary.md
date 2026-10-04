@@ -54,11 +54,6 @@ The catalog must cover common representation problems without turning Canonicali
 point. It must also leave a path for specialized domains whose representative depends on an explicit semantic basis.
 Other transformations remain separate unless they satisfy the Canonicalization law itself.
 
-A single Input coordinate may also need a meaning that combines more than one familiar canonicalization concern.
-Kontrakt does not treat that need as permission to expose an arbitrary normalization pipeline. When a combination is
-admitted, it is represented as one complete Composite Catalog Law semantic subject whose equivalence and representative
-are qualified as one exact profile.
-
 This ADR defines that catalog boundary, the initial V1 catalog, and the rules for admitting later profiles.
 
 ---
@@ -82,10 +77,8 @@ use the word canonicalization for signing or serialization.
 
 This ADR therefore decides the qualification boundary for built-in laws and records the current V1 candidates.
 `Candidate` is a working state, not an accepted Catalog state. During this ADR's Proposed lifecycle, each initial V1
-candidate must be reviewed against Section 5 before the ADR can become Accepted. V1 may admit curated Composite Catalog
-Laws only after the complete combination has passed the same semantic qualification gate. Arbitrary user composition
-remains outside this ADR. A later built-in addition requires an explicit semantic Catalog decision rather than an
-implementation update or mutable registry entry.
+candidate must be reviewed against Section 5 before the ADR can become Accepted. A later built-in addition requires an
+explicit semantic Catalog decision rather than an implementation update or mutable registry entry.
 
 # 3. Decision Drivers
 
@@ -108,10 +101,6 @@ V1 should admit only laws whose hostile-input behavior can be reviewed and whose
 independently of one implementation. Specialized domains remain possible when their Basis and authority boundaries are
 explicit.
 
-Composition must preserve the same boundary. A Composite Catalog Law is not identified by an implementation pipeline, by
-a tuple of component API names, or by the order in which helper routines happen to run. Its semantic identity belongs to
-the independently ratified composite profile.
-
 # 4. Decision
 
 Kontrakt will maintain a **Canonicalization Built-In Law Catalog** as the logical boundary for the built-in
@@ -127,13 +116,13 @@ The current Catalog structure is:
 Canonicalization Built-In Law Catalog
     Built-In Membership
     Exact Built-In Law Definitions
-    Exact Law-to-Law Semantic Relations              [vocabulary OPEN]
 ```
 
 This structure fixes the decomposition rule, not the final contents of every family.
 
-ADR-0066 owns the common semantic shape of Canonicalization. This ADR owns the exact semantics of built-in laws and the
-Catalog-specific relations needed to make the built-in vocabulary closed.
+ADR-0066 owns the common semantic shape of Canonicalization. This ADR owns the exact semantics of built-in laws needed
+to
+make the built-in vocabulary closed.
 
 The catalog does not own host-language names or implementation algorithms.
 
@@ -168,65 +157,40 @@ The exact representation of those choices must remain typed and law-specific rat
 
 ## 5.2. Exact Semantic Profile Closure
 
-ADR-0066 requires every Canonicalization law to have one independently declared same-meaning relation `E_L` and one
-representative selection `C_L` satisfying the common equivalence, representative, and idempotence laws. ADR-0076 does
-not
-redefine those meta-laws. It supplies the exact built-in semantics that satisfy them.
+ADR-0066 owns the common Canonicalization law. ADR-0076 does not restate its equivalence, representative, determinism,
+idempotence, judgment, failure, or occurrence rules. This Catalog ADR supplies only the exact semantic content needed to
+specify each built-in law under those common rules.
 
-The current re-audit also requires every candidate to answer what exact already-established semantic operand the law
-observes and which material actually determines its `E_L` and `C_L`.
+Every built-in candidate must identify the exact already-established Input-owned semantic presentation over which the
+law operates. Java or Kotlin carrier identity, parser choice, source syntax, runtime object topology, or another host
+classification cannot substitute for that semantic operand requirement.
 
-The law must not create a second Input presentation ontology. Input owns the legal presentation meaning. An Exact
-Built-In Law must instead identify the exact Input-owned semantic presentation over which its `E_L` and `C_L` are
-meaningful. Java or Kotlin carrier identity, parser choice, source syntax, runtime object topology, or another host
-classification cannot substitute for that semantic operand.
+Every built-in candidate must define its exact same-meaning relation and its exact representative selection. Those are
+the candidate-specific `E_L` and `C_L` required by ADR-0066. The Catalog does not allow the implementation to infer one
+from host equality, parser behavior, provider defaults, or the behavior of a normalization routine.
 
-A built-in law may observe semantic distinctions beyond the common scalar core. Presence, explicit absence, finite
-alternatives, ordering, multiplicity, duplicates, aggregate collision, semantic bounds, unassigned material, or another
-domain-specific distinction enters the exact law only when that law actually observes it. V1 does not create one
-universal optional-field record containing every such concern.
+When a particular law can reach a Canonicalization-owned failure for an otherwise legal Input presentation, the exact
+semantic condition that causes that failure is part of that law's definition. This ADR does not create a generic failure
+field or redefine the common failure boundary owned by ADR-0066.
 
-The law's negative semantics must be closed as exact outcome meaning rather than as a generic `error` field. A legal
-Input may establish the representative or may reach a Canonicalization-owned negative condition when the exact law owns
-one. Input illegality, an unentered judgment, HIR incompleteness, unavailable backing, Budget or Capacity stop, compiler
-resource exhaustion, and implementation failure are not silently converted into that outcome vocabulary.
+When a particular law requires semantic material beyond the Input-owned operand meaning, and that material can change
+the law's exact equivalence, representative, or law-specific failure condition, the exact material is part of that law's
+definition. Provider identity, library version, conformance evidence, provenance, and physical realization do not become
+semantic determinants merely because an implementation uses them.
 
-A separate mandatory `Representative Range` is not introduced merely because it can be derived from `C_L`. It becomes
-independent semantic material only if a particular law owns an additional distinction that cannot be recovered from its
-exact representative semantics.
+A built-in law may observe additional Input-owned distinctions such as presence, explicit absence, finite alternatives,
+ordering, multiplicity, duplicates, aggregate collision, semantic bounds, or unassigned material only when that exact
+law actually observes them. V1 does not create one universal optional-field record containing every such concern.
 
-A combined built-in law must provide the same complete exact meaning as any other law. Sequentially applying two
-existing
-laws does not itself create a third law. If order or intermediate semantic state changes the legal observation, an
-admitted result is a distinct Composite Catalog Law unless a separately ratified profile establishes another exact
-meaning.
+A separate mandatory `Representative Range` is not introduced merely because it can be derived from the exact
+representative definition. A generic `options`, `profile`, `flags`, `determinants`, or `conditionalClauses` property bag
+is
+also rejected as the default representation of law-specific meaning.
 
 Canonicalization selects a representative of already-declared meaning. A transformation that acquires or changes meaning
 belongs to another authority.
 
-## 5.3. Composition and Semantic-Relation Closure
-
-Ratification must establish the semantic relations that a built-in law actually owns. Canonical material is not assumed
-to remain canonical after concatenation, aggregation, slicing, partial update, or another domain operation merely
-because
-source fragments were canonical.
-
-Where two laws have a useful exact semantic interaction, this ADR may ratify a typed law-to-law relation such as an
-exact
-composition, proven order independence, order sensitivity, incompatibility, or another relation that is itself
-meaningful
-for Catalog qualification. The final vocabulary remains `OPEN` in Section 6.2.1.
-
-Composition qualification is stricter than showing equality of final values for one implementation. Any claimed
-order-independence must preserve the complete Canonicalization-owned observation under the same legal determinants.
-Representative value, successful or negative outcome, and Contract-owned attribution cannot vary because legal
-realization machinery happened to execute approved concerns in another order.
-
-The Catalog does not generate the Cartesian closure of all primitive laws. V1 publishes only curated composite meanings
-that are independently complete and have passed whole-profile qualification. Pairwise evidence does not establish an
-arbitrary N-ary composite when domain, refusal, Basis, or other interactions arise only in the whole combination.
-
-## 5.4. Adversarial Realizability
+## 5.3. Adversarial Realizability
 
 ADR-0066 owns the common finite-work and authority boundaries of Canonicalization. Catalog ratification must
 additionally
@@ -243,7 +207,7 @@ A mitigation may stop work only through the authority that owns that stop. It ca
 different `C_L`, change duplicate or collision semantics, truncate traversal, or alter the successful domain to make one
 implementation cheaper.
 
-## 5.5. Evolution Closure
+## 5.4. Evolution Closure
 
 A ratified built-in law must remain stable for the semantic observations its identity actually promises. Another
 Kontrakt
@@ -274,12 +238,11 @@ The Catalog is a logical boundary over typed semantic families. It is not a univ
 
 ## 6.1. Catalog Logical Content and Exact Law Definition Boundary
 
-The Catalog currently admits the following logical family candidates:
+The Catalog currently admits the following logical families:
 
 ```text
 Built-In Membership
 Exact Built-In Law Definitions
-Exact Law-to-Law Semantic Relations              [partially OPEN]
 ```
 
 `Built-In Membership` answers which exact semantic law definitions belong to the built-in selectable population after
@@ -290,29 +253,52 @@ together.
 ADR-0066. They do not absorb API naming, assurance evidence, compiler optimization permissions, realization algorithms,
 or physical lookup coordinates.
 
-Law-to-law relations are recorded only when an exact normative relation is actually required. This ADR does not create a
-relation family merely because tooling would find one convenient.
-
 ### 6.1.1. Exact Law Common-Core Shape
 
-**OPEN**
+An Exact Built-In Law contains only the candidate-specific semantic material needed to identify that law under the
+common
+Canonicalization rules owned by ADR-0066. The Catalog does not duplicate those common rules as per-law fields.
 
-The HIR–Establishment re-audit and the closed Input model show that one Exact Built-In Law must be complete without
-becoming a generic property bag. The following are therefore mandatory review questions for every candidate, while the
-final common-core decomposition remains open:
+Every Exact Built-In Law must close the following semantic content:
 
-| Semantic concern                      | Current boundary                                                                                                                                                     |
-|---------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Semantic operand meaning              | Must identify the exact already-established Input-owned meaning over which the law operates; no second Input ontology                                                |
-| Law-Defined Equivalence               | Concrete `E_L` required by ADR-0066                                                                                                                                  |
-| Representative Law                    | Concrete `C_L` required by ADR-0066                                                                                                                                  |
-| Meaning-Determinant Closure           | Every semantic input that can change `E_L`, `C_L`, or a law-specific negative condition must be explicit                                                             |
-| Direct Meaning-Determining References | Preserved only when exact external or sibling semantic meaning is actually required                                                                                  |
-| Law-Specific Typed Meaning            | Presence, absence, finite alternatives, ordering, multiplicity, duplicate/collision, semantic bounds, unassigned behavior, or another distinction only when observed |
+| Exact law content                        | Required meaning                                                                                                                                                            |
+|------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Exact Operand Requirement                | The exact already-established Input-owned semantic presentation over which this built-in law is defined                                                                     |
+| Exact Equivalence Definition             | The concrete same-meaning relation that this built-in law declares under ADR-0066                                                                                           |
+| Exact Representative Definition          | The concrete representative selection that this built-in law declares under ADR-0066                                                                                        |
+| Exact Law-Specific Failure Semantics     | Required only when this particular law can produce a Canonicalization-owned failure for an otherwise legal operand; the exact semantic condition must be closed             |
+| Exact Law-Specific Semantic Determinants | Required only when semantic material beyond the Input-owned operand meaning can change this particular law's equivalence, representative, or law-specific failure condition |
 
-A separate mandatory representative-range field is not required when it is merely derivable from `C_L`. A generic
-`options`, `profile`, `flags`, or `conditionalClauses` property bag is also rejected as the default representation of
-law-specific meaning. Exact semantic choices remain typed under the law that owns them.
+The first three items are required for every built-in law. The final two are conditional and exist only when the
+particular
+law actually owns that meaning. Their absence is not represented by generic empty fields.
+
+ADR-0066 remains the owner of the common equivalence laws, representative laws, determinism, idempotence, judgment
+shape,
+common failure boundary, Input-sameness compatibility, and occurrence semantics. Those common obligations are applied to
+the exact content above; they are not duplicated in this Catalog definition.
+
+The exact operand requirement is semantic rather than physical. A JVM carrier type such as `String`, `Float`, or
+`ByteArray` does not by itself define the operand meaning of a built-in law.
+
+The exact equivalence definition and exact representative definition are independently normative law content because
+ADR-0066 requires both. A backend routine, host equality relation, or observed implementation result cannot substitute
+for
+either definition.
+
+A law-specific failure condition does not mean that selection is retried at occurrence time. Selection of the law is
+already established elsewhere. This Catalog records only the particular semantic condition, if any, under which the
+selected exact law cannot establish its representative and therefore reaches the Canonicalization failure boundary owned
+by ADR-0066.
+
+Law-specific semantic determinants are not a generic `determinants` collection. Only material that can actually change
+the particular law's exact meaning belongs here. Provider identity, implementation version, verification evidence,
+provenance, cache state, and physical catalog representation remain outside exact law meaning unless a separate semantic
+argument establishes otherwise.
+
+A separate mandatory representative-range field is not required when it is derivable from the exact representative
+definition. Preserved or collapsed distinctions may be documented to explain and verify a law, but they do not become a
+second authoritative copy of the exact equivalence definition.
 
 ### 6.1.2. Typed Law-Specific Meaning
 
@@ -325,38 +311,6 @@ distinctions are observable under the law.
 The final V1 typed family vocabulary must therefore be derived from the candidate laws that survive qualification rather
 than invented as one universal optional schema. A candidate is incomplete when a distinction it actually observes is
 left to host equality, parser behavior, collection order, provider defaults, or implementation convention.
-
-## 6.2. Composition Relations and Composite Catalog Laws
-
-V1 may publish a curated Composite Catalog Law when one Input coordinate needs a complete meaning that combines more
-than
-one already-approved canonicalization concern. The Catalog-visible selection meaning remains one exact law. A composite
-therefore does not weaken ADR-0066's rule that one selected coordinate resolves to one closed law.
-
-A Composite Catalog Law must close its own exact semantic meaning under Section 5 and Section 6.1. Sequentially applying
-component implementations does not substitute for the complete composite meaning.
-
-The Catalog may record typed semantic relations between exact laws when such relations are needed for qualification or
-for another explicitly owned semantic purpose. Those relations do not construct arbitrary new laws and do not grant
-users
-open composition authority.
-
-A V1 composition review concentrates only on laws that can meaningfully interact over one coordinate. Proven
-order-independent interaction may eliminate redundant ordered candidates. Order-sensitive interaction requires an exact
-curated profile for each ordered meaning that Kontrakt chooses to publish. V1 does not generate every subset or
-permutation merely because it is mechanically expressible.
-
-### 6.2.1. Composition Relation Vocabulary
-
-OPEN
-
-### 6.2.2. V1 Curated Composite Admission Set
-
-OPEN
-
-### 6.2.3. N-Ary Composition Qualification
-
-OPEN
 
 # 7. Initial V1 Review Group
 
@@ -373,13 +327,9 @@ The current detailed V1 review tranche is:
 - `number.binary32.canonical-nan` — Binary32 Canonical NaN
 - `number.binary64.canonical-nan` — Binary64 Canonical NaN
 
-Composite candidates are intentionally omitted from this overview and are reviewed under their own composition
-obligations below.
-
 The laws in this section are grouped together for V1 review because they address general presentation or value
-normalization. Presence here does not mean ratification, and each law must pass Section 5. A candidate may be primitive
-or composite. `text.unicode.nfc-casefold` and `text.unicode.nfkc-casefold` are reviewed as complete composite profiles
-rather than as permission for users to sequence their component operations.
+normalization. Presence here does not mean ratification, and each law must pass Section 5. Each candidate is reviewed as
+one exact built-in law rather than as permission for users to sequence implementation operations.
 
 Text candidates consume the `Text` presentation already established by ADR-0064, which is a sequence of Unicode scalar
 values rather than arbitrary JVM UTF-16 code units. Host material outside that legal Input presentation never enters
@@ -437,14 +387,15 @@ the exact V1 semantic use for which this decomposed compatibility representative
 
 **Candidate semantic label:** `text.unicode.nfc-casefold`
 
-This candidate is a combined Kontrakt profile intended to collapse Unicode canonical-equivalent and default-caseless
-distinctions under one independently specified law. It is not defined merely by composing the existing NFC and case-fold
-Catalog entries, and it must not be described as a Unicode-defined profile unless ratification identifies an exact
-normative Unicode profile that owns the same relation.
+This candidate is intended to collapse Unicode canonical-equivalent and default-caseless distinctions under one
+independently specified exact law. It is not defined merely by sequencing the existing NFC and case-fold Catalog
+entries,
+and it must not be described as a Unicode-defined profile unless ratification identifies an exact normative Unicode
+profile that owns the same relation.
 
-Ratification must close the independent equivalence relation, exact transformation order, fixed-point behavior,
-case-folding profile, Unicode Basis, unassigned-code-point behavior, and composition property. Locale-sensitive
-lowercasing is not part of the law and cannot substitute for the ratified profile.
+Ratification must close the independent equivalence relation, exact representative definition, case-folding profile,
+Unicode Basis, and unassigned-code-point behavior. Locale-sensitive lowercasing is not part of the law and cannot
+substitute for the ratified profile.
 
 ## 7.6. Unicode NFKC Case Fold
 
@@ -454,8 +405,8 @@ This candidate targets Unicode `NFKC_Casefold` semantics for an identifier-like 
 caseless distinctions are intentionally erased.
 
 Ratification must use the exact Unicode profile rather than an arbitrary sequence of host normalization and lowercasing
-calls. Its Basis, treatment of default-ignorable material, evolution behavior, and composition properties remain part of
-the qualification review.
+calls. Its Basis, treatment of default-ignorable material, and evolution behavior remain part of the qualification
+review.
 
 ## 7.7. ASCII Case Fold
 
@@ -474,9 +425,7 @@ The law treats the supported line-ending spellings as equivalent and selects LF 
 standalone CR therefore converge to LF without changing an existing LF.
 
 Other Unicode line separators and other whitespace are preserved. The transformation does not expand the source, trim
-content, or collapse blank lines. The law is composition-sensitive at fragment boundaries, so qualification must state
-the exact Section 5.3 semantic
-composition relation.
+content, or collapse blank lines.
 
 ## 7.9. Unicode Boundary Whitespace Trim
 
@@ -487,8 +436,7 @@ Basis. Interior whitespace remains unchanged.
 
 The Unicode property set, not Java `trim()` or `strip()`, defines the law. Because property membership can be
 version-sensitive, the Unicode Basis is meaning-determining. The law does not collapse internal whitespace or perform
-line-ending normalization. Its boundary operation is not assumed to compose over independently canonicalized fragments;
-ratification must record the exact Section 5.3 property.
+line-ending normalization.
 
 ## 7.10. Decimal Numeric Value
 
@@ -537,16 +485,6 @@ while every non-NaN bit pattern remains unchanged.
 
 The current candidate representative is `0x7ff8000000000000`. Ratification carries the same bit-observability
 requirement as binary32.
-
-## 7.13. V1 Composition Interaction Matrix
-
-OPEN
-
-## 7.14. V1 Additional Curated Composite Candidates
-
-OPEN
-
----
 
 # 8. V1 Protocol and Identifier Candidate Review Group
 
@@ -695,10 +633,6 @@ V1 does not expose arbitrary recursive law composition. A built-in aggregate pro
 complete aggregate equivalence and representative are defined, preventing the catalog from becoming a normalization
 programming language.
 
-An aggregate law and a Composite Catalog Law are different concerns. Aggregate describes the presentation domain owned
-by one coordinate. Composite describes one exact law whose meaning combines more than one canonicalization concern over
-its admitted domain. Either may exist without the other, and neither creates child 1D Contracts.
-
 ---
 
 # 15. Canonicalization Contract Integration Boundary
@@ -752,9 +686,7 @@ keys, dense handles, or exact reference encodings.
 | Protocol / Identifier | `identifier.uuid.rfc9562-lowercase-text` | Candidate      |
 
 The first detailed semantic review batch remains NFC, NFD, NFKC, NFKD, and NFC Case Fold. NFC Case Fold and NFKC Case
-Fold
-also exercise the curated Composite Catalog Law model and must be reviewed as complete laws rather than as user-visible
-sequences of primitives.
+Fold must each be reviewed as complete exact laws rather than as user-visible sequences of implementation operations.
 
 Before this ADR can become Accepted, every entry retained in the initial V1 set must receive an explicit terminal
 Catalog decision. That decision must not be inferred from implementation registration.
@@ -762,57 +694,7 @@ Catalog decision. That decision must not be inferred from implementation registr
 Deferred profile families in Section 9 remain outside this candidate table until their current blocking issues are
 resolved.
 
-# 18. Decisions Against Earlier Candidate Material
-
-Earlier drafts used a broader exploratory list. This ADR narrows that material according to the current Canonicalization
-law.
-
-Earlier candidates are retained only when they establish a Canonicalization representative. Preserve-everything profiles
-collapse into omission, ordering-only profiles remain ordering laws, and reject-only profiles remain with the authority
-that owns domain legality. Collection and binary candidates stay deferred until their semantic equivalence is closed
-independently of JVM representation.
-
-The following names were previously kept as illustrative ADR-0066 Catalog exploration. They are transferred here so that
-removing Catalog population from ADR-0066 does not erase review history. These spellings are not active API promises or
-Ratified law identities; each survives only through a current semantic candidate or a later explicit disposition.
-
-```text
-UnicodeNfcCanonicalization
-UnicodeNfdCanonicalization
-UnicodeNfkcCanonicalization
-UnicodeNfkdCanonicalization
-AsciiCaseFoldCanonicalization
-UnicodeCaseFoldCanonicalization
-UnicodeNfcCaseFoldCanonicalization
-LineEndingLfCanonicalization
-
-RawBitFloatCanonicalization
-RawBitDoubleCanonicalization
-CanonicalNaNPreserveSignedZeroCanonicalization
-CanonicalNaNCollapseSignedZeroCanonicalization
-RejectNaNCanonicalization
-RejectNonFiniteCanonicalization
-IeeeTotalOrderCanonicalization
-
-DecimalScalePreservingCanonicalization
-DecimalNumericValueCanonicalization
-DecimalFixedScaleCanonicalization
-
-OrderPreservingSequenceCanonicalization
-OrderAgnosticSetCanonicalization
-OrderAgnosticBagCanonicalization
-CanonicalMapKeyOrderCanonicalization
-ExactBinaryCanonicalization
-
-ExactZonedTimeCanonicalization
-InstantPreservingZonedTimeCanonicalization
-InstantOnlyCanonicalization
-FixedPrecisionInstantCanonicalization
-```
-
----
-
-# 19. Migration and Supersession
+# 18. Migration and Supersession
 
 This ADR does not supersede the Canonicalization authority defined by ADR-0066. It supplies the built-in semantic
 Catalog
@@ -832,68 +714,63 @@ each selected coordinate resolves to one exact admitted built-in semantic target
 ```
 
 An unselected coordinate remains outside Canonicalization. The IDL does not select a built-in law directly, no
-`ExactCanonicalization` filler is inserted, and the declaration contains no executable user canonicalizer. A selected
-exact law may be primitive or composite; that distinction does not change the authoring relation.
+`ExactCanonicalization` filler is inserted, and the declaration contains no executable user canonicalizer.
 
 Project documentation should migrate to one active statement of this relation.
 
 ADR-0066 retains the common Canonicalization law and Canonicalization-specific HIR, Establishment, occurrence, and
-Protocol ownership. ADR-0076 retains the exact built-in semantic definitions, built-in membership, qualification rules,
-and exact law-to-law semantic relations that are closed here.
+Protocol ownership. ADR-0076 retains the exact built-in semantic definitions, built-in membership, and qualification
+rules that are closed here.
 
-# 20. Consequences
+# 19. Consequences
 
 The exact built-in law shape remains explicit without becoming a universal property bag. Common Canonicalization
 obligations remain common, while presence, alternatives, ordering, multiplicity, collision, semantic bounds, unknown
 member behavior, and other specialized distinctions enter a law only when that law actually observes them.
 
 V1 still does not expose arbitrary user-composed normalization pipelines. One selected coordinate resolves to one closed
-built-in semantic law. Curated Composite Catalog Laws remain possible after whole-profile qualification. General custom
-law support and arbitrary composition remain separate future design problems.
+built-in semantic law. General custom law support and arbitrary composition remain separate future design problems.
 
-# 21. Open Work After This ADR
+# 20. Open Work After This ADR
 
 The remaining work in this ADR is limited to the built-in Catalog itself.
 
-The first decision batch is:
+Section 6.1.1 now fixes the Exact Law Common-Core Shape. The next Catalog work is to complete the law-specific semantic
+vocabulary without reintroducing common ADR-0066 obligations as Catalog fields.
+
+The next decision sequence is:
 
 ```text
-1. Exact Law Common-Core Shape
-   Section 6.1.1
-
-2. Typed Law-Specific Meaning
+1. Typed Law-Specific Meaning
    Section 6.1.2
 
-3. Composition Relation Vocabulary
-   Section 6.2.1
+2. External semantic material
+   Apply Section 16 candidate by candidate
 
-4. V1 Curated Composite Admission Set
-   Section 6.2.2
+3. Candidate qualification
+   Complete the exact operand requirement, equivalence, representative,
+   law-specific failure semantics where present, and law-specific semantic determinants where present
 
-5. N-Ary Composition Qualification
-   Section 6.2.3
+4. Final V1 Built-In Membership decisions
+   Give every retained candidate an explicit terminal Catalog decision
 ```
 
-The external semantic material split in Section 16 must then be applied candidate by candidate without collapsing exact
-semantic material, provider identity, or conformance evidence into one generic `externalDependency` or version field.
+The external semantic material split in Section 16 must be applied candidate by candidate without collapsing exact
+semantic material, provider identity, implementation version, provenance, or conformance evidence into one generic
+`externalDependency` or version field.
 
-After those Catalog questions are closed, detailed candidate qualification resumes. NFC, NFD, NFKC, NFKD, and NFC Case
-Fold remain the first semantic review batch. Their exact semantic operand, `E_L`, `C_L`, meaning-determining external
-material, unknown or unassigned behavior where relevant, and composite interactions must be checked against the final
-Catalog model rather than forcing the model to fit one candidate.
+Detailed candidate qualification should stress the Catalog model against materially different laws rather than close the
+remaining model from one easy candidate. Decimal Numeric Value and Binary32 Canonical NaN exercise self-contained exact
+representatives; Unicode NFC exercises external semantic material and unassigned behavior; IPv6 RFC 5952 exercises exact
+operand ownership; BCP 47 exercises mutable registry dependence; NFC Case Fold exercises a law whose exact meaning must
+not be reconstructed from an arbitrary implementation sequence.
 
 The following ADR-0076 items remain explicitly OPEN in this revision:
 
 ```text
-6.1.1  Exact Law Common-Core Shape
 6.1.2  Typed Law-Specific Meaning
-6.2.1  Composition Relation Vocabulary
-6.2.2  V1 Curated Composite Admission Set
-6.2.3  N-Ary Composition Qualification
-7.13    V1 Composition Interaction Matrix
-7.14    V1 Additional Curated Composite Candidates
-16      exact external-semantic-material classification per law
-17      final Candidate Catalog decision
+16     exact external-semantic-material classification per law
+17     final Candidate Catalog decision
 ```
 
 For project sequencing, ADR-0076 remains the current Catalog closure target.
