@@ -106,25 +106,31 @@ explicit.
 Kontrakt will maintain a **Canonicalization Built-In Law Catalog** as the logical boundary for the built-in
 Canonicalization vocabulary defined by this ADR.
 
-The Catalog is not one `CatalogEntry` record and it is not defined by one physical table. It is a logical boundary over
-typed semantic families. The semantic families may be represented together or separately by the compiler, but physical
-co-location, one row layout, one generated enum, or one lookup structure does not merge their meanings.
+The Catalog is not one `CatalogEntry` record and it is not defined by one physical table. It is a normative manifest
+boundary over the built-in Canonicalization law Authorities admitted by Kontrakt. The manifest may be realized together
+with law material or separately by the compiler, but physical co-location, one row layout, one generated enum, or one
+lookup structure does not merge their meanings or create Contract authority.
 
-The current Catalog structure is:
+The current boundary is:
 
 ```text
 Canonicalization Built-In Law Catalog
-    Built-In Membership
-    Exact Built-In Law Definitions
+    Built-In Law Authority Membership
+
+Exact Built-In Law Authorities specified by this ADR
+    one independently version-sensitive Contract Authority per exact law
+    one exact law Definition for each Version of that Authority
 ```
 
-This structure fixes the decomposition rule, not the final contents of every family.
+The Catalog itself is not another version-sensitive Contract Authority. It owns no `CatalogVersion`, no law Version
+history, and no implicit current-Version selection. Built-In Law Authority Membership answers which law Authorities
+belong to the built-in Canonicalization vocabulary. A new Version under an already-admitted law Authority does not
+change
+Catalog membership.
 
-Built-In Membership is semantic Catalog meaning. Adding or removing a built-in law therefore requires an explicit
-Catalog
-decision; compiler release, implementation registration, physical discovery, or provider availability cannot change
-membership implicitly. The exact Authority and Version coordinate that owns this membership remains governed by the
-common identity and Version architecture rather than by a new `CatalogVersion` field invented here.
+Adding or removing a built-in law Authority requires an explicit Catalog decision; compiler release, implementation
+registration, physical discovery, provider availability, or a newly published law Version cannot change membership
+implicitly. Exact law identity and Version remain owned by the member law Authority under ADR-0053 and ADR-0063.
 
 ADR-0066 owns the common semantic shape of Canonicalization. This ADR owns the exact semantics of built-in laws needed
 to
@@ -230,12 +236,25 @@ A ratified built-in law must remain stable for the semantic observations its ide
 Kontrakt release may replace the implementation, reorganize physical catalog material, or change a host-language
 projection without assigning different Canonicalization meaning to the same exact versioned law.
 
-A change to the Exact Operand Requirement, Exact Equivalence Definition, Exact Representative Definition, Exact
-Representative Coverage, law-specific failure meaning, meaning-determining semantic material, typed law-specific
-distinction, or another actual determinant is a semantic change when it can alter the law's Contract-visible meaning.
-That changed meaning cannot be published under the same exact Versioned Law Definition. ADR-0053 owns Version identity,
-continuity, conflict, history, and claim resolution; when the same Authority continues with changed meaning, the change
-must be represented by an explicit new Version rather than by mutation of the old one.
+Each Exact Built-In Law is an independently version-sensitive Kontrakt Contract Authority. A change to the Exact Operand
+Requirement, Exact Equivalence Definition, Exact Representative Definition, Exact Representative Coverage, law-specific
+failure meaning, meaning-determining semantic material, typed law-specific distinction, or another actual determinant is
+a semantic change when it can alter that Authority's Contract-visible meaning. That changed meaning cannot be published
+under the same Version. ADR-0053 owns Version identity, continuity, conflict, immutable history, and claim resolution;
+when the same law Authority continues with changed meaning, the change must be represented by an explicit new Version
+rather than by mutation of the old one.
+
+A later Version under the same law Authority does not revise Catalog membership and does not replace an earlier Version.
+When a consumer requires an exact earlier Version, resolution must return the exact meaning owned by that Authority and
+Version if it remains legally selectable for that use. A separately established lifecycle, Governance, or other
+selection rule may refuse that use before the Version is consumed; this ADR does not define that prohibition. If the
+resolved or supplied law material carries a different Authority or Version from the exact request, resolution fails. No
+`current`, `latest`, `preferred`, nearest-Version, or silent-upgrade fallback is permitted.
+
+Law Version history is therefore not Catalog history. The Version architecture preserves earlier immutable law Versions;
+the Catalog manifest records only membership of the law Authorities. A compiler or publication system may retain the
+exact Catalog snapshot used for reproducibility or integrity, but such snapshot identity, generation, provenance, or
+fingerprint is not Contract Version meaning and does not become a second law-history authority.
 
 A meaning-determining Basis, registry, or standard revision cannot drift through the host environment. Exact
 version-or-snapshot pinning is required only when that exact revision can change the law's meaning. A ratified stability
@@ -253,29 +272,38 @@ identifiers, generated evaluator shape, or other realization details part of the
 
 # 6. Catalog Logical Content and Semantic Families
 
-The Catalog is a logical boundary over typed semantic families. It is not a universal semantic record.
+The Catalog is a normative manifest boundary over built-in law Authorities. It is not a universal semantic record and
+it does not own the Version history of its members.
 
 ## 6.1. Catalog Logical Content and Exact Law Definition Boundary
 
-The Catalog currently admits the following logical families:
+The Catalog manifest owns one logical relation:
 
 ```text
-Built-In Membership
-Exact Built-In Law Definitions
+Built-In Law Authority Membership
 ```
 
-`Built-In Membership` answers which exact semantic law definitions belong to the built-in selectable population after
-Catalog qualification has been satisfied. Each membership relation must terminate in one exact versioned semantic law
-under the common Authority, Version, and Definition identity laws of ADR-0053 and ADR-0063. A candidate review label,
-host-language symbol, API name, compiler row, dense handle, or physical lookup key cannot substitute for that exact
-semantic reference. Whether the Catalog is one versioned Authority containing several authority-local law Definitions or
-each exact built-in law is independently versioned remains open; this ADR does not create a third Catalog family merely
-to
-encode that unresolved identity shape. Membership is not law meaning merely because a compiler stores the two together.
+`Built-In Law Authority Membership` answers which independently owned Exact Built-In Law Authorities belong to the
+Kontrakt built-in Canonicalization vocabulary after Catalog qualification has been satisfied. Membership identifies the
+law Authority, not one current or preferred Version of that Authority. A candidate review label, host-language symbol,
+API name, compiler row, dense handle, physical lookup key, or Catalog publication snapshot cannot substitute for that
+semantic Authority identity.
 
-`Exact Built-In Law Definitions` contain the candidate-specific semantic meaning needed to close the built-in law under
-ADR-0066. They do not absorb API naming, assurance evidence, compiler optimization permissions, realization algorithms,
-or physical lookup coordinates.
+Each Exact Built-In Law Authority is independently version-sensitive under ADR-0053. In the current model one such
+Authority owns one complete Exact Built-In Law Definition for each of its Versions, so no additional Authority-Local
+Definition Coordinate is required merely to distinguish several laws inside the Catalog. The exact authoritative law
+reference therefore resolves through the law Authority and the exact requested Version under ADR-0063. A different law
+Authority or a different Version denotes a different exact versioned law Definition even when some resolved semantic
+material compares equal.
+
+A new Version of an existing member Authority does not add another Catalog member. Earlier Versions remain Version-owned
+historical meaning rather than historical Catalog entries. The Catalog neither redirects an earlier Version request to a
+newer Version nor duplicates Version continuity, conflict, history, or claim resolution.
+
+The Exact Built-In Law Definitions specified by this ADR contain the candidate-specific semantic meaning needed to close
+each member Authority under ADR-0066. They are owned by those law Authorities rather than by a Catalog-wide versioned
+super-authority. They do not absorb API naming, assurance evidence, compiler optimization permissions, realization
+algorithms, or physical lookup coordinates.
 
 ### 6.1.1. Exact Law Common-Core Shape
 
@@ -687,10 +715,16 @@ and Established Semantic Protocol semantics are owned by ADR-0066 together with 
 checklist. This Catalog ADR does not define their final schema.
 
 A Canonicalization Definition is not the same semantic subject as one built-in law. Actual Basis Binding, Applicability,
-occurrence meaning, and Established Material are not Catalog membership. Exact law reference formation and authoritative
-Version Binding follow ADR-0053 and ADR-0063; this ADR requires exact versioned referenceability but does not introduce
-a
-second Catalog-specific identity or Version mechanism.
+occurrence meaning, and Established Material are not Catalog membership. Each Exact Built-In Law is its own
+version-sensitive Contract Authority. Exact law reference formation, Version claims, authoritative Version Binding,
+historical reselection, and mismatch rejection follow ADR-0053 and ADR-0063; this ADR introduces no Catalog-specific
+Version mechanism or Catalog-owned law history.
+
+A consumer that requires an exact law Version must resolve that exact Version under the member law Authority. If a
+separately established selection or lifecycle rule prohibits that Version, the use is refused under the authority that
+owns that rule. Otherwise an available earlier Version remains eligible for exact historical resolution. Material from a
+different Authority or Version cannot satisfy the request merely because it is newer, structurally similar, or currently
+preferred.
 
 # 16. External Semantic Basis
 
@@ -808,8 +842,10 @@ semantic bounds, unknown member behavior, and other specialized distinctions ent
 observes them. Typed meaning cannot become a parallel source of authority beside the exact equivalence, representative,
 coverage, or failure meaning.
 
-Built-In Membership and exact law meaning cannot drift because a compiler release, provider, registry, or implementation
-changed. Contract-visible semantic change is explicit and is subject to the Version law owned by ADR-0053.
+Built-In Law Authority Membership and exact law meaning cannot drift because a compiler release, provider, registry, or
+implementation changed. Each Exact Built-In Law Authority owns its own Contract Versions. Contract-visible semantic
+change creates a new Version under that Authority rather than a new Catalog Version or an implicit mutation of an old
+Version. A law Version revision by itself does not change Catalog membership.
 
 V1 still does not expose arbitrary user-composed normalization pipelines. One selected coordinate resolves to one closed
 built-in semantic law. General custom law support and arbitrary composition remain separate future design problems.
@@ -818,30 +854,26 @@ built-in semantic law. General custom law support and arbitrary composition rema
 
 The remaining work in this ADR is limited to the built-in Catalog itself.
 
-Section 6.1.1 now fixes the mandatory Exact Law semantic core and its conditional extensions. It does not fix the final
-Authority / Version / authority-local Definition coordinate shape used to reference an exact built-in law. That identity
-granularity must remain consistent with ADR-0053 and ADR-0063 rather than becoming a Catalog-specific identity system.
+Section 6.1 now fixes the Catalog / law identity boundary. The Catalog is a built-in law Authority manifest. Each Exact
+Built-In Law is an independent version-sensitive Contract Authority, one complete law Definition is owned per Version,
+and Version history remains under ADR-0053 rather than under the Catalog.
 
 The next decision sequence is:
 
 ```text
-1. Exact versioned law referenceability
-   Decide the Catalog / exact-law Authority granularity under ADR-0053 and ADR-0063
-   without introducing selector, API-name, or physical-handle identity
-
-2. Typed Law-Specific Meaning
+1. Typed Law-Specific Meaning
    Section 6.1.2
 
-3. External semantic material
+2. External semantic material
    Apply Section 16 candidate by candidate
    and classify each relevant item as law-fixed determinant, Required Basis requirement,
    stability-scoped semantics, or non-semantic realization / evidence
 
-4. Candidate qualification
+3. Candidate qualification
    Complete the exact operand requirement, equivalence, representative, representative coverage,
    law-specific failure semantics when coverage is restricted, and exact semantic determinants where present
 
-5. Final V1 Built-In Membership decisions
+4. Final V1 Built-In Membership decisions
    Give every retained candidate an explicit terminal Catalog decision
 ```
 
@@ -858,7 +890,6 @@ Case Fold exercises a law whose exact meaning must not be reconstructed from an 
 The following ADR-0076 items remain explicitly OPEN in this revision:
 
 ```text
-6.1    exact Catalog / built-in-law Authority and versioned reference granularity
 6.1.2  Typed Law-Specific Meaning
 16     exact external-semantic-material classification per law
 17     final Candidate Catalog decision
