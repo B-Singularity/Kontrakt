@@ -120,6 +120,12 @@ Canonicalization Built-In Law Catalog
 
 This structure fixes the decomposition rule, not the final contents of every family.
 
+Built-In Membership is semantic Catalog meaning. Adding or removing a built-in law therefore requires an explicit
+Catalog
+decision; compiler release, implementation registration, physical discovery, or provider availability cannot change
+membership implicitly. The exact Authority and Version coordinate that owns this membership remains governed by the
+common identity and Version architecture rather than by a new `CatalogVersion` field invented here.
+
 ADR-0066 owns the common semantic shape of Canonicalization. This ADR owns the exact semantics of built-in laws needed
 to
 make the built-in vocabulary closed.
@@ -144,8 +150,9 @@ its
 exact semantics supply enough closed material to prove that law without relying on ambient or physical state.
 
 The candidate must therefore close every semantic determinant that can change its equivalence classes, representative,
-or another law-owned observation. An external semantic source that can change the law must be explicit semantic
-material.
+representative coverage, law-specific failure meaning, or another law-owned observation. An external semantic source
+that
+can change the law must be explicit semantic material.
 Host locale, provider state, encounter order, hash layout, cache history, scheduling, physical catalog revision, and
 other
 realization artifacts cannot finish the law.
@@ -169,14 +176,24 @@ Every built-in candidate must define its exact same-meaning relation and its exa
 the candidate-specific `E_L` and `C_L` required by ADR-0066. The Catalog does not allow the implementation to infer one
 from host equality, parser behavior, provider defaults, or the behavior of a normalization routine.
 
-When a particular law can reach a Canonicalization-owned failure for an otherwise legal Input presentation, the exact
-semantic condition that causes that failure is part of that law's definition. This ADR does not create a generic failure
-field or redefine the common failure boundary owned by ADR-0066.
+Every built-in candidate must also close its **Exact Representative Coverage**. The law must state whether every legal
+operand admitted by its Exact Operand Requirement has a representative under the law, or whether representative
+establishment is restricted for some otherwise legal operands. Total coverage and restricted coverage are both explicit
+semantic statements; absence of failure text does not implicitly mean total coverage.
+
+When representative coverage is restricted, the exact Canonicalization-owned semantic condition that prevents
+representative establishment is part of that law's definition. If the law distinguishes several Contract-visible
+negative
+reasons, those reasons must be closed well enough that a later diagnostic does not have to reconstruct them from parser
+or
+implementation behavior. This ADR does not create a generic failure field or redefine the common failure boundary owned
+by ADR-0066.
 
 When a particular law requires semantic material beyond the Input-owned operand meaning, and that material can change
-the law's exact equivalence, representative, or law-specific failure condition, the exact material is part of that law's
-definition. Provider identity, library version, conformance evidence, provenance, and physical realization do not become
-semantic determinants merely because an implementation uses them.
+the law's exact equivalence, representative, representative coverage, or law-specific failure meaning, the exact
+material
+is part of that law's definition. Provider identity, library version, conformance evidence, provenance, and physical
+realization do not become semantic determinants merely because an implementation uses them.
 
 A built-in law may observe additional Input-owned distinctions such as presence, explicit absence, finite alternatives,
 ordering, multiplicity, duplicates, aggregate collision, semantic bounds, or unassigned material only when that exact
@@ -210,20 +227,22 @@ implementation cheaper.
 ## 5.4. Evolution Closure
 
 A ratified built-in law must remain stable for the semantic observations its identity actually promises. Another
-Kontrakt
-release may replace the implementation, reorganize physical catalog material, or change a host-language projection
-without assigning different Canonicalization meaning to the same exact law.
+Kontrakt release may replace the implementation, reorganize physical catalog material, or change a host-language
+projection without assigning different Canonicalization meaning to the same exact versioned law.
 
-A change to equivalence, representative, law-specific negative condition, meaning-determining semantic material,
-law-specific distinction, or another actual determinant is a semantic change when it can alter the law's meaning. Such a
-change requires a distinct semantic profile; it cannot be hidden behind the prior law.
+A change to the Exact Operand Requirement, Exact Equivalence Definition, Exact Representative Definition, Exact
+Representative Coverage, law-specific failure meaning, meaning-determining semantic material, typed law-specific
+distinction, or another actual determinant is a semantic change when it can alter the law's Contract-visible meaning.
+That changed meaning cannot be published under the same exact Versioned Law Definition. ADR-0053 owns Version identity,
+continuity, conflict, history, and claim resolution; when the same Authority continues with changed meaning, the change
+must be represented by an explicit new Version rather than by mutation of the old one.
 
-A meaning-determining Basis, registry, or standard revision cannot drift through the host environment. Version pinning
-is
-required only when the exact semantic material can change the law. A ratified stability guarantee may justify a narrower
-dependency. Provider version, library version, standard label, and semantic Basis identity are not interchangeable
-merely
-because they often change together.
+A meaning-determining Basis, registry, or standard revision cannot drift through the host environment. Exact
+version-or-snapshot pinning is required only when that exact revision can change the law's meaning. A ratified stability
+guarantee may justify a narrower semantic dependency that is not tied to every external release number. Provider
+version, library version, standard label, and semantic Basis identity are not interchangeable merely because they often
+change together. `current`, `latest`, ambient registry state, or another undeclared external revision cannot silently
+change the meaning of an already-versioned law.
 
 When material can acquire new meaning under a later semantic Basis, the exact law must define how currently unknown,
 unassigned, or future material behaves wherever that distinction is observable. An implementation fallback cannot invent
@@ -246,8 +265,13 @@ Exact Built-In Law Definitions
 ```
 
 `Built-In Membership` answers which exact semantic law definitions belong to the built-in selectable population after
-Catalog qualification has been satisfied. Membership is not law meaning merely because a compiler stores the two
-together.
+Catalog qualification has been satisfied. Each membership relation must terminate in one exact versioned semantic law
+under the common Authority, Version, and Definition identity laws of ADR-0053 and ADR-0063. A candidate review label,
+host-language symbol, API name, compiler row, dense handle, or physical lookup key cannot substitute for that exact
+semantic reference. Whether the Catalog is one versioned Authority containing several authority-local law Definitions or
+each exact built-in law is independently versioned remains open; this ADR does not create a third Catalog family merely
+to
+encode that unresolved identity shape. Membership is not law meaning merely because a compiler stores the two together.
 
 `Exact Built-In Law Definitions` contain the candidate-specific semantic meaning needed to close the built-in law under
 ADR-0066. They do not absorb API naming, assurance evidence, compiler optimization permissions, realization algorithms,
@@ -255,23 +279,24 @@ or physical lookup coordinates.
 
 ### 6.1.1. Exact Law Common-Core Shape
 
-An Exact Built-In Law contains only the candidate-specific semantic material needed to identify that law under the
-common
+An Exact Built-In Law contains only the candidate-specific semantic material needed to define that law under the common
 Canonicalization rules owned by ADR-0066. The Catalog does not duplicate those common rules as per-law fields.
 
 Every Exact Built-In Law must close the following semantic content:
 
-| Exact law content                        | Required meaning                                                                                                                                                            |
-|------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Exact Operand Requirement                | The exact already-established Input-owned semantic presentation over which this built-in law is defined                                                                     |
-| Exact Equivalence Definition             | The concrete same-meaning relation that this built-in law declares under ADR-0066                                                                                           |
-| Exact Representative Definition          | The concrete representative selection that this built-in law declares under ADR-0066                                                                                        |
-| Exact Law-Specific Failure Semantics     | Required only when this particular law can produce a Canonicalization-owned failure for an otherwise legal operand; the exact semantic condition must be closed             |
-| Exact Law-Specific Semantic Determinants | Required only when semantic material beyond the Input-owned operand meaning can change this particular law's equivalence, representative, or law-specific failure condition |
+| Exact law content                        | Required meaning                                                                                                                                                                                   |
+|------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Exact Operand Requirement                | The exact already-established Input-owned semantic presentation over which this built-in law is defined                                                                                            |
+| Exact Equivalence Definition             | The concrete same-meaning relation that this built-in law declares under ADR-0066                                                                                                                  |
+| Exact Representative Definition          | The concrete representative selection that this built-in law declares under ADR-0066                                                                                                               |
+| Exact Representative Coverage            | An explicit statement that representative establishment is total for every legal operand, or restricted for an exact semantic subset of otherwise legal operands                                   |
+| Exact Law-Specific Failure Semantics     | Required when Exact Representative Coverage is restricted; the exact Canonicalization-owned semantic condition or conditions that prevent representative establishment must be closed              |
+| Exact Law-Specific Semantic Determinants | Required only when semantic material beyond the Input-owned operand meaning can change this particular law's equivalence, representative, representative coverage, or law-specific failure meaning |
 
-The first three items are required for every built-in law. The final two are conditional and exist only when the
-particular
-law actually owns that meaning. Their absence is not represented by generic empty fields.
+The first four items are required for every built-in law. Law-specific failure semantics are required whenever coverage
+is
+restricted. Law-specific semantic determinants exist only when the particular law actually owns that additional meaning.
+Their absence is not represented by generic empty fields.
 
 ADR-0066 remains the owner of the common equivalence laws, representative laws, determinism, idempotence, judgment
 shape,
@@ -286,15 +311,29 @@ ADR-0066 requires both. A backend routine, host equality relation, or observed i
 for
 either definition.
 
-A law-specific failure condition does not mean that selection is retried at occurrence time. Selection of the law is
-already established elsewhere. This Catalog records only the particular semantic condition, if any, under which the
-selected exact law cannot establish its representative and therefore reaches the Canonicalization failure boundary owned
-by ADR-0066.
+Exact Representative Coverage is also normative rather than inferred from implementation behavior. A total law
+explicitly
+states that every legal operand covered by its Exact Operand Requirement has a representative. A restricted law
+explicitly
+states the semantic boundary at which representative establishment fails. Restricted coverage does not cause selection
+to
+be retried at occurrence time and does not authorize pass-through, fallback to another law, or delegation to Admission
+or
+Lowering.
+
+When coverage is restricted, this Catalog records only the particular semantic condition or conditions under which the
+selected exact law reaches the Canonicalization failure boundary owned by ADR-0066. If several negative reasons are
+Contract-visible, they must be closed as law meaning; diagnostics may explain those reasons but do not invent them.
 
 Law-specific semantic determinants are not a generic `determinants` collection. Only material that can actually change
 the particular law's exact meaning belongs here. Provider identity, implementation version, verification evidence,
 provenance, cache state, and physical catalog representation remain outside exact law meaning unless a separate semantic
 argument establishes otherwise.
+
+The complete Exact Built-In Law Definition Meaning is the combination of the four mandatory semantic contents above and
+any conditional law-specific failure, external semantic, or typed law-specific meaning that actually determines the law.
+A Contract-visible change to that complete meaning is therefore subject to Section 5.4 and ADR-0053. Equal Definition
+Meaning does not by itself merge different law identities, Authorities, Versions, or Definition References.
 
 A separate mandatory representative-range field is not required when it is derivable from the exact representative
 definition. Preserved or collapsed distinctions may be documented to explain and verify a law, but they do not become a
@@ -308,9 +347,15 @@ The common core must not force every law to carry irrelevant semantic categories
 collision semantics. An aggregate law cannot omit collision, ordering, duplicate, element, or key semantics when those
 distinctions are observable under the law.
 
+Typed law-specific meaning is not a parallel authority beside the Exact Equivalence Definition, Exact Representative
+Definition, Exact Representative Coverage, or law-specific failure meaning. When a law family needs additional typed
+semantic constituents, those constituents must complete those exact meanings rather than create a second conflicting
+summary of them. Explanatory or verification-only material remains non-authoritative.
+
 The final V1 typed family vocabulary must therefore be derived from the candidate laws that survive qualification rather
 than invented as one universal optional schema. A candidate is incomplete when a distinction it actually observes is
-left to host equality, parser behavior, collection order, provider defaults, or implementation convention.
+left to host equality, parser behavior, collection order, provider defaults, or implementation convention. A generic
+`options`, `flags`, `properties`, or other open property bag does not substitute for typed law-specific meaning.
 
 # 7. Initial V1 Review Group
 
@@ -642,24 +687,53 @@ and Established Semantic Protocol semantics are owned by ADR-0066 together with 
 checklist. This Catalog ADR does not define their final schema.
 
 A Canonicalization Definition is not the same semantic subject as one built-in law. Actual Basis Binding, Applicability,
-occurrence meaning, and Established Material are not Catalog membership.
+occurrence meaning, and Established Material are not Catalog membership. Exact law reference formation and authoritative
+Version Binding follow ADR-0053 and ADR-0063; this ADR requires exact versioned referenceability but does not introduce
+a
+second Catalog-specific identity or Version mechanism.
 
 # 16. External Semantic Basis
 
 `external dependency` is not one semantic category. This ADR distinguishes external normative specification or profile,
-meaning-determining semantic material, provider or implementation identity, and conformance or assurance evidence.
+meaning-determining semantic material, a Required Basis requirement, provider or implementation identity, stability
+guarantees, and conformance or assurance evidence. These distinctions do not imply one universal external-dependency
+record.
 
-A standard title, provider name, library version, or platform version does not become semantic meaning merely because it
-is convenient to record.
+A standard title, provider name, library version, platform version, or external release number does not become semantic
+meaning merely because it is convenient to record. `current`, `latest`, ambient registry state, or another undeclared
+external revision cannot complete an Exact Built-In Law.
 
-When a built-in law itself fixes exact external semantic material and changing that material can change its meaning,
-that
-material participates in the law's determinant closure. It is not replaced by ambient provider state merely because the
-material originated outside Kontrakt.
+Each external item relevant to a candidate must be classified by the relation it actually has to that law:
 
-The exact classification of external material is **OPEN per built-in law**. Unicode, registry-backed identifiers,
+```text
+non-semantic realization or evidence
+    -> provider, library, provenance, test or conformance material
+
+law-fixed normative determinant
+    -> exact external material is part of the Exact Built-In Law Definition Meaning
+
+Required Basis requirement
+    -> the law requires a basis under the common ADR-0066 / ADR-0063 architecture
+    -> actual Basis Binding remains outside Catalog membership and exact law definition material
+
+stability-scoped external semantics
+    -> a ratified stability guarantee closes the relevant semantic observations
+    -> every external release number need not become a determinant when the law's meaning is unchanged
+```
+
+These relations may coexist where a law depends on more than one external item. The classification is semantic, not a
+request to encode the four cases as an enum or generic property bag.
+
+When a built-in law itself fixes exact external semantic material and changing that material can change its Exact
+Equivalence Definition, Exact Representative Definition, Exact Representative Coverage, or law-specific failure meaning,
+that material participates in the law's determinant closure. An exact external version or immutable snapshot is required
+when that exact revision is meaning-determining; it is not required merely because an external organization published a
+new release. A ratified stability guarantee may justify a narrower dependency.
+
+The exact classification of external material remains **OPEN per built-in law**. Unicode, registry-backed identifiers,
 temporal data, scientific reference data, and other standards must not be forced into one universal external model
-before their actual semantic dependency is established.
+before
+their actual semantic dependency is established.
 
 # 17. Current V1 Candidate Summary
 
@@ -724,9 +798,18 @@ rules that are closed here.
 
 # 19. Consequences
 
-The exact built-in law shape remains explicit without becoming a universal property bag. Common Canonicalization
-obligations remain common, while presence, alternatives, ordering, multiplicity, collision, semantic bounds, unknown
-member behavior, and other specialized distinctions enter a law only when that law actually observes them.
+The exact built-in law shape remains explicit without becoming a universal property bag. Every exact law closes four
+mandatory semantic contents: Exact Operand Requirement, Exact Equivalence Definition, Exact Representative Definition,
+and Exact Representative Coverage. Law-specific failure meaning, external semantic material, and typed family meaning
+appear only when the particular law actually owns them.
+
+Common Canonicalization obligations remain common, while presence, alternatives, ordering, multiplicity, collision,
+semantic bounds, unknown member behavior, and other specialized distinctions enter a law only when that law actually
+observes them. Typed meaning cannot become a parallel source of authority beside the exact equivalence, representative,
+coverage, or failure meaning.
+
+Built-In Membership and exact law meaning cannot drift because a compiler release, provider, registry, or implementation
+changed. Contract-visible semantic change is explicit and is subject to the Version law owned by ADR-0053.
 
 V1 still does not expose arbitrary user-composed normalization pipelines. One selected coordinate resolves to one closed
 built-in semantic law. General custom law support and arbitrary composition remain separate future design problems.
@@ -735,39 +818,47 @@ built-in semantic law. General custom law support and arbitrary composition rema
 
 The remaining work in this ADR is limited to the built-in Catalog itself.
 
-Section 6.1.1 now fixes the Exact Law Common-Core Shape. The next Catalog work is to complete the law-specific semantic
-vocabulary without reintroducing common ADR-0066 obligations as Catalog fields.
+Section 6.1.1 now fixes the mandatory Exact Law semantic core and its conditional extensions. It does not fix the final
+Authority / Version / authority-local Definition coordinate shape used to reference an exact built-in law. That identity
+granularity must remain consistent with ADR-0053 and ADR-0063 rather than becoming a Catalog-specific identity system.
 
 The next decision sequence is:
 
 ```text
-1. Typed Law-Specific Meaning
+1. Exact versioned law referenceability
+   Decide the Catalog / exact-law Authority granularity under ADR-0053 and ADR-0063
+   without introducing selector, API-name, or physical-handle identity
+
+2. Typed Law-Specific Meaning
    Section 6.1.2
 
-2. External semantic material
+3. External semantic material
    Apply Section 16 candidate by candidate
+   and classify each relevant item as law-fixed determinant, Required Basis requirement,
+   stability-scoped semantics, or non-semantic realization / evidence
 
-3. Candidate qualification
-   Complete the exact operand requirement, equivalence, representative,
-   law-specific failure semantics where present, and law-specific semantic determinants where present
+4. Candidate qualification
+   Complete the exact operand requirement, equivalence, representative, representative coverage,
+   law-specific failure semantics when coverage is restricted, and exact semantic determinants where present
 
-4. Final V1 Built-In Membership decisions
+5. Final V1 Built-In Membership decisions
    Give every retained candidate an explicit terminal Catalog decision
 ```
 
 The external semantic material split in Section 16 must be applied candidate by candidate without collapsing exact
-semantic material, provider identity, implementation version, provenance, or conformance evidence into one generic
-`externalDependency` or version field.
+semantic material, Required Basis, provider identity, implementation version, provenance, stability evidence, or
+conformance evidence into one generic `externalDependency` or version field.
 
 Detailed candidate qualification should stress the Catalog model against materially different laws rather than close the
 remaining model from one easy candidate. Decimal Numeric Value and Binary32 Canonical NaN exercise self-contained exact
-representatives; Unicode NFC exercises external semantic material and unassigned behavior; IPv6 RFC 5952 exercises exact
-operand ownership; BCP 47 exercises mutable registry dependence; NFC Case Fold exercises a law whose exact meaning must
-not be reconstructed from an arbitrary implementation sequence.
+representatives; Unicode NFC exercises external semantic material, stability, and unassigned behavior; IPv6 RFC 5952
+exercises exact operand ownership and restricted-coverage pressure; BCP 47 exercises mutable registry dependence; NFC
+Case Fold exercises a law whose exact meaning must not be reconstructed from an arbitrary implementation sequence.
 
 The following ADR-0076 items remain explicitly OPEN in this revision:
 
 ```text
+6.1    exact Catalog / built-in-law Authority and versioned reference granularity
 6.1.2  Typed Law-Specific Meaning
 16     exact external-semantic-material classification per law
 17     final Candidate Catalog decision
