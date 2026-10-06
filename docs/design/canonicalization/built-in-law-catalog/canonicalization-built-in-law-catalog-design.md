@@ -64,33 +64,21 @@ perform that admission.
 
 # 2. Working Directory Boundary
 
-The intended repository organization is a separate Canonicalization built-in-law Design area. The exact repository path
-may change, but the logical split should remain:
+The current repository organization uses one Canonicalization built-in-law Catalog Design area:
 
 ```text
-docs/design/canonicalization/built-in-laws/
-    catalog-design.md
-    candidates/
-        ...
-    admitted/
-        ...
-    api/
-        ...
-    verification/
-        ...
+docs/design/canonicalization/built-in-law-catalog/
+    canonicalization-built-in-law-catalog-design.md
 ```
 
-`candidates/` contains research and qualification material.
+Candidate research, qualification records, admission decisions, API follow-on notes, and verification follow-on notes
+remain in this Design area for now. Separate `candidates/`, `admitted/`, `api/`, or `verification/` subdirectories are
+not
+created until an actual repository-management need appears.
 
-`admitted/` may contain the exact normative law specification or the material from which that specification is
-published after an explicit Catalog admission decision. The concrete publication format is not decided here.
-
-`api/` contains public spelling, generated API projection, host-language nominal types, IDL-facing names, and similar
-surface design. Those names do not define law identity.
-
-`verification/` contains conformance vectors, differential tests, adversarial cases, performance evidence, reference
-implementations where useful, and implementation-verification material. Verification evidence does not complete missing
-Contract meaning.
+Later file splitting may separate exact normative law specifications, public API design, or verification material
+without
+changing Catalog membership, law identity, or semantic ownership. The concrete publication format is not decided here.
 
 Physical compiler tables, dense handles, cache keys, evaluator dispatch, persistence, and backend layout remain compiler
 Design rather than Catalog semantics.
@@ -123,6 +111,8 @@ Representative-domain closure
 External semantic material
     which external distinctions actually determine Contract meaning
     and which provider / library / provenance / verification details do not
+    without collapsing Contract determinants, Required Basis, and compiler-side
+    Platform Semantic Basis or implementation evidence into one generic basis field
 
 Version / evolution consequence
     what Contract-visible change requires a new law Version
@@ -149,6 +139,11 @@ realizability / verification evidence
 ```
 
 A law is not weakened because one provider, backend, algorithm, or optimization is inconvenient.
+
+The qualification record must close semantic determinants precisely enough that later compiler producers can declare
+exact inputs and validity boundaries. Query keys, dependency edges, result fingerprints, cache schema, generation-local
+handles, and persistence metadata remain compiler reuse machinery rather than Built-In Law meaning unless an owning
+Contract independently makes a distinction Contract-visible.
 
 ---
 
@@ -217,6 +212,7 @@ The current detailed V1 review tranche is:
 - `text.unicode.nfd` — Unicode NFD
 - `text.unicode.nfkc` — Unicode NFKC
 - `text.unicode.nfkd` — Unicode NFKD
+- `text.unicode.nfc-casefold` — Unicode NFC Case Fold
 - `text.ascii.casefold` — ASCII Case Fold
 - `text.line-ending.lf` — LF Line Ending
 - `text.unicode.whitespace-trim` — Unicode Boundary Whitespace Trim
@@ -528,28 +524,44 @@ profitable, provided logical Authority, Version, and observation boundaries rema
 
 ---
 
-# 11. Verification and Performance Follow-On
+# 11. Qualification Evidence, Verification, and Performance Follow-On
 
-Each admitted or admission-ready candidate should have independent evidence that supported realizations preserve its
-law.
-The evidence may include:
+Admission must not precede evidence needed to determine whether the proposed law is semantically closed, independently
+checkable, secure against known representation ambiguity, and realistically supportable in V1. Pre-admission
+qualification evidence is therefore part of candidate review when relevant.
+
+That evidence may include:
 
 ```text
-normative examples
-conformance vectors
-property-based tests
-differential tests
-hostile-input cases
-reference implementation
+normative examples and official conformance material
+independently derived reference or conformance vectors
+security and parser / provider differential cases
+representative-domain closure checks
 worst-case output amplification analysis
 worst-case traversal and intermediate-material analysis
 reference-data size and access analysis
 streaming / bounded-work analysis where relevant
-backend preservation checks
 ```
 
-These artifacts can reject an implementation or expose that a candidate is not practical for the intended support
-surface. They do not silently redefine `E_L`, `C_L`, Coverage, Failure, or semantic determinants.
+The purpose of pre-admission evidence is to expose missing semantics, unsafe ambiguity, or V1 feasibility risk before a
+historical Catalog membership decision is made. It does not replace the exact semantic definition. If the exact law is
+valid but V1 realization risk remains too high, the candidate may remain `DEFER` without weakening its meaning.
+
+After admission, implementation verification may add:
+
+```text
+property-based tests
+differential tests
+hostile-input regression corpora
+reference implementation where useful
+backend preservation checks
+performance and profiling evidence
+provider-conformance checks
+cache / clean-recompute equivalence checks where the result is reused
+```
+
+These artifacts can reject an implementation or expose that an admitted realization is not practical for the intended
+support surface. They do not silently redefine `E_L`, `C_L`, Coverage, Failure, or semantic determinants.
 
 Performance thresholds, scratch-space strategies, provider selection, SIMD/vectorization, memoization, caching, and
 physical layout belong to Design or Verification unless a distinction is independently Contract-visible meaning.
@@ -565,6 +577,9 @@ candidate research
     ↓
 exact semantic qualification
     ↓
+pre-admission qualification evidence
+    normative / conformance / security / feasibility review
+    ↓
 Built-In suitability / Authority uniqueness review
     ↓
 explicit Catalog admission decision
@@ -575,8 +590,12 @@ public API projection design
     ↓
 compiler realization
     ↓
-conformance / adversarial / performance verification
+post-admission conformance / adversarial / performance verification
 ```
+
+Pre-admission evidence does not require the production implementation to exist first. It must be sufficient to prevent a
+historical Catalog membership decision from relying on unresolved semantics, ambient provider behavior, unexamined
+representation ambiguity, or an implementation assumption that later becomes Contract meaning.
 
 Research may expose a missing common Catalog rule. In that case the work returns to ADR-0076 only if the missing rule
 changes Catalog architecture, qualification law, membership semantics, identity, Version, or another ADR-owned boundary.
