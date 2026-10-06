@@ -39,9 +39,10 @@ Accepted
 
 # 1. Context
 
-ADR-0066 defines Canonicalization as an inbound Contract authority. The IDL selects one inert Canonicalization
-declaration, and that declaration names only the Input coordinates on which Canonicalization applies. Each named
-coordinate must resolve to one closed built-in Canonicalization semantic target.
+ADR-0066 defines Canonicalization as an inbound Contract authority. The IDL selects one Canonicalization declaration,
+and that declaration identifies the Input coordinates on which Canonicalization applies. Every Built-In Law reference
+used by that declaration must resolve to one exact admitted Built-In Law Authority and Version. ADR-0066 owns whether
+one Canonicalization Definition uses one such law directly or an ordered composition of several exact laws.
 
 The remaining architectural question is what it means for a Canonicalization law Authority to belong to the built-in
 vocabulary and what semantic closure any admitted law must satisfy. That decision cannot be left to implementation
@@ -526,7 +527,8 @@ profile remains one law bound to that coordinate; its children do not become ind
 
 V1 does not expose arbitrary recursive law composition. A built-in aggregate profile may be added only after the
 complete aggregate equivalence and representative are defined, preventing the catalog from becoming a normalization
-programming language.
+programming language. This prohibition concerns recursive or nested law construction inside the Catalog. It does not
+prohibit the finite ordered composition of already admitted Exact Built-In Laws owned by ADR-0066.
 
 ---
 
@@ -580,15 +582,17 @@ The active authoring relation remains:
 ```text
 IDL selects one Canonicalization declaration
     ↓
-declaration names selected Input coordinates
+declaration identifies selected Input coordinates
     ↓
-each selected coordinate resolves to one exact admitted built-in semantic target
+every Built-In Law reference used by that declaration
+resolves to one exact admitted Built-In Law Authority and Version
 ```
 
 An unselected coordinate remains outside Canonicalization. The IDL continues to select the Canonicalization declaration
 rather than selecting a built-in law directly. Omission does not insert `ExactCanonicalization`, and the declaration
-does
-not contain an executable user canonicalizer.
+does not contain an executable user canonicalizer. ADR-0066 owns whether one selected coordinate refers directly to one
+exact law or participates in one finite ordered composition of exact laws. Such composition does not create a new
+Catalog member merely by being composed.
 
 Project documentation should migrate to one active statement of this relation.
 
@@ -614,8 +618,10 @@ Each Exact Built-In Law Authority owns its own Contract Versions. A Contract-vis
 Version rather than a Catalog Version or mutation of an older meaning. A law Version revision does not change Catalog
 membership.
 
-V1 still does not expose arbitrary user-composed normalization pipelines. One selected coordinate resolves to one closed
-built-in semantic law. General custom law support and arbitrary composition remain separate future design problems.
+V1 may use several Exact Built-In Laws inside one finite ordered Canonicalization composition under ADR-0066. Such
+composition does not merge the constituent Authorities, create a new Built-In Law Authority, or add a Catalog member.
+The Catalog continues to define each constituent law independently. Application-defined Canonicalization law authority
+remains outside V1.
 
 # 17. Closure and Follow-On Work
 
