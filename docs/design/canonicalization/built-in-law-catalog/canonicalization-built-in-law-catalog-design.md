@@ -169,71 +169,137 @@ Neither source is sufficient by itself. Library prevalence does not make a host 
 
 Every row remains a candidate until its exact semantics and Built-In suitability are closed under ADR-0076.
 
-| Review area               | Candidate working name                                 | Working status |
-|---------------------------|--------------------------------------------------------|----------------|
-| Boundary text             | ASCII boundary whitespace trim                         | Candidate      |
-| Boundary text             | ASCII leading whitespace trim                          | Candidate      |
-| Boundary text             | ASCII trailing whitespace trim                         | Candidate      |
-| Boundary text             | Unicode boundary whitespace trim                       | Candidate      |
-| Boundary text             | Unicode leading whitespace trim                        | Candidate      |
-| Boundary text             | Unicode trailing whitespace trim                       | Candidate      |
-| Boundary text             | Unicode whitespace run collapse to U+0020              | Candidate      |
-| Case                      | ASCII lowercase representative                         | Candidate      |
-| Case                      | ASCII uppercase representative                         | Candidate      |
-| Case                      | ASCII case-fold representative                         | Candidate      |
-| Case                      | Unicode default lowercase representative               | Candidate      |
-| Case                      | Unicode default uppercase representative               | Candidate      |
-| Case                      | Unicode default full case-fold representative          | Candidate      |
-| Unicode normalization     | Unicode NFC normalization                              | Candidate      |
-| Unicode normalization     | Unicode NFD normalization                              | Candidate      |
-| Unicode normalization     | Unicode NFKC normalization                             | Candidate      |
-| Unicode normalization     | Unicode NFKD normalization                             | Candidate      |
-| Unicode normalization     | Unicode NFC case-fold profile                          | Candidate      |
-| Unicode normalization     | Unicode NFKC case-fold profile                         | Candidate      |
-| Text representation       | LF line-ending normalization                           | Candidate      |
-| Text representation       | Unicode decimal-digit fold                             | Candidate      |
-| Text representation       | Unicode CJK width fold                                 | Candidate      |
-| Text representation       | Unicode diacritic fold                                 | Candidate      |
-| Numeric                   | Decimal numeric-value representative                   | Candidate      |
-| Numeric                   | Binary32 canonical NaN                                 | Candidate      |
-| Numeric                   | Binary64 canonical NaN                                 | Candidate      |
-| Encoded text              | Base16 lowercase textual representative                | Candidate      |
-| Encoded text              | Base16 uppercase textual representative                | Candidate      |
-| Encoded text              | Base64 RFC 4648 canonical textual representative       | Candidate      |
-| Encoded text              | Base64url RFC 4648 canonical textual representative    | Candidate      |
-| Encoded text              | Base32 RFC 4648 canonical textual representative       | Candidate      |
-| Encoded text              | Base32hex RFC 4648 canonical textual representative    | Candidate      |
-| Numeric text              | Decimal integer textual representative                 | Candidate      |
-| Numeric text              | Fixed-point decimal textual representative             | Candidate      |
-| URI component             | RFC 3986 percent-encoding syntax representative        | Candidate      |
-| Protocol / Identifier     | IPv6 RFC 5952 textual representative                   | Candidate      |
-| Protocol / Identifier     | BCP 47 registry-independent casing representative      | Candidate      |
-| Protocol / Identifier     | BCP 47 registry-dependent canonical representative     | Candidate      |
-| Protocol / Identifier     | UUID RFC 9562 lowercase textual representative         | Candidate      |
-| Protocol / Network        | RFC 9911 MAC-48 lowercase textual representative       | Candidate      |
-| Protocol / Network        | EUI-48 / MAC-48 multi-format textual representative    | Candidate      |
-| Protocol / Network        | IPv4 network-prefix representative                     | Candidate      |
-| Protocol / Network        | IPv6 network-prefix representative                     | Candidate      |
-| HTTP / Time               | HTTP-date textual representative                       | Candidate      |
-| HTTP                      | HTTP media-type textual representative                 | Candidate      |
-| HTTP                      | HTTP qvalue textual representative                     | Candidate      |
-| URI / HTTP                | HTTP(S) URI normal-form representative                 | Candidate      |
-| URI / IoT                 | CoAP URI normal-form representative                    | Candidate      |
-| URI / Identifier          | Generic URN lexical representative                     | Candidate      |
-| URI / Telephony           | RFC 3966 `tel:` URI representative                     | Candidate      |
-| Temporal / XML Schema     | XML Schema `date` canonical lexical representative     | Candidate      |
-| Temporal / XML Schema     | XML Schema `time` canonical lexical representative     | Candidate      |
-| Temporal / XML Schema     | XML Schema `dateTime` canonical lexical representative | Candidate      |
-| International identifier  | DOI textual representative                             | Candidate      |
-| Financial identifier      | IBAN electronic textual representative                 | Candidate      |
-| Retail identifier         | GTIN 14-digit representative                           | Candidate      |
-| Software supply chain     | Package URL canonical representative                   | Candidate      |
-| Cloud-native numeric      | Kubernetes Quantity representative                     | Candidate      |
-| Geographic URI            | `geo:` URI representative                              | Candidate      |
-| Security textual encoding | RFC 7468 textual-encoding representative               | Candidate      |
-| Schema / Data             | Avro Parsing Canonical Form                            | Candidate      |
+The grouping below is a review aid only. It does not create Catalog taxonomy, shared Authority, or shared Version
+ownership. Each candidate is assigned to one primary domain here so that the inventory does not duplicate rows.
+Cross-domain coverage remains a separate concern in Section 4.3.
 
-No row in this table is a Catalog admission decision. The names are descriptive working names only. They do not
+**Text and Unicode**
+
+| Review area           | Candidate working name                        | Working status |
+|-----------------------|-----------------------------------------------|----------------|
+| Boundary text         | ASCII boundary whitespace trim                | Candidate      |
+| Boundary text         | ASCII leading whitespace trim                 | Candidate      |
+| Boundary text         | ASCII trailing whitespace trim                | Candidate      |
+| Boundary text         | Unicode boundary whitespace trim              | Candidate      |
+| Boundary text         | Unicode leading whitespace trim               | Candidate      |
+| Boundary text         | Unicode trailing whitespace trim              | Candidate      |
+| Boundary text         | Unicode whitespace run collapse to U+0020     | Candidate      |
+| Case                  | ASCII lowercase representative                | Candidate      |
+| Case                  | ASCII uppercase representative                | Candidate      |
+| Case                  | ASCII case-fold representative                | Candidate      |
+| Case                  | Unicode default lowercase representative      | Candidate      |
+| Case                  | Unicode default uppercase representative      | Candidate      |
+| Case                  | Unicode default full case-fold representative | Candidate      |
+| Unicode normalization | Unicode NFC normalization                     | Candidate      |
+| Unicode normalization | Unicode NFD normalization                     | Candidate      |
+| Unicode normalization | Unicode NFKC normalization                    | Candidate      |
+| Unicode normalization | Unicode NFKD normalization                    | Candidate      |
+| Unicode normalization | Unicode NFC case-fold profile                 | Candidate      |
+| Unicode normalization | Unicode NFKC case-fold profile                | Candidate      |
+| Text representation   | LF line-ending normalization                  | Candidate      |
+| Text representation   | Unicode decimal-digit fold                    | Candidate      |
+| Text representation   | Unicode CJK width fold                        | Candidate      |
+| Text representation   | Unicode diacritic fold                        | Candidate      |
+
+**Numeric and Numeric Text**
+
+| Review area  | Candidate working name                     | Working status |
+|--------------|--------------------------------------------|----------------|
+| Numeric      | Decimal numeric-value representative       | Candidate      |
+| Numeric      | Binary32 canonical NaN                     | Candidate      |
+| Numeric      | Binary64 canonical NaN                     | Candidate      |
+| Numeric text | Decimal integer textual representative     | Candidate      |
+| Numeric text | Fixed-point decimal textual representative | Candidate      |
+
+**Encoded Text**
+
+| Review area  | Candidate working name                              | Working status |
+|--------------|-----------------------------------------------------|----------------|
+| Encoded text | Base16 lowercase textual representative             | Candidate      |
+| Encoded text | Base16 uppercase textual representative             | Candidate      |
+| Encoded text | Base64 RFC 4648 canonical textual representative    | Candidate      |
+| Encoded text | Base64url RFC 4648 canonical textual representative | Candidate      |
+| Encoded text | Base32 RFC 4648 canonical textual representative    | Candidate      |
+| Encoded text | Base32hex RFC 4648 canonical textual representative | Candidate      |
+
+**Web and HTTP**
+
+| Review area   | Candidate working name                          | Working status |
+|---------------|-------------------------------------------------|----------------|
+| URI component | RFC 3986 percent-encoding syntax representative | Candidate      |
+| HTTP / Time   | HTTP-date textual representative                | Candidate      |
+| HTTP          | HTTP media-type textual representative          | Candidate      |
+| HTTP          | HTTP qvalue textual representative              | Candidate      |
+| URI / HTTP    | HTTP(S) URI normal-form representative          | Candidate      |
+
+**Network and IoT**
+
+| Review area           | Candidate working name                              | Working status |
+|-----------------------|-----------------------------------------------------|----------------|
+| Protocol / Identifier | IPv6 RFC 5952 textual representative                | Candidate      |
+| Protocol / Network    | RFC 9911 MAC-48 lowercase textual representative    | Candidate      |
+| Protocol / Network    | EUI-48 / MAC-48 multi-format textual representative | Candidate      |
+| Protocol / Network    | IPv4 network-prefix representative                  | Candidate      |
+| Protocol / Network    | IPv6 network-prefix representative                  | Candidate      |
+| URI / IoT             | CoAP URI normal-form representative                 | Candidate      |
+
+**Identifiers and Internationalization**
+
+| Review area              | Candidate working name                             | Working status |
+|--------------------------|----------------------------------------------------|----------------|
+| Protocol / Identifier    | BCP 47 registry-independent casing representative  | Candidate      |
+| Protocol / Identifier    | BCP 47 registry-dependent canonical representative | Candidate      |
+| Protocol / Identifier    | UUID RFC 9562 lowercase textual representative     | Candidate      |
+| URI / Identifier         | Generic URN lexical representative                 | Candidate      |
+| URI / Telephony          | RFC 3966 `tel:` URI representative                 | Candidate      |
+| International identifier | DOI textual representative                         | Candidate      |
+
+**Temporal Standards**
+
+| Review area           | Candidate working name                                 | Working status |
+|-----------------------|--------------------------------------------------------|----------------|
+| Temporal / XML Schema | XML Schema `date` canonical lexical representative     | Candidate      |
+| Temporal / XML Schema | XML Schema `time` canonical lexical representative     | Candidate      |
+| Temporal / XML Schema | XML Schema `dateTime` canonical lexical representative | Candidate      |
+
+**Financial and Retail Identifiers**
+
+| Review area          | Candidate working name                 | Working status |
+|----------------------|----------------------------------------|----------------|
+| Financial identifier | IBAN electronic textual representative | Candidate      |
+| Retail identifier    | GTIN 14-digit representative           | Candidate      |
+
+**Software Supply Chain**
+
+| Review area           | Candidate working name               | Working status |
+|-----------------------|--------------------------------------|----------------|
+| Software supply chain | Package URL canonical representative | Candidate      |
+
+**Cloud-Native**
+
+| Review area          | Candidate working name             | Working status |
+|----------------------|------------------------------------|----------------|
+| Cloud-native numeric | Kubernetes Quantity representative | Candidate      |
+
+**Geographic**
+
+| Review area    | Candidate working name    | Working status |
+|----------------|---------------------------|----------------|
+| Geographic URI | `geo:` URI representative | Candidate      |
+
+**Security / PKI Text**
+
+| Review area               | Candidate working name                   | Working status |
+|---------------------------|------------------------------------------|----------------|
+| Security textual encoding | RFC 7468 textual-encoding representative | Candidate      |
+
+**Schema and Structured Data**
+
+| Review area   | Candidate working name      | Working status |
+|---------------|-----------------------------|----------------|
+| Schema / Data | Avro Parsing Canonical Form | Candidate      |
+
+No row in these tables is a Catalog admission decision. The names are descriptive working names only. They do not
 establish
 public API spelling or Contract identity. Qualification may show that a candidate needs to be renamed or split. It may
 also show that two public names should resolve to one Authority. A candidate may still be deferred or rejected before
