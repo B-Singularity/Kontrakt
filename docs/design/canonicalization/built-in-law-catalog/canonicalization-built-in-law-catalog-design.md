@@ -139,8 +139,12 @@ Current semantic equality does not merge independently owned Authorities. The re
 name does not justify a new Authority. A different source spelling or implementation routine is likewise insufficient.
 
 A domain-specific name does not create a new Authority when it removes exactly the same distinction as an existing law.
-For example, a protocol field that merely requires the same ASCII case representative can reuse that exact law. A new
-Authority is justified only when the domain adds semantic meaning that the existing law does not own.
+A protocol field that only requires the existing ASCII case representative can reuse that law. Host names and HTTP
+header names are examples that must first pass this Authority-uniqueness check before a domain-specific law is created.
+
+The opposite mistake is treating every standardized identifier as a Canonicalization candidate. Some identifiers already
+have one legal representation and mainly need validity checking. In that case Input or Admission is the relevant owner,
+not a new Built-In Canonicalization Authority.
 
 Validation or ordering alone is not Canonicalization. A physical storage change is not Canonicalization either. The
 candidate must satisfy the representative-selection law owned by ADR-0066.
@@ -156,56 +160,78 @@ or merge the constituent Authorities. ADR-0066 remains the owner of composition 
 
 # 4. Current Candidate Inventory
 
-The working inventory now includes operations that recur in ordinary developer libraries and production text
-infrastructure. It also keeps important numeric and protocol profiles. Ecosystem prevalence is evidence that a semantic
-subject deserves review. It does not mean that a host API already defines the Kontrakt law.
+The working inventory covers two different sources of demand. Some candidates come from representation problems that
+application developers handle repeatedly. Others come from standards that already define equivalence or a preferred
+representation inside a specific domain.
+
+Neither source is sufficient by itself. Library prevalence does not make a host API authoritative, and the word
+"canonical" in an external standard does not automatically make that standard an inbound Canonicalization law.
 
 Every row remains a candidate until its exact semantics and Built-In suitability are closed under ADR-0076.
 
-| Review area           | Candidate working name                              | Working status |
-|-----------------------|-----------------------------------------------------|----------------|
-| Boundary text         | ASCII boundary whitespace trim                      | Candidate      |
-| Boundary text         | ASCII leading whitespace trim                       | Candidate      |
-| Boundary text         | ASCII trailing whitespace trim                      | Candidate      |
-| Boundary text         | Unicode boundary whitespace trim                    | Candidate      |
-| Boundary text         | Unicode leading whitespace trim                     | Candidate      |
-| Boundary text         | Unicode trailing whitespace trim                    | Candidate      |
-| Boundary text         | Unicode whitespace run collapse to U+0020           | Candidate      |
-| Case                  | ASCII lowercase representative                      | Candidate      |
-| Case                  | ASCII uppercase representative                      | Candidate      |
-| Case                  | ASCII case-fold representative                      | Candidate      |
-| Case                  | Unicode default lowercase representative            | Candidate      |
-| Case                  | Unicode default uppercase representative            | Candidate      |
-| Case                  | Unicode default full case-fold representative       | Candidate      |
-| Unicode normalization | Unicode NFC normalization                           | Candidate      |
-| Unicode normalization | Unicode NFD normalization                           | Candidate      |
-| Unicode normalization | Unicode NFKC normalization                          | Candidate      |
-| Unicode normalization | Unicode NFKD normalization                          | Candidate      |
-| Unicode normalization | Unicode NFC case-fold profile                       | Candidate      |
-| Unicode normalization | Unicode NFKC case-fold profile                      | Candidate      |
-| Text representation   | LF line-ending normalization                        | Candidate      |
-| Text representation   | Unicode decimal-digit fold                          | Candidate      |
-| Text representation   | Unicode CJK width fold                              | Candidate      |
-| Text representation   | Unicode diacritic fold                              | Candidate      |
-| Numeric               | Decimal numeric-value representative                | Candidate      |
-| Numeric               | Binary32 canonical NaN                              | Candidate      |
-| Numeric               | Binary64 canonical NaN                              | Candidate      |
-| Encoded text          | Base16 lowercase textual representative             | Candidate      |
-| Encoded text          | Base16 uppercase textual representative             | Candidate      |
-| Encoded text          | Base64 RFC 4648 canonical textual representative    | Candidate      |
-| Encoded text          | Base64url RFC 4648 canonical textual representative | Candidate      |
-| Encoded text          | Base32 RFC 4648 canonical textual representative    | Candidate      |
-| Encoded text          | Base32hex RFC 4648 canonical textual representative | Candidate      |
-| Numeric text          | Decimal integer textual representative              | Candidate      |
-| Numeric text          | Fixed-point decimal textual representative          | Candidate      |
-| URI component         | RFC 3986 percent-encoding syntax representative     | Candidate      |
-| Protocol / Identifier | IPv6 RFC 5952 textual representative                | Candidate      |
-| Protocol / Identifier | BCP 47 registry-independent casing representative   | Candidate      |
-| Protocol / Identifier | BCP 47 registry-dependent canonical representative  | Candidate      |
-| Protocol / Identifier | UUID RFC 9562 lowercase textual representative      | Candidate      |
-| Protocol / Network    | RFC 9911 MAC-48 lowercase textual representative    | Candidate      |
-| Protocol / Network    | IPv4 network-prefix representative                  | Candidate      |
-| Protocol / Network    | IPv6 network-prefix representative                  | Candidate      |
+| Review area               | Candidate working name                                 | Working status |
+|---------------------------|--------------------------------------------------------|----------------|
+| Boundary text             | ASCII boundary whitespace trim                         | Candidate      |
+| Boundary text             | ASCII leading whitespace trim                          | Candidate      |
+| Boundary text             | ASCII trailing whitespace trim                         | Candidate      |
+| Boundary text             | Unicode boundary whitespace trim                       | Candidate      |
+| Boundary text             | Unicode leading whitespace trim                        | Candidate      |
+| Boundary text             | Unicode trailing whitespace trim                       | Candidate      |
+| Boundary text             | Unicode whitespace run collapse to U+0020              | Candidate      |
+| Case                      | ASCII lowercase representative                         | Candidate      |
+| Case                      | ASCII uppercase representative                         | Candidate      |
+| Case                      | ASCII case-fold representative                         | Candidate      |
+| Case                      | Unicode default lowercase representative               | Candidate      |
+| Case                      | Unicode default uppercase representative               | Candidate      |
+| Case                      | Unicode default full case-fold representative          | Candidate      |
+| Unicode normalization     | Unicode NFC normalization                              | Candidate      |
+| Unicode normalization     | Unicode NFD normalization                              | Candidate      |
+| Unicode normalization     | Unicode NFKC normalization                             | Candidate      |
+| Unicode normalization     | Unicode NFKD normalization                             | Candidate      |
+| Unicode normalization     | Unicode NFC case-fold profile                          | Candidate      |
+| Unicode normalization     | Unicode NFKC case-fold profile                         | Candidate      |
+| Text representation       | LF line-ending normalization                           | Candidate      |
+| Text representation       | Unicode decimal-digit fold                             | Candidate      |
+| Text representation       | Unicode CJK width fold                                 | Candidate      |
+| Text representation       | Unicode diacritic fold                                 | Candidate      |
+| Numeric                   | Decimal numeric-value representative                   | Candidate      |
+| Numeric                   | Binary32 canonical NaN                                 | Candidate      |
+| Numeric                   | Binary64 canonical NaN                                 | Candidate      |
+| Encoded text              | Base16 lowercase textual representative                | Candidate      |
+| Encoded text              | Base16 uppercase textual representative                | Candidate      |
+| Encoded text              | Base64 RFC 4648 canonical textual representative       | Candidate      |
+| Encoded text              | Base64url RFC 4648 canonical textual representative    | Candidate      |
+| Encoded text              | Base32 RFC 4648 canonical textual representative       | Candidate      |
+| Encoded text              | Base32hex RFC 4648 canonical textual representative    | Candidate      |
+| Numeric text              | Decimal integer textual representative                 | Candidate      |
+| Numeric text              | Fixed-point decimal textual representative             | Candidate      |
+| URI component             | RFC 3986 percent-encoding syntax representative        | Candidate      |
+| Protocol / Identifier     | IPv6 RFC 5952 textual representative                   | Candidate      |
+| Protocol / Identifier     | BCP 47 registry-independent casing representative      | Candidate      |
+| Protocol / Identifier     | BCP 47 registry-dependent canonical representative     | Candidate      |
+| Protocol / Identifier     | UUID RFC 9562 lowercase textual representative         | Candidate      |
+| Protocol / Network        | RFC 9911 MAC-48 lowercase textual representative       | Candidate      |
+| Protocol / Network        | EUI-48 / MAC-48 multi-format textual representative    | Candidate      |
+| Protocol / Network        | IPv4 network-prefix representative                     | Candidate      |
+| Protocol / Network        | IPv6 network-prefix representative                     | Candidate      |
+| HTTP / Time               | HTTP-date textual representative                       | Candidate      |
+| HTTP                      | HTTP media-type textual representative                 | Candidate      |
+| HTTP                      | HTTP qvalue textual representative                     | Candidate      |
+| URI / HTTP                | HTTP(S) URI normal-form representative                 | Candidate      |
+| URI / IoT                 | CoAP URI normal-form representative                    | Candidate      |
+| URI / Identifier          | Generic URN lexical representative                     | Candidate      |
+| URI / Telephony           | RFC 3966 `tel:` URI representative                     | Candidate      |
+| Temporal / XML Schema     | XML Schema `date` canonical lexical representative     | Candidate      |
+| Temporal / XML Schema     | XML Schema `time` canonical lexical representative     | Candidate      |
+| Temporal / XML Schema     | XML Schema `dateTime` canonical lexical representative | Candidate      |
+| International identifier  | DOI textual representative                             | Candidate      |
+| Financial identifier      | IBAN electronic textual representative                 | Candidate      |
+| Retail identifier         | GTIN 14-digit representative                           | Candidate      |
+| Software supply chain     | Package URL canonical representative                   | Candidate      |
+| Cloud-native numeric      | Kubernetes Quantity representative                     | Candidate      |
+| Geographic URI            | `geo:` URI representative                              | Candidate      |
+| Security textual encoding | RFC 7468 textual-encoding representative               | Candidate      |
+| Schema / Data             | Avro Parsing Canonical Form                            | Candidate      |
 
 No row in this table is a Catalog admission decision. The names are descriptive working names only. They do not
 establish
@@ -213,68 +239,84 @@ public API spelling or Contract identity. Qualification may show that a candidat
 also show that two public names should resolve to one Authority. A candidate may still be deferred or rejected before
 admission.
 
-## 4.1. Ecosystem Demand Signals
+## 4.1. Demand and Standard Signals
 
-The inventory expansion is based on repeated normalization surfaces in established ecosystems rather than on one
-language's convenience API.
+The inventory does not use one evidence source for every domain. General text candidates are often motivated by repeated
+developer practice. Protocol candidates are stronger when the owning standard already defines equivalence or a preferred
+representation.
 
-| Developer operation              | Representative ecosystem evidence                                     | Catalog implication                                                                                |
-|----------------------------------|-----------------------------------------------------------------------|----------------------------------------------------------------------------------------------------|
-| Trim both boundaries             | Kotlin `trim`; Elasticsearch `trim`                                   | The whitespace set must be explicit                                                                |
-| Trim one boundary                | Kotlin `trimStart` / `trimEnd`; Java `stripLeading` / `stripTrailing` | Start-only and end-only forms select different representatives                                     |
-| Case conversion                  | Kotlin case conversion; Elasticsearch case filters                    | ASCII and Unicode mappings must be distinct; ambient locale cannot define the law                  |
-| Caseless matching                | Python `casefold`; ICU Case Folding                                   | Case folding is not the same semantic subject as lowercasing                                       |
-| Unicode normalization            | Java `Normalizer`; ICU `Normalizer2`                                  | NFC/NFD/NFKC/NFKD are established normalization families                                           |
-| Identifier-style Unicode folding | Unicode `NFKC_Casefold`; ICU NFKC_Casefold                            | A standardized combined profile must not be reconstructed from unrelated host calls                |
-| Whitespace collapse              | Apache Commons `normalizeSpace`; Guava collapse helpers               | The whitespace set and replacement must be exact                                                   |
-| Line-ending normalization        | Git text normalization                                                | The LF representative is common, but the accepted source separators must be exact                  |
-| Decimal representation reduction | Java `BigDecimal.stripTrailingZeros`; Python `Decimal.normalize`      | Numeric-value equivalence is common, but representative-domain closure is required                 |
-| Specialized Unicode folding      | Elasticsearch normalizers; Lucene folding filters                     | Broad search folding should be decomposed into exact narrow laws                                   |
-| Encoded text canonicalization    | RFC 4648; common codec libraries                                      | Encoded-text canonicalization is distinct from bytes-to-text encoding                              |
-| URI percent encoding             | RFC 3986 generic syntax                                               | Percent-triplet spelling can be reviewed without importing whole-URI semantics                     |
-| BCP 47 casing                    | RFC 5646 casing conventions                                           | Registry-independent presentation can be reviewed separately from registry-driven canonicalization |
-| Network prefixes                 | RFC 9911 YANG types                                                   | Clearing non-prefix bits provides an exact representative problem                                  |
-| Protocol text profiles           | RFC 9562 UUID text; RFC 5952 IPv6 text                                | Protocol profiles are useful, but they are reviewed after the everyday surface                     |
+| Candidate area            | Representative evidence                | Catalog implication                                                                         |
+|---------------------------|----------------------------------------|---------------------------------------------------------------------------------------------|
+| Boundary trim and case    | Kotlin, Java, ICU                      | Repeated use justifies review, but the host operation does not define the law               |
+| Unicode normalization     | Unicode normalization forms            | The external semantic profile is already precise enough to ground exact review              |
+| Encoded text              | RFC 4648                               | Canonical encoded text must remain separate from bytes-to-text encoding                     |
+| HTTP-date                 | RFC 9110                               | Multiple accepted date spellings have one required generated form                           |
+| HTTP and CoAP URIs        | RFC 9110 and RFC 7252                  | Scheme-specific standards already define important normal-form choices                      |
+| `tel:` URI                | RFC 3966                               | Visual separators and parameter ordering have protocol-defined comparison rules             |
+| Network prefixes          | RFC 9911                               | Clearing non-prefix bits gives an exact representative problem                              |
+| International identifiers | DOI and ISO-backed identifier profiles | Identifier equivalence must be separated from validation and registry ownership             |
+| Retail identifiers        | GS1 Digital Link and GTIN rules        | Shorter GTIN forms can map to one 14-digit representation under an exact profile            |
+| Cloud-native quantity     | Kubernetes Quantity                    | The API datatype already distinguishes legal non-canonical text from canonical output       |
+| Software supply chain     | ECMA-427 Package URL                   | Core syntax and type-specific normalization must not be collapsed into one hidden rule      |
+| Security textual encoding | RFC 7468                               | Parser tolerance and generator form are distinct and can expose a representative problem    |
+| Schema meaning            | Avro Parsing Canonical Form            | Domain semantics, not raw JSON spelling, determine which schema distinctions are irrelevant |
 
-The table records demand evidence only. It does not import host-library semantics. A Kotlin or ICU method, for example,
-can show that developers repeatedly need a distinction removed while still being unsuitable as the normative definition
-of that removal.
+A standard name is still not enough. The qualification record must identify the exact semantic subject that Kontrakt
+would own. It must also identify which parts remain owned by the external protocol or registry.
 
 ## 4.2. Review Priority
 
-The review order starts with operations that developers use frequently. It then moves toward candidates with harder
-semantic or security boundaries. Earlier review does not imply admission.
+Candidate discovery and candidate admission are separate activities. Discovery should cover different domains before the
+Catalog is narrowed. Admission should start with candidates whose exact meaning can be closed without importing large
+amounts of ambient or mutable state.
+
+The current qualification order is:
 
 ```text
-boundary whitespace laws
+small self-contained text and encoded-text laws
     ↓
-ASCII case laws
+Unicode laws with explicit semantic Basis
     ↓
-Unicode case laws
+compact standards-backed protocol representatives
     ↓
-Unicode normalization forms
+numeric and temporal lexical representatives
     ↓
-Case-fold normalization authority review
+international and financial identifiers
     ↓
-whitespace and line-ending laws
+registry-dependent or type-dependent identifiers
     ↓
-Decimal Numeric Value
+structured domain values and aggregate semantics
     ↓
-specialized Unicode folding laws
-    ↓
-encoded and numeric text representatives
-    ↓
-URI-component and registry-light protocol profiles
-    ↓
-network-prefix representatives
-    ↓
-binary NaN profiles
-    ↓
-registry-dependent and other protocol profiles
+resource-sensitive and cross-authority stress cases
 ```
 
-This order starts with ordinary application operations. Later groups require more external semantic material or a more
-specialized interpretation. Protocol and raw-bit profiles therefore come later.
+This order no longer assumes that text utilities are the center of the Catalog. A compact protocol law can be reviewed
+earlier than a familiar string transformation when the protocol already closes the semantic relation more precisely.
+
+## 4.3. Domain Coverage Discovery
+
+Candidate research should continue to sweep real application domains rather than stop after the first useful set of text
+operations. The purpose of this table is coverage control. It does not admit every listed subject.
+
+| Domain                     | Current coverage direction                                                                   |
+|----------------------------|----------------------------------------------------------------------------------------------|
+| Text and Unicode           | Existing trim, case, normalization, whitespace, and line-ending candidates                   |
+| Numeric and numeric text   | Decimal, floating-point NaN, integer text, and fixed-point text candidates                   |
+| Encoded text               | Base16, Base32, Base64, and Base64url candidates                                             |
+| Web and HTTP               | Percent encoding, HTTP-date, media type, qvalue, and HTTP(S) URI candidates                  |
+| Network and IoT            | IPv6, network-prefix, EUI-48 / MAC-48, and CoAP URI candidates                               |
+| International identifiers  | BCP 47, UUID, DOI, IBAN, and GTIN candidates                                                 |
+| Temporal standards         | HTTP-date and XML Schema date/time candidates; RFC 3339/9557 remain separate research        |
+| Software supply chain      | Package URL candidate; other package and artifact identifiers remain under review            |
+| Cloud-native               | Kubernetes Quantity candidate                                                                |
+| Geographic                 | `geo:` URI candidate; CRS text remains a separate boundary problem                           |
+| Security / PKI text        | RFC 7468 candidate; signing and wire canonicalization remain separate owners                 |
+| Schema and structured data | Avro candidate; RDF canonicalization remains a stress case                                   |
+| Scientific / healthcare    | UCUM quantity remains a deferred aggregate research case                                     |
+| Financial / business data  | IBAN is a candidate; currency-symbol interpretation remains outside generic Canonicalization |
+
+A domain is not complete merely because one candidate exists in it. The sweep exists to expose missing semantic shapes
+and to prevent the Catalog from becoming a renamed collection of string utility methods.
 
 ---
 
@@ -556,11 +598,15 @@ carrier-preservation requirements as binary32.
 
 ---
 
-# 6. Encoded and Structured Text Working Notes
+# 6. Structured, Protocol, and Domain Candidate Working Notes
 
-These candidates apply to structured textual presentations. Their exact meaning depends on a closed grammar, often from
-a standard. They do not perform bytes-to-text encoding or parse the value into a new semantic domain. Validation-only
-rules and resource resolution remain outside this group.
+These candidates have a closed textual or structured presentation that is usually defined by a protocol or domain
+standard. A candidate may depend on parsing rules, but parsing does not itself become Canonicalization authority. The
+Input side must first establish the legal semantic presentation on which the representative law operates.
+
+When a candidate changes structured fields together, it must still preserve the presentation shape promised by
+ADR-0066. A standard that produces signing bytes or a different wire representation belongs to another owner even when
+it uses the word canonicalization.
 
 ## 6.1. Base16 Lowercase Text
 
@@ -783,6 +829,214 @@ RFC 9911 uses RFC 5952 form for the address in its canonical IPv6 prefix represe
 Qualification must close the semantic relation to the RFC 5952 candidate explicitly. Shared realization code cannot
 establish that relation on its own.
 
+## 6.17. EUI-48 / MAC-48 Multi-Format Text
+
+This candidate is broader than the RFC 9911 profile in Section 6.14. The semantic subject is one 48-bit address that can
+arrive through more than one textual convention.
+
+The working direction is to select one lower-case colon-separated representative. Qualification must decide which source
+spellings are legal operands. Hyphen-separated text is standardized in some protocol contexts. Dotted forms used by
+network equipment are common, but ecosystem prevalence alone does not make them part of the law.
+
+This candidate must also pass Authority uniqueness against Section 6.14. The Catalog must not retain two Authorities
+merely because one review began from a narrower grammar.
+
+## 6.18. HTTP-Date Text
+
+RFC 9110 defines three legal HTTP-date forms for compatibility. A recipient must accept all three, while a sender must
+generate IMF-fixdate. That gives this candidate a strong standards-defined representative direction.
+
+The operand must already be a legal HTTP-date. The law does not repair an invalid calendar date. Qualification must also
+close the interpretation of the obsolete RFC 850 form, including its two-digit year rule.
+
+The representative is the IMF-fixdate spelling of the same UTC instant. This candidate is specific to HTTP date syntax;
+it does not establish a generic timestamp canonicalization law.
+
+## 6.19. HTTP Media Type Text
+
+HTTP media types contain several representation freedoms that can be semantically irrelevant. Type and subtype names are
+case-insensitive. Parameter names are also case-insensitive. A parameter value that is legal as a token can sometimes be
+represented by an equivalent quoted-string.
+
+The candidate cannot normalize every parameter value by one generic rule. Parameter-value semantics belong to the
+parameter definition. Qualification must therefore close the exact operand profile before it chooses a representative.
+
+If parameter ordering is declared irrelevant for the selected profile, the representative also needs one exact order.
+That order cannot come from a host map or parser iteration order.
+
+## 6.20. HTTP Qvalue Text
+
+HTTP qvalues have a small numeric domain and several legal lexical spellings for the same value. This makes them a
+useful
+narrow numeric-text candidate.
+
+Qualification must first close the exact RFC grammar and precision bound. It must then choose one representative
+spelling
+for each legal value. The standard constrains the value and syntax but does not by itself justify an arbitrary host
+floating-point formatter.
+
+The operand remains qvalue Text. Parsing the value into an unrelated numeric Fact is outside this law.
+
+## 6.21. HTTP (S) URI Normal Form
+
+HTTP and HTTPS URIs have scheme-specific normal-form rules on top of generic URI syntax. The standard treats the scheme
+and host case-insensitively and omits a default port in normal form. An empty path has a defined normal representation
+in
+the ordinary URI case.
+
+Percent-encoding must follow the URI rules rather than a general-purpose decoder. Unreserved characters should not stay
+percent-encoded in the normal form, while reserved characters retain their URI meaning.
+
+Qualification must not import origin-specific application semantics. Query parameter order is one example of a
+distinction that this candidate cannot erase generically. Host internationalization also remains subject to the exact
+IDNA boundary selected for the operand.
+
+## 6.22. CoAP URI Normal Form
+
+RFC 7252 defines normalization and comparison rules for `coap` and `coaps` URIs. The normal form removes the scheme's
+default port, lowercases the scheme and host, and represents an empty path as `/`. IP literals use the recommended IPv6
+form where applicable.
+
+The candidate shares several constituent relations with HTTP URI normalization, but the scheme defaults are different.
+Qualification must determine whether the final Contract meaning is one scheme-specific Authority or a legal composition
+of independently admitted laws.
+
+No implementation may infer that relation merely because the same URI library handles both protocols.
+
+## 6.23. Generic URN Lexical Representative
+
+RFC 8141 defines generic equivalence rules that apply before a namespace adds its own rules. Scheme and namespace
+identifier case are not semantic distinctions under the generic comparison relation. Percent-triplet hexadecimal case is
+also representation detail.
+
+The candidate must not decode percent-encoded octets simply because a generic URI decoder can do so. Namespace-specific
+equivalence also remains outside this law.
+
+Qualification must close the treatment of optional URN components under the generic RFC 8141 rules. A namespace such as
+ISBN may later add stronger meaning without mutating this generic Authority.
+
+## 6.24. RFC 3966 `tel:` URI Representative
+
+RFC 3966 gives a much better Contract subject than generic user-entered telephone-number normalization. Visual
+separators
+do not affect URI comparison, and parameters are compared independently of their source order. The standard also gives a
+preferred parameter ordering that can guide one representative.
+
+A local number is not complete without its `phone-context`. That material is part of the URI meaning and cannot be
+supplied from an ambient default region.
+
+Qualification must keep global and local numbers distinct. It must also preserve the standard's parameter-specific
+comparison rules instead of applying one blanket text fold to every parameter value.
+
+## 6.25. XML Schema Date/Time Canonical Lexical Family
+
+XML Schema Datatypes explicitly separates a value space from its lexical space and defines canonical lexical mappings.
+That architecture is close to the representative problem that this Catalog is qualifying.
+
+The current working family contains three separate candidates: `date`, `time`, and `dateTime`. Each must be admitted
+independently if its semantic subject or Version history differs from the others. A shared implementation does not merge
+them.
+
+The exact XSD profile determines timezone normalization and fractional-second spelling. Qualification must preserve the
+profile's own timezone semantics rather than importing RFC 3339 or RFC 9557 meaning. Similar-looking timestamp strings
+can
+belong to different equivalence relations under those standards.
+
+## 6.26. DOI Textual Representative
+
+DOI names have an unusual but useful comparison rule. Basic Latin `A` through `Z` compare case-insensitively, while
+non-ASCII case differences are not collapsed by that rule. DOI comparison also does not perform generic Unicode
+normalization.
+
+That makes DOI a stronger domain candidate than applying Unicode case folding to an identifier. Qualification must
+choose
+one exact representative for the Basic Latin case-insensitive relation and preserve every distinction outside it.
+
+The DOI grammar and any URI or proxy presentation remain separate questions. A DOI-name law must not silently absorb the
+syntax of a resolver URL.
+
+## 6.27. IBAN Electronic Text
+
+IBAN has an electronic representation without visual spacing and a paper-oriented representation that groups
+characters for readability. This creates a real presentation distinction over one financial identifier.
+
+The candidate direction is to select the electronic representation. Country-specific length and BBAN structure come
+from the ISO 13616 registry material and affect whether an operand is a legal IBAN, not merely how spaces are removed.
+
+Check-digit validity must remain separate from representative selection. Qualification must decide which parts belong to
+Input or Admission and whether registry material is required by the Canonicalization law itself.
+
+## 6.28. GTIN 14-Digit Representative
+
+GS1 rules use a 14-digit representation for GTIN values in current Digital Link syntax. Shorter GTIN-8, GTIN-12, and
+GTIN-13 forms are padded with leading zeroes when represented in that profile.
+
+This is not a generic integer-leading-zero law. The zeros are part of a domain representation rule for a GS1 identifier.
+Qualification must preserve that domain meaning and keep check-digit validity outside Canonicalization.
+
+A later GS1 Digital Link URI candidate may consume this representative without turning the GTIN Authority into a URI
+law.
+
+## 6.29. Package URL Canonical Representative
+
+Package URL is now standardized by ECMA-427 and is widely used in software supply-chain data. The core form has
+canonicalization requirements, while individual package types can add type-specific normalization rules.
+
+Qualification must therefore separate core PURL meaning from type-specific material. Maven, npm, and PyPI cannot be
+collapsed into one implicit provider behavior simply because one parser supports all of them.
+
+The candidate is a useful test of Required Basis and Version ownership. If type-specific rules determine the
+representative, that dependency must be explicit rather than read from a mutable registry at realization time.
+
+## 6.30. Kubernetes Quantity Representative
+
+Kubernetes Quantity is a fixed-point domain value with several legal textual forms. The API machinery accepts
+non-canonical forms and re-emits a canonical representation. Examples include representing `1.5` as `1500m` and `1.5Gi`
+as `1536Mi`.
+
+The Kubernetes parser also has rounding and range behavior. Kontrakt must not inherit that behavior blindly. The
+Canonicalization candidate should operate only after the legal Quantity meaning has been established without loss.
+
+Qualification must close the suffix family retained by the representative and the exact numeric domain. It must also
+prove that canonical formation does not silently round a Contract-visible value.
+
+## 6.31. `geo:` URI Representative
+
+RFC 5870 defines comparison rules for geographic URI components in semantic rather than purely lexical terms. Decimal
+strings that denote the same coordinate can compare equal. Parameter order is also not significant under the URI's
+comparison model.
+
+The profile has additional domain rules. An omitted default CRS can compare like an explicit `wgs84` value, and special
+coordinate cases can remove distinctions that ordinary decimal text would preserve.
+
+This makes `geo:` a strong stress candidate. Qualification must derive one representative from the full RFC relation
+instead of composing generic decimal and parameter-sorting helpers and assuming the result is equivalent.
+
+## 6.32. RFC 7468 Textual-Encoding Representative
+
+RFC 7468 defines textual encodings used for PKIX, PKCS, and CMS objects. Parsers may tolerate line layouts that
+generators
+must not emit. Generators use 64-character Base64 lines except for the final line and do not emit extraneous whitespace.
+
+That parser/generator split creates a candidate representative for one already-established textual-encoding instance.
+The label remains part of the meaning; Canonicalization cannot discard or infer it.
+
+A file containing several instances is a different subject. Ordering of those instances depends on the surrounding
+protocol and is not owned by this candidate.
+
+## 6.33. Avro Parsing Canonical Form
+
+Avro defines Parsing Canonical Form so that schemas that are the same for a reader can obtain the same canonical schema
+representation. The transformation removes schema material that is irrelevant to parsing while preserving distinctions
+that affect how data is read.
+
+This is a domain-specific semantic law, not generic JSON canonicalization. Qualification must define the operand as an
+Avro schema presentation whose parsing meaning is already established.
+
+The same-shape question requires explicit review. If the authoritative Input presentation is an Avro-schema textual
+presentation, the canonical result can remain in that presentation family. If the transformation instead crosses from a
+semantic schema object to serialization bytes, the owner would be different.
+
 ---
 
 # 7. Deferred and Explicit Boundary Working Notes
@@ -827,6 +1081,9 @@ That breadth is useful for search but is too large to import as a default Canoni
 search library provides it. Narrow laws are reviewed separately above. A future broad search-fold Authority must first
 define its exact relation and representative. It must then close its Unicode Basis and security consequences.
 
+Folding U+00A0 NO-BREAK SPACE into U+0020 SPACE belongs to this review unless a narrower law is independently justified.
+The two code points have different line-breaking semantics, so visual similarity alone cannot establish equivalence.
+
 ## 7.5. Signed-Zero Collapse
 
 A binary floating-point law may declare positive and negative zero equivalent, but IEEE 754 behavior can later observe
@@ -838,7 +1095,9 @@ RFC 3986 defines generic syntax normalization, but whole-URI equivalence can bec
 no generic whole-URI canonicalization law.
 
 Section 6.9 isolates percent-encoding syntax because that relation can be reviewed without importing the rest of URI
-meaning. Dot-segment removal remains outside that candidate because path interpretation creates a different boundary.
+meaning. Sections 6.21 and 6.22 review HTTP and CoAP only because those schemes provide their own normalization rules.
+Dot-segment removal remains outside the generic component candidate because path interpretation creates a different
+boundary.
 
 ## 7.7. IDNA and PRECIS Profiles
 
@@ -862,6 +1121,10 @@ Legacy parsers complicate the issue because some accept abbreviated forms or ass
 forms. Kontrakt must not erase that ambiguity by silently normalizing such text. Input must first decide which spellings
 are legal and what they mean.
 
+WHATWG URL host parsing is a separate semantic domain because it deliberately preserves legacy IPv4 interpretation
+rules.
+If Kontrakt later supports that behavior, it must be reviewed as a URL-host profile rather than as generic IPv4 text.
+
 ## 7.10. Order-Insensitive Finite Aggregates
 
 Sorting and duplicate removal are common for tags, identifiers, and permission-like lists, but the generic operation is
@@ -881,15 +1144,15 @@ domain portion follows different comparison rules. Internationalized domains add
 A single lowercasing or Unicode-folding law therefore cannot safely define mailbox equivalence. A future candidate must
 start from a narrower semantic subject.
 
-## 7.12. Telephone Numbers and `tel:` URIs
+## 7.12. User-Entered Telephone Numbers
 
 User-entered telephone numbers remain deferred because national notation can require numbering-plan context before it
 has
 one global interpretation. A hidden default region cannot become a Canonicalization determinant.
 
-RFC 3966 `tel:` URIs are a narrower future candidate. The standard defines comparison rules for visual separators and
-requires local numbers to carry `phone-context`. That protocol surface should be reviewed independently rather than used
-to justify a generic phone-number normalizer.
+Section 6.24 treats RFC 3966 `tel:` URI as a different semantic subject because the protocol carries the context
+required
+for its own comparison rules. That candidate does not justify a generic phone-number normalizer.
 
 ## 7.13. RFC 3339 Lexical Normalization
 
@@ -899,6 +1162,9 @@ permitted lexical variation without converting every timestamp to UTC.
 The offset distinction must remain exact. RFC 3339 `-00:00` means that the local offset is unknown and is not equivalent
 to `Z` or `+00:00`. Any future representative must preserve that distinction.
 
+RFC 9557 adds named time-zone and additional suffix semantics on top of RFC 3339-style timestamps. Those fields create a
+separate candidate problem and must not be folded into a generic instant-only law.
+
 ## 7.14. Canonical JSON and JCS
 
 JSON Canonicalization Scheme work does not belong to this inbound Built-In Law Catalog merely because it uses the word
@@ -907,6 +1173,150 @@ rather than Unicode-normalized.
 
 That authority belongs to the protocol or serialization layer that owns the representation. Kontrakt Canonicalization
 must not absorb JCS as an inbound text law.
+
+## 7.15. HTML Character References
+
+HTML character-reference resolution is not a generic Text Canonicalization law. In raw HTML source, replacing a
+character
+reference with the literal character can change parsing because characters such as `<` participate in markup syntax.
+
+After an HTML parser has established character data, the source spelling distinction has already been consumed by that
+parser. The correct owner is therefore HTML interpretation at the Input boundary, not a later law that rewrites
+arbitrary
+Text.
+
+## 7.16. Currency Symbols and Currency Codes
+
+A currency symbol does not identify one currency without additional context. The symbol `$` is the obvious example. A
+locale or market convention can change what it means, so a generic symbol-to-ISO-code law would have an undeclared
+semantic determinant.
+
+An alphabetic currency code that only needs the existing ASCII case representative should reuse that law if the operand
+profile permits it. The Catalog must not create a currency-specific Authority merely to rename an existing case rule.
+
+## 7.17. Time-Zone Identifier Aliases
+
+Time-zone databases contain aliases, but the meaning of a preferred identifier is not as simple as selecting the newest
+IANA spelling. CLDR maintains stable canonical identifiers for its own purposes, and those choices can differ from a
+current TZDB preference.
+
+A future candidate must therefore name the authority that owns the representative. It must also make the relevant data
+version explicit when that version can change the result.
+
+## 7.18. SIP and SIPS URI Profiles
+
+SIP URI comparison has domain-specific rules for case, parameters, headers, and percent-encoding. It is too complex to
+be
+inferred from generic URI normalization.
+
+A future candidate should begin from the exact RFC comparison relation. The work remains deferred until the
+representative
+and the relationship to generic URI constituent laws are closed.
+
+## 7.19. GS1 Digital Link Canonical URI
+
+GS1 Digital Link defines a canonical URI profile that includes HTTPS, a canonical host, the current 14-digit GTIN
+representation, and restrictions on query material. This is stronger than the GTIN candidate in Section 6.28.
+
+The full URI law remains deferred because it combines several GS1 identifier rules with URI-level semantics. The
+candidate must first prove that these rules form one legitimate Built-In Authority rather than a protocol-owned output
+projection or a composition of narrower laws.
+
+## 7.20. UCUM Quantity Canonicalization
+
+UCUM gives units exact semantics and defines relationships to canonical units. That makes it a strong aggregate research
+case for a pair such as `(value, unit)`.
+
+A unit cannot be changed without changing the numeric value consistently. Qualification must therefore close conversion
+precision and exact arithmetic before any representative is admitted. A text-only unit fold would not preserve the
+quantity meaning.
+
+## 7.21. RDF Dataset Canonicalization
+
+RDFC-1.0 is a W3C canonicalization algorithm for RDF datasets. It is useful as a stress case because graph isomorphism
+and
+blank-node assignment require substantially more work than ordinary text normalization.
+
+The standard produces a canonical serialization of a dataset and discusses denial-of-service risk for difficult inputs.
+Kontrakt must first decide whether that output remains inside the Canonicalization presentation boundary or belongs to a
+serialization/signing owner. The resource problem must remain separate from semantic equivalence.
+
+## 7.22. LDAP and X.509 String Preparation
+
+LDAP string matching and X.509 name comparison can use preparation rules that combine Unicode normalization, case
+handling, and insignificant-space semantics. They also have legality rules that are not Canonicalization.
+
+A future candidate must split representative formation from prohibited-input handling before admission. The profile must
+not become a shortcut for importing an entire security-sensitive matching pipeline as one opaque law.
+
+## 7.23. SPDX License Expressions
+
+SPDX defines exact syntax and operator meaning for license expressions, but it does not provide one universal canonical
+ordering or parenthesization for every semantically equivalent expression.
+
+The current subject therefore remains deferred. Kontrakt should not invent a broad Boolean-algebra normal form merely
+because applications would find one convenient.
+
+## 7.24. Signing and Wire Canonicalization
+
+Many important standards use canonicalization to produce signing or wire material. Their existence is evidence for
+strict
+representation control, but it does not make them inbound Canonicalization laws.
+
+DER and XML canonicalization are representative examples. JWK Thumbprint similarly creates a hash preimage from selected
+key material. These belong to the authority that owns serialization, signing, or identity derivation unless a separate
+same-shape inbound law is independently established.
+
+## 7.25. Generic Filesystem Paths
+
+Generic path normalization remains outside the Catalog. Lexically removing `.` or `..` is not equivalent to filesystem
+resolution when links, mount points, or platform rules can change the resolved object.
+
+A future path candidate needs a much narrower semantic subject. Ambient filesystem state cannot become hidden
+Canonicalization meaning.
+
+## 7.26. Generic SQL and Database Identifiers
+
+Database identifier comparison depends on the database and its configured semantics. Case folding and collation can also
+depend on deployment configuration.
+
+A generic SQL identifier law would therefore hide ambient semantic state. A database-specific profile could be reviewed
+later if its equivalence and representative are closed independently of one running database instance.
+
+## 7.27. Single-Shape International Identifiers
+
+Some international identifiers primarily need validation rather than normalization because their legal representation is
+already singular. A fixed-width identifier with no alternate legal spelling does not need a Canonicalization law merely
+because it is widely used.
+
+LEI is a useful example of this boundary. Similar identifier families should first prove that multiple legal
+representations of the same meaning actually exist before entering the candidate inventory.
+
+## 7.28. Charset Labels
+
+Charset names and aliases are a real interoperability problem, but there is more than one relevant semantic universe.
+The
+IANA charset registry and the WHATWG Encoding model do not expose exactly the same alias policy.
+
+A future candidate must choose one authority and Version basis before mapping aliases to a representative name. Until
+then, a generic "charset label normalize" law would hide an external semantic choice.
+
+## 7.29. Other Researched Domain Cases
+
+The following subjects were investigated during candidate discovery. They are recorded here so that absence from the
+current candidate table is deliberate rather than accidental.
+
+| Subject                              | Current disposition                         | Reason                                                                                                                                |
+|--------------------------------------|---------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------|
+| ISBN and ISSN textual profiles       | Further research                            | Display punctuation and namespace-specific rules must be separated from identifier validity before one representative is proposed     |
+| LDAP GeneralizedTime                 | Deferred                                    | RFC 4517 defines equality by the same UTC instant but explicitly does not define canonical LDAP encodings                             |
+| OAuth scope sets                     | Aggregate stress case                       | Scope order is not semantic, but the protocol does not define one canonical sort order                                                |
+| HTTP Structured Fields               | Owner review                                | The standard mainly serializes an already parsed abstract field value, so protocol serialization may own the result                   |
+| OCI digest text                      | Authority-uniqueness review                 | Much of the visible normalization may already be covered by exact digest grammar plus an existing Base16 law                          |
+| ORCID presentation                   | Further research                            | The relationship between bare identifier text, grouped display text, and the recommended HTTPS URI needs one exact operand definition |
+| CPE 2.3 names                        | Owner review                                | The standard separates a semantic name model from string bindings, which may make binding a projection rather than Canonicalization   |
+| Protobuf deterministic serialization | Excluded as evidence of a different problem | Protobuf explicitly warns that deterministic serialization is not a canonical byte representation                                     |
+| CRS WKT                              | Deferred                                    | The standard defines the representation language but does not provide one universal canonical writer                                  |
 
 ---
 
@@ -999,7 +1409,8 @@ SIMD or caching, for example, do not become Built-In Law meaning merely because 
 
 # 11. Working Sequence
 
-The concrete Catalog work proceeds in this order:
+The concrete Catalog work proceeds in this order. Candidate research includes a domain sweep before detailed
+qualification so that one familiar ecosystem does not dominate the final population.
 
 ```text
 candidate research
