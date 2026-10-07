@@ -141,8 +141,8 @@ name does not justify a new Authority. A different source spelling or implementa
 Validation or ordering alone is not Canonicalization. A physical storage change is not Canonicalization either. The
 candidate must satisfy the representative-selection law owned by ADR-0066.
 
-Candidate labels in this document are working labels only. They are not Authority or Version identities. They also make
-no promise about public API names or compiler storage coordinates.
+Candidate names in this document are descriptive working names only. They are not Authority or Version identities, and
+they do not establish public API spelling. Package structure and compiler coordinates remain separate design work.
 
 ADR-0066 may use several admitted Exact Built-In Laws inside one finite ordered Canonicalization composition. Candidate
 qualification here still judges each Exact Built-In Law independently. Composition does not create a new Catalog member
@@ -158,46 +158,48 @@ subject deserves review. It does not mean that a host API already defines the Ko
 
 Every row remains a candidate until its exact semantics and Built-In suitability are closed under ADR-0076.
 
-| Review area           | Candidate semantic label                    | Working status |
-|-----------------------|---------------------------------------------|----------------|
-| Boundary text         | `text.ascii.whitespace-trim`                | Candidate      |
-| Boundary text         | `text.ascii.whitespace-trim-start`          | Candidate      |
-| Boundary text         | `text.ascii.whitespace-trim-end`            | Candidate      |
-| Boundary text         | `text.unicode.whitespace-trim`              | Candidate      |
-| Boundary text         | `text.unicode.whitespace-trim-start`        | Candidate      |
-| Boundary text         | `text.unicode.whitespace-trim-end`          | Candidate      |
-| Boundary text         | `text.unicode.whitespace-collapse-space`    | Candidate      |
-| Case                  | `text.ascii.lowercase`                      | Candidate      |
-| Case                  | `text.ascii.uppercase`                      | Candidate      |
-| Case                  | `text.ascii.casefold`                       | Candidate      |
-| Case                  | `text.unicode.default-lowercase`            | Candidate      |
-| Case                  | `text.unicode.default-uppercase`            | Candidate      |
-| Case                  | `text.unicode.default-full-casefold`        | Candidate      |
-| Unicode normalization | `text.unicode.nfc`                          | Candidate      |
-| Unicode normalization | `text.unicode.nfd`                          | Candidate      |
-| Unicode normalization | `text.unicode.nfkc`                         | Candidate      |
-| Unicode normalization | `text.unicode.nfkd`                         | Candidate      |
-| Unicode normalization | `text.unicode.nfc-casefold`                 | Candidate      |
-| Unicode normalization | `text.unicode.nfkc-casefold`                | Candidate      |
-| Text representation   | `text.line-ending.lf`                       | Candidate      |
-| Text representation   | `text.unicode.decimal-digit-fold`           | Candidate      |
-| Text representation   | `text.unicode.cjk-width-fold`               | Candidate      |
-| Text representation   | `text.unicode.diacritic-fold`               | Candidate      |
-| Numeric               | `number.decimal.numeric-value`              | Candidate      |
-| Numeric               | `number.binary32.canonical-nan`             | Candidate      |
-| Numeric               | `number.binary64.canonical-nan`             | Candidate      |
-| Encoded text          | `encoding.base16.lowercase-text`            | Candidate      |
-| Encoded text          | `encoding.base16.uppercase-text`            | Candidate      |
-| Encoded text          | `encoding.base64.rfc4648-canonical-text`    | Candidate      |
-| Encoded text          | `encoding.base64url.rfc4648-canonical-text` | Candidate      |
-| Numeric text          | `text.integer.decimal-canonical`            | Candidate      |
-| Protocol / Identifier | `network.ipv6.rfc5952`                      | Candidate      |
-| Protocol / Identifier | `identifier.bcp47.rfc5646`                  | Candidate      |
-| Protocol / Identifier | `identifier.uuid.rfc9562-lowercase-text`    | Candidate      |
+| Review area           | Candidate working name                              | Working status |
+|-----------------------|-----------------------------------------------------|----------------|
+| Boundary text         | ASCII boundary whitespace trim                      | Candidate      |
+| Boundary text         | ASCII leading whitespace trim                       | Candidate      |
+| Boundary text         | ASCII trailing whitespace trim                      | Candidate      |
+| Boundary text         | Unicode boundary whitespace trim                    | Candidate      |
+| Boundary text         | Unicode leading whitespace trim                     | Candidate      |
+| Boundary text         | Unicode trailing whitespace trim                    | Candidate      |
+| Boundary text         | Unicode whitespace run collapse to U+0020           | Candidate      |
+| Case                  | ASCII lowercase representative                      | Candidate      |
+| Case                  | ASCII uppercase representative                      | Candidate      |
+| Case                  | ASCII case-fold representative                      | Candidate      |
+| Case                  | Unicode default lowercase representative            | Candidate      |
+| Case                  | Unicode default uppercase representative            | Candidate      |
+| Case                  | Unicode default full case-fold representative       | Candidate      |
+| Unicode normalization | Unicode NFC normalization                           | Candidate      |
+| Unicode normalization | Unicode NFD normalization                           | Candidate      |
+| Unicode normalization | Unicode NFKC normalization                          | Candidate      |
+| Unicode normalization | Unicode NFKD normalization                          | Candidate      |
+| Unicode normalization | Unicode NFC case-fold profile                       | Candidate      |
+| Unicode normalization | Unicode NFKC case-fold profile                      | Candidate      |
+| Text representation   | LF line-ending normalization                        | Candidate      |
+| Text representation   | Unicode decimal-digit fold                          | Candidate      |
+| Text representation   | Unicode CJK width fold                              | Candidate      |
+| Text representation   | Unicode diacritic fold                              | Candidate      |
+| Numeric               | Decimal numeric-value representative                | Candidate      |
+| Numeric               | Binary32 canonical NaN                              | Candidate      |
+| Numeric               | Binary64 canonical NaN                              | Candidate      |
+| Encoded text          | Base16 lowercase textual representative             | Candidate      |
+| Encoded text          | Base16 uppercase textual representative             | Candidate      |
+| Encoded text          | Base64 RFC 4648 canonical textual representative    | Candidate      |
+| Encoded text          | Base64url RFC 4648 canonical textual representative | Candidate      |
+| Numeric text          | Decimal integer textual representative              | Candidate      |
+| Protocol / Identifier | IPv6 RFC 5952 textual representative                | Candidate      |
+| Protocol / Identifier | BCP 47 language-tag canonicalization                | Candidate      |
+| Protocol / Identifier | UUID RFC 9562 lowercase textual representative      | Candidate      |
 
-No row in this table is a Catalog admission decision. The dotted labels are review coordinates only. Qualification may
-show that a candidate needs to be renamed or split. It may also show that two public names should resolve to one
-Authority. A candidate may still be deferred or rejected before admission.
+No row in this table is a Catalog admission decision. The names are descriptive working names only. They do not
+establish
+public API spelling or Contract identity. Qualification may show that a candidate needs to be renamed or split. It may
+also show that two public names should resolve to one Authority. A candidate may still be deferred or rejected before
+admission.
 
 ## 4.1. Ecosystem Demand Signals
 
@@ -271,17 +273,9 @@ The working labels below are not public API names.
 
 ## 5.1. Boundary Whitespace Trim Family
 
-Current candidates:
-
-```text
-text.ascii.whitespace-trim
-text.ascii.whitespace-trim-start
-text.ascii.whitespace-trim-end
-
-text.unicode.whitespace-trim
-text.unicode.whitespace-trim-start
-text.unicode.whitespace-trim-end
-```
+Current working candidates cover both-boundary, leading-only, and trailing-only trim for an exact ASCII whitespace set.
+The same three semantic shapes are also reviewed for an exact Unicode whitespace set. These descriptions do not fix
+public API names.
 
 These candidates exist because general-purpose APIs repeatedly expose both-boundary, leading-only, and trailing-only
 trimming. They must not be collapsed into one law merely because an implementation can share one scanner.
@@ -306,16 +300,11 @@ are fixed.
 
 ## 5.2. ASCII Case Conversion and Case Fold
 
-Current candidates:
+Current working candidates are an ASCII lowercase representative, an ASCII uppercase representative, and an ASCII
+case-fold representative. These descriptions do not fix public API names.
 
-```text
-text.ascii.lowercase
-text.ascii.uppercase
-text.ascii.casefold
-```
-
-`text.ascii.lowercase` maps ASCII `A` through `Z` to `a` through `z` and preserves every other Unicode scalar value.
-`text.ascii.uppercase` applies the inverse case-direction mapping to ASCII letters and likewise preserves every other
+The lowercase candidate maps ASCII `A` through `Z` to `a` through `z` and preserves every other Unicode scalar value.
+The uppercase candidate applies the inverse case-direction mapping to ASCII letters and likewise preserves every other
 scalar value.
 
 The ASCII case-fold candidate declares ASCII letter case irrelevant and selects one exact representative. The current
@@ -328,13 +317,8 @@ None of the ASCII candidates owns locale behavior or Unicode case data.
 
 ## 5.3. Unicode Default Case Conversion and Full Case Folding
 
-Current candidates:
-
-```text
-text.unicode.default-lowercase
-text.unicode.default-uppercase
-text.unicode.default-full-casefold
-```
+Current working candidates are Unicode default lowercase, Unicode default uppercase, and Unicode default full case fold.
+These descriptions do not fix public API names.
 
 The lowercase and uppercase candidates exist because invariant case conversion is a ubiquitous developer operation.
 Their meaning cannot come from ambient host behavior. Java's default locale is one example. The host's current Unicode
@@ -357,14 +341,8 @@ not itself the semantic Basis.
 
 ## 5.4. Unicode Normalization Forms
 
-Current candidates:
-
-```text
-text.unicode.nfc
-text.unicode.nfd
-text.unicode.nfkc
-text.unicode.nfkd
-```
+Current working candidates are Unicode NFC, NFD, NFKC, and NFKD normalization. These are descriptive review names, not
+public API spellings.
 
 ### NFC
 
@@ -404,8 +382,6 @@ profile.
 
 ## 5.5. Unicode NFC Case Fold
 
-**Candidate semantic label:** `text.unicode.nfc-casefold`
-
 This candidate is intended to collapse Unicode canonical-equivalent and default-caseless distinctions under one
 independently specified exact law.
 
@@ -420,8 +396,6 @@ repeated-application stability require explicit review. Locale-sensitive lowerca
 
 ## 5.6. Unicode NFKC Case Fold
 
-**Candidate semantic label:** `text.unicode.nfkc-casefold`
-
 This candidate targets Unicode `NFKC_Casefold` semantics for identifier-like text. It is a defined semantic operation,
 not an arbitrary composition chosen by an implementation. In particular, ordinary lowercasing cannot stand in for it.
 
@@ -433,8 +407,6 @@ Because Unicode and ICU expose NFKC_Casefold as a distinct semantic operation, t
 Authority case than an ad hoc composition. That observation is evidence for review, not an admission decision.
 
 ## 5.7. Unicode Whitespace Collapse to Space
-
-**Candidate semantic label:** `text.unicode.whitespace-collapse-space`
 
 Whitespace collapse is common in application utility libraries and search normalization. The current candidate is
 intended to remove boundary whitespace and map each maximal interior run from one exact Unicode whitespace set to one
@@ -458,8 +430,6 @@ whether one independent Built-In Authority is justified. Convenience alone is in
 
 ## 5.8. LF Line Ending
 
-**Candidate semantic label:** `text.line-ending.lf`
-
 The candidate is motivated by cross-platform text tooling and source-control systems that normalize repository text to
 LF. That ecosystem behavior is demand evidence, not the law definition.
 
@@ -474,8 +444,6 @@ or collapse content.
 
 ## 5.9. Unicode Decimal Digit Fold
 
-**Candidate semantic label:** `text.unicode.decimal-digit-fold`
-
 Search and text-normalization infrastructure commonly folds native decimal digits into ASCII digits. The narrow
 candidate should target Unicode decimal digits only, not every character with a numeric value.
 
@@ -488,8 +456,6 @@ numerals and vulgar fractions are two examples.
 
 ## 5.10. Unicode CJK Width Fold
 
-**Candidate semantic label:** `text.unicode.cjk-width-fold`
-
 Width folding is used by search systems to remove selected full-width / half-width presentation distinctions. The
 candidate must not be defined as "whatever Elasticsearch `cjk_width` or ICU currently does."
 
@@ -500,8 +466,6 @@ explicit. Multi-scalar cases involving combining or voiced marks need separate c
 The law requires an explicit Unicode semantic Basis when Unicode data determines the mapping.
 
 ## 5.11. Unicode Diacritic Fold
-
-**Candidate semantic label:** `text.unicode.diacritic-fold`
 
 Accent and diacritic folding is common in search and application libraries. There is still no safe generic meaning
 behind the phrase "strip accents."
@@ -524,8 +488,6 @@ define a Kontrakt-owned exact finite/versioned mapping law with independently re
 Until that closure exists, this row is a demand-backed candidate, not an admission-ready law.
 
 ## 5.12. Decimal Numeric Value
-
-**Candidate semantic label:** `number.decimal.numeric-value`
 
 The presentation domain is a finite base-10 decimal represented by an integer coefficient and a decimal scale. Scale
 differences are irrelevant when they denote the same exact decimal number.
@@ -557,8 +519,6 @@ elsewhere.
 
 ## 5.13. Binary32 Canonical NaN
 
-**Candidate semantic label:** `number.binary32.canonical-nan`
-
 The presentation domain is IEEE 754 binary32 only when raw NaN representation remains Contract-visible at the Input
 boundary. The candidate maps every NaN bit pattern to one quiet-NaN representative while preserving every non-NaN bit
 pattern, including signed zero.
@@ -568,8 +528,6 @@ supported Input and backend path. In particular, NaN payload and signaling state
 own them.
 
 ## 5.14. Binary64 Canonical NaN
-
-**Candidate semantic label:** `number.binary64.canonical-nan`
 
 The binary64 candidate follows the same shape as binary32. Every NaN representation maps to one quiet NaN while every
 non-NaN bit pattern remains unchanged.
@@ -587,8 +545,6 @@ rules and resource resolution remain outside this group.
 
 ## 6.1. Base16 Lowercase Text
 
-**Candidate semantic label:** `encoding.base16.lowercase-text`
-
 The operand must already be legal Base16 textual presentation under an exact profile. The candidate does not encode
 bytes
 into hexadecimal text.
@@ -602,8 +558,6 @@ must not silently widen the law.
 
 ## 6.2. Base16 Uppercase Text
 
-**Candidate semantic label:** `encoding.base16.uppercase-text`
-
 This candidate has the same legal encoded-text boundary as the lowercase profile but selects uppercase hexadecimal
 letters.
 
@@ -611,8 +565,6 @@ Authority uniqueness must be reviewed explicitly. Lowercase and uppercase select
 cannot be aliases merely because they preserve the same decoded bytes.
 
 ## 6.3. Base64 RFC 4648 Canonical Text
-
-**Candidate semantic label:** `encoding.base64.rfc4648-canonical-text`
 
 The operand must already be legal Base64 text under one exact RFC 4648 profile. The law does not perform bytes-to-text
 encoding and does not repair arbitrary decoder input.
@@ -633,8 +585,6 @@ A liberal decoder accepting ignored characters cannot become the law by implemen
 
 ## 6.4. Base64url RFC 4648 Canonical Text
 
-**Candidate semantic label:** `encoding.base64url.rfc4648-canonical-text`
-
 Base64url uses a different alphabet from standard Base64 and cannot be treated as an API flag on one ambiguous law.
 
 Qualification must also select an exact padding policy. RFC 4648 permits referring specifications to omit padding in
@@ -642,8 +592,6 @@ specific circumstances, so "Base64url" alone does not close one representative. 
 profile is required, this candidate must split before admission.
 
 ## 6.5. Decimal Integer Text Canonical Form
-
-**Candidate semantic label:** `text.integer.decimal-canonical`
 
 Developers frequently remove redundant leading zeros or normalize signs when handling decimal integer text. That demand
 does not justify a vague "number string normalize" law.
@@ -665,8 +613,6 @@ the output is one same-shape representative of the declared textual equivalence 
 
 ## 6.6. IPv6 RFC 5952 Text
 
-**Candidate semantic label:** `network.ipv6.rfc5952`
-
 The candidate domain is legal textual IPv6 presentation without an external zone identifier. Alternate legal spellings
 are equivalent when they denote the same IPv6 address, and RFC 5952 supplies the target text form.
 
@@ -679,8 +625,6 @@ The law performs no DNS lookup and does not resolve interface scope.
 
 ## 6.7. BCP 47 Language Tag
 
-**Candidate semantic label:** `identifier.bcp47.rfc5646`
-
 The candidate domain is a well-formed BCP 47 language tag under one exact Kontrakt profile.
 
 RFC 5646 supplies syntax and canonicalization rules, while IANA Language Subtag Registry data becomes
@@ -692,8 +636,6 @@ explicit rule. Extensions and private-use material need their own treatment. Fut
 the meaning through a mutable current registry.
 
 ## 6.8. UUID Lowercase Text
-
-**Candidate semantic label:** `identifier.uuid.rfc9562-lowercase-text`
 
 The candidate domain is one exact standard textual UUID form. Hexadecimal letter case is declared irrelevant and
 lowercase text is the representative.
@@ -734,8 +676,8 @@ locale-independent surface.
 Unicode defines Turkic-specific case-fold behavior distinct from Default Case Folding. It is not silently selected by
 language environment or locale.
 
-A future profile must make that distinction explicit and independently justify Built-In suitability. It remains
-separate from `text.unicode.default-full-casefold`.
+A future profile must make that distinction explicit and independently justify Built-In suitability. It remains separate
+from the Unicode default full case-fold candidate.
 
 ## 7.4. Broad Search Folding
 
@@ -754,7 +696,7 @@ the sign. V1 therefore defers this law until those semantic consequences are rev
 ## 7.6. RFC 3986 URI Syntax Profile
 
 RFC 3986 defines syntax-level normalization, but URI equivalence depends on purpose and can become scheme-specific. V1
-therefore publishes no generic `UriCanonicalization`.
+therefore admits no generic URI canonicalization law.
 
 A later law must identify the exact syntax-level or scheme-specific equivalence it owns.
 
@@ -769,7 +711,7 @@ Representative formation may belong to Canonicalization while Input or Admission
 A temporal law may declare two offset date-time presentations equivalent when they denote the same instant and select a
 UTC representative. Such a law is valid only when the original civil-time context is explicitly irrelevant.
 
-V1 therefore publishes no generic `DateTimeCanonicalization`.
+V1 therefore admits no generic date-time canonicalization law.
 
 ---
 
