@@ -446,22 +446,6 @@ The grouping below is only a review aid. It does not establish a Catalog taxonom
 It does not create shared Version ownership. Each candidate appears in one primary domain to avoid
 duplicate rows. Section 4.3 separately tracks cross-domain coverage.
 
-**Numeric and Numeric Text**
-
-| Review area  | Candidate working name                             | Working status |
-|--------------|----------------------------------------------------|----------------|
-| Numeric      | Decimal numeric-value representative               | Candidate      |
-| Numeric      | Binary32 canonical NaN                             | Candidate      |
-| Numeric      | Binary64 canonical NaN                             | Candidate      |
-| Numeric text | Decimal integer textual representative             | Candidate      |
-| Numeric text | Fixed-point decimal textual representative         | Candidate      |
-| Numeric text | ASCII grouped-decimal textual representative       | Candidate      |
-| Numeric text | Decimal-comma grouped textual representative       | Candidate      |
-| Numeric text | Percentage / per-mille rate textual representative | Candidate      |
-| Numeric text | Scientific-notation textual representative         | Candidate      |
-| Numeric text | Binary32 decimal lexical representative            | Candidate      |
-| Numeric text | Binary64 decimal lexical representative            | Candidate      |
-
 **Radix and Bit Representation**
 
 | Review area    | Candidate working name                                      | Working status |
@@ -1966,6 +1950,25 @@ The LF review proposes CRLF and standalone CR as alternate spellings of LF. Othe
 line separators are preserved. The decimal-digit review proposes folding only Unicode `Nd`
 characters to their matching ASCII digits under fixed Unicode data.
 
+### Numeric and Numeric Text
+
+| Review area  | Law working name                                   | Review outcome   |
+|--------------|----------------------------------------------------|------------------|
+| Numeric text | Decimal integer textual representative             | ADMIT (proposed) |
+| Numeric text | Fixed-point decimal textual representative         | ADMIT (proposed) |
+| Numeric text | ASCII grouped-decimal textual representative       | ADMIT (proposed) |
+| Numeric text | Percentage / per-mille rate textual representative | ADMIT (proposed) |
+| Numeric text | Scientific-notation textual representative         | ADMIT (proposed) |
+
+The integer and fixed-point reviews propose exact ASCII numeric grammars. Their representatives
+preserve the exact numeric value while the operand remains Text. The grouped-decimal review
+removes valid ASCII grouping commas only. It does not remove fractional trailing zeros.
+
+The rate review proposes an exact fractional value for `%` and `‰`, represented as ordinary
+fixed-point Text. The scientific-notation review preserves scientific notation without
+expanding large exponents into fixed-point output. These are review proposals; their complete
+grammars and coverage rules still require normative approval before Catalog admission.
+
 ## 8.2. DEFER
 
 The reason column identifies what must be resolved before the candidate can be reconsidered.
@@ -1981,6 +1984,17 @@ The reason column identifies what must be resolved before the candidate can be r
 | Unicode normalization | Unicode NFKC case-fold profile            | DEFER          | The operand scope and the correspondence between `toNFKC_Casefold` and identifier caseless equivalence need closure.                                 |
 | Text representation   | Unicode CJK width fold                    | DEFER          | The exact width mappings are unresolved, especially multi-scalar cases. Its distinction from full NFKC also needs closure.                           |
 | Text representation   | Unicode diacritic fold                    | DEFER          | No exact removal set or mapping law is established; search folding and transliteration do not define one representative.                             |
+
+### Numeric and Numeric Text
+
+| Review area  | Law working name                             | Review outcome | Reason for deferral                                                                                                                                         |
+|--------------|----------------------------------------------|----------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Numeric      | Decimal numeric-value representative         | DEFER          | Removing trailing coefficient zeros can move the scale outside the legal Decimal domain. Representative closure or exact Restricted Coverage is unresolved. |
+| Numeric      | Binary32 canonical NaN                       | DEFER          | The Input path must prove preservation of raw NaN bits, including signaling NaNs, before Canonicalization.                                                  |
+| Numeric      | Binary64 canonical NaN                       | DEFER          | Raw NaN payload and signaling-state preservation remain unverified across supported Input and JVM paths.                                                    |
+| Numeric text | Decimal-comma grouped textual representative | DEFER          | Input and output decimal grammars can give the same Text different numeric meanings. The operand interpretation must be unambiguous.                        |
+| Numeric text | Binary32 decimal lexical representative      | DEFER          | Exact decimal-to-binary32 rounding and a unique representative remain unspecified. Signed zero and non-finite text need explicit treatment.                 |
+| Numeric text | Binary64 decimal lexical representative      | DEFER          | Exact decimal-to-binary64 rounding and a unique representative remain unspecified. Signed zero and non-finite text need explicit treatment.                 |
 
 ## 8.3. REJECT
 
