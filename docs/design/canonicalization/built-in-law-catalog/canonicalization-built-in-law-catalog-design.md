@@ -6,7 +6,7 @@ Draft
 
 ## Date
 
-2026-10-06
+2026-10-09
 
 ## Governing ADRs
 
@@ -573,6 +573,28 @@ The lowercase candidate maps ASCII `A` through `Z` to `a` through `z` and preser
 The uppercase candidate applies the inverse case-direction mapping to ASCII letters and likewise preserves every other
 scalar value.
 
+The [WHATWG Infra Standard](https://infra.spec.whatwg.org/#ascii-lowercase) defines ASCII lowercase and uppercase
+as separate operations. It also defines ASCII case-insensitive matching by equality after ASCII lowercasing. For these
+candidates, the equivalence relation can be stated without invoking a conversion procedure: two `Text` values are
+equivalent exactly when corresponding Unicode scalars are identical or differ only as one of the 26 ASCII upper/lower
+letter pairs. The scalar sequences must have the same length. All non-ASCII scalars remain distinct unless already
+identical.
+
+Both candidates use that same equivalence relation. The lowercase law selects the ASCII lowercase member of each pair,
+while the uppercase law selects the uppercase member. Each therefore chooses a different exact representative for a
+mixed-case equivalence class. For example, `"AbC"` has representative `"abc"` under the former law and `"ABC"`
+under the latter. Neither maps Unicode-only case variants such as `İ` or `ß`. Each mapping preserves the scalar count,
+returns a legal `Text`, is idempotent, and has Total Representative Coverage. No additional Unicode data, host locale,
+or runtime registry determines the outcome, and no legal `Text` causes a Canonicalization-owned refusal.
+
+The common equivalence does not automatically merge the candidates into one Authority. Their representative
+obligations are different and cannot be substituted for one another. This supports retaining two proposed independent
+law subjects, subject to ADR-0076's final Authority-uniqueness and normative-specification review; separate API names
+alone would not justify that result. The relation is appropriate only where ASCII letter case is declared irrelevant.
+For example, a protocol's case-sensitive command or an identifier requiring exact spelling must not inherit it merely
+because another protocol uses case-insensitive names. Downstream judgments must use the established representative,
+not an alternate Unicode or locale-sensitive case conversion.
+
 The ASCII case-fold proposal declares ASCII letter case irrelevant and selects lowercase ASCII as
 its representative. Section 8 records that this duplicates the exact meaning proposed for ASCII
 lowercase. It therefore does not justify a separate Catalog Authority. An explicit API alias may
@@ -582,21 +604,25 @@ None of the ASCII candidates owns locale behavior or Unicode case data.
 
 ## 5.3. Unicode Default Case Conversion and Full Case Folding
 
-The Unicode default lowercase and uppercase candidates have `DEFER` review outcomes in Section 8.
-Default full case folding has an `ADMIT (proposed)` review outcome there. These names do not determine public API
-spelling.
+The Unicode default lowercase and uppercase candidates have `REJECT` review outcomes as independent
+Canonicalization Built-In Laws in Section 8. Default full case folding retains an `ADMIT (proposed)` review outcome.
+These names do not determine public API spelling.
 
 The lowercase and uppercase candidates exist because invariant case conversion is a ubiquitous developer operation.
 Their meaning cannot come from ambient host behavior. Java's default locale is one example. The host's current Unicode
 tables are another.
 
-Qualification must close the exact Unicode Default Case Conversion profile. Full mappings and context-sensitive rules
-must be part of that profile when they affect the result. Any Unicode Basis that changes the mapping must also be
-explicit. Locale-specific conversion is separate; Turkish casing is a representative example.
+Unicode Default Case Conversion has standard-defined full mappings and context-sensitive rules. A precise realization
+would also require the Unicode semantic data that determines the result, rather than the host's ambient tables.
+Locale-specific conversion is separate; Turkish casing is a representative example.
 
-Before admission, lowercasing and uppercasing must independently satisfy ADR-0066 idempotence and representative-class
-requirements. The fact that a standard library exposes a transformation is not proof that it forms a legal
-Canonicalization law under Kontrakt's equivalence model.
+The reviewed operations are useful case conversions, but neither is the representative of Unicode Default Caseless
+Matching. Lowercase can leave caseless-equivalent strings distinct, such as `ß` and `ss`. Uppercase can merge strings
+that Default Caseless Matching distinguishes, such as ASCII `i` and U+0131 DOTLESS I. Equal conversion output could
+be used to define a mathematical equivalence relation, but it would not by itself justify an independently owned
+same-meaning relation for the general `Text` domain. That semantic ownership gap is the reason for `REJECT`, not an
+assertion that these conversions are nondeterministic or unusable outside Canonicalization. A narrower, independently
+justified semantic subject would require a new candidate review.
 
 The case-fold candidate is not lowercasing. It targets Unicode Default Full Case Folding for locale-independent caseless
 matching, including multi-code-point foldings where the Unicode profile requires them. Qualification must distinguish
@@ -672,27 +698,59 @@ profile as one complete exact law.
 Because Unicode and ICU expose NFKC_Casefold as a distinct semantic operation, this candidate has a stronger independent
 Authority case than an ad hoc composition. That observation is evidence for review, not an admission decision.
 
-## 5.7. Unicode Whitespace Collapse to Space
+## 5.7. WHATWG ASCII Whitespace Collapse
 
-Whitespace collapse is common in application utility libraries and search normalization. Section 8 records a `DEFER`
-review outcome for this proposal. Its intended meaning removes boundary whitespace and maps each maximal interior run
-from one exact Unicode whitespace set to one U+0020 SPACE.
+Whitespace collapse is common in application text processing. The earlier Unicode-wide whitespace-collapse proposal
+remains historical research; it is no longer an active candidate in Section 8. Its scope could erase distinctions among
+Unicode separators without a sufficiently justified general Built-In meaning. The replacement candidate follows the
+WHATWG Infra Standard's `strip and collapse ASCII whitespace` algorithm. Five code points belong to **one** proposed
+Built-In Law, not five independent Authorities.
 
-Qualification must close all of the following rather than inherit a library's `normalizeSpace` behavior:
+Normative source: WHATWG Infra, §4.7, [`ASCII whitespace`](https://infra.spec.whatwg.org/#ascii-whitespace) and
+[`strip and collapse ASCII whitespace`](https://infra.spec.whatwg.org/#strip-and-collapse-ascii-whitespace).
+
+The operand is an already-established Input `Text`, interpreted as Unicode scalar values under ADR-0064. The exact set
+`W` is fixed to the following five code points:
 
 ```text
-exact whitespace set
-whether leading runs are removed
-whether trailing runs are removed
-replacement scalar value
-whether line separators are part of the collapsed set
-empty / all-whitespace representative
-Unicode Basis and evolution when a Unicode property defines membership
+U+0009  TAB
+U+000A  LINE FEED
+U+000C  FORM FEED
+U+000D  CARRIAGE RETURN
+U+0020  SPACE
 ```
 
-ADR-0066 composition creates an Authority-uniqueness issue here as well. If the exact candidate meaning is nothing more
-than a legal composition of boundary trim and an independently admitted run-collapse law, the Catalog must decide
-whether one independent Built-In Authority is justified. Convenience alone is insufficient.
+`E_L` relates two Text values exactly when the ordered sequences of their nonempty maximal runs of scalars outside `W`
+are identical. This declares the kind and length of each intervening `W` run irrelevant, including runs at either
+boundary. It does not collapse any distinction between scalars outside `W`. In particular, removing a `W` run between
+two nonempty runs would change the relation: `"AB"` is not equivalent to `"A B"`.
+
+`C_L` joins the non-`W` runs with exactly one U+0020 SPACE between adjacent runs. All leading and trailing `W` scalars
+are removed. An empty operand, or one containing only `W`, has the empty `Text` representative. This fixes the
+representative without consulting a host whitespace predicate. It gives one representative per equivalence class;
+`C_L` is idempotent and remains in the same `Text` domain.
+
+Representative Coverage is Total for legal established Input `Text`. The law does not own a refusal for any such
+operand. A single finite scan suffices, and the representative cannot contain more scalar values than the operand.
+The fixed literal set and algorithm determine the proposed Law Version. A later change to the WHATWG Living Standard
+cannot silently change that Version's meaning. Host locale, JDK or ICU Unicode data, and mutable external registries
+are not semantic determinants.
+
+For example, `"  A\t B\r\nC  "` becomes `"A B C"`. The escape notation in this example denotes the respective
+control characters. U+000B VERTICAL TAB, U+00A0 NO-BREAK SPACE, and U+2028 LINE SEPARATOR remain untouched.
+The separate ASCII boundary-trim candidates currently propose a six-character set that includes U+000B; those laws
+must not be substituted for this exact five-character relation.
+
+This law intentionally erases line and control-character distinctions. It is unsuitable wherever such characters
+separate fields, records, or security-relevant protocol elements. WHATWG's generic ASCII whitespace set must not be
+mistaken for XML, JSON, or HTTP whitespace grammar. Canonicalization cannot repair illegal Input or replace protocol
+validation. When selected, Admission judges the established representative, and Lowering consumes that same meaning.
+Raw provenance may support diagnostics but cannot reintroduce an erased distinction as a later semantic determinant.
+
+The existing boundary-trim candidates do not collapse interior whitespace. The standardized algorithm supplies a
+reusable reason to examine an independent Built-In. Nevertheless, ADR-0066 composition and Authority uniqueness must
+still be checked before formal Catalog admission. Section 8 records `ADMIT (proposed)` only; a complete Exact Law
+specification, independent evidence, and an explicit membership decision remain necessary.
 
 ## 5.8. LF Line Ending
 
@@ -1819,6 +1877,7 @@ under ADR-0076.
 | Unicode normalization | Unicode NFD normalization                     | ADMIT (proposed) |
 | Unicode normalization | Unicode NFKC normalization                    | ADMIT (proposed) |
 | Unicode normalization | Unicode NFKD normalization                    | ADMIT (proposed) |
+| Text representation   | WHATWG ASCII whitespace collapse              | ADMIT (proposed) |
 | Text representation   | LF line-ending normalization                  | ADMIT (proposed) |
 | Text representation   | Unicode decimal-digit fold                    | ADMIT (proposed) |
 
@@ -1828,9 +1887,21 @@ under a fixed Unicode semantic version. These selections must be closed in each 
 law specification before formal admission. Leading, trailing, and both-boundary forms remain
 separate proposed Authorities pending that approval.
 
+The ASCII case reviews use the 26 ASCII upper/lower letter pairs as one exact case-insensitive equivalence relation,
+consistent with WHATWG Infra's ASCII case-insensitive matching. Their representatives differ: lowercase selects the
+lowercase spelling, and uppercase selects the uppercase spelling. Both preserve non-ASCII scalars, require no Unicode
+version or ambient locale, and have Total Coverage with length-preserving, idempotent representatives. The different
+representatives justify reviewing two independent Law Authorities rather than treating uppercase as an alias for
+lowercase. Final Authority uniqueness and exact-law approval remain necessary. Case-sensitive protocol fields and
+identifier semantics must not acquire this equivalence without their own applicable contract declaration.
+
 The full case-fold review proposes Unicode Default Full Case Folding rather than lowercasing.
 The normalization reviews propose the four distinct Unicode normalization forms. Every
 Unicode-dependent law requires its exact semantic Version before formal admission.
+
+The WHATWG whitespace-collapse review proposes one law over exactly U+0009, U+000A, U+000C, U+000D, and U+0020.
+It removes boundary runs and collapses interior runs to one U+0020. This is not the earlier Unicode-wide whitespace
+proposal. The selected equivalence can erase protocol delimiters, so its use cannot substitute for protocol validation.
 
 The LF review proposes CRLF and standalone CR as alternate spellings of LF. Other Unicode
 line separators are preserved. The decimal-digit review proposes folding only Unicode `Nd`
@@ -1950,15 +2021,12 @@ The reason column identifies what must be resolved before the candidate can be r
 
 ### Text and Unicode
 
-| Review area           | Law working name                          | Review outcome | Reason for deferral                                                                                                                                  |
-|-----------------------|-------------------------------------------|----------------|------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Text representation   | Unicode whitespace run collapse to U+0020 | DEFER          | Collapses line-separator distinctions. A separate Built-In rather than a legal composition is not yet justified.                                     |
-| Case                  | Unicode default lowercase representative  | DEFER          | Default lowercasing does not itself define the required equivalence relation. Whole-domain representative stability is unproved.                     |
-| Case                  | Unicode default uppercase representative  | DEFER          | Uppercasing can merge strings that default caseless matching distinguishes. Its equivalence relation and representative stability remain unresolved. |
-| Unicode normalization | Unicode NFC case-fold profile             | DEFER          | Unicode specifies the canonical caseless representative; independence from a possible lawful composition of separate laws remains unproven.          |
-| Unicode normalization | Unicode NFKC case-fold profile            | DEFER          | The operand scope and the correspondence between `toNFKC_Casefold` and identifier caseless equivalence need closure.                                 |
-| Text representation   | Unicode CJK width fold                    | DEFER          | The exact width mappings are unresolved, especially multi-scalar cases. Its distinction from full NFKC also needs closure.                           |
-| Text representation   | Unicode diacritic fold                    | DEFER          | No exact removal set or mapping law is established; search folding and transliteration do not define one representative.                             |
+| Review area           | Law working name               | Review outcome | Reason for deferral                                                                                                                         |
+|-----------------------|--------------------------------|----------------|---------------------------------------------------------------------------------------------------------------------------------------------|
+| Unicode normalization | Unicode NFC case-fold profile  | DEFER          | Unicode specifies the canonical caseless representative; independence from a possible lawful composition of separate laws remains unproven. |
+| Unicode normalization | Unicode NFKC case-fold profile | DEFER          | The operand scope and the correspondence between `toNFKC_Casefold` and identifier caseless equivalence need closure.                        |
+| Text representation   | Unicode CJK width fold         | DEFER          | The exact width mappings are unresolved, especially multi-scalar cases. Its distinction from full NFKC also needs closure.                  |
+| Text representation   | Unicode diacritic fold         | DEFER          | No exact removal set or mapping law is established; search folding and transliteration do not define one representative.                    |
 
 ### Numeric and Numeric Text
 
@@ -2045,9 +2113,16 @@ Rejection concerns the proposed independent law, not necessarily every possible 
 
 ### Text and Unicode
 
-| Review area | Law working name               | Review outcome | Reason for rejection                                                                                                                             |
-|-------------|--------------------------------|----------------|--------------------------------------------------------------------------------------------------------------------------------------------------|
-| Case        | ASCII case-fold representative | REJECT         | Its exact ASCII equivalence relation and lowercase representative duplicate the proposed ASCII lowercase law. An alias may reuse that Authority. |
+| Review area | Law working name                         | Review outcome | Reason for rejection                                                                                                                                |
+|-------------|------------------------------------------|----------------|-----------------------------------------------------------------------------------------------------------------------------------------------------|
+| Case        | ASCII case-fold representative           | REJECT         | Its exact ASCII equivalence relation and lowercase representative duplicate the proposed ASCII lowercase law. An alias may reuse that Authority.    |
+| Case        | Unicode default lowercase representative | REJECT         | Default lowercase is case conversion, not a representative of Unicode Default Caseless Matching. No separate general-text equivalence is justified. |
+| Case        | Unicode default uppercase representative | REJECT         | Default uppercase can erase distinctions retained by Unicode Default Caseless Matching. An independent general-text relation is unjustified.        |
+
+The Unicode default lowercase and uppercase operations are standardized and useful outside this admission decision.
+Rejecting these proposed Built-In Authorities does not reject their algorithms or prevent a future narrowly scoped law.
+The Catalog does not derive Contract equivalence merely from equality of conversion output. The Unicode Default Full
+Case Folding candidate remains a separate proposed law for its explicitly defined caseless-matching purpose.
 
 ---
 
