@@ -432,126 +432,12 @@ or merge the constituent Authorities. ADR-0066 remains the owner of composition 
 
 # 4. Current Candidate Inventory
 
-The working inventory covers two different sources of demand. Some candidates come from representation problems that
-application developers handle repeatedly. Others come from standards that already define equivalence or a preferred
-representation inside a specific domain.
+The initial inventory contained 75 candidates. All 75 have now received a proposed review disposition in
+Section 8. No candidate remains unreviewed. The results are not formal Catalog admission decisions.
 
-Neither source is sufficient by itself. Library prevalence does not make a host API authoritative, and the word
-"canonical" in an external standard does not automatically make that standard an inbound Canonicalization law.
-
-Every row in the tables below remains unreviewed. Candidates with a recorded review disposition
-are listed by domain in Section 8. A favorable review is not formal Catalog admission.
-
-The grouping below is only a review aid. It does not establish a Catalog taxonomy or common Authority.
-It does not create shared Version ownership. Each candidate appears in one primary domain to avoid
-duplicate rows. Section 4.3 separately tracks cross-domain coverage.
-
-**Radix and Bit Representation**
-
-| Review area    | Candidate working name                                      | Working status |
-|----------------|-------------------------------------------------------------|----------------|
-| Radix integer  | Hexadecimal integer textual representative                  | Candidate      |
-| Radix integer  | Binary integer textual representative                       | Candidate      |
-| Radix integer  | Octal integer textual representative                        | Candidate      |
-| Bit vector     | Fixed-width hexadecimal bit-vector textual representative   | Candidate      |
-| Bit vector     | Fixed-width binary bit-vector textual representative        | Candidate      |
-| Binary integer | Minimal two's-complement signed-integer byte representative | Candidate      |
-| System bitmask | POSIX file-mode octal textual representative                | Candidate      |
-
-**Encoded Text**
-
-| Review area  | Candidate working name                              | Working status |
-|--------------|-----------------------------------------------------|----------------|
-| Encoded text | Base16 lowercase textual representative             | Candidate      |
-| Encoded text | Base16 uppercase textual representative             | Candidate      |
-| Encoded text | Base64 RFC 4648 canonical textual representative    | Candidate      |
-| Encoded text | Base64url RFC 4648 canonical textual representative | Candidate      |
-| Encoded text | Base32 RFC 4648 canonical textual representative    | Candidate      |
-| Encoded text | Base32hex RFC 4648 canonical textual representative | Candidate      |
-
-**Web and HTTP**
-
-| Review area   | Candidate working name                          | Working status |
-|---------------|-------------------------------------------------|----------------|
-| URI component | RFC 3986 percent-encoding syntax representative | Candidate      |
-| HTTP / Time   | HTTP-date textual representative                | Candidate      |
-| HTTP          | HTTP media-type textual representative          | Candidate      |
-| HTTP          | HTTP qvalue textual representative              | Candidate      |
-| URI / HTTP    | HTTP(S) URI normal-form representative          | Candidate      |
-
-**Network and IoT**
-
-| Review area           | Candidate working name                              | Working status |
-|-----------------------|-----------------------------------------------------|----------------|
-| Protocol / Identifier | IPv6 RFC 5952 textual representative                | Candidate      |
-| Protocol / Network    | POSIX IPv4 numbers-and-dots textual representative  | Candidate      |
-| Protocol / Network    | RFC 9911 MAC-48 lowercase textual representative    | Candidate      |
-| Protocol / Network    | EUI-48 / MAC-48 multi-format textual representative | Candidate      |
-| Protocol / Network    | IPv4 network-prefix representative                  | Candidate      |
-| Protocol / Network    | IPv6 network-prefix representative                  | Candidate      |
-| URI / IoT             | CoAP URI normal-form representative                 | Candidate      |
-
-**Identifiers and Internationalization**
-
-| Review area              | Candidate working name                             | Working status |
-|--------------------------|----------------------------------------------------|----------------|
-| Protocol / Identifier    | BCP 47 registry-independent casing representative  | Candidate      |
-| Protocol / Identifier    | BCP 47 registry-dependent canonical representative | Candidate      |
-| Protocol / Identifier    | UUID RFC 9562 lowercase textual representative     | Candidate      |
-| URI / Identifier         | Generic URN lexical representative                 | Candidate      |
-| URI / Telephony          | RFC 3966 `tel:` URI representative                 | Candidate      |
-| International identifier | DOI textual representative                         | Candidate      |
-
-**Temporal Standards**
-
-| Review area           | Candidate working name                                 | Working status |
-|-----------------------|--------------------------------------------------------|----------------|
-| Temporal / XML Schema | XML Schema `date` canonical lexical representative     | Candidate      |
-| Temporal / XML Schema | XML Schema `time` canonical lexical representative     | Candidate      |
-| Temporal / XML Schema | XML Schema `dateTime` canonical lexical representative | Candidate      |
-
-**Financial and Retail Identifiers**
-
-| Review area          | Candidate working name                 | Working status |
-|----------------------|----------------------------------------|----------------|
-| Financial identifier | IBAN electronic textual representative | Candidate      |
-| Retail identifier    | GTIN 14-digit representative           | Candidate      |
-
-**Software Supply Chain**
-
-| Review area           | Candidate working name               | Working status |
-|-----------------------|--------------------------------------|----------------|
-| Software supply chain | Package URL canonical representative | Candidate      |
-
-**Cloud-Native**
-
-| Review area          | Candidate working name             | Working status |
-|----------------------|------------------------------------|----------------|
-| Cloud-native numeric | Kubernetes Quantity representative | Candidate      |
-
-**Geographic**
-
-| Review area    | Candidate working name    | Working status |
-|----------------|---------------------------|----------------|
-| Geographic URI | `geo:` URI representative | Candidate      |
-
-**Security / PKI Text**
-
-| Review area               | Candidate working name                   | Working status |
-|---------------------------|------------------------------------------|----------------|
-| Security textual encoding | RFC 7468 textual-encoding representative | Candidate      |
-
-**Schema and Structured Data**
-
-| Review area   | Candidate working name      | Working status |
-|---------------|-----------------------------|----------------|
-| Schema / Data | Avro Parsing Canonical Form | Candidate      |
-
-No row in these tables is a Catalog admission decision. The names are descriptive working names only. They do not
-establish public API spelling or Contract identity. Qualification may show that a candidate needs to be renamed or
-split. It may
-also show that two public names should resolve to one Authority. A candidate may still be deferred or rejected before
-admission.
+New unreviewed candidates may be recorded here before qualification. They leave this section when
+an `ADMIT (proposed)`, `DEFER`, or `REJECT` result is recorded in Section 8. The domain grouping is a
+review aid; it does not establish shared Authority or Version ownership.
 
 ## 4.1. Demand and Standard Signals
 
@@ -1969,6 +1855,95 @@ fixed-point Text. The scientific-notation review preserves scientific notation w
 expanding large exponents into fixed-point output. These are review proposals; their complete
 grammars and coverage rules still require normative approval before Catalog admission.
 
+### Radix and Bit Representation
+
+| Review area    | Law working name                                            | Review outcome   |
+|----------------|-------------------------------------------------------------|------------------|
+| Radix integer  | Hexadecimal integer textual representative                  | ADMIT (proposed) |
+| Radix integer  | Binary integer textual representative                       | ADMIT (proposed) |
+| Radix integer  | Octal integer textual representative                        | ADMIT (proposed) |
+| Bit vector     | Fixed-width hexadecimal bit-vector textual representative   | ADMIT (proposed) |
+| Bit vector     | Fixed-width binary bit-vector textual representative        | ADMIT (proposed) |
+| Binary integer | Minimal two's-complement signed-integer byte representative | ADMIT (proposed) |
+| System bitmask | POSIX file-mode octal textual representative                | ADMIT (proposed) |
+
+The radix integer reviews propose exact ASCII grammars without radix prefixes. Their representatives
+remove redundant leading zeros and normalize the sign. The hexadecimal representative uses lowercase
+digits. These laws preserve mathematical integer value, not bit-vector width.
+
+The bit-vector reviews preserve every bit and the width of the represented sequence. They remove only
+permitted separators; the hexadecimal form also selects lowercase digits. The signed-integer Bytes review
+proposes the shortest nonempty big-endian two's-complement sequence. The POSIX mode review proposes a
+12-bit mask with a four-digit octal representative. These choices require approval in the exact normative
+law specifications before admission.
+
+### Encoded Text
+
+| Review area  | Law working name                                    | Review outcome   |
+|--------------|-----------------------------------------------------|------------------|
+| Encoded text | Base16 lowercase textual representative             | ADMIT (proposed) |
+| Encoded text | Base16 uppercase textual representative             | ADMIT (proposed) |
+| Encoded text | Base32 RFC 4648 canonical textual representative    | ADMIT (proposed) |
+| Encoded text | Base32hex RFC 4648 canonical textual representative | ADMIT (proposed) |
+
+The Base16 reviews preserve the octet sequence and select lowercase or uppercase digits respectively.
+They propose an even number of hexadecimal digits without prefixes or separators. The Base32 and
+Base32hex reviews propose uppercase representatives for permitted case variants. Their operand grammars
+must enforce RFC 4648 padding and zero pad bits. Decoder permissiveness cannot expand those grammars.
+
+### Web and HTTP
+
+| Review area | Law working name                   | Review outcome   |
+|-------------|------------------------------------|------------------|
+| HTTP        | HTTP qvalue textual representative | ADMIT (proposed) |
+
+The qvalue review proposes exact RFC 9110 syntax and a minimal decimal representative for the same thousandth-based
+value. Out-of-grammar Text is not repaired.
+
+### Network and IoT
+
+| Review area        | Law working name                                   | Review outcome   |
+|--------------------|----------------------------------------------------|------------------|
+| Protocol / Network | POSIX IPv4 numbers-and-dots textual representative | ADMIT (proposed) |
+| Protocol / Network | RFC 9911 MAC-48 lowercase textual representative   | ADMIT (proposed) |
+| Protocol / Network | IPv4 network-prefix representative                 | ADMIT (proposed) |
+
+The POSIX IPv4 review maps its expressly permitted legacy spellings to four decimal octets. The MAC-48 review selects
+RFC 9911 lowercase colon notation. The IPv4 prefix review clears host bits without changing the prefix length.
+
+### Identifiers and Internationalization
+
+| Review area              | Law working name                                  | Review outcome   |
+|--------------------------|---------------------------------------------------|------------------|
+| Protocol / Identifier    | BCP 47 registry-independent casing representative | ADMIT (proposed) |
+| Protocol / Identifier    | UUID RFC 9562 lowercase textual representative    | ADMIT (proposed) |
+| URI / Telephony          | RFC 3966 `tel:` URI representative                | ADMIT (proposed) |
+| International identifier | DOI textual representative                        | ADMIT (proposed) |
+
+BCP 47 casing is registry-independent. UUID and DOI reviews preserve their identifier meaning while selecting lowercase
+ASCII spelling. The `tel:` review follows RFC 3966 comparison rules; its complete parameter treatment still requires
+normative closure.
+
+### Temporal Standards
+
+| Review area           | Law working name                                       | Review outcome   |
+|-----------------------|--------------------------------------------------------|------------------|
+| Temporal / XML Schema | XML Schema `date` canonical lexical representative     | ADMIT (proposed) |
+| Temporal / XML Schema | XML Schema `time` canonical lexical representative     | ADMIT (proposed) |
+| Temporal / XML Schema | XML Schema `dateTime` canonical lexical representative | ADMIT (proposed) |
+
+The three reviews propose XML Schema 1.1 canonical lexical mappings. Their equivalence follows datatype value identity,
+not an unconditional conversion to one UTC instant. The absence of a timezone remains meaningful.
+
+### Financial and Retail Identifiers
+
+| Review area       | Law working name             | Review outcome   |
+|-------------------|------------------------------|------------------|
+| Retail identifier | GTIN 14-digit representative | ADMIT (proposed) |
+
+The GTIN review proposes a 14-digit zero-padded Text representative. It does not repair check digits or decide whether
+an identifier has been allocated.
+
 ## 8.2. DEFER
 
 The reason column identifies what must be resolved before the candidate can be reconsidered.
@@ -1995,6 +1970,74 @@ The reason column identifies what must be resolved before the candidate can be r
 | Numeric text | Decimal-comma grouped textual representative | DEFER          | Input and output decimal grammars can give the same Text different numeric meanings. The operand interpretation must be unambiguous.                        |
 | Numeric text | Binary32 decimal lexical representative      | DEFER          | Exact decimal-to-binary32 rounding and a unique representative remain unspecified. Signed zero and non-finite text need explicit treatment.                 |
 | Numeric text | Binary64 decimal lexical representative      | DEFER          | Exact decimal-to-binary64 rounding and a unique representative remain unspecified. Signed zero and non-finite text need explicit treatment.                 |
+
+### Encoded Text
+
+| Review area  | Law working name                                    | Review outcome | Reason for deferral                                                                                                                                                                         |
+|--------------|-----------------------------------------------------|----------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Encoded text | Base64 RFC 4648 canonical textual representative    | DEFER          | The allowed noncanonical spellings are unresolved. Strict RFC 4648 encoding alone offers no distinct representations to collapse; permissive decoding may admit unsafe padding or pad bits. |
+| Encoded text | Base64url RFC 4648 canonical textual representative | DEFER          | The exact padding policy and equivalence between padded and unpadded forms are unresolved. Protocol-specific byte-exact uses must remain distinct.                                          |
+
+### Web and HTTP
+
+| Review area   | Law working name                                | Review outcome | Reason for deferral                                                                                          |
+|---------------|-------------------------------------------------|----------------|--------------------------------------------------------------------------------------------------------------|
+| URI component | RFC 3986 percent-encoding syntax representative | DEFER          | The operand boundary and its interaction with URI component decoding order remain unresolved.                |
+| HTTP / Time   | HTTP-date textual representative                | DEFER          | RFC 850 two-digit years require a reference time. A deterministic Basis or narrower operand must be fixed.   |
+| HTTP          | HTTP media-type textual representative          | DEFER          | Parameter-value comparison and ordering cannot be normalized without closing each applicable parameter rule. |
+| URI / HTTP    | HTTP(S) URI normal-form representative          | DEFER          | Host interpretation and component-sensitive URI normalization are not yet closed in one exact profile.       |
+
+### Network and IoT
+
+| Review area           | Law working name                                    | Review outcome | Reason for deferral                                                                                                          |
+|-----------------------|-----------------------------------------------------|----------------|------------------------------------------------------------------------------------------------------------------------------|
+| Protocol / Identifier | IPv6 RFC 5952 textual representative                | DEFER          | The representative policy for IPv4-embedded IPv6 addresses remains unselected.                                               |
+| Protocol / Network    | EUI-48 / MAC-48 multi-format textual representative | DEFER          | The accepted alternate formats are unspecified. Independent Authority value beyond the RFC 9911 law is unproved.             |
+| Protocol / Network    | IPv6 network-prefix representative                  | DEFER          | The network-bit relation is clear, but the final IPv6 textual representative depends on the unresolved IPv4-embedded policy. |
+| URI / IoT             | CoAP URI normal-form representative                 | DEFER          | The exact URI operand needs closed host and percent-encoding rules, including their transformation order.                    |
+
+### Identifiers and Internationalization
+
+| Review area           | Law working name                                   | Review outcome | Reason for deferral                                                                                                               |
+|-----------------------|----------------------------------------------------|----------------|-----------------------------------------------------------------------------------------------------------------------------------|
+| Protocol / Identifier | BCP 47 registry-dependent canonical representative | DEFER          | The IANA Registry snapshot and scope of extension-dependent rules are not fixed.                                                  |
+| URI / Identifier      | Generic URN lexical representative                 | DEFER          | URN-equivalence can ignore components used during resolution. The identity subject and retained components must be distinguished. |
+
+### Financial and Retail Identifiers
+
+| Review area          | Law working name                       | Review outcome | Reason for deferral                                                                                              |
+|----------------------|----------------------------------------|----------------|------------------------------------------------------------------------------------------------------------------|
+| Financial identifier | IBAN electronic textual representative | DEFER          | The accepted print/electronic forms must be separated from country-registry validation and check-digit judgment. |
+
+### Software Supply Chain
+
+| Review area           | Law working name                     | Review outcome | Reason for deferral                                                                                                |
+|-----------------------|--------------------------------------|----------------|--------------------------------------------------------------------------------------------------------------------|
+| Software supply chain | Package URL canonical representative | DEFER          | Package-type-specific normalization is not closed by the core syntax. The rule set must be fixed before admission. |
+
+### Cloud-Native
+
+| Review area          | Law working name                   | Review outcome | Reason for deferral                                                                                                                           |
+|----------------------|------------------------------------|----------------|-----------------------------------------------------------------------------------------------------------------------------------------------|
+| Cloud-native numeric | Kubernetes Quantity representative | DEFER          | Kubernetes preserves suffix-format families and rounds some parsed quantities. Exact equivalence and representative semantics are unresolved. |
+
+### Geographic
+
+| Review area    | Law working name          | Review outcome | Reason for deferral                                                                                            |
+|----------------|---------------------------|----------------|----------------------------------------------------------------------------------------------------------------|
+| Geographic URI | `geo:` URI representative | DEFER          | A unique representative for coordinate edge cases and the treatment of extension parameters remain unresolved. |
+
+### Security / PKI Text
+
+| Review area               | Law working name                         | Review outcome | Reason for deferral                                                                                                              |
+|---------------------------|------------------------------------------|----------------|----------------------------------------------------------------------------------------------------------------------------------|
+| Security textual encoding | RFC 7468 textual-encoding representative | DEFER          | RFC 7468 has no general canonical encoding. Accepted parser variants and the wrapper representative must be explicitly selected. |
+
+### Schema and Structured Data
+
+| Review area   | Law working name            | Review outcome | Reason for deferral                                                                                                    |
+|---------------|-----------------------------|----------------|------------------------------------------------------------------------------------------------------------------------|
+| Schema / Data | Avro Parsing Canonical Form | DEFER          | The same-domain operand and parsing-only equivalence scope need closure; bounded schema resolution remains unverified. |
 
 ## 8.3. REJECT
 
