@@ -55,8 +55,9 @@ compiler realization
     realizes admitted meaning
 ```
 
-A candidate becomes a Catalog member only through an explicit admission decision under ADR-0076. A public API symbol
-cannot perform that admission. Neither can implementation registration, generated code, or verification evidence.
+A candidate becomes a Catalog member only through an explicit admission decision under ADR-0076.
+Neither a public API symbol nor implementation registration can admit it. Generated code and
+verification evidence cannot grant membership either.
 
 ---
 
@@ -67,11 +68,11 @@ hard-gate
 review rather than a weighted score. A candidate is not admitted because most checks look favorable. Every semantic
 obligation that can change Contract-visible meaning must be closed before `ADMIT` is possible.
 
-Security review is part of qualification, but it does not create Canonicalization meaning. A security concern may show
-that the proposed subject is too broad, that a distinction must remain visible, or that V1 admission must be deferred.
-It
-must not invent an equivalence relation, representative, repair rule, or protocol meaning that the owning Contract or
-normative source does not define.
+Security review is part of qualification, but it does not create Canonicalization meaning. It may
+reveal that the proposed subject is too broad or that a distinction must remain visible. It may also
+require V1 admission to be deferred. Security concerns cannot define an equivalence relation or
+representative that the owning law does not support. Nor can they introduce a repair rule or new
+protocol meaning.
 
 The working record must be rich enough to answer ADR-0066 and ADR-0076 without creating a generic property bag. It also
 must keep law meaning separate from evidence about one implementation.
@@ -82,13 +83,17 @@ The review first identifies who owns the proposed meaning. An external standard 
 propose a law that it can legitimately own as reusable built-in meaning. A library API is evidence of developer demand
 or implementation practice. It is not normative semantic authority by itself.
 
-When an external specification is relevant, the review records the exact normative source needed to understand the law.
-It also checks whether that source is current, superseded, amended by errata, or maintained as an evolving standard.
-Normative requirements must be distinguished from examples, implementation guidance, and common library behavior.
+When an external specification is relevant, the reviewer records the exact normative source needed to
+understand the law. The reviewer then checks the source's present normative status. The reviewer must
+determine whether a later specification supersedes it or whether errata amend it. An evolving standard
+requires an explicit account of which meaning is being evaluated. Examples and implementation guidance
+must not be mistaken for normative requirements. Common library behavior is evidence, not a source of
+Contract authority.
 
-A specification name is not enough when the specification leaves a choice open. If an open branch can change `E_L`,
-`C_L`, representative coverage, or a Canonicalization-owned failure, the candidate must close that branch explicitly or
-remain unresolved. Provider choice cannot finish the law.
+A specification name is not enough when its rules leave a choice open. If that choice affects `E_L` or
+`C_L`, the candidate must resolve it explicitly. The same applies when the choice changes
+representative coverage or a Canonicalization-owned failure. A provider's preferred behavior cannot
+complete the law.
 
 The review must not broaden an operand merely because several implementations accept different legacy forms. Parser
 behavior is evidence to examine. It does not define the union of presentations that Kontrakt must accept.
@@ -117,9 +122,11 @@ ADR-0066: the law may govern only an Input presentation meaning that it explicit
 not the same question as occurrence coverage. Applicability decides whether the law may govern that presentation kind;
 coverage decides whether one otherwise legal occurrence can establish the required representative.
 
-The Exact Equivalence Definition must identify which distinctions survive and which are collapsed. `E_L` must be an
-equivalence relation over the domain for which the candidate claims same meaning. A security suspicion, host equality,
-hash collision, parser coincidence, or common implementation shortcut does not establish equivalence.
+The Exact Equivalence Definition must identify which distinctions survive and which are collapsed.
+`E_L` must be an equivalence relation over the domain for which the candidate claims same meaning. A
+security warning does not make two presentations equivalent. Neither host equality nor a shared hash
+establishes the relation. Matching parser results or implementation shortcuts are insufficient for the
+same reason.
 
 The Exact Representative Definition is independently normative. For every successful operand, the candidate must satisfy
 the common ADR-0066 law:
@@ -134,38 +141,51 @@ E_L(x, C_L(x))
 C_L(C_L(x)) = C_L(x)
 ```
 
-The representative must therefore be unique for the declared equivalence class, remain in the same declared meaning
-class, and remain stable under repeated application. An implementation may not select among several equally convenient
-outputs.
+The law must select one representative for each declared equivalence class. That representative must
+stay in the same meaning class. Repeated application must leave it unchanged. An implementation may not
+choose among otherwise convenient outputs.
 
 Representative-domain closure is mandatory. Every successful representative must remain a legal value of the exact
 semantic presentation promised by the law. Canonicalization may replace the value of a selected coordinate with a
 same-shape representative, but it may not change the declared coordinate structure or manufacture a different semantic
 type. Shape-changing formation belongs to Lowering or another explicit owner.
 
-The candidate must state whether coverage is total or restricted. Restricted coverage requires the exact semantic
-condition that reaches the Canonicalization-owned refusal boundary. Input illegality, compiler inability, Budget or
-Capacity exhaustion, and an invalid Definition are not Canonicalization refusals. If several negative outcomes are
-Contract-visible, those distinctions must already be part of the exact law rather than reconstructed by diagnostics.
+The candidate must state whether coverage is total or restricted. Restricted coverage requires an exact
+condition for reaching the Canonicalization-owned refusal boundary. The reviewer must also examine
+how the law's equivalence relation applies to its successful canonicalizable domain. If two legal
+Input presentations are declared equivalent but only one can establish a representative, the review
+must explain how coverage and the owned failure remain coherent. ADR-0066 does not impose a new
+universal rule that every equivalent legal Input must succeed. The relation must instead be closed
+for the exact domain claimed by the law.
 
-If the operand contains explicit absence, finite alternatives, ordering, multiplicity, keys, or another distinction that
-the law can observe, the review must state how that distinction is treated. An aggregate law that can collapse distinct
-keys or elements must define collision behavior. Host iteration order or replacement behavior cannot choose the result.
+Input illegality and an invalid Definition have different owners. Compiler inability is also not a
+Canonicalization refusal; neither is exhaustion of Budget or Capacity. If the law has several
+Contract-visible negative outcomes, it must define those distinctions itself. Diagnostics cannot
+reconstruct them later.
+
+The review must identify every distinction the law can observe in its operand. Explicit absence and
+finite alternatives require precise treatment. Ordering and multiplicity matter when the presentation
+preserves them. The same applies to keys in a structured value. If an aggregate law merges distinct
+keys or elements, it must define what happens to the collision. Host iteration order and replacement
+behavior cannot decide the outcome.
 
 A candidate must collapse declared representation freedom rather than merely validate it. A preserve-everything identity
 law is not a Catalog member because omission already represents the absence of Canonicalization. A standardized value
 with only one legal presentation may still need Input or Admission rules, but that fact alone does not justify a new
 Canonicalization law.
 
-The review must also confirm ownership. Parsing illegal material into legality, sanitizing suspicious data, repairing an
-Input, acquiring business meaning, resolving an external resource, and generating a wire or signing representation are
-not automatically inbound Canonicalization. Exact deterministic bytes belong here only when those bytes are themselves
-the representative owned by the proposed law.
+The review must confirm that the proposed transformation belongs to inbound Canonicalization. Making
+illegal Input legal is repair, not representative selection. Sanitizing suspicious material does not
+become Canonicalization merely because it changes text. Acquiring business meaning or resolving an
+external resource belongs to another owner. Generating wire bytes or signing material also ordinarily
+belongs elsewhere. Exact deterministic bytes qualify here only when the proposed law owns them as its
+same-domain representative.
 
-The complete law meaning must be knowable without executing application behavior. Application callbacks, reflection,
-runtime registration, dynamically supplied replacement laws, and mutable runtime state cannot complete an otherwise
-missing semantic rule. An implementation may realize an admitted law, but executable behavior is not the Authority
-that defines it.
+The complete law meaning must be knowable without executing application behavior. An application
+callback cannot supply a missing semantic rule. Reflection or runtime registration must not introduce
+that rule indirectly. A dynamically replaceable law and mutable runtime state are equally unsuitable as
+sources of authority. Executable code may realize an admitted law, but it cannot define the law's
+meaning.
 
 Ordering by itself is not Canonicalization. Sorting or storage re-layout qualifies only when the exact semantic
 presentation declares the affected ordering distinction irrelevant and the law selects a representative on that basis.
@@ -173,31 +193,37 @@ If the semantic domain was already unordered, deterministic physical ordering is
 
 ## 2.3. Semantic Determinants, External Material, and Evolution
 
-Every semantic input that can change a law-owned observation must be explicit. Material fixed by the exact law is
-Definition-determining meaning. Material that must be supplied through a later legal relation is an explicit Required
-Basis requirement under the common Establishment architecture. Ambient provider state cannot substitute for either one.
+Every semantic input that can change a law-owned observation must be explicit. Material fixed by the
+exact law is Definition-determining meaning. Material supplied through a later legal relation is an
+explicit Required Basis under the common Establishment architecture. Ambient provider state cannot
+stand in for either.
 
-The review must therefore look for hidden dependence on locale, timezone, registry state, operating-system behavior,
-filesystem state, network namespace, mutable configuration, container iteration, provider defaults, or a library's
-current data tables. If such material changes Contract-visible meaning, the candidate must bind it explicitly or remain
-unqualified.
+The review must identify every ambient dependency that could change Contract-visible meaning. Locale
+and timezone defaults are common examples. A registry may change independently of the law, as may the
+data tables shipped with a library. Operating-system state also varies between environments: filesystem
+contents and network namespaces are two concrete cases. Mutable configuration, provider defaults, and
+container iteration order must be checked for the same reason. Any such material that actually
+determines meaning must be bound explicitly. Otherwise the candidate remains unqualified.
 
-For the same exact law Version, operand, and legally bound semantic material, the result must not vary with thread
-scheduling, worker placement, evaluation order, cache state, or parallel execution. The same requirement applies to a
-Canonicalization-owned refusal. Deterministic implementation techniques may help establish the result, but they do not
-become semantic determinants.
+For one exact law Version, the same operand and legally bound semantic material must give the same
+result. Thread scheduling cannot change that result. Neither may worker placement, evaluation order,
+cache state, or parallel execution. A Canonicalization-owned refusal is subject to the same determinism
+requirement. The techniques used to achieve determinism do not themselves become semantic determinants.
 
-Semantic dependencies must also be acyclic. A candidate cannot require recursive semantic discovery, a fixed-point
-search, or repeated approximation to discover what its own law means.
+Semantic dependencies must be acyclic. A candidate cannot discover its own meaning through recursion
+that forms a semantic cycle. Fixed-point search or repeated approximation cannot substitute for a
+closed law.
 
-External material and its label are not automatically the same thing. A standard revision, registry release number, or
-provider version becomes law meaning only when the exact distinction it denotes can change an observation owned by the
-law. Realization and verification metadata remain evidence unless an owning Contract makes them semantic.
+External material and its label are not automatically the same thing. A standard revision matters
+semantically only if a distinction denoted by that revision can change an observation owned by the law.
+The same test applies to registry releases and provider versions. Metadata about realization or
+verification remains evidence unless an owning Contract explicitly gives it meaning.
 
-The review must state the Version consequence of every Contract-visible change. A changed `E_L`, `C_L`, coverage rule,
-owned failure, or semantic determinant cannot silently remain under the same Exact Built-In Law Version. There is no
-`current`, `latest`, `preferred`, `nearest`, or silent upgrade fallback. A new external release does not mutate an
-already-versioned law through ambient state.
+The review must state the Version consequence of every Contract-visible change. A change to `E_L` or
+`C_L` cannot silently remain under the same Exact Built-In Law Version. Changes to coverage, owned
+failure, or semantic determinants have the same consequence. A dynamic `current` or `latest` lookup
+cannot choose the law's meaning. Neither may a `preferred` or `nearest` fallback silently upgrade the
+result. A new external release cannot mutate an already-versioned law through ambient state.
 
 Where an external specification intentionally guarantees stability across revisions, that guarantee may support the
 candidate's evolution closure. It does not remove the need to state what Kontrakt's law Version promises.
@@ -208,40 +234,47 @@ Canonicalization is on an untrusted inbound path. Every V1 candidate must have a
 the presentation domain it admits. The review must be able to explain how much material may need inspection and how much
 representative material may be produced. Structured operands also require a finite traversal boundary.
 
-The review examines output expansion, intermediate expansion, temporary work, nesting depth, aggregate cardinality, and
-any data-dependent operation that can amplify CPU or memory use. A bounded operand type does not by itself prove a
-bounded evaluator when one legal presentation can expand into much more work or output.
+The review must bound the work required to inspect an operand and form its representative. Output and
+intermediate expansion need independent analysis. The reviewer must account for temporary work and for
+the traversal depth of structured data. Aggregate cardinality and data-dependent work can also amplify
+resource use. A bounded operand type is not enough if one legal value still triggers disproportionate
+CPU or memory consumption.
 
 A structured or aggregate candidate must define one closed traversal and representative relation for the whole operand.
 V1 qualification does not admit an open recursive normalization language in which user-provided child laws determine
 meaning at runtime.
 
-Semantic bounds and implementation safety limits must remain separate. A bound belongs to the law only when changing it
-changes legal meaning, representative selection, coverage, or an owned refusal. A compiler safety limit may stop one
-realization, but it must not silently narrow `E_L`, choose another `C_L`, or become a new Canonicalization failure.
+Semantic bounds and implementation safety limits must remain separate. A bound belongs to the law when
+changing it alters legal meaning or representative selection. It also belongs to the law if it changes
+coverage or an owned refusal. A compiler safety limit may stop one realization. It must not silently
+narrow `E_L`, select a different `C_L`, or present the stop as a Canonicalization refusal.
 
 A semantically valid candidate may remain `DEFER` when V1 cannot yet demonstrate a safe bounded realization without
 weakening the law. Qualification must expose that feasibility risk rather than hide it behind a provider limit or an
 implementation-specific cutoff.
 
-Per-law admission does not prove that every ordered composition containing that law is legal. ADR-0066 separately owns
-composition legality, whole-composition stability, basis compatibility, cycle rejection, and whole-composition resource
-bounds.
+Admitting one law does not prove that every composition containing it is legal. ADR-0066 owns
+composition legality and stability for the complete ordered sequence. It also owns compatibility of
+required bases and rejection of semantic cycles. Resource bounds must be checked for the whole
+composition, not inferred from individual admission.
 
 ## 2.5. Built-In Suitability and Authority Uniqueness
 
-A valid representative relation is not automatically a Kontrakt Built-In Law. The candidate must express reusable
-semantic meaning that Kontrakt can legitimately provide as part of its vocabulary. Private application, tenant, or
-organization convention remains with that owner even when it is deterministic.
+A valid representative relation is not automatically a Kontrakt Built-In Law. The candidate must
+provide reusable semantic meaning that Kontrakt can legitimately make part of its vocabulary. A convention owned
+by one application remains with that application. Tenant-specific and organization-specific conventions
+do not acquire Built-In authority merely by being deterministic.
 
-Developer demand, common JVM APIs, and repeated protocol use are useful evidence of Built-In value. They do not replace
-semantic closure. The number of possible public API symbols is not an admission criterion.
+Repeated use in protocols is evidence that a Built-In law could be valuable. Developer demand and
+common JVM APIs provide additional evidence. None of them substitutes for semantic closure, and the
+number of possible public API symbols is not an admission criterion.
 
-A new Catalog member must represent one independently owned semantic subject. A different name, package, standard
-citation, implementation routine, or current output does not by itself justify another Authority. If an existing Exact
-Built-In Law owns the same subject, the candidate may be an alias or reuse case rather than a new member. If an explicit
-ADR-0066 composition already expresses the desired declaration, that fact must also be considered before a convenience
-combined law is proposed.
+A new Catalog member must represent one independently owned semantic subject. Renaming an existing law
+does not justify another Authority. A different package or cited standard is not sufficient either.
+Shared implementation code and identical current output also do not determine ownership. If an existing
+Exact Built-In Law already owns the same subject, reuse or an explicit alias may be appropriate. The
+review must also ask whether an allowed ADR-0066 composition expresses the intended declaration without
+introducing a convenience law.
 
 The reverse rule is equally important. Current semantic equality does not merge Authorities that can evolve
 independently under different owners. Alias relations must be explicit rather than inferred from equal outputs or shared
@@ -249,44 +282,48 @@ code.
 
 ## 2.6. Security Qualification
 
-Security qualification crosses the entire candidate rather than appearing as one final boolean. The review uses the
-Kontrakt Security Architecture as an architecture-level constraint. It also examines the owning standard or protocol's
-security considerations, relevant errata and supersessions, known vulnerability classes, and representative failures in
-real systems when those sources illuminate the candidate.
+Security qualification applies throughout the candidate's meaning and use. It is not one final boolean.
+The Kontrakt Security Architecture supplies the architecture-level constraints. The reviewer must also
+read the owning standard's security considerations, including relevant errata or superseding
+requirements. Known vulnerability classes and failures in deployed systems provide evidence when they
+reveal a risk in the candidate.
 
-Security evidence may narrow the proposed operand, expose an unowned distinction, require `DEFER`, or show that the
-proposed subject belongs outside Canonicalization. It must not create a new equivalence or representative merely because
-that result looks safer.
+Security evidence may show that the operand must be narrower or that a distinction has no proper owner.
+It may justify `DEFER`. It may also show that the proposed subject belongs outside Canonicalization. It
+cannot create an equivalence relation or representative merely because doing so appears safer.
 
 The review covers these security questions when they are relevant to the candidate:
 
-| Security question                   | Qualification requirement                                                                                                                                                                                                                                                               |
-|-------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Interpretation convergence          | Determine whether strict, legacy, liberal, or competing parsers can assign different meaning to the same proposed operand. If they can, the exact operand and owning interpretation must remove the ambiguity rather than inherit ambient parser behavior.                              |
-| Equivalence safety                  | Check whether `E_L` collapses a distinction that the exact semantic subject must preserve for identity, authorization, routing, policy, or another security-relevant judgment. False equivalence and accidental collision are admission defects, not implementation details.            |
-| Judgment-use coherence              | Admission and later consumers must use the established representative relation. Raw provenance may be retained for diagnostics, but a later stage must not recover a distinction that Canonicalization erased and use it as semantic meaning.                                           |
-| Decode and transform ordering       | State the relevant decoding and canonicalization layer. Hidden extra decoding, double decoding, validation of one representation followed by use of another, and post-judgment reinterpretation must not be possible under the law.                                                     |
-| Context binding and freshness       | Check whether Version, Required Basis, protocol mode, world, occurrence context, registry material, or another context can change the result. A result from one context must not be replayed as valid in another.                                                                       |
-| Fail-closed behavior                | Unsupported, ambiguous, corrupt, missing, or inconclusive material must not become successful Canonicalization by pass-through or fallback. Failure ownership must remain with the authority that actually failed.                                                                      |
-| Resource boundedness                | Hostile legal material must not permit unbounded CPU, memory, traversal, output expansion, or diagnostic amplification. Security limits must not change the admitted semantic law.                                                                                                      |
-| Cryptographic and protocol boundary | Determine whether signatures, MACs, hashes, exact-match authentication rules, or protocol transcripts give the original representation independent security meaning. Canonicalization must occur only when the owning protocol actually declares the relevant equivalence and ordering. |
+| Security question                   | Qualification requirement                                                                                                                                                                                                                                                                                             |
+|-------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Interpretation convergence          | Determine whether parsers can disagree about the operand's meaning. Review strict parsing against permissive and legacy behavior. The law must own one interpretation rather than inherit a host parser's choice.                                                                                                     |
+| Equivalence safety                  | Check whether `E_L` erases a distinction needed for identity or authorization. Routing and policy judgments may also depend on such distinctions. False equivalence and accidental collisions are admission defects, not mere implementation bugs.                                                                    |
+| Judgment-use coherence              | Admission must judge the established representative relation, and later consumers must use it consistently. Raw provenance may remain for diagnostics. It must not restore a distinction that the law erased.                                                                                                         |
+| Decode and transform ordering       | Identify the exact decoding layer before judging the result. An implicit extra decode or double decode is prohibited. The law must also prevent validation of one representation followed by use of another, including reinterpretation after judgment.                                                               |
+| Context binding and freshness       | Bind the law Version and any Required Basis that changes the result. Protocol mode and the applicable World or occurrence may also be determinants. Registry material must not leak in through ambient state. Results must not be replayed across incompatible contexts.                                              |
+| Fail-closed behavior                | Unsupported or ambiguous material cannot succeed by fallback. The same rule applies when material is corrupt, missing, or inconclusive. Failure attribution must remain with the authority that failed.                                                                                                               |
+| Resource boundedness                | Hostile legal material must not cause unbounded computation or memory consumption. Traversal and output expansion need bounds, as does diagnostic amplification. Security limits cannot redefine the admitted semantic law.                                                                                           |
+| Cryptographic and protocol boundary | Check whether a signature or MAC authenticates the original representation. Hash preimages and protocol transcripts may require exact bytes too. Authentication fields can require exact matching without normalization. Apply Canonicalization only when the owning protocol declares the equivalence and ordering.  |
+| Sensitive input and disclosure      | When the operand may contain sensitive material, examine what raw provenance is retained and who may observe it. Diagnostics and logs must not expose that material without an authorized disclosure boundary. A correct representative alone does not establish confidentiality.                                     |
+| Other security properties           | Determine whether the candidate's use requires protection beyond identical functional results. Timing behavior may matter for an authentication secret, for example. Such requirements must be traced to their owning security obligation; this review does not impose constant-time execution on every Built-In Law. |
 
-Known vulnerability patterns are review evidence rather than new Contract law. In particular,
-validate-before-canonicalize
-failures such as `CWE-180`, double decoding such as `CWE-174`, and parser-differential failures such as HTTP request
-smuggling show why ordering and single interpretation must be checked. They do not authorize Kontrakt to accept every
-legacy spelling or to sanitize an otherwise distinct value.
+Known vulnerability patterns are review evidence rather than new Contract law. `CWE-180` illustrates
+validation performed before canonicalization. `CWE-174` addresses double decoding. HTTP request
+smuggling demonstrates what can happen when parsers disagree on a message's boundaries. These cases
+require careful ordering and one exact interpretation. They do not authorize Kontrakt to accept every
+legacy spelling or repair a distinct value.
 
-Generic laws and protocol-specific uses must be distinguished. A generic law can be semantically valid while being
-unsafe in a protocol field that requires exact string or byte comparison. That contextual misuse does not silently
-change the generic law's `E_L`. When the candidate itself is protocol-specific, the protocol's exact comparison,
-authentication, signing, and normalization rules are part of qualification and may narrow the operand or reject the
-candidate.
+Generic laws and protocol-specific uses must be distinguished. A generic law may be valid but unsafe
+for a field whose protocol requires exact string or byte comparison. That misuse does not change the
+law's `E_L`. A protocol-specific candidate must respect the comparison and normalization rules owned by that protocol.
+Authentication and signing requirements may narrow its operand or require rejection.
 
-The security review should leave concrete regression witnesses for the distinctions most likely to fail. Depending on
-the domain, these can include an equivalent pair, a near-miss non-equivalent pair, malformed or legacy syntax, nested or
-double encoding, boundary-size material, collision cases, and signed or authenticated material whose exact
-representation matters. The witnesses support later verification; they do not become a second semantic definition.
+The security review should preserve concrete regression witnesses for distinctions likely to fail. It
+should include both an equivalent pair and a closely related non-equivalent pair when the distinction
+matters. Malformed or legacy syntax can expose parser disagreement. Nested encoding tests can expose an
+unintended second decode. Boundary-size inputs and collision cases test different failure modes. When
+authentication or signing depends on exact representation, the witness must preserve those original
+bytes or characters. These cases support verification; they do not become a second semantic definition.
 
 ## 2.7. Evidence and Admission Readiness
 
@@ -294,10 +331,16 @@ Admission must be supported by enough independent evidence to show that the exac
 production implementation does not need to exist first, but unresolved meaning cannot be deferred to that
 implementation.
 
-Relevant evidence can include the current normative specification, official conformance data, versioned examples,
-independently derived reference vectors, independent implementations, differential tests, malformed and adversarial
-cases, version-crossing cases, and resource-bound analysis. Not every simple law needs every evidence category. The
-record must contain the evidence that can actually falsify its important claims.
+Evidence must be chosen to test the candidate's actual claims. The normative specification establishes
+the expected meaning; official conformance data may test it. Independently derived reference vectors
+and separate implementations can expose interpretation differences. Malformed inputs and adversarial
+cases test rejection behavior. Version-crossing cases test evolution, while resource-bound analysis
+tests V1 feasibility. A simple law need not use every method. Its record must nevertheless contain
+evidence capable of falsifying the important claims.
+
+Conformance evidence and security evidence answer different questions. Passing a standard's
+conformance suite does not resolve an applicable parser differential or security risk. The review
+must evaluate both when the candidate has such a risk.
 
 Normative examples and conformance vectors that define or verify an admitted law must be tied to the exact law Version.
 A provider's current behavior is not a substitute for that versioned evidence.
@@ -317,16 +360,20 @@ post-admission realization evidence
     the already-admitted meaning
 ```
 
-A realization constraint cannot weaken the law. An inconvenient provider or backend does not justify a different
-representative. A cache key, fingerprint, dense handle, or result reuse rule likewise has no Contract meaning unless an
-owning Contract independently makes that distinction observable.
+A realization constraint cannot weaken the law. An inconvenient provider or backend does not justify
+choosing a different representative. Compiler artifacts have a separate status. A cache key and
+fingerprint are not Contract meaning, and neither is a dense handle. A result reuse rule gains semantic
+significance only when an owning Contract makes that distinction observable.
 
-The final disposition follows Section 8. `ADMIT` requires every mandatory semantic gate to be closed, no unresolved
-security contradiction in the proposed subject, sufficient V1 finite-work confidence, Built-In suitability, Authority
-uniqueness, and adequate pre-admission evidence. `DEFER` preserves a plausible candidate when one of those admission
-questions remains materially unresolved. `REJECT` is used when the proposed subject structurally falls outside the
-Canonicalization or Built-In boundary, or when its exact relation cannot satisfy the governing law. A rejected broad
-subject may later be researched again as a narrower and semantically different candidate.
+The final disposition follows Section 8. Before a formal `ADMIT`, the complete versioned normative
+law specification must close the mandatory semantic gates. Any material security contradiction must
+also be resolved, and V1 must have sufficient finite-work confidence. The candidate must justify
+Built-In suitability, satisfy Authority uniqueness, and have adequate pre-admission evidence.
+A favorable batch recommendation does not establish Catalog membership. `DEFER` preserves a plausible
+law when an admission question remains materially unresolved. `REJECT` applies when the proposed
+subject falls structurally outside the Canonicalization or Built-In boundary, or when its exact
+relation cannot satisfy the governing law. A rejected broad subject may be researched later as a
+narrower, semantically different candidate.
 
 ---
 
@@ -369,9 +416,10 @@ Parser differential is evidence to resolve, not permission to accept every parse
 implementations disagree, the candidate must identify the one exact operand and interpretation it owns. Hidden second
 decoding and post-judgment reinterpretation are not compatibility features.
 
-A protocol that requires exact bytes or exact string comparison does not automatically inherit a generic
-Canonicalization law. Signing inputs, authentication redirects, routing keys, and other context-bound values remain
-under their owning protocol unless that protocol itself declares the relevant equivalence.
+A protocol that requires exact byte or string comparison does not automatically inherit a generic
+Canonicalization law. A signing input may give the original bytes independent meaning. Authentication
+redirects and routing keys can likewise carry context-bound distinctions. Those values remain under
+their owning protocols unless the protocol declares the relevant equivalence.
 
 Raw source material may remain available as separately owned provenance or diagnostic evidence. Retention does not let
 a later consumer restore semantic authority to a distinction that the selected law already erased.
@@ -391,39 +439,12 @@ representation inside a specific domain.
 Neither source is sufficient by itself. Library prevalence does not make a host API authoritative, and the word
 "canonical" in an external standard does not automatically make that standard an inbound Canonicalization law.
 
-Every row remains a candidate until its exact semantics and Built-In suitability are closed under ADR-0076.
+Every row in the tables below remains unreviewed. Candidates with a recorded review disposition
+are listed by domain in Section 8. A favorable review is not formal Catalog admission.
 
-The grouping below is a review aid only. It does not create Catalog taxonomy, shared Authority, or shared Version
-ownership. Each candidate is assigned to one primary domain here so that the inventory does not duplicate rows.
-Cross-domain coverage remains a separate concern in Section 4.3.
-
-**Text and Unicode**
-
-| Review area           | Candidate working name                        | Working status |
-|-----------------------|-----------------------------------------------|----------------|
-| Boundary text         | ASCII boundary whitespace trim                | Candidate      |
-| Boundary text         | ASCII leading whitespace trim                 | Candidate      |
-| Boundary text         | ASCII trailing whitespace trim                | Candidate      |
-| Boundary text         | Unicode boundary whitespace trim              | Candidate      |
-| Boundary text         | Unicode leading whitespace trim               | Candidate      |
-| Boundary text         | Unicode trailing whitespace trim              | Candidate      |
-| Boundary text         | Unicode whitespace run collapse to U+0020     | Candidate      |
-| Case                  | ASCII lowercase representative                | Candidate      |
-| Case                  | ASCII uppercase representative                | Candidate      |
-| Case                  | ASCII case-fold representative                | Candidate      |
-| Case                  | Unicode default lowercase representative      | Candidate      |
-| Case                  | Unicode default uppercase representative      | Candidate      |
-| Case                  | Unicode default full case-fold representative | Candidate      |
-| Unicode normalization | Unicode NFC normalization                     | Candidate      |
-| Unicode normalization | Unicode NFD normalization                     | Candidate      |
-| Unicode normalization | Unicode NFKC normalization                    | Candidate      |
-| Unicode normalization | Unicode NFKD normalization                    | Candidate      |
-| Unicode normalization | Unicode NFC case-fold profile                 | Candidate      |
-| Unicode normalization | Unicode NFKC case-fold profile                | Candidate      |
-| Text representation   | LF line-ending normalization                  | Candidate      |
-| Text representation   | Unicode decimal-digit fold                    | Candidate      |
-| Text representation   | Unicode CJK width fold                        | Candidate      |
-| Text representation   | Unicode diacritic fold                        | Candidate      |
+The grouping below is only a review aid. It does not establish a Catalog taxonomy or common Authority.
+It does not create shared Version ownership. Each candidate appears in one primary domain to avoid
+duplicate rows. Section 4.3 separately tracks cross-domain coverage.
 
 **Numeric and Numeric Text**
 
@@ -543,8 +564,8 @@ Cross-domain coverage remains a separate concern in Section 4.3.
 | Schema / Data | Avro Parsing Canonical Form | Candidate      |
 
 No row in these tables is a Catalog admission decision. The names are descriptive working names only. They do not
-establish
-public API spelling or Contract identity. Qualification may show that a candidate needs to be renamed or split. It may
+establish public API spelling or Contract identity. Qualification may show that a candidate needs to be renamed or
+split. It may
 also show that two public names should resolve to one Authority. A candidate may still be deferred or rejected before
 admission.
 
@@ -647,12 +668,12 @@ The working labels below are not public API names.
 
 ## 5.1. Boundary Whitespace Trim Family
 
-Current working candidates cover both-boundary, leading-only, and trailing-only trim for an exact ASCII whitespace set.
-The same three semantic shapes are also reviewed for an exact Unicode whitespace set. These descriptions do not fix
-public API names.
+The ASCII and Unicode trim families were reviewed in Section 8 with proposed `ADMIT` outcomes for
+their boundary, leading, and trailing forms. The research below records the meaning that must still
+be closed in each normative law specification. None of these descriptions fixes a public API name.
 
-These candidates exist because general-purpose APIs repeatedly expose both-boundary, leading-only, and trailing-only
-trimming. They must not be collapsed into one law merely because an implementation can share one scanner.
+General-purpose APIs expose all three trimming behaviors, so each has an observable use case. The
+review must not merge them simply because one scanner can implement every behavior.
 
 The ASCII family cannot inherit a host predicate by name. Java `trim()` is one example of behavior that must not define
 the Contract. Qualification must choose the exact finite ASCII code-point set. In particular, "ASCII whitespace" and
@@ -674,25 +695,26 @@ are fixed.
 
 ## 5.2. ASCII Case Conversion and Case Fold
 
-Current working candidates are an ASCII lowercase representative, an ASCII uppercase representative, and an ASCII
-case-fold representative. These descriptions do not fix public API names.
+The ASCII lowercase and uppercase candidates have proposed `ADMIT` outcomes in Section 8.
+The ASCII case-fold proposal was `REJECT`ed as an independent Built-In Authority because it
+duplicates the reviewed lowercase law. These labels are not public API names.
 
 The lowercase candidate maps ASCII `A` through `Z` to `a` through `z` and preserves every other Unicode scalar value.
 The uppercase candidate applies the inverse case-direction mapping to ASCII letters and likewise preserves every other
 scalar value.
 
-The ASCII case-fold candidate declares ASCII letter case irrelevant and selects one exact representative. The current
-working direction is lowercase ASCII. Qualification must determine whether this law is semantically identical to the
-ASCII lowercase candidate. If it is the same exact semantic subject, the Catalog must not create two Authorities merely
-because developers use the words "lowercase" and "case-insensitive" for different intents. API aliases or separate
-authoring names may still project one Authority if that is the deliberate design.
+The ASCII case-fold proposal declares ASCII letter case irrelevant and selects lowercase ASCII as
+its representative. Section 8 records that this duplicates the exact meaning proposed for ASCII
+lowercase. It therefore does not justify a separate Catalog Authority. An explicit API alias may
+still project that Authority if it is formally admitted.
 
 None of the ASCII candidates owns locale behavior or Unicode case data.
 
 ## 5.3. Unicode Default Case Conversion and Full Case Folding
 
-Current working candidates are Unicode default lowercase, Unicode default uppercase, and Unicode default full case fold.
-These descriptions do not fix public API names.
+The Unicode default lowercase and uppercase candidates have `DEFER` review outcomes in Section 8.
+Default full case folding has an `ADMIT (proposed)` review outcome there. These names do not determine public API
+spelling.
 
 The lowercase and uppercase candidates exist because invariant case conversion is a ubiquitous developer operation.
 Their meaning cannot come from ambient host behavior. Java's default locale is one example. The host's current Unicode
@@ -715,8 +737,8 @@ not itself the semantic Basis.
 
 ## 5.4. Unicode Normalization Forms
 
-Current working candidates are Unicode NFC, NFD, NFKC, and NFKD normalization. These are descriptive review names, not
-public API spellings.
+The four normalization-form candidates are Unicode NFC, Unicode NFD, Unicode NFKC, and Unicode NFKD.
+These are descriptive review names, not public API spellings.
 
 ### NFC
 
@@ -759,10 +781,10 @@ profile.
 This candidate is intended to collapse Unicode canonical-equivalent and default-caseless distinctions under one
 independently specified exact law.
 
-It must not be defined merely by the phrase "NFC plus case folding." ADR-0066 now permits finite ordered composition of
-admitted Exact Built-In Laws, so qualification has an additional Authority-uniqueness question: does NFC Case Fold have
-one independently standardized or otherwise independently owned exact semantic subject, or should ordinary use be
-expressed as an explicit composition of separately admitted laws?
+It must not be defined merely by the phrase "NFC plus case folding." ADR-0066 permits finite ordered
+composition of admitted Exact Built-In Laws. Qualification must therefore ask whether NFC Case Fold has
+one independently owned semantic subject. If not, ordinary use may belong to an explicit composition of
+separately admitted laws.
 
 If an independent Authority is retained, qualification must first close the exact equivalence relation and
 representative. It must then fix the case-folding profile and Unicode Basis. Unassigned-code-point behavior and
@@ -782,9 +804,9 @@ Authority case than an ad hoc composition. That observation is evidence for revi
 
 ## 5.7. Unicode Whitespace Collapse to Space
 
-Whitespace collapse is common in application utility libraries and search normalization. The current candidate is
-intended to remove boundary whitespace and map each maximal interior run from one exact Unicode whitespace set to one
-U+0020 SPACE.
+Whitespace collapse is common in application utility libraries and search normalization. Section 8 records a `DEFER`
+review outcome for this proposal. Its intended meaning removes boundary whitespace and maps each maximal interior run
+from one exact Unicode whitespace set to one U+0020 SPACE.
 
 Qualification must close all of the following rather than inherit a library's `normalizeSpace` behavior:
 
@@ -807,9 +829,9 @@ whether one independent Built-In Authority is justified. Convenience alone is in
 The candidate is motivated by cross-platform text tooling and source-control systems that normalize repository text to
 LF. That ecosystem behavior is demand evidence, not the law definition.
 
-The current working relation accepts CRLF, standalone CR, and LF as line-ending spellings. LF is the representative.
-Other Unicode line separators remain unchanged unless a later exact profile admits them; U+2028 and U+2029 are two
-examples.
+The current working relation treats CRLF as a line-ending spelling. It also admits standalone CR and
+LF. LF is the representative. Other Unicode line separators remain unchanged unless the law explicitly
+admits them; U+2028 and U+2029 are examples.
 
 Qualification must decide the exact source separator set rather than inherit host newline behavior. Git is evidence of
 demand, not semantic authority. The law does not alter ordinary text around line endings. In particular, it does not
@@ -844,9 +866,10 @@ The law requires an explicit Unicode semantic Basis when Unicode data determines
 Accent and diacritic folding is common in search and application libraries. There is still no safe generic meaning
 behind the phrase "strip accents."
 
-Apache Commons and Lucene demonstrate clear demand, but their behavior does not define one shared law. Some approaches
-decompose text, while others transliterate or remove combining marks. Broad ICU search folding removes still more
-distinctions, so it cannot silently define this narrower candidate.
+Apache Commons and Lucene show that developers need diacritic-related transformations, but their
+behavior does not define one shared law. Some implementations decompose text before removing marks.
+Others transliterate instead. Broad ICU search folding erases additional distinctions and therefore
+cannot silently define this candidate.
 
 Unicode UTR #30 Character Foldings was withdrawn before a final published version. It therefore cannot be cited as an
 ambient normative authority that silently completes this candidate.
@@ -859,7 +882,7 @@ or
 define a Kontrakt-owned exact finite/versioned mapping law with independently reviewable semantics
 ```
 
-Until that closure exists, this row is a demand-backed candidate, not an admission-ready law.
+Section 8 records this candidate as `DEFER` until that meaning is closed. It is not an admission-ready law.
 
 ## 5.12. Decimal Numeric Value
 
@@ -883,10 +906,11 @@ scale without changing the exact value. Zero has one representative with coeffic
 Java `BigDecimal.stripTrailingZeros` and Python `Decimal.normalize` provide strong demand evidence for this relation.
 Those host APIs do not define the Contract.
 
-Qualification must resolve representative-domain closure. A host decimal carrier can have a bounded scale even when the
-mathematical representative would require a scale outside that carrier's range. Kontrakt must narrow the operand domain,
-use Restricted Coverage with exact failure semantics, or choose a semantic Decimal domain whose representative is
-closed. The law performs no rounding.
+Qualification must resolve representative-domain closure. A host decimal carrier can bound the scale
+even when the mathematical representative needs a larger scale. Kontrakt could narrow the admitted
+operand domain. Alternatively it could specify Restricted Coverage with exact failure semantics, or
+choose a semantic Decimal domain closed under the representative. These alternatives require an
+explicit decision. The law performs no rounding.
 
 This profile is distinct from business scale rules. A fixed monetary scale is one example of meaning that belongs
 elsewhere.
@@ -911,9 +935,9 @@ carrier-preservation requirements as binary32.
 
 ## 5.15. ASCII Grouped-Decimal Text
 
-This candidate targets one self-contained ASCII grammar. Grouping uses `,`, the decimal separator is `.`, and valid
-grouping placement is part of the operand requirement. No locale, host setting, or external numbering profile may alter
-that grammar.
+This candidate targets one self-contained ASCII grammar. It uses `,` for grouping and `.` for the
+decimal separator. The operand requirement must specify valid grouping positions. An ambient locale
+cannot change that grammar. Host settings and external numbering profiles have no authority over it.
 
 The representative removes only valid grouping separators. It does not silently add the stronger distinctions owned by
 fixed-point or scientific-notation candidates.
@@ -961,9 +985,10 @@ must also pass Authority-uniqueness review.
 
 ## 5.18. Scientific-Notation Text
 
-Scientific notation has representation freedom even when the exact decimal value is unchanged. Exponent marker case, an
-explicit positive exponent sign, exponent leading zeros, and redundant decimal zeros are examples that require one exact
-rule.
+Scientific notation allows several spellings of the same exact decimal value. The law must decide how
+to write the exponent marker and whether to retain a positive exponent sign. It must also handle
+leading zeros in the exponent and redundant zeros in the significand. Each decision must lead to one
+exact representative.
 
 The current direction keeps the operand inside scientific notation and chooses one scientific representative. It does
 not make ordinary fixed-point text equivalent merely because both spellings denote the same decimal value.
@@ -993,14 +1018,16 @@ part of the law when they affect the representative.
 The binary64 candidate has the same semantic shape as binary32 but a different value space and precision boundary. That
 difference prevents one host formatting routine from implicitly defining both laws.
 
-Qualification must close the exact text-to-binary64 relation and the unique decimal representative. Signed zero,
-infinity, and NaN treatment require the same explicit review as binary32.
+Qualification must close the exact text-to-binary64 relation and select one decimal representative. It
+must decide whether signed zero remains observable. Infinity and NaN spellings need explicit treatment
+under the same rules applied to binary32.
 
 ## 5.21. Radix Integer Text Family
 
-Three working candidates cover hexadecimal, binary, and octal Text presentations of a mathematical integer. They are not
-Base16 or other encoded-byte laws. Leading zeros, letter case where applicable, prefixes, signs, and negative zero are
-part of the textual grammar rather than properties of an encoded byte sequence.
+Three working candidates cover mathematical integers written in hexadecimal, binary, or octal Text.
+They do not encode an octet sequence, so they are distinct from Base16 and other encoded-byte laws. The
+operand grammar must decide when leading zeros can be ignored. It must also define prefixes and signs,
+including negative zero. Hexadecimal letter case needs its own exact rule.
 
 Qualification must decide whether the three candidates are independent Authorities or one exact semantic family with
 separate authoring projections. A host parser's auto-radix rules cannot define the operand.
@@ -1074,9 +1101,9 @@ into hexadecimal text.
 The intended equivalence declares hexadecimal letter case irrelevant and selects lowercase ASCII hex digits as the
 representative while preserving the represented bit string.
 
-Qualification must close the exact Base16 grammar. For example, it must decide whether a `0x` prefix or separators are
-legal. It must also decide whether odd digit counts are legal. RFC 4648 Base16 has no padding, and a broader host parser
-must not silently widen the law.
+Qualification must close the exact Base16 grammar. It must decide whether the `0x` prefix is legal and
+whether separators are permitted. Odd digit counts need an explicit rule too. RFC 4648 Base16 has no
+padding. A broader host parser cannot silently expand the operand domain.
 
 ## 6.2. Base16 Uppercase Text
 
@@ -1091,8 +1118,8 @@ cannot be aliases merely because they preserve the same decoded bytes.
 The operand must already be legal Base64 text under one exact RFC 4648 profile. The law does not perform bytes-to-text
 encoding and does not repair arbitrary decoder input.
 
-RFC 4648 identifies canonical-encoding requirements around alphabet, padding, and unused pad bits. Qualification must
-close:
+RFC 4648 defines the alphabet and constrains padding. It also requires unused pad bits to be handled
+canonically. Qualification must close these points for the admitted Base64 profile:
 
 ```text
 standard Base64 alphabet
@@ -1154,10 +1181,10 @@ the output is one same-shape representative of the declared textual equivalence 
 This candidate covers decimal quantities that arrive as Text and remain Text after Canonicalization. It is distinct from
 the structured Decimal Numeric Value candidate in Section 5.12.
 
-The working scope is fixed-point notation rather than exponent notation. Qualification must close whether redundant
-integer leading zeros and fractional trailing zeros are equivalent. It must also decide the representative for forms
-such
-as `.5`, `12.`, an explicit plus sign, and negative zero.
+The working scope is fixed-point notation rather than exponent notation. Qualification must decide
+whether redundant integer leading zeros are equivalent. It must separately decide whether trailing
+zeros in the fraction are irrelevant. Legal spellings such as `.5` and `12.` need exact treatment. The
+representative must also account for an explicit plus sign and negative zero.
 
 ```text
 12.50
@@ -1199,10 +1226,11 @@ rules remain separate.
 The candidate domain is legal textual IPv6 presentation without an external zone identifier. Alternate legal spellings
 are equivalent when they denote the same IPv6 address, and RFC 5952 supplies the target text form.
 
-Qualification must keep Input legality separate from the candidate's canonicalizable domain. If the selected Input is
-broader legal Text, non-IPv6 text requires exact Canonicalization Coverage and failure treatment. The grammar must not
-come from a host parser. The profile must settle zero-run tie breaking, leading-zero removal, and hexadecimal letter
-case.
+Qualification must keep Input legality separate from the candidate's canonicalizable domain. If Input
+admits all legal Text, non-IPv6 text needs exact Canonicalization Coverage and owned refusal treatment. The grammar
+cannot
+come from a host parser. The RFC 5952 profile must decide how to choose among equal-length zero runs.
+Leading-zero removal and hexadecimal letter case also need exact rules.
 
 Embedded IPv4 form needs a narrower decision. A configurable or deployment-specific prefix cannot decide whether the
 representative switches to mixed IPv6 / dotted-decimal text. V1 qualification must either use only exact
@@ -1354,9 +1382,9 @@ IDNA boundary selected for the operand.
 
 ## 6.22. CoAP URI Normal Form
 
-RFC 7252 defines normalization and comparison rules for `coap` and `coaps` URIs. The normal form removes the scheme's
-default port, lowercases the scheme and host, and represents an empty path as `/`. IP literals use the recommended IPv6
-form where applicable.
+RFC 7252 defines normalization and comparison rules for `coap` and `coaps` URIs. Their normal form
+omits the scheme's default port. It lowercases the scheme and host and writes an empty path as `/`. IP
+literals follow the recommended IPv6 form where applicable.
 
 The candidate shares several constituent relations with HTTP URI normalization, but the scheme defaults are different.
 Qualification must determine whether the final Contract meaning is one scheme-specific Authority or a legal composition
@@ -1394,9 +1422,9 @@ comparison rules instead of applying one blanket text fold to every parameter va
 XML Schema Datatypes explicitly separates a value space from its lexical space and defines canonical lexical mappings.
 That architecture is close to the representative problem that this Catalog is qualifying.
 
-The current working family contains three separate candidates: `date`, `time`, and `dateTime`. Each must be admitted
-independently if its semantic subject or Version history differs from the others. A shared implementation does not merge
-them.
+The current working family contains three candidates: `date`, `time`, and `dateTime`. They require
+independent admission when their semantic subjects or Version histories differ. Shared implementation
+code does not merge them.
 
 The exact XSD profile determines timezone normalization and fractional-second spelling. Qualification must preserve the
 profile's own timezone semantics rather than importing RFC 3339 or RFC 9557 meaning. Similar-looking timestamp strings
@@ -1429,8 +1457,8 @@ Input or Admission and whether registry material is required by the Canonicaliza
 
 ## 6.28. GTIN 14-Digit Representative
 
-GS1 rules use a 14-digit representation for GTIN values in current Digital Link syntax. Shorter GTIN-8, GTIN-12, and
-GTIN-13 forms are padded with leading zeroes when represented in that profile.
+GS1 Digital Link syntax uses a 14-digit representation for GTIN values. Shorter forms are padded with
+leading zeroes under that profile. This applies to GTIN-8, GTIN-12, and GTIN-13.
 
 This is not a generic integer-leading-zero law. The zeros are part of a domain representation rule for a GS1 identifier.
 Qualification must preserve that domain meaning and keep check-digit validity outside Canonicalization.
@@ -1443,8 +1471,9 @@ law.
 Package URL is now standardized by ECMA-427 and is widely used in software supply-chain data. The core form has
 canonicalization requirements, while individual package types can add type-specific normalization rules.
 
-Qualification must therefore separate core PURL meaning from type-specific material. Maven, npm, and PyPI cannot be
-collapsed into one implicit provider behavior simply because one parser supports all of them.
+Qualification must separate core PURL meaning from type-specific material. Maven, npm, and PyPI each
+illustrate why package-type rules cannot be inferred from the behavior of one parser. If those rules
+change the representative, the required material must be explicit.
 
 The candidate is a useful test of Required Basis and Version ownership. If type-specific rules determine the
 representative, that dependency must be explicit rather than read from a mutable registry at realization time.
@@ -1475,9 +1504,9 @@ instead of composing generic decimal and parameter-sorting helpers and assuming 
 
 ## 6.32. RFC 7468 Textual-Encoding Representative
 
-RFC 7468 defines textual encodings used for PKIX, PKCS, and CMS objects. Parsers may tolerate line layouts that
-generators
-must not emit. Generators use 64-character Base64 lines except for the final line and do not emit extraneous whitespace.
+RFC 7468 defines textual encodings for public-key and message-security objects. PKIX is one use; PKCS
+and CMS are others. Parsers may tolerate source line layouts that generators must not emit. A generator
+normally uses 64-character Base64 lines, except on the final line, and emits no extraneous whitespace.
 
 That parser/generator split creates a candidate representative for one already-established textual-encoding instance.
 The label remains part of the meaning; Canonicalization cannot discard or infer it.
@@ -1611,10 +1640,10 @@ generic IPv4 text.
 
 ## 7.10. Order-Insensitive Finite Aggregates
 
-Sorting and duplicate removal are common for tags, identifiers, and permission-like lists, but the generic operation is
-not yet one Built-In Law candidate. The Contract must first establish whether order and multiplicity are distinctions
-that
-Canonicalization may erase.
+Sorting and duplicate removal are common in application-defined collections, but the generic operation
+is not yet a Built-In Law candidate. Tags are one example. Identifier collections and permission-like
+lists raise the same question. The Contract must first establish whether order and multiplicity are
+distinctions Canonicalization may erase.
 
 If a future aggregate law needs an element order to choose one representative, that order must be Contract-defined. A
 host comparator cannot supply it implicitly. Text ordering is particularly sensitive because UTF-16 code-unit order is
@@ -1689,9 +1718,9 @@ version explicit when that version can change the result.
 
 ## 7.18. SIP and SIPS URI Profiles
 
-SIP URI comparison has domain-specific rules for case, parameters, headers, and percent-encoding. It is too complex to
-be
-inferred from generic URI normalization.
+SIP URI comparison has domain-specific rules that cannot be inferred from generic URI normalization.
+Case handling depends on the relevant component. Parameters and headers have their own comparison
+semantics. Percent-encoding must also follow the SIP rules.
 
 A future candidate should begin from the exact RFC comparison relation. The work remains deferred until the
 representative
@@ -1699,8 +1728,9 @@ and the relationship to generic URI constituent laws are closed.
 
 ## 7.19. GS1 Digital Link Canonical URI
 
-GS1 Digital Link defines a canonical URI profile that includes HTTPS, a canonical host, the current 14-digit GTIN
-representation, and restrictions on query material. This is stronger than the GTIN candidate in Section 6.28.
+GS1 Digital Link defines a canonical URI profile, not merely a GTIN text format. It requires HTTPS and
+selects a canonical host. It uses the current 14-digit GTIN representation and restricts which query
+material remains. This is stronger than the GTIN candidate in Section 6.28.
 
 The full URI law remains deferred because it combines several GS1 identifier rules with URI-level semantics. The
 candidate must first prove that these rules form one legitimate Built-In Authority rather than a protocol-owned output
@@ -1727,8 +1757,9 @@ serialization/signing owner. The resource problem must remain separate from sema
 
 ## 7.22. LDAP and X.509 String Preparation
 
-LDAP string matching and X.509 name comparison can use preparation rules that combine Unicode normalization, case
-handling, and insignificant-space semantics. They also have legality rules that are not Canonicalization.
+LDAP string matching and X.509 name comparison can require preparation before comparison. Their rules
+may normalize Unicode or alter case. Some rules also treat insignificant spaces specially. Legality
+checks are part of those protocols but are not automatically Canonicalization.
 
 A future candidate must split representative formation from prohibited-input handling before admission. The profile must
 not become a shortcut for importing an entire security-sensitive matching pipeline as one opaque law.
@@ -1747,14 +1778,16 @@ Many important standards use canonicalization to produce signing or wire materia
 strict
 representation control, but it does not make them inbound Canonicalization laws.
 
-DER and XML canonicalization are representative examples. JWK Thumbprint similarly creates a hash preimage from selected
-key material. These belong to the authority that owns serialization, signing, or identity derivation unless a separate
-same-shape inbound law is independently established.
+DER and XML canonicalization are examples of standards that control serialization. JWK Thumbprint
+instead constructs a hash preimage from selected key material. The relevant serialization, signing, or
+identity-derivation authority owns those outputs. A separate same-shape inbound law would need
+independent justification.
 
 ## 7.25. Generic Filesystem Paths
 
-Generic path normalization remains outside the Catalog. Lexically removing `.` or `..` is not equivalent to filesystem
-resolution when links, mount points, or platform rules can change the resolved object.
+Generic path normalization remains outside the Catalog. Lexically removing `.` or `..` is not
+equivalent to resolving a filesystem path. Symbolic links can change the resolved object. Mount points
+and platform rules can change it as well.
 
 A future path candidate needs a much narrower semantic subject. Ambient filesystem state cannot become hidden
 Canonicalization meaning.
@@ -1797,12 +1830,14 @@ Input presentation meaning and whether conversion to an integer belongs to Lower
 
 ## 7.30. Finite Bit Sets and CPU-Affinity Text
 
-Finite sets of bit positions can appear as dense masks, hexadecimal masks, individual indexes, or compressed ranges.
-CPU-affinity tooling demonstrates that these forms occur in real system input.
+Finite sets of bit positions can have several textual presentations. A dense binary mask and a
+hexadecimal mask are common. An index list may instead enumerate the set bits or compress consecutive
+indexes into ranges. CPU-affinity tooling demonstrates that these forms occur in real system input.
 
-There is no universal representative across those forms. A generic `sort`, `compress`, or mask conversion rule would
-invent meaning that the domain may not own. CPU affinity remains a useful stress case, but a concrete law needs an exact
-domain profile and a standard-owned or Kontrakt-justified representative before admission.
+There is no universal representative across those forms. Sorting a list does not by itself establish
+Canonicalization meaning. Compressing ranges or choosing a mask format has the same problem. CPU affinity remains a
+useful stress case. An admitted law needs an exact domain profile. Its
+representative must be owned by a relevant standard or independently justified by Kontrakt.
 
 ## 7.31. Bit Numbering and Bit Order
 
@@ -1815,8 +1850,9 @@ belongs to Input interpretation or Lowering rather than Canonicalization.
 
 ## 7.32. IPv6 Scoped Address and Zone Identifier
 
-An IPv6 zone identifier can depend on a host-local interface index, interface name, network namespace, or other node
-state. Two textual zone identifiers cannot therefore be collapsed by consulting the running machine.
+An IPv6 zone identifier can depend on host-local network state. An interface name and numeric interface
+index may refer to the same zone only on a particular node. The active network namespace can change
+that relationship. The running machine therefore cannot decide the law's equivalence relation.
 
 The RFC 5952 candidate remains limited to the IPv6 address text itself. Scoped-address canonicalization is deferred
 unless a future semantic subject supplies a stable explicit zone identity without ambient interface lookup.
@@ -1848,12 +1884,13 @@ current candidate table is deliberate rather than accidental.
 
 # 8. Admission Decision Record
 
-When candidate qualification is complete, the working record should end in one explicit disposition:
+Candidate review records a proposed disposition before any historical Catalog membership decision.
+The review uses the following outcomes:
 
 ```text
-ADMIT
-    candidate satisfies ADR-0076 and an exact Built-In Law Authority
-    is explicitly admitted to the Catalog
+ADMIT (proposed)
+    the candidate appears ready for formal admission, subject to
+    completion and approval of its exact normative law specification
 
 DEFER
     candidate may be valid but one or more admission questions remain unresolved
@@ -1863,20 +1900,97 @@ REJECT
     under the proposed semantic subject
 ```
 
+A proposed `ADMIT` is not Catalog admission. Formal `ADMIT` requires a complete versioned normative
+law specification and an explicit Catalog decision under ADR-0076. Specification approval and
+Catalog admission may be recorded together if neither precedes the other.
+
 The disposition must state the semantic reason. Implementation availability alone does not turn a semantically valid law
 into a different law, and implementation registration does not turn a candidate into a member.
 
-`ADMIT` is a hard-gate result rather than a score. It requires the qualification record in Section 2 to be closed,
-including security qualification and pre-admission evidence relevant to the subject. A candidate remains `DEFER` when
-its law may be valid but an exact semantic, evolution, security, finite-work, V1-feasibility, or evidence question is
-still material. `REJECT` means the proposed semantic subject itself does not satisfy the governing boundary; lack of one
-convenient implementation is not enough by itself.
+Formal `ADMIT` is a hard-gate result rather than a score. The Section 2 qualification record and the
+exact normative law specification must be closed. Relevant security review and pre-admission evidence
+must also be complete. A candidate remains `DEFER` while a material question about its semantics or
+evolution is unresolved. The same applies to security, finite work, V1 feasibility, or required
+evidence. `REJECT` means that the proposed semantic subject fails the governing boundary. The lack of
+a convenient implementation alone does not justify rejection.
 
-An `ADMIT` record must identify the exact independently owned Law Authority being admitted. Once admitted, ADR-0076
-treats Built-In Law Authority Membership as historical and monotonic. A later lifecycle or Governance rule may restrict
-future use without erasing or reassigning that membership.
+The formal `ADMIT` record identifies the independently owned Law Authority and the exact law
+specification approved for admission. Once admitted, ADR-0076 treats Built-In Law Authority Membership
+as historical and monotonic. A later lifecycle or Governance rule may restrict future use without
+erasing or reassigning that membership.
 
 A new exact Version under an already-admitted Authority does not create another Catalog member.
+
+The review tables below use the same domain names as the candidate inventory. A candidate leaves
+Section 4 when its review disposition is recorded here. This movement does not create Catalog
+membership. Working notes in Sections 5–7 remain research evidence rather than current status
+records; the tables below own the recorded review disposition.
+
+## 8.1. ADMIT (Proposed)
+
+A proposed `ADMIT` is a favorable review outcome, not a ratified Exact Built-In Law. Each entry
+still requires its complete normative law specification and an explicit Catalog admission
+under ADR-0076.
+
+### Text and Unicode
+
+| Review area           | Law working name                              | Review outcome   |
+|-----------------------|-----------------------------------------------|------------------|
+| Boundary text         | ASCII boundary whitespace trim                | ADMIT (proposed) |
+| Boundary text         | ASCII leading whitespace trim                 | ADMIT (proposed) |
+| Boundary text         | ASCII trailing whitespace trim                | ADMIT (proposed) |
+| Boundary text         | Unicode boundary whitespace trim              | ADMIT (proposed) |
+| Boundary text         | Unicode leading whitespace trim               | ADMIT (proposed) |
+| Boundary text         | Unicode trailing whitespace trim              | ADMIT (proposed) |
+| Case                  | ASCII lowercase representative                | ADMIT (proposed) |
+| Case                  | ASCII uppercase representative                | ADMIT (proposed) |
+| Case                  | Unicode default full case-fold representative | ADMIT (proposed) |
+| Unicode normalization | Unicode NFC normalization                     | ADMIT (proposed) |
+| Unicode normalization | Unicode NFD normalization                     | ADMIT (proposed) |
+| Unicode normalization | Unicode NFKC normalization                    | ADMIT (proposed) |
+| Unicode normalization | Unicode NFKD normalization                    | ADMIT (proposed) |
+| Text representation   | LF line-ending normalization                  | ADMIT (proposed) |
+| Text representation   | Unicode decimal-digit fold                    | ADMIT (proposed) |
+
+The ASCII trim reviews propose the six-character set from U+0009 through U+000D and U+0020,
+not Java `trim()` behavior. The Unicode trim reviews propose the Unicode `White_Space` property
+under a fixed Unicode semantic version. These selections must be closed in each exact normative
+law specification before formal admission. Leading, trailing, and both-boundary forms remain
+separate proposed Authorities pending that approval.
+
+The full case-fold review proposes Unicode Default Full Case Folding rather than lowercasing.
+The normalization reviews propose the four distinct Unicode normalization forms. Every
+Unicode-dependent law requires its exact semantic Version before formal admission.
+
+The LF review proposes CRLF and standalone CR as alternate spellings of LF. Other Unicode
+line separators are preserved. The decimal-digit review proposes folding only Unicode `Nd`
+characters to their matching ASCII digits under fixed Unicode data.
+
+## 8.2. DEFER
+
+The reason column identifies what must be resolved before the candidate can be reconsidered.
+
+### Text and Unicode
+
+| Review area           | Law working name                          | Review outcome | Reason for deferral                                                                                                                                  |
+|-----------------------|-------------------------------------------|----------------|------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Text representation   | Unicode whitespace run collapse to U+0020 | DEFER          | Collapses line-separator distinctions. A separate Built-In rather than a legal composition is not yet justified.                                     |
+| Case                  | Unicode default lowercase representative  | DEFER          | Default lowercasing does not itself define the required equivalence relation. Whole-domain representative stability is unproved.                     |
+| Case                  | Unicode default uppercase representative  | DEFER          | Uppercasing can merge strings that default caseless matching distinguishes. Its equivalence relation and representative stability remain unresolved. |
+| Unicode normalization | Unicode NFC case-fold profile             | DEFER          | Unicode specifies the canonical caseless representative; independence from a possible lawful composition of separate laws remains unproven.          |
+| Unicode normalization | Unicode NFKC case-fold profile            | DEFER          | The operand scope and the correspondence between `toNFKC_Casefold` and identifier caseless equivalence need closure.                                 |
+| Text representation   | Unicode CJK width fold                    | DEFER          | The exact width mappings are unresolved, especially multi-scalar cases. Its distinction from full NFKC also needs closure.                           |
+| Text representation   | Unicode diacritic fold                    | DEFER          | No exact removal set or mapping law is established; search folding and transliteration do not define one representative.                             |
+
+## 8.3. REJECT
+
+Rejection concerns the proposed independent law, not necessarily every possible authoring alias.
+
+### Text and Unicode
+
+| Review area | Law working name               | Review outcome | Reason for rejection                                                                                                                             |
+|-------------|--------------------------------|----------------|--------------------------------------------------------------------------------------------------------------------------------------------------|
+| Case        | ASCII case-fold representative | REJECT         | Its exact ASCII equivalence relation and lowercase representative duplicate the proposed ASCII lowercase law. An alias may reuse that Authority. |
 
 ---
 
@@ -1955,9 +2069,11 @@ Built-In suitability review
     ↓
 Authority uniqueness review
     ↓
-explicit Catalog admission decision
+proposed disposition from candidate review
     ↓
-exact normative law specification
+complete and approve exact normative law specification
+    ↓
+explicit Catalog admission decision (for ADMIT)
     ↓
 public API projection design
     ↓
@@ -1966,14 +2082,19 @@ compiler realization
 post-admission realization verification
 ```
 
+A `DEFER` or `REJECT` review ends with its recorded reason. Only a proposed `ADMIT` proceeds to
+exact normative specification and a possible formal Catalog admission decision.
+
 Pre-admission evidence does not require the production implementation to exist first. It must prevent membership from
 relying on unresolved semantics or ambient provider behavior. It must also expose representation ambiguity before an
 implementation assumption can harden into Contract meaning.
 
-Concrete qualification is reviewed in small fixed batches so that each candidate receives the same depth of source,
-security, and evidence review. The current working batch size is five candidates. Batch size is workflow only and does
-not alter admission law. The first batch may calibrate the record format, but a later candidate does not receive weaker
-or different gates because it belongs to another domain.
+Concrete qualification is reviewed in small fixed batches so that each candidate receives equivalent
+scrutiny. Sources must support the exact meaning. Security risks and verification evidence must also be
+reviewed. The current batch size is five candidates. A proposed `ADMIT` from a batch does not enter
+the Catalog until its normative specification and formal admission decision are complete. Batch size
+changes only the workflow, not the admission law. The first batch may calibrate the record format,
+but later domains must not receive weaker gates.
 
 Research may expose a missing common Catalog rule. The work returns to ADR-0076 only when that common law must change. A
 change to membership semantics or Version ownership is one example. Candidate-specific detail stays in this Design.
