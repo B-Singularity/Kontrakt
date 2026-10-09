@@ -675,28 +675,52 @@ profile.
 ## 5.5. Unicode NFC Case Fold
 
 This candidate is intended to collapse Unicode canonical-equivalent and default-caseless distinctions under one
-independently specified exact law.
+independently specified exact law. Section 8 records an `ADMIT (proposed)` review outcome, not formal Catalog admission.
 
-It must not be defined merely by the phrase "NFC plus case folding." ADR-0066 permits finite ordered
-composition of admitted Exact Built-In Laws. Qualification must therefore ask whether NFC Case Fold has
-one independently owned semantic subject. If not, ordinary use may belong to an explicit composition of
-separately admitted laws.
+Unicode D145 defines Canonical Caseless Matching using canonical decomposition and Default Full Case Folding. The
+working equivalence compares the NFD forms obtained after folding canonically decomposed inputs. The proposed NFC
+representative applies NFC after folding the canonically decomposed input. This must not be shortened to an
+unspecified "NFC plus case folding" operation: the order and the Unicode semantic Basis are part of the exact meaning.
+Locale-sensitive lowercasing is not part of this law.
 
-If an independent Authority is retained, qualification must first close the exact equivalence relation and
-representative. It must then fix the case-folding profile and Unicode Basis. Unassigned-code-point behavior and
-repeated-application stability require explicit review. Locale-sensitive lowercasing is not part of this law.
+ADR-0066 permits finite ordered composition of separately admitted laws, but it also permits an independently admitted
+curated combined Built-In Law. A standardized, repeatedly useful canonical-caseless relation can justify one
+independently selectable and versioned Law Authority even where a lawful composition could produce the same meaning.
+The candidate is not admitted merely as a convenience alias; its exact relation and representative must be owned by
+that Authority rather than inherited from runtime composition.
+
+Formal admission still requires an exact Unicode Basis, treatment of unassigned code points, and verification that
+representative equality matches the declared equivalence. Repeated-application stability, same-domain closure, and
+finite-work bounds must also be established for the complete law, not assumed from its constituent operations.
 
 ## 5.6. Unicode NFKC Case Fold
 
 This candidate targets Unicode `NFKC_Casefold` semantics for identifier-like text. It is a defined semantic operation,
 not an arbitrary composition chosen by an implementation. In particular, ordinary lowercasing cannot stand in for it.
+Section 8 records an `ADMIT (proposed)` review outcome, not formal Catalog admission.
+
+Unicode R5 defines `toNFKC_Casefold`, while D147 defines Identifier Caseless Matching using that operation after
+canonical decomposition. The working equivalence compares `toNFKC_Casefold(NFD(x))` results. The proposed
+representative is that same exact Unicode-defined form. The preliminary NFD step must not be omitted when the law
+claims D147 equivalence. The exact Unicode data and profile that determine these results must be fixed by the Law
+Version, not inherited from a host library.
 
 The Unicode profile combines compatibility normalization with case folding. It also defines how default-ignorable
-material is treated. Qualification must pin the Unicode semantic material that determines those results and review the
-profile as one complete exact law.
+material is treated. This provides useful, independently standardized identifier-caseless meaning that a generic
+composition of NFKC and Full Case Folding must not silently claim to reproduce. ICU support is implementation and
+demand evidence, not authority to change the Unicode profile.
 
-Because Unicode and ICU expose NFKC_Casefold as a distinct semantic operation, this candidate has a stronger independent
-Authority case than an ad hoc composition. That observation is evidence for review, not an admission decision.
+The proposed operand remains already-established `Text`; this law does not establish that a Text value is a valid or
+secure identifier. Its use in an identifier domain must be selected explicitly. A legality rule that needs to observe
+an original distinction erased by this law must already be established at an authorized earlier boundary; otherwise
+the law must not be selected for that input. Admission receives the representative and cannot restore erased Input
+distinctions. In particular, compatibility characters and default-ignorable code points can collapse to the same
+representative as otherwise distinct input. Signing, authorization, and protocol validation must not silently import
+this equivalence.
+
+Formal admission still requires proof that the proposed representative is idempotent and belongs to the same legal
+presentation domain, complete representative coverage, a pinned Unicode semantic Basis, and finite-work and security
+evidence for the exact law. These obligations cannot be discharged by the availability of a provider API.
 
 ## 5.7. WHATWG ASCII Whitespace Collapse
 
@@ -783,11 +807,17 @@ numerals and vulgar fractions are two examples.
 Width folding is used by search systems to remove selected full-width / half-width presentation distinctions. The
 candidate must not be defined as "whatever Elasticsearch `cjk_width` or ICU currently does."
 
-Qualification must identify the exact supported mapping relation. A narrow width law must remain distinct from full
-NFKC compatibility normalization. If full-width ASCII or half-width Katakana are included, their mappings must be
-explicit. Multi-scalar cases involving combining or voiced marks need separate closure.
+Section 8 records `REJECT` for this broad independent Built-In Law. Unicode width properties and compatibility
+mappings do not by themselves define one narrow CJK width-fold equivalence and representative. The proposal leaves
+open which full-width ASCII and half-width Katakana distinctions are removed and how multi-scalar cases involving
+combining or voiced marks are handled. Applying NFC to resolve those cases could also remove unrelated canonical
+distinctions. An implementation's current behavior cannot settle that Contract meaning.
 
-The law requires an explicit Unicode semantic Basis when Unicode data determines the mapping.
+The rejection does not claim that width conversion is inherently nondeterministic. Exact mappings and combining rules
+could be implemented deterministically under an explicit Unicode semantic Basis. Narrower full-width ASCII and
+half-width Katakana profiles may be researched as separate candidates, each with an independently justified exact
+relation, representative, and security review. Such future work must remain distinct from full NFKC compatibility
+normalization and does not reopen the rejected broad subject by implication.
 
 ## 5.11. Unicode Diacritic Fold
 
@@ -800,17 +830,24 @@ Others transliterate instead. Broad ICU search folding erases additional distinc
 cannot silently define this candidate.
 
 Unicode UTR #30 Character Foldings was withdrawn before a final published version. It therefore cannot be cited as an
-ambient normative authority that silently completes this candidate.
+ambient normative authority that silently completes this candidate. Neither the Unicode `Diacritic` property nor a
+general combining-mark category establishes that removing those characters preserves meaning. The distinction may be
+linguistically or security-significant in the original Text domain.
 
-Before admission this candidate must either:
+Section 8 records `REJECT` for the generic independent Built-In proposal. It cannot claim one standards-defined
+equivalence and representative merely from the prevalence of accent-insensitive search or host folding functions.
+Deterministic mark removal would not resolve this semantic ownership defect.
+
+A future narrowly scoped law would need either:
 
 ```text
-identify one current normative mapping source that exactly owns the desired relation
+one current normative mapping source that exactly owns the desired relation
 or
-define a Kontrakt-owned exact finite/versioned mapping law with independently reviewable semantics
+one independently justified Kontrakt-owned finite/versioned mapping with reviewable semantic meaning
 ```
 
-Section 8 records this candidate as `DEFER` until that meaning is closed. It is not an admission-ready law.
+Such a law would require separate operand, representative, and security qualification. This possibility does not
+change the rejection of the present generic proposal.
 
 ## 5.12. Decimal Numeric Value
 
@@ -834,11 +871,21 @@ scale without changing the exact value. Zero has one representative with coeffic
 Java `BigDecimal.stripTrailingZeros` and Python `Decimal.normalize` provide strong demand evidence for this relation.
 Those host APIs do not define the Contract.
 
-Qualification must resolve representative-domain closure. A host decimal carrier can bound the scale
-even when the mathematical representative needs a larger scale. Kontrakt could narrow the admitted
-operand domain. Alternatively it could specify Restricted Coverage with exact failure semantics, or
-choose a semantic Decimal domain closed under the representative. These alternatives require an
-explicit decision. The law performs no rounding.
+The Java `BigDecimal` cohort and stripping behavior are documented by the
+[Java Platform API](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/math/BigDecimal.html).
+
+Section 8 records `ADMIT (proposed)` for the exact numeric-cohort relation, with Restricted Coverage as the proposed
+solution to representative-domain closure. The equivalence relates two legal Decimal presentations when their exact
+values `coefficient × 10^(-scale)` are equal. For each nonzero value, the proposed representative removes all trailing
+base-10 coefficient zeroes and adjusts the scale exactly. For zero, it selects `(coefficient=0, scale=0)`.
+
+The law establishes that representative only when the fully reduced coefficient and scale are both legal under the
+same established Decimal domain and its closed bounds. Otherwise it owns an explicit Canonicalization refusal. It does
+not stop reduction early, clamp the scale, round, or substitute a convenient carrier value. Numerically equivalent
+operands within one exact Decimal domain have the same mathematical reduced form, so their coverage judgment is the
+same. Java `BigDecimal` scale overflow is implementation evidence, not a source of Contract failure semantics. The
+formal law must pin the bound and refusal relation, including cases where the zero representative is outside the
+applicable scale domain; this positive review does not ratify those details.
 
 This profile is distinct from business scale rules. A fixed monetary scale is one example of meaning that belongs
 elsewhere.
@@ -849,17 +896,35 @@ The presentation domain is IEEE 754 binary32 only when raw NaN representation re
 boundary. The candidate maps every NaN bit pattern to one quiet-NaN representative while preserving every non-NaN bit
 pattern, including signed zero.
 
-The current candidate representative is `0x7fc00000`. Qualification must first prove that the raw NaN bits survive every
-supported Input and backend path. In particular, NaN payload and signaling state must remain observable if the law is to
-own them.
+Section 8 records `ADMIT (proposed)`. The proposed representative is `0x7fc00000`, consistent with the canonical NaN
+bits used by Java `Float.floatToIntBits`. Two binary32 presentations are equivalent when both bit patterns denote NaN,
+or, for non-NaN patterns, only when their complete 32 bits match. Every NaN payload, sign, and signaling/quiet
+distinction
+is deliberately collapsed; signed zero and all non-NaN bits remain distinct. The representative is idempotent, stays
+inside the binary32 domain, and has Total Coverage for admitted exact binary32 bits.
+
+Raw-bit acquisition must precede the law. A lossless 32-bit carrier can realize the fixed exponent/fraction mask test
+without executing floating-point arithmetic. Passing signaling NaN through a JVM `Float` path before Input
+Establishment cannot be assumed lossless. This is a platform-carrier qualification and verification obligation under
+ADR-0073, not permission to weaken ADR-0064 Input sameness or the proposed Law. A domain that needs NaN payload or
+signaling distinctions for diagnostics, integrity, or control must not select this collapse. Formal admission still
+requires evidence that each supported Input path preserves the admitted bit distinctions before Canonicalization.
 
 ## 5.14. Binary64 Canonical NaN
 
 The binary64 candidate follows the same shape as binary32. Every NaN representation maps to one quiet NaN while every
 non-NaN bit pattern remains unchanged.
 
-The current candidate representative is `0x7ff8000000000000`. Qualification carries the same raw-bit observability and
-carrier-preservation requirements as binary32.
+Section 8 records `ADMIT (proposed)`. The proposed representative is `0x7ff8000000000000`, consistent with Java
+`Double.doubleToLongBits`. All binary64 NaN bit patterns belong to one equivalence class; every non-NaN pattern is
+only equivalent to the identical 64-bit pattern. The law preserves both signed zeroes, infinities, and finite-value
+bits exactly. It is Total, idempotent, and uses fixed masks rather than host floating-point equality or arithmetic.
+
+The realization must preserve the complete binary64 bit datum at Input acquisition, for example through a lossless
+64-bit carrier. A JVM `Double` carrier cannot be presumed to retain every signaling NaN representation. The
+independent binary64 Law does not inherit the binary32 representative or its bit-width semantics. NaN payload and
+signaling-state loss is intentional only after the selected Canonicalization establishes its representative. Formal
+admission still requires supported-path preservation and security evidence for that boundary.
 
 ## 5.15. ASCII Grouped-Decimal Text
 
@@ -884,13 +949,22 @@ This candidate addresses an exact decimal-comma grammar without using a locale p
 fix `,` as the decimal separator and `.` as the grouping separator. Other separators or culturally inferred variants are
 not accepted by implication.
 
-The working representative uses ungrouped decimal text with `.` as the decimal separator.
+The original working representative changes the decimal separator to `.`, as illustrated below:
 
 ```text
 12.345,67
     -> 12345.67
 ```
 
+Section 8 rejects this proposed independent Law. In its source grammar, `.` denotes grouping and `,` denotes the
+decimal point. The output therefore cannot in general be interpreted under the same grammar as the input without
+changing numeric meaning. For example, `1,234` means one and 234 thousandths under the proposed input grammar, while
+its suggested representative `1.234` denotes one thousand two hundred thirty-four in that grammar. The problem is
+same-domain semantic closure, not an inability to deterministically rewrite punctuation. Neither an implicit locale
+switch nor a subsequent parser is allowed to decide which interpretation is authoritative.
+
+A narrower grouping-removal profile might preserve the comma decimal separator, as in `12.345,67` -> `12345,67`.
+That is a different exact representative and requires its own admission review; it is not admitted by this rejection.
 This candidate must not become a general international-number parser. A different grouping grammar requires a separate
 exact review rather than ambient locale selection.
 
@@ -934,21 +1008,44 @@ qualified separately rather than hidden behind a formatter choice.
 This candidate concerns decimal Text that denotes an IEEE 754 binary32 value. Two legal spellings are equivalent only
 when the law's exact conversion relation produces the same binary32 value.
 
-Qualification must define a deterministic shortest or otherwise unique decimal representative. It must preserve signed
-zero when that distinction remains visible. Infinity and NaN spelling require explicit treatment rather than inheritance
-from a host formatter.
+Section 8 records `ADMIT (proposed)` for the exact
+[W3C XML Schema 1.1](https://www.w3.org/TR/xmlschema11-2/) `float` lexical/canonical profile. The already-established
+`Text` operand is interpreted under the selected `floatRep` grammar and the specifically chosen
+`floatLexicalMap`; equivalence means identity of the resulting binary32 value, not equality of exact decimal rationals.
+The representative is the result of the chosen `floatCanonicalMap` for that value. Both maps must be frozen as the
+Exact Law Version's meaning, since XML Schema permits other conforming mappings that need not emit identical Text.
 
-The law cannot use the current JVM floating-point formatter as semantic authority. Correct rounding and tie-breaking are
-part of the law when they affect the representative.
+This profile distinguishes positive and negative zero by value identity and represents NaN by its one canonical lexical
+value. The grammar and maps must close the treatment of `INF`, `-INF`, exponent forms, rounding, and tie-breaking.
+Within the exact legal lexical profile the representative remains `Text` and is intended to be stable on reapplication;
+other `Text` cannot be silently repaired or accepted by a permissive host parser. The formal law must pin occurrence
+coverage and owned refusal where the selected Input `Text` lies outside its exact operand profile. The resulting
+binary32
+value is an interpretation used to define Text equivalence, not a Lowering result or a new Input presentation.
+
+The law cannot use the current JVM floating-point formatter as semantic authority. Exact rational/integer-based
+rounding or another independently verified implementation must produce the specified binary32 result, without
+intermediate binary64 double-rounding. Very long numerals and extreme exponents require bounded-work evidence; any
+safety limit must not silently change the selected rounding or representative.
 
 ## 5.20. Binary64 Decimal Lexical Form
 
 The binary64 candidate has the same semantic shape as binary32 but a different value space and precision boundary. That
 difference prevents one host formatting routine from implicitly defining both laws.
 
-Qualification must close the exact text-to-binary64 relation and select one decimal representative. It
-must decide whether signed zero remains observable. Infinity and NaN spellings need explicit treatment
-under the same rules applied to binary32.
+Section 8 records `ADMIT (proposed)` for the separate W3C XML Schema 1.1 `double` lexical/canonical profile. Legal
+`Text` under the selected `doubleRep` grammar is interpreted by the specifically chosen `doubleLexicalMap`; operands
+are equivalent when they have the same binary64 value identity. Their one Text representative is selected by the
+corresponding `doubleCanonicalMap`. The Law Version must fix both exact maps rather than inherit the current JVM or
+an interchangeable IEEE 754 formatter.
+
+Value identity preserves the distinction between positive and negative zero; NaN has one lexical identity within this
+Text law. The grammar and mapping specify infinities and exact rounding independently of binary32. The proposed
+representative remains in the same lexical Text domain. The formal law must close coverage or refusal outside the
+exact grammar, prove reapplication stability, and verify finite work for adversarially long numerals and exponents.
+Its equivalence does not assert that two different exact decimal rationals are equal: they may round to the same
+binary64 value. A downstream consumer must not reinterpret the established representative under another floating-point
+or exact-decimal profile.
 
 ## 5.21. Radix Integer Text Family
 
@@ -1873,6 +1970,8 @@ under ADR-0076.
 | Case                  | ASCII lowercase representative                | ADMIT (proposed) |
 | Case                  | ASCII uppercase representative                | ADMIT (proposed) |
 | Case                  | Unicode default full case-fold representative | ADMIT (proposed) |
+| Unicode normalization | Unicode NFC case-fold profile                 | ADMIT (proposed) |
+| Unicode normalization | Unicode NFKC case-fold profile                | ADMIT (proposed) |
 | Unicode normalization | Unicode NFC normalization                     | ADMIT (proposed) |
 | Unicode normalization | Unicode NFD normalization                     | ADMIT (proposed) |
 | Unicode normalization | Unicode NFKC normalization                    | ADMIT (proposed) |
@@ -1899,6 +1998,13 @@ The full case-fold review proposes Unicode Default Full Case Folding rather than
 The normalization reviews propose the four distinct Unicode normalization forms. Every
 Unicode-dependent law requires its exact semantic Version before formal admission.
 
+The NFC case-fold review proposes Unicode D145 Canonical Caseless Matching with one NFC representative. An explicit
+composition may express similar meaning, but a frequently used standardized combination can justify a separately
+versioned curated Built-In Law under ADR-0066. The NFKC case-fold review proposes Unicode D147 Identifier Caseless
+Matching using `toNFKC_Casefold` after NFD. That law also removes distinctions involving compatibility characters and
+default-ignorable code points. Neither proposed law validates identifier syntax or makes every identifier use safe.
+Their precise Unicode Basis, representative stability, and security obligations remain subject to normative approval.
+
 The WHATWG whitespace-collapse review proposes one law over exactly U+0009, U+000A, U+000C, U+000D, and U+0020.
 It removes boundary runs and collapses interior runs to one U+0020. This is not the earlier Unicode-wide whitespace
 proposal. The selected equivalence can erase protocol delimiters, so its use cannot substitute for protocol validation.
@@ -1916,6 +2022,11 @@ characters to their matching ASCII digits under fixed Unicode data.
 | Numeric text | ASCII grouped-decimal textual representative       | ADMIT (proposed) |
 | Numeric text | Percentage / per-mille rate textual representative | ADMIT (proposed) |
 | Numeric text | Scientific-notation textual representative         | ADMIT (proposed) |
+| Numeric      | Decimal numeric-value representative               | ADMIT (proposed) |
+| Numeric      | Binary32 canonical NaN                             | ADMIT (proposed) |
+| Numeric      | Binary64 canonical NaN                             | ADMIT (proposed) |
+| Numeric text | Binary32 decimal lexical representative            | ADMIT (proposed) |
+| Numeric text | Binary64 decimal lexical representative            | ADMIT (proposed) |
 
 The integer and fixed-point reviews propose exact ASCII numeric grammars. Their representatives
 preserve the exact numeric value while the operand remains Text. The grouped-decimal review
@@ -1925,6 +2036,19 @@ The rate review proposes an exact fractional value for `%` and `‰`, represente
 fixed-point Text. The scientific-notation review preserves scientific notation without
 expanding large exponents into fixed-point output. These are review proposals; their complete
 grammars and coverage rules still require normative approval before Catalog admission.
+
+The Decimal numeric-value review proposes exact numeric-cohort equivalence over the already-established Decimal Leaf.
+It selects the fully reduced coefficient/scale pair, with `(0,0)` for zero, and uses Restricted Coverage with an
+explicit Canonicalization refusal if that representative lies outside the same closed Decimal domain. No rounding or
+silent scale clipping is admitted. The Binary32 and Binary64 NaN reviews collapse only their respective NaN bit
+patterns to `0x7fc00000` and `0x7ff8000000000000`; non-NaN bits, including signed zero, remain exact. Each supported
+Input acquisition route must preserve the complete admitted bit datum before the selected Law runs.
+
+The two decimal lexical reviews select the distinct W3C XML Schema 1.1 `floatLexicalMap` / `floatCanonicalMap` and
+`doubleLexicalMap` / `doubleCanonicalMap` algorithm pairs as their proposed exact Text relations and representatives.
+They retain signed-zero identity and one `NaN` text identity under those profiles. The Law Versions must specify the
+exact grammar, rounding, representative coverage, and bounded realization, not borrow JVM formatter behavior. All five
+reviews remain proposals until their exact normative specifications and admission evidence are approved.
 
 ### Radix and Bit Representation
 
@@ -2019,26 +2143,6 @@ an identifier has been allocated.
 
 The reason column identifies what must be resolved before the candidate can be reconsidered.
 
-### Text and Unicode
-
-| Review area           | Law working name               | Review outcome | Reason for deferral                                                                                                                         |
-|-----------------------|--------------------------------|----------------|---------------------------------------------------------------------------------------------------------------------------------------------|
-| Unicode normalization | Unicode NFC case-fold profile  | DEFER          | Unicode specifies the canonical caseless representative; independence from a possible lawful composition of separate laws remains unproven. |
-| Unicode normalization | Unicode NFKC case-fold profile | DEFER          | The operand scope and the correspondence between `toNFKC_Casefold` and identifier caseless equivalence need closure.                        |
-| Text representation   | Unicode CJK width fold         | DEFER          | The exact width mappings are unresolved, especially multi-scalar cases. Its distinction from full NFKC also needs closure.                  |
-| Text representation   | Unicode diacritic fold         | DEFER          | No exact removal set or mapping law is established; search folding and transliteration do not define one representative.                    |
-
-### Numeric and Numeric Text
-
-| Review area  | Law working name                             | Review outcome | Reason for deferral                                                                                                                                         |
-|--------------|----------------------------------------------|----------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Numeric      | Decimal numeric-value representative         | DEFER          | Removing trailing coefficient zeros can move the scale outside the legal Decimal domain. Representative closure or exact Restricted Coverage is unresolved. |
-| Numeric      | Binary32 canonical NaN                       | DEFER          | The Input path must prove preservation of raw NaN bits, including signaling NaNs, before Canonicalization.                                                  |
-| Numeric      | Binary64 canonical NaN                       | DEFER          | Raw NaN payload and signaling-state preservation remain unverified across supported Input and JVM paths.                                                    |
-| Numeric text | Decimal-comma grouped textual representative | DEFER          | Input and output decimal grammars can give the same Text different numeric meanings. The operand interpretation must be unambiguous.                        |
-| Numeric text | Binary32 decimal lexical representative      | DEFER          | Exact decimal-to-binary32 rounding and a unique representative remain unspecified. Signed zero and non-finite text need explicit treatment.                 |
-| Numeric text | Binary64 decimal lexical representative      | DEFER          | Exact decimal-to-binary64 rounding and a unique representative remain unspecified. Signed zero and non-finite text need explicit treatment.                 |
-
 ### Encoded Text
 
 | Review area  | Law working name                                    | Review outcome | Reason for deferral                                                                                                                                                                         |
@@ -2113,16 +2217,34 @@ Rejection concerns the proposed independent law, not necessarily every possible 
 
 ### Text and Unicode
 
-| Review area | Law working name                         | Review outcome | Reason for rejection                                                                                                                                |
-|-------------|------------------------------------------|----------------|-----------------------------------------------------------------------------------------------------------------------------------------------------|
-| Case        | ASCII case-fold representative           | REJECT         | Its exact ASCII equivalence relation and lowercase representative duplicate the proposed ASCII lowercase law. An alias may reuse that Authority.    |
-| Case        | Unicode default lowercase representative | REJECT         | Default lowercase is case conversion, not a representative of Unicode Default Caseless Matching. No separate general-text equivalence is justified. |
-| Case        | Unicode default uppercase representative | REJECT         | Default uppercase can erase distinctions retained by Unicode Default Caseless Matching. An independent general-text relation is unjustified.        |
+| Review area | Law working name                         | Review outcome | Reason for rejection                                                                                                                                                    |
+|-------------|------------------------------------------|----------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Case        | ASCII case-fold representative           | REJECT         | Its exact ASCII equivalence relation and lowercase representative duplicate the proposed ASCII lowercase law. An alias may reuse that Authority.                        |
+| Case        | Unicode default lowercase representative | REJECT         | Default lowercase is case conversion, not a representative of Unicode Default Caseless Matching. No separate general-text equivalence is justified.                     |
+| Case        | Unicode default uppercase representative | REJECT         | Default uppercase can erase distinctions retained by Unicode Default Caseless Matching. An independent general-text relation is unjustified.                            |
+| Text        | Unicode CJK width fold                   | REJECT         | The broad profile has no one exact width-equivalence rule; multi-scalar composition and unrelated NFC effects remain unresolved. Narrower laws need separate review.    |
+| Text        | Unicode diacritic fold                   | REJECT         | No general Unicode accent-removal equivalence exists. Broad removal can erase language- or security-significant distinctions. A narrower profile needs separate review. |
 
 The Unicode default lowercase and uppercase operations are standardized and useful outside this admission decision.
 Rejecting these proposed Built-In Authorities does not reject their algorithms or prevent a future narrowly scoped law.
 The Catalog does not derive Contract equivalence merely from equality of conversion output. The Unicode Default Full
 Case Folding candidate remains a separate proposed law for its explicitly defined caseless-matching purpose.
+
+The CJK width-fold rejection concerns the unresolved broad subject, not the possibility of separately qualified
+full-width ASCII or half-width Katakana laws. The diacritic-fold rejection likewise concerns the proposed generic
+same-meaning relation, not accent-sensitive search or narrower standards-backed comparisons. Neither rejection means
+that these transformations are inherently nondeterministic; a fixed implementation cannot replace missing Contract
+meaning or justify unsafe equivalence.
+
+### Numeric and Numeric Text
+
+| Review area  | Law working name                             | Review outcome | Reason for rejection                                                                                                                                                                                    |
+|--------------|----------------------------------------------|----------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Numeric text | Decimal-comma grouped textual representative | REJECT         | Changing a comma decimal separator to `.` creates a Text that can denote a different number under the same grouping/decimal grammar. The proposed same-domain representative does not preserve meaning. |
+
+This rejection applies to the original comma-to-dot representative, not to all decimal-comma processing. A separately
+qualified Law could remove only valid grouping periods while retaining the comma decimal separator. That narrower
+relation must receive its own exact grammar, equivalence, security review, and Catalog disposition before use.
 
 ---
 
