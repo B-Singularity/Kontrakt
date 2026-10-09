@@ -1140,30 +1140,37 @@ cannot be aliases merely because they preserve the same decoded bytes.
 
 ## 6.3. Base64 RFC 4648 Canonical Text
 
-The operand must already be legal Base64 text under one exact RFC 4648 profile. The law does not perform bytes-to-text
-encoding and does not repair arbitrary decoder input.
+Section 8 records `REJECT` for this proposed independent Built-In
+Law. [RFC 4648](https://www.rfc-editor.org/rfc/rfc4648.html) defines the Base64 alphabet, padding requirements, and
+canonical zero pad bits. Under the strict standard profile, each octet sequence already has one legal encoded
+representation. The corresponding Input grammar can recognize that representation without creating a second
+Canonicalization Authority that preserves everything.
 
-RFC 4648 defines the alphabet and constrains padding. It also requires unused pad bits to be handled
-canonically. Qualification must close these points for the admitted Base64 profile:
+Some decoders accept ignored line breaks, non-alphabet characters, excess padding, or nonzero unused pad bits. Such
+acceptance does not establish a common equivalence law for Kontrakt. RFC 4648 explicitly distinguishes strict encoding
+requirements from permissions that a referring specification may grant. Treating every decodable spelling as equivalent
+would import parser tolerance into Contract meaning and could erase differences relevant to signatures, covert channels,
+or validation.
 
-```text
-standard Base64 alphabet
-padding requirement
-allowed line breaks or other non-alphabet characters
-unused pad-bit requirements
-whether alternate but decodable spellings are legal operands
-the exact representative text for each admitted encoded value
-```
-
-A liberal decoder accepting ignored characters cannot become the law by implementation accident.
+The rejected subject is generic RFC 4648 Base64 canonicalization, not Base64 processing in every protocol. A separately
+specified domain such as MIME line-wrapped Base64 may supply its own exact accepted presentations and representative.
+Its scope would require new qualification instead of silently widening this candidate.
 
 ## 6.4. Base64url RFC 4648 Canonical Text
 
-Base64url uses a different alphabet from standard Base64 and cannot be treated as an API flag on one ambiguous law.
+Section 8 records `REJECT` for this generic independent Built-In
+Law. [RFC 4648](https://www.rfc-editor.org/rfc/rfc4648.html) defines the URL-safe alphabet but leaves omission of
+padding to the referring specification. Neither a universal padded representative nor a universal unpadded
+representative follows from the Base64url name alone.
 
-Qualification must also select an exact padding policy. RFC 4648 permits referring specifications to omit padding in
-specific circumstances, so "Base64url" alone does not close one representative. If more than one materially different
-profile is required, this candidate must split before admission.
+The strict padded and strict unpadded profiles each have a single canonical spelling for an octet sequence when their
+grammar and zero pad-bit requirements are fixed. A law that equates `YQ==` with `YQ` would add a cross-profile
+equivalence not granted by every consumer. This is particularly unsafe where the encoded text itself participates in a
+signature or another byte-exact protocol rule; JWS, for example, specifies unpadded Base64url for its own use.
+
+Input or the relevant protocol Authority must enforce the selected alphabet and padding rule. A future protocol-specific
+law may be qualified when that protocol explicitly admits more than one representation of the same meaning. Decoder
+permissiveness cannot supply the missing semantic authority.
 
 ## 6.5. Base32 RFC 4648 Canonical Text
 
@@ -1227,12 +1234,15 @@ texts are not equivalent under this law.
 
 ## 6.9. RFC 3986 Percent-Encoding Syntax Representative
 
-This candidate stops below whole-URI canonicalization. It applies only where RFC 3986 percent-encoding syntax is already
-part of the legal presentation.
+Section 8 records `ADMIT (proposed)` for the narrow syntax representative described
+by [RFC 3986, Sections 2.1 and 6.2.2](https://www.rfc-editor.org/rfc/rfc3986.html). The operand must be an
+already-established `Text` presentation whose exact URI-component context and percent-triplet grammar are fixed. This
+Law does not accept an arbitrary whole URI and infer its component boundaries.
 
-Percent-triplet hexadecimal case is not semantically significant, so the working representative uses uppercase hex
-letters. A percent-encoded octet for an RFC 3986 unreserved character may use that unreserved character directly.
-Reserved characters are not decoded merely because a parser can do so.
+Two legal component presentations are equivalent only when they differ by the hexadecimal letter case of a percent
+triplet or by the choice between an unreserved ASCII character and its percent-encoded spelling. The representative uses
+uppercase hexadecimal letters in retained triplets and direct spelling for encoded unreserved characters. Reserved
+characters stay encoded when supplied as encoded octets.
 
 ```text
 %2f
@@ -1240,28 +1250,40 @@ Reserved characters are not decoded merely because a parser can do so.
 
 %7e
     -> ~
+
+%25
+    -> %25
 ```
 
-The first example preserves the encoded slash because `/` is reserved. The second uses the unreserved `~` character.
-Qualification must keep malformed percent sequences outside silent repair. Dot-segment removal and scheme-specific URI
-rules remain separate.
+The representative remains in the same exact component-presentation domain and must be stable when the Law is applied
+again. Valid percent triplets and the allowed direct character repertoire must be defined by the operand grammar. Other
+established `Text` lies outside successful coverage and must not be repaired by a host URI decoder. The exact Refusal
+and Coverage relation belongs in the versioned Law specification.
+
+A selected component Law cannot become a second URI parser. In particular, decoding an encoded slash, applying this Law
+before component parsing, or decoding again after Admission can change path boundaries. Encoded unreserved dots may also
+matter to a later dot-segment interpretation. The application of this Law therefore requires a legally fixed component
+boundary and downstream judgment-use coherence. Path normalization, routing, signature bytes, and scheme-specific
+interpretation remain with their own Authorities. No ambient URI library may decide the transformation order.
 
 ## 6.10. IPv6 RFC 5952 Text
 
-The candidate domain is legal textual IPv6 presentation without an external zone identifier. Alternate legal spellings
-are equivalent when they denote the same IPv6 address, and RFC 5952 supplies the target text form.
+Section 8 records `ADMIT (proposed)` for an
+exact [RFC 5952 Section 4](https://www.rfc-editor.org/rfc/rfc5952.html#section-4) all-hexadecimal profile. The operand
+is an already-established legal IPv6 address Text without a zone identifier. Two operands are equivalent exactly when
+they denote the same 128-bit IPv6 address. The representative uses lowercase hexadecimal digits, removes leading zeros
+in each field, compresses the longest eligible zero run, and selects the leftmost run on a tie. It never compresses a
+single zero field merely for brevity.
 
-Qualification must keep Input legality separate from the candidate's canonicalizable domain. If Input
-admits all legal Text, non-IPv6 text needs exact Canonicalization Coverage and owned refusal treatment. The grammar
-cannot
-come from a host parser. The RFC 5952 profile must decide how to choose among equal-length zero runs.
-Leading-zero removal and hexadecimal letter case also need exact rules.
+IPv4-embedded spellings are legal inputs when admitted by the exact IPv6 operand grammar, but the representative is
+always the RFC 5952 Section 4 hexadecimal form. Section 5 recommends mixed IPv4 notation for certain address classes;
+this narrower all-hexadecimal choice is an explicit Kontrakt profile, not a claim that every RFC 5952 recommendation
+mandates all-hexadecimal output. A deployment-dependent prefix list must not influence it. The grammar and the Section 4
+tie rules are fixed by the Law, not a host address formatter.
 
-Embedded IPv4 form needs a narrower decision. A configurable or deployment-specific prefix cannot decide whether the
-representative switches to mixed IPv6 / dotted-decimal text. V1 qualification must either use only exact
-standards-defined cases owned by the law or select an all-hex relation that avoids such ambient input.
-
-Zone identifiers are outside this candidate. The law performs no DNS lookup and does not resolve interface scope.
+This Law does not establish a DNS name, an interface scope, or equality of network endpoints. Text outside the legal
+address grammar has exact non-repairing Coverage and refusal treatment. Canonical formation must remain in the same
+textual domain and be idempotent.
 
 ## 6.11. BCP 47 Registry-Independent Casing
 
@@ -1279,18 +1301,24 @@ registry-dependent canonicalization.
 
 ## 6.12. BCP 47 Registry-Dependent Canonical Representative
 
-The candidate domain is a well-formed BCP 47 language tag under one exact Kontrakt profile.
+Section 8 records `ADMIT (proposed)` for the registry-dependent language-tag canonicalization described
+by [RFC 5646 Section 4.5](https://www.rfc-editor.org/rfc/rfc5646.html#section-4.5). The operand is an
+already-established well-formed BCP 47 language-tag Text admitted by one precisely defined Registry profile. The Law
+applies RFC 5646 Preferred-Value and applicable canonical subtag rules, including the RFC-defined ordering of extension
+singletons, and selects one exact casing and replacement sequence. The registry-independent casing Law in Section 6.11
+remains narrower.
 
-RFC 5646 supplies syntax and canonicalization rules, while IANA Language Subtag Registry data becomes
-meaning-determining wherever the representative consumes registry fields such as Preferred-Value or deprecated
-relations.
+The [IANA Language Subtag Registry](https://www.iana.org/assignments/language-subtag-registry/language-subtag-registry)
+snapshot used to determine meaning must be immutable and identified by the Exact Law Version and a verifiable content
+identity. Kontrakt must not read the current IANA Registry, an OS locale database, or a newer ICU dataset during
+canonicalization. A new snapshot that changes the mapping requires a new semantic Version; it does not silently redefine
+the existing Law.
 
-Qualification must close the exact registry Basis and its evolution consequences. Legacy or deprecated tags need an
-explicit rule. Extensions and private-use material need their own treatment. Future registrations cannot silently change
-the meaning through a mutable current registry.
-
-The casing candidate in Section 6.11 does not remove this dependency. It owns only registry-independent presentation
-case.
+The proposed profile does not invent normalization inside registered extension subtags, reorder their contents without
+authority, or reinterpret private-use values. Optional transformations not required by the selected RFC 5646
+canonicalization profile, including unconditional Suppress-Script deletion or arbitrary variant reordering, are not
+silently added. Exact grammar, Preferred-Value replacement order, legality after replacement, same-domain closure, and
+finite work remain normative admission checks.
 
 ## 6.13. UUID Lowercase Text
 
@@ -1330,53 +1358,91 @@ belongs to the operand profile rather than to a backend parser.
 
 ## 6.16. IPv6 Network Prefix
 
-The IPv6 prefix candidate follows the same prefix-bit rule. The representative clears every non-prefix bit and uses the
-selected IPv6 textual representative for the address portion.
-
-RFC 9911 uses RFC 5952 form for the address in its canonical IPv6 prefix representation.
+Section 8 records `ADMIT (proposed)` for the [RFC 9911](https://www.rfc-editor.org/rfc/rfc9911.html) IPv6 network-prefix
+representative. The operand is an already-established legal IPv6-prefix Text with a prefix length from 0 through 128.
+Two operands are equivalent only when their prefix lengths and the address bits covered by that length are equal. The
+representative clears every non-prefix bit and formats the remaining 128-bit address using the Section 6.10 RFC 5952
+Section 4 all-hexadecimal profile.
 
 ```text
 2001:db8::1/64
     -> 2001:db8::/64
 ```
 
-Qualification must close the semantic relation to the RFC 5952 candidate explicitly. Shared realization code cannot
-establish that relation on its own.
+The prefix length is retained. A shorter and a longer prefix are not equivalent merely because their displayed address
+portions agree. Embedded IPv4 presentation is interpreted only through the precise IPv6 operand grammar, and no ambient
+prefix policy or host formatting rule selects the result. This Law's normative meaning includes its relation to the
+admitted IPv6 textual profile; shared realization code does not establish Authority ownership.
 
 ## 6.17. EUI-48 / MAC-48 Multi-Format Text
 
-This candidate is broader than the RFC 9911 profile in Section 6.14. The semantic subject is one 48-bit address that can
-arrive through more than one textual convention.
+Section 8 records `REJECT` for the proposed generic multi-format Authority. This candidate is broader than the
+separately proposed [RFC 9911](https://www.rfc-editor.org/rfc/rfc9911.html) lowercase colon-separated MAC-48 Text Law in
+Section 6.14. Several forms are widely used, including hyphen-separated octets and vendor-specific dotted notation, but
+their prevalence does not establish one universal standard input grammar and interpretation rule for Kontrakt.
 
-The working direction is to select one lower-case colon-separated representative. Qualification must decide which source
-spellings are legal operands. Hyphen-separated text is standardized in some protocol contexts. Dotted forms used by
-network equipment are common, but ecosystem prevalence alone does not make them part of the law.
+Accepting all such formats under a single Law without fixing their octet interpretation, any relevant bit-order
+convention, and the supported source standard would make its equivalence depend on an inferred origin. It would also
+overlap the existing RFC 9911 Authority without proving a distinct and safely bounded need. This is not a claim that
+conversions between individually specified formats are inherently nondeterministic.
 
-This candidate must also pass Authority uniqueness against Section 6.14. The Catalog must not retain two Authorities
-merely because one review began from a narrower grammar.
+A new narrowly named candidate may explicitly translate a designated IEEE EUI-48 textual profile, or a separately
+specified dotted form, into the RFC 9911 representation after its grammar and octet-order semantics are established.
+That proposal requires a separate Catalog decision; the present broad multi-format Law is not admitted.
 
 ## 6.18. HTTP-Date Text
 
-RFC 9110 defines three legal HTTP-date forms for compatibility. A recipient must accept all three, while a sender must
-generate IMF-fixdate. That gives this candidate a strong standards-defined representative direction.
+Section 8 records `ADMIT (proposed)` for
+the [RFC 9110 Section 5.6.7](https://www.rfc-editor.org/rfc/rfc9110.html#section-5.6.7) HTTP-date profile. The standard
+recognizes IMF-fixdate, obsolete RFC 850 date, and obsolete asctime date forms for recipients, but requires an
+IMF-fixdate form when a sender generates a date. These admitted spellings can represent one HTTP date without giving
+Kontrakt a generic timestamp-normalization Authority.
 
-The operand must already be a legal HTTP-date. The law does not repair an invalid calendar date. Qualification must also
-close the interpretation of the obsolete RFC 850 form, including its two-digit year rule.
+The proposed equivalence relates exact legal spellings that denote the same UTC calendar date and time under the
+required interpretation context. The representative is that date's IMF-fixdate Text. The obsolete RFC 850 spelling has a
+two-digit year whose interpretation depends on the reference time specified by RFC 9110. That time must therefore be an
+explicitly resolved and bound UTC Required Basis. It cannot be the compiler's clock, a mutable runtime default, or the
+moment at which a cached result happens to be reused.
 
-The representative is the IMF-fixdate spelling of the same UTC instant. This candidate is specific to HTTP date syntax;
-it does not establish a generic timestamp canonicalization law.
+```text
+Sun, 06 Nov 1994 08:49:37 GMT
+Sunday, 06-Nov-94 08:49:37 GMT
+Sun Nov  6 08:49:37 1994
+    -> Sun, 06 Nov 1994 08:49:37 GMT
+```
+
+The normative specification must fix calendar legality, weekday consistency, leap-second treatment, the exact RFC 850
+century rule, representable year range, and failure when a legal Input `Text` is not a canonicalizable HTTP-date. These
+conditions must be decided under the selected Law rather than delegated to the current JVM date parser. HTTP-date
+Canonicalization does not establish freshness, expiry, or authorization. Those judgments belong to their own Contracts.
 
 ## 6.19. HTTP Media Type Text
 
-HTTP media types contain several representation freedoms that can be semantically irrelevant. Type and subtype names are
-case-insensitive. Parameter names are also case-insensitive. A parameter value that is legal as a token can sometimes be
-represented by an equivalent quoted-string.
+Section 8 records `ADMIT (proposed)` for a restricted HTTP media-type *syntax* representative based
+on [RFC 9110 Section 8.3.1](https://www.rfc-editor.org/rfc/rfc9110.html#section-8.3.1)
+and [RFC 6838 Section 4.3](https://www.rfc-editor.org/rfc/rfc6838.html#section-4.3). It does not claim to canonicalize
+every semantic equivalence of a registered media type. The already-established `Text` operand must be parsed under one
+exact HTTP media-type grammar, with one type/subtype and a finite set of named parameters.
 
-The candidate cannot normalize every parameter value by one generic rule. Parameter-value semantics belong to the
-parameter definition. Qualification must therefore close the exact operand profile before it chooses a representative.
+The common equivalence treats ASCII letter case in type, subtype, and parameter names as irrelevant. RFC 6838 gives no
+meaning to parameter order and prohibits repeated parameter names. Within the selected HTTP quoted-string grammar,
+equivalent quoted and token spellings of an unchanged parameter value may share a representative. The Law preserves
+every parameter value's exact content and case rather than assuming the value's registered comparison semantics.
 
-If parameter ordering is declared irrelevant for the selected profile, the representative also needs one exact order.
-That order cannot come from a host map or parser iteration order.
+The representative lowercases type, subtype, and parameter names; orders parameters by a fixed ASCII name order; emits
+an unquoted token only when the value is a legal token; and otherwise uses one exactly specified quoted-string and
+escape spelling. For example, the following are equivalent under the proposed common syntax relation:
+
+```text
+Application/Example;Z=ABC;A="xyz"
+    -> application/example;a=xyz;z=ABC
+```
+
+No parameter registration or ambient IANA registry lookup may silently extend this equivalence. In particular,
+`charset=UTF-8` is not converted to `charset=utf-8` merely because that particular parameter may have a case-insensitive
+value. Duplicate names after ASCII case normalization, invalid escapes, malformed parameter syntax, or unsupported
+extensions must have exact non-repairing coverage and refusal rules. Host map iteration order cannot select the output.
+The Law remains a same-domain `Text` representative and does not establish media-type-specific processing meaning.
 
 ## 6.20. HTTP Qvalue Text
 
@@ -1393,41 +1459,76 @@ The operand remains qvalue Text. Parsing the value into an unrelated numeric Fac
 
 ## 6.21. HTTP (S) URI Normal Form
 
-HTTP and HTTPS URIs have scheme-specific normal-form rules on top of generic URI syntax. The standard treats the scheme
-and host case-insensitively and omits a default port in normal form. An empty path has a defined normal representation
-in
-the ordinary URI case.
+Section 8 records `ADMIT (proposed)` for a restricted HTTP (S) scheme-based URI representative
+using [RFC 9110 Section 4.2.3](https://www.rfc-editor.org/rfc/rfc9110.html#section-4.2.3) and the
+applicable [RFC 3986](https://www.rfc-editor.org/rfc/rfc3986.html) syntax rules. This is not an assertion that URI
+normalization proves two origin resources are the same, and it does not admit generic whole-URI canonicalization for
+every scheme.
 
-Percent-encoding must follow the URI rules rather than a general-purpose decoder. Unreserved characters should not stay
-percent-encoded in the normal form, while reserved characters retain their URI meaning.
+The proposed V1 operand is an already-established absolute `http` or `https` URI `Text` under a strict ASCII-host
+profile. Userinfo, internationalized host interpretation requiring IDNA, and IP-literal profiles whose canonical
+spelling has not been closed are outside this operand. DNS resolution, origin-specific query rules, and platform
+URL-parser recovery do not establish legal alternate presentations. HTTP and HTTPS remain distinct schemes.
 
-Qualification must not import origin-specific application semantics. Query parameter order is one example of a
-distinction that this candidate cannot erase generically. Host internationalization also remains subject to the exact
-IDNA boundary selected for the operand.
+Within that domain the Law declares only the selected standards-defined presentation differences equivalent. Its
+representative lowercases the scheme and ASCII host, omits the matching default port (`80` for HTTP or `443` for HTTPS),
+applies the exact RFC 3986 percent-encoding and dot-segment rules in an expressly fixed order, and preserves query
+contents and ordering rather than treating them as an unordered map. The ordinary empty-path representative is `/` only
+where the applicable HTTP request-target context permits that equivalence.
+
+```text
+http://EXAMPLE.com:80/%7Euser
+    -> http://example.com/~user
+```
+
+RFC 9110 identifies an OPTIONS request-target exception relevant to empty-path handling. A `Text` value alone cannot
+supply that request context. The positive applicability requirement must therefore exclude contexts where the proposed
+normalization is not valid or demand the appropriate explicit context binding. A later consumer may not re-interpret the
+representative under another URI parser or decode it a second time. Signed URI material, routing identity, encoded
+separators, and path traversal are security-sensitive; the selected Law is not a substitute for their owning validation
+and authorization rules.
+
+The exact normative specification must settle the ASCII-host grammar, URI component boundaries, operation order,
+percent-encoding and path corner cases, legal occurrence coverage, and the identity of any context-dependent Required
+Basis. Host syntax not supported by the selected profile must be refused rather than guessed. A more permissive URL
+library or a future standards revision cannot silently broaden this Law's Version.
 
 ## 6.22. CoAP URI Normal Form
 
-RFC 7252 defines normalization and comparison rules for `coap` and `coaps` URIs. Their normal form
-omits the scheme's default port. It lowercases the scheme and host and writes an empty path as `/`. IP
-literals follow the recommended IPv6 form where applicable.
+Section 8 records `ADMIT (proposed)` for a restricted `coap` / `coaps` URI normal-form Law grounded
+in [RFC 7252 Section 6.3](https://www.rfc-editor.org/rfc/rfc7252.html#section-6.3)
+and [RFC 3986](https://www.rfc-editor.org/rfc/rfc3986.html). The operand is an already-established whole URI Text whose
+scheme, authority, path, and query are parsed under one exact CoAP URI profile. The relation is the selected standard
+scheme-specific normalization, not proof that two requests ultimately reach the same resource.
 
-The candidate shares several constituent relations with HTTP URI normalization, but the scheme defaults are different.
-Qualification must determine whether the final Contract meaning is one scheme-specific Authority or a legal composition
-of independently admitted laws.
+The representative lowercases the scheme and permitted ASCII host, removes the scheme's default port (`5683` for `coap`
+and `5684` for `coaps`), applies only the RFC-authorized percent-encoding and path rules, and uses `/` for an eligible
+empty path. It does not equate `coap` with `coaps`, sort application-defined query items, decode a reserved path
+separator, or allow a later consumer to decode the representative again. The rules for IPv4 and IPv6 literals must be
+explicit, including the chosen IPv6 textual profile.
 
-No implementation may infer that relation merely because the same URI library handles both protocols.
+V1 qualification selects an exact ASCII-host and permitted-IP-literal domain; unsupported internationalized names,
+userinfo, zone identifiers, and ambiguous URI spellings lie outside successful Coverage. Parsing precedes
+component-sensitive transformation, and the order of percent-encoding and dot-segment treatment is fixed by the Law
+rather than a host URL library. Any reused implementation shared with the HTTP URI Law must still preserve the
+independent CoAP Authority and its own scheme defaults.
 
 ## 6.23. Generic URN Lexical Representative
 
-RFC 8141 defines generic equivalence rules that apply before a namespace adds its own rules. Scheme and namespace
-identifier case are not semantic distinctions under the generic comparison relation. Percent-triplet hexadecimal case is
-also representation detail.
+Section 8 records `ADMIT (proposed)` for the restricted **RFC 8141 assigned-name-only** Text
+representative. [RFC 8141 Section 3.1](https://www.rfc-editor.org/rfc/rfc8141.html#section-3.1) defines generic
+URN-equivalence for the assigned name. The operand is a legal `urn:` assigned-name Text without `r-component`,
+`q-component`, or `f-component`; full URNs carrying those components are outside this Law's successful Coverage.
 
-The candidate must not decode percent-encoded octets simply because a generic URI decoder can do so. Namespace-specific
-equivalence also remains outside this law.
+Its equivalence disregards only scheme and Namespace Identifier ASCII letter case and percent-triplet hexadecimal letter
+case in the Namespace-Specific String. The representative uses `urn:`, a lowercase NID, and uppercase hexadecimal
+letters within retained NSS percent triplets. It must not decode percent-encoded octets, infer namespace-specific
+identity, or reinterpret the assigned name through generic RFC 3986 unreserved-decoding rules.
 
-Qualification must close the treatment of optional URN components under the generic RFC 8141 rules. A namespace such as
-ISBN may later add stronger meaning without mutating this generic Authority.
+RFC 8141 ignores optional components for the generic URN-equivalence comparison while permitting them to affect
+resolution requests. Discarding such components from a full input URN could change operational meaning. Restricting the
+operand to assigned names avoids this problem without claiming the whole-URN identity or resolution semantics.
+Namespace-specific stronger relations require independently qualified Laws.
 
 ## 6.24. RFC 3966 `tel:` URI Representative
 
@@ -1471,14 +1572,22 @@ syntax of a resolver URL.
 
 ## 6.27. IBAN Electronic Text
 
-IBAN has an electronic representation without visual spacing and a paper-oriented representation that groups
-characters for readability. This creates a real presentation distinction over one financial identifier.
+Section 8 records `ADMIT (proposed)` for the paper-to-electronic spacing distinction
+under [ISO 13616-1](https://www.iso.org/standard/81089.html). The operand is an already-established Text in the exact
+electronic IBAN presentation or its specified paper grouping with `U+0020 SPACE`. The equivalence removes only
+authorized printed grouping spaces while preserving all account characters exactly. Its representative is the
+corresponding unspaced electronic Text.
 
-The candidate direction is to select the electronic representation. Country-specific length and BBAN structure come
-from the ISO 13616 registry material and affect whether an operand is a legal IBAN, not merely how spaces are removed.
+```text
+DE89 3704 0044 0532 0130 00
+    -> DE89370400440532013000
+```
 
-Check-digit validity must remain separate from representative selection. Qualification must decide which parts belong to
-Input or Admission and whether registry material is required by the Canonicalization law itself.
+The Law does not uppercase the BBAN or apply case-insensitive Unicode folding. Country-specific BBAN rules may make
+letter case meaningful. Nor does it silently remove arbitrary Unicode whitespace, repair check digits, or infer country
+formats from an ambient registry. Country-specific length and BBAN legality, MOD-97 check-digit judgment, and account
+validity remain separate Input / Admission concerns. The precise paper-group grammar and supported domain must be fixed
+so no invalid spacing is repaired by canonicalization.
 
 ## 6.28. GTIN 14-Digit Representative
 
@@ -1493,64 +1602,118 @@ law.
 
 ## 6.29. Package URL Canonical Representative
 
-Package URL is now standardized by ECMA-427 and is widely used in software supply-chain data. The core form has
-canonicalization requirements, while individual package types can add type-specific normalization rules.
+Section 8 records `ADMIT (proposed)` only for an
+**[ECMA-427](https://ecma-international.org/publications-and-standards/standards/ecma-427/) core PURL syntax**
+representative. The operand is a legal Package URL Text in an exact core grammar. The Law owns only representation
+distinctions for which the ECMA-427 core specification supplies common rules. Package-type-specific identity and
+normalization are not silently included.
 
-Qualification must separate core PURL meaning from type-specific material. Maven, npm, and PyPI each
-illustrate why package-type rules cannot be inferred from the behavior of one parser. If those rules
-change the representative, the required material must be explicit.
+The canonical core form uses the `pkg:` scheme and a lowercase package type, removes only the redundant slashes that
+ECMA-427 declares insignificant, applies component-specific percent encoding, and chooses one exact order for distinct
+qualifier keys where the standard allows reordering. Version, namespace, name, qualifier values, and subpath remain
+subject to the core component grammar; their ecosystem-specific case sensitivity or meaning cannot be guessed. Duplicate
+or invalid qualifier keys, malformed percent encodings, and unsupported type-dependent forms require exact Coverage and
+refusal.
 
-The candidate is a useful test of Required Basis and Version ownership. If type-specific rules determine the
-representative, that dependency must be explicit rather than read from a mutable registry at realization time.
+A Maven, npm, or PyPI rule may create additional equivalence not established by the core syntax. Such a rule needs its
+own qualified Law or explicit versioned semantic material. Canonicalizing the core PURL Text does not establish that two
+package versions are the same dependency or may be treated as the same vulnerability target. The normative specification
+must verify same-domain closure and idempotence, including the exact percent-encoding and qualifier-order algorithm.
 
 ## 6.30. Kubernetes Quantity Representative
 
-Kubernetes Quantity is a fixed-point domain value with several legal textual forms. The API machinery accepts
-non-canonical forms and re-emits a canonical representation. Examples include representing `1.5` as `1500m` and `1.5Gi`
-as `1536Mi`.
+Section 8 records `ADMIT (proposed)` for a **Kubernetes Quantity canonical Text** Law tied to one immutable Kubernetes
+Quantity semantic profile. The basis is
+the [Kubernetes Quantity API documentation](https://kubernetes.io/docs/reference/kubernetes-api/definitions/quantity-resource/)
+and a specific verifiable `k8s.io/apimachinery/pkg/api/resource` implementation baseline. Kubernetes parses DecimalSI,
+BinarySI, and DecimalExponent suffix families, remembers the selected family, applies its specified precision and range
+rules, and emits its own canonical format. Kontrakt must reproduce those semantics rather than replace them with a new
+exact-value DecimalSI-only rule.
 
-The Kubernetes parser also has rounding and range behavior. Kontrakt must not inherit that behavior blindly. The
-Canonicalization candidate should operate only after the legal Quantity meaning has been established without loss.
+```text
+1.5
+    -> 1500m
 
-Qualification must close the suffix family retained by the representative and the exact numeric domain. It must also
-prove that canonical formation does not silently round a Contract-visible value.
+1.5Gi
+    -> 1536Mi
+```
+
+A numeric comparison is not the Law's equivalence: `1Ki` and `1024` can compare as the same numeric quantity while their
+Kubernetes canonical Text remains different because the source suffix families are retained. The proposed `E_L` relates
+exactly those legal input spellings that produce the same Text under the fixed Kubernetes parse-and-canonicalize
+profile. `C_L` is that profile's actual canonical Text. The exact Law must establish that the result is a legal
+same-domain operand and a fixed point under repeated application; neither property may be assumed merely because a Go
+`String()` method exists.
+
+Kubernetes can round finer inputs, including the documented `0.1m` to `1m`, and can cap values outside its supported
+range. Such behavior is part of the selected Kubernetes semantics and must not be silently replaced by mathematical
+exact-value equivalence or a Kontrakt-only refusal rule. The exact normative specification must reconcile documentation
+and the chosen implementation baseline for suffixes, precision, rounding, signs, boundary values, zero, and
+serialization. Input Text must be acquired losslessly; the Kubernetes-defined interpretation is then explicit inside
+this Law. Host floating-point arithmetic is not its semantic authority.
+
+The Law Version identifies the immutable semantic profile and its source/test-vector provenance. Kubernetes releases are
+compatibility evidence, not necessarily distinct Law Versions: different releases may be supported under one Version
+when their relevant Quantity behavior is proven equivalent. A changed parser or canonical representative requires a new
+semantic Version and must not silently alter an existing Authority. Developers should not have to select a cluster
+release when several verified releases share that profile. This Quantity Law does not establish general Kubernetes
+resource-policy validity or numeric-comparison semantics.
 
 ## 6.31. `geo:` URI Representative
 
-RFC 5870 defines comparison rules for geographic URI components in semantic rather than purely lexical terms. Decimal
-strings that denote the same coordinate can compare equal. Parameter order is also not significant under the URI's
-comparison model.
+Section 8 records `ADMIT (proposed)` for an [RFC 5870](https://www.rfc-editor.org/rfc/rfc5870.html) WGS-84 core `geo:`
+URI Text profile. The operand is a legal URI with WGS-84 coordinates and only the core parameters admitted by the
+profile. Two operands are equivalent under the RFC's geographic URI comparison rules, including equal exact decimal
+coordinate values, the longitude equivalence at the antimeridian, longitude irrelevance at the poles, and the
+RFC-authorized omitted/explicit default CRS distinction.
 
-The profile has additional domain rules. An omitted default CRS can compare like an explicit `wgs84` value, and special
-coordinate cases can remove distinctions that ordinary decimal text would preserve.
+Kontrakt selects one deterministic representative within each such class: minimal exact decimal coordinate spelling,
+longitude `180` at the antimeridian, longitude `0` at the poles, and omission of an explicit default `crs=wgs84`. The
+existence and exact value of altitude are preserved. The existence and exact value of uncertainty `u` are also
+preserved: absent altitude is not altitude zero, and an absent `u` parameter is not `u=0`.
 
-This makes `geo:` a strong stress candidate. Qualification must derive one representative from the full RFC relation
-instead of composing generic decimal and parameter-sorting helpers and assuming the result is equivalent.
+The V1 operand excludes unqualified extension parameters and other CRS-specific equivalence rules, which RFC 5870 does
+not globally determine. The Law must specify exact latitude/longitude bounds, negative zero, numeric lexical grammar,
+component order, refusal, and idempotence. It operates on exact decimal text meaning, not Binary32/64 approximations,
+host geolocation, or lookup of a mutable geodetic registry.
 
 ## 6.32. RFC 7468 Textual-Encoding Representative
 
-RFC 7468 defines textual encodings for public-key and message-security objects. PKIX is one use; PKCS
-and CMS are others. Parsers may tolerate source line layouts that generators must not emit. A generator
-normally uses 64-character Base64 lines, except on the final line, and emits no extraneous whitespace.
+Section 8 records `ADMIT (proposed)` for a **single [RFC 7468](https://www.rfc-editor.org/rfc/rfc7468.html)
+textual-encoding instance**. Its operand is one legal established encapsulation Text with an explicit BEGIN/END Label
+and Base64-encoded octets. The equivalence relates only permitted parser spellings carrying exactly the same Label and
+octet sequence. The representative selects one exact strict-generator presentation with Base64 lines of 64 characters
+except the final line, no extraneous whitespace, and a fixed LF line ending.
 
-That parser/generator split creates a candidate representative for one already-established textual-encoding instance.
-The label remains part of the meaning; Canonicalization cannot discard or infer it.
+The admitted parser spellings are narrower than every input tolerated by a permissive PEM reader. BEGIN and END Labels
+must match, label case and content are preserved, Base64 alphabet, padding, and zero pad bits are validated, and only
+explicitly enumerated line-layout or whitespace variants are canonicalized. A mismatch, inserted nonalphabet characters,
+or unsupported framing is refused rather than repaired. The exact output newline/trailing-newline rule must be fixed so
+the canonical output is again a legal operand and applying the Law twice is stable.
 
-A file containing several instances is a different subject. Ordering of those instances depends on the surrounding
-protocol and is not owned by this candidate.
+A file containing several encapsulations is a different subject. The Law does not reorder such instances or normalize
+ASN.1, certificates, keys, signatures, or their validation results. RFC 7468 supplies a generator form and bounded
+parser latitude that are independent of the rejected generic Base64 textual law.
 
 ## 6.33. Avro Parsing Canonical Form
 
-Avro defines Parsing Canonical Form so that schemas that are the same for a reader can obtain the same canonical schema
-representation. The transformation removes schema material that is irrelevant to parsing while preserving distinctions
-that affect how data is read.
+Section 8 records `ADMIT (proposed)` for the
+versioned [Apache Avro Parsing Canonical Form](https://avro.apache.org/docs/current/specification/#parsing-canonical-form-for-schemas)
+Law. The operand and result are both Text presentations of legal Avro schemas under one frozen Avro specification
+profile. The equivalence is equality of the Parsing Canonical Form Text, and the representative is the exact result of
+the Avro-defined PRIMITIVES, FULLNAMES, STRIP, ORDER, STRINGS, INTEGERS, and WHITESPACE transformations in their
+specified order.
 
-This is a domain-specific semantic law, not generic JSON canonicalization. Qualification must define the operand as an
-Avro schema presentation whose parsing meaning is already established.
+This is not general JSON Canonicalization. The Parsing Canonical Form intentionally discards properties that do not
+affect Avro parsing, but they may still affect schema evolution, defaults, logical-type interpretation, or application
+policy. Therefore this Law asserts parsing equivalence only. It does not establish full schema substitutability,
+validation of application constraints, or equality of arbitrary JSON documents.
 
-The same-shape question requires explicit review. If the authoritative Input presentation is an Avro-schema textual
-presentation, the canonical result can remain in that presentation family. If the transformation instead crosses from a
-semantic schema object to serialization bytes, the owner would be different.
+The normative Law must fix the Avro specification version, complete schema grammar, name/namespace resolution, exact
+escaping and integer rules, idempotent same-domain output, and bounded handling of deeply nested schemas. Named schema
+references require explicit finite resolution, not host object identity or unbounded recursive traversal. Avro
+fingerprints may accelerate lookup, but the exact canonical content remains the final equality witness; hash equality
+alone is not authoritative.
 
 ## 6.34. POSIX IPv4 Numbers-and-Dots Text
 
@@ -2088,36 +2251,65 @@ must enforce RFC 4648 padding and zero pad bits. Decoder permissiveness cannot e
 
 ### Web and HTTP
 
-| Review area | Law working name                   | Review outcome   |
-|-------------|------------------------------------|------------------|
-| HTTP        | HTTP qvalue textual representative | ADMIT (proposed) |
+| Review area   | Law working name                                | Review outcome   |
+|---------------|-------------------------------------------------|------------------|
+| URI component | RFC 3986 percent-encoding syntax representative | ADMIT (proposed) |
+| HTTP / Time   | HTTP-date textual representative                | ADMIT (proposed) |
+| HTTP          | HTTP media-type textual representative          | ADMIT (proposed) |
+| HTTP          | HTTP qvalue textual representative              | ADMIT (proposed) |
+| URI / HTTP    | HTTP(S) URI normal-form representative          | ADMIT (proposed) |
+
+The percent-encoding review limits equivalence to hexadecimal case in triplets and direct presentation of RFC 3986
+unreserved characters. It requires an explicit URI-component operand and excludes reserved-character decoding and
+implicit later reinterpretation. The HTTP-date review selects RFC 9110's IMF-fixdate representative with an explicit
+UTC Required Basis for RFC 850 two-digit-year interpretation.
+
+The media-type review is a restricted common-syntax profile. It canonicalizes ASCII-insensitive names, parameter order,
+and legally equivalent token/quoted presentations without folding registration-specific parameter values. The HTTP (S)
+URI review proposes a strict ASCII-host, context-limited scheme-based representative, not generalized resource identity;
+userinfo, unclosed host profiles, implicit OPTIONS request-target rules, and origin-specific query equivalence remain
+outside it. Each Law still requires exact grammar, coverage, and security closure before formal admission.
 
 The qvalue review proposes exact RFC 9110 syntax and a minimal decimal representative for the same thousandth-based
 value. Out-of-grammar Text is not repaired.
 
 ### Network and IoT
 
-| Review area        | Law working name                                   | Review outcome   |
-|--------------------|----------------------------------------------------|------------------|
-| Protocol / Network | POSIX IPv4 numbers-and-dots textual representative | ADMIT (proposed) |
-| Protocol / Network | RFC 9911 MAC-48 lowercase textual representative   | ADMIT (proposed) |
-| Protocol / Network | IPv4 network-prefix representative                 | ADMIT (proposed) |
+| Review area           | Law working name                                   | Review outcome   |
+|-----------------------|----------------------------------------------------|------------------|
+| Protocol / Network    | POSIX IPv4 numbers-and-dots textual representative | ADMIT (proposed) |
+| Protocol / Network    | RFC 9911 MAC-48 lowercase textual representative   | ADMIT (proposed) |
+| Protocol / Network    | IPv4 network-prefix representative                 | ADMIT (proposed) |
+| Protocol / Identifier | IPv6 RFC 5952 all-hex textual representative       | ADMIT (proposed) |
+| Protocol / Network    | IPv6 network-prefix representative                 | ADMIT (proposed) |
+| URI / IoT             | CoAP URI normal-form representative                | ADMIT (proposed) |
 
 The POSIX IPv4 review maps its expressly permitted legacy spellings to four decimal octets. The MAC-48 review selects
 RFC 9911 lowercase colon notation. The IPv4 prefix review clears host bits without changing the prefix length.
 
+The IPv6 address review selects the RFC 5952 Section 4 all-hexadecimal representative for the same 128-bit address,
+including legal IPv4-embedded inputs without selecting a deployment-specific mixed form. The IPv6 prefix review clears
+non-prefix bits and retains the exact prefix length. CoAP uses its own RFC 7252 scheme defaults and an explicitly
+restricted host and URI-component interpretation, independent of the HTTP (S) URI Authority.
+
 ### Identifiers and Internationalization
 
-| Review area              | Law working name                                  | Review outcome   |
-|--------------------------|---------------------------------------------------|------------------|
-| Protocol / Identifier    | BCP 47 registry-independent casing representative | ADMIT (proposed) |
-| Protocol / Identifier    | UUID RFC 9562 lowercase textual representative    | ADMIT (proposed) |
-| URI / Telephony          | RFC 3966 `tel:` URI representative                | ADMIT (proposed) |
-| International identifier | DOI textual representative                        | ADMIT (proposed) |
+| Review area              | Law working name                                   | Review outcome   |
+|--------------------------|----------------------------------------------------|------------------|
+| Protocol / Identifier    | BCP 47 registry-independent casing representative  | ADMIT (proposed) |
+| Protocol / Identifier    | BCP 47 registry-dependent canonical representative | ADMIT (proposed) |
+| URI / Identifier         | Generic URN assigned-name textual representative   | ADMIT (proposed) |
+| Protocol / Identifier    | UUID RFC 9562 lowercase textual representative     | ADMIT (proposed) |
+| URI / Telephony          | RFC 3966 `tel:` URI representative                 | ADMIT (proposed) |
+| International identifier | DOI textual representative                         | ADMIT (proposed) |
 
 BCP 47 casing is registry-independent. UUID and DOI reviews preserve their identifier meaning while selecting lowercase
 ASCII spelling. The `tel:` review follows RFC 3966 comparison rules; its complete parameter treatment still requires
 normative closure.
+
+The registry-dependent BCP 47 review uses one immutable IANA Language Subtag Registry snapshot per Exact Law Version
+and does not normalize extension internals without their own authority. The RFC 8141 URN review concerns assigned-name
+Text only; optional resolver, query, and fragment components are outside its operand.
 
 ### Temporal Standards
 
@@ -2132,88 +2324,81 @@ not an unconditional conversion to one UTC instant. The absence of a timezone re
 
 ### Financial and Retail Identifiers
 
-| Review area       | Law working name             | Review outcome   |
-|-------------------|------------------------------|------------------|
-| Retail identifier | GTIN 14-digit representative | ADMIT (proposed) |
+| Review area          | Law working name                       | Review outcome   |
+|----------------------|----------------------------------------|------------------|
+| Retail identifier    | GTIN 14-digit representative           | ADMIT (proposed) |
+| Financial identifier | IBAN electronic textual representative | ADMIT (proposed) |
 
 The GTIN review proposes a 14-digit zero-padded Text representative. It does not repair check digits or decide whether
 an identifier has been allocated.
 
-## 8.2. DEFER
-
-The reason column identifies what must be resolved before the candidate can be reconsidered.
-
-### Encoded Text
-
-| Review area  | Law working name                                    | Review outcome | Reason for deferral                                                                                                                                                                         |
-|--------------|-----------------------------------------------------|----------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Encoded text | Base64 RFC 4648 canonical textual representative    | DEFER          | The allowed noncanonical spellings are unresolved. Strict RFC 4648 encoding alone offers no distinct representations to collapse; permissive decoding may admit unsafe padding or pad bits. |
-| Encoded text | Base64url RFC 4648 canonical textual representative | DEFER          | The exact padding policy and equivalence between padded and unpadded forms are unresolved. Protocol-specific byte-exact uses must remain distinct.                                          |
-
-### Web and HTTP
-
-| Review area   | Law working name                                | Review outcome | Reason for deferral                                                                                          |
-|---------------|-------------------------------------------------|----------------|--------------------------------------------------------------------------------------------------------------|
-| URI component | RFC 3986 percent-encoding syntax representative | DEFER          | The operand boundary and its interaction with URI component decoding order remain unresolved.                |
-| HTTP / Time   | HTTP-date textual representative                | DEFER          | RFC 850 two-digit years require a reference time. A deterministic Basis or narrower operand must be fixed.   |
-| HTTP          | HTTP media-type textual representative          | DEFER          | Parameter-value comparison and ordering cannot be normalized without closing each applicable parameter rule. |
-| URI / HTTP    | HTTP(S) URI normal-form representative          | DEFER          | Host interpretation and component-sensitive URI normalization are not yet closed in one exact profile.       |
-
-### Network and IoT
-
-| Review area           | Law working name                                    | Review outcome | Reason for deferral                                                                                                          |
-|-----------------------|-----------------------------------------------------|----------------|------------------------------------------------------------------------------------------------------------------------------|
-| Protocol / Identifier | IPv6 RFC 5952 textual representative                | DEFER          | The representative policy for IPv4-embedded IPv6 addresses remains unselected.                                               |
-| Protocol / Network    | EUI-48 / MAC-48 multi-format textual representative | DEFER          | The accepted alternate formats are unspecified. Independent Authority value beyond the RFC 9911 law is unproved.             |
-| Protocol / Network    | IPv6 network-prefix representative                  | DEFER          | The network-bit relation is clear, but the final IPv6 textual representative depends on the unresolved IPv4-embedded policy. |
-| URI / IoT             | CoAP URI normal-form representative                 | DEFER          | The exact URI operand needs closed host and percent-encoding rules, including their transformation order.                    |
-
-### Identifiers and Internationalization
-
-| Review area           | Law working name                                   | Review outcome | Reason for deferral                                                                                                               |
-|-----------------------|----------------------------------------------------|----------------|-----------------------------------------------------------------------------------------------------------------------------------|
-| Protocol / Identifier | BCP 47 registry-dependent canonical representative | DEFER          | The IANA Registry snapshot and scope of extension-dependent rules are not fixed.                                                  |
-| URI / Identifier      | Generic URN lexical representative                 | DEFER          | URN-equivalence can ignore components used during resolution. The identity subject and retained components must be distinguished. |
-
-### Financial and Retail Identifiers
-
-| Review area          | Law working name                       | Review outcome | Reason for deferral                                                                                              |
-|----------------------|----------------------------------------|----------------|------------------------------------------------------------------------------------------------------------------|
-| Financial identifier | IBAN electronic textual representative | DEFER          | The accepted print/electronic forms must be separated from country-registry validation and check-digit judgment. |
+The IBAN review removes only correctly positioned paper-format U+0020 grouping spaces to select electronic Text.
+It preserves account-character case and does not perform BBAN registry, check-digit, or account-validity judgment.
 
 ### Software Supply Chain
 
-| Review area           | Law working name                     | Review outcome | Reason for deferral                                                                                                |
-|-----------------------|--------------------------------------|----------------|--------------------------------------------------------------------------------------------------------------------|
-| Software supply chain | Package URL canonical representative | DEFER          | Package-type-specific normalization is not closed by the core syntax. The rule set must be fixed before admission. |
+| Review area           | Law working name                         | Review outcome   |
+|-----------------------|------------------------------------------|------------------|
+| Software supply chain | ECMA-427 core PURL syntax representative | ADMIT (proposed) |
+
+The PURL review owns only ECMA-427's common syntactic equivalences. Package-type-specific name, namespace, and
+version normalization requires separately qualified meaning and cannot be inferred from a current package registry.
 
 ### Cloud-Native
 
-| Review area          | Law working name                   | Review outcome | Reason for deferral                                                                                                                           |
-|----------------------|------------------------------------|----------------|-----------------------------------------------------------------------------------------------------------------------------------------------|
-| Cloud-native numeric | Kubernetes Quantity representative | DEFER          | Kubernetes preserves suffix-format families and rounds some parsed quantities. Exact equivalence and representative semantics are unresolved. |
+| Review area          | Law working name                                     | Review outcome   |
+|----------------------|------------------------------------------------------|------------------|
+| Cloud-native numeric | Kubernetes Quantity canonical textual representative | ADMIT (proposed) |
+
+The Kubernetes Quantity review selects the versioned, source-verified Kubernetes parse-and-canonicalize semantics,
+including suffix-family retention and specified rounding. It does not replace the Kubernetes canonical output with
+Kontrakt's own exact-value DecimalSI encoding. Kubernetes release compatibility is verified against the frozen semantic
+profile; a different release number alone does not require a distinct Law Version.
 
 ### Geographic
 
-| Review area    | Law working name          | Review outcome | Reason for deferral                                                                                            |
-|----------------|---------------------------|----------------|----------------------------------------------------------------------------------------------------------------|
-| Geographic URI | `geo:` URI representative | DEFER          | A unique representative for coordinate edge cases and the treatment of extension parameters remain unresolved. |
+| Review area    | Law working name                               | Review outcome   |
+|----------------|------------------------------------------------|------------------|
+| Geographic URI | RFC 5870 WGS-84 core `geo:` URI representative | ADMIT (proposed) |
+
+The geographic review adopts RFC 5870 coordinate equivalence and fixes a representative for poles, the antimeridian,
+and the default CRS while preserving optional altitude and uncertainty distinctions. Extensions are outside V1 coverage.
 
 ### Security / PKI Text
 
-| Review area               | Law working name                         | Review outcome | Reason for deferral                                                                                                              |
-|---------------------------|------------------------------------------|----------------|----------------------------------------------------------------------------------------------------------------------------------|
-| Security textual encoding | RFC 7468 textual-encoding representative | DEFER          | RFC 7468 has no general canonical encoding. Accepted parser variants and the wrapper representative must be explicitly selected. |
+| Review area               | Law working name                                | Review outcome   |
+|---------------------------|-------------------------------------------------|------------------|
+| Security textual encoding | RFC 7468 single-instance textual representative | ADMIT (proposed) |
+
+The RFC 7468 review represents one Label and byte payload in a fixed strict-generator text layout. It does not accept
+arbitrary permissive-PEM repairs, alter the decoded security object, or order multiple encapsulations.
 
 ### Schema and Structured Data
 
-| Review area   | Law working name            | Review outcome | Reason for deferral                                                                                                    |
-|---------------|-----------------------------|----------------|------------------------------------------------------------------------------------------------------------------------|
-| Schema / Data | Avro Parsing Canonical Form | DEFER          | The same-domain operand and parsing-only equivalence scope need closure; bounded schema resolution remains unverified. |
+| Review area   | Law working name            | Review outcome   |
+|---------------|-----------------------------|------------------|
+| Schema / Data | Avro Parsing Canonical Form | ADMIT (proposed) |
+
+The Avro review uses the precise Parsing Canonical Form in one frozen Avro specification version. It is not an
+assertion of whole-schema equivalence and does not replace exact canonical-content comparison with a hash alone.
+
+## 8.2. DEFER
+
+No candidates in the initial 75-candidate inventory remain `DEFER` after qualification review. This does not remove
+`DEFER` as a possible disposition for a future candidate whose required semantic or security evidence remains open.
 
 ## 8.3. REJECT
 
 Rejection concerns the proposed independent law, not necessarily every possible authoring alias.
+
+### Network and IoT
+
+| Review area        | Law working name                                    | Review outcome | Reason for rejection                                                                                                                                                        |
+|--------------------|-----------------------------------------------------|----------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Protocol / Network | EUI-48 / MAC-48 multi-format textual representative | REJECT         | The broad candidate has no one fixed standard for all accepted source forms and octet interpretations, and its independent Authority boundary against RFC 9911 is unproved. |
+
+This rejection leaves the standards-backed RFC 9911 MAC-48 Law intact. Explicitly scoped additional source-format
+conversions may be reviewed independently; common vendor usage does not by itself establish a universal equivalence.
 
 ### Text and Unicode
 
@@ -2245,6 +2430,18 @@ meaning or justify unsafe equivalence.
 This rejection applies to the original comma-to-dot representative, not to all decimal-comma processing. A separately
 qualified Law could remove only valid grouping periods while retaining the comma decimal separator. That narrower
 relation must receive its own exact grammar, equivalence, security review, and Catalog disposition before use.
+
+### Encoded Text
+
+| Review area  | Law working name                                    | Review outcome | Reason for rejection                                                                                                                                                                                     |
+|--------------|-----------------------------------------------------|----------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Encoded text | Base64 RFC 4648 canonical textual representative    | REJECT         | The strict RFC 4648 grammar already has one representation per octet sequence. Adding permissive decoder spellings lacks one generic normative equivalence and may erase security-relevant distinctions. |
+| Encoded text | Base64url RFC 4648 canonical textual representative | REJECT         | Padding choices are owned by referring protocols. Strict individual profiles already have singular representations, while generic padded/unpadded equivalence is not universally authorized.             |
+
+These rejections concern the proposed generic independent Canonicalization Authorities, not Base64 codecs or
+protocol-specific text profiles. A future MIME or other standards-backed profile must independently define the legal
+operand spellings and canonical representative. Neither RFC 4648 decoder latitude nor a provider's fallback rule can
+supply that meaning. In particular, signature-bearing Base64url text must retain the spelling mandated by its protocol.
 
 ---
 
