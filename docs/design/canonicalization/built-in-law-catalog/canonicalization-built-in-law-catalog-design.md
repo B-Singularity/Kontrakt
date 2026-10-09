@@ -6,7 +6,7 @@ Draft
 
 ## Date
 
-2026-10-09
+2026-10-10
 
 ## Governing ADRs
 
@@ -228,6 +228,11 @@ result. A new external release cannot mutate an already-versioned law through am
 Where an external specification intentionally guarantees stability across revisions, that guarantee may support the
 candidate's evolution closure. It does not remove the need to state what Kontrakt's law Version promises.
 
+The qualification record should also state whether an immutable public law name alone identifies the exact law, or
+which external revision and publicly distinguishable semantic profile the authoring source must preserve. A public
+reference may conceal Kontrakt's internal Version representation, but it cannot be ambiguous about the chosen exact
+meaning. That public authoring decision does not change the Authority or Version owned by the law.
+
 ## 2.4. Finite Work and V1 Realizability
 
 Canonicalization is on an untrusted inbound path. Every V1 candidate must have a finite and analyzable work shape for
@@ -324,6 +329,10 @@ matters. Malformed or legacy syntax can expose parser disagreement. Nested encod
 unintended second decode. Boundary-size inputs and collision cases test different failure modes. When
 authentication or signing depends on exact representation, the witness must preserve those original
 bytes or characters. These cases support verification; they do not become a second semantic definition.
+
+Security obligations here concern the admitted law and its use inside the Kontrakt pipeline. A different system's
+normalization performed after material leaves that pipeline is not a new responsibility of this Catalog. The law's
+own internal interpretation, version-bound semantic material, and realization must nevertheless remain verifiable.
 
 ## 2.7. Evidence and Admission Readiness
 
@@ -2447,7 +2456,8 @@ supply that meaning. In particular, signature-bearing Base64url text must retain
 
 # 9. API and Compiler Design Follow-On
 
-Concrete API design begins only from admitted or deliberately prototyped candidate meaning. Follow-on Design has four
+Concrete API design begins only from admitted or deliberately prototyped candidate meaning. The working user-facing
+source design is `docs/design/api/canonicalization-authoring-api-design.md`. Follow-on Design has four
 main concerns:
 
 ```text
@@ -2461,6 +2471,17 @@ None of these artifacts owns Catalog membership or exact law meaning.
 
 Source aliases must resolve to the same exact Authority rather than mint duplicate Catalog members. Similarity cannot
 infer aliasing. Equal structure or shared implementation code, for example, is insufficient.
+
+The CLI should generate complete public law selections directly into each Canonicalization 1D source declaration.
+Its supported, verified, security-eligible recommendations are authoring aids; users may explicitly choose another
+legal version. A fixed-meaning name may suffice, while version-sensitive laws require a public selector that resolves
+to exactly one immutable law Authority and Version. Users need not author internal Law Version identities. Neither
+ordinary compilation nor an inherited project or Policy-World Profile fills missing selections.
+
+The linked Authoring API Design also owns CLI-assisted migration, reviewable source edits, source-recovery snapshots,
+and rollback. Such rollback cannot delete or reset ADR-0053 immutable Version History, and the restored selection must
+pass ordinary Version legality and verification. The final Kotlin spelling for exact versions is still open because
+direct selections occupy type positions while composition uses direct law symbols.
 
 Compiler realization may physically fuse adjacent lookup and evaluation work when profitable. That optimization must
 still preserve the logical Authority and Version boundary. Contract-visible observations must remain recoverable.
@@ -2501,6 +2522,11 @@ surface. They cannot redefine the admitted law. In particular, they cannot chang
 
 Performance engineering belongs to Design or Verification unless a Contract independently makes a distinction visible.
 SIMD or caching, for example, do not become Built-In Law meaning merely because an implementation uses them.
+
+The CLI recommendation used for a new authoring declaration must be derived from separately checked support,
+conformance, security and relevant performance evidence. Selecting a recommended version is not evidence that it
+was admitted or that its realization is correct. The exact source-bound Version remains subject to the same
+qualification and verification as a manually chosen Version.
 
 ---
 
