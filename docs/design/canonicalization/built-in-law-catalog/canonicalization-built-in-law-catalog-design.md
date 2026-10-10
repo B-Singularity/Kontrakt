@@ -254,6 +254,18 @@ changing it alters legal meaning or representative selection. It also belongs to
 coverage or an owned refusal. A compiler safety limit may stop one realization. It must not silently
 narrow `E_L`, select a different `C_L`, or present the stop as a Canonicalization refusal.
 
+Unicode representative expansion is not itself a reason for Restricted Coverage. Normalization and
+Full Case Folding may increase the number of Unicode scalars while leaving the value in the `Text`
+semantic family. Length-based continuation policy over an established representative belongs to
+Admission when such a policy is declared. Resource exhaustion belongs to the applicable Budget or
+Capacity judgment, including resource control during Canonicalization before Admission is reached.
+Neither owner may silently truncate, replace, or approximate the law's required representative.
+The general Input-owned presentation legality and ADR-0066 same-domain requirement remain in force:
+an actual Input domain whose immutable semantic restrictions exclude the required representative
+must not be made applicable through a fictitious Admission check. Definition-time applicability
+must reject an incompatible law/presentation pairing. This paragraph does not transfer an existing
+Input-owned semantic bound to Admission or redefine the Input Contract.
+
 A semantically valid candidate may remain `DEFER` when V1 cannot yet demonstrate a safe bounded realization without
 weakening the law. Qualification must expose that feasibility risk rather than hide it behind a provider limit or an
 implementation-specific cutoff.
@@ -441,11 +453,14 @@ or merge the constituent Authorities. ADR-0066 remains the owner of composition 
 
 # 4. Current Candidate Inventory
 
-The initial inventory contained 75 candidates. All 75 have now received a proposed review disposition in
-Section 8. No candidate remains unreviewed. The results are not formal Catalog admission decisions.
+The initial inventory contained 75 candidates, all of which have now received an individual disposition. Section 8
+records **61 formally admitted Authorities, no remaining `ADMIT (proposed)` candidates, two `DEFER` decisions, and
+twelve
+`REJECT` decisions**. Only the Authorities explicitly admitted in Sections 8.4–8.13 have historical Catalog membership.
+The two deferred candidates do not gain membership through a favorable technical recommendation.
 
 New unreviewed candidates may be recorded here before qualification. They leave this section when
-an `ADMIT (proposed)`, `DEFER`, or `REJECT` result is recorded in Section 8. The domain grouping is a
+a review disposition or formal admission is recorded in Section 8. The domain grouping is a
 review aid; it does not establish shared Authority or Version ownership.
 
 ## 4.1. Demand and Standard Signals
@@ -461,7 +476,7 @@ representation.
 | Encoded text              | RFC 4648                                   | Canonical encoded text must remain separate from bytes-to-text encoding                     |
 | Numeric text              | Decimal and scientific notation practice   | Grouping, radix, scale markers, and exponent spelling need exact self-contained grammars    |
 | Bit representation        | Two's-complement and fixed-width bit forms | Numeric value, byte sequence, and fixed-width bit-vector meaning must remain distinct       |
-| POSIX IPv4 text           | POSIX network-address syntax               | Legacy multi-radix and abbreviated forms need an explicit profile before normalization      |
+| Historical IPv4 text      | BSD/Unix `inet_aton` numbers-and-dots      | Legacy multi-radix and abbreviated forms need an explicit profile before normalization      |
 | HTTP-date                 | RFC 9110                                   | Multiple accepted date spellings have one required generated form                           |
 | HTTP and CoAP URIs        | RFC 9110 and RFC 7252                      | Scheme-specific standards already define important normal-form choices                      |
 | `tel:` URI                | RFC 3966                                   | Visual separators and parameter ordering have protocol-defined comparison rules             |
@@ -535,9 +550,13 @@ and to prevent the Catalog from becoming a renamed collection of string utility 
 
 # 5. General Candidate Working Notes
 
-The laws in this section address common text or numeric representation choices. Presence here does not mean
-ratification. Each candidate must pass ADR-0076 qualification as one exact Built-In Law Authority. If it does not, the
-review must say why. A duplicate meaning or an over-broad subject are two common reasons.
+The laws in this section address common text or numeric representation choices. Presence here does not itself mean
+ratification. Sections 8.4–8.13 record the formally admitted ASCII, Unicode, Encoded Text,
+Web/HTTP, Numeric, Radix/Bit, Text/Network, Identifier, and domain-specific laws. Prior qualification
+questions below remain research history for those admitted subjects; their approved
+exact meaning belongs to Section 8. If another candidate fails ADR-0076 qualification
+as an independently owned Exact Built-In Law Authority, the review must say why.
+A duplicate meaning or an over-broad subject are two common reasons.
 
 Text candidates consume the `Text` presentation already established by ADR-0064, which is a sequence of Unicode scalar
 values rather than arbitrary JVM UTF-16 code units. Host material outside that legal Input presentation never enters
@@ -547,9 +566,9 @@ The working labels below are not public API names.
 
 ## 5.1. Boundary Whitespace Trim Family
 
-The ASCII and Unicode trim families were reviewed in Section 8 with proposed `ADMIT` outcomes for
-their boundary, leading, and trailing forms. The research below records the meaning that must still
-be closed in each normative law specification. None of these descriptions fixes a public API name.
+Section 8.4 formally admits the three ASCII trim forms with complete initial-version normative specifications.
+Section 8.5 admits the corresponding Unicode trim Authorities. The original research below
+records the reasons considered during qualification. None of these descriptions fixes a public API name.
 
 General-purpose APIs expose all three trimming behaviors, so each has an observable use case. The
 review must not merge them simply because one scanner can implement every behavior.
@@ -563,20 +582,22 @@ Qualification must decide whether the candidate is defined by the Unicode `White
 Unicode set. The property choice and any Version-sensitive membership are law meaning.
 
 For every family member, interior characters remain unchanged. A start-only law does not remove trailing whitespace; an
-end-only law does not remove leading whitespace; a both-boundary law removes both. These distinct representative
-functions are separate semantic subjects unless a later Authority-uniqueness review proves that one should be expressed
-only as a composition or API alias.
+end-only law does not remove leading whitespace; a both-boundary law removes both. The admitted ASCII boundary law is
+an expressly approved independent Built-In Authority despite being exactly expressible as a composition of the two
+one-sided laws. The matching Unicode exception is approved in Section 8.5.4. Neither admission is a general exemption
+for
+other composition-equivalent candidates.
 
-Empty input and all-whitespace input need explicit representative treatment. For the obvious trim relation the expected
-representative is the empty Text value, but that is not considered closed until the exact operand and whitespace-set
-laws
-are fixed.
+Empty input and all-whitespace input require explicit representative treatment. Section 8.4 fixes the empty Text
+representative for those cases under each admitted ASCII trim law. The exact Unicode whitespace set, Version-sensitive
+meaning, and corresponding representatives are
+formally fixed for the initial Unicode trim Versions in Section 8.5.
 
 ## 5.2. ASCII Case Conversion and Case Fold
 
-The ASCII lowercase and uppercase candidates have proposed `ADMIT` outcomes in Section 8.
-The ASCII case-fold proposal was `REJECT`ed as an independent Built-In Authority because it
-duplicates the reviewed lowercase law. These labels are not public API names.
+Section 8.4 formally admits the ASCII lowercase and uppercase laws as independent Built-In Authorities.
+The ASCII case-fold proposal remains `REJECT`ed as an independent Built-In Authority because it
+duplicates the admitted lowercase law. These labels are not public API names.
 
 The lowercase candidate maps ASCII `A` through `Z` to `a` through `z` and preserves every other Unicode scalar value.
 The uppercase candidate applies the inverse case-direction mapping to ASCII letters and likewise preserves every other
@@ -597,24 +618,24 @@ returns a legal `Text`, is idempotent, and has Total Representative Coverage. No
 or runtime registry determines the outcome, and no legal `Text` causes a Canonicalization-owned refusal.
 
 The common equivalence does not automatically merge the candidates into one Authority. Their representative
-obligations are different and cannot be substituted for one another. This supports retaining two proposed independent
-law subjects, subject to ADR-0076's final Authority-uniqueness and normative-specification review; separate API names
-alone would not justify that result. The relation is appropriate only where ASCII letter case is declared irrelevant.
+obligations are different and cannot be substituted for one another. This justifies the two independently admitted
+law subjects in Section 8.4; separate API names alone would not have justified the decision. The relation is
+appropriate only where ASCII letter case is declared irrelevant.
 For example, a protocol's case-sensitive command or an identifier requiring exact spelling must not inherit it merely
 because another protocol uses case-insensitive names. Downstream judgments must use the established representative,
 not an alternate Unicode or locale-sensitive case conversion.
 
 The ASCII case-fold proposal declares ASCII letter case irrelevant and selects lowercase ASCII as
-its representative. Section 8 records that this duplicates the exact meaning proposed for ASCII
-lowercase. It therefore does not justify a separate Catalog Authority. An explicit API alias may
-still project that Authority if it is formally admitted.
+its representative. Section 8 records that this duplicates the admitted ASCII lowercase law's exact
+meaning. It therefore does not justify a separate Catalog Authority. An explicit API alias may
+still project that Authority under the downstream Authoring API rules.
 
 None of the ASCII candidates owns locale behavior or Unicode case data.
 
 ## 5.3. Unicode Default Case Conversion and Full Case Folding
 
 The Unicode default lowercase and uppercase candidates have `REJECT` review outcomes as independent
-Canonicalization Built-In Laws in Section 8. Default full case folding retains an `ADMIT (proposed)` review outcome.
+Canonicalization Built-In Laws in Section 8. Default full case folding was subsequently admitted in Section 8.6.
 These names do not determine public API spelling.
 
 The lowercase and uppercase candidates exist because invariant case conversion is a ubiquitous developer operation.
@@ -641,6 +662,9 @@ Unicode case data is meaning-determining when it changes the exact representativ
 not itself the semantic Basis.
 
 ## 5.4. Unicode Normalization Forms
+
+The exact initial NFC, NFD, NFKC, and NFKD laws and their membership decisions appear in
+Section 8.6. The following candidate research remains for traceability.
 
 The four normalization-form candidates are Unicode NFC, Unicode NFD, Unicode NFKC, and Unicode NFKD.
 These are descriptive review names, not public API spellings.
@@ -683,8 +707,11 @@ profile.
 
 ## 5.5. Unicode NFC Case Fold
 
+The exact initial law and membership decision appear in Section 8.6. The working notes below
+record the preceding qualification, not an outstanding admission decision.
+
 This candidate is intended to collapse Unicode canonical-equivalent and default-caseless distinctions under one
-independently specified exact law. Section 8 records an `ADMIT (proposed)` review outcome, not formal Catalog admission.
+independently specified exact law. Section 8.6 records its later formal Catalog admission.
 
 Unicode D145 defines Canonical Caseless Matching using canonical decomposition and Default Full Case Folding. The
 working equivalence compares the NFD forms obtained after folding canonically decomposed inputs. The proposed NFC
@@ -698,15 +725,18 @@ independently selectable and versioned Law Authority even where a lawful composi
 The candidate is not admitted merely as a convenience alias; its exact relation and representative must be owned by
 that Authority rather than inherited from runtime composition.
 
-Formal admission still requires an exact Unicode Basis, treatment of unassigned code points, and verification that
-representative equality matches the declared equivalence. Repeated-application stability, same-domain closure, and
-finite-work bounds must also be established for the complete law, not assumed from its constituent operations.
+These were pre-admission questions. Section 8.6 owns the approved Unicode Basis, formal
+representative relation, and recorded verification argument. A production realization must still
+pass its own version-pinned conformance and bounded-work verification.
 
 ## 5.6. Unicode NFKC Case Fold
 
+The exact initial law and membership decision appear in Section 8.6. The working notes below
+record the preceding qualification, not an outstanding admission decision.
+
 This candidate targets Unicode `NFKC_Casefold` semantics for identifier-like text. It is a defined semantic operation,
 not an arbitrary composition chosen by an implementation. In particular, ordinary lowercasing cannot stand in for it.
-Section 8 records an `ADMIT (proposed)` review outcome, not formal Catalog admission.
+Section 8.6 records its later formal Catalog admission.
 
 Unicode R5 defines `toNFKC_Casefold`, while D147 defines Identifier Caseless Matching using that operation after
 canonical decomposition. The working equivalence compares `toNFKC_Casefold(NFD(x))` results. The proposed
@@ -727,9 +757,8 @@ distinctions. In particular, compatibility characters and default-ignorable code
 representative as otherwise distinct input. Signing, authorization, and protocol validation must not silently import
 this equivalence.
 
-Formal admission still requires proof that the proposed representative is idempotent and belongs to the same legal
-presentation domain, complete representative coverage, a pinned Unicode semantic Basis, and finite-work and security
-evidence for the exact law. These obligations cannot be discharged by the availability of a provider API.
+These were pre-admission requirements. Section 8.6 owns the approved semantic profile and
+its admission evidence. A provider API remains insufficient as independent conformance evidence.
 
 ## 5.7. WHATWG ASCII Whitespace Collapse
 
@@ -771,7 +800,7 @@ are not semantic determinants.
 
 For example, `"  A\t B\r\nC  "` becomes `"A B C"`. The escape notation in this example denotes the respective
 control characters. U+000B VERTICAL TAB, U+00A0 NO-BREAK SPACE, and U+2028 LINE SEPARATOR remain untouched.
-The separate ASCII boundary-trim candidates currently propose a six-character set that includes U+000B; those laws
+The admitted ASCII trim laws use a six-character set that includes U+000B; those laws
 must not be substituted for this exact five-character relation.
 
 This law intentionally erases line and control-character distinctions. It is unsuitable wherever such characters
@@ -780,10 +809,10 @@ mistaken for XML, JSON, or HTTP whitespace grammar. Canonicalization cannot repa
 validation. When selected, Admission judges the established representative, and Lowering consumes that same meaning.
 Raw provenance may support diagnostics but cannot reintroduce an erased distinction as a later semantic determinant.
 
-The existing boundary-trim candidates do not collapse interior whitespace. The standardized algorithm supplies a
+The admitted boundary-trim laws do not collapse interior whitespace. The standardized algorithm supplies a
 reusable reason to examine an independent Built-In. Nevertheless, ADR-0066 composition and Authority uniqueness must
-still be checked before formal Catalog admission. Section 8 records `ADMIT (proposed)` only; a complete Exact Law
-specification, independent evidence, and an explicit membership decision remain necessary.
+were checked before formal Catalog admission. Section 8.11 records this Law's approved `Initial` specification,
+qualification basis, and explicit membership decision.
 
 ## 5.8. LF Line Ending
 
@@ -800,6 +829,9 @@ trim
 or collapse content.
 
 ## 5.9. Unicode Decimal Digit Fold
+
+The exact law and initial membership decision appear in Section 8.5. The candidate research
+that follows remains as the original qualification record.
 
 Search and text-normalization infrastructure commonly folds native decimal digits into ASCII digits. The narrow
 candidate should target Unicode decimal digits only, not every character with a numeric value.
@@ -883,8 +915,8 @@ Those host APIs do not define the Contract.
 The Java `BigDecimal` cohort and stripping behavior are documented by the
 [Java Platform API](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/math/BigDecimal.html).
 
-Section 8 records `ADMIT (proposed)` for the exact numeric-cohort relation, with Restricted Coverage as the proposed
-solution to representative-domain closure. The equivalence relates two legal Decimal presentations when their exact
+Section 8.9.1 formally admits the exact numeric-cohort relation, with Restricted Coverage selected for
+representative-domain closure. The equivalence relates two legal Decimal presentations when their exact
 values `coefficient × 10^(-scale)` are equal. For each nonzero value, the proposed representative removes all trailing
 base-10 coefficient zeroes and adjusts the scale exactly. For zero, it selects `(coefficient=0, scale=0)`.
 
@@ -893,8 +925,8 @@ same established Decimal domain and its closed bounds. Otherwise it owns an expl
 not stop reduction early, clamp the scale, round, or substitute a convenient carrier value. Numerically equivalent
 operands within one exact Decimal domain have the same mathematical reduced form, so their coverage judgment is the
 same. Java `BigDecimal` scale overflow is implementation evidence, not a source of Contract failure semantics. The
-formal law must pin the bound and refusal relation, including cases where the zero representative is outside the
-applicable scale domain; this positive review does not ratify those details.
+admitted `Initial` law in Section 8.9.1 fixes the bound-sensitive refusal relation, including cases where the
+zero representative is outside the applicable scale domain; this earlier review is preserved as qualification evidence.
 
 This profile is distinct from business scale rules. A fixed monetary scale is one example of meaning that belongs
 elsewhere.
@@ -905,7 +937,7 @@ The presentation domain is IEEE 754 binary32 only when raw NaN representation re
 boundary. The candidate maps every NaN bit pattern to one quiet-NaN representative while preserving every non-NaN bit
 pattern, including signed zero.
 
-Section 8 records `ADMIT (proposed)`. The proposed representative is `0x7fc00000`, consistent with the canonical NaN
+Section 8.9.2 records formal `ADMIT`. The admitted representative is `0x7fc00000`, consistent with the canonical NaN
 bits used by Java `Float.floatToIntBits`. Two binary32 presentations are equivalent when both bit patterns denote NaN,
 or, for non-NaN patterns, only when their complete 32 bits match. Every NaN payload, sign, and signaling/quiet
 distinction
@@ -916,15 +948,16 @@ Raw-bit acquisition must precede the law. A lossless 32-bit carrier can realize 
 without executing floating-point arithmetic. Passing signaling NaN through a JVM `Float` path before Input
 Establishment cannot be assumed lossless. This is a platform-carrier qualification and verification obligation under
 ADR-0073, not permission to weaken ADR-0064 Input sameness or the proposed Law. A domain that needs NaN payload or
-signaling distinctions for diagnostics, integrity, or control must not select this collapse. Formal admission still
-requires evidence that each supported Input path preserves the admitted bit distinctions before Canonicalization.
+signaling distinctions for diagnostics, integrity, or control must not select this collapse. The admitted Law requires
+each supported Input path to preserve the admitted bit distinctions before
+Canonicalization; verification of a concrete platform path remains separate.
 
 ## 5.14. Binary64 Canonical NaN
 
 The binary64 candidate follows the same shape as binary32. Every NaN representation maps to one quiet NaN while every
 non-NaN bit pattern remains unchanged.
 
-Section 8 records `ADMIT (proposed)`. The proposed representative is `0x7ff8000000000000`, consistent with Java
+Section 8.9.3 records formal `ADMIT`. The admitted representative is `0x7ff8000000000000`, consistent with Java
 `Double.doubleToLongBits`. All binary64 NaN bit patterns belong to one equivalence class; every non-NaN pattern is
 only equivalent to the identical 64-bit pattern. The law preserves both signed zeroes, infinities, and finite-value
 bits exactly. It is Total, idempotent, and uses fixed masks rather than host floating-point equality or arithmetic.
@@ -932,8 +965,9 @@ bits exactly. It is Total, idempotent, and uses fixed masks rather than host flo
 The realization must preserve the complete binary64 bit datum at Input acquisition, for example through a lossless
 64-bit carrier. A JVM `Double` carrier cannot be presumed to retain every signaling NaN representation. The
 independent binary64 Law does not inherit the binary32 representative or its bit-width semantics. NaN payload and
-signaling-state loss is intentional only after the selected Canonicalization establishes its representative. Formal
-admission still requires supported-path preservation and security evidence for that boundary.
+signaling-state loss is intentional only after the selected Canonicalization establishes its representative. The
+admitted `Initial` Law fixes that boundary; supported-path preservation and security evidence
+remain realization verification duties.
 
 ## 5.15. ASCII Grouped-Decimal Text
 
@@ -942,7 +976,7 @@ decimal separator. The operand requirement must specify valid grouping positions
 cannot change that grammar. Host settings and external numbering profiles have no authority over it.
 
 The representative removes only valid grouping separators. It does not silently add the stronger distinctions owned by
-fixed-point or scientific-notation candidates.
+fixed-point or scientific-notation candidates. Section 8.8.4 fixes the admitted exact grammar and representative.
 
 ```text
 1,234,567.89
@@ -989,10 +1023,9 @@ they are not decoration to be stripped mechanically.
     -> 0.855
 ```
 
-Qualification must define the legal decimal grammar and use exact arithmetic. It must not round through binary floating
-point. If the plain decimal form is admitted into the same operand domain, its relation to the existing decimal-text
-laws
-must also pass Authority-uniqueness review.
+The admitted exact grammar and arithmetic are fixed in Section 8.8.5; the earlier qualification required
+exact arithmetic rather than binary floating-point rounding. The selected plain-decimal operand form
+ensures same-domain closure, and the exact rate relation remains independent of the other decimal-text laws.
 
 ## 5.18. Scientific-Notation Text
 
@@ -1010,14 +1043,15 @@ not make ordinary fixed-point text equivalent merely because both spellings deno
 ```
 
 A broader law that equates fixed-point and exponent notation would have a different equivalence relation. It must be
-qualified separately rather than hidden behind a formatter choice.
+qualified separately rather than hidden behind a formatter choice. The `Initial` scientific-only law is admitted in
+Section 8.8.6.
 
 ## 5.19. Binary32 Decimal Lexical Form
 
 This candidate concerns decimal Text that denotes an IEEE 754 binary32 value. Two legal spellings are equivalent only
 when the law's exact conversion relation produces the same binary32 value.
 
-Section 8 records `ADMIT (proposed)` for the exact
+Section 8.9.5 records formal `ADMIT` for the exact
 [W3C XML Schema 1.1](https://www.w3.org/TR/xmlschema11-2/) `float` lexical/canonical profile. The already-established
 `Text` operand is interpreted under the selected `floatRep` grammar and the specifically chosen
 `floatLexicalMap`; equivalence means identity of the resulting binary32 value, not equality of exact decimal rationals.
@@ -1042,7 +1076,7 @@ safety limit must not silently change the selected rounding or representative.
 The binary64 candidate has the same semantic shape as binary32 but a different value space and precision boundary. That
 difference prevents one host formatting routine from implicitly defining both laws.
 
-Section 8 records `ADMIT (proposed)` for the separate W3C XML Schema 1.1 `double` lexical/canonical profile. Legal
+Section 8.9.6 records formal `ADMIT` for the separate W3C XML Schema 1.1 `double` lexical/canonical profile. Legal
 `Text` under the selected `doubleRep` grammar is interpreted by the specifically chosen `doubleLexicalMap`; operands
 are equivalent when they have the same binary64 value identity. Their one Text representative is selected by the
 corresponding `doubleCanonicalMap`. The Law Version must fix both exact maps rather than inherit the current JVM or
@@ -1063,8 +1097,8 @@ They do not encode an octet sequence, so they are distinct from Base16 and other
 operand grammar must decide when leading zeros can be ignored. It must also define prefixes and signs,
 including negative zero. Hexadecimal letter case needs its own exact rule.
 
-Qualification must decide whether the three candidates are independent Authorities or one exact semantic family with
-separate authoring projections. A host parser's auto-radix rules cannot define the operand.
+Section 8.10.1 admits the three distinct Authorities with fixed independent radix grammars and
+representatives. A host parser's auto-radix rules cannot define the operand.
 
 The representative must not accidentally import fixed-width integer meaning. In an integer law, redundant leading zero
 digits can be irrelevant. In a bit-vector law, the same digits may carry width.
@@ -1082,8 +1116,8 @@ established width.
 
 This family is not an integer formatter. `0000000010101111` cannot become `10101111` when the operand is a 16-bit
 vector.
-Qualification must close the exact separator and prefix grammar for each textual form and review Authority uniqueness
-against Base16.
+Section 8.10.2–8.10.3 closes the exact separator and prefix grammars and records both independent
+Authorities, distinct from Base16 by their exact-width Bit-Vector subject.
 
 ## 5.23. Minimal Two's-Complement Signed-Integer Bytes
 
@@ -1102,16 +1136,16 @@ not.
     -> 00 80
 ```
 
-Qualification must ensure that the Input presentation preserves the octet sequence as semantic material. This law does
-not reinterpret arbitrary memory or protocol buffers.
+The admitted `Initial` law and its exact nonempty-Bytes Coverage are fixed in Section 8.10.4. Input must preserve
+the octet sequence as semantic material; this law does not reinterpret arbitrary memory or protocol buffers.
 
 ## 5.24. POSIX File-Mode Octal Text
 
 A POSIX-style numeric file mode is a bitmask presentation, not merely an octal spelling of an unrelated mathematical
 integer. The candidate therefore remains domain-specific even if its implementation can share radix parsing machinery.
 
-The exact operand profile must define which mode bits and numeric widths are admitted. Redundant leading zero digits may
-be canonicalized only where the selected profile treats them as presentation detail. Symbolic mode expressions such as
+Section 8.10.5 fixes the admitted 12-bit mode-mask domain and four-octal-digit representative.
+Redundant leading zero digits may be canonicalized only under that selected profile. Symbolic mode expressions such as
 `u+rwx` are not part of this law because they can describe operations rather than one already-established mode value.
 
 ---
@@ -1137,7 +1171,8 @@ representative while preserving the represented bit string.
 
 Qualification must close the exact Base16 grammar. It must decide whether the `0x` prefix is legal and
 whether separators are permitted. Odd digit counts need an explicit rule too. RFC 4648 Base16 has no
-padding. A broader host parser cannot silently expand the operand domain.
+padding. A broader host parser cannot silently expand the operand domain. Section 8.7 closes these
+questions in the admitted `Initial` Version.
 
 ## 6.2. Base16 Uppercase Text
 
@@ -1145,7 +1180,7 @@ This candidate has the same legal encoded-text boundary as the lowercase profile
 letters.
 
 Authority uniqueness must be reviewed explicitly. Lowercase and uppercase select different representatives and therefore
-cannot be aliases merely because they preserve the same decoded bytes.
+cannot be aliases merely because they preserve the same decoded bytes. Section 8.7 records both independent admissions.
 
 ## 6.3. Base64 RFC 4648 Canonical Text
 
@@ -1187,7 +1222,9 @@ The operand must already be legal Base32 text under one exact RFC 4648 profile. 
 text and then re-encode it under implementation defaults.
 
 RFC 4648 defines a Base32 alphabet and canonical pad-bit requirements. Qualification must close the padding policy and
-the accepted grammar. Case-insensitive behavior from a permissive decoder cannot silently widen the operand.
+the accepted grammar. Case-insensitive behavior from a permissive decoder cannot silently widen the operand. Section 8.7
+fixes the
+permitted ASCII case variants and requires exact padding and zero unused bits.
 
 ## 6.6. Base32hex RFC 4648 Canonical Text
 
@@ -1196,13 +1233,15 @@ an
 implementation flag on one ambiguous candidate.
 
 The same canonical pad-bit and padding questions apply. Shared codec code does not make the two alphabets one Authority.
+Section 8.7 fixes a distinct Base32hex alphabet and the same strict padding profile.
 
 ## 6.7. Decimal Integer Text Canonical Form
 
 Developers frequently remove redundant leading zeros or normalize signs when handling decimal integer text. That demand
 does not justify a vague "number string normalize" law.
 
-The candidate must define one exact textual grammar and representative relation. Qualification must explicitly decide:
+The candidate qualification identified the following details, now fixed by the formally admitted `Initial`
+grammar and representative in Section 8.8.2:
 
 ```text
 optional or required sign
@@ -1235,15 +1274,15 @@ representative must also account for an explicit plus sign and negative zero.
     -> 0.5
 ```
 
-These examples illustrate the candidate direction only. They do not establish the final law before the exact grammar is
-closed.
+These examples were candidate evidence. The exact grammar, representative, and formal membership are now fixed
+by Section 8.8.3.
 
 Business scale remains outside this candidate. If `12.50` carries a Contract-visible scale distinct from `12.5`, the two
 texts are not equivalent under this law.
 
 ## 6.9. RFC 3986 Percent-Encoding Syntax Representative
 
-Section 8 records `ADMIT (proposed)` for the narrow syntax representative described
+Section 8.7 records formal `ADMIT` for the narrow syntax representative described
 by [RFC 3986, Sections 2.1 and 6.2.2](https://www.rfc-editor.org/rfc/rfc3986.html). The operand must be an
 already-established `Text` presentation whose exact URI-component context and percent-triplet grammar are fixed. This
 Law does not accept an arbitrary whole URI and infer its component boundaries.
@@ -1267,7 +1306,7 @@ characters stay encoded when supplied as encoded octets.
 The representative remains in the same exact component-presentation domain and must be stable when the Law is applied
 again. Valid percent triplets and the allowed direct character repertoire must be defined by the operand grammar. Other
 established `Text` lies outside successful coverage and must not be repaired by a host URI decoder. The exact Refusal
-and Coverage relation belongs in the versioned Law specification.
+and Coverage relation is fixed in the admitted versioned Law specification in Section 8.7.
 
 A selected component Law cannot become a second URI parser. In particular, decoding an encoded slash, applying this Law
 before component parsing, or decoding again after Admission can change path boundaries. Encoded unreserved dots may also
@@ -1277,7 +1316,7 @@ interpretation remain with their own Authorities. No ambient URI library may dec
 
 ## 6.10. IPv6 RFC 5952 Text
 
-Section 8 records `ADMIT (proposed)` for an
+Section 8.11 records formal `ADMIT` for an
 exact [RFC 5952 Section 4](https://www.rfc-editor.org/rfc/rfc5952.html#section-4) all-hexadecimal profile. The operand
 is an already-established legal IPv6 address Text without a zone identifier. Two operands are equivalent exactly when
 they denote the same 128-bit IPv6 address. The representative uses lowercase hexadecimal digits, removes leading zeros
@@ -1310,7 +1349,7 @@ registry-dependent canonicalization.
 
 ## 6.12. BCP 47 Registry-Dependent Canonical Representative
 
-Section 8 records `ADMIT (proposed)` for the registry-dependent language-tag canonicalization described
+Section 8.2 records `DEFER` for the registry-dependent language-tag canonicalization described
 by [RFC 5646 Section 4.5](https://www.rfc-editor.org/rfc/rfc5646.html#section-4.5). The operand is an
 already-established well-formed BCP 47 language-tag Text admitted by one precisely defined Registry profile. The Law
 applies RFC 5646 Preferred-Value and applicable canonical subtag rules, including the RFC-defined ordering of extension
@@ -1340,6 +1379,9 @@ bits nor version or variant meaning.
 
 A structured UUID value that no longer contains textual case does not need this law.
 
+The independent Authority is `REJECT`ed in Section 8.3; UUID validation plus the existing ASCII Lowercase Law covers its
+case-only representative.
+
 ## 6.14. RFC 9911 MAC-48 Lowercase Text
 
 This candidate is narrower than a generic MAC-address normalizer. RFC 9911 defines a 48-bit IEEE 802 MAC text profile as
@@ -1347,6 +1389,9 @@ six hexadecimal octets separated by colons and uses lowercase hexadecimal charac
 
 Qualification must decide whether Kontrakt adopts that exact textual profile as the operand. Other address lengths and
 separator conventions are not silently included.
+
+The independent Authority is `REJECT`ed in Section 8.3; lawful MAC-48 Input may reuse the already-admitted ASCII
+Lowercase Law.
 
 ## 6.15. IPv4 Network Prefix
 
@@ -1367,7 +1412,7 @@ belongs to the operand profile rather than to a backend parser.
 
 ## 6.16. IPv6 Network Prefix
 
-Section 8 records `ADMIT (proposed)` for the [RFC 9911](https://www.rfc-editor.org/rfc/rfc9911.html) IPv6 network-prefix
+Section 8.11 records formal `ADMIT` for the [RFC 9911](https://www.rfc-editor.org/rfc/rfc9911.html) IPv6 network-prefix
 representative. The operand is an already-established legal IPv6-prefix Text with a prefix length from 0 through 128.
 Two operands are equivalent only when their prefix lengths and the address bits covered by that length are equal. The
 representative clears every non-prefix bit and formats the remaining 128-bit address using the Section 6.10 RFC 5952
@@ -1401,7 +1446,7 @@ That proposal requires a separate Catalog decision; the present broad multi-form
 
 ## 6.18. HTTP-Date Text
 
-Section 8 records `ADMIT (proposed)` for
+Section 8.7 records formal `ADMIT` for
 the [RFC 9110 Section 5.6.7](https://www.rfc-editor.org/rfc/rfc9110.html#section-5.6.7) HTTP-date profile. The standard
 recognizes IMF-fixdate, obsolete RFC 850 date, and obsolete asctime date forms for recipients, but requires an
 IMF-fixdate form when a sender generates a date. These admitted spellings can represent one HTTP date without giving
@@ -1422,12 +1467,12 @@ Sun Nov  6 08:49:37 1994
 
 The normative specification must fix calendar legality, weekday consistency, leap-second treatment, the exact RFC 850
 century rule, representable year range, and failure when a legal Input `Text` is not a canonicalizable HTTP-date. These
-conditions must be decided under the selected Law rather than delegated to the current JVM date parser. HTTP-date
+conditions are fixed by the `Initial` Law in Section 8.7 rather than delegated to the current JVM date parser. HTTP-date
 Canonicalization does not establish freshness, expiry, or authorization. Those judgments belong to their own Contracts.
 
 ## 6.19. HTTP Media Type Text
 
-Section 8 records `ADMIT (proposed)` for a restricted HTTP media-type *syntax* representative based
+Section 8.7 records formal `ADMIT` for a restricted HTTP media-type *syntax* representative based
 on [RFC 9110 Section 8.3.1](https://www.rfc-editor.org/rfc/rfc9110.html#section-8.3.1)
 and [RFC 6838 Section 4.3](https://www.rfc-editor.org/rfc/rfc6838.html#section-4.3). It does not claim to canonicalize
 every semantic equivalence of a registered media type. The already-established `Text` operand must be parsed under one
@@ -1468,7 +1513,7 @@ The operand remains qvalue Text. Parsing the value into an unrelated numeric Fac
 
 ## 6.21. HTTP (S) URI Normal Form
 
-Section 8 records `ADMIT (proposed)` for a restricted HTTP (S) scheme-based URI representative
+Section 8.7 records formal `ADMIT` for a restricted HTTP (S) scheme-based URI representative
 using [RFC 9110 Section 4.2.3](https://www.rfc-editor.org/rfc/rfc9110.html#section-4.2.3) and the
 applicable [RFC 3986](https://www.rfc-editor.org/rfc/rfc3986.html) syntax rules. This is not an assertion that URI
 normalization proves two origin resources are the same, and it does not admit generic whole-URI canonicalization for
@@ -1504,7 +1549,7 @@ library or a future standards revision cannot silently broaden this Law's Versio
 
 ## 6.22. CoAP URI Normal Form
 
-Section 8 records `ADMIT (proposed)` for a restricted `coap` / `coaps` URI normal-form Law grounded
+Section 8.11 records formal `ADMIT` for a restricted `coap` / `coaps` URI normal-form Law grounded
 in [RFC 7252 Section 6.3](https://www.rfc-editor.org/rfc/rfc7252.html#section-6.3)
 and [RFC 3986](https://www.rfc-editor.org/rfc/rfc3986.html). The operand is an already-established whole URI Text whose
 scheme, authority, path, and query are parsed under one exact CoAP URI profile. The relation is the selected standard
@@ -1524,7 +1569,7 @@ independent CoAP Authority and its own scheme defaults.
 
 ## 6.23. Generic URN Lexical Representative
 
-Section 8 records `ADMIT (proposed)` for the restricted **RFC 8141 assigned-name-only** Text
+Section 8.12 records formal `ADMIT` for the restricted **RFC 8141 assigned-name-only** Text
 representative. [RFC 8141 Section 3.1](https://www.rfc-editor.org/rfc/rfc8141.html#section-3.1) defines generic
 URN-equivalence for the assigned name. The operand is a legal `urn:` assigned-name Text without `r-component`,
 `q-component`, or `f-component`; full URNs carrying those components are outside this Law's successful Coverage.
@@ -1579,9 +1624,12 @@ one exact representative for the Basic Latin case-insensitive relation and prese
 The DOI grammar and any URI or proxy presentation remain separate questions. A DOI-name law must not silently absorb the
 syntax of a resolver URL.
 
+The independent Authority is `REJECT`ed in Section 8.3; the DOI name retains the Basic Latin-only equivalence of the
+admitted ASCII Lowercase Law.
+
 ## 6.27. IBAN Electronic Text
 
-Section 8 records `ADMIT (proposed)` for the paper-to-electronic spacing distinction
+Section 8.13 records formal `ADMIT` for the paper-to-electronic spacing distinction
 under [ISO 13616-1](https://www.iso.org/standard/81089.html). The operand is an already-established Text in the exact
 electronic IBAN presentation or its specified paper grouping with `U+0020 SPACE`. The equivalence removes only
 authorized printed grouping spaces while preserving all account characters exactly. Its representative is the
@@ -1611,7 +1659,7 @@ law.
 
 ## 6.29. Package URL Canonical Representative
 
-Section 8 records `ADMIT (proposed)` only for an
+Section 8.13 records formal `ADMIT` only for an
 **[ECMA-427](https://ecma-international.org/publications-and-standards/standards/ecma-427/) core PURL syntax**
 representative. The operand is a legal Package URL Text in an exact core grammar. The Law owns only representation
 distinctions for which the ECMA-427 core specification supplies common rules. Package-type-specific identity and
@@ -1631,7 +1679,7 @@ must verify same-domain closure and idempotence, including the exact percent-enc
 
 ## 6.30. Kubernetes Quantity Representative
 
-Section 8 records `ADMIT (proposed)` for a **Kubernetes Quantity canonical Text** Law tied to one immutable Kubernetes
+Section 8.2 records `DEFER` for a **Kubernetes Quantity canonical Text** Law tied to one immutable Kubernetes
 Quantity semantic profile. The basis is
 the [Kubernetes Quantity API documentation](https://kubernetes.io/docs/reference/kubernetes-api/definitions/quantity-resource/)
 and a specific verifiable `k8s.io/apimachinery/pkg/api/resource` implementation baseline. Kubernetes parses DecimalSI,
@@ -1670,7 +1718,7 @@ resource-policy validity or numeric-comparison semantics.
 
 ## 6.31. `geo:` URI Representative
 
-Section 8 records `ADMIT (proposed)` for an [RFC 5870](https://www.rfc-editor.org/rfc/rfc5870.html) WGS-84 core `geo:`
+Section 8.13 records formal `ADMIT` for an [RFC 5870](https://www.rfc-editor.org/rfc/rfc5870.html) WGS-84 core `geo:`
 URI Text profile. The operand is a legal URI with WGS-84 coordinates and only the core parameters admitted by the
 profile. Two operands are equivalent under the RFC's geographic URI comparison rules, including equal exact decimal
 coordinate values, the longitude equivalence at the antimeridian, longitude irrelevance at the poles, and the
@@ -1688,7 +1736,7 @@ host geolocation, or lookup of a mutable geodetic registry.
 
 ## 6.32. RFC 7468 Textual-Encoding Representative
 
-Section 8 records `ADMIT (proposed)` for a **single [RFC 7468](https://www.rfc-editor.org/rfc/rfc7468.html)
+Section 8.13 records formal `ADMIT` for a **single [RFC 7468](https://www.rfc-editor.org/rfc/rfc7468.html)
 textual-encoding instance**. Its operand is one legal established encapsulation Text with an explicit BEGIN/END Label
 and Base64-encoded octets. The equivalence relates only permitted parser spellings carrying exactly the same Label and
 octet sequence. The representative selects one exact strict-generator presentation with Base64 lines of 64 characters
@@ -1706,7 +1754,7 @@ parser latitude that are independent of the rejected generic Base64 textual law.
 
 ## 6.33. Avro Parsing Canonical Form
 
-Section 8 records `ADMIT (proposed)` for the
+Section 8.13 records formal `ADMIT` for the
 versioned [Apache Avro Parsing Canonical Form](https://avro.apache.org/docs/current/specification/#parsing-canonical-form-for-schemas)
 Law. The operand and result are both Text presentations of legal Avro schemas under one frozen Avro specification
 profile. The equivalence is equality of the Parsing Canonical Form Text, and the representative is the exact result of
@@ -2099,7 +2147,10 @@ REJECT
 
 A proposed `ADMIT` is not Catalog admission. Formal `ADMIT` requires a complete versioned normative
 law specification and an explicit Catalog decision under ADR-0076. Specification approval and
-Catalog admission may be recorded together if neither precedes the other.
+Catalog admission may be recorded together if neither precedes the other. The formally approved ASCII membership
+decisions are recorded in Section 8.4. The Unicode decisions
+are recorded in Sections 8.5 and 8.6. The formally admitted Encoded Text and Web/HTTP laws are recorded in Section 8.7.
+Sections 8.8–8.10 record the subsequently ratified Decimal Text, Numeric/IEEE/XSD, and Radix/Bit Laws.
 
 The disposition must state the semantic reason. Implementation availability alone does not turn a semantically valid law
 into a different law, and implementation registration does not turn a candidate into a member.
@@ -2121,84 +2172,58 @@ A new exact Version under an already-admitted Authority does not create another 
 The review tables below use the same domain names as the candidate inventory. A candidate leaves
 Section 4 when its review disposition is recorded here. This movement does not create Catalog
 membership. Working notes in Sections 5–7 remain research evidence rather than current status
-records; the tables below own the recorded review disposition.
+records. Formal Membership appears in Sections 8.4–8.13: the prior 42 Authorities plus seven
+Text/Network, three identifier/URI, and nine temporal/domain Authorities. The final disposition of all
+75 initial candidates is **61 formal `ADMIT`, zero `ADMIT (proposed)`, two `DEFER`, and twelve `REJECT`**.
+The historic Working Notes are not a second status register.
 
 ## 8.1. ADMIT (Proposed)
 
-A proposed `ADMIT` is a favorable review outcome, not a ratified Exact Built-In Law. Each entry
-still requires its complete normative law specification and an explicit Catalog admission
-under ADR-0076.
+No candidate in the initial 75-candidate inventory remains `ADMIT (proposed)`. The original
+review observations below are retained as qualification history, not live proposed entries.
+Each admitted candidate has its formal Membership and exact Version meaning in Sections 8.4–8.13;
+the two unresolved candidates appear in Section 8.2 and independent-Authority rejections in 8.3.
+A future proposed `ADMIT` must still satisfy ADR-0076 before it gains Membership.
 
 ### Text and Unicode
 
-| Review area           | Law working name                              | Review outcome   |
-|-----------------------|-----------------------------------------------|------------------|
-| Boundary text         | ASCII boundary whitespace trim                | ADMIT (proposed) |
-| Boundary text         | ASCII leading whitespace trim                 | ADMIT (proposed) |
-| Boundary text         | ASCII trailing whitespace trim                | ADMIT (proposed) |
-| Boundary text         | Unicode boundary whitespace trim              | ADMIT (proposed) |
-| Boundary text         | Unicode leading whitespace trim               | ADMIT (proposed) |
-| Boundary text         | Unicode trailing whitespace trim              | ADMIT (proposed) |
-| Case                  | ASCII lowercase representative                | ADMIT (proposed) |
-| Case                  | ASCII uppercase representative                | ADMIT (proposed) |
-| Case                  | Unicode default full case-fold representative | ADMIT (proposed) |
-| Unicode normalization | Unicode NFC case-fold profile                 | ADMIT (proposed) |
-| Unicode normalization | Unicode NFKC case-fold profile                | ADMIT (proposed) |
-| Unicode normalization | Unicode NFC normalization                     | ADMIT (proposed) |
-| Unicode normalization | Unicode NFD normalization                     | ADMIT (proposed) |
-| Unicode normalization | Unicode NFKC normalization                    | ADMIT (proposed) |
-| Unicode normalization | Unicode NFKD normalization                    | ADMIT (proposed) |
-| Text representation   | WHATWG ASCII whitespace collapse              | ADMIT (proposed) |
-| Text representation   | LF line-ending normalization                  | ADMIT (proposed) |
-| Text representation   | Unicode decimal-digit fold                    | ADMIT (proposed) |
+The two remaining Text candidates have been admitted in Section 8.11. Earlier observations below are historical.
 
-The ASCII trim reviews propose the six-character set from U+0009 through U+000D and U+0020,
-not Java `trim()` behavior. The Unicode trim reviews propose the Unicode `White_Space` property
-under a fixed Unicode semantic version. These selections must be closed in each exact normative
-law specification before formal admission. Leading, trailing, and both-boundary forms remain
-separate proposed Authorities pending that approval.
+The three ASCII trim laws are formally admitted in Section 8.4. Their exact six-character set is U+0009
+through U+000D plus U+0020, not Java `trim()` behavior or WHATWG Infra's five-character ASCII
+whitespace set. The three Unicode trim Authorities are separately admitted in Section 8.5.
+Their fixed Unicode 17.0.0 `White_Space` property differs from the fixed ASCII `W6` meaning.
 
-The ASCII case reviews use the 26 ASCII upper/lower letter pairs as one exact case-insensitive equivalence relation,
-consistent with WHATWG Infra's ASCII case-insensitive matching. Their representatives differ: lowercase selects the
-lowercase spelling, and uppercase selects the uppercase spelling. Both preserve non-ASCII scalars, require no Unicode
-version or ambient locale, and have Total Coverage with length-preserving, idempotent representatives. The different
-representatives justify reviewing two independent Law Authorities rather than treating uppercase as an alias for
-lowercase. Final Authority uniqueness and exact-law approval remain necessary. Case-sensitive protocol fields and
-identifier semantics must not acquire this equivalence without their own applicable contract declaration.
+The two ASCII case laws are formally admitted in Section 8.4. They use the 26 ASCII upper/lower letter pairs as
+one exact case-insensitive equivalence relation, consistent with WHATWG Infra's ASCII case-insensitive matching.
+Their representatives differ: lowercase selects the lowercase spelling, and uppercase selects the uppercase spelling.
+Both preserve non-ASCII scalars, require no Unicode version or ambient locale, and have Total Coverage with
+length-preserving, idempotent representatives. Their different representative obligations justify two independent
+Authorities rather than an uppercase alias of lowercase. Case-sensitive protocol fields and identifier semantics
+must not acquire this equivalence without their own applicable contract declaration.
 
-The full case-fold review proposes Unicode Default Full Case Folding rather than lowercasing.
-The normalization reviews propose the four distinct Unicode normalization forms. Every
-Unicode-dependent law requires its exact semantic Version before formal admission.
+Unicode Default Full Case Folding and the four normalization forms are formally admitted in
+Section 8.6 with exact Unicode 17.0.0 semantic material. Full Case Folding remains distinct
+from lowercasing; canonical and compatibility equivalence are not interchangeable.
 
-The NFC case-fold review proposes Unicode D145 Canonical Caseless Matching with one NFC representative. An explicit
-composition may express similar meaning, but a frequently used standardized combination can justify a separately
-versioned curated Built-In Law under ADR-0066. The NFKC case-fold review proposes Unicode D147 Identifier Caseless
-Matching using `toNFKC_Casefold` after NFD. That law also removes distinctions involving compatibility characters and
-default-ignorable code points. Neither proposed law validates identifier syntax or makes every identifier use safe.
-Their precise Unicode Basis, representative stability, and security obligations remain subject to normative approval.
+The NFC case-fold and NFKC case-fold Authorities are separately admitted in Section 8.6. The first
+uses Unicode D145 Canonical Caseless Matching with an NFC representative. The second uses D147
+Identifier Caseless Matching and Unicode R5 after initial NFD. Neither law validates identifier
+syntax, confusable security, authorization, or a protocol's use of the folded value.
 
-The WHATWG whitespace-collapse review proposes one law over exactly U+0009, U+000A, U+000C, U+000D, and U+0020.
+The admitted WHATWG whitespace-collapse Law fixes one law over exactly U+0009, U+000A, U+000C, U+000D, and U+0020.
 It removes boundary runs and collapses interior runs to one U+0020. This is not the earlier Unicode-wide whitespace
 proposal. The selected equivalence can erase protocol delimiters, so its use cannot substitute for protocol validation.
 
-The LF review proposes CRLF and standalone CR as alternate spellings of LF. Other Unicode
-line separators are preserved. The decimal-digit review proposes folding only Unicode `Nd`
-characters to their matching ASCII digits under fixed Unicode data.
+The admitted LF Law fixes CRLF and standalone CR as alternate spellings of LF. Other Unicode
+line separators are preserved. The Unicode `Nd` decimal-digit fold is separately admitted in
+Section 8.5; numeric characters outside `Nd` remain unchanged.
 
 ### Numeric and Numeric Text
 
-| Review area  | Law working name                                   | Review outcome   |
-|--------------|----------------------------------------------------|------------------|
-| Numeric text | Decimal integer textual representative             | ADMIT (proposed) |
-| Numeric text | Fixed-point decimal textual representative         | ADMIT (proposed) |
-| Numeric text | ASCII grouped-decimal textual representative       | ADMIT (proposed) |
-| Numeric text | Percentage / per-mille rate textual representative | ADMIT (proposed) |
-| Numeric text | Scientific-notation textual representative         | ADMIT (proposed) |
-| Numeric      | Decimal numeric-value representative               | ADMIT (proposed) |
-| Numeric      | Binary32 canonical NaN                             | ADMIT (proposed) |
-| Numeric      | Binary64 canonical NaN                             | ADMIT (proposed) |
-| Numeric text | Binary32 decimal lexical representative            | ADMIT (proposed) |
-| Numeric text | Binary64 decimal lexical representative            | ADMIT (proposed) |
+The ten original Numeric and Numeric Text review outcomes were subsequently admitted
+in Sections 8.8 and 8.9. The following research observations remain historical
+qualification evidence rather than current `ADMIT (proposed)` dispositions.
 
 The integer and fixed-point reviews propose exact ASCII numeric grammars. Their representatives
 preserve the exact numeric value while the operand remains Text. The grouped-decimal review
@@ -2206,8 +2231,8 @@ removes valid ASCII grouping commas only. It does not remove fractional trailing
 
 The rate review proposes an exact fractional value for `%` and `‰`, represented as ordinary
 fixed-point Text. The scientific-notation review preserves scientific notation without
-expanding large exponents into fixed-point output. These are review proposals; their complete
-grammars and coverage rules still require normative approval before Catalog admission.
+expanding large exponents into fixed-point output. Their complete grammars and Coverage rules are fixed in Section 8.8,
+which records the resulting formal admission.
 
 The Decimal numeric-value review proposes exact numeric-cohort equivalence over the already-established Decimal Leaf.
 It selects the fully reduced coefficient/scale pair, with `(0,0)` for zero, and uses Restricted Coverage with an
@@ -2220,19 +2245,14 @@ The two decimal lexical reviews select the distinct W3C XML Schema 1.1 `floatLex
 `doubleLexicalMap` / `doubleCanonicalMap` algorithm pairs as their proposed exact Text relations and representatives.
 They retain signed-zero identity and one `NaN` text identity under those profiles. The Law Versions must specify the
 exact grammar, rounding, representative coverage, and bounded realization, not borrow JVM formatter behavior. All five
-reviews remain proposals until their exact normative specifications and admission evidence are approved.
+have the approved exact normative specifications and formal decisions
+in Section 8.9. This paragraph retains their preceding qualification observations.
 
 ### Radix and Bit Representation
 
-| Review area    | Law working name                                            | Review outcome   |
-|----------------|-------------------------------------------------------------|------------------|
-| Radix integer  | Hexadecimal integer textual representative                  | ADMIT (proposed) |
-| Radix integer  | Binary integer textual representative                       | ADMIT (proposed) |
-| Radix integer  | Octal integer textual representative                        | ADMIT (proposed) |
-| Bit vector     | Fixed-width hexadecimal bit-vector textual representative   | ADMIT (proposed) |
-| Bit vector     | Fixed-width binary bit-vector textual representative        | ADMIT (proposed) |
-| Binary integer | Minimal two's-complement signed-integer byte representative | ADMIT (proposed) |
-| System bitmask | POSIX file-mode octal textual representative                | ADMIT (proposed) |
+The seven Radix/Bit candidates recorded here were subsequently admitted as distinct
+`Initial` Authorities in Section 8.10. The following earlier review notes remain
+for traceability, not as outstanding admission decisions.
 
 The radix integer reviews propose exact ASCII grammars without radix prefixes. Their representatives
 remove redundant leading zeros and normalize the sign. The hexadecimal representative uses lowercase
@@ -2241,17 +2261,13 @@ digits. These laws preserve mathematical integer value, not bit-vector width.
 The bit-vector reviews preserve every bit and the width of the represented sequence. They remove only
 permitted separators; the hexadecimal form also selects lowercase digits. The signed-integer Bytes review
 proposes the shortest nonempty big-endian two's-complement sequence. The POSIX mode review proposes a
-12-bit mask with a four-digit octal representative. These choices require approval in the exact normative
-law specifications before admission.
+12-bit mask with a four-digit octal representative. These choices are approved in the exact normative `Initial`
+law specifications of Section 8.10.
 
 ### Encoded Text
 
-| Review area  | Law working name                                    | Review outcome   |
-|--------------|-----------------------------------------------------|------------------|
-| Encoded text | Base16 lowercase textual representative             | ADMIT (proposed) |
-| Encoded text | Base16 uppercase textual representative             | ADMIT (proposed) |
-| Encoded text | Base32 RFC 4648 canonical textual representative    | ADMIT (proposed) |
-| Encoded text | Base32hex RFC 4648 canonical textual representative | ADMIT (proposed) |
+The candidate-review table has moved to the formal decision in Section 8.7. The following
+pre-admission working notes are preserved as evidence; Section 8.7 now owns the exact meaning.
 
 The Base16 reviews preserve the octet sequence and select lowercase or uppercase digits respectively.
 They propose an even number of hexadecimal digits without prefixes or separators. The Base32 and
@@ -2260,13 +2276,8 @@ must enforce RFC 4648 padding and zero pad bits. Decoder permissiveness cannot e
 
 ### Web and HTTP
 
-| Review area   | Law working name                                | Review outcome   |
-|---------------|-------------------------------------------------|------------------|
-| URI component | RFC 3986 percent-encoding syntax representative | ADMIT (proposed) |
-| HTTP / Time   | HTTP-date textual representative                | ADMIT (proposed) |
-| HTTP          | HTTP media-type textual representative          | ADMIT (proposed) |
-| HTTP          | HTTP qvalue textual representative              | ADMIT (proposed) |
-| URI / HTTP    | HTTP(S) URI normal-form representative          | ADMIT (proposed) |
+The candidate-review table has moved to the formal decision in Section 8.7. The following
+pre-admission working notes are preserved as evidence; Section 8.7 now owns the exact meaning.
 
 The percent-encoding review limits equivalence to hexadecimal case in triplets and direct presentation of RFC 3986
 unreserved characters. It requires an explicit URI-component operand and excludes reserved-character decoding and
@@ -2277,124 +2288,130 @@ The media-type review is a restricted common-syntax profile. It canonicalizes AS
 and legally equivalent token/quoted presentations without folding registration-specific parameter values. The HTTP (S)
 URI review proposes a strict ASCII-host, context-limited scheme-based representative, not generalized resource identity;
 userinfo, unclosed host profiles, implicit OPTIONS request-target rules, and origin-specific query equivalence remain
-outside it. Each Law still requires exact grammar, coverage, and security closure before formal admission.
+outside it. Their exact grammars, Coverage, and security boundaries are fixed for the admitted `Initial` Laws in Section
+8.7.
 
 The qvalue review proposes exact RFC 9110 syntax and a minimal decimal representative for the same thousandth-based
 value. Out-of-grammar Text is not repaired.
 
 ### Network and IoT
 
-| Review area           | Law working name                                   | Review outcome   |
-|-----------------------|----------------------------------------------------|------------------|
-| Protocol / Network    | POSIX IPv4 numbers-and-dots textual representative | ADMIT (proposed) |
-| Protocol / Network    | RFC 9911 MAC-48 lowercase textual representative   | ADMIT (proposed) |
-| Protocol / Network    | IPv4 network-prefix representative                 | ADMIT (proposed) |
-| Protocol / Identifier | IPv6 RFC 5952 all-hex textual representative       | ADMIT (proposed) |
-| Protocol / Network    | IPv6 network-prefix representative                 | ADMIT (proposed) |
-| URI / IoT             | CoAP URI normal-form representative                | ADMIT (proposed) |
+The five independent Network/IoT Authorities are admitted in Section 8.11; MAC-48 lowercase is rejected in Section 8.3.
 
-The POSIX IPv4 review maps its expressly permitted legacy spellings to four decimal octets. The MAC-48 review selects
-RFC 9911 lowercase colon notation. The IPv4 prefix review clears host bits without changing the prefix length.
+The admitted historical IPv4 Law maps its expressly permitted legacy spellings to four decimal octets. The rejected
+independent MAC-48 review would select
+RFC 9911 lowercase colon notation. The admitted IPv4 prefix Law clears host bits without changing the prefix length.
 
-The IPv6 address review selects the RFC 5952 Section 4 all-hexadecimal representative for the same 128-bit address,
-including legal IPv4-embedded inputs without selecting a deployment-specific mixed form. The IPv6 prefix review clears
+The admitted IPv6 address Law selects the RFC 5952 Section 4 all-hexadecimal representative for the same 128-bit
+address,
+including legal IPv4-embedded inputs without selecting a deployment-specific mixed form. The admitted IPv6 prefix Law
+clears
 non-prefix bits and retains the exact prefix length. CoAP uses its own RFC 7252 scheme defaults and an explicitly
 restricted host and URI-component interpretation, independent of the HTTP (S) URI Authority.
 
 ### Identifiers and Internationalization
 
-| Review area              | Law working name                                   | Review outcome   |
-|--------------------------|----------------------------------------------------|------------------|
-| Protocol / Identifier    | BCP 47 registry-independent casing representative  | ADMIT (proposed) |
-| Protocol / Identifier    | BCP 47 registry-dependent canonical representative | ADMIT (proposed) |
-| URI / Identifier         | Generic URN assigned-name textual representative   | ADMIT (proposed) |
-| Protocol / Identifier    | UUID RFC 9562 lowercase textual representative     | ADMIT (proposed) |
-| URI / Telephony          | RFC 3966 `tel:` URI representative                 | ADMIT (proposed) |
-| International identifier | DOI textual representative                         | ADMIT (proposed) |
+Three Authorities are admitted in Section 8.12, two case-only duplicates are rejected, and the registry-dependent BCP 47
+subject is deferred.
 
-BCP 47 casing is registry-independent. UUID and DOI reviews preserve their identifier meaning while selecting lowercase
-ASCII spelling. The `tel:` review follows RFC 3966 comparison rules; its complete parameter treatment still requires
-normative closure.
+BCP 47 casing is registry-independent and is admitted under Section 8.12. UUID and DOI
+lowercase proposals, like the MAC-48 lowercase proposal, are `REJECT`ed as redundant independent
+Authorities because an applicable existing ASCII Lowercase Law selects their same representative.
+The RFC 3966 `tel:` Law is separately admitted in Section 8.12 with a restricted parameter profile.
 
-The registry-dependent BCP 47 review uses one immutable IANA Language Subtag Registry snapshot per Exact Law Version
-and does not normalize extension internals without their own authority. The RFC 8141 URN review concerns assigned-name
-Text only; optional resolver, query, and fragment components are outside its operand.
+The registry-dependent BCP 47 review requires an immutable IANA Language Subtag Registry snapshot and
+remains `DEFER` pending actual byte identity and verified replacement closure (Section 8.2).
+The admitted RFC 8141 URN Law concerns assigned-name Text only; resolver, query, and fragment
+components are outside its operand.
 
 ### Temporal Standards
 
-| Review area           | Law working name                                       | Review outcome   |
-|-----------------------|--------------------------------------------------------|------------------|
-| Temporal / XML Schema | XML Schema `date` canonical lexical representative     | ADMIT (proposed) |
-| Temporal / XML Schema | XML Schema `time` canonical lexical representative     | ADMIT (proposed) |
-| Temporal / XML Schema | XML Schema `dateTime` canonical lexical representative | ADMIT (proposed) |
+All three exact XSD 1.1 temporal Laws are admitted in Section 8.13.
 
-The three reviews propose XML Schema 1.1 canonical lexical mappings. Their equivalence follows datatype value identity,
+The three admitted Laws use XML Schema 1.1 canonical lexical mappings. Their equivalence follows datatype value
+identity,
 not an unconditional conversion to one UTC instant. The absence of a timezone remains meaningful.
 
 ### Financial and Retail Identifiers
 
-| Review area          | Law working name                       | Review outcome   |
-|----------------------|----------------------------------------|------------------|
-| Retail identifier    | GTIN 14-digit representative           | ADMIT (proposed) |
-| Financial identifier | IBAN electronic textual representative | ADMIT (proposed) |
+Both exact identifier Laws are admitted in Section 8.13.
 
-The GTIN review proposes a 14-digit zero-padded Text representative. It does not repair check digits or decide whether
+The admitted GTIN Law fixes a 14-digit zero-padded Text representative. It does not repair check digits or decide
+whether
 an identifier has been allocated.
 
-The IBAN review removes only correctly positioned paper-format U+0020 grouping spaces to select electronic Text.
+The admitted IBAN Law removes only correctly positioned paper-format U+0020 grouping spaces to select electronic Text.
 It preserves account-character case and does not perform BBAN registry, check-digit, or account-validity judgment.
 
 ### Software Supply Chain
 
-| Review area           | Law working name                         | Review outcome   |
-|-----------------------|------------------------------------------|------------------|
-| Software supply chain | ECMA-427 core PURL syntax representative | ADMIT (proposed) |
+The restricted ECMA-427 core PURL Law is admitted in Section 8.13.
 
-The PURL review owns only ECMA-427's common syntactic equivalences. Package-type-specific name, namespace, and
+The admitted core PURL Law owns only ECMA-427's common syntactic equivalences. Package-type-specific name, namespace,
+and
 version normalization requires separately qualified meaning and cannot be inferred from a current package registry.
 
 ### Cloud-Native
 
-| Review area          | Law working name                                     | Review outcome   |
-|----------------------|------------------------------------------------------|------------------|
-| Cloud-native numeric | Kubernetes Quantity canonical textual representative | ADMIT (proposed) |
+Kubernetes Quantity is deferred in Section 8.2 pending its frozen implementation-semantic baseline and pre-admission
+verification.
 
-The Kubernetes Quantity review selects the versioned, source-verified Kubernetes parse-and-canonicalize semantics,
+The deferred Kubernetes Quantity review targets versioned, source-verified Kubernetes parse-and-canonicalize semantics,
 including suffix-family retention and specified rounding. It does not replace the Kubernetes canonical output with
 Kontrakt's own exact-value DecimalSI encoding. Kubernetes release compatibility is verified against the frozen semantic
 profile; a different release number alone does not require a distinct Law Version.
 
 ### Geographic
 
-| Review area    | Law working name                               | Review outcome   |
-|----------------|------------------------------------------------|------------------|
-| Geographic URI | RFC 5870 WGS-84 core `geo:` URI representative | ADMIT (proposed) |
+The restricted RFC 5870 WGS-84 Law is admitted in Section 8.13.
 
-The geographic review adopts RFC 5870 coordinate equivalence and fixes a representative for poles, the antimeridian,
+The admitted geographic Law adopts RFC 5870 coordinate equivalence and fixes a representative for poles, the
+antimeridian,
 and the default CRS while preserving optional altitude and uncertainty distinctions. Extensions are outside V1 coverage.
 
 ### Security / PKI Text
 
-| Review area               | Law working name                                | Review outcome   |
-|---------------------------|-------------------------------------------------|------------------|
-| Security textual encoding | RFC 7468 single-instance textual representative | ADMIT (proposed) |
+The restricted single-instance RFC 7468 Law is admitted in Section 8.13.
 
-The RFC 7468 review represents one Label and byte payload in a fixed strict-generator text layout. It does not accept
+The admitted RFC 7468 Law represents one Label and byte payload in a fixed strict-generator text layout. It does not
+accept
 arbitrary permissive-PEM repairs, alter the decoded security object, or order multiple encapsulations.
 
 ### Schema and Structured Data
 
-| Review area   | Law working name            | Review outcome   |
-|---------------|-----------------------------|------------------|
-| Schema / Data | Avro Parsing Canonical Form | ADMIT (proposed) |
+Avro 1.12.0 Parsing Canonical Form is admitted in Section 8.13.
 
-The Avro review uses the precise Parsing Canonical Form in one frozen Avro specification version. It is not an
+The admitted Avro Law uses the precise Parsing Canonical Form in one frozen Avro specification version. It is not an
 assertion of whole-schema equivalence and does not replace exact canonical-content comparison with a hash alone.
 
 ## 8.2. DEFER
 
-No candidates in the initial 75-candidate inventory remain `DEFER` after qualification review. This does not remove
-`DEFER` as a possible disposition for a future candidate whose required semantic or security evidence remains open.
+Two candidates in the initial 75 remain `DEFER`; **neither has historical Catalog Membership**.
+
+| Review area          | Candidate                                            | Disposition | Exact unresolved admission gate                                                           |
+|----------------------|------------------------------------------------------|-------------|-------------------------------------------------------------------------------------------|
+| Identifiers / BCP 47 | Registry-dependent canonical representative          | DEFER       | IANA Registry snapshot content identity and Preferred-Value closure evidence              |
+| Cloud-native         | Kubernetes Quantity canonical textual representative | DEFER       | Frozen Kubernetes parse/round/canonicalize baseline and representative-stability evidence |
+
+**BCP 47.** [RFC 5646 §4.5](https://www.rfc-editor.org/rfc/rfc5646.html#section-4.5)
+provides the applicable Registry-dependent canonicalization steps. An IANA Language Subtag
+Registry with `File-Date: 2026-06-14` was inspected as a *candidate* initial Basis, including
+`bh → bih`; however that mutable-location file has **not** been archived and fixed by a
+verifiable immutable byte/content identity in this Catalog. Neither the historical Version
+basis nor its complete transitive `Preferred-Value`, extension and replacement stability
+has therefore been independently verified. `Initial` is not admitted by merely naming
+`2026-06-14`, by reading the latest IANA file, or by trusting a provider's current tables.
+A future admission must preserve the exact snapshot content identity and validate the
+full fixed RFC 5646 normalization pipeline and output-domain closure. The favorable
+semantic recommendation in Section 6.12 remains research, not membership.
+
+**Kubernetes Quantity.** The candidate preserves Kubernetes' source suffix family,
+precision, rounding and range/capping rules rather than general decimal numeric equality.
+Its selected `k8s.io/apimachinery/pkg/api/resource` source version, the exact relationship
+between parse-time cached spellings and canonical output, and `C_L(C_L(x)) = C_L(x)`
+for that frozen profile must be established before admission. Implementation convenience,
+provider version drift, and a different host formatter may not complete this Law.
+These missing qualification facts are not Budget/Capacity stops or new law-owned refusals.
 
 ## 8.3. REJECT
 
@@ -2413,7 +2430,7 @@ conversions may be reviewed independently; common vendor usage does not by itsel
 
 | Review area | Law working name                         | Review outcome | Reason for rejection                                                                                                                                                    |
 |-------------|------------------------------------------|----------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Case        | ASCII case-fold representative           | REJECT         | Its exact ASCII equivalence relation and lowercase representative duplicate the proposed ASCII lowercase law. An alias may reuse that Authority.                        |
+| Case        | ASCII case-fold representative           | REJECT         | Its exact ASCII equivalence relation and lowercase representative duplicate the admitted ASCII lowercase law. An alias may reuse that Authority.                        |
 | Case        | Unicode default lowercase representative | REJECT         | Default lowercase is case conversion, not a representative of Unicode Default Caseless Matching. No separate general-text equivalence is justified.                     |
 | Case        | Unicode default uppercase representative | REJECT         | Default uppercase can erase distinctions retained by Unicode Default Caseless Matching. An independent general-text relation is unjustified.                            |
 | Text        | Unicode CJK width fold                   | REJECT         | The broad profile has no one exact width-equivalence rule; multi-scalar composition and unrelated NFC effects remain unresolved. Narrower laws need separate review.    |
@@ -2422,7 +2439,7 @@ conversions may be reviewed independently; common vendor usage does not by itsel
 The Unicode default lowercase and uppercase operations are standardized and useful outside this admission decision.
 Rejecting these proposed Built-In Authorities does not reject their algorithms or prevent a future narrowly scoped law.
 The Catalog does not derive Contract equivalence merely from equality of conversion output. The Unicode Default Full
-Case Folding candidate remains a separate proposed law for its explicitly defined caseless-matching purpose.
+Case Folding Law is independently admitted in Section 8.6 for its explicitly defined caseless-matching purpose.
 
 The CJK width-fold rejection concerns the unresolved broad subject, not the possibility of separately qualified
 full-width ASCII or half-width Katakana laws. The diacritic-fold rejection likewise concerns the proposed generic
@@ -2452,11 +2469,1776 @@ protocol-specific text profiles. A future MIME or other standards-backed profile
 operand spellings and canonical representative. Neither RFC 4648 decoder latitude nor a provider's fallback rule can
 supply that meaning. In particular, signature-bearing Base64url text must retain the spelling mandated by its protocol.
 
+### Case-Only Domain Authorities Reusing Existing ASCII Lowercase
+
+| Review area              | Law working name                                 | Review outcome | Reason for rejection                                                                                                                                                               |
+|--------------------------|--------------------------------------------------|----------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Network / Identifier     | RFC 9911 MAC-48 lowercase textual representative | REJECT         | For a properly established MAC-48 Text, the only collapsed distinction and lowercase representative are already owned by the admitted ASCII Lowercase Law.                         |
+| Identifier               | RFC 9562 UUID lowercase textual representative   | REJECT         | UUID grammar and validity belong to Input/Admission; canonicalizing its ASCII hexadecimal letter case reuses the exact admitted ASCII Lowercase Authority.                         |
+| International identifier | DOI textual representative                       | REJECT         | DOI's Basic Latin-only case equivalence and lowercase representative reuse the exact ASCII Lowercase Authority; non-ASCII and Unicode-normalization distinctions remain preserved. |
+
+These decisions reject *new independent Authorities*, not support for MAC-48, UUID or DOI
+Text domains. A legal domain-specific Input may select the already-admitted ASCII
+Lowercase Law. The existing Law is not narrowed or re-versioned by such use; a new
+protocol grammar or public-facing alias does not create Catalog Membership. Input must
+establish valid source syntax before any such selection. In particular, no MAC address
+separator recovery, UUID wrapper conversion, or DOI resolver-URL interpretation is implied.
+
+## 8.4. Formal ADMIT — Initial ASCII Text Laws (2026-10-10)
+
+The project owner has approved the five exact ASCII Text laws below for formal Catalog admission. The normative
+specifications in this section are approved with the membership decision, rather than inferred from a candidate
+review outcome or from implementation registration. Each named law is an independently owned Exact Built-In Law
+Authority. These Authority designations identify Contract subjects; they do not fix Kotlin API spellings.
+
+| Independently owned Exact Built-In Law Authority | Initial Version Identity | Formal decision |
+|--------------------------------------------------|--------------------------|-----------------|
+| ASCII boundary whitespace trim                   | `Initial`                | ADMIT           |
+| ASCII leading whitespace trim                    | `Initial`                | ADMIT           |
+| ASCII trailing whitespace trim                   | `Initial`                | ADMIT           |
+| ASCII lowercase representative                   | `Initial`                | ADMIT           |
+| ASCII uppercase representative                   | `Initial`                | ADMIT           |
+
+For each Authority, `Initial` is its explicitly selected, case-sensitive Version Identity, not a compiler-generated
+fallback, a global default, or an ordering claim. The Authority and exact Version together identify one complete,
+immutable law meaning under ADR-0053. The same spelling under different Authorities does not merge their histories.
+Later versions may be established only through those Authorities' own Version laws. Admission grants historical
+Built-In Law Authority Membership once; it does not create Catalog Version history.
+
+### 8.4.1. Shared Exact Operand and Fixed ASCII Vocabulary
+
+Each of the five laws accepts every already-established legal `Text` presentation specified by ADR-0064. The operand
+is a finite sequence of Unicode scalar values. The exact Text value, including its order and length, is the operand;
+a JVM `String`, an arbitrary UTF-16 code-unit sequence, or a host-dependent character classification cannot change
+its meaning. Surrogate code points cannot enter as legal `Text` scalars. Empty Text is a legal operand.
+
+The three trim laws use the law-owned fixed set `W6` containing exactly U+0009 TAB, U+000A LF, U+000B VT,
+U+000C FF, U+000D CR, and U+0020 SPACE. No other scalar belongs to `W6`. In particular U+0000 NULL,
+U+0085 NEXT LINE, U+00A0 NO-BREAK SPACE, and every other Unicode whitespace scalar are excluded.
+`W6*` denotes any finite sequence formed solely from `W6`, including the empty sequence.
+
+`W6` is a deliberate Kontrakt six-scalar profile.
+The [WHATWG Infra Standard](https://infra.spec.whatwg.org/#ascii-whitespace)
+defines a different five-scalar ASCII whitespace set that excludes U+000B VT. The
+[POSIX locale whitespace classification](https://pubs.opengroup.org/onlinepubs/009695399/basedefs/xbd_chap07.html)
+provides comparative evidence for all six scalars but does not supply ambient locale semantics to these laws.
+[Java `String.trim()`](https://docs.oracle.com/en/java/javase/26/docs/api/java.base/java/lang/String.html#trim())
+removes a broader set of code points at or below U+0020 and is not an implementation specification for `W6`.
+
+### 8.4.2. ASCII Boundary Whitespace Trim — `Initial`
+
+**Exact Equivalence `E_L`.** Two legal Text values are equivalent exactly when each can be written as
+`p + t + q`, where `p` and `q` are in `W6*` and both values share the same middle sequence `t`.
+The middle sequence is empty, or its first and last scalars are outside `W6`. In the two values,
+`p` and `q` may differ independently. Every all-`W6` sequence is therefore equivalent to empty Text.
+An interior `W6` scalar between two non-`W6` scalars is retained as a distinction.
+
+**Exact Representative `C_L`.** Remove the maximal initial `W6` prefix and maximal final `W6` suffix
+from the operand. Preserve every scalar and its order between those boundaries. Empty Text and any
+all-`W6` Text produce empty Text. The representative is unique for the declared equivalence class.
+
+**Exact Representative Coverage.** Total for all legal `Text`. There is no law-owned Canonicalization
+refusal for a legal operand. The law owns no external semantic determinants or Required Basis beyond
+its fixed `W6` meaning and the established operand.
+
+**Independent Authority decision.** This law is exactly expressible in result as a legal composition of
+ASCII leading and trailing trim, in either order. Nevertheless the project owner explicitly approves
+one separate Built-In Authority here because direct both-boundary selection is exceptionally common
+and has independent declarative value. The admission is a specific, recorded Boundary Trim family exception to the usual
+preference for expressing a composition without adding another curated Authority. Unicode Boundary
+Trim receives the same limited treatment in Section 8.5.4. Neither admission waives semantic
+qualification, authorizes alias inference, or creates a general precedent for other composed laws.
+An explicit composition remains its own declared Definition, not an alias of this Authority.
+
+### 8.4.3. ASCII Leading Whitespace Trim — `Initial`
+
+**Exact Equivalence `E_L`.** Two legal Text values are equivalent exactly when both can be written
+as `p + t` with `p` in `W6*` and the same remaining sequence `t` across both values, where `t` is
+empty or starts with a scalar outside `W6`. Differences at the trailing boundary or in the interior
+are not erased.
+
+**Exact Representative `C_L`.** Remove only the maximal initial `W6` prefix and leave the exact
+remaining scalar sequence unchanged. Empty Text and all-`W6` Text produce empty Text.
+
+**Exact Representative Coverage.** Total for all legal `Text`, with no law-owned refusal and no
+external semantic determinants or Required Basis.
+
+### 8.4.4. ASCII Trailing Whitespace Trim — `Initial`
+
+**Exact Equivalence `E_L`.** Two legal Text values are equivalent exactly when both can be written
+as `t + q` with `q` in `W6*` and the same preceding sequence `t` across both values, where `t` is
+empty or ends with a scalar outside `W6`. Differences at the leading boundary or in the interior
+are not erased.
+
+**Exact Representative `C_L`.** Remove only the maximal final `W6` suffix and leave the exact
+preceding scalar sequence unchanged. Empty Text and all-`W6` Text produce empty Text.
+
+**Exact Representative Coverage.** Total for all legal `Text`, with no law-owned refusal and no
+external semantic determinants or Required Basis.
+
+### 8.4.5. ASCII Lowercase Representative — `Initial`
+
+**Exact Equivalence `E_L`.** Two legal Text values are equivalent if and only if their scalar
+sequences have equal length and, at every position, the scalars are identical or form one of the
+26 ASCII case pairs (`U+0041`/`U+0061` through `U+005A`/`U+007A`). Any unequal pair involving
+a non-ASCII scalar remains non-equivalent. This relation does not implement Unicode case folding.
+
+**Exact Representative `C_L`.** At each position replace U+0041 through U+005A with the corresponding
+U+0061 through U+007A scalar. Preserve all other scalars, positions, and scalar count. In particular
+non-ASCII `İ`, `ı`, `ß`, and `K` are unchanged.
+
+**Exact Representative Coverage.** Total for all legal `Text`, with no law-owned refusal and no
+external Unicode data, locale, registry, or Required Basis. All mapping pairs are fixed here.
+
+### 8.4.6. ASCII Uppercase Representative — `Initial`
+
+**Exact Equivalence `E_L`.** Use the same 26 ASCII case-pair equivalence specified in Section 8.4.5.
+The relation is normatively shared, not inferred from equal implementation results.
+
+**Exact Representative `C_L`.** At each position replace U+0061 through U+007A with the corresponding
+U+0041 through U+005A scalar. Preserve every other scalar, position, and scalar count. In particular
+non-ASCII `İ`, `ı`, `ß`, and `K` are unchanged.
+
+**Exact Representative Coverage.** Total for all legal `Text`, with no law-owned refusal and no
+external Unicode data, locale, registry, or Required Basis. The uppercase representative differs
+from the lowercase representative for classes containing ASCII letters. They therefore remain
+separate Authorities despite sharing `E_L`.
+
+### 8.4.7. Pre-Admission Qualification and Verification Evidence
+
+For the trim laws, deleting a uniquely determined maximal boundary sequence yields a unique residual
+Text. The independently stated `E_L` for each law is equality of that residual Text. This establishes
+reflexivity, symmetry, and transitivity. Each `C_L` preserves the declared equivalence class;
+identical representatives coincide exactly with equivalent inputs. A representative cannot retain a
+removable boundary scalar, so applying its `C_L` again leaves it unchanged. The same reasoning
+covers empty and all-`W6` input.
+
+For both case laws, the 26 disjoint ASCII two-scalar classes and the singleton classes for all
+other Unicode scalars induce an equivalence relation at each sequence position. Equality of length
+and the position classes induces `E_L` over complete Text. Each representative chooses exactly one
+member of every per-position class. No mapping introduces a new ASCII letter requiring another
+change; repeated application is stable. Neither law changes Text length or merges non-ASCII scalars.
+
+All five laws admit a single finite scan over an input of `n` Unicode scalars. Work is bounded by
+`O(n)` and their output never exceeds `n` scalars. Trim does not expand output; ASCII case mapping
+preserves its length. Input's own finite size bounds and the compiler's physical resource handling
+remain separate from the Total Coverage statement. No implementation resource stop is a new
+Canonicalization-owned refusal.
+
+The following witness pairs distinguish the admitted equivalences from nearby non-equivalences.
+Backslash escapes denote the stated Unicode scalar, not literal backslash characters.
+
+| Law                 | Equivalent Text pair     | Non-equivalent Text pair |
+|---------------------|--------------------------|--------------------------|
+| ASCII boundary trim | `"\u000Babc\t"`, `"abc"` | `"a b"`, `"ab"`          |
+| ASCII leading trim  | `"\tabc "`, `"abc "`     | `"abc "`, `"abc"`        |
+| ASCII trailing trim | `" abc\r"`, `" abc"`     | `" abc"`, `"abc"`        |
+| ASCII lowercase     | `"Ab"`, `"aB"`           | `"ß"`, `"ss"`            |
+| ASCII uppercase     | `"Ab"`, `"aB"`           | `"K"`, `"K"`             |
+
+The initial review used independently implemented reference procedures to compare all five
+representatives on 19,608 Text strings over a seven-symbol adversarial alphabet at lengths 0 through 5.
+It checked idempotence, non-expansion, and both-boundary trim against either order of one-sided
+trim. Independently specified equivalence predicates were compared with representative equality
+for 160,000 ordered string pairs **per law**, with no mismatches. It also checked ASCII singleton
+code-point classification and explicit VT, NULL, NO-BREAK SPACE, Kelvin sign, and dotless-i
+regressions. These finite tests supplement, but do not replace, the structural arguments above.
+They do not attest to a future Kotlin or JVM implementation.
+
+Security review identified a concrete cross-standard difference: WHATWG ASCII whitespace excludes
+U+000B VT, while this exact `W6` law includes it. The difference is explicitly part of the Law
+meaning, not a case for silently using a host whitespace predicate. Generic trim or ASCII case
+conversion must not repair invalid protocol syntax, alter authenticated raw bytes, or override
+protocol-specific comparison rules. The laws do not confer identity or authorization semantics
+outside the exact Canonicalization relation selected by the owning Contract. Later Admission and
+Lowering consume the established representative through their declared legal relations.
+
+The specification and these pre-admission checks close the applicable ADR-0066/0076 semantic,
+security, bounded-work, Version, and independent-Authority gates for these five subjects.
+Acceptance is not a claim that all implementations conform or that all uses are safe. Subsequent
+API projection and backend conformance remain separate responsibilities.
+
+### 8.4.8. Explicit Membership Decision
+
+**Decision (2026-10-10): ADMIT all five Authority subjects and their approved `Initial` exact
+Version meanings in Sections 8.4.2–8.4.6.** The project owner has explicitly approved independent
+Catalog membership for each Authority, including the expressly limited Boundary Trim
+family exception further recorded for Unicode in Section 8.5.4.
+Their membership is now historical and monotonic under ADR-0076. No `ADMIT (proposed)` entry in
+Section 8.1 gains membership through this decision. The nine `REJECT` decisions and all remaining
+favorable-but-unratified candidates are unchanged. The Catalog does not provide an implicit latest
+Version or a fallback to another Authority.
+
+---
+
+## 8.5. Formal ADMIT — Initial Unicode Whitespace and Decimal-Digit Laws (2026-10-10)
+
+The project owner approves four independently owned Unicode Text Authorities for Catalog membership.
+The initial exact version of each is bound to the **Unicode Standard 17.0.0**, including the
+Unicode Character Database of that version. `Initial` is an exact Kontrakt Law Version Identity
+under each Authority, not a request to consult the latest Unicode release. The Unicode standard
+release is fixed external semantic material, not an ambient JDK/ICU version selector.
+
+| Independently owned Exact Built-In Law Authority | Initial Version Identity | Decision |
+|--------------------------------------------------|--------------------------|----------|
+| Unicode boundary whitespace trim                 | `Initial`                | ADMIT    |
+| Unicode leading whitespace trim                  | `Initial`                | ADMIT    |
+| Unicode trailing whitespace trim                 | `Initial`                | ADMIT    |
+| Unicode decimal-digit fold                       | `Initial`                | ADMIT    |
+
+### 8.5.1. Exact Text Domain and Unicode 17.0.0 Basis
+
+The operand of each law is an already-established, legal ADR-0064 `Text`: a finite sequence of
+Unicode scalar values. Empty Text is included. These laws do not repair malformed UTF-16, parse
+source spelling, or assign application meaning to a character. The Unicode whitespace set `W17`
+is exactly the `White_Space` binary property in Unicode 17.0.0 `PropList.txt`. Its 25 scalar
+values are U+0009–U+000D, U+0020, U+0085, U+00A0, U+1680, U+2000–U+200A,
+U+2028–U+2029, U+202F, U+205F, and U+3000. In particular U+200B, U+FEFF, and
+U+001C do not belong to `W17`. `W17*` denotes all finite sequences using only these scalars.
+
+The `Nd` law uses exactly the Unicode 17.0.0 `General_Category=Decimal_Number` (`Nd`)
+classification and the corresponding exact decimal digit value 0 through 9. Its meaning excludes
+other numeric properties such as Numeric_Type=Digit or Numeric_Type=Numeric. No runtime Unicode
+database refresh can change these first Versions. The authoritative sources are
+[Unicode 17.0.0 UCD](https://www.unicode.org/Public/17.0.0/ucd/),
+[UAX #44](https://www.unicode.org/reports/tr44/), and the
+[Unicode 17.0.0 Core Specification](https://www.unicode.org/versions/Unicode17.0.0/core-spec/chapter-3/).
+
+### 8.5.2. Unicode Leading Whitespace Trim — `Initial`
+
+**Exact Equivalence `E_L`.** Legal Text values `x` and `y` are equivalent if and only if
+removing each one's maximal initial `W17` prefix yields the same residual scalar sequence.
+Their trailing and interior distinctions remain observable.
+
+**Exact Representative `C_L`.** Remove the maximal initial `W17` prefix and retain the
+remaining scalars unchanged. Empty and all-`W17` Text map to empty Text.
+
+**Exact Representative Coverage.** Total on its declared legal Text domain. There is no
+Canonicalization-owned refusal and no occurrence-time external semantic Basis.
+
+### 8.5.3. Unicode Trailing Whitespace Trim — `Initial`
+
+**Exact Equivalence `E_L`.** Legal `x` and `y` are equivalent if and only if removing each
+maximal final `W17` suffix yields identical preceding scalar sequences.
+
+**Exact Representative `C_L`.** Remove the maximal final `W17` suffix. Preserve the complete
+initial and interior sequences. Empty and all-`W17` Text map to empty Text.
+
+**Exact Representative Coverage.** Total on its declared legal Text domain, with no
+Canonicalization-owned refusal or occurrence-time external Basis.
+
+### 8.5.4. Unicode Boundary Whitespace Trim — `Initial`
+
+**Exact Equivalence `E_L`.** Legal `x` and `y` are equivalent if and only if deleting each
+maximal initial `W17` prefix and maximal final `W17` suffix yields the same scalar sequence.
+Interior whitespace distinctions remain observable.
+
+**Exact Representative `C_L`.** Remove exactly those maximal boundary sequences. All-`W17`
+input and empty input yield empty Text. Other scalar values remain in the same order.
+
+**Exact Representative Coverage.** Total on its declared legal Text domain, with no
+Canonicalization-owned refusal or occurrence-time external Basis.
+
+**Independent Authority decision.** Boundary trim is result-equivalent to either order of the
+explicitly declared leading and trailing Unicode trim laws. The project owner nevertheless
+approves direct both-boundary selection as an independent Authority on the same practical basis
+as the admitted ASCII boundary trim. The exceptional allowance is specific to the ASCII and
+Unicode *boundary trim family*. It is not a generic exemption for any frequently composed laws.
+The direct Law and an explicit composition still have different declared Authority/Definition
+relations even where they yield the same representative.
+
+### 8.5.5. Unicode Decimal-Digit Fold — `Initial`
+
+**Exact Equivalence `E_L`.** Two legal Text values are equivalent if and only if they have
+the same scalar count and, at each position, either their scalars are identical or both are
+Unicode 17.0.0 `Nd` scalars having the same decimal digit value. No other character is
+considered equal to an ASCII digit merely by looking numeric.
+
+**Exact Representative `C_L`.** Replace every `Nd` scalar with U+0030–U+0039 having the
+same integer decimal digit value. All other scalars remain byte-independent scalar-identical,
+in the same order and position. Arabic-Indic, Extended Arabic-Indic, fullwidth and mathematical
+`Nd` digits are folded by their decimal values; circled digits, superscript digits and Roman
+numerals are not.
+
+**Exact Representative Coverage.** Total on legal Text. Each scalar maps to one scalar, so
+length is preserved and there is no Canonicalization-owned refusal or occurrence-time Basis.
+This law does not validate identifiers or detect mixed-number-script security problems.
+
+### 8.5.6. Qualification, Security, and Membership Decision
+
+For each trim, equality of the uniquely determined residual scalar sequence defines `E_L`.
+Removing the specified boundary once leaves no removable scalar on that boundary. The three
+relations are equivalence relations, their representatives are unique, and each representative
+is idempotent. Their implementation may inspect a finite `n`-scalar input once with bounded
+per-scalar membership work, producing no more than `n` scalars. Leading and trailing trim
+commute; their combined output is exactly Unicode boundary trim, including empty and all-
+whitespace inputs.
+
+For digit folding, `Nd` scalars form ten disjoint decimal-value classes and non-`Nd` scalars
+remain singleton classes. Per-position equivalence therefore gives a reflexive, symmetric,
+transitive relation with one unique ASCII representative per digit class. It is idempotent
+and does not expand output. Witnesses for trim must distinguish U+00A0 and U+3000, which
+are removed, from U+200B and U+FEFF, which are preserved. Digit witnesses must contrast
+Arabic-Indic U+0661 with ASCII U+0031 (equivalent), and circled U+2460 with ASCII U+0031 (non-equivalent).
+Implementations must test against the pinned Unicode 17.0.0 property files,
+not rely on Java `Character.isWhitespace()` or current ICU defaults.
+
+Unicode UTS #39 discusses mixed-number-script identifier confusion. This is evidence about
+law selection in particular identifier/security contexts, not authority to alter the declared
+`Nd` equivalence. These laws perform no parser repair, authentication decision, or
+identifier validation. Their exact fixed mappings admit finite reference validation;
+production backend conformance remains a separately verified realization duty.
+
+**Decision (2026-10-10): ADMIT these four independent Authority subjects and their approved
+`Initial` meanings in Sections 8.5.2–8.5.5.** The Unicode Boundary Trim exception is approved
+alongside the ASCII Boundary Trim exception; it does not change the Authority Uniqueness
+criterion for unrelated law families. Their membership is historical under ADR-0076 and
+cannot be reset through later Version or API work.
+
+---
+
+## 8.6. Formal ADMIT — Initial Unicode Normalization and Case Folding Laws (2026-10-10)
+
+The project owner approves seven independently owned Exact Built-In Law Authorities with
+Unicode Standard **17.0.0** as the fixed external semantic Basis of each `Initial` Version.
+One Unicode version shared by several laws does not merge their independent Authorities or
+Version histories. Implementation support for a newer Unicode version is not implicit rebinding.
+
+| Independently owned Exact Built-In Law Authority | Initial Version Identity | Decision |
+|--------------------------------------------------|--------------------------|----------|
+| Unicode NFC normalization                        | `Initial`                | ADMIT    |
+| Unicode NFD normalization                        | `Initial`                | ADMIT    |
+| Unicode NFKC normalization                       | `Initial`                | ADMIT    |
+| Unicode NFKD normalization                       | `Initial`                | ADMIT    |
+| Unicode default full case-fold representative    | `Initial`                | ADMIT    |
+| Unicode NFC case-fold profile                    | `Initial`                | ADMIT    |
+| Unicode NFKC case-fold profile                   | `Initial`                | ADMIT    |
+
+### 8.6.1. Exact Semantic Basis, Domain, and Coverage
+
+Each law acts on an already-established legal `Text` of Unicode scalar values, including empty
+Text. Its `E_L` and `C_L` are defined by the algorithms and data fixed in Unicode 17.0.0.
+The four normalization forms follow that version of [UAX #15](https://www.unicode.org/reports/tr15/)
+and its normative UCD data. Full Case Folding uses Unicode 17.0.0
+[`CaseFolding.txt`](https://www.unicode.org/Public/17.0.0/ucd/CaseFolding.txt), using the
+`C` and `F` statuses under Unicode R4, not the `T` Turkic or `S` simple variants.
+Identifier Case Folding uses the `NFKC_CF` mapping in Unicode 17.0.0
+[`DerivedNormalizationProps.txt`](https://www.unicode.org/Public/17.0.0/ucd/DerivedNormalizationProps.txt),
+with the R5 algorithm. D144, D145, and D147 below refer to Unicode 17.0.0
+[Core Specification §3.13](https://www.unicode.org/versions/Unicode17.0.0/core-spec/chapter-3/).
+
+The declared operand is finite Text, and the exact representatives are again finite Unicode
+scalar sequences. They remain in the same semantic Text family and preserve the surrounding
+Input coordinate structure. An individual representative may contain more scalars than its
+operand. That fact alone does not create a Restricted Coverage branch. **All seven Laws have
+Total Representative Coverage over their declared legal Text domain and no law-owned refusal
+for an otherwise legal operand.** No Law may truncate, round, replace or reject a representative
+merely because a host buffer was too small. Any exactly narrower Input-owned presentation
+meaning must still pass the normal positive selection-applicability and same-domain checks of
+ADR-0064/0066 before the Law is used. A hypothetical application-specific maximum length does
+not silently redefine the intrinsic Unicode mapping or create an occurrence-time Law refusal.
+Where a distinct continuation length policy is declared, Admission evaluates the established
+canonical representative. Budget and Capacity own resource limits, including those required
+during Canonicalization itself; they do not decide `E_L`, `C_L`, or successful Coverage.
+
+No locale, normalization toggle, current JVM/ICU data, mutable registry, or execution callback
+may supply additional meaning. Unassigned scalar values must be interpreted under the pinned
+Unicode version's data and normalization stability rules, not silently reclassified under a
+newer release. An explicit future Exact Law Version is required when Contract-visible behavior
+changes.
+
+### 8.6.2. Unicode NFC Normalization — `Initial`
+
+**Exact Equivalence `E_L`.** `x` and `y` are equivalent exactly when their Unicode 17.0.0
+NFD results are scalar-identical. Compatibility-only distinctions remain significant.
+
+**Exact Representative `C_L`.** The Unicode 17.0.0 NFC result of `x`, with decomposition,
+canonical combining order, and canonical composition exactly as specified by UAX #15.
+
+**Exact Representative Coverage.** Total on declared legal Text. U+0344 can expand to
+U+0308 U+0301 even in NFC; such expansion alone is not Law failure.
+
+### 8.6.3. Unicode NFD Normalization — `Initial`
+
+**Exact Equivalence `E_L`.** Same Unicode 17.0.0 canonical equivalence as Section 8.6.2.
+
+**Exact Representative `C_L`.** The exact Unicode 17.0.0 NFD result. Do not recompose.
+
+**Exact Representative Coverage.** Total on declared legal Text. U+00E9 decomposes into
+U+0065 U+0301 without making the operand ineligible.
+
+### 8.6.4. Unicode NFKC Normalization — `Initial`
+
+**Exact Equivalence `E_L`.** Unicode 17.0.0 compatibility equivalence: the inputs' NFKD
+representatives are scalar-identical. Canonical equivalence is included.
+
+**Exact Representative `C_L`.** The exact Unicode 17.0.0 NFKC result. Compatibility
+replacement is part of the selected Law, not an implementation repair.
+
+**Exact Representative Coverage.** Total on declared legal Text. A compatibility decomposition
+may expand one scalar into many; the exact result is not truncated to fit an implementation
+buffer. The Law does not assert that compatibility distinctions are irrelevant to every protocol.
+
+### 8.6.5. Unicode NFKD Normalization — `Initial`
+
+**Exact Equivalence `E_L`.** The same Unicode 17.0.0 compatibility equivalence as Section 8.6.4.
+
+**Exact Representative `C_L`.** The Unicode 17.0.0 NFKD result, retaining its decomposed
+rather than recomposed representative.
+
+**Exact Representative Coverage.** Total on declared legal Text, including expanding inputs.
+
+### 8.6.6. Unicode Default Full Case Fold — `Initial`
+
+Let `F17(x)` be the exact Unicode 17.0.0 R4 `toCasefold` result, using the complete fixed
+Default Full Case Folding mapping. It is not general lowercasing, a locale-sensitive operation,
+or Simple/Turkic Case Folding.
+
+**Exact Equivalence `E_L`.** `E_L(x,y)` if and only if `F17(x) = F17(y)` by exact scalar
+sequence comparison (Unicode D144). Canonical-equivalent spellings need not match under D144.
+
+**Exact Representative `C_L`.** `F17(x)`. For example U+00DF `ß` becomes the two scalars
+`ss`; Unicode-defined Cherokee folding does not have to produce lowercase spelling.
+
+**Exact Representative Coverage.** Total on declared legal Text, including mappings that
+expand scalar count.
+
+### 8.6.7. Unicode NFC Case Fold — `Initial`
+
+Let `Q17(x) = NFC17(F17(NFD17(x)))`, where all three operations use Unicode 17.0.0.
+
+**Exact Equivalence `E_L`.** `E_L(x,y)` if and only if
+`NFD17(F17(NFD17(x))) = NFD17(F17(NFD17(y)))` by scalar equality, exactly as Unicode D145
+Canonical Caseless Matching specifies.
+
+**Exact Representative `C_L`.** `Q17(x)`, the exact NFC representative of that relation.
+Unicode §5.18.5 gives the closure property `Q17(Q17(x)) = Q17(x)`. `NFD` must precede folding;
+a shortcut treating this law as an unspecified `NFC + lowercase` sequence is not equivalent.
+
+**Exact Representative Coverage.** Total on declared legal Text. Canonical decomposition and
+full folding may expand the scalar sequence; expansion alone does not constitute refusal.
+
+### 8.6.8. Unicode NFKC Case Fold — `Initial`
+
+Let `H17(x) = toNFKC_Casefold17(NFD17(x))`. The inner operation uses Unicode R5:
+map each scalar through Unicode 17.0.0 `NFKC_CF`, concatenate, and normalize the result to NFC.
+
+**Exact Equivalence `E_L`.** `E_L(x,y)` if and only if `H17(x) = H17(y)`, exactly as Unicode
+D147 Identifier Caseless Matching specifies.
+
+**Exact Representative `C_L`.** `H17(x)`. The mapping intentionally collapses some
+compatibility and Default_Ignorable distinctions. A generic `NFKC` followed by a host
+lowercase or casefold operation may not reproduce R5 or D147.
+
+**Exact Representative Coverage.** Total on declared legal Text. This law is not an
+identifier validator, a confusable-character detector, or an authorization decision.
+
+### 8.6.9. Qualification, Security, and Finite-Work Evidence
+
+For NFC and NFD, canonical equivalence is equality of normalized NFD forms, while NFC and
+NFD select different unique representatives. For NFKC and NFKD, the same holds under NFKD
+compatibility equivalence. UAX #15 defines the forms as stable normalized representations;
+its conformance conditions fix decomposition, combining order, composition exclusions, and
+Hangul algorithmic behavior. The output form and input relation jointly establish equivalence
+preservation and idempotence, independent of host normalization methods.
+
+Unicode R4 and D144 define the Full Case Folding comparison. Unicode D145 supplies the
+canonical-caseless relation, and Unicode §5.18.5 explicitly identifies the idempotent NFC
+representative `Q`. Unicode R5/D147 specify the identifier-caseless relation and its fixed
+`NFKC_CF` mapping. For R5/D147, the Law's required self-stability and non-equivalence
+separation remain verification obligations against the version-pinned normative mapping;
+conformance testing does not permit an implementation to choose a different `C_L`.
+
+There is finite work for a finite input with these finite, version-fixed tables and specified
+normalization procedures. Combining-mark reordering and intermediate output expansion need
+explicit physical analysis. An implementation must not infer constant-time or constant-memory
+behavior from bounded input length. Budget/Capacity can stop untrusted-input resource
+amplification while retaining their own result and failure attribution; a stop does not turn
+Total Coverage into Restricted Coverage. Every supported V1 realization must establish the
+exact result when it succeeds and must fail closed on resource inability.
+
+Regression witnesses include U+0344 expansion in NFC, U+00E9 decomposition in NFD,
+U+FB01 compatibility collapse (`ﬁ` → `fi`), U+00DF fold (`ß` → `ss`), U+00C5 versus
+U+0041 U+030A under D145, and U+200D default-ignorable treatment under R5.
+[NormalizationTest.txt](https://www.unicode.org/Public/17.0.0/ucd/NormalizationTest.txt),
+[CaseFolding.txt](https://www.unicode.org/Public/17.0.0/ucd/CaseFolding.txt), and
+[DerivedNormalizationProps.txt](https://www.unicode.org/Public/17.0.0/ucd/DerivedNormalizationProps.txt)
+are version-pinned conformance and mapping sources. The earlier exploratory scalar tests
+used local Unicode 15.1 data; they are **not** complete Unicode 17.0.0 conformance evidence
+and must not be described as such.
+
+Unicode UAX #31 and UTS #39 identify cases where compatibility mapping, case folding,
+Default_Ignorable removal, and visually confusable identifiers carry security consequences.
+[PRECIS RFC 8264](https://www.rfc-editor.org/rfc/rfc8264.html) likewise warns against
+unqualified application of compatibility normalization. Those findings constrain claims about
+safe *use*, not the exact standardized Text equivalence chosen by each Law. These laws
+must not repair malformed protocol input, implicitly authorize identifier equality, or
+substitute for a protocol's original-byte or signing requirements. Admission observes the
+selected canonical representative and cannot recover deliberately erased distinctions.
+
+### 8.6.10. Explicit Membership Decision and Remaining Realization Duties
+
+**Decision (2026-10-10): ADMIT these seven independent Authority subjects and their
+approved Unicode 17.0.0-based `Initial` exact meanings in Sections 8.6.2–8.6.8.**
+Separate formal versions are owned by the seven Authorities; none is a hidden alias of
+another. The same `E_L` used by NFC/NFD or NFKC/NFKD does not erase their different
+representative obligations. The curated Case Fold profiles own Unicode-standardized
+meaning rather than a runtime guess about composing unrelated APIs.
+
+The decision does not assert that a production Kontrakt backend has passed full Unicode
+17.0.0 conformance. Conformance suites, differential regression, resource-envelopes, and
+compiler preservation checks remain implementation-verification obligations. The
+independent Exact Law meanings and their Catalog Membership are not conditional on which
+physical implementation or host Unicode database is used.
+
+## 8.7. Formal ADMIT — Initial Encoded Text and Web/HTTP Laws (2026-10-10)
+
+**Decision (2026-10-10): ADMIT the following nine independent Exact Built-In Law Authorities**
+with the complete `Initial` meanings fixed in this section. The four RFC 4648 and five Web/HTTP
+subjects have no shared Authority merely because they may share parsers or an output `Text`
+representation. `Initial` is an immutable, case-sensitive Law Version Identity under each
+Authority, not a request for a provider's newest parser, RFC revision, or interpretation profile.
+
+| Independently owned Exact Built-In Law Authority    | Initial Version Identity | Decision |
+|-----------------------------------------------------|--------------------------|----------|
+| Base16 lowercase textual representative             | `Initial`                | ADMIT    |
+| Base16 uppercase textual representative             | `Initial`                | ADMIT    |
+| Base32 RFC 4648 canonical textual representative    | `Initial`                | ADMIT    |
+| Base32hex RFC 4648 canonical textual representative | `Initial`                | ADMIT    |
+| RFC 3986 percent-encoding syntax representative     | `Initial`                | ADMIT    |
+| HTTP-date textual representative                    | `Initial`                | ADMIT    |
+| HTTP media-type textual representative              | `Initial`                | ADMIT    |
+| HTTP qvalue textual representative                  | `Initial`                | ADMIT    |
+| HTTP(S) URI normal-form representative              | `Initial`                | ADMIT    |
+
+### 8.7.1. Common Semantic Boundary, Coverage, and Failure Ownership
+
+Each Law accepts an already-established ADR-0064 `Text` presentation and establishes a `Text`
+representative without replacing its coordinate or obtaining a new Fact. The exact selected
+syntax profile is the positive applicability boundary. Within an admitted `Text` domain,
+their Coverage is **Restricted**: malformed or out-of-profile `Text` has the corresponding
+Law-owned, deterministic **non-repairing refusal**. No parser may silently trim, case-fold
+unmentioned characters, accept extra punctuation, insert missing padding, decode an unsafe
+reserved character, or infer a different protocol profile. A Law-owned refusal is distinct
+from Input illegality, an invalid Definition or missing Required Basis, and Budget/Capacity
+or implementation failure.
+
+Unless specified below, the external normative references are the fixed published texts
+[RFC 4648 (October 2006)](https://www.rfc-editor.org/rfc/rfc4648.html),
+[RFC 3986 (January 2005)](https://www.rfc-editor.org/rfc/rfc3986.html),
+[RFC 9110 (June 2022)](https://www.rfc-editor.org/rfc/rfc9110.html), and
+[RFC 6838 (January 2013)](https://www.rfc-editor.org/rfc/rfc6838.html), at the cited
+sections. External errata and later standards cannot silently modify `Initial`.
+The special ASCII case-variant acceptance in Base32 and Base32hex is an express Kontrakt
+selection; it is not a blanket mandate to accept all decoder aliases.
+
+### 8.7.2. Base16 Lowercase Text — `Initial`
+
+**Exact Operand.** Empty Text or an even-length sequence of ASCII hexadecimal digits
+`[0-9A-Fa-f]`. Each two digits denote one octet in left-to-right order. No `0x` prefix,
+separator, whitespace, or padding is legal. The empty sequence denotes zero octets.
+
+**Exact Equivalence `E_L`.** Two successful operands are equivalent exactly when they
+denote the same ordered octet sequence. Letter case is irrelevant; octet count and leading
+zero octets remain significant.
+
+**Exact Representative `C_L`.** Replace ASCII `A`–`F` by `a`–`f` and preserve all digits.
+Thus `00Af → 00af`; `0` and `0xAB` refuse. The representative is legal and fixed by
+reapplication. **Coverage:** Restricted to the stated Base16 grammar.
+
+### 8.7.3. Base16 Uppercase Text — `Initial`
+
+The operand, octet equivalence, and Restricted Coverage are precisely those in Section
+8.7.2. **Exact Representative `C_L`:** replace ASCII `a`–`f` by `A`–`F`, preserving
+all digits. Thus `00af → 00AF`. Distinct lowercase and uppercase representatives
+require distinct Authorities despite their shared `E_L`.
+
+### 8.7.4. RFC 4648 Base32 Text — `Initial`
+
+**Exact Operand.** Empty Text or RFC 4648 Section 6 Base32 groups with alphabet
+`A`–`Z`, `2`–`7`, explicitly permitting ASCII lowercase variants of the letters.
+Nonempty input length is a multiple of eight. The final quantum has exactly one of
+zero, one, three, four, or six `=` characters as required by its decoded octet count;
+padding is absent only for a full quantum. All unused low-order pad bits must be zero.
+Other whitespace, line breaks, `0`/`1` aliases, early `=`, excess/missing padding,
+nonalphabet characters, and nonzero unused bits are illegal.
+
+**Exact Equivalence `E_L`.** Two successful inputs are equivalent exactly when they
+represent identical ordered octets. Their only permitted textual variance for a
+fixed octet sequence is ASCII letter case.
+
+**Exact Representative `C_L`.** ASCII-uppercase the Base32 letters and leave digits
+and the already-correct padding unchanged. `my====== → MY======`; `MY` and
+`MZ======` refuse. The same rule applies to every quantum, including empty Text. **Coverage:** Restricted to the exact
+grammar and zero-pad-bit condition.
+
+### 8.7.5. RFC 4648 Base32hex Text — `Initial`
+
+The exact operand and Restricted Coverage use RFC 4648 Section 7 Base32hex instead,
+with alphabet `0`–`9`, `A`–`V` and explicitly permitted ASCII lowercase variants.
+The same eight-character quantum, exact required padding, and zero unused low-order
+bits apply. The value of an encoded symbol is determined only by the Base32hex alphabet,
+never by the ordinary Base32 alphabet.
+
+**Exact Equivalence `E_L`.** Equal ordered decoded octets under that exact alphabet. **Exact Representative `C_L`.**
+ASCII-uppercase legal letters and preserve digits,
+correct padding, and symbol count. Thus `co====== → CO======`; `C5======` refuses
+because its unused bits are nonzero, and `CW======` refuses because `W` is outside
+the alphabet. No other spelling is repaired.
+
+### 8.7.6. RFC 3986 Percent-Encoding Syntax — `Initial`
+
+**Exact Operand.** An already-established ASCII URI-component `Text` with its component
+kind explicitly fixed by the selecting Definition or its legal binding. Supported
+component kinds are `userinfo`, `reg-name`, `segment`, `path-abempty`, `query`, and
+`fragment`. Each uses exactly its corresponding RFC 3986 Section 3 production,
+with `pct-encoded` from Section 2.1. No kind is inferred from a whole URI. A literal
+`%` not followed by exactly two ASCII hexadecimal digits is illegal. Components
+outside this enumerated profile are not admitted by `Initial`.
+
+**Exact Equivalence `E_L`.** For one fixed component kind, two successful operands
+are equivalent if and only if replacing each percent-encoded unreserved ASCII octet
+by its direct unreserved character and uppercasing the hex letters in all remaining
+triplets produces identical scalar sequences. Different component-kind bindings
+cannot establish cross-kind equivalence.
+
+**Exact Representative `C_L`.** Apply that deterministic transformation once,
+without percent-decoding reserved or non-ASCII octets. `%7e → ~`, `%2f → %2F`,
+`%25 → %25`; `%GG` refuses. The output must still satisfy the same component grammar. **Coverage:** Restricted to the
+chosen legal component profile. Neither whole-URI
+parsing nor dot-segment removal belongs to this Law. A later decode, path parser,
+or signature consumer must not assume that this Law established resource identity.
+
+### 8.7.7. HTTP-Date Text — `Initial`
+
+**Exact Operand.** An already-established `Text` matching exactly one of RFC 9110
+Section 5.6.7's `IMF-fixdate`, `rfc850-date`, or `asctime-date` ABNF spellings.
+Whitespace and alphabetic spellings are not relaxed beyond that grammar.
+Gregorian year, month, day, time, and supplied weekday must be consistent.
+Use UTC civil-date fields with years `0001` through `9999`; the second field can
+be `00` through `60`, with `60` preserved as a leap-second notation rather than
+converted into the following minute. This Law does not consult a historical leap-second
+table or convert the result to a Unix timestamp. Invalid dates, weekdays, or civil
+times, and resolved years outside the domain, refuse.
+
+**Exact Required Basis.** One explicitly established UTC Reference Instant used
+only when interpreting the RFC 850 two-digit year. Apply RFC 9110's rule by selecting the greatest Gregorian year ending
+in the
+supplied two digits whose resulting UTC civil date/time is not more than fifty
+calendar years after the bound Reference Instant. The fifty-year comparison uses
+the reference UTC civil fields with the year advanced by fifty; it is a civil
+date comparison, not a floating-point duration estimate. The decoded year must
+remain within `0001`–`9999`. This resolves century rollover without relying on
+an initial guess based on the host calendar's current century. The basis must
+be fixed before evaluation; the compiler clock, current
+host clock, and cache reuse time are not semantic inputs. Without a legal Basis,
+selection cannot establish this Law.
+
+**Exact Equivalence `E_L`.** Under the same bound Basis, equal UTC civil-year,
+month, day, hour, minute, and second fields including the distinguishable `60`
+second. **Exact Representative `C_L`.** The corresponding IMF-fixdate spelling,
+with an exact three-letter weekday/month, two-digit day and clock fields,
+four-digit year, and literal `GMT`. `Sunday, 06-Nov-94 08:49:37 GMT`
+canonicalizes to `Sun, 06 Nov 1994 08:49:37 GMT` under a Basis that resolves
+`94` to 1994. **Coverage:** Restricted to valid grammar and values under the Basis.
+The result does not decide freshness, expiration, or authorization.
+
+### 8.7.8. HTTP Media-Type Text — `Initial`
+
+**Exact Operand.** Already-established ASCII `Text` parsed as the RFC 9110
+Section 8.3.1 `media-type` production using the RFC 9110 `token`, `parameters`,
+`quoted-string`, and `quoted-pair` rules. The admitted `Initial` profile requires
+nonempty type and subtype tokens, legal ASCII token parameter names, and exactly
+one occurrence of each parameter name after ASCII case normalization. OWS is
+allowed only where the RFC grammar permits it. Empty delimiter-only parameters,
+`obs-text`, non-ASCII characters, and unsupported extended parameter syntax are
+outside this exact profile. Quoted-string escapes are interpreted only as RFC
+quoted-pairs; they do not authorize arbitrary repair. No IANA registry consultation
+adds extra equivalence.
+
+**Exact Equivalence `E_L`.** Type/subtype and parameter names compare without ASCII
+case; parameter order is insignificant. Parameter values compare by their exact
+resulting ASCII character sequence after legal quoted-pair interpretation, with
+case preserved. A token value and a quoted spelling of the same value are equivalent.
+Parameters with names equal after ASCII lowercasing are duplicates and refuse.
+
+**Exact Representative `C_L`.** Emit lowercase type/subtype and parameter names.
+Sort parameters by ASCII lexicographic order of their normalized names. Emit each
+value as an unquoted token if possible; otherwise use double quotes and escape
+only literal `\` and `"` with a leading `\`, retaining other admitted value
+characters in their original order. Emit `;` between parameters, without OWS.
+For example, `Application/Example;Z=ABC;A="xyz"` becomes
+`application/example;a=xyz;z=ABC`. The representative's reparse must recover
+exactly the same values. **Coverage:** Restricted to the specified common HTTP
+syntax. Registration-specific value comparisons, including case-insensitive
+`charset` values, are not part of `Initial`.
+
+### 8.7.9. HTTP Qvalue Text — `Initial`
+
+**Exact Operand.** Already-established `Text` matching RFC 9110 Section 12.4.2
+exactly: `("0" [ "." 0*3DIGIT ]) / ("1" [ "." 0*3"0" ])`.
+In particular, `0.`, `1.`, and plain `0` or `1` are allowed; `.5`, `1.001`,
+`0.1234`, plus/minus signs, whitespace, and non-ASCII digits are not.
+
+**Exact Equivalence `E_L`.** Equal exact values among integer thousandths from
+0 through 1000, without binary floating-point interpretation. **Exact Representative `C_L`.** Write the shortest ASCII
+decimal spelling that
+has the same thousandth value: `0.500 → 0.5`, `0.050 → 0.05`, `0.000 → 0`,
+`1.000 → 1`, and `1. → 1`. **Coverage:** Restricted to the exact grammar.
+Out-of-range text is refused rather than rounded or clamped.
+
+### 8.7.10. HTTP (S) URI Normal-Form Text — `Initial`
+
+**Exact Operand.** An absolute `http` or `https` URI `Text` under RFC 9110
+Section 4.2 and RFC 3986 syntax, with a non-OPTIONS HTTP request context
+explicitly fixed as a positive applicability condition. The `Initial` host
+profile is nonempty ASCII DNS LDH labels (1–63 octets each), separated by dots,
+with alphanumeric first and last characters, no trailing dot or empty label,
+and total DNS hostname length at most 253 octets. Exclude all-numeric/dotted
+IPv4-looking hosts, IPv4/IPv6 literals, IDNA/non-ASCII or percent-encoded host
+names, userinfo, fragment, backslash, and unsupported host forms. The port is
+absent, syntactically empty, or an ASCII decimal integer from 1 through 65535
+with leading zeros allowed; explicit empty port and the scheme's default port
+are admitted. Path and query retain their RFC 3986 component grammar. Presence
+of an empty query delimiter remains distinct from an absent query.
+
+**Exact Equivalence `E_L`.** Under this single scheme-specific profile and
+fixed non-OPTIONS applicability, two legal URI Texts are equivalent if and
+only if the following uniquely defined representative Texts are identical.
+This is syntax-based URI normal-form equivalence, not equality of the resource
+returned by a server, a route, an authorization subject, or a signed byte string.
+
+**Exact Representative `C_L`.** Parse the complete RFC 3986 component boundaries
+first. Lowercase the scheme and ASCII host. Canonicalize an explicit port by
+removing leading zeros; omit an empty port and the scheme default (80 for HTTP,
+443 for HTTPS). For path and query, uppercase percent-triplet hex letters and
+decode only triplets corresponding to RFC 3986 unreserved ASCII characters.
+Next, remove path dot segments by RFC 3986 Section 5.2.4, including dots exposed
+by that unreserved-only decoding. For a remaining empty path, emit `/` in the
+fixed non-OPTIONS request context. Preserve every other path separator, encoded
+reserved character, query character and query ordering, and preserve the
+presence/absence of `?`. Retain neither a fragment nor userinfo because they
+are excluded from the operand.
+
+`HTTP://EXAMPLE.com:80/%7Euser → http://example.com/~user` and
+`https://EXAMPLE.com:443/a/./b → https://example.com/a/b` are normal cases;
+`http://example.com/a/%2E%2E/b → http://example.com/b` must not first decode
+`%2F` or use a permissive URL parser. The representative must pass the same
+operand grammar and yield itself on reapplication. **Coverage:** Restricted
+to this fixed URI profile. Absence of legal non-OPTIONS context is a selection
+applicability failure, not a guess made from runtime request state.
+
+### 8.7.11. Qualification Evidence and Implementation Cautions
+
+[RFC 4648 Sections 3.2–3.5, 6–8, and 10](https://www.rfc-editor.org/rfc/rfc4648.html)
+supply the strict padding, alphabet, zero-pad-bit, and test-vector basis. For
+Base16, odd digits and unmentioned prefixes/separators must refuse. For Base32
+and Base32hex, verify the last quantum and every unused pad bit independently
+of a decoder that may ignore invalid bits, missing padding, or nonalphabet text.
+The Base32 lowercase-acceptance rule must be tested without also admitting
+`0`/`1` aliases or any host default profile.
+
+[RFC 3986 Sections 2.1–2.4, 3 and 5.2.4](https://www.rfc-editor.org/rfc/rfc3986.html)
+and [RFC 9110 Sections 4.2.3, 5.6.7, 8.3.1 and 12.4.2](https://www.rfc-editor.org/rfc/rfc9110.html)
+are the Web/HTTP semantic and adversarial basis. A percent-transform must not
+preempt component parsing or decode reserved separators. HTTP-date needs tests
+on both sides of the RFC 850 50-year boundary, impossible calendar dates,
+weekday mismatches, and seconds `60`. Media-type tests must cover quoted-pair
+values, duplicate normalized parameter names, and stable parameter ordering.
+Qvalue should exhaustively check all 1001 semantic values and the exact three-
+digit limit. URI tests must preserve empty query distinction and encoded
+slashes while covering percent-encoded dot segments, default/empty ports,
+non-OPTIONS applicability, and refusal of unsupported hosts. A WHATWG browser
+URL parser, current JVM clock, mutable registry, or host media-type formatter
+must never select the Contract result.
+
+These are short implementation/verification watchpoints, not additions to
+`E_L` or `C_L`. The sixteen previously admitted ASCII and Unicode Laws already
+record their relevant pitfalls and sources in Sections 8.4.7, 8.5.6, and 8.6.9;
+those grounds are retained rather than repeated here. In particular, host
+whitespace methods, Unicode-data-version drift, compatibility/security loss,
+scalar expansion, and Budget/Capacity separation remain implementation checks.
+Finite inputs and fixed grammar permit finite parsing/transformation; evaluation
+must not use unbounded recursion, speculative decoding, ambient lookups, or
+silent recovery. Resource refusal belongs to Budget/Capacity rather than an
+additional Law-owned semantic failure. No production-backend conformance claim
+is made from the examples alone; independent differential/adversarial tests and
+compiler-preservation checks remain required.
+
+### 8.7.12. Explicit Membership Decision
+
+The nine named Authorities above are admitted with the immutable `Initial`
+Versions and the exact profiles in Sections 8.7.2–8.7.10. Their Law-owned
+Restricted Coverage refusals, fixed references, and explicit required contexts
+are part of the approved meaning. No registered API, parser installation,
+backend artifact, validation outcome, or runtime provider state grants or
+revises membership. This decision does not approve the generic Base64 or
+Base64url candidates rejected in Section 8.3, nor does it include any other
+separately admitted Numeric and Radix Laws of Sections 8.8–8.10, or any still-proposed
+network, internationalization, or protocol Law.
+
+---
+
+## 8.8. Formal ADMIT — Initial Decimal Text Laws (2026-10-10)
+
+**Decision (2026-10-10): ADMIT five independent Decimal Text Authorities** with the
+complete `Initial` meanings specified in this section. They were previously recorded as
+`ADMIT (proposed)` in Section 8.1. Each Authority owns its own exact Version history;
+shared decimal-digit scanning or arithmetic does not merge their meanings. None of these
+laws acquires a numeric Fact or changes the already-established Input `Text` coordinate.
+
+| Independently owned Exact Built-In Law Authority   | Initial Version Identity | Decision |
+|----------------------------------------------------|--------------------------|----------|
+| Decimal integer textual representative             | `Initial`                | ADMIT    |
+| Fixed-point decimal textual representative         | `Initial`                | ADMIT    |
+| ASCII grouped-decimal textual representative       | `Initial`                | ADMIT    |
+| Percentage / per-mille rate textual representative | `Initial`                | ADMIT    |
+| Scientific-notation textual representative         | `Initial`                | ADMIT    |
+
+### 8.8.1. Shared Decimal Text Boundary
+
+Each operand is a finite, already-established ADR-0064 `Text`. The selected
+Input Presentation must admit each successful canonical representative; an
+incompatible Input-owned semantic bound is an applicability problem, not an
+extra occurrence-time Canonicalization refusal. These Laws own **Restricted Coverage**, with one exact
+Canonicalization-owned refusal when a legal
+`Text` does not satisfy the respective complete grammar. Grammar mismatch is not
+Input illegality, and it may not be repaired by trimming, accepting Unicode numeric
+characters, or invoking a permissive host parser. Matching is over the complete Text;
+ASCII `[0-9]` means precisely U+0030–U+0039. The five separately declared grammars
+are not inherited from XML Schema, JSON, a locale, or each other.
+
+Where the Law compares numeric values, it uses exact base-10 mathematical values,
+not binary32/binary64 conversion, host Decimal context rounding, or an integer carrier
+of fixed width. A leading `-` on mathematical zero does not establish a separate
+value under these five Laws. The required representative is legal under the same
+Law grammar and is a fixed point under reapplication. External runtime state and
+occurrence-time Required Basis do not determine these `Initial` meanings.
+
+### 8.8.2. Decimal Integer Text — `Initial`
+
+**Exact Operand.** The complete grammar is `[+-]?[0-9]+`. At least one decimal
+digit is required. Leading zeros and an optional leading sign are legal. A decimal
+point, exponent, Unicode decimal digit, prefix, or space is not.
+
+**Exact Equivalence `E_L`.** Two successful Text operands are equivalent if and
+only if their signed base-10 **mathematical integers** are equal. In particular,
+`+00012` and `12` are equivalent; a decimal identifier with meaningful leading
+zeros must not select this Law merely because its characters are digits.
+
+**Exact Representative `C_L`.** Remove every redundant leading zero, remove the
+leading `+`, and keep `-` only for a nonzero negative integer. The unique zero
+representative is `0`. Thus `+000123 → 123`, `-00123 → -123`, and `-000 → 0`. **Coverage:** Restricted to the complete
+grammar above; otherwise refuse without
+repair. Work and output are at most linear in the Input digit count, without
+converting the value into a bounded JVM integer.
+
+### 8.8.3. Fixed-Point Decimal Text — `Initial`
+
+**Exact Operand.** The complete grammar is
+`[+-]?(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+)`.
+Exponent notation is outside the operand. This grammar permits `12`, `12.`, `.5`,
+`+0012.500`, and `-0.000`, but not an empty numeric part or `.` alone.
+
+**Exact Equivalence `E_L`.** Equality of exact signed finite decimal numerical
+values represented by the admitted Text. It deliberately ignores redundant leading
+integer zeros, fractional trailing zeros, a leading plus sign, and signed zero.
+An application for which trailing fractional zeros denote precision or scale
+must not select this Law for that meaning.
+
+**Exact Representative `C_L`.** Use no plus sign, the shortest nonempty integer
+part without leading zeros, and a fractional part only when nonzero; in that case
+remove every trailing fractional zero. Include a leading `0` before a decimal
+point and preserve the `-` only for nonzero negative values. Thus
+`12.5000 → 12.5`, `.5 → 0.5`, `12. → 12`, `+00012.00 → 12`,
+`000.0500 → 0.05`, and `-0.000 → 0`. **Coverage:** Restricted to the complete grammar; no rounding or scale-dependent
+host behavior is admitted.
+
+### 8.8.4. ASCII Grouped-Decimal Text — `Initial`
+
+**Exact Operand.** Use an optional ASCII `+` or `-`. The unsigned body is either
+the unsigned fixed-point body `[0-9]+(?:\.[0-9]*)?|\.[0-9]+`, or a grouped
+integer part `[0-9]{1,3}(?:,[0-9]{3})+` followed by an optional `.` and zero
+or more ASCII decimal digits. The `,` is the sole grouping separator, `.` the sole
+decimal point, and every group after the first contains exactly three digits.
+An ungrouped `.5` is admitted; a grouped form always has an integer part.
+No locale-specific grouping, whitespace, or exponent is admitted.
+
+**Exact Equivalence `E_L`.** Two successful operands are equivalent exactly when
+deleting their grouping commas gives **scalar-identical Text**. This Law does not
+declare `001234.50` equivalent to `1234.5` or collapse a signed zero.
+
+**Exact Representative `C_L`.** Remove only valid grouping commas and preserve
+every remaining scalar and its position. For example, `1,234,567.89 → 1234567.89`,
+`001,234.50 → 001234.50`, and `+1,234.00 → +1234.00`.
+`12,34`, `1,23,456`, and `1.234,50` refuse rather than being repaired. **Coverage:** Restricted to the exact
+grouped/ungrouped grammar. Decimal-value
+normalization belongs to a different Authority, even when a composed selection
+might subsequently apply it.
+
+### 8.8.5. Percentage / Per-Mille Rate Text — `Initial`
+
+**Exact Operand.** A complete fixed-point decimal from Section 8.8.3 followed by
+exactly one of: no suffix, ASCII `%` (U+0025), or PER MILLE SIGN `‰` (U+2030).
+No intervening whitespace, duplicate suffix, exponent, or alternate percent
+glyph is legal. The plain, unsuffixed decimal form belongs to the same operand
+profile so that every representative remains legal.
+
+**Exact Equivalence `E_L`.** Let `d` be the exact decimal numerical value of the
+numeric body. The Rate value is `d`, `d/100`, or `d/1000` respectively for no suffix,
+`%`, or `‰`. Two successful operands are equivalent exactly when these rational
+Rate values are equal. Suffixes change value; `1` differs from `1%`, whereas `1`
+and `100%` are equivalent.
+
+**Exact Representative `C_L`.** Express that rational value as the unique minimal
+unsuffixed fixed-point Text specified in Section 8.8.3, moving the decimal position
+exactly rather than rounding. For example `85.5% → 0.855`, `855‰ → 0.855`,
+`1% → 0.01`, `.5‰ → 0.0005`, and `-0% → 0`. Any expanded zero run must be formed
+exactly; the Law does not permit binary floating-point arithmetic to choose a result. **Coverage:** Restricted to the
+stated rate grammar. A resource stop while forming
+a large finite representative belongs to Budget/Capacity, not to an invented
+Law-owned refusal.
+
+### 8.8.6. Scientific-Notation Text — `Initial`
+
+**Exact Operand.** The complete grammar is
+`[+-]?(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+)[Ee][+-]?[0-9]+`.
+The exponent marker and at least one exponent digit are mandatory. Both exponent
+signs, leading exponent zeros, redundant significand zeros, and `e`/`E` spellings
+are legal. Fixed-point Text without an exponent is not an operand.
+
+**Exact Equivalence `E_L`.** Two successful operands are equivalent exactly when
+they denote the same finite mathematical decimal value, with the exponent treated
+as an arbitrary-magnitude signed base-10 integer. Signed zero has one meaning.
+
+**Exact Representative `C_L`.** Zero is always `0E0`. For nonzero values, retain
+exactly one nonzero digit before the decimal point, all remaining significant
+digits up to the last nonzero digit after it, and omit the decimal point when
+there are no remaining significant digits. The exponent is the exact adjusted
+power of ten, written after uppercase `E` in signed ordinary decimal digits,
+without leading zeros or a leading `+`; exponent zero is `E0`. Keep a leading `-`
+only for negative values. Thus `1.23e+04 → 1.23E4`,
+`00012.300E+0002 → 1.23E3`, `0.0500E+4 → 5E2`, `1E-0003 → 1E-3`,
+and `-0.0E+999 → 0E0`.
+
+**Coverage:** Restricted to the stated scientific grammar. The exponent must be
+handled as an exact decimal integer, not narrowed to JVM `Int`/`Long`. The Law
+must not expand `1E999999999999` into fixed-point Text; it is already a valid
+representative. A finite scan and digit-string exponent adjustment suffice.
+
+### 8.8.7. Qualification, Security, and Membership Evidence
+
+Each integer or decimal-value Law compares precisely defined finite base-10
+values and selects the one spelling determined by the above rules. Removing
+unnecessary integer/fraction digits or relocating the decimal point preserves
+the exact value. The chosen representative has no removable syntax, proving
+idempotence and uniqueness for that value class. Grouped-Decimal instead
+compares the exact comma-free string, so it preserves signed-zero, leading-zero,
+and fractional-scale spelling distinctions that the other Laws erase. Scientific
+notation stays scientific, and the Rate Law's unsuffixed representative remains
+an operand. These are independently owned semantic subjects, not names for one
+floating-point formatter.
+
+The pre-admission review used 5,000 reference samples per Decimal Text candidate (25,000 in total) for grammar,
+representative stability, and value preservation;
+these are limited reference checks, not exhaustive implementation conformance.
+Required negative cases include `01` in protocols whose own grammar rejects it,
+`12,34`, `1,23,456`, out-of-grammar rate precision, and extremely long exponents.
+XML Schema and JSON numeric grammars, Java `BigDecimal` scale equality, and CLDR
+locale-sensitive grouping differ from these fixed profiles; their runtime APIs
+are not semantic determinants. Very large finite inputs remain subject to
+finite-work analysis and active Budget/Capacity controls, not numeric overflow
+or silently truncated output. Input identifiers and financial values whose
+spelling or scale is meaningful must not inherit numeric-value equivalence.
+
+**Membership decision.** The project owner approves all five Authorities and
+their distinct `Initial` meanings above. Their Restricted Coverage refusals
+and grammars are part of those meanings. Later backends must prove preservation
+of the exact representative and may not broaden the operand through parser
+leniency.
+
+---
+
+## 8.9. Formal ADMIT — Initial Numeric Value, IEEE and XSD Floating-Point Laws (2026-10-10)
+
+**Decision (2026-10-10): ADMIT five independent numeric Authorities** with the
+complete `Initial` meanings below. The input meaning is different for an
+ADR-0064 `Decimal` cohort, a bit-exact binary32/64 datum, and an XSD lexical
+`Text`. Sharing a value converter does not create one Authority or permit
+substitution of another equality relation.
+
+| Independently owned Exact Built-In Law Authority | Initial Version Identity | Decision |
+|--------------------------------------------------|--------------------------|----------|
+| Decimal numeric-value representative             | `Initial`                | ADMIT    |
+| Binary32 canonical NaN                           | `Initial`                | ADMIT    |
+| Binary64 canonical NaN                           | `Initial`                | ADMIT    |
+| Binary32 decimal lexical representative          | `Initial`                | ADMIT    |
+| Binary64 decimal lexical representative          | `Initial`                | ADMIT    |
+
+### 8.9.1. Decimal Numeric Value — `Initial`
+
+**Exact Operand.** An already-established legal ADR-0064 `Decimal` with an
+integer coefficient `c` and exact integral scale `s`, subject to the applicable
+Input-owned closed Decimal bounds. Its value is exactly `c × 10^(-s)`.
+Coefficient and scale remain distinct in Input Presentation Sameness.
+
+**Exact Equivalence `E_L`.** Two legal Decimal presentations in the same
+selected exact Decimal domain are equivalent when their mathematical decimal
+values are equal. The relation is not equality of the `(c,s)` pair and does not
+perform rounding or application-specific scale/precision policy.
+
+**Exact Representative `C_L`.** For nonzero `c`, repeatedly remove all factors
+of 10 from `c` and decrement `s` by the exact number removed. Zero selects
+`(0,0)`. For example `(200,2) → (2,0)`, `(6000,0) → (6,-3)`, and
+`(0,5) → (0,0)` when the indicated representatives belong to the same
+legal Decimal domain. No partial reduction, clamping, or substitute scale
+is permitted.
+
+**Coverage and Law-owned refusal.** **Restricted**: the fully reduced pair must
+be legal in the same selected Input Decimal semantic domain, under all its
+coefficient and scale bounds. If the unique complete representative is not
+legal, refuse exactly for that reason, including when `(0,0)` lies outside a
+zero operand's scale domain. An otherwise legal input `(6000,0)` under scale
+bounds `0..2`, for example, refuses because `(6,-3)` is outside that domain.
+The refusal is not an Admission judgment, a Java `BigDecimal` overflow, or a
+Budget/Capacity stop. Every numerically equivalent operand in a given exact
+domain has the same complete mathematical representative and therefore the
+same coverage outcome.
+
+### 8.9.2. Binary32 Canonical NaN — `Initial`
+
+**Exact Operand.** One already-established ADR-0064 IEEE binary32 interchange
+datum whose complete 32 bits remain Contract-visible after Input acquisition.
+An integer carrier is only a physical realization of those bits.
+
+**Exact Equivalence `E_L`.** Two inputs are equivalent when both bit patterns
+are NaNs, or when neither is NaN and all 32 bits are identical. A NaN has all
+eight exponent bits set and a nonzero 23-bit fraction. Ordinary IEEE arithmetic
+`==` is not this reflexive Contract equivalence relation.
+
+**Exact Representative `C_L`.** Replace every NaN payload, NaN sign, and
+signaling/quiet variant by **`0x7FC00000`**. Preserve every non-NaN bit
+exactly, including both infinities and signed zero: `0x00000000` remains
+distinct from `0x80000000`. **Coverage:** Total over all legal binary32 bit
+data; no Law-owned refusal or external semantic Basis.
+
+### 8.9.3. Binary64 Canonical NaN — `Initial`
+
+**Exact Operand.** One already-established ADR-0064 IEEE binary64 interchange
+datum with its complete 64-bit Input-visible representation.
+
+**Exact Equivalence `E_L`.** Both inputs are NaN, or both are non-NaN and
+all 64 bits are identical. NaN has all eleven exponent bits set and a nonzero
+52-bit fraction. Do not use host floating-point comparison.
+
+**Exact Representative `C_L`.** Every NaN maps to **`0x7FF8000000000000`**. All non-NaN bit patterns are unchanged,
+including
+positive/negative zero and both infinities. **Coverage:** Total, with no
+Law-owned refusal or occurrence-time semantic Basis. This Authority has a
+separate domain and Version history from binary32.
+
+### 8.9.4. Shared XSD Lexical Profile and Exact Interpretation
+
+The next two Laws consume already-established ADR-0064 `Text`, not a Binary32
+or Binary64 Input Leaf. Their fixed normative source is
+[W3C XML Schema Definition Language (XSD) 1.1 Part 2: Datatypes,
+Recommendation of 5 April 2012](https://www.w3.org/TR/2012/REC-xmlschema11-2-20120405/),
+Sections 3.3.4 (`float`), 3.3.5 (`double`) and Appendix E.1. Kontrakt selects **the specifically named
+`floatLexicalMap` / `floatCanonicalMap` and
+`doubleLexicalMap` / `doubleCanonicalMap` algorithm pairs**. XSD permits other
+conforming host choices; those are not alternate results under `Initial`.
+
+Both Laws admit exactly the respective XSD `floatRep` or `doubleRep` complete
+lexical grammar, equivalent here to:
+
+```text
+[+-]?(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+)(?:[Ee][+-]?[0-9]+)?|[+-]?INF|NaN
+```
+
+This accepts `+.5E-2`, `1.`, `INF`, `+INF`, `-INF`, and `NaN`.
+It rejects `+NaN`, `nan`, `Infinity`, whitespace-padded numbers, and grouped
+numbers. XSD's schema-wide `whiteSpace=collapse` is not silently executed
+by these Canonicalization Laws: the established Text is matched directly.
+A legal `Text` outside this exact lexical profile receives a deterministic **Canonicalization-owned grammatical
+refusal**. A lexical value within the
+profile succeeds, including when exact rounding overflows to an infinity or
+underflows to a signed zero. Both Laws therefore have **Restricted Coverage**
+over generally legal established `Text`, not a restriction on the representable
+floating-point numerical range.
+
+`E_L` is identity of the chosen mapping's **XSD value**, not IEEE arithmetic
+`==` and not equality of source exact decimal rationals. Positive and negative
+zero are distinct identities; the single XSD notANumber identity is reflexive
+under this relation. A numeric string whose exact decimal value differs from
+another can still be equivalent to it after rounding to the selected value
+space. `C_L` always stays legal Text under the same lexical grammar and
+is reapplied without change.
+
+### 8.9.5. XSD Binary32 Decimal Lexical — `Initial`
+
+**Exact Equivalence `E_L`.** Apply the exact selected XSD 1.1 `floatLexicalMap`
+to each legal operand and compare the resulting binary32 value identities.
+The mapping converts the exact decimal rational directly to binary32 using
+the W3C `floatingPointRound` parameters `(24, -149, 104)` and the specified
+round-to-nearest, ties-to-even choice, without intermediate binary64 rounding.
+The mapping gives distinct signed zero identities where the input sign requires
+and one identity for `NaN`.
+
+**Exact Representative `C_L`.** Apply the exact selected
+`floatCanonicalMap` to the resulting value. For example the canonical special
+forms are positive zero `0.0E0`, negative zero `-0.0E0`, positive infinity
+`INF`, negative infinity `-INF`, and notANumber `NaN`. The finite nonzero
+representative follows the entire pinned W3C algorithm, including its
+significand and exponent spelling; no Java `Float.toString` default can
+replace that algorithm by coincidence. A numerical string representing
+16,777,217 rounds to the same binary32 value as `16777216` under the chosen
+mapping. **Coverage and failure:** Restricted exactly as Section 8.9.4;
+all in-grammar inputs succeed.
+
+### 8.9.6. XSD Binary64 Decimal Lexical — `Initial`
+
+**Exact Equivalence `E_L`.** Apply the selected XSD 1.1 `doubleLexicalMap`
+and compare binary64 value identities. Decimal-to-binary rounding uses the
+exact W3C `floatingPointRound` parameters `(53, -1074, 971)`, with nearest,
+ties-to-even and no intermediary narrower or differently rounded host value.
+For example the two decimal strings `9007199254740992` and
+`9007199254740993` map to the same binary64 finite value.
+
+**Exact Representative `C_L`.** Apply the exact `doubleCanonicalMap` of the
+same frozen W3C Recommendation. The five special forms are respectively
+`0.0E0`, `-0.0E0`, `INF`, `-INF`, and `NaN`; finite nonzero spelling follows
+the specified Canonical Mapping, not RFC 8785 JSON serialization or the
+host's current `Double.toString`. **Coverage and failure:** Restricted
+exactly as Section 8.9.4, with complete success for every legal lexical value.
+
+### 8.9.7. Qualification, Security, and Membership Evidence
+
+For Decimal Numeric Value, integer division by ten until no factor remains
+produces the same unique reduced coefficient/scale pair for a given exact
+finite decimal value. The exact Domain-membership check defines the one owned
+refusal; Input may not be widened and the reduction may not be approximated.
+For each binary NaN Law, finite exponent/fraction bit masks partition the
+entire bit domain into one NaN class and singleton non-NaN classes. Choosing
+one quiet-NaN bit pattern makes the relation reflexive, symmetric, transitive,
+and fixed by reapplication. Raw signaling NaNs must not be quieted by a JVM
+floating-point carrier before Input establishes their full bits.
+
+For XSD, the selected named Mapping algorithms and fixed value identity
+supply a determinate same-domain Text representative. Verification must use an
+independent exact-rational reference oracle for both roundings, including
+subnormals, half-ULP ties, sign-preserving underflow, overflow, infinities,
+NaN, and long decimal inputs. `7.038531E-26` is a known binary32 double-
+rounding regression: exact direct binary32 and binary64-then-binary32 paths
+can differ. XSD canonical spelling must be compared against the frozen W3C
+algorithm rather than accepted merely because a host formatter round-trips.
+This qualification rests on exact normative selection, structural reasoning,
+and recorded boundary witnesses; it is **not** a claim that a complete XSD
+production conformance suite has run. Full backend conformance and resource
+verification remain separate after membership.
+
+Very long numeral/exponent Text and Decimal coefficient material require
+finite-work and memory-envelope controls during evaluation. Compiler resource
+stops are owned by Budget/Capacity or realization failure, not additional
+numeric semantics. Signed-zero collapse is intentionally absent from Binary
+NaN and XSD value-identity Laws; importing JSON or PostgreSQL equality would
+change this decision. IEEE bit arithmetic, Java `BigDecimal` scale overflow,
+and platform NaN handling may supply test cases, not normative law meaning.
+
+**Membership decision.** The project owner admits the five independently
+versioned Authorities in Sections 8.9.1–8.9.6. Their exact bit, value,
+Text, Coverage and refusal meanings are fixed under their respective
+`Initial` Versions. Any production implementation must subsequently prove
+that it preserves these meanings.
+
+---
+
+## 8.10. Formal ADMIT — Initial Radix and Bit Representation Laws (2026-10-10)
+
+**Decision (2026-10-10): ADMIT seven independent Radix and Bit Representation
+Authorities**, with the exact `Initial` meanings below. Equality of a
+mathematical integer, equality of an exact-width bit sequence, equality of a
+signed integer represented as Bytes, and equality of a POSIX mode mask are
+distinct Contract subjects.
+
+| Independently owned Exact Built-In Law Authority            | Initial Version Identity | Decision |
+|-------------------------------------------------------------|--------------------------|----------|
+| Hexadecimal integer textual representative                  | `Initial`                | ADMIT    |
+| Binary integer textual representative                       | `Initial`                | ADMIT    |
+| Octal integer textual representative                        | `Initial`                | ADMIT    |
+| Fixed-width hexadecimal bit-vector textual representative   | `Initial`                | ADMIT    |
+| Fixed-width binary bit-vector textual representative        | `Initial`                | ADMIT    |
+| Minimal two's-complement signed-integer byte representative | `Initial`                | ADMIT    |
+| POSIX file-mode octal textual representative                | `Initial`                | ADMIT    |
+
+### 8.10.1. Radix Integer Text — Three Separate `Initial` Laws
+
+**Exact Operand.** Each of the hexadecimal, binary, and octal Authorities
+operates on already-established legal `Text`, using respectively the complete
+grammars `[+-]?[0-9A-Fa-f]+`, `[+-]?[01]+`, and `[+-]?[0-7]+`.
+A sign-only input, an empty Text, whitespace, and prefixes `0x`, `0b`, or
+`0o` are not legal operands. No host base autodetection may change a selected
+Authority's radix.
+
+**Exact Equivalence `E_L`.** For each distinct Authority, the two legal Text
+values are equivalent if and only if their exact signed mathematical integers
+in **that** radix agree. For example `10` represents 2 in binary, 8 in octal,
+and 16 in hexadecimal; there is no cross-Law equality relation.
+
+**Exact Representative `C_L`.** Remove redundant leading zeros and leading
+`+`; retain `-` exactly for a nonzero negative value, and select `0` for zero.
+The hexadecimal Law also maps `A`–`F` to lowercase `a`–`f`. Witnesses:
+hex `+000FF → ff`, binary `-0000 → 0`, octal `+000755 → 755`. **Coverage:** Restricted to the respective exact grammar,
+with Law-owned
+non-repairing refusal on grammar mismatch. Each remains Text and may be
+formed by scanning digits rather than narrowing an arbitrarily large integer
+to a JVM numeric carrier.
+
+### 8.10.2. Fixed-Width Hexadecimal Bit-Vector Text — `Initial`
+
+**Exact Operand.** A nonempty sequence of ASCII hexadecimal digits, optionally
+separated by single `_` characters between adjacent digits. Every `_` must
+have one hexadecimal digit immediately before and after it, so leading,
+trailing, or consecutive underscores are illegal. Prefixes, signs,
+whitespace, and `0x` are excluded. The represented bit-vector width is **four times the number of hexadecimal digits**,
+excluding underscores.
+
+**Exact Equivalence `E_L`.** Two successful inputs are equivalent if and only
+if they have identical bit widths and bit sequences. Hexadecimal letter case
+and legal underscore separators carry no meaning. No zero extension or
+truncation is permitted; `F` (4 bits) and `000F` (16 bits) are not equivalent.
+
+**Exact Representative `C_L`.** Delete underscores, lowercase `A`–`F`, and
+retain every hexadecimal digit including leading zeros: `00_Af → 00af`,
+`000F → 000f`. **Coverage:** Restricted to the stated grammar. The exact
+output remains a legal vector Text with unchanged width and bits; the Law
+does not imply a general conversion from an arbitrary non-multiple-of-four
+bit width into hexadecimal.
+
+### 8.10.3. Fixed-Width Binary Bit-Vector Text — `Initial`
+
+**Exact Operand.** A nonempty sequence of ASCII `0` and `1` digits with only
+single `_` separators between adjacent digits. Leading, trailing, repeated
+underscores, prefixes, signs, and whitespace are illegal. Width is exactly
+the number of binary digits, excluding underscores.
+
+**Exact Equivalence `E_L`.** Two legal operands are equivalent if and only if
+the ordered bits and their exact width are identical. Separator placement is
+the only ignored distinction. `01` (2 bits) and `1` (1 bit) are distinct.
+
+**Exact Representative `C_L`.** Delete underscores and preserve every bit,
+including leading zeros: `0000_1111 → 00001111` and `0_1 → 01`. **Coverage:** Restricted to the complete grammar, with
+exact non-repairing
+failure on malformed separators or digits.
+
+### 8.10.4. Minimal Two's-Complement Signed-Integer Bytes — `Initial`
+
+**Exact Operand.** An already-established legal ADR-0064 `Bytes` value that
+is **nonempty**, interpreted as one arbitrarily wide, signed, big-endian
+2's-complement integer. Byte order is fixed by this Law; it is not inferred
+from a host buffer. Empty Bytes is a legal general Bytes value but outside
+this Law's success domain.
+
+**Exact Equivalence `E_L`.** Two nonempty Byte sequences are equivalent if
+and only if they represent the same signed mathematical integer under that
+big-endian 2's-complement interpretation. No tag, length field, or separate
+ASN.1 object is parsed.
+
+**Exact Representative `C_L`.** Select the shortest **nonempty** big-endian
+2's-complement byte sequence representing that integer. Remove a leading
+`00` only while the following octet's top bit is 0; remove a leading `FF`
+only while the following octet's top bit is 1. Do not remove the final octet
+or a sign-preserving leading byte. For example `00 00 7F → 7F`, `00 80 → 00 80`,
+`FF FF 80 → 80`, `FF 7F → FF 7F`, `00 00 → 00`, and `FF FF → FF`.
+
+**Coverage:** Restricted exactly by the nonempty requirement. Empty Bytes
+causes one Law-owned refusal. General DER INTEGER is a different protocol
+subject: [ITU-T X.690](https://www.itu.int/rec/T-REC-X.690/) already requires
+minimum 2's-complement INTEGER contents in its legal encoding. This Law
+normalizes general input Bytes and does not validate or emit ASN.1 framing.
+
+### 8.10.5. POSIX File-Mode Octal Text — `Initial`
+
+**Exact Operand.** An already-established legal `Text` consisting of one
+or more ASCII octal digits `0`–`7`, with no sign, `0o` prefix, underscore,
+whitespace, or symbolic permission expression. Interpret the digits as an
+unsigned octal integer. The permitted value range is **0 through octal
+`7777`** inclusive, i.e. the complete twelve permission/special-mode bits.
+Input may have redundant leading zero digits. Bits describing file type,
+ACLs, or actual resolved OS access are excluded.
+
+**Exact Equivalence `E_L`.** Two successful operands are equivalent exactly
+when they denote the same **12-bit POSIX-style mode mask**. It is not merely
+matching the lowest nine access bits: set-user-ID, set-group-ID, and the
+sticky bit must be retained. `0755` is not equivalent to `4755`.
+
+**Exact Representative `C_L`.** Write the exact octal value with exactly
+four ASCII octal digits, adding leading zeroes as needed but never dropping
+mode bits. Thus `755 → 0755`, `00755 → 0755`, `4755 → 4755`, and
+`0000 → 0000`. `10000`, `0o755`, and `u+rwx` refuse. **Coverage:** Restricted by the exact syntax and range. The Law
+does not
+consult the filesystem, process umask, or platform permissions and does not
+inherit YAML 1.1/1.2 integer-autodetection differences.
+
+### 8.10.6. Qualification, Security, and Membership Evidence
+
+The three radix Laws select a unique sign/zero/digit spelling per exact
+integer under a **fixed** radix. The two Bit-Vector Laws preserve every
+bit-width distinction while removing permitted textual separators and hex
+letter case; their representatives cannot lose width and are already fixed
+points. For signed Bytes, the two redundant-sign-prefix tests yield a unique
+minimal nonempty 2's-complement representation for every signed integer;
+negating or modifying a necessary sign byte would change its value. For POSIX
+Mode, the exact 12-bit range determines one four-digit representation without
+collapsing privilege-related bits. All seven `C_L` functions choose one
+representative for each claimed `E_L` class within their respective successful
+domains, preserve that class, and are idempotent.
+
+The pre-admission independent reference exercises covered 15,000 radix integer
+samples, 20,000 Bit-Vector samples, all 65,536 two-octet Signed-Integer
+inputs, and 12,288 POSIX-mode / leading-zero samples, with no observed
+mismatches in the checked properties. They are bounded evidence rather than
+a proof of all lengths or conformance of the future JVM realization.
+[SMT-LIB FixedSizeBitVectors](https://smt-lib.org/theories-FixedSizeBitVectors.shtml)
+and LLVM's `APInt` are useful independent references for width semantics,
+while X.690 supplies the minimum signed-integer octet boundary. They do not
+replace the expressly selected operand grammars or POSIX mode rules.
+
+Implementation must preserve the distinction between signed integer value,
+bit-vector width, and POSIX authorization-related mode bits. Signed bytes
+must never pass through an automatically truncated JVM integer; leading
+`00` and `FF` may be removed only under the explicit next-sign-bit tests.
+No radix auto-parser or YAML default may decide POSIX mode meaning. The
+supported algorithms inspect only finite legal Text/Bytes and need no
+unbounded recursive interpretation. Budget/Capacity own resource stops;
+they do not enlarge Restricted Coverage or supply additional failure codes.
+
+**Membership decision.** The project owner formally admits these seven
+independently versioned Authorities with their exact grammars, width/
+signedness distinctions, representatives, Coverage, and refusal relations
+under `Initial`. Any later semantic change requires a new exact Version;
+realization conformance remains separately verifiable.
+
+---
+
+## 8.11. Formal ADMIT — Initial Text and Network Laws (2026-10-10)
+
+**Decision (2026-10-10): ADMIT the seven independent Authorities below** with the exact `Initial` meanings established
+in this section. Each owns its own historical Catalog Membership and immutable Law Version. Shared scanners, address
+parsers, or URI processing routines do not merge Authorities. An already-established ADR-0064 `Text` is the operand of
+each Law; a malformed or unadmitted presentation is never repaired into a legal Input.
+
+| Independently owned Exact Built-In Law Authority | Initial Version | Decision | Coverage   |
+|--------------------------------------------------|-----------------|----------|------------|
+| WHATWG ASCII whitespace collapse                 | `Initial`       | ADMIT    | Total      |
+| LF line-ending normalization                     | `Initial`       | ADMIT    | Total      |
+| Historical IPv4 numbers-and-dots Text            | `Initial`       | ADMIT    | Restricted |
+| IPv4 network-prefix Text                         | `Initial`       | ADMIT    | Restricted |
+| RFC 5952 IPv6 all-hex Text                       | `Initial`       | ADMIT    | Restricted |
+| IPv6 network-prefix Text                         | `Initial`       | ADMIT    | Restricted |
+| CoAP URI normal-form Text                        | `Initial`       | ADMIT    | Restricted |
+
+### 8.11.1. WHATWG ASCII Whitespace Collapse — `Initial`
+
+The exact immutable source is [WHATWG Infra,
+`strip and collapse ASCII whitespace`](https://infra.spec.whatwg.org/#strip-and-collapse-ascii-whitespace), restricted
+to the already-established Unicode-scalar `Text` domain. `W5` consists of precisely U+0009 TAB, U+000A LF, U+000C FF,
+U+000D CR, and U+0020 SPACE; **U+000B VT is excluded**. This is a different set from the admitted ASCII Trim family
+`W6`.
+
+**`E_L`:** two Text values are equivalent exactly when the nonempty maximal runs of characters outside `W5` agree
+positionally, with intervening `W5` runs regarded as one separator and leading/trailing `W5` runs disregarded. Thus
+`"AB"` and `"A B"` are *not* equivalent. **`C_L`:** remove leading and trailing `W5`, replace each nonempty interior
+`W5` run by exactly one U+0020 SPACE, and preserve all remaining scalars. Empty and all-`W5` Text yield empty Text.
+**Coverage:** Total; no Law-owned refusal or occurrence-time Basis. The representative is idempotent, cannot grow, and
+requires a finite linear scan.
+
+**Implementation caution:** never substitute JVM `trim`, `\s`, or a Unicode whitespace predicate; include the U+000B and
+U+00A0 non-collapse regressions. A protocol delimiter erased by this Law cannot be recovered by Admission.
+
+### 8.11.2. LF Line-Ending Normalization — `Initial`
+
+The fixed selected rule is equivalent to [WHATWG Infra,
+`normalize newlines`](https://infra.spec.whatwg.org/#normalize-newlines), restricted to CRLF, standalone CR, and LF. **
+`E_L`:** equality after replacing every U+000D U+000A pair with one U+000A and every remaining U+000D with U+000A. **
+`C_L`:** that exact replacement, performed without treating the LF of a former CRLF pair as a second line break.
+`"A\r\r\nB"` maps to `"A\n\nB"`; U+0085 and U+2028/U+2029 are preserved. **Coverage:** Total on legal `Text`, with no
+Law-owned refusal or Required Basis. The transformation is nonexpanding, deterministic, and idempotent.
+
+**Implementation caution:** match CRLF as a pair before converting lone CR, including adjacent CR and empty input. This
+Law does not trim line content or impose source-control configuration.
+
+### 8.11.3. Historical IPv4 Numbers-and-Dots Text — `Initial`
+
+The semantic profile is the historic BSD/Unix `inet_aton` *numbers-and-dots* interpretation documented in [Linux
+`inet(3)`](https://man7.org/linux/man-pages/man3/inet.3.html), deliberately **not** an ambient POSIX or host resolver's
+accepted language. It permits exactly one through four nonempty dot-separated unsigned numeric parts without whitespace
+or signs. Each part is ASCII decimal by default, octal when it has a multi-digit leading zero, or hexadecimal when
+prefixed `0x`/`0X` and followed by hexadecimal digits. All part characters must be consumed; malformed radix digits such
+as `08` refuse. With 4, 3, 2, or 1 parts, their respective bit widths are `(8,8,8,8)`, `(8,8,16)`, `(8,24)`, and `(32)`.
+No part may exceed its assigned unsigned width; there is no modulo truncation.
+
+**`E_L`:** equality of the exact 32-bit IPv4 address resulting from that profile. **`C_L`:** four minimal unsigned
+decimal octets separated by periods, with no leading zeros. `127.1`, `0x7f.1`, `0177.0.0.1`, and `2130706433` all map to
+`127.0.0.1`. **Coverage:** Restricted to the exact grammar and numeric ranges; malformed or out-of-range text refuses.
+The representative is again a legal four-part operand and a fixed point.
+
+**Implementation caution:** reject host `inet_aton` extensions, trailing garbage, octal `8`/`9`, signed values, and
+overwide parts. Explicit selection must precede any security-sensitive address interpretation; ordinary strict IPv4
+input must not inherit this legacy syntax. Exact digit scanning can avoid fixed-width overflow before bounds have been
+checked.
+
+### 8.11.4. IPv4 Network-Prefix Text — `Initial`
+
+This Law selects the [RFC 9911](https://www.rfc-editor.org/rfc/rfc9911.html) strict IPv4 prefix representation. The
+operand is an ASCII dotted-decimal four-octet address with an explicit `/` and an ASCII decimal prefix length from `0`
+through `32`. Each octet is `0`–`255`, written in strict decimal without legacy octal/hex interpretations; the
+representative uses minimal digits. **`E_L`:** equality of the prefix length and the address's first `length` bits. **
+`C_L`:** clear the remaining 32−`length` host bits, format the four octets in strict decimal, and retain the minimal
+decimal length. `192.0.2.129/24 → 192.0.2.0/24`, and `255.255.255.255/0 → 0.0.0.0/0`. **Coverage:** Restricted; illegal
+octets, prefix lengths, or delimiters refuse.
+
+A `/24` and a `/25` cannot be equated even when their text starts with the same address. **Implementation caution:** do
+not parse the address through the admitted historical IPv4 Law; mask bits only after strict parsing and prefix-length
+validation.
+
+### 8.11.5. RFC 5952 IPv6 All-Hex Text — `Initial`
+
+The operand is a syntactically valid unscoped 128-bit IPv6 address as defined
+by [RFC 4291](https://www.rfc-editor.org/rfc/rfc4291.html), with RFC 5952 Section 4 as the **chosen all-hexadecimal
+output** profile. Exact mixed IPv4-embedded input is admissible, but no zone identifier, URI bracket wrapper, DNS host
+name, or implicit scope is accepted. **`E_L`:** exact 128-bit IPv6 address equality. **`C_L`:** lowercase hexadecimal
+fields, remove redundant zeros inside fields, compress only the longest run of at least two zero fields, prefer the
+leftmost run in a tie, and express the full address as RFC 5952 Section 4 all-hexadecimal notation.
+`::ffff:192.0.2.1 → ::ffff:c000:201`. **Coverage:** Restricted to legal unscoped IPv6 addresses; malformed Text refuses.
+
+RFC 5952 Section 5's suggested IPv4 mixed notation for certain address classes does not override this expressly selected
+Section 4 representative. **Implementation caution:** include longest-run tie, one-zero-field, embedded IPv4, and
+all-zero regressions; no DNS or interface lookup may affect `C_L`.
+
+### 8.11.6. IPv6 Network-Prefix Text — `Initial`
+
+The operand is the above exact legal IPv6 address Text followed by `/` and a strict decimal prefix length `0`–`128`,
+under the fixed [RFC 9911](https://www.rfc-editor.org/rfc/rfc9911.html) prefix profile. **`E_L`:** equality of prefix
+length and the first `length` bits of the 128-bit address. **`C_L`:** clear all non-prefix bits, emit the address with
+this Catalog's RFC 5952 Section 4 all-hex rule, and append the minimal decimal `/length`.
+`2001:db8::1/64 → 2001:db8::/64`, and `ffff::1/0 → ::/0`. **Coverage:** Restricted to exact IPv6-address/prefix syntax
+and range; out-of-profile Text refuses.
+
+The IPv6 address Authority and the IPv6 prefix Authority remain distinct because the latter erases host-bit distinctions
+that the former preserves. **Implementation caution:** handle bit boundaries not divisible by eight or sixteen,
+especially `/1`, `/63`, `/65`, `/127` and `/128`; avoid implicit host IPv6 mixed formatting.
+
+### 8.11.7. CoAP URI Normal Form — `Initial`
+
+The immutable rule is the scheme-specific normal form
+in [RFC 7252 §6.3](https://www.rfc-editor.org/rfc/rfc7252.html#section-6.3) together with RFC 3986 URI syntax. The exact
+operand is a complete absolute `coap` or `coaps` URI Text under an explicitly restricted host profile: strict ASCII DNS
+host, strict dotted-decimal IPv4 literal, or bracketed unscoped IPv6 literal. Host must be nonempty; userinfo,
+non-ASCII/IDNA host, percent-encoded host, zone identifiers, fragments, backslash recovery, and ambiguous legacy numeric
+hosts are not admitted. The RFC 3986 authority, path, and query grammar, valid percent-triplets, and valid unsigned
+decimal port range must be checked in their exact components.
+
+**`E_L`:** equality of the scheme-based RFC 7252 normal form under the chosen profile, not equality of resolved network
+resources. **`C_L`:** lowercase scheme and ASCII DNS host; output IPv6 literals in the admitted RFC 5952 all-hex form;
+elide empty/default ports (`5683` for `coap`, `5684` for `coaps`), normalize permitted unreserved percent-encoded octets
+and uppercase remaining percent hex digits, apply the RFC 3986 dot-segment rule in the fixed order, make an empty path
+`/`, and preserve query byte-level distinctions and order. For example
+`coap://EXAMPLE.com:5683/%7Esensors → coap://example.com/~sensors`. `coap` and `coaps` are never equivalent.
+**Coverage:** Restricted; an illegal profile or ambiguous component refuses.
+
+**Implementation caution:** parse component boundaries once, avoid a second percent decode, preserve `%2F` as encoded
+slash, and do not sort query arguments or consult DNS. URI equivalence does not establish authorization, destination
+identity, or secure routing.
+
+### 8.11.8. Shared Qualification and Membership Evidence
+
+The text laws define `E_L` by unique nonexpanding representatives, which immediately gives reflexivity, symmetry,
+transitivity and representative equality; reapplying their transformations cannot expose a new removable run. The
+address laws instead interpret one exact finite bit domain and choose one fixed output; prefix masking is idempotent and
+equivalence depends on the preserved length. CoAP uses its finite, fixed URI component grammar with an exact transform
+order, not a host's current permissive parser. Output is again legal under the selected operand profile. Security review
+must test comparison against *nearby non-equivalent* forms (escaped reserved slash, scope-bearing IPv6, legacy IP
+alternatives and differing query order).
+
+Their fixed external sources, exact syntax rules, refusal profiles and candidate-specific implementation cautions above
+are the approved `Initial` semantic boundaries. Bounded parsing and finite output work are realizable over each legally
+bounded Text. Host-specific differential and stress tests remain realization-verification duties; failure of one backend
+does not change these Authorities' Membership or semantic coverage.
+
+**Explicit Membership decision:** ADMIT all seven exact Authority subjects in the table. Neither the rejected RFC 9911
+MAC-48 lowercase convenience subject nor another domain-specific name can duplicate the existing ASCII Lowercase
+Authority; its rejection is recorded separately in Section 8.3.
+
+---
+
+## 8.12. Formal ADMIT — Initial Language-Tag Casing, URN and `tel:` URI Laws (2026-10-10)
+
+**Decision (2026-10-10): ADMIT the three independent Authorities below.** They retain their own `Initial` Version
+histories; a language-tag, assigned-name, or telephone-URI parser does not by itself create Canonicalization authority.
+
+| Independently owned Exact Built-In Law Authority | Initial Version | Decision | Coverage   |
+|--------------------------------------------------|-----------------|----------|------------|
+| BCP 47 registry-independent casing               | `Initial`       | ADMIT    | Restricted |
+| RFC 8141 URN assigned-name text                  | `Initial`       | ADMIT    | Restricted |
+| RFC 3966 restricted `tel:` URI text              | `Initial`       | ADMIT    | Restricted |
+
+### 8.12.1. BCP 47 Registry-Independent Casing — `Initial`
+
+The exact operand is an already-established ASCII `Text` admitted
+by [RFC 5646 §§2.1–2.2](https://www.rfc-editor.org/rfc/rfc5646.html) syntax, including recognized grandfathered
+spellings, without performing IANA registry resolution. **`E_L`:** two such Tags are equivalent exactly when their ASCII
+case-insensitive spellings match; order, subdivision, and literal subtag contents remain observable. **`C_L`:** apply
+RFC 5646 role-dependent conventional casing: lowercase primary language, extlang, variants, extensions and private-use;
+titlecase the syntactically parsed four-letter script; uppercase the syntactically parsed two-letter region; leave
+numeric regions unchanged. For grandfathered and irregular tags that do not conform to the ordinary role grammar,
+lowercase ASCII without replacement. `ZH-hans-cn → zh-Hans-CN`; `EN-u-CA-JAPANESE → en-u-ca-japanese`. **Coverage:**
+Restricted to the exact RFC 5646 well-formed-tag syntax, with deterministic grammar refusal outside it.
+
+Script/region casing must **not** be inferred inside extension or private-use sequences. No Registry `Preferred-Value`
+rewriting, extension singleton sorting, variant reordering, or Suppress-Script deletion belongs to this Law. Its
+role-specific representative differs from the generic ASCII Lowercase representative for script/region-bearing tags,
+justifying separate membership. An ambient locale or current language registry cannot change this `Initial` meaning.
+
+### 8.12.2. RFC 8141 URN Assigned-Name Text — `Initial`
+
+The exact operand is one syntactically legal [RFC 8141 §3.1](https://www.rfc-editor.org/rfc/rfc8141.html#section-3.1)
+URN *assigned name* (`urn:` + NID + NSS), excluding `?+` r-components, `?=` q-components and `#` f-components. **
+`E_L`:** the RFC's generic assigned-name equivalence: disregard ASCII case in `urn` and the NID and case in the
+hexadecimal digits of NSS percent triplets; preserve the exact unencoded NSS characters and encoded-vs-unencoded
+distinction. **`C_L`:** spell the scheme `urn:`, lowercase the NID, and uppercase hex digits within NSS percent
+triplets, leaving all NSS character content and its encoding structure unchanged.
+`URN:EXAMPLE:a%2cz → urn:example:a%2Cz`. **Coverage:** Restricted to the exact legal assigned-name grammar; malformed
+percent triplets, unsupported optional URI components, and invalid NIDs refuse.
+
+**Implementation caution:** this Law neither percent-decodes unreserved NSS characters nor determines namespace-specific
+identity or URN resolution. A whole URN with resolver/query/fragment components must not lose those components through
+an implicit narrowing operation.
+
+### 8.12.3. RFC 3966 Restricted `tel:` URI Text — `Initial`
+
+The immutable source is [RFC 3966 §§3–5](https://www.rfc-editor.org/rfc/rfc3966.html). V1 admits a strict ASCII subset
+of legal `tel:` URIs: a global number beginning with `+`, or a local number with exactly one explicit `phone-context`.
+It permits an optional single `ext` parameter and no `isub`, additional `m-`/extension parameters, unknown parameters,
+or missing local context. The exact grammar follows the RFC's `phonedigit`, `phonedigit-hex`, permitted
+`visual-separator` (`-`, `.`, `(`, `)`), local `*`/`#`, `descriptor`, and `ext` productions. A `phone-context` is either
+a valid ASCII DNS domain or a global number prefix; its type may not be inferred from the host locale or caller region.
+
+**`E_L`:** RFC 3966 equality restricted to the admitted fields: global and local numbers remain distinct, remove visual
+separators from phone-number and numeric-context digits, compare domain context ASCII case-insensitively, and compare
+matching parameter names and `ext` contents under RFC 3966's rules; absent `ext` differs from present `ext`. **`C_L`:**
+use lowercase `tel:`, remove visual separators from numbers and numeric context, lowercase ASCII domain context, and
+emit the selected RFC parameter order (`ext` before `phone-context`). `TEL:+1-212-555-0100 → tel:+12125550100`;
+`tel:9-1-1;phone-context=EXAMPLE.COM → tel:911;phone-context=example.com`. **Coverage:** Restricted; unknown/multiple
+parameters, missing required context, invalid syntax or invalid context refuse; arbitrary dial-string repair is
+prohibited.
+
+**Implementation caution:** numeric `phone-context` is not automatically appended to form a global number. This Law
+makes no claim about actual number allocation, current dialing plan, or whether dialing succeeds. Routing and protocol
+authorization remain separate.
+
+### 8.12.4. Qualification and Membership Evidence
+
+RFC 5646 grammatical subtag roles and RFC 8141 generic assigned-name equivalence fix stable normal forms independent of
+a mutable provider. RFC 3966 fixes the admitted core comparisons, visual-separator set, and parameter meaning; excluding
+extension parameters prevents a new deployment from changing the Law's equivalence. Each successful result is legal
+under its own exact grammar, and a second application cannot change the representative. Finite parsers with
+component-boundary checks can realize these Text rules without callbacks, current clock, or runtime registry lookup.
+Near-miss tests must cover language-tag extension context, URN `%2F` versus slash, and telephone local/global and
+context distinctions.
+
+**Explicit Membership decision:** ADMIT these three Authorities and their `Initial` meanings. The separate
+*registry-dependent* BCP 47 candidate is **not** included: its actual IANA Registry byte snapshot is not archived or
+content-pinned in this Design, so its pre-admission Version determinant remains unclosed. Section 8.2 records that
+candidate as `DEFER` without representing the favorable research recommendation as historical Membership.
+
+---
+
+## 8.13. Formal ADMIT — Initial Temporal, Identifier, Supply-Chain, Geographic, Security-Text and Avro Laws (2026-10-10)
+
+**Decision (2026-10-10): ADMIT the nine independent Authorities below** with separately owned exact `Initial` meanings.
+These are same-presentation representative Laws rather than general parsing, serialization, identity validation, or
+signing authority. Except where otherwise noted, the operand is already-established legal ADR-0064 `Text`, the
+representative remains `Text`, and coverage is Restricted to the stated exact grammar. An out-of-profile Text receives a
+deterministic Canonicalization-owned syntax/meaning refusal; Input illegality, missing bases, Budget/Capacity stops, and
+realization failures retain separate owners.
+
+| Independently owned Exact Built-In Law Authority | Initial Version | Decision | Coverage   |
+|--------------------------------------------------|-----------------|----------|------------|
+| XSD 1.1 `date` canonical lexical Text            | `Initial`       | ADMIT    | Restricted |
+| XSD 1.1 `time` canonical lexical Text            | `Initial`       | ADMIT    | Restricted |
+| XSD 1.1 `dateTime` canonical lexical Text        | `Initial`       | ADMIT    | Restricted |
+| GTIN 14-digit textual representative             | `Initial`       | ADMIT    | Restricted |
+| IBAN electronic textual representative           | `Initial`       | ADMIT    | Restricted |
+| ECMA-427 core PURL syntax representative         | `Initial`       | ADMIT    | Restricted |
+| RFC 5870 WGS-84 core `geo:` URI                  | `Initial`       | ADMIT    | Restricted |
+| RFC 7468 single textual-encoding instance        | `Initial`       | ADMIT    | Restricted |
+| Avro 1.12.0 Parsing Canonical Form Text          | `Initial`       | ADMIT    | Restricted |
+
+### 8.13.1. XSD 1.1 `date` Canonical Lexical Text — `Initial`
+
+The exact immutable normative source is
+the [W3C XML Schema 1.1 Part 2 Recommendation of 2012-04-05](https://www.w3.org/TR/2012/REC-xmlschema11-2-20120405/):
+`dateLexicalRep`, `dateLexicalMap`, and `dateCanonicalMap`, using the standard's Value **Identity**, not mere overlap of
+date intervals. **`E_L`:** identity of the datatype values obtained by the specified lexical map, retaining whether a
+timezone is absent and retaining the exact timezone offset where present. **`C_L`:** the corresponding
+`dateCanonicalMap` result, including the standardized `Z` spelling for a zero timezone offset, without otherwise
+converting a date to a UTC civil day. `2026-10-10+00:00 → 2026-10-10Z`. **Coverage:** Restricted to the precise XSD
+`date` grammar and legal calendar/timezone values; all invalid dates, offsets, or out-of-domain year spellings refuse.
+
+### 8.13.2. XSD 1.1 `time` Canonical Lexical Text — `Initial`
+
+The exact source is the same frozen XSD Recommendation's `timeLexicalRep`, `timeLexicalMap`, and `timeCanonicalMap`. **
+`E_L`:** same mapped `time` Value Identity, preserving absent versus present timezone and differing offsets even when
+UTC interpretation would coincide. **`C_L`:** `timeCanonicalMap` output, including exact fractional-second normalization
+and legal `24:00:00` interpretation; `12:00:00.5000+00:00 → 12:00:00.5Z`. **Coverage:** Restricted to legal `time`
+lexical forms and values. The Law does not bind an ambient date, timezone database or leap-second history to decide
+equality.
+
+### 8.13.3. XSD 1.1 `dateTime` Canonical Lexical Text — `Initial`
+
+The exact source is that Recommendation's `dateTimeLexicalRep`, `dateTimeLexicalMap`, and `dateTimeCanonicalMap`. **
+`E_L`:** same mapped `dateTime` Value Identity, not an unconditional same-instant comparison; an explicitly present
+offset remains an observable identity distinction, and absent offset remains absent. **`C_L`:** exact
+`dateTimeCanonicalMap`; e.g., `2026-10-10T12:00:00.5000+00:00 → 2026-10-10T12:00:00.5Z`, while `2026-10-10T24:00:00Z`
+canonicalizes to `2026-10-11T00:00:00Z`. **Coverage:** Restricted to XSD lexical and value legality; illegal
+civil-date/time, timezone, fractional-second, and year forms refuse. No general conversion to `Instant` belongs to this
+Law.
+
+**XSD implementation caution (all three Laws):** follow XSD 1.1, **not** RFC 3339, an ambient timezone, `java.time`
+formatter defaults, or XML Schema `whiteSpace=collapse` applied implicitly to already-established Text. Test timezone
+absent, `Z` versus `+00:00`, differing offsets, calendar transitions, `24:00:00`, negative/zero year rules, and
+idempotence against the frozen Canonical Mapping. The identities and lexical maps are independent for the three
+datatypes.
+
+### 8.13.4. GTIN 14-Digit Text — `Initial`
+
+The fixed domain is the [GS1 Digital Link](https://ref.gs1.org/standards/digital-link/) 14-digit GTIN presentation,
+limited to ASCII numeric Text of exactly 8, 12, 13, or 14 digits. **`E_L`:** equality after left-padding to exactly
+fourteen digits with `0`; the indicator and check-digit positions are not erased. **`C_L`:** that exact 14-digit Text.
+`95200002 → 00000095200002`, and `9521101530001 → 09521101530001`. **Coverage:** Restricted to the specified digit
+repertoire and lengths. Check-digit correctness, issued-code status, country allocation and business identity are
+**not** judged or repaired by this Law.
+
+**Implementation caution:** do not use the Decimal Integer representative, which removes significant leading zeros;
+preserve the 14-digit result as Text and validate original digit count before padding.
+
+### 8.13.5. IBAN Electronic Text — `Initial`
+
+The fixed subject is the electronic/paper spelling distinction described
+by [ISO 13616-1](https://www.iso.org/standard/81089.html) and
+the [SWIFT IBAN Registry](https://www.swift.com/standards/data-standards/iban-international-bank-account-number). The
+input is a syntactically admitted electronic IBAN of ASCII account characters or its exact paper grouping: maximal
+consecutive four-character groups separated by **one U+0020 SPACE**, with a shorter final group allowed only at the end.
+**`E_L`:** identical electronic character sequences after *only* authorized paper-group spaces have been removed; letter
+case, country prefix, check digits and account characters remain exact. **`C_L`:** unspaced electronic spelling.
+`DE89 3704 0044 0532 0130 00 → DE89370400440532013000`. **Coverage:** Restricted; mispositioned spaces, tabs, Unicode
+whitespace, doubled spaces, invalid characters or malformed groups refuse.
+
+**Implementation caution:** grouping normalization must not supply an ambient country BBAN registry or uppercase account
+characters; country-specific BBAN validity and MOD-97 check remain separately owned. Do not accept arbitrary printed
+whitespace as a recoverable spelling.
+
+### 8.13.6. ECMA-427 Core PURL Syntax Text — `Initial`
+
+The fixed source
+is [ECMA-427, First Edition, December 2025](https://ecma-international.org/publications-and-standards/standards/ecma-427/),
+restricted to **common core PURL syntax** without package-type-dependent identity. The operand is a legal absolute
+`pkg:` URL Text whose type, optional namespace, name, version, qualifiers and subpath satisfy the exact ECMA core rules.
+**`E_L`:** equality after applying only core-authorized case, insignificant slash, UTF-8 percent-encoding and
+qualifier-order equivalences. Package name, namespace, version, qualifier values and subpath retain all distinctions not
+explicitly erased by core rules. **`C_L`:** lowercase `pkg:` and type, remove only core-insignificant namespace slashes,
+generate exact component-specific UTF-8 Percent-Encoding with uppercase hex digits, and emit distinct qualifiers ordered
+by their ASCII lowercase keys with no implicit rewriting of values. Other separators and subpath boundaries remain as
+prescribed by the ECMA core canonical form. **Coverage:** Restricted: invalid type, malformed UTF-8/percent encoding,
+empty or duplicate qualifier keys, and invalid component structure refuse.
+
+**Implementation caution:** this is neither npm nor Maven package identity; do not apply type-specific
+namespace/name/version folding or download registry data. Check percent-triplet decoding/reencoding and qualifier
+collisions under lowercase-key comparison, then reapply the law to prove fixed-point stability.
+
+### 8.13.7. RFC 5870 WGS-84 Core `geo:` URI — `Initial`
+
+The fixed source is [RFC 5870 §§3.3–3.4](https://www.rfc-editor.org/rfc/rfc5870.html). The operand is a legal core
+WGS-84 `geo:` Text with exact decimal latitude and longitude, optional exact decimal altitude, optional nonnegative
+uncertainty `u`, and optionally explicit default `crs=wgs84`; V1 excludes non-default CRS, unknown parameters and
+unbounded extensions. Latitude must be from `-90` to `90`, longitude from `-180` to `180`, with all values finite exact
+decimal numbers. **`E_L`:** exact decimal coordinate equality, together with the RFC's +180/-180 antimeridian
+equivalence, latitude ±90 polar longitude irrelevance, and absent/explicit default CRS equality. Existence of altitude
+and `u` is part of equality; absent is never synonymous with zero. **`C_L`:** minimal exact decimal spelling without
+surplus sign/leading/trailing fractional zeros, write longitude `0` at either pole and `180` at the antimeridian, omit
+the explicit default CRS, and preserve whether altitude and `u` exist. `geo:90,-22.43;crs=WGS84 → geo:90,0`, and
+`geo:0,-180 → geo:0,180`. **Coverage:** Restricted to this exact WGS-84 profile, legal bounds, and numeric syntax;
+malformed or unsupported Text refuses.
+
+**Implementation caution:** use exact decimal comparison rather than binary floating-point approximation; do not equate
+missing altitude or uncertainty with zero. No geolocation lookup, proximity tolerance, CRS registry or coordinate
+transformation is authorized.
+
+### 8.13.8. RFC 7468 Single Textual-Encoding Instance — `Initial`
+
+The source is [RFC 7468](https://www.rfc-editor.org/rfc/rfc7468.html), with a deliberately restricted input-profile
+chosen here. The operand is **one** complete BEGIN/END Label enclosure using legal exact label syntax, matching
+case-sensitive Labels, strict RFC 4648 Base64 encoding with valid padding and zero unused bits, and exactly described
+line endings/layout variants: LF or CRLF on all enclosure/body lines, canonical 64-character Base64 line breaks except
+possibly the last line, no extraneous spaces or nonalphabet data, and an optional final line ending. Additional RFC 7468
+permissive-parser latitude is not admitted. **`E_L`:** exact Label and decoded ordered Octet equality, disregarding only
+the admitted LF/CRLF and optional final-newline presentation differences. **`C_L`:** the *same* Label and exact encoded
+Octets, Base64 alphabet/padding in strict canonical spelling, 64-character lines except the last, and LF line endings
+including exactly one final LF. **Coverage:** Restricted; unmatched or re-cased Labels, corrupt payload, different
+wrapping, multiple instances and unsupported whitespace refuse.
+
+**Implementation caution:** Base64 pad-bit checking is mandatory, even when a decoder accepts the payload. Enclosure
+Canonicalization does not parse DER, validate certificates or keys, merge multiple PEM blocks, or change signed bytes. A
+strict generator form and a broader parser latitude must not be conflated.
+
+### 8.13.9. Avro 1.12.0 Parsing Canonical Form Text — `Initial`
+
+The exact source
+is [Apache Avro Specification 1.12.0, Parsing Canonical Form](https://avro.apache.org/docs/1.12.0/specification/#parsing-canonical-form-for-schemas).
+The operand and representative are both `Text` of one legal Avro Schema under the exact 1.12.0 JSON and schema grammar.
+**`E_L`:** exact Unicode-scalar equality of the Parsing Canonical Form results of two legal schemas. **`C_L`:** the
+result of the **seven ordered normative transformations**
+`PRIMITIVES → FULLNAMES → STRIP → ORDER → STRINGS → INTEGERS → WHITESPACE`; this algorithm, including schema-name and
+namespace resolution, string escape and integer spelling, is frozen in `Initial`. **Coverage:** Restricted to
+syntactically and semantically valid finite Avro Schema Text; invalid names, illegal schema constructs, duplicate
+illegal definitions and unresolved references refuse. A successful result must itself parse as a legal Schema and
+reapplication must yield identical Text.
+
+**Implementation caution:** field order is significant and must not be sorted. Named reference resolution must be
+finite, explicit and independent of JVM object identity; do not use unbounded recursion for deeply nested inputs.
+Removed `doc`, `default` and other non-parsing properties can remain relevant to evolution or application semantics,
+which this Law does not claim. Fingerprints may index results but hash equality cannot replace exact canonical Text
+equality.
+
+### 8.13.10. Qualification Evidence and Explicit Membership
+
+These nine candidates have standard-defined or explicitly narrowed equivalence subjects and fixed representative
+algorithms, not a default formatter selected by the runtime. Each `E_L` is the equality relation of the expressly
+selected representative or frozen datatype identity, and each `C_L` selects one legal same-domain fixed point; its
+Restricted refusal boundary is exact grammar/value-profile failure, not resource exhaustion. The output expansion and
+possible intermediate parsing complexity for PURL, RFC 7468 and Avro require bounded physical realization over the
+legally finite operand. Budget/Capacity own exhaustion before later Admission, without changing any `E_L` or `C_L`.
+
+The review fixes the above published standard editions, component-specific profiles, and security exclusions as
+immutable `Initial` meaning. Independent realization verification must exercise XSD temporal edge cases, GS1 digit
+widths, IBAN grouping collisions, PURL percent/qualifier handling, geographic poles/date line, RFC 7468 strict framing,
+and Avro recursive/named-schema structures. Normative sources and these reviewable regression witnesses support
+qualification; they do not imply that production Kotlin/JVM implementation conformance is already established.
+
+**Membership decision (2026-10-10): ADMIT the nine Authorities in the table with their separate `Initial` Versions.**
+Kubernetes Quantity is deliberately **not** part of this decision; its remaining pre-admission obligations and `DEFER`
+status appear in Section 8.2.
+
 ---
 
 # 9. API and Compiler Design Follow-On
 
-Concrete API design begins only from admitted or deliberately prototyped candidate meaning. The working user-facing
+Concrete API design begins only from admitted or deliberately prototyped candidate meaning. The **61 admitted
+Authorities** in Sections 8.4–8.13 may now be projected without changing their approved versioned meaning.
+The two deferred subjects have no Catalog Membership or admitted `Initial` Law Version; the twelve
+rejected independent Authorities are not authoring targets, although three case-only domains may reuse
+an admitted ASCII Lowercase Authority through lawful selection.
+The working user-facing
 source design is `docs/design/api/canonicalization-authoring-api-design.md`. Follow-on Design has four
 main concerns:
 
@@ -2566,12 +4348,13 @@ Pre-admission evidence does not require the production implementation to exist f
 relying on unresolved semantics or ambient provider behavior. It must also expose representation ambiguity before an
 implementation assumption can harden into Contract meaning.
 
-Concrete qualification is reviewed in small fixed batches so that each candidate receives equivalent
-scrutiny. Sources must support the exact meaning. Security risks and verification evidence must also be
-reviewed. The current batch size is five candidates. A proposed `ADMIT` from a batch does not enter
-the Catalog until its normative specification and formal admission decision are complete. Batch size
-changes only the workflow, not the admission law. The first batch may calibrate the record format,
-but later domains must not receive weaker gates.
+Concrete qualification was reviewed in bounded batches so that each candidate received independent
+scrutiny. Sources must support exact meaning, security qualification, and reviewable evidence. Batch
+sizes varied without changing the admission gate. Sections 8.4–8.10 record the initial 42 admissions;
+Sections 8.11–8.13 record the subsequent nineteen, making 61 total. The three additional duplicate
+case-only subjects are rejected in Section 8.3, and BCP 47 Registry-dependent canonicalization
+and Kubernetes Quantity remain deferred in Section 8.2. A favorable recommendation cannot bypass a
+missing immutable semantic determinant or unperformed mandatory pre-admission verification.
 
 Research may expose a missing common Catalog rule. The work returns to ADR-0076 only when that common law must change. A
 change to membership semantics or Version ownership is one example. Candidate-specific detail stays in this Design.
