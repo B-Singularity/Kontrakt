@@ -28,6 +28,11 @@ ADR-0048: Flow Contract Processing — Boundary Refinement and Core Entry
 
 ---
 
+> **Document-separation note (2026-10-11).** This edit transfers Admission implementation and authoring examples to the
+> working Design without reopening Contract decisions. The older Input-to-Admission-to-Canonicalization ordering and
+> `presentedInput` Basis assertions remain in this source pending the separately planned ADR-0065 semantic revision for
+> the new Canonicalization-before-Admission composition. They are not validated by this document-only separation.
+
 ## 1. Context
 
 Admission is the continuation judgment over the immutable presentation established by Input. Input completes its own
@@ -57,10 +62,6 @@ There is no user transformation stage between Input and Admission. Admission may
 deciding its result. Such computation is judgment-local: it does not replace the Input presentation and does not
 establish Canonicalization, Lowering, Fact, or other downstream Contract material.
 
-The host program is therefore authoring evidence rather than authority. Kontrakt may erase or replace the source method,
-helper structure, collection pipeline, regular-expression engine, or other host execution mechanics once their complete
-Admission-visible meaning has been resolved.
-
 ---
 
 ## 2. Problem
@@ -68,9 +69,6 @@ Admission-visible meaning has been resolved.
 A Boolean callback is too weak to act as Contract authority. A callback can return a Boolean while obtaining its answer
 from hidden runtime state, exception control flow, unresolved dispatch, or implementation-specific library behavior. The
 return type alone says nothing about whether the judgment is closed or deterministic.
-
-The opposite design is also undesirable. Requiring users to construct Kontrakt IR or learn a second judgment language
-would duplicate work already performed by the compiler and would make ordinary Java or Kotlin authoring artificial.
 
 Admission therefore needs a host-language source surface whose complete relevant meaning can be resolved before
 authority is granted. Accepted source must become a closed, terminating, deterministic Admission judgment over legal
@@ -80,10 +78,6 @@ semantics.
 
 Frontend coverage may grow without changing the Contract. Supporting another source spelling or library operation
 expands what the compiler can understand; it does not expand what Admission is allowed to observe or establish.
-
-The user-facing language and the compiler-internal protocol are separate concerns. Kontrakt may need rich internal
-material from HIR through execution formation. None of that internal representation becomes an ordinary Admission
-authoring obligation.
 
 ---
 
@@ -121,9 +115,6 @@ separately owned stopping condition, but it cannot silently become an Admission 
 
 Host syntax must resolve to exact semantics before it is trusted. For example, an ordinary type test is legal only when
 the frontend can resolve it to a closed Input-owned choice relation; open runtime subtype discovery is not equivalent.
-
-The backend may replace host execution mechanics aggressively. It may do so only when every Admission-visible result and
-attribution remains the same under the exact semantic law.
 
 ---
 
@@ -249,35 +240,13 @@ Admission may derive temporary values while deciding the judgment. Such values r
 Contract needs meaning that Admission derived only for its judgment, that later authority must establish or consume that
 meaning under its own law. Admission-local computation is not already-authoritative downstream material.
 
-### 6.1. Illustrative Source
+### 6.1. Ordinary Source as Authoring Evidence
 
-A declaration may remain ordinary host code when the frontend can erase it completely into Admission meaning.
+The illustrative Kotlin source formerly in this section is preserved in
+`docs/design/admission/admission-source-refinement-and-realization-working-design.md`. A separate Authoring API document
+will describe supported source forms.
 
-```kotlin
-package example.calculate
-
-data class CalculateInput(
-    val x: Int,
-    val limit: Int,
-    val flags: Int,
-)
-
-object XGreaterThanOne {
-    private const val MINIMUM = 1
-    private const val REQUIRED_FLAGS = 0b0011
-
-    fun admit(input: CalculateInput): Boolean {
-        val requiredFlagsPresent =
-            (input.flags and REQUIRED_FLAGS) == REQUIRED_FLAGS
-
-        return input.x > MINIMUM &&
-                input.x <= input.limit &&
-                requiredFlagsPresent
-    }
-}
-```
-
-The object, method, local variable, operators, and host Boolean are source mechanics. Authority begins only after the
+An ordinary host declaration supplies authoring evidence, not Admission authority. Authority begins only after the
 complete judgment meaning has been resolved and established.
 
 ### 6.2. Input Occurrence and Admission Occurrence
@@ -339,10 +308,6 @@ Definition Meaning. Such equality does not merge their references and is not by 
 
 Admission does not define a separate projection for every source read or operator, nor does it create consumer-specific
 Contract projections. Any additional narrow projection would require an independently useful legal observation boundary.
-
-Projection is a semantic protocol concept rather than a storage prescription. One backing structure may realize several
-projections, and ADR-0075 may mediate their delivery and reuse. Query layout, dependency recording, persistence,
-fingerprinting, and other physical mechanisms remain compiler architecture rather than Admission meaning.
 
 ### 6.5. Admission Definition Establishment Judgment
 
@@ -483,9 +448,6 @@ Admission Occurrence -> exact Admission Definition
 Admission Occurrence -> exact determining Presented Input Occurrence
 ```
 
-A compiler may build the reverse lookup for efficiency. Doing so creates derived compiler knowledge, not an inverse
-Contract relation.
-
 V1 defines two fine-grained Established projections. The Established Admission Input Observation Requirement Projection
 exposes the requirement owned by one exact Definition. The Admission Occurrence Outcome Projection exposes only the
 `Admitted` or `Rejected` result of one exact Occurrence. Their equality laws are producer-owned. Equal narrow
@@ -501,9 +463,6 @@ is not retained or not yet materialized. Unavailable, unsupported, stale, or cor
 those states can revoke already Established Admission meaning or fabricate Definition Refusal, `Rejected`, or Failure.
 ADR-0075 owns qualification, retention, persistence, mediation, and reuse across responsibility boundaries. Any valid
 reused, restored, repaired, or parallel path must expose the same legal observation as clean formation.
-
-Logical projections do not prescribe one object, query, or table each. Several observations may share compact backing as
-long as typed references, completeness, coherence, and producer-owned equality remain recoverable.
 
 ---
 
@@ -539,15 +498,6 @@ and reduction may be accepted under the same rule; `all` and `count` are represe
 pipelines follow the same rule. An unordered `Membership` does not acquire encounter order merely because a host API
 offers `first` or `last`; Admission may derive a temporary order only under its own exact supported ordering law.
 
-Closed value APIs beyond primitive data may be supported under the same rule. This includes large-number or decimal
-values, temporal values, closed identifiers or references, codecs, and pattern operations when Kontrakt owns the
-relevant semantics. Java Stream, Kotlin collection, or locally derived Sequence syntax is acceptable only when Section
-7.4 can erase the host pipeline as authority.
-
-Local helpers and non-escaping accumulation may participate when their complete reachable effects are known. Exact
-callable coverage and reusable platform knowledge remain frontend/compiler and ADR-0073 concerns, not new user-authored
-Admission vocabulary.
-
 ### 7.2. Ordinary Expressions and Temporary Computation
 
 The frontend may refine ordinary closed control flow when its complete meaning is known. Ordinary value expressions and
@@ -570,9 +520,6 @@ aggregation. If such computation introduces a relation that Input did not provid
 Admission meaning. A new equality or ordering rule is a representative case; host conventions cannot silently supply the
 missing relation.
 
-Temporary host objects need not survive realization. Kontrakt may fuse, scalarize, precompute, specialize, or eliminate
-them when the Admission-visible result remains unchanged.
-
 ### 7.3. Known Operation Refinement
 
 A helper or library call may participate only when Kontrakt can remove that call as a source of Admission authority or
@@ -582,10 +529,6 @@ An exact-target helper is acceptable when all semantically reachable behavior th
 resolved into the root Admission meaning. The closure includes implicit behavior, not just the visible body. For
 example, a property read may execute a getter and an operator may resolve to user code. The helper's name, call frame,
 and JVM target do not become Admission meaning.
-
-Standard-library operations may be supported broadly when Kontrakt has exact reusable knowledge for the selected
-callable. The user does not select internal semantic profiles or HIR operation nodes; any platform semantic basis needed
-by the operation is resolved internally under ADR-0073.
 
 An overload that depends on undeclared ambient state is not accepted merely because a neighboring overload is closed.
 Behavior whose exact callable meaning cannot be closed remains unsupported. This includes unresolved dispatch and
@@ -609,11 +552,6 @@ when its body is closed, does not escape, and has exact invocation semantics. Th
 binder with a known invocation law may use a fresh local accumulator. An API that may reorder or duplicate callbacks
 cannot make captured mutation semantic unless that invocation law is itself closed.
 
-Java Stream or Kotlin Sequence syntax is accepted only when the source is locally derived from finite legal values and
-every intermediate operation is recognized. The host pipeline itself must disappear as authority; a live iterator or
-external lazy source cannot survive the refinement. Parallel or potentially open-ended pipelines remain outside the V1
-profile unless the same closure guarantees can be established.
-
 Order-sensitive operations require a semantic order. If Admission derives a temporary order, its ordering and tie
 behavior must resolve every distinction that can affect the result. A host sort being stable does not manufacture a
 deterministic first element when the comparator itself leaves Input-distinct values tied. Conversely, if the final
@@ -621,10 +559,6 @@ Admission result is invariant under every legal tied permutation, Admission need
 
 Reduction legality is operation-specific. Side-effect freedom does not imply associativity; floating arithmetic is a
 representative case. A backend may reassociate or parallelize a reduction only when the exact result law permits it.
-
-Judgment-local pipelines need not be materialized as host collections. Equivalent scans, primitive or columnar access,
-indexes, and vectorized implementations remain available to the backend when they preserve every Admission-visible
-distinction.
 
 ### 7.5. Completion, Exceptional Control, and Termination
 
@@ -639,9 +573,6 @@ A partial operation is legal only when its domain is established on every path t
 represented by an explicit non-exceptional semantic result. A guard that establishes the domain of a later operation is
 therefore semantically relevant even if the original source evaluation order is not. Optimizations may not move that
 operation onto a path where the guard no longer protects it.
-
-This ADR does not mandate one proof technology. The compiler may use any sound supported analysis that establishes the
-required domain, effect, and completion facts.
 
 Exceptions are not branches of the Admission result. Catching a host exception and translating it into `Rejected` or
 `Admitted` is therefore illegal in V1. The same rule applies when realization fails for unrelated resource or VM
@@ -672,9 +603,6 @@ matching strategy.
 A supported pattern must be reducible to exact Admission-visible matching semantics together with a supported work law
 over the finite pattern and presented text or bytes. If result semantics, capture behavior, Unicode basis, or required
 work cannot be closed, the source is unsupported rather than delegated to arbitrary host behavior.
-
-The backend remains free to use an automaton, a specialized matcher, a fused scan, or another equivalent implementation.
-The algorithm is realization, not Contract meaning.
 
 ---
 
@@ -709,24 +637,10 @@ cannot alter Admission-visible semantics.
 
 ## 9. Deterministic Refinement
 
-Frontend refinement has one purpose: turn ordinary source evidence into complete Admission meaning before authority
-begins. The detailed legality rules are already defined in Sections 6 through 8 and are not repeated here.
-
-Conceptually, the frontend first resolves the exact selected Admission declaration and its single root judgment. It then
-forms the Admission-owned Input Observation Requirement from approved Input HIR observations, closes every semantically
-reachable helper and operation, and resolves any platform semantics through ADR-0073. Host mechanics that do not survive
-as Contract-visible meaning are erased, while provenance remains separate.
-
-The resulting complete Candidate crosses the ADR-0071 HIR boundary. Admission Definition Establishment then applies
-Section 6.5. The exact IDL selections remain Binding Candidate meaning, while Input-to-Admission compatibility is
-established separately by ADR-0048 after both Definitions exist. Only an Established Admission Definition can proceed to
-execution formation.
-
-The user does not observe the internal references, projections, summaries, or physical handles used by this path.
-
-A change to Admission-owned meaning follows the normal Version and identity laws. A change that affects only source
-formatting, helper factoring, temporary allocation, analysis implementation, or backend layout does not create new
-Admission meaning when all legal observations remain unchanged.
+Admission Definition Establishment requires a complete, legally resolved Candidate as defined in Section 6.5. Source
+refinement must preserve the Admission-owned judgment and the observation requirements defined in Sections 6 through 8.
+Frontend acquisition steps, capability coverage, and implementation techniques are recorded in the Admission working
+Design.
 
 ---
 
@@ -746,10 +660,6 @@ result law, or other distinction that can affect the Admission result must still
 A host operation with several specification-permitted semantic outcomes is not made deterministic by compiler
 preference. V1 may accept it only when Admission selects one exact semantic operation, when all permitted outcomes are
 indistinguishable to the final judgment, or when another explicit preservation law justifies the narrowing.
-
-The backend may fuse or reorder work, eliminate temporary state, vectorize, or substitute a different matcher when the
-exact semantic operation permits the transformation. Side-effect freedom alone is not enough to justify reassociation or
-parallel reduction.
 
 Resource accounting remains separate from semantic legality. An operation can be finite and semantically valid while
 expensive. Budget, Capacity, compiler-safety, or backend limits retain the stopping result when such work exceeds their
@@ -852,19 +762,10 @@ different current subject.
 
 ### 13.2. Frontend and Capability Work That Does Not Block Semantic Closure
 
-The exact Java or Kotlin declaration spelling may evolve while the user-facing model remains ordinary host-language
-authoring selected through IDL. Likewise, the set of supported library operations and source constructs is
-frontend/compiler coverage. Section 7 states the semantic conditions that any such expansion must continue to satisfy.
-
-The V1 capability matrix therefore belongs to frontend/compiler work. For each source form it must account for implicit
-execution and for whether temporary state can alias or escape. It must also close partial or exceptional behavior, any
-guard that makes an operation legal, and any external effect. Binder-style operations require their invocation and
-ordering law to be known, and derived temporary material must not escape with new authority. Failure to establish these
-properties is compiler unsupported, not a new Admission result.
-
-Future support for additional loop forms, recursive source, collection idioms, or language constructs does not change
-Admission semantics when those forms resolve to the same closed judgment law. Expanding Admission's actual semantic
-inputs, outputs, authority, or result vocabulary would require a separate Contract decision.
+The frontend Design and later Authoring API document own exact Java or Kotlin spellings and the V1 source-capability
+matrix. New forms do not change Admission meaning when they resolve to the same closed judgment law under Section 7. A
+change to Admission's semantic input, output, authority, or result vocabulary requires a separate Contract decision. The
+transferred implementation work is recorded in the Admission working Design.
 
 ### 13.3. Owned Elsewhere or Derived
 
@@ -887,14 +788,8 @@ are another.
 
 ### 13.4. Moved to Design or Narrower Compiler Architecture
 
-Physical representation remains open. This ADR fixes logical ownership, not subsystem placement. Protocol observations
-and the composition or Basis relations may share backing when their semantics remain recoverable. Dependency, reuse,
-persistence, and incremental machinery may likewise be fused or separated by compiler Design. No dedicated Admission or
-Composition manager is required.
-
-Verification and execution mechanisms also remain replaceable. The compiler may choose different analyses, IR forms,
-matchers, or resource-enforcement strategies as long as they preserve Admission semantics and keep resource or
-implementation failure outside the two-result occurrence vocabulary.
+Compiler Design chooses how Admission is represented and realized. It also chooses analysis and verification mechanisms,
+but those mechanisms must preserve Admission meaning. Resource enforcement remains subject to its separately owning law.
 
 Admission determinism does not by itself promise constant-time execution, confidentiality, or side-channel resistance.
 Any such guarantee requires an explicit owning security or realization law.
@@ -906,9 +801,6 @@ Any such guarantee requires an explicit owning security or realization law.
 Admission is a Contract judgment rather than a Boolean callback or general validation hook. The user can still write
 ordinary supported Java or Kotlin because the compiler, not the user, carries the burden of resolving that source into
 closed HIR, Establishment input, and executable material.
-
-This separation gives the backend broad optimization freedom. Temporary host structures and source execution mechanics
-may disappear once their semantics are known, while the Contract-visible judgment law remains fixed.
 
 The same separation keeps resource policy and reuse machinery from becoming hidden Admission authority. Variable finite
 Input extent remains legal, and compatibility work may be reused under ADR-0075, but current Contract relations and
