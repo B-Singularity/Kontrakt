@@ -44,118 +44,97 @@ Proposed
 
 # 1. Context
 
-Kontrakt has independent Contract authorities whose established material can be required by later judgments. An
-Admission judgment may require Input material and, when selected, the authoritative result of Canonicalization. An
-Invariant judgment may require a Fact that was established under another authority. Other relationships arise when
-Governance selects a Policy World, a State-Machine judgment consumes an established State, or a Whole Machine relates
-independently operating Cores.
+Kontrakt's Contract authorities can use results established by other authorities. Admission may depend on
+established Input. If Canonicalization was selected, it may also require that authority's result. Invariant
+can depend on an established Fact, while higher-scope laws can relate independent Cores.
 
-These relationships are not instances of one interchangeable Contract. Each owning law decides what the relationship
-means, what exact source material is admissible, and when a dependent judgment may be entered. Establishment is the
-boundary at which the owning authority makes an admissible result authoritative.
+Each relation derives its meaning from its owning Contract law. That law decides which earlier result may be
+used and when the dependent judgment may begin. Establishment is where the owning law makes the result
+authoritative.
 
-ADR-0063 already defines Required Basis, Basis Resolution, Basis Binding, Applicability, Complete Basis, and the
-restriction that new composition meaning must be owned by a Contract law. ADR-0055 defines Whole-Machine composition
-without permitting implicit joining or synchronization of otherwise independent flows. ADR-0075 defines the
-compiler-wide producer-owned protocol and legal consumption boundary. None of these laws requires that every
-relationship be resolved through a single physical manager or through one universal graph.
+ADR-0063 governs the establishment and legal use of required basis, including its applicability and
+completeness. ADR-0055 governs Whole-Machine composition without allowing implicit synchronization. ADR-0075
+governs legal consumption of compiler-produced material. These laws do not prescribe a central manager or a
+universal relation graph.
 
-The current compiler architecture distinguishes resolved HIR, Authority-Owned Establishment, Canonical Contract World,
-compiler-derived knowledge, verification, realization, product orchestration, and reuse. The relationship work that
-occurs between these responsibilities must have a clear compiler-subsystem obligation. Without that boundary, each 1D
-implementation could construct its own relation lookup and silently introduce different rules for source selection,
-completeness, validity, or failure.
+The compiler already separates contract meaning from the work used to realize it. Relation processing also
+needs a defined owner. Otherwise, each 1D implementation could develop its own source-resolution rules and
+produce inconsistent judgments.
 
-This ADR proposes **Contract Relation Infrastructure**, abbreviated **CRI**, as a logical compiler subsystem with a
-contract of its own. This is a **compiler-subsystem contract**. It does not, by naming a subsystem contract, establish a
-new What Contract Is one-dimensional authority or transfer any existing authority to the compiler.
+This ADR proposes **Contract Relation Infrastructure (CRI)** as the compiler subsystem responsible for that
+shared work. Its obligations concern compiler processing, not a new one-dimensional Contract authority.
+Existing Contract laws retain their authority.
 
-The proposal is deliberately narrower than a universal Composition Manager. CRI performs relation-specific preparation
-and carries explicit obligations at its handoff boundaries. It does not become the owner of every judgment, global
-verification, consumer request, work schedule, cache, or runtime transition.
+CRI prepares the relation evidence required by the owning authorities without performing their judgments.
+Sections 4 and 9–12 define the resulting subsystem boundary.
 
 ---
 
 # 2. Problem
 
-A dependent judgment cannot use an earlier result merely because that result exists. The judgment must identify its
-required meaning, connect that requirement to an exact lawful source, establish that the source is applicable where the
-owning law demands applicability, and satisfy the owning completeness law before entering the dependent judgment.
+An earlier result may be used only when the dependent law permits the exact source and all required
+conditions for entry are met. Finding a source is not enough to establish that it applies or that the
+required basis is complete.
 
-The compiler has useful work to perform at each boundary. It may interpret a resolved requirement, locate a candidate
-within the permitted source domain, construct information needed by the owning binding law, and obtain enough evidence
-to evaluate a cardinality or completeness condition. Yet none of these computations alone establishes a Contract Basis
-Binding or an authoritative composition result.
+The compiler can resolve a declared requirement and prepare evidence for the owning law. That work can make
+the subsequent judgment possible, but it cannot establish a Basis Binding or a composition result by itself.
 
-The distinction is especially important when multiple authorities participate. A relation lookup may return a source
-with the correct kind but the wrong occurrence. An index may find one applicable source without proving that another
-applicable source does not exist. A cache may return a previously sound answer after the legal source domain has
-changed. A derived graph may contain a dependency edge that was never authorized as a Contract relation.
+Independent authorities expose several ways for a relation lookup to be wrong. It might match the source kind
+but use the wrong occurrence. It might find one source without ruling out a second. A reused answer might be
+stale because the lawful domain changed. A computation dependency might also be mistaken for a Contract
+relation. Sections 7, 10, and 12 address these failures.
 
-There are also two opposite subsystem-design failures.
+The responsibility can be drawn either too narrowly or too broadly.
 
-If CRI owns only an unqualified lookup operation, the responsibility for complete source-domain reasoning and correct
-handoff is scattered across unrelated consumers. If CRI owns the entire lifecycle of Establishment, verification,
-protocol mediation, scheduling, and incremental repair, it becomes a second compiler-wide control plane that duplicates
-existing owners and is difficult to replace.
+A lookup-only CRI would leave each Consumer to establish the accuracy and completeness of its own
+relation inputs. A CRI that assumed Contract judgments or general compiler services would instead duplicate
+their owners.
 
-The problem is therefore to specify the **smallest coherent relation-processing responsibility** that can preserve exact
-semantic requirements without centralizing unrelated compiler services.
+CRI therefore needs one coherent responsibility: preparing legally constrained relations without taking over
+unrelated compiler services.
 
 ---
 
 # 3. Decision Drivers
 
-Contract meaning must remain explicit and deterministic. A relationship is legal because its owning Contract law permits
-it, not because the compiler found a convenient source or selected a particular computation path. Search order, worker
-schedule, hash-table order, physical storage, and cache history must not become hidden semantic determinants.
+The owning Contract law determines which relation is legal. CRI must produce equivalent permitted
+observations for the same legal inputs, regardless of how the computation is performed.
 
-The compiler must also preserve the distinction between a relation that has been proposed, one whose exact source
-connection has been established, one that is applicable to an exact use, and a set of applicable relations that
-satisfies a completeness requirement. These stages cannot be compressed into a generic successful lookup when doing so
-would hide a Contract-visible distinction.
+Relation preparation must preserve the distinction between a candidate and an established source connection.
+Even an established connection may be inapplicable, and applicable sources may still fail the owning law's
+completeness requirement. Section 8 specifies these boundaries.
 
-Subsystem placement must preserve replaceability. V1 may use a query-oriented compiler and frozen, HID-assisted reuse;
-V2 may use a different incremental computation, dependency tracking, or repair strategy. Neither implementation may
-redefine Required Basis, semantic identity, or the authority of a Contract relation.
+CRI's guarantees must survive changes to its implementation and reuse strategy. Neither V1 nor V2 may
+change the meaning of Required Basis or the identity of an established relation. Section 12 defines the
+conditions for valid reuse.
 
-An effective boundary should reduce duplicate resolution work without requiring every small relation request to compute
-a whole-machine graph. CRI should permit the same exact legal relation to be discovered through different implementation
-strategies while preserving the same qualified observation. It should also allow a sound summary to establish
-source-domain completeness without mandating exhaustive traversal.
+A relation request does not authorize a wider semantic observation than its owning law permits. When that
+law requires knowledge of a wider domain, CRI must obtain sufficient authorized evidence. Section 13
+separates this obligation from the cost of obtaining it.
 
-Security obligations must be specific to the boundary being protected. CRI is accountable for the correctness of
-relation information it supplies. Independent validation, broader integrity assurance, trust of stored products, and
-resource enforcement retain their appropriate owners.
+CRI is accountable for the correctness of its own relation claims. The compiler's common trust services and
+independent verification retain their existing ownership under Section 10.
 
-Finally, the subsystem must serve the compiler architecture that already exists. It may not introduce a competing World
-Assembly authority, a second universal producer–consumer mediator, or an additional runtime orchestrator simply to make
-relation handling convenient.
+The existing architecture is the boundary for this subsystem. CRI cannot become another World Assembly
+authority, general consumer mediator, or runtime orchestrator.
 
 ---
 
 # 4. Decision and Responsibility Model
 
-Kontrakt will recognize **Contract Relation Infrastructure** as the logical compiler responsibility for preparing exact
-cross-authority relation work under laws owned elsewhere. CRI first acts as a Consumer: it requests the relation meaning
-and source observations it needs through the producer-owned protocols and Kontrakt-controlled mediation of ADR-0075.
-Only knowledge that CRI derives from those authorized observations can become its own compiler-produced result.
+Kontrakt will recognize **Contract Relation Infrastructure** as the compiler subsystem that prepares
+relations required by laws owned elsewhere. CRI consumes authorized observations under ADR-0075. It becomes a
+Producer only when it derives independently usable compiler knowledge from those observations.
 
-CRI has three primary responsibilities. It interprets an already resolved relation requirement within the boundaries of
-its owning law, resolves source candidates within that law's permitted domain, and prepares the evidence required for
-the
-owning Binding, Applicability, or completeness judgment. Section 6 specifies CRI's legal input boundary, while Sections
-7 and 8 specify its relation-processing obligations.
+CRI has three primary tasks. It reads an already resolved relation requirement, finds lawful source
+candidates, and prepares the evidence needed by the owning judgment. Section 6 governs its inputs; Sections 7
+and 8 govern its work.
 
-Four interface obligations constrain this work. CRI is responsible for the correctness of the relation information it
-produces. It must hand prepared evidence to the appropriate authority without conferring authority on the evidence. It
-must supply any independently consumable result through its own lawful producer protocol while leaving established
-relations with their original producers. It must define the current-use conditions of its derived results. Sections 9
-through 12 assign these obligations without creating a second general mediation or verification system.
+CRI must preserve its guarantees when a prepared relation crosses into another subsystem. Sections 9–12
+govern the handoff and use of its results without giving CRI the authority of their recipients.
 
-The three primary responsibilities and four interface obligations do not imply seven classes, processes, tables, or
-independently cached compiler products. Logical separation permits physical fusion when the guarantees are preserved;
-physical separation remains available when independent lifetime, failure, or scaling requirements justify its cost.
+These responsibilities define observable guarantees rather than a fixed arrangement of compiler
+components. Section 17 leaves their physical realization open.
 
 The proposed logical relationship is:
 
@@ -172,24 +151,24 @@ Prepared compiler evidence
           authorized compiler consumers
 ```
 
-Independent Verification may consume both the CRI claim and independently authorized source observations. Its separate
-correctness obligation is defined in Section 10. The diagram describes semantic ownership and legal consumption, not a
-mandatory call order or physical materialization sequence.
+An independent Verifier may consume CRI's claims alongside observations obtained from the original producers.
+Section 10 defines that distinction. The diagram specifies legal information flow, not a required call
+sequence.
 
 ## 4.1. Primary Responsibility One: Requirement Interpretation
 
-CRI interprets the relation requirement supplied by its owning law or the relevant resolved protocol; it does not
-perform a new Frontend resolution. The observation must identify the exact requirement coordinate, its owning judgment
-or application where relevant, and the source-domain constraints actually declared by that law.
+CRI consumes the resolved relation requirement through its owning producer's permitted protocol. That
+observation must identify the exact dependent judgment and the restrictions governing its eligible sources.
+CRI does not reinterpret the source language.
 
-If those observations leave a necessary distinction unresolved, CRI cannot repair the requirement through an inferred
-source name, containment relation, call topology, or default. Section 6 defines which producer observations CRI may
-request to perform this work.
+If the permitted observations do not determine the requirement, CRI must not guess. It cannot infer a missing
+source from naming conventions or incidental compiler structure. Section 6 governs any further observations
+it may request.
 
 ## 4.2. Primary Responsibility Two: Lawful Source Resolution
 
-CRI must produce only candidate source connections admitted by the relation's owning law. It must distinguish a legal
-source-domain member from an item that is merely reachable through a compiler index.
+CRI may report a source candidate only when the owning law permits that source to be considered for the
+specified relation. Reachability by compiler machinery alone does not establish eligibility.
 
 When a requirement identifies one exact source, CRI must not widen that requirement into a search for equivalent-looking
 material. When a law permits several candidates, CRI may prepare several exact candidates without treating discovery
@@ -197,20 +176,18 @@ order as a preference.
 
 ## 4.3. Primary Responsibility Three: Qualification Preparation
 
-CRI must make available the information needed by the owning laws to distinguish a resolved source connection, an
-applicable relation, and a complete set of required basis relations. This includes evidence concerning the legal source
-domain when the completeness law depends on the absence or presence of other applicable sources.
+CRI prepares the basis on which an owning law can decide whether a source connection is applicable and
+whether the whole required basis is complete. Where completeness depends on other potential sources, CRI must
+provide evidence about the legal domain rather than just the source already found.
 
-The qualifier's work may establish compiler-derived evidence. It must not declare a successful Applicability judgment,
-Complete Basis, or new Composition meaning merely because its internal checks returned a positive answer. Those
-conclusions belong to the applicable owning laws and their Establishment boundary.
+A successful compiler qualification is not an authoritative Contract judgment. Only the owning law may
+establish Applicability, Complete Basis, or composition meaning through the appropriate Establishment
+boundary.
 
 ## 4.4. Four Boundary Obligations
 
-CRI's first interface obligation is local relation correctness, including exact attribution and defensible source-domain
-claims under Section 10. Its Establishment handoff is governed by Section 9. Section 11 limits its producer role to the
-results it actually derives, while Section 12 governs the current-use conditions of those results. Independent
-verification and shared trust qualification retain the owners distinguished in Section 10.
+Sections 9–12 define CRI's four boundary obligations. Shared trust qualification and independent verification
+retain their existing owners under Section 10.
 
 ---
 
@@ -218,9 +195,9 @@ verification and shared trust qualification retain the owners distinguished in S
 
 ## 5.1. Contract Relations and Compiler Work Relations
 
-A **Contract relation** has the meaning and authority assigned by its owning Contract law. An IDL Slot Binding, a Basis
-Binding, an Applicability judgment, and a Whole-Machine composition are not interchangeable simply because they can be
-represented as edges between references.
+A **Contract relation** has the meaning assigned by its owning law. An IDL Slot Binding cannot substitute for
+a Required-Basis Binding. Likewise, Applicability and Whole-Machine composition are different judgments even
+if a compiler stores similar references for them.
 
 A **compiler relation candidate** is a compiler-prepared possibility that may be used as input to the appropriate owning
 judgment. Its discovery does not establish that relationship.
@@ -229,11 +206,11 @@ judgment. Its discovery does not establish that relationship.
 determines whether that evidence is sufficient for its specific judgment. Evidence storage or a successful compiler
 check alone cannot confer Contract authority.
 
-A **compiler computation dependency** records what work must be performed or revalidated for a compiler result. The
-compiler may derive one from an established Contract relation, but it may not infer a Contract relation from a query,
-build, analysis, or scheduling edge.
+A **compiler computation dependency** records which work a result depends on. That dependency may be informed
+by an established Contract relation, but a compiler graph edge cannot create the Contract relation that it
+describes.
 
-These distinctions remain meaningful even if a single physical table stores their handles side by side.
+Physical representation cannot erase these semantic distinctions.
 
 ## 5.2. CRI Is Not the Composition Authority
 
@@ -245,45 +222,43 @@ material. No new universal `CompositionResult` or `EstablishedRelation` authorit
 
 ## 5.3. No Universal Relationship Schema
 
-Different relation families have different semantic coordinates, cardinality, context, and occurrence behavior. This ADR
-does not require them to fit one universally extensible node or edge schema.
+The owning law determines the relation's source coordinates, cardinality, and applicable context. CRI
+must preserve those differences rather than imposing one universal relation meaning. Section 14 tests the
+shared obligations across existing relation families.
 
-Common compiler services may operate over typed protocol observations and family-owned projections. A family-specific
-representation may remain compact and specialized if the same obligations are maintained at the boundary.
+The producer protocols under ADR-0075 remain the basis for any common observation; this ADR does not
+require one representation for every relation.
 
 ---
 
 # 6. CRI Consumption Boundary and Authorized Observations
 
-CRI is a requesting compiler responsibility under ADR-0075, not a privileged reader of every producer's internal
-material. For each relation question it must identify the observation and guarantee required from each producer, obtain
-those observations through legal mediation, and use them only for the purpose and context approved by the applicable
-producer protocol. A reference or an accessible table does not itself grant the right to observe or reinterpret the
-referenced meaning.
+CRI consumes only observations authorized for its relation requirement under ADR-0075. A reference does
+not grant authority to reinterpret the original producer's material.
 
-The requesting boundary must not demand more source material than the relation law needs. A producer-approved domain
-summary may suffice where whole-domain knowledge is required; an exact reference may suffice where the law names one
-source. The former cannot be replaced by the latter when the owning law requires completeness. Sections 7.3 and 13.2
-govern the resulting correctness and scope-cost obligations.
+The permitted observations must be sufficient for the claim CRI is preparing. An exact-source requirement
+needs evidence for that source; a domain-completeness claim also needs evidence for the relevant domain.
+Section 7.3 governs completeness. Physical request size and retrieval strategy remain Design choices
+under Section 17.
 
 ## 6.1. Definition-Time Requirements
 
-When CRI works before Authority-Owned Establishment, it may consume resolved semantic candidates and binding candidates
-through the Resolved HIR Candidate Protocol of ADR-0071. HIR resolution provides candidate meaning and provenance under
-its own law. It is not proof that a definition, relation, or occurrence has been established.
+Before Establishment, CRI may consume resolved candidates through the HIR Candidate Protocol of ADR-0071. HIR
+establishes what a candidate means, not that the candidate has already become an established definition or
+relation.
 
-A definition-time relation requirement must be derived from exactly the observations the owning law permits. CRI must
-not reopen authored source, traverse incidental HIR containment, or inspect generated host artifacts to supply omitted
-meaning.
+A definition-time requirement must come from the observations allowed by its owning law. CRI may not fill
+gaps by reading source again or treating generated host artifacts as new meaning. Incidental HIR layout is
+not a substitute for the resolved protocol.
 
-The admissible input is a typed semantic observation, not a compulsory in-memory `RelationRequest` object. This ADR
-does not require an additional CRI-specific gateway or material format behind ADR-0075 mediation.
+CRI relies on producer-approved semantic observations. This ADR imposes no additional mandatory
+consumption boundary beyond ADR-0075.
 
 ## 6.2. Occurrence-Time Requirements
 
-When CRI assists an occurrence judgment, it must preserve the distinction between reusable Definition meaning and the
-exact dependent application. A requirement law may be established once while each occurrence instantiates a fresh
-Required Basis with its own exact attribution.
+An occurrence-time request is about one exact dependent application. Its definition may be reusable, but a
+fresh occurrence establishes its own required basis. CRI must not confuse that new basis with the
+definition-level work reused to prepare it.
 
 Only material already established by its owning authority can become the source of a Basis Binding under ADR-0063. CRI
 may find candidate sources or prepare evidence before that point, but such work remains compiler work until the owning
@@ -294,35 +269,33 @@ equivalent or its computation is reusable.
 
 ## 6.3. Applicable Context and Scoped Input
 
-CRI must use the precise Applicable Context when one is independently required by the owning law. It must not invent a
-universal ambient context by reading a process singleton named `currentWorld`, `currentState`, or `currentPolicy`.
+When the owning law requires an Applicable Context, CRI must use that precise context. It may not infer one
+from ambient compiler state such as a process-wide `currentWorld` value.
 
 Conversely, CRI must not add the same Version or scope coordinate to every relation merely because that coordinate
 exists somewhere in the compiler. ADR-0063 keeps context determinants with the law that makes them relevant.
 
 ## 6.4. Source and Material Availability
 
-An authorized reference, the present availability of physical material, and its current usability are different facts. A
-retained or historically established source may fail current applicability or reuse eligibility. An unavailable
-materialization must not be silently replaced by the nearest currently loaded source.
+Knowing a source reference does not mean that its material is available or legally usable for the
+current judgment. An unavailable source cannot be replaced by a different available source unless the
+owning law permits that substitution.
 
-No physical object identity, dense ordinal, allocation address, worker-local cache slot, or host class identity may
-complete an otherwise ambiguous semantic reference.
+An ambiguous semantic reference cannot be completed by an incidental compiler or host identity. Section 7
+governs lawful source selection.
 
 ---
 
 # 7. Relation Resolution and Legal Source Domains
 
-The law owning the source connection defines the permissible domain. CRI must preserve that domain throughout candidate
-discovery, even when an index or query engine offers a broader set of reachable results.
+The law owning the source connection defines the permissible domain. CRI must use only evidence that
+supports membership in that domain, even when the compiler can observe additional sources.
 
-A source candidate is not preferred merely because its lookup is cheaper or because it was discovered first. If a
-relation is nominal, a structurally equivalent source does not satisfy it unless the owning law explicitly provides that
-equivalence.
+A source candidate is not preferred by the order or cost of discovery. A nominal relation cannot be
+satisfied by structural equivalence unless the owning law expressly allows it.
 
-A source domain can be exact, scoped, conditionally narrowed, or plural when the owning Contract permits those forms.
-CRI need not use one candidate-discovery algorithm for each form. It does need to produce observations sufficient for
-the applicable source law.
+The owning law may name one source, allow several candidates, or narrow eligibility by context. CRI must
+honor that defined domain. Section 17 leaves source-discovery algorithms open.
 
 ## 7.1. Nominal Source Coordinates
 
@@ -336,114 +309,99 @@ of Admission and the owning inbound-composition law, not this infrastructure ADR
 
 ## 7.2. Plural Candidate Domains
 
-When a law admits multiple candidates, CRI may resolve them concurrently or through an index. It cannot declare one
-candidate authoritative without applying the owning selection and singularity law.
+When a law admits multiple candidates, CRI prepares candidates within the declared source domain and
+the evidence required by that law. It does not determine their Applicability or exercise the law's
+selection or singularity judgment; those judgments remain with the owning authority.
 
-An allowed plural domain must not be reduced to one source merely because the implementation optimizes for a common
-case. If equivalence or arbitration is part of the owning law, that law decides whether reduction is permitted and which
-distinctions remain observable.
+CRI must preserve plurality until the owning law permits a particular reduction. Any law-owned equivalence
+or arbitration is applied through that authority's judgment, not inferred from the compiler's choice of
+candidate.
 
 ## 7.3. Completeness of the Candidate Domain
 
-Exactly-one requires a statement about the whole legal candidate domain. A successful lookup of one applicable source is
-not sufficient if another legally applicable source could also exist.
+An exactly-one judgment needs evidence sufficient to exclude another applicable source in the legal
+domain. Finding one candidate is not enough.
 
-CRI must be able to provide the legal evidence needed for this claim. That evidence may come from direct source
-identification, an index with a proven coverage condition, a validated summary, or a complete search. This ADR does not
-demand enumeration when another sound method proves the same fact.
+CRI must supply sound evidence covering the domain relevant to the owning law's question. The law retains
+authority over which candidates are Applicable and whether Complete Basis is established under ADR-0063.
+CRI's domain-coverage claim is evidence for that judgment, not the judgment itself.
 
-The completeness claim must remain sensitive to changes in domain membership. If a second applicable source appears, an
-earlier exactly-one claim may cease to be usable even if the original source and its attributes remain unchanged.
-
-This requirement must not be confused with a compiler claim that a particular search data structure has finished
-traversal. The legal candidate domain belongs to the owning Contract law; the completion of a particular algorithm
-belongs to the implementation.
+Evidence of coverage must remain valid when domain membership changes. If a second eligible source appears,
+the earlier evidence may no longer support an exactly-one judgment even though the original source is
+unchanged. Section 12 governs the current use of such evidence.
 
 ---
 
 # 8. Basis, Applicability, and Qualification
 
-ADR-0063 remains the normative source for Required Basis, Basis Binding, Applicable Basis, Complete Basis, and the
-distinctions between unresolved and legally absent relations. CRI does not redefine these states.
+ADR-0063 defines Required Basis and governs when a bound source is applicable and the required basis is
+complete. CRI prepares evidence for those judgments; it does not redefine their legal outcomes. The same ADR
+also distinguishes a legally permitted absence from an unresolved requirement.
 
-For each requirement instance CRI must preserve the owning requirement coordinate. Two requirements may demand the same
-Fact kind while expressing distinct left and right operands. Their identity cannot be inferred from array position,
-field offset, or discovery order.
+Two requirements for the same Fact kind can still be distinct operands of one judgment. CRI must preserve
+the declared identity of each requirement rather than deriving it from processing order.
 
 ## 8.1. Binding Is Not Applicability
 
-An exact Basis Binding records a lawful source connection. It does not automatically make the bound source applicable to
-a dependent judgment. CRI must carry enough exact information for the applicability-owning law to make that later
-judgment.
+A lawful Basis Binding identifies the source, but does not by itself establish that the source is applicable.
+CRI must provide the exact information the applicability-owning law needs for that judgment.
 
 A source already bound but found Inapplicable remains distinguishable from a requirement for which no binding exists.
 CRI may not erase that distinction simply because both situations currently block dependent entry.
 
 ## 8.2. Applicable Basis Is Not Complete Basis
 
-A judgment may require several independently owned Basis coordinates. One applicable source cannot satisfy an unrelated
-unresolved coordinate. The law that owns the judgment specifies whether absence is legal, how many sources are required,
-and whether alternatives are meaningful.
+A judgment may require multiple independently owned Basis coordinates. One applicable source cannot satisfy
+another unresolved coordinate. The owning law determines the cardinality of each requirement. It also decides
+when absence is permitted and whether alternatives have legal meaning.
 
-If a required source is missing or inapplicable, CRI cannot manufacture a `Rejected` result from the unentered dependent
-judgment. Missing prerequisites prevent that judgment from entering. The unsuccessful result, where one exists, belongs
-to its own legal boundary.
+If a required source is missing or inapplicable, the dependent judgment cannot enter. CRI must not report
+`Rejected` as though that judgment had been performed. Section 15 assigns unsuccessful outcomes to their
+proper owner.
 
 ## 8.3. Qualification Does Not Become a New Authority
 
-The subsystem may produce evidence that a candidate satisfies a syntax-independent source constraint or that an index
-covered the legal domain. Its evidence may be used by the owning law when the law permits such use. That evidence is
-never a generic substitute for Contract Establishment.
-
-The infrastructure must not convert `qualification completed` into `Basis established` solely through an implementation
-status flag. The final source-binding and completeness meanings remain governed by ADR-0063 and the applicable 1D or
-higher-scope law.
+CRI may provide evidence of a candidate's permitted source characteristics or of the legal domain's
+coverage. The owning law decides whether that evidence is sufficient for its judgment, as Sections 7.3 and
+9 require. Completion of CRI's work does not establish Basis Binding or Complete Basis.
 
 ## 8.4. No Implicit Recovery or Arbitration
 
-The plural-domain and completeness rules in Sections 7.2 and 7.3 govern ambiguity. An earlier Binding or a
-same-shaped source from another World cannot replace an unresolved relation.
-
-Compiler unavailability or corruption is not a permitted absence under the owning law. Section 15 assigns the resulting
-unsuccessful outcome to its proper boundary.
+CRI cannot resolve an unsettled requirement by substituting an older Binding or a source from another
+World. An unavailable or invalid compiler result is not an absence permitted by Contract law; Section 15
+specifies the failure boundary.
 
 ---
 
 # 9. Establishment Integration and Authority Separation
 
-CRI participates in the path that prepares legal inputs for Authority-Owned Establishment. It is not a replacement for
-Establishment and does not establish a definition or occurrence in its own name.
+CRI supplies evidence to Authority-Owned Establishment without becoming the authority that issues the
+judgment. Its relation candidates remain non-authoritative until the owning law establishes their meaning.
+The continued availability of compiler evidence does not change its status.
 
-A candidate produced by relation resolution must remain visibly non-authoritative until the proper owning law has
-completed the necessary judgment. CRI may retain a prepared candidate or compute a summary, but those compiler products
-cannot acquire authority through publication, serialization, caching, or a change of type name.
-
-Once an owning relation is established, CRI may use its exact established reference for subsequent legal work. It must
-not mutate that relation in place when another application makes a different Binding. The later law establishes a new
-exact relation when new relation meaning is required.
+Once an owning relation is established, CRI may use its exact established reference where the owning
+law permits. A later application requiring a different Binding cannot redefine the earlier relation;
+its owning law must establish the new relation.
 
 ## 9.1. Handoff Non-Amplification
 
-The Establishment handoff must be explainable using only legal observations of resolved candidates, independently
-established prerequisites, and explicit judgment inputs admitted by the owning law.
+The handoff must contain only the observations permitted by the owning law. CRI must preserve whether the
+material is still a resolved candidate or has already been established as a prerequisite.
 
-If CRI consulted an index or query graph to locate a source, the graph itself is not a new semantic determinant. Only
-the source relation law's legal observations can determine the Contract result.
+Compiler-derived connections cannot add a determinant to the owning Contract law.
 
 ## 9.2. Semantic Cycles
 
-An unresolved semantic prerequisite cycle is not completed by CRI's search procedure, a provisional Binding, or
-iterative fixed-point evaluation. ADR-0063 forbids such cycles from creating Complete Basis.
+An unresolved semantic prerequisite cycle cannot establish Complete Basis under ADR-0063. CRI must not
+present a provisional or repeatedly calculated result as a lawful completion of that cycle.
 
-The compiler may use graph algorithms to detect the cycle. A cycle in a compiler calculation graph, however, is not
-automatically the same as an illegal Contract prerequisite cycle. CRI must preserve that distinction when reporting or
-assisting detection.
+A compiler computation cycle is not automatically an illegal semantic prerequisite cycle. CRI must preserve
+the distinction when reporting or assisting detection.
 
 ## 9.3. Authority-Specific Composition
 
-When a higher-scope law establishes new meaning from established inputs, the resulting material remains owned by that
-higher-scope authority. When only an existing relation is used, CRI must not manufacture a higher-scope result to
-simplify downstream access.
+A higher-scope authority owns any new meaning it establishes from earlier material. CRI may prepare the
+source relations for that law, but it does not create a composition result when no composing judgment exists.
 
 The existence of a common relation infrastructure therefore does not imply that every valid Binding generates a new
 Composition Occurrence.
@@ -459,131 +417,116 @@ permitted to prepare; Section 9 reserves authoritative judgment to the owning Co
 
 ## 10.1. Local Correctness at the Production Boundary
 
-Before a candidate or qualification result is treated as complete compiler information, CRI must establish that its
-attribution matches the actual requirement and dependent application. When CRI supplies a domain-completeness claim, it
-must have a sound basis for the legal domain described in Section 7.3. A completed search of an incomplete index cannot
-support that claim.
+Before a CRI result can be consumed, CRI must establish that its relation claims are supported by the
+observations they use. Exact attribution follows Section 7.1, and domain-coverage evidence follows
+Section 7.3.
 
-If retained evidence is insufficient or incompatible for the present question, CRI may recompute or return an explicit
-compiler-owned unsuccessful outcome. It cannot arbitrate between incompatible summaries by discovery order or strengthen
-a partial conclusion to make progress. Section 15 governs failure and non-entry; the representation of compiler-owned
-unsuccessful results remains subject to the Proposed ADR-0074.
+If the available evidence cannot support the current question, CRI cannot report a completed qualification.
+It may obtain further lawful evidence or return an unsuccessful compiler result under Section 15.
+Conflicting or partial evidence cannot be treated as complete.
 
 ## 10.2. Integrity and Trust of Consumed Material
 
-CRI uses the same consumption and trust boundaries as other compiler responsibilities. ADR-0075 Sections 13 and 19
-separate current-use eligibility from integrity, provenance trust, and representation compatibility. The appropriate
-storage, producer, and mediation responsibilities qualify those properties before an observation is admitted for the
-relevant use. CRI must not recreate their general checks under a second relation-specific trust authority.
+CRI consumes material under the common trust conditions of ADR-0075 §§13 and 19. The original producer and
+the applicable trust or mediation boundary determine whether that material is intact, compatible, and
+eligible for the requested use. CRI does not repeat those general checks as a new trust authority.
 
-A trusted or intact representation does not prove that a CRI relation calculation is correct. Conversely, a logically
-correct relation computed from material that was not eligible for consumption cannot be promoted into an authorized
-observation. Local relation correctness remains CRI's responsibility under Section 10.1.
+An intact source does not make CRI's calculation correct. Nor can an accurate calculation authorize
+consumption of a source that failed the original producer's conditions. Section 10.1 governs CRI's local
+correctness independently of those conditions.
 
 ## 10.3. Independent Relation Verification
 
-Independent Verification owns the assessment of CRI's correctness claims; CRI does not own the Verifier or issue its
-result. The Verifier is itself a Consumer under ADR-0075 and must obtain the source-domain observations needed for its
-check through the appropriate producer protocols. It must not use CRI's unverified closure assertion as the sole premise
-for validating that same assertion. Where the legal source information cannot be observed independently, the claimed
-assurance must be limited rather than inferred from CRI's success.
+An independent Verifier checks CRI's claims without becoming part of their Contract authority. It must obtain
+any required source observations through the original producers' legal protocols under ADR-0075. A closure
+claim cannot be independently verified by trusting that same unverified claim. If the Verifier cannot obtain
+adequate independent observations, it must limit its assurance.
 
-A verifier may independently recompute selected knowledge as ADR-0075 Section 20 permits, or evaluate evidence whose
-coverage can be checked without accepting the conclusion under examination. Verification evidence and its result remain
-compiler-owned assurance material. They do not establish a Basis Binding, Applicable Basis, or Complete Basis.
+ADR-0075 §20 permits independent checking based on the original producers' lawful observations. The
+Verifier may accept evidence only when its adequacy can be checked without assuming the claim under test.
+Its assurance is compiler-owned and cannot establish a Contract Basis relation.
 
 ## 10.4. Assurance Boundary and Cost
 
-Mandatory production checks under Section 10.1 must remain distinguishable from independent assurance. The Verification
-and Security Designs determine whether a particular independent check runs during ordinary compilation, in a stricter
-verification mode, or as part of compiler QA. This ADR does not silently make a costly full-domain recomputation
-mandatory for every relation request or permit optional assurance to replace essential production correctness.
+Section 10.1 defines the condition CRI must satisfy before a result is consumed. Independent assurance
+is a separate claim governed by the Verification Architecture. Its scope must be explicit, and absence of
+that assurance cannot excuse a CRI correctness failure. Section 20.6 leaves assurance policy open.
 
-Any independently required source observation must be narrow enough to respect the original producer's access law and
-sufficient to detect the error being tested. Section 18 specifies the conformance cases; Section 20.6 retains the exact
-assurance profile and resource envelope as open Design decisions.
+Independent checking must still respect each source producer's access rules. The verifier needs enough
+information to detect the targeted error, not unrestricted access to the producer's material. Section 18
+defines test cases; Section 20.6 keeps the precise assurance profile open.
 
 ---
 
 # 11. Relation-Specific Output and Legal Consumption
 
-CRI is a Consumer under Section 6 before it is a Producer. Candidate discovery and qualification may remain private to
-one computation. When CRI makes newly derived compiler knowledge independently consumable, it owns that result's
-meaning, legal projection, and current-use conditions under ADR-0075 Sections 7 and 8. An unsuccessful operation follows
-the compiler-result boundary addressed in Section 15.
+CRI's consumption obligations are defined in Section 6. When relation preparation produces knowledge that
+another compiler subsystem must consume independently, CRI becomes the owner of that derived result under
+ADR-0075. Private intermediate work does not require a new producer protocol. Section 20.2 leaves the
+necessary result families open.
 
-Connecting a Consumer to an already established relation does not make CRI the Producer of that relation. The owning
-Contract authority retains its meaning and protocol, even when CRI prepared its source connection or shares the same
-physical storage. Establishment remains governed by Section 9.
+CRI does not acquire ownership of an established relation by helping a Consumer locate it. The original
+Contract authority retains that relation and its protocol under Section 9.
 
-No universal CRI `RelationResult` is mandated. Section 20.2 leaves the exact CRI-owned result families open until their
-independent Consumer requirements justify a separate producer boundary.
+This ADR does not require a universal CRI `RelationResult`. A separate result family must be justified by an
+actual Consumer need under Section 20.2.
 
 ## 11.1. Consumer Requirement Comes First
 
-As Section 6 requires of CRI itself, a downstream Consumer must state the relation information or guarantee it needs.
-When the requested meaning belongs to another Producer, CRI may help resolve its exact reference but cannot enlarge the
-permitted observation. A Consumer requiring a chain of established relations obtains the necessary approved projections
-from their respective producers; CRI does not reconstruct that chain from its private working state.
+A downstream Consumer must identify the relation guarantee it needs, just as CRI does under Section 6. CRI
+can help locate an established relation but cannot expand its legal projection. When a Consumer needs several
+established relations, it consumes the permitted observations from their owners instead of relying on CRI's
+private search state.
 
 ## 11.2. No Second Universal Mediation Layer
 
-ADR-0075 already owns the general requirement for Kontrakt-controlled consumption mediation. CRI must not construct a
-second mandatory gateway through which every compiler product must pass.
+ADR-0075 already governs legal consumption across the compiler. CRI must use that mediation rather than
+introduce another mandatory gateway.
 
-CRI must preserve the traceable relation handoff specified in Section 9 and, for any result it independently produces,
-provide the legal producer observation described above. ADR-0075 determines the common request and delivery mechanism.
+CRI provides the relation-specific handoff required by Section 9. If it owns an independently consumed
+result, that result must be exposed through its producer protocol under ADR-0075.
 
 ## 11.3. Information Preservation and Safe Loss
 
-A representation may omit a relation detail only when the producer's consumption law allows the omission and no
-downstream guarantee depends on reconstructing that detail. It cannot discard the exact application or source
-attribution and later recover them from execution order, cache identity, or a guessed parent pointer.
+CRI may expose a narrower projection only when the originating producer permits it and no Consumer
+requirement loses a legally significant distinction. Exact source attribution cannot be reconstructed from
+incidental computation state.
 
-For the inbound pipeline, this includes preserving the relationship that proves Admission judged the same complete
-Boundary Presentation that later Lowering is legally permitted to use. This ADR does not determine Admission's exact
-Required Basis shape; that remains an open Admission and inbound-composition decision.
+In the inbound pipeline, Admission and later Lowering must refer to the same legally completed Boundary
+Presentation. The exact Admission Required Basis remains an open decision for its owning law and inbound
+composition; this ADR preserves the relation without choosing its shape.
 
 ---
 
 # 12. Relation Validity, Reuse, and Incremental Evolution
 
-The law owning a Contract relation determines the semantic conditions under which that relation is meaningful and
-applicable. CRI-derived compiler results separately require current-use qualification. A cached lookup result is not
-inherently a current Basis Binding.
+The owning Contract law determines when an established relation applies. Any CRI-owned derived result must
+also be qualified for the current Consumer request under ADR-0075. Reuse does not create a current Basis
+Binding.
 
-Expensive candidate discovery and qualification evidence may be reused only when eligible for the current request under
-ADR-0075. The trust and independent-verification questions remain separate under Sections 10.2 and 10.3.
+CRI may reuse earlier resolution work only under ADR-0075's current-use conditions. Sections 10.2 and 10.3
+separately govern trust in consumed material and optional independent verification.
 
-## 12.1. V1 Boundary
+## 12.1. V1 Guarantee
 
-V1 may use frozen material, HID-based equality evidence, indexed resolution, query computation, and L1/L2 retention
-where appropriate. The chosen optimization must not appear in the semantic identity or source-domain law.
+V1 must preserve the legal result when computation is reused. A clean computation from the same lawful
+observations and one relying on retained compiler knowledge must agree on the semantic observations
+required by their Consumers. Section 18 states the corresponding conformance case.
 
-CRI must make it possible to perform a clean relation computation that does not rely on an earlier cache answer. That
-reference path is needed for conformance checking, and its meaning must agree with a legally reused result.
+Compiler-derived result identity does not become the identity of Required Basis or an Established Relation.
+The ability to reuse definition-level work cannot substitute an earlier Occurrence for a fresh one. The
+physical V1 reuse arrangements remain governed by Compiler Design.
 
-A query result's identity does not become the identity of a Required Basis or an Established Relation. A retained
-previous occurrence cannot replace a fresh current occurrence merely because the expensive definition-level work was
-reusable.
+## 12.2. V2 Guarantee
 
-## 12.2. V2 Boundary
+V2 must preserve the same legal observations under incremental reuse. Any retained result claiming
+exactly-one must remain sensitive to changes in the legal candidate domain. Checking the formerly selected
+source alone is insufficient when another eligible source can change the judgment.
 
-V2 may introduce more precise change propagation, maintained indexes, conditional dependency repair, or delta updates
-without changing CRI's external guarantees. No particular red-green, pull, push, or hybrid algorithm is made normative
-here.
-
-For an exactly-one claim, the current-use conditions must include sufficient evidence that changes to the **legal
-candidate domain** have been accounted for. Validation of the previously selected source alone is inadequate when a new
-eligible candidate could change completeness.
-
-If a relationship depends on a previously absent source, the appearance of that source must be capable of invalidating
-an older result. The compiler may realize this with negative dependencies, domain summaries, explicit source-set
-versions, or another sound strategy. The implementation technique is not Contract meaning.
-
-Conditional dependencies require similar care. A changed branch can make a previously unreachable source or helper
-relevant. A reused relation summary cannot omit that new determinant merely because the earlier computation never read
-it.
+A result dependent on a source's absence is no longer justified if that source becomes eligible. Similarly,
+a change to the conditions governing source eligibility can introduce a determinant not used by the
+previous computation. Current-use qualification must account for both cases. The incremental algorithm
+remains a Design decision.
 
 ## 12.3. Coherent Observation
 
@@ -591,68 +534,50 @@ A Consumer must not receive a combination of relation output and qualification e
 generations. An answer formed under one current selection cannot be paired with context or source-domain evidence from a
 different selection and then presented as one complete result.
 
-The semantic coherence and visibility constraints follow ADR-0063 and ADR-0075. A particular snapshot, generation,
-transaction, or publication mechanism is Design.
+ADR-0063 and ADR-0075 govern coherent visibility. Section 17 leaves its physical realization open.
 
-## 12.4. Early Cutoff
+## 12.4. Equality and Current Use
 
-A producer may stop change propagation when it has established the equality required by the relevant downstream
-protocol. Identical physical bytes or a matching local HID are not sufficient if the source-domain closure,
-applicability, or current-context assumptions necessary to the Consumer have changed.
+A previously produced relation result may be reused only when its producer establishes the equality
+required by the Consumer's protocol and its current-use conditions still hold. An unchanged physical
+representation is not sufficient if a legal determinant has changed.
 
-Conversely, a provenance-only edit should not force semantic downstream recomputation when the legally required semantic
-projection remains unchanged and the applicable producer has proved that fact.
+A provenance-only change does not alter Contract identity when the owning semantic law leaves the
+semantic projection unchanged. Provenance Consumers may nevertheless require updated observations.
 
 ---
 
 # 13. Determinism, Scope, and Cost
 
-The same exact legal requirement, admissible source-domain meaning, and applicable context must not lead to different
-approved results merely because CRI selected another index, visited candidates in a different order, or ran work on
-different workers.
-
-Compiler-internal work traces may differ. Contract-visible selection, refusal attribution, and established reference
-meaning may not vary with that scheduling unless the owning law explicitly makes another input a legal determinant.
+For the same legally determining inputs, CRI must provide equivalent permitted observations regardless of
+its computation path. Only the owning law can determine Contract-visible selection or refusal attribution.
 
 ## 13.1. Determinism Under Concurrent Resolution
 
-The candidate and completeness conditions in Section 7 must hold regardless of iteration order or worker scheduling.
-Concurrent resolution may publish partial compiler work privately, but it cannot expose a completed qualification until
-the whole legal domain is covered by the evidence required for that claim.
+Concurrency cannot change the candidate or completeness guarantees in Section 7. A Consumer cannot observe
+a completed qualification until the evidence required for its claim is complete.
 
-## 13.2. Scope-Limited Work
+## 13.2. Lawful Scope of Observation
 
-A function-, Interaction-, Interface-, Core-, and Whole-Machine-level relation request may have very different costs.
-CRI must not let a local request silently trigger repeated global analysis when the request does not own such a need.
+The required relation determines which source domain CRI must cover; it does not give CRI permission to
+consume unrelated Contract meaning. When evidence from a wider scope is necessary, CRI may consume it only
+through the responsible Producer's authorized projection under Section 6.
 
-Where an owning law requires wider knowledge, the compiler can produce an independently owned wider-scope summary and
-provide the approved projection. The scope-specific summary's cost and validity remain visible to its compiler producer;
-the relation semantics remain unchanged.
+Whether a wider result is calculated once, reused, or recomputed is a cost decision for Compiler Design.
+The legality and completeness conditions remain those of Sections 7 and 12.
 
-This proposal adopts the architectural lesson of LLVM's scoped analysis managers without requiring LLVM's manager
-topology. Avoiding accidental repeated whole-machine work is a subsystem-performance obligation; the exact query or
-scheduling technique is not.
+## 13.3. Logical Boundaries Without Physical Mandates
 
-## 13.3. Compact Representations and Protocol Granularity
-
-CRI's semantic responsibilities do not mandate a query node for each Required Basis, one heap object for each Binding,
-or a runtime allocation for each applicability check.
-
-A compiler can place several relation families in shared primitive storage, reuse a compact immutable summary, or fuse
-related computations if exact semantic distinctions remain observable where needed. Conversely, a physically separate
-relation service is legitimate when its different lifetime, scaling, or failure boundary justifies the cost.
-
-The allocation decision must balance additional routing and synchronization against the risk of coupling unrelated
-results. ADR-0075 owns that horizontal tradeoff; this ADR supplies the relation-specific constraints.
+The responsibilities in Section 4 need not correspond to separate physical components. Their
+producer–consumer boundaries must nevertheless preserve the legal observations defined in Sections 6
+and 11. Compiler Design determines the cost and physical realization under ADR-0075.
 
 ## 13.4. Resource Exhaustion Is Not Contract Refusal
 
-A legal relation question may be computationally expensive. An attacker or an unusually large contract world might make
-candidate discovery or qualification exceed a compiler resource limit.
-
-CRI must not convert an unfinished calculation into `Inapplicable`, `Rejected`, or a completed Contract Refusal. The
-unsuccessful compiler path and its diagnostics remain distinct. Resource envelopes, algorithm choice, and admission
-control for compiler work belong to Compiler Design and Security Architecture.
+A relation request may remain unresolved when compiler resources are exhausted. CRI must represent that
+condition through the compiler-owned unsuccessful-result boundary. It cannot turn an unfinished computation
+into `Inapplicable` or a Contract Refusal without the owning judgment. Resource limits and their enforcement
+belong to later Compiler and Security Design.
 
 ---
 
@@ -663,12 +588,11 @@ demonstrate required distinctions; they do not add Required Basis declarations t
 
 ## 14.1. IDL Selection and Definition Binding
 
-An IDL Slot Binding identifies which Contract Definition governs one declared machine position. Its meaning is not
-inferred from the location of that Definition inside a compiler object graph.
+An IDL Slot Binding identifies which Contract Definition governs one declared machine position. Its
+meaning comes from the owning IDL law, not the compiler's representation.
 
-CRI may support the resolution work needed to identify the exact semantic references in such a relation. However, an IDL
-Slot Binding is not a Required-Basis Binding. The existing frontend, selection, HIR, and Establishment authorities
-continue to own its exact law.
+CRI may assist exact IDL reference resolution, but it does not establish an IDL Slot Binding. That binding
+follows its own Frontend and Establishment laws; it is not a Required-Basis Binding.
 
 ## 14.2. Input, Canonicalization, and Admission
 
@@ -677,7 +601,7 @@ occurrence establishes the selected representatives under the exact law, while u
 meaning in the complete Boundary Presentation admitted by the inbound composition law.
 
 Admission uses the final lawful Boundary Presentation, not whichever raw Input object happens to be reachable. CRI may
-help establish the exact relations required to make this handoff complete. This ADR does not select between a single
+prepare the evidence required for the owning law to establish that handoff. This ADR does not select between a single
 conditional source requirement and multiple explicitly bound sources; that must be decided using the owning Admission
 and inbound-composition laws.
 
@@ -686,8 +610,8 @@ successful coordinate fragments or retrieving a previous Admission result.
 
 ## 14.3. Lowering and Operation Coordinates
 
-Lowering requires a lawful source and a declared target relation. CRI may prepare or connect the exact prerequisite
-references, but Lowering owns the transformation relation and its result meaning.
+Lowering owns the legal transformation from its declared source to the specified Operation coordinate. CRI
+may prepare the needed source connection, but it does not perform the Lowering judgment.
 
 A Compiler IR Lowering Pass must not be treated as the same kind of Contract relation merely because it also moves
 information between representations.
@@ -711,8 +635,8 @@ cannot settle it by implication.
 
 ## 14.6. Budget and Capacity
 
-Budget and Capacity may bind to different Subjects and scopes. CRI can assist the connection between a declared resource
-contract and the exact Subject or execution boundary where its law applies.
+Budget and Capacity may govern different execution subjects or scopes. CRI can prepare the exact connection
+declared for a resource contract, but it cannot decide the runtime resource outcome.
 
 The current elapsed time, concurrent occupancy, and resource-stop outcome may depend on runtime observation. A
 compile-time relation plan cannot establish those runtime judgments in advance. CRI must not become a Resource Manager
@@ -731,76 +655,63 @@ Section 9.2 governs the distinct treatment of semantic prerequisite cycles and c
 Whole-Machine Composition can relate explicit Contract surfaces across Cores under ADR-0055. CRI may resolve the legal
 cross-unit connections and provide their exact prerequisites.
 
-It cannot invent waiting, aggregation, direct inter-pipeline communication, or implicit merging. Synchronization and
-transport in a particular realization do not themselves create a new Whole-Machine Contract relation.
+CRI cannot infer a Whole-Machine obligation from the way independent flows happen to communicate. Any
+required wait or join must be expressly governed by its owning law under ADR-0055.
 
 ---
 
 # 15. Failure, Non-Entry, and Diagnostics
 
-Failure attribution follows the boundary that actually owns the unsuccessful condition. A malformed compiler request,
-unavailable computation, corrupt retained product, unsupported implementation technique, and resource exhaustion are not
-identical to Contract Refusal or to the negative result of an entered owning judgment.
+An unsuccessful outcome belongs to the boundary where it arose. A compiler request that could not be
+processed must not be reported as a Contract Refusal. Section 8 distinguishes missing prerequisites from a
+negative Contract judgment.
 
-Sections 8.1, 8.2, and 8.4 distinguish inapplicability, unresolved Basis, and permitted absence. A dependent judgment
-that never entered must not be assigned its own `Rejected` outcome because a prerequisite was unsuccessful.
+A judgment that never entered cannot be assigned its own `Rejected` result merely because its prerequisite
+failed. Section 8 governs missing or inapplicable basis.
 
-When a compiler-owned resolution or qualification operation fails, the relevant compiler result boundary owns the
-failure. ADR-0074 remains Proposed, so this ADR does not presume that its complete result taxonomy has already been
-ratified. No CRI-specific shortcut may reinterpret a compiler failure as an authority-owned judgment result.
+Compiler-owned resolution failure follows the compiler-result boundary. ADR-0074 is still Proposed, so CRI
+must not assume its result taxonomy is final. In particular, compiler failure cannot be translated into the
+unsuccessful judgment of a Contract authority.
 
-Diagnostics may use exact source and relation provenance to explain why a requirement could not be satisfied. It may
-also report when an otherwise valid Binding is inapplicable or when cardinality is violated. Diagnostic presentation
-must not reopen raw source material to reconstruct authoritative meaning or disclose information outside its permitted
-observation scope.
+Diagnostics may explain why a source requirement could not be met using legally observable provenance. They
+must not reconstruct authoritative meaning from raw source or reveal details that the Consumer is not
+permitted to observe.
 
-A useful diagnostic should identify the failed requirement and its owning application when that information is lawfully
-available. It should explain the relevant domain constraint rather than only reporting that an internal lookup returned
-no entries. The precise user-facing wording, source-range presentation, evidence retention, and privacy controls remain
-Diagnostic and Security Design.
+A diagnostic should identify the requirement that could not be satisfied and explain the relevant
+source-domain rule when such information may lawfully be disclosed. The Diagnostic and Security Designs own
+presentation and retention, including appropriate limits on sensitive material.
 
 ---
 
 # 16. Security and Trust Boundary
 
-CRI crosses relation domains whose producers and Contract authorities can differ. The important threats arise when a
-result is attributed to the wrong application, when candidate-domain coverage is overstated, or when retained evidence
-is replayed outside the context for which it was qualified. Sections 7.3, 10, and 12 define the correctness and
-current-use obligations that constrain these threats.
+CRI must defend against false relation claims. A result may name the wrong application or claim complete
+coverage of an incomplete domain. Cached evidence can also be applied outside its valid context. Sections
+7.3, 10, and 12 define the relevant correctness obligations.
 
-The common trust boundary remains with ADR-0075 and the Security Architecture, as distinguished in Section 10.2.
-Independent verification follows Section 10.3 rather than creating a CRI-owned verifier. A checksum, signed artifact,
-or authorized physical reference cannot compensate for an incorrect source-domain conclusion.
+ADR-0075 and the Security Architecture govern common trust checks. CRI's local correctness and its
+independent verification boundary are specified in Section 10. Intact or authenticated data cannot repair an
+unsound source-domain conclusion.
 
-Security review must also consider resource amplification through wide repeated scans, adversarial candidate-set
-changes, or excessive evidence retention. Section 13 defines the cost and unsuccessful-computation boundaries. The
-Security and Verification Designs may specify additional controls and assurance profiles without adding new Contract
-meaning or dictating one CRI algorithm.
+Untrusted inputs may make relation preparation expensive or inconclusive. Section 13.4 requires such
+failures to remain compiler-owned. Security and Verification Design will determine resource safeguards
+without changing Contract meaning.
 
 ---
 
 # 17. Subsystem Contract Versus Implementation Design
 
-This ADR specifies what CRI must preserve across its observable boundaries. The compiler Design determines how to
-satisfy those obligations.
+This ADR specifies CRI's observable obligations. It does not prescribe a relation-solving algorithm,
+physical representation, execution schedule, or reuse mechanism. Such decisions belong to later Compiler
+Design after the relevant Contract laws are closed.
 
-An implementation may use a direct array lookup when a nominal requirement identifies one source. It may use an index
-when many legal candidates exist. It may maintain a scope-specific summary when the completeness question otherwise
-requires expensive repeated scans. These are alternative ways to realize the same law-owned requirement.
+For example, an exact-source requirement and a plural-domain requirement may use different retrieval
+strategies. Both must preserve the owning law's source domain and produce evidence sufficient for the
+claim made under Section 7. This example does not select either strategy.
 
-V1 implementation work must consider storage locality, batching, memory limits, cancellation, and the number of protocol
-crossings. A design that represents every relation as a heap node and every lookup as an independent query is not
-required. Nor does this ADR forbid a graph when the relation problem or incremental computation genuinely benefits from
-that graph.
-
-The chosen physical layout can use primitive tables, slabs, immutable generations, local handles, or other structures
-allowed by the compiler architecture. Their identities and layout cannot become Contract determinants. This ADR does not
-require a generic object-oriented manager with mutable maps, one global lock, or one runtime service controlling every
-judgment.
-
-A future dedicated CRI Design should detail the physical realization and show how independently owned relation families
-meet this ADR's interface obligations. It must account for the costs of Section 6 consumption and Section 10 assurance
-without creating parallel HIR, Establishment, Mediation, Trust, or Verification infrastructures.
+The later CRI Design must demonstrate that its chosen realization satisfies this ADR and the general
+producer–consumer obligations of ADR-0075. A physical handle cannot acquire Contract identity or
+judgment authority.
 
 ---
 
@@ -844,8 +755,9 @@ resulting law-owned relation must not depend on discovery order.
 **Cancelled producer.** A newer request supersedes or cancels a previous computation. A late result from the cancelled
 request must not be accepted as complete current evidence without the current-use checks.
 
-**Clean reference comparison.** A clean relation computation and a cached or incrementally maintained computation must
-agree on every producer-approved semantic observation for the same current lawful inputs.
+**Independent reference comparison.** Derive a relation from current lawful source observations without
+assuming a retained CRI result. The independently derived observation must agree with a legally reused
+CRI result under the same Consumer requirements.
 
 **Provenance-only edit.** A change in source location that leaves the producer-owned semantic projection unchanged must
 not become a change in Contract identity. Separate provenance products may still require updating.
@@ -864,9 +776,9 @@ material through CRI's internal access path.
 **Resource stop.** Exhausting a compiler analysis budget must not be converted into `Inapplicable`, an owning Contract
 Refusal, or an established negative judgment.
 
-**Independent domain verification.** Inject an incomplete CRI index that omits an additional lawful candidate. A
-Verifier using independently authorized domain observations must detect the unsupported completeness claim rather than
-accepting CRI's cached summary as its only evidence.
+**Independent domain verification.** Supply CRI with an incomplete candidate view that omits another
+eligible source. A Verifier using independently authorized source observations must detect an unsupported
+completeness claim rather than accept CRI's claim as its only evidence.
 
 **Verification access discipline.** The Verifier must not obtain producer-private material merely because CRI can access
 it internally. If the source Producer lacks a lawful observation sufficient for the desired independent check, the
@@ -882,30 +794,29 @@ currently passes them.
 
 # 19. Relationship to Existing ADRs and Ownership Transfer
 
-ADR-0063 remains the currently Accepted owner of the shared Establishment, Required Basis, Applicability, and
-Composition laws. This Proposed ADR does not silently revoke or overwrite those provisions.
+ADR-0063 retains the Accepted laws of Establishment and required basis. Acceptance of this ADR would not
+revoke them.
 
-If this ADR is accepted, a separate, loss-checked amendment may move the **CRI-specific compiler-subsystem obligations**
-and appropriate Composition-specialization wording out of ADR-0063. The generic Required Basis, Basis Binding,
-Applicable Basis, Complete Basis, semantic prerequisite, identity, and Establishment laws should remain in ADR-0063
-unless a distinct normative decision justifies another division.
+After ADR-0077 is accepted, a separately reviewed amendment may move CRI-specific compiler obligations out of
+ADR-0063. ADR-0063 must still own the general Required Basis law and the meaning of its applicability and
+completeness. Its semantic prerequisite and identity laws remain there as well, together with Establishment,
+unless an explicit normative decision changes their ownership. Any moved composition-specific rule requires a
+lossless audit.
 
-In particular, ADR-0063 §8.8 currently provides the fundamental rule that new meaning created by composing established
-sources belongs to the composing Contract authority. That rule must remain normative and discoverable during migration.
-It must not be weakened to make a common Compiler Composition Engine appear authoritative.
+ADR-0063 §8.8 must continue to state that newly composed meaning belongs to the composing Contract authority.
+That law cannot be weakened merely to give CRI a convenient common execution model.
 
-ADR-0055 retains Whole-Machine semantics, including its prohibition on implicit waiting and merging. ADR-0048 requires
-its own inbound ordering migration. ADR-0065 must still determine its exact Required Basis after Canonicalization. This
-ADR does not decide those contracts in their place.
+ADR-0055 retains Whole-Machine composition law. ADR-0048 must be migrated under its own inbound-ordering
+decision, and ADR-0065 must determine Admission's exact Required Basis after Canonicalization. CRI cannot
+close these decisions for their owners.
 
-ADR-0071 continues to own the meaning and visibility of HIR Candidate observations. ADR-0075 continues to own generic
-producer–consumer mediation, result-currentness, reuse, and incremental constraints. The CRI consumption requirements in
-Section 6 and independently produced results in Section 11 specialize those boundaries; Section 10 separates CRI's own
-correctness from existing trust and independent verification responsibilities without transferring their ownership.
+HIR candidate meaning remains with ADR-0071, and general legal consumption remains with ADR-0075. Sections 6
+and 11 specialize those boundaries for CRI. Section 10 states how CRI's local correctness differs from the
+compiler's existing trust and independent verification obligations.
 
-The final amendment process should compare the full original text of ADR-0063 against both resulting documents. Deleting
-duplicated text is acceptable only when its entire normative meaning remains explicitly owned and reachable. This
-separation must not be judged complete merely because the same section headings appear elsewhere.
+The amendment must compare the original ADR-0063 with both resulting documents. Repeated text may be removed
+only when every normative requirement still has an explicit owner and a discoverable location. Matching
+section titles are not proof of a lossless move.
 
 ---
 
@@ -913,115 +824,65 @@ separation must not be judged complete merely because the same section headings 
 
 ## 20.1. Relation-Family Coverage
 
-The current proposal covers the shared relationship requirements illustrated in Section 14. It does not declare one
-final exhaustive list of all Relation Families. Each new 1D or higher-scope contract must still show which relations are
-law-owned, whether CRI can assist their resolution, and whether another subsystem already has the relevant
-responsibility.
+Section 14 tests this proposal against representative relation families but does not claim exhaustive
+coverage. Before acceptance, every affected 1D or higher-scope law must be examined to determine whether it
+needs CRI and which owner already governs its relation.
 
-A complete relation-family audit should precede acceptance. Missing coverage should be added where it reflects a genuine
-common obligation, not through a universal schema that erases family meaning.
+A coverage audit must add genuinely shared obligations that are missing. It must not force different relation
+laws into one generic schema simply to simplify the inventory.
 
 ## 20.2. Compiler-Produced Result Boundary
 
-The exact families of CRI-owned compiler-derived products remain to be defined in Design and validated against ADR-0075.
-This ADR does not prescribe a universal `ResolutionResult`, `ClosureProof`, or `RelationHandle` semantic domain.
+Which CRI results deserve independent Producer status remains open. Their definitions must follow ADR-0075
+and actual Consumer needs. This ADR does not prescribe universal `ResolutionResult`, `ClosureProof`, or
+`RelationHandle` semantics.
 
-If CRI-derived knowledge becomes independently consumable, the owning result family must define the guarantee required
-by its consumers, the permitted projection, comparison and current-use conditions, and unsuccessful behavior before
-ordinary Consumer reliance is allowed. CRI must not create a second product for an already established relation simply
-to make it convenient to access.
+An independently consumed CRI result needs a defined guarantee and a legal projection. Its Producer must also
+define when the result can be reused and how an unsuccessful computation is represented. CRI cannot create a
+duplicate product for a relation already established by another authority.
 
 ## 20.3. Establishment and Mediation Interface Shape
 
-This ADR fixes the legal upstream consumption boundary of Section 6 and the downstream handoff of Sections 9 and 11.
-It does not fix physical call direction or interface layout among CRI, the source producers, Establishment, and ADR-0075
-mediation. Design must preserve their authority and coherent-observation boundaries without unnecessary protocol
-crossings or intermediate materialization.
+Sections 6, 9, and 11 define the lawful information boundaries. Any additional semantic observation needed
+by an owning authority or Consumer remains subject to its Producer's protocol. The physical interface
+shape is deferred to Design.
 
 ## 20.4. Runtime Relation Assistance
 
-It remains open how much runtime relation preparation, if any, should share CRI's physical realization. Budget,
-Capacity, and State-Machine laws must be reviewed before deciding whether to reuse a compact relation primitive or
-introduce a separate runtime-oriented service.
+It remains open whether CRI's obligations extend to any runtime relation preparation. That question must
+be reviewed against the laws governing Budget, Capacity, and State Machine. No such extension can transfer
+a runtime judgment to CRI. Any shared physical mechanism is a later Design choice.
 
-This decision must not give CRI authority to establish runtime state transitions or resource outcomes.
+## 20.5. V1 and V2 Realization
 
-## 20.5. V1 and V2 Calculation Strategies
-
-Query granularity, index structures, closure-summary maintenance, domain-change tracking, physical caching, and V2
-repair algorithms remain design choices. V2 may need negative dependencies or another equivalent source-domain tracking
-mechanism; the normative obligation is to preserve correct current-use conditions, not to mandate one algorithm.
+Section 12 requires current-use correctness across V1 and V2, including changes to formerly absent
+candidates. Calculation granularity, evidence retention, and incremental repair mechanisms are deferred
+to Compiler Design. None may weaken the guarantees of this ADR.
 
 ## 20.6. Security Assurance and Resource Envelope
 
-The exact independent assurance profile remains to be set in Verification and Security Design. It must decide which
-claims require an independent check during ordinary compilation, which may be checked in a stricter mode or compiler
-QA, and which lawful source observations are sufficient for that independence. The design must also bound verification
-cost, avoid repeated unqualified whole-domain scans, and specify what happens when independent evidence is unavailable.
-These choices cannot weaken the production-time correctness obligation in Section 10.1 or turn an inconclusive check
-into
-an established Contract result. Sections 13, 16, and 18 provide the related cost and conformance requirements.
+The independent assurance profile remains open. Each claimed profile must state which CRI properties it
+checks and which authorized source observations support its independence. It must not claim success when
+adequate evidence is unavailable. Sections 10 and 18 define the correctness and conformance obligations;
+resource limits and verification scheduling belong to later Design.
 
 ---
 
-# 21. Research and Architecture Basis
+# 21. Consequences and Proposed Adoption Boundary
 
-The starting point for this ADR is the existing Kontrakt compiler architecture, not a decision to imitate one external
-system. *Modern Compiler Architecture 01–15* provides the whole-system reference model: Contract semantics are separate
-from compiler dependency and execution graphs; producers own their meaning; consumers use explicit protocols; compiler
-work and reuse stay replaceable.
+CRI becomes the compiler owner of relation preparation without becoming the authority that establishes the
+relation. It consumes producer-approved observations and publishes only derived knowledge that another
+Consumer independently needs. Sections 4, 6, and 11 define that responsibility.
 
-LLVM's [New Pass Manager](https://llvm.org/docs/NewPassManager.html) shows why analysis ownership and scope matter for
-performance and concurrency. In particular, it restricts inner-level passes from computing mutable outer-level analyses
-on demand because repeated global work can produce quadratic cost and interfere with deterministic concurrent execution.
-CRI should likewise avoid a local relation request triggering uncontrolled whole-machine analysis.
+Local correctness is required whenever CRI produces a result. Independent verification may add assurance
+without replacing those mandatory checks. Separately owned summaries are justified when they meet a real
+Consumer requirement and reduce repeated work.
 
-MLIR's [Dialect Conversion](https://mlir.llvm.org/docs/DialectConversion/) separates the target's legality requirements
-from rewrite machinery and documents the cost and complexity of rollback. CRI should distinguish law-owned relation
-legality from candidate preparation, rather than making every relation search an authority-bearing speculative
-transaction.
+Acceptance requires the relation-family audit in Section 20.1 and the lossless ownership review in Section
 
-FoundationDB's [Developer Guide](https://apple.github.io/foundationdb/developer-guide.html) describes transactional
-conflict ranges and the different consequences of snapshot reads. A source-domain closure claim likewise cannot be
-secured by revalidating only the one source previously found when other legal candidates might have appeared. This
-analogy informs compiler Design, but it does not turn a Contract Basis into a database transaction.
+19. The consumption and security reviews follow Sections 6 and 16. Until these checks are complete, the seven
+    responsibilities remain **Proposed** rather than ratified Contract law.
 
-The Bazel [Skyframe documentation](https://bazel.build/reference/skyframe) and the broader work on incremental builds
-illustrate the cost of missing dependencies and the need to track changes that alter a candidate set. The compiler may
-use such mechanisms to maintain qualified relations, but a dependency edge must never become Contract authority.
-
-LLVM's separation of analysis production from verification and the independent checking approach exemplified by
-[Alive2](https://github.com/AliveToolkit/alive2) motivate the distinct correctness and assurance boundaries of Section
-
-10. They do not justify making the CRI resolver its own independent verifier or forcing verification of each request
-    through a full duplicate computation.
-
-The research behind DBSP and maintained relational views provides candidate strategies for V2 relation maintenance.
-These techniques are relevant because a stable relation projection can be computed through different paths. They do not
-justify treating a delta-updated view as a newly established Contract judgment without the owning law's conditions.
-
-These external references support architectural constraints and failure analysis. They do not replace What Contract Is,
-Accepted ADRs, or the pending decisions explicitly named in this document.
-
----
-
-# 22. Consequences and Proposed Adoption Boundary
-
-The proposal makes CRI a lawful Consumer of existing producer observations and a specialized Producer only of
-independently required compiler-derived relation knowledge. It gives relation processing a recognizable owner without
-turning CRI into a compiler-wide mediator, verification service, or Contract authority. Established meanings remain
-available from the producers that own them.
-
-The proposal requires relation correctness at the production boundary and independent assurance paths capable of
-checking its claims when appropriate. Some expensive reusable summaries may justify their own compiler result family.
-The cost is justified by actual consumer guarantees and avoided repeated work, not by a universal object graph.
-
-A decision to accept this ADR should follow a complete relation-family audit, an HIR-to-Establishment ownership review,
-an ADR-0063 migration mapping, a protocol-consumer check against ADR-0075, and a security review of candidate-domain and
-cross-scope attacks. Pending those checks, the subsystem boundary and its seven responsibilities remain a **Proposed
-architectural direction** rather than ratified Contract law.
-
-This ADR does not create new 1D Contract authority, settle Admission's unresolved source-Basis shape, replace
-Whole-Machine composition law, or select the V2 incremental engine. Its intended contribution is narrower: **a
-replaceable compiler responsibility that prepares exact relations while preserving the existing ownership of their
-meaning and the legality of their consumption**.
+The proposal does not decide Admission's remaining basis question or change Whole-Machine composition law. It
+also leaves the V2 incremental algorithm open. Its contribution is a replaceable compiler subsystem that
+prepares exact relations under the laws that own them.
