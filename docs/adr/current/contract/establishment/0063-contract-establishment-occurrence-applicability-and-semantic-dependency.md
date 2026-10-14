@@ -361,6 +361,12 @@ Semantic Projections when those projections expose every observation required by
 partial physical reads without creating consumer-specific HIR meaning. An observation omitted by a narrower projection
 is not semantic absence; absence is usable only when the producer-owned HIR meaning represents it explicitly.
 
+Under ADR-0071, each applicable 1D role is observed at its owning HIR subject and role coordinate as either an exact
+selected IDL Binding Candidate Reference or Explicit Absence. An absent role has no selected Binding Candidate and does
+not acquire a Definition, Occurrence, or Judgment through that absence. Its legality and effect on a dependent
+judgment's
+Required Basis remain with the owning law.
+
 An IDL Binding Candidate Projection is consumed only when the owning judgment requires the pre-authority selection
 relation represented by that Binding Candidate. It does not supply or reconstruct the target Definition Candidate
 meaning. When the target meaning is required, Establishment follows the exact target Candidate Reference and consumes
@@ -871,8 +877,8 @@ Applicable Context
 ```
 
 `none` means that the owning law requires no additional context. It does not name one universal empty context object.
-Likewise, required context that is unavailable is not semantic absence. Explicit absence is meaningful only when the
-owning law defines that absence as one of its legal semantic inputs.
+Likewise, unavailable required context is not semantic absence. An explicitly absent HIR role supplies determining
+Applicable Context only where the owning applicability law expressly permits that use.
 
 A universal ambient context is not Contract law. Version, Policy, Governance, State, or another coordinate participates
 only when the owning applicability law makes it meaning-determining. Source provenance and compiler-owned execution,
@@ -1361,6 +1367,10 @@ Complete
 `Not Owned`, `Permitted Absence`, and `Required, Unresolved` are different semantic states. Required context that is
 unavailable also cannot be reinterpreted as permitted absence. These distinctions determine whether later semantic work
 may be entered; they do not require separate heap objects or one universal state enumeration in physical storage.
+
+These are Required Basis states, not HIR role-selection states. A role's Explicit Absence does not automatically mean
+`Not Owned`, `Permitted Absence`, or `Required, Unresolved`. Only the owning law determines its effect on an exact
+Required Basis; a missing Binding Candidate cannot supply that determination.
 
 ---
 
@@ -1952,10 +1962,12 @@ cost model
     → derived compiler product, not Protocol projection
 ```
 
-A legal projection may omit meaning outside its declared observation. Such omission is not semantic absence. A consumer
-may treat a coordinate as absent only when the owning semantic law explicitly establishes that absence. Projection
-semantic equality follows the source-owned distinctions represented by that declared observation. Byte equality, object
-identity, HID equality, cache-key equality, or physical range equality cannot replace that semantic equality law.
+A legal projection may omit meaning outside its declared observation. Such omission is not semantic absence. An
+Established projection reports absence only when the owning Established meaning explicitly establishes it. HIR role
+selection and its Explicit Absence remain observations of the Resolved HIR Candidate Protocol under ADR-0071, not
+Established projections. Projection semantic equality follows the source-owned distinctions represented by that declared
+observation. Byte equality, object identity, HID equality, cache-key equality, or physical range equality cannot replace
+that semantic equality law.
 
 Generic recursive navigation is not part of the common Protocol. Operations such as `getParent`, `getChildren`,
 `walkGraph`, `allReachable`, or arbitrary dependency traversal would make physical or inferred topology look like
