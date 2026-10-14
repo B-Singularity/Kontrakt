@@ -1,8 +1,8 @@
-# ADR-0077: Contract Relation Infrastructure — Resolved Requirements, Source Candidates, and Coverage
+# ADR-0077: Contract Relation Infrastructure — Relation Information Preparation, Source Candidates, and Coverage
 
 ## Status
 
-Proposed
+Accepted
 
 ## Date
 
@@ -44,107 +44,147 @@ Proposed
 
 # 1. Context
 
-Kontrakt's Contract authorities can use results established by other authorities. Admission may
-consume Input-related material. Invariant may require an exact Established Fact. Other requirements
-need evidence about a permitted Source Domain.
+Kontrakt's 1D pipeline has explicit relations between separately owned Contract judgments. An Admission
+Definition declares the Input observations it needs, while the Input Definition and applicable IDL
+selection expose their own meaning. Preparing that Admission judgment still requires the compiler to
+obtain those observations and connect them for the exact composition. Canonicalization, when selected,
+adds a distinct selection and observation requirement. Policy, Budget, Capacity, State, Failure, and
+Diagnostic consumers likewise need legally available information from earlier responsibilities.
 
-ADR-0063 governs Required Basis and its Establishment. ADR-0055 defines Whole-Machine composition.
-ADR-0075 governs consumption of compiler-produced material. None requires a universal relation graph.
+ADR-0071 exposes resolved HIR candidates and IDL selections. ADR-0063 governs Required Basis, Basis
+Binding, and Establishment. ADR-0075 supplies legal cross-responsibility observation mediation. These
+laws do not require each 1D implementation to know another Producer's lookup or storage mechanism.
 
-When a relation needs candidate discovery beyond direct observation, that compiler work needs a defined
-owner. Otherwise, each 1D implementation may apply different lookup rules to the same requirement.
-
-This ADR introduces **Contract Relation Infrastructure (CRI)** as the independent compiler subsystem for
-that shared preparation. Section 4 defines its responsibility.
+This ADR introduces **Contract Relation Infrastructure (CRI)** to prepare information for compiler-time
+relation uses within a 1D pipeline. Directly declared connections and questions requiring candidate
+or coverage calculation use the same preparation responsibility. Whole-Machine and Cross-Core relations
+remain outside V1 (§14.8). Runtime acquisition of concrete Occurrence Material is a separate
+architecture problem.
 
 
 ---
 
 # 2. Problem
 
-A discovered source can have the right kind but the wrong occurrence. Finding one matching source
-cannot rule out others in a permitted domain. Retained candidate knowledge may also become stale after a
-change in domain membership.
+A resolved relation does not by itself obtain the observations needed to use it. Without a shared
+preparation responsibility, each 1D implementation must navigate other Contracts' projections,
+reconcile the exact selection context, and assemble the information required for its judgment. That
+repeats compiler work and couples independent authorities to one another's acquisition paths.
 
-Without a shared responsibility, each Consumer must independently check such candidate and coverage
-claims. A universal relation manager would cause a different problem: it would duplicate Frontend,
-Establishment, and other subsystem judgments.
+A discovered source may also have the right kind but the wrong occurrence. Finding one matching source
+cannot rule out others when the owning law permits several. A universal relation manager would create
+the opposite problem by duplicating Frontend, Establishment, and general compiler mediation.
 
-The required boundary is therefore a shared compiler calculation with exact inputs and verifiable
-claims. Sections 6–12 specify those guarantees.
+CRI therefore needs one narrowly defined information-request and preparation boundary. Sections 4 and
+6 define how the observations are obtained; §§7–11 define the resulting correspondence, sufficiency,
+and handoff. CRI does not retain a pipeline-wide aggregate of the acquired material.
 
 
 ---
 
 # 3. Decision Drivers
 
-Candidate discovery must preserve exact source attribution and the domain defined for the requirement.
-The adequacy of an observation depends on the question being answered, not on the amount of material
-physically scanned.
+The relation use and required information must be identifiable before acquisition. Exact selection
+context and source attribution must survive the correspondence calculation. The adequate observation
+depends on the question, not on how much material was physically scanned.
 
-Compiler reuse must preserve the same guarantees across V1 and V2. An earlier result must not remain
-usable merely because its previously discovered sources are unchanged.
+Already established meaning remains with its Producer. CRI must not own a second lifetime for that
+material. V1 recomputes its preparation on request; optional reuse of underlying producer observations
+is an optimization, not a CRI semantic prerequisite (§12).
 
-The subsystem must operate through authorized producer observations. Its own calculations need mandatory
-correctness checks and must remain independently verifiable.
-
-Common computation must not displace existing Contract authorities or other compiler subsystems.
+The subsystem must use authorized, coherent observations. It must validate the correspondence it
+prepares and remain independently verifiable. Shared preparation must not displace Contract authority
+or duplicate ADR-0075 mediation.
 
 
 ---
 
 # 4. Decision and Responsibility Model
 
-Kontrakt recognizes **Contract Relation Infrastructure (CRI)** as an independent compiler subsystem.
-CRI consumes resolved relation requirements from their owners. It prepares source candidates.
-It obtains domain-coverage evidence when the current question needs it.
+Kontrakt recognizes **Contract Relation Infrastructure (CRI)** as the compiler-time subsystem that
+prepares the information needed by one exact Contract relation use. The owning law supplies the legal
+question. CRI determines which already-defined observations that question requires, acquires them
+through ADR-0075, and prepares their exact correspondence for the owning judgment. Source-candidate
+calculation and requirement-relative coverage are part of this responsibility when the law requires
+them.
 
-**CRI owns the accuracy of that preparation, not the legal meaning or Establishment of a relation.**
-The Required Basis retains the meaning defined by its owning law. The Binding-owning law defines
-the legal Source Domain and establishes Basis Binding. Applicability and Complete Basis remain with
-their respective owners under ADR-0063. Established Material keeps its original Contract authority.
-Other compiler subsystems retain their own relations.
+**CRI owns the accuracy of its preparation, not the legal meaning or Establishment of the relation.**
+The Required Basis retains the meaning defined by its owning law. The Binding-owning law defines the
+legal Source Domain and establishes Basis Binding. Applicability and Complete Basis remain with their
+owners under ADR-0063. HIR resolution, IDL selection, Inbound Composition, and other compiler relations
+retain their existing owners. Runtime relation-material acquisition is excluded from CRI V1.
 
-The responsibility boundary is:
+The compiler-time responsibility boundary is:
 
 ```text
-Owning law + producer-owned observations
-    ↓ resolved requirement + authorized source observations
+Owning relation use / judgment
+    ↓ exact semantic context + required information
 CRI
-    ↓ source candidates + required coverage evidence
-Owning judgment
-    ↓ legally established relation, if any
+    ↓ requests lawful producer-owned observations through ADR-0075
+HIR Candidate Protocol / Established Semantic Protocol
+    ↓ exact references + producer-complete authorized projections
+CRI
+    ↓ prepared correspondence + sufficient observations and evidence
+Owning composition / judgment
+    ↓ authoritative relation, if the owning law establishes one
 Established Material under its original authority
 ```
 
-A direct established reference need not pass through CRI. When another compiler responsibility
-independently consumes a guarantee CRI produced, the Producer boundary follows ADR-0075 (§11).
+This is a logical boundary, not a mandatory additional physical pass or a new material store. Where one
+producer-owned direct relation already fulfills the request, preparation may consist solely of
+obtaining and forwarding that observation; CRI must not manufacture a duplicate relation. Section 11
+governs that immediate handoff.
 
-## 4.1. Primary Responsibility One: Resolved Requirement Consumption
+## 4.1. Primary Responsibility One: Exact Relation-Use Demand
 
-CRI takes the requirement in the meaning already resolved by its owner. The permitted observation must
-identify the exact dependent use and the applicable source restrictions. Missing meaning cannot be
-inferred from host names, generated artifacts, or compiler topology.
+A CRI demand identifies one **exact owning relation use** and the information question defined by
+its owning law. An existing typed HIR selection, Established relation, or Required Basis reference may
+already determine the exact use and question, without repeating those determinants as extra fields.
+For a composition demand, the exact Dependent Application and owning composition law identify its
+use. If they admit several independent uses, that law supplies the local coordinate needed to
+distinguish them.
 
-CRI may request additional authorized observations when the current evidence is insufficient (§6).
+A selected IDL Binding Candidate can identify its particular slot selection, but it does not by
+itself identify an entire Inbound Composition. In particular, a Composition use must not depend on
+the presence of any one optional role. Nor may preparation require a reference to the Established
+Composition result that it is supposed to help establish. The owning law determines the exact
+Dependent Application and any necessary local coordinate; CRI issues no new Contract identity.
 
-## 4.2. Primary Responsibility Two: Source Candidate Preparation
+A reusable Definition Requirement Law is not an occurrence-specific Required Basis. A Definition-time
+request must not invent a future Occurrence or demand runtime values. Source references, Producer
+lists, physical Query Keys, and storage handles are not mandatory demand fields: they are obtained or
+resolved under the existing law and Protocols. Section 6 defines the acquisition path for HIR
+candidates and already-established compiler-time meaning.
 
-CRI prepares the candidates supported by the declared domain. An exact nominal source must not be
-replaced by an equivalent-looking one. Where the requirement permits alternatives, CRI preserves the
-candidates needed for the later judgment. Discovery order grants no preference.
+## 4.2. Primary Responsibility Two: Authorized Relation Information Acquisition
 
-## 4.3. Primary Responsibility Three: Required Coverage Evidence Preparation
+CRI requests the narrowest sufficient observations through ADR-0075. It follows exact selecting or
+direct references supplied by the relevant Producer Protocols; it does not discover their meaning
+through host identifiers, compiler object containment, or unrestricted World traversal.
 
-CRI prepares enough domain-coverage evidence to support the requested question. It may use an already
-sufficient observation or seek further evidence (§7.3). The request does not require a physical
-full-domain scan.
+A relation may need observations from more than one Producer. CRI relates those observations to the
+same exact owning question, and passes them onward only when they can form a coherent, legal handoff.
+The source Producers retain the original observations and their lifetimes. Section 6 owns the detailed
+acquisition rules.
 
-## 4.4. Four Boundary Obligations
+## 4.3. Primary Responsibility Three: Correspondence and Candidate Preparation
 
-The obligations in §§9–12 govern every completed CRI result. They do not reassign common trust
-qualification or independent verification to CRI.
+CRI prepares the exact correspondence between the required observation and the observed source
+coordinates or material. It preserves the distinctions supplied by the relevant owning law. Where
+several sources are lawfully permitted, CRI also prepares the candidate distinctions needed for the
+later judgment. Discovery order grants no preference. The calculation rules are in §7.
 
+## 4.4. Primary Responsibility Four: Requested Sufficiency
+
+CRI checks whether the prepared observations support the precise relation question. An already
+complete declared connection need not trigger wider source enumeration. Questions about absence or
+singularity may require further producer-guaranteed domain evidence. Section 7.3 owns the coverage
+rule; §11 owns completed delivery.
+
+## 4.5. Four Boundary Obligations
+
+The obligations in §§9–12 govern every completed preparation. They do not assign common trust
+qualification, retention, or independent verification to CRI.
 
 ---
 
@@ -155,7 +195,13 @@ qualification or independent verification to CRI.
 A **Contract relation** carries the meaning defined by its law. IDL Slot Binding, Required-Basis
 Binding, and Applicability are not interchangeable even if they refer to similar material.
 
-A **compiler relation candidate** is a proposed source for an exact requirement.
+A **relation preparation demand** is a compiler-time information request for one exact relation use;
+it is not a new Contract Required Basis. Its owning question may already be determined by that use
+and need not be restated. A **prepared correspondence** associates approved observations with that use
+without establishing its legal Binding.
+
+A **compiler relation candidate** is a proposed source for an exact requirement when candidate
+calculation is necessary.
 
 **Coverage evidence** supports the candidate set or absence claim for one relation question. Its scope
 must remain distinguishable from the question's final legal outcome.
@@ -163,7 +209,9 @@ must remain distinguishable from the question's final legal outcome.
 A **compiler computation dependency** records which inputs affect a compiler calculation. It does not
 define a Contract relation.
 
-Physical representations may share storage without merging these meanings.
+Physical representations may share storage without merging these meanings. V1 CRI serves relations
+within a 1D pipeline; this scope does not grant it authority over Whole-Machine composition.
+Runtime Occurrence Material lookup and runtime relation assistance remain separately owned.
 
 ## 5.2. CRI Is Not the Composition Authority
 
@@ -176,35 +224,55 @@ creates a universal `CompositionResult`.
 Relation laws differ in their coordinates, cardinality, and relevant context. CRI must preserve these
 requirements without imposing one common semantic relation type.
 
-It may consume results from IDL Binding, Realization Binding, or other subsystems when a separate
-source-preparation request requires them. Their existing Producer Protocols remain authoritative for
-those observations.
+It may consume observations of IDL Binding, Realization Binding, or other subsystem relations
+when the owning compiler-time use requires them. Those subsystems retain their Producer Protocols
+and the authority or compiler responsibilities to which the observations belong.
 
 
 ---
 
 # 6. CRI Consumption Boundary and Authorized Observations
 
-CRI uses the authorized producer observations needed to fulfill its request, under ADR-0075.
-A source reference alone is not permission to inspect its material. The request's sufficient
-observation is defined in §7.3; physical acquisition remains a Design choice.
+CRI uses the authorized producer observations needed to fulfill the exact demand in §4.1, under
+ADR-0075. A source reference alone is not permission to inspect its material. CRI determines which
+producer-defined projections supply the required observations, but general request resolution,
+qualification, acquisition, and coherent delivery remain ADR-0075 mediation responsibilities.
+The request's sufficiency condition is defined in §7.3; physical access paths remain Design choices.
 
 ## 6.1. Definition-Time Requirements
 
-Before Establishment, CRI may consume resolved candidates through the HIR Candidate Protocol of
-ADR-0071. HIR carries resolved candidate meaning but not Established Definition authority.
+Before Establishment, CRI consumes exact selections and resolved candidates through ADR-0071's HIR
+Candidate Protocol. The IDL Binding Candidate Projection exposes the selecting context, selected role,
+and target Definition Candidate Reference for an actual selection. It is not by itself a complete view
+of roles that were not selected. The Selection-owning HIR subject must also expose, through its
+producer-owned Fine-Grained Semantic Projection, a complete observation of selection or explicit
+Absence at an exact role coordinate in the correct owning scope. CRI assumes this observation
+contract; ADR-0071 and the selection-owning laws must provide it. The owning 1D's other Fine-Grained
+Semantic Projections expose only the observations needed for the relation question. HIR carries
+resolved candidate meaning but not Established Definition authority.
 
-CRI cannot fill gaps by reparsing source or treating generated host artifacts as new Contract meaning.
-The source observations must be authorized for the definition-time requirement.
+An inbound composition preparation may require the Input Candidate Coordinate Surface Projection of
+ADR-0064 §5.8, the Canonicalization Declared Selection Surface and Selected Law Relation Projections
+of ADR-0066 §9.4, and the Admission Input Observation Requirement Projection of ADR-0065 §6.4.
+These are distinct observations. An IDL Binding Candidate Projection alone does not establish current
+Input compatibility or carry an Admission judgment's requirement law.
+
+CRI cannot fill gaps by reparsing source, refining a 1D's definition, or treating generated host
+artifacts as new Contract meaning. The source observations must be authorized for the definition-time
+question and must not be represented as already-established material.
 
 ## 6.2. Occurrence-Time Requirements
 
-An occurrence-time request identifies one dependent application. Its Definition may be reusable,
-but the exact Required Basis belongs to that Occurrence.
+Where a compiler-time preparation concerns an exact application, it preserves the dependent
+application and its Required Basis coordinates. Its Definition may be reusable, but the exact
+Required Basis belongs to that application. Only material already established by its source
+authority can support an authoritative Basis Binding.
 
-Only material already established by its source authority can become the source of an authoritative
-Basis Binding. Earlier occurrence material cannot stand in for the current occurrence merely
-because its value or compiler calculation is reusable.
+CRI may consume such material through ADR-0063 §11's Typed Established Semantic References, Direct
+Established Relation Projections, and relevant Fine-Grained Established Projections. Established
+Definition meaning is not a substitute for an actual Occurrence result; an earlier Occurrence is not
+a substitute for the current one merely because its value is equal. This ADR does not prescribe how
+runtime Occurrence Material will be located (§5.1).
 
 ## 6.3. Applicable Context and Scoped Input
 
@@ -221,44 +289,112 @@ Availability cannot justify substituting another source unless the requirement p
 
 Ambiguous references cannot be resolved through incidental host identity or compiler storage layout.
 
+## 6.5. Request-to-Observation Acquisition
 
----
+For one requested 1D relation use, CRI starts with the exact owning use and information question
+defined in §4.1. It obtains that use's lawful selection or requirement observations through
+ADR-0075 and follows the exact Producer references they expose. It may acquire observations in
+stages: an earlier observation may determine which later Projections are needed. Once independent
+requests are known, mediation may acquire them together. This is a semantic acquisition dependency,
+not a prescribed two-pass algorithm or fixed physical evaluation order.
+
+The following illustrates existing inbound Protocol surfaces, not a new common relation payload:
+
+```text
+Exact Interaction / owning Inbound Composition use
+    → complete role-selection observations in their owning HIR scopes
+    → Input Candidate Coordinate Surface Projection, if Input is selected and needed
+    → Canonicalization selection and selected-law projections, if selected and needed
+    → Admission Input Observation Requirement Projection, if Admission is selected and needed
+    → exact correspondence prepared for the composition-owning judgment
+```
+
+The same demand may require only a Direct Established Relation Projection instead of these HIR
+surfaces. CRI requests the observations required by the owning use at its compiler stage; it does
+not obtain future Occurrence values for Definition-time preparation. An exact direct reference is
+followed through its Producer Protocol, not by searching for a similar source.
+
+All observations used for one prepared answer must satisfy ADR-0075 §15, including observations
+acquired at different steps. CRI cannot repair incompatibility by comparing physical generation
+numbers or selecting the latest-looking source. If the requested guarantee cannot be supported by
+coherent, legally qualified observations, CRI does not complete the handoff (§§11, 15).
+
+## 6.6. Complete Selection and Optional Roles
+
+Every 1D role, including Input and Output, may be explicitly absent in its selection surface. CRI
+assumes that HIR and Establishment preserve that declared meaning and expose the complete lawful
+observation through their respective Producer Protocols. The selecting scope may belong to an
+Interface, Interaction, Operation, or another subject established by its owning selection law. CRI
+must request the role coordinate from that scope rather than assuming every role belongs to the
+Interaction.
+
+An exact role is observed as selected through its Binding reference or as explicitly absent through
+the complete selection observation. A missing Binding row, partial projection, unavailable
+observation, or failed lookup is not evidence of Explicit Absence. The legality of omitting a role,
+and whether another selected contract requires that role, belong to the relevant declaration and
+composition laws; CRI neither approves the absence nor turns it into a compiler acquisition failure.
+
+When a role is selected, CRI acquires only the producer-owned observations needed by the owning
+question. It preserves duplicate or invalid candidate distinctions for that role's own judgment.
+For selected Canonicalization, the inbound law supplies the applicable coordinate correspondence
+and final-presentation requirement. CRI prepares the requested Input and Canonicalization
+observations, without establishing the Presentation or resolving ADR-0065's pending Basis migration (§14.2). Detailed
+Absence representation and acceptance law remain with HIR and Establishment.
 
 # 7. Source Candidate Preparation and Legal Domains
 
-The source domain restricts which observations can support a candidate claim. CRI must not use
-additional compiler-visible sources to enlarge that domain.
+The owning relation law determines which source observations may satisfy a demand. CRI must not
+use additional compiler-visible sources to enlarge that domain. Preparing an exact declared connection
+and calculating candidates from a plural domain use the same request boundary in §6; neither creates
+a new Contract relation.
 
-A requirement may name one exact source or permit several sources under stated conditions. Sections
-7.1–7.3 determine what CRI must preserve in each case.
+Sections 7.1–7.3 determine what CRI must preserve when it correlates those observations.
 
 ## 7.1. Nominal Source Coordinates
 
-If a requirement names Input Occurrence `I1`, material from `I2` cannot satisfy that exact reference
-even when both presentations have equal values. The inbound-composition law owns its source definition;
-its pending ADR-0065 migration is not settled here.
+When an IDL role or an already-established direct relation supplies an exact source reference, CRI
+prepares that reference for the current use rather than searching by kind or name. In HIR it preserves
+the selecting Binding Candidate and its target; after Establishment it preserves the corresponding
+exact authoritative reference without treating the earlier Candidate as its authority.
+
+For example, the Input Candidate Coordinate Surface of ADR-0064 and the Admission Input Observation
+Requirement of ADR-0065 can be related only under the applicable inbound composition law. Equal field
+names or host-compatible representations do not establish correspondence. If a requirement names Input
+Occurrence `I1`, material from `I2` cannot satisfy it even when both presentations have equal values.
+The inbound-composition law owns the legal source definition; its pending migration is not settled
+here.
 
 ## 7.2. Plural Candidate Domains
 
-When several sources are permitted, CRI maintains the candidate distinctions necessary for the
-owning judgment. Discovery order does not supply arbitration. Neither structural similarity nor
-compiler cost permits an unapproved reduction of the candidate domain.
+When several sources are permitted, CRI obtains the observations authorized for the owning law's
+source domain and prepares their correspondence to the exact Required Basis coordinate. The same
+Established source may support distinct Required Basis uses without merging those requirements.
+Discovery order does not supply arbitration. Neither structural similarity nor compiler cost permits
+an unapproved reduction of the candidate domain. CRI may combine overlapping complete observations
+only with producer-owned reference identity and a lawful scope/coverage relation; physical duplicate
+reads do not create additional semantic candidates.
 
 ## 7.3. Requirement-Relative Domain Coverage
 
-Coverage is sufficient for the precise relation question. An exact-source requirement can be
-satisfied by authorized observations of that source, without inspecting unrelated material.
+Coverage is sufficient for the precise relation question. An exact, lawfully declared connection
+may be prepared from its direct observation. When a complete selected-role or coordinate surface
+already defines the full legal extent, CRI uses that producer-owned closure; it does not independently
+scan the whole Contract World. A claim that any 1D role is explicitly absent requires the
+complete, scope-correct selection observation of §6.6.
 
-An absence or singularity claim needs evidence accounting for every lawful source that could change
-the conclusion. One discovered candidate is not proof of Exactly-one Applicable Basis. A producer
-may supply the necessary coverage guarantee without requiring CRI to enumerate every source.
-A partial projection cannot establish completeness beyond its declared scope.
+For a plural domain, a positive existence question may be supported by an exact qualified candidate.
+An absence, singularity, or complete-enumeration claim instead requires evidence accounting for every
+lawful source that could change that answer. One discovered candidate is not proof of Exactly-one
+Applicable Basis. A source Producer may provide complete observation of its own extent without
+requiring physical enumeration by CRI. Where several such extents are needed, CRI may combine their
+claims only when the owning law's observable domain relation proves they cover the question's legal
+extent; producer-local completeness alone cannot prove an unobserved extent absent.
 
-When the current observations are insufficient, CRI may request further authorized evidence through
-ADR-0075. It cannot report completed coverage while the necessary guarantee is unavailable.
-No fixed acquisition order or two-stage algorithm is required.
-
-Section 12 governs the continued validity of coverage after domain changes.
+A partial projection cannot establish completeness beyond its declared scope. Inconsistent or
+unsupported extent relations are not repaired with generic set semantics invented by CRI. When the
+current observations are insufficient, CRI requests further authorized evidence through ADR-0075 or
+does not complete the preparation. No fixed acquisition order, universal extent algebra, or mandatory
+full-domain scan is required. Section 12 governs any later reuse of this evidence.
 
 
 ---
@@ -286,8 +422,9 @@ distinguishes that non-entry from unsuccessful compiler work.
 ## 8.3. Coverage and Permitted Absence
 
 A completed observation of zero candidates can support a requirement that permits absence. It may
-leave a different requirement unresolved. CRI reports the same observed absence without treating
-those two Contract outcomes as equivalent.
+leave a different requirement unresolved. A role's explicit absence in HIR is a distinct selection
+fact, not automatically a permitted absence of the dependent Required Basis. CRI preserves those
+observations without determining the legal outcome for either requirement.
 
 ## 8.4. No Implicit Recovery or Arbitration
 
@@ -299,17 +436,23 @@ Compiler-result unavailability is not Contract-permitted absence (§15).
 
 # 9. Establishment Integration and Authority Separation
 
-The handoff to Establishment must preserve the exact requirement and the scope of the supporting
-evidence. A prepared candidate cannot silently acquire the status of an Established relation.
+The handoff to an owning composition or Establishment judgment preserves the exact relation use,
+the authorized observations it requires, and the scope of supporting evidence. A completed
+observation, including an explicitly absent selected role, does not establish that a dependent
+Required Basis is satisfied or that the declaring composition is valid. A computed correspondence
+or candidate cannot silently acquire the status of an Established relation.
 
-An already Established relation may be consumed later under its Producer Protocol. A fresh
-application with a distinct Required Basis needs its own legal judgment.
+An already Established relation may be observed through its Producer Protocol and prepared for a
+later use without repeating its legal judgment. A fresh application with a distinct Required Basis
+still needs its own authoritative judgment.
 
 ## 9.1. Handoff Non-Amplification
 
 The handoff identifies whether each prerequisite observation is still a resolved candidate or an
 Established source. It may not expose more information than the receiving requirement permits.
-A compiler-derived connection cannot add determinants to the Contract law.
+Permission to inspect a broader Source Domain does not authorize disclosure of its members or
+absence claims beyond the receiving requirement. A compiler-derived connection cannot add
+determinants to the Contract law.
 
 ## 9.2. Semantic Cycles
 
@@ -319,8 +462,8 @@ CRI must not report a compiler computation cycle as a Contract semantic cycle.
 
 ## 9.3. Authority-Specific Composition
 
-A higher-scope judgment may establish new meaning from earlier material when its law permits that
-composition. Common candidate preparation does not create a new Composition Occurrence for every
+ADR-0063 §8.8 governs any new meaning that a higher-scope judgment may establish from earlier
+material. Common candidate preparation does not create a new Composition Occurrence for every
 valid source connection.
 
 
@@ -333,9 +476,10 @@ cannot replace this production obligation.
 
 ## 10.1. Local Correctness at the Production Boundary
 
-CRI must verify that every candidate has the required attribution (§7.1) and that any coverage
-claim is supported at the stated scope (§7.3). Unsupported claims cannot enter a completed
-CRI observation. Section 15 governs unsuccessful preparation.
+CRI verifies that every prepared correspondence matches the owning question's exact references,
+selection context, and permitted observation scope (§§6–7). Where it computes candidates, it checks
+the required attribution. Where it claims coverage, it checks the lawfully supported extent (§7.3).
+Unsupported claims cannot enter a completed handoff. Section 15 governs unsuccessful preparation.
 
 ## 10.2. Integrity and Trust of Consumed Material
 
@@ -356,54 +500,75 @@ ADR-0075 §20.
 
 The Verification Architecture determines the optional assurance profile. Each assurance claim must
 state what was independently checked. Source access is limited to evidence lawfully available for
-that check. Testing obligations appear in §18; resource policy remains with its owner (§20.6).
+that check. Conformance cases are tracked separately from this ADR; resource policy remains with
+its owner (§13.4).
 
 
 ---
 
-# 11. Relation-Specific Output and Legal Consumption
+# 11. Relation-Specific Handoff and Legal Consumption
 
-CRI ordinarily supplies prepared source evidence for one judgment. If another responsibility
-independently consumes a guarantee derived by CRI, the result has a CRI-owned Producer boundary under
-ADR-0075, even with one Consumer.
+V1 prepares information on demand and hands it directly to the owning compiler-time use. It does
+not create a CRI Result Family, a retained relation aggregate, or a second owner for the HIR and
+Established Material it has observed. The demand in §4.1 and the observations acquired under §6
+remain separately attributable. Any temporary correspondence table or working buffer ends with the
+preparation rather than establishing persistent CRI semantic material.
 
-Private intermediate work needs no independent Result. Candidate and coverage claims remain distinct
-in meaning but need not use different material families or physical products. Additional result
-families require a separately consumable guarantee, not merely an expensive calculation.
+If another responsibility later needs the same Established information, it obtains the required
+producer-owned observation again through ADR-0075. An independently consumed new guarantee derived
+by CRI would require a CRI-owned Producer boundary under ADR-0075, but that future choice is not a
+V1 prerequisite and does not imply a new physical Result Family.
 
-## 11.1. Consumer Requirement Comes First
+## 11.1. Completed Preparation Handoff
 
-A Consumer requests an exact guarantee and receives only its lawful projection. If the needed
-relation is already Established, it can be observed through the owning Producer without a duplicate
-CRI result.
+A completed handoff supplies the exact owning relation-use attribution, the approved references
+and projections needed for the requested information question, and any correspondence or
+requirement-relative coverage evidence that CRI actually computed. The receiving judgment need
+not know which Producer lookup mechanisms were used. It receives neither unrelated material nor
+a guarantee stronger than the requested observation. This is request-local delivery using existing
+Protocol observations, not a new CRI result schema or persistent Material.
+
+One existing direct established observation may be the whole handoff. Where several observations
+are required, CRI completes the handoff only after the acquired information is coherent and
+sufficient for the **information question** under ADR-0075 §15. A complete role-selection
+observation may report Explicit Absence; that is a completed observation, not proof that another
+Contract's Required Basis is satisfied or that the declaration is legal. A complete zero-candidate
+observation likewise remains distinct from missing source material or failed acquisition (§15).
+CRI does not invent a replacement source or classify an owning law's declaration error.
 
 ## 11.2. No Second Universal Mediation Layer
 
-CRI uses the common ADR-0075 mediation boundary for authorized inputs and independent outputs.
-Neither a new universal gateway nor a mandated physical call path is introduced. A direct
-implementation call does not bypass the logical Producer–Consumer boundary.
+CRI specifies the observations demanded by a relation use; ADR-0075 retains general protocol
+resolution, legal acquisition, qualification, and coherent observation responsibilities. Neither a
+new universal gateway nor a mandated physical call path is introduced. A direct implementation call
+cannot bypass the logical Producer–Consumer boundary.
 
 ## 11.3. Information Preservation and Safe Loss
 
-An output projection may omit details only if the requested guarantee and source permissions still
-hold. Exact Requirement and Source attribution must not be reconstructed from CRI-private lookup
-state. The inbound-presentation obligation remains with its own composition law (§14.2).
-
+A handoff may omit details only if the requested guarantee and source permissions still hold. Exact
+Requirement and Source attribution must be recoverable from the delivered legal observations, not
+from CRI-private lookup state. The inbound-presentation obligation remains with its own composition
+law (§14.2).
 
 ---
 
 # 12. Relation Validity, Reuse, and Incremental Evolution
 
-CRI guarantees independently consumed by other responsibilities require current-use qualification
-under ADR-0075. The following obligations apply to both retained and newly obtained observations.
+CRI's V1 work is request-local. HIR and Established Material remain under their Producers' lifetimes;
+subsequent requests re-obtain the legal observations through ADR-0075 instead of reading a retained
+CRI pipeline context. If later Design introduces independently consumable CRI guarantees or reuse,
+ADR-0075 qualifies their current use. The following rules preserve the same meaning across strategies.
 
 ## 12.1. V1 Guarantee
 
-V1 reuse must agree with a clean calculation on the observations guaranteed to the same Consumer.
+V1 performs CRI correspondence and sufficiency calculation when the relation information is
+requested. It retains no CRI-owned completed Result, pipeline-wide observation cache, or cross-request
+lifecycle. Producer-side material and ordinary compiler-query reuse may still avoid repeated work
+behind ADR-0075; those optimizations must provide observations equivalent to clean acquisition.
 Definition-level reuse does not replace an occurrence-specific Required Basis (§6.2).
 
-Compiler-derived result identity remains distinct from Contract identity. V1's physical frozen and
-cache arrangements belong to Compiler Design.
+Compiler-derived result identity remains distinct from Contract identity. Physical frozen and cache
+arrangements belong to Compiler Design, not the CRI contract.
 
 ## 12.2. V2 Guarantee
 
@@ -421,7 +586,8 @@ ADR-0063 and ADR-0075 define the visibility requirements.
 
 ## 12.4. Equality and Current Use
 
-CRI defines equality and current-use conditions for each guarantee it independently produces.
+If a future CRI guarantee is independently produced and retained, CRI must define its equality
+and current-use conditions under ADR-0075. This does not require V1 to mint such a result.
 Unchanged backing data alone cannot establish unchanged domain coverage.
 
 A provenance-only edit need not change Contract identity, but a Provenance Consumer may still
@@ -442,14 +608,20 @@ become visible before its supporting evidence is sufficient.
 
 ## 13.2. Lawful Scope of Observation
 
-A wider physical calculation is allowed only through lawful observations. Its broader working
-scope must not change the projection the Consumer may obtain (§6), or the evidence's current-use
-conditions (§12).
+CRI begins with the exact relation use and its declared references. The default acquisition path
+follows their producer-defined projections, not a scan of every HIR subject or Established Material.
+A wider physical calculation is allowed only through lawful observations. Its broader working scope
+must not change the projection the Consumer may obtain (§6), or the evidence's current-use conditions (§12).
 
 ## 13.3. Logical Boundaries Without Physical Mandates
 
-Section 4 defines logical responsibilities, not separate JVM modules or passes. Physical sharing
-must preserve the Producer–Consumer boundaries of §§6 and 11. Cost and storage belong to Design.
+Section 4 defines logical responsibilities, not separate JVM modules or passes. One producer-owned
+projection may satisfy several observations in one request, and mediation may batch acquisitions.
+CRI need not create a query node per coordinate, field, or source reference. Nor does a logically
+complete composition require one large retained relation object. Temporary scratch for a request
+may reuse immutable backing without obtaining ownership of that backing. Physical sharing must
+preserve the Producer–Consumer boundaries of §§6 and 11. Cost and storage belong to Design.
+Implementation Design must not settle an unresolved owning law through a storage or lookup choice.
 
 ## 13.4. Resource Exhaustion Is Not Contract Refusal
 
@@ -461,54 +633,80 @@ is specified in §15; budget enforcement is left to Compiler and Security Design
 
 # 14. Relation-Family Applicability
 
-The following families test where source preparation is needed and where direct observations are
-sufficient. These cases do not add new Required Basis declarations to existing 1Ds.
+The following families test which compiler-time relation information CRI can prepare from existing
+legal observations, including direct relations. CRI involvement need not mean additional candidate
+search or a new Result. These cases do not add Required Basis declarations to existing 1Ds.
+Completion of every future
+1D law and its Projection audit is not a prerequisite for V1 CRI; each new owner must supply the
+exact observations its relation law requires.
 
 ## 14.1. IDL Selection and Definition Binding
 
-Frontend resolves IDL references and prepares Slot Binding Candidates. The binding-owning law
-establishes the Slot Binding. CRI can consume that result for a separate source-preparation question,
-but ordinary IDL selection needs no CRI operation.
+Frontend resolves IDL references and produces exact Slot Binding Candidates. The binding-owning
+law establishes the Slot Binding. CRI consumes the corresponding HIR or Established observation
+when a later composition asks which selected Definition provides required information. It does not
+redo IDL reference resolution or establish the Slot Binding. Selection formation itself remains
+with Frontend and its owning law.
 
 ## 14.2. Input, Canonicalization, and Admission
 
-ADR-0066 orders selected Canonicalization after Input and before the later inbound judgment.
-The exact Admission Required Basis remains subject to the ADR-0048/0065 migration.
+ADR-0066 §4.5 orders selected Canonicalization after Input and before Admission; ADR-0048 owns the
+complete inbound wiring. ADR-0065 §6.7 still describes a direct `presentedInput` Required Basis, so
+the owning ADRs must reconcile the precise final-presentation relation. CRI may prepare the
+compiler-time observations without deciding that open law.
 
-Unselected Input coordinates retain their Input-owned meaning. Direct source connections are
-sufficient unless the completed inbound law declares another candidate requirement. A raw Input
-object does not substitute for a legally refused source.
+For a specific Interaction, CRI uses the exact owning Inbound Composition use, not an Admission
+Binding Candidate as a surrogate identity for that composition (§4.1). It obtains complete
+scope-correct selection observations for the roles relevant to the owning question. Input,
+Canonicalization, and Admission may each be selected or explicitly absent (§6.6). It obtains
+Input's coordinate surface, Canonicalization's declared selection, and Admission's Input
+observation requirement only where those roles are actually selected and the question requires
+them. An observed absent role supplies no fabricated Definition or Occurrence.
+
+When the applicable roles are selected, the law-owned inbound composition determines which
+selected coordinates use Canonicalization representatives and which unselected coordinates
+retain Input-owned meaning. CRI prepares these correspondences; it neither constructs runtime
+Presentation values nor permits raw Input to replace a refused Canonicalization result. The
+owning law must decide what to do if a required role is absent. A separately declared additional
+Required Basis may entail further source candidates under §7.2.
 
 ## 14.3. Lowering and Operation Coordinates
 
-Lowering declares its source-to-Operation coordinate relation. Such an exact connection can be
-consumed directly. CRI becomes relevant only for an additional declared candidate question.
-
-Compiler IR Lowering does not inherit this Contract relation merely because it transforms values.
+Lowering declares its source-to-Operation coordinate relation. At compiler time CRI can prepare
+its exact Input/Presentation source correspondence and Operation Parameter coordinates from the
+appropriate owning projections, without searching for similar host fields. It must preserve the
+V1 one-to-one mapping law of ADR-0067. The owning Lowering law determines validity and execution
+meaning; compiler IR Lowering does not inherit Contract authority merely because it transforms
+values.
 
 ## 14.4. Invariant and Fact
 
-An Invariant may refer directly to its exact Established Fact. CRI is needed only if the law
-requires further candidate discovery. Equal Fact payloads do not erase distinct relevant
-occurrence coordinates.
+An Invariant may require an exact Established Fact. CRI can prepare the exact relation observation
+for the requesting compiler-time judgment without recomputing the Fact's meaning. If the owning law
+already supplies the complete direct reference, no candidate search is needed. Equal Fact payloads
+do not erase distinct relevant occurrence coordinates.
 
 ## 14.5. Governance and Policy Worlds
 
-Existing Governance or Policy World bindings can be observed directly. CRI cannot pick a Policy
-World from matching names. A separate candidate question requires an explicit law and domain;
-Governance remains open under ADR-0056.
+CRI can obtain the current legal Policy World selection and its exact established Contract
+bindings when a compiler-time relation use requires them. It cannot select a Policy World from
+matching names, broaden a selected World, or establish Governance validity or singularity.
+Governance remains open under ADR-0056; any additional information demand must follow that owner's
+completed law rather than assumptions introduced by CRI.
 
 ## 14.6. Budget and Capacity
 
-Budget and Capacity have their own subject declarations and runtime judgments. CRI can prepare
-only a separately declared compiler-time source relation. Runtime Resource Management is outside
-the current scope (§20.4).
+Budget and Capacity have separately established Definition meaning and explicit subject/scope
+selection. CRI may prepare those compiler-time subject and Definition relations for another legal
+compiler judgment using their producer-owned projections. It does not perform resource accounting,
+apply runtime allowances, or obtain current occupancy observations; those are outside this ADR (§5.1).
 
 ## 14.7. State Machine
 
-State transitions depend on lawfully established State. Runtime transition judgment does not
-become a CRI request, and CRI cannot insert an undeclared transition. Compiler and semantic cycles
-retain the distinction of §9.2.
+CRI may prepare the compiler-time references relating a declared State Machine to its stated
+roles, transitions, and required subject context. It cannot insert an undeclared transition or
+interpret the runtime's current State. Runtime transition judgment remains outside this ADR (§5.1); compiler and
+semantic cycles retain the distinction of §9.2.
 
 ## 14.8. Whole-Machine Relations
 
@@ -517,16 +715,22 @@ second Core is new external Input, not shared internal Basis or an extension of 
 
 ADR-0063 §8.9 describes a broader internal Cross-Core Basis. Until the owning ADRs are reconciled,
 CRI cannot use that reading to justify a Cross-Core candidate requirement. No Contract-level
-waiting or joining is introduced.
+waiting or joining is introduced. Whole-Machine relation preparation belongs to a separate
+relation responsibility or a later explicitly approved extension; its unresolved owner laws do
+not block adoption of this 1D-pipeline CRI.
 
 
 ---
 
 # 15. Failure, Non-Entry, and Diagnostics
 
-A completed CRI preparation may report zero candidates when the requested coverage is sufficient.
-Zero candidates under an incomplete observation is not a confirmed absence. Additional evidence
-may be requested under §7.3; otherwise the requested guarantee remains unfinished.
+A preparation is complete only when the information requested for the exact relation use has
+been legally obtained and any required correspondence or coverage calculation is supported.
+Explicit Absence in a complete selection observation is a valid information answer, not a failed
+lookup or CRI's ruling on declaration validity. A completed plural-candidate preparation may
+report zero candidates when its requested coverage is sufficient. Zero candidates under an
+incomplete observation is not a confirmed absence. Further evidence may be requested under §7.3;
+otherwise the guarantee remains unfinished.
 
 A source Producer retains ownership of its own failure. CRI cannot wrap it as a new root failure.
 CRI owns unsuccessful work arising from its preparation. Cancellation or resource exhaustion cannot
@@ -539,203 +743,3 @@ nor an unqualified retained result can stand in for current evidence (§12).
 ADR-0074 remains Proposed. This ADR defines no compiler-wide failure taxonomy. Diagnostics may
 observe failure evidence only through authorized projections, without disclosing restricted
 domain information.
-
-
----
-
-# 16. Security and Trust Boundary
-
-Access to a Source Domain does not authorize disclosure of its contents or absence claims to a
-Consumer whose Protocol permits only a narrower projection. A partial observation cannot support
-a stronger domain-coverage assertion (§7.3).
-
-Common source trust checks follow ADR-0075; local computation checks follow §10. Untrusted
-requests can exhaust resources or prevent completion, which is handled under §15. Resource
-safeguards remain Security and Compiler Design responsibilities.
-
-
----
-
-# 17. Subsystem Contract Versus Implementation Design
-
-This ADR fixes the guarantees of an independent CRI subsystem, not its physical realization.
-The relevant owning laws must be closed before Design fixes their implementation requirements.
-A request may finish with its first sufficient observation or require more evidence. No fixed
-two-stage algorithm, full scan, lookup structure, or mandatory pass is imposed.
-
-Later Design must show conformance to these obligations and ADR-0075 without assigning
-Contract identity to physical handles.
-
-
----
-
-# 18. Conformance and Verification Obligations
-
-This proposal can be accepted as a subsystem contract only if its guarantees can be tested separately from one
-particular CRI implementation.
-
-## 18.1. Correctness Cases
-
-**Exact-source mismatch.** Two Input occurrences have equal values but different occurrence identities.
-A source derived from one occurrence must not satisfy an exact requirement for the other.
-
-**Exactly-one domain expansion.** A legal domain first contains one Applicable Source and later contains two.
-CRI must not reuse outdated coverage as proof of uniqueness.
-
-**Exact-source sufficiency.** The owning law limits the relation to one exact source. CRI may complete the
-relevant source check without demanding a complete observation of unrelated material.
-
-**Partial observation.** An initial legal projection reveals one candidate, but another legal candidate is
-not yet accounted for. CRI must not report singularity without sufficient further evidence.
-
-**Producer-guaranteed coverage.** An authorized protocol provides a complete domain observation for the
-current requirement. CRI may rely on that guarantee without physically enumerating every source again.
-
-**Completed zero-candidate observation.** A complete legal domain contains no matching sources. CRI may finish its
-preparation and report the absence evidence.
-
-**Incomplete zero-candidate observation.** A partial legal projection contains no match. CRI must not
-deliver this as a complete absence claim.
-
-**Permitted absence.** A law explicitly permits one absent source. CRI must preserve that lawful absence as distinct
-from a failed lookup for a required source.
-
-**Non-entry.** An Input or Canonicalization refusal prevents the dependent Admission judgment from entering. No
-fabricated Admission `Rejected` occurrence may be produced from this absence.
-
-**Independent Core handoff.** One Core publishes material that later enters another Core as external Input.
-CRI must not infer a shared internal Basis Binding, joining, or an extension of either admitted flow.
-
-**Unresolved Cross-Core Binding.** A hypothetical internal Cross-Core Basis is not admitted as a CRI
-use case while ADR-0055 §3.4 and ADR-0063 §8.9 remain unreconciled.
-
-**Semantic cycle.** A set of dependent judgments requires material that could only be established by the same unresolved
-cycle. CRI may diagnose that cycle but cannot complete it by a provisional fixed point.
-
-## 18.2. Reuse and Concurrency Cases
-
-**Cached candidate after domain expansion.** A new legal source appears while an old source remains unchanged.
-Previous coverage used for an Exactly-one judgment must be qualified against the changed domain.
-
-**Changed assumption.** A retained CRI guarantee depends on an assumption that changes. It may be reused only
-if its Producer establishes current compatibility.
-
-**Worker-order variation.** Two legal computation schedules discover the same candidates in different orders. The
-resulting law-owned relation must not depend on discovery order.
-
-**Equivalent acquisition paths.** One calculation completes with an already sufficient observation.
-Another obtains further authorized evidence. For the same determining inputs, both must preserve the
-same relation guarantee regardless of the work performed.
-
-**Cancelled producer.** A newer request supersedes or cancels a previous computation. Partial work must not
-be exposed as a completed CRI guarantee. An older completed result still requires current-use qualification.
-
-**Previously unsuccessful preparation.** A source observation unavailable on one attempt becomes available
-later. The earlier unsuccessful attempt must not be reused as a current absence result.
-
-**Independent reference comparison.** Derive a relation from current lawful source observations without
-assuming a retained CRI result. The independently derived observation must agree with a legally reused
-CRI result under the same Consumer requirements.
-
-**Provenance-only edit.** A change in source location that leaves the producer-owned semantic projection unchanged must
-not become a change in Contract identity. Separate provenance products may still require updating.
-
-## 18.3. Security and Cross-Subsystem Cases
-
-**Candidate authority laundering.** A CRI-derived candidate must remain non-authoritative even if cached in the same
-physical store as Established Material.
-
-**Mismatched generation.** A relation and supporting coverage evidence from incompatible generations must
-not be delivered as a coherent result.
-
-**Unauthorized observation.** A Consumer requiring a narrow relation projection must not obtain unrelated producer
-material through CRI's internal access path.
-
-**Resource stop.** Exhausting a compiler analysis budget must not be converted into `Inapplicable`, an owning Contract
-Refusal, or an established negative judgment.
-
-**Independent domain verification.** Supply CRI with an incomplete candidate view that omits another
-eligible source. A Verifier using independently authorized source observations must detect an unsupported
-completeness claim rather than accept CRI's claim as its only evidence.
-
-**Verification access discipline.** The Verifier must not obtain producer-private material merely because CRI can access
-it internally. If the source Producer lacks a lawful observation sufficient for the desired independent check, the
-Verifier must report the assurance limit rather than invent a stronger guarantee.
-
-**Production check without optional assurance.** CRI must not deliver unsupported attribution or coverage
-evidence when an independent Verifier is not run.
-
-**Upstream producer failure.** A source Producer fails during an otherwise valid relation request. CRI
-must preserve the owning failure without turning the dependent Contract judgment into `Rejected`.
-
-**Direct established relation.** A Consumer obtains an already established relation through its owning
-Producer. The compiler must not require a duplicate CRI Result or a CRI lookup for that consumption.
-
-These cases are obligations for later implementation and QA. This Proposed ADR does not claim that a particular compiler
-currently passes them.
-
----
-
-# 19. Relationship to Existing ADRs and Ownership Transfer
-
-ADR-0063 remains Accepted and unchanged. The compiler preparation allocated to CRI here must be
-compared clause by clause with ADR-0063 before any duplicated implementation wording is removed.
-That comparison must preserve every normative obligation and its discoverable owner; similarly
-named sections alone do not prove a lossless move.
-
-ADR-0063 §8.8 continues to govern newly composed meaning. ADR-0055 §3.4 and ADR-0063 §8.9 still
-require owner-level reconciliation on internal Cross-Core Basis. The inbound-order migration of
-ADR-0048 and the Admission Required Basis in ADR-0065 also remain unresolved.
-
-HIR Candidate observations follow ADR-0071. General legal consumption follows ADR-0075.
-This ADR specializes their use for CRI without amending either Protocol.
-
-
----
-
-# 20. Decisions and Remaining Acceptance Work
-
-The following items record the decision status. Their rules are defined in the cited sections.
-
-## 20.1. Relation-Family Coverage — Acceptance Audit Required
-
-The Relation Inventory covers B+ architecture relations; it is not a CRI ownership register.
-The 19-authority audit is a first pass, not proof of complete 1D coverage. Acceptance requires
-checking each law's actual requirements. Open Governance, Diagnostic, inbound, and Cross-Core
-decisions cannot be counted as CRI use cases (§14).
-
-## 20.2. Compiler-Produced Result Boundary — Decided
-
-The independent Producer boundary is decided in §11 and ADR-0075. Physical representation and
-retention remain Design choices.
-
-## 20.3. Establishment and Mediation Interface — Decided
-
-The existing handoff and Mediation responsibilities of §§9 and 11 are sufficient. Physical APIs
-and scheduling remain Design.
-
-## 20.4. Runtime Relation Assistance — Excluded
-
-Runtime assistance is outside this ADR (§14.6–14.7). Any future extension needs a separate
-architectural decision.
-
-## 20.5. V1 and V2 Guarantees — Decided
-
-The V1/V2 guarantees are fixed in §12. Reuse algorithms and cache layout remain Design.
-
-## 20.6. Security and Resource Boundaries — Assigned
-
-Mandatory production checks are in §10. Independent assurance belongs to Verification.
-Resource safeguards remain with Security and Compiler Design (§16).
-
-
----
-
-# 21. Consequences and Proposed Adoption Boundary
-
-CRI has a defined role from V1 without being a mandatory step for every relation. Its results
-can support multiple owning laws through ADR-0075 without introducing another Contract authority.
-V2 may replace the calculation strategy while preserving the same guarantees.
-
-Final acceptance remains blocked by the incomplete 1D coverage check and the unresolved
-Cross-Core and inbound owner laws (§19–20). Until then, the ADR remains **Proposed**.
