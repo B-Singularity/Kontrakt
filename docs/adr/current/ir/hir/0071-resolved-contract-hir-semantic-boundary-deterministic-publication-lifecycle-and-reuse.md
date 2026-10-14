@@ -781,8 +781,9 @@ Definition determinants are formation law, not generic visible HIR metadata. Mat
 Definition meaning remains in that meaning under its semantic name. The fact that a value was a formation determinant is
 not itself a new HIR semantic field.
 
-Explicit absence is observable only where an owning law makes absence meaningful. HIR does not add one universal
-`absent` field to every semantic subject.
+Each applicable 1D role has one observable selection state at its exact owning scope and role coordinate: the
+selected IDL Binding Candidate Reference or Explicit Absence. This includes Input and Output. Absence records
+non-selection, not the legality of omission, and requires no universal `absent` field.
 
 ---
 
@@ -983,6 +984,11 @@ observation, and must remain complete for that observation. It does not establis
 reopen authored source, repeat 1D authoring refinement, or read hidden mutable state to recover missing candidate
 meaning. Its semantic equality remains producer-owned under Sections 8.4 and 9. A fine-grained projection is not a
 second source of HIR meaning and does not require one compiler-wide query architecture.
+
+The existing Fine-Grained Semantic Projection must completely expose each applicable 1D role's selection from its
+owning HIR subject and exact role coordinate: either the selected IDL Binding Candidate Reference or Explicit Absence.
+A missing Binding Candidate, failed lookup, or unresolved selection does not establish absence. This observation neither
+judges whether omission is legal nor establishes Contract material.
 
 A legal Establishment-facing Protocol view is available only over material that already satisfies the HIR seal,
 recovery, visibility, and snapshot-coherence laws in Sections 4.8, 6, 11, and 13. Ordinary Establishment observation is

@@ -13,12 +13,42 @@ Migration Pending
 - `docs/what-contract-is.md`
 - ADR-0049: Flow Contract Processing — Fact, Invariant, Publication, and Output Presentation
 - ADR-0047: One-Dimensional Contract Presentations, Pipeline-Slot Selection, and Backend Realization Boundary
+- ADR-0063: Contract Establishment, Occurrence, Applicability, and Semantic Dependency
+- ADR-0065: Admission Contract, Continuation Judgment
+- ADR-0066: Canonicalization Contract, Stable Representative, Canonical Bytes, and Explicit Omission
+- ADR-0067: Lowering Contract, Explicit Source-to-Operation Relation, Compiler-Derived Realization, and Core Entry
+  Boundary
+- ADR-0071: Resolved Contract HIR Semantic Boundary
+- ADR-0075: Compiler Result Ownership and Legal Consumption
+- ADR-0077: Contract Relation Infrastructure
 - ADR-0046: IDL-First Interface Contract Frontend and Retained Generated Host Interface and Realization Port Boundary
 - ADR-0045: Contract Pipeline Package Architecture, Explicit State-Machine Axis, and Compiler Realization Mirror
 - ADR-0043: Contract Graph Canonicalization, Sealed Structural References, and Incremental Identity Derivation
 - ADR-0041: Stable Metadata Identity, BLAKE3, HID, and Protocol-Owned Interning
 - ADR-0040: Deterministic Frozen Acquisition Pipeline, Explicit Readiness, and Memory-Disciplined Publication
 - ADR-0039: Adapter-Neutral Metamodel Acquisition, Frozen Fact Image, and Backend-Handle Erasure
+
+---
+
+## Amendment — Explicit Absence and Inbound Composition (2026-10-15)
+
+Every applicable 1D role, including Input, Admission, Canonicalization, Lowering, and Output, may be
+selected or explicitly absent at the scope owned by its selection law (ADR-0046/0047). An Interaction
+remains identifiable without a selected role. The owning composition law, not absence itself, determines
+whether the resulting flow satisfies its requirements. An absent role has no fabricated Definition,
+Occurrence, judgment, successful material, or refusal.
+
+This ADR retains ownership of the inbound-airlock composition. Its use is identified by the exact
+Dependent Application and owning composition law, with a law-local use coordinate only when required to
+distinguish independent uses. No optional Input, Admission, Canonicalization, or Lowering Binding is the
+identity of the whole Composition. The use is identifiable before the Composition result exists.
+
+The detailed 1D processing profiles were extracted into ADR-0064 through ADR-0067. Their current
+Accepted laws prevail over the earlier profile descriptions retained in §5 and the historical
+implementation details elsewhere in this Migration Pending ADR. In particular, ADR-0066 §4.5 places
+selected Canonicalization before Admission; ADR-0065's `presentedInput` Basis and the remaining full
+composition migration are not settled here. ADR-0067 removes the user-supplied Lowering port. Existing
+historical descriptions are preserved for a separate migration, not re-established by this amendment.
 
 ---
 
@@ -32,24 +62,25 @@ does not own contract meaning.
 
 ADR-0047 fixes the selection boundary after that.
 
-The operation manifest selects operation-local one-dimensional roles through explicit slots. A source does not declare
-itself to be `Input`, `Admission`, `Canonicalization`, or `Lowering`. The operation supplies the boundary, and the slot
-supplies the role. Lowering is one of the two V1 coordinate-relation exceptions fixed by ADR-0046 and ADR-0047: its
-manifest slot selects the role, while one sibling `lowering` declaration inside the same operation states the exact
-source-to-target relations.
+The operation manifest provides explicit authoring positions for operation-local roles. Resolution preserves
+each role's selection or Explicit Absence at its owning scope. A source does not declare itself to be
+`Input`, `Admission`, `Canonicalization`, or `Lowering`; host structure cannot supply a missing
+role. A selected Lowering declaration states its exact source-to-Operation relation under ADR-0067.
 
 A single `.kontrakt` interface scope may declare a closed set of operations that enter the same machine. `Policy`,
 `Governance`, `Budget`, `Capacity`, `facts`, and `invariants` are bound once at that enclosing scope. The resource
 contracts coordinate decisions and finite resources shared among those operations. `facts` declares the closed Fact
 vocabulary of the core, and `invariants` declares its standing Fact laws. None is repeated as an operation-manifest
-slot. Each operation manifest continues to declare its own flow, failure, movement, version, and diagnostics.
+slot. Each operation manifest declares its applicable flow, failure, movement, and diagnostics selections.
+Version belongs to its owning Contract under ADR-0053, not to a separate 1D manifest role.
 
 The remaining problem is processing.
 
-The four contract roles addressed here form the inbound airlock of the machine. `Input` establishes judgeable immutable
-boundary presentation. `Admission` decides whether that presentation may continue. `Canonicalization` optionally
-produces its stable representative under a selected equivalence law. `Lowering` removes external-presentation authority
-and forms complete candidate material for the ordinary Operation parameter types. The corresponding Fact kinds come from
+When selected, the four roles described here participate in the inbound airlock. `Input` establishes a
+judgeable boundary Presentation. `Canonicalization` may establish a representative before the
+continuation judgment owned by `Admission`. `Lowering` may form candidate Operation-parameter material.
+Their selection is not required merely for the Interaction to exist; any dependent requirements remain
+subject to the owning composition and Establishment laws. The corresponding Fact kinds come from
 the enclosing interface's `facts` declaration, and their standing laws come from `invariants`. Only after the applicable
 judgments and legal movement succeed does the generated machine establish input Fact authority and invoke the ordinary
 user Operation.
@@ -71,30 +102,30 @@ state pipeline
 The contract pipeline defines authority and judgment. The implementation pipeline realizes ratified material and
 performs work behind declared boundaries. The state pipeline declares when each judgment, realization, refusal, seal,
 and handoff is legally available. JVM objects, interfaces, callbacks, and intermediate allocations are frontend and
-implementation mechanisms; they are not the authority model of the machine. Slot-selected Lowering consists of explicit
-immutable IDL relation material plus one replaceable realization behind a generated plain host-language port. The
-relation owns the permission and dependency. The supplied implementation owns physical formation only and must never
-become contract authority.
+implementation mechanisms; they are not the authority model of the machine. Selected Lowering
+owns its declared relation, while the compiler/backend owns physical value formation under ADR-0067. Implementation does
+not acquire the relation's authority.
 
-Input and Admission are a direct contract adjacency in this ADR. Input establishes the immutable presentation that
-Admission judges, so no user implementation transformation exists between them. Input enters the declared external
+Where Input and Admission are selected, Admission must judge the applicable established Presentation,
+not an independently re-read carrier. Selected Canonicalization affects that Presentation under ADR-0066;
+no user implementation may insert an undeclared transformation. Input enters the declared external
 boundary, not the core. Kontrakt neither owns the surrounding user system nor observes or classifies processing that may
 have occurred before the Input presentation was formed; the submitted presentation is the raw Input material of this
 flow.
 
-The `canonicalization` slot is optional in V1. When it is selected, Admission and Canonicalization have no user-supplied
-transformation region: a Kontrakt-owned realization applies the selected Canonicalization law to the same
-contract-visible presentation and produces its stable representative. When it is omitted, Kontrakt inserts no semantic
-Canonicalization Contract, no `ExactCanonicalization`, and no user callback, proxy, or interceptor. The admitted Input
-presentation passes unchanged to the selected Lowering formation.
+Like the other 1D roles, Canonicalization may be Explicit Absence. Its absence does not establish an
+identity representative or insert a user callback, proxy, or interceptor. When selected,
+Canonicalization applies its declared law to the Input Presentation before Admission uses the resulting
+Presentation, as provided by ADR-0066. The exact Admission Basis and selected/absent branch wiring
+remain subject to their owning laws.
 
-In both branches, Lowering is declared through immutable one-to-one coordinate bindings authored in one operation-local
-`lowering` body beside the operation manifest. Each target address begins with an Operation parameter slot and continues
-to one coordinate of that parameter's declared Fact kind. The compiler derives one semantic `LoweringPlan`, generates a
-retained plain host-language realization port, and requires exactly one implementation during machine assembly. It does
-not silently close that port through equal names, equal host types, catalog lookup, or backend convention. The generated
-pipeline invokes the supplied realization, forms complete candidate material, applies the standing judgments selected by
-the resolved Fact kind and movement world, and grants input Fact authority only after those obligations succeed.
+When Lowering is selected, its declared relation uses the applicable selected source and target
+coordinates under ADR-0067. The earlier operation-local `lowering` body describes the original authoring
+surface; its current semantics and compiler-derived realization belong to ADR-0067. Each target
+address begins with an Operation parameter slot and continues to a coordinate of its declared
+Fact kind. The compiler derives the realization permitted by the established relation,
+without a required user-supplied Lowering port. Applicable standing and movement judgments must
+succeed before the corresponding Fact authority is established.
 
 This ADR defines the processing profiles for those four contracts, their relationship to the implementation and state
 axes, and the handoff from untrusted external presentation to explicit immutable core information.
@@ -127,7 +158,8 @@ knows by executing implementation. That is the implicit machine Kontrakt rejects
 Kontrakt therefore needs processing that can:
 
 - accept ordinary external contract evidence;
-- require explicitly formed immutable Input presentation before Admission;
+- require the exact applicable Presentation for any selected Admission judgment, without manufacturing Input when
+  absent;
 - refine external declaration meaning into explicit Kontrakt-owned obligation material;
 - reject unratifiable sources before runtime;
 - refuse malformed or unavailable invocation material before Admission;
@@ -136,16 +168,15 @@ Kontrakt therefore needs processing that can:
 - avoid repeating acquisition, planning, identity, and image work already performed by the existing machine;
 - treat the submitted presentation as the flow's raw Input without inferring or governing any prior external value
   history;
-- permit omission of semantic Canonicalization without inserting an implicit representative contract or runtime hook;
+- preserve Explicit Absence for every applicable 1D role without implicit substitutes, including Canonicalization;
 - preserve a strict boundary between boundary formation, continuation judgment, optional same-shape representative
   production, immutable Lowering formation, core Fact availability, Invariant judgment, state movement, Operation Result
   Material production, and Publication;
 - permit Lowering authors to declare only finite immutable one-to-one bindings from selected Input coordinates to
   coordinates addressed through the selected Operation parameter slots, with no same-name inference, expression,
   callback, lookup, business algorithm, or executable implementation inside the IDL relation body;
-- generate one retained plain host-language Lowering realization port from that relation and require exactly one
-  explicitly supplied implementation, without silently selecting same-type copying, a conversion catalog entry, a naming
-  convention, or backend behavior;
+- derive Lowering realization from the exact established relation under ADR-0067, without inferring missing
+  semantic meaning from types, names, implementation callbacks, or backend conventions;
 - allow ordinary primitive and closed immutable host types to nominate Fact coordinates when they already express the
   required information, without manufacturing Kontrakt-specific core wrappers or a rich object model;
 - derive source-read closure, target coverage, port ABI, candidate sealing, judgment handoff, verification, generated
@@ -164,9 +195,8 @@ The machine must reject as early as possible without moving a later contract's j
 A source declaration may nominate external contract evidence, but only ratified Kontrakt-owned material may receive
 contract authority.
 
-A user must not be required to declare the same contract twice. The operation-local IDL relation is the one Lowering
-contract source. The generated port implementation is a replaceable realization of that declared relation, not a second
-contract declaration.
+A user must not be required to declare the same contract twice. A selected Lowering relation
+is Contract expression; its compiler/backend realization is not another Contract declaration.
 
 The core must not read external DTOs, mutable objects, lazy values, proxies, framework contexts, repositories,
 callbacks, or implementation-owned object graphs in order to discover information. Everything available to the core must
@@ -181,24 +211,23 @@ Fact is information itself. It is not necessarily an implementation result, a do
 entity, or a Value Object. A record-like host declaration may nominate Fact coordinates, but the declaration and its
 object instances do not own factual meaning.
 
-Input presentation must be explicit and immutable before it reaches Admission. Runtime snapshot timing, lazy
+When Input is selected, its Presentation must be explicit and immutable before it is consumed by a
+later judgment. Explicit Absence of Input supplies no substitute Presentation. Runtime snapshot timing, lazy
 materialization, proxy activation, and framework lifecycle must not become hidden Input meaning. Lowering must likewise
 be declared only through immutable finite relation material. The author explicitly binds each target Operation-parameter
 Fact coordinate to exactly one selected Input coordinate, even when their names happen to match.
 
-The selected source and target types may be identical. Lowering does not require a new target type, a new object, or a
-Kontrakt-specific scalar wrapper. Equal host types do not close the realization port implicitly. When the types differ,
-the supplied realization performs the declared representation formation explicitly; the compiler does not infer a
-conversion merely from the type pair.
+The selected source and target types may be identical. Lowering requires no Kontrakt-specific
+scalar wrapper. Equal host types do not supply a missing source-to-target law, and a differing type
+pair does not authorize an inferred conversion. ADR-0067 governs compiler/backend formation.
 
-A supplied Lowering implementation may not become the authority that defines the relation, target participation, factual
-meaning, or establishment. The generated port exposes only the declared realization boundary. The generated machine owns
-stage order, candidate completeness, applicable Invariant and movement judgment, establishment, refusal routing, and the
-handoff to the user Operation.
+A Lowering realization cannot define the relation, target participation, factual meaning, or
+Establishment. The generated machine owns candidate completeness, applicable Invariant and movement
+judgments, refusal routing, and legal Operation handoff.
 
-Input refusal, Admission rejection, selected Canonicalization refusal, Budget or Capacity stop during selected canonical
-production, and Lowering refusal must remain distinguishable because they report different failed obligations. A flow
-that omits Canonicalization has no Canonicalization refusal surface.
+A refusal or rejection may arise only from a role whose judgment is actually entered. Input refusal,
+Admission rejection, selected Canonicalization refusal, a Budget or Capacity stop, and Lowering refusal
+retain their distinct owners. Explicit Absence is none of those outcomes.
 
 The contract, implementation, and state pipelines must remain separate. Completion of implementation work does not grant
 contract authority and does not by itself perform a legal state transition.
@@ -212,63 +241,63 @@ contract authority, factual meaning, or state meaning.
 V1 must not optimize, rewrite, fuse, devirtualize, or remove allocations inside unrelated user-supplied implementation
 code. Such implementation remains an opaque realization region whose legal inputs, visible Facts, possible declared
 Operation Result Material surfaces, failure surface, and state participation are governed by explicit contracts.
-Slot-selected Admission and Canonicalization declarations remain restricted immutable frontend source evidence that
-Kontrakt must refine completely and erase or reject before ContractImage publication. Lowering relation material is
-likewise fully ratified, but its physical representation formation is supplied through one generated port. Kontrakt may
-inspect, devirtualize, inline, specialize, or erase that port only where the closed binding and implementation body
-permit a proven equivalent path; otherwise the explicit call remains.
+Selected Admission and Canonicalization declarations are frontend evidence resolved under their
+own laws. Selected Lowering retains an explicit Contract relation, which the compiler/backend
+realizes under ADR-0067. Optimization may not change any owning judgment or its result.
 
-Kontrakt-owned validation, deterministic planning, generated port and assembly production, automatic test generation and
-execution, state enforcement, diagnostics, cache planning, frozen material, and generated gates remain optimization
-targets and must be implemented to a state-of-the-art performance standard. A rich contract declaration and closed
+Kontrakt-owned validation, deterministic planning, compiler-generated realization, automatic test
+generation and execution, state enforcement, diagnostics, caching, and generated gates remain
+optimization targets. A rich contract declaration and closed
 realization binding expose enough whole-pipeline knowledge for mechanically sympathetic specialization, pass fusion,
 allocation control, structural reuse, and deterministic caching. Any optimization that changes declared meaning,
 observes undeclared implementation state, or weakens determinism is invalid.
 
 ## 4. Decision
 
-ADR-0048 defines four contract processing profiles on the contract axis, while permitting a flow to omit the
-Canonicalization profile in V1. These profiles belong to each operation's inbound flow. The enclosing interface scope
-may declare several operations and binds the shared Policy, Governance, Budget, and Capacity contracts once for that
-closed machine scope:
+ADR-0048 composes the applicable inbound roles for an exact Interaction. The Selection surface
+preserves Selected or Explicit Absence for each role at its owning scope. A role's absence never
+supplies the Basis required by a selected role or by the composition itself. The owning law judges
+whether the declared combination is legal; an invalid combination is not repaired with default
+Contracts or fictitious successful judgments.
 
-```text
-Input
--> Admission
--> Canonicalization, when selected
--> Lowering
-```
+For a flow with selected Input, Canonicalization, Admission, and Lowering, ADR-0066 fixes the
+Canonicalization-before-Admission dependency. If Canonicalization is absent, no canonical result
+exists and the owning composition must determine the direct legal source. Other absent-role cases
+are not implicitly equivalent to an identity stage or a successful no-op.
 
-When `canonicalization` is omitted, the contract-axis handoff is directly from Admission to Lowering. This ordering
-expresses authority handoff. It is not a complete execution pipeline and does not imply that one contract performs the
-implementation work needed to reach the next contract.
+The exact composition use is identified by its Dependent Application and owning composition law.
+If these admit several independent uses, that law supplies a local use coordinate. An optional role's
+Binding Candidate and a not-yet-established Composition Result cannot identify the use. The use's
+identity is separate from its validity. CRI may prepare authorized relation observations under
+ADR-0077 but cannot select roles, establish the composition, or decide legality.
+
+This section defines the logical authority boundary, not a mandatory physical execution order.
 
 The selected flow advances on three parallel pipelines.
 
 ### 4.1. Contract Pipeline
 
-The contract pipeline defines what material may receive authority at each boundary:
+The contract pipeline defines authority only for roles actually selected and entered. One possible
+selected-role path is:
 
 ```text
-explicit immutable boundary presentation
--> Input authority
--> Admission continuation judgment over the same presentation
--> optional canonical-representative authority over the same contract-visible shape
--> Lowering formation obligation
--> sealed boundary Fact material
--> legal handoff into the explicit core machine
+selected Input -> established Input Presentation
+selected Canonicalization -> established representative (when selected)
+selected Admission -> continuation judgment over the applicable Presentation
+selected Lowering -> candidate Operation-parameter material
+applicable Fact / Invariant / movement judgment -> established input Facts
+legal user Operation handoff
 ```
 
-Input and Admission inspect the same formed presentation. When selected, Canonicalization applies a ratified
-representative law to that same contract-visible shape and produces Kontrakt-owned canonical material. When omitted,
-there is no semantic representative-production boundary and the admitted presentation remains the source material for
-Lowering.
+An Explicit Absence is observed in selection, not entered as a stage. No missing role is assigned
+a Definition, Occurrence, refusal, or success result. The exact direct dependencies and required
+Presentation for each selected branch are governed by the owning inbound and 1D laws.
 
 Lowering declares how that boundary presentation may form the ordinary Operation parameter material addressed by its
 one-to-one relation body. Each parameter type resolves to one Fact kind from the enclosing interface's `facts`
 declaration. Lowering does not define an independent Operation Start object, a backend layout, a domain object graph, or
-a Result. The compiler derives the semantic plan and generated port ABI, and exactly one supplied realization forms
-complete candidate material. Fact formation is complete only after the generated machine has verified candidate
+a Result. The compiler/backend realizes the established Lowering relation and forms complete candidate
+material under ADR-0067. Fact formation is complete only after the generated machine has verified candidate
 completeness, applied the applicable interface-level Invariants and movement judgments, established input Fact
 authority, and erased external authority. The state axis governs the legal moment at which that established material
 becomes available to the user Operation.
@@ -281,20 +310,17 @@ syntax, generated machinery, host objects, or backend storage into contract auth
 The implementation pipeline performs the work that contracts intentionally leave open:
 
 ```text
-Input -> Admission:
-    no user transformation region
+Selected Input -> selected Canonicalization, when present:
+    Kontrakt-owned realization produces the representative governed by ADR-0066
 
-Admission -> Canonicalization, when selected:
-    Kontrakt-owned generated realization applies the selected representative law
+Applicable Presentation -> selected Admission:
+    no user transformation; the basis follows the owning composition law
 
-Admission -> Lowering realization, when Canonicalization is omitted:
-    admitted Input coordinates are supplied unchanged through the generated Lowering port
+Admitted Presentation -> selected Lowering, when present:
+    compiler/backend realizes the established relation under ADR-0067
 
-Canonicalization -> Lowering realization, when selected:
-    stable same-shape representative coordinates are supplied through the same generated port
-
-Lowering realization:
-    exactly one explicitly bound implementation forms complete candidate Operation-parameter material
+Absent role:
+    no generated replacement stage, fabricated judgment, or implicit port
 
 Generated judgment and establishment path:
     verifies target completion and declared relation coverage
@@ -308,26 +334,22 @@ Core realization:
     produces its ordinary declared result
 ```
 
-When Canonicalization is selected, a Kontrakt backend generates its realization because the ratified representative law
-fully determines its permitted meaning. That generated code remains implementation and is wrong if it disagrees with the
-canonical law or its canonical byte protocol. When Canonicalization is omitted, no replacement canonical realization is
-generated; the admitted Input is simply the source material of Lowering.
+When selected, Canonicalization has a compiler-owned realization and must preserve its established
+meaning. When explicitly absent, it has no replacement realization or representative judgment. The
+applicable source for each downstream selected role belongs to the inbound composition law.
 
-In both branches, the selected Lowering declaration contains immutable explicit one-to-one coordinate bindings only. The
-bindings do not rely on matching names and contain no conversion implementation. The compiler resolves the exact source
-and target coordinates, derives the fixed `LoweringPlan`, generates one retained plain host-language realization port,
-and closes exactly one supplied implementation into the machine assembly. The implementation may use ordinary reusable
-libraries, but no library, equal type pair, naming rule, classpath discovery, or backend convention selects itself. The
-relation remains contract authority; the implementation remains replaceable boundary machinery.
+A selected Lowering declaration retains the explicit one-to-one source-to-target relation. The
+compiler resolves the coordinates and realizes the established meaning under ADR-0067. No matching
+name, equal type, library, or backend convention may supply an undeclared relation. No user-supplied
+Lowering port is required by the current law.
 
 The internal realization that later consumes Facts may be one function, many functions, an object graph, an AOT plan, or
 another replaceable implementation. Its structure is not the Fact Contract and is not defined by this ADR.
 
 ### 4.3. State Pipeline
 
-The state pipeline runs in parallel with both other axes. It declares when Input formation, Admission judgment,
-Canonicalization, Lowering realization, candidate completion, input Fact establishment, Operation invocation, ordinary
-result availability, result Fact establishment, refusal, and Publication are legal.
+The state pipeline governs when each applicable selected judgment, realization, refusal, and
+handoff is legal. An explicitly absent role provides no state transition or completed stage.
 
 ```text
 implementation completed
@@ -346,9 +368,10 @@ that explicit state machine; neither contract order nor callback completion may 
 
 ### 4.4. Complete Flow Model
 
-The four profiles in this ADR end at established input Fact authority and the legal invocation of the ordinary user
-Operation. They do not define the internal implementation graph and do not require an Operation Start DTO, candidate
-wrapper, or established-Fact wrapper.
+When selected and legally composable, the inbound roles may establish Operation input Facts before
+the ordinary user Operation is invoked. They do not define the internal implementation graph or
+require an Operation Start DTO, candidate wrapper, or established-Fact wrapper. A declared Operation
+and its meaning remain present when some or all inbound roles are explicitly absent.
 
 One interface scope may contain several operation pipelines. Each operation has its own external boundary flow, while
 Policy, Governance, Budget, and Capacity coordinate the finite resources and decisions shared by the closed operation
@@ -357,32 +380,29 @@ once. Operation manifests do not repeat either declaration. Successful Lowering 
 input Facts explicitly addressed through that Operation's parameter slots; it does not divide the shared core or grant
 universal Fact participation.
 
-The inbound airlock is:
+An illustrative path in which Input, Admission, and Lowering are selected is:
 
 ```text
 Untrusted external region
-
-Boundary Input
-    -> Input judgment
-    -> Admission judgment
-    -> optional Canonicalization
-    -> operation-local Lowering relation
-    -> generated retained Lowering port
-    -> exactly one supplied realization
+    -> selected Input judgment
+    -> selected Canonicalization, if present
+    -> selected Admission judgment over the applicable Presentation
+    -> selected Lowering relation and compiler/backend realization
     -> complete candidate Operation input material
-    -> every applicable interface-level Invariant judgment
-    -> every applicable movement judgment
+    -> applicable Invariant and movement judgments
     -> established input Fact authority
     -> ordinary user Operation invocation
 ```
 
+This path is not the minimum Interaction shape. The lawful path with any role absent must be
+determined from its remaining requirements; a missing role does not acquire a bypass judgment.
+
 The explicit core machine is:
 
 ```text
-Established input Facts for the selected Operation
-+ other explicitly bound existing Facts
-+ machine-wide Policy, Governance, Budget, and Capacity material
-+ explicit Version and State material
+Applicable established Operation parameter Facts, if required
++ other explicitly bound established Facts
++ applicable Policy, Governance, Budget, Capacity, Version, and State material
     -> ordinary replaceable user Operation
     -> ordinary declared result material
     -> proposed result Fact of the Operation return kind
@@ -391,9 +411,8 @@ Established input Facts for the selected Operation
     -> established Operation return Fact
 ```
 
-At operation start, Governance resolves the active contract world, Policy supplies the allocation and reaction law,
-Capacity supplies the shared machine walls and the operation's applicable allocation, and Budget supplies the run grant.
-The resulting material is fixed for that run before core work depends on it. Core realization may consume the granted
+Before core work depends on them, the applicable Governance, Policy, Capacity, and Budget
+judgments establish the material required by their owning laws. Core realization may consume the granted
 resources, but it does not define their limits, redistribute them by hidden implementation structure, or create a new
 contract pipeline for each internal step.
 
@@ -412,7 +431,8 @@ successful contractual output merely because a method returned an object. Kontra
 the Fact kind resolved from the Operation return. Every applicable interface-level Invariant and movement obligation
 must succeed before the result receives established Fact authority and the contractual Operation completes.
 
-The outbound boundary is defined by ADR-0049:
+For an Interaction that selects the applicable outward roles, the outbound boundary is
+illustrated below. ADR-0058 and ADR-0059 govern the current Publication and Output laws:
 
 ```text
 established Operation return Fact
@@ -428,10 +448,10 @@ A concrete flow may therefore be:
 
 ```text
 WithdrawInputPresentation
-    -> Admission
-    -> optional Canonicalization
-    -> WithdrawLowering relation
-    -> WithdrawLoweringPort implementation
+    -> Input
+    -> selected Canonicalization, if present
+    -> Admission over the applicable Presentation
+    -> WithdrawLowering relation and backend realization
     -> WithdrawalRequest candidate
     -> WithdrawalRequest Invariant
     -> established WithdrawalRequest Fact
@@ -464,8 +484,9 @@ balance is non-negative` may belong to the standing Invariant for `WithdrawalRec
 that one candidate Fact. Legal account movement belongs to State and Transition. The permitted external response belongs
 to Publication and the outward presentation boundary.
 
-Contracts may exist without an executable Operation implementation, but executable machine publication requires every
-required generated port and Operation realization to be closed exactly once. An interface operation handle selects and
+Contracts may exist without an executable Operation implementation, but executable machine
+formation must close the required Operation realization without inventing one for an absent role. An interface operation
+handle selects and
 coordinates one external contract flow inside the enclosing machine scope; it does not become the source of Fact
 authority and does not prescribe the shape of the internal implementation graph. Internal core work may be split, fused,
 or reordered behind its declared obligations without becoming another IDL operation or recursively opening another
@@ -474,7 +495,9 @@ boundary, not merely because an implementation contains another function or stag
 
 ### 4.5. Common Definition-Time Authority Path
 
-The common contract-definition authority path is:
+The historical definition-time path below describes earlier compiler machinery. Current HIR
+Candidate formation and authority-owned Establishment follow ADR-0071 and ADR-0063; observing
+these results follows ADR-0075. None of those boundaries is created by the absence of a role.
 
 ```text
 slot-selected source coordinate
@@ -484,7 +507,7 @@ slot-selected source coordinate
 -> ratified Kontrakt-owned contract material
 -> ContractImage-visible material
 -> compiler-derived semantic plan
--> generated realization or explicitly bound generated-port realization behind that material
+-> generated realization
 ```
 
 A role does not own a duplicate acquisition engine, closure frontier, cycle table, frozen image, planning lifecycle,
@@ -504,14 +527,22 @@ computation, allocation, normalization, lowering, or global coherence cost.
 
 This authority path is not a mandatory physical runtime schedule. Kontrakt-owned reads, gates, canonical producers,
 Lowering orchestration, candidate-completion checks, establishment, and state checks may be specialized or fused where
-equivalent. The exactly bound Lowering realization may be optimized only where analysis proves an equivalent result;
-otherwise its explicit generated-port call remains. Unrelated user-supplied implementation code remains outside that V1
+equivalent. A selected Lowering realization may be optimized only when its established relation and
+observable behavior are preserved under ADR-0067. Unrelated user-supplied implementation code remains outside that V1
 optimization authority, and factual meaning, refusal attribution, core-entry handoff, and state movement must remain
 explicit.
 
 ---
 
 ## 5. Contract Processing Profiles
+
+The following original profiles describe behavior **when their respective roles are selected**.
+Their detailed authoring, Definition, Occurrence, and realization laws have been extracted into
+ADR-0064, ADR-0065, ADR-0066, and ADR-0067. These retained profiles are migration context and do
+not override those Accepted ADRs. In particular, older assumptions of mandatory Input/Admission,
+full-coordinate Canonicalization coverage, user-supplied Lowering ports, and
+Admission-before-Canonicalization ordering are not current laws. If a role is Explicit Absence,
+its profile is not entered or replaced with an invented successful result.
 
 ### 5.1. Input Contract
 
@@ -2042,7 +2073,8 @@ presentation, repeat Lowering, or derive authority from the erased IDL relation 
 
 ### 6.1. Three-Axis Coordination
 
-The contract, implementation, and state pipelines are parallel authorities over one selected flow.
+The contract, implementation, and state pipelines coordinate one declared flow; their authority
+and available work depend on the roles actually selected.
 
 ```text
 Contract pipeline:
@@ -2060,25 +2092,23 @@ not make its classes or return values contract authority. A successful contract 
 unless the declared transition is legal. A state label does not prove that either implementation work or contract
 judgment occurred.
 
-Input and Admission are directly adjacent because Admission judges the immutable presentation formed under Input without
-an intervening user transformation. When Canonicalization is selected, Admission and Canonicalization likewise have no
-user-supplied transformation region: a Kontrakt-owned realization applies the selected representative law to that same
-contract-visible shape. When Canonicalization is omitted, Admission hands the same presentation directly to Lowering
-without an inserted contract, callback, proxy, or interceptor. Lowering then uses the operation-local immutable
-one-to-one relation, a derived `LoweringPlan`, one retained generated port, and exactly one explicitly bound realization
-to form candidate Operation input material. The generated machine—not the realization implementation—owns completion,
-standing judgment, establishment, and the legal handoff to the user Operation.
+Each selected role receives only the Presentation and Basis permitted by its owning law. Where
+selected, Canonicalization precedes Admission under ADR-0066. With Canonicalization absent, no
+representative is invented; any direct Input-to-Admission relation must meet the owning Composition
+and Admission Basis laws. If Lowering is selected, ADR-0067 governs its compiler-derived value
+formation. None of these selected-role relations authorizes a judgment for a role marked Explicit
+Absence. The generated machine retains completion, judgment, Establishment, and handoff authority.
 
 ### 6.2. Earliest Authoritative Rejection
 
 Each of these contracts stops only the material it has authority to judge.
 
-Input stops material that cannot be formed as the declared immutable boundary presentation. Admission stops formed
-material that may not continue. When selected, Canonicalization refuses admitted material only when its law cannot
-produce one unique bounded representative within its declared domain. A Budget or Capacity wall crossed during selected
-canonical production retains the supplying contract's result. When Canonicalization is omitted, no Canonicalization
-refusal is possible. Lowering refuses when its immutable relation, permitted source material, explicitly bound
-realization, and applicable standing judgments cannot form and establish the selected Operation input Fact material.
+A selected Input may refuse a presentation it cannot establish. Selected Canonicalization may
+refuse under its own law; selected Admission may reject the applicable Presentation; selected
+Lowering may refuse when its obligations cannot be fulfilled. A Budget or Capacity stop remains
+owned by the supplying Contract. An absent role cannot refuse, reject, or establish a result. A
+missing required role or Basis is a separate composition or Establishment problem, not a fabricated
+refusal by that absent role.
 
 A condition must have one owning contract. Executing the same condition in multiple stages is not defensive safety; it
 is duplicate authority and duplicate cost.
@@ -2096,62 +2126,44 @@ Admission rejection:
     but continuation was not permitted
 ```
 
-Admission must not run after Input refusal. Conversely, Input must not reject material merely because Admission will
-later reject it.
+When both judgments are applicable, Admission must not run after Input refusal. Conversely,
+Input must not reject material merely because Admission might later reject it. Neither refusal
+nor rejection is the meaning of an explicitly absent role.
 
 ### 6.4. Optional Canonical Production and Core Fact Entry Authority
 
-When Canonicalization is selected, its production is owned by Kontrakt because the representative law fully determines
-its permitted result. Fact-forming representation remains outside Canonicalization and is declared by Lowering.
+When selected, Canonicalization establishes representative meaning under ADR-0066. Its physical
+realization does not determine the Contract law. When absent, no Canonicalization Definition,
+Occurrence, successful material, or refusal is produced.
 
 ```text
-selected Canonicalization:
-    admitted presentation
-    -> Kontrakt-generated Canonicalization realization
-    -> stable same-shape representative
-    -> exact canonical bytes
-    -> operation-local Lowering relation
-    -> generated retained Lowering port
-    -> exactly one supplied realization
-    -> complete candidate Operation input material
-    -> applicable Invariant and movement judgment
-    -> established input Fact authority
-    -> ordinary user Operation invocation
+Canonicalization selected (where the selected composition is legal):
+    established Input Presentation
+    -> representative established under ADR-0066
+    -> Admission judges the applicable Presentation
+    -> selected Lowering, if required and legal
 
-omitted Canonicalization:
-    admitted presentation
-    -> operation-local Lowering relation
-    -> generated retained Lowering port
-    -> exactly one supplied realization
-    -> complete candidate Operation input material
-    -> applicable Invariant and movement judgment
-    -> established input Fact authority
-    -> ordinary user Operation invocation
+Canonicalization Explicit Absence:
+    no representative judgment or identity substitute
+    -> the owning Composition determines each direct dependent relation
 ```
 
-In the selected branch, Canonicalization owns representative meaning and grants authority to the result produced by its
-generated realization. In the omitted branch, no semantic representative authority is granted and the admitted Input
-remains the Lowering source. Neither branch permits an arbitrary user canonicalizer, proxy, interceptor, or hidden
-transformation stage.
-
-Lowering owns the explicit one-to-one source-to-Operation-parameter-Fact relation in both branches. Its IDL body is
-immutable contract material authored beside the operation manifest. The generated port and exactly one supplied
-implementation form candidate representation. The implementation is wrong if it introduces undeclared meaning, observes
-hidden state, performs business computation, judges an Invariant, moves State, publishes material, or returns candidate
-material that disagrees with the ratified relation and target Fact surface. The generated machine owns completion,
-judgment, establishment, and Operation invocation.
+A selected Lowering Contract owns its explicit relation; ADR-0067 governs compiler/backend
+realization and Operation handoff. The compiler cannot use Canonicalization omission to authorize
+Lowering, produce a missing Input, or fill a Required Basis. The selected roles' judgment and
+refusal attribution are preserved even if their physical execution is fused.
 
 ### 6.5. Cross-Cutting Gates
 
-Policy, Governance, Budget, and Capacity are selected once at the enclosing interface scope for the closed set of
-operations. They coordinate finite resources and decisions shared by those operation pipelines; they are not
-operation-manifest slots and are not attached to internal implementation stages. Their declarations may contain both
-machine-wide walls and explicit operation allocations or run-grant profiles.
+Policy, Governance, Budget, and Capacity use the selection and application scopes fixed by their
+own laws. An enclosing interface may declare shared bindings, but an Interaction does not copy
+those roles into its Operation slots. Their complete selection observations also distinguish an
+exact binding from Explicit Absence. An absent role is not a default allocation or policy world.
 
-At operation start, the applicable Governance world, Policy material, Capacity allocation, and Budget grant are resolved
-and fixed for the run. Version or another cross-cutting contract may also be bound where its own scope requires it. A
-gate owned by any of those contracts may be executed during an Input, Admission, selected Canonicalization, Lowering, or
-core implementation region when the needed evidence becomes available.
+When selected and required, the applicable Governance, Policy, Capacity, Budget, and Version
+material must be established at the scope and moment defined by their own laws. Their gates may
+act during any applicable selected inbound or core region, without creating a judgment for a role
+that is explicitly absent.
 
 Early execution does not transfer authority. A Capacity stop observed during Input remains a Capacity result. When
 Canonicalization is selected, a Budget or Capacity stop observed during generated canonical production remains the
@@ -2163,8 +2175,11 @@ not make the implementation function, stage, or call graph the scope or owner of
 
 This ADR owns the inbound airlock and the handoff into the core.
 
-The core begins only after external-presentation authority has ended and the required input Fact authority has been
-established. Realization inside the core must not reopen the erased external presentation as another source of meaning.
+Core entry requires the established Facts and other complete Basis demanded by the declared
+Operation and applicable composition. If no Input Presentation is selected, the machine must not
+invent or later reopen one. If the applicable laws cannot establish the required Basis, the
+Operation cannot lawfully proceed. Core realization never obtains authority by reopening external
+material.
 
 The user Operation and its internal implementation remain realization rather than Contract authority. Their structure
 does not change the Facts or the Contract world that govern the Operation.
@@ -2176,15 +2191,15 @@ Lowering-specific realization remains governed by ADR-0067.
 
 ### 6.7. Handoff to the Explicit Core
 
-Successful Lowering means that every explicit one-to-one relation has been realized through the exactly bound generated
-port implementation, the candidate Operation input material is complete, every applicable interface-level Invariant and
-movement judgment has succeeded, input Fact authority has been established, and external-presentation authority has
-ended.
+When Lowering is selected, its successful realization means that the declared relation has been
+realized by the compiler/backend under ADR-0067, candidate material is complete, and the applicable
+Fact, Invariant, and movement obligations have been satisfied before the user Operation receives
+established parameter Facts. No such Lowering outcome is created when the role is Explicit Absence.
 
-The legal core-entry handoff invokes the ordinary user Operation with its declared parameter values under established
-input Fact authority. It does not require an Operation Start DTO, candidate wrapper, established-Fact wrapper, or
-Kontrakt-specific parameter type. The implementation receives no Input presentation, Lowering relation table, generated
-port metadata, `LoweringPlan`, or judgment machinery.
+The legal handoff invokes the ordinary user Operation with its declared parameters only after their
+Required Basis has been established. It does not require an Operation Start DTO, candidate wrapper,
+established-Fact wrapper, or Kontrakt-specific parameter type. The implementation receives no
+external Input presentation, Lowering relation table, or compiler judgment machinery.
 
 The core thereafter operates only over explicitly bound established Facts and other declared immutable contract material
 under the machine-wide Policy, Governance, Budget, and Capacity material fixed for the selected operation run. Internal
@@ -2194,56 +2209,30 @@ Presentation. It must not reopen the erased Input or Lowering relation as source
 
 ## 7. Deferred Decisions
 
-This ADR does not freeze the final token spelling, exact public canonical type names, or the exact Java or Kotlin
-carrier syntax for host-facing Input, Admission, or Canonicalization declarations. Lowering relation placement and
-`source -> parameter.coordinate` authoring are fixed here; the exact generated port ABI and assembly API remain deferred
-below.
+The role-selection amendment does not decide which combinations of absent roles are legal, how
+ADR-0065's `presentedInput` Basis is reconciled with ADR-0066's selected-Canonicalization order,
+or how a selected Lowering can operate without a source required by its current law. These belong
+to their owning composition and 1D laws. HIR selection observation belongs to ADR-0071;
+Establishment Basis and failure distinctions belong to ADR-0063; CRI prepares information only
+under ADR-0077. The earlier authoring and user-port decisions retained below are migration history
+where superseded by ADR-0064 through ADR-0067, not new obligations.
 
-It does fix the Canonicalization authoring boundary: V1 may omit the `canonicalization` slot, select one complete flat
-built-in symbol, or select one uninstantiable Java/Kotlin coordinate-law signature declaration. Omission declares no
-semantic Canonicalization Contract and causes no implicit `ExactCanonicalization`, user callback, proxy, interceptor, or
-generated replacement stage. A selected declaration must cover every selected Input coordinate exactly once by parameter
-name and an applicable exact Kontrakt-owned nominal canonical type, without any shape-directed generic or
-nested-signature inference. V1 exposes no canonical-law values, enums, singleton objects, constructors, factories,
-application-defined canonical types, user-authored canonical output presentation, transformation method, `T -> T`
-canonicalizer, or shape mapping. Each public canonical type must be accompanied by API specification and user
-documentation derived from the same versioned law material.
-
-It also fixes the Lowering authoring boundary. The operation manifest's `lowering` slot selects one exact handle. One
-sibling `lowering` declaration inside the same operation contains the complete finite `source -> parameter.coordinate`
-relation body. `facts` and `invariants` remain enclosing-interface declarations and are not repeated in the manifest or
-the Lowering body. Every target coordinate formed by the inbound airlock is bound to exactly one selected Input
-coordinate, even when names or host types are equal. Each Input coordinate may appear in at most one binding. V1 permits
-no `1:N` or `N:1` contract-visible relation and no same-name inference.
-
-Every selected Lowering declaration generates one required retained plain host-language realization port. Exactly one
-implementation is supplied during machine assembly. Equal source and target types, a conversion catalog, a naming
-convention, classpath contents, or backend support do not close the port implicitly. The implementation may use ordinary
-libraries to realize the declared representation formation, but it may not perform repository lookup, environmental
-resolution, business computation, Invariant judgment, State movement, or Publication.
-
-The exact generated port method decomposition, result carrier, declared-failure encoding, and assembly API remain
-backend/API decisions. Whatever form is selected must expose only the declared source material and target candidate
-surface, preserve the one-to-one relation, permit exact implementation binding without runtime discovery, and remain
-ordinary retained Java or Kotlin source.
-
-The compiler derives the semantic `LoweringPlan`, port ABI, source-read closure, target-completion checks, judgment and
-establishment handoff, verification, tests, diagnostics, cache plan, and optimization opportunities. It does not infer
-or own the supplied conversion implementation. A backend may inline or erase the closed port only when equivalent
-behavior is proven; otherwise the explicit implementation call remains.
+This ADR does not fix the source grammar, coordinate-coverage rule, or realization ABI of an
+individual 1D Contract. ADR-0064 through ADR-0067 own those details. In particular, the earlier
+requirement for full-coordinate Canonicalization coverage and a user-implemented Lowering port has
+been superseded. The explicit one-to-one Lowering relation and the prohibition on inferred
+source-to-target meaning remain governed by ADR-0067. The original detailed decisions are retained
+in §5 as migration history, rather than repeated as current obligations here.
 
 This ADR does not define the complete authoring surface for additional Fact participation, Operation Result Material,
 result-side Change formation, Publication, or Output Presentation. It fixes the inbound airlock, the ordinary Operation
 parameter handoff, and the fact that the core may depend on explicitly established immutable information rather than
 hidden object state.
 
-It does not define the complete state and transition sets of the three-axis machine. State-machine manifests,
-cross-contract movement, diagnostic evidence production, retention, failure representation, and Version remain
-operation-flow decisions that must be designed across the complete flow rather than independently inside one processing
-profile. Policy, Governance, Budget, and Capacity are instead bound once at the enclosing interface scope for the closed
-set of operations because they coordinate shared finite resources. Their declarations may include machine-wide walls and
-explicit operation allocations or run-grant profiles, but their complete processing languages remain outside this ADR.
-They are not operation-manifest slots and do not acquire authority from implementation-stage placement.
+It does not define the State and Transition sets, cross-contract movement, diagnostic retention,
+failure representation, or Version law. Policy, Governance, Budget, and Capacity retain the
+selection and application scopes defined by their own ADRs. None obtains authority from an
+implementation stage or an enclosing Operation manifest position.
 
 It does not define a projection callback SPI. Mutable and framework-owned objects must be converted before Input through
 an explicit adapter or presentation-formation operation, but the final adapter, factory, builder, or generated formation
@@ -2253,12 +2242,10 @@ require no second presentation declaration.
 It does not select the final internal IR classes or backend data structures. Those implementations must realize the
 authority and handoff fixed here without becoming new sources of meaning.
 
-Allocation elimination, callback removal, cross-region fusion, and optimization of arbitrary unrelated core code are
-intentionally outside V1. Kontrakt may optimize the compiler-derived `LoweringPlan`, generated port call path,
-candidate-completion and establishment machinery, cache plan, and backend layout because their meaning is derived from
-ratified contract material. It may optimize the supplied realization body only where analysis proves an equivalent
-result. A later version may investigate a broader implementation IR or restricted frontend for core realization, but
-that work requires separate authority, analysis, and ADRs.
+This ADR does not authorize arbitrary transformation of user Operation code. The compiler may
+optimize the realization of established Contract meaning while preserving its observable judgment,
+failure attribution, and legal handoff. Realization-analysis and backend details belong to their
+respective ADRs.
 
 ## 8. Consequences
 
@@ -2273,30 +2260,29 @@ coordinate shape is refined into contract material, while constructor execution 
 implementation artifacts. Other ordinary Kotlin and Java carriers require explicit presentation formation before the
 Input boundary.
 
-Input and Admission share one immutable presentation and require no user transformation between them. Kontrakt treats
-that submitted presentation as the flow's raw Input and makes no claim about values or processing that may have existed
-before submission. After Admission, a selected Canonicalization law produces the stable representative and canonical
-bytes. If the `canonicalization` slot is omitted, no semantic canonicalization occurs and the admitted presentation is
-supplied unchanged to Lowering.
+When Input is selected, its Presentation retains the distinction between external material and
+Contract-owned judgment. When Canonicalization is selected, ADR-0066 establishes the applicable
+representative before Admission judges the resulting Presentation. If Canonicalization is Explicit
+Absence, no representative is invented; the legal direct dependencies remain owned by Inbound
+Composition. Absence of Input or Admission likewise creates no substitute value or successful
+judgment.
 
-In both branches, one operation-local sibling Lowering declaration provides explicit one-to-one
-Input-to-Operation-parameter-Fact coordinate bindings. The compiler derives one semantic `LoweringPlan` and one retained
-plain host-language port; exactly one implementation is supplied explicitly. Equal coordinate names or equal host types
-create no implicit binding or copy. Catalog lookup, naming convention, and backend support do not close the port. The
-generated machine owns candidate completion, standing judgment, establishment, and Operation invocation.
+When Lowering is selected, its explicit one-to-one relation governs the applicable source and
+Operation-parameter-Fact coordinates. Equal names or host types create no hidden binding. The
+compiler/backend realizes the established relation under ADR-0067; no user Lowering port is
+required. An absent Lowering creates no candidate Fact or successful judgment.
 
-Invalid or unratifiable material stops before later work pays its cost. Input formation failure does not reach
-Admission. Admission rejection reaches neither selected canonical production nor Lowering realization. When
-Canonicalization is selected, its refusal or an attributed Budget or Capacity stop during canonical production does not
-enter Lowering. When it is omitted, an admitted presentation proceeds directly to the explicitly bound Lowering
-realization behind the generated port. Lowering refusal means that no complete candidate input Fact can be established
-for the selected Operation.
+Invalid or unratifiable material stops under the earliest authority actually reached. Input
+refusal, Canonicalization refusal, Admission rejection, Lowering refusal, and cross-cutting stops
+retain their different owners. An explicitly absent role neither refuses nor succeeds. If the
+composition requires an absent role, that requirement must be judged by its owner rather than
+converted to a fabricated role outcome.
 
-Successful Lowering completes the selected operation's inbound airlock and invokes the ordinary user Operation with
-established input Fact authority attached outside the host value representation. An enclosing interface may expose
-several operation pipelines, but their successful Lowering handoffs enter the same explicit core under the shared
-machine-wide Policy, Governance, Budget, and Capacity contracts. The implementation sees ordinary Java or Kotlin
-parameters and no external presentation, candidate wrapper, established-Fact wrapper, or Kontrakt orchestration. Result
+When Lowering is selected and succeeds, the generated machine may hand established
+Operation-parameter Facts into the core after all applicable judgments. Other legal core-entry
+paths, if any, require their own Complete Basis under the owning composition law. The
+implementation sees ordinary Java or Kotlin parameters and no external presentation, candidate wrapper, established-Fact
+wrapper, or Kontrakt orchestration. Result
 Fact establishment, movement, Publication, and Output Presentation remain outside this ADR. Internal functions, objects,
 stages, and call graph remain implementation and do not become nested IDL operations.
 
@@ -2304,18 +2290,14 @@ Fact richness no longer depends on a rich object model. Ordinary primitives and 
 Fact coordinates when they preserve the required information. The Fact Contract, not a class constructor, method, custom
 equality implementation, Value Object name, or backend layout, owns factual meaning.
 
-Canonicalization authoring exposes no executable law API. Users place only Kontrakt-owned nominal canonical type names
-in an uninstantiable coordinate signature, while the API specification and user documentation explain the meaning of
-each name. The frontend resolves exact symbols, erases the host signature, and grants authority only to the resulting
-flat versioned law material.
+Canonicalization authoring supplies declarative law selection rather than a user-supplied
+canonicalization implementation. Its current built-in, coordinate-selection, and composition
+rules belong to ADR-0066 and ADR-0076, not to the earlier flat signature restrictions in §5.
 
-V1 leaves arbitrary core implementation opaque and does not optimize its callbacks, allocations, dispatch, control flow,
-or effects. The Lowering relation body contains no implementation, while its generated port closes exactly one
-explicitly supplied realization. Kontrakt owns the relation plan, port ABI, assembly, candidate-completion checks,
-judgment handoff, and establishment machinery. It may devirtualize, inline, specialize, or erase the supplied port only
-when equivalence is proven; otherwise the ordinary adapter call remains. This preserves implementation replaceability
-and Kontrakt removal while still enabling pass fusion, direct layout generation, structural caching, allocation control,
-and other SOTA-grade specialization.
+V1 does not acquire Contract authority over arbitrary user Operation code. Selected Lowering
+contains declarative relation material only, and ADR-0067 assigns its realization to the
+compiler/backend. Kontrakt may specialize that realization while preserving the established
+relation, candidate completeness, refusal attribution, and legal Operation handoff.
 
 Kontrakt also derives verification, automatic tests, diagnostics, deterministic planning, state enforcement, frozen
 material, generated gates, caching, and publication control from the same explicit contract source. The existing frozen
