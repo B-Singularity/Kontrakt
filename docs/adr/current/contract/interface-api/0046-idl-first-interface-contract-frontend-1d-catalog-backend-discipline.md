@@ -41,6 +41,10 @@ interface itself and is implemented by Kontrakt backend realization.
 The one-dimensional ADRs own their individual Contract meaning and authoring forms. This ADR owns the interface-level
 frontend split and the generated host boundaries.
 
+The 2026-10-14 revision removes mandatory Input and Output bindings. It preserves Explicit Absence in 1D role selection,
+separates HIR candidates (ADR-0071) from Establishment (ADR-0063), and leaves the legality of each absence to its owning
+Contract laws.
+
 ---
 
 ## 1. Context
@@ -50,19 +54,20 @@ Kontrakt is moving from a test-framework-shaped system toward an explicit contra
 `What Contract Is` places contract authority outside host-language implementation mechanics. The frontend must preserve
 that boundary while remaining small enough for ordinary use.
 
-The frontend has two jobs. It makes the contract machine visible to the user and lets Kontrakt lower that surface into
-canonical material. It also turns open-ended system design into a finite set of visible questions. Users declare the
-answers they know. Kontrakt owns the machine-facing representation and the verification, testing, enforcement,
-diagnostic, realization, and optimization consequences that those answers permit.
+The frontend has two jobs. It makes the contract machine visible to the user and resolves authored declarations into
+HIR candidates. It also turns open-ended system design into a finite set of visible questions. Users declare the
+answers they know. Owning Contract laws establish meaning from valid candidates. Kontrakt owns the machine-facing
+representation and the verification, testing, enforcement, diagnostic, realization, and optimization that established
+meaning permits.
 
 The key correction is this:
 
 ```text
 IDL interface
     = closed external Interaction surface
-    + closed Operation handles
-    + required Input and Output Presentation bindings
-    + selected shared, standing-core, operation-local, and movement bindings
+    + closed Operation handles and signatures
+    + explicit role selection at each applicable owning scope
+    + selected bindings or Explicit Absence for each applicable 1D role
 
 selected one-dimensional Contract
     = declarative Contract expression
@@ -72,21 +77,21 @@ Operation
     = the user-supplied business realization boundary
 ```
 
-A method name alone is only an operation handle. The external callable surface becomes a Kontrakt interaction when the
-IDL binds that handle to the applicable boundary presentations and other selected Contract material. The Operation
-signature separately states the ordinary host values that the user business realization receives and the candidate
-result material it returns.
+A method name alone is only an operation handle. The IDL declares Interaction and Operation surfaces independently of
+Input or Output selection. Resolution forms their exact semantic subjects and preserves role selection at each owning
+scope. An absent boundary role neither erases an Interaction nor supplies a substitute Contract. The Operation signature
+separately declares the host values received by user business code and its candidate result.
 
 When selected, shared `Policy`, `Governance`, `Budget`, and `Capacity` contracts are bound once at the enclosing
 interface scope. `Facts` and `Invariants` are declared once for the same explicit core. Operation-local slots bind the
 additional obligations required by that operation.
 
-The slot declaration does not create a user callback boundary. The selected Contract is source evidence. Kontrakt
-resolves it into authoritative Contract material and realizes the required judgment or material movement through the
-compiler and backend.
+The slot declaration does not create a user callback boundary. A selected Contract declaration is source evidence.
+Resolution forms HIR candidates; only the owning Contract laws establish their authority. Kontrakt realizes the
+established judgments and material movement through the compiler and backend.
 
-This ADR decides how that interface is authored, what generated host surfaces users receive, which generated surface a
-user implements, and where authority moves after resolution and establishment.
+This ADR decides interface authoring and generated host boundaries. It preserves the distinctions needed by HIR and
+Establishment without transferring authority between Contracts or defining their judgments.
 
 ---
 
@@ -106,19 +111,23 @@ a compiler to police the drift.
 Annotation carriers and string references fail for different reasons. The first routes the manifest through host runtime
 type handles. The second hands meaning to lookup rules.
 
-There is another boundary problem. The values seen outside the machine are not the same authority surface as the values
-seen by the user Operation. External software supplies an Input Presentation. The Contract machine must judge and refine
-that material before the Operation may receive established core material. A successful Operation return is likewise
-candidate result material rather than an Output Presentation merely because a host method returned it.
+There is another boundary problem. The external Interaction and user Operation have different authority boundaries.
+When Input is selected, external software supplies its Presentation; applicable Contract judgments must establish the
+material passed into the Operation. When Input is explicitly absent, Kontrakt does not invent an Input Presentation.
+A successful Operation return is candidate material, not an Output Presentation merely because a host method returned
+it, even when Output is explicitly absent.
 
 Using one generated host interface for both sides collapses those boundaries:
 
 ```text
-outside Input Presentation
+selected external Input Presentation
     != Operation parameter Fact material
 
 Operation return candidate
-    != outward Output Presentation
+    != selected outward Output Presentation
+
+Explicit Absence of Input or Output
+    != absence of Interaction or Operation
 ```
 
 Generating user implementation interfaces for each selected one-dimensional Contract is also wrong. It turns declarative
@@ -142,9 +151,9 @@ absence, and let the author strengthen the machine by answering additional quest
 The frontend must keep the contract interface and every selected shared, contract, and movement binding visible in one
 authored surface without requiring every available position to be filled.
 
-The interface must distinguish the external interaction boundary from the user Operation realization boundary. Input
-Presentation and Output Presentation belong to the external surface. Established Operation parameter material and
-Operation result candidate material belong to the user realization surface.
+The interface must distinguish the external Interaction boundary from the user Operation boundary. Selected Input and
+Output Presentations belong to the external surface; their Explicit Absence does not erase either boundary. Established
+Operation parameter material and Operation result candidates belong to the user realization surface.
 
 The generated external interface must preserve the IDL interface name. External application code should depend on that
 interface rather than on a second generated `Interaction` type.
@@ -153,20 +162,22 @@ The generated Operation surface must remain ordinary JVM/Kotlin code so user bus
 host-language tooling. The generated surface is realization ABI, not Contract authority.
 
 A selected one-dimensional Contract must not require a user implementation merely because runtime work is necessary. The
-declaration supplies semantic authority. Kontrakt supplies the compiler/backend realization. If the declared Contract is
+declaration supplies candidate meaning to be judged by its owning law. Kontrakt supplies the compiler/backend
+realization. If the declared Contract is
 not sufficiently closed to determine a valid realization under its own law, compilation must reject the definition or
 the Contract language must be extended. A hidden mapper, validator, policy callback, or framework convention must not
 fill the gap.
 
-The slot board must guide authoring. Each slot must present one bounded design question, preserve unanswered positions
-as explicit absence, and let Kontrakt derive only the verification, tests, enforcement, diagnostics, realization, and
-optimization supported by the answers actually declared.
+The slot board must guide authoring. Each slot presents a bounded design question and preserves explicit nonselection
+without confusing it with unresolved declarations. Kontrakt derives only the verification, tests, enforcement,
+diagnostics, realization, and optimization supported by established meaning.
 
 The vocabulary must come from the Kontrakt pipeline. Stage names carry the judgment role, so Design-by-Contract terms
 are not the primary frontend model.
 
-References must begin as source symbols and end as Kontrakt-owned material. Runtime host handles and string lookup
-cannot own identity.
+Source symbols resolve into exact semantic references in Visible HIR. HIR candidates are distinct from established
+Contract references. Runtime host handles, generated API symbols, physical indexes, and string lookup cannot own
+semantic identity.
 
 V1 must stay narrow. The interface IDL owns interface shape, Operation signatures, slot selection, and explicit
 bindings. Each one-dimensional ADR owns the authoring grammar and semantic closure of its own Contract. This ADR does
@@ -254,9 +265,10 @@ A `.kontrakt` interface contract is source material. It is not a mirror of a han
 
 Kontrakt compiles that source into two distinct host-facing artifacts.
 
-The first is the external interface. It preserves the IDL interface name. Its operation handle accepts the selected
-Input Presentation and returns the selected outward Output Presentation according to the applicable Output and Failure
-surface.
+The first is the external interface. It preserves the IDL interface name and exposes declared Interaction handles.
+Its host ABI represents the applicable boundary meaning, including Explicit Absence of Input or Output, without defining
+that absence through a host parameter or return type. Selected Presentations and outward Failure handling remain subject
+to their owning laws.
 
 The second is the Operation realization interface. It mirrors the resolved IDL Operation signature. The user implements
 this surface to provide business computation over the material lawfully handed into the Core.
@@ -286,11 +298,12 @@ The Operation implementation receives only the host values that the declared inb
 for that Operation occurrence. Returning a host value does not establish Fact, State, Publication, Failure, or Output
 authority. The returned material is candidate result material until the applicable Contract authorities judge it.
 
-The IDL declares a closed set of interface operations. Each operation binds one `Input Contract` and one explicit Output
-position under the existing Output law. Those boundary declarations are enough to make the external interaction shape
-visible. They do not by themselves guarantee that a complete executable business path exists. Every selected Contract
-and every declared Operation parameter or outward result must satisfy its own dependency and completeness law before the
-machine is valid.
+The IDL declares a closed set of interface operations and their Interaction surfaces. Each applicable 1D role,
+including Input and Output, has an exact selected binding or Explicit Absence at its owning scope. Interaction and
+Operation subjects remain identifiable independently of those selections. Complete selection makes the declared
+boundary visible but does not make every combination legal or executable. Each selected Contract, Operation parameter,
+and declared outward result must satisfy its applicable dependency and completeness laws. The laws requiring a role
+determine whether its absence is legal.
 
 When selected, the enclosing interface binds `Policy`, `Governance`, `Budget`, and `Capacity` once because those
 contracts coordinate the finite resources and decisions shared among its operations. It likewise declares selected
@@ -299,8 +312,8 @@ an operation manifest.
 
 Operation-local slots select the applicable one-dimensional Contract material. The slot is not an implementation hook.
 The source form for each selected Contract is owned by that Contract's ADR. A source may be IDL material or another
-restricted declaration form, but after resolution it becomes Kontrakt-owned Contract material rather than a user
-callback.
+restricted declaration form; resolution creates Kontrakt-owned HIR candidate meaning, not a user callback or an
+established Contract judgment.
 
 References in the IDL are compile-time source symbols, not host-runtime handles or lookup names.
 
@@ -308,7 +321,10 @@ Short form:
 
 ```text
 .kontrakt interface contract
-    -> resolve and establish Contract material
+    -> resolve Interface, Interaction, and Operation subjects
+    -> resolve 1D role selections at their owning scopes
+    -> form valid Resolved Contract HIR candidates
+    -> establish applicable meaning under owning Contract laws
     -> generate external interface with the IDL interface name
     -> generate Operation realization interface
     -> user implements Operation only
@@ -326,9 +342,10 @@ The authored interface contract lives in `.kontrakt` source.
 The IDL interface name is also the name of the generated external host interface. The generated type is an artifact of
 that contract source; it is not a second authored interface and does not create separate Contract identity.
 
-The IDL Operation declaration serves another purpose. Its parameter and result surface describes the business
-realization boundary inside the Contract machine. The generated Operation interface mirrors that resolved signature for
-ordinary host-language implementation.
+The IDL Operation declaration describes the business realization boundary inside the Contract machine. Resolution
+forms its independent nominal Operation, parameter, and result coordinates before Lowering targets them. Their identity
+does not derive from Input or Output selection, host parameter order, or a JVM descriptor. The generated Operation
+interface mirrors the resolved signature for ordinary host-language implementation.
 
 For example, the conceptual distinction is:
 
@@ -415,18 +432,19 @@ public final class CalculateService implements CalculateOperation {
 }
 ```
 
-The user does not construct the inbound `CalculateCommand` merely to call the business implementation. For an actual
-interaction occurrence, Kontrakt receives the actual `CalculateInput`, applies the selected inbound Contracts, forms the
-actual Operation parameter material according to the declared Lowering relation, establishes the required authority, and
-then invokes the user Operation with that actual value.
+The user does not construct `CalculateCommand` merely to call the business implementation. This example selects Input
+and Lowering. Kontrakt receives the actual `CalculateInput`, applies the applicable inbound judgments, and forms the
+Operation parameter material through the declared Lowering relation. Required material must be established before the
+user Operation runs. When Input is explicitly absent, Kontrakt neither invents an Input Presentation nor infers a
+replacement Lowering source. Any required Basis remains subject to its owning law.
 
 Conceptually:
 
 ```text
 actual CalculateInput
     -> Input
+    -> Canonicalization (when selected)
     -> Admission
-    -> optional Canonicalization
     -> Lowering
     -> candidate CalculateCommand
     -> applicable judgment and establishment
@@ -438,6 +456,10 @@ actual CalculateInput
     -> Output
     -> actual CalculateOutput
 ```
+
+This shows a selected Input, Admission, Lowering, Publication, and Output path. When Canonicalization is selected,
+Admission judges the applicable representative-bearing Presentation; when absent, no identity Canonicalization is
+established. ADR-0048 owns inbound Composition, including the exact basis supplied to each selected stage.
 
 The physical backend does not need to emit a source-level `CalculateInteractionMachine` or equivalent orchestration
 class. It may lower the same established Contract path directly into bytecode, static calls, compiler-owned tables,
@@ -456,9 +478,10 @@ meaning. The exact machine-assembly, DI capture, and realization-admission proto
 
 An interface is the software-visible contract presentation for interaction.
 
-A method name is only an operation handle. The IDL gives that handle an explicit external boundary and an explicit
-business Operation signature. Selected contract-axis and movement material then closes the obligations that apply to
-that interaction.
+A method name is only an operation handle. The IDL declares separate Interaction and Operation surfaces; resolution
+forms their semantic subjects independently of optional role bindings. Each applicable role is selected or explicitly
+absent at its owning scope. Selected Contract and movement declarations supply obligations governed by their owning
+laws.
 
 The frontend shape is:
 
@@ -490,8 +513,10 @@ interface contract
             selected diagnostic positions
 ```
 
-The external generated method uses the selected boundary presentations. The generated Operation realization method uses
-the resolved Operation signature. The two surfaces are related by the Contract machine, not by a user-authored mapper.
+Input and Output in this diagram name role positions, not mandatory bindings. A role is selected or explicitly absent
+at its owning scope; interface-scoped selections are not copied into operation manifests. The external generated method
+represents the applicable boundary meaning. The generated Operation realization method uses its independently resolved
+Operation signature. The Contract machine relates these surfaces, not a user-authored mapper.
 
 The operation manifest is a slot board. The slot names on the left are IDL keywords, not user-defined labels. Each slot
 is both a binding position and a bounded design question. The author supplies Contract material on the right when that
@@ -521,24 +546,22 @@ own owner.
 The minimum authoring skeleton is:
 
 ```text
-operation handle
-+ explicit Input position
-+ explicit Output position
-= visible external interaction skeleton
+declared Interaction and Operation surfaces
++ complete 1D role selection at each applicable owning scope
+= visible external Interaction skeleton
 ```
 
-This minimum is an authoring boundary, not permission to bypass the Contracts required by the declared Operation
-signature or outward result.
+This minimum is an authoring boundary, not permission to bypass obligations required by the Operation signature,
+outward result, or another applicable law.
 
-If an Operation parameter must be formed from external Input, the applicable inbound Contracts must lawfully form and
-establish that parameter before user code can run. If an outward result uses Core result material, the applicable
-Publication and Output laws must close before outside software can rely on that result. The compiler validates those
-dependencies rather than assuming that Input and Output alone make every business path executable.
+If an Operation parameter must be formed from external Input, the selected inbound Contracts must lawfully establish
+that parameter before user code runs. Absent Input does not satisfy that requirement or supply another source. When a
+selected Output presents Core result material, the applicable Publication and Output laws must establish outward
+meaning before external reliance. Complete role selection is not Complete Basis or proof of a legal executable path.
 
-Every other position remains explicit Contract enrichment rather than a universal mandatory slot. Selecting a position
-adds the declared Contract material and allows Kontrakt to derive the corresponding machine capability. More declared
-material gives the machine more knowledge, but no position receives authority merely because a backend could guess a
-useful behavior.
+No 1D role, including Input or Output, is universally required merely to declare an Interaction. A selected role adds
+declared Contract material; its actual capabilities depend on lawful Establishment. The owning laws decide whether a
+particular absence is permitted. No role gains authority from a backend guess.
 
 ```text
 more declared contract material
@@ -546,13 +569,15 @@ more declared contract material
     -> stronger generated verification, testing, enforcement, diagnostics, realization, and optimization
 ```
 
-An unselected optional slot lowers to canonical explicit absence. It is not an unresolved reference, an invitation to
-structural inference, or permission to insert a convenient law. A named default may apply only when the authored
-contract explicitly selects that default.
+An unselected 1D role remains Explicit Absence in its owning selection surface. Failed lookup, missing Binding
+Candidate, or unresolved reference does not prove absence. No Definition, Occurrence, default, or inferred Contract is
+established for that unselected role. A named default applies only if explicitly selected; another Contract's Required
+Basis remains its own concern.
 
 The slot system is therefore also an authoring system. Software and tests are often difficult to construct because the
 author does not yet know what must be decided, what may fail, what must always remain true, what movement is legal, or
-what evidence should survive. The board does not merely name mechanisms. Input asks what may appear at the inbound
+what evidence should survive. The board does not merely name mechanisms. A role is first selected or explicitly absent
+at its owning scope; absence does not answer the role's Contract question. Input asks what may appear at the inbound
 boundary. Admission asks whether that presentation may continue. Invariant asks what standing Fact law must hold.
 Movement asks what may happen next. Publication asks which established exit material may receive outward authority.
 Output asks what final outward shape exists. Diagnostics asks what the machine may explain. Bounds asks which explicit
@@ -603,26 +628,27 @@ selected movement material grants no State-Machine authority; Kontrakt does not 
 Selected one-dimensional Contracts enter the implementation axis through compiler/backend realization, not through
 user-supplied per-Contract implementations.
 
-At the authoring surface, the operation manifest may be grouped for readability. `Flow` carries the material path.
-`Movement` carries the state surface. `Bounds` carries the operation's version coordinate. `Diagnostics` carries
-explanation and retention. These names do not create another axis, and `bounds` is not an operation stage. The shared
-`Policy`, `Governance`, `Budget`, and `Capacity` bindings remain at the enclosing interface scope.
+The operation manifest may be grouped for readability. `Flow` presents material roles, `Movement` presents state
+roles, `Bounds` groups applicable bounds, and `Diagnostics` groups explanation and retention. The groups create no
+Contract authority, semantic axis, or processing stage. `Bounds` does not introduce a separate Operation Version or
+repeat the Version belonging to each selected Contract under ADR-0053. Shared `Policy`, `Governance`, `Budget`, and
+`Capacity` bindings remain subject to their owning scope laws.
 
 The stage names used in the contract axis are Contract vocabulary, not a physical schedule. A backend may use any
 equivalent structure as long as the declared obligation remains intact.
 
-Every selected position must satisfy its own applicability and dependency law. Every unselected optional position
-becomes canonical explicit absence before machine realization. The compiler may not infer a Contract, insert a hidden
-default, or claim missing authority.
+Every selected position must satisfy its applicable dependency and applicability laws. Every unselected 1D role,
+including Input and Output, remains Explicit Absence at its owning scope. Selection and the legality of the resulting
+composition are distinct. The compiler cannot infer a Contract, insert a hidden default, or satisfy missing Basis.
 
 ```text
-input        selected
-output       selected or explicitly absent under its owning law
-invariant    unselected
-movement     unselected
+input        selected or Explicit Absence
+output       selected or Explicit Absence
+invariant    selected or Explicit Absence at its owning scope
+movement     selected or Explicit Absence at its owning scope
 ```
 
-Declared absence is Contract material. Hidden absence is not.
+Explicit Absence is resolved selection meaning, not an Established Definition, Occurrence, judgment, or Basis.
 
 ---
 
@@ -685,9 +711,6 @@ Diagnostic Evidence Contract:
 Diagnostic Retention Contract:
     declares what diagnostic evidence may remain after the run, how it is bounded, and what must be discarded
 
-Version Coordinate:
-    declares which contract meaning governed a judgment, material, claim, or evidence
-
 Policy Contract:
     declares the explicit operating world and applicable cross-Contract criteria for the bound interface machine
 
@@ -700,6 +723,10 @@ Capacity Contract:
 Governance Contract:
     declares the applicable selection, scope, binding, validity, and singularity material for the governed machine
 ```
+
+Version is not a separate 1D Contract. Under ADR-0053, each independently versioned Contract owns its Version
+coordinate. The interface manifest does not repeat it; governing Version attribution remains available to later
+judgments, material, claims, and evidence.
 
 The catalog names the obligation kinds that Kontrakt must recognize across frontend, resolution, establishment,
 verification, realization, and backend projection. Later ADRs may refine the exact vocabulary within their own semantic
@@ -730,10 +757,10 @@ interface CalculateContract {
 }
 ```
 
-This is an authoring skeleton. `CalculateInput` and `CalculateOutput` describe the external boundary. `CalculateCommand`
-and `CalculateRecorded` belong to the Operation realization surface. A complete executable machine must still satisfy
-the dependency laws required to form the declared Operation input and establish the declared outward result. The
-compiler does not bridge those domains by shape inference.
+This example selects both Input and Output. `CalculateInput` and `CalculateOutput` describe external Presentations;
+`CalculateCommand` and `CalculateRecorded` belong to the independent Operation realization surface. Neither
+Presentation is universally required. A complete executable machine must still satisfy the laws governing Operation
+parameters and any outward result. The compiler does not bridge those domains by shape inference.
 
 The same operation may be enriched as its requirements become explicit:
 
@@ -750,15 +777,12 @@ interface CalculateContract {
         manifest {
             flow:
                 input             CalculateInput
-                admission         XGreaterThanOne
                 canonicalization  DefaultPrimitiveCanonicalization
+                admission         XGreaterThanOne
                 lowering          CalculateLowering
                 publication       CalculatePublication
                 output            CalculateOutput
                 failure           CalculateFailure
-
-            bounds:
-                version           CalculateContractVersion
 
             diagnostics:
                 evidence          CalculateDiagnostics
@@ -775,7 +799,8 @@ interface CalculateContract {
 This sketch shows the external Input and Output Presentation bindings together with selected machine-wide bindings,
 interface-scoped Fact vocabulary and Invariant laws, and additional operation-local slots. Inside the manifest, the left
 side is the fixed operation-slot vocabulary and the right side is the Contract material bound to each selected slot.
-`flow` is shown as a readable grouping, not as transition authority.
+`flow` is a readable grouping, not judgment order or transition authority. This is one selected-role example, not a
+minimum required selection set; each selected Contract retains its own Version under ADR-0053.
 
 `facts CalculateFacts` declares the Fact vocabulary eligible for establishment in the interface's explicit Core.
 `invariants CalculateInvariants` declares the standing laws that govern applicable Facts in that same Core. Neither
@@ -804,10 +829,9 @@ movement:
     machine        OrderStateMachine
 ```
 
-If no movement region is selected, the compiler lowers canonical absence of declared movement authority. It does not
-infer State from a returned value, method completion, a field named `status`, or backend behavior. An explicitly
-selected
-`Stateless` declaration remains available when its owning State law permits deliberate statelessness.
+If movement is not selected, its Explicit Absence is preserved; no State-Machine authority is inferred from a returned
+value, method completion, a field named `status`, or backend behavior. Explicit `Stateless` remains available when its
+owning State law permits it.
 
 The manifest regions do not change the one-dimensional catalog. Bound presentations remain separate after resolution.
 The interface-level `Policy`, `Governance`, `Budget`, and `Capacity` contracts also remain separate material even when
@@ -834,11 +858,14 @@ application code calls. Kontrakt backend realization connects them through the e
 
 The v1 parser covers only the IDL interface contract subset.
 
-It reads interface shape, Operation signatures, explicit Input and Output position bindings, selected shared `Policy`,
-`Governance`, `Budget`, and `Capacity` references, selected interface-scoped `Facts` and `Invariants` references,
-selected axis entries, IDL-owned one-dimensional declarations such as the current Lowering relation form, slot
-occupancy, source references, and source locations. Resolution records every permitted unselected optional position as
-canonical explicit absence.
+It reads Interface, Interaction, and Operation declarations and signatures; role selections, including absent Input
+and Output; selected shared `Policy`, `Governance`, `Budget`, and `Capacity` references; selected interface-scoped
+`Facts` and `Invariants` references; selected axis entries; IDL-owned 1D declarations such as the current Lowering
+relation form; slot occupancy; and source references and locations.
+
+Resolution preserves complete role selection at each owning scope: exact selected Binding Candidate relations or
+Explicit Absence. It cannot infer absence from failed lookup, incomplete resolution, or a missing Binding Candidate.
+ADR-0071 owns the resulting HIR observation protocol.
 
 The parser does not absorb the source grammar owned by another frontend merely because the Contract is selected from the
 IDL. Restricted host declarations used by current one-dimensional ADRs remain source evidence acquired by their own
@@ -853,11 +880,14 @@ interface notation, not a general programming language.
 
 The generated external interface and generated Operation realization interface are reproducible build outputs.
 
-They must be regenerated from `.kontrakt` source and must not be manually edited. If generated files are committed for
-consumer convenience, the committed files are still artifacts, not authority.
+They are regenerated from resolved `.kontrakt` declarations and applicable selected 1D declarations acquired through
+their owning frontend paths, under established Contract meaning. They must not be manually edited. Committed generated
+files remain artifacts, not authority.
 
-The external interface preserves the IDL interface name. The Operation realization interface is a generated host ABI for
-business implementation. Neither generated surface owns Contract meaning.
+The external interface preserves the IDL interface name. Its ABI represents selected Presentations and Explicit
+Absence without inventing Input or Output Contracts; the host parameter or return encoding is a backend/API choice.
+The Operation realization ABI follows the independently resolved Operation signature regardless of absent external
+roles. Neither generated surface owns Contract meaning.
 
 Selected one-dimensional Contracts do not produce user-owned implementation artifacts merely because the backend needs
 code to execute them. Compiler-generated evaluators, guards, materialization paths, tables, and specialized helpers are
@@ -886,13 +916,16 @@ Publication does not require a user publication adapter. The same rule applies t
 under their own semantics. Physical realization remains replaceable because backend machinery may change without moving
 Contract authority into user code.
 
-The separation also makes the inbound and outward authority boundaries explicit. External Input Presentation material
-must be judged and lawfully formed before the user Operation receives Core material. An Operation return remains
-candidate result material until the applicable Contract authorities establish what may continue and what may leave.
+The separation also makes the inbound and outward authority boundaries explicit. Selected Input Presentation material
+must undergo the applicable judgments before it can supply established Operation parameters. Absent Input does not waive
+required Basis. An Operation return remains candidate material until the applicable authorities establish what may
+continue and what may leave. Absent Output neither establishes outward Presentation nor removes internal judgments.
 
-The slot board still exposes the questions that would otherwise be scattered across implementation, tests, reviews, and
-conventions. Optional positions remain explicit absence where their owning law permits it. The compiler derives only the
-verification, testing, enforcement, diagnostics, realization, and optimization justified by declared material.
+The slot board still exposes questions otherwise scattered across implementation, tests, reviews, and conventions.
+Each applicable 1D role, including Input and Output, is selected or explicitly absent. Owning laws determine when
+absence
+is legal. The compiler derives only the verification, testing, enforcement, diagnostics, realization, and optimization
+justified by established Contract meaning.
 
 The cost is that Kontrakt must own more compiler/backend work. It must generate the external and Operation ABI surfaces,
 resolve every selected one-dimensional Contract, synthesize or lower the corresponding machine realization, verify the
