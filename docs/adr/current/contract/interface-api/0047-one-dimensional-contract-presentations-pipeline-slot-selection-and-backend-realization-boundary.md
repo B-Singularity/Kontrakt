@@ -46,6 +46,9 @@ and no one-dimensional role is inferred from host structure or implementation be
 The detailed source grammar and semantic closure of each one-dimensional Contract remain owned by its current
 per-Contract ADR.
 
+The 2026-10-15 revision extends Explicit Absence to every 1D role, including Input and Output. It separates role
+selection from the legality of omission and aligns frontend resolution with HIR and Establishment.
+
 ---
 
 ## 1. Context
@@ -60,9 +63,9 @@ The one-dimensional catalog has since been split into Contract-specific ADRs. Th
 source grammar, applicability, establishment law, and realization constraints. This ADR does not duplicate those
 semantics. It decides how one-dimensional material receives a role in the enclosing interface and Operation surface.
 
-The Operation is a selectable business-computation handle. It is not itself the one-dimensional pipeline. For an
-Operation, the manifest exposes explicit positions where operation-local Contract material may be bound. Those positions
-are slots.
+The Operation is a declared business-computation handle, not the one-dimensional pipeline. Its manifest provides
+explicit authoring positions for applicable Contract roles. These slots do not by themselves determine each role's
+semantic owning scope.
 
 Not every Contract is operation-local. `Policy`, `Governance`, `Budget`, and `Capacity` are bound at the enclosing
 interface scope under their own laws because they coordinate the interface's closed Operation set. `Facts` and
@@ -82,18 +85,19 @@ Operation. Shape can help once a role is known. Shape cannot choose the role.
 
 The missing mark is already present in the declared machine.
 
-An operation slot marks an operation-local role. An enclosing interface declaration or binding marks an interface-scoped
-role. State movement belongs to the State-Machine Axis because the Interaction Manifest binds the applicable movement
-material, not because a host method changed a field. A Publication declaration receives its role because the declared
-interface binds it under Publication authority, not because a result object can be serialized. A Lowering declaration
-receives its role because the declared Operation binds it as Lowering, not because implementation happens to copy
-matching values.
+A manifest slot names a declared role; resolution preserves its selection at the scope required by the owning law.
+An enclosing interface declaration or binding marks an interface-scoped role. State movement belongs to the
+State-Machine Axis because the Interaction Manifest binds the applicable movement material, not because a host method
+changed a field. A Publication declaration receives its role through its explicit binding under Publication law, not
+because a result object can be serialized. A Lowering declaration receives its role through its explicit binding under
+Lowering law, not because implementation happens to copy matching values.
 
 The mark belongs to the declared Contract machine, not to the user's runtime type.
 
 This gives Kontrakt a practical authoring law without turning the system into a pile of annotations, callbacks, or a
 second implementation wiring language. The author states Contract material in the source form owned by each
-one-dimensional ADR. The interface and Operation surface then bind that material at the explicit scope where it applies.
+one-dimensional ADR. The interface and Operation authoring surfaces bind it for resolution at its applicable owning
+scope.
 
 Selection does not create implementation authority. Once selected, the declaration remains Contract expression. Kontrakt
 resolves it, establishes the applicable Contract meaning, and realizes the required machine behavior. The only user
@@ -122,8 +126,8 @@ different law.
 
 ## 3. Decision Drivers
 
-A one-dimensional role must come from an explicit declaration, slot, or enclosing-interface binding at the scope fixed
-by the owning Contract. It must not come from incidental host form.
+A one-dimensional role selection must be explicit at the scope fixed by its owning Contract. An authoring slot or
+interface declaration may express it; incidental host form cannot.
 
 User-owned source should stay user-owned. Kontrakt may acquire supported declaration evidence from it, but the user
 should not have to reshape ordinary implementation around Kontrakt marker types or callback interfaces.
@@ -131,9 +135,9 @@ should not have to reshape ordinary implementation around Kontrakt marker types 
 A selected one-dimensional Contract is declarative source evidence. It is not a request for the user to implement the
 selected Contract in Java or Kotlin.
 
-Contract authority must not remain in source carriers, helpers, compiler metadata, generated adapters, runtime objects,
-caches, or backend tables. Resolution and establishment move the applicable meaning into Kontrakt-owned Contract
-material under the owning authority.
+Contract authority must not reside in source carriers, helpers, compiler metadata, generated adapters, runtime
+objects, caches, or backend tables. Resolution forms HIR candidates; only the owning Contract judgment establishes
+authoritative meaning.
 
 Physical realization must remain replaceable. Kontrakt may generate evaluators, guards, value-formation paths,
 materialization code, tables, specialized helpers, or other executable structures as long as they preserve the
@@ -187,9 +191,9 @@ Decision: rejected.
 
 ### 4.6. Explicit Contract-scope selection
 
-The operation manifest already provides the right mark for operation-local roles. The enclosing interface provides the
-right mark for standing Core and machine-wide roles. The owning Contract ADR decides what source declaration may be
-bound at that position.
+The operation manifest provides an authoring position for applicable roles. The enclosing interface provides
+positions for its standing Core and shared roles. Resolution preserves each selection at the semantic scope set by its
+owning Contract law, which also controls the permitted source declaration.
 
 After explicit selection, Kontrakt may acquire, resolve, establish, verify, reject, and realize the material under that
 role. No implementation callback is needed merely because the Contract requires executable work.
@@ -202,13 +206,12 @@ Decision: accepted.
 
 Kontrakt will use explicit declared scope as the selection law for one-dimensional Contract presentations.
 
-Operation-local roles are selected through the Operation's declared manifest positions or movement surface. Standing
-Core and machine-wide roles are selected through explicit enclosing-interface declarations or bindings according to
-their owning Contract laws.
+Applicable roles are authored through explicit manifest positions or enclosing-interface declarations. Resolution
+preserves each role selection at its exact owning Interface, Interaction, Operation, or other scope under the relevant
+Contract law.
 
-The interface manifest names a closed set of Operation handles. Each Operation may bind the one-dimensional Contract
-material applicable to that interaction. The enclosing interface binds material whose authority spans the shared Core or
-the closed Operation set.
+The interface declares a closed set of Interaction and Operation surfaces independently of optional role bindings.
+The enclosing interface binds material applicable to the shared Core or closed Operation set under its owning laws.
 
 A presentation is not selected because a host class has an annotation, a marker interface, an inheritance edge, a
 mapping entry, a matching name, or a convenient shape. It is selected because the authored Contract surface explicitly
@@ -217,9 +220,11 @@ binds it at the role and scope where its owning law applies.
 Kontrakt acquires only material reachable from those explicit selections and from references lawfully owned by them.
 Unreferenced user material is ignored as Contract source.
 
-When an owning Contract permits omission, an unselected optional position becomes explicit absence under that Contract
-law. It is not an unresolved reference and it does not authorize structural inference. A default may apply only when the
-authored Contract explicitly selects a default recognized by the owning law.
+Every applicable 1D role, including Input and Output, resolves to an exact selected binding or Explicit Absence at
+its owning scope. Absence records non-selection; its legality belongs to the applicable declaration and composition
+laws. It is not a missing Binding Candidate, failed lookup, incomplete resolution, or satisfied Required Basis.
+No default or inferred Contract fills an absent role. A named default applies only when explicitly selected under its
+owning law.
 
 The source grammar of the selected declaration remains owned by its current per-Contract ADR. This ADR does not require
 Lowering, Publication, Invariant, Admission, Policy, or another one-dimensional Contract to share one physical authoring
@@ -230,8 +235,8 @@ A selected one-dimensional Contract does not create a user implementation interf
 ```text
 selected one-dimensional Contract
     -> acquire supported source evidence
-    -> resolve under the owning Contract law
-    -> establish applicable Contract material
+    -> resolve Definition and Binding Candidates in HIR
+    -> owning Contract judgment and Establishment
     -> compiler/backend realization
 ```
 
@@ -261,8 +266,8 @@ interface CalculateContract {
         manifest {
             flow:
                 input             CalculateInput
-                admission         CalculateAdmission
                 canonicalization  CalculateCanonicalization
+                admission         CalculateAdmission
                 lowering          CalculateLowering
                 publication       CalculatePublication
                 output            CalculateOutput
@@ -271,20 +276,18 @@ interface CalculateContract {
 }
 ```
 
-The example shows selection only. It does not define the source grammar of `CalculateAdmission`,
-`CalculateCanonicalization`, `CalculateLowering`, `CalculatePublication`, or the other selected declarations. Their
-owning ADRs do that.
+The example selects both Input and Output; neither is mandatory for every Interaction. It shows selection, not
+processing order or the source grammar of the selected declarations. Their owning ADRs define that grammar.
 
-It also does not ask the user to implement those names. They are Contract declarations selected into the machine.
+The user does not implement these declarations. They are Contracts selected into the machine.
 
 ---
 
 ## 6. Pipeline-Slot Selection Law
 
-A pipeline slot is a declared position in an Operation's Contract Axis or a corresponding explicit position on the
-State-Machine Axis.
-
-It is not a runtime scheduling statement. It is an operation-local role statement.
+A pipeline slot is an explicit authoring position in the Operation manifest's Contract Axis or the corresponding
+State-Machine Axis surface. It is not a runtime schedule or proof that every role belongs to the Operation. Resolution
+preserves the selection at the owning scope, which may instead be the Interaction or enclosing Interface.
 
 `Policy`, `Governance`, `Budget`, and `Capacity` are not ordinary operation-local pipeline slots. Their applicable
 bindings are made at the enclosing interface scope under their current laws. `Facts` and `Invariants` are also standing
@@ -294,9 +297,8 @@ Input is not Input because a DTO says so. Publication is not Publication because
 is not a Transition because a method rewrites a status field. Lowering is not Lowering because a helper happens to
 convert compatible types.
 
-The Operation identifies the interaction handle. The slot identifies an operation-local Contract role. The enclosing
-interface identifies the explicit shared scope. The selected declaration supplies source evidence under the owning
-Contract law.
+The IDL resolves separate Interaction and Operation subjects. A slot names an authored role, while the applicable
+Contract law fixes its owning scope. The selected declaration supplies source evidence, not established authority.
 
 Several Operation interactions under one enclosing interface may enter the same Core. Internal functions, helper
 methods, stages, or call-graph nodes do not open another IDL Operation or create another slot board. They remain
@@ -336,21 +338,18 @@ realization SPI.
 
 ---
 
-## 8. Canonical Material Law
+## 8. HIR Candidate and Establishment Boundary
 
-Source evidence is not Contract authority merely because it has been selected.
+Selection makes source evidence relevant, not authoritative. Kontrakt resolves that evidence into exact HIR Definition
+and Binding Candidates under ADR-0071. The owning Contract law judges the applicable candidates and establishes
+Contract meaning under ADR-0063. Compiler materialization does not supply authority.
 
-Kontrakt acquires the selected evidence, resolves its symbols and references, verifies the definition-time law owned by
-the Contract, and lowers the result into deterministic Kontrakt-owned material. Establishment and applicability then
-follow the authority law defined by the owning Contract and ADR-0063.
+Identity, ordering, equality, Version, absence, dependency, and failure meaning must not depend on source traversal
+accidents or host runtime mechanics. Source carriers, generated declarations, and backend tables remain
+non-authoritative
+regardless of their convenience.
 
-Identity, ordering, equality, version, absence, dependency, and failure meaning must not depend on source traversal
-accidents or host runtime mechanics.
-
-A source carrier may be pleasant to write. A generated declaration may be convenient to call. A backend table may be
-fast to query. None of them receives Contract authority from that convenience.
-
-The authoritative result is the applicable Contract material established under the owning law.
+The authoritative result is the applicable Contract material established under its owning law.
 
 ---
 
@@ -365,8 +364,8 @@ Instead:
 
 ```text
 declared Contract expression
-    -> resolved Contract material
-    -> applicable establishment
+    -> resolved HIR candidates
+    -> owning judgment and applicable Establishment
     -> compiler-derived realization knowledge
     -> backend executable realization
 ```
@@ -431,11 +430,10 @@ Conceptually:
 
 ```text
 supported source evidence
-    -> explicit slot / declaration / interface binding
-    -> acquisition
-    -> resolution
-    -> deterministic canonical Contract material
-    -> applicability and establishment under the owning law
+    -> explicit authoring and scope-correct role selection
+    -> acquisition and resolution
+    -> visible HIR candidates and complete selection / Explicit Absence
+    -> owning judgment, applicability, and Establishment
     -> compiler/backend realization
 ```
 
@@ -444,21 +442,21 @@ The diagram is not a physical runtime schedule.
 An owning Contract may perform a definition-time judgment, a run-time judgment, material formation, selection,
 accounting, retention, or another obligation. This ADR does not flatten those differences into one evaluator protocol.
 
-`Policy`, `Governance`, `Budget`, `Capacity`, standing `Facts`, and `Invariants` use interface-scoped declaration or
-binding under their current laws. Operation-local flow, movement, bounds, and diagnostic positions use the explicit
-Operation surface where their owners place them.
+`Policy`, `Governance`, `Budget`, `Capacity`, standing `Facts`, and `Invariants` retain their scope under their
+owning laws. Flow, movement, bounds, and diagnostic authoring positions do not override the semantic selection scope
+of any role.
 
 The common rule is narrower: source evidence does not select itself, user implementation does not fill a selected
-one-dimensional Contract, and backend realization cannot change established Contract meaning. Permitted omission is
-closed as explicit absence before realization rather than left for backend convention to fill.
+one-dimensional Contract, and backend realization cannot change established meaning. An unselected role remains
+Explicit Absence; a required but absent role is judged under the law that requires it.
 
 ---
 
 ## 12. One-Dimensional Presentations
 
-ADR-0046 owns the Interface Surface Contract and generated external/Operation host split. The current per-Contract ADRs
-own the detailed meaning below. This section records only the interface-visible obligation catalog needed by the
-selection law.
+ADR-0046 owns the Interface Surface Contract and generated external/Operation host split. The per-Contract ADRs
+own the detailed meanings below. This catalog records interface-visible obligations; §12.15 records Version only as
+a cross-cutting Contract coordinate, not as another 1D role.
 
 ### 12.1. Input Contract
 
@@ -467,14 +465,15 @@ continuation, canonicalize presentation values, form Operation parameter Facts, 
 
 ### 12.2. Admission Contract
 
-Admission declares the continuation judgment over a valid Input presentation. It decides whether that presentation may
-continue beyond the boundary under the selected Admission law.
+Admission owns the continuation judgment over the applicable inbound Presentation. After successful selected
+Canonicalization, it judges the final Presentation supplied by inbound composition; when Canonicalization is absent,
+it judges the Input-established Presentation. Its Required Basis remains governed by its own law.
 
 ### 12.3. Canonicalization Contract
 
-Canonicalization declares an optional stable representative law over the admitted Input presentation. Where selected, it
-owns the permitted equivalence and representative meaning without performing shape-changing Operation parameter
-formation.
+Canonicalization defines and judges the declared representative of an Input-established Presentation. Its successful
+result precedes Admission, and it does not perform shape-changing Operation parameter formation. Omission establishes
+neither an identity law nor a Canonicalization Occurrence.
 
 ### 12.4. Lowering Contract
 
@@ -538,10 +537,11 @@ exists because the machine must be able to account for its own decisions, not be
 Diagnostic Retention declares what diagnostic evidence may remain after the run and under what bounds. Evidence
 existence does not imply retention.
 
-### 12.15. Version Coordinate
+### 12.15. Version Coordinate (Not a One-Dimensional Presentation)
 
-Version declares which Contract meaning governs a judgment, material, claim, or evidence. It is a semantic coordinate,
-not a release-tag convenience.
+Version belongs to each independently versioned Contract Authority under ADR-0053. It identifies the governing
+Contract meaning for a judgment, material, claim, or evidence. It is not a separately selected 1D role or an
+interface-level release tag.
 
 ### 12.16. Policy Contract
 
@@ -589,9 +589,9 @@ No unresolved implementation detail reopens a user implementation port for a sel
 
 One-dimensional Contract selection becomes explicit-scope-centered.
 
-Operation-local roles are selected through the declared Operation surface. Standing Core and machine-wide roles are
-selected through explicit enclosing-interface declarations or bindings under their current laws. Host structure does not
-select the role.
+Applicable roles are authored through declared positions and preserved at their owning semantic scopes. Standing
+Core and shared roles retain their enclosing-interface bindings under their current laws. Host structure does not
+select a role.
 
 The source grammar of each Contract can evolve independently without changing the common selection law. Lowering may use
 its explicit relation form. Publication may use its own positive exposure declaration. Invariant, Admission,
@@ -602,7 +602,8 @@ Selected one-dimensional Contracts remain declaration, not user implementation S
 
 ```text
 user declares Contract meaning
-    -> Kontrakt resolves and establishes it
+    -> Kontrakt resolves HIR candidates
+    -> owning Contract law establishes applicable meaning
     -> compiler/backend realizes it
 
 user implements Operation
@@ -612,13 +613,12 @@ user implements Operation
 This keeps Contract authority out of validators, mappers, publication adapters, framework hooks, and generated callback
 interfaces.
 
-It also makes the interface surface easier to read. The reader can see which Contract questions are answered for the
-shared Core and for each Operation without confusing those declarations with runtime object wiring. A bounded design
-question becomes a declaration or slot question before it becomes a code question. Permitted unanswered positions stay
-visible as explicit absence rather than hidden defaults.
+It also makes the interface surface easier to read. The reader can see selected and explicitly absent roles in their
+owning scopes without confusing Contract declarations with runtime object wiring. An unresolved or incomplete
+declaration is not Explicit Absence.
 
 The author therefore does not begin from a blank set of implementation callbacks. The declared surface shows where
-Contract material may be supplied and which obligations remain absent. Responsibility stays visible without turning the
+Contract material may be supplied and which roles are unselected. Responsibility stays visible without turning the
 slot board into executable wiring.
 
 The cost moves deliberately into the compiler/backend. Kontrakt must be able to realize the executable consequences of
