@@ -40,9 +40,11 @@ judgment language. Internal semantic references, operation profiles, summaries, 
 compiler concerns. The declaration's host type, method body, and generated interface do not independently establish
 Contract authority.
 
-The Admission Authoring API will be documented separately. That document will choose exact Java/Kotlin spellings,
-supported overloads, legal declaration patterns, and user-facing diagnostics. This Design retains the implementation
-requirements and candidate cases needed to make those choices; it does not approve a particular public API.
+The selected Admission source is a Java or Kotlin class declaration identified exactly through IDL. Its methods
+and private constants express one closed Admission judgment; the class is not instantiated as a validator. Section 3.1
+shows the agreed authoring form in both languages. The separate Admission Authoring API Design may specify further
+language-level qualification and diagnostics, but it must not reopen the class-based selection or give method names,
+instances, or host call structure Contract authority.
 
 Admission user authoring is intended to remain Input-shaped whether Canonicalization is omitted, selected on some
 coordinates, or selected throughout the applicable Input. Its exact semantic operand and Basis must follow the governing
@@ -61,10 +63,11 @@ authority to host libraries.
 
 ## 2.1. Exact source subject
 
-Identify the language construct or exact callable and its overload, receiver, argument, value domain, language/platform
-version, and any implicit behavior. A familiar operation name is not a sufficiently exact subject. For an inlined
-helper, include every semantically reachable callee and initializer. Record Kotlin and Java differences when they change
-resolution or execution meaning.
+Identify the exact class selected by IDL before resolving its member declarations. For each contributing language
+construct or callable, record its receiver, arguments, value domain, language/platform version, and implicit behavior.
+Overloaded method names within the selected Admission class are an authoring error, not a dispatch choice. For a private
+helper or closed constant, account for the complete semantically reachable computation. Record Kotlin and Java
+differences when they change resolution or execution meaning.
 
 ## 2.2. Input observation and actual operand
 
@@ -108,56 +111,285 @@ The following inventory provides planning coverage for the frontend and later Ad
 ordinary value-oriented judgment code whose complete meaning can be resolved under ADR-0065; none of the entries grants
 blanket support to every host expression in its category.
 
-| Candidate area                          | Source forms to qualify                                                                     | Main qualification issue                                                                               |
-|-----------------------------------------|---------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------|
-| Root judgment and Boolean control       | One root Boolean result, conjunction, disjunction, finite conditional choices, early return | Preserve reachability, short-circuit semantics, and exactly one Admission result                       |
-| Fixed-width integers                    | Comparisons, arithmetic, bit operations, narrowing, shifts, division                        | Close signedness, widths, overflow, shift rules, division domains, and guards                          |
-| Floating and decimal values             | Arithmetic, comparison, classification, large numbers, decimal values                       | Preserve NaN, infinities, signed zero, raw bits where observable, numeric vs presentation equality     |
-| Closed alternatives                     | Enum-like choices, presence, absence, nullability, closed tagged choices                    | Read only Input-exposed discriminants and payload distinctions                                         |
-| Text, character, and bytes              | Exact comparison, containment, slicing, codecs, Unicode and binary operations               | Fix encoding, position, equality, length, and external semantic profile                                |
-| Closed domain values                    | Temporal values, identifiers, closed references                                             | Determine exact versioned operation meaning and any external semantic material                         |
-| Finite array and Input collection forms | Size, indexed/keyed lookup, containment, quantification, aggregation                        | Respect Input `Sequence`, `Membership`, and `Association` semantics; do not invent order               |
-| Local control and temporary state       | `for`, guarded `while`, branches, fresh accumulators, derived temporary material            | Prove finite progress, non-escape, no Input alias, and deterministic result                            |
-| Helpers and standard-library calls      | Exact-target helpers, selected library operations, locally resolved lambdas                 | Close reachable calls, initialization, captures, dispatch, implicit effects, and platform profiles     |
-| Java Stream and Kotlin Sequence         | Input-derived finite pipelines, filters, mappings, reductions                               | Recognize every stage, eliminate live host pipeline authority, preserve binder invocation and ordering |
-| Patterns and regular expressions        | Matching, finite captures, supported pattern operations                                     | Close pattern syntax, Unicode behavior, capture semantics, finite supported work, and resource risk    |
+| Candidate area                          | Source forms to qualify                                                                              | Main qualification issue                                                                               |
+|-----------------------------------------|------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------|
+| Judgment and Boolean control            | One complete class-declared Boolean judgment, conjunction, disjunction, finite choices, early return | Preserve reachability, short-circuit semantics, and exactly one Admission result                       |
+| Fixed-width integers                    | Comparisons, arithmetic, bit operations, narrowing, shifts, division                                 | Close signedness, widths, overflow, shift rules, division domains, and guards                          |
+| Floating and decimal values             | Arithmetic, comparison, classification, large numbers, decimal values                                | Preserve NaN, infinities, signed zero, raw bits where observable, numeric vs presentation equality     |
+| Closed alternatives                     | Enum-like choices, presence, absence, nullability, closed tagged choices                             | Read only Input-exposed discriminants and payload distinctions                                         |
+| Text, character, and bytes              | Exact comparison, containment, slicing, codecs, Unicode and binary operations                        | Fix encoding, position, equality, length, and external semantic profile                                |
+| Closed domain values                    | Temporal values, identifiers, closed references                                                      | Determine exact versioned operation meaning and any external semantic material                         |
+| Finite array and Input collection forms | Size, indexed/keyed lookup, containment, quantification, aggregation                                 | Respect Input `Sequence`, `Membership`, and `Association` semantics; do not invent order               |
+| Local control and temporary state       | `for`, guarded `while`, branches, fresh accumulators, derived temporary material                     | Prove finite progress, non-escape, no Input alias, and deterministic result                            |
+| Helpers and standard-library calls      | Exact-target helpers, selected library operations, locally resolved lambdas                          | Close reachable calls, initialization, captures, dispatch, implicit effects, and platform profiles     |
+| Java Stream and Kotlin Sequence         | Input-derived finite pipelines, filters, mappings, reductions                                        | Recognize every stage, eliminate live host pipeline authority, preserve binder invocation and ordering |
+| Patterns and regular expressions        | Matching, finite captures, supported pattern operations                                              | Close pattern syntax, Unicode behavior, capture semantics, finite supported work, and resource risk    |
 
 Parallel or potentially open-ended streams are outside the initial V1 coverage unless the same semantic and completion
 guarantees can actually be established. Open recursion and state-dependent loops remain unsupported when the required
 completion proof is unavailable. Supporting an additional ordinary source form later does not itself modify Admission
 meaning; adding an Admission-observable determinant or result requires an owning Contract decision.
 
-## 3.1. Working source example
+## 3.1. Working source examples
 
-The following illustrates a possible frontend acquisition subject, not an approved public API declaration:
+IDL selects one exact class declaration rather than a source file or a named method. The class is an authoring
+container;
+its name and the names of its methods locate source but do not determine Admission Definition meaning. No particular
+method name, including `admit`, is prescribed. Several differently named methods may participate in the same judgment
+as closed private helpers. Reusing a method name within the selected class, including a legal host-language overload,
+is an Admission authoring error. The frontend must resolve one complete judgment from the selected declaration and
+its semantically contributing bodies. It must not choose a method by spelling or source order, nor combine unrelated
+Boolean methods by an invented conjunction.
+
+This Kotlin example uses an ordinary class, an immutable private constant, a private helper, and direct Input reads:
 
 ```kotlin
-package example.calculate
+package example.orders
 
-data class CalculateInput(
-    val x: Int,
-    val limit: Int,
-    val flags: Int,
-)
+data class LineItem(val quantity: Int)
+data class OrderInput(val amount: Long, val limit: Long, val items: List<LineItem>)
 
-object XGreaterThanOne {
-    private const val MINIMUM = 1
-    private const val REQUIRED_FLAGS = 0b0011
+class PurchaseChecks {
+    private val minimum = 100L
 
-    fun admit(input: CalculateInput): Boolean {
-        val requiredFlagsPresent =
-            (input.flags and REQUIRED_FLAGS) == REQUIRED_FLAGS
+    private fun quantitiesValid(items: List<LineItem>): Boolean =
+        items.all { it.quantity > 0 }
 
-        return input.x > MINIMUM &&
-                input.x <= input.limit &&
-                requiredFlagsPresent
+    fun permits(input: OrderInput): Boolean =
+        input.amount >= minimum &&
+                input.amount <= input.limit &&
+                quantitiesValid(input.items)
+}
+```
+
+The corresponding Java authoring form also uses an ordinary class and does not require a static method or explicit
+constructor. The method names differ deliberately: they are not prescribed API entry names.
+
+```java
+package example.orders;
+
+import java.util.List;
+
+record LineItem(int quantity) {
+}
+
+record OrderInput(long amount, long limit, List<LineItem> items) {
+}
+
+class OrderConditions {
+    private final long minimum = 100L;
+
+    private boolean validQuantities(List<LineItem> items) {
+        return items.stream().allMatch(item -> item.quantity() > 0);
+    }
+
+    boolean allows(OrderInput input) {
+        return input.amount() >= minimum
+                && input.amount() <= input.limit()
+                && validQuantities(input.items());
     }
 }
 ```
 
-The frontend would need to resolve the constant values, Input-facing observations, bitwise operation, comparisons,
-Boolean short-circuit behavior, and method reachability. The `object`, method, local variable, and host Boolean remain
-source mechanics. Whether this exact declaration syntax appears in the final API is a separate Authoring API decision.
+A corresponding IDL role selection identifies `PurchaseChecks` or `OrderConditions` in its exact source resolution
+context; these are two independent example declarations, not two members of one Admission Definition. The frontend
+reads the constant and helper bodies without constructing either class. It resolves Input observations and the complete
+Boolean computation, including the collection binder. Java Stream and Kotlin collection syntax remain source evidence;
+their host iterators, lambdas, and instances need not be retained in the realization.
+
+The class cannot inherit judgment behavior, delegate evaluation to another application object, call an external
+callback, or acquire values through a constructor or live initializer. A constant such as `private val minimum = 100L`
+or `private final long minimum = 100L` is allowed because its value can be established from its declaration without
+running an instance. A constructor that logs, reads the environment, or otherwise performs application behavior is not
+an acceptable declaration, even when its effects do not contribute to the displayed predicate. An overload such as a
+second method named `permits` in the Kotlin class is likewise rejected even if its parameter list differs. The same
+restrictions apply to Java methods and constructors. Closed standard-library collection operations are not external
+application callbacks; they remain eligible only when their full meaning and completion are established under Section 2.
+
+## 3.2. Admission user-authoring expression inventory
+
+This inventory spells out the source capabilities that the preceding coverage table leaves implicit. It covers the
+ordinary Java and Kotlin forms needed to express Admission conditions, including the additional collection relations
+under consideration. These are candidate expression forms within the agreed selected-class authoring model, not newly
+established
+Admission operations or an assertion that every listed library overload is implemented. The exact callable, source
+version, legal value domain, and qualification result remain subject to Section 2.
+
+Users read the exact Input-declared field or nested constituent in ordinary source. A Kotlin property access such as
+`input.amount` and a Java record-component access such as `input.amount()` are examples of this authoring convention,
+not mandatory host carrier forms. A getter, method reference, property delegate, or operator overload has no special
+authority and must be resolved when its behavior contributes to the judgment. The authored Input reference does not
+make the Input Definition identity part of the Admission Definition identity. Its legal Observation Requirements and
+actual binding are determined under the owning Contract relations. Neither this inventory nor a matching host type
+establishes that binding.
+
+The following tables describe semantic coverage to qualify, rather than specifying a fixed set of JVM method calls.
+Ordinary alternatives such as direct loops and collection helpers may express the same required judgment; Java and
+Kotlin need not have identical source spellings. Each expression is eligible only if its reachable behavior is closed,
+its required observations are legal, and every applicable Admission judgment completes as required by ADR-0065.
+
+### 3.2.1. Boolean judgments and control flow
+
+| Judgment capability                | Kotlin source candidates                  | Java source candidates                      | Qualification boundary                                                                                  |
+|------------------------------------|-------------------------------------------|---------------------------------------------|---------------------------------------------------------------------------------------------------------|
+| One complete Boolean judgment      | Boolean computation in the selected class | `boolean` computation in the selected class | Establish one complete judgment; class and member names are source selectors, not semantic authority    |
+| Boolean literals and negation      | `true`, `false`, `!condition`             | `true`, `false`, `!condition`               | Exact Boolean value                                                                                     |
+| Conjunction and disjunction        | `&&`, `\|\|`                              | `&&`, `\|\|`                                | Preserve short-circuit reachability and guards                                                          |
+| Boolean equivalence and inequality | `a == b`, `a != b`                        | `a == b`, `a != b`                          | Compare the actual supported Boolean or value relation; reference identity is not Presentation Sameness |
+| Relational comparisons             | `<`, `<=`, `>`, `>=`                      | `<`, `<=`, `>`, `>=`                        | Exact operand domains and comparison law                                                                |
+| Conditional branches               | `if` / `else`                             | `if` / `else`                               | Finite closed paths and reachability                                                                    |
+| Conditional expressions            | `if (c) a else b`                         | `c ? a : b`                                 | Same guard and branch-result meaning                                                                    |
+| Finite alternatives                | `when`, closed `if` chains                | `switch`, closed `if` chains                | A complete, supported choice domain; no open runtime subtype discovery                                  |
+| Early return                       | `return true`, `return false`             | `return true;`, `return false;`             | Early exits contribute only to the one complete Admission judgment                                      |
+| Local immutable values             | `val result = ...`                        | `final` local variables                     | Complete local value meaning; host immutability marking alone proves nothing                            |
+| Local accumulation                 | `var total = ...`                         | Ordinary local variables                    | Fresh, nonescaping state with closed reads and writes                                                   |
+| Finite iteration                   | `for (item in items)`                     | Enhanced `for`, indexed `for`               | Exact finite traversal and legal binder order                                                           |
+| Proven-progress iteration          | Guarded `while`                           | Guarded `while`                             | Completion must be proved from closed material                                                          |
+| Guarded partial expressions        | `if (d != 0) n / d else ...`              | `d != 0 ? n / d : ...`                      | Every reachable partial operation has an established domain                                             |
+
+### 3.2.2. Numeric and bitwise judgments
+
+| Judgment capability                        | Kotlin source candidates                                   | Java source candidates                                  | Qualification boundary                                                                        |
+|--------------------------------------------|------------------------------------------------------------|---------------------------------------------------------|-----------------------------------------------------------------------------------------------|
+| Signed fixed-width values                  | `Byte`, `Short`, `Int`, `Long` expressions                 | `byte`, `short`, `int`, `long` expressions              | Declared width, signedness, overflow, and promotion                                           |
+| Unsigned integer domains                   | `UByte`, `UShort`, `UInt`, `ULong` operations              | Explicit unsigned operations and conversions            | Exact unsigned profile; a host representation is not a new Input Leaf                         |
+| Arithmetic and unary signs                 | `+`, `-`, `*`, `/`, `%`, unary `+` / `-`                   | Same ordinary operators                                 | Overflow, rounding, remainder, zero division, and partial domains                             |
+| Increment and decrement                    | Local `++`, `--`                                           | Local `++`, `--`                                        | Only judgment-local writes with established bounds and completion                             |
+| Bit-level tests and operations             | `and`, `or`, `xor`, `inv`                                  | `&`, `\|`, `^`, `~`                                     | Bit width, signedness, and shift/promotion behavior                                           |
+| Bit shifts                                 | `shl`, `shr`, `ushr`                                       | `<<`, `>>`, `>>>`                                       | Exact shift-distance and signed/unsigned behavior                                             |
+| Explicit conversions                       | `toByte()`, `toInt()`, `toLong()`                          | Casts and exact conversion calls                        | Narrowing, truncation, and range behavior                                                     |
+| Ranges and boundary tests                  | `x in low..high`, direct comparisons                       | Direct comparisons                                      | Endpoints and any constructed range have closed meaning                                       |
+| Minimum, maximum, absolute value           | `minOf`, `maxOf`, `abs`                                    | `Math.min`, `Math.max`, `Math.abs`                      | Exact overload, exceptional domain, and integer-minimum behavior                              |
+| Floating arithmetic and comparison         | `Float`, `Double`, comparisons                             | `float`, `double`, comparisons                          | NaN, infinities, signed zero, rounding, and evaluation order                                  |
+| Floating classification and bit inspection | `isNaN`, `isInfinite`, supported raw-bit calls             | `Float.isNaN`, `Double.isInfinite`, supported bit calls | Preserve exact raw-bit distinctions when the selected law exposes them                        |
+| Large integer and decimal computation      | `BigInteger` / `BigDecimal` methods or resolved operators  | `BigInteger` / `BigDecimal` methods                     | Exact operations, bounds, scale, precision, rounding, and partiality                          |
+| Numeric vs presentation equality           | Qualified numeric comparison or exact component inspection | `compareTo`, `equals`, component access as qualified    | Never substitute host equality for Input Presentation Sameness or a selected numeric relation |
+
+### 3.2.3. Text, characters, and bytes
+
+| Judgment capability                        | Kotlin source candidates                                   | Java source candidates                                     | Qualification boundary                                                           |
+|--------------------------------------------|------------------------------------------------------------|------------------------------------------------------------|----------------------------------------------------------------------------------|
+| Exact text comparison                      | Supported `==`, `compareTo`                                | Supported `equals`, `compareTo`                            | Exact Unicode scalar sequence or separately established relation                 |
+| Emptiness and length                       | `isEmpty()`, `length`, qualified scalar count              | `isEmpty()`, `length()`, qualified scalar count            | Code units, code points, and other length notions are not interchangeable        |
+| Prefix, suffix, and containment            | `startsWith`, `endsWith`, `contains`                       | `startsWith`, `endsWith`, `contains`                       | Exact string/character overload and matching law                                 |
+| Search and position                        | `indexOf`, `lastIndexOf`                                   | `indexOf`, `lastIndexOf`                                   | Exact position unit and not-found result                                         |
+| Slicing and finite character traversal     | `substring`, finite loops, supported code-point operations | `substring`, finite loops, supported code-point operations | Legal positions, bounds, surrogate handling, and scalar interpretation           |
+| Character classification and ranges        | Comparisons, supported `Char` predicates                   | Character comparisons and qualified `Character` methods    | Unicode profile and exact character domain                                       |
+| Case mapping, normalization, and collation | Exact supported conversion/comparison calls                | Exact supported conversion/comparison calls                | Not provided by Input Text sameness; require a resolved, stable semantic profile |
+| Byte sequence length and access            | `size`, `bytes[i]`                                         | `length`, `bytes[i]`                                       | Finite octet domain and supported bounds                                         |
+| Byte sequence equality and slicing         | `contentEquals`, `copyOfRange` as qualified                | `Arrays.equals`, `Arrays.copyOfRange` as qualified         | Content versus host array identity, and exact slice bounds                       |
+| Encoding and decoding                      | Qualified charset/codec calls                              | Qualified charset/codec calls                              | Exact encoding, invalid-sequence behavior, and separately ratified profile       |
+
+### 3.2.4. Presence, closed choices, and nested values
+
+| Judgment capability                  | Kotlin source candidates                          | Java source candidates                       | Qualification boundary                                                                                  |
+|--------------------------------------|---------------------------------------------------|----------------------------------------------|---------------------------------------------------------------------------------------------------------|
+| Direct and nested Input observations | `input.amount`, `input.address.zip`               | `input.amount()`, `input.address().zip()`    | Resolve exact declared coordinate and constituent; accessors are source evidence only                   |
+| Presence and null-like alternatives  | `x == null`, `x != null`, `?.`, `?:`              | `x == null`, `x != null`, guarded access     | Distinguish an Input-declared presence law from absent coordinates or roles                             |
+| Option-like alternatives             | Closed optional-case tests and payload reads      | Qualified `Optional` or closed case access   | Resolve the exact Input case and guard payload reads; do not assume all host option APIs are equivalent |
+| Enum-like closed choices             | `when (status)`, supported enum equality          | `switch (status)`, enum equality             | Only exact declared alternatives; no implicit authority from ordinal or class identity                  |
+| Closed tagged choice                 | Closed `when` or supported type/tag tests         | Closed `switch` or supported tag/type tests  | Resolve to Input-owned discriminant and payload, not runtime subtype discovery                          |
+| Product constituents                 | Nested property reads and comparisons             | Nested record/accessor reads and comparisons | Each member uses its declared presence and value meaning                                                |
+| Arrays and fixed extent              | Indexed access, `size`, finite loops              | Indexed access, `length`, finite loops       | Exact element meaning and established cardinality or extent                                             |
+| Multiple-field conditions            | `a <= b`, conditional checks using several fields | The same value relations through accessors   | Every observation participates in the one Admission judgment                                            |
+
+### 3.2.5. Finite collection observations
+
+| Judgment capability                     | Kotlin source candidates                  | Java source candidates                      | Qualification boundary                                                              |
+|-----------------------------------------|-------------------------------------------|---------------------------------------------|-------------------------------------------------------------------------------------|
+| Cardinality and emptiness               | `size`, `isEmpty`, `isNotEmpty`           | `size()`, `isEmpty()`, array `length`       | Cardinality must be Input-observable                                                |
+| Sequence index and range access         | `items[i]`, qualified `slice` / `subList` | `get(i)`, qualified `subList`, indexed loop | Position is intrinsic only to an Input `Sequence`; bounds must be guarded           |
+| Membership test                         | `contains`, `in`                          | `contains`                                  | Exact Input constituent sameness or explicit derived membership relation            |
+| Association key presence                | `containsKey`, `keys.contains`            | `containsKey`, `keySet().contains`          | Exact Input key relation and absent-key distinction                                 |
+| Association lookup                      | `map[key]`, `getValue` as qualified       | `get`, qualified entry lookup               | Missing key must not be confused with a present null-like value                     |
+| Association value and entry observation | `values`, `entries`, `keys`               | `values()`, `entrySet()`, `keySet()`        | Preserve declared key/value relations and any Input-visible encounter order         |
+| Finite traversal                        | `for (x in items)`                        | Enhanced `for`, indexed `for`               | Source traversal order cannot manufacture Membership or Association order           |
+| First, last, and positional neighbors   | `first`, `last`, index-based reads        | `get(0)`, last-index reads                  | Only an exact semantic or explicitly derived order may support position             |
+| Nested collection traversal             | Nested `for`, nested element access       | Nested enhanced/indexed `for`               | Close every constituent domain, binder, and finite bound                            |
+| Collection equality and relation tests  | Supported value comparisons               | Supported value comparisons                 | Host `equals`, ordering, or hashing does not automatically define Contract sameness |
+
+### 3.2.6. Collection predicates, aggregation, and derived relations
+
+The following inventory includes the additional requested areas: uniqueness, grouping, cross-collection relations,
+pairwise and adjacent-element checks, Map entry relations, and collection matching. Their appearance here makes them
+explicit V1 design candidates. It does not establish a new collection identity, mandatory order, equality law, or
+runtime object representation.
+
+| Judgment capability                     | Kotlin source candidates                          | Java source candidates                                      | Qualification boundary                                                                     |
+|-----------------------------------------|---------------------------------------------------|-------------------------------------------------------------|--------------------------------------------------------------------------------------------|
+| Universal and existential conditions    | `all`, `any`, `none`                              | `allMatch`, `anyMatch`, `noneMatch`, finite loops           | Exact finite domain, binder, and short-circuit meaning                                     |
+| Predicate count                         | `count { predicate }`                             | `filter(...).count()`, finite loops                         | Exact cardinality of qualifying members                                                    |
+| Filtering and mapping                   | `filter`, `map`                                   | Stream `filter`, `map`, finite loops                        | Closed element function, no escaping or live pipeline                                      |
+| Flattening nested finite domains        | `flatMap`, nested loops                           | `flatMap`, nested loops                                     | Finite nested constituents and precise traversal/invocation law                            |
+| Summation and other aggregates          | `sum`, `sumOf`, `minOrNull`, `maxOrNull`          | Primitive Stream `sum`, `min`, `max`, loops                 | Exact arithmetic, empty-domain result, and order dependence                                |
+| General accumulation                    | `fold`, `reduce`, local accumulator               | Stream `reduce`, finite accumulator loop                    | Seed, element order, combination law, and partiality                                       |
+| Average and derived counts              | Qualified `average`, `count`, arithmetic          | Qualified Stream `average`, `count`, arithmetic             | Exact numeric type, rounding, and empty-domain result                                      |
+| Pipeline composition                    | `filter(...).map(...).all(...)`                   | Stream `filter(...).map(...).allMatch(...)`                 | Entire chain is closed; intermediate host collections are not authority                    |
+| Distinct elements and unique keys       | `distinct`, `distinctBy`, distinct-count equality | `distinct`, keyed projection, finite duplicate checks       | Exact equality for constituents or derived keys; hashing cannot silently redefine sameness |
+| Grouping and group-wise conditions      | `groupBy`, `groupingBy`, `eachCount`, group `all` | Qualified `Collectors.groupingBy`, `counting`, loops        | Exact derived key relation, group membership, and per-group aggregation                    |
+| Group-wise totals and bounds            | `groupBy(...).all { ... sumOf ... }`              | Qualified grouping and per-group reductions                 | Preserve numeric law, grouping relation, and finite nested work                            |
+| Cross-collection inclusion              | `containsAll`, `all { it in other }`              | `containsAll`, `allMatch(other::contains)`, loops           | Explicit element relation; two host collection types do not determine it                   |
+| Intersection and disjointness           | `intersect`, `any { it in other }`                | Qualified `retainAll` on fresh local data, membership loops | Exact membership and equality; mutation must remain local                                  |
+| Adjacent-element relations              | `zipWithNext`, indexed-neighbor loop              | Indexed-neighbor `for` loop                                 | Requires Sequence or an exact derived order; preserve pair boundaries                      |
+| Pairwise conditions                     | Nested `all` / `any`, indexed nested loops        | Nested `allMatch` / `anyMatch`, nested loops                | Specify whether identical occurrences and both pair directions are included                |
+| Map-wide key, value, and entry rules    | `keys.all`, `values.all`, `entries.all`           | `keySet`, `values`, `entrySet` loops or Streams             | Key/value binding, missing-key distinctions, and traversal semantics                       |
+| Positional collection pairing           | `zip`, indexed loops                              | Indexed loops, qualified paired traversal                   | Both Sequence domains, unequal-length handling, and exact pairing law                      |
+| Key-based collection matching           | `associateBy`, qualified lookup and `all`         | Qualified `toMap`/lookup, finite matching loops             | Explicit match-key equality, duplicate-key policy, and missing match behavior              |
+| Derived ordering and sorting            | `sorted`, `sortedBy`, `sortedWith`                | Qualified Stream `sorted`, local sort                       | Exact comparator, tie behavior, and any result-sensitive order                             |
+| Derived slices, windows, and partitions | `take`, `drop`, `windowed`, `partition`           | Qualified bounded subranges and partition loops             | Finite extent, position law, and complete temporary result meaning                         |
+
+### 3.2.7. Helpers, libraries, and local derived computation
+
+| Judgment capability                      | Kotlin source candidates                                  | Java source candidates                                            | Qualification boundary                                                                                               |
+|------------------------------------------|-----------------------------------------------------------|-------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------|
+| Exact-target private helper              | Direct call to a private method of the selected class     | Direct call to a private method of the selected class             | Close its body without application-object communication or dynamic dispatch                                          |
+| Nested and factored helpers              | Several differently named private methods                 | Several differently named private methods                         | All contributing methods form one judgment; duplicate member method names, including overloads, are authoring errors |
+| Local binder and lambda                  | `{ item -> ... }`, local lambda                           | `item -> ...`, finite stream lambda                               | Invocation and capture remain closed inside a qualified operation, never a user-supplied external callback           |
+| Function or method references            | Qualified reference to a closed local helper              | Qualified private-helper reference                                | The exact binder and callable body must be known; no live callback receiver or external object                       |
+| Kotlin extension or overloaded operation | Qualified extension/property/operator usage               | Qualified platform operation overloads                            | Resolve the exact supported platform meaning; external user-object dispatch is prohibited                            |
+| Standard library value functions         | Qualified numeric, string, collection helpers             | Qualified `Math`, `String`, `Arrays`, collection helpers          | Exact callable and platform profile; a library entry is not an arbitrary application callback                        |
+| Constants and closed initialization      | Literals, private `val` initialized from closed constants | Literals, private `final` field initialized from closed constants | Resolve the declared value without running constructors, initializers, or application objects                        |
+| Fresh temporary product or collection    | Judgment-local construction and reads                     | Judgment-local construction and reads                             | Complete local meaning, no Input alias, shared state, or escape                                                      |
+| Deterministic derived comparison         | Supported comparator and derived key                      | Supported comparator and derived key                              | New relation is explicit Admission meaning, not inherited from a host default                                        |
+
+### 3.2.8. Patterns and regular expressions
+
+| Judgment capability                  | Kotlin source candidates         | Java source candidates                  | Qualification boundary                                                   |
+|--------------------------------------|----------------------------------|-----------------------------------------|--------------------------------------------------------------------------|
+| Whole-text pattern match             | Qualified `Regex.matches`        | Qualified `Pattern` / `Matcher.matches` | Complete pattern syntax, Unicode basis, and exact match result           |
+| Substring pattern search             | Qualified `containsMatchIn`      | Qualified `Matcher.find`                | Exact match selection, position, and completion behavior                 |
+| Groups and captures                  | Qualified `MatchResult.groups`   | Qualified `Matcher.group`               | Exact captured span, optional group, and indexing law                    |
+| Repeated finite matches              | Qualified finite match traversal | Qualified finite matcher iteration      | Finite advancement even for zero-length matches, plus supported work law |
+| Literal pattern or character classes | Supported literal/pattern forms  | Supported literal/pattern forms         | Stable interpretation without inheriting an arbitrary host engine        |
+
+### 3.2.9. Closed domain leaves and references
+
+The Input semantic inventory includes the following closed Leaf families. They are not a grant to call every method on
+a corresponding JVM class. The authoring candidates below are usable only when the selected operation preserves the
+Leaf's exact distinctions or establishes an explicit, closed derived relation.
+
+| Input value family       | Kotlin source candidates                                        | Java source candidates                                                     | Qualification boundary                                                          |
+|--------------------------|-----------------------------------------------------------------|----------------------------------------------------------------------------|---------------------------------------------------------------------------------|
+| UUID                     | Exact value/bit comparisons and qualified component reads       | Qualified `UUID` equality and component reads                              | Exact 128-bit datum; no resource lookup                                         |
+| Decimal                  | Qualified `BigDecimal` arithmetic, scale and numeric comparison | `BigDecimal` arithmetic, `scale`, `compareTo`, exact equality as qualified | Coefficient/scale presentation distinction and explicit numeric relation        |
+| Binary32 / Binary64      | Qualified floating comparison, classification, raw-bit reads    | Qualified `Float` / `Double` operations and bit reads                      | Exact admitted bit datum versus numeric comparison                              |
+| ISO Date                 | Qualified date components and comparisons                       | Qualified `LocalDate` component reads and comparisons                      | Fixed proleptic Gregorian meaning; no implicit current date                     |
+| Local Time               | Qualified component reads and comparisons                       | Qualified `LocalTime` component reads and comparisons                      | Exact time-of-day domain and fractional resolution                              |
+| Local Date-Time          | Qualified date/time components and comparisons                  | Qualified `LocalDateTime` component reads and comparisons                  | No implied offset, zone, or Instant interpretation                              |
+| Numeric UTC Offset       | Qualified numeric offset comparison                             | Qualified `ZoneOffset` value comparison                                    | Exact numeric offset, not a named-zone rule                                     |
+| Offset Date-Time         | Qualified local date-time/offset reads and comparisons          | Qualified `OffsetDateTime` component reads                                 | Preserve local value and offset; same-instant equivalence is separate           |
+| Duration                 | Qualified duration value and fixed-unit relations               | Qualified `Duration` value and fixed-unit relations                        | Exact unit, resolution, range, and signed quantity                              |
+| Instant                  | Qualified fixed-epoch coordinate relations                      | Qualified `Instant` component/coordinate relations                         | Exact epoch/unit/resolution; no clock acquisition                               |
+| Zone Descriptor          | Qualified descriptor-kind and payload inspection                | Qualified descriptor-kind and payload inspection                           | No implicit time-zone database or rule lookup                                   |
+| Resolved Zoned Date-Time | Qualified retained components and comparisons                   | Qualified `ZonedDateTime` component reads as qualified                     | Preserve local value, numeric offset, and descriptor; no live zone resolution   |
+| URI Reference            | Qualified component-presence and text inspection                | Qualified `URI` component access as qualified                              | Syntactic closed reference; no dereference, normalization, or resource identity |
+
+The preceding entries describe the complete candidate authoring coverage under the current scope, including
+collection-relation capabilities not previously named in this Design. Neither a host return type nor a standard-library
+method name alone establishes whether an expression is supported. A candidate whose meaning, finite work, or
+Observation Requirements cannot be closed remains unsupported until the corresponding qualification succeeds. This
+inventory does not change the Admission result vocabulary, add a user-facing Validation DSL, or resolve the separate
+Authoring API declaration-shape decisions.
 
 ---
 
@@ -165,9 +397,13 @@ source mechanics. Whether this exact declaration syntax appears in the final API
 
 ## 4.1. Resolve the selected declaration
 
-Resolve the exact Admission declaration selected through IDL and identify its single root judgment. Find the complete
-semantically reachable source needed to express that judgment. Source provenance and formation dependencies must remain
-distinguishable from Admission Definition determinants.
+Resolve the exact Java or Kotlin class declaration selected through IDL. Validate its member-name uniqueness and
+exclude inheritance, constructors that perform application behavior, object communication, and undeclared state.
+Resolve one complete Admission judgment from the class's semantically contributing methods, closed private helpers,
+and constant material. Member names do not select a privileged root, and several unrelated methods must not be joined
+by an implicit Boolean operator. If the frontend cannot determine one unambiguous complete judgment meaning, it reports
+an authoring or qualification error. Source provenance and formation dependencies remain separate from Admission
+Definition determinants.
 
 ## 4.2. Resolve Input-facing observations
 
@@ -182,10 +418,12 @@ composition law. Until that law is closed, the compiler must not assume that Adm
 
 ## 4.3. Close reachable source behavior
 
-Resolve the exact targets and semantics of reachable helpers, operators, library calls, lambdas, captures,
-initialization, and derived operations. Obtain platform semantic knowledge through the ADR-0073 boundary where required.
-Unresolved or effectful reachable behavior cannot be left as an arbitrary runtime callback. Do not execute application
-code or application initialization to discover its meaning.
+Resolve the exact semantics of contributing private helper methods, operators, supported library calls, local lambdas,
+and derived operations. Recognize closed constant declarations without executing the selected class or its initializers.
+Application-object calls, external callbacks, inheritance, and execution-bearing constructors are not permitted as
+Admission authoring mechanisms. Obtain platform semantic knowledge through the ADR-0073 boundary where required. A
+qualified standard-library collection operation may be interpreted as a closed binder; its host callback or stream
+object does not become a permitted runtime dependency. Do not execute application code to discover its meaning.
 
 The frontend may eliminate provably unreachable source. If unreachability is not proven, rejecting unsupported source is
 a permitted implementation coverage outcome rather than permission to execute it speculatively.
@@ -215,10 +453,13 @@ technology. The implementation must nevertheless obtain sufficient evidence for 
 
 ## 5.1. Reachability, dispatch, and initialization
 
-Analyze only semantically reachable paths, but account for implicit getter execution, overloads, dynamic call targets,
-initialization, callbacks, and platform helpers on those paths. A reachable call target that cannot be resolved under
-the supported source profile makes the candidate unsupported. No fallback through reflection, MethodHandle invocation,
-DI resolution, live class initialization, or host runtime evaluation may create Admission meaning.
+Analyze the selected class before forming its complete judgment. Duplicate method names (including overloads),
+explicit inheritance, object communication, and constructors or initializer blocks with application behavior are
+illegal declaration forms, even if an offending member would not be reached by the eventual Boolean computation.
+Within a legal declaration, analyze semantically reachable helper and library operations, including implicit field or
+property access and qualified collection binders. An unresolved target makes the source unsupported; no fallback through
+reflection, MethodHandle invocation, DI resolution, live class initialization, or host runtime evaluation may create
+Admission meaning. Closed constant initializers are read as declarations, not executed as constructor effects.
 
 ## 5.2. Mutation, aliasing, and temporary structures
 
@@ -346,17 +587,17 @@ resistance.
 
 # 10. Open Implementation Decisions
 
-| Subject                         | Decision required                                                                                                    | Owning or dependent document                                         |
-|---------------------------------|----------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------|
-| Admission authoring surface     | Final Kotlin/Java declaration syntax, overloads, supported spellings, and all three Canonicalization selection cases | Separate Admission Authoring API Design; ADR-0065 controls meaning   |
-| V1 source coverage              | Which exact callable/construct variants meet the qualification record; which remain unsupported                      | Frontend capability matrix; ADR-0073 for platform semantics          |
-| Source closure                  | Practical analysis combination, summary boundaries, iteration/alias checks, negative diagnostics                     | Compiler Frontend/Verification Design                                |
-| Input observation mapping       | Map Input-facing authored observations to the final legally determining operand                                      | ADR-0065, ADR-0066, ADR-0048; then Frontend Design                   |
-| Admission Basis and attribution | Final selected/omitted Canonicalization relations, required cardinality, exact occurrence attribution                | ADR-0065, ADR-0063, ADR-0048; then Protocol Design                   |
-| Protocol backing                | Compact primitive representation, shared projections, reverse indexes, coherent materialization                      | ADR-0075 and Compiler Material Design                                |
-| Execution and performance       | Reference evaluator, optimization candidates, cost model, matchers, resource enforcement                             | Compiler Execution/Optimization Design; owning Budget/Capacity rules |
-| Threat mitigation               | Trusted analysis inputs, proof integrity, resource amplification, stale material, diagnostics exposure               | New Admission SADR and Security Design                               |
-| V2 incremental support          | Dependencies, revalidation, repair, and proof reuse without new Contract identity                                    | Compiler V2 TODO and Incremental Design                              |
+| Subject                         | Decision required                                                                                                                           | Owning or dependent document                                         |
+|---------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------|
+| Admission authoring surface     | Qualify exact Kotlin/Java member forms and diagnostics within the selected-class model; preserve all three Canonicalization selection cases | Admission Authoring API Design; ADR-0065 controls meaning            |
+| V1 source coverage              | Which exact callable/construct variants meet the qualification record; which remain unsupported                                             | Frontend capability matrix; ADR-0073 for platform semantics          |
+| Source closure                  | Practical analysis combination, summary boundaries, iteration/alias checks, negative diagnostics                                            | Compiler Frontend/Verification Design                                |
+| Input observation mapping       | Map Input-facing authored observations to the final legally determining operand                                                             | ADR-0065, ADR-0066, ADR-0048; then Frontend Design                   |
+| Admission Basis and attribution | Final selected/omitted Canonicalization relations, required cardinality, exact occurrence attribution                                       | ADR-0065, ADR-0063, ADR-0048; then Protocol Design                   |
+| Protocol backing                | Compact primitive representation, shared projections, reverse indexes, coherent materialization                                             | ADR-0075 and Compiler Material Design                                |
+| Execution and performance       | Reference evaluator, optimization candidates, cost model, matchers, resource enforcement                                                    | Compiler Execution/Optimization Design; owning Budget/Capacity rules |
+| Threat mitigation               | Trusted analysis inputs, proof integrity, resource amplification, stale material, diagnostics exposure                                      | New Admission SADR and Security Design                               |
+| V2 incremental support          | Dependencies, revalidation, repair, and proof reuse without new Contract identity                                                           | Compiler V2 TODO and Incremental Design                              |
 
 A candidate can be marked implemented only after its exact meaning, negative cases, and conformance evidence are
 available. Open ADR-dependent questions must not be decided implicitly by a convenient frontend representation or
@@ -372,10 +613,13 @@ source, correctly attributed refusal and non-entry from `Rejected`, and successf
 realization.
 
 Cover Input-only observations, partly Canonicalized observations, and fully Canonicalized observations once their Basis
-laws are finalized. Exercise closed helper calls, implicit getters, initializers, dynamic dispatch, mutable captures,
-open streams, exceptional paths, nonterminating or excessive work, unordered collection traversal, floating reductions,
-Unicode and regex behavior, and resource exhaustion. Test revalidation of reused material under changed World, Version,
-composition, and input application context.
+laws are finalized. Test selected Java and Kotlin classes with different names for their judgment methods, multiple
+private helpers, and closed private constants. Reject duplicate method names including overloads, explicit inheritance,
+constructor or initializer side effects, external object calls, and callbacks. Also exercise supported collection
+binders,
+implicit getters, invalid dispatch, mutable captures, open streams, exceptional paths, nonterminating or excessive work,
+unordered collection traversal, floating reductions, Unicode and regex behavior, and resource exhaustion. Test
+revalidation of reused material under changed World, Version, composition, and input application context.
 
 A completed implementation qualification should identify its exact source subject, relevant ADR obligations, supporting
 semantic evidence, negative and adversarial tests, resource limits, and any unsupported corner cases. Findings that
