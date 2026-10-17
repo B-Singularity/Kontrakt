@@ -25,57 +25,29 @@ ADR-0048: Flow Contract Processing — Boundary Refinement and Core Entry
 - ADR-0048: Inbound Airlock Composition, Boundary Refinement, and Core Entry
 - ADR-0047: One-Dimensional Contract Presentations, Pipeline-Slot Selection, and Backend Realization Boundary
 - ADR-0046: IDL-First Interface Contract Frontend and Retained Generated Host Interface and Realization Port Boundary
+- ADR-0053: Version Contract
+- ADR-0057: Failure Contract
+- ADR-0060: Diagnostic Evidence and Retention Contract (Proposed)
+- ADR-0067: Lowering Contract
+- ADR-0077: Contract Relation Infrastructure
 
 ---
 
-> **Revision scope (2026-10-16).** This revision aligns Admission's judgment operand and selected-role flow with
-> ADR-0048 and ADR-0066. Section 6.7 states the Required Basis for both paths. Section 6.3 now preserves that
-> requirement law as Definition Candidate meaning. Sections 6.4 through 6.6 clarify the HIR and Establishment boundary.
-> Section 7.6 aligns source initialization qualification with the Admission Design. The HIR Protocol now separates the
-> complete Input observation requirement surface from the meaning of an exact requirement. At that revision, the
-> detailed Established attribution protocol was still deferred.
->
-> **Revision scope (2026-10-17, Definition).** Section 6.5 states the Admission-owned Definition judgment and its
-> complete Established Definition meaning. Compiler verification remains separate.
->
-> **Revision scope (2026-10-17, Occurrence).** Sections 6.2, 6.8, and 11 now complete occurrence attribution and the
-> Established Protocol, and connect one Admission rejection to ADR-0057 Failure without multiplying it by the number
-> of explanatory conditions. Detailed explanation is governed by the separately owned Diagnostic Evidence law; the
-> proposed default coverage for independent ordinary conditions and deterministic collection witnesses remains subject
-> to that law's closure.
+> **Revision record.** The 2026-10-16 and 2026-10-17 reviews completed the two inbound Basis paths, HIR and
+> Established Protocols, Definition and Occurrence Establishment, and the separation of Admission outcomes from Failure,
+> Diagnostic, and Compiler Verification. Section 15 records the sequence. The normative rules are in Sections 5–11.
 
 ## 1. Context
 
-Admission is the continuation judgment over the complete boundary presentation made applicable by the inbound
-composition. Input establishes the original immutable presentation. Its occurrence judgment establishes either
-`Presented` or `Refused` under ADR-0064. Only an exact `Presented` Input Occurrence can contribute to a legal Admission
-application. When Canonicalization is selected, its whole occurrence must first establish `Canonicalized`. Admission
-neither creates nor changes either upstream result.
+Admission judges whether the complete presentation supplied by a legal inbound application may continue. It consumes
+Input's `Presented` occurrence and, when Canonicalization is selected, the successful whole `Canonicalized` occurrence.
+The two Required Basis paths and the meaning of the final judged presentation are specified in Section 6.7 and
+ADR-0048; Input and Canonicalization retain their respective authorities under ADR-0064 and ADR-0066.
 
-At the user surface, Admission answers one question:
-
-```text
-May this complete applicable boundary presentation continue past Admission?
-```
-
-The user writes that judgment as an ordinary Java or Kotlin 1D declaration and selects it through the normal Kontrakt
-IDL surface. Compiler-internal semantic references, protocol observations, and execution representations remain internal
-to Kontrakt.
-
-Input owns the original Presentation and its observable distinctions. When Canonicalization is selected and succeeds,
-its exact Law owns the final representative of each selected coordinate. Unselected coordinates retain their
-Input-established values. ADR-0048 owns the composition of these results into the complete boundary presentation
-judged by Admission. If Canonicalization is explicitly absent, the Input-established Presentation is used directly.
-Neither path permits Admission to reopen the original JVM carrier or reconstruct Input meaning from host structure.
-
-Admission cannot redefine Input `Presentation Sameness` or a selected Canonicalization Law. Its user source reads the
-applicable values without being told which upstream role produced them. Section 7 covers the collection and
-closed-choice
-cases that matter to source refinement.
-
-Admission may compute temporary values while deciding its result. Such computation remains judgment-local. It does not
-replace the applicable presentation or establish Canonicalization, Lowering, Fact, or other downstream Contract
-material.
+Users author an ordinary Java or Kotlin judgment and select it through the IDL. The declaration is not itself Contract
+authority. Admission's complete Definition meaning is formed and established through Sections 5 and 6; source refinement
+and the prohibition on hidden observation are specified in Sections 7 and 8. Admission-local computations do not create
+material for later Contracts (Section 7.2).
 
 ---
 
@@ -98,44 +70,24 @@ expands what the compiler can understand; it does not expand what Admission is a
 
 ## 3. Decision Drivers
 
-Admission is a judgment, not a transformation. It may derive temporary values to reach that judgment, but only the
-Admission result receives Admission authority.
+Admission owns a single flat continuation judgment with occurrence outcomes `Admitted` and `Rejected` (Sections 5 and
+11).
+The Admission role is explicitly selected, and neither source organization nor host runtime identity grants it. The
+selected Definition states its own Input Observation Requirement without adopting a particular Input Definition
+(Sections 5 and 6.3).
 
-The occurrence-time result vocabulary contains exactly two values: `Admitted` and `Rejected`. Section 11 defines their
-meaning. Definition-time `Admission Definition Refusal`, compiler-owned unsuccessful results, and stopping results owned
-by other Contracts are separate and must not be folded into that pair.
-
-Admission authority comes from explicit role selection and the Admission-owned Establishment path. A class name, method
-shape, runtime type, or inheritance relation cannot create the role. One selected declaration denotes one flat Admission
-Contract; helper decomposition does not create child Contracts.
-
-At occurrence time, Admission judges one complete presentation supplied by the legal inbound composition. Its Input
-origin remains exact, but selected Canonicalization may change the values that Admission must judge. Admission cannot
-refresh those values from the original carrier. Internal references used for attribution are not user-visible operands.
-
-Definition-local material may contribute to the judgment only when the frontend can establish its complete meaning
-without executing application initialization or consulting an undeclared capability. The same closure rule applies to
-helper calls and platform operations.
-
-Accepted source may be expressive, but every semantically reachable path must remain closed, terminating, deterministic,
-and free of undeclared Contract-visible effects. Section 7 defines the supported source law; Section 8 owns the
-hidden-observation prohibition.
-
-A finite Input presentation does not imply one fixed semantic work budget. Admission may process the actual finite
-extent of an occurrence when the operation law permits it. Budget, Capacity, and compiler or backend resource limits
-retain their own authority and cannot be translated into `Rejected`.
-
-Exception control is not Admission judgment meaning in V1. A JVM exception may indicate a realization defect or another
-separately owned stopping condition, but it cannot silently become an Admission result.
-
-Host syntax must resolve to exact semantics before it is trusted. For example, an ordinary type test is legal only when
-the frontend can resolve it to a closed Input-owned choice relation; open runtime subtype discovery is not equivalent.
+The judgment must have closed, deterministic, completing meaning. Sections 7–10 specify which ordinary source operations
+may form that meaning and prohibit hidden state, exceptional control as a result, and undeclared effects. Finite
+computation
+is permitted, but Budget, Capacity, and compiler or backend resource limits retain separate authority (Sections 7.4,
+7.5, and 10). Definition Refusal, occurrence Rejection, and compiler-owned unsuccessful results remain distinct
+(Sections 6.5 and 11).
 
 ---
 
 ## 4. Authority Path
 
-Admission follows the common HIR and Establishment architecture at Definition time:
+Definition-time authority follows ADR-0071 and ADR-0063, specialized by Sections 6.3–6.6:
 
 ```text
 ordinary Java or Kotlin Admission declaration
@@ -148,20 +100,11 @@ ordinary Java or Kotlin Admission declaration
 -> execution formation for an Established Definition
 ```
 
-An unresolved or invalid frontend result does not enter the Admission Definition judgment. Section 6.5 defines that
-boundary.
+The IDL Binding Candidate records selection, not Input-to-Admission compatibility. ADR-0048 owns that composition;
+ADR-0075 owns mediation and reuse of compiler-produced information. Neither creates Admission meaning or substitutes
+for the owning Establishment judgment.
 
-An Admission Definition is complete without embedding one exact Input Definition. It states the Input observations its
-judgment requires. After Input and Admission Definitions have been established independently, ADR-0048 owns the
-inbound-airlock composition that decides whether the exact selected Input surface satisfies those requirements. The HIR
-Binding Candidate remains only the ADR-0071 selection relation; it does not also become the later compatibility
-relation.
-
-Cross-responsibility compiler work may obtain producer-owned observations through ADR-0075 mediation. That mediation may
-obtain and qualify compiler material and may reuse prior work when legal. It cannot create Admission meaning or
-establish the ADR-0048 composition relation.
-
-Occurrence-time authority follows a different path:
+Occurrence-time authority is separate:
 
 ```text
 exact Established Admission Definition
@@ -173,12 +116,8 @@ exact Established Admission Definition
 -> Established Admission Occurrence
 ```
 
-ADR-0048 owns the inbound composition. Section 6.7 specifies both the direct-Input and selected-Canonicalization
-Required Basis paths. Section 6.8 exposes their exact Established attribution without changing the source authority
-of the underlying bindings.
-
-Starting physical evaluation is not enough to establish an Admission Occurrence. If the judgment cannot complete with
-one trustworthy result, no occurrence result is fabricated.
+Sections 6.7 and 6.8 define its exact Basis and attribution. Physical evaluation without a completed trustworthy
+judgment cannot establish an Occurrence (Section 11).
 
 ---
 
@@ -242,49 +181,20 @@ absent constituent inside a selected Input Presentation is different from an abs
 
 ## 6. Input Observation and Composition Boundary
 
-Admission judges the complete boundary presentation made applicable to the exact Interaction. Its Definition is
-independent of the exact Input Definition that will later supply an occurrence. Instead, the Admission Definition states
-the complete Input observations required by its judgment.
+Admission Definition meaning declares the complete Input observations required by the judgment, independently of any
+particular Input Definition. ADR-0064 owns the offered presentation; ADR-0048 determines whether an exact legal
+composition satisfies Admission's requirements. Resemblance between host fields or JVM types is not sufficient.
 
-Input owns the semantic surface it provides. ADR-0048 composition connects the exact established Input and Admission
-Definitions and determines whether that Input surface satisfies the Admission requirement. The composition relation
-cannot fill in missing Admission meaning or import Input identity into the Admission Definition.
+The frontend may obtain Input HIR observations to form that requirement, but the Input Candidate consulted during
+formation does not thereby become an Admission Definition determinant (Section 6.3). At occurrence time, the judged
+presentation follows the two paths in Section 6.7, without reopening the host carrier. User Admission code observes
+the applicable values without branching on their internal producer references. Constituent observations retain their
+Input-owned meaning, and temporary Admission computations do not establish downstream values (Sections 7.2 and 8).
 
-Compatibility is semantic rather than structural. Similar host fields or compatible JVM types do not establish the
-relation. The match must follow the explicit Contract-owned law of the inbound-airlock composition.
-
-During frontend formation, Admission may need to understand ordinary reads from the selected Input-facing source. It
-states those needs as Admission-owned requirements and obtains legal Input HIR observations through Kontrakt-controlled
-mediation. The exact Input Candidate used during that work is a formation dependency, not automatically an Admission
-Definition determinant.
-
-At occurrence time, Admission observes the complete applicable boundary presentation. If Canonicalization is selected,
-that presentation uses the successful whole Occurrence's final representatives for selected coordinates. Unselected
-coordinates retain their exact Input-established values. If Canonicalization is explicitly absent, the original
-Input-established Presentation is used without a fabricated identity result. Admission does not select an Input
-implementation or recover meaning from source declarations, storage layout, or backend representation.
-
-For example, suppose Input establishes `code = "A"` and `amount = 10`. If a legally selected Canonicalization Law
-establishes `code = "a"`, an Admission condition `code == "a" && amount > 0` is true. With Canonicalization explicitly
-absent, the same condition is false because `code` remains `"A"`. If the selected Canonicalization whole Occurrence is
-`Refused`, Admission does not enter. This example assumes the exact Law is legal for the selected coordinate.
-
-Admission can observe only distinctions that Input legally exposed. Nested constituents remain constituents of the Input
-presentation; observing them does not turn them into new direct coordinates or independent authorities. Internal Input
-references may support interpretation and attribution inside Kontrakt, but user Admission code does not branch on those
-references as ordinary data.
-
-No additional operand may be discovered from undeclared application or environment state. Section 8 owns this
-prohibition. Results owned by neighboring Contracts remain outside the Admission operand set unless a separate law
-explicitly makes one of them semantic input. Section 12 identifies those neighboring authorities.
-
-Definition-local constants or values may participate only when their meaning is closed without executing application
-initialization. A value reachable through a mutable configuration source or an effectful initializer does not become
-Definition material merely because the host language can name it.
-
-Admission may derive temporary values while deciding the judgment. Such values remain local to that judgment. If a later
-Contract needs meaning that Admission derived only for its judgment, that later authority must establish or consume that
-meaning under its own law. Admission-local computation is not already-authoritative downstream material.
+For example, if Input establishes `code = "A"` and `amount = 10`, and selected Canonicalization establishes the
+representative `code = "a"`, then `code == "a" && amount > 0` is true for Admission. With Canonicalization explicitly
+absent it is false; a refused whole Canonicalization occurrence prevents Admission entry. This assumes a legal selected
+Canonicalization Law for the coordinate.
 
 ### 6.1. Ordinary Source as Authoring Evidence
 
@@ -297,26 +207,16 @@ complete judgment meaning has been resolved and established.
 
 ### 6.2. Input Occurrence and Admission Occurrence
 
-Input and Admission own separate occurrence meaning. A `Presented` Input Occurrence may determine a later Admission
-application through the applicable inbound composition. A `Refused` Input Occurrence cannot do so. When Canonicalization
-is selected, its whole occurrence must establish `Canonicalized` before Admission can legally enter. Its refusal does
-not become an Admission rejection.
+Input and Admission establish different Occurrences. A fresh legal Admission application has its own semantic Occurrence
+identity even when its values and outcome equal an earlier application's. Repeated or parallel physical evaluation of
+the same exact application does not create additional Occurrence authority. ADR-0063 §4.4–4.5 governs this common
+identity boundary.
 
-A fresh legal Admission application has its own occurrence identity even when the complete presentation equals an
-earlier one. A new Input Occurrence does not by itself authorize Admission entry when selected Canonicalization has not
-succeeded. Repeated physical evaluation of one already-identified application does not create another occurrence.
-Parallel or speculative computation may converge on the same result without minting duplicate authority.
-
-An Established Admission Occurrence exists only after the owning judgment establishes `Admitted` or `Rejected`. Its
-meaning preserves the exact semantic application, applied Admission Definition, complete Applicable Basis attribution
-under Section 6.7, and the one established result. The attribution includes the exact selected-Canonicalization
-Occurrence when that requirement is instantiated; otherwise no such Basis relation is established. Section 6.8 governs
-the legal observation of those meanings. Occurrence material remains separate from the default Definition World. It
-does not copy the whole upstream presentation or surrounding Contract World merely because a later compiler consumer
-may need attribution.
-
-Occurrence authority and physical retention are independent. Reclaiming the backing does not undo the earlier
-Establishment, and retaining bytes or diagnostic evidence does not make an old occurrence current again.
+An Admission Occurrence is Established only when its judgment produces one trustworthy `Admitted` or `Rejected` result.
+It preserves the exact application and applied Definition, the complete Applicable Basis attribution specified in
+Section 6.7, and its outcome. Section 6.8 defines the authoritative observation of that material. Reclamation of
+physical backing does not undo Establishment; retained backing alone does not confer current validity (ADR-0063 §§9,
+11.6–11.7).
 
 ### 6.3. Definition Candidate Meaning and Semantic Equality
 
@@ -450,24 +350,13 @@ Contract refusal. An inconclusive compiler verification does not prove an Admiss
 responsible compiler boundary retains its own unsuccessful result. A definite Admission-law violation yields Admission
 Definition Refusal only when the complete Candidate has legally entered the owning judgment.
 
-HIR seal verification checks resolved meaning and the legal visibility boundary. Admission HIR cannot become visible
-until the exact Candidate and Binding references are resolved, the complete judgment and requirement meanings are
-closed, and all required semantic references are exact. The requirement surface must be complete, and every selected
-requirement meaning must remain obtainable through its legal projection. An unresolved requirement or a recovery
-placeholder cannot be treated as an empty requirement surface. A Binding Candidate must identify its exact selecting
-context, role, and target without silently choosing between competing targets.
-
-The legal Protocol observation must also remain coherent. A consumer may combine complete and narrow projections, but
-may not join incompatible Generations or reuse a stale reference without the validation required by ADR-0071. An
-unknown required semantic extension cannot be ignored. Compatible observation or validated migration remains governed
-by the common HIR Protocol law. The logical projection boundary does not prescribe a physical copy or access strategy.
-
-Seal does not perform the Admission Definition judgment. A Source Qualification failure that prevents complete Candidate
-formation remains compiler-owned. A complete but unlawful Admission Candidate may receive Admission Definition Refusal
-only after valid Visible HIR has legally entered that judgment. Conversely, Establishment consumes the complete legal
-HIR meaning through the Protocol. It may combine fine-grained observations when they are sufficient and coherent, but
-cannot reopen source or compiler-private backing to recover Candidate meaning that those observations failed to provide.
-Actual Occurrence Basis Bindings and authoritative Version Binding remain with their separately owning judgments.
+ADR-0071 §§4.8 and 8.9 owns HIR Seal, coherent observation, extension compatibility, and the prohibition on
+recovering hidden meaning from source or compiler storage. For Admission, Visible HIR must retain exact Candidate and
+Binding references, a complete Judgment Law, and the complete Requirement Surface with every exact Requirement Meaning
+obtainable under Section 6.4. An unresolved requirement is neither an empty Surface nor a legal recovery value.
+A Binding Candidate must identify one exact selection without arbitration. The Seal does not judge Admission legality;
+that belongs to the entered Definition judgment above. Actual Basis Binding and Version Binding remain separately owned
+under ADR-0063.
 
 A successful Admission Definition judgment establishes this complete semantic material:
 
@@ -634,8 +523,8 @@ ADR-0063. In particular, a complete compiler observation is not itself an Establ
 The two paths use the already-Established Input and Canonicalization meanings. Neither path requires a new
 Final Presentation Authority or a copied whole-presentation material. The exact legal composition makes the complete
 Presentation available for Admission judgment. The semantic relations may share a physical representation when their
-exact meaning remains recoverable. Compiler dependency or cache structures cannot replace them. Section 6.8 separately
-reviews how the selected Canonicalization predecessor is exposed by the Established Admission protocol.
+exact meaning remains recoverable. Compiler dependency or cache structures cannot replace them. Section 6.8 exposes
+the selected Canonicalization predecessor through the Established Admission protocol.
 
 ### 6.8. Established Admission Semantic Protocol
 
@@ -683,27 +572,11 @@ Established Admission Occurrence
         Admitted or Rejected
 ```
 
-The material refers to the exact Composition-owned legal source relation and ADR-0063 Basis Binding and Applicability
-results. Admission does not establish those relations again. Canonicalization owns its relation to the determining
-Input; Admission preserves the applicable exact source correspondence without acquiring that ownership. There is no
-additional Applicable Context in V1. When Canonicalization is explicitly absent, its requirement is not instantiated,
-not recorded as an absent successful result, and not replaced by identity Canonicalization. Equal source values do not
-repair mismatched origins or create a lawful Basis Binding.
-
-The direct relation projection exposes only already-established source-owned relations. Admission's occurrence-owned
-attribution includes the following exact links where the owning laws establish them:
-
-```text
-Admission Occurrence -> exact applied Admission Definition
-Admission Occurrence -> exact Applicable presentedInput Basis Binding -> Presented Input Occurrence
-Admission Occurrence -> exact Applicable selectedCanonicalization Basis Binding -> Canonicalized Occurrence
-    only when Canonicalization is Selected
-```
-
-These relations do not create a new inverse ownership relation or recursively embed Input and Canonicalization
-presentations. The full Occurrence Projection accounts for the complete applicable Basis set, not merely the first
-relation that a consumer happens to retrieve. A Direct Relation Projection of one link alone does not prove complete
-Basis membership.
+The Direct Relation Projection exposes the exact links specified in the complete Occurrence material above.
+Admission owns its link to the applied Definition and its occurrence attribution. The upstream Composition, Basis, and
+Canonicalization source relations remain with their respective owners under ADR-0048, ADR-0063, and ADR-0066 (Section
+6.7). These links do not embed upstream presentations or create inverse source authority. One observed link
+does not prove the complete set of required Applicable Basis relations.
 
 V1 provides the following fine-grained Established observations:
 
@@ -713,23 +586,28 @@ Established Admission Input Observation Requirement Meaning Projection
 Admission Occurrence Outcome Projection
 ```
 
-The Requirement Surface Projection exposes the complete declared observation extent of one exact Established Admission
-Definition. The Requirement Meaning Projection exposes the complete meaning of one exact requirement selected from
-that surface. Their producer-owned completeness and equality follow the same semantic boundaries as the HIR candidate
-projections in Section 6.4, but use Established Definition authority rather than Candidate references. A consumer may
-combine them legally; an unavailable or unqueried requirement is not an absent requirement. Exact requirement
-selection remains subject to the Section 6.4 meaning-boundary rule without fixing a physical selector schema here.
+The two Established Requirement Projections retain the Surface/Meaning completeness, exact selection, and equality
+boundaries of Section 6.4, but use Established Definition authority rather than Candidate references. Their legal
+combination and the difference between an unqueried requirement and an absent requirement follow that section.
 
 The Occurrence Outcome Projection exposes only the exact `Admitted` or `Rejected` result of one exact Occurrence. It
 is not by itself a complete account of applicable Basis or diagnostic explanation. Outcome equality, Requirement
 Surface equality, one Requirement Meaning equality, whole Definition equality, and Occurrence identity are distinct.
 Equal narrow observations do not merge their enclosing Definitions or Occurrences and do not establish reuse validity.
 
-An exact Admission Occurrence and its complete Judgment Meaning remain available for legal ADR-0057 Failure attribution
-and producer-qualified Diagnostic consumption. `Rejected` does not create a Predicate Failure family or multiple
-Admission outcomes. Source locations, compiler evaluation records, and separately established Diagnostic Evidence do
-not become Admission-owned direct relations merely because they can explain that result. ADR-0057 preserves the exact
-unsuccessful judgment, while the applicable Diagnostic law governs any finer explanation of its conditions.
+Reuse of Established Requirement Projections must preserve the complete current Surface, including additions and
+removals, not just previously selected meanings. Coherent observation and reuse qualification follow ADR-0063 §11.7
+and ADR-0075 §§13–17; equal retained observations alone do not establish current validity.
+
+For a current Admission application, a reused Complete Basis observation must cover the legal source domain for every
+instantiated exactly-one requirement. Finding the previously Applicable source is insufficient if another source may
+now be legally Applicable. This can invalidate reuse of the earlier completeness result without undoing the earlier
+Established Occurrence. A selected Canonicalization requirement cannot become explicitly absent because its projection
+is unavailable. Basis completeness and current reuse qualification remain with their existing owners, not this Protocol.
+
+The exact Occurrence and Judgment Meaning remain legally observable for Failure and Diagnostic under Section 11 and
+ADR-0057. Source locations, compiler evaluation records, and Diagnostic Evidence do not thereby become Admission-owned
+direct relations.
 
 Admission defines no field-specific or consumer-specific Contract projection. A consumer may select a legal
 producer-defined observation but may not redefine its completeness, equality, or source authority. If a consumer
@@ -773,10 +651,17 @@ inspected through exact finite relations; containment and slicing are representa
 operations are legal only when the required position or order is itself observable.
 
 Finite arrays and the Input `Sequence`, `Membership`, and `Association` forms are also within the intended V1 surface.
-Direct observations such as size or keyed lookup are legal only when Input exposes the required relation. Quantification
-and reduction may be accepted under the same rule; `all` and `count` are representative examples. Judgment-local
-pipelines follow the same rule. An unordered `Membership` does not acquire encounter order merely because a host API
-offers `first` or `last`; Admission may derive a temporary order only under its own exact supported ordering law.
+Admission may derive collection size from the complete finite Input Presentation. Input does not define a separate size
+operation; form-defining cardinality constraints, when present, remain Input-owned.
+
+Keyed lookup may be accepted when its complete meaning can be derived from the Association's exact key/value relations
+and
+Key Presentation Sameness. Quantification and reduction, such as `all` and `count`, may likewise be accepted over exact
+finite presented domains under Section 7.4.
+
+Judgment-local pipelines follow the same rule. An unordered `Membership` does not acquire encounter order merely because
+a host API offers `first` or `last`; Admission may derive a
+temporary order only under its own exact supported ordering law.
 
 ### 7.2. Ordinary Expressions and Temporary Computation
 
@@ -932,13 +817,9 @@ Design.
 
 ## 10. Deterministic Evaluation
 
-At occurrence time, Admission consumes the complete applicable boundary presentation and the exact closed material of
-the Established Admission Definition. Input supplies the original Presentation. When Canonicalization is selected and
-succeeds, the applicable presentation reflects its final representatives. ADR-0075 mediation may deliver lawful
-producer-owned observations, but the requester does not manage producer generations or retained backing directly.
-
-The hidden-observation law of Section 8 continues to apply during execution. Runtime correctness cannot depend on
-reopening the user-facing carrier, resolving symbols dynamically, or discovering semantics from execution state.
+At occurrence time, Admission evaluates the Established Definition against the exact applicable presentation
+specified in Section 6.7, using legally qualified observations under ADR-0075. Section 8's hidden-observation
+prohibition applies during realization as well as source refinement.
 
 Host evaluation strategy is replaceable. Short-circuit syntax, iteration shape, temporary allocation, and matcher
 implementation may disappear when they are not Contract-visible. Any Input-visible order, guarded domain, exact numeric
@@ -951,6 +832,14 @@ indistinguishable to the final judgment, or when another explicit preservation l
 Resource accounting remains separate from semantic legality. An operation can be finite and semantically valid while
 expensive. Budget, Capacity, compiler-safety, or backend limits retain the stopping result when such work exceeds their
 own law.
+
+An optimized, fused, cached, restored, or parallel realization must judge the same lawful Presentation supplied by the
+current inbound composition. It cannot replace a selected Canonicalization representative with the original Input value
+or change a guarded operation's applicable domain. The exact collection, numeric, and other Admission-visible laws
+remain
+binding even if a transformation preserves the Boolean result on sample inputs. When a Diagnostic Evidence obligation
+is legally established, its required attribution and observations must also be preserved. Compiler Verification owns
+these preservation checks; neither an equal Boolean alone nor a cache hit establishes Contract conformance.
 
 Admission determinism is defined by its semantic determinants:
 
@@ -965,10 +854,7 @@ Compiler scheduling, cache state, storage layout, worker count, and unrelated Co
 to this equation. The surrounding Contract World likewise contributes only through semantic material that an owning law
 explicitly makes relevant.
 
-Deterministic result equality does not collapse occurrence identity. A fresh legal Admission application has its own
-Occurrence even if it observes equal values. A new Input Occurrence alone does not establish that every selected
-upstream prerequisite has completed. Repeated physical evaluation of the same exact application creates no new
-Occurrence.
+Equal results and duplicate physical evaluations do not change the Occurrence identity law of Section 6.2.
 
 ---
 
@@ -1038,71 +924,39 @@ Diagnostic evidence may explain an Admission result, but it does not promote dis
 Admission authority. Likewise, a stop owned by another Contract keeps that owner's result rather than being translated
 into `Rejected`. Section 12 identifies the neighboring Contract authorities.
 
-The three failure boundaries are therefore distinct. If a complete Candidate cannot be formed, the Definition judgment
-does not enter and the compiler owns the unsuccessful result. If a complete Candidate enters Definition Establishment
-but violates Admission Definition law, the result is `Admission Definition Refusal`. If a valid occurrence enters and
-its continuation condition is false, the result is `Rejected`.
-
-`Rejected` stops that applicable presentation from continuing beyond Admission. It does not retroactively delete the
-Input Occurrence that determined the application or undo a selected Canonicalization result.
-
-Physical retention is separate from this result law. Reclaiming occurrence backing does not undo Establishment, while
-retaining logs or diagnostic material does not extend current validity or Admission authority.
+The Definition-time non-entry and Refusal boundary is specified in Section 6.5. At occurrence time, Section 5.3 and
+Section 6.7 govern role absence, upstream refusal, mismatched origins, incomplete or non-singular Basis, and unavailable
+required observations. None establishes Admission `Rejected` or an additional Admission Failure. ADR-0057 preserves
+other independently reached failures. `Rejected` stops continuation without revoking its upstream Input or
+Canonicalization occurrences.
 
 ---
 
 ## 12. Relationship to Neighboring Contracts
 
-Input establishes the original Presentation. A `Presented` occurrence exposes it through Input's producer-owned
-protocol. A `Refused` Input Occurrence cannot supply Admission.
+ADR-0064 and ADR-0066 own the Input Presentation and selected Canonicalization representatives; ADR-0048 owns the
+complete applicable presentation and its composition. Section 6.7 states which of their Established occurrences
+Admission requires. A refused Canonicalization cannot provide a partially successful Admission operand.
 
-When Canonicalization is selected, it judges the Input Presentation before Admission. A whole `Canonicalized` result
-supplies the selected coordinates' final representatives. Input supplies unselected coordinates. ADR-0048 owns the
-complete boundary presentation formed from those sources. If Canonicalization is explicitly absent, the
-Input-established Presentation reaches Admission directly. Absence establishes no identity representative.
-
-Admission decides only whether that applicable presentation may continue. Judgment-local parsing or normalization does
-not create a replacement presentation that downstream Contracts may reuse as already established meaning. A later
-consumer cannot substitute a different parser or equality law for a judgment-local interpretation. A whole
-Canonicalization `Refused` result cannot supply a partially successful Admission operand.
-
-A selected Lowering must consume the same lawful presentation meaning that Admission judged. Admission itself neither
-performs Lowering nor establishes core Fact authority.
-
-Policy, Governance, Budget, Capacity, State, Version, Failure, and Diagnostic are independently applicable neighboring
-Contracts. Each retains its own authority. Their presence around the same Interaction does not make their material an
-implicit Admission operand.
+Admission-local parsing or normalization remains temporary under Section 7.2; it cannot supply an established
+presentation for a later Contract. Any later Contract needing such derived meaning must establish or consume it under
+its own law. Selected Lowering must consume the same lawful presentation meaning Admission judged (ADR-0067), without
+receiving Admission's authority to perform Lowering or establish core Facts. Policy, Governance,
+Budget, Capacity, State, Version, Failure, and Diagnostic retain their own authority under their respective ADRs.
+Their material is not an implicit Admission operand (Section 8).
 
 ---
 
 ## 13. Closure and Deferred Work
 
-Admission's judgment law and Definition meaning remain closed under ADR-0053, ADR-0063, ADR-0071, and ADR-0075.
-Section 6.7 specifies both occurrence Basis paths. Section 6.8 now completes their Established attribution and the
-producer-owned Protocol. Failure cardinality remains with ADR-0057. The proposed basic coverage of Admission
-condition explanations remains with the separately owning Diagnostic Evidence decision; frontend coverage and
-physical realization remain outside Admission authority.
+Sections 5–11 contain Admission's normative law. The remaining items below belong to authoring, Diagnostic, Compiler,
+or another Contract owner; their unfinished implementation or separately owned decisions do not redefine Admission.
 
 ### 13.1. Closed Admission-Specific Decisions
 
-Sections 6.3 through 6.6 preserve the normative path from Admission Candidate meaning to Established Definition
-meaning. Section 6.3 includes the conditional Occurrence Basis Requirement Law without importing concrete Basis
-Bindings into Definition HIR. Section 6.6 fixes one independently addressable Admission Definition per Authority and
-Version. Section 6.7 retains the exactly-one `presentedInput` requirement in both paths. When Canonicalization is
-selected, it also requires
-one successful whole Canonicalization Occurrence with the same Input origin. ADR-0048 owns inbound composition. These
-occurrence requirements do not import upstream Definition identity into Admission Definition meaning.
-
-Section 6.8 preserves the complete Established Definition and Occurrence projections and exposes the exact
-selected-Canonicalization Basis attribution when selected. It divides the former Established Input Observation
-Requirement Projection into a complete Surface and an exact selected Meaning Projection. It retains the narrow Outcome
-Projection. No separate Basis Attribution Projection, new Authority, or consumer-specific Contract projection is
-introduced. An Admission rejection remains one source judgment and one ADR-0057 semantic Failure; multiple explained
-conditions do not change that cardinality.
-
-Input and Admission Definition authority remain independent throughout. Neither composition nor compiler reuse imports
-Input identity into Admission Definition meaning or transfers old Definition, Occurrence, or composition authority to a
-different current subject.
+The Definition, HIR, identity, and Basis decisions are in Sections 6.3–6.7; the Established Protocol and current-use
+conditions are in Section 6.8. Section 11 owns the Admission outcome and its connection to ADR-0057. These clauses,
+not the closure summary, are the authoritative statements of their meanings.
 
 ### 13.2. Frontend and Capability Work That Does Not Block Semantic Closure
 
@@ -1113,22 +967,14 @@ transferred implementation work is recorded in the Admission working Design.
 
 ### 13.3. Owned Elsewhere or Derived
 
-ADR-0064 owns Input observation meaning, completeness, and equality. ADR-0071 owns the common HIR Binding Candidate,
-seal, visibility, and producer-owned projection rules. ADR-0053 and ADR-0063 own the common versioning, Established
-identity, and semantic-prerequisite machinery. The common Basis and Applicability laws belong there rather than being
-redefined by Admission. ADR-0048 owns inbound-airlock composition. This ADR specializes those laws only where Admission
-needs its own meaning.
+ADR-0064 owns Input observation meaning; ADR-0048 owns inbound composition; ADR-0053 and ADR-0063 own Version,
+Establishment, Basis, Applicability, and the Established Semantic Protocol. ADR-0071 owns the common HIR Protocol and
+Seal. ADR-0075 governs compiler-produced observations and reuse. Sections 6.3–6.8 contain only Admission-specific
+specializations of these laws.
 
-ADR-0075 owns the cross-responsibility lifecycle of compiler observations. That includes qualification and reuse without
-turning compiler retention into Contract authority. When the current Admission requirement and relevant Input
-observations are semantically equivalent, compiler compatibility work may be reused. Propagation may also stop at that
-legal product boundary. The old Contract composition relation itself is not reused as current authority. Those
-mechanisms may reuse compiler work, but cache state or retained compatibility evidence cannot establish Admission
-meaning or a Contract composition relation.
-
-Compiler-owned unsuccessful results remain outside Admission. Derived compiler or higher-scope knowledge stays outside
-the Admission Established protocol. Whole-Machine or transitive analyses are one case; verifier or optimization results
-are another.
+Compiler-derived compatibility, transitive or Whole-Machine knowledge, optimization results, and unsuccessful compiler
+results do not become Admission-established meaning or authority (ADR-0075). In particular, a reused correspondence
+cannot grant a current Composition or Basis judgment; Section 6.8 governs the exact current observations required.
 
 ### 13.4. Moved to Design or Narrower Compiler Architecture
 
@@ -1147,85 +993,67 @@ Diagnostic Evidence declaration, required coverage, exact witness-selection capa
 remain for the owning Diagnostic design and ADR-0060 review rather than an Admission-specific verifier or evidence
 schema.
 
+Compiler Design and Verification must test that clean, reused, repaired, and parallel paths preserve the same legal
+Admission observation. Conformance testing must check the exact applied Presentation, outcome, Basis attribution,
+Failure source, and any required Diagnostic Evidence, not only the final Boolean. Changes to requirement membership or
+legal Basis candidates, stale or corrupt retained material, and transformations of guarded or collection computations
+must not silently validate an incomplete observation. These tests do not become Admission judgments.
+
+Source analysis and realization must also account for expensive but finite collection work and pattern matching without
+turning resource stops into `Rejected`. Compiler and backend limits, cache integrity checks, and their physical cost
+remain implementation responsibilities. Independent logical Projections need not imply individual queries, dependency
+nodes, or cache entries; V1 may share compact backing, and V2 may replace scheduling or reuse mechanisms under the same
+current-valid Protocol law. Narrow observations may permit compiler early cutoff without reusing a complete Definition,
+subject to ADR-0075's current-validity and authority boundary.
+
 Admission determinism does not by itself promise constant-time execution, confidentiality, or side-channel resistance.
-Any such guarantee requires an explicit owning security or realization law.
+Detailed Diagnostic Evidence may also contain sensitive Input observations. The owning Diagnostic and outward disclosure
+laws determine who may receive those details; an exact internal explanation is not permission to publish it. Any
+additional timing or information-flow guarantee requires its separately owning law.
 
 ---
 
 ## 14. Consequences
 
-Admission is a Contract judgment rather than a Boolean callback or general validation hook. The user can still write
-ordinary supported Java or Kotlin because the compiler, not the user, carries the burden of resolving that source into
-closed HIR, Establishment input, and executable material.
+Admission is an explicit, flat continuation Contract rather than a general Boolean callback. Ordinary supported Java
+and Kotlin remain authoring inputs; the compiler forms and verifies their complete meaning without making user code
+or compiler state authoritative (Sections 6 and 7).
 
-The same separation keeps resource policy and reuse machinery from becoming hidden Admission authority. Variable finite
-Input extent remains legal, and compatibility work may be reused under ADR-0075, but current Contract relations and
-fresh occurrence identity still follow their own semantic laws.
-
-Finally, rejection is local to Admission. It stops continuation but leaves the determining Input Occurrence intact for
-exact attribution and permitted later observation. A selected Canonicalization result also retains its own authority;
-Admission cannot undo it or bypass it with the original Input carrier.
+The separation of Outcome, Applicable Basis, and current reuse preserves independent Contract authority and permits
+replaceable implementation, subject to Sections 6.7–6.8, 10–11, and ADR-0075. `Rejected` affects continuation only;
+it does not undo the upstream occurrences that determine its application.
 
 ---
 
 ## 15. Migration History
 
-This section is historical only; the normative Admission law is stated in the sections above. It records how that law
-reached its current form without creating a second source of semantics.
+This history records prior reviews, not additional normative Admission law. The current decisions are in Sections 5–11.
 
-This ADR was mechanically extracted from the Admission-owned material of ADR-0048. The extraction did not change the
-accepted Admission semantics, and ADR-0048 continues to own the shared inbound-airlock composition and direct
-Input-to-Admission adjacency.
+The ADR originated in the Admission-owned part of ADR-0048. Its extraction left inbound-airlock composition with
+ADR-0048 and Admission judgment with ADR-0065.
 
-The 2026-09-22 review aligned Admission with the closed Input model. It replaced the earlier direct-coordinate-only
-operand model with consumption of the complete Input-owned presentation and allowed nested observation without creating
-nested Input authority. It also made temporary Admission computation explicitly non-authoritative. The review then
-closed the source-law questions now stated in Sections 7 and 8. Finite traversal and local mutation are allowed only
-when their semantics are closed. Exceptions cannot become judgment control, and source acquisition must remain hermetic.
-Pattern meaning is independent of a host engine, while resource enforcement remains outside Admission.
+The **2026-09-22 Input review** replaced a direct-coordinate-only operand with the complete Input-owned presentation.
+It permitted nested observations without new nested authority, kept temporary computations local, and settled the
+finite traversal, local mutation, exception, hermetic-acquisition, and pattern conditions now in Sections 7 and 8.
+A subsequent occurrence review separated Admission occurrence identity from physical evaluation and retention and
+required a prior `Presented` Input Occurrence (Sections 6.2 and 11).
 
-A later 2026-09-22 occurrence review gave Admission independent occurrence meaning. It required a prior `Presented`
-Input Occurrence, separated occurrence Establishment from physical evaluation and retention, and kept non-entry or
-realization failure outside the `Admitted`/`Rejected` result vocabulary. Section 6.2 and Section 11 now contain that
-law.
+The following **binding review** removed exact Input identity from Admission Definition meaning and assigned
+Input-to-Admission compatibility to ADR-0048 (Sections 6.3 and 6.7). The **2026-09-25 HIR and compiler-product review**
+introduced producer-owned semantic equality, the originally single narrow observation-requirement projection, and
+compiler mediation under ADR-0071, ADR-0063, and ADR-0075. It also separated Definition Refusal, compiler non-entry,
+and occurrence Rejection. The subsequent identity review fixed Definition identity at Authority plus Version, required
+exactly one `presentedInput`, and retained no extra V1 Applicable Context (Sections 6.5–6.8).
 
-The subsequent binding review removed exact Input identity from Admission Definition meaning. Admission now owns only
-its Input Observation Requirement, while ADR-0048 composition connects exact established Input and Admission
-Definitions. Section 6 states the resulting authority boundary.
+The **2026-10-16 flow review** incorporated Canonicalization-before-Admission and Explicit Absence. At that stage the
+selected-Canonicalization Basis and attribution still awaited detail. The subsequent Basis review added the conditional,
+exactly-one whole `Canonicalized` Basis from the same Input origin, with composition owned by ADR-0048 and common Basis
+machinery by ADR-0063. The Candidate review included that conditional requirement in Definition HIR and distinguished
+source refinement from optimizer-owned rewriting. It also qualified selected-class initialization.
 
-The 2026-09-25 HIR and compiler-product review aligned Admission with ADR-0071, ADR-0063, and ADR-0075. It made
-Definition equality producer-owned, introduced the narrow Input Observation Requirement projection, separated IDL
-selection from later composition, and placed cross-responsibility qualification and reuse behind compiler mediation. It
-also separated Definition Refusal from compiler non-entry and occurrence-time `Rejected`.
-
-The final 2026-09-25 closure review fixed Admission Definition identity at Authority plus Version. It also closed the
-exactly-one `presentedInput` Basis law and confirmed that V1 needs no additional Applicable Context. The same review
-completed the Established Admission protocol. Syntax coverage and compiler mechanisms such as verification, storage,
-reuse, or subsystem placement remain with their compiler or Design owners.
-
-The 2026-10-16 flow-alignment review applied ADR-0048's Explicit Absence rule and ADR-0066's
-Canonicalization-before-Admission judgment order. It corrected the complete boundary presentation consumed by
-Admission and distinguished the direct-Input path from the selected-Canonicalization path. The earlier `presentedInput`
-Basis formulation is retained for the direct path while the exact selected-Canonicalization Basis and Established
-attribution await their separate review. This revision changes neither Admission Definition identity nor the
-`Admitted`/`Rejected` result law.
-
-The subsequent 2026-10-16 Basis review retained `presentedInput` and added a second Required Basis only when
-Canonicalization is selected. It requires a successful whole Canonicalization Occurrence from the same exact Input
-origin. ADR-0048 owns the legal source composition, while ADR-0063 owns the common Basis and Applicability machinery.
-ADR-0077 prepares relation information without establishing those judgments. The detailed Established protocol
-attribution remains for a separate review.
-
-The subsequent 2026-10-16 Candidate review made the already approved conditional Basis Requirement Law explicit in
-Definition HIR. It clarified the completeness of judgment and Input observation meaning without prescribing an
-optimized expression form. It also separated frontend refinement from Admission-owned semantic equality and aligned
-selected-class initialization qualification with the authoring Design. The subsequent HIR Protocol review divided
-Candidate Observation Requirements into a complete Surface and exact Meaning observations. The 2026-10-17 Definition
-review aligned the Admission-owned Establishment judgment with Compiler Verification and specified complete
-Established Definition Meaning.
-
-The subsequent 2026-10-17 Occurrence review completed Applicable Basis attribution for both inbound paths and divided
-the Established requirement observation into Surface and Meaning projections. It retained one Admission result and
-ADR-0057's one-Failure-per-unsuccessful-judgment cardinality. It distinguished the proposed default explanation of
-ordinary independent conditions and deterministic collection witnesses from Admission-owned judgment and from the
-separately owned Diagnostic Evidence obligation, which remains for ADR-0060 review.
+The later **2026-10-16 HIR Protocol review** separated the requirement Surface from each exact requirement Meaning.
+The **2026-10-17 Definition review** completed Admission-owned Definition Establishment while separating Compiler
+Verification. The **2026-10-17 Occurrence review** completed the Established Basis attribution and the matching
+Established requirement projections. It preserved one Admission outcome per Occurrence and ADR-0057's Failure
+cardinality; detailed Diagnostic coverage remained separately owned. The final closure review connected current-valid
+reuse, non-entry, conformance, and compiler-security responsibilities to their existing authorities.
