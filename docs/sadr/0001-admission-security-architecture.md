@@ -15,7 +15,7 @@ implemented security guarantee.
 - `docs/the-most-important-thing/what-contract-is.md`
 - ADR-0065 Admission; ADR-0064 Input; ADR-0066 Canonicalization; ADR-0048 Inbound Composition
 - ADR-0063 Establishment; ADR-0071 HIR; ADR-0073 JVM Platform; ADR-0074 Compiler Result; ADR-0075 Compiler Material
-- `docs/design/admission/admission-source-refinement-and-realization-working-design.md`
+- `../design/admission/admission-authoring-api-and-source-surface-working-design.md`
 - `docs/verification/checklists/kontrakt-1d-hir-establishment-master-checklist.md`
 - `docs/verification/checklists/kontrakt-canonicalization-adr-sadr-closure-checklist.md`
 - `docs/todo/compiler-engine/kontrakt-compiler-architecture-closure-and-implementation-readiness-todo.md`

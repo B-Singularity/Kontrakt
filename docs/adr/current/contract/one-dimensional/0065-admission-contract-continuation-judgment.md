@@ -143,9 +143,21 @@ because its source declaration exists.
 
 ### 5.2. One Flat Admission Contract
 
-One selectable declaration names one flat Admission Contract. Private constants, local values, and helper expressions
-may contribute to its root judgment when the frontend closes their meaning, but they do not become independently
-selectable Contracts.
+One selectable class declaration names one flat Admission Contract. Its authored methods belong to that one Admission
+source; they do not become independently selectable Contracts. The complete continuation judgment may be written as one
+Boolean method, as several independent Boolean condition methods, or through exact-target helper calls. Independent
+Boolean method conditions are conjoined into the one judgment. A Boolean method used as a helper contributes where it is
+called, not a second time as an independent condition. No privileged root method or additional IDL method selection is
+required. For example, independent `positive(v)` meaning `v > 0` and `small(v)` meaning `v < 1000`, when legally bound
+to
+the same Input observation, compose `(v > 0) && (v < 1000)`.
+
+The frontend must resolve the complete meaning of these methods and their legal Input observations under Sections 6 and
+
+7. Their names, source order, and host calls do not determine Admission authority. All authored member forms remain
+   subject to source qualification; getter and setter members of the selected Admission class are not permitted
+   authoring
+   forms. Closed constants and local values may contribute to the same judgment without becoming separate Contracts.
 
 Several Admission declarations may coexist in one source file. Conversely, several legal selection occurrences may
 deliberately select the same Admission declaration. In that case the Admission Definition may be shared, while selection
@@ -199,7 +211,8 @@ Canonicalization Law for the coordinate.
 ### 6.1. Ordinary Source as Authoring Evidence
 
 The illustrative Kotlin source formerly in this section is preserved in
-`docs/design/admission/admission-source-refinement-and-realization-working-design.md`. A separate Authoring API document
+`../../../../design/admission/admission-authoring-api-and-source-surface-working-design.md`. A separate Authoring API
+document
 will describe supported source forms.
 
 An ordinary host declaration supplies authoring evidence, not Admission authority. Authority begins only after the
@@ -691,9 +704,9 @@ A helper or library call may participate only when Kontrakt can remove that call
 preserve a separately ratified platform obligation under ADR-0073.
 
 An exact-target helper is acceptable when all semantically reachable behavior that can affect the judgment can be
-resolved into the root Admission meaning. The closure includes implicit behavior, not just the visible body. For
-example, a property read may execute a getter and an operator may resolve to user code. The helper's name, call frame,
-and JVM target do not become Admission meaning.
+resolved into the one composed Admission judgment. The closure includes implicit behavior, not just the visible body.
+For example, a property read may execute a getter and an operator may resolve to user code. The helper's name, call
+frame, and JVM target do not become Admission meaning.
 
 An overload that depends on undeclared ambient state is not accepted merely because a neighboring overload is closed.
 Behavior whose exact callable meaning cannot be closed remains unsupported. This includes unresolved dispatch and
@@ -860,9 +873,9 @@ Equal results and duplicate physical evaluations do not change the Occurrence id
 
 ## 11. Result Law
 
-The occurrence-time result is exactly `Admitted` or `Rejected`. A source Boolean maps to that result only after its
-complete computation has been resolved into legal Admission meaning. Definition-time `Admission Definition Refusal`
-remains the separate result defined in Section 6.5.
+The occurrence-time result is exactly `Admitted` or `Rejected`. The one composed Boolean continuation judgment maps to
+that result only after all contributing conditions and helper computations have been resolved into legal Admission
+meaning. Definition-time `Admission Definition Refusal` remains the separate result defined in Section 6.5.
 
 `Admitted` means that the complete applicable boundary presentation satisfies this Admission Contract's continuation
 condition. It does not authorize the whole Interaction or predict the result of later Contracts.
