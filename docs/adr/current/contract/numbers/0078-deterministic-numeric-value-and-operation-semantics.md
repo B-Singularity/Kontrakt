@@ -128,7 +128,13 @@ treated as a different numeric operation.
 
 An admitted Numeric Operation must have a complete semantic definition. It identifies the operands, applicable source
 operation, result domain, definedness, and exact result. The definition includes every distinction that affects a legal
-observation.
+observation. A mathematical operation and a source operation that rounds its operands or intermediate results are not
+presumed to have the same meaning.
+
+A mathematical expression may have one exact meaning without first being evaluated into a finite Numeric Datum. An
+operand or result may retain that meaning symbolically when its operation law permits it. This does not defer the
+definition of the value to a future external computation. If an operation law already fixes a result in a particular
+Numeric Format, subsequent operations consume that fixed result even when no physical datum has yet been materialized.
 
 This meaning is not a physical profile record or HIR schema. It is not identified by a source symbol, runtime object,
 machine instruction, external implementation, or cache key. Section 4.7 defines when an operation is sufficiently
@@ -140,10 +146,22 @@ An operation law fixes the result rather than the algorithm that calculates it. 
 required rounding determine one result, that result is preferred over a reference algorithm's historical output. Section
 4.3 still requires source-semantic preservation.
 
-The operation law also determines where numeric information may be lost. A realization may use exact or wider
-intermediate calculations only if it preserves the required result and intermediate rounding. Required evaluation order
-and exceptional behavior must also be preserved. Ordered arithmetic and a separately defined exact aggregate may
-therefore have different accumulation laws.
+Where an operation denotes an exact mathematical result, that result is the reference for any required finite-format
+conversion. Its mathematical value need not be explicitly computed before a legal symbolic transformation. For exact
+real operations, `exp(a) * exp(b)` and `exp(a + b)` have the same result. This identity does not authorize replacing
+separately rounded source operations or changing their exceptional behavior.
+
+The operation law determines the required result precision and representation. It also fixes the rounding rule and every
+semantic boundary where rounding or another loss occurs. A realization may defer physical evaluation or materialization,
+but it must preserve any intermediate result already fixed by the law. An exact mathematical expression does not
+silently replace a required rounded intermediate result.
+
+A realization may use exact or wider intermediate calculations only if it preserves the required result and intermediate
+rounding. Passing through a wider format does not, by itself, prove the final result correct: rounding through an
+intermediate format may differ from rounding the exact value directly. Conversely, if the operation law expressly
+requires staged rounding, those stages are part of its meaning. Required evaluation order and exceptional behavior must
+also be preserved. Ordered arithmetic and a separately defined exact aggregate may therefore have different accumulation
+laws.
 
 A representation's **numerical resolution** describes the values it can distinguish. This does not establish a
 measurement's accuracy or uncertainty. Measurement resolution may affect a judgment only when supplied through its
@@ -160,17 +178,35 @@ Kontrakt's required Numeric Value scope includes:
 
 These are required semantic support targets, not a promise to implement their external calculation APIs.
 
-A Numeric Value is interpretable when its domain and legally observable distinctions are fully determined. For
-structured values, the constituent numeric meanings and relevant structure must also be determined. For example, tensor
-shape and logical element coordinates cannot be inferred from element count alone.
+A Numeric Value is interpretable when its domain and legally observable distinctions are fully determined. The
+information needed to determine its numeric meaning must be sufficient under the applicable value law. Kontrakt cannot
+infer an omitted Numeric Format, quantization parameter, or structural context from an unstated external default. Value
+Interpretation may be complete without supporting any particular calculation on that value.
+
+For structured values, the constituent numeric meanings and relevant structure must also be determined. For example,
+tensor shape and logical element coordinates cannot be inferred from element count alone. A structured value may have a
+logical numerical meaning independent of its physical storage. That meaning does not, by itself, replace the owning
+Presentation Sameness or make every representation interchangeable. Distinctions such as duplicate sparse entries,
+explicitly stored zeros, quantization parameters, and validity information remain observable whenever the owning law so
+provides. Forming a new coordinate value by combining entries requires an exact operation law unless that result is
+already part of the established value meaning.
 
 A lawfully admitted value must retain its meaning without depending on later changes to an external object or hidden
-execution. The law requires stable observations, not a mandatory memory copy or physical encoding. Layout and storage
-choices remain with the realization unless the owning value law makes a distinction observable.
+execution. The law requires stable observations, not a mandatory memory copy or physical encoding. An already determined
+value may be read or decoded later without reopening its meaning. Deferred access cannot obtain the established result
+from mutable external state or an unperformed external calculation. Layout and storage choices remain with the
+realization unless the owning value law makes a distinction observable.
 
+Interpretation preserves every Numeric Datum distinction required by the owning law. Exact format bits are preserved
+when those bits are part of that datum's meaning; unrelated storage padding is not automatically made Contract-visible.
 Interpretation does not authorize normalization or precision loss. A change in Numeric Meaning requires an explicitly
 legal conversion. Such a conversion produces a distinct result under its own law; it does not rewrite the admitted
 input.
+
+A floating NaN is a Numeric Format value, not a universal Missing or Null marker. Missing, Null, invalid slots, and
+masks follow the owning Presentation's presence and validity law. Numbers does not infer a numeric datum for an absent
+or invalid element, nor convert a valid NaN into absence. Any operation that resolves these states into a new numeric
+result requires its own complete law.
 
 The external producer's measurement accuracy and algorithmic error bounds are not inferred from the result. Units and
 other domain meaning remain with the Contract that supplies them. Section 4.1 governs authority over those judgments.
@@ -219,8 +255,9 @@ coefficient/scale equality, raw-bit equality, and Collection Presentation Samene
 
 IEEE-style numerical equality does not equate NaN to itself and equates positive and negative zero. Input Binary
 Presentation Sameness compares the complete admitted bits. Decimal numerical comparison can equate `2.0` and `2.00`,
-while Decimal Presentation Sameness does not. A relation used for membership uniqueness or hash indexing must have the
-equivalence properties required by the owning collection law; an arbitrary numeric predicate is not substituted for it.
+while Decimal Presentation Sameness does not. Approximate comparison is not presumed transitive and does not establish a
+Sameness relation. A relation used for membership uniqueness or hash indexing must have the equivalence properties
+required by the owning collection law; an arbitrary numeric predicate is not substituted for it.
 
 The meaning of Kotlin `==`, Java `==`, `equals`, `compareTo`, and a Collection membership operation follows the exact
 resolved operation and the applicable value/collection law. Syntax alone cannot authorize a host equality implementation
@@ -474,6 +511,11 @@ The Numeric Realization Design owns calculation algorithms and physical represen
 paths and implementation-specific resource protection. These may change without changing the established Numeric Meaning
 under Sections 4–12.
 
+The selected E-Graph-based optimization direction is a compiler design choice, not a new Numeric Law. Its shared
+machinery may be specialized for different compiler consumers. It may exploit exact mathematical identities only where
+the applicable operation laws and their domains permit them. Neither a rewrite nor cost-based extraction may change a
+required intermediate or final result. A direct computation path remains legal when it satisfies the same law.
+
 Compiler optimization and cache reuse remain subject to their existing result and validity laws. Budget, Capacity, and
 security authorities continue to govern resource limits. No implementation mechanism can establish a new Numeric
 outcome.
@@ -482,6 +524,8 @@ outcome.
 
 An operation may be advertised as executable only when the realization has sufficient evidence that its legal
 observations match the approved Numeric Meaning. When the law fixes one result, a numerical tolerance is not sufficient.
+A faster approximate calculation is legal only when its delivered result satisfies that exact law. An internal precision
+increase alone is not evidence that all required rounding boundaries are preserved.
 
 Verification methods and test cases belong to Numeric Realization Design. They do not define the operation's legal
 result.
@@ -505,8 +549,8 @@ The following decisions remain open; none is made Accepted by this draft:
 4. Resolve ADR-0065 §7.5 against Section 10.3 without silently modifying that Accepted ADR.
 5. Define the semantic details of Binary16, bfloat16, and Binary128, then determine their legal Input and Platform
    boundaries under ADR-0064 and ADR-0073.
-6. Complete the Structured Numeric Value laws. Tensor structure, quantization, missing values, and legal observations
-   require explicit decisions by their respective owners.
+6. Complete format-specific Structured Numeric Value laws under the preservation rule in Section 4.6. Tensor structure,
+   quantization, missing values, and legal observations require explicit decisions by their respective owners.
 7. Determine which operations have an algorithm-independent unique result. Any exception relying on a reference
    procedure requires separate approval consistent with Section 4.3.
 8. Decide how explicitly supplied measurement resolution or uncertainty participates in existing Input and Fact
@@ -530,6 +574,6 @@ The following alternatives are excluded by the controlling laws rather than repe
 Contract consumers share the Numeric Law while retaining their own judgments. The compiler may choose different
 realizations, but it must preserve the same legal result.
 
-Next work is to close the remaining Numeric Value and Operation details in Section 16. The corresponding Realization
-Design and the necessary ADR-0064, ADR-0065, and ADR-0073 consistency changes follow separately. This Proposed ADR
-changes none of those Accepted documents.
+Next work is to close the remaining Numeric Value and Operation details in Section 16. The corresponding Numeric
+Realization and E-Graph optimization designs, and the necessary ADR-0064, ADR-0065, and ADR-0073 consistency changes,
+follow separately. This Proposed ADR changes none of those Accepted documents.
