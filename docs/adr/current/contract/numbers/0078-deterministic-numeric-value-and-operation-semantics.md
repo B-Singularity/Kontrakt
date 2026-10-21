@@ -270,19 +270,25 @@ or allow an optimizer to replace `any { x == value }` with `contains(value)`.
 Each supported fixed-width operation has one exact operand and result width, signedness interpretation, and
 source-language promotion or conversion rule. A narrower Java integer expression may be promoted to `int`; a Kotlin
 overload may produce a different type. The frontend must resolve the actual expression before numeric refinement.
-Neither an operand's source spelling nor its storage lane alone decides the result type.
+Neither an operand's source spelling nor its storage lane alone decides the result type. An exact mathematical integer
+operation and a fixed-width bitvector operation have distinct meanings; neither inherits the other's overflow or
+equivalence laws.
 
 For wrapping addition, subtraction, and multiplication at width `w`, the output bits are the result modulo `2^w`. Signed
-and unsigned interpretation of those bits remains operation-specific. Reassociation and algebraic simplification are
-permitted only under that exact operation law; a checked operation is not rewritten as a wrapping operation without
-establishing the required guard.
+and unsigned interpretation of those bits remains operation-specific. Modular identities may be used only where the full
+operation law, including its fixed-width results and required observations, is preserved. A mathematical integer
+identity does not automatically establish an equivalent signed comparison or checked operation. Reassociation and
+algebraic simplification are permitted only under that exact operation law; a checked operation is not rewritten as a
+wrapping operation without establishing the required guard.
 
 ## 6.2. Division, Remainder, and Exceptional Bounds
 
 Integer division and remainder must retain the exact source law for quotient direction, remainder sign, division by
 zero, and the minimum signed value divided by negative one. In Java fixed-width signed division, the latter has its
-defined wrapped result; it must not be turned into an unrelated mathematical overflow failure. Floor division and floor
-modulus are distinct operations from truncating division and remainder.
+defined wrapped result; it must not be turned into an unrelated mathematical overflow failure. Truncating, floor,
+ceiling, and Euclidean quotient and remainder laws are distinct wherever their results or domains differ. Each admitted
+law determines both quotient and remainder under its required sign and range conditions. A mathematical integer quotient
+identity may be applied to a fixed-width result only when its overflow and exceptional cases also agree.
 
 Division by zero remains outside the legal domain of a throwing source operation. A governed judgment may use it only
 where its domain is established on every reachable path or where an explicitly supported non-exceptional result law
@@ -296,29 +302,38 @@ Shift-distance masking, result width, bit extension, and narrow-type promotion f
 width-sized Java shift distance is not automatically an illegal distance.
 
 Fixed-width operations are not replaced by `BigInteger` shifts without proving that sign extension, truncation, and
-distance semantics agree.
+distance semantics agree. A fixed-width shift's masked distance and width-bounded result are not the same law as an
+arbitrary-precision shift. Negative shift distances and arithmetic right shifts retain the exact source operation's
+meaning.
 
 ## 6.4. Checked and Exact Conversion Operations
 
 Checked addition, subtraction, multiplication, negation, increment, decrement, absolute value, and exact narrowing are
 separate partial operation laws when they can throw on overflow. They may be used only in an established non-exceptional
-domain. Ordinary wrapping arithmetic and checked arithmetic do not share one operation meaning.
+domain. Ordinary wrapping arithmetic and checked arithmetic do not share one operation meaning. An algebraic
+transformation cannot remove a checked intermediate operation unless its original definedness and legally observable
+behavior are preserved.
 
 Numeric conversions distinguish sign extension, zero extension, truncation, narrowing, saturation, floating rounding,
-and rejection of inexact results. The exact Kotlin/Java source conversion is preserved. A backend conversion with poison
-or undefined behavior outside its domain must not replace a defined saturating or wrapping source conversion without an
-appropriate guard or equivalent implementation.
+and rejection of inexact results. Interpreting a bit pattern with a different signedness is distinct from converting a
+mathematical integer into another numeric domain. Equal storage bits do not by themselves make these operations
+equivalent. The exact Kotlin/Java source conversion is preserved. A backend conversion with poison or undefined behavior
+outside its domain must not replace a defined saturating or wrapping source conversion without an appropriate guard or
+equivalent implementation.
 
 # 7. Arbitrary-Precision Integer Semantics
 
 A supported `BigInteger`-like operation denotes a finite mathematical integer result under its exact operation law.
-Addition, subtraction, multiplication, comparison, division, remainder, modulus, powers, signed bit operations, shifts,
-and conversions are independently qualified. A negative exponent, zero divisor, nonpositive modulus, missing modular
-inverse, or exact conversion outside its target range is handled according to that operation's definedness, not by
-inventing a Contract failure.
+Addition, subtraction, multiplication, comparison, division, remainder, modulus, powers, modular exponentiation, modular
+inverse, greatest common divisor, signed bit operations, shifts, and conversions are independently qualified. Truncating
+remainder and a nonnegative modulus result are not interchangeable. An ordinary integer power may exclude negative
+exponents while modular exponentiation may admit them when the required inverse exists. A negative exponent, zero
+divisor, nonpositive modulus, missing modular inverse, or exact conversion outside its target range is handled according
+to that operation's definedness, not by inventing a Contract failure.
 
 Signed arbitrary-precision bitwise operations follow their explicitly defined infinite sign-extension behavior. They are
-not widened versions of fixed-width bitvector operations by default.
+not widened versions of fixed-width bitvector operations by default. A negative shift distance reverses the shift
+direction only where the applicable source operation expressly defines that behavior.
 
 A library's probabilistic primality test, ambient random generator, or unspecified algorithm-dependent result is not
 admitted merely because its arguments and return value are integers. A deterministic primality operation would require
@@ -345,34 +360,47 @@ constructors are lossless on every JVM path.
 ## 8.2. Basic Arithmetic and Rounding
 
 Supported basic binary arithmetic must fix its result format, rounding rule, treatment of signed zero, infinities,
-subnormal values, overflow, underflow, remainder, and exceptional numeric conditions. The default Java-compatible
-Binary32/64 arithmetic profile uses round-to-nearest, ties-to-even at the required result precision. No implicit wider
-intermediate precision, flush-to-zero mode, reassociation, reciprocal substitution, or FMA contraction is permitted
-unless the exact result law remains intact.
+subnormal values, overflow, underflow, remainder, and exceptional numeric conditions. Its finite nonexceptional results
+follow the exact mathematical operation with the rounding required by that law; cases involving NaN, infinity, or other
+exceptional numeric conditions retain their operation-specific results. The default Java-compatible Binary32/64
+arithmetic profile uses round-to-nearest, ties-to-even at the required result precision. It preserves gradual underflow,
+including subnormal results and the required sign of a rounded zero. No implicit wider intermediate precision,
+flush-to-zero mode, reassociation, reciprocal substitution, or FMA contraction is permitted unless the exact result law
+remains intact. Ordinary Java/Kotlin arithmetic does not acquire IEEE exception flags or traps as additional observable
+results without an explicit law admitting those observations.
 
-A fused multiply-add is distinct from separately rounded multiplication followed by addition. Floating addition is not
-generally associative, even when all operations are pure. A reduction over a fixed ordered Sequence preserves the
-legally selected evaluation order unless an exact equivalence has been established. Unordered collection iteration
-cannot silently select an arithmetic accumulation order that changes the result.
+A fused multiply-add is distinct from separately rounded multiplication followed by addition. Where fused multiply-add
+is admitted, it rounds the exact product-plus-sum once under its applicable result law. Replacing separate operations
+with it requires preservation of the original intermediate and final observations. Java floating `%` and IEEE remainder
+have different quotient-selection laws and are not interchangeable. Floating addition is not generally associative, even
+when all operations are pure. An exact real-number identity alone does not authorize a binary floating rewrite that
+changes NaN results, signed zero, or required rounding. A reduction over a fixed ordered Sequence preserves the legally
+selected evaluation order unless an exact equivalence has been established. Unordered collection iteration cannot
+silently select an arithmetic accumulation order that changes the result.
 
 ## 8.3. NaN Result Closure
 
-Input NaN bit preservation and NaN generation by arithmetic must be specified separately. Every supported binary
-operation whose result can be NaN must determine an exact legally observable result, including which NaN encoding is
-produced or which operand bits are retained, quieted, or transformed. Platform-dependent NaN payload propagation is not
-admitted as a closed deterministic operation.
+Input NaN bit preservation and the NaN result of an arithmetic operation are distinct. Under the default Java-compatible
+Binary32/64 profile, a supported addition, subtraction, multiplication, division, remainder, or fused multiply-add whose
+operation law requires a NaN result produces quiet NaN `0x7fc00000` for Binary32 or `0x7ff8000000000000` for Binary64,
+provided the applicable source law permits that exact result. This choice applies whether the NaN result arises from
+non-NaN operands or from one or more NaN operands. Their NaN signs and payloads do not determine the arithmetic result.
 
-**Proposed V1 default for newly generated arithmetic NaN:** where the exact applicable source operation permits this
-refinement, newly produced Binary32 NaN is quiet NaN `0x7fc00000` and newly produced Binary64 NaN is quiet NaN
-`0x7ff8000000000000`. This is a proposed operation-result rule, not a rule for Input canonicalization, raw-bit identity
-operations, or unconditional rewriting of existing NaNs. Operations that copy raw bits, change sign bits, reinterpret
-representations, or promise a more specific behavior must retain their own exact rule. If the fixed-result policy would
-violate a source operation's guarantee, that operation requires a different lawful exact profile or is unsupported.
+The fixed result is an operation-result law, not Input canonicalization or a change to an already admitted datum. An
+operation that observes raw bits, preserves or transforms a representation, or has a more specific source result retains
+its own exact law. A NaN operand does not require a NaN result when the applicable operation expressly determines a
+non-NaN result. A source operation that cannot admit this fixed NaN result requires another lawful exact deterministic
+result law or remains unsupported for governed use.
 
-This default must be confirmed by per-operation preservation and conformance evidence before this ADR can be Accepted.
-The exact behavior of signaling NaNs and round trips through Java/Kotlin floating values must be specified without
-assuming that the JVM preserves every signaling representation. Simply choosing a fixed NaN constant in a compiler pass
-does not prove legal preservation.
+Other floating operations, including unary negation, magnitude and sign operations, minimum and maximum, and
+mathematical functions, require their own complete law for NaN operands and results. This includes cases where a NaN
+operand changes a non-NaN result. Where the applicable source law permits multiple behaviors, only an expressly selected
+lawful deterministic refinement satisfies Section 4.2. The fixed arithmetic NaN rule does not extend to these operations
+without such qualification.
+
+Signaling NaN bit patterns retain every distinction required by their admitted Presentation. A carrier that may quiet
+such a pattern cannot be presumed to preserve it. Their participation in an admitted arithmetic operation follows that
+operation's result law.
 
 ## 8.4. Classification, Comparison, and Raw Bits
 
@@ -543,7 +571,8 @@ use. Those Accepted documents are not amended by this Proposed ADR.
 
 The following decisions remain open; none is made Accepted by this draft:
 
-1. Define each supported floating operation's exact NaN result, including the proposed default in Section 8.3.
+1. Complete the separate NaN operand and result laws for floating operations outside Section 8.3's fixed basic
+   arithmetic result rule, and qualify each applicable source operation under Section 4.3.
 2. Complete the deterministic result laws for supported `Math`, `StrictMath`, and Kotlin mathematical operations.
 3. Complete the exact BigInteger and Decimal operation laws, including exceptional domains and result representation.
 4. Resolve ADR-0065 §7.5 against Section 10.3 without silently modifying that Accepted ADR.
