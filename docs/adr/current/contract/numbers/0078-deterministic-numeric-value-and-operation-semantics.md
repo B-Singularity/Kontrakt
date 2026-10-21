@@ -91,21 +91,15 @@ This ADR does not introduce a new 1D Contract, Numeric authority, or user-visibl
 
 ## 4.2. Determinism Requirement
 
-For the same exact numeric operation law, legal operands, declared semantic inputs, and applicable world, the operation
-must yield one exact legally observable result. A result that depends on processor model, JIT decision, library
-provider, thread schedule, locale, platform default, or unrecorded implementation version is not a closed deterministic
-operation.
+For the same Numeric Operation Law, legal operands, declared semantic inputs, and applicable world, one exact legally
+observable result must follow. An undeclared choice of execution environment cannot determine that result.
 
-A fixed Boolean judgment alone is not sufficient evidence of deterministic numeric behavior. A result may later be
-observed through bits, scale, order, text projection, or a different Contract. An implementation may disregard a
-distinction only when the owning law has proved that distinction irrelevant to every legal observation of the
-transformed result.
+Agreement on a final Boolean judgment is insufficient when another legal observation can distinguish the underlying
+Numeric Result. A distinction may be discarded only when the owning law permits it under every remaining legal
+observation.
 
-Compiler results formed through clean computation, cache reuse, restoration, optimization, or parallel compilation must
-agree under the same legal semantic basis. An optimization does not narrow or change the owning numeric law. A Kontrakt
-release, numerical-kernel revision, or target change is not permission to select a different result for that unchanged
-law. If an improvement requires different legally observable numeric results, it is a change of meaning that must be
-handled under Section 12, not a transparent implementation upgrade.
+A change to Kontrakt, its execution target, or its calculation methods must not change the result of an unchanged
+Numeric Law. Section 12 governs changes to the law itself. Compiler-result reuse remains subject to ADR-0075.
 
 ## 4.3. Relation to ADR-0073
 
@@ -113,55 +107,39 @@ ADR-0073 permits some separately ratified platform operations to execute unchang
 when those contracts allow more than one behavior. That general permission does not make such an operation admissible as
 a deterministic Numeric Operation in a governed Contract judgment.
 
-An exact Kotlin or Java operation is admitted into the deterministic numeric surface only when its applicable semantics,
-or an explicitly legal deterministic refinement of those semantics, satisfies Section 4.2. When Kontrakt substitutes a
-numeric realization for an accepted platform operation, ADR-0073's Preservation Law remains binding. The substitute must
-preserve every relevant source-semantic observation and may choose a deterministic result only inside the platform's
-permitted behavior.
+When a user's Contract declaration relies on a Kotlin or Java operation, the resolved source operation supplies the
+meaning that Kontrakt must preserve. Performing its calculation inside Kontrakt does not replace that meaning with a
+Kontrakt-defined mathematical operation.
 
-If the platform promises an exact result, Kontrakt cannot replace it with a different result merely because the new
-result is more accurate or easier to reproduce. If the platform permits multiple results but no legal deterministic
-refinement can be established, that operation is unsupported for the deterministic governed use. It is not silently
-treated as a different numeric operation.
+That source operation may participate in a deterministic Contract judgment only when its source law determines one
+result or permits a lawful deterministic refinement under Section 4.2. A refinement must preserve the legal observations
+required by ADR-0073. An operation for which this cannot be established remains unsupported for that governed use.
 
 ## 4.4. Exact Operation Meaning
 
-An admitted Numeric Operation must have a complete semantic definition. It identifies the operands, applicable source
-operation, result domain, definedness, and exact result. The definition includes every distinction that affects a legal
-observation. A mathematical operation and a source operation that rounds its operands or intermediate results are not
-presumed to have the same meaning.
+An admitted Numeric Operation must determine its legal operands, definedness, and exact result. A Kontrakt-defined
+operation that does not derive its meaning from a user's source operation follows its own Numeric Law. Running it on the
+JVM does not make Java or Kotlin arithmetic its governing law.
 
-A mathematical expression may have one exact meaning without first being evaluated into a finite Numeric Datum. An
-operand or result may retain that meaning symbolically when its operation law permits it. This does not defer the
-definition of the value to a future external computation. If an operation law already fixes a result in a particular
-Numeric Format, subsequent operations consume that fixed result even when no physical datum has yet been materialized.
+An exact mathematical result can be fully defined without a finite Numeric Datum. This does not make an otherwise
+unsupported Numeric Value format available under Section 4.7. If an operation has already fixed a finite-format result,
+subsequent operations use that result even when it has not been physically produced.
 
-This meaning is not a physical profile record or HIR schema. It is not identified by a source symbol, runtime object,
-machine instruction, external implementation, or cache key. Section 4.7 defines when an operation is sufficiently
-complete to be supported.
+Neither a source symbol nor a physical identifier establishes the operation's Contract authority or meaning.
 
 ## 4.5. Result Determination and Permitted Loss
 
-An operation law fixes the result rather than the algorithm that calculates it. Where the mathematical operation and
-required rounding determine one result, that result is preferred over a reference algorithm's historical output. Section
-4.3 still requires source-semantic preservation.
+An operation law fixes the result, not the algorithm used to obtain it. A Kontrakt-defined mathematical operation may
+require the exact mathematical result or its correctly rounded form. This does not override the source meaning protected
+by Section 4.3.
 
-Where an operation denotes an exact mathematical result, that result is the reference for any required finite-format
-conversion. Its mathematical value need not be explicitly computed before a legal symbolic transformation. For exact
-real operations, `exp(a) * exp(b)` and `exp(a + b)` have the same result. This identity does not authorize replacing
-separately rounded source operations or changing their exceptional behavior.
+For exact real operations, `exp(a) * exp(b)` and `exp(a + b)` agree wherever the identity is defined. They do not
+generally agree with a source expression that separately rounds intermediate results.
 
-The operation law determines the required result precision and representation. It also fixes the rounding rule and every
-semantic boundary where rounding or another loss occurs. A realization may defer physical evaluation or materialization,
-but it must preserve any intermediate result already fixed by the law. An exact mathematical expression does not
-silently replace a required rounded intermediate result.
-
-A realization may use exact or wider intermediate calculations only if it preserves the required result and intermediate
-rounding. Passing through a wider format does not, by itself, prove the final result correct: rounding through an
-intermediate format may differ from rounding the exact value directly. Conversely, if the operation law expressly
-requires staged rounding, those stages are part of its meaning. Required evaluation order and exceptional behavior must
-also be preserved. Ordered arithmetic and a separately defined exact aggregate may therefore have different accumulation
-laws.
+The applicable law determines the result format when one is required. It fixes each semantic rounding boundary and any
+permitted information loss. Rounding through a wider intermediate format need not equal direct rounding to the target
+format. A change in calculation method must preserve the required result and any intermediate result already fixed by
+that law. The source law also governs required evaluation order and exceptional behavior.
 
 A representation's **numerical resolution** describes the values it can distinguish. This does not establish a
 measurement's accuracy or uncertainty. Measurement resolution may affect a judgment only when supplied through its
@@ -323,13 +301,15 @@ equivalent implementation.
 
 # 7. Arbitrary-Precision Integer Semantics
 
-A supported `BigInteger`-like operation denotes a finite mathematical integer result under its exact operation law.
-Addition, subtraction, multiplication, comparison, division, remainder, modulus, powers, modular exponentiation, modular
-inverse, greatest common divisor, signed bit operations, shifts, and conversions are independently qualified. Truncating
-remainder and a nonnegative modulus result are not interchangeable. An ordinary integer power may exclude negative
-exponents while modular exponentiation may admit them when the required inverse exists. A negative exponent, zero
-divisor, nonpositive modulus, missing modular inverse, or exact conversion outside its target range is handled according
-to that operation's definedness, not by inventing a Contract failure.
+A supported `BigInteger`-like arithmetic operation has an exact mathematical integer result where its domain is defined.
+A comparison may instead return a Boolean. Supporting the value does not admit its library's entire operation set under
+Section 4.7.
+
+Division and remainder follow their own quotient law. A nonnegative modulus result is not interchangeable with a
+truncating remainder. An ordinary power may reject negative exponents while modular exponentiation may permit them when
+the required inverse exists. A `mod` operation may require a positive modulus. Modular inverse, greatest common divisor,
+shifts, and conversions each retain the applicable source law. Division by zero and exact conversion outside its target
+range retain their source-defined partiality. An invalid operand does not create a new Contract Failure.
 
 Signed arbitrary-precision bitwise operations follow their explicitly defined infinite sign-extension behavior. They are
 not widened versions of fixed-width bitvector operations by default. A negative shift distance reverses the shift
@@ -432,26 +412,28 @@ into deterministic Contract judgments until a conforming exact profile exists.
 
 ## 9.1. Value, Presentation, and Arithmetic Result
 
-A Decimal presentation retains an exact coefficient and an exact scale. Its numerical value is
-`coefficient × 10^(-scale)`. Numerical cohort equality may ignore differences in scale for comparison, but Presentation
-Sameness does not. Arithmetic results must preserve their own exact coefficient/scale and rounding laws, including the
-source operation's preferred scale and tie behavior.
+A Decimal Presentation retains its exact coefficient and scale. Its numerical value is `coefficient × 10^(-scale)`.
+Numerical cohort equality may equate `2.0` with `2.00`, but Presentation Sameness does not, as specified in Section 5.2.
 
-An implementation may use compact or wide representation, but it cannot normalize trailing zeros or change scale merely
-because the numerical value is unchanged. Explicit scale-changing operations are legal derived calculations when their
-exact result law is supported.
+A Decimal Operation that produces a Decimal Datum must determine its coefficient and scale. When the operation is
+source-bound, its preferred scale and rounding follow Section 4.3. An exact calculation whose law requires no
+intermediate Decimal result is not assigned one merely because its operands are Decimal.
+
+An established Decimal Datum cannot have its required scale changed on the ground that its numerical value is unchanged.
+A separately defined conversion may form a new result under its own law.
 
 ## 9.2. Exact and Rounded Operations
 
 Addition, subtraction, multiplication, comparison, division, integral division, remainder, powers, scale conversion,
-square root, and conversions must be qualified individually, including each source overload. Exact division is partial
-where the quotient has no admissible finite decimal expansion or its other domain conditions fail. Scale-changing
-operations without rounding are partial if an exact result cannot be represented in the required result scale.
+square root, and conversions must be qualified individually, including each source overload. Exact division requiring a
+finite Decimal result is partial if the quotient has no admissible representation or another domain condition fails.
+Other exact mathematical division follows Section 4.4. Scale-changing operations without rounding are partial if an
+exact result cannot be represented in the required result scale.
 
-A rounded Decimal operation must fix precision, result scale where applicable, and an explicit rounding rule. The closed
-Java `RoundingMode` cases `UP`, `DOWN`, `CEILING`, `FLOOR`, `HALF_UP`, `HALF_DOWN`, `HALF_EVEN`, and `UNNECESSARY`
-retain their exact distinct meanings. `UNNECESSARY` is legal only where no rounding is needed. A `MathContext`
-contributes its exact precision and rounding case; default process-wide context is not inferred.
+A rounded Decimal operation must fix its rounding rule and any precision or scale constraints required by its result
+law. The closed Java `RoundingMode` cases `UP`, `DOWN`, `CEILING`, `FLOOR`, `HALF_UP`, `HALF_DOWN`, `HALF_EVEN`, and
+`UNNECESSARY` retain their exact distinct meanings. `UNNECESSARY` is legal only where no rounding is needed. A
+`MathContext` contributes its exact precision and rounding case; default process-wide context is not inferred.
 
 Context-bearing and context-free overloads are not interchangeable. The result of `BigDecimal.divide(BigDecimal)` is not
 silently replaced with a rounded quotient. An algorithm with an error bound, including a host `sqrt` implementation, is
@@ -520,43 +502,29 @@ Reflection or dynamic provider discovery cannot grant permission.
 
 # 12. Establishment, Identity, Version, and Failure Boundaries
 
-Numbers does not establish a separate Numeric Definition or Occurrence. Existing Contract judgments retain their
-Required Basis and applicability laws under ADR-0063. Version Claim and binding remain governed by ADR-0053. An external
-numeric specification becomes a required semantic basis only when the owning law so requires.
+Numbers establishes neither a separate Numeric Definition nor a Numeric Version Authority. Contract Required Basis and
+applicability remain governed by ADR-0063. Contract Version Identity and binding remain governed by ADR-0053. An
+external numeric specification becomes Required Basis only where the owning Contract law requires it.
 
-Changing an operation's result-determining law changes its meaning. It cannot be disguised as an optimization or cache
-migration. A compatible new implementation must preserve the unchanged law's legally observable results. Greater
-numerical accuracy alone does not excuse a different result. ADR-0053 governs intentional meaning changes; Numbers
-introduces no independent version authority or obligation to retain unsafe historical executables.
+A Contract Version must not silently acquire different Numeric Meaning when Kontrakt changes. The Numeric Law used to
+interpret that established meaning must remain equivalent. A change that alters a required Numeric Result is a change of
+meaning, not a compatible realization update. Its version and applicability are governed by ADR-0053 and ADR-0063, not
+by an implicit Kontrakt release number.
 
-An unsupported operation, a value outside an operation's domain, a prohibited platform call, and resource exhaustion are
-distinct from a legal Admission result. Their respective owners determine the outcome. Numbers cannot establish Failure,
-`Rejected`, or Diagnostic Material on their behalf.
+An unsupported operation or an operation outside its domain does not establish Admission `Rejected`. Failure and
+resource refusal retain their respective owners under ADR-0057, ADR-0051, and ADR-0052.
 
 # 13. Realization Design Ownership
 
-The Numeric Realization Design owns calculation algorithms and physical representations. It also owns platform fast
-paths and implementation-specific resource protection. These may change without changing the established Numeric Meaning
-under Sections 4–12.
-
-The selected E-Graph-based optimization direction is a compiler design choice, not a new Numeric Law. Its shared
-machinery may be specialized for different compiler consumers. It may exploit exact mathematical identities only where
-the applicable operation laws and their domains permit them. Neither a rewrite nor cost-based extraction may change a
-required intermediate or final result. A direct computation path remains legal when it satisfies the same law.
-
-Compiler optimization and cache reuse remain subject to their existing result and validity laws. Budget, Capacity, and
-security authorities continue to govern resource limits. No implementation mechanism can establish a new Numeric
-outcome.
+Realization does not determine Numeric Meaning. Its freedom to change calculation methods is bounded by Sections 4.2 and
+4.5. Compiler-result reuse remains governed by ADR-0075. Resource limits remain under their existing Contract
+authorities.
 
 # 14. Conformance and Execution Eligibility
 
-An operation may be advertised as executable only when the realization has sufficient evidence that its legal
-observations match the approved Numeric Meaning. When the law fixes one result, a numerical tolerance is not sufficient.
-A faster approximate calculation is legal only when its delivered result satisfies that exact law. An internal precision
-increase alone is not evidence that all required rounding boundaries are preserved.
-
-Verification methods and test cases belong to Numeric Realization Design. They do not define the operation's legal
-result.
+An operation may be declared executable only when its realization is shown to preserve the complete Numeric Law. A
+numerical tolerance does not establish conformance when the law requires one exact result. The means of verification do
+not define that result.
 
 # 15. Integration and Supersession Boundaries
 
@@ -584,7 +552,6 @@ The following decisions remain open; none is made Accepted by this draft:
    procedure requires separate approval consistent with Section 4.3.
 8. Decide how explicitly supplied measurement resolution or uncertainty participates in existing Input and Fact
    meanings, without introducing a new Numbers authority.
-9. Complete the Numeric Realization Design under Sections 13 and 14. The implementation plan is not Contract meaning.
 
 # 17. Rejected Directions
 
@@ -595,14 +562,5 @@ The following alternatives are excluded by the controlling laws rather than repe
 - One mandatory representation, universal precision mode, or implicit normalization: Sections 4.5–4.7.
 - Treating host syntax or approximate tolerance as a complete operation law: Sections 4.3–4.4.
 - Replacing Input Sameness with one numeric equality rule: Section 5.
-- Allowing an optimization or cache hit to establish Numeric Meaning: Sections 4.2 and 13.
+- Allowing an optimization or cache hit to establish Numeric Meaning: Sections 4.1 and 4.2.
 - Treating resource or computation failure as Admission `Rejected`: Section 12.
-
-# 18. Consequences and Follow-On Work
-
-Contract consumers share the Numeric Law while retaining their own judgments. The compiler may choose different
-realizations, but it must preserve the same legal result.
-
-Next work is to close the remaining Numeric Value and Operation details in Section 16. The corresponding Numeric
-Realization and E-Graph optimization designs, and the necessary ADR-0064, ADR-0065, and ADR-0073 consistency changes,
-follow separately. This Proposed ADR changes none of those Accepted documents.
