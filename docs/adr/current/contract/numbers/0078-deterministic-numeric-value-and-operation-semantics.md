@@ -8,10 +8,6 @@ Proposed
 
 2026-10-18
 
-## Proposed Location
-
-`docs/adr/current/contract/numbers/0078-deterministic-numeric-value-and-operation-semantics.md`
-
 ## Related
 
 - `docs/the-most-important-thing/what-contract-is.md`
@@ -127,6 +123,24 @@ subsequent operations use that result even when it has not been physically produ
 
 Neither a source symbol nor a physical identifier establishes the operation's Contract authority or meaning.
 
+A source-bound Numeric Operation is qualified by its resolved callable and applicable source specification, including
+the
+language and specification version wherever they affect meaning. Qualification is complete only if its legal operand
+meaning, result type and format, semantic rounding points, required evaluation behavior, exceptional domain, and
+complete
+legally observable result are determined. An exact mathematical function and an operation with the same name in a host
+library are not presumed to be the same law. A numeric return type or a recognized method name is insufficient.
+
+If the source specification already determines the result, that result is preserved. If it permits several results,
+Kontrakt may admit only an exact deterministic refinement permitted for every relevant source observation under
+ADR-0073. An algorithm-independent exact mathematical result, with its legally permitted rounding and source-specific
+special cases, is preferred when that choice satisfies the entire source law. Where the source law itself requires a
+specified reference result, that source requirement is preserved. A newly selected reference procedure is not inferred
+from one observed JDK release or implementation; using such a procedure to close an otherwise underdetermined law
+requires
+an explicit and independently justified semantic decision. If no legal unique result is established, the operation is
+unsupported for governed judgment. Merely promising repeatability within one Kontrakt release is insufficient.
+
 ## 4.5. Result Determination and Permitted Loss
 
 An operation law fixes the result, not the algorithm used to obtain it. A Kontrakt-defined mathematical operation may
@@ -145,29 +159,35 @@ A representation's **numerical resolution** describes the values it can distingu
 measurement's accuracy or uncertainty. Measurement resolution may affect a judgment only when supplied through its
 owning Contract boundary. Numbers does not infer it from the representation.
 
+When a source operation admits multiple outcomes within an error bound, that bound is a constraint on possible results,
+not the Numeric Result Law itself. A deterministic refinement must name one result for every legal input, including
+special cases. A correctly rounded mathematical result is eligible only after the exact source operation's exceptional
+rules, representation requirements, and other mandatory constraints have been satisfied. Improved numerical accuracy
+alone cannot justify a changed source-bound result. The semantic result cannot depend on the selected realization,
+compiler pass, target, cache state, or Kontrakt release.
+
 ## 4.6. Numeric Value Interpretation and Preservation
 
-Kontrakt's required Numeric Value scope includes:
+Kontrakt's current required Numeric Value scope includes:
 
 - Signed and unsigned integers, including BigInteger.
 - Decimal.
 - Binary16, bfloat16, Binary32, Binary64, and Binary128.
-- Vector, Matrix, and Tensor values.
 
-These are required semantic support targets, not a promise to implement their external calculation APIs.
+These are required semantic support targets, not a promise to implement their external calculation APIs. Vector,
+Matrix, Tensor, and their structured numeric variants are V2 support targets under Section 15.1, not part of the
+current required Numeric Value scope.
 
 A Numeric Value is interpretable when its domain and legally observable distinctions are fully determined. The
 information needed to determine its numeric meaning must be sufficient under the applicable value law. Kontrakt cannot
-infer an omitted Numeric Format, quantization parameter, or structural context from an unstated external default. Value
+infer an omitted Numeric Format or other meaning-determining information from an unstated external default. Value
 Interpretation may be complete without supporting any particular calculation on that value.
 
-For structured values, the constituent numeric meanings and relevant structure must also be determined. For example,
-tensor shape and logical element coordinates cannot be inferred from element count alone. A structured value may have a
-logical numerical meaning independent of its physical storage. That meaning does not, by itself, replace the owning
-Presentation Sameness or make every representation interchangeable. Distinctions such as duplicate sparse entries,
-explicitly stored zeros, quantization parameters, and validity information remain observable whenever the owning law so
-provides. Forming a new coordinate value by combining entries requires an exact operation law unless that result is
-already part of the established value meaning.
+A structured numeric form requires its own complete value law before it can be claimed as supported. Shape and element
+count alone do not establish Tensor meaning; sparse entry presence, duplicate-coordinate interpretation, quantization
+parameters, ragged coordinates, and presence or validity distinctions may require additional laws. The preliminary
+mathematical model of a homogeneous indexed value does not ratify a V1 Tensor Presentation, Fact, or operation. These
+V2 questions remain open under Section 15.1 and do not determine current Scalar Numeric Meaning.
 
 A lawfully admitted value must retain its meaning without depending on later changes to an external object or hidden
 execution. The law requires stable observations, not a mandatory memory copy or physical encoding. An already determined
@@ -181,10 +201,11 @@ Interpretation does not authorize normalization or precision loss. A change in N
 legal conversion. Such a conversion produces a distinct result under its own law; it does not rewrite the admitted
 input.
 
-A floating NaN is a Numeric Format value, not a universal Missing or Null marker. Missing, Null, invalid slots, and
-masks follow the owning Presentation's presence and validity law. Numbers does not infer a numeric datum for an absent
-or invalid element, nor convert a valid NaN into absence. Any operation that resolves these states into a new numeric
-result requires its own complete law.
+A floating NaN is a Numeric Format value, not a universal Missing or Null marker. Missing, Null, and invalid
+presentations follow their owning presence and validity laws. Numbers does not infer a numeric datum where no valid
+numeric value has been established, nor convert a valid NaN into absence. A future masked or validity-bearing Tensor
+must retain those owners under Section 15.1. Any operation that resolves these states into a new numeric result requires
+its own complete law.
 
 The external producer's measurement accuracy and algorithmic error bounds are not inferred from the result. Units and
 other domain meaning remain with the Contract that supplies them. Section 4.1 governs authority over those judgments.
@@ -207,9 +228,15 @@ to establish a governed judgment. A known operation that is outside the current 
 thereby lose its semantic definition. The different refusal and failure authorities remain governed by Section 12.
 
 New Numeric Formats and structured meanings may be introduced without changing existing laws. Rational, Complex, and
-Interval values require their own closed meanings before being claimed as supported. A new format must preserve its own
-distinctions and must not obtain Contract authority from the external runtime that supplies it. No global precision mode
-is introduced to redefine existing source operations.
+Interval values require their own closed meanings before being claimed as supported. Vector, Matrix, and Tensor follow
+the V2 integration boundary of Section 15.1. A new format must preserve its own distinctions and must not obtain
+Contract authority from the external runtime that supplies it. No global precision mode is introduced to redefine
+existing source operations.
+
+An operation not yet qualified under Sections 4.3–4.5 is not provisionally admitted on the assumption that a later
+optimizer, JVM library, or realization can give it a stable answer. This is a limit on the set of governed operations,
+not a refusal to interpret an otherwise legal Numeric Value and not a new Contract Failure. New operations may become
+supported after their meanings are closed without changing the meaning of previously qualified operations.
 
 # 5. Numeric Value Domains and Sameness
 
@@ -240,6 +267,96 @@ required by the owning collection law; an arbitrary numeric predicate is not sub
 The meaning of Kotlin `==`, Java `==`, `equals`, `compareTo`, and a Collection membership operation follows the exact
 resolved operation and the applicable value/collection law. Syntax alone cannot authorize a host equality implementation
 or allow an optimizer to replace `any { x == value }` with `contains(value)`.
+
+## 5.3. Exact Binary Format and Datum Law
+
+A Binary Numeric Datum is determined by its exact Numeric Format `F` and one logical bitstring `b` of that format's
+width. The supported binary-format meanings are closed to the five named formats in Section 4.6. One common
+parameterized interpretation applies to these named formats; arbitrary exponent and fraction widths are not thereby
+admitted as further Numeric Formats. The corresponding parameters are:
+
+| Format    | Total bits | Exponent bits `k` | Fraction bits `t` | Exponent bias `B` |
+|-----------|-----------:|------------------:|------------------:|------------------:|
+| Binary16  |         16 |                 5 |                10 |                15 |
+| bfloat16  |         16 |                 8 |                 7 |               127 |
+| Binary32  |         32 |                 8 |                23 |               127 |
+| Binary64  |         64 |                11 |                52 |              1023 |
+| Binary128 |        128 |                15 |               112 |             16383 |
+
+From most significant to least significant bit, `b` consists of the sign bit `s`, the unsigned exponent field `e` of
+width `k`, and the unsigned fraction field `f` of width `t`. Let `Emax = 2^k - 1`. Every logical bitstring of the
+required width has exactly one interpretation within its specified format:
+
+- `e = 0` and `f = 0`: signed zero, retaining `s`.
+- `e = 0` and `f > 0`: subnormal finite value `(-1)^s × f × 2^(1-B-t)`.
+- `0 < e < Emax`: normal finite value `(-1)^s × (2^t + f) × 2^(e-B-t)`.
+- `e = Emax` and `f = 0`: signed infinity, retaining `s`.
+- `e = Emax` and `f > 0`: NaN, retaining its sign and complete nonzero fraction field.
+
+For a NaN, the most significant fraction bit `q` is the quiet/signaling discriminator. Write
+`f = q × 2^(t-1) + p`, with `0 <= p < 2^(t-1)`. A NaN with `q = 1` is quiet and permits any `p`; a NaN with `q = 0`
+is signaling and requires `p > 0`. When `q = 0` and `p = 0` at the reserved exponent, the datum is infinity, not NaN.
+This polarity deliberately agrees with the widely used binary interchange encoding; the external specification does
+not own this Kontrakt law. The sign and fraction fields do not, by themselves, give the payload a diagnostic,
+identifier,
+or other domain meaning. Classification does not independently establish a trap or exception result.
+
+The interpretation retains subnormals without flush-to-zero and distinguishes both signs of zero, both signs of
+infinity, and all NaN bit patterns. The exact positive finite boundaries derived from the common law are:
+
+| Format    | Least positive normal | Least positive subnormal | Greatest finite        |
+|-----------|-----------------------|--------------------------|------------------------|
+| Binary16  | `2^-14`               | `2^-24`                  | `(2-2^-10) × 2^15`     |
+| bfloat16  | `2^-126`              | `2^-133`                 | `(2-2^-7) × 2^127`     |
+| Binary128 | `2^-16382`            | `2^-16494`               | `(2-2^-112) × 2^16383` |
+
+The following examples are consequences of the law, not separate operation laws:
+
+| Format    | Positive infinity                    | Quiet NaN                            | Signaling NaN                        |
+|-----------|--------------------------------------|--------------------------------------|--------------------------------------|
+| Binary16  | `0x7c00`                             | `0x7e00`                             | `0x7c01`                             |
+| bfloat16  | `0x7f80`                             | `0x7fc0`                             | `0x7f81`                             |
+| Binary128 | `0x7fff0000000000000000000000000000` | `0x7fff8000000000000000000000000000` | `0x7fff0000000000000000000000000001` |
+
+Binary16 `0x3c00 = +1`, bfloat16 `0x3f80 = +1`, and Binary128
+`0x3fff0000000000000000000000000000 = +1` follow the same interpretation.
+
+Exact Binary Datum identity is defined by
+`(F1, b1) ≡datum (F2, b2)` if and only if `F1 = F2` and `b1 = b2`. Two 16-bit values with identical bitstrings but
+formats Binary16 and bfloat16 are different datums. Positive and negative zero, and NaNs that differ in sign,
+quiet/signaling bit, or payload, are likewise different datums. Exact Datum identity is not numeric comparison, Input
+Presentation Sameness, Fact Sameness, Contract identity, or permission to reuse a compiler result under ADR-0075.
+
+These are logical bits, not a prescribed byte order, host carrier, storage layout, or extra physical payload. A
+meaning-preserving physical representation may use fixed-width primitive lanes, with padding or cache-line alignment
+under Design ownership; the NaN payload is already within the datum's declared bit width. An integer bit carrier may
+retain a signaling NaN pattern without performing floating arithmetic. By contrast, an actual floating-value carrier
+or conversion may quiet it. Each proposed path must preserve the observations required of that path under ADR-0073;
+no blanket carrier prohibition or blanket losslessness follows from the format name.
+
+## 5.4. Legal Numeric Observations and Distinction Lifetime
+
+A distinction in an exact Binary Datum is not a general authorization for every operation or Contract consumer to
+observe it. An authorized raw-bit operation may distinguish two NaN payloads; a qualified `isNaN` operation may return
+the same Boolean for both. A representation-preserving use must preserve all distinctions required by its applicable
+law. Classification, numeric equality, ordered comparison, sign manipulation, bit reinterpretation, format conversion,
+and newly produced arithmetic results instead follow their individually qualified operation laws under Sections 4.3–4.5
+and 8. Raw-bit observation does not automatically authorize external disclosure of a payload or reinterpretation of it
+as Diagnostic meaning.
+
+Value preservation does not impose universal NaN payload propagation. Under Section 8.3's applicable basic-arithmetic
+profile, `Binary32(0x7fc00001) + 1.0f` may be required to yield the newly formed canonical NaN
+`Binary32(0x7fc00000)`, while a legal raw-bit observation of the original operand still yields `0x7fc00001`.
+Consequently, the unconditional rewrite `x + 0.0f -> x` is not valid for that profile over all Binary32 inputs: NaN
+payloads may differ, and signed zero can also distinguish the results. Such a rewrite is legal only on a domain and
+under observations for which the complete applicable operation law establishes equivalence. The requirement can limit
+optimization; it does not mandate a single calculation algorithm or permanent storage of every original bit pattern.
+
+An original distinction may cease to constrain later realization only when its owning observation obligations have
+been discharged or an owning law has established a new result that does not retain that distinction. The absence of an
+observation in one current execution is not sufficient if a legally possible later consumer still requires it. Replacing
+or reclaiming physical storage never itself changes the established datum. Observation discharge remains governed by
+ADR-0073, and compiler-result validity and reuse remain governed by ADR-0075.
 
 # 6. Fixed-Width Integer Semantics
 
@@ -324,6 +441,18 @@ The mathematical result and the physical cost of constructing it are separate. R
 silently change the arithmetic result. Budget, Capacity, compiler safety, and realization ownership govern resource
 exhaustion; such exhaustion does not become an ordinary Boolean `false` or Admission `Rejected`.
 
+For each BigInteger-like callable selected for governed use, the exact source operation determines its input
+restrictions
+and complete result, including the sign convention of quotient and remainder, positivity of a modulus, existence of a
+modular inverse, exponent restrictions, and exact conversion bounds. The mathematical equality of two formulations does
+not permit substituting one callable for another when their valid domains or exceptional behavior differ. These laws do
+not require one multiplication, division, or modular arithmetic algorithm.
+
+A deterministic Boolean or integer result is not inferred from a method's return type. Operations defined by
+probabilistic evidence, ambient randomness, or algorithm-dependent classification are not qualified merely because they
+are methods of a supported numeric type. If a distinct exact operation is established, its source-law compatibility
+and independently closed result must be demonstrated before use.
+
 # 8. Binary32 and Binary64 Semantics
 
 ## 8.1. Representation and Value Operations
@@ -382,6 +511,20 @@ Signaling NaN bit patterns retain every distinction required by their admitted P
 such a pattern cannot be presumed to preserve it. Their participation in an admitted arithmetic operation follows that
 operation's result law.
 
+For floating operations outside the fixed basic arithmetic profile of Section 8.3, qualification is per exact callable.
+Unary negation, absolute value, sign and sign-copy operations, minimum and maximum, and other operations must retain
+their distinct source laws for NaN operands, signed zero, and any representational observation. An input NaN does not
+uniformly entail a NaN result, and a newly produced NaN does not uniformly inherit its operand's sign or payload.
+Section 8.3's fixed NaN bits do not supply a default result for these operations.
+
+For example, Java `Math.copySign` and `StrictMath.copySign` cannot be treated as interchangeable when the sign operand
+is
+NaN. The resolved callable's own permitted NaN-sign rule must be honored. Likewise, a minimum or maximum that returns
+NaN, a non-NaN operand, or a selected signed zero cannot be reduced to one universal floating comparison law. A source
+law that leaves NaN result bits unspecified requires an explicitly lawful deterministic result refinement wherever those
+bits can be legally observed. Otherwise that use remains unsupported. None of these refinements normalizes an already
+admitted Input datum.
+
 ## 8.4. Classification, Comparison, and Raw Bits
 
 `isNaN`, `isInfinite`, `isFinite`, primitive comparisons, explicit total comparison functions, canonicalizing bit
@@ -407,6 +550,22 @@ algorithm may be a suitable basis for some functions; its name alone does not pr
 bitwise result. More mathematically accurate output from another library is not automatically a legal replacement for a
 source operation with a different specified result. Platform functions that cannot meet this section are not admitted
 into deterministic Contract judgments until a conforming exact profile exists.
+
+For mathematical functions, qualification begins with the exact source overload and its versioned language or library
+law. Java `Math`, `StrictMath`, and Kotlin callables are audited separately. Where a Java `StrictMath` callable requires
+a
+specified fdlibm result, a different correctly rounded mathematical result is not substituted merely because it is
+more accurate. Where a Java `Math` callable permits multiple approximations, its stated accuracy, monotonicity, special
+cases, and other observations constrain any selected deterministic refinement. The same method spelling or
+mathematical name does not imply the same result law in Kotlin or Java.
+
+A correctly rounded result may close a mathematically defined operation only when the result format, rounding,
+exceptional inputs, and source requirements make it one legal answer. The exact result of an ideal real function does
+not
+by itself specify the complete result of a floating library callable. A tolerance or quality-of-implementation bound
+without a unique selection is insufficient; a specific historical library output is not automatically a normative
+reference result. An operation without a complete legal result law remains unsupported for governed use, independently
+of whether an external adapter may lawfully supply an already computed value.
 
 # 9. Decimal Semantics
 
@@ -440,6 +599,20 @@ silently replaced with a rounded quotient. An algorithm with an error bound, inc
 insufficient for a deterministic profile if that bound permits multiple different results and the profile does not
 otherwise fix which one is selected.
 
+For each supported Decimal operation, the result law determines the full Decimal Datum, not only its numerical value.
+Where the source law prescribes a preferred scale, a precision-dependent representation, or a special result for an
+exact
+value, those requirements are retained. Inexact rounding is permitted only where the exact overload admits it;
+`UNNECESSARY`
+does not become a request for the nearest result when its exactness condition fails.
+
+`BigDecimal.pow(int)` and `BigDecimal.pow(int, MathContext)` do not share a general result law. The latter's documented
+error allowance and potential future algorithm changes do not, by themselves, choose one Numeric Result. The operation
+must receive a lawful exact deterministic refinement covering its result coefficient and scale and its exceptional
+domain, or remain unsupported for governed use. A current implementation's observed output is not silently frozen as
+the source law. `BigDecimal.sqrt(MathContext)` is likewise qualified with its own exact rounding, preferred scale,
+precision, and exceptional conditions rather than being grouped with `pow` or a binary host `sqrt`.
+
 ## 9.3. Formation, Conversion, and Text Projection
 
 Decimal formation from a source string, integer, coefficient/scale pair, binary floating value, or a floating-to-text
@@ -461,6 +634,14 @@ automatically serve as the other's guard.
 
 An exception, arithmetic trap, compiler resource refusal, and a legitimate Contract `Rejected` are different outcomes.
 Numeric exception handling cannot be used to fabricate a second Admission result type.
+
+The domain of a partial Numeric Operation is part of that operation's meaning, not a license for a new Admission
+outcome.
+A source guard may establish that the operation is reached only on its legal inputs. A transformation cannot remove the
+guard, change the order of required observations, or replace a checked operation with a total one unless the original
+source law and its legally observable behavior are preserved. Whether an unreachable but otherwise unsupported source
+form is admissible remains governed by the unresolved ADR-0065 Section 7.5 conflict in Section 10.3; Numeric partiality
+does not settle that source-legality question.
 
 ## 10.2. Collections, Equality, and Reductions
 
@@ -492,6 +673,13 @@ Kotlin and Java, this includes the exact overload and relevant language version.
 law and legal execution domain under Sections 4.3, 4.4, and 4.7. An unresolved or unverified operation cannot contribute
 to a governed judgment.
 
+An operation selected for governed use must be distinguished from an operation whose numeric family is only understood.
+When the complete Numeric Result Law is not established for the exact callable, it remains unqualified. When its meaning
+is complete but the available realization has not demonstrated conformance, the meaning remains valid but executable
+support is not claimed. In neither case may a library's current behavior, an optimizer's rewrite, or a cache hit provide
+missing semantic qualification. Qualified source operations and separately defined mathematical operations remain
+distinct even if their current results happen to agree.
+
 ADR-0073 controls whether a platform or external call may execute within the governed boundary. A permitted external
 calculation may instead deliver a result through an approved Adapter or Input path. Under Section 4.6, Kontrakt
 interprets the admitted value without taking ownership of the library's prior computation. A numeric return type does
@@ -510,6 +698,12 @@ A Contract Version must not silently acquire different Numeric Meaning when Kont
 interpret that established meaning must remain equivalent. A change that alters a required Numeric Result is a change of
 meaning, not a compatible realization update. Its version and applicability are governed by ADR-0053 and ADR-0063, not
 by an implicit Kontrakt release number.
+
+External numeric standards and their revisions are evidence for defining and verifying Kontrakt's own closed value
+laws, not automatic amendments to them. This independence does not waive a qualified source-bound operation's
+compatibility obligations under Sections 4.3–4.4: the exact applicable source specification still constrains its
+result and legal observations. An external format can be consumed only through an unambiguous, lawfully established
+mapping to the required Kontrakt meaning; a changed external specification requires a fresh compatibility judgment.
 
 An unsupported operation or an operation outside its domain does not establish Admission `Rejected`. Failure and
 resource refusal retain their respective owners under ADR-0057, ADR-0051, and ADR-0052.
@@ -531,27 +725,62 @@ not define that result.
 This ADR supplies shared Numeric Meaning without superseding other Contracts. The authority split is defined in Section
 4.1. Existing Input support remains limited as stated in Section 5.1. Platform admissibility follows Section 11.
 
-ADR-0064 requires a separate compatibility decision before Binary16, bfloat16, Binary128, or new structured Numeric
-Presentations may enter its V1 Input surface. ADR-0073 must independently ratify each proposed carrier and executable
-use. Those Accepted documents are not amended by this Proposed ADR.
+ADR-0064 requires a separate compatibility decision before Binary16, bfloat16, or Binary128 Presentations may enter
+its V1 Input surface. ADR-0073 must independently ratify each proposed carrier and executable use. A V2 Tensor
+Presentation also requires its own owning-Contract decisions under Section 15.1. Those Accepted documents are not
+amended by this Proposed ADR.
+
+## 15.1. V2 Vector, Matrix, and Tensor Support
+
+Vector, Matrix, and Tensor are assigned to V2 as an explicit cross-pipeline Structured Numeric Value extension. Their
+mathematical investigation is retained as V2 Design/Research, not ratified here as current supported value semantics.
+A base homogeneous indexed value can be described by a determined shape, one element Numeric Format, and one exact
+element datum at each logical coordinate; that description alone does not constitute complete support for Tensor
+systems.
+Sparse, ragged, quantized, heterogeneous, masked, or labeled forms need separate closed meanings wherever they are
+claimed as supported. A supported sparse form must determine whether duplicate entries, explicit zeros, omitted
+coordinates, and entry order are observable; combining entries to form a new numeric result requires an exact operation
+law unless that result is already completely determined by the owning structured value law. Quantization parameters,
+coordinate-dependent meanings, and validity must likewise be explicit wherever the supported form requires them. The
+logical meaning need not prescribe physical layout, and equality of coordinate-wise numbers alone does not determine
+an owning Presentation's Sameness. V2 support does not imply universal coverage of every external Tensor framework or
+operation.
+
+For every V2 Tensor form that Kontrakt declares supported, the extension must be coherent across the existing
+Interaction/Input, Admission, Canonicalization, Lowering, Fact, Invariant, Establishment, Operation/result judgment, and
+Output/Publication boundaries. The owning Contracts must determine the relevant presentation and presence laws,
+structural validity, Canonicalization authority, required relations and lowering, established Fact meaning and Sameness,
+legal observations, and projection of results. Governance, Policy, Budget, Capacity, Failure, Diagnostics, and Platform
+qualification apply where the supported use requires them. Tensor does not become a new Contract authority, and each
+1D Contract continues to own only its existing judgment. Qualification of Tensor operations is separate from
+interpretation of Tensor values, and each supported operation requires a complete result law under Section 4.7.
+
+V2 may choose data-oriented primitive slabs, compressed layouts, device representations, and cache-line-aware storage
+without putting those physical decisions into the Numeric Law. A Tensor object or external buffer is not thereby a
+legal Input, Fact, or Core authority. V1 may lawfully consume separately admitted scalar or closed aggregate results of
+external Tensor calculations under existing boundaries without claiming that the external Tensor calculation itself
+was verified. V2 integration must preserve the established V1 Scalar Numeric Laws and Contract ownership.
 
 # 16. Decisions Still Required Before Acceptance
 
-The following decisions remain open; none is made Accepted by this draft:
+The operation-law qualification decision is closed by Sections 4.3–4.5, 4.7, and 6–11. A callable with a complete exact
+source result or an established lawful deterministic refinement may be qualified. The remaining callables are not
+implicitly supported. In particular, Section 8.3's NaN result law is not extended to other floating callables, and a
+library's documented error bound is not promoted to a unique result. Extending the set of qualified callables requires a
+complete operation-specific law; their algorithms and physical representations remain Design work. This closes the
+shared Numeric Operation decision without claiming universal coverage of Java, Kotlin, BigInteger, or Decimal APIs.
 
-1. Complete the separate NaN operand and result laws for floating operations outside Section 8.3's fixed basic
-   arithmetic result rule, and qualify each applicable source operation under Section 4.3.
-2. Complete the deterministic result laws for supported `Math`, `StrictMath`, and Kotlin mathematical operations.
-3. Complete the exact BigInteger and Decimal operation laws, including exceptional domains and result representation.
-4. Resolve ADR-0065 §7.5 against Section 10.3 without silently modifying that Accepted ADR.
-5. Define the semantic details of Binary16, bfloat16, and Binary128, then determine their legal Input and Platform
-   boundaries under ADR-0064 and ADR-0073.
-6. Complete format-specific Structured Numeric Value laws under the preservation rule in Section 4.6. Tensor structure,
-   quantization, missing values, and legal observations require explicit decisions by their respective owners.
-7. Determine which operations have an algorithm-independent unique result. Any exception relying on a reference
-   procedure requires separate approval consistent with Section 4.3.
-8. Decide how explicitly supplied measurement resolution or uncertainty participates in existing Input and Fact
+The following independent decisions remain open; none is made Accepted by this draft:
+
+1. Resolve ADR-0065 §7.5 against Section 10.3 without silently modifying that Accepted ADR.
+2. Determine which Binary16, bfloat16, and Binary128 Input Presentations and platform uses are independently ratified
+   under ADR-0064 and ADR-0073. Section 5.3 closes their Numeric Format interpretations but does not ratify those uses.
+3. Decide how explicitly supplied measurement resolution or uncertainty participates in existing Input and Fact
    meanings, without introducing a new Numbers authority.
+
+Vector, Matrix, Tensor, and their structured variants are V2 support work under Section 15.1, not conditions for
+accepting the current Scalar Numeric Law. Their V2 format-specific meaning, owning-Contract integration, operation
+qualification, and realization still require separate decisions before those capabilities may be claimed as supported.
 
 # 17. Rejected Directions
 
@@ -559,7 +788,7 @@ The following alternatives are excluded by the controlling laws rather than repe
 
 - A new Numeric 1D Contract or runtime Numeric authority: Section 4.1.
 - Treating external library algorithms as Numeric Contract authority: Sections 4.6 and 11.
-- One mandatory representation, universal precision mode, or implicit normalization: Sections 4.5–4.7.
+- One mandatory representation, universal precision mode, or implicit normalization: Sections 4.5–4.7 and 5.3.
 - Treating host syntax or approximate tolerance as a complete operation law: Sections 4.3–4.4.
 - Replacing Input Sameness with one numeric equality rule: Section 5.
 - Allowing an optimization or cache hit to establish Numeric Meaning: Sections 4.1 and 4.2.
