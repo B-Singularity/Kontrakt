@@ -744,8 +744,9 @@ Every legally entered Admission occurrence judgment must complete with exactly o
 legal presentation to which its Definition applies.
 
 Only semantically reachable source paths contribute to the judgment. A compiler may discard a provably unreachable
-branch even if that branch contains unsupported syntax. If the compiler cannot establish the unreachability, rejecting
-the source is a conservative V1 coverage decision.
+branch without lowering or realizing its otherwise lawful operations. Unreachability does not make a source form
+forbidden by the applicable authoring law, or invalid under the source language, lawful. If the compiler cannot
+establish the unreachability, rejecting the source is a conservative V1 coverage decision.
 
 A partial operation is legal only when its domain is established on every path that reaches it or when its partiality is
 represented by an explicit non-exceptional semantic result. A guard that establishes the domain of a later operation is
