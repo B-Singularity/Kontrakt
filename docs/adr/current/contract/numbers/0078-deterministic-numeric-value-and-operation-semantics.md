@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed
+Accepted
 
 ## Date
 
@@ -81,18 +81,25 @@ The same Numeric Operation Law, legal operands, declared semantic inputs, and ap
 one exact legally observable result. Neither an execution environment nor a choice of realization may
 select that result implicitly.
 
+This guarantee covers Numeric Value interpretation and the calculation semantics that determine the
+result. Required evaluation order, rounding boundaries, conversions, and exceptional behavior must
+remain consistent with the applicable law (Sections 3.3–3.6). Calculation algorithms and execution
+strategies remain replaceable when they preserve that meaning.
+
 Equality of the final Boolean judgment is insufficient if a legal observer can distinguish the Numeric
 Result. Information may be discarded only when no remaining legally permitted observation requires it
-under the owning law (Section 4.4).
+under the owning law (Section 4.3).
 
 An unchanged law must retain its result across Kontrakt releases and targets. Semantic changes follow
 Section 11. Compiler-result reuse follows ADR-0075.
 
 ## 3.3. Source-Bound Operations and ADR-0073
 
-A Java or Kotlin operation used by a Contract keeps the law of its exact resolved source callable.
-Calculating it inside Kontrakt does not replace that law with ideal mathematics. Qualification uses the
-applicable language or library specification, including its version when relevant.
+An explicitly supported Java or Kotlin operation used by a Contract keeps the law of its exact
+resolved source callable. Calculating it inside Kontrakt does not replace that law with ideal
+mathematics. Qualification uses the applicable language or library specification, including its
+version when relevant, only for that supported operation. The presence of an arbitrary library
+call in user realization does not require Kontrakt to qualify or verify it. Its use follows ADR-0073.
 
 The callable must have determined operand meaning, result format, evaluation and rounding obligations,
 defined domain, and legally observable result. A recognized name or numeric return type does not
@@ -165,9 +172,9 @@ Datum. Those meanings require an owning Contract declaration.
 
 ## 3.7. Value Support, Legal Use, and Executability
 
-A value's semantic interpretation, the legality of its Input presentation, the meaning of an operation,
-and the ability to execute that operation are separate determinations. In particular, understanding a
-value does not authorize every operation or carrier for it.
+A value's semantic interpretation, its legal use at a Contract boundary, the meaning of an operation,
+and its executable realization are separate determinations. Understanding a value does not authorize
+its use through any particular carrier or Contract boundary.
 
 A complete operation law can exist without an available realization. Conversely, an operation without a
 closed lawful result cannot establish a governed judgment merely because an optimizer or library can
@@ -179,17 +186,7 @@ existing source operations.
 
 # 4. Numeric Value Domains and Sameness
 
-## 4.1. Input Presentation Boundary
-
-ADR-0064's accepted V1 Input Leafs include fixed-width signed and unsigned integers, Decimal, Binary32,
-and Binary64. Its Decimal Presentation preserves coefficient and scale; its admitted binary Presentations
-preserve exact bits.
-
-Section 3.6 does not itself ratify additional Input Leafs or JVM carriers. The V1 support targets for
-Binary16, bfloat16, and Binary128 require the independent decisions in Section 14. Input Presentation
-Sameness and Canonicalization remain with their respective owners.
-
-## 4.2. Comparison Relations
+## 4.1. Comparison Relations
 
 Numeric equality is not a universal Sameness law. Floating numerical equality equates signed zeros but
 not NaN with itself. Raw-bit equality distinguishes those encodings. Decimal numerical equality may
@@ -201,10 +198,9 @@ Integer value equality, floating ordered comparison, and an explicitly defined t
 remain distinct operations. Kotlin `==`, Java `==`,
 `equals`, `compareTo`, and collection membership follow their resolved
 operations. `any { x == value }` cannot be replaced by `contains(value)` unless their actual
-comparison and membership laws coincide. Input-owned membership and key Sameness is addressed in Section
-10.2.
+comparison and membership laws coincide. Input-owned membership and key Sameness follow ADR-0064.
 
-## 4.3. Exact Binary Format and Datum Law
+## 4.2. Exact Binary Format and Datum Law
 
 An exact Binary Numeric Datum is `(F, b)`: one admitted Numeric Format and one logical
 bitstring of its width. Only the following named formats are included. Their common interpretation does
@@ -247,7 +243,7 @@ extra field. A primitive integer carrier may retain signaling NaN bits while a f
 quiet them. No carrier is presumed lossless or prohibited solely from its format name; each path must
 satisfy ADR-0073. Physical padding and alignment are Design choices.
 
-## 4.4. Legal Observation and Distinction Lifetime
+## 4.3. Legal Observation and Distinction Lifetime
 
 An exact datum's distinctions may be observed only by an operation or Contract consumer entitled to
 observe them. For instance, a lawful raw-bit operation distinguishes NaN payloads, while
@@ -313,9 +309,10 @@ without a guard or equivalent realization.
 
 # 6. Arbitrary-Precision Integer Semantics
 
-A qualified `BigInteger`-like arithmetic operation produces the exact mathematical integer
-required by its source law, within its legal domain. Supporting BigInteger values does not admit the
-library's methods as a group (Section 3.7).
+An arbitrary-precision integer has an exact mathematical integer value independent of any library
+implementation. A qualified source-bound arithmetic operation produces the integer required by its
+exact resolved source law, within its legal domain. Supporting BigInteger values does not admit Java
+`BigInteger` methods as a group (Section 3.7).
 
 Division, truncating remainder, and nonnegative modulus are distinct. A modulus operation may require a
 positive modulus. Ordinary powers may exclude negative exponents; modular exponentiation may admit them
@@ -339,9 +336,10 @@ Its ownership follows Section 11.
 
 ## 7.1. Representation and Value Operations
 
-An admitted Binary32 or Binary64 Input preserves its entire legal bit pattern. Representational uses
-cannot collapse signed zero or canonicalize an original NaN. Source conversions and newly produced
-numeric results instead obey their qualified operations (Sections 3.6 and 4.4).
+A lawfully admitted or established Binary32 or Binary64 datum retains its exact bits in
+representation-preserving uses, regardless of its producer. Those uses cannot collapse signed zero or
+canonicalize an original NaN. Conversions and newly produced results follow their qualified operation
+laws (Sections 3.6 and 4.3).
 
 ## 7.2. Basic Arithmetic and Rounding
 
@@ -366,18 +364,19 @@ the default Java-compatible Binary32/64 profile, an operation whose law requires
 permits that result. This applies whether the NaN arose from NaN operands or other exceptional
 arithmetic.
 
-This is a newly produced result, not Input normalization. NaN inputs do not always imply NaN output: an
-operation with an expressly determined non-NaN result retains it. If the source cannot permit the fixed
-NaN result, another lawful exact result must be determined or the operation remains unsupported.
+This is a newly produced result, not normalization of an existing datum. NaN operands do not always
+imply NaN output: an operation with an expressly determined non-NaN result retains it. If the source
+cannot permit the fixed NaN result, another lawful exact result must be determined or the operation
+remains unsupported.
 
 The fixed NaN rule does not extend to other floating callables. Their source-specific NaN and signed-zero
-behavior is qualified under Sections 3.3 and 7.4–7.5. Signaling NaN bits remain protected in an original
-Presentation; a carrier that may quiet them is not presumed lossless (Section 4.3).
+behavior is qualified under Sections 3.3 and 7.4–7.5. Signaling NaN bits remain protected by the owning
+value law. A carrier that may quiet them is not presumed lossless (Section 4.2).
 
 ## 7.4. Classification, Comparison, and Raw Bits
 
 Floating classification, comparison, sign operations, and bit conversions have their own exact laws.
-Primitive numerical equality differs from boxed Java equality and raw-bit equality (Section 4.2).
+Primitive numerical equality differs from boxed Java equality and raw-bit equality (Section 4.1).
 
 Canonicalizing `doubleToLongBits` is not `doubleToRawLongBits`; `longBitsToDouble` does
 not guarantee signaling NaN preservation through later floating use. Raw-bit access requires a source
@@ -408,9 +407,9 @@ already calculated value through a legal Input path (Section 10).
 
 ## 8.1. Value and Result
 
-A Decimal Presentation has an exact coefficient and scale; its numerical value is
-`coefficient × 10^(-scale)`. Its Presentation Sameness is specified by ADR-0064, distinct from numeric
-cohort equality (Section 4.2).
+A Decimal Numeric Datum has an exact coefficient and scale; its numerical value is
+`coefficient × 10^(-scale)`. Decimal Input Presentation Sameness is specified by ADR-0064, distinct from numeric
+cohort equality (Section 4.1).
 
 A Decimal-producing operation determines the full coefficient/scale result. A source-bound preferred
 scale must be retained even when a differently scaled result has the same numerical value. A distinct
@@ -471,7 +470,7 @@ unreachable lawful path does not legalize forbidden source.
 Collection element predicates follow their selected numeric comparison. `Membership.contains` and
 `Association.containsKey` instead use Input-owned Presentation Sameness. Whole-Collection equality also
 preserves any declared constituent and order distinctions. A compiler may exchange these relations only
-after establishing equivalence on the actual domains (Section 4.2).
+after establishing equivalence on the actual domains (Section 4.1).
 
 Aggregation over a Sequence preserves its semantic order. An unordered Membership gains no order from
 physical iteration. Reassociation or parallel reduction requires equivalence under the exact numeric
@@ -523,11 +522,11 @@ Compiler-result validity and reuse follow ADR-0075. Its decisions do not change 
 
 # 13. Conformance and Execution Eligibility
 
-An operation may execute in governed processing only when its exact Numeric Law is qualified and the
-selected realization is shown to preserve that law over its admitted domain. Conformance covers the
-required result and every legally observable distinction. It also covers definedness and required
-evaluation behavior under Sections 3.3–4.4. Agreement on selected inputs or within a tolerance does not
-establish conformance to an exact result law.
+An explicitly supported Numeric Operation may execute in governed processing only when its exact
+Numeric Law is qualified and the selected realization is shown to preserve that law over its admitted
+domain. Conformance covers the required result and every legally observable distinction. It also covers
+definedness and required evaluation behavior under Sections 3.3–4.3. Agreement on selected inputs or
+within a tolerance does not establish conformance to an exact result law.
 
 Kontrakt may rely on an independently ratified platform guarantee when the admitted operation executes
 unchanged under ADR-0073. It need not verify the internal implementation of a conforming JVM. If
@@ -544,14 +543,19 @@ result grants Contract authority.
 
 # 14. Integration and Supersession Boundaries
 
-ADR-0078 does not supersede any owning Contract (Section 3.1). The current Input scope is fixed by
-ADR-0064 (Section 4.1). Binary16, bfloat16, and Binary128 are V1 exact-bit Scalar Input Leaf support
-targets, but ADR-0064 must ratify their Presentation laws and ADR-0073 must qualify their carriers and
-executable uses. This Proposed ADR does neither.
+ADR-0078 does not supersede any owning Contract (Section 3.1). Its Numeric Meaning applies wherever
+Contract processing lawfully consumes or forms numeric values, including results returned by user
+Operation realization. Their legal use and establishment remain with their owning Contracts.
+
+Input Presentation remains governed by ADR-0064. Binary16, bfloat16, and Binary128 are V1 exact-bit
+Scalar Input Leaf support targets, but ADR-0064 must ratify their Presentation laws and ADR-0073 must
+qualify their carriers and executable uses. This ADR does neither.
 
 ## 14.1. V2 Vector, Matrix, and Tensor Support
 
 Vector, Matrix, and Tensor are V2 Structured Numeric Value support targets across Kontrakt's pipeline.
+This V2 scope does not restrict V1 SIMD vectorization of legally supported scalar operations.
+Direct JVM Vector API uses require independent qualification under ADR-0073 and the applicable Numeric Laws.
 Their earlier mathematical analysis remains Design/Research, not V1 ratification. A homogeneous indexed
 value has a determined shape, an element Numeric Format, and an exact datum at each coordinate. This
 model alone is not complete Tensor support.
@@ -580,18 +584,19 @@ may consume lawfully admitted scalar or aggregate results of external Tensor cal
 claiming verification of the external calculation. The V2 extension must preserve established V1 Scalar
 Numeric Laws. Supporting one Tensor form does not imply support for every framework or operation.
 
-# 15. Decisions Still Required Before Acceptance
+# 15. Remaining Integration Work
 
-The shared operation-qualification law is closed by Sections 3–10. New callables require individual
-qualification; universal coverage of Java, Kotlin, BigInteger, or Decimal APIs is not claimed.
+The shared operation-qualification law is closed by Sections 3–10. A newly supported callable
+requires individual qualification; universal coverage of Java, Kotlin, BigInteger, or Decimal APIs
+is not claimed.
 
 The remaining V1 integration work is the independent Input and carrier ratification described in Section
 
-15. Section 4.3 already closes the three formats' Numeric Meanings.
+14. Section 4.2 already closes the three formats' Numeric Meanings.
 
 The V2 work in Section 14.1 is not an acceptance condition for the current Scalar Numeric Law.
 
 # 16. Rejected Directions
 
-Rejected alternatives are governed by Sections 3.1–3.7, 4.2, and 12. This section establishes no
+Rejected alternatives are governed by Sections 3.1–3.7, 4.1, and 12. This section establishes no
 additional restrictions.
