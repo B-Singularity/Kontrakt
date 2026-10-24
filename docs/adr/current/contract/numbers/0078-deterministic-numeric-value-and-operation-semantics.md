@@ -95,11 +95,26 @@ Section 11. Compiler-result reuse follows ADR-0075.
 
 ## 3.3. Source-Bound Operations and ADR-0073
 
+An external Numeric Value is interpreted by default from the datum already produced and lawfully
+admitted. Kontrakt need not know the producer's algorithm or error specification, including when a Java
+or Kotlin library produced the value. Section 3.2 fixes subsequent Contract results for the same
+admitted datum and determining inputs; it does not require separate executions of the external producer
+to yield identical data. Value admission does not admit the producing operation for governed execution (Section 10 and
+ADR-0073).
+
 An explicitly supported Java or Kotlin operation used by a Contract keeps the law of its exact
 resolved source callable. Calculating it inside Kontrakt does not replace that law with ideal
 mathematics. Qualification uses the applicable language or library specification, including its
 version when relevant, only for that supported operation. The presence of an arbitrary library
 call in user realization does not require Kontrakt to qualify or verify it. Its use follows ADR-0073.
+
+Kontrakt may additionally consume qualified knowledge of an exact Java or Kotlin language or
+standard-library operation when a compiler judgment or transformation needs it. This knowledge is
+optional; it is not required to interpret an admitted value and does not qualify the library as a
+whole. No corresponding knowledge is presumed for other external libraries. A conclusion derived from
+an operation that permits several results must hold for every permitted result unless a lawful
+deterministic refinement has fixed one result. Such knowledge does not make an otherwise unsupported
+operation eligible for governed execution. Compiler-result consumption follows ADR-0075.
 
 The callable must have determined operand meaning, result format, evaluation and rounding obligations,
 defined domain, and legally observable result. A recognized name or numeric return type does not
@@ -490,8 +505,8 @@ but is not executable support (Section 13).
 
 ADR-0073 decides whether a platform or external call may execute inside the governed boundary. A lawful
 external calculation may instead supply an already computed value through an approved Adapter or Input
-path. Neither a numeric return type, runtime reflection, nor dynamic provider discovery authorizes an
-otherwise prohibited call.
+path (Section 3.3). Neither a numeric return type, runtime reflection, nor dynamic provider discovery
+authorizes an otherwise prohibited call.
 
 Source qualification knowledge and its reuse remain compiler products under ADR-0075, not Numeric or
 Contract authority.
@@ -527,6 +542,10 @@ Numeric Law is qualified and the selected realization is shown to preserve that 
 domain. Conformance covers the required result and every legally observable distinction. It also covers
 definedness and required evaluation behavior under Sections 3.3–4.3. Agreement on selected inputs or
 within a tolerance does not establish conformance to an exact result law.
+
+These execution obligations do not require qualification of the external calculation that produced a
+value admitted under Section 3.3. They still apply if that calculation itself is to execute as a
+governed operation (Section 10).
 
 Kontrakt may rely on an independently ratified platform guarantee when the admitted operation executes
 unchanged under ADR-0073. It need not verify the internal implementation of a conforming JVM. If
