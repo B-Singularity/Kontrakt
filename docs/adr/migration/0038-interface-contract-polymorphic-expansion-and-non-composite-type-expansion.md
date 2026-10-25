@@ -16,7 +16,7 @@ Migration Pending
 - ADR-0030: Edge-Aware Deterministic Cycle Truncation Strategy
 - ADR-0032: Capacity Law, Resource Policy Resolution, Identity Hierarchy, and Zero-Residue Semantics
 - ADR-0037: Cycle Identity Preflight and Deferred Raw Fact Resolution
-- `../../design/frontend/deterministic-active-member-projection-and-ordering-protocol.md`
+- `../../design/migration/deterministic-active-member-projection-and-ordering-protocol.md`
 - `../../design/compiler-engine/l1-planner-session-primitive-data-structures.md`
 
 ## Context

@@ -24,7 +24,7 @@ Accepted
 - ADR-0041: Stable Metadata Identity, BLAKE3, HID, and Protocol-owned Interning
 - Future ADR / Amendment: Shared Runtime Policy Snapshot, Policy Epoch Publication, and Bounded-Context Policy Slices
 - `../../../design/frontend/cycle-truncation-examples.md`
-- `../../../design/frontend/deterministic-active-member-projection-and-ordering-protocol.md`
+- `../../../design/migration/deterministic-active-member-projection-and-ordering-protocol.md`
 - `../../../design/compiler-engine/l1-planner-session-primitive-data-structures.md`
 - `../../../design/compiler-engine/l2-join-lifecycle-state-machine-mechanics-for-planning-tier-2-cache.md`
 - `../../../design/compiler-engine/l2-plan-interner-partitioned-tier2-with-governance.md`

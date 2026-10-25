@@ -15,7 +15,7 @@ Proposed
 - ADR-0034: Explicit L2 Join Lifecycle State Machine
 - ADR-0035: Deterministic Balanced Lanes for Tier-2 Join Completion Delivery
 - ADR-0043: Contract Graph Canonicalization, Sealed Structural References, and Incremental Identity Derivation
-- `../../../design/infrastructure/stable-metadata-identity-protocol.md` (post-acceptance extraction target)
+- `../../../design/migration/stable-metadata-identity-protocol.md` (post-acceptance extraction target)
 - `../../../design/infrastructure/protocol-owned-metadata-interning.md` (post-acceptance extraction target)
 - `docs/adr/0044-unified-runtime-memory-envelope-and-pipeline-lifecycle-governance.md` (planned)
 

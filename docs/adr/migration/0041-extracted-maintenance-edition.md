@@ -21,12 +21,12 @@ delegating detailed maintenance to the narrower documents created after acceptan
 ## Related
 
 - ADR-0041 archival monolith: Stable Metadata Identity, BLAKE3/HID, and Protocol-Owned Interning
-- `../../../design/infrastructure/stable-metadata-identity-protocol.md`
-- `../../../design/infrastructure/protocol-owned-metadata-interning.md`
+- `../../design/migration/stable-metadata-identity-protocol.md`
+- `../../design/infrastructure/protocol-owned-metadata-interning.md`
 - ADR-0042: Mechanical Sympathy, Primitive Lifecycle, and Async Ownership Governance
 - ADR-0043: Contract Graph Canonicalization, Sealed Structural References, and Incremental Identity Derivation
 - ADR-0044: Unified Runtime Memory Envelope and Pipeline Lifecycle Governance
-- `../../../constitution/compiler-core-protocols.md`
+- `../../constitution/compiler-core-protocols.md`
 
 ---
 
@@ -253,7 +253,7 @@ ADR-0041 delegates detailed post-acceptance maintenance to the following documen
 
 ### 5.1. Stable metadata identity protocol
 
-`../../../design/infrastructure/stable-metadata-identity-protocol.md` owns:
+`../../design/migration/stable-metadata-identity-protocol.md` owns:
 
 - canonical material law;
 - canonical byte encoding law;
@@ -274,7 +274,7 @@ It MUST NOT own interner publication mechanics, physical substrate mechanics, gr
 
 ### 5.2. Protocol-owned metadata interning
 
-`../../../design/infrastructure/protocol-owned-metadata-interning.md` owns:
+`../../design/infrastructure/protocol-owned-metadata-interning.md` owns:
 
 - intern scope law;
 - candidate admission;
@@ -359,7 +359,7 @@ ADR-0044 MUST NOT redefine identity equality or physical substrate mechanics.
 
 ### 5.6. Compiler constitution enforcement
 
-`../../../constitution/compiler-core-protocols.md` owns enforcement hooks such as:
+`../../constitution/compiler-core-protocols.md` owns enforcement hooks such as:
 
 - no backend handles in core identity;
 - no runtime object authority after normalization;

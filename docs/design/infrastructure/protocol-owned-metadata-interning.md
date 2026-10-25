@@ -104,16 +104,16 @@ This document does not own:
 
 Ownership split:
 
-| Surface                                            | Owner                                           |
-|----------------------------------------------------|-------------------------------------------------|
-| Accepted parent decision                           | ADR-0041                                        |
-| Canonical metadata bytes / HID protocol            | `stable-metadata-identity-protocol.md`          |
-| Metadata interning semantics                       | This design note                                |
-| Primitive substrate / routing / physical lifecycle | ADR-0042                                        |
-| Contract graph identity / incremental derivation   | ADR-0043                                        |
-| Unified runtime memory envelope                    | ADR-0044                                        |
-| L2 plan cache governance                           | L2 design notes and ADR-0031/ADR-0032 family    |
-| Enforcement hooks                                  | `../../constitution/compiler-core-protocols.md` |
+| Surface                                            | Owner                                               |
+|----------------------------------------------------|-----------------------------------------------------|
+| Accepted parent decision                           | ADR-0041                                            |
+| Canonical metadata bytes / HID protocol            | `../migration/stable-metadata-identity-protocol.md` |
+| Metadata interning semantics                       | This design note                                    |
+| Primitive substrate / routing / physical lifecycle | ADR-0042                                            |
+| Contract graph identity / incremental derivation   | ADR-0043                                            |
+| Unified runtime memory envelope                    | ADR-0044                                            |
+| L2 plan cache governance                           | L2 design notes and ADR-0031/ADR-0032 family        |
+| Enforcement hooks                                  | `../../constitution/compiler-core-protocols.md`     |
 
 ### 2.3. Conflict rule
 
@@ -1075,7 +1075,7 @@ A routing failure must not publish partial identity.
 
 ## 17. TypeReference Interning Boundary
 
-TypeReference identity is defined by `stable-metadata-identity-protocol.md`.
+TypeReference identity is defined by `../migration/stable-metadata-identity-protocol.md`.
 
 TypeReference stable intern ids are assigned by this interning protocol only after:
 

@@ -26,7 +26,7 @@ Accepted
 - ADR-0025: Interface-First Design and Test Interface Pattern
 - `../../../../constitution/compiler-core-protocols.md`
 - `docs/design/canonical-ir-stage-and-lowering-protocol.md`
-- `../../../../design/infrastructure/stable-metadata-identity-protocol.md`
+- `../../../../design/migration/stable-metadata-identity-protocol.md`
 - `../../../../design/infrastructure/protocol-owned-metadata-interning.md`
 - `docs/release-readiness-todo.md`
 -

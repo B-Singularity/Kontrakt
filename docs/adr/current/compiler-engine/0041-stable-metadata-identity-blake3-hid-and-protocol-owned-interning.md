@@ -23,7 +23,7 @@ Proposed
 - ADR-0040: Deterministic Frozen Acquisition Pipeline, Explicit Readiness, and Memory-Disciplined Publication
 - `../../../constitution/compiler-core-protocols.md`
 - `docs/design/canonical-ir-stage-and-lowering-protocol.md`
-- `../../../design/frontend/deterministic-active-member-projection-and-ordering-protocol.md`
+- `../../../design/migration/deterministic-active-member-projection-and-ordering-protocol.md`
 - `../../../design/compiler-engine/l1-planner-session-primitive-data-structures.md`
 - `../../../design/compiler-engine/l2-plan-interner-partitioned-tier2-with-governance.md`
 - `../../../design/runtime/planner-budget-resolution-and-worker-lifecycle.md`
@@ -14993,7 +14993,7 @@ The current extraction target is design-level protocol maintenance, not an exter
 
 ### 27.3. Stable Metadata Identity Protocol Design Note
 
-`../../../design/infrastructure/stable-metadata-identity-protocol.md` owns the extracted maintenance surface for
+`../../../design/migration/stable-metadata-identity-protocol.md` owns the extracted maintenance surface for
 byte-level metadata
 identity protocol.
 

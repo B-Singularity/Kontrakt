@@ -608,7 +608,7 @@ For the identity-first preflight path, this means:
     - `GateOffOnAutoEquivalenceTest`
     - `ArithmeticOverflowGuardTest`
 
-4. Amend `../../../design/frontend/deterministic-active-member-projection-and-ordering-protocol.md`
+4. Amend `../../../design/migration/deterministic-active-member-projection-and-ordering-protocol.md`
     - clarify identity-first / fact-lazy active-cycle preflight,
     - clarify type-expansion metering,
     - add type-cycle identity resolution and continuity-check metering,

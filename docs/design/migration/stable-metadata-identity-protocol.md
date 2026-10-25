@@ -87,15 +87,15 @@ This document does not own:
 
 Ownership split:
 
-| Surface                                                        | Owner                                           |
-|----------------------------------------------------------------|-------------------------------------------------|
-| Accepted parent decision                                       | ADR-0041                                        |
-| Stable metadata identity bytes / HID protocol                  | This design note                                |
-| Protocol-owned metadata interning                              | `protocol-owned-metadata-interning.md`          |
-| Primitive lifecycle / physical substrate / mechanical sympathy | ADR-0042                                        |
-| Contract graph identity / incremental derivation               | ADR-0043                                        |
-| Unified runtime memory envelope                                | ADR-0044                                        |
-| Enforcement hooks                                              | `../../constitution/compiler-core-protocols.md` |
+| Surface                                                        | Owner                                                    |
+|----------------------------------------------------------------|----------------------------------------------------------|
+| Accepted parent decision                                       | ADR-0041                                                 |
+| Stable metadata identity bytes / HID protocol                  | This design note                                         |
+| Protocol-owned metadata interning                              | `../infrastructure/protocol-owned-metadata-interning.md` |
+| Primitive lifecycle / physical substrate / mechanical sympathy | ADR-0042                                                 |
+| Contract graph identity / incremental derivation               | ADR-0043                                                 |
+| Unified runtime memory envelope                                | ADR-0044                                                 |
+| Enforcement hooks                                              | `../../constitution/compiler-core-protocols.md`          |
 
 ### 2.3. Conflict rule
 

@@ -18,7 +18,7 @@ Draft
 - ADR-0034: Explicit Dual-Axis L2 Join Lifecycle State Machine and Single Terminalization Authority
 - ADR-0032: Capacity Law, Resource Policy Resolution, Identity Hierarchy, and Zero-Residue Semantics
 - ADR-0031: Cache-Blind Determinism and Tier-2 Governance
-- `../../../design/infrastructure/stable-metadata-identity-protocol.md`
+- `../../../design/migration/stable-metadata-identity-protocol.md`
 - `../../../design/infrastructure/protocol-owned-metadata-interning.md`
 - `../../../constitution/compiler-core-protocols.md`
 

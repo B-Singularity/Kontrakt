@@ -34,7 +34,7 @@ Migrated
 - ADR-0040: Deterministic Frozen Acquisition Pipeline, Explicit Readiness, and Memory-Disciplined Publication
 - ADR-0039: Adapter-Neutral Metamodel Acquisition, Frozen Fact Image, and Backend-Handle Erasure
 - ADR-0031: Two-Tier Transactional Memoization and Structural Interning
-- `../../design/infrastructure/stable-metadata-identity-protocol.md`
+- `../../design/migration/stable-metadata-identity-protocol.md`
 - `../../design/infrastructure/protocol-owned-metadata-interning.md`
 - `../../design/compiler-engine/l1-planner-session-primitive-data-structures.md`
 - `../../design/compiler-engine/l2-plan-interner-partitioned-tier2-with-governance.md`
