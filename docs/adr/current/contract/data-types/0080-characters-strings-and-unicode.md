@@ -23,7 +23,9 @@ turn its proposals into Accepted Contract law.
 - ADR-0075: Compiler Result Ownership and Legal Consumption
 - ADR-0076: Canonicalization Built-In Law Catalog
 - ADR-0078: Deterministic Numeric Value and Operation Semantics
-- `docs/design/canonicalization/built-in-law-catalog/canonicalization-built-in-law-catalog-design.md`, especially §8.6
+- `docs/design/canonicalization/built-in-law-catalog/canonicalization-built-in-law-catalog-design.md`, especially
+  §8.4–§8.6 —
+  research and prior specification material only for this ADR; it does not grant authority to shared Text semantics
 - `docs/design/overview/kontrakt-compiler-total-architecture-map-design-draft.md` — Working Design, not an Accepted ADR
 - `docs/todo/roadmap/kontrakt-v2-reference-architecture-and-v1-foundations.md` — Reference Architecture, not an Accepted
   ADR
@@ -36,9 +38,11 @@ ADR-0078 establishes the precedent for defining shared value and operation seman
 or fixing a realization. ADR-0064 already fixes the meaning and Presentation Sameness of Input `Text`. ADR-0066 and
 ADR-0076 retain the authority of separately selected Exact Canonicalization Laws.
 
-This ADR will address the shared Character and Text meaning needed by lawful Contract processing and its compiler
-consumers. Each 1D retains its own judgment, applicability, established Material, and legal observations. Its use of a
-shared Text operation must nevertheless preserve that operation's meaning.
+This ADR establishes the common meaning of Character and Text values and of Kontrakt-defined Text calculations wherever
+they are used in the compiler. The same calculation must have the same meaning in Contract processing and in compiler
+consumers. Each 1D retains its own judgment, applicability, established Material, and legal observations. A shared
+calculation does not replace a 1D judgment, nor does a 1D implementation acquire permission to redefine that
+calculation.
 
 ## 2. Problem
 
@@ -48,18 +52,166 @@ one consumer can accidentally change an observable result through Unicode-librar
 comparison, compiler rewriting, or representation changes.
 
 The existing Contract pipeline and the planned V1/V2 compiler architecture need common semantic requirements, not a
-mandatory Text engine, new IR family, or physical string layout. The items in Section 5 remain open for review. This
-outline does not itself ratify an operation or implementation.
+mandatory Text engine, new IR family, or physical string layout. Sections 3.1–3.3 establish the shared boundary, value
+domain, and obligations for interpreting and selecting basic operations. Section 5 still contains unresolved exact
+operation laws and qualification questions; none is approved for execution merely by appearing in this Draft.
 
 ## 3. Decision
 
-*Decision text reserved. The following headings are a drafting structure, not adopted laws.*
+*Section 3.1 records the shared boundary resolved in the first review group. Section 3.2 records the agreed Character
+and Text value domain, and Section 3.3 states the contract-level obligations for interpreting and selecting basic
+operations. The precise operation scope and unresolved result conditions remain under Section 5.3; Sections 3.4–3.14
+remain drafting headings. This Draft does not declare those unresolved operations supported.*
 
 ### 3.1. Shared Meaning and Contract Ownership
 
+Kontrakt defines common Character and Text value and operation semantics for the exact calculations it governs. A
+Character has the meaning of a Unicode Scalar Value. A Text value is a finite, ordered sequence of those scalars. ASCII
+characters therefore belong to the same Character domain. UTF encodings can represent that Text without giving it a
+different meaning. This law does not require the compiler to store Text as a scalar array or to use one physical string
+representation.
+
+The common Text value preserves the identity and order of its scalars. Exact sequence equality does not perform
+normalization, case folding, or collation. This agrees with the Text Presentation Sameness established by ADR-0064.
+The finite bound imposed on an Input `Text` presentation remains an Input-owned condition; it is not a global maximum
+length for every Text result computed by the compiler. The exact domains and boundary conditions of individual
+operations
+remain to be completed in Sections 3.2–3.5.
+
+A Kontrakt-defined Character or Text operation has one exact meaning regardless of the compiler component that performs
+it. Before an operation is approved, its law must identify which operands it accepts and the exact result it
+produces. If another semantic input, such as a Unicode version, can change that result, the law must make that input
+explicit. It must also determine the conditions under which the calculation has no successful result. The same operation
+law and determining inputs must yield the same legally observable result. The execution algorithm cannot select a
+result using whatever Unicode data or locale happens to be available in the environment. Defining an operation does
+not require every compiler component to execute it. Nor does it imply that V1 already has a conforming realization.
+Operation-specific scope and qualification remain under review in Section 5.
+
+Unicode and the relevant encoding standards provide the semantic sources from which this ADR can define common
+calculations. Existing Character and Text calculations discussed in the Canonicalization Catalog Design may be used as
+research material and checked against those standards. That Design combines law specifications with
+implementation-facing
+material. It is not a normative basis for this ADR, and citing it cannot import its implementation choices or grant
+Canonicalization authority to a shared calculation. Where a common operation is selected, this ADR must close its own
+meaning against an explicitly chosen standard and any required immutable version or profile. A choice made by an
+existing Canonicalization law is not automatically a choice for every new common Text operation.
+
+ADR-0066 continues to govern Canonicalization judgments. ADR-0076 governs membership and qualification of the built-in
+Canonicalization authorities. Each selected Exact Law retains its own equivalence, representative, Version, and
+judgment authority. A common normalization calculation can be used without establishing a Canonicalization judgment.
+Likewise, every other 1D Contract continues to own the judgments and Material established under its existing law.
+ADR-0080 creates no new 1D Contract or Text judgment authority. It does not alter Establishment or introduce another
+HIR law-reference protocol.
+
+Kontrakt may interpret a Text datum lawfully produced by an external computation without adopting the producer's
+operation as a Kontrakt-defined Text operation. A Java or Kotlin Source-Bound operation retains the semantics of the
+exact resolved callable under ADR-0073 and the qualification model of ADR-0078. In particular, a UTF-16 Code Unit
+operation does not become a Unicode Scalar operation because both are expressed using a Host `String`.
+
+A compiler component that uses a common Text operation must preserve that operation's exact result. The component
+continues to own the independent meaning of the task for which the calculation was used. For example, comparing the
+spelling of two source names does not itself decide whether they resolve to the same symbol. Likewise, an exact Text
+result cannot by itself determine equality of compiler products or the legal encoding of a target artifact. The relevant
+IR and Compiler Product laws determine which results and original distinctions must remain available to later legal
+observers. This ADR does not prescribe how long a compiler stores the information or whether it reuses a physical
+representation. ADR-0071 and ADR-0075 continue to govern those boundaries.
+
+A Text value remains finite without acquiring a global physical capacity limit. An Input size bound follows ADR-0064,
+and Contract Budget and Capacity follow ADR-0051 and ADR-0052. Compiler resource controls and target-representation
+limits retain their separate owners. An unsuccessful calculation cannot be published as a successful, truncated, or
+silently repaired Text result. Resource exhaustion cannot create a new refusal on behalf of a 1D whose law does not
+provide one.
+
+The relevant Realization or Compiler Design chooses how to calculate and store the value. It may use an encoding buffer
+or reuse a previously computed result, provided that the common meaning remains intact. These physical choices may
+change between V1 and V2 without changing an unchanged Text operation law. A semantic change requires an explicit law
+decision; updating a Unicode library cannot silently revise that law.
+
 ### 3.2. Character and Text Value Interpretation
 
+A Character denotes one Unicode Scalar Value, from U+0000 through U+10FFFF excluding the surrogate code points
+U+D800–U+DFFF. A Unicode Code Point is not necessarily a scalar, and a UTF-16 Code Unit or an octet is a unit of
+representation rather than a Character. A legal Text is a finite sequence of these Character values. Its exact
+observations preserve sequence length, scalar values, and their order. Empty Text is a legal zero-length value; U+0000,
+combining scalars, and supplementary scalars remain distinguishable values. Equality never silently normalizes or folds
+the sequence.
+
+Every Unicode Scalar remains eligible for the common Character and Text domain, including noncharacters, currently
+unassigned scalars, private-use scalars, default-ignorable scalars, and bidirectional controls. Their classification,
+visual presentation, or security implications can affect a particular source language, Contract use, or external
+boundary without changing the common value domain. A classification depending on Unicode data is subject to the
+selected operation's semantic basis, not to an implicit restriction on which scalar values exist. One Character is not
+a grapheme cluster: grapheme segmentation may identify a sequence containing several scalars, and that calculation
+cannot silently change Character identity.
+
+Once the meaning of a Text value is determined, its legally observable value cannot change merely because its physical
+representation is produced later or an external buffer or library state changes. This requirement does not select a
+materialization point, ownership mechanism, decoding strategy, or storage lifetime. Those decisions remain with the
+responsible compiler boundary, provided it can preserve the exact observations the owning law requires. A partially
+interpreted Host representation must not be asserted to be an established common Text value before its legality and
+meaning are determined.
+
+The Text domain has no compiler-wide physical length ceiling. A lawful operation can produce a longer finite Text than
+its inputs without inheriting a particular Input presentation bound. The owning Contract and compiler resource laws
+remain responsible for their distinct restrictions. Absence is not empty Text, and neither malformed encoding nor an
+unsuccessful calculation supplies a Text datum by implication. This ADR does not define or assign a new Failure
+judgment; ADR-0057 and the other existing owners govern the relevant attribution and outcome.
+
 ### 3.3. Exact Text Operations and Observable Results
+
+The scope of common Character and Text calculations must satisfy three independent needs. Kontrakt first interprets
+supported Java and Kotlin expressions used to author a 1D Contract. It then relates the resolved expressions to the
+values and observations that the particular 1D law permits. Separately, Kontrakt's own compiler components require
+Character and Text calculations even when no user-authored expression is involved. All three needs contribute to the
+selection of common calculation laws. The supported authoring surface is not a new string library exposed by Kontrakt,
+and no compiler component is restricted to operations that happen to appear in a 1D definition.
+
+Java and Kotlin syntax in a 1D declaration serves as an authoring expression, not as delegated JVM execution or an
+independent platform authority over the Contract. The Kontrakt-owned Contract Frontend must resolve the meaning of an
+expression it supports; executing user code or accepting a JVM-computed Boolean in place of that interpretation cannot
+establish the declaration's Contract meaning. A familiar method name or syntax shape is insufficient to identify the
+calculation. The supported expression must have its actual source-level operand and result meaning determined, including
+any evaluation behavior that can affect its lawful observation. If that meaning cannot be closed under the applicable
+1D law, the expression cannot be silently accepted on the strength of a Host callable's existence.
+
+Mapping an interpreted expression to Contract meaning is governed by the receiving 1D. An Admission judgment may
+consume a common Text comparison without giving ADR-0080 or the Java/Kotlin spelling authority over that judgment.
+The same principle applies to any other 1D. A recognized expression does not expand an otherwise restricted 1D
+Authoring Law. In particular, a source `String.length` observation measured in UTF-16 Code Units cannot be silently
+replaced with the number of Unicode scalars, and an unrelated collection `size` observation does not acquire Text
+meaning. The result of a supported expression must preserve the source meaning Kontrakt has admitted for that
+expression and the observations required by the receiving 1D.
+
+Source-bound intermediate results need not themselves be common Text values. A Java or Kotlin operation over UTF-16
+Code Units may produce a sequence containing an unpaired surrogate; Kontrakt can interpret such a source result
+without falsely establishing it as a Unicode Scalar Sequence. Converting the result to common Text requires the
+applicable value conditions to hold. Recognition of an authoring expression is not, by itself, ratification of its
+callable for JVM execution. ADR-0073 retains its distinct platform qualification and preservation requirements where
+actual platform behavior is involved, consistently with ADR-0078 §3.3.
+
+When a compiler component performs a Kontrakt-defined operation independently of user source, the operation follows
+its common law rather than acquiring the Java or Kotlin API's meaning from the chosen implementation. Scalar count
+therefore observes the number of scalars, while UTF-16 Code Unit count and encoded-byte count remain different
+calculations. An exact Text concatenation preserves both operand sequences in order, including the empty sequence,
+without an implicit normalization or case conversion. Indexing, slicing, comparison, and search likewise need their
+own precisely determined units, applicable domains, and results. Exact sequence equality does not confer an ordering;
+if scalar lexicographic order or exact contiguous-subsequence search is selected, its relation must be defined without
+silently adopting collation, case folding, or a Host search convention. Section 5.3 retains the decisions about the
+particular operations and boundary cases that are not yet closed.
+
+Compiler subsystems may use the same common calculation independently of user-authored Contract expressions. For
+example, constant folding may calculate a Text result without performing an Admission judgment. Exact Text comparison
+can also assist Source Resolution without deciding Symbol identity. Compiler Product equality, Cache validity,
+diagnostic presentation, and JVM artifact legality remain subject to their own laws. Internal encodings and algorithms
+are replaceable as long as they preserve the required result and legally observable evaluation. The compiler need not
+invoke the corresponding Java/Kotlin method or materialize a Scalar array, and a faster implementation is not evidence
+that an otherwise different operation is equivalent.
+
+This ADR does not prescribe a Java/Kotlin callable mapping table. The owning Frontend and ADR-0073 platform audit
+must establish their supported mappings and qualifications under existing law, while the catalog records and their
+validation remain separate Design work. No new compiler pass or IR structure follows from these Text laws. Changing
+that machinery cannot alter an unchanged common Text operation law. Any actual 1D judgment and the attribution of
+unsuccessful calculation remain with their existing owners.
 
 ### 3.4. Unicode Operations and Fixed Semantic Bases
 
@@ -90,58 +242,65 @@ repeat Section 3.*
 
 ## 5. Matters to Resolve Before Acceptance
 
-This is a review inventory, not an approved feature list. Resolve each issue against ADR-0078's ownership and
+This is a review inventory, not an approved feature list. Checked items record a resolved review disposition; unchecked
+items remain open and do not imply supported functionality. Resolve each issue against ADR-0078's ownership and
 qualification model. Where an existing ADR already decides the matter, refer to it rather than restating its law. A
 decision belonging to another subsystem should result in a precise dependency or follow-on task, not an additional
 authority in ADR-0080.
 
 ### 5.1. Define the shared semantic boundary
 
-- [ ] Determine exactly which Text computations Kontrakt itself governs. Separate a value interpreted after lawful
-  external computation from an operation executed inside a governed judgment, following ADR-0078 §3.3. Do not make every
-  Java or Kotlin string API a Kontrakt operation.
-- [ ] Determine whether the common Text datum must use the same bounded Unicode Scalar Sequence domain as ADR-0064 Input
-  `Text`, or whether some internal exact operations can have a distinct finite result domain. If they can, specify the
-  boundary at which an Input-owned size limit becomes applicable.
-- [ ] Specify how shared operation laws constrain 1D implementations without taking over their judgments. For example,
-  Canonicalization chooses its equivalence and representative under ADR-0066; this ADR can constrain the exact Unicode
-  calculation that a chosen law uses.
-- [ ] Identify every place where a shared operation's result is legally observed after another Contract has acted.
-  Determine which distinction must survive until the owning consumer no longer needs it, using ADR-0078 §4.3 as the
-  model.
-- [ ] Decide whether this ADR needs a common operation-law reference at all. Prefer a reference to already ratified
-  exact meaning over a second catalog that duplicates the seven Unicode Canonicalization Law authorities in the Accepted
-  Catalog Design §8.6.
-- [ ] Keep the scope of source identifiers, diagnostic wording, source encodings, and target Classfile text separate
-  from the meaning of a Contract Text datum. Determine which common rules they may reuse without acquiring Contract
-  authority.
+- [x] Establish the scope of common Text calculations under Section 3.1. Kontrakt governs the exact meaning of
+  operations
+  it defines, wherever the compiler uses them. Interpreting a Text value after lawful external computation does not
+  qualify its producing Java or Kotlin operation for governed execution; ADR-0073 and ADR-0078 §3.3 remain applicable.
+- [x] Use a finite Unicode Scalar Sequence as the common Text value meaning, consistently with ADR-0064. The bound on an
+  Input `Text` presentation applies at the Input-owned boundary. Other exact calculations may produce finite results
+  without inheriting that bound. Their own domains and resource conditions remain for Sections 5.2–5.5 and 5.13.
+- [x] Apply common operation meanings without relocating a 1D judgment. ADR-0066 continues to own Canonicalization
+  equivalence and representative judgments; a shared Unicode calculation cannot establish either judgment by itself.
+- [x] Assign layer-specific information retention and legal observation to the owning IR and Compiler Product laws.
+  Section 3.1 requires exact operation results, while ADR-0071 and ADR-0075 govern the meaning and legal consumption of
+  products that preserve them. The concrete consumers and retention obligations remain to be audited in Sections
+  5.7–5.12.
+- [x] Define common Character and Text operation meaning in this ADR, without a second Catalog or new Authority. Use
+  the approved Contract ADRs for their own judgments. The Canonicalization Catalog Design is available for reviewing
+  existing Character and String calculations, but is not a normative source for this ADR and cannot supply authority
+  merely by being referenced. Implementation catalogs and conformance machinery remain Design responsibilities.
+- [x] Apply common value and operation meaning consistently wherever it is used by the compiler. Source identifiers,
+  diagnostic presentation, source encoding, and target Classfile text still follow their owning language or artifact
+  rules. Reusing a common calculation does not transfer those owners' authority to ADR-0080.
 
 ### 5.2. Determine the character and text value domains
 
-- [ ] Fix the meaning of a Unicode Scalar Value, including the exclusion of surrogate code points. State how the scalar
+- [x] Fix the meaning of a Unicode Scalar Value, including the exclusion of surrogate code points. State how the scalar
   domain differs from a Unicode Code Point, a UTF-16 Code Unit, and an octet; do not infer a conversion between them.
-- [ ] Decide which exact observations of a legal Text value are available to shared operations. For example, an empty
+- [x] Decide which exact observations of a legal Text value are available to shared operations. For example, an empty
   sequence, U+0000, combining marks, and supplementary scalars remain distinct values unless a specified operation
   changes them.
-- [ ] Examine whether noncharacters, unassigned scalars, private-use characters, default-ignorable characters, and
+- [x] Examine whether noncharacters, unassigned scalars, private-use characters, default-ignorable characters, and
   bidirectional controls remain legal scalar inputs. Their Unicode properties or security implications must not silently
   make them invalid Text.
-- [ ] Specify whether a character-like operation consumes one scalar or a larger unit. A visible grapheme can contain
+- [x] Specify whether a character-like operation consumes one scalar or a larger unit. A visible grapheme can contain
   several scalars, while a Java `char` is one UTF-16 Code Unit; neither can be substituted merely because both are
   called a character.
-- [ ] Require a Text value to have the same legal observations regardless of when its physical representation is
-  materialized. Lazy decoding and buffer ownership are realization choices. They cannot make the result depend on
-  mutable external content or a later library state.
-- [ ] Decide how result length growth interacts with a finite admitted input. NFC, case folding, and text concatenation
+- [x] Require the same legal observations once a Text value's meaning is determined, regardless of when its physical
+  representation is produced. The compiler must preserve that meaning without fixing materialization timing, buffer
+  ownership, or the point of physical decoding in this ADR.
+- [x] Decide how result length growth interacts with a finite admitted input. NFC, case folding, and text concatenation
   can increase length; a physical buffer limit must not invent a shorter semantic result or a new law-owned refusal.
-- [ ] Separate Text absence from empty Text, an invalid encoding, and a failed operation. The relevant owner must decide
-  absence or refusal; none may be encoded as a silently chosen Text sentinel.
+- [x] Separate empty Text as a legal value from absence, malformed encoding, and an unsuccessful calculation. This ADR
+  does not decide their Failure attribution or outcomes; those remain with ADR-0057 and the applicable owning laws.
+  None may be silently represented by an invented Text sentinel.
 
 ### 5.3. Close the exact basic operations
 
-- [ ] Establish the smallest V1 operation set actually required by the Contract pipeline and compiler. For each selected
-  operation, record the legal operand domain, result domain, exact observation, and any failure condition instead of
-  approving a broad String API family.
+- [ ] Complete the common basic operation scope from three independent requirements: direct interpretation of supported
+  Java/Kotlin 1D authoring expressions, mapping those expressions into the receiving 1D's permitted meaning, and
+  Kontrakt's own compiler calculations. Account for foreseeable V2 uses without letting V1 realization difficulty
+  choose the law. For each selected operation, close its operand domain, result domain, exact observations, and
+  unsuccessful-result conditions without taking Failure authority. A law is neither blanket approval of a Host String
+  API family nor a declaration of V1 execution support. Catalog coverage and implementation details remain separate.
 - [ ] Define a scalar-count operation separately from a byte count, UTF-16 Code Unit count, or grapheme count. For
   example, the Java `String.length()` result for a supplementary scalar differs from the scalar count.
 - [ ] Determine the index unit and boundary conditions for indexing and slicing. Specify whether a slice can fail, how
@@ -153,26 +312,31 @@ authority in ADR-0080.
   comparator.
 - [ ] Define searching in terms of a selected sequence and index unit. For example, an `indexOf`-like operation must
   determine the result for an empty needle, absence of a match, and overlapping occurrences.
-- [ ] Review prefix, suffix, containment, repetition, split, and join individually. Include an operation only if the
-  compiler or Contract pipeline needs its exact semantics; broad availability in a Host library is not sufficient.
+- [ ] Review prefix, suffix, containment, repetition, split, and join individually against the three Section 3.3
+  requirements. A common law must be justified by an exact calculation needed for supported source interpretation,
+  lawful 1D mapping, or independent compiler work; its existence in a Host library is not sufficient. Keep callable
+  coverage and the physical implementation inventory in their separate Catalog and Design work.
 - [ ] Decide how byte-to-text parsing and text-to-domain formatting are divided among owners. Numeric formatting follows
   ADR-0078; temporal interpretation belongs to ADR-0082 when ratified; URI and path interpretation must not be silently
   absorbed into generic Text operations.
 
 ### 5.4. Resolve Unicode-specific operations and semantic dependencies
 
-- [ ] Separate canonical normalization from compatibility normalization. Establish which exact forms are used, while
-  referring to the existing NFC, NFD, NFKC, and NFKD Exact Law specifications rather than reauthorizing their
-  equivalence or representative choices.
-- [ ] Determine whether any general Unicode normalization operation is needed outside a selected Canonicalization Law.
-  If yes, specify its exact result meaning and how it references an approved semantic basis without granting new
-  Canonicalization authority.
+- [ ] Separate canonical normalization from compatibility normalization. Define any selected common NFC, NFD, NFKC,
+  or NFKD calculation against its precise Unicode standard and immutable semantic basis. Preserve the existing
+  Canonicalization laws' equivalence and representative choices without taking the Catalog Design as the common
+  calculation's authority.
+- [ ] Determine which general Unicode normalization operations are needed outside a selected Canonicalization Law.
+  For each selected operation, specify the exact result and governing Unicode standard directly under this ADR.
+  Reusing a calculation does not grant Canonicalization authority or adopt a Design document's implementation profile.
 - [ ] Distinguish simple case mapping, full case mapping, default full case folding, Turkic-sensitive behavior, and
   locale-sensitive mapping. A case-insensitive result must not be inferred from unspecified lowercasing.
 - [ ] Review contextual mappings such as the Greek final sigma and scalar-to-multiple-scalar expansions. If an operation
   depends on neighbors or locale, those determinants must be explicit before that operation is supported.
-- [ ] Audit the seven Unicode 17.0.0 Exact Laws admitted in the Canonicalization Catalog Design §8.6. Identify reusable
-  calculation primitives, but retain each law's separate Version, `E_L`, `C_L`, and coverage authority.
+- [ ] Examine the seven Unicode 17.0.0 Canonicalization law profiles described in the Catalog Design §8.6 and verify
+  their Character and Text calculations against the governing Unicode standards. Use that material to identify potential
+  common operations, but do not import its normative claims or realization assumptions. Each Canonicalization law keeps
+  its separate Version, `E_L`, `C_L`, and coverage authority under ADR-0066 and ADR-0076.
 - [ ] Determine whether classification operations such as whitespace, decimal digit, identifier property, or general
   category are required. If supported, specify their exact Unicode property and version rather than relying on the
   current JDK's `Character` tables.

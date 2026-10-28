@@ -526,7 +526,7 @@ and the compiler must reject one that cannot determine an exact law Version.
 ## 16.2. Compatibility with the Working Kotlin Surface
 
 Sections 3–7 currently place a direct law selection in a Kotlin parameter type and each composed step in a
-`compose(...)` argument. A call such as `UnicodeNfc("17.0")` cannot simply replace a Kotlin type in that surface.
+`compose(...)` argument. A call such as `UnicodeNfc("18.0")` cannot simply replace a Kotlin type in that surface.
 The final version-sensitive spelling must work in both positions while preserving a flat, static declaration.
 
 One possible projection is a distinct public, immutable marker symbol for each approved semantic selection. Another

@@ -2085,7 +2085,7 @@ Version or a fallback to another Authority.
 ## 8.5. Formal ADMIT — Initial Unicode Whitespace and Decimal-Digit Laws (2026-10-10)
 
 The project owner approves four independently owned Unicode Text Authorities for Catalog membership.
-The initial exact version of each is bound to the **Unicode Standard 17.0.0**, including the
+The initial exact version of each is bound to the **Unicode Standard 18.0.0**, including the
 Unicode Character Database of that version. `Initial` is an exact Kontrakt Law Version Identity
 under each Authority, not a request to consult the latest Unicode release. The Unicode standard
 release is fixed external semantic material, not an ambient JDK/ICU version selector.
@@ -2097,30 +2097,43 @@ release is fixed external semantic material, not an ambient JDK/ICU version sele
 | Unicode trailing whitespace trim                 | `Initial`                | ADMIT    |
 | Unicode decimal-digit fold                       | `Initial`                | ADMIT    |
 
-### 8.5.1. Exact Text Domain and Unicode 17.0.0 Basis
+**Pre-V1 Unicode Basis Revision (2026-10-28).** The project owner replaces the original
+Unicode 17.0.0 semantic Basis selected on 2026-10-10 with the final Unicode 18.0.0 release
+for the V1 `Initial` meanings of all eleven admitted Unicode Authorities in Sections 8.5 and
+8.6. The four Authorities admitted here and the seven admitted in Section 8.6 retain their
+separate membership, exact version selection, equivalence and representative obligations,
+and Total Coverage. Their `Initial` specifications below now refer to Unicode 18.0.0. The
+2026-10-10 membership admissions remain historical decisions; the Unicode release choice
+from that date is superseded for the V1 design baseline. This recorded pre-release revision
+is not permission to reinterpret an `Initial` Version already established under Unicode
+17.0.0. Any such established meaning remains immutable under ADR-0053 and ADR-0076 and
+requires a different lawful Version identity rather than in-place rebinding. No such
+previously established material is asserted to exist or not exist by this Design.
+
+### 8.5.1. Exact Text Domain and Unicode 18.0.0 Basis
 
 Each Law consumes finite, already-established ADR-0064 Text, including empty Text. These Laws do not repair
-invalid UTF-16 or reinterpret application source. Their fixed `W17` is exactly Unicode 17.0.0 `White_Space` in
+invalid UTF-16 or reinterpret application source. Their fixed `W18` is exactly Unicode 18.0.0 `White_Space` in
 `PropList.txt`. The 25 scalars consist of U+0009–U+000D and U+0020; U+0085, U+00A0 and U+1680; U+2000–U+200A;
-U+2028–U+2029; and U+202F, U+205F and U+3000. U+200B, U+FEFF and U+001C are excluded. `W17*` is the set of
+U+2028–U+2029; and U+202F, U+205F and U+3000. U+200B, U+FEFF and U+001C are excluded. `W18*` is the set of
 finite sequences over this set.
 
-The `Nd` law uses exactly the Unicode 17.0.0 `General_Category=Decimal_Number` (`Nd`)
+The `Nd` law uses exactly the Unicode 18.0.0 `General_Category=Decimal_Number` (`Nd`)
 classification and the corresponding exact decimal digit value 0 through 9. Its meaning excludes
 other numeric properties such as Numeric_Type=Digit or Numeric_Type=Numeric. No runtime Unicode
 database refresh can change these first Versions. The authoritative sources are
-[Unicode 17.0.0 UCD](https://www.unicode.org/Public/17.0.0/ucd/),
+[Unicode 18.0.0 UCD](https://www.unicode.org/Public/18.0.0/ucd/),
 [UAX #44](https://www.unicode.org/reports/tr44/), and the
-[Unicode 17.0.0 Core Specification](https://www.unicode.org/versions/Unicode17.0.0/core-spec/chapter-3/).
+[Unicode 18.0.0 Core Specification](https://www.unicode.org/versions/Unicode18.0.0/core-spec/chapter-3/).
 
 ### 8.5.2. Unicode Leading Whitespace Trim — `Initial`
 
 **Exact Equivalence `E_L`.** Legal Text values `x` and `y` are equivalent if and only if
-removing each one's maximal initial `W17` prefix yields the same residual scalar sequence.
+removing each one's maximal initial `W18` prefix yields the same residual scalar sequence.
 Their trailing and interior distinctions remain observable.
 
-**Exact Representative `C_L`.** Remove the maximal initial `W17` prefix and retain the
-remaining scalars unchanged. Empty and all-`W17` Text map to empty Text.
+**Exact Representative `C_L`.** Remove the maximal initial `W18` prefix and retain the
+remaining scalars unchanged. Empty and all-`W18` Text map to empty Text.
 
 **Exact Representative Coverage.** Total on its declared legal Text domain. There is no
 Canonicalization-owned refusal and no occurrence-time external semantic Basis.
@@ -2128,10 +2141,10 @@ Canonicalization-owned refusal and no occurrence-time external semantic Basis.
 ### 8.5.3. Unicode Trailing Whitespace Trim — `Initial`
 
 **Exact Equivalence `E_L`.** Legal `x` and `y` are equivalent if and only if removing each
-maximal final `W17` suffix yields identical preceding scalar sequences.
+maximal final `W18` suffix yields identical preceding scalar sequences.
 
-**Exact Representative `C_L`.** Remove the maximal final `W17` suffix. Preserve the complete
-initial and interior sequences. Empty and all-`W17` Text map to empty Text.
+**Exact Representative `C_L`.** Remove the maximal final `W18` suffix. Preserve the complete
+initial and interior sequences. Empty and all-`W18` Text map to empty Text.
 
 **Exact Representative Coverage.** Total on its declared legal Text domain, with no
 Canonicalization-owned refusal or occurrence-time external Basis.
@@ -2139,10 +2152,10 @@ Canonicalization-owned refusal or occurrence-time external Basis.
 ### 8.5.4. Unicode Boundary Whitespace Trim — `Initial`
 
 **Exact Equivalence `E_L`.** Legal `x` and `y` are equivalent if and only if deleting each
-maximal initial `W17` prefix and maximal final `W17` suffix yields the same scalar sequence.
+maximal initial `W18` prefix and maximal final `W18` suffix yields the same scalar sequence.
 Interior whitespace distinctions remain observable.
 
-**Exact Representative `C_L`.** Remove exactly those maximal boundary sequences. All-`W17`
+**Exact Representative `C_L`.** Remove exactly those maximal boundary sequences. All-`W18`
 input and empty input yield empty Text. Other scalar values remain in the same order.
 
 **Exact Representative Coverage.** Total on its declared legal Text domain, with no
@@ -2160,10 +2173,10 @@ relations even where they yield the same representative.
 
 **Exact Equivalence `E_L`.** Two legal Text values are equivalent if and only if they have
 the same scalar count and, at each position, either their scalars are identical or both are
-Unicode 17.0.0 `Nd` scalars having the same decimal digit value. No other character is
+Unicode 18.0.0 `Nd` scalars having the same decimal digit value. No other character is
 considered equal to an ASCII digit merely by looking numeric.
 
-**Exact Representative `C_L`.** Map each Unicode 17.0.0 `Nd` scalar to its ASCII U+0030–U+0039 digit value.
+**Exact Representative `C_L`.** Map each Unicode 18.0.0 `Nd` scalar to its ASCII U+0030–U+0039 digit value.
 Other scalars retain their exact position and value. Arabic-Indic and fullwidth `Nd` digits therefore fold.
 Circled digits and Roman numerals do not, because they are not `Nd`. The mapping is not a generic
 numeric-character conversion.
@@ -2186,7 +2199,7 @@ For digit folding, the ten possible `Nd` digit values define disjoint equivalenc
 remain singleton classes. Position-wise mapping therefore produces one idempotent ASCII representative without
 expansion. Trim tests must show that U+00A0 is removed but U+200B is retained. Digit tests must distinguish
 Arabic-Indic U+0661 from circled U+2460: only the former is equivalent to ASCII `1`. Verification uses pinned
-Unicode 17.0.0 property files, not Java or ICU defaults.
+final-release Unicode 18.0.0 property files, not beta data or Java/ICU defaults.
 
 Unicode UTS #39 discusses mixed-number-script identifier confusion. This is evidence about
 law selection in particular identifier/security contexts, not authority to alter the declared
@@ -2194,8 +2207,8 @@ law selection in particular identifier/security contexts, not authority to alter
 identifier validation. Their exact fixed mappings admit finite reference validation;
 production backend conformance remains a separately verified realization duty.
 
-**Decision (2026-10-10): ADMIT these four independent Authority subjects and their approved
-`Initial` meanings in Sections 8.5.2–8.5.5.** The Unicode Boundary Trim exception is approved
+**Decision (2026-10-10): ADMIT these four independent Authority subjects and their
+then-approved `Initial` meanings (originally based on Unicode 17.0.0).** The Unicode Boundary Trim exception is approved
 alongside the ASCII Boundary Trim exception; it does not change the Authority Uniqueness
 criterion for unrelated law families. Their membership is historical under ADR-0076 and
 cannot be reset through later Version or API work.
@@ -2205,7 +2218,7 @@ cannot be reset through later Version or API work.
 ## 8.6. Formal ADMIT — Initial Unicode Normalization and Case Folding Laws (2026-10-10)
 
 The project owner approves seven independently owned Exact Built-In Law Authorities with
-Unicode Standard **17.0.0** as the fixed external semantic Basis of each `Initial` Version.
+Unicode Standard **18.0.0** as the fixed external semantic Basis of each `Initial` Version.
 One Unicode version shared by several laws does not merge their independent Authorities or
 Version histories. Implementation support for a newer Unicode version is not implicit rebinding.
 
@@ -2222,15 +2235,15 @@ Version histories. Implementation support for a newer Unicode version is not imp
 ### 8.6.1. Exact Semantic Basis, Domain, and Coverage
 
 Each law acts on an already-established legal `Text` of Unicode scalar values, including empty
-Text. Its `E_L` and `C_L` are defined by the algorithms and data fixed in Unicode 17.0.0.
+Text. Its `E_L` and `C_L` are defined by the algorithms and data fixed in Unicode 18.0.0.
 The four normalization forms follow that version of [UAX #15](https://www.unicode.org/reports/tr15/)
-and its normative UCD data. Full Case Folding uses Unicode 17.0.0
-[`CaseFolding.txt`](https://www.unicode.org/Public/17.0.0/ucd/CaseFolding.txt), using the
+and its normative UCD data. Full Case Folding uses Unicode 18.0.0
+[`CaseFolding.txt`](https://www.unicode.org/Public/18.0.0/ucd/CaseFolding.txt), using the
 `C` and `F` statuses under Unicode R4, not the `T` Turkic or `S` simple variants.
-Identifier Case Folding uses the `NFKC_CF` mapping in Unicode 17.0.0
-[`DerivedNormalizationProps.txt`](https://www.unicode.org/Public/17.0.0/ucd/DerivedNormalizationProps.txt),
-with the R5 algorithm. D144, D145, and D147 below refer to Unicode 17.0.0
-[Core Specification §3.13](https://www.unicode.org/versions/Unicode17.0.0/core-spec/chapter-3/).
+Identifier Case Folding uses the `NFKC_CF` mapping in Unicode 18.0.0
+[`DerivedNormalizationProps.txt`](https://www.unicode.org/Public/18.0.0/ucd/DerivedNormalizationProps.txt),
+with the R5 algorithm. D144, D145, and D147 below refer to Unicode 18.0.0
+[Core Specification §3.13](https://www.unicode.org/versions/Unicode18.0.0/core-spec/chapter-3/).
 
 The declared operand is finite Text, and the exact representatives are again finite Unicode
 scalar sequences. They remain in the same semantic Text family and preserve the surrounding
@@ -2247,15 +2260,15 @@ canonical representative. Budget and Capacity own resource limits, including tho
 during Canonicalization itself; they do not decide `E_L`, `C_L`, or successful Coverage.
 
 No ambient locale or mutable Unicode setting contributes meaning. Host JVM/ICU data may realize the algorithm
-only if it matches the pinned version. Unassigned scalars follow Unicode 17.0.0 data, not a newer release's
+only if it matches the pinned version. Unassigned scalars follow Unicode 18.0.0 data, not a newer release's
 classification. A Contract-visible change requires a different Exact Law Version.
 
 ### 8.6.2. Unicode NFC Normalization — `Initial`
 
-**Exact Equivalence `E_L`.** `x` and `y` are equivalent exactly when their Unicode 17.0.0
+**Exact Equivalence `E_L`.** `x` and `y` are equivalent exactly when their Unicode 18.0.0
 NFD results are scalar-identical. Compatibility-only distinctions remain significant.
 
-**Exact Representative `C_L`.** The Unicode 17.0.0 NFC result of `x`, with decomposition,
+**Exact Representative `C_L`.** The Unicode 18.0.0 NFC result of `x`, with decomposition,
 canonical combining order, and canonical composition exactly as specified by UAX #15.
 
 **Exact Representative Coverage.** Total on declared legal Text. U+0344 can expand to
@@ -2263,19 +2276,19 @@ U+0308 U+0301 even in NFC; such expansion alone is not Law failure.
 
 ### 8.6.3. Unicode NFD Normalization — `Initial`
 
-**Exact Equivalence `E_L`.** Same Unicode 17.0.0 canonical equivalence as Section 8.6.2.
+**Exact Equivalence `E_L`.** Same Unicode 18.0.0 canonical equivalence as Section 8.6.2.
 
-**Exact Representative `C_L`.** The exact Unicode 17.0.0 NFD result. Do not recompose.
+**Exact Representative `C_L`.** The exact Unicode 18.0.0 NFD result. Do not recompose.
 
 **Exact Representative Coverage.** Total on declared legal Text. U+00E9 decomposes into
 U+0065 U+0301 without making the operand ineligible.
 
 ### 8.6.4. Unicode NFKC Normalization — `Initial`
 
-**Exact Equivalence `E_L`.** Unicode 17.0.0 compatibility equivalence: the inputs' NFKD
+**Exact Equivalence `E_L`.** Unicode 18.0.0 compatibility equivalence: the inputs' NFKD
 representatives are scalar-identical. Canonical equivalence is included.
 
-**Exact Representative `C_L`.** The exact Unicode 17.0.0 NFKC result. Compatibility
+**Exact Representative `C_L`.** The exact Unicode 18.0.0 NFKC result. Compatibility
 replacement is part of the selected Law, not an implementation repair.
 
 **Exact Representative Coverage.** Total on declared legal Text. A compatibility decomposition
@@ -2284,23 +2297,23 @@ buffer. The Law does not assert that compatibility distinctions are irrelevant t
 
 ### 8.6.5. Unicode NFKD Normalization — `Initial`
 
-**Exact Equivalence `E_L`.** The same Unicode 17.0.0 compatibility equivalence as Section 8.6.4.
+**Exact Equivalence `E_L`.** The same Unicode 18.0.0 compatibility equivalence as Section 8.6.4.
 
-**Exact Representative `C_L`.** The Unicode 17.0.0 NFKD result, retaining its decomposed
+**Exact Representative `C_L`.** The Unicode 18.0.0 NFKD result, retaining its decomposed
 rather than recomposed representative.
 
 **Exact Representative Coverage.** Total on declared legal Text, including expanding inputs.
 
 ### 8.6.6. Unicode Default Full Case Fold — `Initial`
 
-Let `F17(x)` be the exact Unicode 17.0.0 R4 `toCasefold` result, using the complete fixed
+Let `F18(x)` be the exact Unicode 18.0.0 R4 `toCasefold` result, using the complete fixed
 Default Full Case Folding mapping. It is not general lowercasing, a locale-sensitive operation,
 or Simple/Turkic Case Folding.
 
-**Exact Equivalence `E_L`.** `E_L(x,y)` if and only if `F17(x) = F17(y)` by exact scalar
+**Exact Equivalence `E_L`.** `E_L(x,y)` if and only if `F18(x) = F18(y)` by exact scalar
 sequence comparison (Unicode D144). Canonical-equivalent spellings need not match under D144.
 
-**Exact Representative `C_L`.** `F17(x)`. For example U+00DF `ß` becomes the two scalars
+**Exact Representative `C_L`.** `F18(x)`. For example U+00DF `ß` becomes the two scalars
 `ss`; Unicode-defined Cherokee folding does not have to produce lowercase spelling.
 
 **Exact Representative Coverage.** Total on declared legal Text, including mappings that
@@ -2308,14 +2321,14 @@ expand scalar count.
 
 ### 8.6.7. Unicode NFC Case Fold — `Initial`
 
-Let `Q17(x) = NFC17(F17(NFD17(x)))`, where all three operations use Unicode 17.0.0.
+Let `Q18(x) = NFC18(F18(NFD18(x)))`, where all three operations use Unicode 18.0.0.
 
 **Exact Equivalence `E_L`.** `E_L(x,y)` if and only if
-`NFD17(F17(NFD17(x))) = NFD17(F17(NFD17(y)))` by scalar equality, exactly as Unicode D145
+`NFD18(F18(NFD18(x))) = NFD18(F18(NFD18(y)))` by scalar equality, exactly as Unicode D145
 Canonical Caseless Matching specifies.
 
-**Exact Representative `C_L`.** `Q17(x)`, the exact NFC representative of that relation.
-Unicode §5.18.5 gives the closure property `Q17(Q17(x)) = Q17(x)`. `NFD` must precede folding;
+**Exact Representative `C_L`.** `Q18(x)`, the exact NFC representative of that relation.
+Unicode §5.18.5 gives the closure property `Q18(Q18(x)) = Q18(x)`. `NFD` must precede folding;
 a shortcut treating this law as an unspecified `NFC + lowercase` sequence is not equivalent.
 
 **Exact Representative Coverage.** Total on declared legal Text. Canonical decomposition and
@@ -2323,13 +2336,13 @@ full folding may expand the scalar sequence; expansion alone does not constitute
 
 ### 8.6.8. Unicode NFKC Case Fold — `Initial`
 
-Let `H17(x) = toNFKC_Casefold17(NFD17(x))`. The inner operation uses Unicode R5:
-map each scalar through Unicode 17.0.0 `NFKC_CF`, concatenate, and normalize the result to NFC.
+Let `H18(x) = toNFKC_Casefold18(NFD18(x))`. The inner operation uses Unicode R5:
+map each scalar through Unicode 18.0.0 `NFKC_CF`, concatenate, and normalize the result to NFC.
 
-**Exact Equivalence `E_L`.** `E_L(x,y)` if and only if `H17(x) = H17(y)`, exactly as Unicode
+**Exact Equivalence `E_L`.** `E_L(x,y)` if and only if `H18(x) = H18(y)`, exactly as Unicode
 D147 Identifier Caseless Matching specifies.
 
-**Exact Representative `C_L`.** `H17(x)`. The mapping intentionally collapses some
+**Exact Representative `C_L`.** `H18(x)`. The mapping intentionally collapses some
 compatibility and Default_Ignorable distinctions. A generic `NFKC` followed by a host
 lowercase or casefold operation may not reproduce R5 or D147.
 
@@ -2361,11 +2374,12 @@ exact result when it succeeds and must fail closed on resource inability.
 Version-pinned regression witnesses cover NFC expansion at U+0344 and NFD decomposition of U+00E9.
 Compatibility folding of `ﬁ` and full folding of `ß` exercise different Law families. D145 also needs the
 U+00C5 versus U+0041 U+030A canonical-caseless case; R5 must cover U+200D default-ignorable treatment.
-Normative conformance sources are
-[NormalizationTest.txt](https://www.unicode.org/Public/17.0.0/ucd/NormalizationTest.txt),
-[CaseFolding.txt](https://www.unicode.org/Public/17.0.0/ucd/CaseFolding.txt) and
-[DerivedNormalizationProps.txt](https://www.unicode.org/Public/17.0.0/ucd/DerivedNormalizationProps.txt).
-Earlier exploratory tests used Unicode 15.1 data. They do **not** prove full Unicode 17.0.0 conformance.
+Normative conformance sources are the final Unicode 18.0.0 release files:
+[NormalizationTest.txt](https://www.unicode.org/Public/18.0.0/ucd/NormalizationTest.txt),
+[CaseFolding.txt](https://www.unicode.org/Public/18.0.0/ucd/CaseFolding.txt) and
+[DerivedNormalizationProps.txt](https://www.unicode.org/Public/18.0.0/ucd/DerivedNormalizationProps.txt).
+Earlier exploratory tests used Unicode 15.1 data. They did not prove full Unicode 17.0.0
+conformance and do **not** establish Unicode 18.0.0 conformance.
 
 Unicode UAX #31 and UTS #39 explain security risks when identifier distinctions are erased. Compatibility
 mapping and case folding are relevant examples; UTS #39 also addresses visually confusable text.
@@ -2377,13 +2391,15 @@ owned, and Admission cannot restore an erased distinction.
 ### 8.6.10. Explicit Membership Decision and Remaining Realization Duties
 
 **Decision (2026-10-10): ADMIT these seven independent Authority subjects and their
-approved Unicode 17.0.0-based `Initial` exact meanings in Sections 8.6.2–8.6.8.**
+then-approved Unicode 17.0.0-based `Initial` exact meanings.** The Unicode semantic Basis of
+the V1 `Initial` selections is revised to 18.0.0 by the pre-release decision in Section 8.5;
+their presently selected exact meanings are specified in Sections 8.6.2–8.6.8.
 Separate formal versions are owned by the seven Authorities; none is a hidden alias of
 another. The same `E_L` used by NFC/NFD or NFKC/NFKD does not erase their different
 representative obligations. The curated Case Fold profiles own Unicode-standardized
 meaning rather than a runtime guess about composing unrelated APIs.
 
-This admission does not establish production-backend conformance with Unicode 17.0.0. Independent conformance
+This admission does not establish production-backend conformance with Unicode 18.0.0. Independent conformance
 and differential tests remain implementation obligations. Resource-envelope and compiler-preservation checks
 are also required. None of those implementation results changes historical Membership or the immutable Law
 meaning.
