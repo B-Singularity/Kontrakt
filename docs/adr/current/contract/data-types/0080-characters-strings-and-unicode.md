@@ -59,17 +59,17 @@ The existing Contract pipeline and the planned V1/V2 compiler architecture need 
 mandatory Text engine, new IR family, or physical string layout. Sections 3.1–3.3 establish the shared boundary and
 value domain, the interpretation obligations, and the selected exact position, slicing, ordering, literal-search,
 concatenation, finite-repetition, and ordered-literal-split laws. Section 3.4 selects Unicode Property, Case,
-Normalization, and default Text-boundary calculations. It also distinguishes internal Emoji and security analysis from
-independent common operations. Section 3.6 fixes the interpretation and preservation requirements for source Regex and
-Collation. Other qualification questions remain open in Section 5. A law resolved in this Draft is not by itself a claim
-of V1 execution support.
+Normalization, and default Text-boundary calculations, with internal Emoji and security analysis kept distinct. Section
+3.5 selects Unicode UTF conversions and their error semantics. Section 3.6 fixes source Regex and Collation
+interpretation. Other qualification questions remain open in Section 5. A law resolved in this Draft is not by itself a
+claim of V1 execution support.
 
 ## 3. Decision
 
 *Sections 3.1–3.3 define shared values and exact Text calculations. Section 3.4 selects Unicode calculations and
-distinguishes internal analysis. Section 3.6 establishes source Regex and Collation meaning without selecting an
-implementation or its ownership stage. The other Section 3 headings remain open. Unchecked matters in Section 5 remain
-unresolved. No decision alone establishes V1 execution support.*
+internal analysis. Section 3.5 selects UTF conversion semantics. Section 3.6 establishes source Regex and Collation
+meaning. Sections 3.7–3.14 remain open. Unchecked matters in Section 5 remain unresolved. No decision alone establishes
+V1 execution support.*
 
 ### 3.1. Shared Meaning and Contract Ownership
 
@@ -281,9 +281,9 @@ For example, the Text `A😀B` has Scalar Boundaries `0, 1, 2, 3`, corresponding
 uses the established scalar domain and UTF-16 encoding semantics, not a version-specific Unicode Character Property
 table. It does not govern arbitrary malformed Host UTF-16 sequences or require the compiler to store such offsets.
 
-The same principle of exact correspondence can be considered for other selected encodings, but this Decision closes
-only UTF-16 boundary correspondence. The encoding-specific laws for UTF-8, UTF-32, malformed data, and byte offsets
-remain open under Section 5.5. Source-bound Java/Kotlin operations keep their resolved UTF-16 behavior; in particular,
+Section 3.5 selects UTF-8, UTF-16, and UTF-32 conversion semantics and derives byte-boundary correspondence for valid
+encoded Text. This subsection defines the exact UTF-16 Code Unit correspondence. Source-bound Java/Kotlin operations
+keep their resolved UTF-16 behavior; in particular,
 a Host substring may split a surrogate pair and yield a Host intermediate value that is not legal common Text. It may
 be mapped to Scalar Slice only when both boundaries and all legally observable source behavior correspond exactly.
 No new Source Location or source-operation law is established by this correspondence.
@@ -608,6 +608,96 @@ consume these facts only under its own governing decision.
 
 ### 3.5. Encoding, Decoding, and Invalid Data
 
+#### 3.5.1. Selected UTF Conversions
+
+Kontrakt selects the Unicode **UTF-8, UTF-16, and UTF-32** encoding forms as common calculations. Each maps a legal
+Scalar Text to its exact ordered Code Unit sequence. UTF-8 Code Units are octets; UTF-16 and UTF-32 Code Units are
+16-bit and 32-bit values. Conversion between Code Units and serialized bytes is governed separately by the selected
+encoding scheme in §3.5.2. These are Unicode conversions, not a claim that every Java/Kotlin Charset call has the same
+meaning.
+
+Encoding is total for every finite legal Scalar Text, including unassigned Scalars, private-use Scalars, noncharacters,
+and U+0000. Surrogates are not legal Scalars. A Java/Kotlin Host String containing an unpaired surrogate remains a
+source-bound Code Unit value; it cannot be represented as common Text without an explicit, qualified conversion. Neither
+Unicode character allocation nor a physical output limit changes the UTF encoding result.
+
+#### 3.5.2. Byte Order and Byte-Order Signatures
+
+The common byte-scheme meaning must distinguish the following cases:
+
+| Scheme                        | Selected result or interpretation                                                                                                              |
+|-------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------|
+| UTF-8                         | Ordinary encoding emits no BOM. Initial `EF BB BF` decodes as U+FEFF unless the consuming protocol explicitly selects signature handling.      |
+| UTF-16BE / UTF-16LE           | Byte order is fixed. An initial encoded U+FEFF is content, not an automatically consumed signature.                                            |
+| UTF-32BE / UTF-32LE           | The same fixed-order rule applies to UTF-32 Code Units.                                                                                        |
+| BOM-sensitive UTF-16 / UTF-32 | An initial valid BOM selects byte order and is consumed as a signature. With no BOM and no overriding protocol rule, byte order is big-endian. |
+
+The selected encoding profile also determines whether to emit an initial signature; output bytes cannot depend on an
+unspecified optional BOM. A protocol may require a signature, select another default byte order, or define a different
+treatment of initial U+FEFF. These choices cannot be inferred from the host machine or guessed from content. Consuming a
+signature is not Text trimming. A signature-sensitive decode and an explicit-endian decode are not interchangeable
+merely because they accept the same bytes.
+
+#### 3.5.3. Strict Failure and Lossy Decoding
+
+**Strict decoding** maps a well-formed input under the selected UTF form and scheme to exactly one Scalar Text. A
+malformed sequence has no successful Text result. Failure observation includes the position where the first malformed
+subsequence begins, measured in the input's explicitly selected unit (octet or Code Unit). An incomplete prefix becomes
+a truncation failure only when the end of input is established. Invalid UTF-8 includes overlong sequences, invalid
+continuations, surrogate encodings, and values beyond U+10FFFF. Invalid UTF-16 includes unpaired surrogates; invalid
+UTF-32 includes values outside the Scalar domain. The applicable Failure owner determines how unsuccessful computation
+is attributed; a decoder failure is not an Admission rejection.
+
+**Replacement decoding** is a separate, lossy common calculation. Its selected Unicode profile consumes each *maximal
+subpart of an ill-formed subsequence* and substitutes one U+FFFD for that part, preserving valid intervening input. For
+example, UTF-8 `E2 82` at final input end produces one U+FFFD, while `E2 28 A1` produces U+FFFD, `(`, U+FFFD. No decoder
+may silently apply Replacement when Strict was selected. Replacement Text does not assert that the original bytes were
+valid or recoverable.
+
+Java/Kotlin Charset operations retain the error behavior of their resolved callable and effective Charset profile. A
+source operation may report, replace, or ignore malformed or unmappable input; its replacement bytes or characters and
+error-consumption rules are not assumed equivalent to the common Unicode maximal-subpart calculation. The distinction
+between malformed input and a character unmappable by a non-UTF Charset is preserved. If the source exposes an error
+length, exception, input-consumption state, or other observation, those semantics remain source-bound under §3.3 and
+§3.6.
+
+#### 3.5.4. Partial Input, Positions, and Round-Trips
+
+The final decoded Text or Strict failure of a completed byte sequence is independent of how that sequence was divided
+into chunks under the same profile. A valid multi-unit prefix is not treated as truncated before the input's declared
+end. If a source streaming API exposes intermediate consumption, buffer state, or errors, those observations must also
+be preserved; this law does not prescribe a physical decoder state machine.
+
+For valid Text and a fixed byte scheme, each Scalar Boundary corresponds to the exact byte offset after encoding its
+preceding Scalars, including any explicitly selected initial signature. Byte offsets within a multi-byte scalar have no
+inverse Scalar Boundary. Section 3.3.3 owns the analogous UTF-16 Code Unit correspondence. Replacement decoding need not
+preserve a one-to-one origin mapping; when source diagnostics or artifacts require offending bytes and their positions,
+the responsible consumer must retain that evidence separately. The common Text value remains only a Scalar Sequence: an
+original U+FFFD and a substituted U+FFFD can have the same resulting value.
+
+Under matching lossless encoding and Strict decoding profiles, `Decode(Encode(T)) = T` for every legal Text. The reverse
+byte identity is guaranteed only by a profile that preserves every relevant byte, including signature treatment. A
+decode that consumes a BOM or replaces malformed input does not promise recovery of the original byte sequence. These
+relations do not decide serialization framing, cache schemas, or physical storage.
+
+#### 3.5.5. Source, Artifact, and Other Semantic Boundaries
+
+A Java/Kotlin expression is interpreted using its **actual Charset, overload, options, provider, and source-level error
+behavior**. This applies to UTF and non-UTF Charsets; selecting three common Unicode forms does not prohibit a supported
+source operation using `US_ASCII`, `ISO_8859_1`, or another resolved Charset. Equivalence to a common UTF calculation
+must be established rather than inferred from a familiar API name. Encoding a legal common Text and encoding an
+arbitrary malformed Host UTF-16 String are different operations.
+
+Source-file decoding, user-visible conversion, transport, and compiler artifacts follow their own applicable format
+rules. In particular, JVM Classfile **Modified UTF-8** is not ordinary UTF-8: it has distinct representations and a
+65,535-byte limit on an individual `CONSTANT_Utf8_info` entry. That limit does not restrict common Text length. Backend
+and Artifact owners retain target legality and publication responsibilities; this ADR selects neither a disk codec nor a
+new failure owner.
+
+Valid UTF does not imply normalization, Unicode security permission, or any Contract judgment. Existing Canonicalization
+and source-language rules remain independent of encoding validity. The algorithms, buffers, streaming implementations,
+and ownership placement of these calculations remain open to Realization and compiler-architecture decisions.
+
 ### 3.6. Source-Bound Operations and Platform Qualification
 
 #### 3.6.1. Regex Pattern Meaning
@@ -840,33 +930,28 @@ authority in ADR-0080.
 
 ### 5.5. Define encoding and decoding semantics without designing file I/O
 
-- [ ] Determine which encoding and decoding operations Kontrakt needs as governed calculations. Do not equate
-  source-file decoding, API transport encoding, compiler cache serialization, and a user-visible Text conversion merely
-  because they all use UTF encodings.
-- [ ] Examine the text-bearing artifacts that V1 already writes to disk, rather than treating persistence as a V2-only
-  concern. Generated source, executable Classfiles, diagnostic records when emitted, and test or reproducer outputs can
-  have different encoding requirements. The owning Artifact and Backend Designs decide their formats and publication
-  procedures; ADR-0080 must only constrain any shared Text meaning they claim to preserve.
-- [ ] For each selected UTF-8, UTF-16, or UTF-32 operation, define the exact mapping between octet or code-unit
-  sequences and Unicode Scalar Text. Byte order and byte-order marks must be explicit where they affect the result.
-- [ ] Define strict failure for malformed encodings. Include overlong UTF-8, surrogate encodings, incomplete sequences,
-  invalid continuation bytes, and values beyond U+10FFFF; specify whether failure reports a position or only
-  non-success.
-- [ ] Decide whether replacement or repair is supported as a separate lossy operation. If it is, specify which malformed
-  subsequence is replaced, the exact replacement result, and the reported error information; do not silently change
-  strict decoding into repair.
-- [ ] Define the relationship between an already valid Text value and its various physical encodings. Different legal
-  byte encodings of the same scalar sequence must not become different Text meanings unless the consuming law explicitly
-  observes bytes.
-- [ ] Determine the required observations of a streaming decoder. A multi-byte scalar split at a chunk boundary must
-  produce the same result and failure information as decoding the complete input, subject to the selected streaming law.
-- [ ] Separate encoding validity from normalization state and from security acceptance. A valid UTF-8 sequence can
-  encode Text that is not NFC and may contain confusable or bidirectional control characters.
-- [ ] Keep JVM Modified UTF-8 outside the ordinary UTF-8 datum law. It belongs to Classfile representation; decide which
-  semantic obligations the Backend must satisfy when emitting a corresponding constant.
-- [ ] Review exact Text round-trips across a binary or textual artifact boundary when such a round-trip is required. A
-  serializer must not confuse an empty value with absence, discard U+0000, or merge adjacent fields because its framing
-  or escaping is ambiguous. Record the semantic obligation without selecting an on-disk codec.
+- [x] **UTF forms and schemes.** Section 3.5 selects UTF-8, UTF-16, and UTF-32; distinguishes Code Units from bytes; and
+  defines total encoding for legal Scalar Text. It fixes explicit byte order and BOM-sensitive profiles without
+  borrowing Host defaults.
+- [x] **Malformed input.** Section 3.5 selects Strict failure with first-error position and a separate maximal-subpart
+  Replacement calculation. Truncated final input, invalid Scalars, and Host Charset-specific reporting, replacement, or
+  ignoring have distinct meanings.
+- [x] **Partial input and offsets.** Section 3.5 selects chunk-independent completed-input results and derives exact
+  encoded-byte positions for valid Scalar Boundaries. Streaming API observations and lossy origin evidence remain
+  distinct.
+- [x] **Round-trip and value identity.** The lossless Text round-trip is fixed. Original byte identity requires an
+  applicable byte-preserving profile; encoding validity is not normalization or security acceptance.
+- [x] **Source and target distinction.** Non-UTF Java/Kotlin Charset callables retain their resolved meaning. JVM
+  Modified UTF-8 is a Classfile representation, not common UTF-8 or a Text length bound.
+- [ ] **Callable qualification.** Audit actual Java/Kotlin Charset and streaming callable profiles, including
+  provider-dependent behavior and observable failure details, under §5.6. Selection of common UTF semantics is not
+  evidence of complete Source support.
+- [ ] **V1 artifact review.** Examine generated source, executable Classfiles, emitted diagnostics, and test/reproducer
+  output. Each producing owner must verify required bytes, publication, and failure attribution without treating disk
+  persistence as a V2-only concern. See §§5.11–5.14.
+- [ ] **Serialization and preservation.** Check Text round-trips through binary or textual artifacts for unambiguous
+  framing, absence versus empty Text, U+0000 preservation, integrity, and legally required origin evidence. Do not
+  select an on-disk codec, cache schema, or storage implementation here.
 
 ### 5.6. Qualify Host operations without redefining Host language semantics
 
