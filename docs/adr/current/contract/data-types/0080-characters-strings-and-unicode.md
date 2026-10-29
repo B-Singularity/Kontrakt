@@ -23,11 +23,13 @@ turn its proposals into Accepted Contract law.
 - ADR-0075: Compiler Result Ownership and Legal Consumption
 - ADR-0076: Canonicalization Built-In Law Catalog
 - ADR-0078: Deterministic Numeric Value and Operation Semantics
-- `docs/design/character-text/character-text-sdk-interpretation-and-calculation-design.md` — Working Design for
-  Java/Kotlin SDK callable coverage, proposed common calculations, and conformance; not an Accepted Contract law
+- `docs/design/character-text/kontrakt-character-text-sdk-interpretation-and-calculation-design-en.md` — Working Design
+  for Java/Kotlin callable interpretation.
+- `docs/design/character-text/kontrakt-unicode-property-and-calculation-coverage-design.md` — Working Design for the
+  selected Unicode coverage inventory and compiler consumers.
 - `docs/design/canonicalization/built-in-law-catalog/canonicalization-built-in-law-catalog-design.md`, especially
-  §8.4–§8.6 —
-  research and prior specification material only for this ADR; it does not grant authority to shared Text semantics
+  §8.5–§8.6 — existing admitted Canonicalization laws. Their `E_L`, `C_L`, Version, and Coverage remain with their
+  owners.
 - `docs/design/overview/kontrakt-compiler-total-architecture-map-design-draft.md` — Working Design, not an Accepted ADR
 - `docs/todo/roadmap/kontrakt-v2-reference-architecture-and-v1-foundations.md` — Reference Architecture, not an Accepted
   ADR
@@ -56,20 +58,18 @@ comparison, compiler rewriting, or representation changes.
 The existing Contract pipeline and the planned V1/V2 compiler architecture need common semantic requirements, not a
 mandatory Text engine, new IR family, or physical string layout. Sections 3.1–3.3 establish the shared boundary and
 value domain, the interpretation obligations, and the selected exact position, slicing, ordering, literal-search,
-concatenation, finite-repetition, and ordered-literal-split laws. Section 3.4 establishes the Unicode 18.0.0
-Property Observation meaning and its complete result/default-value obligations, without selecting the entire Property
-catalog. Other operation selections and qualification questions remain open in Section 5. A law resolved in this
-Draft is not by itself a claim of V1 execution support.
+concatenation, finite-repetition, and ordered-literal-split laws. Section 3.4 selects Unicode Property, Case,
+Normalization, and default Text-boundary calculations. It also distinguishes internal Emoji and security analysis from
+independent common operations. Section 3.6 fixes the interpretation and preservation requirements for source Regex and
+Collation. Other qualification questions remain open in Section 5. A law resolved in this Draft is not by itself a claim
+of V1 execution support.
 
 ## 3. Decision
 
-*Section 3.1 records the resolved shared boundary. Section 3.2 records the Character and Text value domain. Section
-3.3 states the interpretation obligations and the selected exact scalar position, access, slice, ordering,
-literal-search,
-concatenation, finite-repetition, and ordered-literal-split laws. Section 3.4 records the resolved Unicode 18.0.0
-Property Observation requirements; the particular Property selection, independent literal replacement, Join, and the
-other candidates in Section 5 remain open. Sections 3.5–3.14 remain drafting headings. This Draft does not declare
-unresolved operations or unqualified source callables supported for execution.*
+*Sections 3.1–3.3 define shared values and exact Text calculations. Section 3.4 selects Unicode calculations and
+distinguishes internal analysis. Section 3.6 establishes source Regex and Collation meaning without selecting an
+implementation or its ownership stage. The other Section 3 headings remain open. Unchecked matters in Section 5 remain
+unresolved. No decision alone establishes V1 execution support.*
 
 ### 3.1. Shared Meaning and Contract Ownership
 
@@ -456,28 +456,22 @@ for example, some unassigned scalar ranges have specific `Extended_Pictographic`
 Character domain under Section 3.2; their treatment in source-bound Code Unit operations remains distinct. A
 Property's lawful `false`, `Unknown`, or absence result must not conceal an unrecognized or unselected Property request.
 
-#### 3.4.2. Derived Classification and Selection Boundary
+#### 3.4.2. Property Coverage and Derived Classification
 
-A common derived character classification is lawful only when its result follows exactly from the selected Unicode 18
-Property definitions and their normative derivation relationships. An intermediate contributory Property, such as
-`Other_Alphabetic`, is not by itself the complete derived `Alphabetic` Property. Likewise, `Script`,
-`Script_Extensions`, `ID_Start`, `XID_Start`, and their related Properties may have different meanings and may not be
-silently substituted. Existing Character and Text equality, indexing, and scalar validity are unchanged by these
-classifications.
+The companion `kontrakt-unicode-property-and-calculation-coverage-design.md` owns the **coverage selection**: 54
+independently observed UCD Scalar Properties, two UTS #39 security-profile observations, 38 items of algorithm-dependent
+data, and 34 items excluded from independent observation. Section 3.4.1 governs the exact meaning of every selected
+common UCD Property; the Design's consumer inventory does not create a new Contract Authority or change that meaning.
 
-**Which** Unicode 18 Properties become independent common calculations remains an explicit, consumer-grounded
-selection under Section 5.4. The proposed initial set of eighteen classification, whitespace, numeric, Script,
-identifier, and character-state Properties is an investigation candidate, not an approved complete catalog or a claim
-that all UCD Properties are available to V1. Property and algorithm consumers needed for case mapping, normalization,
-segmentation, emoji, bidirectional processing, and security must be evaluated with their own exact requirements.
-Supported Java/Kotlin Character/Text callables retain their actual source-level meaning and their separate SDK
-coverage obligation under Section 3.3, regardless of whether the analogous Unicode Property is selected.
+`Identifier_Status` and `Identifier_Type` use the UTS #39 security profile matched to Unicode 18.0.0. The latter
+preserves the full set of applicable types. These are security facts, not identifier permission or Contract judgments.
+Confusable mappings support the internal calculations selected in Section 3.4.8; they are not independent common
+Property Observations.
 
-Property Observation establishes character facts, not the admissibility of a Contract authoring expression, an Input
-value, a source identifier, or a security-sensitive spelling. Unicode identifier and security specifications can
-inform their owning consumers without making this observation a new 1D Authority, Failure policy, Unicode security
-judgment, or implicit Text transformation. Nothing here performs case folding, normalization, deletion of ignorable
-scalars, or confusable rewriting in exact Text equality.
+Contributory Properties may be used to derive official Property results but are not substitutes for them. An exact
+decimal-digit calculation for `Nd` Scalars is a separate derived operation, not another UCD Property or Java
+`Character.getNumericValue`. Its remaining operation-specific result conditions are addressed in Section 5.4. Scalar
+validity, Text equality, Source identifier permission, and 1D judgments remain independent of Property classification.
 
 #### 3.4.3. Semantic Basis and Realization Separation
 
@@ -490,9 +484,219 @@ supply locale-dependent CLDR data or the behavior of a Java/Kotlin source callab
 an external reference implementation, or a target intrinsic is never a second semantic authority. This direction
 requires no new 1D, HIR subject, IR family, compiler pass, global Unicode lookup service, or runtime policy engine.
 
+#### 3.4.4. Selected Case Mapping and Case Folding
+
+The following common calculations use **Unicode 18.0.0**. They do not change Exact Text Equality or perform a
+Canonicalization judgment.
+
+| Calculation                            | Operand and exact result                                                                                                                                                                      |
+|----------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Simple Lowercase, Uppercase, Titlecase | Each maps one Scalar to one Scalar using the matching Unicode simple mapping; an unmapped Scalar is unchanged.                                                                                |
+| Default Full Lowercase, Uppercase      | Each maps Text to Text using the complete default Unicode mapping, including applicable context rules and one-to-many results.                                                                |
+| Default Full Titlecase                 | Maps Text using the Unicode default titlecasing rules and their required word boundaries. It is not scalar-by-scalar uppercasing.                                                             |
+| Explicit-locale Full Case Mapping      | Separate Text calculations use only the locale conditions specified by Unicode 18 `SpecialCasing.txt`, with the locale profile supplied explicitly. Arbitrary CLDR tailoring is not selected. |
+| Simple Case Fold                       | Scalar-to-Scalar folding with the explicit **Default** or **Turkic** profile.                                                                                                                 |
+| Full Case Fold                         | Text-to-Text folding with the explicit **Default** or **Turkic** profile, including one-to-many mappings.                                                                                     |
+
+Default mappings never consult ambient Locale. Turkic folding is not the default profile. Full context-sensitive mapping
+follows the Unicode conditions, including final Sigma. Each selected operation returns the exact mapped value for every
+legal operand; a longer result is not an operation failure. Source callables with different Unicode data, locale rules,
+or evaluation effects retain their source meaning under Section 3.6.
+
+Let **`F18(x)`** denote Unicode 18 R4 *Default Full Case Folding*. The common `F18` result is exactly the representative
+calculation used by the existing Unicode Default Full Case Fold Canonicalization Law. Folding equality and ordering can
+be derived by comparing explicitly folded Text values with the already selected exact comparison laws. No separate
+case-insensitive comparison primitive, implicit identifier equivalence, or Locale Collation is selected.
+
+Default Text Titlecase uses the selected Default Word Boundary calculation in Section 3.4.6.
+
+#### 3.4.5. Selected Normalization and Caseless Calculations
+
+**NFC, NFD, NFKC, and NFKD** are four selected Unicode 18 Text-to-Text calculations. Each follows UAX #15, including
+canonical ordering, composition, decomposition, and the required Hangul rules. Each is total on finite Scalar Text,
+including empty Text and Scalars unassigned in Unicode 18. Input expansion is not an intrinsic refusal. These
+calculations do not implicitly transform stored Text or change exact equality.
+
+These common results coincide with the representatives of the seven previously selected Canonicalization laws in Catalog
+§8.6:
+
+| Existing Canonicalization representative | Selected common calculation | Existing equivalence retained by its Law                      |
+|------------------------------------------|-----------------------------|---------------------------------------------------------------|
+| `NFC18(x)`                               | NFC                         | Canonical equivalence, measured by equal `NFD18` results      |
+| `NFD18(x)`                               | NFD                         | Same canonical equivalence; different representative          |
+| `NFKC18(x)`                              | NFKC                        | Compatibility equivalence, measured by equal `NFKD18` results |
+| `NFKD18(x)`                              | NFKD                        | Same compatibility equivalence; different representative      |
+| `F18(x)`                                 | Default Full Case Fold      | Unicode D144                                                  |
+| `Q18(x) = NFC18(F18(NFD18(x)))`          | NFC Case Fold               | Unicode D145                                                  |
+| `H18(x) = toNFKC_Casefold18(NFD18(x))`   | NFKC Case Fold              | Unicode D147                                                  |
+
+Here **`toNFKC_Casefold18`** is the Unicode R5 calculation using the version-fixed `NFKC_CF` mappings followed by NFC.
+It is required to define `H18`, but **is not separately selected as an independent common Text operation**. Unicode D146
+Compatibility Caseless Matching is likewise not selected as a separate common comparison. Neither may replace the
+approved D147 relation. The `Q18` and `H18` formulas are exact; shortcuts using general lowercasing or a reordered Fold
+and Normalize sequence are not accepted.
+
+The seven existing Canonicalization Laws retain their individual `E_L`, `C_L`, Version, applicability, and established
+Material under ADR-0066 and ADR-0076. Their representatives are consistent with these common calculations, but using a
+common calculation does not establish a Canonicalization judgment.
+
+For each selected normalization form `N`, **`isNormalized_N(x)`** is a derived Boolean calculation defined by `N(x) = x`
+under exact Text equality. It is not a new primitive law. The four Unicode **Normalization Quick Check Properties**
+remain internal algorithm data. No standalone String Quick Check operation or `Yes/No/Maybe` common observation is
+selected. An implementation may use these facts without changing the Boolean result or any Canonicalization Law.
+
+Normalization composition and casefold rewrites are lawful only where the selected Unicode operation meanings guarantee
+the result. In particular, normalization cannot generally be distributed over Text concatenation. Unicode stability
+guarantees apply only to their stated scope; they do not equate later Property, Case, or Segmentation profiles with
+Unicode 18. **Stream-Safe Text Processing** is not selected and must not be substituted for an approved normalization
+result.
+
+#### 3.4.6. Selected Text Segmentation
+
+The **Default Extended Grapheme Boundary** and **Default Word Boundary** calculations are selected as independent common
+Text observations under Unicode 18.0.0 UAX #29. Each accepts any finite Scalar Text and returns its ordered
+Scalar-boundary positions. For Text of length `n`, the positions include `0` and `n`, contain no duplicates, and lie
+within `0..n`. Empty Text has the single boundary `0` and no segments. Segments and counts derive from those boundaries
+and the existing Scalar Slice and Count laws. No UTF-16, Source, or display-column position is implied.
+
+The Extended Grapheme calculation does not change the Character domain: a Grapheme may contain several Scalars. Default
+Word Boundaries do not claim to identify all natural-language words. Both calculations use the fixed Unicode default
+rules without ambient Locale or hidden tailoring. Their observations neither alter the input Text nor establish an
+identifier or 1D judgment.
+
+UAX #29 Sentence Boundaries and UAX #14 Line Break Opportunities remain **internal normative calculations**, not
+independently selected common Text operations. Their Property dependencies are recorded in the Unicode Coverage Design.
+Line-break opportunities do not determine rendered lines, text width, or display layout. CR/LF line-separator
+recognition remains a separate Text calculation.
+
+#### 3.4.7. Emoji Sequence Analysis
+
+The six selected scalar Emoji Properties in the Unicode Coverage Design remain unchanged. Whole-Text Emoji sequences
+require the separate Unicode 18.0 UTS #51 sequence definitions. The following are selected as **internal facts**, not
+independent common Text operations:
+
+| Internal fact                 | Meaning                                                                                                       |
+|-------------------------------|---------------------------------------------------------------------------------------------------------------|
+| Emoji sequence classification | Whether a Text sequence meets the applicable UTS #51 sequence definition, with its specified kind.            |
+| RGI membership                | Whether the given character or sequence belongs to the version-fixed recommended-for-general-interchange set. |
+| `RGI_Emoji_Qualification`     | The applicable UTS #51 status, or no applicable status for Text outside its domain.                           |
+
+An Emoji sequence need not be RGI, and an Extended Grapheme Cluster need not be an Emoji sequence. These facts do not
+repair qualification, insert or remove variation selectors, normalize Text, or impose Emoji-specific value equality. The
+implementation or presentation of a glyph remains outside this common Text meaning.
+
+#### 3.4.8. Bidirectional and Identifier-Security Analysis
+
+The Unicode 18.0.0 UAX #9 Bidirectional Algorithm is selected as an **internal normative calculation**. It distinguishes
+explicit LTR and RTL paragraph direction from first-strong direction. Its embedding levels and visual ordering do not
+change the Scalar sequence. Source display must preserve the original token order and apply its own display rules; font
+layout remains separate.
+
+The following Unicode 18 UTS #39 calculations are also selected for internal analysis, **not** as independent common
+Text operations:
+
+| Calculation                | Determining meaning                                                                                                                                                       |
+|----------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Confusable analysis        | The standard's `internalSkeleton` and direction-aware `bidiSkeleton`; ordinary `skeleton` uses LTR. The direction-aware profile distinguishes LTR, RTL, and first-strong. |
+| Script analysis            | Resolved Script Set and mixed-script classification under UTS #39.                                                                                                        |
+| Restriction-level analysis | The standard's identifier restriction-level classification.                                                                                                               |
+
+These facts do not alter Text equality, Symbol Identity, or Canonicalization equivalence. **This ADR selects no
+automatic Unicode security warnings or rejections.** Even a Confusable pair does not, by itself, require a diagnostic.
+Actual source illegality remains governed by the source language and existing Contract laws. A separate analysis could
+consume these facts only under its own governing decision.
+
 ### 3.5. Encoding, Decoding, and Invalid Data
 
 ### 3.6. Source-Bound Operations and Platform Qualification
+
+#### 3.6.1. Regex Pattern Meaning
+
+A resolved Java/Kotlin Regex expression retains the **meaning of its actual source callable**. Kontrakt does not impose
+a new restricted Pattern language or adopt an unspecified Host engine as the law. The selected source profile determines
+how a Pattern is constructed, interpreted, and used. A shared Text calculation may replace part of it only when the
+results agree exactly. Admission qualification continues to follow ADR-0065 §7.7.
+
+Regex meaning must preserve the distinctions that determine a selected match:
+
+| Aspect    | Required meaning                                                                        |
+|-----------|-----------------------------------------------------------------------------------------|
+| Pattern   | Source grammar, flags, Unicode rules, and applicable options                            |
+| Selection | Alternative and quantifier priority, including assertions and atomic behavior           |
+| Capture   | Group participation, update and retention across repetition, and the final group values |
+| Result    | The match chosen by the specific operation and its exact bounds                         |
+
+An accepted-string set alone cannot determine these observations. The rules must describe their results without
+requiring backtracking or another particular matching algorithm.
+
+#### 3.6.2. Matcher State and Derived Operations
+
+A stateful Matcher call determines both its **returned result** and the **state observable by later calls**. The
+selected source API governs search progress, region bounds, reset behavior, and replacement progress. The meaning can be
+expressed as state transitions without requiring a physical mutable Matcher object.
+
+Regex-based Split, Replace, and result iteration additionally require their own result rules:
+
+| Operation            | Distinctions to preserve                                          |
+|----------------------|-------------------------------------------------------------------|
+| Split                | Match consumption, zero-width progress, limit, and empty segments |
+| Replace              | Selected matches, group expansion, and output formation           |
+| Callback replacement | Invocation order, returned values, and observable effects         |
+| Iteration            | Search-state progression and when evaluation occurs               |
+
+These operations cannot be inferred from a Boolean match or the common Literal Split of §3.3.8. Java and Kotlin results
+may differ for the same Pattern.
+
+An API exposing execution observations, such as `hitEnd()`, requires its own source-profile guarantee. Matching results
+alone do not prove that such observations are preserved. If the observation cannot be expressed independently of a
+specific platform behavior, the replacement must remain qualified by that behavior; the compiler cannot invent a common
+result.
+
+#### 3.6.3. Regex Inputs and Completion
+
+Pattern construction is distinct from matching. Invalid Pattern syntax is not a valid non-match. Unsupported source
+interpretation and resource termination are also separate from either result. Failure attribution follows the existing
+laws, not a new Regex-specific Contract outcome.
+
+A Pattern may be computed rather than literal. Its use in a 1D is qualified by that 1D's existing source-closure and
+completion law. Under ADR-0065 §§7.3–7.7, finite-work qualification is required for Admission; it does not imply a
+blanket restriction to linear-time Regex engines or allow a resource stop to become `Rejected`.
+
+Regex positions and character classes retain their **source-defined units and Unicode profile**. An observable
+Java/Kotlin UTF-16 offset cannot be silently changed into a Scalar Boundary. Exact correspondence is available only
+within §3.3.3's domain. Unicode 18 common calculations may be reused only when they agree with the selected source
+result.
+
+#### 3.6.4. Collation Meaning
+
+A source Collation comparison is defined by its **effective rules**, not merely its Locale label. The complete profile
+must determine the comparison, including any relevant provider data and settings. The result is `Less`, `Equal`, or
+`Greater` under those rules. Unicode UCA or CLDR can supply a rule basis when actually applicable; Unicode 18 Default
+UCA is not substituted for an arbitrary Java/Kotlin `Collator` call.
+
+A `CollationKey` comparison must preserve its source comparison relation. Other source observations impose additional
+requirements:
+
+| Observed call                  | Preservation requirement                            |
+|--------------------------------|-----------------------------------------------------|
+| `Collator.compare`             | Exact comparison result under the effective profile |
+| `CollationKey.compareTo`       | Key comparison relation required by the source API  |
+| `CollationKey.getSourceString` | Original source string                              |
+| `CollationKey.toByteArray`     | Returned bytes when that representation is observed |
+
+The internal sort-key representation is otherwise replaceable. A Collation result of `Equal` neither establishes Exact
+Scalar Equality nor changes Symbol Identity or Canonicalization.
+
+#### 3.6.5. Realization Equivalence and Deferred Placement
+
+An alternative execution is valid only if it preserves **every observation of the resolved use**. This includes source
+evaluation effects and unsuccessful outcomes, not just successful final values. The matching algorithm or comparison
+representation may change when that condition holds. Unproven provider or engine behavior cannot be silently made
+authoritative by implementation choice.
+
+This section does **not** decide which compiler stage, IR, HIR subject, or product owns the resolved Regex or Collation
+meaning. The placement and handoff remain open under §§5.6–5.12 and the existing architecture ADRs. No new 1D judgment
+or blanket library-call eligibility is established.
 
 ### 3.7. Composition, Partiality, and Information Preservation
 
@@ -612,38 +816,27 @@ authority in ADR-0080.
 
 ### 5.4. Resolve Unicode-specific operations and semantic dependencies
 
-- [ ] Separate canonical normalization from compatibility normalization. Define any selected common NFC, NFD, NFKC,
-  or NFKD calculation against its precise Unicode standard and immutable semantic basis. Preserve the existing
-  Canonicalization laws' equivalence and representative choices without taking the Catalog Design as the common
-  calculation's authority.
-- [ ] Determine which general Unicode normalization operations are needed outside a selected Canonicalization Law.
-  For each selected operation, specify the exact result and governing Unicode standard directly under this ADR.
-  Reusing a calculation does not grant Canonicalization authority or adopt a Design document's implementation profile.
-- [ ] Distinguish simple case mapping, full case mapping, default full case folding, Turkic-sensitive behavior, and
-  locale-sensitive mapping. A case-insensitive result must not be inferred from unspecified lowercasing.
-- [ ] Review contextual mappings such as the Greek final sigma and scalar-to-multiple-scalar expansions. If an operation
-  depends on neighbors or locale, those determinants must be explicit before that operation is supported.
-- [ ] Examine the seven Unicode 18.0.0 Canonicalization law profiles described in the Catalog Design §8.6 and verify
-  their Character and Text calculations against the governing Unicode standards. Use that material to identify potential
-  common operations, but do not import its normative claims or realization assumptions. Each Canonicalization law keeps
-  its separate Version, `E_L`, `C_L`, and coverage authority under ADR-0066 and ADR-0076.
-- [ ] Select the actual common classification Properties required by supported Source Interpretation, lawful 1D
-  consumers, and independent compiler calculations. Section 3.4 already closes the Unicode 18.0.0 Property
-  Observation domain, typed result, normative derived/default-value, and classification-derivation requirements;
-  it does **not** approve the proposed eighteen-Property candidate set. Complete the per-Property input/result and
-  consumer inventory without replacing a Java/Kotlin callable by a Unicode 18 lookup.
-- [ ] Examine grapheme, word, sentence, and line segmentation as separate candidates. Their context-sensitive rules may
-  require state across chunks; supporting Unicode scalars alone does not imply support for these operations.
-- [ ] Treat locale collation, confusable detection, bidirectional display safety, and regular expressions as separately
-  qualified candidate features. Do not make any of them default Text equality, and do not claim V1 support without a
-  closed law and use case.
-- [ ] Close the remaining selected Unicode operations' exact version, data, and algorithmic determinants. Section 3.4
-  fixes Unicode 18.0.0 for selected common Property Observations; the corresponding decisions for later case mapping,
-  normalization, segmentation, and other operations still require individual closure. The Unicode version fixed for
-  an existing Canonicalization Law must not be automatically upgraded when a system library changes.
-- [ ] Review Unicode stability guarantees per operation rather than globally. A compatibility claim for normalization
-  must not be reused as proof that newer property tables, case mappings, segmentation results, or security data are
-  unchanged.
+- [x] **Property selection.** The Unicode Coverage Design selects 54 independent UCD observations and two UTS #39
+  observations, plus internal algorithm data. Section 3.4.1 fixes the exact meaning of a selected common observation.
+  This is not a claim of complete Unicode API or V1 execution coverage.
+- [x] **Case operations.** Section 3.4.4 selects Simple and Full mapping, default and explicit-locale mapping, Text
+  Titlecase, and Default/Turkic Simple and Full Folding. Case comparison is derived from those results and existing
+  comparison laws.
+- [x] **Normalization.** Section 3.4.5 selects NFC, NFD, NFKC and NFKD. Their results preserve the existing seven
+  Canonicalization representatives `NFC18`, `NFD18`, `NFKC18`, `NFKD18`, `F18`, `Q18`, and `H18` under Catalog §8.6; no
+  new Canonicalization authority is created.
+- [x] **Derived checks and internal data.** Exact `isNormalized` is derived from normalization and equality. Quick Check
+  is internal algorithm material, not an independent common observation. Unicode R5 remains an internal determinant of
+  `H18`; D146 and Stream-Safe Text processing are not selected.
+- [x] **Version and stability.** The selected operations use the immutable Unicode 18 basis. Stability guarantees are
+  limited to their actual normative scope; host and later Unicode versions are not implicitly equivalent.
+- [x] **Segmentation and Emoji sequences.** Common boundary calculations and internal Emoji analysis are selected in
+  Sections 3.4.6–3.4.7. Sentence and Line Break operations are not independently selected.
+- [x] **Security calculations and warning policy.** Section 3.4.8 selects internal Bidi and UTS #39 analysis without
+  automatic warnings. Diagnostic display and integration remain open under Section 5.13.
+- [ ] **Remaining integration.** Review the selected Unicode operations through Source interpretation, 1D use, HIR,
+  Realization, JVM, compiler products, and diagnostics under §§5.6–5.14. A selected common result does not prove a
+  supported Host callable or a conformant implementation.
 
 ### 5.5. Define encoding and decoding semantics without designing file I/O
 
@@ -677,6 +870,11 @@ authority in ADR-0080.
 
 ### 5.6. Qualify Host operations without redefining Host language semantics
 
+- [x] **Regex and Collation semantic direction.** Section 3.6 fixes the source-meaning and realization-equivalence
+  requirements. The detailed callable profiles, support evidence, and compiler placement remain open.
+- [ ] Close the callable-specific Regex and Collation profiles needed by supported Java/Kotlin source, including exact
+  match selection, Matcher transitions, engine-sensitive observations, and effective Collation rules. Use the SDK
+  Interpretation Design for the coverage inventory; do not assign a new HIR or IR owner here.
 - [ ] Identify the exact Java or Kotlin callables whose Text behavior Kontrakt must understand for a governed
   calculation or a compiler transformation. Recognizing a method name or return type does not qualify the operation or
   its entire library. Account for the complete relevant standard Character/Text API of each declared supported Java
@@ -893,13 +1091,12 @@ authority in ADR-0080.
   control character or replace an unprintable glyph for display, but reopening or comparing structured diagnostics must
   not depend on the rendered spelling as its sole identity or lose the original offending bytes when those bytes are
   required as evidence.
-- [ ] Decide whether confusable identifiers, bidi controls, or mixed-script warnings are compilation policy,
-  diagnostics, or a separately selected semantic operation. A security warning must not silently introduce a new global
-  Text equality relation.
+- [x] Resolve Unicode security warning selection in Section 3.4.8: no automatic warning or rejection. A separate
+  diagnostic policy requires its own decision.
 - [ ] Examine resource exhaustion during normalization, case folding, transcoding, and pattern matching. An execution
   limit must not make an exact operation return a truncated but successful result or an invented Contract rejection.
-- [ ] For any proposed pattern or regex support, define the admitted pattern language before comparing engines.
-  Backtracking complexity and pathological input cost cannot be delegated to a hidden arbitrary Host callable.
+- [ ] Verify the required completion and resource evidence for each qualified Regex use under ADR-0065 §7.7 and §3.6.3.
+  Engine choice cannot substitute for a supported work law or silently produce a Contract rejection.
 - [ ] Decide what an IDE or incremental editor needs from Source Provenance after changes. The ability to refresh
   location information separately from unchanged semantic Text must remain possible without prescribing an IDE cache
   implementation.
