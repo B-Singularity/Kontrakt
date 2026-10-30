@@ -1,6 +1,6 @@
 # ADR-0080: Characters, Strings, and Unicode
 
-**Status:** Draft
+**Status:** Accepted
 
 **Date:** 2026-10-25
 
