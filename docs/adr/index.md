@@ -73,11 +73,11 @@ location determine whether an ADR provides current authority.
 
 ### Frontend
 
-| ADR                                                                                                                                  | Title                                                                                             | Status   |
-|--------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------|----------|
-| [ADR-0037](current/frontend/0037-cycle-identity-preflight-and-deferred-raw-fact-resulution.md)                                       | Cycle Identity Preflight and Deferred Raw Fact Resolution                                         | Accepted |
-| [ADR-0039](current/frontend/0039-adapter-neutral-metamodel-acquisition-frozen-fact-image-and-backend-handle-erasure.md)              | Adapter-Neutral Metamodel Acquisition, Frozen Fact Image, and Backend-Handle Erasure              | Accepted |
-| [ADR-0040](current/frontend/0040-deterministic-frozen-acquisition-pipeline-explicit-readiness-and-memory-disciplined-publication.md) | Deterministic Frozen Acquisition Pipeline, Explicit Readiness, and Memory-Disciplined Publication | Accepted |
+| ADR                                                                                                                           | Title                                                                                             | Status   |
+|-------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------|----------|
+| [ADR-0037](current/frontend/0037-cycle-identity-preflight-and-deferred-raw-fact-resulution.md)                                | Cycle Identity Preflight and Deferred Raw Fact Resolution                                         | Accepted |
+| [ADR-0039](migration/0039-adapter-neutral-metamodel-acquisition-frozen-fact-image-and-backend-handle-erasure.md)              | Adapter-Neutral Metamodel Acquisition, Frozen Fact Image, and Backend-Handle Erasure              | Accepted |
+| [ADR-0040](migration/0040-deterministic-frozen-acquisition-pipeline-explicit-readiness-and-memory-disciplined-publication.md) | Deterministic Frozen Acquisition Pipeline, Explicit Readiness, and Memory-Disciplined Publication | Accepted |
 
 ### IR
 
