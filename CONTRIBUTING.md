@@ -106,4 +106,21 @@ Requests using "Squash and merge," the PR title becomes the final commit message
 5. Wait for all CI checks (Build, Ktlint, CLA, etc.) to pass.
 6. A maintainer will then review your code.
 
+---
+
+## 6. Contribution Rights and Licensing
+
+Kontrakt is distributed under the [Kontrakt Noncommercial Source License 1.0](LICENSE), with separately granted
+commercial rights. Contributions intended for the official upstream project are subject to the project's
+existing [Contributor License Agreement](CLA.md), including its copyright-assignment and patent-license provisions.
+
+Before merging a contribution, the project owner must confirm that the contributor has completed the applicable
+signature process and has authority to grant the rights stated in the CLA. Submitting a pull request, checking a box, or
+using GitHub does not by itself execute the CLA or transfer intellectual-property rights. Do not submit employer-owned,
+third-party, or incompatible-licensed material without authorization.
+
+A noncommercial fork is not automatically contributed upstream. Independent fork authors retain the rights in
+independently authored additions unless those rights are separately transferred. See [LICENSE](LICENSE)
+and [Commercial Licensing](COMMERCIAL-LICENSING.md).
+
 We look forward to your contributions!
