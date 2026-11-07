@@ -98,9 +98,12 @@ when an operation is not an SDK call. For a permitted expression, the frontend m
 actually selected and what types that operation accepts and produces. A condition that changes operation selection
 must be considered before interpretation is complete.
 
-A familiar operator spelling is not enough. Depending on the language and its operand types, the spelling can denote
-a built-in operation or a callable defined by authored source or an SDK. Kontrakt cannot replace the selected source
-operation with one that appears similar.
+The spelling of an expression does not necessarily identify the operation it uses. A familiar operator can denote
+a language-defined built-in operation or a selected callable, depending on the language and operand types.
+
+For example, Kotlin can interpret `a[i]` through a selected `get` callable, while `a(x)` may use `invoke`. A
+property access can also resolve to a source property whose JVM representation is a method. The actual callable and
+its types must be determined under the selected language rules; an apparently similar operation cannot replace it.
 
 This section establishes which operation the source uses, not the calculation law for that operation. Numeric
 calculations remain under ADR-0078, Text calculations under ADR-0080, and other 1D-specific calculations under their
@@ -140,10 +143,10 @@ that proposal as confirmed. The author or the project's declared selection polic
 
 The effective profile must be fixed before any affected source judgment runs. A later environment change cannot
 silently replace that profile, and a Binding Result cannot be validated against semantic inputs different from those
-that supported its interpretation. Build configuration supplies source-interpretation evidence. In particular,
-dependency versions and the
-compilation scope can affect which declarations and type rules apply. That evidence does not establish the Contract
-Version or applicability owned by ADR-0053 and the relevant 1D.
+that supported its interpretation. Build configuration supplies evidence for source interpretation. The selected
+dependencies and compilation scope
+can change which declarations and type rules apply. They do not establish the Contract Version or applicability,
+which remain governed by ADR-0053 and the owning 1D.
 
 The V1 ordinary 1D frontend does not implicitly support arbitrary Kotlin compiler plugins by executing them. If a
 particular plugin effect is explicitly supported, the selected profile must account for the declarations it generates
@@ -217,30 +220,49 @@ exists is not the same as knowing whether a particular use selects it. A success
 to the applicable source language and the context of that use. Evidence shared between Java and Kotlin does not
 thereby acquire one common source-type meaning.
 
-A type name can be affected by an import or a nearer declaration that shadows another name. A member access can
-depend on the receiver's type and on whether the member is accessible in that context. Kotlin adds rules that
-cannot be reconstructed from JVM members alone. Its file-local and module visibility rules affect which uses are
-lawful. Import aliases can change the name through which a declaration is referenced. Member and extension
-candidates must be considered according to Kotlin's selection rules. Where a selected profile supports implicit
-or context receivers, their applicable typing also contributes to binding. A Kotlin property must retain its
-source meaning even if the corresponding JVM representation uses methods.
+The same type name can refer to different types when an import or a nearer declaration changes which name is
+visible at the use. The source language also decides whether the referenced declaration is accessible there. For
+Kotlin, file-local and module visibility must be respected, and an import alias must resolve to the type it actually
+names. The fact that a declaration was found elsewhere does not make it a valid type for this source use.
+
+A member's type can depend on the receiver through which it is used. An explicit receiver supplies a type for
+member selection and generic substitution; a call without an explicit receiver can instead depend on the implicit
+receivers available at that location. Kotlin further distinguishes member and extension candidates, and its
+receiver-selection rules can be affected by language-defined restrictions such as `@DslMarker`. If the selected
+language rules admit context parameters or context receivers for the permitted use, their typing must be considered
+as well. These conditions determine which source member or callable is selected; they do not authorize additional
+1D authoring forms. A Kotlin property retains its source meaning even if its JVM representation uses methods.
+
+Modifiers and annotations participate in source typing only to the extent that the selected language assigns them
+that effect. For example, an annotation that changes Kotlin's candidate selection cannot be ignored when that
+selection determines a type. An ordinary annotation does not, merely by being present, establish a new type relation
+or guarantee that the annotated callable is pure or safe under a Contract. Qualification of the selected operation
+remains governed by ADR-0084 and the owning 1D.
+
+The selected language can provide source members that were not explicitly written as methods. Kotlin data classes,
+for example, provide `componentN` and `copy` members under Kotlin's rules. Java records provide component accessors,
+including accessors that the author may explicitly implement. The type of a source use must reflect the member the
+language actually provides. Conversely, a bridge or other JVM implementation helper is not an independent source
+callable merely because it appears in a classfile. A source member's type does not establish its runtime behavior or
+its admissibility under a 1D.
 
 A general declaration lookup is therefore insufficient to establish the result of a source use. The relevant
 judgment must satisfy the contextual availability and candidate-selection requirements in §§3.2.2–3.2.3. Shared
 declaration evidence does not become Contract authority.
 
-Completed Binding Results and declaration evidence may be reused when their current semantic inputs still support
-them (ADR-0075). V1 may use existing query-oriented reuse, indexing, and caching to avoid repeating work. V2 may refine
-dependency tracking and selective invalidation. It may also avoid unnecessary downstream work
-through early cutoff or repair only affected results. Neither version may change
-binding meaning for the sake of reuse. For example, adding an overload to a newly selected SDK can invalidate an
-earlier call selection even when the previously selected method still exists. Reuse must account for that possibility
-under §3.2.3; an earlier successful lookup is not proof of current validity.
+Completed Binding Results and declaration evidence may be reused only when their current semantic inputs still
+support them (ADR-0075). V1 may use query-oriented caching and indexing. V2 may refine dependency tracking,
+selective invalidation, and early cutoff or repair of affected results. Neither may change binding meaning to avoid
+recomputation. These are implementation possibilities rather than requirements on Contract meaning.
 
-This decision does not require a complete global source model, one shared table for all 1Ds, or a specific query
-boundary. Frontend Design may choose eager or on-demand completion and the physical indexing and reuse granularity
-based on measured workloads. Type-meaning interpretation remains governed by §3.1.7, while ADR-0085 owns the
-lifecycle of compiler type knowledge. HIR retains only the resolved distinctions needed by its owning 1D (§3.4).
+For example, adding an overload to the selected SDK can invalidate a previous call selection even if the earlier
+selected method still exists. An earlier successful lookup is not proof of current validity. The required candidate
+sufficiency remains governed by §3.2.3; the reuse and incremental implementation belong to Frontend Design.
+
+This decision does not require a global source model or a shared physical type table. Frontend Design determines
+when knowledge is completed and how it is indexed or reused. ADR-0085 owns the lifecycle of compiler type knowledge.
+Neither implementation choice changes the language-specific type meaning governed by §3.1.7. HIR retains only the
+resolved distinctions needed by its owning 1D (§3.4).
 
 #### 3.1.7. Language-Specific Type Meaning and Interoperability
 
@@ -273,11 +295,46 @@ captured wildcards must remain distinguishable where the language's type judgmen
 Similarly, matching erasure does not make a raw type and a parameterized type interchangeable. These requirements
 concern accurate Java interpretation; they do not grant any generic source form permission under a 1D Contract.
 
-Kotlin also requires distinctions that Java's erased representation cannot supply. Nullability changes the type
-relationships available to source expressions. A flexible or platform type cannot be forced into one universally
-transitive type relation merely to simplify comparison. Function types and value classes have source meanings that
-may differ from their JVM representations. Their relevant distinctions must survive interpretation when they change
-a type, member, or callable selected by a permitted source use.
+Kotlin nullability affects which type relations and member uses are valid. A flexible type, including a platform
+type obtained through Java interoperability, has the bounds supplied by Kotlin's language rules. It must not be
+replaced with either its non-null or nullable bound merely to simplify the judgment. Nor may its comparisons be
+forced into a universally transitive relation that Kotlin's flexible type rules do not establish. Kotlin's
+definitely non-null type forms also matter where a generic use requires them. When recognized annotations on Java
+declarations affect
+the types visible to Kotlin, interpretation must respect the annotation's actual type-use location and the selected
+language rules. Source typing does not, by itself, guarantee that an external value will be non-null at runtime.
+
+A Kotlin type alias denotes the type to which the alias resolves; it does not create a new independent source type.
+The applied type arguments still matter when the alias refers to a generic type. A Kotlin value class, by contrast,
+has its own source type even where the JVM represents a value through the underlying type. The source distinction
+must not be discarded because the host representation looks similar.
+
+For example, an alias for `String` is usable as `String`. A value class whose underlying property is a `String`
+is not thereby interchangeable with `String` in Kotlin source.
+
+Function types must likewise retain their language-defined meaning. Kotlin permits function types whose calls
+require a receiver. A suspending function type also has type rules that differ from those of an ordinary function.
+A Java functional interface and a Kotlin function type are not made identical by matching parameter and return types.
+Their source meanings cannot be inferred merely from similar JVM method signatures. Where the selected language
+permits SAM conversion, it must be interpreted in the actual target context; the conversion does not make the two
+declared types identical. Resolving a function type does not make a higher-order source form admissible under a 1D
+that prohibits it.
+
+A callable reference is not necessarily interpreted as an ordinary call. Its referenced callable and resulting
+function or property-reference type depend on the reference form and its applicable target context. A bound member
+reference can already supply its receiver, whereas an unbound reference can leave the receiver as part of the
+reference's function type. Kontrakt must apply the selected language's reference-selection rules instead of assuming
+that the same spelling would select the same declaration in a direct invocation.
+
+Some expressions require type relationships that do not appear explicitly in the authored source. When an
+expression combines alternatives with different types, its result can depend on a language-defined common bound.
+When several type constraints must hold, an intersection or another constrained type may be needed to determine
+which members remain usable. Kotlin's `Nothing` can affect the type of an expression that has a branch which does
+not return a value. A literal can also require contextual typing before its final type is known.
+
+Kontrakt must preserve the effects of those relationships until the relevant source judgment is complete. It must
+not substitute a convenient wider type for a distinction that changes the result. This obligation neither adds
+new authoring forms nor requires provisional types to become part of the final HIR candidate (§3.4).
 
 The interpretation must use the particular type judgment required by the source language, not treat every
 successful type check as the same relation:
@@ -290,17 +347,54 @@ successful type check as the same relation:
 | Type-argument containment or capture | How a generic argument is constrained and interpreted for this use. Matching bounds do not make separate captures identical.                                 |
 | Inference                            | What type information is determined from the available constraints. The inferred result must still satisfy the separate relation required by the source use. |
 
-The exact types and declarations referred to by these judgments follow the consuming language's rules. How the
-frontend assigns or stores internal identifiers is outside this ADR. These distinctions preserve existing language
-meaning; they do not create new Kontrakt type relations.
+A type conversion must be interpreted under the rule for its actual source use. Java, for example, does not
+apply exactly the same permitted conversions in assignment and in each phase of invocation applicability. Kotlin
+does not inherit Java's implicit numeric widening merely because the JVM has related numeric representations.
+The original expression type and the type at which a converted use is accepted must therefore not be conflated.
+A source-level conversion judgment also does not prove that a cast or unboxing will succeed at runtime. The
+calculation and failure meaning of a selected operation remain with their owning laws.
 
-Evidence from selected SDK binaries may be decoded once and reused for both languages under §3.1.6. The evidence
-can include classfiles, generic signatures, annotations, and Kotlin metadata. Shared decoding does not produce a
-language-neutral semantic type. When Java source uses a Kotlin-produced declaration, the Java view is determined by
-the Java source rules and the qualified JVM/ABI evidence. When Kotlin source uses a Java-produced declaration, Kotlin
-applies its interoperability rules to the available evidence. The latter can change the apparent nullability or
-collection mapping. These directions need not be symmetric or lossless. Contradictory or incomplete evidence cannot
-be silently combined into a convenient type result (§3.5).
+When a source declaration omits a type, the language rules for that form determine the inferred declaration type.
+Java local `var` uses the appropriate initializer typing and projection rules. Kotlin property inference and
+function-return inference do not follow one interchangeable rule for every declaration form. In particular, a type
+made available by a smart cast at one use is not automatically the inferred declared type of another variable.
+If the language cannot determine the required type, Kontrakt must not invent a wider type and report success.
+
+A permitted expression may have a type refined by its control-flow context. Kotlin applies smart casts only where
+the relevant flow conditions and stability requirements hold. Java pattern variables instead have their own
+flow-sensitive scope and typing rules. A condition that refines one use must not silently rewrite the declaration's
+type or justify the same refinement at an unrelated use. Such flow information is needed only insofar as it changes
+the actual source typing judgment; it does not establish runtime Contract authority.
+
+The surrounding expected or target type can constrain an expression's interpretation. For example, a lambda may
+receive its parameter types from a candidate callable, while an invocation's type arguments and resulting type can
+depend on the context in which the invocation occurs. Candidate selection and contextual inference must interact
+only as the selected language specifies. Kontrakt cannot universally fix every argument type before considering
+candidates, nor choose a method merely because its result type matches an expected result.
+
+For example, Kotlin can allow a lambda's return type to distinguish candidates under its
+`@OverloadResolutionByLambdaReturnType` rules. This does not authorize the selection of arbitrary calls by their
+return types. An expected type is a constraint on interpretation, not automatically the expression's final type.
+
+The types referred to by all these judgments follow the consuming language's rules. How the frontend assigns or
+stores internal identifiers is outside this ADR. These distinctions preserve existing language meaning; they do
+not create new Kontrakt type relations.
+
+Evidence from selected SDK binaries may be decoded once and reused for both languages under §3.1.6. Shared
+decoding does not produce a language-neutral semantic type.
+
+When Kotlin source uses a Java-produced declaration, Kotlin's interoperability rules determine the type it sees.
+A Java type can become flexible in Kotlin, including distinctions concerning nullability or collection mutability.
+Recognized type-use annotations may affect only a particular part of a generic type; their effect must not be
+applied indiscriminately to the enclosing type. A JVM `void` result does not thereby become a Kotlin source type
+named `void`.
+
+When Java source uses a Kotlin-produced declaration, Java's type rules apply to the declarations actually exposed
+to Java by the selected binary. A Kotlin property may be exposed through accessors, and Kotlin default arguments
+do not automatically authorize the same abbreviated call from Java. JVM-facing names and members may differ from
+those of the Kotlin source. Kotlin metadata can help explain their origin but cannot replace the Java-visible
+binary declaration. These two directions of interoperability need not be symmetric or lossless. Required evidence
+that is contradictory or incomplete cannot be combined into a convenient type result (§3.5).
 
 An interop interpretation belongs to the consuming language's source judgment. Reusing it requires the same relevant
 semantic inputs and current validity under ADR-0075. Kontrakt is not required to establish a shared semantic Type
@@ -315,11 +409,12 @@ Kontrakt prepares the SDK declaration information needed by supported Java/Kotli
 compilation. The frontend uses that prepared knowledge rather than rebuilding all needed SDK declarations from the
 installed libraries on every build.
 
-The preparation basis is the compiled binary selected by the effective language/SDK profile. Generic signatures and
-type annotations can change how Java source sees a method; Kotlin metadata can change how Kotlin source interprets
-a declaration. The selected archive member and source-to-binary mapping must therefore correspond to the actual
-profile. A file name or SDK version label is not sufficient evidence. Interpretation does not obtain declaration
-meaning by executing SDK methods.
+The preparation basis is the compiled binary selected by the effective language/SDK profile. A JVM descriptor alone
+may not preserve the generic source type. Generic signatures and annotations at their actual type-use locations can
+therefore be necessary for interpreting a Java declaration. Kotlin metadata may be needed to recover how Kotlin
+source sees a declaration. The selected archive member and any source-to-binary correspondence must match the
+actual profile. A file name or SDK version label is not sufficient evidence. Interpretation does not obtain
+declaration meaning by executing SDK methods.
 
 Common binary evidence may be decoded once, but Kotlin source declarations need not correspond one-to-one with
 Java-visible or JVM implementation members (§3.1.7). SDK source and language specifications can assist
@@ -360,19 +455,37 @@ is lawful. Prepared accessibility facts can be reused, but cannot replace contex
 
 #### 3.2.3. Complete Source Candidate Selection
 
-Within the source forms permitted by the owning 1D, Kontrakt must determine which declarations are candidates
-for a Java or Kotlin call. The source language's rules decide what the call name denotes in its scope. The receiver
-and access conditions may change which members can participate. The actual callable is selected from the relevant
-candidate set under that language's selection rules.
+Within the source forms permitted by the owning 1D, Kontrakt must determine the candidates for a Java or Kotlin
+call under that language's rules. The name at the use, the receiver context, and source accessibility determine which
+calls can be considered. Candidate discovery is sufficient only when no unexamined declaration could change the
+selected callable or the judgment that the use is ambiguous. The presence of one applicable callable is not proof
+of that sufficiency.
 
-That set cannot be limited to operations for which Kontrakt already has qualified SDK meaning. An unqualified
-overload or a permitted authored helper still participates in source selection when the language rules make it
-relevant. Otherwise an unrelated available interpretation could incorrectly determine the call.
+Each candidate must be assessed using the argument-to-parameter correspondence that its language actually permits.
+In Kotlin, named arguments can identify parameters independently of their declaration order, and default arguments
+can affect whether a candidate applies. In Java, the applicability of a variable-arity method depends on the
+language-defined invocation phases. The chosen language also determines how spread arguments and function-valued
+arguments participate. Argument mapping is part of deciding whether a candidate applies; it cannot be supplied as an
+unexamined assumption after selection.
 
-Candidate search may proceed in stages and may stop when the applicable language rules establish that no unexamined
-candidate can change the outcome, including ambiguity. Finding the first applicable declaration is not such a proof.
-A rejected provisional candidate is not necessarily a failed source-resolution judgment. If the relevant candidate set
-cannot be established sufficiently, the resolver cannot select a successful call (§3.5).
+A candidate can supply the target type needed to interpret an argument. In such cases, candidate applicability and
+argument typing must be considered together as the language requires. Generic invocation inference can also have
+distinct obligations when checking whether a candidate applies and when establishing the final invocation type.
+The final type must reflect every constraint that actually participates in its determination, including constraints
+from an allowed lambda body where the language makes them relevant. Neither a provisional inference result nor a
+convenient wider type can replace the resolved invocation type.
+
+The language's candidate priority and most-specific selection rules must be applied before a call is considered
+resolved. Language-defined modifier or annotation effects on that selection remain part of the judgment (§3.1.6).
+Java's invocation phases and Kotlin's prioritized candidate sets need not select the same result from apparently
+similar declarations. If more than one candidate remains without a language-defined unique selection,
+the call is ambiguous. An unqualified SDK overload or a permitted authored helper must still participate whenever
+the language makes it relevant; qualified meaning cannot be used to preselect a convenient overload (§3.3).
+
+Candidate search may proceed in stages. It may stop once the language rules establish that further candidates cannot
+alter selection or ambiguity, but an unsuccessful provisional candidate does not by itself fail the whole source use.
+If the relevant candidates or their required typing cannot be established sufficiently, no successful call can be
+selected (§3.5).
 
 A new overload, member, extension, or other declaration may change selection under a newly chosen profile. Reuse must
 therefore establish the current adequacy of the candidate search, including any absence of competing declarations on
@@ -387,9 +500,12 @@ qualified meaning applies to the exact SDK operation and use.
 
 For a generic SDK call, the effective argument and return types can depend on the actual type substitution. The
 receiver context may also affect the applicable qualification. A signature or JVM-callable target alone cannot
-prove the operation's calculation meaning. Qualified generic meaning may be reused across type instantiations only
-when the qualification covers each selected use. Where dynamic dispatch matters to the qualification, the static
-receiver type alone does not establish the implementation that will be invoked (ADR-0073; ADR-0084).
+prove the operation's calculation meaning.
+
+A qualified meaning can cover a particular generic instantiation or a range of instantiations, provided that its
+conditions actually cover the selected use. Whether that meaning is stored or reused per instantiation or in a
+parameterized form is not decided here. Where dynamic dispatch matters to qualification, the static receiver type
+alone does not establish the implementation that will be invoked (ADR-0073; ADR-0084).
 
 Qualified meaning cannot change which overload the language selected. If that operation lacks adequate qualified
 meaning, Kontrakt may neither choose a different overload nor assume a convenient runtime implementation. The
@@ -403,10 +519,17 @@ For example, if a permitted generic call determines a 1D expression's result typ
 resulting meaning needed by that 1D. It need not retain every provisional generic constraint or every rejected
 call candidate that the frontend considered.
 
+An expression's result type does not, by itself, determine its 1D meaning. For example, when Admission permits
+both `amount > 0` and `amount >= 0`, their Boolean result types do not erase the difference between the judgments.
+If a selected operation or source-language conversion contributes to candidate meaning, the resolved distinction
+must survive in the candidate. A host callable signature cannot replace the qualified calculation meaning that
+this 1D requires (ADR-0084). An exact reference to separately owned meaning is sufficient only when the owning
+1D law already permits that relation and the required meaning is resolved. Neither source binding nor SDK
+qualification may be deferred to Establishment.
+
 The 1D owns its candidate vocabulary. This ADR does not require HIR to retain a host Type Model, the SDK declaration
-database, solver state, or an interoperability graph. A resolved type or callable distinction must be preserved
-when it changes the candidate's meaning; information that no longer affects that meaning can remain within the
-frontend.
+database, solver state, or an interoperability graph. Information that no longer affects the candidate's meaning
+can remain within the frontend.
 
 Establishment applies the owning Contract law to this resolved candidate. A host type or HIR transport reference
 does not gain Contract authority from its role in source interpretation.
@@ -450,8 +573,11 @@ and ADR-0075. This ADR does not create a separate SDK-wide failure-containment l
 
 #### 3.5.2. Unsuccessful Conditions and Their Ownership
 
-The responsible source judgment must distinguish failures to obtain the information needed to identify a type,
-declaration, or operation from actual rejection under the selected source rules:
+A source type judgment is successful only when the declarations, type relations, and use-specific constraints
+necessary for its result have been resolved. An incomplete provisional inference cannot become a successful result
+by substituting a wider type. The responsible judgment must distinguish a failure to establish that meaning from
+rejection under the selected source rules. It must also distinguish the successful selection of an operation from
+failure to qualify its calculation meaning under ADR-0084:
 
 | Condition                                          | Required distinction                                                                                                          |
 |----------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------|
@@ -461,11 +587,12 @@ declaration, or operation from actual rejection under the selected source rules:
 | Selected operation lacks qualified meaning         | Source binding succeeded, but ADR-0084 does not qualify the operation for the required use.                                   |
 | Defective interpretation of supported inputs       | The compiler's failure or incorrect inference within declared support is a correctness defect, not lawful unsupported source. |
 
-A provisional failed lookup or rejected overload candidate does not establish that the owning judgment failed. Where
-required meaning is unresolved, the compiler cannot publish a completed HIR candidate. An unsuccessful compiler
-source judgment is not a refusal by an unentered 1D Establishment judgment (ADR-0063 §4.7.1; ADR-0071 §6). General
-execution cancellation, resource exhaustion, result protocols, and diagnostic presentation retain their existing
-compiler-result ownership; this ADR does not define a separate failure taxonomy.
+A provisional failed lookup or rejected overload candidate does not establish that the owning judgment failed.
+Where required meaning is unresolved, the compiler cannot make a completed HIR candidate available. A source form
+may also be valid in Java or Kotlin while disallowed by the owning 1D; that is a distinct source-eligibility judgment.
+An unsuccessful compiler source judgment is not a refusal by an unentered 1D Establishment judgment (ADR-0063
+§4.7.1; ADR-0071 §6). General execution cancellation, resource exhaustion, result protocols, and diagnostic
+presentation retain their existing compiler-result ownership; this ADR does not define a separate failure taxonomy.
 
 #### 3.5.3. Lawful Response to Unusable Evidence
 
