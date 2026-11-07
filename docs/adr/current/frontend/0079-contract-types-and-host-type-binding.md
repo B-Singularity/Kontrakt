@@ -98,7 +98,8 @@ candidate meaning from source or host structure.
 
 The design problem is to obtain the exact type and call information needed for that interpretation, while avoiding two
 mistakes: making Java/Kotlin type relationships a source of Contract authority, and carrying the host compiler's entire
-type model into HIR simply because it was useful during resolution.
+type model into HIR simply because it was useful during resolution. Java and Kotlin may consume evidence from the same
+SDK binary without assigning that evidence the same source-language type or callable meaning.
 
 ## 3. Decision
 
@@ -158,6 +159,159 @@ basic operations of each supported Java/Kotlin profile. It must cover their inte
 defined evaluation and failure conditions. The catalogue is implementation and verification work; it does not define a
 second operation law or allow support gaps that contradict this section.
 
+#### 3.1.2. Selected Language Profile and Proposed Defaults
+
+Source interpretation uses a definite, selected language environment. For Java, the frontend must distinguish the source
+language level and enabled language features from the selected JDK/API level and available SDK declarations. Module and
+classpath selection can change which declarations are visible; a target JVM setting alone does not necessarily restrict
+available APIs or source-language meaning. For Kotlin, the actual compiler implementation, selected language version,
+API version, enabled language features, relevant semantic compiler options, and the selected stdlib/JDK/dependency
+binaries must be distinguished. Kotlin module, source-set and friend relationships, metadata, and Java interoperability
+settings may change source visibility, type meaning, or the applicable callable set. JVM output compatibility and
+compilation-execution settings are not automatically source-semantic determinants. The compiler must retain the
+determinants needed by each affected judgment; they need not form one universal profile object or physical cache key.
+
+Where the author has not supplied a complete effective profile, Kontrakt uses supported project build configurations,
+including Gradle or Maven where applicable, as the primary basis for a **reviewable default-profile draft**. The
+relevant input is the actual compilation configuration after applicable
+project settings and dependency selection, not merely the build-tool version, an installed compiler, or a text
+occurrence
+in a build script. Missing or uncertain settings may be proposed from the configured toolchain or environment, but must
+not be silently treated as confirmed. The author or the project's declared selection policy can adopt or override the
+proposal. The effective profile must be fixed before the affected source judgments run. A later environment change must
+not silently replace an already selected profile or validate a Binding Result against different semantic inputs.
+Build-tool dependency versions and compilation scopes supply source-interpretation evidence; they do not establish the
+Contract Version or applicability governed by ADR-0053 and the owning 1D.
+
+For the V1 ordinary 1D frontend, an arbitrary Kotlin compiler plugin's source-semantic effects are not implicitly
+supported or acquired by running that plugin. If specific plugin-generated declarations, modified type relations, or
+other frontend effects are explicitly supported, their precise meaning and semantic determinants must be accounted for
+under the selected profile. This does not restrict independently governed plugins in the user Operation host-compilation
+path.
+Reading build configuration and executing its scripts or plugins have different trust implications; concrete
+acquisition,
+trusted build integration, and isolation belong to Build Integration and Frontend Design.
+
+Frontend Design owns the discovery procedure, supported version combinations, representation of the proposal, and
+configuration workflow. This ADR does not fix a Java/Kotlin release, an SDK installation, a build-system adapter, or a
+source-profile data structure.
+
+#### 3.1.3. Java/Kotlin Language Forms and 1D Source Eligibility
+
+For each Java or Kotlin language profile Kontrakt declares supported, the frontend must accurately recognize its
+lexical and syntactic forms under that language's rules, including context-dependent distinctions. Java and Kotlin have
+separate lexical, syntactic, and contextual rules; the presence of a similar token or JVM representation does not equate
+their source forms. Kotlin's language-version-dependent declarations, function and property forms, receiver syntax, and
+expression conventions must not be interpreted through Java grammar. The exhaustive grammar and operation conformance
+catalogues, as well as lexer/parser machinery, belong to Frontend Design.
+
+A declaration or expression may be valid in its host language yet unavailable as an authored form in a particular 1D.
+The owning 1D determines authoring eligibility; the frontend's ability to recognize a form does not grant Contract
+meaning or expand a 1D Source Carrier. In particular, reading Gradle Kotlin DSL for profile discovery does not select a
+Kotlin Script as a 1D carrier. Any additional Script carrier is a later decision for the owning 1D laws, not this ADR.
+
+Accurate source interpretation does not require eager construction of a complete semantic model for every declaration.
+The compiler may defer detailed completion where doing so cannot change the interpretation or legality required by the
+current source judgment. A skipped region cannot be assumed irrelevant when it changes name lookup, scope, an
+applicable initializer restriction, or another determinant of the selected source meaning. Recognition does not excuse
+omission of basic language-operation semantics under §3.1.1. Physical parsing and completion remain Frontend Design.
+
+#### 3.1.4. Selected 1D Source and the Realization Boundary
+
+Java/Kotlin 1D source is a representation through which an author declares Contract obligations; the owning 1D, not
+the source carrier, defines those obligations. For a selected 1D subject, Source Interpretation must complete the
+language meaning of the declarations and calculations that determine its candidate. This includes related source
+material whose meaning affects binding or 1D eligibility even if it is not directly executed in the selected judgment.
+For example, ADR-0065 §7.6 requires the selected Admission class as a whole to satisfy its initialization restriction.
+For Kotlin, the necessary source meaning may depend on declarations, imports, accessibility, or initialization beyond
+the containing file or directly called functions. File, package, module, and source-set boundaries are language and
+compilation-context facts, not automatic 1D definition boundaries or Contract identity. The owning 1D still determines
+the extent of whole-declaration authoring restrictions.
+
+The legality of a Java compilation unit and the semantic completeness of an independently selected 1D candidate are
+distinct judgments. A completed candidate does not prove that an entire source file or build is legal; conversely, an
+unrelated source error does not by itself redefine that candidate's resolved meaning. The relevant frontend and owning
+1D laws determine the required source scope, while ADR-0071 determines candidate visibility and independent failure
+impact. ADR-0065 §7.5 already distinguishes unreachable judgment paths from source forms forbidden by the language
+or authoring law. The remaining interpretation of whole-source restrictions in Admission Working Design must be
+checked against that Accepted law rather than silently settled here.
+
+User Operation Realization follows its separate host-compilation and realization-acquisition path. Its classfiles and
+other qualified evidence are processed toward MIR under the realization architecture, not through the Contract-side
+Resolved HIR as if they were 1D source candidates. Neither path is required to use the other's physical parser, source
+coverage unit, or failure-recovery mechanism. Where both paths interpret the same supported language fact, their
+conclusions must still respect the same applicable language semantics. Current 1D authoring restrictions bound which
+calculations a 1D may submit; they do not redefine the basic type and operation semantics of a declared supported
+language profile or require future source consumers to inherit those authoring restrictions.
+
+#### 3.1.5. Source Encoding, Lexical Meaning, and Provenance
+
+The source character stream used for a judgment must be decoded under a determined encoding rather than an unnoticed
+machine default. For Java, the selected language rules then govern Unicode escape translation, token boundaries,
+identifiers, literals, and grammar interpretation in their defined order. Kotlin has its own lexical and literal rules,
+including quoted identifiers and expressions embedded in string templates; Java's Unicode escape translation must not
+be applied to Kotlin source. An encoding choice or identifier transformation must not silently replace either language's
+authored meaning. The proposed-default mechanism of §3.1.2 may suggest an encoding, but the effective input
+interpretation must be fixed before resolution.
+
+Source provenance records where material was acquired for diagnostic and verification purposes; a path, byte offset,
+or character span is not by itself the semantic identity of a resolved declaration or Contract candidate. Display
+warnings about visually confusable identifiers may be useful, but they cannot make identifiers equal under rules other
+than those of the selected source language. Physical decoding, source-position storage, and diagnostic presentation
+remain Frontend and Diagnostic Design responsibilities. ADR-0080's Character/Text Contract meaning does not replace
+Java or Kotlin lexical, `Char`, or `String` semantics.
+
+#### 3.1.6. Shared Declaration Knowledge and Contextual Binding
+
+The frontend may maintain common knowledge of declarations obtained from supported authored source and the selected SDK.
+A declaration's existence is distinct from binding a particular use to that declaration. Shared binary or declaration
+evidence does not itself have one Java-and-Kotlin source type meaning. At the use site, Kontrakt resolves names in the
+applicable language scope, taking account of imports, shadowing, receiver context, access rules, and the other
+source-language conditions that can change the selected declaration. For Kotlin this includes file-local and module
+visibility, import aliases, extension and member candidates, implicit/context receivers where the selected profile
+supports them, and the source callable or property meaning distinguished from JVM members. This shared knowledge must
+not become a separate source of Contract authority, and a general declaration lookup cannot substitute for the
+context-dependent source judgment required by §§3.2.2–3.2.3.
+
+Declaration knowledge and completed Binding Results may be reused across source judgments when their current semantic
+inputs and validity conditions permit it. The V1 query-oriented compiler can avoid repeated discovery and resolution
+through its existing result reuse, indexing, and caching mechanisms. V2 may add finer dependency tracking, selective
+invalidation, early cutoff, and incremental repair without changing the meaning of a binding. In particular, the
+absence of a competing declaration may be relevant when a newly selected SDK adds an overload; a previous successful
+lookup alone does not prove that the old selection remains valid. ADR-0075 governs current result eligibility.
+
+This decision separates reusable declaration evidence from a contextually resolved use. It does not require an
+eagerly completed global source model, one table shared by every 1D, or a particular query boundary. Frontend Design
+may choose eager or on-demand completion, physical indexes, and reuse granularity based on measured workloads. The
+sharing and interpretation of type meaning remain subject to §3.1.7; ADR-0085 owns compiler type-knowledge lifecycle.
+Under §3.4, only the distinctions that determine the owning 1D candidate survive as its HIR meaning.
+
+#### 3.1.7. Language-Specific Type Meaning and Interoperability
+
+Java and Kotlin Source Type Meaning is interpreted independently under each language's selected profile, declaration
+scope, and type rules. A common SDK binary, class name, erased type, or JVM descriptor does not give Java and Kotlin a
+single source type identity, type relation, or callable meaning. Java generics, raw and captured types, and conversions
+must be distinguished from Kotlin nullability, flexible/platform types, declaration- and use-site variance, type
+projections, function types, value classes, and other Kotlin-specific distinctions wherever they affect supported source
+meaning. Exact type identity, subtyping, conversion, inference, and operation selection follow their respective
+language laws; their detailed conformance scope remains subject to §4.
+
+The selected SDK's binary and metadata evidence, including classfiles, signatures, annotations, and Kotlin metadata,
+may be acquired, decoded, and reused as common declaration evidence under B-1 (§3.1.6). This does not authorize a
+language-neutral semantic type view. When Java source uses a Kotlin-produced declaration, the Java interpretation must
+reflect what is available under Java source and the qualified JVM/ABI evidence. When Kotlin source uses a Java-produced
+declaration, Kotlin's applicable interoperability and metadata rules determine the Kotlin view, including any
+nullability and collection mapping. These directions need not yield symmetrical or lossless mappings. Contradictory or
+incomplete evidence cannot be silently normalized into one convenient type meaning (§3.5).
+
+Interop interpretation is a result of the consuming language's source judgment. A result may be cached and reused only
+under the semantic determinants and validity conditions that actually support it (ADR-0075). This ADR neither requires
+a shared semantic Type Identity nor a globally authoritative interop-relation graph; maintaining one could propagate an
+outdated, language-specific inference to unrelated consumers. The same evidence may nonetheless be read once and
+language-specific interpretations reused without rereading SDK archives. This is a semantic separation, not a mandate
+for separate binary readers, type-table implementations, or compiler processes; those choices and type-knowledge
+lifecycle belong to Frontend Design and ADR-0085.
+
 ### 3.2. SDK Declarations Are Prepared Before User Compilation
 
 Kontrakt prepares the Java/Kotlin SDK type and declaration information needed by the supported platform profiles before
@@ -165,10 +319,12 @@ ordinary user compilation. The frontend consults that prepared information inste
 to construct their declarations on every build.
 
 Preparation reads declaration evidence from the compiled binaries selected for the author's SDK and language
-profile, including JDK classfiles, generic signatures, and Kotlin metadata. It does not acquire declaration meaning by
-invoking SDK methods. The selected archive members and binary mappings must correspond to that profile; a file name or
-SDK version label alone does not establish that correspondence. SDK sources and normative language specifications may
-support interpretation and qualification, but they do not replace the selected binary declarations by assumption.
+profile, including JDK classfiles, generic signatures, annotations, and Kotlin metadata. It does not acquire declaration
+meaning by invoking SDK methods. The selected archive members and binary mappings must correspond to that profile; a
+file name or SDK version label alone does not establish that correspondence. Commonly decoded evidence retains its
+original distinctions; Kotlin source-visible declarations need not correspond one-to-one to Java source-visible or JVM
+implementation members (§3.1.7). SDK sources and normative language specifications may support interpretation and
+qualification, but they do not replace the selected binary declarations by assumption.
 `javac` and K2 may be used during preparation and conformance testing. Their results are evidence for the prepared
 knowledge, not the resolver called during ordinary 1D compilation.
 
@@ -258,8 +414,9 @@ intermediate inference constraint, for example, may be discarded once its result
 distinction that changes the applicable calculation cannot be discarded before the owning 1D can judge it.
 
 This rule does not prescribe a universal type field in HIR or require HIR to store a copy of the SDK declaration
-database. ADR-0071 §4.4 leaves each 1D responsible for its own candidate vocabulary. The exact type-related observations
-needed by each 1D remain to be checked (§4).
+database, Java/Kotlin source type graphs, or cross-language interoperability relations. ADR-0071 §4.4 leaves each 1D
+responsible for its own candidate vocabulary. The exact type-related observations needed by each 1D remain to be
+checked (§4).
 
 Establishment does not upgrade a host type to Contract authority. It judges the resolved candidate under ADR-0063 and
 produces the corresponding established meaning where the owning law permits. The exact information relationship between
@@ -279,8 +436,9 @@ A source form outside a particular 1D's permitted authoring surface is a separat
 Successful source interpretation requires the actual declarations and relations needed under the selected language
 rules, including the complete relevant candidate set (§§3.2.1–3.2.3). Decoding a classfile or metadata record is not
 itself proof of that source meaning. The evidence used must refer coherently to the binaries selected for the current
-profile, including any applicable source-to-JVM mappings. It must not combine declarations from different selected
-binaries or profiles merely because their names agree.
+profile, including any applicable source-to-JVM mappings and the consuming language's interoperability interpretation.
+It must not combine declarations or source-type results from different binaries, language profiles, or interpretation
+contexts merely because their names or erased JVM representations agree.
 
 Normal absence of optional data is not corruption: a non-generic Java declaration may have no generic `Signature`, and
 Java declarations do not require Kotlin metadata. Conversely, a required declaration, signature, mapping, or binary
@@ -355,21 +513,28 @@ The preceding sections settle the meaning obligations for the selected source pr
 candidate selection, and declaration-evidence failure. This Draft still has open questions. The table does not approve
 any unchosen mechanism or change an Accepted 1D law.
 
-| Area                                | Decision or work still required                                                                                                         | Owner or boundary                                        |
-|-------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------|
-| Language conformance                | Exact Java/Kotlin resolution rules for names, overloads, generics, conversions, receivers, and nullability                              | ADR-0079; Java/Kotlin rules reviewed separately          |
-| Operation catalogue                 | Exhaustive, version-specific inventory and conformance tests for basic language operations; no optional gaps within a supported profile | Frontend Design / Verification; obligation in §3.1.1     |
-| 1D authoring surfaces               | The precise Java/Kotlin declaration and expression forms permitted by each 1D, separately from complete basic-operation interpretation  | Owning 1D / Frontend Design                              |
-| SDK profiles                        | Supported version combinations, binary-selection rules, and conformance of prepared declaration knowledge                               | Frontend Design / Verification; ADR-0073 semantic basis  |
-| SDK lookup                          | Concrete indexes, completion granularity, candidate search, negative dependencies, and lawful early-stop implementation                 | Frontend Design; semantic requirements in §§3.2.1–3.2.3  |
-| Source availability                 | Conformance coverage for context-dependent access rules in permitted 1D authoring forms                                                 | Frontend Design / Verification; §3.2.2                   |
-| Binary acquisition and verification | Concrete classfile/archive/metadata readers, binary-evidence checks, lawful recovery, resource safeguards, and profiling-guided timing  | Verification / Frontend / Compiler Design; §3.5 law      |
-| Qualified binding                   | Exact semantic conditions for applying prepared SDK calculation meaning to a resolved source use                                        | ADR-0079 ↔ ADR-0084                                      |
-| Semantic reuse                      | When generic qualified meaning may be specialized without changing the selected source operation's law                                  | ADR-0079 ↔ ADR-0084                                      |
-| HIR observations                    | Which resolved type distinctions determine the meaning of each 1D candidate                                                             | ADR-0079 ↔ ADR-0071 / owning 1D                          |
-| Establishment                       | What candidate distinctions must remain available for the owning Establishment judgment                                                 | ADR-0063 / owning 1D; reviewed from ADR-0079             |
-| Compiler result                     | Shared unsuccessful-result ownership, observation, and recovery protocol; not diagnostic rendering in this ADR                          | ADR-0074 (*Proposed*) and related compiler-result design |
-| Later consumers                     | Type information needed outside 1D HIR, including Realization and JVM backend use                                                       | ADR-0085 (*Draft*)                                       |
+| Area                                | Decision or work still required                                                                                                                                                           | Owner or boundary                                         |
+|-------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------|
+| Language conformance                | Exact Java/Kotlin source-type and operation rules for names, generics, overloads, conversions, receivers, and nullability; no correctness gaps deferred to V2                             | ADR-0079; language-specific normative rules               |
+| Type distinctions and relationships | Complete Java/Kotlin type-meaning inventory, identity, subtyping, inference, capture, projection, conversions, and their required basic-operation observations; B-2.2 onward remains open | ADR-0079; detailed conformance in Frontend Design; §3.1.7 |
+| Java/Kotlin interoperation          | Direction-specific source type/callable interpretation, metadata/annotation disagreements, platform and flexible types, ABI mappings; preserve B-2.1 independence                         | ADR-0079 / ADR-0073 / Frontend Verification; §3.1.7       |
+| Source-profile proposal             | Build-system-derived effective compilation inputs and reviewable defaults, source-semantic settings, qualified plugin coverage, trust boundary, and profile conformance                   | Frontend / Build Integration Design; §3.1.2               |
+| Language forms and source intake    | Java/Kotlin lexical and grammar conformance, deterministic decoding, and separation of host syntax recognition from 1D authoring eligibility                                              | Frontend Design / owning 1D; §§3.1.3, 3.1.5               |
+| New 1D source carriers              | Revisit Kotlin Script after scripting maturity is reassessed, if the owning 1D later proposes it; no support decision in this ADR                                                         | Owning 1D / ADR-0047; §3.1.3                              |
+| Selected source legality            | Exact source scope required by each 1D; Admission whole-class initialization and remaining Working Design consistency review under ADR-0065 §§7.5–7.6                                     | Owning 1D / Frontend Design; §3.1.4                       |
+| Declaration and binding reuse       | Shared declaration evidence, contextual Binding Results, language-specific type meaning, and measured reuse without fixing the V2 incremental engine                                      | Frontend Design / ADR-0085; §§3.1.6–3.1.7, §§3.2.1–3.2.3  |
+| Operation catalogue                 | Exhaustive, version-specific inventory and conformance tests for basic language operations; no optional gaps within a supported profile                                                   | Frontend Design / Verification; obligation in §3.1.1      |
+| 1D authoring surfaces               | The precise Java/Kotlin declaration and expression forms permitted by each 1D, separately from complete basic-operation interpretation                                                    | Owning 1D / Frontend Design                               |
+| SDK profiles                        | Supported version combinations, binary-selection rules, and conformance of prepared declaration knowledge                                                                                 | Frontend Design / Verification; ADR-0073 semantic basis   |
+| SDK lookup                          | Concrete indexes, completion granularity, candidate search, negative dependencies, and lawful early-stop implementation                                                                   | Frontend Design; semantic requirements in §§3.2.1–3.2.3   |
+| Source availability                 | Conformance coverage for context-dependent access rules in permitted 1D authoring forms                                                                                                   | Frontend Design / Verification; §3.2.2                    |
+| Binary acquisition and verification | Concrete classfile/archive/metadata readers, binary-evidence checks, lawful recovery, resource safeguards, and profiling-guided timing                                                    | Verification / Frontend / Compiler Design; §3.5 law       |
+| Qualified binding                   | Exact semantic conditions for applying prepared SDK calculation meaning to a resolved source use                                                                                          | ADR-0079 ↔ ADR-0084                                       |
+| Semantic reuse                      | When generic qualified meaning may be specialized without changing the selected source operation's law                                                                                    | ADR-0079 ↔ ADR-0084                                       |
+| HIR observations                    | Which resolved type distinctions determine the meaning of each 1D candidate                                                                                                               | ADR-0079 ↔ ADR-0071 / owning 1D                           |
+| Establishment                       | What candidate distinctions must remain available for the owning Establishment judgment                                                                                                   | ADR-0063 / owning 1D; reviewed from ADR-0079              |
+| Compiler result                     | Shared unsuccessful-result ownership, observation, and recovery protocol; not diagnostic rendering in this ADR                                                                            | ADR-0074 (*Proposed*) and related compiler-result design  |
+| Later consumers                     | Type information needed outside 1D HIR, including Realization and JVM backend use                                                                                                         | ADR-0085 (*Draft*)                                        |
 
 The compiler may select different verification and storage strategies as profiling and measured workloads change.
 ADR-0075 governs result validity and reuse. ADR-0073 §9.6 governs eligible preservation of a qualified platform call
@@ -395,6 +560,18 @@ not excuse a gap in the basic language operations of a supported Java/Kotlin pro
 remains outside valid HIR; its unsuccessful meaning belongs to its owning compiler judgment rather than a later 1D
 refusal. The impact on independent compiler products and the eligibility of previous results follow ADR-0071 and
 ADR-0075. Failure output and diagnostic presentation remain outside this ADR.
+
+The selected source profile may begin as an automatically generated proposal based primarily on supported build-system
+compilation settings, but its effective interpretation basis must be fixed before use. Java and Kotlin language-form
+recognition is separate from each 1D's permission to author a particular form; build scripts used for discovery do not
+become Contract Source Carriers. The selected candidate requires complete contextual source meaning; this does not
+merge Contract-side source interpretation with the host-compilation and MIR acquisition of user realization.
+
+Common SDK and declaration evidence and contextual Binding Results may be reused to reduce frontend work. Java and
+Kotlin Source Type Meaning remains language-specific; using the same binary does not create a common type identity or a
+mandatory cross-language semantic graph. Physical indexes, language-specific caches, lazy completion, and future
+incremental techniques remain replaceable; they must preserve the meaning of current source bindings and the legal HIR
+observations under ADR-0071 and ADR-0075.
 
 This document remains **Draft**. The open semantic coverage and information-preservation decisions in §4 must be
 reviewed before acceptance.
