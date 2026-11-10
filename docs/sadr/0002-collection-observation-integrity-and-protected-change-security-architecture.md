@@ -2,7 +2,9 @@
 
 ## Status
 
-Proposed
+Proposed — Security Architecture Working Draft. The threat scenarios and assurance requirements below are proposals for
+review, not claims that the V1 implementation already enforces them. This document does not establish a Collection
+Authority or amend an Accepted Contract ADR.
 
 ## Date
 
@@ -77,6 +79,13 @@ association, representative or admitted nested constituent is insufficient when 
 
 This claim is conditional on the true protection boundary. It does not assert that every `MutableList`, every JVM
 object, or every database transaction is automatically protected. It does not require a universal rollback algorithm.
+
+An operation may nevertheless require its own later callbacks to see earlier pending modifications. For example, a
+destination-mutating transformation can read the destination as it grows. Preventing all such internal reads would
+change the selected source calculation, while allowing an unrelated observer to see the pending modifications could
+violate the owning protection law. The protection claim must cover both observations. If a captured external alias makes
+that combination unsupported, the integration cannot claim protected execution merely because an isolated working value
+exists. Participation and failure policy remain with the owning protection and realization laws (ADR-0081 §§3.3, 3.5).
 
 ## 2.3. Identity, membership and currentness
 
@@ -160,7 +169,9 @@ callback registration or a `rollback()` method does not prove coordinated atomic
 For example, a Spring `@Transactional` method may return a structured Kontrakt failure normally; the default Spring
 rollback rules need not interpret that as an exception. Similarly, a database may commit before the application receives
 confirmation. Compensating an external effect after the fact is not the same claim as preventing an uncommitted effect
-from becoming visible.
+from becoming visible. Likewise, a completed collection value does not demonstrate that its callback effects are safe to
+omit on reuse or safe to repeat on retry. A state-changing `Unit`/`void` Operation is subject to that distinction even
+when there is no outward result to cache.
 
 ## 3.4. Internal compiler computation
 
@@ -340,6 +351,36 @@ object and an independent database into one atomic resource. The upper integrati
 participation and recovery level. External outcomes that cannot be determined remain indeterminate until the responsible
 system resolves them.
 
+## 4.8. Intermediate observations, effectful reads and replay — X01–X12
+
+A protected operation can require read-after-write visibility inside its own source execution without granting unrelated
+readers access to pending changes. This is a Source and protection compatibility test, not an isolation level or
+rollback scope decided by this SADR. It is especially important for destination-mutating Collection operations and
+callbacks that hold aliases outside the transformation's explicit arguments.
+
+| ID  | Failure scenario                                                                                                                                       | Property violated if mishandled                                                                  |
+|-----|--------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------|
+| X01 | A `mapTo` callback reads the destination's size after a preceding element has been appended; all appends are deferred until completion.                | The later callback observes the wrong intermediate source state and computes a different result. |
+| X02 | A subsequent callback checks an earlier change and must throw; a deferred update makes the check false.                                                | A required source failure is silently removed.                                                   |
+| X03 | A callback accesses the mutable destination through a separately captured alias that still points to the original object.                              | An isolated replacement silently changes the callback's lawful source observation.               |
+| X04 | The original destination is mutated so that a captured callback alias sees prior writes, but an unrelated thread can also read them before acceptance. | Internal read-after-write correctness is obtained by violating the claimed outward isolation.    |
+| X05 | A backed view observes a pending mutation that its source semantics require, while a separate observer treats the view as committed.                   | A transient view is mistaken for an established Collection value.                                |
+| X06 | A mapping operation returns a new Collection while its callback changes an independent audit object; only the returned Collection is withdrawn.        | The effects of a callback are mistaken for effects of the result container alone.                |
+| X07 | A `Map.compute` callback throws after changing another object, while the map's own mapping stays unchanged.                                            | No mapping update is incorrectly taken as proof of no external effect.                           |
+| X08 | A lookup or comparison executes user code or changes observable access order, but is optimized as a pure read.                                         | Mandatory source effects or later traversal observations disappear.                              |
+| X09 | A canceled operation is retried against an existing mutable destination and repeats earlier additions.                                                 | Surviving effects are duplicated under an unsupported replay claim.                              |
+| X10 | A one-shot Sequence or Stream is consumed once, then the same source is consumed again to validate an incremental result.                              | Compiler recomputation is confused with permission to replay a source capability.                |
+| X11 | An effectful Operation's return value matches the cached result, so V2 skips the invocation even though the operation was required to change state.    | Result equality is substituted for execution equivalence.                                        |
+| X12 | A fused or parallel transformation changes which callback observes an earlier local mutation, including an observable failure.                         | A valid optimization result is claimed despite a changed source execution obligation.            |
+
+X01–X05 require an explicit claim about which observers may lawfully see pending changes, rather than a mandatory copy
+or transactional storage representation. X06–X12 distinguish a result's Collection meaning from the effects of the
+source execution. Source Qualification supplies the selected API's guarantees; the user's realization supplies its
+actual callable and alias relations; the upper protection law owns permitted participation, rollback and retry. Where
+those sources of authority cannot justify both internal source behavior and external protection, the implementation must
+not claim that a protected execution has been established. Ordinary, unprotected platform execution retains its actual
+source meaning.
+
 ---
 
 # 5. Proposed Security Architecture Requirements
@@ -435,6 +476,21 @@ A producer may claim integrity for a single-process V1 execution, a crash-recove
 distributed external transaction only when evidence covers that model. Evidence from one context cannot silently justify
 a stronger context.
 
+### SR-17 — Internal source visibility must not defeat protected isolation
+
+Assurance for a protected destination-mutating operation must establish that later computation observes earlier changes
+when the selected source operation requires them. It must also establish that observers excluded by the owning
+protection law cannot observe those pending changes. A working copy, alias replacement or delayed application is not
+sufficient evidence on its own. If the actual captured aliases or effects make both conditions unsupported, that
+execution cannot be certified as protected under the claimed participation model.
+
+### SR-18 — Computation reuse does not authorize effect reuse
+
+Source Qualification and realization evidence must distinguish completion of a Collection result from mandatory state
+effects, callback invocation and failure reachability. A reusable Compiler Product does not by itself justify replaying
+a consumed source, reexecuting a state-changing Operation or omitting its required effects. The retry decision and
+protection scope remain with their owners.
+
 ---
 
 # 6. Assurance Plan and Conformance Evidence
@@ -444,25 +500,29 @@ implementations; passing them does not replace the owning law.
 
 ## 6.1. Required differential and fault-injection families
 
-| Family                   | Representative injection                                                              | Expected assurance question                                                               |
-|--------------------------|---------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------|
-| Source operations        | Interrupt `replaceAll`, `removeIf`, Kotlin `mapTo`/`groupByTo` at different elements. | Is the exact Source partial effect interpreted, and is a failed Contract result withheld? |
-| Nested/aliased values    | Mutate one shared nested element after lawful acquisition.                            | Does already established meaning remain stable?                                           |
-| Backed/lazy views        | Invalidate `subList`, escape an ephemeral Kotlin window, reconsume a one-shot source. | Are Source lifetime and Contract completion distinguished?                                |
-| Absence/closure          | Add a newly qualifying member without changing previously read members.               | Is a uniqueness/complete-set conclusion reconsidered?                                     |
-| Duplicate/representative | Remove one equal occurrence or the chosen first representative.                       | Does current membership/selection match the owning semantics?                             |
-| World formation          | Fail one Definition while unrelated Definitions complete.                             | Are valid independent results preserved and invalid dependent results withheld?           |
-| Protected change         | Fail after local Collection success but before a required Invariant/State judgment.   | Is local success incorrectly accepted as overall protected completion?                    |
-| Dependent consumers      | Let B read a pending A and C read B; withdraw A.                                      | Are invalid derived results prevented from claiming current validity?                     |
-| Concurrency              | Cancel a producer while another worker is still operating; vary completion order.     | Can a late result corrupt or impersonate a completed product?                             |
-| Storage replacement      | Fail at arbitrary physical update boundaries with live readers.                       | Do all legal observations remain coherent regardless of the representation?               |
-| V2 variants              | Compare clean, cache, pull, push, differential and fallback paths where supported.    | Is the exact Contract result preserved, including negative observations?                  |
-| Optimization             | Rewrite/fuse a computation with a guarded throwing callback or external effect.       | Are all required source-visible conditions preserved?                                     |
-| Resources                | Stop at Budget/Capacity boundaries and during cleanup.                                | Is the actual stop attributed correctly and incomplete work withheld?                     |
-| Framework participation  | Return a structured failure from a Spring-managed operation.                          | Does the actual external transaction obey the declared participation guarantee?           |
-| Distributed outcome      | Lose confirmation after DB commit; replay a requested effect.                         | Is outcome uncertainty preserved and duplicate effect risk handled explicitly?            |
-| Recovery                 | Restart from a partially persisted result and attempt to reuse its proof.             | Does retained material still have justified current completion and assurance?             |
-| Confidentiality          | Trigger errors on sensitive membership and grouping facts.                            | Are only the permitted causal facts disclosed?                                            |
+| Family                             | Representative injection                                                                                                                                      | Expected assurance question                                                                                                                        |
+|------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------|
+| Source operations                  | Interrupt `replaceAll`, `removeIf`, Kotlin `mapTo`/`groupByTo` at different elements.                                                                         | Is the exact Source partial effect interpreted, and is a failed Contract result withheld?                                                          |
+| Local read-after-write             | Let a later `mapTo` callback read the destination after an earlier append; repeat with a callback that throws based on the read.                              | Does protected execution preserve required internal values and failure reachability before overall completion?                                     |
+| Captured alias and external reader | Access a destination from a callback-held alias while an unrelated thread attempts to observe pending changes.                                                | Can the implementation satisfy both source-required observations and its advertised isolation, or does it correctly decline that protection claim? |
+| Indirect source effects            | In `Map.compute`, mutate a separate object before throwing; use access-order `LinkedHashMap.get` and effectful comparison calls.                              | Does qualification distinguish a local mapping result from other source-required state effects?                                                    |
+| Retry and reuse effects            | Interrupt a destination update, retry without restoring the participant; separately test one-shot source reconsumption and cached `Unit` Operation execution. | Are surviving side effects duplicated, source lifetimes exceeded or mandatory state effects skipped?                                               |
+| Nested/aliased values              | Mutate one shared nested element after lawful acquisition.                                                                                                    | Does already established meaning remain stable?                                                                                                    |
+| Backed/lazy views                  | Invalidate `subList`, escape an ephemeral Kotlin window, reconsume a one-shot source.                                                                         | Are Source lifetime and Contract completion distinguished?                                                                                         |
+| Absence/closure                    | Add a newly qualifying member without changing previously read members.                                                                                       | Is a uniqueness/complete-set conclusion reconsidered?                                                                                              |
+| Duplicate/representative           | Remove one equal occurrence or the chosen first representative.                                                                                               | Does current membership/selection match the owning semantics?                                                                                      |
+| World formation                    | Fail one Definition while unrelated Definitions complete.                                                                                                     | Are valid independent results preserved and invalid dependent results withheld?                                                                    |
+| Protected change                   | Fail after local Collection success but before a required Invariant/State judgment.                                                                           | Is local success incorrectly accepted as overall protected completion?                                                                             |
+| Dependent consumers                | Let B read a pending A and C read B; withdraw A.                                                                                                              | Are invalid derived results prevented from claiming current validity?                                                                              |
+| Concurrency                        | Cancel a producer while another worker is still operating; vary completion order.                                                                             | Can a late result corrupt or impersonate a completed product?                                                                                      |
+| Storage replacement                | Fail at arbitrary physical update boundaries with live readers.                                                                                               | Do all legal observations remain coherent regardless of the representation?                                                                        |
+| V2 variants                        | Compare clean, cache, pull, push, differential and fallback paths where supported.                                                                            | Is the exact Contract result preserved, including negative observations?                                                                           |
+| Optimization                       | Rewrite/fuse a computation with a guarded throwing callback or external effect.                                                                               | Are all required source-visible conditions preserved?                                                                                              |
+| Resources                          | Stop at Budget/Capacity boundaries and during cleanup.                                                                                                        | Is the actual stop attributed correctly and incomplete work withheld?                                                                              |
+| Framework participation            | Return a structured failure from a Spring-managed operation.                                                                                                  | Does the actual external transaction obey the declared participation guarantee?                                                                    |
+| Distributed outcome                | Lose confirmation after DB commit; replay a requested effect.                                                                                                 | Is outcome uncertainty preserved and duplicate effect risk handled explicitly?                                                                     |
+| Recovery                           | Restart from a partially persisted result and attempt to reuse its proof.                                                                                     | Does retained material still have justified current completion and assurance?                                                                      |
+| Confidentiality                    | Trigger errors on sensitive membership and grouping facts.                                                                                                    | Are only the permitted causal facts disclosed?                                                                                                     |
 
 ## 6.2. Evidence to retain
 
@@ -485,19 +545,21 @@ proposed incremental engines. No benchmark or memory layout is elevated to a Con
 
 The project has agreed on the A+C direction, but the following details are not closed by this SADR.
 
-| Open decision                                            | Owning document or subsystem                        | Security review question                                                                                          |
-|----------------------------------------------------------|-----------------------------------------------------|-------------------------------------------------------------------------------------------------------------------|
-| Explicit protected scopes at World formation             | Establishment / Governance / future Transaction law | Which independently computed results remain pending, and which already-established results cannot be revoked?     |
-| Rollback propagation through direct and indirect readers | Failure / Governance / Transaction law              | When is a dependent result canceled, reconsidered or independently valid?                                         |
-| Nested protection, scope escape and savepoint meaning    | Owning protection law                               | Can a narrower result be visible before a wider condition succeeds?                                               |
-| Protected runtime state changes without Input or Result  | Whole Machine / State / Transaction law             | What is the actual success/commit boundary for state-only effects?                                                |
-| External transaction participation API                   | Framework Integration Design                        | How are Spring, JTA, JDBC, reactive contexts and ordinary JVM effects represented without false atomicity claims? |
-| Indeterminate external commit and compensation           | Transaction/Failure/Integration Design              | Which recovery and idempotency guarantees are supported?                                                          |
-| Internal result validity after withdrawal                | ADR-0075 / Producer Protocol / V2 Design            | How is currentness established for directly and transitively dependent results?                                   |
-| Compiler resource and retained-result safety             | Compiler Memory / Cache Design                      | How is incomplete work separated from safely reusable products?                                                   |
-| Collection family semantics and legal observation        | ADR-0081 and the owning 1D                          | Which distinctions are actually part of the resulting Collection value?                                           |
-| Java/Kotlin callable coverage                            | ADR-0079/0084 and SDK Qualification                 | Which exact source operations, callbacks and partial failure modes have been qualified?                           |
-| Security claim validation and governance                 | Security Constitution / Verification Design         | What claims are supported by tests, independent proofs and runtime evidence?                                      |
+| Open decision                                            | Owning document or subsystem                               | Security review question                                                                                                            |
+|----------------------------------------------------------|------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------|
+| Explicit protected scopes at World formation             | Establishment / Governance / future Transaction law        | Which independently computed results remain pending, and which already-established results cannot be revoked?                       |
+| Rollback propagation through direct and indirect readers | Failure / Governance / Transaction law                     | When is a dependent result canceled, reconsidered or independently valid?                                                           |
+| Nested protection, scope escape and savepoint meaning    | Owning protection law                                      | Can a narrower result be visible before a wider condition succeeds?                                                                 |
+| Protected runtime state changes without Input or Result  | Whole Machine / State / Transaction law                    | What is the actual success/commit boundary for state-only effects?                                                                  |
+| External transaction participation API                   | Framework Integration Design                               | How are Spring, JTA, JDBC, reactive contexts and ordinary JVM effects represented without false atomicity claims?                   |
+| Indeterminate external commit and compensation           | Transaction/Failure/Integration Design                     | Which recovery and idempotency guarantees are supported?                                                                            |
+| Internal result validity after withdrawal                | ADR-0075 / Producer Protocol / V2 Design                   | How is currentness established for directly and transitively dependent results?                                                     |
+| Compiler resource and retained-result safety             | Compiler Memory / Cache Design                             | How is incomplete work separated from safely reusable products?                                                                     |
+| Collection family semantics and legal observation        | ADR-0081 and the owning 1D                                 | Which distinctions are actually part of the resulting Collection value?                                                             |
+| Read-after-write within protected source execution       | Source Qualification / Realization / owning protection law | Which internal observations are mandatory, and is the advertised external isolation compatible with captured aliases and callbacks? |
+| Effectful source replay and compiler reuse               | ADR-0073 / ADR-0075 / Realization and V2 Design            | When is recalculation of a pure compiler result valid without reexecuting a required user state effect?                             |
+| Java/Kotlin callable coverage                            | ADR-0079/0084 and SDK Qualification                        | Which exact source operations, callbacks and partial failure modes have been qualified?                                             |
+| Security claim validation and governance                 | Security Constitution / Verification Design                | What claims are supported by tests, independent proofs and runtime evidence?                                                        |
 
 Physical storage topics such as Primitive Slabbing, FFM arenas, indexes, epoch retirement and recovery algorithms belong
 to the compiler's implementation research. They remain important test surfaces, but their names do not appear as new
