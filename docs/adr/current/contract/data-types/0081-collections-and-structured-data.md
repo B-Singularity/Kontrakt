@@ -13,6 +13,7 @@
 - ADR-0063: Contract Establishment, Identity, Applicability, and Composition
 - ADR-0064: Input Contract, especially §§7.3 and 7.9
 - ADR-0065: Admission Contract, especially §7
+- ADR-0067: Lowering Contract, especially §§4, 6, and 17
 - ADR-0068: Fact Contract, especially §10
 - ADR-0069: Invariant Contract, especially §15
 - ADR-0071: Resolved Contract HIR
@@ -22,6 +23,8 @@
 - ADR-0079: Type Interpretation and Semantic Binding
 - ADR-0080: Characters, Strings, and Unicode
 - ADR-0084: One-Dimensional Standard-Library Semantic Acquisition
+- `docs/sadr/0002-collection-observation-integrity-and-protected-change-security-architecture.md` — collection-specific
+  security threats and assurance; non-authoritative for Contract meaning
 
 ---
 
@@ -31,19 +34,20 @@ Java and Kotlin offer extensive collection libraries. A user may construct a col
 library view, or compose several operations before obtaining the value needed by a 1D Contract. These are ordinary ways
 to express a calculation. They do not confer Contract authority on a Java or Kotlin object.
 
-Kontrakt must solve two different problems.
+Kontrakt must interpret the exact source operation selected by the author while establishing its own Contract meaning.
+The selected Java or Kotlin operation determines its source calculation; the owning 1D determines which result and
+observations it may lawfully use. The calculation's source meaning is not automatically the meaning of a Contract
+result.
 
-1. It must interpret the collection operation the author actually selected. Java and Kotlin define that operation's
-   source meaning.
-2. It must establish stable collection results for its own judgments and compiler products. Kontrakt owns the meaning of
-   those results.
+There are two distinct times at which this separation matters. Contract compilation resolves definitions, establishes
+authoritative definition material, and produces compiler results. At runtime, an already-established Contract governs
+each fresh Input occurrence and the subsequent formation and establishment of Fact material. Temporary mutable
+computation in either implementation does not make host objects authoritative.
 
-A result can be represented by a host object without adopting that object's identity, lifecycle, or class hierarchy. The
-applicable 1D Contract determines what the represented value means.
-
-ADR-0078 and ADR-0080 establish the corresponding separation for Numeric and Text calculations. ADR-0079 and ADR-0084
-govern source resolution and standard-library interpretation. This ADR applies those boundaries to collections and
-states the collection-specific preservation obligations.
+A result may use a host representation without adopting its identity, lifecycle, or class hierarchy. ADR-0078 and
+ADR-0080 establish the corresponding separation for Numeric and Text calculations. ADR-0079 and ADR-0084 govern source
+resolution and standard-library interpretation. This ADR applies those boundaries to collection calculations and results
+without imposing a collection algorithm on either compiler or runtime realization.
 
 ## 2. Problem
 
@@ -64,16 +68,25 @@ For example:
 | Kotlin `runningFold` / `fold`                   | A sequence of prefix results versus one final accumulator                        |
 | `HashSet` / `TreeSet` / `IdentityHashMap`       | Different element or key discrimination rules                                    |
 
-A compiler that replaces these operations with one generic collection algorithm can change the author's calculation. A
-compiler that retains a live host object as Contract material can also change an already established result when that
-object is mutated.
+Replacing these operations with one generic collection calculation can change the author's source meaning. Moreover, an
+API may allow multiple observable results even when one current JDK happens to return the same result repeatedly. A
+governed Contract judgment cannot acquire determinism from that implementation accident.
 
-Neither problem is solved by requiring authors to use immutable collection classes. Java and Kotlin do not make the
-complete contents of a collection immutable merely because its public interface is read-only.
+The risks also extend to work that is interrupted. An operation can change an existing destination before failing; a
+consumer can observe a constituent or an absence assertion before a larger result is complete. Those observations can
+propagate to later calculations even if the original change is subsequently withdrawn. Whether those consumers must be
+rejected, reconsidered or rolled back belongs to their owning result and protection laws. Collection interpretation
+nonetheless has to preserve the distinctions on which they relied.
 
-The design must preserve source meaning while preventing host object behavior from becoming Contract meaning. It must
-also allow V1 and V2 to change their physical collection algorithms without changing a result already made available to
-an authorized consumer.
+At runtime, external mutable carriers and live views can change while their data is being acquired. The problem ends at
+the appropriate boundary once a complete, lawful Input presentation has been formed; the original object need not travel
+through the Contract pipeline or remain part of an established Fact. During compilation, the corresponding issue is
+whether authoritative definition material and compiler results preserve their meaning, not whether the compiler's
+working collections are physically mutable.
+
+Requiring authors to use immutable collection classes solves neither problem. The design must preserve mandatory source
+observations and determinate Contract results while allowing V1 and V2 to replace internal algorithms and physical
+representations.
 
 ## 3. Decision
 
@@ -158,8 +171,24 @@ applicable SDK meaning determines which of these distinctions are required:
 A familiar type name or return signature is not sufficient evidence of any row in this table. One generic collection
 model cannot replace operations whose source laws differ.
 
-When a source operation permits several behaviors, ADR-0078 §3.3 and ADR-0073 §5.7 govern any deterministic refinement.
-The compiler cannot invent an otherwise unsupported choice and call it the source operation's meaning.
+Failure at an intermediate element is particularly significant for operations that mutate an existing destination.
+The source law may leave earlier removals, substitutions or additions in place; another collection implementation may
+leave the destination unchanged at the same failing callback. Such behavior is qualified for the exact callable and
+implementation guarantee, not inferred from the common interface. This ADR does not define the Failure result or the
+subsequent rollback procedure.
+
+**A governed Contract judgment must establish one determinate legally observable result for the same governing law and
+meaning-determining semantic inputs.** If the exact source API guarantees that result, Kontrakt preserves it. If the API
+permits several results, the judgment must either be invariant under every legally permitted result or use a lawful
+deterministic refinement to fix any observable distinction that matters. Repeated behavior of a particular JDK,
+sequential execution alone, or a particular thread schedule does not supply that guarantee. Where neither an invariant
+judgment nor a lawful refinement can be established, the operation is unsupported for that judgment.
+
+Refinement must remain within every required source observation, including mandatory evaluation, completion and failure
+behavior (ADR-0073 §5.7; ADR-0078 §3.3 for Numeric operations). The fixed obligation is the result and any mandatory
+semantic process condition, **not** a sort, reduction tree, scheduling order, reference algorithm, or other realization
+strategy. An unchanged admissible platform operation in user realization remains subject to its own platform law; the
+preceding deterministic-judgment requirement does not rewrite that operation.
 
 ### 3.4. Collection Values and Observable Results
 
@@ -180,40 +209,76 @@ The distinctions relevant to a result depend on its operation. For example:
 Two Kotlin Sets can compare equal while exposing different encounter orders. A later lawful first-element selection can
 distinguish them. Collection equality is therefore not sufficient proof of equivalent observations.
 
-A derived index belongs to the traversal that produced it. It does not create an Input coordinate or give an unordered
-Input Membership an undeclared position (ADR-0065 §7.4). Likewise, a source operation that permits an unordered choice
-may leave the membership of its output underdetermined, not merely its iteration order. Any refinement follows §3.3.
+A lawful observation may concern absence, the complete set of qualifying members, multiplicity, a selected
+representative, or a derived aggregate. A newly applicable member may change the truth of an earlier uniqueness or
+absence judgment without changing any member that the earlier calculation actually visited. Conversely, two
+representations that differ physically can support the same legal collection observation. The selected operation and
+consuming 1D determine which distinctions matter; the observation does not acquire a new identity or authority from
+this ADR.
 
-No universal sort is imposed to manufacture determinism. The compiler may discard a distinction only when no remaining
-legal calculation needs it. ADR-0078 §4.3 and ADR-0080 §3.7 govern that preservation obligation.
+Nested results retain every constituent distinction that their owning value law admits. Shared host references,
+backed views and temporary windows can affect a source computation without becoming the identity of a Contract
+constituent. A complete result cannot continue to obtain its established meaning from later changes to such a source
+object. Section 3.5 states the boundary at which that separation must hold.
+
+A derived index belongs to the traversal that produced it. It does not create an Input coordinate or give an unordered
+Input Membership an undeclared position (ADR-0065 §7.4). A stable sort preserves the relevant prior order among ties; it
+does not create that order when the input does not own it. A source operation that permits an unordered choice can leave
+the output's membership or representative underdetermined, not merely its iteration order. Such use must satisfy §3.3.
+
+No universal sort or tie-breaking procedure is imposed to manufacture determinism. The compiler may discard a
+distinction only when no remaining legal calculation needs it. ADR-0078 §4.3 and ADR-0080 §3.7 govern that preservation
+obligation.
 
 ### 3.5. Immutable Results at Contract Boundaries
 
-A collection may be constructed or calculated through temporary mutable state. That state is not automatically Contract
-material.
+Physical mutation during compilation or runtime realization is not itself a Contract property. The obligation concerns
+the material lawfully established or made available under the owning boundary, not the working collection or algorithm
+used to produce it.
 
-**Any collection result made available to an authorized later Contract stage or other consumer must be a complete,
-immutable semantic value.** Later mutation of the producer's working state, original carrier, or another alias must not
-change the result. This obligation covers every constituent the consumer may legally observe.
+During Contract compilation, the Frontend and Establishment may compute with mutable representations. Established
+definition material and compiler-produced results retain their authoritative meaning under ADR-0063, ADR-0071 and
+ADR-0075. Their consumers do not acquire an alias through which the producer's later working-state mutations can revise
+that meaning.
 
-The result must represent one coherent observation of its source. Combining incompatible observations into an immutable
-container does not satisfy this rule. A read-only wrapper, `final` field, or Kotlin `val` does not establish closure by
-itself.
+At runtime, the external Java or Kotlin collection is a carrier of Input evidence, not the Input occurrence or a Fact.
+Kontrakt-controlled acquisition may form the required stable presentation **before** the Input judgment. ADR-0064 §7.3
+requires that judgment to receive an already-formed complete immutable presentation; Input cannot make an otherwise
+illegal carrier lawful by copying, snapshotting, normalizing or freezing it during judgment. The formed presentation
+must correspond to one lawful observation and preserve all declared constituent distinctions (ADR-0073 §5.2).
+
+After successful Input and the subsequent legally selected judgments, Lowering forms candidate Operation-parameter
+material. The required standing and movement judgments must succeed before immutable Fact authority is established
+(ADR-0067 §§4, 6 and 17; ADR-0068). The original Input object does not have to be retained as the Fact's representation.
+A different representation may replace it as soon as all still-required observations remain preserved; physical disposal
+of the carrier does not itself terminate Input authority or establish Fact authority (ADR-0073 §5.11).
+
+Read-only interfaces, unmodifiable wrappers, snapshot iterators and thread-safe collections are evidence only for what
+their exact source laws guarantee. None alone establishes coherent, immutable Contract meaning; mutable constituent
+objects or external aliases may still affect a carrier. Once a lawful presentation or Fact meaning has been established
+independently of those aliases, subsequent changes to the external object cannot revise that occurrence.
 
 A source operation may mutate an existing destination or leave earlier changes in place before failing. Those facts
-remain part of its interpreted source meaning. A failed local calculation does not produce a successful Contract result,
-and this ADR does not require a transactional rollback implementation. Only the owning 1D can permit the temporary
-computation (ADR-0065 §7.2, §7.5; ADR-0073).
+remain part of its interpreted source meaning, but a failed calculation does not produce a successful Contract result.
+The owning 1D determines permissible temporary computation and failure (ADR-0065 §7.2, §7.5; ADR-0073).
 
-This boundary is semantic, not a requirement to copy a container at every physical phase. A compiler may use local
-mutable buffers, structural sharing, or another representation when the exposed result has the required meaning.
+The completion of a collection calculation is not the establishment of every result that may eventually consume it.
+An operation that promises one complete collection cannot present the elements processed before an interruption as
+that completed result. Independently defined and lawfully completed results remain distinct from the intermediate
+constituents of a larger result. For a protected change defined by its owning law, a successfully
+calculated collection may still be pending the change's wider completion conditions. If that change is withdrawn, its
+pending collection effects cannot be represented as committed collection meaning. Conversely, an unrelated result
+that was independently established does not lose its authority merely because this calculation failed.
 
-The existing Input boundary is narrower: ADR-0064 §7.3 requires an immutable presentation **before** Input judgment.
-Input does not repair a mutable carrier by freezing it during judgment. Kontrakt-controlled acquisition or formation may
-establish a legal value before that boundary, subject to ADR-0073 §5.2.
-
-An incomplete lazy view or a live mutable alias cannot be treated as an established collection value merely because its
-current contents were once observed. Its use requires a lawful completed result under the owning boundary.
+Where the owning protection law requires a previous collection observation to be preserved after withdrawal, the
+relevant observation includes every distinction the selected collection law actually protects: presence and absence,
+position and multiplicity, key/value correspondence, chosen representatives, and admitted nested constituents.
+Restoring an equal element count is insufficient if those distinctions differ. This requirement concerns lawful
+observations rather than byte-for-byte restoration or host object identity. The protection owner determines the
+change's scope, participation, completion and rollback; this ADR neither supplies a general transaction nor chooses a
+rollback algorithm. A source operation outside the declared protection retains its normal platform effects. External
+alias and resource effects cannot be presumed restored by restoring one collection value. The corresponding security
+and fault scenarios are developed in SADR-0002.
 
 ### 3.6. Source Null, Contract Absence, and Lookup
 
@@ -262,14 +327,14 @@ separate observations. For example, filtering within a Java grouping collector c
 before grouping can omit that group. A Kotlin key transformation can replace the value at a colliding key without
 thereby promising which equal host key instance remains.
 
-When an operation selects a representative, preserve its selection law wherever the representative can affect a legal
-later observation. A result may require first-wins, last-wins or stable tie behavior, but none of these rules is
-universal. Source implementation evidence cannot be elevated into an SDK guarantee without qualification (ADR-0084).
+An extreme-value operation may determine the minimum or maximum comparison value without determining an observable
+representative among ties. Where the selected API guarantees first-wins or another tie law, that law is preserved. A
+host operation with unspecified ties does not acquire a first-wins guarantee from its current implementation (ADR-0084).
 
-Kontrakt-owned calculations cannot let physical traversal order, thread completion order or hash-table layout decide an
-observably different representative. If candidates are indistinguishable under every permitted observation, their
-physical choice need not become Contract meaning. Otherwise the owning calculation requires a sufficient selection law
-or a justified refinement under §3.3.
+In a governed calculation, an observably different representative must meet §3.3. The result cannot depend on accidental
+hash layout, source traversal order that is not part of the declared meaning, thread completion, or incremental update
+history. If candidates are indistinguishable under every permitted observation, their physical selection need not become
+Contract meaning. Neither case specifies a representative-selection algorithm.
 
 This does not amend Input's rule against silent deduplication or representative choice at its boundary (ADR-0064
 §7.9.1).
@@ -280,77 +345,108 @@ A recognized SDK call can still be unlawful for a 1D. Its calculation may requir
 callback, external state or an observation that the receiving Contract does not admit. ADR-0084 §3.4 governs incomplete
 source interpretation. The owning 1D decides legal use and judgment failure.
 
-Deferred computation cannot be presented as a complete collection result before the consumer's required observation has
-been lawfully resolved. Java Stream and Kotlin Sequence differ in evaluation and reuse. In particular, Java Stream may
-elide callbacks, and a Kotlin Sequence may be one-shot. Result order does not prove callback execution order, even for
-an order-preserving parallel operation.
+A deferred operation is not a complete Contract value merely because its carrier exposes a read-only collection
+interface. Completion is judged against the actual result required by its lawful consumer. A short-circuit result may
+need only part of a finite traversal; a complete collection result requires the full set of its legally observable
+constituents. Java Stream and Kotlin Sequence differ in evaluation, reuse and one-shot behavior. Repeated traversal is
+not proof that repeated results are equal.
 
-Each source operation determines the permitted callback invocations and failure behavior. A prefix calculation may
-expose intermediate results, but mutable accumulator aliasing does not authorize the compiler to invent independent
-snapshots that the source operation did not produce. Once a lawful result is passed to another Contract stage, §3.5
-applies.
+The selected SDK operation owns mandatory callback observations and any permitted elision, including associated failure
+reachability. A source-allowed omission must not be converted into a required invocation or exception. Callback
+ordering, invocation cardinality, abrupt completion and resource lifetime are preserved where the source and owning 1D
+make them obligations; result order alone does not establish execution order. Prefix calculations can expose
+intermediate values, but mutable accumulator aliasing cannot be misrepresented as independently frozen source results.
 
-The existing partial-operation, completion and resource laws remain in force (ADR-0065 §7.4–7.5; ADR-0073). No
-Collection-specific runtime policy engine, proxy verifier, or fallback execution of unknown user code is introduced.
+External live resources and capabilities do not become Closed Values because a Stream, Sequence or collection wrapper
+refers to them (ADR-0073 §§5.2–5.4). The existing partial-operation, finite-completion and resource laws govern
+admissibility (ADR-0065 §7.4–7.5; ADR-0073). No Collection-specific runtime policy engine, proxy verifier or fallback
+execution of unknown user code is introduced.
 
 ### 3.10. Contract Pipeline and Composition
 
-The IDL selects the applicable 1D subjects. The Frontend resolves permitted collection expressions into the meaning
-required by each selected 1D. Before a complete Resolved Contract HIR candidate becomes visible, that meaning must be
-sufficient for Establishment. Establishment does not rerun Java/Kotlin source resolution or SDK qualification (ADR-0071;
-ADR-0063).
+At compile time, IDL selects the applicable 1D subjects and the Frontend resolves permitted collection expressions into
+their exact meaning. The Resolved Contract HIR carries sufficient meaning for Definition Establishment; Establishment
+does not rerun Java/Kotlin source resolution or SDK qualification. The Canonical Contract World contains the resulting
+established Contract authority, not a mutable host object graph (ADR-0071; ADR-0063).
 
-A shared collection calculation may support several 1D definitions. It does not join their authority or alter their
-order of judgment. The ordinary pipeline remains one-way, with no access to another flow's internal stages.
+At runtime, an Interaction enters through Kontrakt-controlled Ingress. An already-formed presentation is judged by its
+selected Input Definition; the succeeding 1D judgments and explicit Lowering relation form and establish the appropriate
+Fact material before user Operation invocation. Runtime Input and Fact occurrences are not compile-time Definition
+material, and the source Input carrier is not itself a Fact (ADR-0064; ADR-0067; ADR-0068).
 
-Whole Machine composition relates declared Contract surfaces. It cannot insert a collection operation between another
-Core's stages or share a mutable collection as Contract state across flows. Material that lawfully leaves one Core and
-later enters another starts a new flow through the latter's Input boundary (ADR-0055 §3.4).
+A shared collection calculation may support several 1D definitions or runtime judgments. It does not combine their
+authority, select an additional stage or change their legal consumption order. Whole Machine composition relates
+declared Contract surfaces. It cannot enter another Core's internal stages or share mutable collection state as Contract
+authority across flows; lawful material entering another Core begins through that Core's declared Input boundary
+(ADR-0055 §3.4).
 
-The Canonical Contract World contains established authority under ADR-0063. It is not a mutable host object graph
-through which other computations may revise an established result. Governance retains its own authority and composition
-rules. Neither concept inserts a new stage into a running Contract pipeline.
+Governance keeps its own authority and composition laws. Neither it nor a collection helper can retroactively change
+already established meaning.
 
 ### 3.11. Compiler Realization and V1/V2 Preservation
 
-A collection law is defined by its legal result, not by a JVM collection class or storage algorithm. A physical
-implementation can change only when the legally observable result stays the same.
+Collection obligations are specified by semantic results and mandatory source or Contract observations, never by a JVM
+collection class, algorithm, or physical scheduling policy. Different implementations may employ mutable scratch
+storage, structural sharing, parallel execution or incremental maintenance where the owning law permits them.
 
-For Contract compilation, this requirement applies to HIR candidates, established material, and compiler-produced
-results according to their own observation laws. ADR-0075 governs comparison and reuse. A hash, HID, memory address, or
-serialized representation is not automatically semantic equality.
+For Contract compilation, HIR candidates, established definition material and compiler-produced results retain their
+legal observations and currentness under ADR-0071, ADR-0063 and ADR-0075. A hash, HID, address or serialized
+representation does not establish semantic equality or reuse validity. Internal mutation is permitted where it does not
+revise authoritative meaning.
 
-For user Operation realization, the platform's original calculation must be preserved. An optimization may replace or
-fuse collection work only when the applicable source and Contract observations permit it. An unchanged admissible
-platform call can remain an unchanged call under ADR-0073 §9.6.
+A collection value, a constituent's semantic identity, its occurrence or position in a particular result, and its
+current membership are separate questions. Equal values do not merge independent Contract identities; an old position
+or retained physical reference does not grant current membership. A later lawful candidate is evaluated under its
+own current determinants, even if an earlier candidate used equal values or the same internal storage.
 
-V1 may use mutable scratch storage before producing an immutable result. V2 may use parallel or incremental calculation.
-A transformation that fuses loops or reorders a reduction must preserve every required source observation, including
-reachable failure and callback behavior. ADR-0078 §9.2 governs Numeric reductions.
+At runtime, representations used for acquisition, Input evaluation, Lowering and Fact realization may change without
+preserving the original Input object, provided every still-required observation and the authority handoff remain lawful
+(§3.5). For an admitted user Operation realization, an unchanged platform call retains its platform meaning. Kontrakt
+transforms or fuses platform collection work only when all mandatory source observations, including guarded failure and
+callback obligations, are preserved; it need not force a callback or error the source permits it to elide (ADR-0073
+§§5.7, 9.6).
 
-For incremental maintenance, a change to an earlier member can change a first-wins representative or a prefix result. A
-cached or incremental result must agree with a lawful full computation under its consumer's observation law. ADR-0075
-governs result validity, coherent observation and reuse; the index or retained history needed to meet that law belongs
-to Design. Neither version may introduce a new Contract observation through scheduling, cache state or update history.
+A reduction may be reassociated, vectorized or parallelized only when its legally observable result and mandatory
+process constraints remain intact (ADR-0078 §9.2). The numerical method, partition, merge tree and execution order are
+implementation choices unless some aspect is itself source- or Contract-mandated. Reproducible use of one implementation
+does not replace the deterministic semantic guarantee of §3.3.
+
+For the same established law and meaning-determining inputs, clean compilation, valid cache reuse, full recomputation
+and V2 incremental maintenance must provide the same determined legally observable Contract result. A change to an
+earlier member may change a first-wins representative, grouping or prefix result; the update engine must preserve the
+owning semantic law, not a particular data structure. ADR-0075 owns result validity and coherent observation.
+Scheduling, cache state, thread count or update history cannot choose a different Contract result.
+
+Validity checks must account for the actual legal collection observation, including negative and complete-set
+observations that can change when a new qualifying member appears. A consumer may have used a pending collection
+observation through an intermediate result before its producer failed or its protected change was withdrawn. Whether
+that consumer is canceled, reconsidered or accepted after a new valid proof is decided by the owning protection and
+producer-result laws, not by collection identity or physical dependency reachability. When reuse is lawful, the
+current result must be justified under those laws; the existence of a retained value, prior read set or equality of
+output bytes is not sufficient evidence. These conditions permit full recomputation, validated reuse, incremental
+repair and early cutoff without assigning a particular propagation algorithm to Contract meaning (ADR-0075).
 
 ## 4. Consequences and Deferred Work
 
-The shared law does not make every Java/Kotlin Collection operation legal in every 1D. An otherwise resolved operation
-can fail the owning 1D's requirements. Value formation can require additional work when a source exposes aliases or
-deferred results, but the compiler is not required to copy every collection. Optimization is permitted when its legality
-can be established from the source and Contract observations (§3.11).
+The shared law does not make every Java/Kotlin Collection operation legal in every 1D. A resolved operation can fail its
+owner's closure, determinism or completion requirements. The compiler need not materialize every intermediate collection
+or copy a carrier at every phase. It must preserve the source observations still required and establish each Contract
+result at its actual boundary (§§3.3, 3.5 and 3.11).
 
 The following work remains outside this draft's decided meaning:
 
-| Work                            | Owner or constraint                                                                                                                                                                        |
-|---------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Common collection families      | Decide the exact need and domains for Sequence, Membership, Association, Multiset and structured forms. Do not infer them from host interfaces (§3.1).                                     |
-| Sorting and aggregation details | Qualify source-specific tie rules, numeric reductions, collectors and parallel execution. Existing Numeric and 1D laws apply until further decisions.                                      |
-| Representative refinement       | Determine per operation when source-permitted nondeterminism admits a lawful deterministic refinement (§3.3).                                                                              |
-| SDK coverage and conformance    | Complete Java JDK 27 and Kotlin 2.4.21 callable-level qualification. The existing declaration inventories are not proof of complete coverage (ADR-0079; ADR-0084).                         |
-| Object laws outside collections | Align the general representation/authority boundary with existing Accepted ADRs and still-Draft ADR-0083. Do not create a second object authority here.                                    |
-| Input evolution                 | Reconsider ADR-0064's current collection limits after this ADR is decided. Nothing here silently changes its Accepted V1 surface.                                                          |
-| IR and compiler Design          | Choose value encodings, explicit absence representation, formation procedures, protocols, optimization and incremental algorithms. Prove V1/V2 conformance under the owning compiler ADRs. |
+| Work                                                | Owner or constraint                                                                                                                                                                                                                                                                       |
+|-----------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Common collection families                          | Decide the exact need and domains for Sequence, Membership, Association, Multiset and structured forms. Do not infer them from host interfaces (§3.1).                                                                                                                                    |
+| Per-operation sorting and aggregation qualification | Record tie selection, stable ordering, numeric reductions, Collector and parallel guarantees in the applicable SDK profile. The governing determinism and preservation requirements are already stated (§§3.3, 3.4 and 3.8; ADR-0078).                                                    |
+| Per-operation deterministic refinement              | Establish when a source-permitted range of outcomes can be lawfully refined for governed judgments. The applicable result law must not be replaced by the behavior of one JDK (§3.3).                                                                                                     |
+| Deferred and mutable source forms                   | Qualify one-shot traversal, callback elision, backed views, concurrent access and partial failure per callable; separate those source properties from runtime Ingress acquisition and completed Contract material (§§3.5 and 3.9).                                                        |
+| Partial completion and protected changes            | Test whether a selected operation promises one completed result or independent results; preserve the owning protection law when a collection change is canceled. Scope, commit, recovery and external participation remain with Failure/Governance/Transaction owners (§3.5; SADR-0002).  |
+| Collection observation and incremental validity     | Exercise absence, completeness, duplicate counts, representative changes, nested constituents and failed pending reads. ADR-0075 owns currentness and valid reuse; the security attack and fault cases are specified in SADR-0002 (§§3.4, 3.11).                                          |
+| SDK coverage and conformance                        | Complete Java JDK 27 and Kotlin 2.4.21 callable-level qualification. The existing declaration inventories are not proof of complete coverage (ADR-0079; ADR-0084).                                                                                                                        |
+| Object laws outside collections                     | Align the general representation/authority boundary with existing Accepted ADRs and still-Draft ADR-0083. Do not create a second object authority here.                                                                                                                                   |
+| Input evolution                                     | Reconsider ADR-0064's current collection limits after this ADR is decided. Nothing here silently changes its Accepted V1 surface.                                                                                                                                                         |
+| IR, runtime Ingress and compiler Design             | Choose value encodings, explicit absence representation, acquisition and formation mechanisms, protocols, optimization and incremental algorithms. Keep compile-time definition material distinct from runtime Input and Fact occurrences; demonstrate conformance under the owning ADRs. |
 
 The SDK catalogs and compiler designs are separate artifacts. This ADR states the meaning they must preserve; it neither
 declares every source call qualified nor selects a JVM collection implementation.
