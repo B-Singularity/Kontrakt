@@ -80,9 +80,9 @@ profiles and conformance evidence belong to the Collection SDK Interpretation an
 This ADR defines the constituent meaning of completed collection and structured values. It creates no new 1D
 Contract, independent judgment, Collection runtime or universal host API, and gives no shared collection calculation
 authority to establish Input, Fact or other Contract material. The owning 1D decides which completed meanings it
-admits and how its own Sameness, judgment, Identity and Establishment apply. In particular, the common ability to
-describe a Bag or Positional Product does not change ADR-0064 §7.9's V1
-Input presentation forms.
+admits and how its own Sameness, judgment, Identity and Establishment apply. In particular, describing a Bag or
+Positional Product does not change ADR-0064 §7.9's V1 Input
+presentation forms.
 
 A family describes what a value must preserve, independently of the class or storage used to realize it. A source
 operation may return a value that combines several such laws. The laws below describe **five basic forms of completed
@@ -92,86 +92,121 @@ Their use depends on the exact source meaning and the authoring law that admits 
 
 #### 3.1.1. Common formation and the five basic forms
 
-A completed value has a determined constituent schema where one is required, an exact meaning for each lawful
-constituent, and a complete account of the relationships that its form exposes. The form determines what counts as
-empty, which constituents can be absent, how repeated constituents are distinguished and what completion requires.
-Constituent comparison uses the relation lawfully selected for that use; neither host `equals` nor Contract Sameness is
-an implicit global comparison. A source operation that exposes a particular retained representative may require more
-information than a membership test that treats several candidates as equivalent (§§3.7–3.8).
+A completed collection or structured value has the exact constituent schema required by its selected form, the
+lawfully admitted meaning of every present constituent, and a complete account of the relationships that form makes
+observable. The form fixes its legal empty values, presence obligations, repetitions, discrimination, and completion.
+Missing required material, an unresolved Source Operation, a pending producer, and a failed calculation are not
+completed values. A value need not retain a particular host object or physical materialization after its meaning has
+been lawfully completed (§§3.5 and 3.9).
 
-The basic forms are:
+Discrimination belongs to the use and law that require it. Host `equals`, a source comparator, Input Presentation
+Sameness, and a subsequent 1D relation are not one global equality. Full constituent agreement must preserve all
+observations owned by the completed form; it does not introduce a universal collection `equals` (§§3.1.4 and 3.7).
+Source-defined representatives can remain observable even when multiple candidates belong to one discrimination
+class (§3.8). Presence and an admissible null-like constituent meaning are governed once, in §3.6.
 
-| Basic form                    | Required completed-value meaning                                                                                                                      |
-|-------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **Ordered Occurrence**        | A finite number of constituent occurrences, their complete linear encounter order, and the value at each occurrence                                   |
-| **Finite Relational Extent**  | An exact, finite relation over declared constituent roles, with presence or nonnegative multiplicity for each distinguishable tuple                   |
-| **Functional Correspondence** | A declared key domain, the keys for which a mapping is defined, and exactly one value for each such key; partial and total mappings are distinguished |
-| **Declared Product**          | A closed schema of individually declared roles or slots, with each role's required presence and value                                                 |
-| **Closed Tagged Alternative** | A closed case schema, exactly one selected case, and the payload required by that case                                                                |
+The five basic forms are:
 
-**Ordered Occurrence.** A complete ordered result has a finite extent of occurrences. Each occurrence has one
-completed constituent meaning, and every pair of distinct occurrences has a determined encounter order. Two
-occurrences may have equal constituent values without becoming one occurrence. An empty result has no occurrences; a
-pending iterator or a partly consumed producer does not thereby constitute a completed result. The relative rank of
-an occurrence can be derived from a complete linear order. An indexed-access or separate source-position law is an
-additional obligation: encounter order alone does not authorize arbitrary indexed operations. A source may also
-expose a reverse or backed view; that view's lifetime and effects are interpreted under §§3.3, 3.5 and 3.9 rather
-than added to the completed Sequence's intrinsic identity.
+| Basic form                    | Required completed-value meaning                                                                                          |
+|-------------------------------|---------------------------------------------------------------------------------------------------------------------------|
+| **Ordered Occurrence**        | A finite number of constituent occurrences, their complete linear encounter order, and the value at each occurrence       |
+| **Finite Relational Extent**  | A finite relation over exact declared roles, with presence or nonnegative multiplicity for each distinguished tuple       |
+| **Functional Correspondence** | A lawful key domain, its present-key domain, and one mapped value per present key; partial and total laws remain distinct |
+| **Declared Product**          | A finite closed schema of named roles or fixed slots, with each role's presence and constituent-value obligations         |
+| **Closed Tagged Alternative** | A finite closed case schema, exactly one case selected by each completed value, and the required case payload             |
 
-**Finite Relational Extent.** A relation has a declared finite arity and a role schema that fixes the meaning of
-one tuple's constituents. It has a finite support of distinguishable tuples. For each tuple, the completed relation
-states either whether it is present (**Membership Extent**) or its exact nonnegative integer multiplicity (**Bag
-Extent**). In Membership Extent a tuple is present at most once; in Bag Extent repeated occurrences are counted and
-have no intrinsic encounter order. Multiplicity zero means absence under the relation's applicable discrimination.
-A negative multiplicity is not a completed Bag value; a signed delta used to calculate a new relation is a different
-calculation meaning. The number of distinct members and the sum of multiplicities are different observations where
-the form provides both. The role schema may describe a relation of arity greater than two, without choosing one role
-as a key or imposing a traversal order. A zero-arity relation, when explicitly admitted, distinguishes the absence
-and presence of the empty tuple; it does not acquire Boolean Contract authority by that resemblance.
+**Ordered Occurrence.** A completed ordered value contains a finite number `n` of separate occurrences. Each has one
+completed constituent value; the occurrences possess one complete linear order. Consequently every occurrence has a
+relative rank in `0..n-1`, but that rank is not its identity, a host address, or an independently declared Input
+coordinate. Equal constituent values may occupy distinct occurrences. `[A, B, A]` therefore has three occurrences
+and differs in its ordered construction from `[A, A, B]`; converting either to Membership may discard that order and
+its repetitions only under an explicit conversion law. The unique empty Sequence has zero occurrences under its
+selected constituent form. A pending iterator or partly consumed producer does not thereby establish that empty
+result. An individual short-circuit operation can complete its own result without completing the entire source (§3.9).
 
-A discrimination relation must be lawful over the actual constituent domain for the use claimed. In particular, an
-approximate comparison that is not transitive cannot establish unique members. A qualified source comparator may
-legitimately group values differently from `equals`. Its grouping law and any source-observable retained
-representative are both preserved; discarding that representative merely because it belongs to an equivalent group
-can lose source meaning. This rule does not transfer source discrimination into an owning 1D's Sameness (§3.7).
+The existence of a linear order does not imply a supported random-access operation. An **Indexed Sequence**
+additionally defines the valid element-position domain, the correspondence between each position and occurrence,
+and any exact source-defined access and boundary law (§3.1.2). A source-backed, reverse, or live view retains its
+qualified observation lifetime and effects under §§3.3, 3.5 and 3.9 rather than becoming part of an immutable
+Sequence's semantic identity. Ordered constituent agreement requires equal extent, corresponding ordered occurrences,
+and agreement of their constituent meanings under the applicable declared relation; it is not a mandatory host
+`equals` implementation.
 
-**Functional Correspondence.** A correspondence declares its lawful key domain and the exact key-discrimination
-law. It determines a domain of present keys within that key domain and one completed mapped value for every present
-key. A **partial** correspondence permits a missing key; a **total** correspondence has a mapping for every lawful
-key. These are distinct completed meanings. A present key mapped to an admissible null value is not a missing key.
-Two values associated with the same distinguished key cannot coexist as separate mappings in a functional result;
-the source operation that handles a colliding key determines whether it rejects, replaces or selects a value and
-which representative remains observable (§§3.3 and 3.8).
+**Finite Relational Extent.** A relation declares a closed, finite role schema and an exact arity, including the
+constituent meaning of every role. Its completed support consists of finitely many distinguishable tuples, without an
+intrinsic traversal order. A **Membership Extent** records presence or absence of each distinguishable tuple; a **Bag
+Extent** records an exact nonnegative integer multiplicity. Multiplicity zero means nonmembership, one means one
+occurrence, and larger values preserve repetition without creating an order. Distinct-member count and the sum of
+multiplicities are not interchangeable. Signed deltas used in a transformation cannot be treated as negative counts
+in a completed Bag. The role schema survives an empty result: an empty binary relation and an empty ternary relation
+are different completed forms. When a zero-arity relation is explicitly admitted, the empty tuple is either present
+or absent; this resemblance to truth or falsehood grants no Boolean Contract authority.
 
-A finite partial Association can also be described as a finite binary relation with the functional condition. That
-shared description does not erase the Association's key, presence, lookup and representative obligations. A total
-correspondence over a non-enumerated or unbounded domain instead requires a closed, qualified law determining the
-value at each lawful key; a finite list of entries does not by itself establish it. Such a law is admitted only when
-its determinants, completion and required observations can be established under the owning Contract. An arbitrary
-callback, unresolved predicate or physical default storage value does not establish a completed total function.
-An operation claiming equality or full-domain reasoning must itself have a lawful, determined result; the ability to
-describe a symbolic function does not imply that arbitrary function equality is decidable or eligible for a 1D.
+The discrimination used for Membership or Bag uniqueness must be an equivalence relation on the lawful constituent
+or tuple domain: reflexive, symmetric and transitive. A nontransitive approximate comparison does not establish
+unique members. A qualified source comparator may give a different equivalence partition from host `equals`; its
+lawful equivalence and any legally observable exact retained representative must both be preserved. For example,
+two decimal representations may be comparator-equivalent while retaining different source-observable scale. It is
+not lawful to discard the actual representative solely because the membership class is unchanged. The owning 1D,
+not this common form, decides whether that source discrimination can participate in its judgment (§§3.7–3.8).
+Relational constituent agreement requires compatible exact role schemas, the same distinguishable support, the same
+multiplicities where provided, and agreement of any representative or additional observation owned by the selected
+completed form. It does not identify physically distinct Contract subjects or occurrences.
 
-**Declared Product.** A Product is formed from a finite, closed declaration of constituent roles. In a Named
-Product those roles are declared by their exact names or nominal coordinates; in a Positional Product each fixed
-slot has its own declared role. For every role the schema determines its admitted value and presence condition. A
-complete Product settles the required presence and value of each role. An absent optional role is different from a
-present role containing an admissible null. A positional slot is not an occurrence in a dynamically sized Sequence,
-and a declared name is not an arbitrary Association key. Two nominal schemas are not made equal by matching field
-spellings. Source Type resolution remains with ADR-0079; a Java record, Kotlin data class or tuple-like object does
-not automatically select Contract constituents.
+**Functional Correspondence.** A correspondence declares the lawful key domain, its qualified key-discrimination
+law, the subset of keys with present mappings, and exactly one completed value at each distinguished present key.
+An admissible but absent key is not an invalid key. A **partial** correspondence permits missing mappings; a **total**
+correspondence requires one mapping for every lawful key. A present mapping whose value has an admissible
+null-like meaning differs from an absent mapping (§3.6). Two different values cannot coexist as separate mappings
+for one distinguished key. Repeated input keys are handled according to the exact construction operation: reject,
+retain, replace or aggregate are not implicit Family defaults (§§3.3 and 3.8).
 
-**Closed Tagged Alternative.** A Choice has an explicitly closed set of admissible cases. Each completed value
-selects exactly one case and completes the payload prescribed for that case; unselected cases contribute no payload.
-For example, a case with an admissible null payload differs from a case with no payload. An open subtype search or
-host inheritance hierarchy cannot supply an undeclared case. A source `Optional`, `Result` or enum-like declaration
-may be interpreted only under its exact qualified meaning; no case automatically acquires 1D Absence, Failure,
-Identity or judgment authority.
+A completed finite Association can also be described as a finite binary Relational Extent with a declared key role
+and functional uniqueness. Where both descriptions apply, the exact key discrimination, present-key set, mapped
+values and required representatives must agree; the overlap does not create two conflicting Mapping authorities.
+The correspondence law also permits a qualified total function over a non-enumerated or unbounded key domain, but
+only when a closed law determines the mapped value for every lawful key and establishes the required meaning,
+completion and legal observations under the owning Contract. An arbitrary callback, unresolved predicate or host
+storage default is not such a law. A function may be mathematically described without arbitrary equality or
+full-domain observations being decidable; an operation claiming those results must separately establish their
+exact, lawful completion. Agreement of two correspondences requires compatible key-domain and discrimination laws,
+matching presence, corresponding mapped values and all additional legally observed representative or totality
+information; physical entry order supplies none unless separately declared.
 
-These forms have distinct formation laws, even when one may be represented in another. The existence of a conversion
-is not proof that its source and result are the same value: removing encounter order, collapsing multiplicity,
-selecting an undeclared representative, fabricating absence or inventing an indexed position changes or adds observed
-meaning. Exact conversions and shared calculations must define such changes as results, not perform them silently.
+**Declared Product.** A Product declares a finite, closed schema of constituent roles. Each role has an exact
+admissible value meaning and an independently determined presence obligation. A **required** role must have a present,
+completed constituent; an **optional** role may be explicitly absent. Presence is not nullability: a required role
+may admit a null-like value, while an optional role may admit absence without admitting such a value. A role can
+admit both only when its value law permits the latter (§3.6). Every role's presence and, when present, its value
+must be settled for Product completion.
+
+A **Named Product** distinguishes roles by exact declared names or nominal coordinates; their declaration order
+is not automatically constituent encounter order. A **Positional Product** distinguishes fixed declared slots, each
+of which may have its own value domain; its slots are not occurrences of an arbitrary Sequence. Two nominal schemas
+are not equivalent merely because their field spellings and value types match. Structural correspondence between
+schemas requires its own explicit legal meaning. A closed schema with no roles admits one completed empty Product
+when the owning 1D permits that form; it is not an empty Sequence or Association. Relations between multiple roles,
+such as one role's presence depending on another role's value, require an explicit law of the specific closed form
+or owning Contract rather than an arbitrary executable predicate built into the basic Product. Source Type binding
+remains with ADR-0079; neither a Java record nor a Kotlin data class automatically defines Contract constituents.
+Product constituent agreement requires the same or expressly compatible schema and corresponding role-presence and
+value meanings; it is not inferred from the source's generated `equals`.
+
+**Closed Tagged Alternative.** A Choice has a finite, explicitly closed schema of declared cases. Every completed
+Choice selects exactly one case. A case prescribes either no payload or one completed value with an exact admitted
+domain; a multi-field payload may itself be a Declared Product. Unselected cases contribute no payload, and the
+absence of a payload in a payloadless case differs from a present payload whose law admits a null-like value (§3.6).
+A schema with no cases has no completed Choice value; it does not create an empty Choice instance. Case identity is
+determined by its exact declaration, not by a source enum ordinal, host address, class inheritance or matching case
+spelling. Two completed Choices agree only under compatible exact case schemas, the same selected case and the
+corresponding required payload meaning. An open subtype search or undeclared runtime subtype cannot enlarge or
+select a Contract case. Qualified source `Optional`, `Result` and enum-like meanings may be represented, but the
+choice of a case creates no 1D Absence, Failure, Identity or judgment authority of its own.
+
+These five forms are distinct complete-value formation laws, not public classes, IR encodings or separate Contract
+authorities. A shared representation or lawful conversion is not a proof that the values themselves have the same
+meaning. A conversion that removes order, folds multiplicity, chooses a representative, manufactures a position, or
+introduces a new case must be defined by its own exact result law rather than silently changing the source value.
 
 #### 3.1.2. Closed value forms and compositional obligations
 
@@ -222,7 +257,11 @@ A Group with an empty constituent and a Group that does not exist are different 
 that difference. A Window result that borrows a temporary view is not thereby a persistently completed immutable
 Contract value. A prefix calculation that returns intermediate values remains subject to its actual evaluation and
 alias conditions (§3.9). The tables define required distinctions; whether a specific Source Operation forms each
-result and how it does so remains governed by §3.3.
+result and how it does so remains governed by §3.3. A composite is complete only when the meaning of each constituent
+form is complete and its cross-form coupling is satisfied. A Sequenced Membership therefore cannot contain an ordered
+occurrence absent from its Membership or repeat a member that is unique under its applicable discrimination.
+A partition with declared alternatives retains the existence of an empty partition; a Group absent from a grouping
+is not silently formed from a default empty group.
 
 #### 3.1.3. Interval, progression, coordinate and shaped-value laws
 
@@ -230,11 +269,16 @@ There is no generic `Domain` or `Coordinate Region` Family that can accept an ar
 meaning on it. An ordinary value's admitted domain follows its owning Type, Numeric, Text and 1D laws. A range,
 progression or shaped result instead supplies a **specific completed meaning** with the following obligations.
 
-An **Ordered Interval** declares the exact ordered carrier, lower and upper bounds where present, each endpoint's
-inclusion law, and its empty condition. Membership is judged by that declared comparison law. Two source ranges may
-contain the same members on a discrete carrier while exposing different bounds; a result that lawfully exposes those
-bounds must preserve them. Neither the set of included members nor a host comparison's `equals` result alone decides
-all Range observations.
+An **Ordered Interval** declares the exact ordered carrier, a comparison that determines every required lawful
+endpoint/member ordering, lower and upper bounds where
+present, the inclusion or exclusion of each endpoint, and the resulting empty and membership conditions. Bounds and
+included members are separate observations where the completed form exposes both. For example, `[1,5]` and `(0,6)`
+include the same integer members but expose different endpoints if their selected forms retain those endpoints.
+Conversely, two different source expressions that resolve to the same exact range value are not kept distinct merely
+for their syntax. Neither enumerating the included members nor a host `equals` operation determines all
+source-guaranteed
+Range observations. An Interval may be complete by its law without enumerating an unbounded or continuous carrier;
+it does not thereby establish a completed infinite Sequence.
 
 A **Discrete Progression** declares its start, step, direction, stopping and last-member law, including the exact
 conditions for emptiness, valid step and arithmetic boundaries. It determines the values produced in their lawful
@@ -243,29 +287,43 @@ exposes the rule itself. Numeric overflow or source-specific stepping follows AD
 Operation; a generic sequence algorithm must not substitute its own last-member calculation.
 
 An **Index or Axis Schema** defines the exact role and coordinate domain of each axis, any ordering or label law,
-and the permitted coordinate tuples. A **Shaped Indexed Aggregate** binds such a schema to a correspondence over
-coordinates and states whether it is total or partial. Rank and shape are meaningful where this completed form
-exposes them: shapes `0×3` and `3×0` remain distinct even though both have no coordinate values. Changing the order
-of named axes does not automatically preserve or change the value; the exact axis-identity and alignment law of the
-selected form decides correspondence.
+and the permitted coordinate tuples. An element index, a boundary position between elements, the logical extent and
+physical storage capacity are different notions. For a two-element zero-based List, the element indexes are `0,1`
+while insertion boundaries can be `0,1,2`; neither law grants a nominal Input coordinate. A **Shaped Indexed
+Aggregate** binds the exact axis schema to a value correspondence over valid coordinates and declares whether the
+mapping is total or partial. Rank, axis meaning and shape are preserved when the form exposes them: `0×3` and
+`3×0` have no coordinate values but different shapes, while a rank-zero total scalar-shaped aggregate has one empty
+coordinate and differs from an
+aggregate with an empty axis. Named-axis position and coordinate label are separate observations; whether
+reordering axes preserves a value is decided by the selected form's exact axis-identity and alignment law, not
+physical memory layout or a universal normalization.
 
-A **Sparse or Masked Aggregate** distinguishes an invalid coordinate, a valid coordinate with no mapping, an explicit
-zero value, an admissible null value and a separately defined mask state wherever those distinctions are supported.
-The absence of a stored entry is not by itself a semantic zero. A **Ragged Aggregate** requires a closed law for how
-lawful coordinates on an earlier axis determine the domain of a later axis; ordinary nested Sequences are not
-silently treated as rectangular tensors. Arbitrary callbacks do not establish an unbounded axis law merely because
-they can enumerate coordinates. These are precise formation obligations for claimed supported forms, not automatic
-V1 or V2 Tensor eligibility. ADR-0078 §14.1 retains Numeric Format, numeric operations and the stated V2 Tensor
-support boundary.
+A **Sparse or Masked Aggregate** distinguishes an invalid coordinate, an absent mapping at a valid coordinate, an
+explicit zero value, an admissible null-like value and a separately defined mask state wherever those distinctions
+are supported. Physical nonstorage does not establish semantic absence or zero: a qualified dense-equivalent sparse
+form can assign an implicit logical zero, whereas a partial mapping can declare the same coordinate absent. A mask
+is not automatically a deletion, null or zero. A **Ragged Aggregate** requires a closed law for how a coordinate of
+an earlier axis determines the lawful domain of a later axis; a two-row nested Sequence of lengths two and one is
+not automatically a rectangular `2×2` value with a manufactured filler. Arbitrary callbacks do not establish an
+unbounded or dependent axis law merely because they enumerate coordinates. These are formation obligations when a
+specific form is claimed, not automatic V1 or V2 Tensor eligibility. ADR-0078 §14.1 retains Numeric Format, numeric
+operations and its stated V2 Tensor-support boundary.
 
 A **Graph or Hypergraph** may be formed from declared node and edge constituents and exact incidence relations.
-Parallel edges must remain distinguishable when the graph law gives them distinct semantic coordinates; an edge
-cannot be identified only by its endpoints in such a graph. Hyperedges may associate more than two declared roles.
-A graph may describe cyclic data without permitting a cycle in Contract Establishment dependencies. Partial orders,
-rooted trees and forests likewise require their own relation constraints rather than inheriting them from a nested
-collection or a physical graph representation. A **Weighted Relation** declares the value and meaning of its weight
-separately from Bag multiplicity. Neither a cost, probability nor signed incremental delta is automatically an
-occurrence count.
+Two edges with the same endpoints remain distinguishable when the selected graph law declares separate semantic edge
+coordinates; a physical object address cannot create such a coordinate. Direction, self-loop, parallel-edge and
+hyperedge-role laws must be stated by the particular graph form, not inferred from binary Membership. Cyclic graph
+data does not authorize cyclic Contract Establishment dependencies. Partial orders, rooted trees and forests require
+their own relation constraints, including lawful parent, root and acyclicity conditions where applicable; the
+physical traversal representation does not supply those constraints.
+
+A **Grouped Collection** declares which groups exist and the complete constituent law for each present group. An
+existing group with an empty constituent differs from an absent group where the result exposes that distinction.
+A **Partitioned Collection** declares its alternatives and preserves each prescribed partition, including an empty
+one; no default grouping operation may remove it. A **Weighted Relation** declares the admitted weight domain and
+weight meaning separately from tuple Membership and Bag multiplicity. Cost, probability, priority and signed
+incremental delta are not automatically occurrence counts, and an exact weight result additionally follows its
+own Numeric or other governing value law.
 
 These forms can use the five basic formation laws without making range bounds, shape, axis labels, edge distinction
 or required group presence optional metadata. Each claimed form must close its own legal domain, result
@@ -485,21 +543,38 @@ retains its source effects. The corresponding security and fault scenarios are d
 
 ### 3.6. Source Null, Contract Absence, and Lookup
 
-Java and Kotlin null handling belongs to the exact source operation. A Map can distinguish an absent key from a key
-mapped to `null`, while a particular lookup may return `null` for both. Kontrakt must preserve the selected operation's
-result. It must not recover a distinction that the operation did not produce.
+**Absence is the explicitly declared nonpresence of a role, coordinate or correspondence under its owning Contract
+law, not a universal value that is automatically added to every value domain.** A missing optional Product role, a
+valid but unmapped Association key, and a payloadless selected Choice case have distinct owners and observations.
+The last is a present Choice with no payload, not the absence of that Choice. Empty Collection, whole-Input absence,
+an unevaluated constituent, invalid coordinate, unresolved meaning, failure, and temporarily unavailable source item
+are likewise not interchangeable with a declared constituent absence (ADR-0064 §7.6 and §7.9.4; ADR-0063; ADR-0071).
 
-Contract absence instead follows the explicit law of its owner. A source `null` is not a universal Contract value, and
-it does not become Absence without a complete declared interpretation (ADR-0064 §7.6). An empty collection is likewise
-not an absent collection. A missing Map association is not automatically a missing Input coordinate.
+A source-language `null` is an exact Source observation, not automatically Absence and not a universal Kontrakt Null
+value. Where the admitted constituent domain explicitly supports a null-like value, a **present** constituent may
+have that meaning. Presence and such a value are independent distinctions: a required role may admit a present
+null-like value, an optional role may permit absence but forbid a null-like value, and a declared role may support
+both. Nullability or an Optional wrapper in the host type does not by itself establish any of these Contract laws.
 
-Absence need not be a member of every value type. A declared coordinate may lack a value under its own presence law. An
-operation that requires the value can consume it only when its domain is established. Missing material, unresolved
-meaning, and unsuccessful computation are not Absence (ADR-0063; ADR-0071).
+The selected Source Operation may use `null` to express a declared Absence only when the owning 1D has admitted that
+interpretation and its mapping from Source observations to the required Contract distinctions is complete and
+unambiguous. For example, an exact permitted nullable Input presentation may map source `null` to a declared absent
+optional coordinate when no separate present-null meaning is required. This is a boundary-specific interpretation,
+not a rule that all other uses of that source `null` express Absence. If the Contract must distinguish Absent from
+Present (null-like), its lawful source presentation must preserve that distinction; a lone null-like observation
+cannot be assigned to both meanings or used to invent an unobserved distinction.
 
-Defaults and partial lookups retain their source-defined behavior. A lookup's default does not create an Input
-constituent. A host exception does not become `Rejected` or `Admitted` in Admission (ADR-0065 §7.5). How an IR
-represents a declared absence is an implementation choice, not a new universal Nullable type.
+A Java or Kotlin Map can contain a key mapped to `null` while another key is absent, yet a selected `get` operation
+may return `null` in both cases. The Map's complete correspondence retains mapping presence separately from the
+value; `get` retains only the result guaranteed by its exact Source Operation. Kontrakt does not infer key presence
+from that return value. If a source computation combines `get` with `containsKey`, it must also respect the actual
+source-state and concurrency conditions: two separate observations do not automatically provide an atomic snapshot
+(§§3.3 and 3.9). A missing Map key is not thereby a missing Input coordinate.
+
+Source defaults and partial lookups retain their qualified behavior. A default result does not create an Input
+constituent or silently modify a completed mapping. An exception does not become Admission `Rejected` or `Admitted`
+(ADR-0065 §7.5). A declaration of Absence does not supply a new universal Nullable Family, enforce one physical
+sentinel, or determine an IR encoding; physical representation remains realization.
 
 ### 3.7. Equality, Ordering, and Membership
 
@@ -658,10 +733,12 @@ repair and early cutoff without assigning a particular propagation algorithm to 
 
 ## 4. Consequences and Deferred Work
 
-This ADR fixes five basic completed-value formation laws together with the additional closed forms and semantic
-compositions required for Collection and Structured Value results (§3.1). They provide common constituent and
-relational meaning without eliminating the independent obligations of a Sequence, Bag, Membership, Association,
-Range, Progression or Shaped Aggregate. The Contract laws in §§3.1–3.11 do not make every Java/Kotlin operation legal
+This ADR fixes five basic completed-value formation laws, including the roles, legal empty forms, presence,
+discrimination, constituent agreement and completion obligations of Ordered Occurrence, Finite Relational Extent,
+Functional Correspondence, Declared Product and Closed Tagged Alternative. It also fixes the required formation and
+coupling distinctions of their closed structured compositions (§3.1). These common laws do not eliminate the
+independent obligations of a Sequence, Bag, Membership, Association, Range, Progression or Shaped Aggregate. The
+Contract laws in §§3.1–3.11 do not make every Java/Kotlin operation legal
 in every 1D, compel materialization or copying of temporary results, or require a particular storage layout,
 algorithm, state engine, runtime proxy, IR node, cache scheme or incremental scheduler. Completed Contract meaning
 and mandatory source observations remain independent of those implementation choices.
