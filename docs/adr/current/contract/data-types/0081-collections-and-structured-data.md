@@ -25,7 +25,7 @@
 - ADR-0084: One-Dimensional Standard-Library Semantic Acquisition
 - `docs/sadr/0002-collection-observation-integrity-and-protected-change-security-architecture.md` — collection-specific
   security threats and assurance; non-authoritative for Contract meaning
-- `docs/design/collection/kontrakt-collection-sdk-interpretation-and-calculation-design.md` — source/implementation
+- `docs/design/collections/kontrakt-collection-sdk-interpretation-and-calculation-design.md` — source/implementation
   catalogs, SDK qualification, evidence and conformance; non-authoritative for Contract meaning
 
 ---
@@ -77,76 +77,227 @@ profiles and conformance evidence belong to the Collection SDK Interpretation an
 
 ### 3.1. Shared Collection Meaning and Authority
 
-This ADR establishes shared collection and structured-value **meaning**, not a new 1D Contract, independent judgment,
-collection runtime, source API or universal `List`/`Set`/`Map` type. A value family specifies the constituent relations
-that a completed result makes available. The owning 1D decides whether those relations are legal, which distinctions
-it admits, and what its own Sameness, judgment, Identity and Establishment mean.
+This ADR defines the constituent meaning of completed collection and structured values. It creates no new 1D
+Contract, independent judgment, Collection runtime or universal host API, and gives no shared collection calculation
+authority to establish Input, Fact or other Contract material. The owning 1D decides which completed meanings it
+admits and how its own Sameness, judgment, Identity and Establishment apply. In particular, the common ability to
+describe a Bag or Positional Product does not change ADR-0064 §7.9's V1
+Input presentation forms.
 
-A common family must not silently add a position, remove a duplicate, choose a representative, invent an absent value,
-or transform a source-defined effect into Contract authority. The semantic coverage model must account for every
-relevant distinction of a supported Java/Kotlin source operation. Family availability does **not** expand the forms
-already allowed by ADR-0064 §7.9 in V1 Input.
+A family describes what a value must preserve, independently of the class or storage used to realize it. A source
+operation may return a value that combines several such laws. The laws below describe **five basic forms of completed
+value**, followed by closed forms and compositions that retain their own exact observations. They are not a claim that
+five is a unique mathematical minimum, five public classes, five IR variants or five kinds of Contract authority.
+Their use depends on the exact source meaning and the authoring law that admits it.
 
-#### 3.1.1. Constituent families
+#### 3.1.1. Common formation and the five basic forms
 
-The common model distinguishes the following completed-result meanings:
+A completed value has a determined constituent schema where one is required, an exact meaning for each lawful
+constituent, and a complete account of the relationships that its form exposes. The form determines what counts as
+empty, which constituents can be absent, how repeated constituents are distinguished and what completion requires.
+Constituent comparison uses the relation lawfully selected for that use; neither host `equals` nor Contract Sameness is
+an implicit global comparison. A source operation that exposes a particular retained representative may require more
+information than a membership test that treats several candidates as equivalent (§§3.7–3.8).
 
-| Family               | Required semantic distinction                                                                        |
-|----------------------|------------------------------------------------------------------------------------------------------|
-| Encounter Sequence   | Ordered constituent occurrences and multiplicity without inventing an indexed-access law             |
-| Indexed Sequence     | A defined position domain with a constituent at each position and repeated occurrences where present |
-| Multiset / Bag       | Each distinguishable member's occurrence multiplicity without intrinsic position                     |
-| Membership           | Presence and absence of members under the applicable discrimination relation                         |
-| Association          | Distinguishable keys and each key's value correspondence                                             |
-| Indexed Membership   | Presence and absence over a defined index domain and its ranges                                      |
-| Range Domain         | Bounds, endpoint inclusion and domain membership                                                     |
-| Progression          | Starting point, step, direction, stopping rule and resulting occurrences                             |
-| Named Product        | Individually declared named constituents and their meanings                                          |
-| Positional Product   | Individually defined constituent positions without inventing names                                   |
-| Closed Tagged Choice | A closed alternative domain, the selected alternative and its associated payload                     |
+The basic forms are:
 
-A Multiset cannot be reduced to Membership without losing multiplicity, or to Sequence without adding position. A
-Range Domain and a Progression are not interchangeable. A Positional Product exists in the common meaning space but
-is not thereby permitted as an arbitrary tuple in V1 Input. A Source result that resembles a Product or Choice does
-not acquire Contract Sameness, Failure authority or case Identity from its host class.
+| Basic form                    | Required completed-value meaning                                                                                                                      |
+|-------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Ordered Occurrence**        | A finite number of constituent occurrences, their complete linear encounter order, and the value at each occurrence                                   |
+| **Finite Relational Extent**  | An exact, finite relation over declared constituent roles, with presence or nonnegative multiplicity for each distinguishable tuple                   |
+| **Functional Correspondence** | A declared key domain, the keys for which a mapping is defined, and exactly one value for each such key; partial and total mappings are distinguished |
+| **Declared Product**          | A closed schema of individually declared roles or slots, with each role's required presence and value                                                 |
+| **Closed Tagged Alternative** | A closed case schema, exactly one selected case, and the payload required by that case                                                                |
 
-#### 3.1.2. Composed family meaning
+**Ordered Occurrence.** A complete ordered result has a finite extent of occurrences. Each occurrence has one
+completed constituent meaning, and every pair of distinct occurrences has a determined encounter order. Two
+occurrences may have equal constituent values without becoming one occurrence. An empty result has no occurrences; a
+pending iterator or a partly consumed producer does not thereby constitute a completed result. The relative rank of
+an occurrence can be derived from a complete linear order. An indexed-access or separate source-position law is an
+additional obligation: encounter order alone does not authorize arbitrary indexed operations. A source may also
+expose a reverse or backed view; that view's lifetime and effects are interpreted under §§3.3, 3.5 and 3.9 rather
+than added to the completed Sequence's intrinsic identity.
 
-A family may combine constituent relations without becoming an additional Contract authority. The common model must
-preserve, when defined by the applicable source and admitted by its owner:
+**Finite Relational Extent.** A relation has a declared finite arity and a role schema that fixes the meaning of
+one tuple's constituents. It has a finite support of distinguishable tuples. For each tuple, the completed relation
+states either whether it is present (**Membership Extent**) or its exact nonnegative integer multiplicity (**Bag
+Extent**). In Membership Extent a tuple is present at most once; in Bag Extent repeated occurrences are counted and
+have no intrinsic encounter order. Multiplicity zero means absence under the relation's applicable discrimination.
+A negative multiplicity is not a completed Bag value; a signed delta used to calculate a new relation is a different
+calculation meaning. The number of distinct members and the sum of multiplicities are different observations where
+the form provides both. The role schema may describe a relation of arity greater than two, without choosing one role
+as a key or imposing a traversal order. A zero-arity relation, when explicitly admitted, distinguishes the absence
+and presence of the empty tuple; it does not acquire Boolean Contract authority by that resemblance.
 
-- ordered and navigable Membership or Association, including source-defined encounter order, comparison order,
-  range and neighbor relations;
-- group and partition existence, their keys, empty constituents where significant, and each group's lawful
-  multiplicity and order;
-- multiple value occurrences associated with a key;
-- slice, window and prefix results, including each distinct result and any legitimate relationship to its origin;
-- nested structured constituents, with all lawful relations of the contained family.
+A discrimination relation must be lawful over the actual constituent domain for the use claimed. In particular, an
+approximate comparison that is not transitive cannot establish unique members. A qualified source comparator may
+legitimately group values differently from `equals`. Its grouping law and any source-observable retained
+representative are both preserved; discarding that representative merely because it belongs to an equivalent group
+can lose source meaning. This rule does not transfer source discrimination into an owning 1D's Sameness (§3.7).
 
-These are **semantic compositions**, not a mandate to mint separately stored Contract objects, host classes or HIR
-nodes for every named form. Two family descriptions may be unified only if their legal observations remain exactly
-representable after composition, including presence, absence, multiplicity, order, representative, bounded selection
-and constituent completeness. Merely sharing a result interface or host `equals` is not proof of equivalence.
+**Functional Correspondence.** A correspondence declares its lawful key domain and the exact key-discrimination
+law. It determines a domain of present keys within that key domain and one completed mapped value for every present
+key. A **partial** correspondence permits a missing key; a **total** correspondence has a mapping for every lawful
+key. These are distinct completed meanings. A present key mapped to an admissible null value is not a missing key.
+Two values associated with the same distinguished key cannot coexist as separate mappings in a functional result;
+the source operation that handles a colliding key determines whether it rejects, replaces or selects a value and
+which representative remains observable (§§3.3 and 3.8).
 
-#### 3.1.3. Common distinctions and limits
+A finite partial Association can also be described as a finite binary relation with the functional condition. That
+shared description does not erase the Association's key, presence, lookup and representative obligations. A total
+correspondence over a non-enumerated or unbounded domain instead requires a closed, qualified law determining the
+value at each lawful key; a finite list of entries does not by itself establish it. Such a law is admitted only when
+its determinants, completion and required observations can be established under the owning Contract. An arbitrary
+callback, unresolved predicate or physical default storage value does not establish a completed total function.
+An operation claiming equality or full-domain reasoning must itself have a lawful, determined result; the ability to
+describe a symbolic function does not imply that arbitrary function equality is decidable or eligible for a 1D.
 
-The family model must keep source discrimination, Contract Sameness, value Identity, occurrence, position and current
-membership separate. The comparison law needed by a family is not a global equality: the selected Source Operation
-uses its own qualified relation, while the owning 1D uses its own declared law. Encounter order, explicit position,
-comparison order and priority-head selection are different observations. Cardinality means the number of constituents
-specified by the relevant family; it is not automatically a platform capacity, number of completed evaluations, or
-number of waiting operations. Absence, present null, empty collection, unevaluated constituent, failed evaluation and
-unavailable-but-present source item are distinct where the governing laws distinguish them.
+**Declared Product.** A Product is formed from a finite, closed declaration of constituent roles. In a Named
+Product those roles are declared by their exact names or nominal coordinates; in a Positional Product each fixed
+slot has its own declared role. For every role the schema determines its admitted value and presence condition. A
+complete Product settles the required presence and value of each role. An absent optional role is different from a
+present role containing an admissible null. A positional slot is not an occurrence in a dynamically sized Sequence,
+and a declared name is not an arbitrary Association key. Two nominal schemas are not made equal by matching field
+spellings. Source Type resolution remains with ADR-0079; a Java record, Kotlin data class or tuple-like object does
+not automatically select Contract constituents.
 
-A *value family* is not the same thing as a stateful collection **operation**, traversal **protocol** or **observation
-lifetime**. The latter may change a destination, block or hand off an item, invoke callbacks, depend on time, expose a
-live view or defer evaluation. Those exact source meanings must still be interpreted under §§3.3, 3.5 and 3.9; they
-are not additional immutable Contract Value Families merely because the SDK calls them collections. The Design owns
-their inventory and classification, including producer/consumer surfaces adjacent to the Collection Framework.
+**Closed Tagged Alternative.** A Choice has an explicitly closed set of admissible cases. Each completed value
+selects exactly one case and completes the payload prescribed for that case; unselected cases contribute no payload.
+For example, a case with an admissible null payload differs from a case with no payload. An open subtype search or
+host inheritance hierarchy cannot supply an undeclared case. A source `Optional`, `Result` or enum-like declaration
+may be interpreted only under its exact qualified meaning; no case automatically acquires 1D Absence, Failure,
+Identity or judgment authority.
 
-Family names in this Draft are semantic descriptions, not fixed IR discriminants, physical encoding, serialization
-codes or source type aliases. The Source Coverage Index and callable mapping in the companion Design remain evidence
-of investigated candidates, **not** proof that every public Java/Kotlin overload is supported.
+These forms have distinct formation laws, even when one may be represented in another. The existence of a conversion
+is not proof that its source and result are the same value: removing encounter order, collapsing multiplicity,
+selecting an undeclared representative, fabricating absence or inventing an indexed position changes or adds observed
+meaning. Exact conversions and shared calculations must define such changes as results, not perform them silently.
+
+#### 3.1.2. Closed value forms and compositional obligations
+
+The five forms do not replace the names and obligations by which a user expresses a particular collection. A
+completed Membership, Bag, Association, Indexed Sequence or structured result must be recognized under its own **closed
+form law**, even when its construction reuses a basic form. Each such law fixes its additional schema,
+observations, completion and legal conversion. Merely placing two base descriptions beside one another is not a
+completed composite value: the same lawful constituents must be related consistently across their descriptions.
+
+| Completed form           | Basic formation                                 | Additional meaning that must be preserved                                                                   |
+|--------------------------|-------------------------------------------------|-------------------------------------------------------------------------------------------------------------|
+| Encounter Sequence       | Ordered Occurrence                              | Repeated occurrences and source-guaranteed encounter order; no implicit indexed access                      |
+| Indexed Sequence         | Ordered Occurrence with a declared position law | The exact valid positions, position-to-occurrence correspondence, and lawful boundary/access distinctions   |
+| Multiset / Bag           | Finite Relational Extent, Bag mode              | Nonnegative multiplicity per distinguishable member, without an invented order                              |
+| Membership               | Finite Relational Extent, Membership mode       | Presence and absence under the selected lawful member-discrimination relation                               |
+| Association              | Functional Correspondence                       | Key presence, exactly one mapped value per distinguished present key, and required key representatives      |
+| Indexed Membership       | Membership with a declared index law            | Which valid indexes are present, its range observations, and the distinction between cardinality and extent |
+| Ordered Interval / Range | Closed interval law                             | Ordered carrier, exact bounds, endpoint inclusion or exclusion, empty condition and lawful membership       |
+| Discrete Progression     | Closed progression law                          | Start, step, direction, termination, last-value and generated-occurrence laws                               |
+| Named Product            | Declared Product, named roles                   | Exact declared constituent coordinates and their presence laws                                              |
+| Positional Product       | Declared Product, fixed slots                   | Per-slot roles and values, without treating the slots as a generic V1 Input tuple                           |
+| Closed Tagged Choice     | Closed Tagged Alternative                       | Exact selected case and conditional payload                                                                 |
+
+An Indexed Sequence's relative position may be derived from its encounter order, but any source-defined index
+units, allowed indexes, boundaries or accesses retain their exact law. For a zero-based List of length `n`, element
+indexes and inter-element boundaries are not the same domain. Those relative positions are not Input nominal
+coordinates, Text scalar positions or physical Dense Ordinals. Indexed Membership likewise distinguishes its
+included indexes from the entire valid index domain. For a Java `BitSet`, the results of `cardinality`, `length` and
+`size` must follow their distinct exact source meanings; reserved storage capacity is not a universal Membership
+cardinality.
+
+Additional completed forms combine relations without creating additional Contract authorities:
+
+| Composed form            | Required coupling                                                                                                                                                  |
+|--------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Sequenced Membership     | The ordered occurrences correspond exactly to the distinct present members; neither missing nor repeated members may be invented by the order component            |
+| Navigable Membership     | Membership, exact comparison order and source-defined bounds and neighbor selection; a sorted traversal alone is insufficient                                      |
+| Sequenced Association    | Encounter order is defined over the actual mapping entries; an access-order view or modification has its separately qualified source effects                       |
+| Navigable Association    | The same mapping keys participate in the qualified comparison, range and neighbor laws, including comparator-equivalent keys and retained representatives          |
+| Grouped Collection       | Group keys and group presence are defined; each present group's constituents retain their own occurrence, multiplicity and order laws                              |
+| Partitioned Collection   | Declared partition alternatives and their presence are respected, including an explicitly existing empty partition                                                 |
+| Multi-Association        | A key can have multiple value occurrences; their multiplicity and any source-defined order are preserved without imposing functional uniqueness on each occurrence |
+| Slice / Window result    | Selected constituents, exact selection boundaries and any source-required origin relationship or temporary observation lifetime                                    |
+| Prefix result            | Each prescribed intermediate result and any initial result, with the exact source calculation order and completion law                                             |
+| Nested structured result | Each contained value's formation, required presence and completeness; nested references do not themselves create Contract identities                               |
+
+A Group with an empty constituent and a Group that does not exist are different wherever the applicable law exposes
+that difference. A Window result that borrows a temporary view is not thereby a persistently completed immutable
+Contract value. A prefix calculation that returns intermediate values remains subject to its actual evaluation and
+alias conditions (§3.9). The tables define required distinctions; whether a specific Source Operation forms each
+result and how it does so remains governed by §3.3.
+
+#### 3.1.3. Interval, progression, coordinate and shaped-value laws
+
+There is no generic `Domain` or `Coordinate Region` Family that can accept an arbitrary predicate and confer Contract
+meaning on it. An ordinary value's admitted domain follows its owning Type, Numeric, Text and 1D laws. A range,
+progression or shaped result instead supplies a **specific completed meaning** with the following obligations.
+
+An **Ordered Interval** declares the exact ordered carrier, lower and upper bounds where present, each endpoint's
+inclusion law, and its empty condition. Membership is judged by that declared comparison law. Two source ranges may
+contain the same members on a discrete carrier while exposing different bounds; a result that lawfully exposes those
+bounds must preserve them. Neither the set of included members nor a host comparison's `equals` result alone decides
+all Range observations.
+
+A **Discrete Progression** declares its start, step, direction, stopping and last-member law, including the exact
+conditions for emptiness, valid step and arithmetic boundaries. It determines the values produced in their lawful
+order when enumerated. The progression rule and its completed enumeration are different results where the source
+exposes the rule itself. Numeric overflow or source-specific stepping follows ADR-0078 and the resolved Source
+Operation; a generic sequence algorithm must not substitute its own last-member calculation.
+
+An **Index or Axis Schema** defines the exact role and coordinate domain of each axis, any ordering or label law,
+and the permitted coordinate tuples. A **Shaped Indexed Aggregate** binds such a schema to a correspondence over
+coordinates and states whether it is total or partial. Rank and shape are meaningful where this completed form
+exposes them: shapes `0×3` and `3×0` remain distinct even though both have no coordinate values. Changing the order
+of named axes does not automatically preserve or change the value; the exact axis-identity and alignment law of the
+selected form decides correspondence.
+
+A **Sparse or Masked Aggregate** distinguishes an invalid coordinate, a valid coordinate with no mapping, an explicit
+zero value, an admissible null value and a separately defined mask state wherever those distinctions are supported.
+The absence of a stored entry is not by itself a semantic zero. A **Ragged Aggregate** requires a closed law for how
+lawful coordinates on an earlier axis determine the domain of a later axis; ordinary nested Sequences are not
+silently treated as rectangular tensors. Arbitrary callbacks do not establish an unbounded axis law merely because
+they can enumerate coordinates. These are precise formation obligations for claimed supported forms, not automatic
+V1 or V2 Tensor eligibility. ADR-0078 §14.1 retains Numeric Format, numeric operations and the stated V2 Tensor
+support boundary.
+
+A **Graph or Hypergraph** may be formed from declared node and edge constituents and exact incidence relations.
+Parallel edges must remain distinguishable when the graph law gives them distinct semantic coordinates; an edge
+cannot be identified only by its endpoints in such a graph. Hyperedges may associate more than two declared roles.
+A graph may describe cyclic data without permitting a cycle in Contract Establishment dependencies. Partial orders,
+rooted trees and forests likewise require their own relation constraints rather than inheriting them from a nested
+collection or a physical graph representation. A **Weighted Relation** declares the value and meaning of its weight
+separately from Bag multiplicity. Neither a cost, probability nor signed incremental delta is automatically an
+occurrence count.
+
+These forms can use the five basic formation laws without making range bounds, shape, axis labels, edge distinction
+or required group presence optional metadata. Each claimed form must close its own legal domain, result
+observations, partiality and completion conditions before it is used as a completed Contract-visible value. A family
+name alone is insufficient qualification.
+
+#### 3.1.4. Observation, composition and authority limits
+
+Completed results may agree under one comparison and differ under another legal observation. Full constituent
+agreement requires every distinction the selected completed form actually owns, including any relevant occurrence,
+role, multiplicity, key, representative, ordering, boundary, shape or case information. This is not an additional
+universal `equals` operation or an owning 1D's Sameness. Two named forms may be unified only when their complete
+legal observations and the required conditions of their operations are preserved; sharing a host interface, a
+physical representation or a convertible mathematical description does not establish that equivalence.
+
+The common model keeps source discrimination, Contract Sameness, value Identity, occurrence, semantic position and
+current membership separate. Encounter order, source comparison order, declared coordinate order and priority-head
+selection remain different observations. Cardinality refers to what the selected completed form counts, not
+platform storage capacity, number of evaluations or number of waiting operations. Absence, present null, empty
+collection, deferred constituent, failed computation and a source item temporarily unavailable for consumption are
+different where the selected laws distinguish them (§§3.6 and 3.9).
+
+A completed value form is distinct from a stateful collection operation, traversal protocol or observation lifetime.
+A source may mutate a destination, block or hand off an item, invoke callbacks, depend on time, expose a live view or
+defer evaluation. Those behaviors remain part of the exact Source Operation under §§3.3, 3.5 and 3.9. A lawful
+short-circuit calculation may complete its own result without completing a larger source collection. Such source
+operations do not become new immutable Value Families merely because their carrier is called a collection.
+
+The common family names are semantic descriptions and can be composed without creating separate host classes, HIR
+nodes, serialization codes or Contract identities. The companion Design retains the Java/Kotlin operation and
+producer/consumer inventories, source-version profiles and qualification evidence. Candidate inventories, including
+mechanically collected public declarations, do not establish that every resolved callable is eligible or supported.
 
 ### 3.2. Host Objects Are Representations
 
@@ -243,12 +394,11 @@ A collection calculation preserves the distinctions required by its selected sou
 its consuming Contract. The output of a transformation need not preserve every distinction of its input. It must
 preserve the result that the transformation actually defines.
 
-The relevant observations follow the selected result family and operation: position and occurrence multiplicity;
-member inclusion and exclusion; mapping and key discrimination; group and partition presence; a source-guaranteed
-order, range or neighbor; a selected representative; a prefix/window constituent and its lawful lifetime; a
-Progression's actual generated occurrences; and admitted nested Product or Choice relations. A stateful source
-operation may additionally have a head, transfer or time-gated eligibility observation. None of these distinctions
-is automatically present in every Family.
+Section 3.1 defines the constituent relations available from each completed form. A transformation preserves the
+observations actually defined by its result, including required position, multiplicity, membership, correspondence,
+representative, shape and constituent completeness; it does not carry unrelated source distinctions into that result.
+A stateful source operation may additionally have a head, transfer or time-gated eligibility observation under its
+own qualified source law.
 
 Two completed collection results may be equal under one declared relation while differing under another legally
 observable ordering or selection law. Equality under a narrower relation is therefore insufficient proof of
@@ -508,11 +658,13 @@ repair and early cutoff without assigning a particular propagation algorithm to 
 
 ## 4. Consequences and Deferred Work
 
-This ADR fixes the common constituent and relational meaning that qualified Collection calculations must preserve.
-The Contract laws in §§3.1–3.11 do not make every Java/Kotlin operation legal in every 1D, compel materialization or
-copying of temporary results, or require a particular storage layout, algorithm, state engine, runtime proxy, IR node,
-cache scheme or incremental scheduler. Completed Contract meaning and mandatory source observations remain
-independent of those implementation choices.
+This ADR fixes five basic completed-value formation laws together with the additional closed forms and semantic
+compositions required for Collection and Structured Value results (§3.1). They provide common constituent and
+relational meaning without eliminating the independent obligations of a Sequence, Bag, Membership, Association,
+Range, Progression or Shaped Aggregate. The Contract laws in §§3.1–3.11 do not make every Java/Kotlin operation legal
+in every 1D, compel materialization or copying of temporary results, or require a particular storage layout,
+algorithm, state engine, runtime proxy, IR node, cache scheme or incremental scheduler. Completed Contract meaning
+and mandatory source observations remain independent of those implementation choices.
 
 The **Collection SDK Interpretation and Calculation Design** owns detailed Value/Operation/Observation catalogs,
 Java/Kotlin type and implementation mappings, precise public-callable and overload inventories, SDK version/Preview
@@ -521,10 +673,12 @@ findings on source-representation observations, stochastic operations, temporary
 ADR-0079 and ADR-0084 retain exact binding and interpretation authority. The Design is implementation-facing and
 cannot amend this ADR or admit a new Input/Fact law.
 
-The remaining work is to finish exact-source qualification; prove the completeness and compositional sufficiency of
-the Family model, including currently unclassified source surfaces; verify deterministic refinement against each
-specified outcome set and its mandatory execution effects; exercise partial failure, protected internal observations,
-views, lazy and concurrent acquisition; and compare clean, reused, optimized and incrementally maintained results.
+The remaining work is to finish exact-source qualification; verify that the five basic formation laws and their
+closed compositions cover each resolved Source Operation without losing its legal observations, including currently
+unclassified source surfaces; complete the exact result and partiality laws of individual common Collection
+calculations; verify deterministic refinement against each specified outcome set and its mandatory execution effects;
+exercise partial failure, protected internal observations, views, lazy and concurrent acquisition; and compare clean,
+reused, optimized and incrementally maintained results.
 Security and fault-injection obligations remain in SADR-0002. ADR-0075 owns result currentness and early cutoff;
 Rollback, Scope, external Transaction and Failure owners govern protection and recovery. The companion Design tracks
 these work items and their evidence without turning them into new Collection Contract authority.
