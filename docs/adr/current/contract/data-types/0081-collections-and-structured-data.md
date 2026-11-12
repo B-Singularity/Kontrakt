@@ -484,6 +484,299 @@ No universal sort or tie-breaking procedure is imposed to manufacture determinis
 distinction only when no remaining legal calculation needs it. ADR-0078 §4.3 and ADR-0080 §3.7 govern that preservation
 obligation.
 
+### 3.4.1. Common Collection Calculations and Their Results
+
+The common calculations below observe or form the completed values defined in §3.1. Their result laws are part of
+collection meaning, while exact Java/Kotlin callable selection and any required evaluation effects remain with §3.3
+and ADR-0079/0084. Each calculation is available only for a value whose selected form supplies its required
+constituents and relations. A calculation may have a lawful result without being available to every 1D; the owning
+1D decides its permitted use. Conversely, the absence of a particular host method or compiler implementation does
+not remove a lawful common calculation.
+
+The names below distinguish results, not required public methods, HIR instructions or runtime algorithms. One
+implementation may share work between several calculations, and another may realize them separately. Where a result
+can be determined from another completed observation, that relationship is binding, but it does not require one
+calculation to call the other. A source method with additional guaranteed behavior is not interchangeable merely
+because its returned value agrees. Sections 3.3 and 3.9 govern those source conditions.
+
+#### 3.4.1.1. Cardinality, Count and Empty (R02-1)
+
+**Occurrence count** of a completed Ordered Occurrence is its number of occurrences. Equal constituent values are
+counted separately: `[A, A, B]` has three occurrences. **Member count** of a finite Membership counts the distinct
+present members under its already selected discrimination law. **Tuple count** of a finite Membership Relation counts
+its present distinguished tuples under the declared role schema. **Total multiplicity** of a finite Bag counts each
+tuple as many times as its admitted multiplicity; **distinct member count** counts its present distinguished tuples
+once. Consequently `{A×2, B×1}` has total multiplicity three and distinct member count two. These are separate
+calculations, even when they happen to have the same result.
+
+**Mapping count** of a completed finite Association counts its present distinguished keys, equivalently its current
+mappings. Distinct keys mapped to equal values remain separate mappings. No finite mapping count is implied for a
+qualified total correspondence over a domain that is not established to have a finite, countable extent. A lawfully
+completed value may therefore support direct value access without supplying this count.
+
+**Empty** determines whether the selected form has no constituent of the kind that calculation observes. A completed
+Sequence is empty when it has no occurrences; a finite Membership or Bag is empty when it has no present member;
+a finite Association is empty when it has no present mapping. Where a corresponding exact finite count exists, Empty
+is true precisely when that count is zero. Empty remains a distinct observable calculation: an implementation need
+not evaluate the full count to decide it. An unevaluated producer is not an empty completed value (§3.9).
+
+These counts do not replace other quantities. A Product's number of declared roles differs from the number of its
+present optional roles. A Choice selects one case, but that does not define a general collection cardinality for
+its case schema. An Indexed Membership's member count differs from its index extent. A shaped result may expose the
+number of valid logical coordinates and, separately, the number of present mappings; rank-zero total scalar shape
+has one empty coordinate, while `0×3` and `3×0` have no value coordinates but retain different shapes (§3.1.3).
+Where such a quantity is exposed, its counted subject must be stated rather than inferred from a generic `size`.
+
+**Matching-occurrence count** counts the occurrences satisfying a selected lawful comparison or condition. It is
+not a Membership's distinct member count. For example, counting occurrences matching `A` in `[A, A, B]` returns
+two, whereas querying the Membership `{A, B}` for A's presence returns a Boolean. A Bag's count for one member
+returns its multiplicity, not its overall total. Conditions executed through Source callbacks retain their exact
+Source evaluation obligations (§3.3); the common count does not mandate a traversal strategy.
+
+A completed count denotes the exact nonnegative quantity specified by the calculation. Formation of a numeric
+result, its admitted format and representability follow ADR-0078. A source method that saturates, overflows or
+reports capacity according to its own specification is qualified as that source calculation, not automatically as
+exact common cardinality. Java `BitSet.cardinality`, `length` and `size` illustrate respectively a member count, an
+index-related extent and a storage-capacity observation; their distinct source results remain governed by §3.3.
+
+#### 3.4.1.2. Member Presence and Matching Existence (R02-2)
+
+**Member Presence** answers whether a lawful candidate belongs to a completed Membership under that Membership's
+selected discrimination relation (§3.7). For a Bag it answers whether the candidate's multiplicity is positive;
+it does not report that multiplicity. For a finite Relation it tests a tuple formed under the declared role schema.
+A candidate with the wrong role schema or outside the lawful comparison domain does not become an absent member
+merely because the calculation cannot compare it.
+
+**Matching Existence** on an Ordered Occurrence answers whether at least one of its occurrences matches the candidate
+under the comparison law selected for that calculation. Its result is Boolean when that law determines the required
+comparisons. `[A, B, A]` contains two matching occurrences of `A`, but Matching Existence returns true once; it does
+not select a representative or remove duplicate occurrences. A Sequence's encounter order alone does not establish
+Membership's discrimination relation.
+
+A calculation testing all requested candidates, disjointness between two completed extents, or the existence of a
+mapping whose **value** matches a candidate must identify the relations and the sides being compared. `containsAll`
+and `disjoint` are not automatically identical to repeated host `contains` calls where their Source comparison or
+evaluation meaning differs. Value matching in an Association examines present mapped values; it is not Key Presence.
+Ordered Interval membership instead follows that interval's declared bounds and ordering (§3.1.3), without requiring
+enumeration. For an indexed membership, querying a lawful index observes whether it is present, not whether the
+index falls inside a storage-capacity limit.
+
+A selected condition over occurrences or tuples may support Exists, All or None results. The condition's domain and
+result interpretation must be established for that exact calculation. In particular, SQL's three-valued `IN` or
+`WHERE` and a source mask's null handling do not create a universal Collection Boolean or Absence conversion.
+A complete false existence result requires sufficient lawful knowledge that no qualifying member exists; an early
+true result may be complete when the selected operation permits short-circuiting (§3.9).
+
+#### 3.4.1.3. Association Presence and Lookup (R02-3)
+
+**Key Presence** reports whether a lawful key has a present mapping in a completed Functional Correspondence. **Mapped
+Value Access** returns the value associated with a present key. A lawful but unmapped key supplies no
+successful mapped value for direct access; it does not manufacture a default constituent. An invalid key is not
+simply a missing mapping. A present mapping whose value admits a null-like meaning remains present (§3.6).
+
+A selected **absence-reporting lookup** may form a completed result that distinguishes a found mapping and its value
+from a missing mapping. Such a result is governed by its exact declared result form, which may use a Closed Tagged
+Alternative; it does not create a universal Optional or Null Family. **Default lookup** may instead choose a
+specified fallback value when no mapping is present, without inserting that value into the correspondence. The
+same correspondence must yield compatible Key Presence, direct access and absence-reporting results for the same
+lawful key and completed observation. These calculations remain separately expressible; the relation does not
+require a particular combined lookup implementation.
+
+**Key, value and entry selection** are different observations. Selecting the stored key representative requires
+the representative law already owned by §3.8; selecting a mapped value does not silently determine that key object.
+`Map.get(k)` returning source `null` cannot by itself prove whether the mapping is absent or maps to an admissible
+null-like value. A source implementation combining `get` and `containsKey` must satisfy its actual observation and
+concurrency conditions before claiming a coherent result (§§3.3, 3.6 and 3.9).
+
+#### 3.4.1.4. Index, Boundary and Selection (R02-4)
+
+**Positional access** selects a constituent under an Indexed Sequence's declared position-to-occurrence relation.
+An Ordered Occurrence without lawful indexed access does not acquire that operation by virtue of its linear order.
+The exact index domain and the result for a position outside it follow the selected calculation. Indexes of an
+Indexed Membership or coordinates of a Shaped Aggregate use their own declared domains (§§3.1.2–3.1.3).
+
+A **boundary** describes a cut used by a particular insertion, slice or range-selection calculation, not another
+existing element. In a zero-based Indexed Sequence with four occurrences, the element indexes are `0..3`, whereas
+an insertion calculation may admit boundaries `0..4`. The end boundary `4` identifies the point after the last
+occurrence; it is neither an element at index `4` nor a physical tail address. A completed empty Sequence may have
+an insertion boundary `0` without having a last element. Whether the implementation keeps a length, cursor, node
+reference or explicit boundary representation belongs to realization, not this Contract.
+
+A **contiguous selection** states its bounds and endpoint inclusion. Under the usual half-open zero-based selection,
+`[1,3)` from `[A,B,C,D]` produces `[B,C]`; `[2,2)` produces an empty result with its selected form. **Indexed
+gather** instead follows an exact list of selected indexes, including their order and repetitions where the operation
+allows them: gathering `2,0,2` from the same Sequence produces `[C,A,C]`. These are distinct result laws. `Take`,
+`Drop`, strided selection and a source-defined filled range require their actual bounds and formation rules; a
+requested end beyond the input may fail, truncate or introduce source-prescribed fill values, depending on the
+selected operation. No universal slice behavior is inferred from the method name.
+
+**First and last selection** use the selected ordered value's actual order and are applicable only where the
+relevant result exists; they do not define a last constituent for an empty Sequence. **Navigable selection** uses
+the qualified comparison relation and its strict or inclusive neighbor rule. It is not positional selection under
+encounter order. An operation returning an index, insertion-point encoding, selected value, matching extent or
+representative states that result explicitly; Java `binarySearch`'s encoded absent result is not a generic Index
+law. Where the source returns a backed view, its origin relationship and observation lifetime remain with §§3.3
+and 3.9 rather than becoming an immutable slice by assumption.
+
+#### 3.4.1.5. Construction and Composition (R02-5)
+
+**Ordered concatenation** forms a new ordered value by taking every occurrence of the left input in order and then
+every occurrence of the right input in order. Neither equal values nor repeated occurrences are discarded:
+`[A,B]` concatenated with `[B,C]` produces `[A,B,B,C]`. Append and prepend place new occurrences at the declared
+end or beginning of the result without requiring a boundary object in the implementation. A construction from an
+unordered source cannot claim a determined encounter order unless the selected source or lawful choice rule
+supplies it (§3.3).
+
+**Positional composition**, including Zip, declares which occurrences correspond and the result formed from each
+match. The ordinary shortest-input Zip of `[A,B,C]` with `[1,2]` produces `[(A,1),(B,2)]`; requiring equal lengths,
+adding fill elements, or producing a different pair form requires its own selected law. Its pair may be a Declared
+Product, but paired relative positions do not become Input nominal coordinates. **Flatten** follows the declared
+outer and inner constituent relationships. Flattening `[[A,B],[C]]` under ordered concatenation produces `[A,B,C]`;
+it does not authorize arbitrary recursion or erase a Product, Choice, Graph or Shape's required schema by default.
+
+**Membership, Bag and Association construction** form completed results under the already selected discrimination,
+multiplicity and key-collision laws (§§3.1 and 3.8). Construction need not preserve every input distinction: a Set
+construction may discard repeated occurrences, whereas a Bag construction retains their counts. Which key/value
+mapping survives a repeated key is specified by the selected construction, not an implicit last-wins rule. A composed
+Graph, grouped result or Shaped Aggregate must satisfy its declared cross-form relationships before it can be
+considered complete. Union, intersection, difference and join are defined separately below; the word
+`composition` does not select one of them.
+
+#### 3.4.1.6. Value Transformation and Source Mutation (R02-6)
+
+A **completed-value update** forms a new value with the selected change applied to its constituents. It determines
+whether a position is replaced, a new occurrence inserted, one matching occurrence removed, every matching
+occurrence removed, a distinct member excluded, or a key mapping replaced. A positional change uses the declared
+index or boundary law; a membership change uses the existing discrimination; an Association change uses the exact
+key domain and collision law. These are different results. For instance, removing the first matching `A` from
+`[A,B,A]` yields `[B,A]`, while removing all matching `A` occurrences yields `[B]`. Neither calculation changes the
+original completed value's established meaning.
+
+A **mutable Source Operation** may instead change a destination and return an old element, a Boolean, a previous
+mapped value, an updated collection or another source-prescribed result. Java `List.remove(int)` and
+`List.remove(Object)` differ in both their target selection and returned result; `Map.put`'s returned `null` does
+not necessarily distinguish a missing prior key from a prior present-null mapping. A mutable operation's required
+intermediate observations, callback order where guaranteed, and partial state changes survive as Source meaning
+under §3.3. One source implementation may leave completed changes behind after a failure while another guarantees
+a stronger failure behavior. The common completed-value transformation does not assert that the source call was
+atomic, automatically rolled back or effect-free. Protection and Failure authority remain with their owners (§3.5).
+
+#### 3.4.1.7. Set, Bag and Relation Operations (R02-7)
+
+On finite Membership values with compatible role schemas and an applicable common discrimination law, **Set Union**
+contains each distinguished member present in either input, **Set Intersection** contains each member present in
+both, and **Set Difference** contains each member present in the left input but absent from the right. Each result
+is a completed Membership under the selected law. When two source collections use incompatible discrimination
+relations, a common result must first establish an explicit lawful comparison; the name `union` or `difference`
+does not silently choose one. Source-guaranteed order or retained representatives remain additional observations
+where applicable (§§3.3 and 3.8).
+
+For a finite Bag, the following are **distinct calculations** on the multiplicity of each distinguished member:
+
+| Bag calculation        | Multiplicity in the result when left has `3` and right has `2`                                             |
+|------------------------|------------------------------------------------------------------------------------------------------------|
+| Additive Union         | `5`, the sum of the two multiplicities                                                                     |
+| Maximum Union          | `3`, the greater multiplicity                                                                              |
+| Minimum Intersection   | `2`, the lesser multiplicity                                                                               |
+| Subtractive Difference | `1`, the positive remainder after subtracting the right multiplicity, or zero if the remainder is negative |
+| Remove-all Difference  | `0`, because the right Bag contains that member                                                            |
+
+The same rules apply independently to each distinguished member. The calculation names express different results;
+a generic `Bag Union` or `Bag Difference` does not select among them. Completed Bag multiplicities remain
+nonnegative (§3.1.1). A signed delta used by an incremental implementation is not a completed Bag constituent.
+
+**Relation Union, Intersection and Difference** require compatible declared role schemas and a specified result
+mode; Membership mode uses presence and Bag mode uses the selected multiplicity rule. A result with no tuples keeps
+its declared role schema. **Relation Join** names the roles or matching condition by which source tuples combine,
+the resulting role schema, and the multiplicity or presence of each output tuple. In a Bag equijoin, each matching
+pair contributes the product of its input tuple multiplicities; if several matching pairs form the same output
+tuple, their contributions are added. For example, `(x,1)×2` joined with `(1,y)×3` on the shared role forms
+`(x,1,y)×6`. A Set result instead records matching tuple presence under its own result law.
+
+An inner join, outer join, semijoin and antijoin do not have one interchangeable result law. Each must specify what
+happens to unmatched tuples and which roles are present in the result. In particular, outer-join fill is not an
+implicit Contract Absence or Null conversion (§3.6). Weighted Relation combination follows the selected weight
+law; a numeric weight cannot automatically be treated as Bag multiplicity (§3.1.3). Hash, merge and nested-loop
+join are possible implementation methods, not Contract results.
+
+#### 3.4.1.8. Map, Projection and Filter (R02-8)
+
+**Element-wise Map** on an Ordered Occurrence forms exactly one output occurrence for each input occurrence, in
+corresponding order, when that is the selected operation. Distinct inputs may map to equal output values without
+losing occurrences: mapping the lengths of `["A","BB","C"]` yields `[1,2,1]`. An operation yielding zero or
+several outputs per input is a different calculation and additionally follows its declared flattening or composition
+law (§3.4.1.5). The Source Operation, rather than this common result law, determines required callback calls,
+elision and failure behavior (§3.3).
+
+**Projection** specifies which roles or constituents it retains and the result form. An ordered projection preserves
+selected occurrence order. A Bag Projection combines the multiplicities of source tuples that become
+indistinguishable in the projected result; projecting `{(x,1)×1,(x,2)×1}` onto the first role yields `{x×2}`.
+A Membership Projection retains `x` once under its applicable discrimination. The selected projection fixes the
+result role schema; it does not silently identify nominally distinct roles. Projection of a Weighted Relation
+combines weights only as allowed by its declared weight law, not by Bag addition by default.
+
+An Association's **Key Projection** observes its present distinguished keys. **Value Projection** observes the
+mapped value of every present entry and must preserve repeated values across different keys whenever the selected
+result form exposes their occurrence or multiplicity. **Entry Projection** retains each key/value correspondence.
+For `{K1→X,K2→X}`, Value Projection as a Bag produces `{X×2}`, not `{X×1}`. **Re-keying** forms new keys and must
+apply the selected collision and representative laws (§3.8); Kotlin `mapKeys`'s later-value behavior is an exact
+Source Operation rule, not a universal Association rule. A mapped null-like value remains a present value (§3.6).
+
+**Filter** states what it tests and what constitutes a retained result: an occurrence, distinguished tuple,
+Association entry, declared role or shaped coordinate. Retained constituents preserve the observations required by
+the selected result form, while excluded constituents do not contribute. Filtering entries of an Association may
+remove mappings but does not erase the correspondence of entries that remain. Filtering graph edges does not
+silently remove nodes unless that selected graph calculation declares such a result. Filtering a shaped value does
+not silently change its axis schema or invent missing coordinates. Group-presence consequences follow the selected
+Group calculation below.
+
+A source condition may be Boolean, three-valued or otherwise qualified; its exact result interpretation is part
+of the selected calculation, not a universal rule that a null-like result means false. Where a Membership class
+admits multiple source representatives, a transformation sensitive to their representation requires an actually
+lawful representative choice or a result that is independent of that choice (§§3.3 and 3.8). These requirements
+neither impose a proof language nor grant a runtime callback unrestricted Contract authority.
+
+#### 3.4.1.9. Grouping, Partition and Association Formation (R02-9)
+
+**Group Formation** applies a selected lawful key calculation to the input constituents and determines which
+groups exist and which original occurrences or tuples belong to each group. A grouping formed only from keys
+observed in its input does not invent groups for keys that never occur. A different calculation may preserve
+previously declared or already existing groups. The presence of an existing empty group remains distinct from the
+absence of that group (§§3.1.2–3.1.3).
+
+**Group Constituent Formation** specifies the result form of each group's contents. For an Ordered Occurrence,
+source-guaranteed encounter order is preserved within each group; for a Bag or Relation, each selected tuple's
+multiplicity is retained. No order is invented for an unordered input. Group-key encounter order and the order of
+members within a group are separate observations. A group-value transformation further follows the Map and Filter
+laws above; the Group's key presence does not change merely because its constituent values are transformed.
+
+A Grouping performed **after** filtering may omit groups whose keys no longer appear. Filtering **within groups**
+that have already been formed may leave their present groups empty. Thus grouping `[a1,b1]` and then removing every
+member from each group can yield `{a→[],b→[]}`, while filtering away all input occurrences before grouping yields
+`{}` under an observed-keys-only grouping. The selected operation determines whether it retains an empty group,
+including when an existing destination is supplied; it does not receive an implicit universal empty-group policy.
+
+**Partition Calculation** assigns constituents to declared alternatives according to its selected classification
+law. When a partition is declared complete and exclusive, every input occurrence belongs to exactly one selected
+partition and each required alternative remains present even if it receives none. Kotlin `partition` represents
+its Boolean alternatives as the two positions of a Product of lists; Java `partitioningBy` represents its
+`true` and `false` alternatives as present Map keys. The value formations are not automatically identical merely
+because both classify with a Boolean result. Partitions that admit overlap or omission require their own explicit
+formation law rather than being called complete, exclusive partitions.
+
+**Associate Calculation** forms a Functional Correspondence from selected key/value results. Where input constituents
+yield the same distinguished key, the exact selected construction law determines the final mapped value and any
+observable key representative (§3.8). An operation that retains all matched values is a Grouping or
+Multi-Association calculation, not the same result as an Associate operation that chooses one mapped value per key.
+Kotlin `associateBy`'s later-value selection and Java `Collectors.toMap`'s duplicate-key failure or explicit merge
+are qualified source differences, not defaults imposed on every Association.
+
+A source `Grouping` producer that has not been consumed is not a completed Grouped Collection. An operation
+updating an existing grouping or association destination may additionally change its source state and must retain
+its qualified effects. The corresponding callback, completion and concurrency conditions remain under §§3.3 and
+3.9. Aggregation inside a completed group, including its empty-input and Numeric results, is not decided by group
+formation alone and remains for the Fold, Reduce and Aggregate calculation work.
+
 ### 3.5. Immutable Results at Contract Boundaries
 
 Physical mutation during compilation or runtime realization is not itself a Contract property. The obligation concerns
@@ -752,10 +1045,11 @@ cannot amend this ADR or admit a new Input/Fact law.
 
 The remaining work is to finish exact-source qualification; verify that the five basic formation laws and their
 closed compositions cover each resolved Source Operation without losing its legal observations, including currently
-unclassified source surfaces; complete the exact result and partiality laws of individual common Collection
-calculations; verify deterministic refinement against each specified outcome set and its mandatory execution effects;
-exercise partial failure, protected internal observations, views, lazy and concurrent acquisition; and compare clean,
-reused, optimized and incrementally maintained results.
+unclassified source surfaces; complete the exact result and partiality laws of the remaining common Collection
+calculations (including Sort, Distinct, representative-sensitive selection, Fold, Reduce, Scan, Aggregate, Window,
+Chunk, Prefix, Range, Progression and shaped calculations); verify deterministic refinement against each specified
+outcome set and its mandatory execution effects; exercise partial failure, protected internal observations, views,
+lazy and concurrent acquisition; and compare clean, reused, optimized and incrementally maintained results.
 Security and fault-injection obligations remain in SADR-0002. ADR-0075 owns result currentness and early cutoff;
 Rollback, Scope, external Transaction and Failure owners govern protection and recovery. The companion Design tracks
 these work items and their evidence without turning them into new Collection Contract authority.
