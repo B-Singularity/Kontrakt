@@ -1,6 +1,6 @@
 # ADR-0081: Collections and Structured Data
 
-**Status:** Draft
+**Status:** Accepted
 
 **Date:** 2026-10-25
 
