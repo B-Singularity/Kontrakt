@@ -33,10 +33,6 @@ ADR-0048: Flow Contract Processing — Boundary Refinement and Core Entry
 
 ---
 
-> **Revision record.** The 2026-10-16 and 2026-10-17 reviews completed the two inbound Basis paths, HIR and
-> Established Protocols, Definition and Occurrence Establishment, and the separation of Admission outcomes from Failure,
-> Diagnostic, and Compiler Verification. Section 15 records the sequence. The normative rules are in Sections 5–11.
-
 ## 1. Context
 
 Admission judges whether the complete presentation supplied by a legal inbound application may continue. It consumes
@@ -676,6 +672,10 @@ Judgment-local pipelines follow the same rule. An unordered `Membership` does no
 a host API offers `first` or `last`; Admission may derive a
 temporary order only under its own exact supported ordering law.
 
+When an exact Source operation instead permits selecting any member or leaves its traversal order unspecified, Admission
+may use a qualified deterministic selection within the Source-permitted outcomes under Section 10. Such a selection
+does not establish Input-owned encounter order; Source-guaranteed order remains binding.
+
 ### 7.2. Ordinary Expressions and Temporary Computation
 
 The frontend may refine ordinary closed control flow when its complete meaning is known. Ordinary value expressions and
@@ -735,6 +735,11 @@ behavior must resolve every distinction that can affect the result. A host sort 
 deterministic first element when the comparator itself leaves Input-distinct values tied. Conversely, if the final
 Admission result is invariant under every legal tied permutation, Admission need not invent an observable tie order.
 
+The order-sensitive case is distinct from a Source operation that explicitly permits any member or an unspecified
+traversal. Section 10 permits an exactly qualified deterministic choice within that operation's allowed outcomes,
+including among comparator-tied candidates when their selection is Source-permitted. Stable sorting alone is not such
+a choice law, and a chosen representative does not create Input-owned order.
+
 Reduction legality is operation-specific. Side-effect freedom does not imply associativity; floating arithmetic is a
 representative case. A backend may reassociate or parallelize a reduction only when the exact result law permits it.
 
@@ -748,14 +753,19 @@ branch without lowering or realizing its otherwise lawful operations. Unreachabi
 forbidden by the applicable authoring law, or invalid under the source language, lawful. If the compiler cannot
 establish the unreachability, rejecting the source is a conservative V1 coverage decision.
 
-A partial operation is legal only when its domain is established on every path that reaches it or when its partiality is
-represented by an explicit non-exceptional semantic result. A guard that establishes the domain of a later operation is
-therefore semantically relevant even if the original source evaluation order is not. Optimizations may not move that
-operation onto a path where the guard no longer protects it.
+A partial operation is legal only when its domain is established on every path that reaches it, when its partiality is
+represented by an explicit non-exceptional semantic result, or when a source-authored, exactly qualified handler covers
+its legally reachable abrupt completion and the complete judgment still satisfies this Section. A guard that establishes
+the domain of a later operation is therefore semantically relevant even if the original source evaluation order is not.
+Optimizations may not move that operation onto a path where the guard no longer protects it.
 
-Exceptions are not branches of the Admission result. Catching a host exception and translating it into `Rejected` or
-`Admitted` is therefore illegal in V1. The same rule applies when realization fails for unrelated resource or VM
-reasons: Section 11 keeps those outcomes outside Admission.
+Exceptions are not branches of the Admission result. An authored `try`/`catch`/`finally` may contribute to a judgment
+only when its complete reachable Source meaning, exception conditions, handler selection, evaluation order, and required
+effects are exactly qualified. A Boolean returned after an authored handler completes normally is interpreted under the
+ordinary Admission result law; it is not a compiler conversion of a host exception into `Rejected` or `Admitted`. An
+unhandled Source exception must not be converted to an Admission outcome or silently bypassed to obtain a preferred
+normal result. The same rule applies when realization fails for unrelated resource or VM reasons: Section 11 keeps those
+outcomes outside Admission. Machine Failure meaning and processing remain with ADR-0057.
 
 Finite processing may scale with the actual finite Input extent. A fixed Definition-time step count is not required. A
 loop form whose progress depends on external progress, blocking, synchronization, or an unclosed recursive cycle remains
@@ -843,6 +853,21 @@ A host operation with several specification-permitted semantic outcomes is not m
 preference. V1 may accept it only when Admission selects one exact semantic operation, when all permitted outcomes are
 indistinguishable to the final judgment, or when another explicit preservation law justifies the narrowing.
 
+The last condition may be satisfied by a lawful deterministic refinement qualified for the exact resolved Java/Kotlin
+Source operation under ADR-0079 and ADR-0084. Its result must remain within the Source-permitted outcomes, and its
+required encounter order, evaluation, callback, state, normal or abrupt completion, and other effects must be preserved.
+An unspecified Set traversal or `Stream.findAny()` may admit a deterministic permitted choice; the choice does not imply
+an Input-owned order or change `findAny()` into `findFirst()`. Source operations that actually use a random generator
+retain the exact qualified random-source and state-consumption semantics; they are not replaced by arbitrary fixed
+results or a preferred normal completion in place of a required exception.
+
+The choice law uses lawful semantic determinants, not incidental hash order, object addresses, worker scheduling or
+cache state. It may share implementation with other qualified callables only where each Source law permits that choice.
+When the selected choice affects Admission, its determinants are part of the complete Admission Judgment Meaning under
+Section 6.3; SDK qualification does not itself grant Admission authority. If no lawful deterministic choice is
+qualified, final-judgment invariance may still establish deterministic meaning. Otherwise the judgment cannot satisfy
+the completion and determinism requirements of Section 6.5.
+
 Resource accounting remains separate from semantic legality. An operation can be finite and semantically valid while
 expensive. Budget, Capacity, compiler-safety, or backend limits retain the stopping result when such work exceeds their
 own law.
@@ -921,8 +946,10 @@ For finite collection predicates and repeated computation, the correct aggregate
 but a Diagnostic obligation need not enumerate every failing member or iteration. A deterministic representative
 witness may be given when its exact semantic selection is legal. For an Input-owned Sequence, an exact semantic
 position can select a witness. An unordered Membership does not permit the backend's first encountered element to
-become a stable witness. If no lawful deterministic member selection exists, the aggregate predicate itself remains
-an exact explanatory location; a member-level witness is not fabricated. A result such as `any == false` still requires
+become a stable witness. An exact Section 10 qualified member selection may supply a deterministic witness only when
+the applicable Diagnostic law permits that selection; it does not create Input-owned encounter order. If no lawful
+deterministic member selection exists, the aggregate predicate itself remains an exact explanatory location; a
+member-level witness is not fabricated. A result such as `any == false` still requires
 whatever complete evaluation its result law needs. Omission is permitted only for repetitive diagnostic detail, never
 for the Admission result or required evidence under the applicable Diagnostic definition.
 
@@ -1038,36 +1065,3 @@ replaceable implementation, subject to Sections 6.7–6.8, 10–11, and ADR-0075
 it does not undo the upstream occurrences that determine its application.
 
 ---
-
-## 15. Migration History
-
-This history records prior reviews, not additional normative Admission law. The current decisions are in Sections 5–11.
-
-The ADR originated in the Admission-owned part of ADR-0048. Its extraction left inbound-airlock composition with
-ADR-0048 and Admission judgment with ADR-0065.
-
-The **2026-09-22 Input review** replaced a direct-coordinate-only operand with the complete Input-owned presentation.
-It permitted nested observations without new nested authority, kept temporary computations local, and settled the
-finite traversal, local mutation, exception, hermetic-acquisition, and pattern conditions now in Sections 7 and 8.
-A subsequent occurrence review separated Admission occurrence identity from physical evaluation and retention and
-required a prior `Presented` Input Occurrence (Sections 6.2 and 11).
-
-The following **binding review** removed exact Input identity from Admission Definition meaning and assigned
-Input-to-Admission compatibility to ADR-0048 (Sections 6.3 and 6.7). The **2026-09-25 HIR and compiler-product review**
-introduced producer-owned semantic equality, the originally single narrow observation-requirement projection, and
-compiler mediation under ADR-0071, ADR-0063, and ADR-0075. It also separated Definition Refusal, compiler non-entry,
-and occurrence Rejection. The subsequent identity review fixed Definition identity at Authority plus Version, required
-exactly one `presentedInput`, and retained no extra V1 Applicable Context (Sections 6.5–6.8).
-
-The **2026-10-16 flow review** incorporated Canonicalization-before-Admission and Explicit Absence. At that stage the
-selected-Canonicalization Basis and attribution still awaited detail. The subsequent Basis review added the conditional,
-exactly-one whole `Canonicalized` Basis from the same Input origin, with composition owned by ADR-0048 and common Basis
-machinery by ADR-0063. The Candidate review included that conditional requirement in Definition HIR and distinguished
-source refinement from optimizer-owned rewriting. It also qualified selected-class initialization.
-
-The later **2026-10-16 HIR Protocol review** separated the requirement Surface from each exact requirement Meaning.
-The **2026-10-17 Definition review** completed Admission-owned Definition Establishment while separating Compiler
-Verification. The **2026-10-17 Occurrence review** completed the Established Basis attribution and the matching
-Established requirement projections. It preserved one Admission outcome per Occurrence and ADR-0057's Failure
-cardinality; detailed Diagnostic coverage remained separately owned. The final closure review connected current-valid
-reuse, non-entry, conformance, and compiler-security responsibilities to their existing authorities.

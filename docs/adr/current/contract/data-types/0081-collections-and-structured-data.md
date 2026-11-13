@@ -403,11 +403,12 @@ the selected standard-library operation.
 
 An exact source profile must preserve every legally relevant constituent and calculation distinction: result
 composition and cardinality; applicable equality, order and selection; evaluation and permissible callback elision;
-source mutation, aliases and effects; completion and abrupt failure; source observation lifetime and environmental
+source mutation, aliases and effects; normal and abrupt completion; source observation lifetime and environmental
 conditions. These obligations apply to the exact resolved callable, receiver and overload. They cannot be deduced
-solely from a host type, return signature or broad family classification. Source result formation and 1D admissibility
-remain separate determinations. The companion Design owns the complete operation-group inventory, exact
-Java/Kotlin catalog, versioned profiles and coverage-evidence states.
+solely from a host type, return signature or broad family classification. Qualification distinguishes the Source's
+required observations from the outcomes it leaves open to choice. Source result formation and 1D admissibility remain
+separate determinations. The companion Design owns the complete operation-group inventory, exact Java/Kotlin catalog,
+versioned profiles, choice-law evidence and coverage states.
 
 The source-to-source collection conversion audit therefore distinguishes a call that forms a separate result from
 one that exposes a backed view, wraps existing storage, or changes a supplied destination. Java `List.copyOf`,
@@ -430,8 +431,9 @@ Failure result or the subsequent rollback procedure.
 A Source Operation may expose facts tied to its platform representation; such an observation must be interpreted as
 that operation's result, not promoted into Contract Identity, intrinsic Family cardinality or a mandatory storage
 representation. An operation that actually uses a random source is not equivalent merely because its output belongs
-to an otherwise unspecified result set. Qualified randomness and its required state or invocation effects remain
-source meaning; lawful deterministic refinement of *unspecified selection* may not erase them.
+to an otherwise unspecified result set. Its qualified randomness, state consumption and invocation effects remain
+Source meaning. Conversely, `Stream.findAny()` permits selection of a member without requiring a random generator;
+choosing a permitted member deterministically does not convert that operation into `findFirst()`.
 
 **For the same governing law and meaning-determining semantic inputs, a governed Contract judgment establishes one
 determinate legally observable result.** A result or selection determined by the exact Java/Kotlin specification is
@@ -442,19 +444,22 @@ is not a semantic choice law.
 
 Refinement may choose a stable representative, subset or other source-permitted outcome as appropriate to the exact
 operation. Its selection must be determined by lawful semantic inputs and a qualified Kontrakt choice law; it need not
-borrow an order or position from an unordered source. Where all permitted outcomes are indistinguishable to the owning
-judgment, physical representative selection may vary without changing the determined Contract observation. This
-judgment-invariance case simplifies realization; it is not a prerequisite to deterministic refinement. If a qualified,
-legally observable deterministic outcome cannot yet be defined, the call remains unqualified for that governed use
-rather than acquiring meaning from one host implementation's accident.
+borrow an order or position from an unordered source. That choice is qualified against the exact Source Operation as
+part of the ADR-0084 semantic knowledge, but it is not a new guarantee of the Java/Kotlin specification. Where a
+selection affects an owning 1D judgment, that 1D's complete Judgment Meaning must retain the qualified selection law
+and its lawful determinants. Qualification alone does not confer 1D eligibility. Where every permitted choice is
+indistinguishable to the owning judgment, physical representative selection may vary without changing the determined
+Contract observation. If neither a lawful deterministic choice nor judgment-invariance is established, the operation
+remains unsupported for that governed use rather than acquiring meaning from one host implementation's accident.
 
-Refinement preserves every mandatory source observation, including required callback evaluation, completion, failure
-and state effects; it also respects source-permitted elision (ADR-0073 §5.7). It may narrow an unspecified result
-without
-rewriting a guaranteed one. Numeric reduction laws remain owned by ADR-0078 §3.3. The obligation fixes the result and
-any mandatory semantic process condition, **not** the sort, reduction tree, scheduling order, reference algorithm, or
-other realization strategy. An unchanged admissible platform operation in user realization retains its platform law;
-this deterministic-judgment rule does not rewrite that operation.
+Refinement preserves every mandatory source observation, including callback execution or permitted elision,
+required state effects, and the selected Source's exact normal or abrupt completion (ADR-0073 §5.7). Source-authored
+exception handling is interpreted as part of that calculation; neither a guaranteed exception nor its handling is
+replaced merely to obtain a preferred Collection result. The meaning and establishment of a machine Failure are owned
+by ADR-0057 and are not decided here. Numeric reduction laws remain owned by ADR-0078 §3.3. The obligation fixes the
+result and any mandatory semantic process condition, **not** the sort, reduction tree, scheduling order, reference
+algorithm, or other realization strategy. An unchanged admissible platform operation in user realization retains its
+platform law; this deterministic-judgment rule does not rewrite that operation.
 
 ### 3.4. Collection Values and Observable Results
 
@@ -1518,9 +1523,11 @@ laws are now integrated as R03's reviewed semantic scope. They do not certify a 
 callable inventory, full source-domain support, or eligibility for every 1D. R03 does not prescribe a separate
 universal Conversion IR, lossless conversion by default, or one physical storage scheme for the forms it relates.
 
-The remaining independent reviews are deterministic semantic refinement (R04), combined completed-value
-conformance (R05), exact callable and overload qualification across the selected Source profiles (R06), the
-Frontend/HIR/Establishment and runtime boundaries (R07), and V1/V2 implementation preservation (R08). R05 must
+R04's Source-specific refinement rule is integrated into §3.3, using the existing ADR-0079/0084 qualification path.
+The related Admission restrictions in Accepted ADR-0065 require their own proposed amendment; this Draft does not
+supersede them. The remaining independent reviews are combined completed-value conformance (R05), exact callable and
+overload qualification across the selected Source profiles (R06), the Frontend/HIR/Establishment and runtime boundaries
+(R07), and V1/V2 implementation preservation (R08). R05 must
 test the coupling and completion conditions actually required by every claimed composed result. R06 must also
 record any Java/Kotlin or internal calculation whose qualified result cannot yet be explained by the common
 formation and conversion laws; a declaration census is not semantic qualification. Partial failure, protected
@@ -1530,11 +1537,10 @@ owns result currentness and early cutoff; Rollback, Scope, external Transaction 
 protection and recovery. The companion Design tracks the detailed work without turning it into new Collection
 Contract authority.
 
-R04 must examine the older decision-language of Accepted ADR-0065 §§7.4 and 10 alongside §3.3. The author's
-actual Source meaning, including genuinely stochastic or deliberately nondeterministic behavior and required
-effects, is not rewritten into a deterministic result. Where the specification merely leaves an outcome
-unspecified, Kontrakt may define a lawful semantic refinement rather than inherit an incidental platform choice;
-compiler implementation preference alone never supplies that law. R04 must determine the applicable conditions
-for 1D judgments and propose any necessary revision to the owning Accepted text, not silently amend it through
-this Draft. Likewise, the existence of a common Multiset or Positional Product does not amend ADR-0064's V1 Input
-allow-list. Family and Source Profile evolution must be reviewed under their actual owning laws.
+The Source-specific choice law distinguishes an expressly permitted selection such as `Stream.findAny()` from an
+operation whose required meaning includes a random generator, state consumption or effects. An unspecified iteration
+or representative may be stabilized within the exact Source-permitted outcomes, while a source-guaranteed order or
+failure behavior must be preserved. The proposed ADR-0065 amendment separately addresses complete Admission Judgment
+Meaning and authored exceptional control. Machine Failure decisions remain with ADR-0057. Likewise, the existence of
+a common Multiset or Positional Product does not amend ADR-0064's V1 Input allow-list. Family and Source Profile
+evolution must be reviewed under their actual owning laws.
