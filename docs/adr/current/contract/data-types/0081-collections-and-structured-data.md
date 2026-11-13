@@ -409,6 +409,16 @@ solely from a host type, return signature or broad family classification. Source
 remain separate determinations. The companion Design owns the complete operation-group inventory, exact
 Java/Kotlin catalog, versioned profiles and coverage-evidence states.
 
+The source-to-source collection conversion audit therefore distinguishes a call that forms a separate result from
+one that exposes a backed view, wraps existing storage, or changes a supplied destination. Java `List.copyOf`,
+`List.subList` and `Collections.unmodifiableList` do not grant the same ownership or observation lifetime. Kotlin
+`associateBy` and `associateByTo` can form related mappings, but the latter retains the existing destination and
+its qualified mutation and abrupt-completion effects. A returned unmodifiable outer collection also does not prove
+that its contained `Map.Entry` objects or other mutable constituents have become independent immutable values.
+These are exact Source Operation distinctions, not new completed-value Families. Whether a source transformation
+can be realized through a Kontrakt-owned calculation is decided by correspondence of the required result and
+mandatory source observations, not by a matching return type or collection name (§§3.4.2 and 3.11).
+
 Failure at an intermediate element is particularly significant for operations that mutate an existing destination.
 The source law may leave earlier removals, substitutions or additions in place; another collection implementation may
 leave the destination unchanged at the same failing callback. Such behavior is qualified for the exact callable and
@@ -775,7 +785,289 @@ A source `Grouping` producer that has not been consumed is not a completed Group
 updating an existing grouping or association destination may additionally change its source state and must retain
 its qualified effects. The corresponding callback, completion and concurrency conditions remain under §§3.3 and
 3.9. Aggregation inside a completed group, including its empty-input and Numeric results, is not decided by group
-formation alone and remains for the Fold, Reduce and Aggregate calculation work.
+formation alone; its result follows §3.4.1.11 and the owning Numeric or Source law.
+
+#### 3.4.1.10. Sort, Distinct and Representative-Sensitive Selection (R02-10)
+
+**Sort** forms the result order prescribed by the selected comparison and result law while retaining the occurrences
+that calculation sorts. Equal comparison keys do not, by themselves, identify the occurrences or authorize their
+removal. A stable sort of an already ordered input preserves the prior relative order of comparison ties; a sort
+without that guarantee does not. Sorting an unordered input cannot borrow its accidental traversal order as an
+established encounter order. A calculation that returns sorting indexes rather than reordered values also retains
+that distinct result form. The selected comparison must be lawful over the values being ordered (§3.7); its
+comparison-equivalence is not automatically the Membership discrimination relation.
+
+**Distinct** states whether it discriminates full values, selected keys or another already lawful relation, and
+whether it removes duplicates across the complete input or only adjacent duplicates. It also determines the
+result form and the retained occurrences. In an Ordered Occurrence, `distinctBy`-style selection can preserve an
+original value while discriminating a derived key; the key does not determine the retained original representative.
+A first- or last-occurrence selection is meaningful only where the input owns the required order and the exact
+operation selects that occurrence. An operation retaining any lawful representative, or eliminating every member
+of a duplicated class, forms a different result from first-occurrence Distinct. A Membership result may expose
+only distinguished members, whereas an ordered result can additionally expose their selected representatives and
+relative order. For a Bag or Relation, the selected Distinct result fixes what happens to existing multiplicity;
+no universal first-wins or representative law is introduced (§3.8).
+
+**Extremum Calculation** distinguishes the minimum or maximum comparison value from an actual constituent,
+occurrence, key or entry that attains it. Several distinguishable constituents may share one extreme comparison
+value. Whether the result contains the comparison value, one selected representative or all attaining members is
+part of the selected operation. An operation guaranteeing the first tied occurrence retains that guarantee only
+when a lawful prior order exists; an operation without a specified tie result cannot acquire first-wins from its
+physical evaluation. The empty-input result, including a permitted absence or source failure, is likewise
+operation-specific. Numeric and Text ordering remain subject to ADR-0078 and ADR-0080.
+
+**Top-K Selection** distinguishes an exact number of selected occurrences, inclusion of all occurrences tied at
+the selection boundary, and selection of all extrema. The value of `k`, an empty input, `k=0`, fewer than `k`
+available occurrences and ties crossing the selection boundary can change both the result cardinality and its
+constituents. The exact calculation determines whether it returns an Ordered Occurrence, an unordered membership,
+indexes or another prescribed result; a partial sort or heap is not part of that meaning. Sort, Distinct, Extremum
+and Top-K do not change Group keys, Graph node/edge identity or shaped coordinates unless the selected calculation
+expressly transforms those relations. An observable choice among source-permitted tied representatives remains
+subject to §3.3 and the outstanding ADR-0065 §10 reconciliation, not an implicit host tie-break.
+
+#### 3.4.1.11. Fold, Reduce, Scan and Aggregate (R02-11)
+
+**Fold** produces a final accumulated result under its selected initial value, constituent participation,
+combining calculation and meaningful direction or order. **Reduce** is distinguished where its selected operation
+starts from an input constituent or has another source-defined reduction rule without a separately supplied
+initial result. A fold over an empty input may return its initial result; a reduction over the same input may
+fail, return an explicit absence or have another exact result. These are different operation laws, not a common
+null, zero or failure rule. Left- and right-directed accumulation can produce different results. An unordered
+Membership or Bag has no implicit iteration order for a direction-sensitive accumulation; a result requiring
+such an order must obtain it lawfully, or be independent of the unspecified order under the selected calculation.
+
+**Scan and running accumulation** form the prescribed intermediate results, not merely the final Fold result.
+An initial-inclusive running fold over `[1,2,3]` with initial value `10` and addition yields
+`[10,11,13,16]`; a running reduction with its first input as the first result yields `[1,3,6]`. Their empty-input
+results and intermediate-result counts differ. Each completed Prefix result contains the steps and values that
+the selected calculation requires (§3.1.2). An incompletely consumed Sequence producer does not thereby contain
+all of those completed results. If a source callback reuses a mutable accumulator, its aliasing remains source
+meaning; it cannot be presented as independently completed immutable earlier Contract values (§§3.5 and 3.9).
+
+**Aggregate** identifies the constituents on which it operates and the exact result it forms. Sum, product,
+average, count, statistics, string combination, collection aggregation and grouped reduction need not have the same
+result domain, null-like treatment, ordering or empty-input result. A Bag aggregation that consumes all occurrences
+must account for the admitted multiplicities; an aggregation over distinct members is a different calculation.
+An Association can aggregate mapped values without treating equal mapped values as one entry. Group aggregation
+retains the distinction between a present empty group and an absent group (§3.4.1.9). Relation roles, Weighted
+Relation weights, Graph constituents and shaped coordinates are included only under the selected aggregate's
+stated subject and result law. An aggregate that forms a Product, Collection or shaped result retains that result's
+existing constituent and completeness laws.
+
+The numerical meaning, format, overflow, rounding and any observable intermediate failure of a numeric aggregate
+remain with ADR-0078. Text concatenation and Unicode meaning remain with ADR-0080. An actual Java/Kotlin or SQL
+operation may specify a different empty-input value or a permitted numerical result space; it is not silently
+reinterpreted as one universal aggregate. Source-specified callback invocation, permitted elision, mutation,
+accumulator lifetime and sequential or parallel combination remain under §§3.3 and 3.9. They do not require the
+Contract to adopt a collector implementation, prove associativity as a new 1D obligation, or mandate an evaluation
+tree. Reordering or fusing a computation is lawful only where its result and mandatory source observations are
+preserved (§3.11; ADR-0078 §9.2).
+
+#### 3.4.1.12. Window, Chunk and Prefix Selection (R02-12)
+
+**Window Formation** defines which windows exist in the completed result and which source constituents appear in
+each window. A position-based window specifies the lawful starting positions or selection boundaries, width,
+movement and treatment of the remaining suffix. The result can contain overlapping windows, nonoverlapping chunks
+or gaps where some input occurrences contribute to no window. One source occurrence may contribute to several
+result windows without becoming several occurrences in the original input. Where ordering is a result observation,
+both the order of windows and the order of constituents within a window follow the selected calculation. A
+position-based operation cannot manufacture indexes for an unordered Membership (§§3.1.2 and 3.4.1.4).
+
+**Partial Window Formation** is operation-specific. An operation may omit incomplete final windows, include the
+remaining suffix as one or more shorter windows, or emit one reduced window only when the entire input is shorter
+than its requested width. Those results are not interchangeable. For the input `[A,B]` and width three, an exact
+full-window-only calculation can produce no windows, a partial-window calculation can produce `[[A,B],[B]]`, and
+a sliding calculation with a short-input special case can produce `[[A,B]]`. No windows is a completed empty
+collection of windows; it is neither an absent result nor a single empty window. A requested width, step or other
+parameter is interpreted under the exact operation's legal domain. Source termination before the required result
+is complete does not create a completed partial window by default (§3.9).
+
+**Chunk** selects nonoverlapping successive constituents under its exact extent and trailing-part rules. It may
+coincide with a particular Window calculation, but the equality of one result does not make all Chunk and Window
+operations synonymous. **Prefix Selection** selects an initial part of an already ordered value; it neither forms
+all moving windows nor creates the intermediate accumulated values of Scan (§3.4.1.11). A Slice or Window exposes
+its origin correspondence only to the extent required by its actual result or exact source law. A temporary
+callback window, backed view and separately completed window value retain the distinct source lifetime and
+completion requirements of §§3.1.2, 3.3, 3.5 and 3.9; no copying, alias or buffer representation is prescribed.
+
+Position-based windows, comparison-peer or relation-based frames, time-window assignments and multi-axis shaped
+windows can have different selection domains and result forms. They do not inherit one another's movement,
+completion, trigger or coordinate rules merely by sharing the name `window`. A shaped window specifies its
+resulting axes and selected coordinate correspondence under §3.1.3. A source time/window producer that has not
+completed the observation required by the receiving 1D does not become a finished collection through a window
+label. This section does not admit new time, streaming or tensor uses into V1 Input.
+
+#### 3.4.1.13. Range, Progression and Shaped Calculations (R02-13)
+
+A **Range Calculation** states the members selected by its exact bounds, endpoint inclusion and carrier law,
+and the form of its result. A range selection, intersection, union, containment or clamping calculation need not
+produce one Interval. The union of `[1,2]` and `[4,5]` over the integers does not become `[1,5]` merely because
+one Interval would be convenient to store. Conversely, two Interval values can have the same included integer
+members while exposing different declared bounds, which remain distinguishable where the result law observes
+those bounds (§3.1.3). The exact operation determines whether its result is an Interval, a noncontiguous relation,
+a Boolean or another admitted completed form.
+
+A **Discrete Progression Calculation** determines the actual generated occurrences and their order from its
+selected start, step, direction and termination law. A requested endpoint need not be the last generated
+constituent: the progression `1..9 step 3` generates `[1,4,7]`. An empty progression has no last generated
+constituent even if an exact source type exposes a stored `last` property. A source range or progression property
+is interpreted under its own source law rather than automatically serving as a common last-element calculation.
+Only a calculation with a lawfully determined finite enumeration forms a completed Ordered Sequence; membership
+in an Interval does not itself create an enumerated Sequence. The exact count and the Numeric format used to
+represent it remain distinct (§3.4.1.1; ADR-0078), as do source-specific step restrictions and overflow effects.
+
+**Shaped Result Transformation** distinguishes reshaping, axis permutation, axis selection, flattening and other
+coordinate-changing calculations. Each fixes the result rank, axis schema and shape together with the exact
+correspondence between output coordinates and admitted input constituents. Equal element counts do not determine
+one reshape, one order of traversal or the identity of named axes. The shapes `0×3` and `3×0` each contain no
+value coordinates but retain different axis extents; a rank-zero total scalar has the single empty coordinate (§3.1.3).
+The chosen transformation, not a physical stride or storage order, determines how values move between
+coordinates.
+
+**Broadcast and Axis Alignment** define which positional or named axes correspond and how each output coordinate
+obtains its value. Several output coordinates may lawfully observe the same input constituent without changing the
+source value's constituent identity. A positional trailing-axis broadcasting rule from a particular library is
+not a default named-axis Contract rule. Coordinate selection, masking and alignment retain their own exact
+result and axis-presence distinctions.
+
+**Sparse, masked and ragged calculations** preserve the existing distinction among an invalid coordinate, absent
+mapping, explicit zero, permitted implicit logical zero, present null-like value and mask state (§3.1.3). A
+conversion to dense form or a padded rectangular result requires a selected law for every new correspondence or
+fill value; a Ragged result does not silently gain a rectangular axis. Stored-entry count, physical `nnz` and
+logical nonzero count can be different observations, and no physical sparse encoding supplies the Contract
+cardinality. Range enumeration, shaped conversion and source-defined partial results remain governed by the
+completion and eligibility conditions of §§3.3, 3.9 and the owning 1D; these result laws introduce neither new
+Value Families nor required IR layouts or physical algorithms.
+
+### 3.4.2. Conversion Between Completed Collection Forms (R03 — Reviewed Cases)
+
+A conversion has the result prescribed by its exact selected operation. It may preserve the source value's
+constituents under a different completed form, remove a distinction the destination does not retain, or form a new
+constituent or ordering through a separate lawful rule. The source value and the result are not thereby identical.
+In particular, a valid lossy conversion need not support recovery of the original value. Recovery is warranted only
+when the retained result, together with any explicitly admitted additional information, determines all observations
+required by the original completed form. Equality of one projection or of one enumerated result is insufficient.
+
+For an authored Java or Kotlin calculation, source resolution and qualification precede this mapping (§3.3;
+ADR-0079; ADR-0084). The source operation fixes the conversion's guaranteed results, permitted choices and required
+effects, including those of a supplied destination or backed view. Kontrakt also has its own common collection
+calculations, which need not correspond to one Java or Kotlin method. Their result laws are defined here and in
+§3.4.1; an internal representation or optimized algorithm may implement either kind of calculation only while
+preserving the observations that kind actually requires. Neither a common result form nor a qualified SDK method
+makes its use lawful in every 1D. The companion Design owns the exact method and overload inventory, supporting
+source evidence and conformance records; a collected candidate is not a qualified callable.
+
+#### 3.4.2.1. Ordered Occurrence, Bag and Membership
+
+Conversion from Ordered Occurrence to a Bag preserves the multiplicity of each distinguished constituent under the
+selected destination discrimination, but removes its original relative occurrence positions. For example,
+`[A,A,B]` and `[A,B,A]` both produce `{A×2,B×1}` under the same Bag law. Conversion to Membership additionally
+removes multiplicity and gives `{A,B}`. Conversely, a Bag-to-Membership conversion retains presence but cannot
+recover how many times each member occurred. These results follow the existing occurrence and multiplicity laws (§§3.1.1
+and 3.4.1.8); they do not supply a default representative-selection rule.
+
+A conversion in the other direction can lawfully form a new value when its selected operation supplies the missing
+information. A Membership can form a Bag with unit multiplicity, for instance, but such a result does not reconstruct
+an earlier Bag that had repeated members. A Bag can be enumerated into a Sequence when the chosen calculation
+legally determines the resulting order; it cannot recover a source encounter order that the Bag never retained.
+When a qualified source conversion guarantees a separate order, as Kotlin `Iterable.toSet()` does for the result's
+iteration, that order belongs to the corresponding sequenced result (§3.1.2). It is not an intrinsic order of every
+Membership. Java `Collectors.toSet()` and `Set.copyOf()` must retain their own qualified guarantees rather than
+borrowing Kotlin's rule. Representative choices left open by a source specification remain subject to §3.3 and the
+outstanding ADR-0065 §10 reconciliation; R03 does not choose an arbitrary first occurrence or sort order.
+
+#### 3.4.2.2. Relation and Bag to Functional Correspondence
+
+To form a Functional Correspondence from a relation, the selected conversion must identify which exact role supplies
+the key and how the other role or roles form the mapped value. Key discrimination belongs to the destination's
+qualified key law. If two source tuples yield the same distinguished key, a direct functional conversion succeeds
+only when the selected operation determines one value for that key. A qualified conversion may reject the collision,
+select a source-prescribed value or apply an expressly selected combining calculation. The common Association form
+itself chooses none of those behaviors (§§3.1.1, 3.4.1.9 and 3.8).
+
+Even when duplicate source tuples carry the same mapped value, conversion from a Bag Relation to an Association may
+lose multiplicity. `{(K,X)×3}` can form `K→X` under an appropriate operation, but that mapping does not record that
+the original tuple occurred three times. A collision between `(K,X)` and `(K,Y)` presents the additional question of
+which value survives or whether formation fails. Applying a destination that distinguishes keys differently may
+introduce such collisions even when the source treated the keys as distinct; a reference-identity-based source Map
+and an equality-based destination illustrate the need for exact source qualification (§§3.3 and 3.7).
+
+A finite Association's present entries can be projected to a binary Relation with declared key and value roles.
+This preserves their correspondence when the projection retains the applicable key discrimination, mapped values
+and legally required representatives. It does not by itself reconstruct a source Bag's former multiplicities, an
+undeclared entry order or additional lawful key-domain constraints. In particular, listing the present entries of a
+partial correspondence cannot establish the domain or totality of a different, possibly non-enumerated total
+correspondence. The selected destination must possess its own completed schema and domain law (§3.1.1).
+
+#### 3.4.2.3. Association Key, Value and Entry Projections
+
+Key Projection retains the present distinguished keys. Value Projection can retain the multiplicity of mapped
+values across different keys, or only their distinct Membership, according to its destination form. Entry
+Projection retains the actual key/value pairs (§3.4.1.8). These results expose different information: for
+`{K1→X,K2→X,K3→Y}`, Value Bag Projection is `{X×2,Y×1}`, whereas Value Membership is `{X,Y}`.
+
+Even a complete Key Projection and Value Bag Projection do not generally reconstruct the original correspondence.
+`{K1→X,K2→Y}` and `{K1→Y,K2→X}` have the same separate key and value projections but different entries. A
+qualified Entry Projection retains the pairing, subject to the source's exact roles, presence and representative
+laws; a present null-like mapped value must remain distinguishable from an absent mapping (§3.6). Whether a source
+Entry View is still backed by its Map, or whether a copied container retains mutable Entry constituents, is governed
+by §§3.3, 3.5 and 3.9 rather than by this completed-result correspondence.
+
+A Sequenced Association can project its entry encounter order into an Ordered Entry result when the chosen operation
+guarantees that observation. An unordered Entry Relation instead need retain the correspondence without that order.
+Likewise, an Entry Relation alone need not retain a correspondence's otherwise observable lawful key domain or
+partial-versus-total form. An inverse formation succeeds as recovery only when those additional observations are
+actually established, not merely because an implementation can construct a Map from entries.
+
+#### 3.4.2.4. Grouping, Partition and Aggregate Results
+
+Grouping can preserve each group's constituent order and a qualified order of group keys while losing the original
+interleaving between different groups. The source Sequences `[a1,b1,a2]` and `[a1,a2,b1]` can both yield the same
+ordered groups `{a→[a1,a2],b→[b1]}`. The group-key order and the order within each group therefore do not determine
+the original encounter order. A conversion claiming to recover that order needs an additional lawful position or
+correspondence relation; ordinary Group formation does not require one (§3.4.1.9).
+
+Converting a Grouped Collection into a complete and exclusive Partition must supply every declared alternative,
+including one that has no constituents, and must preserve the prescribed assignment of each input occurrence.
+Kotlin `partition` forms a Product with two present list positions, while Java `Collectors.partitioningBy` forms a
+Map with present `true` and `false` alternatives. A grouping that creates only observed keys can instead produce
+`{}` on empty input. Forming a Partition from such a grouping requires the selected formation law to account for
+the alternatives that grouping did not create. Conversely, converting a Partition into a grouping may discard an
+empty alternative only if the selected result law actually prescribes that omission. The completed forms are not
+made interchangeable by a Boolean classification alone (§§3.1.2 and 3.4.1.9).
+
+A Group Aggregate forms another result from each group's constituents. For example, `{a→[a1,a2],b→[b1]}` can
+produce `{a→2,b→1}` under a group-count calculation. The counts retain group presence and occurrence quantities
+but not the constituent values or their order. An empty existing group can remain present after a downstream
+filter, whereas filtering the input before grouping may prevent that key from being formed. A source operation
+that updates an existing grouping destination can additionally retain pre-existing empty groups and partially
+completed mutations after failure; §3.3 determines those effects. These observations follow §§3.4.1.9 and
+3.4.1.11, without creating a separate aggregate or rollback authority.
+
+#### 3.4.2.5. Range, Progression and Enumerated Sequence
+
+A Range's membership and declared bounds, a Progression's generation rule, and the occurrences in a completed
+Sequence are different observations (§§3.1.3 and 3.4.1.13). Under Kotlin's `1..9 step 3`, enumeration forms
+`[1,4,7]`; the Progression's last generated value is `7`, not the endpoint `9` in the earlier source expression.
+The enumerated Sequence preserves the generated occurrences in order. It need not retain the range expression's
+original endpoint, step or syntactic spelling. Distinct source expressions can already have formed the same exact
+Progression before enumeration, and different empty ranges can enumerate to the same empty Sequence without
+making all of their source-exposed boundary properties equal.
+
+A Sequence-to-Range or Sequence-to-Progression calculation must itself determine the destination's carrier,
+bounds, endpoint inclusion, step, direction and termination wherever required. `[1,4,7]` is compatible with a
+step-three Progression, but does not prove which earlier source expression produced it. `[1,4,8]` does not form a
+single ordinary constant-step Progression under that law without a different selected calculation. The empty
+Sequence cannot recover an original range's exposed bounds. Lawful formation of a new Range or Progression and
+recovery of a former source value are therefore separate claims.
+
+An Interval need not enumerate its members to be complete. A qualified finite Progression can determine an ordered
+enumeration, but a deferred Java Stream or Kotlin Sequence producer is not thereby an already completed result (§3.9).
+The exact number of occurrences can exceed the source element type's numeric range; the number, its numeric
+representation and the ability to allocate a particular concrete container are separate matters (§3.4.1.1;
+ADR-0078). A Range's member bounds also do not become the positions of an Indexed Sequence produced by its
+enumeration (§3.1.2). Any lowering, iteration or optimized enumeration must retain the exact source termination,
+last-member and overflow behavior under §§3.3 and 3.11.
 
 ### 3.5. Immutable Results at Contract Boundaries
 
@@ -1043,16 +1335,25 @@ findings on source-representation observations, stochastic operations, temporary
 ADR-0079 and ADR-0084 retain exact binding and interpretation authority. The Design is implementation-facing and
 cannot amend this ADR or admit a new Input/Fact law.
 
-The remaining work is to finish exact-source qualification; verify that the five basic formation laws and their
-closed compositions cover each resolved Source Operation without losing its legal observations, including currently
-unclassified source surfaces; complete the exact result and partiality laws of the remaining common Collection
-calculations (including Sort, Distinct, representative-sensitive selection, Fold, Reduce, Scan, Aggregate, Window,
-Chunk, Prefix, Range, Progression and shaped calculations); verify deterministic refinement against each specified
-outcome set and its mandatory execution effects; exercise partial failure, protected internal observations, views,
-lazy and concurrent acquisition; and compare clean, reused, optimized and incrementally maintained results.
-Security and fault-injection obligations remain in SADR-0002. ADR-0075 owns result currentness and early cutoff;
-Rollback, Scope, external Transaction and Failure owners govern protection and recovery. The companion Design tracks
-these work items and their evidence without turning them into new Collection Contract authority.
+The common result-calculation families examined in R02-1 through R02-13 are stated in §3.4.1. The reviewed
+R03 conversion relations and their limits on recovering source information are owned by §3.4.2. These cover
+Ordered Occurrence, Bag and Membership; finite Relation and Functional Correspondence; Association projections;
+Grouping and Partition; and Range, Progression and enumerated Sequence. Source examples in those provisions explain
+specific distinctions; they do not certify a complete JDK 27 or Kotlin 2.4.21 callable inventory. Their presence
+does not establish full callable coverage, success for every input domain or eligibility for every 1D. The remaining
+work is to finish exact-source qualification; check each resolved operation against the five basic formation laws,
+their closed compositions and the applicable result and partiality laws without losing legal observations; and
+record any source or internal-calculation result that these laws cannot yet express. R03 still requires exact
+callable and overload completion and review of the remaining conversions, including Indexed/Sequenced/Navigable
+forms, Product/Choice and nested results, Graph and Hypergraph, shaped and sparse aggregates, and weighted or
+incremental relations. Deterministic refinement (R04), composed-value completion (R05), exact source qualification
+(R06), frontend/HIR/Establishment boundaries (R07) and V1/V2 conformance (R08) require their planned separate
+reviews. Partial failure,
+protected internal observations, views, lazy and concurrent acquisition, and clean, reused, optimized and
+incrementally maintained results still require conformance evidence. Security and fault-injection obligations
+remain in SADR-0002. ADR-0075 owns result currentness and early cutoff; Rollback, Scope, external Transaction
+and Failure owners govern protection and recovery. The companion Design tracks these work items and their
+evidence without turning them into new Collection Contract authority.
 
 **Accepted ADR-0065 §10 remains a reconciliation task:** arbitrary compiler implementation preference is not a
 lawful meaning determinant, whereas a *qualified, Kontrakt-owned deterministic semantic refinement* is this ADR's
