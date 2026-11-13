@@ -946,7 +946,10 @@ constituents under a different completed form, remove a distinction the destinat
 constituent or ordering through a separate lawful rule. The source value and the result are not thereby identical.
 In particular, a valid lossy conversion need not support recovery of the original value. Recovery is warranted only
 when the retained result, together with any explicitly admitted additional information, determines all observations
-required by the original completed form. Equality of one projection or of one enumerated result is insufficient.
+required by the original completed form. That additional information must come from a lawful input or selected
+calculation; a source location, temporary row number, physical ordering or retained compiler cache cannot silently
+supply an omitted constituent. Forming a new destination that satisfies its own law is not a claim that the earlier
+source value has been recovered. Equality of one projection or of one enumerated result is insufficient.
 
 For an authored Java or Kotlin calculation, source resolution and qualification precede this mapping (§3.3;
 ADR-0079; ADR-0084). The source operation fixes the conversion's guaranteed results, permitted choices and required
@@ -974,7 +977,7 @@ When a qualified source conversion guarantees a separate order, as Kotlin `Itera
 iteration, that order belongs to the corresponding sequenced result (§3.1.2). It is not an intrinsic order of every
 Membership. Java `Collectors.toSet()` and `Set.copyOf()` must retain their own qualified guarantees rather than
 borrowing Kotlin's rule. Representative choices left open by a source specification remain subject to §3.3 and the
-outstanding ADR-0065 §10 reconciliation; R03 does not choose an arbitrary first occurrence or sort order.
+R04 review of the applicable choice law; R03 does not choose an arbitrary first occurrence or sort order.
 
 #### 3.4.2.2. Relation and Bag to Functional Correspondence
 
@@ -1038,11 +1041,13 @@ made interchangeable by a Boolean classification alone (§§3.1.2 and 3.4.1.9).
 
 A Group Aggregate forms another result from each group's constituents. For example, `{a→[a1,a2],b→[b1]}` can
 produce `{a→2,b→1}` under a group-count calculation. The counts retain group presence and occurrence quantities
-but not the constituent values or their order. An empty existing group can remain present after a downstream
-filter, whereas filtering the input before grouping may prevent that key from being formed. A source operation
-that updates an existing grouping destination can additionally retain pre-existing empty groups and partially
-completed mutations after failure; §3.3 determines those effects. These observations follow §§3.4.1.9 and
-3.4.1.11, without creating a separate aggregate or rollback authority.
+but not the constituent values or their order. A grouped collection that retains constituent occurrences may
+supply the assignments needed for a Partition conversion; a grouping already reduced to counts cannot reconstruct
+those assignments merely because its group keys and counts are available. An empty existing group can remain present
+after a downstream filter, whereas filtering the input before grouping may prevent that key from being formed. A
+source operation that updates an existing grouping destination can additionally retain pre-existing empty groups
+and partially completed mutations after failure; §3.3 determines those effects. These observations follow
+§§3.4.1.9 and 3.4.1.11, without creating a separate aggregate or rollback authority.
 
 #### 3.4.2.5. Range, Progression and Enumerated Sequence
 
@@ -1068,6 +1073,174 @@ representation and the ability to allocate a particular concrete container are s
 ADR-0078). A Range's member bounds also do not become the positions of an Indexed Sequence produced by its
 enumeration (§3.1.2). Any lowering, iteration or optimized enumeration must retain the exact source termination,
 last-member and overflow behavior under §§3.3 and 3.11.
+
+#### 3.4.2.6. Indexed, Sequenced and Navigable Conversions
+
+An Indexed Sequence formed by a Slice, Gather or Reverse calculation has the index domain and position-to-occurrence
+correspondence prescribed for its **result**, not the original source's positions. For the zero-based source
+`[A,B,C,D]`, selecting positions `[1,2]` forms `[B,C]` whose result indexes are `0,1`; reversing the source forms
+`[D,C,B,A]` whose result index `0` selects `D`. A Gather selecting `[2,0,2]` can form `[C,A,C]`: repeating a
+source index repeats a result occurrence rather than making the result a Membership. Recovery of original positions
+requires the selected mapping or other admitted information, not merely the result's reindexed positions. The
+operation's boundary law decides an empty selection and an invalid access separately (§3.4.1.4).
+
+A backed Slice or reversed View may continue to read or change its origin through a source-defined position
+mapping. An independently formed List need not retain that connection even if its initial occurrences match the
+View. Java `List.reversed()` and Kotlin `List.asReversed()` must therefore be qualified separately from Kotlin
+`Iterable.reversed()` and `slice` result formation. Any restrictions arising from structural changes to the origin,
+mutable aliases, unsupported updates or access-order reads belong to the selected Source Operation and its
+observation lifetime (§§3.3, 3.5 and 3.9). They are not properties of all completed Indexed Sequences.
+
+An Encounter Order can be used to form an Indexed Sequence only when the selected calculation determines the
+result's occurrences and positions. A Sequenced Membership or Association does not acquire arbitrary index lookup
+merely because its members or entries have a sequence of encounters. Conversely, conversion of an Indexed Sequence
+to a Sequenced Membership may remove repeated occurrences under the destination discrimination; the new order must
+correspond to the retained members, including any qualified representative choice (§§3.1.2, 3.7 and 3.8).
+
+Enumerating a Navigable Membership or Association can form an Ordered result in the direction guaranteed by the
+selected operation. That result does not automatically retain the source comparator, its neighbor queries or its
+range-selection capabilities. Forming a new Navigable result from an Ordered Sequence requires a qualified comparison
+and destination discrimination, and may combine constituents that the input distinguished. A List containing
+`[2,5,9]`, for example, does not by itself determine which comparison law should answer a subsequent `floor(7)`
+query. A sorted traversal alone does not complete a Navigable form (§3.1.2).
+
+A Navigable range operation uses the comparison and direction of the **current source view**, its specified endpoint
+inclusion, and any restriction inherited from a parent view. Thus a descending view of keys `1..5` can select
+`subMap(5,true,2,false)` to obtain keys `5,4,3`; reversing the numeric arguments is not the same range. An
+out-of-range bound, a valid empty range and an empty result for another reason remain distinct where the qualified
+callable distinguishes them. A comparator-governed Sequenced collection also does not thereby permit arbitrary
+first/last repositioning: Java sorted collections and insertion- or access-ordered collections expose different
+mutator laws. Those source effects remain with §3.3 rather than this completed-value conversion relation.
+
+#### 3.4.2.7. Declared Product, Tagged Choice and Nested Results
+
+A Named Product can form a Positional Product or an Ordered result by selecting its declared roles in a determined
+order. Such a result retains the values in those positions, not the original role names, their optionality or the
+full source schema. For example, `{customerId=17,quantity=3}` can form `(17,3)`, but `(17,3)` alone does not decide
+which slot was `customerId`. Reverse formation requires an admitted role-to-slot correspondence and all mandatory
+presence and type obligations of the destination Product. An absent optional role is not manufactured as a present
+null-like value merely to occupy a positional slot (§§3.1.1 and 3.6). Java records and Kotlin data classes may
+provide exact source components; their host declarations do not automatically establish Contract Role Identity (§§3.2
+and 3.3; ADR-0079).
+
+Projecting the payload or another result from a Closed Tagged Choice may discard the selected case. Such a
+projection is lawful when defined by the chosen operation, but it does not generally permit recovery of the Choice.
+For instance, Kotlin `Result.success(null)` and `Result.failure(exception)` can both project to `null` through
+`getOrNull()` while having different cases. Java `Optional.ofNullable(null)` instead forms an empty Optional; its
+source case and null rules must not be borrowed for Kotlin Result or for a Contract Alternative. A conversion
+claiming to retain the Choice must determine the exact case and its admitted payload, including a payloadless case
+and an absent versus present optional role. Host success/failure wrappers do not thereby acquire 1D Failure
+authority (§§3.1.1, 3.3 and 3.6).
+
+Flattening a Nested Ordered result can retain the selected outer-then-inner element encounter order while removing
+segment boundaries. Both `[[A,B],[],[C]]` and `[[A],[B,C]]` can form `[A,B,C]`, although their nested constituent
+counts and the existence of an empty inner Sequence differ. Reconstruction of the former nested value requires a
+lawful account of the original segment boundaries and nested form, such as admitted per-segment extents; it is not
+derived from the flattened values. A physical flat buffer with explicit logical segment ranges may nevertheless
+realize a completed Nested value without separate allocations for every inner collection. The governing constituent
+completion and stable-value obligations remain with §§3.1, 3.5 and 3.9, not a new Nested runtime.
+
+#### 3.4.2.8. Graph, Hypergraph and Relational Projections
+
+A Graph may be expressed using relations for its declared Node set, Edge set and Incidence, provided their combined
+result retains every observation required by that Graph form. A binary endpoint relation alone can be a valid
+projection without being a recovery of the Graph. For example, distinct edges `e1:A→B` and `e2:A→B` can both
+project to `(A,B)`; a Membership of endpoint pairs reduces them to one member. A Bag of endpoint pairs can retain
+multiplicity two, but cannot thereby recover the two edge coordinates, their individual attributes or any source
+edge order. Likewise, gathering nodes only from edge endpoints cannot recover a separately declared isolated node.
+The selected Graph law determines whether each of those distinctions belongs to its completed value (§3.1.3).
+
+A relational form that claims to recover the original Graph must preserve its required Node and Edge domains,
+direction, incidence roles and constituent correspondence. One possible expression uses distinct Node and Edge
+relations plus an Incidence relation connecting an Edge coordinate, an endpoint role and a Node coordinate; this
+is an example of a sufficient logical description for certain graph laws, not a mandatory canonical storage schema.
+Converting relations in the other direction requires the selected Graph's incidence constraints to be satisfied:
+for a form requiring every endpoint to be a present node, `(e1,target,C)` cannot complete the Graph if `C` is
+absent from its Node domain. No generic Graph rule silently supplies missing endpoints or changes the admissibility
+of self-loops and parallel edges.
+
+Hypergraph conversion must also preserve the incidence distinctions actually declared by the source. A hyperedge
+joining `A`, `B` and `C` is not generally equivalent to three independent binary edges. If the hyperedge form
+admits repeated participation of one node, positional roles or an edge with no incidences, a plain set of
+`(edge,node)` pairs can lose those observations. Recovering the source needs the relevant edge grouping, roles,
+occurrence counts or positions. A simple projection remains lawful if it explicitly forms only the reduced result,
+without claiming source equivalence.
+
+A Path or Reachability result is another projection. Membership of reachable node pairs does not determine which
+parallel edge was traversed, how many distinct paths exist, or the exact node/edge occurrence sequence of a selected
+Path. Where an operation chooses one of several permissible paths, its selection follows the qualified source
+meaning and §3.3; R03 does not choose a default path. Graph Data cycles remain independent of prohibited circular
+Contract Establishment (§3.1.3). CSR, adjacency indexes and relationship tables are interchangeable physical
+candidates only when they preserve the selected logical result (§3.11).
+
+#### 3.4.2.9. Shaped, Sparse, Ragged and Masked Conversions
+
+Linear enumeration of a Shaped Indexed Aggregate forms the Ordered occurrences in the order determined by the
+selected coordinate traversal. It does not automatically retain rank, axis roles, shape or the original
+coordinate-to-value relation. A `2×3` value and a `3×2` value can enumerate the same six elements in row-major
+order; `0×3` and `3×0` can both enumerate to `[]` while exposing different axis extents. Inverse formation
+requires the destination's axis schema and a correspondence for every required coordinate. A count of six alone
+cannot determine a shape or recover a previous one (§3.1.3).
+
+Reshape, axis permutation, slicing and broadcasting require their own coordinate mappings. For a row-major
+`2×3` value `[[1,2,3],[4,5,6]]`, a reshape to `3×2` can form `[[1,2],[3,4],[5,6]]`, whereas exchanging the
+two axes forms `[[1,4],[2,5],[3,6]]`. Equal destination shape therefore does not establish equal results.
+Broadcasting can map several destination coordinates to one source coordinate; such a transformation does not
+by itself supply an inverse. The selected form, rather than row-major memory layout, owns axis identity and the
+value correspondence (§3.4.1.13).
+
+Sparse-to-Dense conversion must determine a value for each coordinate required by the destination. A source that
+defines absent storage as logical zero can form that zero; a source whose missing mapping denotes Absence cannot
+silently substitute zero. Explicit zero, an admissible present null-like value and a Mask state retain their
+different meanings where the selected form exposes them (§§3.1.3 and 3.6). Dense-to-Sparse conversion may omit
+zero-valued stored entries under its qualified rule, but the resulting logical value's agreement does not recover
+which entries were explicitly stored in the original representation. A storage-entry distinction is relevant to
+Contract recovery only when the source and admitted completed form make that distinction observable; otherwise it
+remains representation (§3.2). Duplicate coordinate entries cannot be summed, overwritten or rejected by a
+universal Sparse rule; the exact conversion must define how they form a destination correspondence, using an
+admitted combining operation if one is required (§3.4.1.13).
+
+Padding a Ragged value into a rectangular form can manufacture fill coordinates. Both `[[0],[]]` and `[[],[0]]`
+can produce a padded `[[0],[0]]`, but the former contains its zero in the first segment and the latter in the
+second. Recovery needs the source's actual valid-coordinate domain, supplied for example by admitted segment
+extents or a mask whose precise meaning identifies original coordinates. A filler such as zero, null or NaN
+cannot distinguish a real constituent from an introduced padding constituent merely because its value is
+recognizable. Likewise, Masked-to-Unmasked conversion follows the declared mask meaning; a Boolean mask is not
+universally a delete, zero-fill or null-fill command. These are result correspondences, not a requirement to
+materialize Tensor buffers or to extend V1 Input's allowed forms (ADR-0064; ADR-0078 §14.1).
+
+#### 3.4.2.10. Weighted Relations, Deltas and Completed Collection Results
+
+A Weighted Relation assigns a weight under its selected weight law; a Bag assigns a nonnegative occurrence
+multiplicity. The values correspond only if the chosen calculation actually interprets that weight as the
+required occurrence count. `{A→weight 3}` can form `A×3` under a counting weight law; the same numeric value as
+a cost or priority cannot. A source weight domain admitting fractional or negative values is not converted to
+Bag multiplicity merely by using a numeric Map. A Bag can form a Weighted result when the destination weight
+law gives an appropriate meaning to its counts, but this need not recover an earlier unrelated weighting (§§3.1.3 and
+3.4.1.7).
+
+When a Weighted Projection combines contributions with the same output tuple, the required combination follows
+the selected weight law. For instance, two contributions to `X` weighted `2` and `3` form weight `5` under a
+counting-addition law, but that addition is not prescribed for costs, priorities or probabilities. Nor does a
+common Weighted form require every weight domain to be a semiring. The exact result and its numeric or other
+value obligations remain with §§3.4.1.7–3.4.1.8 and the applicable owner.
+
+A signed Delta can describe changes to a previous result without itself being a completed Bag. Starting with
+`{A×2,B×1}`, a counting delta `{A→−1,B→+2}` can form `{A×1,B×3}` under an appropriate update calculation.
+Applying `{A→−3}` to `{A×2}` cannot publish a Bag with multiplicity `−1`. An intermediate signed accumulator
+may exist inside a legal calculation, but its state does not by itself meet the completed result law. Completed
+Membership, Association, Grouping, Ordered or Shaped results additionally require their own presence, entry,
+group, occurrence or coordinate laws; equality of final Bag counts alone does not establish their correctness.
+
+The same final value need not imply the same change history. Adding then removing `A` and making no change can
+leave identical final Membership while differing as event sequences. If the selected source exposes effects,
+intermediate observations or callback invocation, a final-result equality does not authorize eliding them.
+Conversely, a compiler-owned Delta computation may coalesce or reorder work when its own result and all mandatory
+observations are preserved. A batch that is valid only at its completed boundary must not be silently treated as
+a sequence of separately published intermediate collections, or vice versa (§§3.3, 3.9 and 3.11). Java `Map.merge`
+or a stream collector is not a universal relation-delta operation: its null, callback, failure and mutation laws
+must be separately qualified. Difference engines, upsert stores, scheduling and early cutoff belong to the
+compiler Design and ADR-0075, not to a new Collection Contract Authority.
 
 ### 3.5. Immutable Results at Contract Boundaries
 
@@ -1335,28 +1508,33 @@ findings on source-representation observations, stochastic operations, temporary
 ADR-0079 and ADR-0084 retain exact binding and interpretation authority. The Design is implementation-facing and
 cannot amend this ADR or admit a new Input/Fact law.
 
-The common result-calculation families examined in R02-1 through R02-13 are stated in §3.4.1. The reviewed
-R03 conversion relations and their limits on recovering source information are owned by §3.4.2. These cover
-Ordered Occurrence, Bag and Membership; finite Relation and Functional Correspondence; Association projections;
-Grouping and Partition; and Range, Progression and enumerated Sequence. Source examples in those provisions explain
-specific distinctions; they do not certify a complete JDK 27 or Kotlin 2.4.21 callable inventory. Their presence
-does not establish full callable coverage, success for every input domain or eligibility for every 1D. The remaining
-work is to finish exact-source qualification; check each resolved operation against the five basic formation laws,
-their closed compositions and the applicable result and partiality laws without losing legal observations; and
-record any source or internal-calculation result that these laws cannot yet express. R03 still requires exact
-callable and overload completion and review of the remaining conversions, including Indexed/Sequenced/Navigable
-forms, Product/Choice and nested results, Graph and Hypergraph, shaped and sparse aggregates, and weighted or
-incremental relations. Deterministic refinement (R04), composed-value completion (R05), exact source qualification
-(R06), frontend/HIR/Establishment boundaries (R07) and V1/V2 conformance (R08) require their planned separate
-reviews. Partial failure,
-protected internal observations, views, lazy and concurrent acquisition, and clean, reused, optimized and
-incrementally maintained results still require conformance evidence. Security and fault-injection obligations
-remain in SADR-0002. ADR-0075 owns result currentness and early cutoff; Rollback, Scope, external Transaction
-and Failure owners govern protection and recovery. The companion Design tracks these work items and their
-evidence without turning them into new Collection Contract authority.
+The common result-calculation families examined in R02-1 through R02-13 are stated in §3.4.1. The R03
+conversion relations, including their permitted losses and conditions for recovering a prior value, are owned by
+§3.4.2. They address Ordered Occurrence, Bag and Membership; relations and Functional Correspondence; Association
+projections; Grouping, Partition and Aggregate results; Range, Progression and enumeration; Indexed, Sequenced and
+Navigable results; Product, Choice and Nested results; Graph and Hypergraph projections; Shaped, Sparse, Ragged
+and Masked conversions; and Weighted Relation or Delta formation of completed results. Their common conversion
+laws are now integrated as R03's reviewed semantic scope. They do not certify a complete JDK 27 or Kotlin 2.4.21
+callable inventory, full source-domain support, or eligibility for every 1D. R03 does not prescribe a separate
+universal Conversion IR, lossless conversion by default, or one physical storage scheme for the forms it relates.
 
-**Accepted ADR-0065 §10 remains a reconciliation task:** arbitrary compiler implementation preference is not a
-lawful meaning determinant, whereas a *qualified, Kontrakt-owned deterministic semantic refinement* is this ADR's
-default within a Source-permitted outcome space (§3.3). This Draft does not silently change the Accepted ADR.
-Likewise, the existence of a common Multiset or Positional Product does not amend ADR-0064's V1 Input allow-list.
-Family and Source Profile evolution must be reviewed under their actual owning laws.
+The remaining independent reviews are deterministic semantic refinement (R04), combined completed-value
+conformance (R05), exact callable and overload qualification across the selected Source profiles (R06), the
+Frontend/HIR/Establishment and runtime boundaries (R07), and V1/V2 implementation preservation (R08). R05 must
+test the coupling and completion conditions actually required by every claimed composed result. R06 must also
+record any Java/Kotlin or internal calculation whose qualified result cannot yet be explained by the common
+formation and conversion laws; a declaration census is not semantic qualification. Partial failure, protected
+observations, views, lazy or concurrent acquisition, and clean, reused, optimized or incrementally maintained
+results require conformance evidence. Security and fault-injection obligations remain in SADR-0002. ADR-0075
+owns result currentness and early cutoff; Rollback, Scope, external Transaction and Failure owners govern
+protection and recovery. The companion Design tracks the detailed work without turning it into new Collection
+Contract authority.
+
+R04 must examine the older decision-language of Accepted ADR-0065 §§7.4 and 10 alongside §3.3. The author's
+actual Source meaning, including genuinely stochastic or deliberately nondeterministic behavior and required
+effects, is not rewritten into a deterministic result. Where the specification merely leaves an outcome
+unspecified, Kontrakt may define a lawful semantic refinement rather than inherit an incidental platform choice;
+compiler implementation preference alone never supplies that law. R04 must determine the applicable conditions
+for 1D judgments and propose any necessary revision to the owning Accepted text, not silently amend it through
+this Draft. Likewise, the existence of a common Multiset or Positional Product does not amend ADR-0064's V1 Input
+allow-list. Family and Source Profile evolution must be reviewed under their actual owning laws.
